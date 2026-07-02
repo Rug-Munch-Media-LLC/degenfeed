@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark" />
+    <title>DegenFeed — The social feed of web3</title>
+    <meta
+      name="description"
+      content="Sign in once. Read every network. Write everywhere. DegenFeed aggregates Nostr, Farcaster, Lens, and Bluesky into one window."
+    />
+    <meta property="og:title" content="DegenFeed — The social feed of web3" />
+    <meta
+      property="og:description"
+      content="One composer. Four protocols. Zero switching apps."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://degenfeed.xyz" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' fill='%2300ff41' font-family='ui-monospace,monospace' font-size='20' font-weight='700'%3ED%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="topbar" role="banner">
+      <a href="/" class="brand" aria-label="DegenFeed home">
+        <span class="brand-mark" aria-hidden="true">&gt;_</span>
+        <span class="brand-name">DegenFeed</span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#how">How it works</a>
+        <a href="#protocols">Protocols</a>
+        <a href="#launch">Get notified</a>
+        <a href="/docs" class="nav-docs">Docs</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="hero-inner">
+          <p class="hero-eyebrow">
+            <span class="dot" aria-hidden="true"></span>
+            Building in public · Day 1
+          </p>
+          <h1 id="hero-title" class="hero-title">
+            The social feed of <span class="accent">web3</span>.
+          </h1>
+          <p class="hero-pitch">
+            Sign in once. Read every network. <strong>Write everywhere.</strong>
+          </p>
+          <p class="hero-sub">
+            DegenFeed is a single window onto the open social graph —
+            Nostr, Farcaster, Lens, and Bluesky — with one composer that
+            publishes to all of them at once. No algorithm jail. No ads.
+            No tokens-as-engagement.
+          </p>
+
+          <div class="hero-cta">
+            <form id="notify-form" class="notify-form" novalidate>
+              <label for="notify-email" class="sr-only">Email address</label>
+              <input
+                id="notify-email"
+                name="email"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                required
+                placeholder="[email protected]"
+                aria-describedby="notify-help"
+              />
+              <button type="submit" class="btn btn-primary">
+                Notify me at launch
+                <span aria-hidden="true">→</span>
+              </button>
+            </form>
+            <p id="notify-help" class="notify-help" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="hero-protocols" id="protocols">
+            <span class="hp-label">Posting to:</span>
+            <span class="chip chip-nostr" title="Nostr"><span class="chip-dot"></span>Nostr</span>
+            <span class="chip chip-farcaster" title="Farcaster"><span class="chip-dot"></span>Farcaster</span>
+            <span class="chip chip-lens" title="Lens"><span class="chip-dot"></span>Lens</span>
+            <span class="chip chip-bluesky" title="Bluesky"><span class="chip-dot"></span>Bluesky</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="how" id="how" aria-labelledby="how-title">
+        <h2 id="how-title" class="section-title">
+          <span class="bracket" aria-hidden="true">[</span>
+          How it works
+          <span class="bracket" aria-hidden="true">]</span>
+        </h2>
+        <div class="how-grid">
+          <article class="card">
+            <div class="card-num" aria-hidden="true">01</div>
+            <h3>Sign in with any web3 key</h3>
+            <p>
+              Nostr <code>nsec</code>, Farcaster custody, Lens profile, or
+              Bluesky handle. We never hold your key — it stays encrypted in your
+              browser, signed in by you, used only for the actions you take.
+            </p>
+          </article>
+          <article class="card">
+            <div class="card-num" aria-hidden="true">02</div>
+            <h3>Read every network, ranked</h3>
+            <p>
+              One timeline that aggregates the most interesting posts from
+              across protocols. Transparent ranking — every score component
+              is documented and overridable. No opaque algorithm deciding
+              what you see.
+            </p>
+          </article>
+          <article class="card">
+            <div class="card-num" aria-hidden="true">03</div>
+            <h3>Compose once. Publish everywhere.</h3>
+            <p>
+              The headline feature. Type a post, toggle which protocols to
+              cross-post to, hit send. We sign natively with each protocol's
+              key and broadcast in parallel. Failures retry in the background.
+            </p>
+          </article>
+          <article class="card">
+            <div class="card-num" aria-hidden="true">04</div>
+            <h3>Engage natively, not proxied</h3>
+            <p>
+              Liking a Farcaster cast signs a Farcaster reaction. Replying to
+              a Nostr note publishes a Nostr reply. Every action uses the
+              source protocol's primitive — we never proxy, never store.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="manifesto" aria-labelledby="manifesto-title">
+        <h2 id="manifesto-title" class="section-title">
+          <span class="bracket" aria-hidden="true">[</span>
+          What we are not
+          <span class="bracket" aria-hidden="true">]</span>
+        </h2>
+        <ul class="not-list">
+          <li><span class="x" aria-hidden="true">✕</span> Not a new social graph.</li>
+          <li><span class="x" aria-hidden="true">✕</span> Not a fediverse server.</li>
+          <li><span class="x" aria-hidden="true">✕</span> Not a Mastodon fork.</li>
+          <li><span class="x" aria-hidden="true">✕</span> Not a token launch.</li>
+          <li><span class="x" aria-hidden="true">✕</span> Not a moderation regime that decides who can speak.</li>
+        </ul>
+        <p class="manifesto-line">
+          We are a <strong>client</strong>. We read what already exists and let you
+          write to where you already have a voice. The graph belongs to the
+          protocols. The window belongs to us.
+        </p>
+      </section>
+
+      <section class="open" aria-labelledby="open-title">
+        <h2 id="open-title" class="section-title">
+          <span class="bracket" aria-hidden="true">[</span>
+          Open source. Free API. No paywalls.
+          <span class="bracket" aria-hidden="true">]</span>
+        </h2>
+        <p>
+          The whole stack ships under MIT. The public API is free for any
+          developer to build on. Operating cost at 100k MAU is roughly the
+          price of dinner. We can run this for ten years without charging
+          anyone — and we will.
+        </p>
+        <p>
+          Self-host if you want. Fork it. Build your own client on top of
+          the same unified types. That's the whole point.
+        </p>
+      </section>
+
+      <section class="cta-final" id="launch" aria-labelledby="cta-title">
+        <h2 id="cta-title" class="cta-title">Launching soon.</h2>
+        <p>Drop your email. We'll send one message at launch. No tracking, no list, no spam.</p>
+        <form id="notify-form-2" class="notify-form notify-form-large" novalidate>
+          <label for="notify-email-2" class="sr-only">Email address</label>
+          <input
+            id="notify-email-2"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            required
+            placeholder="[email protected]"
+            aria-describedby="notify-help-2"
+          />
+          <button type="submit" class="btn btn-primary">
+            Notify me at launch
+            <span aria-hidden="true">→</span>
+          </button>
+        </form>
+        <p id="notify-help-2" class="notify-help" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <footer class="footer" role="contentinfo">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="brand-mark" aria-hidden="true">&gt;_</span>
+          <span>DegenFeed</span>
+        </div>
+        <p class="footer-tag">The social feed of web3.</p>
+        <p class="footer-meta">
+          Built by
+          <a href="https://github.com/cryptorugmuncher" rel="me noopener">@cryptorugmuncher</a>
+          · Open source under MIT · Hosted on Cloudflare Pages
+        </p>
+        <nav class="footer-links" aria-label="Footer">
+          <a href="/docs">Docs</a>
+          <span aria-hidden="true">·</span>
+          <a href="/source">Source</a>
+          <span aria-hidden="true">·</span>
+          <a href="/status">Status</a>
+          <span aria-hidden="true">·</span>
+          <a href="/privacy">Privacy</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
