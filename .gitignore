@@ -1,0 +1,36 @@
+# Cinnabox build directory — ignore user/desktop state
+# Only canonical docs + fleet state files are tracked.
+
+# Desktop / user
+.Xauthority
+.aider.chat.history.md
+.aider.input.history
+.aider.models.settings.yml
+
+# Tools / runtimes
+.local/
+.hermes/.hermes_history
+.hermes/state.db*
+.hermes/auth.lock
+.hermes/cache/
+.hermes/logs/
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# Shell history
+.bash_history
+.zsh_history
+
+# Temp
+*.swp
+*.swo
+.DS_Store
