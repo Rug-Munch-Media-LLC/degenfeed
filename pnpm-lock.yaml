@@ -310,6 +310,9 @@ importers:
       '@degenfeed/feed-core':
         specifier: workspace:*
         version: link:../../packages/feed-core
+      '@degenfeed/identity':
+        specifier: workspace:*
+        version: link:../../packages/identity
       '@degenfeed/lens-sdk':
         specifier: workspace:*
         version: link:../../packages/lens-sdk
