@@ -1,57 +1,44 @@
-# DegenFeed v2
+# DegenFeed Web
 
-The social feed of web3.
+**Repo:** git.rugmunch.io/RugMunchMedia/degenfeed-web
+**Status:** Active development
+**Note:** This repo is the Next.js social-aggregator client for Nostr, Farcaster, Lens, and Bluesky. It is NOT the deployed Mastodon instance at degenfeed.xyz.
 
-DegenFeed is a single window onto the open social graph —
-Nostr, Farcaster, Lens, and Bluesky — with one composer that
-publishes to all of them at once.
+## What this repo is
+A web client that aggregates open social protocols into a single feed and composer.
+Planned stack: Next.js 14 App Router, React 19, Tailwind, Radix, Zustand, TanStack Query.
+
+## What this repo is NOT
+- The deployed DegenFeed Mastodon server runs at /srv/degenfeed/ container degenfeed-web on port 4002
+- A backend API. Protocol adapters live in packages/.
 
 ## Status
+- apps/landing is a static landing page live at degenfeed.xyz
+- apps/web is scaffolding; not deployed
+- This repo currently has no health endpoint because apps/web is not running
 
-- **Day 1 (2026-07-02):** v1 (Akkoma/Soapbox) nuked. v2 scaffolding begun.
-- **Landing:** https://degenfeed.xyz (live, email capture only)
-- **App:** building — see docs/PROGRESS.md
+## Quick start when apps/web exists
+npm install
+npm run dev
 
-## Stack
+## Deployed Mastodon separate
+ssh netcup
+cd /srv/degenfeed/
+docker compose ps
 
-- Frontend: Next.js 14 App Router, React 19, Tailwind, Radix
-- State: Zustand (client), TanStack Query (server cache)
-- Protocols: nostr-tools, @farcaster/hub-web, @lens-protocol/client, @atproto/api
-- Crypto: viem
-- Hosting: Cloudflare Pages + Workers
-- Cache: Cloudflare KV
-- Analytics: Plausible (self-hosted on Talos)
-- Search: MeiliSearch (self-hosted on Talos)
+## Current issues
+- No PRODUCT/ARCHITECTURE/ROADMAP/TODO docs now added
+- No pre-commit config
+- No Makefile
+- No CI
+- Repo README conflated this client with the Mastodon deployment
 
-## Repo layout
+## Standards
+This repo follows Rug Munch Media standards:
+https://git.rugmunch.io/RugMunchMedia/standards
 
-```
-apps/
-  landing/   static HTML/CSS/JS landing page (live)
-  web/       Next.js app (week 1)
-packages/
-  types/     Unified types across protocols
-  feed-core/ normalization, dedupe, niche detection
-  ranking/   transparent feed scoring
-  ui/        shared components (week 1)
-  identity/  cross-protocol identity resolution (week 2)
-  nostr-sdk/ nostr client (week 1)
-  farcaster-sdk/ (week 1)
-  lens-sdk/  (week 1)
-  bluesky-sdk/ (week 1)
-workers/
-  api/       Cloudflare Worker for feed proxy (week 1)
-infra/
-  cloudflare/  wrangler, KV setup (week 1)
-docs/
-  PROGRESS.md  build log
-  design.md    full design doc
-```
-
-## Operating principle
-
-Tool-pull, not model-push. Every capability is a deterministic fetch from the source protocol. The LLM is a summarizer, not a brain.
-
-## License
-
-MIT
+## Docs
+- PRODUCT.md — charter
+- ARCHITECTURE.md — packages and protocol adapters
+- ROADMAP.md — next 90 days
+- TODO.md — current tasks
