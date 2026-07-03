@@ -16,8 +16,8 @@
  * the pre-encrypted blobs and decryptable fields.
  */
 
-import { openDB, type IDBPDatabase } from 'idb';
 import type { Protocol } from '@degenfeed/types';
+import { type IDBPDatabase, openDB } from 'idb';
 
 // ─── Schema Types ──────────────────────────────────────────────────────
 
@@ -359,12 +359,17 @@ export async function muteIdentity(
   } satisfies StoredMutedIdentity);
 }
 
-export async function unmuteIdentity(targetIdentityId: string, mutedByIdentityId: string): Promise<void> {
+export async function unmuteIdentity(
+  targetIdentityId: string,
+  mutedByIdentityId: string,
+): Promise<void> {
   const db = await getDb();
   await db.delete('muted', [targetIdentityId, mutedByIdentityId]);
 }
 
-export async function getMutedIdentities(mutedByIdentityId: string): Promise<StoredMutedIdentity[]> {
+export async function getMutedIdentities(
+  mutedByIdentityId: string,
+): Promise<StoredMutedIdentity[]> {
   const db = await getDb();
   const index = (db as IDBPDatabase<{ muted: StoredMutedIdentity }>)
     .transaction('muted')
@@ -420,11 +425,7 @@ export async function getDefaultPreferences(identityId: string): Promise<UserPre
     identityId,
     theme: 'dark',
     rankingWeights: null,
-    pinnedRelays: [
-      'wss://relay.damus.io',
-      'wss://nos.lol',
-      'wss://relay.primal.net',
-    ],
+    pinnedRelays: ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'],
     pinnedHubs: ['https://hub.farcaster.standardcrypto.vc:2281'],
     defaultProtocols: ['nostr', 'farcaster', 'lens', 'bluesky'],
     reducedMotion: false,

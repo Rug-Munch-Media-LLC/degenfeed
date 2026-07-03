@@ -13,15 +13,15 @@
  *   - The "active session" is also memory-only.
  */
 
-import type { Protocol } from '@degenfeed/types';
 import {
+  type StoredIdentity,
   clearActiveSession,
   deleteIdentity,
   getIdentity,
   saveIdentity,
   setActiveSession,
-  type StoredIdentity,
 } from '@degenfeed/storage';
+import type { Protocol } from '@degenfeed/types';
 
 // ─── Encryption layer ───────────────────────────────────────────────────
 
@@ -169,7 +169,12 @@ declare global {
   interface Window {
     nostr?: {
       getPublicKey: () => Promise<string>;
-      signEvent: (event: { kind: number; tags: string[][]; content: string; created_at: number }) => Promise<{ id: string; sig: string }>;
+      signEvent: (event: {
+        kind: number;
+        tags: string[][];
+        content: string;
+        created_at: number;
+      }) => Promise<{ id: string; sig: string }>;
     };
   }
 }
@@ -180,9 +185,7 @@ declare global {
  */
 export async function signInWithNostrExtension(): Promise<StoredIdentity> {
   if (typeof window === 'undefined' || !window.nostr) {
-    throw new Error(
-      'No Nostr extension detected. Install Alby, nos2x, or another NIP-07 wallet.',
-    );
+    throw new Error('No Nostr extension detected. Install Alby, nos2x, or another NIP-07 wallet.');
   }
   const { npubEncode } = await import('@degenfeed/nostr-sdk');
   const pk = await window.nostr.getPublicKey();
@@ -329,7 +332,15 @@ export async function signInWithLens(opts: {
   });
   if (!profileRes.ok) throw new Error('Failed to fetch Lens profiles');
   const { data: profileData } = (await profileRes.json()) as {
-    data: { profiles: { items: { id: string; handle: string; metadata: { displayName: string | null; picture: string | null } }[] } };
+    data: {
+      profiles: {
+        items: {
+          id: string;
+          handle: string;
+          metadata: { displayName: string | null; picture: string | null };
+        }[];
+      };
+    };
   };
   const profile = profileData.profiles.items[0];
   if (!profile) throw new Error('No Lens profile found for this wallet');
@@ -409,14 +420,11 @@ export async function signInWithBluesky(
   passphrase: string,
 ): Promise<StoredIdentity> {
   // 1. Create session via XRPC
-  const sessionRes = await fetch(
-    'https://bsky.social/xrpc/com.atproto.server.createSession',
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ identifier, password: appPassword }),
-    },
-  );
+  const sessionRes = await fetch('https://bsky.social/xrpc/com.atproto.server.createSession', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ identifier, password: appPassword }),
+  });
   if (!sessionRes.ok) {
     const err = (await sessionRes.json()) as { message?: string; error?: string };
     throw new Error(`Bluesky auth failed: ${err.message ?? err.error ?? sessionRes.statusText}`);

@@ -43,7 +43,7 @@ function decodeTlv(type: 'nevent' | 'nprofile', bytes: Uint8Array): DecodedResul
 
   while (offset + 1 < bytes.length) {
     const t = bytes[offset];
-    const len = bytes[offset + 1]!;
+    const len = bytes[offset + 1] ?? 0;
     const value = bytes.slice(offset + 2, offset + 2 + len);
     offset += 2 + len;
 

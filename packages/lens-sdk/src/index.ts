@@ -26,7 +26,6 @@
  */
 
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import { buildUnifiedPost, emptyIdentity, emptyMetrics } from '@degenfeed/feed-core';
 
 export type { Protocol, UnifiedIdentity, UnifiedPost };
 
@@ -40,8 +39,16 @@ export interface LensPublication {
     media: { original: { url: string } }[];
   };
   createdAt: string;
-  stats: { totalAmountOfComments: number; totalAmountOfMirrors: number; totalAmountOfReactions: number };
-  by: { id: string; handle: string; metadata: { displayName: string | null; picture: string | null } };
+  stats: {
+    totalAmountOfComments: number;
+    totalAmountOfMirrors: number;
+    totalAmountOfReactions: number;
+  };
+  by: {
+    id: string;
+    handle: string;
+    metadata: { displayName: string | null; picture: string | null };
+  };
 }
 
 export class LensClient {

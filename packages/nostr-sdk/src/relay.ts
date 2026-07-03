@@ -67,8 +67,6 @@ interface RelayState {
   reconnectTimer: ReturnType<typeof setTimeout> | null;
 }
 
-function noop() {}
-
 export class RelayPool {
   private relays: Map<string, RelayState> = new Map();
   private opts: Required<RelayPoolOptions>;
@@ -200,13 +198,13 @@ export class RelayPool {
     }
 
     // Reconnect
-    if (
-      this.opts.maxReconnects === 0 ||
-      state.reconnectAttempts < this.opts.maxReconnects
-    ) {
+    if (this.opts.maxReconnects === 0 || state.reconnectAttempts < this.opts.maxReconnects) {
       state.reconnectAttempts++;
-      const delay = this.opts.reconnectDelay * Math.pow(2, state.reconnectAttempts - 1);
-      this.log('info', `Reconnecting to ${state.url} in ${delay}ms (attempt ${state.reconnectAttempts})`);
+      const delay = this.opts.reconnectDelay * 2 ** (state.reconnectAttempts - 1);
+      this.log(
+        'info',
+        `Reconnecting to ${state.url} in ${delay}ms (attempt ${state.reconnectAttempts})`,
+      );
       state.reconnectTimer = setTimeout(() => {
         this.connectRelay(state);
       }, delay);

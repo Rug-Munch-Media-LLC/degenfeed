@@ -27,8 +27,8 @@
  *   - Add feed generator integration
  */
 
+import { buildUnifiedPost, emptyIdentity } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import { buildUnifiedPost, emptyIdentity, emptyMetrics } from '@degenfeed/feed-core';
 
 export type { Protocol, UnifiedIdentity, UnifiedPost };
 
@@ -47,7 +47,11 @@ export interface BskyPostView {
   record: {
     text: string;
     createdAt: string;
-    embed?: { type: string; external?: { uri: string }; images?: { image: { ref: string }; alt: string }[] };
+    embed?: {
+      type: string;
+      external?: { uri: string };
+      images?: { image: { ref: string }; alt: string }[];
+    };
     reply?: { parent: { uri: string }; root: { uri: string } };
   };
   likeCount?: number;
@@ -74,14 +78,17 @@ export class BskyClient {
       for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
     }
     const headers: Record<string, string> = {};
-    if (this.accessJwt) headers['authorization'] = `Bearer ${this.accessJwt}`;
+    if (this.accessJwt) headers.authorization = `Bearer ${this.accessJwt}`;
     const res = await fetch(url.toString(), { headers });
     if (!res.ok) throw new Error(`XRPC error: ${res.status} ${res.statusText}`);
     return res.json();
   }
 
   /** Get the authenticated user's home timeline. */
-  async getTimeline(limit = 50, cursor?: string): Promise<{ posts: BskyPostView[]; cursor?: string }> {
+  async getTimeline(
+    limit = 50,
+    cursor?: string,
+  ): Promise<{ posts: BskyPostView[]; cursor?: string }> {
     const params: Record<string, string> = { limit: String(limit) };
     if (cursor) params.cursor = cursor;
     const data = (await this.xrpc('/xrpc/app.bsky.feed.getTimeline', params)) as {

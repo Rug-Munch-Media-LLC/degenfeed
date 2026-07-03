@@ -37,7 +37,7 @@ export interface RankingContext {
 /** Half-life decay: 1.0 at age=0, 0.5 at age=halfLife, 0.25 at age=2*halfLife. */
 export function recencyDecay(createdAt: number, now: number, halfLifeHours: number): number {
   const ageHours = Math.max(0, (now - createdAt) / (1000 * 60 * 60));
-  return Math.pow(0.5, ageHours / halfLifeHours);
+  return 0.5 ** (ageHours / halfLifeHours);
 }
 
 export function score(post: UnifiedPost, ctx: RankingContext): number {

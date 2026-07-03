@@ -6,10 +6,7 @@
 
 export default function HomePage() {
   return (
-    <main
-      id="main"
-      className="flex min-h-screen flex-col items-center justify-center px-4"
-    >
+    <main id="main" className="flex min-h-screen flex-col items-center justify-center px-4">
       <section className="mx-auto max-w-3xl text-center">
         <div className="mb-6 text-sm font-medium uppercase tracking-widest text-degen-500">
           Open Beta
@@ -23,15 +20,11 @@ export default function HomePage() {
           Sign in once. Read every network. Write everywhere.
         </p>
         <div className="mb-12 flex flex-wrap items-center justify-center gap-4">
-          <span className="rounded-full bg-gray-800 px-4 py-1.5 text-sm text-gray-400">
-            Nostr
-          </span>
+          <span className="rounded-full bg-gray-800 px-4 py-1.5 text-sm text-gray-400">Nostr</span>
           <span className="rounded-full bg-gray-800 px-4 py-1.5 text-sm text-gray-400">
             Farcaster
           </span>
-          <span className="rounded-full bg-gray-800 px-4 py-1.5 text-sm text-gray-400">
-            Lens
-          </span>
+          <span className="rounded-full bg-gray-800 px-4 py-1.5 text-sm text-gray-400">Lens</span>
           <span className="rounded-full bg-gray-800 px-4 py-1.5 text-sm text-gray-400">
             Bluesky
           </span>

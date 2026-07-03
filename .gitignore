@@ -7,3 +7,6 @@ coverage/
 .env.local
 *.log
 .DS_Store
+
+# Build artifacts
+*.tsbuildinfo

@@ -43,10 +43,16 @@ export type { Nip46ConnectOptions } from './nip46';
 
 // ─── Normalizers ───────────────────────────────────────────────────────
 
-import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import { buildUnifiedPost, detectNiches, emptyIdentity, emptyMetrics, extractEmbeds } from '@degenfeed/feed-core';
-import { npubEncode } from './nip19';
+import {
+  buildUnifiedPost,
+  detectNiches,
+  emptyIdentity,
+  emptyMetrics,
+  extractEmbeds,
+} from '@degenfeed/feed-core';
+import type { UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { NostrEvent } from './event';
+import { npubEncode } from './nip19';
 
 /**
  * Convert a kind 0 (metadata) Nostr event to a UnifiedIdentity.
@@ -68,7 +74,7 @@ export function profileToIdentity(event: NostrEvent): UnifiedIdentity {
       lens: null,
       bluesky: null,
     },
-    displayName: meta.display_name ?? meta.name ?? npubEncode(event.pubkey).slice(0, 12) + '…',
+    displayName: meta.display_name ?? meta.name ?? `${npubEncode(event.pubkey).slice(0, 12)}…`,
     bio: meta.about ?? '',
     avatarUrl: meta.picture ?? '',
     bannerUrl: meta.banner,
@@ -84,10 +90,7 @@ export function profileToIdentity(event: NostrEvent): UnifiedIdentity {
  * Convert a Nostr event to a UnifiedPost.
  * Handles kind 1 (text note), kind 6 (repost), kind 30023 (long-form).
  */
-export function eventToUnifiedPost(
-  event: NostrEvent,
-  author?: UnifiedIdentity,
-): UnifiedPost {
+export function eventToUnifiedPost(event: NostrEvent, author?: UnifiedIdentity): UnifiedPost {
   const identity = author ?? emptyIdentity();
   identity.keys.nostrPubkey = event.pubkey;
 

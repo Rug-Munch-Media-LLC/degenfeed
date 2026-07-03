@@ -2,7 +2,7 @@
   "name": "degenfeed-web",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "[email protected]",
+  "packageManager": "pnpm@11.7.0",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",

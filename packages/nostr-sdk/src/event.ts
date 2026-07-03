@@ -5,9 +5,9 @@
  * Event format per NIP-01.
  */
 
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { schnorr } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 
 export interface NostrEvent {
   id: string;
@@ -78,11 +78,7 @@ export function verifyEvent(event: NostrEvent): boolean {
     };
     const id = getEventHash(unsigned);
     if (id !== event.id) return false;
-    return schnorr.verify(
-      hexToBytes(event.sig),
-      hexToBytes(event.id),
-      hexToBytes(event.pubkey),
-    );
+    return schnorr.verify(hexToBytes(event.sig), hexToBytes(event.id), hexToBytes(event.pubkey));
   } catch {
     return false;
   }
@@ -143,10 +139,7 @@ export function createReaction(
 /**
  * Create a repost event (kind 6 — generic repost).
  */
-export function createRepost(
-  originalEvent: NostrEvent,
-  secretKey: string,
-): NostrEvent {
+export function createRepost(originalEvent: NostrEvent, secretKey: string): NostrEvent {
   const pubkey = getPublicKey(secretKey);
   const unsigned: UnsignedEvent = {
     pubkey,
@@ -164,11 +157,7 @@ export function createRepost(
 /**
  * Create a deletion event (kind 5).
  */
-export function createDeletion(
-  eventIds: string[],
-  reason: string,
-  secretKey: string,
-): NostrEvent {
+export function createDeletion(eventIds: string[], reason: string, secretKey: string): NostrEvent {
   const pubkey = getPublicKey(secretKey);
   const unsigned: UnsignedEvent = {
     pubkey,

@@ -12,14 +12,15 @@
  *   - Add reaction buttons
  */
 
-export default function PostPage({ params }: { params: { id: string } }) {
+export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
       <button type="button" className="btn-ghost mb-4" onClick={() => window.history.back()}>
         ← Back
       </button>
       <div className="card">
-        <p className="text-sm text-gray-500">Post ID: {params.id}</p>
+        <p className="text-sm text-gray-500">Post ID: {id}</p>
         <p className="mt-4 text-gray-400">Loading post from protocol...</p>
       </div>
     </div>

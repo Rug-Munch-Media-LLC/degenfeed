@@ -26,8 +26,8 @@
  *   - Add frame validation
  */
 
-import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { buildUnifiedPost, emptyIdentity, emptyMetrics } from '@degenfeed/feed-core';
+import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
 export type { Protocol, UnifiedIdentity, UnifiedPost };
 
@@ -73,7 +73,20 @@ export class HubClient {
     const url = `${this.baseUrl}/v1/castsByFid?fid=${fid}&pageSize=${limit}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Hub error: ${res.status} ${res.statusText}`);
-    const json = (await res.json()) as { messages: { data: { castAddBody: { text: string; embeds: { url: string }[]; parentCastId?: { hash: string; fid: number }; parentUrl?: string }; timestamp: number }; hash: string }[] };
+    const json = (await res.json()) as {
+      messages: {
+        data: {
+          castAddBody: {
+            text: string;
+            embeds: { url: string }[];
+            parentCastId?: { hash: string; fid: number };
+            parentUrl?: string;
+          };
+          timestamp: number;
+        };
+        hash: string;
+      }[];
+    };
     return (json.messages ?? []).map((msg) => ({
       hash: msg.hash,
       fid,

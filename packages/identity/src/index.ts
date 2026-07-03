@@ -132,7 +132,9 @@ async function resolveFarcasterFid(
   fetchFn: typeof fetch,
 ): Promise<HandleResolution | null> {
   try {
-    const res = await fetchFn(`https://hub.farcaster.standardcrypto.vc:2281/v1/userDataByFid?fid=${fid}`);
+    const res = await fetchFn(
+      `https://hub.farcaster.standardcrypto.vc:2281/v1/userDataByFid?fid=${fid}`,
+    );
     if (!res.ok) return null;
     return { protocol: 'farcaster', id: String(fid), handle: `@${fid}` };
   } catch {

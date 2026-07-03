@@ -1,4 +1,10 @@
-import type { Embed, EngagementMetrics, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import type {
+  Embed,
+  EngagementMetrics,
+  Protocol,
+  UnifiedIdentity,
+  UnifiedPost,
+} from '@degenfeed/types';
 
 /**
  * Extract embeds from text content. URLs become link embeds.
@@ -20,7 +26,19 @@ export function extractEmbeds(text: string, native: unknown[] = []): Embed[] {
 export function detectNiches(text: string): string[] {
   const t = text.toLowerCase();
   const map: Record<string, string[]> = {
-    crypto: ['btc', 'eth', 'crypto', 'defi', 'nft', 'token', 'web3', 'solana', 'base', 'bitcoin', 'ethereum'],
+    crypto: [
+      'btc',
+      'eth',
+      'crypto',
+      'defi',
+      'nft',
+      'token',
+      'web3',
+      'solana',
+      'base',
+      'bitcoin',
+      'ethereum',
+    ],
     ai: ['ai', 'gpt', 'llm', 'claude', 'gemini', 'agent', 'ml', 'neural', 'rag'],
     oss: ['open source', 'github', 'mit', 'apache', 'repo', 'foss', 'gpl'],
     security: ['sec', 'exploit', 'vuln', 'cve', 'hack', 'audit', 'bug bounty'],

@@ -29,10 +29,9 @@
  *   BSKY_PUBLIC_URL: Bluesky public API endpoint
  */
 
-import type { UnifiedPost, Protocol } from '@degenfeed/types';
-import { rank, type RankingContext } from '@degenfeed/ranking';
-import { RelayPool, type NostrFilter } from '@degenfeed/nostr-sdk';
-import { WEIGHTS } from '@degenfeed/ranking';
+import { type NostrFilter, RelayPool } from '@degenfeed/nostr-sdk';
+import { type RankingContext, rank } from '@degenfeed/ranking';
+import type { Protocol, UnifiedPost } from '@degenfeed/types';
 
 interface Env {
   CACHE?: KVNamespace;
@@ -42,11 +41,7 @@ interface Env {
   BSKY_PUBLIC_URL?: string;
 }
 
-const DEFAULT_RELAYS = [
-  'wss://relay.damus.io',
-  'wss://nos.lol',
-  'wss://relay.primal.net',
-];
+const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 
 const CORS_HEADERS = {
   'access-control-allow-origin': '*',
@@ -129,7 +124,11 @@ async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
       embeds: [],
       createdAt: ev.created_at * 1000,
       metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      engagement: { viewerLiked: false, viewerReposted: false, raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 } },
+      engagement: {
+        viewerLiked: false,
+        viewerReposted: false,
+        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      },
       raw: ev,
       niches: [],
     }));
@@ -188,7 +187,11 @@ async function handleTrendingFeed(request: Request, env: Env): Promise<Response>
     embeds: [],
     createdAt: ev.created_at * 1000,
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    engagement: { viewerLiked: false, viewerReposted: false, raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 } },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+    },
     raw: ev,
     niches: [],
   }));
@@ -207,7 +210,7 @@ async function handleTrendingFeed(request: Request, env: Env): Promise<Response>
   return jsonResponse({ data: ranked, meta: { total: ranked.length, limit } });
 }
 
-async function handleResolveIdentity(request: Request, env: Env): Promise<Response> {
+async function handleResolveIdentity(request: Request, _env: Env): Promise<Response> {
   const handle = new URL(request.url).searchParams.get('handle');
   if (!handle) {
     return jsonResponse({ error: 'Missing handle parameter' }, 400);

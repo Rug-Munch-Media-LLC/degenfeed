@@ -7,8 +7,7 @@
  * Full spec: https://github.com/nostr-protocol/nips/blob/master/46.md
  */
 
-import { generateSecretKey, getPublicKey, getEventHash, signEvent } from './event';
-import { npubEncode } from './nip19';
+import { generateSecretKey, getPublicKey, signEvent } from './event';
 
 interface Nip46Session {
   remotePubkey: string;
@@ -41,9 +40,7 @@ export interface Nip46ConnectOptions {
  * Connect to a NIP-46 remote signer.
  * Returns a session object with getPublicKey and signEvent methods.
  */
-export async function connectNostrConnect(
-  opts: Nip46ConnectOptions,
-): Promise<{
+export async function connectNostrConnect(opts: Nip46ConnectOptions): Promise<{
   getPublicKey: () => Promise<string>;
   signEvent: (event: {
     kind: number;
@@ -55,7 +52,7 @@ export async function connectNostrConnect(
 }> {
   const localSecretKey = generateSecretKey();
   const localPubkey = getPublicKey(localSecretKey);
-  let resolveReady: () => void;
+  let resolveReady!: () => void;
   const ready = new Promise<void>((r) => {
     resolveReady = r;
   });
@@ -66,7 +63,7 @@ export async function connectNostrConnect(
     localPubkey,
     relayUrl: opts.relayUrl,
     ready,
-    resolveReady: resolveReady!,
+    resolveReady,
     pendingRequests: new Map(),
     ws: null,
     connected: false,
@@ -91,11 +88,13 @@ export async function connectNostrConnect(
     ws.onopen = () => {
       session.connected = true;
       // Subscribe to kind 24133 events from the remote pubkey
-      ws.send(JSON.stringify([
-        'REQ',
-        'nip46-init',
-        { kinds: [24133], authors: [opts.remotePubkey], limit: 1 },
-      ]));
+      ws.send(
+        JSON.stringify([
+          'REQ',
+          'nip46-init',
+          { kinds: [24133], authors: [opts.remotePubkey], limit: 1 },
+        ]),
+      );
     };
 
     ws.onmessage = (event: MessageEvent) => {
@@ -103,7 +102,7 @@ export async function connectNostrConnect(
         const data = JSON.parse(event.data as string) as unknown[];
         if (!Array.isArray(data)) return;
 
-        const [type, subId, ...rest] = data;
+        const [type, _subId, ...rest] = data;
 
         if (type === 'EVENT' && rest.length >= 1) {
           const [rawEvent] = rest as Record<string, unknown>[];

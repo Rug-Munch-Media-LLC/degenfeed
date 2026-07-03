@@ -1,13 +1,3 @@
-/**
- * NIP-05: DNS-based identity verification.
- *
- * Resolves a NIP-05 identifier (user@domain) to a Nostr pubkey
- * by fetching `https://domain/.well-known/nostr.json?name=user`.
- */
-
-import { hexToBytes } from '@noble/hashes/utils';
-import { schnorr } from '@noble/curves/secp256k1';
-
 export interface Nip05Result {
   pubkey: string;
   relays?: string[];
