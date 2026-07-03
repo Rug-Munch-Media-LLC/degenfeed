@@ -1,0 +1,16 @@
+name = "degenfeed-api"
+main = "src/index.ts"
+compatibility_date = "2024-05-01"
+
+# KV namespaces for caching
+# Use `wrangler kv:namespace create degenfeed-cache` then add the id here
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = ""
+
+# Environment variables (set via wrangler secret or dashboard)
+# [vars]
+# RELAY_URLS = "wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net"
+# FARCASTER_HUB_URL = "https://hub.farcaster.standardcrypto.vc:2281"
+# LENS_API_URL = "https://api-v2.lens.dev/graphql"
+# BSKY_PUBLIC_URL = "https://public.api.bsky.app"

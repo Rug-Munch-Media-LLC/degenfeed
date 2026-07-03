@@ -159,8 +159,7 @@ button {
 .hero-grid {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
@@ -194,8 +193,13 @@ button {
   animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 .hero-title {
   font-size: clamp(40px, 8vw, 72px);
@@ -319,10 +323,18 @@ button {
   height: 6px;
   border-radius: 50%;
 }
-.chip-nostr .chip-dot { background: var(--protocol-nostr); }
-.chip-farcaster .chip-dot { background: var(--protocol-farcaster); }
-.chip-lens .chip-dot { background: var(--protocol-lens); }
-.chip-bluesky .chip-dot { background: var(--protocol-bluesky); }
+.chip-nostr .chip-dot {
+  background: var(--protocol-nostr);
+}
+.chip-farcaster .chip-dot {
+  background: var(--protocol-farcaster);
+}
+.chip-lens .chip-dot {
+  background: var(--protocol-lens);
+}
+.chip-bluesky .chip-dot {
+  background: var(--protocol-bluesky);
+}
 
 /* SECTIONS */
 section {

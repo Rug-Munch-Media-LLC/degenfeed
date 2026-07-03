@@ -1,9 +1,7 @@
 // DegenFeed landing — pure JS, no framework.
 // Handles email notify form submissions and tracks goal events locally.
 
-(function () {
-  'use strict';
-
+(() => {
   // Endpoint placeholder — wire up to Cloudflare Worker / Turnstile / KV later.
   // For now we just log locally and show success so we can validate the form UX.
   const ENDPOINT = '/api/notify'; // future: real subscribe endpoint
@@ -64,12 +62,12 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('form.notify-form').forEach(function (form) {
-      form.addEventListener('submit', function (e) {
+  document.addEventListener('DOMContentLoaded', () => {
+    for (const form of document.querySelectorAll('form.notify-form')) {
+      form.addEventListener('submit', (e) => {
         e.preventDefault();
         submit(form);
       });
-    });
+    }
   });
 })();

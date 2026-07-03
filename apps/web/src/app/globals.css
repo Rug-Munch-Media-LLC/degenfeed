@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #000000;
+    --color-fg: #e5e7eb;
+    --color-accent: #22c55e;
+    --color-muted: #6b7280;
+    --color-border: #1f2937;
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  /* Skip link for accessibility */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 100;
+    padding: 0.5rem 1rem;
+    background: var(--color-accent);
+    color: #000;
+    font-weight: 600;
+    transition: top 0.1s;
+  }
+  .skip-link:focus {
+    top: 0;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium
+           transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-degen-500 focus:ring-offset-2 focus:ring-offset-black
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-degen-500 text-black hover:bg-degen-400 active:bg-degen-600;
+  }
+  .btn-ghost {
+    @apply btn text-gray-300 hover:bg-gray-800 hover:text-white;
+  }
+  .card {
+    @apply rounded-xl border border-gray-800 bg-gray-900/50 p-4 backdrop-blur-sm;
+  }
+  .input {
+    @apply w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white
+           placeholder-gray-500 focus:border-degen-500 focus:outline-none focus:ring-1 focus:ring-degen-500;
+  }
+}
