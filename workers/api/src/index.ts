@@ -14,6 +14,7 @@ import { handleRmiNewsFeed } from './routes/news';
 import { handleRssFeed } from './routes/rss';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
 import { handlePublish, handleEngage } from './routes/publish';
+import { handleNotifications } from './routes/notifications';
 import { handleResolveIdentity } from './routes/identity';
 import type { Protocol } from '@degenfeed/types';
 
@@ -162,6 +163,7 @@ export default {
       if (path === '/api/engage') {
         return handleEngage(request, env);
       }
+            if (path === '/api/notifications') { return handleNotifications(request, env); }
       if (path === '/api/identity/resolve') {
         return handleResolveIdentity(request, env);
       }

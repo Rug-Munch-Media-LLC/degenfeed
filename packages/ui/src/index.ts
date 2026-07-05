@@ -9,4 +9,6 @@ export type { FeedListProps, FeedState } from './FeedList';
 export type { PostCardProps } from './PostCard';
 export type { ProtocolBadgeProps } from './ProtocolBadge';
 export type { SignInModalProps, ProtocolOption } from './SignInModal';
+export { NotificationBell } from './NotificationBell';
+export type { Notification, NotificationBellProps } from './NotificationBell';
 export type { UnifiedPost, UnifiedIdentity, Protocol } from '@degenfeed/types';
