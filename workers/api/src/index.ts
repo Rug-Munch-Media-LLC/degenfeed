@@ -8,12 +8,13 @@
 
 import { RelayPool } from '@degenfeed/nostr-sdk';
 import { handleRelaysHealth } from './routes/health';
-import { handleHomeFeed, handleTrendingFeed } from './routes/feed';
+import { handleHomeFeed } from './routes/feed';
 import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import { handleRmiNewsFeed } from './routes/news';
 import { handleRssFeed } from './routes/rss';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
 import { handlePublish, handleEngage } from './routes/publish';
+import { handleTopFeed, handleNewsletterFeed, handleTrendingFeed } from './routes/curated';
 import { handleNotifications } from './routes/notifications';
 import { handleResolveIdentity } from './routes/identity';
 import type { Protocol } from '@degenfeed/types';
@@ -163,7 +164,10 @@ export default {
       if (path === '/api/engage') {
         return handleEngage(request, env);
       }
-            if (path === '/api/notifications') { return handleNotifications(request, env); }
+                  if (path === '/api/feed/top') { return handleTopFeed(request, env); }
+      if (path === '/api/feed/newsletters') { return handleNewsletterFeed(request, env); }
+      if (path === '/api/feed/trending') { return handleTrendingFeed(request, env); }
+      if (path === '/api/notifications') { return handleNotifications(request, env); }
       if (path === '/api/identity/resolve') {
         return handleResolveIdentity(request, env);
       }
