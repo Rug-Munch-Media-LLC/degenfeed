@@ -61,12 +61,20 @@ export async function handleRssToNostrBridge(request: Request, env: Env): Promis
 export async function handlePublish(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
   try {
-    const body: Record<string, any> = await request.json() as any;
+    interface PublishRequest {
+      text?: string;
+      targets?: string[];
+      auth?: Record<string, string>;
+      signedMessage?: string;
+      typedDataId?: string;
+      signature?: string;
+    }
+    const body: PublishRequest = await request.json() as PublishRequest;
     if (!body.text?.trim()) return jsonResponse({ error: 'Text required' }, 400);
     if (!body.targets?.length) return jsonResponse({ error: 'Targets required' }, 400);
     const auth = body.auth ?? {} as Record<string, string>;
 
-    const results: Record<string, { ok: boolean; error?: string }> = {};
+    const results: Record<string, { ok: boolean; error?: string; hash?: string }> = {};
 
     for (const target of body.targets) {
       try {
@@ -88,20 +96,57 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
 
           case 'farcaster': {
             // Farcaster Hub submitMessage via REST API
-            // This calls the Hub's PUT /v1/submitMessage endpoint
-            // The message must be a hex-encoded Message protobuf
-            // For full support, use @farcaster/hub-web or @farcaster/protobufs
+            // Accepts a pre-signed Message protobuf from the client
+            // Client flow: @farcaster/hub-web makeCastAdd → sign → send hex
             const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
-            results[target] = { ok: false, error: 'Farcaster publish requires @farcaster/hub-web for Message construction — coming soon. Use external tool to create cast and paste URL.' };
+            const signedMessage = body.signedMessage || body.auth?.farcaster_message;
+            if (signedMessage) {
+              // Submit pre-signed message to Hub
+              const submitRes = await fetch(hubUrl + '/v1/submitMessage', {
+                method: 'PUT',
+                headers: { 'content-type': 'application/octet-stream' },
+                body: signedMessage,
+              });
+              if (submitRes.ok) {
+                const submitData = await submitRes.json() as Record<string, unknown>;
+                results[target] = { ok: true, hash: String(submitData.hash || "") || undefined };
+              } else {
+                const errText = await submitRes.text();
+                results[target] = { ok: false, error: 'Farcaster Hub rejected: ' + errText.slice(0, 100) };
+              }
+            } else {
+              // No pre-signed message — return stub asking client to sign
+              results[target] = { ok: false, error: 'Client must sign cast using @farcaster/hub-web, then submit signedMessage in publish request.' };
+            }
             break;
           }
 
           case 'lens': {
-            // Lens API v2 broadcast — requires EIP-712 typed data signature from wallet
-            // The workflow: createPostTypedData → wallet.signTypedData → broadcast
-            // For now, return stub with clear instructions
+            // Lens API v2 broadcast — accepts a pre-signed typed data from the client
+            // Client flow: lens.createPostTypedData → wallet.signTypedData → send signature
             const lensApi = env.LENS_API_URL || 'https://api-v2.lens.dev/graphql';
-            results[target] = { ok: false, error: 'Lens broadcast requires wallet signing — use Lens API directly with your wallet.' };
+            const typedDataId = body.typedDataId || body.auth?.lens_typedDataId;
+            const signature = body.signature || body.auth?.lens_signature;
+            if (typedDataId && signature) {
+              const broadcastRes = await fetch(lensApi, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                  query: 'mutation Broadcast($request: BroadcastRequest!) { broadcast(request: $request) { ... on RelayerResult { txHash } ... on RelayError { reason } } }',
+                  variables: { request: { id: typedDataId, signature } },
+                }),
+              });
+              if (broadcastRes.ok) {
+                const broadcastData = await broadcastRes.json() as Record<string, unknown>;
+                const result = (broadcastData as any)?.data?.broadcast;
+                results[target] = { ok: !!(result as any)?.txHash, hash: (result as any)?.txHash as string | undefined, error: (result as any)?.reason as string | undefined };
+              } else {
+                const errText = await broadcastRes.text();
+                results[target] = { ok: false, error: 'Lens broadcast failed: ' + errText.slice(0, 100) };
+              }
+            } else {
+              results[target] = { ok: false, error: 'Client must sign typed data using wallet, then submit typedDataId + signature in publish request.' };
+            }
             break;
           }
 
@@ -110,7 +155,7 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
             // AT Protocol repo.createRecord
             // Requires PDS session token (accessJwt) stored during sign-in
             const pdsUrl = target === 'bluesky' ? (env.BSKY_PUBLIC_URL || 'https://public.api.bsky.app') : (env.THREADS_PDS_URL || 'https://public.threads.net');
-            const accessJwt = auth[target + '_jwt'];
+            const accessJwt = auth[target + '_jwt'] || auth[target + '_accessJwt'] || auth.accessJwt;
             if (!accessJwt) {
               results[target] = { ok: false, error: 'Not signed into ' + target };
               break;
@@ -165,11 +210,18 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
 export async function handleEngage(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
   try {
-    const body: Record<string, string | undefined> = await request.json() as any;
+    interface EngageRequest {
+      action?: string;
+      postId?: string;
+      protocol?: string;
+      auth?: Record<string, string>;
+      authToken?: string;
+    }
+    const body: EngageRequest = await request.json() as EngageRequest;
     const action = body.action ?? '';
     const postId = body.postId ?? '';
     const protocol = body.protocol ?? '';
-    const auth = body.auth as Record<string, string> | undefined;
+    const auth = body.auth;
 
     if (!action || !postId || !protocol) {
       return jsonResponse({ error: 'action, postId, protocol required' }, 400);

@@ -72,7 +72,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
         <body>
           <div className="mx-auto max-w-md px-4 py-20 text-center">
             <div className="mb-6 text-5xl text-degen-400">\u2713</div>
-            <h1 className="mb-4 text-2xl font-bold text-white">Signed in!</h1>
+            <h1 className="mb-4 text-2xl font-bold text-white">Signed in!</h1>\n          <p className="mb-4 text-sm text-gray-500">Redirecting to your feed...</p>
             <p className="mb-8 text-gray-400">Redirecting to your feed...</p>
           </div>
           <script
@@ -83,6 +83,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
                 '  const stored = JSON.parse(localStorage.getItem("degenfeed_identities") || "[]");' +
                 '  stored.push({ protocol: "mastodon", instance: "https://social.degenfeed.xyz", token: token, createdAt: Date.now() });' +
                 '  localStorage.setItem("degenfeed_identities", JSON.stringify(stored));' +
+                '  localStorage.setItem("degenfeed_auth_updated", Date.now().toString());' +
                 '} catch(e) { console.error("Token storage failed", e); }' +
                 'window.location.href = "/home";'
             }}
