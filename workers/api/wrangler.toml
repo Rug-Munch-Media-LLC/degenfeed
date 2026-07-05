@@ -1,16 +1,29 @@
 name = "degenfeed-api"
 main = "src/index.ts"
-compatibility_date = "2024-05-01"
+compatibility_date = "2026-07-01"
+compatibility_flags = ["nodejs_compat"]
 
-# KV namespaces for caching
-# Use `wrangler kv:namespace create degenfeed-cache` then add the id here
-# [[kv_namespaces]]
-# binding = "CACHE"
-# id = ""
+# Routes — API endpoints
+routes = [
+  { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
+]
 
-# Environment variables (set via wrangler secret or dashboard)
-# [vars]
-# RELAY_URLS = "wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net"
-# FARCASTER_HUB_URL = "https://hub.farcaster.standardcrypto.vc:2281"
-# LENS_API_URL = "https://api-v2.lens.dev/graphql"
-# BSKY_PUBLIC_URL = "https://public.api.bsky.app"
+# Environment variables
+[vars]
+GTS_CLIENT_ID = ""
+GTS_CLIENT_SECRET = ""
+GTS_INSTANCE_URL = "https://social.degenfeed.xyz"
+GTS_API_BASE = "http://127.0.0.1:8082"
+GTS_REDIRECT_URI = "https://degenfeed.xyz/auth/callback"
+RELAY_URLS = "wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net"
+FARCASTER_HUB_URL = "https://hub.farcaster.standardcrypto.vc:2281"
+LENS_API_URL = "https://api.lens.xyz/graphql"
+BSKY_PUBLIC_URL = "https://public.api.bsky.app"
+THREADS_PDS_URL = "https://public.threads.net"
+RATE_WINDOW_MS = "5000"
+RATE_MAX_REQ = "20"
+
+# KV namespace for caching (optional)
+# kv_namespaces = [
+#   { binding = "CACHE", id = "" }
+# ]

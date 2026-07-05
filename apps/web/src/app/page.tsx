@@ -17,7 +17,7 @@ export default function HomePage() {
           of <span className="text-degen-500">web3</span>
         </h1>
         <p className="mx-auto mb-8 max-w-xl text-lg text-gray-400">
-          Sign in once. Read every network. Write everywhere.
+          No account? Just browse. One key? Like & reply. Multiple keys? Cross-post all networks.
         </p>
         <div className="mb-12 flex flex-wrap items-center justify-center gap-4">
           <span className="rounded-full bg-gray-800 px-4 py-1.5 text-sm text-gray-400">Nostr</span>

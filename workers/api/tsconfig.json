@@ -4,11 +4,59 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": ["@cloudflare/workers-types"],
+    "types": [
+      "@cloudflare/workers-types"
+    ],
     "noEmit": true,
     "isolatedModules": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "paths": {
+      "@degenfeed/types": [
+        "../../packages/types/src"
+      ],
+      "@degenfeed/feed-core": [
+        "../../packages/feed-core/src"
+      ],
+      "@degenfeed/ranking": [
+        "../../packages/ranking/src"
+      ],
+      "@degenfeed/nostr-sdk": [
+        "../../packages/nostr-sdk/src"
+      ],
+      "@degenfeed/bluesky-sdk": [
+        "../../packages/bluesky-sdk/src"
+      ],
+      "@degenfeed/farcaster-sdk": [
+        "../../packages/farcaster-sdk/src"
+      ],
+      "@degenfeed/lens-sdk": [
+        "../../packages/lens-sdk/src"
+      ],
+      "@degenfeed/threads-sdk": [
+        "../../packages/threads-sdk/src"
+      ],
+      "@degenfeed/mastodon-sdk": [
+        "../../packages/mastodon-sdk/src"
+      ],
+      "@degenfeed/rss-sdk": [
+        "../../packages/rss-sdk/src"
+      ],
+      "@degenfeed/identity": [
+        "../../packages/identity/src"
+      ],
+      "@degenfeed/auth": [
+        "../../packages/auth/src"
+      ],
+      "@degenfeed/storage": [
+        "../../packages/storage/src"
+      ],
+      "@degenfeed/ui": [
+        "../../packages/ui/src"
+      ]
+    }
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

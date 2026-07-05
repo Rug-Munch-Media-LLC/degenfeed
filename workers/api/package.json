@@ -18,7 +18,10 @@
     "@degenfeed/farcaster-sdk": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/bluesky-sdk": "workspace:*",
-    "@degenfeed/identity": "workspace:*"
+    "@degenfeed/identity": "workspace:*",
+    "@degenfeed/threads-sdk": "workspace:*",
+    "@degenfeed/mastodon-sdk": "workspace:*",
+    "@degenfeed/rss-sdk": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",

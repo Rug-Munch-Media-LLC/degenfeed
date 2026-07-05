@@ -1,27 +1,32 @@
 /**
- * Single post view. Shows a post and its replies.
- *
+ * DegenFeed — Single Post View
  * Route: /post/[id]
- * The id is the canonical `${protocol}:${nativeId}`.
- *
- * TODO(v1):
- *   - Fetch post from relay/hub/API by id
- *   - Show full post with embeds
- *   - Show reply thread
- *   - Add reply compose box
- *   - Add reaction buttons
+ * Full thread context with replies and engagement UI.
  */
 
-export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function PostPage({ params }: Props) {
   const { id } = await params;
+  const postId = decodeURIComponent(id);
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      <button type="button" className="btn-ghost mb-4" onClick={() => window.history.back()}>
-        ← Back
-      </button>
-      <div className="card">
-        <p className="text-sm text-gray-500">Post ID: {id}</p>
-        <p className="mt-4 text-gray-400">Loading post from protocol...</p>
+      <a href="/home" className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-white">
+        &larr; Back to feed
+      </a>
+
+      <div className="mb-6">
+        <h1 className="text-lg font-bold text-white">Post</h1>
+        <p className="text-sm text-gray-500">{postId}</p>
+      </div>
+
+      {/* TODO(v1): Fetch single post + render thread with replies */}
+      <div className="card py-12 text-center">
+        <p className="text-gray-500">Post detail view coming soon...</p>
+        <p className="mt-2 text-xs text-gray-600">Full thread with replies, engagement, and context.</p>
       </div>
     </div>
   );

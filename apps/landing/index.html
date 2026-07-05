@@ -6,15 +6,9 @@
     <meta name="theme-color" content="#000000" />
     <meta name="color-scheme" content="dark" />
     <title>DegenFeed — The social feed of web3</title>
-    <meta
-      name="description"
-      content="Sign in once. Read every network. Write everywhere. DegenFeed aggregates Nostr, Farcaster, Lens, and Bluesky into one window."
-    />
+    <meta name="description" content="Browse Nostr, Farcaster, Lens, Bluesky, Threads, Mastodon, Reddit, and RSS from one window. Zero sign-ups required. Sign in with one key to like and reply. Compose once, cross-post everywhere." />
     <meta property="og:title" content="DegenFeed — The social feed of web3" />
-    <meta
-      property="og:description"
-      content="One composer. Four protocols. Zero switching apps."
-    />
+    <meta property="og:description" content="Browse 7 protocols + RSS from one window. Zero sign-ups. One composer, all networks." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://degenfeed.xyz" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -32,63 +26,71 @@
       <nav class="nav" aria-label="Primary">
         <a href="#how">How it works</a>
         <a href="#protocols">Protocols</a>
-        <a href="#launch">Get notified</a>
-        <a href="/docs" class="nav-docs">Docs</a>
+        <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">Mastodon</a>
+        <a href="https://github.com/RugMunchMedia" target="_blank" rel="noopener">Source</a>
+        <a href="/home" class="nav-cta">Launch app →</a>
       </nav>
     </header>
 
     <main id="main">
+      <!-- Hero -->
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-grid" aria-hidden="true"></div>
         <div class="hero-inner">
-          <p class="hero-eyebrow">
-            <span class="dot" aria-hidden="true"></span>
-            Building in public · Day 1
-          </p>
+          <div class="hero-badges">
+            <span class="badge badge-green">✦ v0.1 — Now live</span>
+            <span class="badge badge-gray">7 protocols + RSS</span>
+            <span class="badge badge-blue">Self-hosted · MIT</span>
+          </div>
+
           <h1 id="hero-title" class="hero-title">
-            The social feed of <span class="accent">web3</span>.
+            One window. <span class="accent">Every</span> network.
           </h1>
           <p class="hero-pitch">
-            Sign in once. Read every network. <strong>Write everywhere.</strong>
-          </p>
-          <p class="hero-sub">
-            DegenFeed is a single window onto the open social graph —
-            Nostr, Farcaster, Lens, and Bluesky — with one composer that
-            publishes to all of them at once. No algorithm jail. No ads.
-            No tokens-as-engagement.
+            Browse Nostr, Farcaster, Lens, Bluesky, Threads, <strong>Mastodon</strong>, Reddit, and RSS<br />
+            from a single interface. <strong class="accent">Zero accounts required</strong> to read everything.
           </p>
 
           <div class="hero-cta">
-            <form id="notify-form" class="notify-form" novalidate>
-              <label for="notify-email" class="sr-only">Email address</label>
-              <input
-                id="notify-email"
-                name="email"
-                type="email"
-                inputmode="email"
-                autocomplete="email"
-                required
-                placeholder="[email protected]"
-                aria-describedby="notify-help"
-              />
-              <button type="submit" class="btn btn-primary">
-                Notify me at launch
-                <span aria-hidden="true">→</span>
-              </button>
-            </form>
-            <p id="notify-help" class="notify-help" role="status" aria-live="polite"></p>
+            <a href="/home" class="btn btn-primary btn-large">Open the feed →</a>
+            <a href="#how" class="btn btn-secondary">How it works</a>
           </div>
 
-          <div class="hero-protocols" id="protocols">
-            <span class="hp-label">Posting to:</span>
-            <span class="chip chip-nostr" title="Nostr"><span class="chip-dot"></span>Nostr</span>
-            <span class="chip chip-farcaster" title="Farcaster"><span class="chip-dot"></span>Farcaster</span>
-            <span class="chip chip-lens" title="Lens"><span class="chip-dot"></span>Lens</span>
-            <span class="chip chip-bluesky" title="Bluesky"><span class="chip-dot"></span>Bluesky</span>
+          <!-- Protocol runways -->
+          <div class="protocol-strip" id="protocols">
+            <div class="ps-item" style="--pcolor: #8e30eb"><span class="ps-dot"></span>Nostr</div>
+            <div class="ps-item" style="--pcolor: #8a63d2"><span class="ps-dot"></span>Farcaster</div>
+            <div class="ps-item" style="--pcolor: #abfe2c"><span class="ps-dot"></span>Lens</div>
+            <div class="ps-item" style="--pcolor: #1185fe"><span class="ps-dot"></span>Bluesky</div>
+            <div class="ps-item" style="--pcolor: #888"><span class="ps-dot"></span>Threads</div>
+            <div class="ps-item" style="--pcolor: #6364ff"><span class="ps-dot"></span>Mastodon</div>
+            <div class="ps-item" style="--pcolor: #ff4500"><span class="ps-dot"></span>Reddit</div>
+            <div class="ps-item" style="--pcolor: #ffa500"><span class="ps-dot"></span>RSS</div>
+          </div>
+
+          <!-- Stats row -->
+          <div class="stats-row">
+            <div class="stat">
+              <span class="stat-value">7</span>
+              <span class="stat-label">Protocols</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">150+</span>
+              <span class="stat-label">RSS sources</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">10M+</span>
+              <span class="stat-label">Reachable users</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">∞</span>
+              <span class="stat-label">Free reads</span>
+            </div>
           </div>
         </div>
       </section>
 
+      <!-- How it works -->
       <section class="how" id="how" aria-labelledby="how-title">
         <h2 id="how-title" class="section-title">
           <span class="bracket" aria-hidden="true">[</span>
@@ -98,103 +100,160 @@
         <div class="how-grid">
           <article class="card">
             <div class="card-num" aria-hidden="true">01</div>
-            <h3>Sign in with any web3 key</h3>
-            <p>
-              Nostr <code>nsec</code>, Farcaster custody, Lens profile, or
-              Bluesky handle. We never hold your key — it stays encrypted in your
-              browser, signed in by you, used only for the actions you take.
-            </p>
+            <h3>Open the app. See everything.</h3>
+            <p>No sign-up, no wallet, no key. All 7 protocols and RSS feeds load immediately. <strong>Zero friction.</strong></p>
           </article>
           <article class="card">
             <div class="card-num" aria-hidden="true">02</div>
-            <h3>Read every network, ranked</h3>
-            <p>
-              One timeline that aggregates the most interesting posts from
-              across protocols. Transparent ranking — every score component
-              is documented and overridable. No opaque algorithm deciding
-              what you see.
-            </p>
+            <h3>Connect your identity.</h3>
+            <p>Nostr key, Farcaster signer, Lens wallet, Bluesky password, Mastodon token — whatever you have. Sign in to like, reply, repost natively on that network. Your key <strong>never leaves your browser.</strong></p>
           </article>
           <article class="card">
             <div class="card-num" aria-hidden="true">03</div>
-            <h3>Compose once. Publish everywhere.</h3>
-            <p>
-              The headline feature. Type a post, toggle which protocols to
-              cross-post to, hit send. We sign natively with each protocol's
-              key and broadcast in parallel. Failures retry in the background.
-            </p>
+            <h3>Cross-post everywhere.</h3>
+            <p>Link multiple accounts and compose once. DegenFeed publishes the same post to Nostr, Farcaster, Lens, Bluesky, Threads, and Mastodon in parallel. Partial success? Failed networks retry in the background.</p>
           </article>
           <article class="card">
             <div class="card-num" aria-hidden="true">04</div>
-            <h3>Engage natively, not proxied</h3>
-            <p>
-              Liking a Farcaster cast signs a Farcaster reaction. Replying to
-              a Nostr note publishes a Nostr reply. Every action uses the
-              source protocol's primitive — we never proxy, never store.
-            </p>
+            <h3>Ranked, transparent, yours.</h3>
+            <p>Every post is scored with a public algorithm — recency, engagement, source quality, niche relevance. No black box. You can override any weight.</p>
           </article>
         </div>
       </section>
 
+      <!-- What we are -->
+      <section class="what" aria-labelledby="what-title">
+        <h2 id="what-title" class="section-title">
+          <span class="bracket" aria-hidden="true">[</span>
+          What we are
+          <span class="bracket" aria-hidden="true">]</span>
+        </h2>
+        <div class="what-grid">
+          <div class="what-card">
+            <div class="what-icon">⊞</div>
+            <h3>A client, not a network</h3>
+            <p>We don't own your data. We don't host your posts. DegenFeed is a window onto the existing open social graph — we read from public APIs and sign actions with your keys.</p>
+          </div>
+          <div class="what-card">
+            <div class="what-icon">🐘</div>
+            <h3>Mastodon-compatible server</h3>
+            <p>We run a <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">GotoSocial instance</a> at <code>social.degenfeed.xyz</code>. Get a <code>@you@degenfeed.xyz</code> handle in 30 seconds. Your posts federate with the wider fediverse automatically.</p>
+          </div>
+          <div class="what-card">
+            <div class="what-icon">◆</div>
+            <h3>Open source & free</h3>
+            <p>MIT license. Self-hostable. Public API. No tokens. No ads. Operating cost at scale is dinner money — <strong>we can run this forever without charging.</strong></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Protocol details -->
+      <section class="protocol-details" aria-labelledby="pd-title">
+        <h2 id="pd-title" class="section-title">
+          <span class="bracket" aria-hidden="true">[</span>
+          7 protocols, 1 feed
+          <span class="bracket" aria-hidden="true">]</span>
+        </h2>
+        <div class="pd-grid">
+          <article class="pd-card" style="--pcolor:#8e30eb">
+            <div class="pd-icon">☰</div>
+            <h3>Nostr</h3>
+            <p class="pd-desc">Decentralized relay-based notes. Keys, not accounts.</p>
+            <span class="pd-stat">500K+ pubkeys</span>
+          </article>
+          <article class="pd-card" style="--pcolor:#8a63d2">
+            <div class="pd-icon">◈</div>
+            <h3>Farcaster</h3>
+            <p class="pd-desc">Sufficiently decentralized social with hubs.</p>
+            <span class="pd-stat">700K+ FIDs</span>
+          </article>
+          <article class="pd-card" style="--pcolor:#abfe2c">
+            <div class="pd-icon">◎</div>
+            <h3>Lens</h3>
+            <p class="pd-desc">User-owned social graph on Polygon.</p>
+            <span class="pd-stat">100K+ profiles</span>
+          </article>
+          <article class="pd-card" style="--pcolor:#1185fe">
+            <div class="pd-icon">☁</div>
+            <h3>Bluesky</h3>
+            <p class="pd-desc">AT Protocol social. Public AppView API.</p>
+            <span class="pd-stat">5M+ users</span>
+          </article>
+          <article class="pd-card" style="--pcolor:#888">
+            <div class="pd-icon">+</div>
+            <h3>Threads</h3>
+            <p class="pd-desc">Instagram's AT Protocol network. Free reads.</p>
+            <span class="pd-stat">200M+ reachable</span>
+          </article>
+          <article class="pd-card" style="--pcolor:#6364ff">
+            <div class="pd-icon">M</div>
+            <h3>Mastodon</h3>
+            <p class="pd-desc">Self-hosted GotoSocial instance. Federated sync.</p>
+            <span class="pd-stat">Fedi-ready</span>
+          </article>
+          <article class="pd-card" style="--pcolor:#ff4500">
+            <div class="pd-icon">R</div>
+            <h3>Reddit</h3>
+            <p class="pd-desc">Free RSS feeds. No API key required.</p>
+            <span class="pd-stat">1000+ subs</span>
+          </article>
+          <article class="pd-card" style="--pcolor:#ffa500">
+            <div class="pd-icon">A</div>
+            <h3>RSS + Articles</h3>
+            <p class="pd-desc">Mirror, Substack, Medium, Paragraph, and any feed URL.</p>
+            <span class="pd-stat">150+ sources</span>
+          </article>
+        </div>
+      </section>
+
+      <!-- Architecture stack -->
+      <section class="stack" aria-labelledby="stack-title">
+        <h2 id="stack-title" class="section-title">
+          <span class="bracket" aria-hidden="true">[</span>
+          Built with
+          <span class="bracket" aria-hidden="true">]</span>
+        </h2>
+        <div class="stack-grid">
+          <span class="stack-item">TypeScript</span>
+          <span class="stack-item">Next.js 14</span>
+          <span class="stack-item">Cloudflare Workers</span>
+          <span class="stack-item">Cloudflare Pages</span>
+          <span class="stack-item">GotoSocial</span>
+          <span class="stack-item">SQLite</span>
+          <span class="stack-item">Tailwind</span>
+          <span class="stack-item">pnpm monorepo</span>
+          <span class="stack-item">Fastify</span>
+          <span class="stack-item">IndexedDB</span>
+          <span class="stack-item">16 SDK packages</span>
+          <span class="stack-item">71 test suites</span>
+        </div>
+      </section>
+
+      <!-- Manifesto -->
       <section class="manifesto" aria-labelledby="manifesto-title">
         <h2 id="manifesto-title" class="section-title">
           <span class="bracket" aria-hidden="true">[</span>
-          What we are not
+          Why this exists
           <span class="bracket" aria-hidden="true">]</span>
         </h2>
-        <ul class="not-list">
-          <li><span class="x" aria-hidden="true">✕</span> Not a new social graph.</li>
-          <li><span class="x" aria-hidden="true">✕</span> Not a fediverse server.</li>
-          <li><span class="x" aria-hidden="true">✕</span> Not a Mastodon fork.</li>
-          <li><span class="x" aria-hidden="true">✕</span> Not a token launch.</li>
-          <li><span class="x" aria-hidden="true">✕</span> Not a moderation regime that decides who can speak.</li>
-        </ul>
-        <p class="manifesto-line">
-          We are a <strong>client</strong>. We read what already exists and let you
-          write to where you already have a voice. The graph belongs to the
-          protocols. The window belongs to us.
-        </p>
+        <div class="manifesto-content">
+          <p>The open social graph is fractured across a dozen protocols, each with its own app, its own feed, its own set of accounts to manage.</p>
+          <p><strong>DegenFeed is the window that sees them all.</strong></p>
+          <p>One UI. One composer. One ranked feed. 7 protocols. 150+ RSS sources. Zero accounts required to read. Sign in with what you already have to write.</p>
+          <p class="manifesto-tagline">The graph belongs to the protocols. The window belongs to you.</p>
+        </div>
       </section>
 
-      <section class="open" aria-labelledby="open-title">
-        <h2 id="open-title" class="section-title">
-          <span class="bracket" aria-hidden="true">[</span>
-          Open source. Free API. No paywalls.
-          <span class="bracket" aria-hidden="true">]</span>
-        </h2>
-        <p>
-          The whole stack ships under MIT. The public API is free for any
-          developer to build on. Operating cost at 100k MAU is roughly the
-          price of dinner. We can run this for ten years without charging
-          anyone — and we will.
-        </p>
-        <p>
-          Self-host if you want. Fork it. Build your own client on top of
-          the same unified types. That's the whole point.
-        </p>
-      </section>
-
+      <!-- Final CTA -->
       <section class="cta-final" id="launch" aria-labelledby="cta-title">
-        <h2 id="cta-title" class="cta-title">Launching soon.</h2>
-        <p>Drop your email. We'll send one message at launch. No tracking, no list, no spam.</p>
-        <form id="notify-form-2" class="notify-form notify-form-large" novalidate>
-          <label for="notify-email-2" class="sr-only">Email address</label>
-          <input
-            id="notify-email-2"
-            name="email"
-            type="email"
-            inputmode="email"
-            autocomplete="email"
-            required
-            placeholder="[email protected]"
-            aria-describedby="notify-help-2"
-          />
-          <button type="submit" class="btn btn-primary">
-            Notify me at launch
-            <span aria-hidden="true">→</span>
-          </button>
-        </form>
-        <p id="notify-help-2" class="notify-help" role="status" aria-live="polite"></p>
+        <div class="cta-card">
+          <h2 id="cta-title" class="cta-title">Ready to use it?</h2>
+          <p class="cta-sub">The feed is live. No waitlist. No tokens. No sign-up required.</p>
+          <div class="cta-buttons">
+            <a href="/home" class="btn btn-primary btn-large">Open feed →</a>
+            <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener" class="btn btn-secondary">Create @degenfeed.xyz account</a>
+          </div>
+        </div>
       </section>
     </main>
 
@@ -205,18 +264,15 @@
           <span>DegenFeed</span>
         </div>
         <p class="footer-tag">The social feed of web3.</p>
-        <p class="footer-meta">
-          Built by <strong>Rug Munch Media LLC</strong>
-          · Open source under MIT · Hosted on Cloudflare Pages
-        </p>
+        <p class="footer-meta">Built by <strong>Rug Munch Media LLC</strong> · Open source (MIT) · Hosted on Cloudflare</p>
         <nav class="footer-links" aria-label="Footer">
-          <a href="/docs">Docs</a>
+          <a href="https://github.com/RugMunchMedia" target="_blank" rel="noopener">GitHub</a>
           <span aria-hidden="true">·</span>
-          <a href="/source">Source</a>
+          <a href="/docs">Docs</a>
           <span aria-hidden="true">·</span>
           <a href="/status">Status</a>
           <span aria-hidden="true">·</span>
-          <a href="/privacy">Privacy</a>
+          <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">@cryptorugmunch@degenfeed.xyz</a>
         </nav>
       </div>
     </footer>

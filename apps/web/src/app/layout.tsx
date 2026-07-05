@@ -1,13 +1,16 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { ErrorTracker } from '../components/ErrorTracker';
 
 export const metadata: Metadata = {
+  manifest: '/manifest.json',
   title: 'DegenFeed — The social feed of web3',
   description:
-    'Sign in once. Read every network. Write everywhere. DegenFeed aggregates Nostr, Farcaster, Lens, and Bluesky into one window.',
+    'See every network. Zero sign-ups. DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Threads, Reddit, and RSS into one window.',
   openGraph: {
     title: 'DegenFeed — The social feed of web3',
-    description: 'One composer. Four protocols. Zero switching apps.',
+    description:
+      'See every network. Zero sign-ups. Nostr, Farcaster, Lens, Bluesky, Threads, Reddit, RSS in one window.',
     url: 'https://degenfeed.xyz',
     siteName: 'DegenFeed',
     type: 'website',
@@ -15,7 +18,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'DegenFeed — The social feed of web3',
-    description: 'One composer. Four protocols. Zero switching apps.',
+    description:
+      'See every network. Zero sign-ups. Nostr, Farcaster, Lens, Bluesky, Threads, Reddit, RSS in one window.',
   },
 };
 
@@ -31,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a className="skip-link" href="#main">
           Skip to content
         </a>
-        {children}
+        <ErrorTracker />{children}
       </body>
     </html>
   );

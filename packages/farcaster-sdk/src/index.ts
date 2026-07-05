@@ -33,7 +33,12 @@ export type { Protocol, UnifiedIdentity, UnifiedPost };
 
 // ─── Placeholder hub URL ────────────────────────────────────────────────
 
-export const DEFAULT_HUB_URL = 'https://hub.farcaster.standardcrypto.vc:2281';
+export const DEFAULT_HUB_URL = "https://hub.farcaster.standardcrypto.vc:2281";
+export const FALLBACK_HUB_URLS = [
+  DEFAULT_HUB_URL,
+  "https://hub-grpc.pinata.cloud",
+  "https://hoyt.farcaster.standardcrypto.vc:2281",
+];
 
 // ─── Farcaster-specific types ──────────────────────────────────────────
 

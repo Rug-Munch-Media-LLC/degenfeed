@@ -1,270 +1,175 @@
 /**
- * DegenFeed API Worker — Cloudflare Worker
+ * @degenfeed/api-worker — Main router
  *
- * Feed proxy that aggregates from Nostr relays, Farcaster Hubs,
- * Lens API, and Bluesky PDS, normalizes to UnifiedPost, and
- * returns ranked feeds.
- *
- * ## Endpoints
- *
- *   GET /api/feed/home?protocols=nostr,farcaster&limit=25
- *     Home feed: recent posts from followed users across protocols.
- *
- *   GET /api/feed/trending?niches=crypto,ai&limit=25
- *     Trending feed: posts ranked by engagement across all protocols.
- *
- *   GET /api/identity/resolve?handle=jack@nostr.com
- *     Resolve a handle to its canonical identity.
- *
- *   GET /api/relays/health
- *     Health check for configured relays and hubs.
- *     KV caching (TODO): worker.degenfeed.cache
- *
- * ## Environment
- *
- *   KV_NAMESPACE (optional): CACHE for cross-region caching
- *   RELAY_URLS: comma-separated Nostr relay URLs
- *   FARCASTER_HUB_URL: Farcaster Hub URL
- *   LENS_API_URL: Lens GraphQL endpoint
- *   BSKY_PUBLIC_URL: Bluesky public API endpoint
+ * Dispatches requests to route handler modules.
+ * Shared utilities (Env, rateLimit, jsonResponse, GTS config) are
+ * re-exported for route module use.
  */
 
-import { type NostrFilter, RelayPool } from '@degenfeed/nostr-sdk';
-import { type RankingContext, rank } from '@degenfeed/ranking';
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { RelayPool } from '@degenfeed/nostr-sdk';
+import { handleRelaysHealth } from './routes/health';
+import { handleHomeFeed, handleTrendingFeed } from './routes/feed';
+import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
+import { handleRmiNewsFeed } from './routes/news';
+import { handleRssFeed } from './routes/rss';
+import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
+import { handlePublish, handleEngage } from './routes/publish';
+import { handleResolveIdentity } from './routes/identity';
+import type { Protocol } from '@degenfeed/types';
 
-interface Env {
+// ─── Environment variables ───────────────────────────────────────────
+
+export interface Env {
   CACHE?: KVNamespace;
+  GTS_CLIENT_ID?: string;
+  GTS_CLIENT_SECRET?: string;
+  GTS_INSTANCE_URL?: string;
+  GTS_API_BASE?: string;
+  GTS_REDIRECT_URI?: string;
   RELAY_URLS?: string;
   FARCASTER_HUB_URL?: string;
   LENS_API_URL?: string;
   BSKY_PUBLIC_URL?: string;
+  THREADS_PDS_URL?: string;
+  RATE_WINDOW_MS?: string;
+  RATE_MAX_REQ?: string;
 }
 
-const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
+// ─── Shared constants ────────────────────────────────────────────────
 
-const CORS_HEADERS = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET, POST, OPTIONS',
-  'access-control-allow-headers': 'content-type',
+export const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net', 'wss://relay.nostr.band', 'wss://nostr.wine'];
+export const FARCASTER_HUBS = ['https://hub.farcaster.standardcrypto.vc:2281', 'https://hub-grpc.pinata.cloud'];
+export const LENS_APIS = ['https://api.lens.xyz/graphql', 'https://api-v2.lens.dev/graphql'];
+export const BSKY_PUBLIC = 'https://public.api.bsky.app';
+export const THREADS_PUBLIC = 'https://public.threads.net';
+
+// ─── Rate limiting ───────────────────────────────────────────────────
+
+const requestLog = new Map<string, { count: number; resetAt: number }>();
+const DEFAULT_RATE_WINDOW = 5000;
+const DEFAULT_RATE_MAX = 20;
+
+export function rateLimit(ip: string, maxReq: number = DEFAULT_RATE_MAX, windowMs: number = DEFAULT_RATE_WINDOW): { allowed: boolean; retryAfter: number } {
+  const now = Date.now();
+  const entry = requestLog.get(ip);
+  if (!entry || now > entry.resetAt) {
+    requestLog.set(ip, { count: 1, resetAt: now + windowMs });
+    return { allowed: true, retryAfter: 0 };
+  }
+  entry.count++;
+  if (entry.count > maxReq) {
+    return { allowed: false, retryAfter: entry.resetAt - now };
+  }
+  return { allowed: true, retryAfter: 0 };
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of requestLog) {
+    if (now > entry.resetAt) requestLog.delete(ip);
+  }
+}, 60000);
+
+// ─── GotoSocial config ───────────────────────────────────────────────
+
+export const GTS_AUTH_CONFIG = {
+  clientId: '',  // Must be set via GTS_CLIENT_ID env var
+  clientSecret: '',  // Must be set via GTS_CLIENT_SECRET env var
+  instanceUrl: 'https://social.degenfeed.xyz',
+  apiBase: 'http://127.0.0.1:8082',
+  redirectUri: 'https://degenfeed.xyz/auth/callback',
+  scopes: 'read write follow push',
 };
+
+export function getGtsConfig(env: Env) {
+  return {
+    clientId: env.GTS_CLIENT_ID ?? GTS_AUTH_CONFIG.clientId,
+    clientSecret: env.GTS_CLIENT_SECRET ?? GTS_AUTH_CONFIG.clientSecret,
+    instanceUrl: env.GTS_INSTANCE_URL ?? GTS_AUTH_CONFIG.instanceUrl,
+    apiBase: env.GTS_API_BASE ?? GTS_AUTH_CONFIG.apiBase,
+    redirectUri: env.GTS_REDIRECT_URI ?? GTS_AUTH_CONFIG.redirectUri,
+    scopes: GTS_AUTH_CONFIG.scopes,
+  };
+}
+
+// ─── Response helper ─────────────────────────────────────────────────
+
+export function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'cache-control': 'public, max-age=30' },
+  });
+}
+
+// ─── Worker fetch handler ────────────────────────────────────────────
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // Handle CORS preflight
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: CORS_HEADERS });
-    }
-
     const url = new URL(request.url);
     const path = url.pathname;
 
+    // Rate limiting
+    const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
+    const maxReq = Number(env.RATE_MAX_REQ) || DEFAULT_RATE_MAX;
+    const windowMs = Number(env.RATE_WINDOW_MS) || DEFAULT_RATE_WINDOW;
+    const rl = rateLimit(ip, maxReq, windowMs);
+    if (!rl.allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
+        status: 429,
+        headers: { 'content-type': 'application/json', 'retry-after': String(Math.ceil(rl.retryAfter / 1000)) },
+      });
+    }
+
     try {
-      // Route
+      // Route dispatch — each handler is a separate module
+      if (path === '/api/health') {
+        return handleRelaysHealth(env);
+      }
       if (path === '/api/feed/home') {
         return handleHomeFeed(request, env);
       }
       if (path === '/api/feed/trending') {
         return handleTrendingFeed(request, env);
       }
+      if (path === '/api/feed/activitypub') {
+        return handleActivityPubFeed(request, env);
+      }
+      if (path === '/api/feed/threads') {
+        return handleThreadsFeed(request, env);
+      }
+      if (path === '/api/feed/news') {
+        return handleRmiNewsFeed(request, env);
+      }
+            if (path === '/api/bridge/rss-to-nostr') {
+        const { handleRssToNostrBridge } = await import('./routes/publish');
+        return handleRssToNostrBridge(request, env);
+      }
+      if (path === '/api/feed/rss') {
+        return handleRssFeed(request, env);
+      }
+      if (path === '/api/auth/gotosocial/authorize') {
+        return handleGtSAuthorize(request, env);
+      }
+      if (path === '/api/auth/gotosocial/callback') {
+        return handleGtSCallback(request, env);
+      }
+      if (path === '/api/auth/gotosocial/register') {
+        return handleGtSRegister(request, env);
+      }
+      if (path === '/api/publish') {
+        return handlePublish(request, env);
+      }
+      if (path === '/api/engage') {
+        return handleEngage(request, env);
+      }
       if (path === '/api/identity/resolve') {
         return handleResolveIdentity(request, env);
       }
-      if (path === '/api/relays/health') {
-        return handleRelaysHealth(env);
-      }
-      if (path === '/api/health') {
-        return jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.1.0' });
-      }
 
-      return new Response('Not Found', { status: 404, headers: CORS_HEADERS });
+      return jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.1.0' });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Internal error';
       return jsonResponse({ error: message }, 500);
     }
   },
 };
-
-// ─── Handlers ──────────────────────────────────────────────────────────
-
-async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
-  const params = new URL(request.url).searchParams;
-  const protocols = (params.get('protocols') ?? 'nostr,farcaster').split(',') as Protocol[];
-  const limit = Number(params.get('limit')) || 25;
-
-  const relayUrls = (env.RELAY_URLS ?? '').split(',').filter(Boolean);
-  const pool = new RelayPool(relayUrls.length > 0 ? relayUrls : DEFAULT_RELAYS);
-
-  // Fetch from Nostr
-  let nostrPosts: UnifiedPost[] = [];
-  if (protocols.includes('nostr')) {
-    const filter: NostrFilter = {
-      kinds: [1],
-      limit: limit * 2,
-    };
-    const events = await pool.list(filter, 3000);
-    // Convert events to UnifiedPost (simplified — no identity enrichment)
-    nostrPosts = events.map((ev) => ({
-      id: `nostr:${ev.id}`,
-      protocol: 'nostr' as Protocol,
-      author: {
-        id: `nostr:${ev.pubkey}`,
-        primary: { protocol: 'nostr', id: ev.pubkey },
-        handles: { nostr: ev.pubkey, farcaster: null, lens: null, bluesky: null },
-        displayName: ev.pubkey.slice(0, 12),
-        bio: '',
-        avatarUrl: '',
-        verified: [],
-        followerCount: 0,
-        followingCount: 0,
-        links: [],
-        keys: { nostrPubkey: ev.pubkey },
-      },
-      text: ev.content,
-      embeds: [],
-      createdAt: ev.created_at * 1000,
-      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      engagement: {
-        viewerLiked: false,
-        viewerReposted: false,
-        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      },
-      raw: ev,
-      niches: [],
-    }));
-  }
-
-  pool.disconnectAll();
-
-  // Rank
-  const ctx: RankingContext = {
-    viewer: null,
-    recentAuthors: new Map(),
-    sourceQuality: new Map(),
-    viewerNiches: new Set(),
-    followed: new Set(),
-    now: Date.now(),
-  };
-
-  const ranked = rank(nostrPosts, ctx).slice(0, limit);
-
-  return jsonResponse({ data: ranked, meta: { total: ranked.length, limit } });
-}
-
-async function handleTrendingFeed(request: Request, env: Env): Promise<Response> {
-  const params = new URL(request.url).searchParams;
-  const limit = Number(params.get('limit')) || 25;
-
-  const relayUrls = (env.RELAY_URLS ?? '').split(',').filter(Boolean);
-  const pool = new RelayPool(relayUrls.length > 0 ? relayUrls : DEFAULT_RELAYS);
-
-  // Fetch recent posts with engagement (kind 1 with lots of p-tags = replies)
-  const filter: NostrFilter = {
-    kinds: [1],
-    limit: limit * 5,
-  };
-  const events = await pool.list(filter, 4000);
-  pool.disconnectAll();
-
-  // Simplified trending: just return recent Nostr posts ranked by engagement
-  const posts: UnifiedPost[] = events.map((ev) => ({
-    id: `nostr:${ev.id}`,
-    protocol: 'nostr',
-    author: {
-      id: `nostr:${ev.pubkey}`,
-      primary: { protocol: 'nostr', id: ev.pubkey },
-      handles: { nostr: ev.pubkey, farcaster: null, lens: null, bluesky: null },
-      displayName: ev.pubkey.slice(0, 12),
-      bio: '',
-      avatarUrl: '',
-      verified: [],
-      followerCount: 0,
-      followingCount: 0,
-      links: [],
-      keys: { nostrPubkey: ev.pubkey },
-    },
-    text: ev.content,
-    embeds: [],
-    createdAt: ev.created_at * 1000,
-    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    engagement: {
-      viewerLiked: false,
-      viewerReposted: false,
-      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    },
-    raw: ev,
-    niches: [],
-  }));
-
-  const ctx: RankingContext = {
-    viewer: null,
-    recentAuthors: new Map(),
-    sourceQuality: new Map(),
-    viewerNiches: new Set(),
-    followed: new Set(),
-    now: Date.now(),
-  };
-
-  const ranked = rank(posts, ctx).slice(0, limit);
-
-  return jsonResponse({ data: ranked, meta: { total: ranked.length, limit } });
-}
-
-async function handleResolveIdentity(request: Request, _env: Env): Promise<Response> {
-  const handle = new URL(request.url).searchParams.get('handle');
-  if (!handle) {
-    return jsonResponse({ error: 'Missing handle parameter' }, 400);
-  }
-
-  // Dynamic import to avoid worker size issues
-  const { resolveHandle } = await import('@degenfeed/identity');
-  const result = await resolveHandle(handle);
-  if (!result) {
-    return jsonResponse({ error: 'Handle not found', handle }, 404);
-  }
-
-  return jsonResponse({ data: result });
-}
-
-async function handleRelaysHealth(env: Env): Promise<Response> {
-  const relayUrls = (env.RELAY_URLS ?? '').split(',').filter(Boolean);
-  const testRelays = relayUrls.length > 0 ? relayUrls : DEFAULT_RELAYS;
-
-  const results = await Promise.allSettled(
-    testRelays.map(async (url) => {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
-      try {
-        const ws = new WebSocket(url);
-        await new Promise<void>((resolve, reject) => {
-          ws.onopen = () => {
-            ws.close();
-            resolve();
-          };
-          ws.onerror = () => reject(new Error('Connection failed'));
-        });
-        return { url, status: 'ok' as const };
-      } finally {
-        clearTimeout(timeout);
-      }
-    }),
-  );
-
-  const relays = results.map((r) =>
-    r.status === 'fulfilled' ? r.value : { url: '', status: 'error' as const },
-  );
-
-  return jsonResponse({ data: { relays } });
-}
-
-// ─── Response helpers ──────────────────────────────────────────────────
-
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      ...CORS_HEADERS,
-      'content-type': 'application/json',
-    },
-  });
-}

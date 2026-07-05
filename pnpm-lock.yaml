@@ -90,6 +90,9 @@ importers:
 
   packages/auth:
     dependencies:
+      '@degenfeed/mastodon-sdk':
+        specifier: workspace:*
+        version: link:../mastodon-sdk
       '@degenfeed/nostr-sdk':
         specifier: workspace:*
         version: link:../nostr-sdk
@@ -202,6 +205,25 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.19.43)
 
+  packages/mastodon-sdk:
+    dependencies:
+      '@degenfeed/feed-core':
+        specifier: workspace:*
+        version: link:../feed-core
+      '@degenfeed/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^1.9.0
+        version: 1.9.4
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.43)
+
   packages/nostr-sdk:
     dependencies:
       '@degenfeed/feed-core':
@@ -249,6 +271,28 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.19.43)
 
+  packages/rss-sdk:
+    dependencies:
+      '@degenfeed/feed-core':
+        specifier: workspace:*
+        version: link:../feed-core
+      '@degenfeed/types':
+        specifier: workspace:*
+        version: link:../types
+      rss-parser:
+        specifier: ^3.13.0
+        version: 3.13.0
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^1.9.0
+        version: 1.9.4
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.43)
+
   packages/storage:
     dependencies:
       '@degenfeed/types':
@@ -268,11 +312,36 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.19.43)
 
+  packages/threads-sdk:
+    dependencies:
+      '@degenfeed/bluesky-sdk':
+        specifier: workspace:*
+        version: link:../bluesky-sdk
+      '@degenfeed/feed-core':
+        specifier: workspace:*
+        version: link:../feed-core
+      '@degenfeed/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^1.9.0
+        version: 1.9.4
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.43)
+
   packages/types:
     devDependencies:
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.43)
 
   packages/ui:
     dependencies:
@@ -298,6 +367,9 @@ importers:
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.43)
 
   workers/api:
     dependencies:
@@ -316,12 +388,21 @@ importers:
       '@degenfeed/lens-sdk':
         specifier: workspace:*
         version: link:../../packages/lens-sdk
+      '@degenfeed/mastodon-sdk':
+        specifier: workspace:*
+        version: link:../../packages/mastodon-sdk
       '@degenfeed/nostr-sdk':
         specifier: workspace:*
         version: link:../../packages/nostr-sdk
       '@degenfeed/ranking':
         specifier: workspace:*
         version: link:../../packages/ranking
+      '@degenfeed/rss-sdk':
+        specifier: workspace:*
+        version: link:../../packages/rss-sdk
+      '@degenfeed/threads-sdk':
+        specifier: workspace:*
+        version: link:../../packages/threads-sdk
       '@degenfeed/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -1462,6 +1543,9 @@ packages:
   electron-to-chromium@1.5.384:
     resolution: {integrity: sha512-g6KAKY1vkYsADvSPWvdJsuYT0ixdcu6lUtD9P/wJKGBEDlZVXh2AX42j1mPqqaQPDluWjara9ziQ7xqAeXCt5A==}
 
+  entities@2.2.0:
+    resolution: {integrity: sha512-p92if5Nz619I0w+akJrLZH0MX0Pb5DX39XOwQTtXSdQQOaYH03S1uIQp4mhOZtAXrxq4ViO67YTiLBo2638o9A==}
+
   es-errors@1.3.0:
     resolution: {integrity: sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==}
     engines: {node: '>= 0.4'}
@@ -1804,8 +1888,15 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
+  rss-parser@3.13.0:
+    resolution: {integrity: sha512-7jWUBV5yGN3rqMMj7CZufl/291QAhvrrGpDNE4k/02ZchL0npisiYYqULF71jCEKoIiHvK/Q2e6IkDwPziT7+w==}
+
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
+
+  sax@1.6.0:
+    resolution: {integrity: sha512-6R3J5M4AcbtLUdZmRv2SygeVaM7IhrLXu9BmnOGmmACak8fiUtOsYNWUS4uK7upbmHIBbLBeFeI//477BKLBzA==}
+    engines: {node: '>=11.0.0'}
 
   scheduler@0.27.0:
     resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
@@ -2043,6 +2134,14 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+
+  xml2js@0.5.0:
+    resolution: {integrity: sha512-drPFnkQJik/O+uPKpqSgr22mpuFHqKdbS835iAQrUC73L2F5WkboIRd63ai/2Yg6I1jzifPFKH2NTK+cfglkIA==}
+    engines: {node: '>=4.0.0'}
+
+  xmlbuilder@11.0.1:
+    resolution: {integrity: sha512-fDlsI/kFEx7gLvbecc0/ohLG50fugQp8ryHzMTuW9vSa1GJ0XYWKnhsUx7oie3G98+r56aTQIUB4kht42R3JvA==}
+    engines: {node: '>=4.0'}
 
   youch@3.3.4:
     resolution: {integrity: sha512-UeVBXie8cA35DS6+nBkls68xaBBXCye0CNznrhszZjTbRVnJKQuNsyLKBTTL4ln1o1rh2PKtv35twV7irj5SEg==}
@@ -2783,6 +2882,8 @@ snapshots:
 
   electron-to-chromium@1.5.384: {}
 
+  entities@2.2.0: {}
+
   es-errors@1.3.0: {}
 
   es-module-lexer@1.7.0: {}
@@ -3144,9 +3245,16 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.62.2
       fsevents: 2.3.3
 
+  rss-parser@3.13.0:
+    dependencies:
+      entities: 2.2.0
+      xml2js: 0.5.0
+
   run-parallel@1.2.0:
     dependencies:
       queue-microtask: 1.2.3
+
+  sax@1.6.0: {}
 
   scheduler@0.27.0: {}
 
@@ -3443,6 +3551,13 @@ snapshots:
       - utf-8-validate
 
   ws@8.18.0: {}
+
+  xml2js@0.5.0:
+    dependencies:
+      sax: 1.6.0
+      xmlbuilder: 11.0.1
+
+  xmlbuilder@11.0.1: {}
 
   youch@3.3.4:
     dependencies:

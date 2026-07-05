@@ -16,7 +16,8 @@
   "dependencies": {
     "@degenfeed/types": "workspace:*",
     "@degenfeed/storage": "workspace:*",
-    "@degenfeed/nostr-sdk": "workspace:*"
+    "@degenfeed/nostr-sdk": "workspace:*",
+    "@degenfeed/mastodon-sdk": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",

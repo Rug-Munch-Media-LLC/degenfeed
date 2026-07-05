@@ -183,6 +183,23 @@ async function resolveLensHandle(
   }
 }
 
+async function resolveThreadsHandle(
+  handle: string,
+  fetchFn: typeof fetch,
+): Promise<HandleResolution | null> {
+  try {
+    const url =
+      'https://public.threads.net/xrpc/com.atproto.identity.resolveHandle?handle=' +
+      encodeURIComponent(handle);
+    const res = await fetchFn(url);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { did: string };
+    return { protocol: 'threads', id: json.did, handle: 'threads/' + handle };
+  } catch {
+    return null;
+  }
+}
+
 async function resolveBlueskyHandle(
   handle: string,
   fetchFn: typeof fetch,
@@ -194,6 +211,37 @@ async function resolveBlueskyHandle(
     if (!res.ok) return null;
     const json = (await res.json()) as { did: string };
     return { protocol: 'bluesky', id: json.did, handle: `@${handle}` };
+  } catch {
+    return null;
+  }
+}
+
+// ─── GotoSocial handle resolution ──────────────────────────────────────
+
+/**
+ * Resolve a fediverse handle (user@instance.com) to its canonical ActivityPub ID.
+ * Fetches the WebFinger endpoint for the domain.
+ */
+export async function resolveFediverseHandle(
+  handle: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<HandleResolution | null> {
+  // Format: user@instance.com
+  const atIndex = handle.indexOf('@');
+  if (atIndex <= 0 || atIndex === handle.length - 1) return null;
+  const username = handle.slice(0, atIndex);
+  const domain = handle.slice(atIndex + 1);
+
+  try {
+    const webfingerUrl =
+      'https://' + domain + '/.well-known/webfinger?resource=acct:' + encodeURIComponent(handle);
+    const res = await fetchFn(webfingerUrl);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { links?: { rel: string; href: string; type?: string }[] };
+    if (!json.links) return null;
+    const selfLink = json.links.find((l) => l.rel === 'self');
+    if (!selfLink) return null;
+    return { protocol: 'mastodon', id: selfLink.href, handle };
   } catch {
     return null;
   }
@@ -224,7 +272,7 @@ export function mergeIdentities(identities: Partial<UnifiedIdentity>[]): Unified
     if (ident.id) merged.id = ident.id;
     if (ident.primary) merged.primary = ident.primary;
     if (ident.handles) {
-      for (const p of ['nostr', 'farcaster', 'lens', 'bluesky'] as Protocol[]) {
+      for (const p of ['nostr', 'farcaster', 'lens', 'bluesky', 'threads', 'rss'] as Protocol[]) {
         if (ident.handles[p]) merged.handles[p] = ident.handles[p];
       }
     }

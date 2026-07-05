@@ -4,7 +4,7 @@
  * normalizes to these shapes. UI components consume only these.
  */
 
-export type Protocol = 'nostr' | 'farcaster' | 'lens' | 'bluesky';
+export type Protocol = 'nostr' | 'farcaster' | 'lens' | 'bluesky' | 'threads' | 'rss' | 'mastodon';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */
@@ -12,7 +12,7 @@ export interface UnifiedIdentity {
   /** Primary protocol+id (user's chosen canonical) */
   primary: { protocol: Protocol; id: string };
   /** Handles per protocol (null if not linked) */
-  handles: Record<Protocol, string | null>;
+  handles: Partial<Record<Protocol, string | null>>;
   displayName: string;
   bio: string;
   avatarUrl: string;
@@ -29,6 +29,9 @@ export interface UnifiedIdentity {
     did?: string;
     evmAddress?: string;
     solanaAddress?: string;
+    threadsDid?: string;
+    /** RSS source URL (e.g. blog feed URL) */
+    rssUrl?: string;
   };
 }
 

@@ -29,7 +29,11 @@ import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
 export type { Protocol, UnifiedIdentity, UnifiedPost };
 
-export const LENS_API_URL = 'https://api.lens.xyz/graphql';
+export const LENS_API_URL = "https://api.lens.xyz/graphql";
+export const FALLBACK_LENS_URLS = [
+  LENS_API_URL,
+  "https://api-v2.lens.dev/graphql",
+];
 
 export interface LensPublication {
   id: string;
