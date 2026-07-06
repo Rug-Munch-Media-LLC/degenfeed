@@ -1,4 +1,9 @@
-import { deduplicatePosts, enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
+import {
+  deduplicatePosts,
+  enrichPostNiches,
+  isRelevantPost,
+  isSpamPost,
+} from '@degenfeed/feed-core';
 import {
   BlueskyProvider,
   FarcasterProvider,
@@ -6,24 +11,32 @@ import {
   LensProvider,
   MastodonProvider,
   NostrProvider,
-  RedditProvider,
+  RmiDataBusProvider,
   ThreadsProvider,
 } from '@degenfeed/feed-providers';
-import { type UserAlgorithmPreferences, rank } from '@degenfeed/ranking';
+import {
+  computeTrendingTopics,
+  rankDiverse,
+  type UserAlgorithmPreferences,
+} from '@degenfeed/ranking';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
 
 const DEFAULT_PROTOCOLS: Protocol[] = [
+  'rss',
   'nostr',
   'farcaster',
   'lens',
   'bluesky',
   'mastodon',
   'threads',
-  'rss',
 ];
 
 const DEFAULT_TIMEOUT_MS = 6000;
+
+function rmiUrl(env: Env): string {
+  return (env as Env & { RMI_BACKEND_URL?: string }).RMI_BACKEND_URL || 'http://127.0.0.1:8000';
+}
 
 function parseProtocols(raw: string | null): Protocol[] {
   if (!raw) return DEFAULT_PROTOCOLS;
@@ -49,7 +62,9 @@ function getProvider(protocol: Protocol, env: Env): FeedProvider {
     case 'threads':
       return new ThreadsProvider({ pdsUrl: env.THREADS_PDS_URL });
     case 'rss':
-      return new RedditProvider();
+      // Use RMI DataBus (institutional-grade news) as primary, fall back
+      // to the curated RssProvider for community / blog content.
+      return new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
     default:
       throw new Error(`Unknown protocol: ${protocol}`);
   }
@@ -83,45 +98,13 @@ function filterByCategory(posts: UnifiedPost[], category: string): UnifiedPost[]
   return posts.filter((p) => p.niches.map((n) => n.toLowerCase()).includes(target));
 }
 
-function extractTrendingTopics(posts: UnifiedPost[], now: number) {
-  const counts = new Map<string, { count: number; score: number }>();
-  const cutoff = now - 24 * 60 * 60 * 1000;
-  for (const post of posts) {
-    if (post.createdAt < cutoff) continue;
-    for (const niche of post.niches) {
-      const cur = counts.get(niche) ?? { count: 0, score: 0 };
-      cur.count++;
-      cur.score += 1;
-      counts.set(niche, cur);
-    }
-    const text = `${post.text} ${post.author.displayName}`;
-    const tickers = Array.from(text.matchAll(/\$([A-Z]{2,5})\b/g)).map((m) => m[1]);
-    for (const t of tickers) {
-      const cur = counts.get(`$${t}`) ?? { count: 0, score: 0 };
-      cur.count++;
-      cur.score += 2;
-      counts.set(`$${t}`, cur);
-    }
-    const hashtags = Array.from(text.matchAll(/#[a-zA-Z0-9_]+/g)).map((m) => m[0]);
-    for (const h of hashtags) {
-      const cur = counts.get(h) ?? { count: 0, score: 0 };
-      cur.count++;
-      cur.score += 1.5;
-      counts.set(h, cur);
-    }
-  }
-  return Array.from(counts.entries())
-    .sort((a, b) => b[1].score - a[1].score)
-    .slice(0, 12)
-    .map(([topic, v]) => ({ topic, count: v.count, score: v.score }));
-}
-
 export async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'));
   const limit = Math.min(Number(params.get('limit')) || 25, 100);
   const category = params.get('category')?.toLowerCase() ?? '';
   const prefs: UserAlgorithmPreferences | null = null;
+  const diverse = params.get('diverse') !== 'false';
 
   const allPosts: UnifiedPost[] = [];
   const errors: string[] = [];
@@ -158,9 +141,15 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   if (category) {
     deduped = filterByCategory(deduped, category);
   }
+  const relevant = deduped.filter(isRelevantPost);
   const ctx = buildRankingContext(Date.now(), prefs);
-  const ranked = rank(deduped, ctx).slice(0, Math.min(limit, 100));
-  const trending = extractTrendingTopics(deduped, Date.now());
+  // rankDiverse: greedy per-author cap ensures a balanced feed
+  // (otherwise one noisy author can dominate).
+  const ranked = (diverse ? rankDiverse(relevant, ctx, { maxPerAuthor: 2 }) : [...relevant]).slice(
+    0,
+    Math.min(limit, 100),
+  );
+  const trending = computeTrendingTopics(relevant, Date.now());
 
   if (ranked.length === 0 && errors.length > 0) {
     return jsonResponse(
@@ -173,7 +162,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
           errors,
           notices,
           fetchedAt: Date.now(),
-          note: 'All sources failed',
+          note: relevant.length === 0 ? 'No relevant posts found' : 'All sources failed',
         },
       },
       200,

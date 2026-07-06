@@ -2,9 +2,9 @@ import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
+  buildUrl,
   DEFAULT_TIMEOUT_MS,
   DEFAULT_USER_AGENT,
-  buildUrl,
   fetchJson,
   fetchWithFallbacks,
   withConcurrencyLimit,
@@ -102,6 +102,44 @@ async function fetchCastsByFid(
   return data.messages ?? [];
 }
 
+interface HubUserData {
+  type: 'USER_DATA_TYPE_USERNAME' | 'USER_DATA_TYPE_DISPLAY' | 'USER_DATA_TYPE_PFP';
+  value: string;
+}
+
+interface HubUserDataMessage {
+  data: {
+    fid: number;
+    userDataBody: HubUserData;
+  };
+  hash: string;
+}
+
+interface HubUserDataResponse {
+  messages?: HubUserDataMessage[];
+}
+
+async function fetchUserData(
+  baseUrl: string,
+  fid: number,
+): Promise<{ username?: string; displayName?: string; pfp?: string } | null> {
+  try {
+    const data = await fetchJson<HubUserDataResponse>(
+      buildUrl(baseUrl, '/v1/userDataByFid', {
+        fid: String(fid),
+        user_data_type: 'USER_DATA_TYPE_USERNAME',
+      }),
+      { headers: { 'user-agent': DEFAULT_USER_AGENT } },
+    );
+    const msg = data.messages?.[0];
+    const username = msg?.data.userDataBody?.value;
+    if (!username) return null;
+    return { username };
+  } catch {
+    return null;
+  }
+}
+
 async function fetchUserNameProof(
   baseUrl: string,
   name: string,
@@ -118,46 +156,6 @@ async function fetchUserNameProof(
     return null;
   }
 }
-
-const CURATED_STATIC_CASTS: UnifiedPost[] = [
-  {
-    id: 'farcaster:curated:offline',
-    protocol: 'farcaster',
-    author: {
-      id: 'farcaster:0',
-      primary: { protocol: 'farcaster', id: '0' },
-      handles: {
-        nostr: null,
-        farcaster: null,
-        lens: null,
-        bluesky: null,
-        threads: null,
-        rss: null,
-        mastodon: null,
-      },
-      displayName: 'DegenFeed',
-      bio: '',
-      avatarUrl: '',
-      verified: [],
-      followerCount: 0,
-      followingCount: 0,
-      links: [],
-      keys: {},
-    },
-    text: 'Farcaster hubs are currently unreachable. Here are some popular casts from our curated list instead.',
-    embeds: [],
-    createdAt: Date.now(),
-    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    engagement: {
-      viewerLiked: false,
-      viewerReposted: false,
-      viewerBookmarked: false,
-      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    },
-    raw: null,
-    niches: [],
-  },
-];
 
 export interface FarcasterProviderOptions {
   hubUrl?: string;
@@ -201,8 +199,8 @@ export class FarcasterProvider implements FeedProvider {
 
       if (messagesWithFid.length === 0) {
         return {
-          posts: CURATED_STATIC_CASTS,
-          notice: 'Farcaster hubs unreachable; showing curated notice',
+          posts: [],
+          notice: 'Farcaster hubs unreachable; no casts available',
         };
       }
 
@@ -211,8 +209,8 @@ export class FarcasterProvider implements FeedProvider {
       for (const { msg, fid } of messagesWithFid) {
         let name = fidToName.get(fid);
         if (!name) {
-          const proof = await fetchUserNameProof(this.primaryUrl, String(fid));
-          name = proof?.name ?? `fid:${fid}`;
+          const userData = await fetchUserData(this.primaryUrl, fid);
+          name = userData?.username ?? `fid:${fid}`;
           fidToName.set(fid, name);
         }
         const post = castToUnifiedPost(msg, fid);
@@ -224,7 +222,7 @@ export class FarcasterProvider implements FeedProvider {
       return { posts };
     } catch (err) {
       return {
-        posts: CURATED_STATIC_CASTS,
+        posts: [],
         notice: err instanceof Error ? err.message : 'Farcaster feed unavailable',
       };
     }

@@ -1,9 +1,9 @@
 import {
-  RelayPool,
   createTextNote,
   generateSecretKey,
   getEventHash,
   getPublicKey,
+  RelayPool,
   signEvent,
 } from '@degenfeed/nostr-sdk';
 import { type Env, jsonResponse } from '../index';

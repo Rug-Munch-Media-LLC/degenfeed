@@ -1,14 +1,14 @@
+import type { SourcePosts, UnifiedPost } from '@degenfeed/rss-sdk';
 import {
   DEFAULT_SUBREDDITS,
+  feedToUnifiedPosts,
   GenericRssSource,
   MediumSource,
   MirrorSource,
   ParagraphSource,
   RedditSource,
   SubstackSource,
-  feedToUnifiedPosts,
 } from '@degenfeed/rss-sdk';
-import type { SourcePosts, UnifiedPost } from '@degenfeed/rss-sdk';
 import { type Env, jsonResponse } from '../index';
 
 export async function handleRssFeed(request: Request, _env: Env): Promise<Response> {

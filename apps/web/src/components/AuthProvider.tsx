@@ -21,6 +21,7 @@ import {
   useState,
 } from 'react';
 import { useWeb3 } from '../components/Web3Provider';
+import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
 
 export interface AuthContextValue {
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { account: wagmiAddress, isConnected } = useWeb3();
   const { signInWithEthereum, signingIn: walletSigningIn } = useWalletSignIn();
+  const { signInWithSolana, signingIn: solanaSigningIn } = useSolanaSignIn();
 
   const refresh = useCallback(async () => {
     const all = await getAllIdentities();
@@ -172,7 +174,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         switch (protocol) {
           case 'solana': {
-            throw new Error('Solana wallet sign-in is not yet supported');
+            const session = await signInWithSolana();
+            if (session) {
+              setLinkGtsUrl(session.gtsAuthorizeUrl ?? null);
+              await refresh();
+              setShowSignIn(false);
+            }
+            return;
           }
           case 'nostr': {
             const { signInWithNostrNsec } = await import('@degenfeed/auth');
@@ -361,7 +369,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         onClose={() => setShowSignIn(false)}
         onSignIn={handleSignIn}
         walletAddress={walletAddress}
-        walletSigningIn={walletSigningIn}
+        walletSigningIn={walletSigningIn || solanaSigningIn}
       />
 
       <ComposeModal

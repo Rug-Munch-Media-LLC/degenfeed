@@ -2,9 +2,9 @@ import { buildUnifiedPost, enrichPostNiches, extractEmbeds } from '@degenfeed/fe
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
+  buildUrl,
   DEFAULT_TIMEOUT_MS,
   DEFAULT_USER_AGENT,
-  buildUrl,
   fetchJson,
   fetchWithFallbacks,
   withTimeout,
@@ -16,6 +16,19 @@ export const DEFAULT_RELAYS = [
   'wss://relay.primal.net',
   'wss://relay.nostr.band',
   'wss://nostr.wine',
+];
+
+export const CRYPTO_HASHTAGS = [
+  'bitcoin',
+  'ethereum',
+  'solana',
+  'crypto',
+  'cryptocurrency',
+  'blockchain',
+  'web3',
+  'defi',
+  'nft',
+  'altcoin',
 ];
 
 export const FALLBACK_HTTP_ENDPOINTS = [
@@ -127,7 +140,10 @@ function fetchFromWebSocket(
 
     ws.onopen = () => {
       try {
-        ws.send(JSON.stringify(['REQ', subId, { kinds: [1], limit: limit * 3 }]));
+        const filter: Record<string, unknown> = { kinds: [1], limit: limit * 3 };
+        const tags = CRYPTO_HASHTAGS.map((t) => `#${t}`);
+        if (tags.length > 0) filter['#t'] = tags.slice(0, 10);
+        ws.send(JSON.stringify(['REQ', subId, filter]));
       } catch {
         cleanup();
         resolve(events);
@@ -179,7 +195,12 @@ async function fetchFromRelays(
 
 async function fetchFromHttp(limit: number, _timeoutMs: number): Promise<NostrEvent[]> {
   return fetchWithFallbacks(FALLBACK_HTTP_ENDPOINTS, async (base) => {
-    const url = buildUrl(base, '', { limit: String(limit * 3) });
+    const params: Record<string, string> = { limit: String(limit * 3) };
+    if (base.includes('api.nostr.band')) {
+      params.kinds = '1';
+      params['#t'] = CRYPTO_HASHTAGS.slice(0, 5).join(',');
+    }
+    const url = buildUrl(base, '', params);
     const data = await fetchJson<{ events?: NostrEvent[] }>(url, {
       headers: { 'user-agent': DEFAULT_USER_AGENT },
     });

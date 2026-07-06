@@ -36,7 +36,7 @@
     "wagmi": "^3.6.21"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
+    "@biomejs/biome": "^1.9.4",
     "@cloudflare/next-on-pages": "^1.13.16",
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",

@@ -119,7 +119,7 @@ importers:
         version: 3.6.21(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.101.2(react@19.2.7))(@types/react@19.2.17)(react@19.2.7)(typescript@5.9.3)(viem@2.54.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.22.4))
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
+        specifier: ^1.9.4
         version: 1.9.4
       '@cloudflare/next-on-pages':
         specifier: ^1.13.16
@@ -165,8 +165,8 @@ importers:
         version: link:../types
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -184,8 +184,8 @@ importers:
         version: link:../types
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -203,8 +203,8 @@ importers:
         version: link:../types
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -219,8 +219,8 @@ importers:
         version: link:../types
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -238,8 +238,8 @@ importers:
         version: link:../types
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -257,8 +257,8 @@ importers:
         version: link:../types
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -276,8 +276,8 @@ importers:
         version: link:../types
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -295,8 +295,8 @@ importers:
         version: link:../types
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -323,8 +323,8 @@ importers:
         version: 1.2.6
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -342,8 +342,8 @@ importers:
         version: link:../types
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -364,8 +364,8 @@ importers:
         version: 3.13.0
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -383,8 +383,8 @@ importers:
         version: 8.0.3
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -405,8 +405,8 @@ importers:
         version: link:../types
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
@@ -436,8 +436,8 @@ importers:
         version: 19.2.7(react@19.2.7)
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
-        version: 1.9.4
+        specifier: ^2.5.2
+        version: 2.5.2
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.17
@@ -497,7 +497,7 @@ importers:
         version: 1.8.0
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.9.0
+        specifier: ^1.9.4
         version: 1.9.4
       '@cloudflare/workers-types':
         specifier: ^4.20240501.0

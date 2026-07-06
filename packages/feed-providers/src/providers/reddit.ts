@@ -2,9 +2,9 @@ import { detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
+  buildUrl,
   DEFAULT_TIMEOUT_MS,
   DEFAULT_USER_AGENT,
-  buildUrl,
   fetchJson,
   fetchRss,
   fetchWithFallbacks,

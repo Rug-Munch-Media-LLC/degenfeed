@@ -29,11 +29,25 @@ import { handleFundingFeed } from './routes/funding';
 import { handleRelaysHealth } from './routes/health';
 import { handleResolveIdentity } from './routes/identity';
 import { handleNewsFeed } from './routes/news';
+import {
+  handleNewsletterDigest,
+  handleNewsletterStatus,
+  handleNewsletterSubscribe,
+} from './routes/newsletter';
 import { handleNotifications } from './routes/notifications';
 import { handlePrices } from './routes/prices';
 import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import { handlePublish } from './routes/publish';
+import {
+  handleRmiHeadlines,
+  handleRmiHealth,
+  handleRmiNews,
+  handleRmiSentiment,
+  handleRmiSources,
+  handleRmiStats,
+} from './routes/rmi';
 import { handleRssFeed } from './routes/rss';
+import { handleRssXml } from './routes/rss-xml';
 import {
   handleLightningInvoice,
   handleTipCreate,
@@ -68,6 +82,10 @@ export interface Env {
   RATE_WINDOW_MS?: string;
   RATE_MAX_REQ?: string;
   SOLANA_RPC_URL?: string;
+  /** Base URL of the rmi-backend (default: http://127.0.0.1:8000) */
+  RMI_BACKEND_URL?: string;
+  /** Optional bearer for rmi-backend if gated */
+  RMI_API_KEY?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
@@ -248,6 +266,8 @@ export default {
         response = await handleThreadsFeed(request, env);
       } else if (path === '/api/feed/news') {
         response = await handleNewsFeed(request, env);
+      } else if (path === '/api/feed/rss.xml' || path === '/api/feed/atom.xml') {
+        response = await handleRssXml(request, env);
       } else if (path === '/api/bridge/rss-to-nostr') {
         const { handleRssToNostrBridge } = await import('./routes/publish');
         response = await handleRssToNostrBridge(request, env);
@@ -333,8 +353,26 @@ export default {
         response = await handleX402Paywall(request, env);
       } else if (path === '/api/x402/verify') {
         response = await handleX402Verify(request, env);
+      } else if (path === '/api/rmi/news/headlines') {
+        response = await handleRmiHeadlines(request, env);
+      } else if (path === '/api/rmi/news/sources') {
+        response = await handleRmiSources(request, env);
+      } else if (path === '/api/rmi/news/sentiment') {
+        response = await handleRmiSentiment(request, env);
+      } else if (path === '/api/rmi/news/stats') {
+        response = await handleRmiStats(request, env);
+      } else if (path === '/api/rmi/health') {
+        response = await handleRmiHealth(request, env);
+      } else if (path === '/api/rmi/news' || path.startsWith('/api/rmi/news/')) {
+        response = await handleRmiNews(request, env);
+      } else if (path === '/api/newsletter/subscribe') {
+        response = await handleNewsletterSubscribe(request, env);
+      } else if (path === '/api/newsletter/status') {
+        response = await handleNewsletterStatus(request, env);
+      } else if (path === '/api/newsletter/digest' || path.startsWith('/api/newsletter/digest')) {
+        response = await handleNewsletterDigest(request, env);
       } else {
-        response = jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.1.0' });
+        response = jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.2.0' });
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Internal error';

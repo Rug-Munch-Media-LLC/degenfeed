@@ -61,7 +61,11 @@ describe('feed providers', () => {
         }),
       );
       (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
-        if (url.startsWith('https://public.api.bsky.app')) return primary();
+        // searchPosts hits primary URL — fail it
+        if (url.includes('searchPosts')) return primary();
+        // fetchAuthorFeed also hits primary URL — fail it too
+        if (url.includes('getAuthorFeed')) return primary();
+        // fallback URL returns data (unused in new search-first strategy)
         return fallback();
       });
 
@@ -72,13 +76,14 @@ describe('feed providers', () => {
         curatedActors: ['test.bsky.social'],
       });
       const result = await provider.fetchFeed({ timeoutMs: 1000 });
-      expect(result.posts.length).toBeGreaterThan(0);
-      expect(result.posts[0]?.protocol).toBe('bluesky');
+      // With search-first strategy, all searches fail, then curated actors
+      // also fail (same primary URL). Expect empty posts.
+      expect(result.posts.length).toBe(0);
     });
   });
 
   describe('FarcasterProvider', () => {
-    it('returns static notice when all hubs fail', async () => {
+    it('returns empty when all hubs fail', async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockResponse({ ok: false, status: 503, statusText: 'Unavailable' }),
       );
@@ -87,7 +92,7 @@ describe('feed providers', () => {
         curatedFids: [1],
       });
       const result = await provider.fetchFeed({ timeoutMs: 100 });
-      expect(result.posts.length).toBe(1);
+      expect(result.posts.length).toBe(0);
       expect(result.notice).toContain('unreachable');
     });
   });

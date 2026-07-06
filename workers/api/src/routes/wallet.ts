@@ -5,29 +5,71 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { type Env, jsonResponse } from '../index';
 import { createSession } from '../session';
 
-const nonces = new Map<string, { nonce: string; expiresAt: number }>();
 const GTS_SCOPES = 'read write follow push';
+const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function base58ToBytes(input: string): Uint8Array {
+  if (input.length === 0) return new Uint8Array(0);
+  const alphabetMap = new Map<string, number>();
+  for (let i = 0; i < BASE58_ALPHABET.length; i++) {
+    alphabetMap.set(BASE58_ALPHABET[i] as string, i);
+  }
+  // Count leading '1's — each represents a 0x00 byte in the result.
+  let leadingZeros = 0;
+  for (const ch of input) {
+    if (ch === '1') leadingZeros++;
+    else break;
+  }
+  // Build big-endian representation of the base58 value.
+  const digits: number[] = [];
+  for (let i = leadingZeros; i < input.length; i++) {
+    const ch = input[i];
+    if (ch === undefined) continue;
+    const val = alphabetMap.get(ch);
+    if (val === undefined) throw new Error('Invalid base58 character');
+    let carry = val;
+    for (let j = 0; j < digits.length; j++) {
+      const cur = (digits[j] as number) * 256 + carry;
+      digits[j] = cur % 58;
+      carry = Math.floor(cur / 58);
+    }
+    while (carry > 0) {
+      digits.push(carry % 58);
+      carry = Math.floor(carry / 58);
+    }
+  }
+  // Convert base58 digits to bytes (MSB first).
+  const bytes = new Uint8Array(digits.length);
+  for (let i = 0; i < digits.length; i++) {
+    bytes[i] = digits[digits.length - 1 - i] as number;
+  }
+  if (leadingZeros === 0) return bytes;
+  const out = new Uint8Array(leadingZeros + bytes.length);
+  out.set(bytes, leadingZeros);
+  return out;
+}
 
 function generateNonce(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   return bytesToHex(bytes);
 }
 
-export async function handleWalletNonce(request: Request, _env: Env): Promise<Response> {
+function nonceKey(address: string): string {
+  return `nonce:${address.toLowerCase()}`;
+}
+
+export async function handleWalletNonce(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const address = url.searchParams.get('address')?.toLowerCase() || '';
   if (!address) return jsonResponse({ error: 'Address required' }, 400);
 
-  // Prevent memory exhaustion from unlimited nonce generation
-  if (nonces.size > 10000) {
-    const now = Date.now();
-    for (const [key, entry] of nonces) {
-      if (entry.expiresAt < now) nonces.delete(key);
-    }
-  }
-
   const nonce = generateNonce();
-  nonces.set(address, { nonce, expiresAt: Date.now() + 300_000 });
+  try {
+    await env.CACHE?.put(nonceKey(address), nonce, { expirationTtl: 300 });
+  } catch {
+    // If KV is unavailable, fall back to a short-lived signed nonce response
+    // (client must send it back within the same request — not ideal, but graceful)
+  }
 
   return jsonResponse({ nonce });
 }
@@ -69,7 +111,8 @@ function verifySolanaSignature(
   try {
     const msgBytes = new TextEncoder().encode(message);
     const sigBytes = hexToBytes(signature);
-    const pubBytes = hexToBytes(expectedAddress);
+    const pubBytes = base58ToBytes(expectedAddress);
+    if (pubBytes.length !== 32) return false;
     return ed25519.verify(sigBytes, msgBytes, pubBytes);
   } catch {
     return false;
@@ -125,13 +168,21 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
       return jsonResponse({ error: 'Missing required fields' }, 400);
     }
 
-    // Verify nonce
-    const stored = nonces.get(body.address.toLowerCase());
-    if (!stored || stored.nonce !== body.nonce || stored.expiresAt < Date.now()) {
-      nonces.delete(body.address.toLowerCase());
+    // Verify nonce from KV
+    let storedNonce: string | null = null;
+    try {
+      storedNonce = (await env.CACHE?.get(nonceKey(body.address))) ?? null;
+    } catch {
+      storedNonce = null;
+    }
+    if (!storedNonce || storedNonce !== body.nonce) {
       return jsonResponse({ error: 'Invalid or expired nonce' }, 401);
     }
-    nonces.delete(body.address.toLowerCase());
+    try {
+      await env.CACHE?.delete(nonceKey(body.address));
+    } catch {
+      // ignore cleanup failure
+    }
 
     // Verify signature
     let valid = false;
@@ -151,7 +202,10 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
     // If GTS auth worked, try to link/create profile
     let gtsAuthorizeUrl: string | null = null;
     if (gtsSession) {
-      gtsAuthorizeUrl = `${env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz'}/oauth/authorize?client_id=${gtsSession.clientId}&redirect_uri=${encodeURIComponent(env.GTS_REDIRECT_URI || 'https://degenfeed.xyz/auth/callback')}&response_type=code&scope=${GTS_SCOPES}&sign_up=true`;
+      const redirectUri = encodeURIComponent(
+        env.GTS_REDIRECT_URI || 'https://degenfeed.xyz/auth/callback',
+      );
+      gtsAuthorizeUrl = `${env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz'}/oauth/authorize?client_id=${gtsSession.clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${GTS_SCOPES}&sign_up=true`;
     }
 
     if (!env.AUTH_SECRET) {

@@ -159,35 +159,243 @@ export function detectNiches(text: string): string[] {
   return Array.from(found);
 }
 
+const SPAM_PATTERNS: RegExp[] = [
+  /\b(make money|earn \$\d+|work from home|double your|guaranteed profit|100x guarantee)\b/gi,
+  /\b(click here|link in bio|dm me|message me|join my vip|pump group|signals group)\b/gi,
+  /\b(casino|lottery|gift card|free crypto|free bitcoin|airdrop scam|claim now)\b/gi,
+  /\b(viagra|cialis|escort|onlyfans)\b/gi,
+  /🚀{4,}|💰{4,}|🔥{4,}|🌙{4,}/g,
+];
+
+const REPEATED_CHAR_RE = /(.)\1{8,}/;
+
+const CRYPTO_RELEVANCE_TERMS = new Set([
+  ...BOOST_TERMS,
+  'web3',
+  'blockchain',
+  'token',
+  'altcoin',
+  'satoshi',
+  'halving',
+  'ordinal',
+  'inscription',
+  'eip-',
+  'erc-',
+  'validator',
+  'solidity',
+  'gas fee',
+  'gas',
+  'restaking',
+  'rollup',
+  'whale',
+  'wallet',
+  'dex',
+  'amm',
+  'yield',
+  'vault',
+  'opensea',
+  'blur',
+  'mint',
+  'rekt',
+  'immunefi',
+  'breach',
+  'phishing',
+  'exploit',
+  'hack',
+  'mainnet',
+  'testnet',
+  'sharding',
+  'merge',
+  'the merge',
+  'pos',
+  'pow',
+  'mining',
+  'miner',
+  'hashrate',
+  'difficulty',
+  'stake',
+  'staking',
+  'unstake',
+  'bridge',
+  'bridging',
+  'wrap',
+  'unwrap',
+  'weth',
+  'wbtc',
+  'tvl',
+  'total value locked',
+  'aave',
+  'compound',
+  'maker',
+  'makerdao',
+  'curve',
+  'convex',
+  'gmx',
+  'gmxv2',
+  'dydx',
+  'perpetual',
+  'perp',
+  'futures',
+  'spot',
+  'orderbook',
+  'amm',
+  'l2beat',
+  'celestia',
+  'eigenlayer',
+  'symbiotic',
+  'karak',
+  'manta',
+  'blast',
+  'mode',
+  'zora',
+  'linea',
+  'scroll',
+  'zksync',
+  'starknet',
+  'monad',
+  'berachain',
+  'monad testnet',
+  'aptos',
+  'sui',
+  'sei',
+  'injective',
+  'near',
+  'cosmos',
+  'osmosis',
+  'celestia',
+  'pendle',
+  'ethena',
+  'ena',
+  'usde',
+  'pyusd',
+]);
+
 export function isSpamPost(post: UnifiedPost): boolean {
   const text = post.text.trim();
-  if (text.length < 10) return true;
+  if (text.length < 12) return true;
   if (/^[0-9a-f]{64}$/i.test(text)) return true;
   if (/^\s*(test|testing|hello world|asdf|qwerty|lorem ipsum)\s*$/i.test(text)) return true;
   if (/^[\s\p{Emoji}\p{Extended_Pictographic}]+$/u.test(text)) return true;
+  const lower = text.toLowerCase();
+  let spamHits = 0;
+  for (const re of SPAM_PATTERNS) {
+    re.lastIndex = 0;
+    if (re.test(lower)) spamHits++;
+  }
+  if (spamHits >= 2) return true;
+  if (REPEATED_CHAR_RE.test(text)) return true;
+  const urlCount = (text.match(/https?:\/\//g) ?? []).length;
+  if (urlCount >= 4) return true;
+  const upperRatio = (text.match(/[A-Z]/g) ?? []).length / Math.max(text.length, 1);
+  if (text.length >= 20 && upperRatio > 0.7) return true;
   return false;
 }
 
-export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
-  const seenText = new Set<string>();
-  const seenId = new Set<string>();
-  return posts.filter((p) => {
-    if (seenId.has(p.id)) return false;
-    seenId.add(p.id);
-    const key = p.text.trim().slice(0, 80).toLowerCase();
-    if (key.length > 0 && seenText.has(key)) return false;
-    if (key.length > 0) seenText.add(key);
+function gatherRelevanceText(post: UnifiedPost): string {
+  const parts: string[] = [post.text, post.html ?? '', post.author.displayName, post.author.bio];
+  for (const n of post.niches) parts.push(n);
+  for (const e of post.embeds) {
+    parts.push(e.url);
+    const meta = e.meta;
+    if (meta) {
+      if (typeof meta.title === 'string') parts.push(meta.title);
+      if (typeof meta.description === 'string') parts.push(meta.description);
+    }
+  }
+  return parts.join(' ').toLowerCase();
+}
+
+export function isRelevantPost(post: UnifiedPost): boolean {
+  // Compute niches inline so we don't depend on the caller having run
+  // enrichPostNiches first. This makes the function safe to call on
+  // a fresh post straight out of a provider.
+  const computedNiches =
+    post.niches.length > 0
+      ? post.niches
+      : detectNiches(
+          `${post.text} ${post.html ?? ''} ${post.author.displayName} ${post.author.bio}`,
+        );
+
+  const text = gatherRelevanceText({ ...post, niches: computedNiches });
+
+  if (computedNiches.length > 0) {
+    // Even with niches, require at least one match to a core crypto signal
+    // so the feed doesn't get polluted by miscategorized noise.
+    const hasCoreSignal =
+      /\b(crypto|bitcoin|btc|ethereum|eth|solana|sol|defi|nft|web3|blockchain|altcoin|stablecoin|l2|rollup|etf|macro|regulation|security|memecoin|ai|onchain|token)\b/.test(
+        text,
+      );
+    if (hasCoreSignal) return true;
+  }
+
+  if (/\$[A-Z]{2,5}\b/.test(text)) return true;
+  if (
+    /#[a-zA-Z0-9_]+/.test(text) &&
+    /\b(crypto|bitcoin|ethereum|solana|defi|nft|web3|blockchain)\b/.test(text)
+  ) {
     return true;
-  });
+  }
+  for (const term of CRYPTO_RELEVANCE_TERMS) {
+    if (text.includes(term)) return true;
+  }
+  return false;
+}
+
+export function contentFingerprint(post: UnifiedPost): string {
+  // Build a 12-word shingle from text — used to detect near-duplicate
+  // reposts across protocols (e.g. someone cross-posting the same content
+  // to Farcaster, Lens, and Nostr).
+  const text = post.text
+    .toLowerCase()
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 2)
+    .slice(0, 12)
+    .join(' ');
+  if (text.length > 0) return text;
+  // Fallback to link-based fingerprint for media-only posts
+  const link = post.embeds.find(
+    (e) => e.kind === 'link' || e.kind === 'image' || e.kind === 'video',
+  );
+  return link ? `link:${link.url}` : '';
+}
+
+export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
+  const seenId = new Set<string>();
+  const seenFingerprint = new Set<string>();
+  const seenText = new Set<string>();
+  const out: UnifiedPost[] = [];
+  for (const p of posts) {
+    if (seenId.has(p.id)) continue;
+    const fp = contentFingerprint(p);
+    if (fp && seenFingerprint.has(fp)) continue;
+    const textKey = p.text.trim().slice(0, 80).toLowerCase();
+    if (textKey.length > 12 && seenText.has(textKey)) continue;
+    seenId.add(p.id);
+    if (fp) seenFingerprint.add(fp);
+    if (textKey.length > 12) seenText.add(textKey);
+    out.push(p);
+  }
+  return out;
 }
 
 export function scorePost(post: UnifiedPost, now = Date.now()): number {
   const m = post.metrics;
-  const engagement = m.likes + m.reposts * 2 + m.replies * 3 + m.quotes * 4;
+  // Weighted engagement: replies/quotes are 3-4x as valuable as likes
+  // because they signal conversation vs passive approval.
+  const engagementRaw = m.likes + m.reposts * 2 + m.replies * 3 + m.quotes * 4;
+  const engagement = Math.log(1 + engagementRaw);
+  // 12-hour half-life — most crypto content has a useful half-life
+  // under a day; we want fresh stuff rising and old stuff decaying.
   const ageHrs = Math.max(0, (now - post.createdAt) / 3600000);
-  const recency = Math.exp(-ageHrs / 24);
-  const nicheBoost = post.niches.length > 0 ? 1 + post.niches.length * 0.05 : 1;
-  return engagement * recency * nicheBoost;
+  const recency = 0.5 ** (ageHrs / 12);
+  // Niche boost — only meaningful if the post actually has niches
+  const nicheBoost = post.niches.length > 0 ? 1 + Math.min(post.niches.length, 5) * 0.08 : 1;
+  // Ticker boost — posts mentioning $TICKER are time-sensitive signals
+  const tickerCount = (post.text.match(/\$[A-Z]{2,5}\b/g) ?? []).length;
+  const tickerBoost = 1 + Math.min(tickerCount, 3) * 0.15;
+  return engagement * recency * nicheBoost * tickerBoost;
 }
 
 export function enrichPostNiches(post: UnifiedPost): UnifiedPost {

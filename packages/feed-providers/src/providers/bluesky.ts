@@ -2,10 +2,10 @@ import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
-  DEFAULT_TIMEOUT_MS,
   buildUrl,
+  DEFAULT_TIMEOUT_MS,
   fetchJson,
-  fetchWithFallbacks,
+  withConcurrencyLimit,
   withRetry,
   withTimeout,
 } from '../utils';
@@ -28,6 +28,16 @@ export const CURATED_BSKY_ACTORS = [
   'mert.bsky.social',
   'ansem.bsky.social',
   'blknoiz06.bsky.social',
+];
+
+export const CRYPTO_SEARCH_QUERIES = [
+  'bitcoin OR btc',
+  'ethereum OR eth',
+  'solana OR sol',
+  'crypto',
+  'defi',
+  'nft',
+  'web3',
 ];
 
 interface BskyAuthor {
@@ -140,6 +150,23 @@ async function fetchAuthorFeed(
   return (data.feed ?? []).map((f) => f.post);
 }
 
+async function searchPosts(
+  baseUrl: string,
+  q: string,
+  limit: number,
+  accessJwt?: string,
+): Promise<BskyPostView[]> {
+  const url = buildUrl(baseUrl, '/xrpc/app.bsky.feed.searchPosts', {
+    q,
+    limit: String(Math.min(limit, 100)),
+    sort: 'latest',
+  });
+  const headers: Record<string, string> = {};
+  if (accessJwt) headers.authorization = `Bearer ${accessJwt}`;
+  const data = await fetchJson<{ posts?: BskyPostView[] }>(url, { headers });
+  return data.posts ?? [];
+}
+
 export interface BlueskyProviderOptions {
   baseUrl?: string;
   fallbackUrl?: string;
@@ -166,16 +193,42 @@ export class BlueskyProvider implements FeedProvider {
     const limit = 50;
 
     try {
-      const actors = this.curatedActors.slice(0, 12);
       const posts = await withRetry(async () => {
-        const primary = await fetchWithFallbacks(
-          this.accessJwt ? [this.primaryUrl, this.fallbackUrl] : [this.primaryUrl],
-          async (base) => {
-            const all: BskyPostView[] = [];
-            for (const actor of actors) {
-              const p = await withTimeout(
+        const all: BskyPostView[] = [];
+
+        // Primary strategy: search crypto terms in parallel. We bound
+        // concurrency so a slow relay doesn't multiply latency.
+        const queries = CRYPTO_SEARCH_QUERIES.slice(0, 4);
+        const searchResults = await withConcurrencyLimit(
+          queries,
+          Math.min(2, queries.length),
+          async (q) => {
+            try {
+              return await withTimeout(
+                searchPosts(
+                  this.primaryUrl,
+                  q,
+                  Math.max(5, Math.ceil(limit / queries.length)),
+                  this.accessJwt,
+                ),
+                timeoutMs,
+                `bluesky:search:${q}`,
+              );
+            } catch {
+              return [];
+            }
+          },
+        );
+        for (const r of searchResults) all.push(...r);
+
+        // Fallback: curated crypto actors (only if searches were thin)
+        if (all.length < limit / 2) {
+          const actors = this.curatedActors.slice(0, 8);
+          const actorResults = await withConcurrencyLimit(actors, 3, async (actor) => {
+            try {
+              return await withTimeout(
                 fetchAuthorFeed(
-                  base,
+                  this.primaryUrl,
                   actor,
                   Math.max(3, Math.ceil(limit / actors.length)),
                   this.accessJwt,
@@ -183,36 +236,15 @@ export class BlueskyProvider implements FeedProvider {
                 timeoutMs,
                 `bluesky:${actor}`,
               );
-              all.push(...p);
+            } catch {
+              return [];
             }
-            return all;
-          },
-        );
-        return primary;
-      });
-
-      if (posts.length === 0 && !this.accessJwt) {
-        const search = await withTimeout(
-          fetchJson<{ actors?: BskyAuthor[] }>(
-            buildUrl(this.primaryUrl, '/xrpc/app.bsky.actor.searchActorsTypeahead', {
-              q: 'crypto',
-              limit: '10',
-            }),
-            { headers: opts.headers },
-          ),
-          timeoutMs,
-          'bluesky:search',
-        );
-        const searchActors = (search.actors ?? []).map((a) => a.handle).slice(0, 5);
-        for (const actor of searchActors) {
-          const p = await withTimeout(
-            fetchAuthorFeed(this.primaryUrl, actor, 5),
-            timeoutMs,
-            `bluesky:${actor}`,
-          );
-          posts.push(...p);
+          });
+          for (const r of actorResults) all.push(...r);
         }
-      }
+
+        return all;
+      });
 
       return {
         posts: posts.map((p) => enrichPostNiches(postToUnifiedPost(p))),

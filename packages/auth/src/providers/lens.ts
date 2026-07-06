@@ -25,9 +25,7 @@ export interface Eip1193Provider {
 /**
  * Sign in with Lens via a connected wallet (EIP-1193).
  */
-export async function signInWithLens(opts: {
-  wallet: Eip1193Provider;
-}): Promise<StoredIdentity> {
+export async function signInWithLens(opts: { wallet: Eip1193Provider }): Promise<StoredIdentity> {
   // 1. Get wallet address
   const [address] = (await opts.wallet.request({
     method: 'eth_requestAccounts',

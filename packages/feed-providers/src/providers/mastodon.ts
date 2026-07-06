@@ -2,20 +2,33 @@ import { buildUnifiedPost, detectNiches } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
+  buildUrl,
   DEFAULT_TIMEOUT_MS,
   DEFAULT_USER_AGENT,
-  buildUrl,
   fetchJson,
-  fetchWithFallbacks,
+  withConcurrencyLimit,
   withTimeout,
 } from '../utils';
 
 export const DEFAULT_GTS_INSTANCE = 'https://social.degenfeed.xyz';
 export const PUBLIC_MASTODON_INSTANCES = [
+  'https://bitcoinhackers.org',
   'https://mastodon.social',
   'https://fosstodon.org',
-  'https://bitcoinhackers.org',
   'https://mstdn.social',
+];
+
+export const CRYPTO_HASHTAGS = [
+  'bitcoin',
+  'ethereum',
+  'solana',
+  'crypto',
+  'cryptocurrency',
+  'blockchain',
+  'web3',
+  'defi',
+  'nft',
+  'altcoin',
 ];
 
 interface GtSAccount {
@@ -158,6 +171,17 @@ function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): UnifiedPos
   });
 }
 
+async function fetchHashtagTimeline(
+  instanceUrl: string,
+  tag: string,
+  limit: number,
+): Promise<GtSStatus[]> {
+  const url = buildUrl(instanceUrl, `/api/v1/timelines/tag/${encodeURIComponent(tag)}`, {
+    limit: String(limit),
+  });
+  return fetchJson<GtSStatus[]>(url, { headers: { 'user-agent': DEFAULT_USER_AGENT } });
+}
+
 async function fetchPublicTimeline(instanceUrl: string, limit: number): Promise<GtSStatus[]> {
   const url = buildUrl(instanceUrl, '/api/v1/timelines/public', {
     limit: String(limit),
@@ -184,15 +208,94 @@ export class MastodonProvider implements FeedProvider {
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const limit = 20;
+    const limit = 30;
     const endpoints = [this.primaryUrl, ...this.fallbackUrls];
+    // "Crypto-leaning" instances that have meaningful #bitcoin / #ethereum
+    // timelines. The hostname check is explicit so adding a new instance
+    // doesn't silently land in either bucket.
+    const CRYPTO_HOSTS = new Set(['bitcoinhackers.org', 'social.degenfeed.xyz']);
+    const cryptoInstances = endpoints.filter((u) => {
+      try {
+        return CRYPTO_HOSTS.has(new URL(u).hostname);
+      } catch {
+        return false;
+      }
+    });
+    const generalInstances = endpoints.filter((u) => !cryptoInstances.includes(u));
 
     try {
-      const statuses = await fetchWithFallbacks(endpoints, (url) => {
-        return withTimeout(fetchPublicTimeline(url, limit), timeoutMs, `mastodon:${url}`);
+      // Build all (instance, tag) pairs in parallel. Bound concurrency so
+      // we don't slam a single instance.
+      const tagTargets: { instanceUrl: string; tag: string }[] = [];
+      const tagInstances = cryptoInstances.length > 0 ? cryptoInstances : endpoints.slice(0, 2);
+      for (const instanceUrl of tagInstances) {
+        for (const tag of CRYPTO_HASHTAGS.slice(0, 4)) {
+          tagTargets.push({ instanceUrl, tag });
+        }
+      }
+      const tagResults = await withConcurrencyLimit(tagTargets, 3, async ({ instanceUrl, tag }) => {
+        try {
+          return await withTimeout(
+            fetchHashtagTimeline(instanceUrl, tag, Math.ceil(limit / 2)),
+            timeoutMs,
+            `mastodon:${instanceUrl}#${tag}`,
+          );
+        } catch {
+          return [];
+        }
       });
+      const allStatuses: GtSStatus[] = [];
+      for (const r of tagResults) allStatuses.push(...r);
+
+      // Fallback: public timeline from general instances if crypto
+      // hashtag fetches came back thin.
+      if (allStatuses.length < limit) {
+        const fallback = await withConcurrencyLimit(generalInstances, 2, async (instanceUrl) => {
+          try {
+            return await withTimeout(
+              fetchPublicTimeline(instanceUrl, limit),
+              timeoutMs,
+              `mastodon:${instanceUrl}`,
+            );
+          } catch {
+            return [];
+          }
+        });
+        for (const r of fallback) allStatuses.push(...r);
+      }
+
+      if (allStatuses.length === 0) {
+        return { posts: [], notice: 'Mastodon feed unavailable' };
+      }
+
+      const seen = new Set<string>();
+      const unique = allStatuses.filter((s) => {
+        if (seen.has(s.id)) return false;
+        seen.add(s.id);
+        return true;
+      });
+
+      // Pick a sensible instance URL for each status. When the acct is
+      // fully-qualified (user@host), use that host. Otherwise the status
+      // came from the primary instance.
+      const instanceMap = new Map<string, string>();
+      for (const u of endpoints) {
+        try {
+          instanceMap.set(new URL(u).hostname, u);
+        } catch {
+          /* ignore */
+        }
+      }
+      const pickInstance = (acct: string): string => {
+        if (acct.includes('@')) {
+          const host = acct.split('@')[1];
+          if (host && instanceMap.has(host)) return instanceMap.get(host) ?? this.primaryUrl;
+        }
+        return endpoints[0] ?? this.primaryUrl;
+      };
+
       return {
-        posts: statuses.map((s) => statusToUnifiedPost(s, endpoints[0] ?? this.primaryUrl)),
+        posts: unique.map((s) => statusToUnifiedPost(s, pickInstance(s.account.acct))),
       };
     } catch (err) {
       return {

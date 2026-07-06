@@ -3,6 +3,76 @@ import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/t
 import type { FeedProvider, FeedResult, FetchOptions } from '../types';
 import { DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchRss, withTimeout } from '../utils';
 
+export const DEFAULT_CRYPTO_FEEDS = [
+  // Tier 1 — Major outlets
+  'https://cointelegraph.com/rss',
+  'https://decrypt.co/feed',
+  'https://www.coindesk.com/arc/outboundfeeds/rss/',
+  'https://www.theblock.co/rss',
+  'https://cryptoslate.com/feed/',
+  'https://beincrypto.com/feed/',
+  'https://bitcoinmagazine.com/.rss/full/',
+  'https://www.newsbtc.com/feed/',
+  'https://cryptopotato.com/feed/',
+  'https://ambcrypto.com/feed/',
+  'https://cryptobriefing.com/feed/',
+  'https://dailyhodl.com/feed/',
+  'https://zycrypto.com/feed/',
+  'https://bitcoinist.com/feed/',
+  'https://cryptonews.com/feed/',
+  // Tier 2 — Protocol / chain
+  'https://blog.ethereum.org/feed.xml',
+  'https://solana.com/feed',
+  'https://polkadot.network/blog/feed/',
+  'https://blog.chain.link/feed/',
+  'https://a16zcrypto.com/feed/',
+  // Tier 3 — Research / data
+  'https://messari.io/feed',
+  'https://insights.glassnode.com/feed/',
+  'https://blog.kaiko.com/feed',
+  'https://defillama.com/feed',
+  'https://dune.com/blog/rss.xml',
+  // Tier 4 — DeFi / trading / newsletters
+  'https://defipulse.com/blog/feed/',
+  'https://newsletter.banklesshq.com/feed',
+  'https://thedefiant.io/feed',
+  'https://www.coingecko.com/en/blog/rss',
+  'https://coinmarketcap.com/feed/',
+  // Tier 5 — Regulation
+  'https://www.consumerfinance.gov/feed/',
+  // Tier 6 — High-signal / security
+  'https://bitcoincore.org/en/rss.xml',
+  'https://bitcoinops.org/en/feed.xml',
+  'https://lightning.engineering/rss/',
+  'https://unchainedcrypto.com/feed/',
+  'https://blockworks.co/feed',
+  'https://protos.com/feed/',
+  'https://thecryptotimes.com/feed/',
+  'https://cryptodaily.co.uk/feed/',
+  'https://coinjournal.net/feed/',
+  'https://www.trustnodes.com/feed',
+  'https://www.cryptopolitan.com/feed/',
+  'https://www.crypto-news-flash.com/feed/',
+  'https://www.livebitcoinnews.com/feed/',
+  'https://www.crypto-reporter.com/feed/',
+  'https://coinpedia.org/feed/',
+  'https://cryptoadventure.org/feed/',
+  'https://coincodex.com/blog/feed/',
+  // Substacks / creator newsletters
+  'https://bankless.substack.com/feed',
+  'https://thedefiedge.substack.com/feed',
+  'https://milkroad.substack.com/feed',
+  'https://ethdaily.substack.com/feed',
+  'https://nansen.substack.com/feed',
+  'https://weekinethereumnews.com/feed',
+  // Medium / publications
+  'https://medium.com/feed/immunefi',
+  'https://slowmist.medium.com/feed',
+  // Mirror / Paragraph creator feeds
+  'https://mirror.xyz/feed',
+  'https://paragraph.xyz/feed',
+];
+
 export interface RssProviderOptions {
   feeds?: string[];
 }
@@ -247,7 +317,7 @@ export class RssProvider implements FeedProvider {
   private readonly feeds: string[];
 
   constructor(options: RssProviderOptions = {}) {
-    this.feeds = options.feeds ?? [];
+    this.feeds = options.feeds ?? DEFAULT_CRYPTO_FEEDS;
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
