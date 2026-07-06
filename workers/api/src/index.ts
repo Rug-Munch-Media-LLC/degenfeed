@@ -9,7 +9,7 @@
 import { handleRelaysHealth } from './routes/health';
 import { handleHomeFeed } from './routes/feed';
 import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
-import { handleRmiNewsFeed } from './routes/news';
+import { handleNewsFeed } from './routes/news';
 import { handleRssFeed } from './routes/rss';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
 import { handleTipResolve, handleTipCreate, handleTipFrame, handleTipFrameTx, handleTipFrameCallback, handleLightningInvoice } from './routes/tip';
@@ -146,7 +146,7 @@ export default {
         return handleThreadsFeed(request, env);
       }
       if (path === '/api/feed/news') {
-        return handleRmiNewsFeed(request, env);
+        return handleNewsFeed(request, env);
       }
             if (path === '/api/bridge/rss-to-nostr') {
         const { handleRssToNostrBridge } = await import('./routes/publish');

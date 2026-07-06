@@ -1,3 +1,6 @@
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 /**
  * DegenFeed — Single Post View
  * Route: /post/[id]
@@ -14,7 +17,10 @@ export default async function PostPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      <a href="/home" className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-white">
+      <a
+        href="/home"
+        className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-white"
+      >
         &larr; Back to feed
       </a>
 
@@ -26,7 +32,9 @@ export default async function PostPage({ params }: Props) {
       {/* TODO(v1): Fetch single post + render thread with replies */}
       <div className="card py-12 text-center">
         <p className="text-gray-500">Post detail view coming soon...</p>
-        <p className="mt-2 text-xs text-gray-600">Full thread with replies, engagement, and context.</p>
+        <p className="mt-2 text-xs text-gray-600">
+          Full thread with replies, engagement, and context.
+        </p>
       </div>
     </div>
   );

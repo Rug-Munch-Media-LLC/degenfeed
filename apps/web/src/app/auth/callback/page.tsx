@@ -1,3 +1,6 @@
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 /**
  * DegenFeed — Auth Callback Handler
  *
@@ -19,7 +22,9 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
         <div className="mb-6 text-5xl text-red-400">!</div>
         <h1 className="mb-4 text-2xl font-bold text-red-400">Authorization Failed</h1>
         <p className="mb-8 text-gray-400">{params.error}</p>
-        <a href="/home" className="btn-primary inline-block">Back to DegenFeed</a>
+        <a href="/home" className="btn-primary inline-block">
+          Back to DegenFeed
+        </a>
       </div>
     );
   }
@@ -29,8 +34,12 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
       <div className="mx-auto max-w-md px-4 py-20 text-center">
         <div className="mb-6 text-5xl text-gray-500">?</div>
         <h1 className="mb-4 text-2xl font-bold text-white">No Authorization Code</h1>
-        <p className="mb-8 text-gray-400">No authorization code was received. Please try signing in again.</p>
-        <a href="/home" className="btn-primary inline-block">Back to DegenFeed</a>
+        <p className="mb-8 text-gray-400">
+          No authorization code was received. Please try signing in again.
+        </p>
+        <a href="/home" className="btn-primary inline-block">
+          Back to DegenFeed
+        </a>
       </div>
     );
   }
@@ -49,7 +58,10 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
     });
 
     if (res.ok) {
-      const data = await res.json() as { accessToken?: string; profile?: Record<string, unknown> };
+      const data = (await res.json()) as {
+        accessToken?: string;
+        profile?: Record<string, unknown>;
+      };
       if (data.accessToken) {
         exchangeOk = true;
         // The token is returned to the client-side JS which stores it in IndexedDB
@@ -58,7 +70,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
         exchangeError = 'No access token in response';
       }
     } else {
-      const err = await res.json() as { error?: string };
+      const err = (await res.json()) as { error?: string };
       exchangeError = err.error ?? 'Token exchange failed';
     }
   } catch (err) {
@@ -72,20 +84,23 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
         <body>
           <div className="mx-auto max-w-md px-4 py-20 text-center">
             <div className="mb-6 text-5xl text-degen-400">\u2713</div>
-            <h1 className="mb-4 text-2xl font-bold text-white">Signed in!</h1>\n          <p className="mb-4 text-sm text-gray-500">Redirecting to your feed...</p>
+            <h1 className="mb-4 text-2xl font-bold text-white">Signed in!</h1>\n{' '}
+            <p className="mb-4 text-sm text-gray-500">Redirecting to your feed...</p>
             <p className="mb-8 text-gray-400">Redirecting to your feed...</p>
           </div>
           <script
             dangerouslySetInnerHTML={{
               __html:
-                'const token = ' + JSON.stringify(params.code) + ';' +
+                'const token = ' +
+                JSON.stringify(params.code) +
+                ';' +
                 'try {' +
                 '  const stored = JSON.parse(localStorage.getItem("degenfeed_identities") || "[]");' +
                 '  stored.push({ protocol: "mastodon", instance: "https://social.degenfeed.xyz", token: token, createdAt: Date.now() });' +
                 '  localStorage.setItem("degenfeed_identities", JSON.stringify(stored));' +
                 '  localStorage.setItem("degenfeed_auth_updated", Date.now().toString());' +
                 '} catch(e) { console.error("Token storage failed", e); }' +
-                'window.location.href = "/home";'
+                'window.location.href = "/home";',
             }}
           />
         </body>
@@ -99,7 +114,9 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
       <h1 className="mb-4 text-2xl font-bold text-red-400">Exchange Failed</h1>
       <p className="mb-2 text-gray-400">{exchangeError}</p>
       <p className="mb-8 text-sm text-gray-600">Code: {params.code.slice(0, 30)}...</p>
-      <a href="/home" className="btn-primary inline-block">Back to DegenFeed</a>
+      <a href="/home" className="btn-primary inline-block">
+        Back to DegenFeed
+      </a>
     </div>
   );
 }

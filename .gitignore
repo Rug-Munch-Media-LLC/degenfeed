@@ -50,4 +50,4 @@ pnpm-debug.log*
 # ── Cache / temp ───────────────────────────────────────────────
 .cache/
 tmp/
-*.tmp
+*.tmp.vercel/
