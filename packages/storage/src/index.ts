@@ -7,6 +7,7 @@ export type {
   StoredMutedIdentity,
   StoredMutedWord,
   UserPreferences,
+  MonetizationPreferences,
 } from './types';
 export type { ActiveSession } from './session';
 export type { StoredBookmark } from './bookmarks';
@@ -40,3 +41,8 @@ export {
 } from './muting';
 export { addBookmark, removeBookmark, isBookmarked, getBookmarks } from './bookmarks';
 export { getPreferences, savePreferences, getDefaultPreferences } from './preferences';
+export {
+  getMonetizationPreferences,
+  saveMonetizationPreferences,
+  getDefaultMonetizationPreferences,
+} from './monetization';

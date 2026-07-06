@@ -53,3 +53,15 @@ export function isValidAmount(value: string): boolean {
 export function isAllowedProtocol(value: string): boolean {
   return ALLOWED_PROTOCOLS.has(value);
 }
+
+const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+
+export function isValidEvmAddress(value: string): boolean {
+  return EVM_ADDRESS_RE.test(value);
+}
+
+const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+export function isValidSolanaAddress(value: string): boolean {
+  return SOLANA_ADDRESS_RE.test(value);
+}

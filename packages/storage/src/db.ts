@@ -3,7 +3,7 @@ import { type IDBPDatabase, openDB } from 'idb';
 // ─── Database ──────────────────────────────────────────────────────────
 
 const DB_NAME = 'degenfeed';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export let dbPromise: Promise<IDBPDatabase<unknown>> | null = null;
 
@@ -68,6 +68,12 @@ export async function getDb(): Promise<IDBPDatabase<unknown>> {
             keyPath: 'postId',
           });
           store.createIndex('savedAt', 'savedAt');
+        }
+        // Monetization preferences store
+        if (!db.objectStoreNames.contains('monetization')) {
+          db.createObjectStore('monetization', {
+            keyPath: 'identityId',
+          });
         }
       },
     });

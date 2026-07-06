@@ -11,6 +11,7 @@
  *   cached-posts — LRU cache of recently fetched posts
  *   muted        — Muted identities and words
  *   prefs        — User preferences (ranking weights, theme, etc.)
+ *   monetization — Creator tipping/monetization preferences
  *
  * Encryption is handled by @degenfeed/auth; this package only persists
  * the pre-encrypted blobs and decryptable fields.
@@ -95,4 +96,23 @@ export interface UserPreferences {
   defaultProtocols: Protocol[];
   reducedMotion: boolean;
   fontSize: 'small' | 'medium' | 'large';
+}
+
+export interface MonetizationPreferences {
+  identityId: string;
+  updatedAt: number;
+  /** Default EVM address used across Ethereum, Base, Optimism, Arbitrum, Polygon */
+  evmAddress?: string;
+  /** Solana address for direct SOL/SPL transfers */
+  solanaAddress?: string;
+  /** Lightning address (user@domain.com) or LNURL */
+  lightningAddress?: string;
+  /** Farcaster custody address for Frame tips */
+  farcasterCustodyAddress?: string;
+  /** Lens profile id (e.g. 0x01) or handle */
+  lensProfile?: string;
+  /** Nostr pubkey for zaps */
+  nostrPubkey?: string;
+  /** Preferred default method when multiple are available */
+  preferredMethod?: string;
 }

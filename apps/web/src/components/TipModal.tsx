@@ -2,6 +2,7 @@
 
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useState } from 'react';
+import type { TipPostContext } from '../hooks/useTip';
 import { useTip } from '../hooks/useTip';
 import { useSolana } from './SolanaProvider';
 import { useWeb3 } from './Web3Provider';
@@ -13,6 +14,7 @@ interface TipModalProps {
   recipientAuthorId: string;
   recipientDisplayName: string;
   publicationId?: string;
+  postContext?: TipPostContext;
 }
 
 export function TipModal({
@@ -22,6 +24,7 @@ export function TipModal({
   recipientAuthorId,
   recipientDisplayName,
   publicationId,
+  postContext,
 }: TipModalProps) {
   const { state, resolveMethods, createTip, fetchLightningInvoice, setTipStatus } = useTip();
   const { account, connect: connectWallet } = useWeb3();
@@ -34,12 +37,13 @@ export function TipModal({
   useEffect(() => {
     if (open) {
       setInvoice(null);
-      resolveMethods(recipientProtocol, recipientAuthorId).then((methods) => {
+      resolveMethods(recipientProtocol, recipientAuthorId, postContext).then((methods) => {
+        const recommended = methods.find((m) => m.available && m.recommended);
         const firstAvailable = methods.find((m) => m.available);
-        if (firstAvailable) setSelectedMethod(firstAvailable.method);
+        setSelectedMethod(recommended?.method ?? firstAvailable?.method ?? null);
       });
     }
-  }, [open, recipientProtocol, recipientAuthorId, resolveMethods]);
+  }, [open, recipientProtocol, recipientAuthorId, postContext, resolveMethods]);
 
   const handleClose = useCallback(() => {
     setInvoice(null);
@@ -227,12 +231,18 @@ export function TipModal({
               <div className="mb-3 inline-block animate-spin text-2xl">⚡</div>
               <p className="text-sm text-gray-500">Loading tipping options...</p>
             </div>
-          ) : state.methods.length === 0 ? (
+          ) : state.methods.length === 0 || availableMethods.length === 0 ? (
             <div className="py-8 text-center">
               <p className="mb-2 text-gray-500">No tipping methods available for this creator</p>
-              <p className="text-xs text-gray-600">
+              <p className="mb-4 text-xs text-gray-600">
                 They may not have linked any wallets or payment accounts yet.
               </p>
+              <a
+                href="/profile/monetization"
+                className="inline-block rounded-lg bg-degen-500/20 px-4 py-2 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-colors"
+              >
+                Set up tipping
+              </a>
             </div>
           ) : (
             <>
@@ -257,7 +267,14 @@ export function TipModal({
                     >
                       <span className="text-lg">{m.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white">{m.label}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-white">{m.label}</div>
+                          {m.recommended && (
+                            <span className="shrink-0 rounded-full bg-degen-500/20 px-2 py-0.5 text-[10px] font-medium text-degen-400">
+                              Recommended
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-500 truncate">{m.description}</div>
                       </div>
                       {m.fee && (

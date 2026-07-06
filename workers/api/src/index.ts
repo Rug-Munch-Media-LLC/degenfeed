@@ -33,6 +33,8 @@ import {
   handleTipFrameCallback,
   handleTipFrameTx,
   handleTipResolve,
+  handleTipSettingsGet,
+  handleTipSettingsPost,
 } from './routes/tip';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleSessionVerify, requireSession } from './session';
@@ -280,6 +282,17 @@ export default {
           response = session;
         } else {
           response = await handleTipCreate(request, env);
+        }
+      } else if (path === '/api/tip/settings') {
+        const session = await requireSession(request, env);
+        if (session instanceof Response) {
+          response = session;
+        } else if (request.method === 'GET') {
+          response = await handleTipSettingsGet(request, env);
+        } else if (request.method === 'POST') {
+          response = await handleTipSettingsPost(request, env);
+        } else {
+          response = jsonResponse({ error: 'Method not allowed' }, 405);
         }
       } else if (path === '/api/feed/funding') {
         response = await handleFundingFeed(request, env);

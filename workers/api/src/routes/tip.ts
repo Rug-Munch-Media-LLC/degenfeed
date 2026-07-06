@@ -3,12 +3,14 @@ import {
   hasSuspiciousPayload,
   isAllowedProtocol,
   isValidAmount,
+  isValidEvmAddress,
+  isValidSolanaAddress,
   sanitizeString,
 } from '../sanitize';
 import { buildLensCollectIntent } from './lens';
 import { fetchZapInvoice, resolveLnurlFromPubkey } from './lightning';
 
-interface ResolvedTipMethod {
+export interface ResolvedTipMethod {
   method: string;
   label: string;
   description: string;
@@ -20,26 +22,179 @@ interface ResolvedTipMethod {
   fee?: string;
   /** For methods that need a URL (Farcaster Frame, Lens collect) */
   actionUrl?: string;
+  /** True for the auto-routed best method */
+  recommended?: boolean;
+  /** Rank for sorting: lower is better */
+  rank?: number;
 }
 
-export async function handleTipResolve(request: Request, env: Env): Promise<Response> {
-  const url = new URL(request.url);
-  const protocol = sanitizeString(url.searchParams.get('protocol'), 32);
-  const authorId = sanitizeString(url.searchParams.get('authorId'), 256);
+export interface TipPostContext {
+  protocol: string;
+  authorId: string;
+  /** Author monetization preferences when known */
+  author?: {
+    evmAddress?: string;
+    solanaAddress?: string;
+    lightningAddress?: string;
+    farcasterCustodyAddress?: string;
+    lensProfile?: string;
+    nostrPubkey?: string;
+  };
+  /** Protocol-specific metadata */
+  meta?: {
+    hasCollectModule?: boolean;
+    publicationId?: string;
+  };
+}
 
-  if (!protocol || !authorId || !isAllowedProtocol(protocol) || hasSuspiciousPayload(authorId)) {
-    return jsonResponse({ error: 'protocol and authorId required' }, 400);
+const METHOD_RANK = {
+  native: 0,
+  lightning_zap: 1,
+  ethereum: 2,
+  solana: 3,
+  farcaster_frame: 4,
+  lens_collect: 5,
+} as const;
+
+function methodBaseRank(method: string): number {
+  switch (method) {
+    case 'lightning_zap':
+      return METHOD_RANK.lightning_zap;
+    case 'ethereum':
+      return METHOD_RANK.ethereum;
+    case 'solana':
+      return METHOD_RANK.solana;
+    case 'farcaster_frame':
+      return METHOD_RANK.farcaster_frame;
+    case 'lens_collect':
+      return METHOD_RANK.lens_collect;
+    default:
+      return 99;
+  }
+}
+
+function parsePostContext(input: string | null): TipPostContext | null {
+  if (!input) return null;
+  try {
+    const parsed = JSON.parse(input) as TipPostContext;
+    if (
+      typeof parsed.protocol === 'string' &&
+      typeof parsed.authorId === 'string' &&
+      isAllowedProtocol(parsed.protocol) &&
+      !hasSuspiciousPayload(parsed.authorId)
+    ) {
+      return parsed;
+    }
+  } catch {
+    /* ignore invalid JSON */
+  }
+  return null;
+}
+
+function markRecommended(methods: ResolvedTipMethod[], method: string): ResolvedTipMethod[] {
+  return methods.map((m) => (m.method === method ? { ...m, recommended: true } : m));
+}
+
+/**
+ * Rank methods for a given protocol + author context.
+ * Order: native protocol method > Lightning > EVM > Solana.
+ */
+export function rankMethods(
+  methods: ResolvedTipMethod[],
+  protocol: string,
+  postContext?: TipPostContext | null,
+): ResolvedTipMethod[] {
+  const author = postContext?.author;
+
+  // Determine native method and whether it is viable
+  let nativeMethod: string | null = null;
+  switch (protocol) {
+    case 'nostr':
+      if (author?.lightningAddress || author?.nostrPubkey) {
+        nativeMethod = 'lightning_zap';
+      }
+      break;
+    case 'lens':
+      if (postContext?.meta?.hasCollectModule || author?.lensProfile) {
+        nativeMethod = 'lens_collect';
+      }
+      break;
+    case 'farcaster':
+      if (author?.farcasterCustodyAddress) {
+        nativeMethod = 'farcaster_frame';
+      }
+      break;
+    default:
+      nativeMethod = null;
   }
 
+  // Apply availability from author context
+  const contextualized = methods.map((m) => {
+    switch (m.method) {
+      case 'ethereum':
+        return {
+          ...m,
+          available: m.available || !!author?.evmAddress,
+          address: author?.evmAddress,
+        };
+      case 'solana':
+        return {
+          ...m,
+          available: m.available || !!author?.solanaAddress,
+          address: author?.solanaAddress,
+        };
+      case 'lightning_zap':
+        return {
+          ...m,
+          available: m.available || !!author?.lightningAddress || !!author?.nostrPubkey,
+          address: author?.lightningAddress,
+        };
+      case 'farcaster_frame':
+        return {
+          ...m,
+          available: m.available || !!author?.farcasterCustodyAddress,
+          address: author?.farcasterCustodyAddress,
+        };
+      case 'lens_collect':
+        return {
+          ...m,
+          available: m.available || !!postContext?.meta?.hasCollectModule || !!author?.lensProfile,
+          address: author?.lensProfile,
+        };
+      default:
+        return m;
+    }
+  });
+
+  // Compute ranks: native protocol gets top priority when available
+  const ranked = contextualized.map((m) => {
+    let rank = methodBaseRank(m.method);
+    if (nativeMethod && m.method === nativeMethod && m.available) {
+      rank = METHOD_RANK.native;
+    }
+    return { ...m, rank };
+  });
+
+  ranked.sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+
+  // Mark the first available method as recommended
+  const firstAvailable = ranked.find((m) => m.available);
+  if (firstAvailable) {
+    return markRecommended(ranked, firstAvailable.method);
+  }
+
+  return ranked;
+}
+
+function buildBaseMethods(protocol: string, env: Env): ResolvedTipMethod[] {
   const methods: ResolvedTipMethod[] = [];
 
-  // Common crypto methods — always available
   methods.push({
     method: 'ethereum',
     label: 'Ethereum / EVM',
     description: 'Send ETH, USDC, or any ERC-20 on Ethereum, Base, Optimism, Arbitrum, Polygon',
     icon: '◆',
-    available: true,
+    available: false,
     chain: 'ethereum',
     minAmount: 0.0001,
     fee: '~$0.05-5 (varies by chain)',
@@ -50,13 +205,12 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
     label: 'Solana',
     description: 'Send SOL, USDC, or any SPL token — sub-cent fees',
     icon: '◎',
-    available: true,
+    available: false,
     chain: 'solana',
     minAmount: 0.001,
     fee: '< $0.01',
   });
 
-  // Protocol-specific methods
   switch (protocol) {
     case 'nostr':
       methods.push({
@@ -64,8 +218,8 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
         label: 'Lightning Zap',
         description: 'Bitcoin Lightning via Nostr zaps — instant, near-zero fees',
         icon: '⚡',
-        available: true,
-        minAmount: 1, // sats
+        available: false,
+        minAmount: 1,
         fee: '< $0.001',
       });
       break;
@@ -76,8 +230,8 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
         label: 'Farcaster Frame',
         description: 'Tip via Farcaster Frame — embeddable in any cast',
         icon: '◈',
-        available: true,
-        actionUrl: `${env.GTS_INSTANCE_URL || 'https://degenfeed.xyz'}/api/tip/frame/${encodeURIComponent(authorId)}`,
+        available: false,
+        actionUrl: `${env.GTS_INSTANCE_URL || 'https://degenfeed.xyz'}/api/tip/frame/${encodeURIComponent('author')}`,
         fee: '~$0.01-0.50',
       });
       break;
@@ -88,7 +242,7 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
         label: 'Lens Collect',
         description: 'Collect this post via Lens protocol — supports free + paid collects',
         icon: '◎',
-        available: true,
+        available: false,
         fee: '~$0.01-1',
       });
       break;
@@ -96,15 +250,31 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
     case 'bluesky':
     case 'threads':
     case 'mastodon':
-      // Ethereum + Solana already added above
       break;
 
     default:
-      // Unknown protocol — offer generic crypto
       break;
   }
 
-  return jsonResponse({ methods, resolved: true });
+  return methods;
+}
+
+export async function handleTipResolve(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const protocol = sanitizeString(url.searchParams.get('protocol'), 32);
+  const authorId = sanitizeString(url.searchParams.get('authorId'), 256);
+  const postContextParam = sanitizeString(url.searchParams.get('postContext'), 2048);
+
+  if (!protocol || !authorId || !isAllowedProtocol(protocol) || hasSuspiciousPayload(authorId)) {
+    return jsonResponse({ error: 'protocol and authorId required' }, 400);
+  }
+
+  const postContext = parsePostContext(postContextParam);
+
+  const baseMethods = buildBaseMethods(protocol, env);
+  const rankedMethods = rankMethods(baseMethods, protocol, postContext);
+
+  return jsonResponse({ methods: rankedMethods, resolved: true });
 }
 
 export async function handleTipCreate(request: Request, _env: Env): Promise<Response> {
@@ -218,6 +388,82 @@ export async function handleTipCreate(request: Request, _env: Env): Promise<Resp
   }
 }
 
+export interface CreatorTipSettings {
+  evmAddress?: string;
+  solanaAddress?: string;
+  lightningAddress?: string;
+  farcasterCustodyAddress?: string;
+  lensProfile?: string;
+  nostrPubkey?: string;
+  preferredMethod?: string;
+}
+
+function sanitizeSettings(input: unknown): CreatorTipSettings | null {
+  if (typeof input !== 'object' || input === null) return null;
+  const raw = input as Record<string, unknown>;
+  const settings: CreatorTipSettings = {};
+
+  const evmAddress = sanitizeString(raw.evmAddress, 128);
+  if (evmAddress && !isValidEvmAddress(evmAddress)) return null;
+  if (evmAddress) settings.evmAddress = evmAddress;
+
+  const solanaAddress = sanitizeString(raw.solanaAddress, 128);
+  if (solanaAddress && !isValidSolanaAddress(solanaAddress)) return null;
+  if (solanaAddress) settings.solanaAddress = solanaAddress;
+
+  const lightningAddress = sanitizeString(raw.lightningAddress, 128);
+  if (lightningAddress) settings.lightningAddress = lightningAddress;
+
+  const farcasterCustodyAddress = sanitizeString(raw.farcasterCustodyAddress, 128);
+  if (farcasterCustodyAddress && !isValidEvmAddress(farcasterCustodyAddress)) return null;
+  if (farcasterCustodyAddress) settings.farcasterCustodyAddress = farcasterCustodyAddress;
+
+  const lensProfile = sanitizeString(raw.lensProfile, 128);
+  if (lensProfile) settings.lensProfile = lensProfile;
+
+  const nostrPubkey = sanitizeString(raw.nostrPubkey, 128);
+  if (nostrPubkey) settings.nostrPubkey = nostrPubkey;
+
+  const preferredMethod = sanitizeString(raw.preferredMethod, 32);
+  if (preferredMethod) settings.preferredMethod = preferredMethod;
+
+  return settings;
+}
+
+/**
+ * GET /api/tip/settings
+ * Returns the creator's configured addresses. KV not wired yet, so this is a
+ * passthrough that returns an empty/default payload.
+ */
+export async function handleTipSettingsGet(_request: Request, _env: Env): Promise<Response> {
+  return jsonResponse({
+    settings: {},
+    localFirst: true,
+  });
+}
+
+/**
+ * POST /api/tip/settings
+ * Stores creator monetization settings. KV not wired yet, so this validates
+ * and returns success; the client is expected to persist locally.
+ */
+export async function handleTipSettingsPost(request: Request, _env: Env): Promise<Response> {
+  try {
+    const body = (await request.json()) as Record<string, unknown>;
+    const settings = sanitizeSettings(body);
+    if (!settings) {
+      return jsonResponse({ error: 'Invalid settings' }, 400);
+    }
+    return jsonResponse({
+      success: true,
+      settings,
+      localFirst: true,
+    });
+  } catch (err) {
+    return jsonResponse({ error: String(err) }, 500);
+  }
+}
+
 /**
  * Generate a Lightning zap invoice for a Nostr user.
  */
@@ -282,8 +528,8 @@ export async function handleTipFrame(request: Request, _env: Env): Promise<Respo
   <meta property="fc:frame:image" content="https://degenfeed.xyz/og/tip.png" />
   <meta property="fc:frame:button:1" content="⚡ Tip ${amount} ETH" />
   <meta property="fc:frame:button:1:action" content="tx" />
-  <meta property="fc:frame:button:1:target" content="https://degenfeed.xyz/api/tip/frame/tx/${recipientId}?amount=${amount}" />
-  <meta property="fc:frame:post_url" content="https://degenfeed.xyz/api/tip/frame/callback/${recipientId}?amount=${amount}" />
+  <meta property="fc:frame:button:1:target" content="https://degenfeed.xyz/api/tip/frame/tx/${encodeURIComponent(recipientId)}?amount=${amount}" />
+  <meta property="fc:frame:post_url" content="https://degenfeed.xyz/api/tip/frame/callback/${encodeURIComponent(recipientId)}?amount=${amount}" />
   <meta property="og:title" content="Tip on DegenFeed" />
   <meta property="og:description" content="Send a tip via DegenFeed — cross-platform, no platform fees" />
 </head>

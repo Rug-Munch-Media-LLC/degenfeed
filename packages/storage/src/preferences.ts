@@ -84,6 +84,7 @@ export async function wipeAll(): Promise<void> {
     db.clear('muted'),
     db.clear('muted-words'),
     db.clear('prefs'),
+    db.clear('monetization'),
   ]);
 }
 

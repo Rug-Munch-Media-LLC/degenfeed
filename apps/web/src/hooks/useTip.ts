@@ -13,6 +13,7 @@ export interface TipMethod {
   minAmount?: number;
   fee?: string;
   actionUrl?: string;
+  recommended?: boolean;
 }
 
 export interface TipIntent {
@@ -42,6 +43,23 @@ export interface TipState {
   txHash?: string;
 }
 
+export interface TipPostContext {
+  protocol: string;
+  authorId: string;
+  author?: {
+    evmAddress?: string;
+    solanaAddress?: string;
+    lightningAddress?: string;
+    farcasterCustodyAddress?: string;
+    lensProfile?: string;
+    nostrPubkey?: string;
+  };
+  meta?: {
+    hasCollectModule?: boolean;
+    publicationId?: string;
+  };
+}
+
 const INITIAL: TipState = {
   methods: [],
   selectedMethod: null,
@@ -55,29 +73,40 @@ export function useTip() {
   const reset = useCallback(() => setState(INITIAL), []);
 
   /** Resolve available tipping methods for a recipient. */
-  const resolveMethods = useCallback(async (protocol: string, authorId: string) => {
-    setState((s) => ({ ...s, status: 'resolving' }));
-    try {
-      const res = await fetch(
-        `/api/tip/resolve?protocol=${encodeURIComponent(protocol)}&authorId=${encodeURIComponent(authorId)}`,
-        { credentials: 'include' },
-      );
-      const data = (await res.json()) as { methods?: TipMethod[] };
-      const methods: TipMethod[] = data.methods || [];
+  const resolveMethods = useCallback(
+    async (protocol: string, authorId: string, postContext?: TipPostContext) => {
+      setState((s) => ({ ...s, status: 'resolving' }));
+      try {
+        const params = new URLSearchParams({
+          protocol,
+          authorId,
+        });
+        if (postContext) {
+          params.set('postContext', JSON.stringify(postContext));
+        }
+        const res = await fetch(`/api/tip/resolve?${params.toString()}`, {
+          credentials: 'include',
+        });
+        const data = (await res.json()) as { methods?: TipMethod[] };
+        const methods: TipMethod[] = data.methods || [];
+        const recommended = methods.find((m) => m.available && m.recommended);
+        const firstAvailable = methods.find((m) => m.available);
 
-      setState((s) => ({
-        ...s,
-        methods,
-        selectedMethod: methods.find((m) => m.available)?.method || null,
-        status: 'idle',
-      }));
+        setState((s) => ({
+          ...s,
+          methods,
+          selectedMethod: recommended?.method ?? firstAvailable?.method ?? null,
+          status: 'idle',
+        }));
 
-      return methods;
-    } catch (err) {
-      setState((s) => ({ ...s, status: 'failed', error: String(err) }));
-      return [];
-    }
-  }, []);
+        return methods;
+      } catch (err) {
+        setState((s) => ({ ...s, status: 'failed', error: String(err) }));
+        return [];
+      }
+    },
+    [],
+  );
 
   /** Create a tip intent on the server. The caller must handle signing. */
   const createTip = useCallback(

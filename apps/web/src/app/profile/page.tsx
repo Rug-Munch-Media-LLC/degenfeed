@@ -233,6 +233,47 @@ export default function ProfilePage() {
 
           <div className="mb-6">
             <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+              Creator Tools
+            </h2>
+            <div className="card border-degen-500/20 bg-degen-500/5 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-degen-400">Tips Dashboard</div>
+                  <div className="text-2xl font-bold text-white">$0.00</div>
+                  <div className="text-[10px] text-gray-500">Estimated total tips received</div>
+                </div>
+                {(() => {
+                  const tipAddr = identities.find((i) => i.address)?.address;
+                  if (!tipAddr || typeof window === 'undefined') return null;
+                  const tipUrl = tipAddr.startsWith('0x')
+                    ? `ethereum:${tipAddr}`
+                    : `solana:${tipAddr}`;
+                  return (
+                    <div className="rounded-lg bg-white p-1.5 shadow-sm">
+                      <QRCodeSVG value={tipUrl} size={64} />
+                    </div>
+                  );
+                })()}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href="/profile/monetization"
+                  className="rounded-lg bg-degen-500/20 px-3 py-1.5 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-colors"
+                >
+                  Monetization settings
+                </a>
+                <a
+                  href="/profile/monetization"
+                  className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                >
+                  Set up tipping
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
               Receive Tips
             </h2>
             <div className="space-y-3">
