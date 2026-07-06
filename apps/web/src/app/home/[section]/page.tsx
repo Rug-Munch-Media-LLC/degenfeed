@@ -6,6 +6,8 @@ import { useAuth } from "../../../components/AuthProvider";
 import { FeedList, ComposeModal, SignInModal, NotificationBell, type UnifiedPost, type Notification } from "@degenfeed/ui";
 import { SECTIONS } from "../sections";
 
+export const runtime = 'edge';
+
 interface Props {
   params: Promise<{ section: string }>;
 }

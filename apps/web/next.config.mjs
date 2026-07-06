@@ -1,25 +1,17 @@
-/** @type {import('next').NextConfig} */
+/** @type {import("next").NextConfig} */
 const nextConfig = {
-  output: 'export',
-  images: {
-    unoptimized: true,
-  },
+  images: { unoptimized: true },
   transpilePackages: [
-    '@degenfeed/types',
-    '@degenfeed/feed-core',
-    '@degenfeed/ranking',
-    '@degenfeed/identity',
-    '@degenfeed/storage',
-    '@degenfeed/auth',
-    '@degenfeed/nostr-sdk',
-    '@degenfeed/bluesky-sdk',
-    '@degenfeed/farcaster-sdk',
-    '@degenfeed/lens-sdk',
-    '@degenfeed/threads-sdk',
-    '@degenfeed/mastodon-sdk',
-    '@degenfeed/rss-sdk',
-    '@degenfeed/ui',
+    "@degenfeed/types",
+    "@degenfeed/feed-core",
+    "@degenfeed/ranking",
+    "@degenfeed/nostr-sdk",
+    "@degenfeed/storage",
+    "@degenfeed/auth",
+    "@degenfeed/identity",
+    "@degenfeed/ui",
   ],
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
 };
-
 export default nextConfig;

@@ -15,6 +15,8 @@ import { handleRssFeed } from './routes/rss';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
 import { handlePublish, handleEngage } from './routes/publish';
 import { handleTopFeed, handleNewsletterFeed, handleTrendingFeed } from './routes/curated';
+import { handlePrices } from './routes/prices';
+import { handleFundingFeed } from './routes/funding';
 import { handleNotifications } from './routes/notifications';
 import { handleResolveIdentity } from './routes/identity';
 import type { Protocol } from '@degenfeed/types';
@@ -53,6 +55,12 @@ const DEFAULT_RATE_MAX = 20;
 
 export function rateLimit(ip: string, maxReq: number = DEFAULT_RATE_MAX, windowMs: number = DEFAULT_RATE_WINDOW): { allowed: boolean; retryAfter: number } {
   const now = Date.now();
+  // Inline cleanup: purge expired entries
+  if (requestLog.size > 10000) {
+    for (const [key, entry] of requestLog) {
+      if (now > entry.resetAt) requestLog.delete(key);
+    }
+  }
   const entry = requestLog.get(ip);
   if (!entry || now > entry.resetAt) {
     requestLog.set(ip, { count: 1, resetAt: now + windowMs });
@@ -65,12 +73,7 @@ export function rateLimit(ip: string, maxReq: number = DEFAULT_RATE_MAX, windowM
   return { allowed: true, retryAfter: 0 };
 }
 
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of requestLog) {
-    if (now > entry.resetAt) requestLog.delete(ip);
-  }
-}, 60000);
+// Rate limit cleanup inline in rateLimit() — avoids global setInterval (CF Workers restriction)
 
 // ─── GotoSocial config ───────────────────────────────────────────────
 
@@ -167,6 +170,8 @@ export default {
                   if (path === '/api/feed/top') { return handleTopFeed(request, env); }
       if (path === '/api/feed/newsletters') { return handleNewsletterFeed(request, env); }
       if (path === '/api/feed/trending') { return handleTrendingFeed(request, env); }
+            if (path === '/api/prices') { return handlePrices(request, env); }
+      if (path === '/api/feed/funding') { return handleFundingFeed(request, env); }
       if (path === '/api/notifications') { return handleNotifications(request, env); }
       if (path === '/api/identity/resolve') {
         return handleResolveIdentity(request, env);
