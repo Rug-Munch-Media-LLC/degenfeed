@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import NewsClient from './NewsClient';
 import NewsLoading from './loading';
 
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 interface NewsApiResponse {
