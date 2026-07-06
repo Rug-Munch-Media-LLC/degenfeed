@@ -1,54 +1,16 @@
-import { buildUnifiedPost } from '@degenfeed/feed-core';
-import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import type { Protocol, UnifiedIdentity } from '@degenfeed/types';
 
-export type { Protocol, UnifiedIdentity, UnifiedPost };
+export type { Protocol, UnifiedIdentity };
 
 export const BSKY_PUBLIC_URL = 'https://public.api.bsky.app';
 export const BSKY_SOCIAL_URL = 'https://bsky.social';
 export const DEFAULT_USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
-
-export const CURATED_BSKY_ACTORS = [
-  'jay.bsky.social',
-  'naval.bsky.social',
-  'balajis.com',
-  'vitalik.eth.xyz',
-  'a16z.com',
-  'coinbase.com',
-  'solana.com',
-  'joe.bsky.social',
-  'shipyard.bsky.social',
-  'dappgem.bsky.social',
-  'defi.bsky.social',
-  'mert.bsky.social',
-  'ansem.bsky.social',
-  'blknoiz06.bsky.social',
-];
 
 export interface BskyAuthor {
   did: string;
   handle: string;
   displayName?: string;
   avatar?: string;
-}
-
-export interface BskyPostView {
-  uri: string;
-  cid: string;
-  author: BskyAuthor;
-  record: {
-    text: string;
-    createdAt: string;
-    embed?: {
-      type: string;
-      external?: { uri: string };
-      images?: { image: { ref: string }; alt: string }[];
-    };
-    reply?: { parent: { uri: string }; root: { uri: string } };
-  };
-  likeCount?: number;
-  repostCount?: number;
-  replyCount?: number;
-  indexedAt: string;
 }
 
 export interface BskyProfile {
@@ -88,52 +50,11 @@ export class BskyClient {
     };
     if (this.accessJwt) headers.authorization = `Bearer ${this.accessJwt}`;
     const res = await fetch(url.toString(), { headers });
-    if (!res.ok) throw new Error(`XRPC error: ${res.status} ${res.statusText}`);
-    return res.json();
-  }
-
-  async getTimeline(
-    limit = 50,
-    cursor?: string,
-  ): Promise<{ posts: BskyPostView[]; cursor?: string }> {
-    const params: Record<string, string> = { limit: String(limit) };
-    if (cursor) params.cursor = cursor;
-    const data = (await this.xrpc('/xrpc/app.bsky.feed.getTimeline', params)) as {
-      feed: { post: BskyPostView }[];
-      cursor?: string;
-    };
-    return {
-      posts: (data.feed ?? []).map((f) => f.post),
-      cursor: data.cursor,
-    };
-  }
-
-  async getAuthorFeed(
-    actor: string,
-    limit = 50,
-    cursor?: string,
-  ): Promise<{ posts: BskyPostView[]; cursor?: string }> {
-    const params: Record<string, string> = { actor, limit: String(limit) };
-    if (cursor) params.cursor = cursor;
-    const data = (await this.xrpc('/xrpc/app.bsky.feed.getAuthorFeed', params)) as {
-      feed: { post: BskyPostView }[];
-      cursor?: string;
-    };
-    return {
-      posts: (data.feed ?? []).map((f) => f.post),
-      cursor: data.cursor,
-    };
-  }
-
-  async getActorFeeds(actors: string[], limitPerActor = 15): Promise<BskyPostView[]> {
-    const results = await Promise.allSettled(
-      actors.map((actor) => this.getAuthorFeed(actor, limitPerActor)),
-    );
-    const posts: BskyPostView[] = [];
-    for (const r of results) {
-      if (r.status === 'fulfilled') posts.push(...r.value.posts);
+    if (!res.ok) {
+      res.body?.cancel().catch(() => {});
+      throw new Error(`XRPC error: ${res.status} ${res.statusText}`);
     }
-    return posts;
+    return res.json();
   }
 
   async resolveHandle(handle: string): Promise<string> {
@@ -201,27 +122,6 @@ export class BskyClient {
       links: [],
       keys: { did: profile.did },
     };
-  }
-
-  postToUnifiedPost(post: BskyPostView, author?: UnifiedIdentity): UnifiedPost {
-    const identity = author ?? this.authorToIdentity(post.author);
-    return buildUnifiedPost({
-      protocol: 'bluesky',
-      nativeId: post.uri,
-      author: identity,
-      text: post.record.text,
-      parentNativeId: post.record.reply?.parent.uri,
-      rootNativeId: post.record.reply?.root.uri,
-      createdAt: new Date(post.record.createdAt).getTime(),
-      metrics: {
-        likes: post.likeCount ?? 0,
-        reposts: post.repostCount ?? 0,
-        replies: post.replyCount ?? 0,
-        quotes: 0,
-      },
-      viewer: { liked: false, reposted: false },
-      raw: post,
-    });
   }
 
   async like(uri: string, cid: string, actorDid: string): Promise<void> {

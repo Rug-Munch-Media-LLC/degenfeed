@@ -13,9 +13,9 @@
     "format:check": "biome format ."
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
-    "turbo": "^2.0.0",
-    "typescript": "^5.5.0"
+    "@biomejs/biome": "^2.5.2",
+    "turbo": "^2.10.3",
+    "typescript": "^6.0.3"
   },
   "engines": {
     "node": ">=20.0.0"

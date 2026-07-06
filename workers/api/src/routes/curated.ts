@@ -1,20 +1,14 @@
-import type { GtSStatus } from '@degenfeed/mastodon-sdk';
+import { FarcasterProvider, MastodonProvider, NostrProvider } from '@degenfeed/feed-providers';
 import type { UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
 
-// ─── Heat Score ────────────────────────────────────────────────
-// Scores a post based on engagement, recency, and source quality
 function heatScore(post: UnifiedPost, now: number): number {
   const ageHrs = (now - post.createdAt) / 3600000;
-  const recency = 0.5 ** (ageHrs / 24); // 24h half-life
-
+  const recency = 0.5 ** (ageHrs / 24);
   const likes = post.metrics?.likes ?? 0;
   const reposts = post.metrics?.reposts ?? 0;
   const replies = post.metrics?.replies ?? 0;
-
   const engagementScore = likes * 1 + reposts * 2 + replies * 3;
-
-  // Source quality multiplier
   const quality: Record<string, number> = {
     lens: 1.0,
     farcaster: 1.0,
@@ -24,13 +18,8 @@ function heatScore(post: UnifiedPost, now: number): number {
     threads: 0.7,
     rss: 0.6,
   };
-  const q = quality[post.protocol] ?? 0.5;
-
-  return engagementScore * recency * q;
+  return engagementScore * recency * (quality[post.protocol] ?? 0.5);
 }
-
-// ─── 1. Best of Web3 — /api/feed/top ──────────────────────────
-// Fetches from all protocols, scores by heat, returns top 50 in last 24h
 
 const FALLBACK_RELAYS = [
   'wss://relay.damus.io',
@@ -41,140 +30,29 @@ const FALLBACK_RELAYS = [
 ];
 
 async function fetchNostrTop(limit: number): Promise<UnifiedPost[]> {
-  const posts: UnifiedPost[] = [];
-  try {
-    const { RelayPool } = await import('@degenfeed/nostr-sdk');
-    const pool = new RelayPool(FALLBACK_RELAYS, { eoseTimeout: 3000 });
-    const events = await pool.list({ kinds: [1], limit: limit * 3 }, 3000);
-    pool.disconnectAll();
-    for (const ev of events) {
-      posts.push({
-        id: `nostr:${ev.id}`,
-        protocol: 'nostr' as const,
-        author: {
-          id: `nostr:${ev.pubkey}`,
-          primary: { protocol: 'nostr' as const, id: ev.pubkey },
-          handles: {
-            nostr: ev.pubkey.slice(0, 12),
-            farcaster: null,
-            lens: null,
-            bluesky: null,
-            threads: null,
-            rss: null,
-            mastodon: null,
-          },
-          displayName: ev.pubkey.slice(0, 12),
-          bio: '',
-          avatarUrl: '',
-          verified: [],
-          followerCount: 0,
-          followingCount: 0,
-          links: [],
-          keys: {},
-        },
-        text: ev.content,
-        embeds: [],
-        createdAt: ev.created_at * 1000,
-        metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-        engagement: {
-          viewerLiked: false,
-          viewerReposted: false,
-          viewerBookmarked: false,
-          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-        },
-        raw: ev,
-        niches: [],
-      });
-    }
-  } catch {}
-  return posts;
+  const provider = new NostrProvider({ relays: FALLBACK_RELAYS });
+  const result = await provider.fetchFeed({ timeoutMs: 6000, concurrency: 4 });
+  return result.posts.slice(0, limit);
 }
 
 async function fetchFarcasterTop(limit: number): Promise<UnifiedPost[]> {
-  const posts: UnifiedPost[] = [];
-  try {
-    const { HubClient } = await import('@degenfeed/farcaster-sdk');
-    const client = new HubClient('https://hub.farcaster.standardcrypto.vc:2281');
-    const fids = [1, 2, 3, 5650, 1234, 11276, 215, 320];
-    const results = await Promise.allSettled(
-      fids.slice(0, 4).map((fid) => client.getCastsByFid(fid, Math.ceil(limit / 2))),
-    );
-    for (const r of results) {
-      if (r.status === 'fulfilled') {
-        for (const cast of r.value) {
-          posts.push(cast as unknown as UnifiedPost);
-        }
-      }
-    }
-  } catch {}
-  return posts;
+  const provider = new FarcasterProvider();
+  const result = await provider.fetchFeed({ timeoutMs: 6000, concurrency: 4 });
+  return result.posts.slice(0, limit);
 }
 
-async function fetchBlueskyTop(limit: number): Promise<UnifiedPost[]> {
-  const posts: UnifiedPost[] = [];
-  try {
-    const { BskyClient } = await import('@degenfeed/bluesky-sdk');
-    const client = new BskyClient('https://public.api.bsky.app');
-    const { posts: raw } = await client.getTimeline(limit);
-    for (const p of raw) {
-      posts.push(p as unknown as UnifiedPost);
-    }
-  } catch {}
-  return posts;
+async function fetchBlueskyTop(_limit: number): Promise<UnifiedPost[]> {
+  // Lazy-loaded to avoid pulling the provider into the hot path when not needed.
+  const { BlueskyProvider } = await import('@degenfeed/feed-providers');
+  const provider = new BlueskyProvider();
+  const result = await provider.fetchFeed({ timeoutMs: 6000, concurrency: 4 });
+  return result.posts;
 }
 
 async function fetchMastodonTop(limit: number): Promise<UnifiedPost[]> {
-  const posts: UnifiedPost[] = [];
-  try {
-    const { GtSClient } = await import('@degenfeed/mastodon-sdk');
-    const client = new GtSClient('https://social.degenfeed.xyz');
-    const statuses = await client.getPublicTimeline(limit);
-    for (const s of statuses as GtSStatus[]) {
-      posts.push({
-        id: `mastodon:${s.id}`,
-        protocol: 'mastodon' as const,
-        author: {
-          id: `mastodon:${s.account.id}`,
-          primary: { protocol: 'mastodon' as const, id: s.account.id },
-          handles: {
-            mastodon: s.account.acct,
-            nostr: null,
-            farcaster: null,
-            lens: null,
-            bluesky: null,
-            threads: null,
-            rss: null,
-          },
-          displayName: s.account.display_name || s.account.username,
-          bio: '',
-          avatarUrl: s.account.avatar,
-          verified: [],
-          followerCount: s.account.followers_count,
-          followingCount: s.account.following_count,
-          links: [],
-          keys: {},
-        },
-        text: s.content.replace(/<[^>]*>/g, ''),
-        embeds: [],
-        createdAt: new Date(s.created_at).getTime(),
-        metrics: {
-          likes: s.favourites_count,
-          reposts: s.reblogs_count,
-          replies: s.replies_count,
-          quotes: 0,
-        },
-        engagement: {
-          viewerLiked: false,
-          viewerReposted: false,
-          viewerBookmarked: false,
-          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-        },
-        raw: s,
-        niches: [],
-      });
-    }
-  } catch {}
-  return posts;
+  const provider = new MastodonProvider();
+  const result = await provider.fetchFeed({ timeoutMs: 6000, concurrency: 4 });
+  return result.posts.slice(0, limit);
 }
 
 export async function handleTopFeed(request: Request, _env: Env): Promise<Response> {

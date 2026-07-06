@@ -15,6 +15,7 @@
     "@degenfeed/bluesky-sdk": "workspace:*",
     "@degenfeed/farcaster-sdk": "workspace:*",
     "@degenfeed/feed-core": "workspace:*",
+    "@degenfeed/feed-providers": "workspace:*",
     "@degenfeed/identity": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/mastodon-sdk": "workspace:*",

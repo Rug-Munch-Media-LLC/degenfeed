@@ -1,48 +1,13 @@
 /**
  * @degenfeed/mastodon-sdk
  *
- * GotoSocial / Mastodon API client.
- *
- * GotoSocial (https://gotosocial.org) is a lightweight ActivityPub server
- * written in Go (~50MB RAM, single binary). It implements the full Mastodon
- * client API, making this SDK fully compatible.
- *
- * Also works with Mastodon, Pleroma, Akkoma, and Misskey servers.
- *
- * All posts normalize to @degenfeed/types `UnifiedPost`.
- *
- * ## Architecture
- *
- *   GtSClient.connect(instanceUrl, accessToken) → GtSClient
- *     .getPublicTimeline(limit, cursor)   → UnifiedPost[]
- *     .getHomeTimeline(limit, cursor)     → UnifiedPost[] (auth required)
- *     .getAccountStatuses(accountId)      → UnifiedPost[]
- *     .getPost(id)                        → UnifiedPost
- *     .publish(text, opts)                → UnifiedPost
- *     .like(id)                           → void
- *     .repost(id)                         → void
- *     .reply(postId, text)                → UnifiedPost
- *     .getProfile(accountId)              → UnifiedIdentity
- *
- * ## Auth
- *   - Public read endpoints: NO AUTH required
- *   - Home timeline, write, engage: OAuth2 token or application token
- *   - GotoSocial supports app registration + token flow
- *
- * ## GotoSocial vs Mastodon
- *   GotoSocial is:
- *     - Single binary, no external deps (SQLite by default)
- *     - ~50MB RAM at idle vs Mastodon's ~1GB+
- *     - Full Mastodon API compatibility
- *     - Perfect for single-user or small community instances
+ * GotoSocial / Mastodon API client for auth, identity, and write operations.
  */
 
-import { buildUnifiedPost, detectNiches } from '@degenfeed/feed-core';
+import { buildUnifiedPost } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
 export type { Protocol, UnifiedIdentity, UnifiedPost, Embed };
-
-// ─── API types (GoToSocial / Mastodon) ────────────────────────────────
 
 export interface GtSStatus {
   id: string;
@@ -129,8 +94,6 @@ export interface GtSPoll {
   expires_at: string | null;
 }
 
-// ─── Client ───────────────────────────────────────────────────────────
-
 export const DEFAULT_USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
 
 export class GtSClient {
@@ -156,8 +119,6 @@ export class GtSClient {
     return this.accessToken !== null;
   }
 
-  // ─── API request helper ────────────────────────────────────────────
-
   private async api<T>(
     method: string,
     path: string,
@@ -180,6 +141,7 @@ export class GtSClient {
       body: body ? JSON.stringify(body) : undefined,
     });
     if (!res.ok) {
+      res.body?.cancel().catch(() => {});
       const errText = await res.text().catch(() => '');
       throw new Error(
         `GtS API error: ${res.status} ${res.statusText}${errText ? ` - ${errText.slice(0, 200)}` : ''}`,
@@ -196,36 +158,6 @@ export class GtSClient {
     return this.api<T>('POST', path, body);
   }
 
-  // ─── Timeline endpoints ────────────────────────────────────────────
-
-  /** Get the public (local) timeline. No auth required. */
-  async getPublicTimeline(limit = 20, maxId?: string): Promise<GtSStatus[]> {
-    const params: Record<string, string | number> = { limit, local: 'true' as string };
-    if (maxId) params.max_id = maxId;
-    return this.get<GtSStatus[]>('/api/v1/timelines/public', params);
-  }
-
-  /** Get the federated timeline. No auth required. */
-  async getFederatedTimeline(limit = 20, maxId?: string): Promise<GtSStatus[]> {
-    const params: Record<string, string | number> = { limit };
-    if (maxId) params.max_id = maxId;
-    return this.get<GtSStatus[]>('/api/v1/timelines/public', params);
-  }
-
-  /** Get home timeline (people you follow). Requires auth. */
-  async getHomeTimeline(limit = 20, maxId?: string): Promise<GtSStatus[]> {
-    const params: Record<string, string | number> = { limit };
-    if (maxId) params.max_id = maxId;
-    return this.get<GtSStatus[]>('/api/v1/timelines/home', params);
-  }
-
-  /** Get a hashtag timeline. */
-  async getHashtagTimeline(hashtag: string, limit = 20): Promise<GtSStatus[]> {
-    return this.get<GtSStatus[]>(`/api/v1/timelines/tag/${encodeURIComponent(hashtag)}`, { limit });
-  }
-
-  // ─── Account endpoints ─────────────────────────────────────────────
-
   async verifyCredentials(): Promise<GtSAccount> {
     return this.get<GtSAccount>('/api/v1/accounts/verify_credentials');
   }
@@ -237,37 +169,6 @@ export class GtSClient {
   async lookupAccount(acct: string): Promise<GtSAccount> {
     return this.get<GtSAccount>('/api/v1/accounts/lookup', { acct });
   }
-
-  async getAccountStatuses(
-    accountId: string,
-    limit = 20,
-    excludeReplies = false,
-    maxId?: string,
-  ): Promise<GtSStatus[]> {
-    const params: Record<string, string | number> = { limit };
-    if (excludeReplies) params.exclude_replies = 'true';
-    if (maxId) params.max_id = maxId;
-    return this.get<GtSStatus[]>(
-      `/api/v1/accounts/${encodeURIComponent(accountId)}/statuses`,
-      params,
-    );
-  }
-
-  // ─── Status endpoints ──────────────────────────────────────────────
-
-  async getStatus(statusId: string): Promise<GtSStatus> {
-    return this.get<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}`);
-  }
-
-  async getStatusContext(
-    statusId: string,
-  ): Promise<{ ancestors: GtSStatus[]; descendants: GtSStatus[] }> {
-    return this.get<{ ancestors: GtSStatus[]; descendants: GtSStatus[] }>(
-      `/api/v1/statuses/${encodeURIComponent(statusId)}/context`,
-    );
-  }
-
-  // ─── Write endpoints (require auth) ────────────────────────────────
 
   async publish(
     text: string,
@@ -319,33 +220,8 @@ export class GtSClient {
   async unfollow(accountId: string): Promise<GtSAccount> {
     return this.post<GtSAccount>(`/api/v1/accounts/${encodeURIComponent(accountId)}/unfollow`);
   }
-
-  // ─── Search ────────────────────────────────────────────────────────
-
-  async search(
-    query: string,
-    type?: 'accounts' | 'statuses' | 'hashtags',
-    limit = 20,
-  ): Promise<{
-    accounts: GtSAccount[];
-    statuses: GtSStatus[];
-    hashtags: { name: string; url: string }[];
-  }> {
-    const params: Record<string, string | number> = { q: query, limit };
-    if (type) params.type = type;
-    return this.get<{
-      accounts: GtSAccount[];
-      statuses: GtSStatus[];
-      hashtags: { name: string; url: string }[];
-    }>('/api/v2/search', params);
-  }
 }
 
-// ─── Normalizers ───────────────────────────────────────────────────────
-
-/**
- * Normalize a GotoSocial status to UnifiedPost.
- */
 export function statusToUnifiedPost(
   status: GtSStatus,
   instanceUrl: string,
@@ -358,7 +234,6 @@ export function statusToUnifiedPost(
   const html = original.content || '';
   const text = stripHtml(html);
 
-  // Extract embeds
   const embeds: Embed[] = [];
   for (const media of original.media_attachments) {
     if (media.type === 'image' || media.type === 'gifv') {
@@ -380,9 +255,6 @@ export function statusToUnifiedPost(
   }
 
   const finalText = original.spoiler_text ? `[CW: ${original.spoiler_text}]\n\n${text}` : text;
-
-  const _niches = detectNiches(`${finalText} ${original.tags.map((t) => t.name).join(' ')}`);
-
   const nativeId = isBoost ? `boost:${status.id}:${original.id}` : original.id;
 
   return buildUnifiedPost({
@@ -405,9 +277,6 @@ export function statusToUnifiedPost(
   });
 }
 
-/**
- * Normalize a GotoSocial account to UnifiedIdentity.
- */
 export function accountToIdentity(
   account: GtSAccount,
   instanceUrl: string,
@@ -445,18 +314,16 @@ export function accountToIdentity(
   return identity;
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────
-
 function stripHtml(html: string): string {
   return html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
+    .replace(/\u003cbr\s*\/?\u003e/gi, '\n')
+    .replace(/\u003c[^\u003e]*\u003e/g, ' ')
+    .replace(/\u0026amp;/g, '\u0026')
+    .replace(/\u0026lt;/g, '\u003c')
+    .replace(/\u0026gt;/g, '\u003e')
+    .replace(/\u0026quot;/g, '"')
+    .replace(/\u0026#39;/g, "'")
+    .replace(/\u0026nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }

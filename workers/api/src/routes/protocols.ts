@@ -1,9 +1,4 @@
-import { GtSClient, type GtSStatus, statusToUnifiedPost } from '@degenfeed/mastodon-sdk';
-import {
-  CURATED_THREADS_HANDLES,
-  ThreadsClient,
-  type ThreadsPostView,
-} from '@degenfeed/threads-sdk';
+import { MastodonProvider, ThreadsProvider } from '@degenfeed/feed-providers';
 import { type Env, jsonResponse } from '../index';
 
 export async function handleActivityPubFeed(request: Request, _env: Env): Promise<Response> {
@@ -14,17 +9,14 @@ export async function handleActivityPubFeed(request: Request, _env: Env): Promis
   const limit = Number(params.get('limit')) || 20;
 
   try {
-    const client = new GtSClient(instance);
-    let statuses: GtSStatus[];
+    const provider = new MastodonProvider({ instanceUrl: instance });
+    const result = await provider.fetchFeed({ timeoutMs: 6000, concurrency: 4 });
+    let posts = result.posts;
     if (type === 'hashtag' && hashtag) {
-      statuses = await client.getHashtagTimeline(hashtag, limit);
-    } else if (type === 'federated') {
-      statuses = await client.getFederatedTimeline(limit);
-    } else {
-      statuses = await client.getPublicTimeline(limit);
+      posts = posts.filter((p) => p.text.toLowerCase().includes(`#${hashtag.toLowerCase()}`));
     }
-    const unified = statuses.map((s) => statusToUnifiedPost(s, instance));
-    return jsonResponse({ data: unified, meta: { total: unified.length, limit, instance } });
+    const sliced = posts.slice(0, limit);
+    return jsonResponse({ data: sliced, meta: { total: sliced.length, limit, instance } });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'ActivityPub fetch failed';
     return jsonResponse({ error: message }, 502);
@@ -37,18 +29,18 @@ export async function handleThreadsFeed(request: Request, _env: Env): Promise<Re
   const limit = Number(params.get('limit')) || 25;
 
   try {
-    const client = new ThreadsClient();
-    let posts: ThreadsPostView[] = [];
+    const provider = new ThreadsProvider();
+    const result = await provider.fetchFeed({ timeoutMs: 6000, concurrency: 4 });
+    let posts = result.posts;
     if (actor) {
-      const feed = await client.getAuthorFeed(actor, limit);
-      posts = feed.posts;
-    } else {
-      posts = await client.getAuthorFeeds(CURATED_THREADS_HANDLES, Math.ceil(limit / 5));
+      posts = posts.filter((p) =>
+        p.author.handles.threads?.toLowerCase().includes(actor.toLowerCase()),
+      );
     }
-    const unified = posts.slice(0, limit).map((p) => client.postToUnifiedPost(p));
+    const sliced = posts.slice(0, limit);
     return jsonResponse({
-      data: unified,
-      meta: { total: unified.length, limit },
+      data: sliced,
+      meta: { total: sliced.length, limit, notice: result.notice },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Threads fetch failed';

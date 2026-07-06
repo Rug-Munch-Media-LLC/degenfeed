@@ -18,7 +18,13 @@ import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from 
 import { handleBlinkTip } from './routes/blink';
 import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import { handleEngage } from './routes/engage';
-import { handleHomeFeed, handleTrendingFeed } from './routes/feed';
+import {
+  handleCategoryFeed,
+  handleFeedHealth,
+  handleHomeFeed,
+  handleProviderFeed,
+  handleTrendingFeed,
+} from './routes/feed';
 import { handleFundingFeed } from './routes/funding';
 import { handleRelaysHealth } from './routes/health';
 import { handleResolveIdentity } from './routes/identity';
@@ -228,12 +234,14 @@ export default {
         response = await handleHomeFeed(request, env);
       } else if (path === '/api/feed/trending') {
         response = await handleTrendingFeed(request, env);
+      } else if (path === '/api/feed/health') {
+        response = await handleFeedHealth(request, env);
+      } else if (path.startsWith('/api/feed/') && !path.startsWith('/api/feed/category/')) {
+        const provider = path.replace('/api/feed/', '');
+        response = await handleProviderFeed(request, env, provider);
       } else if (path.startsWith('/api/feed/category/')) {
         const category = path.replace('/api/feed/category/', '');
-        response = await handleHomeFeed(
-          new Request(`${url.origin}/api/feed/home?category=${encodeURIComponent(category)}`),
-          env,
-        );
+        response = await handleCategoryFeed(request, env, category);
       } else if (path === '/api/feed/activitypub') {
         response = await handleActivityPubFeed(request, env);
       } else if (path === '/api/feed/threads') {
