@@ -226,21 +226,57 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
               {/* Success */}
               {state.status === 'sent' && state.txHash && (
                 <div className="mt-3 rounded-lg bg-green-900/20 border border-green-900/50 p-3">
-                  <p className="mb-1 text-xs text-green-400">Tip sent successfully!</p>
-                  <a
-                    href={
-                      selectedMethod === 'ethereum'
-                        ? `https://etherscan.io/tx/${state.txHash}`
-                        : selectedMethod === 'solana'
-                        ? `https://solscan.io/tx/${state.txHash}`
-                        : '#'
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-degen-500 hover:text-degen-400 break-all"
-                  >
-                    View transaction
-                  </a>
+                  {selectedMethod === 'lightning_zap' ? (
+                    <>
+                      <p className="mb-2 text-xs text-green-400">Lightning Invoice Ready</p>
+                      <div className="mb-2 flex justify-center">
+                        {typeof window !== "undefined" && (
+                          <div className="rounded-xl bg-white p-2">
+                            <QRCodeSVG value={"lightning:" + state.txHash} size={160} />
+                          </div>
+                        )}
+                      </div>
+                      <p className="mb-2 text-center text-[10px] text-gray-500">
+                        Scan with any Lightning wallet (Alby, Wallet of Satoshi, Phoenix)
+                      </p>
+                      <div className="flex gap-2">
+                        <code className="flex-1 rounded bg-gray-900 px-2 py-1 text-[10px] text-gray-400 font-mono truncate">
+                          {state.txHash.slice(0, 40)}...
+                        </code>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(state.txHash || "")}
+                          className="shrink-0 rounded-lg bg-gray-800 px-2 py-1 text-[10px] text-gray-400 hover:text-white transition-colors"
+                          type="button"
+                        >
+                          Copy Invoice
+                        </button>
+                      </div>
+                      <a
+                        href={"lightning:" + state.txHash}
+                        className="mt-2 block text-center text-xs text-degen-500 hover:text-degen-400"
+                      >
+                        Open in wallet
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mb-1 text-xs text-green-400">Tip sent successfully!</p>
+                      <a
+                        href={
+                          selectedMethod === 'ethereum'
+                            ? `https://etherscan.io/tx/${state.txHash}`
+                            : selectedMethod === 'solana'
+                            ? `https://solscan.io/tx/${state.txHash}`
+                            : '#'
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-degen-500 hover:text-degen-400 break-all"
+                      >
+                        View transaction
+                      </a>
+                    </>
+                  )}
                 </div>
               )}
             </>

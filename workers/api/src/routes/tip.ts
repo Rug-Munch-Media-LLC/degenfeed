@@ -1,4 +1,5 @@
 import { type Env, jsonResponse } from '../index';
+import { resolveLnurlFromPubkey, fetchZapInvoice } from './lightning';
 
 interface ResolvedTipMethod {
   method: string;
@@ -179,11 +180,13 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
         });
 
       case 'lightning_zap':
+        // Fetch a real invoice from the LNURL-pay endpoint
         return jsonResponse({
           method: 'lightning_zap',
           intent: {
             amount: body.amount,
             note: 'Tip from DegenFeed',
+            zapEndpoint: '/api/tip/lightning/invoice',
           },
           instructions: 'Pay the Lightning invoice with your Nostr-compatible wallet (Alby, Wallet of Satoshi, etc.)',
         });
@@ -216,6 +219,43 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
   }
+}
+
+/**
+ * Generate a Lightning zap invoice for a Nostr user.
+ */
+export async function handleLightningInvoice(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const pubkey = url.searchParams.get('pubkey') || '';
+  const amountBtc = parseFloat(url.searchParams.get('amount') || '0.00001');
+  const comment = url.searchParams.get('comment') || 'Tip from DegenFeed';
+
+  if (!pubkey) {
+    return jsonResponse({ error: 'pubkey required' }, 400);
+  }
+
+  const relays = (env.RELAY_URLS || 'wss://relay.damus.io,wss://nos.lol').split(',');
+  const lnurl = await resolveLnurlFromPubkey(pubkey, relays);
+
+  if (!lnurl) {
+    return jsonResponse({ error: 'No LNURL found for this Nostr pubkey' }, 404);
+  }
+
+  // Convert BTC to msat (1 BTC = 100,000,000 sats = 100,000,000,000 msat)
+  const amountMsat = Math.floor(amountBtc * 100_000_000_000);
+  const result = await fetchZapInvoice(lnurl, amountMsat, comment);
+
+  if (result.status === 'ERROR') {
+    return jsonResponse({ error: result.reason || 'Failed to get invoice' }, 500);
+  }
+
+  return jsonResponse({
+    invoice: result.pr,
+    amount: result.amount,
+    expiresAt: result.expires_at,
+    allowsNsec: result.allowsNsec,
+    commentAllowed: result.commentAllowed,
+  });
 }
 
 /**
