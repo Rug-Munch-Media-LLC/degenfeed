@@ -8,9 +8,11 @@ routes = [
   { pattern = "app.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
 ]
 
+# GTS_CLIENT_SECRET is a secret. Set it via:
+#   wrangler secret put GTS_CLIENT_SECRET
+# Do not add it to [vars].
 [vars]
 GTS_CLIENT_ID = "01X3AAWH39P71TXZVKMEGAKMVC"
-GTS_CLIENT_SECRET = "b9f786b1-bc65-4fb8-87db-335024f9d3e5"
 GTS_INSTANCE_URL = "https://social.degenfeed.xyz"
 GTS_API_BASE = "https://social.degenfeed.xyz"
 GTS_REDIRECT_URI = "https://app.degenfeed.xyz/auth/callback"

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // Mock the nostr-sdk before importing
 vi.mock('@degenfeed/nostr-sdk', () => ({
@@ -12,7 +12,9 @@ vi.mock('@degenfeed/nostr-sdk', () => ({
 vi.mock('@degenfeed/farcaster-sdk', () => ({
   HubClient: vi.fn().mockImplementation(() => ({
     getCastsByFid: vi.fn().mockResolvedValue([]),
-    castToUnifiedPost: vi.fn().mockReturnValue({ id: 'fc:test', protocol: 'farcaster', text: 'test' }),
+    castToUnifiedPost: vi
+      .fn()
+      .mockReturnValue({ id: 'fc:test', protocol: 'farcaster', text: 'test' }),
   })),
 }));
 
@@ -29,17 +31,17 @@ vi.mock('@degenfeed/bluesky-sdk', () => ({
   })),
 }));
 
-import { jsonResponse } from '../index';
+import type { Env } from '../index';
 import { handleHomeFeed } from '../routes/feed';
 
 describe('handleHomeFeed', () => {
-  const mockEnv: any = {};
+  const mockEnv: Env = {};
 
   it('should return a response with data array', async () => {
     const req = new Request('http://localhost/api/feed/home?limit=5');
     const res = await handleHomeFeed(req, mockEnv);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = (await res.json()) as { data: unknown[]; meta: Record<string, unknown> };
     expect(Array.isArray(body.data)).toBe(true);
     expect(body.meta).toBeDefined();
     expect(body.meta.limit).toBe(5);
@@ -48,7 +50,7 @@ describe('handleHomeFeed', () => {
   it('should default to nostr,farcaster protocols', async () => {
     const req = new Request('http://localhost/api/feed/home');
     const res = await handleHomeFeed(req, mockEnv);
-    const body = await res.json() as any;
+    const body = (await res.json()) as { data: unknown[]; meta: Record<string, unknown> };
     expect(body.meta).toBeDefined();
   });
 
@@ -56,7 +58,7 @@ describe('handleHomeFeed', () => {
     const req = new Request('http://localhost/api/feed/home?protocols=nostr');
     const res = await handleHomeFeed(req, mockEnv);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = (await res.json()) as { data: unknown[]; meta: Record<string, unknown> };
     expect(Array.isArray(body.data)).toBe(true);
   });
 });

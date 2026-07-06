@@ -1,6 +1,6 @@
 import { type Env, jsonResponse } from '../index';
-import { resolveLnurlFromPubkey, fetchZapInvoice } from './lightning';
 import { buildLensCollectIntent } from './lens';
+import { fetchZapInvoice, resolveLnurlFromPubkey } from './lightning';
 
 interface ResolvedTipMethod {
   method: string;
@@ -101,7 +101,7 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
   return jsonResponse({ methods, resolved: true });
 }
 
-export async function handleTipCreate(request: Request, env: Env): Promise<Response> {
+export async function handleTipCreate(request: Request, _env: Env): Promise<Response> {
   try {
     const body = (await request.json()) as {
       recipient: string;
@@ -126,7 +126,8 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
             value: body.amount,
             chain: body.chain || 'ethereum',
           },
-          instructions: 'Sign with your Ethereum wallet (MetaMask, Rabby, Rainbow, etc.) to send the tip',
+          instructions:
+            'Sign with your Ethereum wallet (MetaMask, Rabby, Rainbow, etc.) to send the tip',
         });
 
       case 'solana':
@@ -137,7 +138,8 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
             amount: body.amount,
             chain: 'solana',
           },
-          instructions: 'Sign with your Solana wallet (Phantom, Solflare, Backpack, etc.) to send the tip',
+          instructions:
+            'Sign with your Solana wallet (Phantom, Solflare, Backpack, etc.) to send the tip',
         });
 
       case 'lightning_zap':
@@ -150,7 +152,8 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
             note: 'Tip from DegenFeed',
             zapEndpoint: '/api/tip/lightning/invoice',
           },
-          instructions: 'Pay the Lightning invoice with your Nostr-compatible wallet (Alby, Wallet of Satoshi, etc.)',
+          instructions:
+            'Pay the Lightning invoice with your Nostr-compatible wallet (Alby, Wallet of Satoshi, etc.)',
         });
 
       case 'farcaster_frame':
@@ -180,7 +183,7 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
       }
 
       default:
-        return jsonResponse({ error: 'Unknown tipping method: ' + body.method }, 400);
+        return jsonResponse({ error: `Unknown tipping method: ${body.method}` }, 400);
     }
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
@@ -193,7 +196,7 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
 export async function handleLightningInvoice(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const pubkey = url.searchParams.get('pubkey') || '';
-  const amountSats = parseFloat(url.searchParams.get('amount') || '1000');
+  const amountSats = Number.parseFloat(url.searchParams.get('amount') || '1000');
   const comment = url.searchParams.get('comment') || 'Tip from DegenFeed';
 
   if (!pubkey) {
@@ -229,7 +232,7 @@ export async function handleLightningInvoice(request: Request, env: Env): Promis
  * Returns Open Graph meta tags that Farcaster clients render as a tipping Frame.
  * recipientId should be the creator's Ethereum address.
  */
-export async function handleTipFrame(request: Request, env: Env): Promise<Response> {
+export async function handleTipFrame(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
   const parts = url.pathname.split('/');
   const recipientId = parts[parts.length - 1] || '';
@@ -262,7 +265,7 @@ export async function handleTipFrame(request: Request, env: Env): Promise<Respon
  * Farcaster Frame transaction endpoint.
  * Receives a POST from the Farcaster client and returns eth_sendTransaction params.
  */
-export async function handleTipFrameTx(request: Request, env: Env): Promise<Response> {
+export async function handleTipFrameTx(request: Request, _env: Env): Promise<Response> {
   try {
     const url = new URL(request.url);
     const parts = url.pathname.split('/');
@@ -271,8 +274,9 @@ export async function handleTipFrameTx(request: Request, env: Env): Promise<Resp
 
     // In production, validate the FrameActionPayload signature against a Farcaster hub.
     // For now we accept the client's signed message and rely on the user approving the tx in their wallet.
-    const body = (await request.json()) as any;
-    const fid = body?.untrustedData?.fid || body?.fid;
+    const body = (await request.json()) as Record<string, unknown>;
+    const fid =
+      ((body.untrustedData as Record<string, unknown>)?.fid as number) || (body.fid as number);
     if (!fid) {
       return jsonResponse({ error: 'Invalid Frame action: missing fid' }, 400);
     }
@@ -282,7 +286,7 @@ export async function handleTipFrameTx(request: Request, env: Env): Promise<Resp
       return jsonResponse({ error: 'Invalid recipient address' }, 400);
     }
 
-    const valueHex = '0x' + (BigInt(Math.floor(parseFloat(amount) * 1e18))).toString(16);
+    const valueHex = `0x${BigInt(Math.floor(Number.parseFloat(amount) * 1e18)).toString(16)}`;
 
     return jsonResponse({
       chainId: 'eip155:1',
@@ -301,15 +305,16 @@ export async function handleTipFrameTx(request: Request, env: Env): Promise<Resp
  * Farcaster Frame callback endpoint.
  * Receives the transaction hash after the user signs in their wallet.
  */
-export async function handleTipFrameCallback(request: Request, env: Env): Promise<Response> {
+export async function handleTipFrameCallback(request: Request, _env: Env): Promise<Response> {
   try {
     const url = new URL(request.url);
     const parts = url.pathname.split('/');
-    const recipientId = parts[parts.length - 1] || '';
-    const amount = url.searchParams.get('amount') || '0.001';
+    const _recipientId = parts[parts.length - 1] || '';
+    const _amount = url.searchParams.get('amount') || '0.001';
 
-    const body = (await request.json()) as any;
-    const txHash = (body?.untrustedData?.transactionId || body?.txHash) as string | undefined;
+    const body = (await request.json()) as Record<string, unknown>;
+    const txHash = (((body.untrustedData as Record<string, unknown>)?.transactionId as string) ||
+      (body.txHash as string)) as string | undefined;
     const success = !!txHash;
 
     const html = `<!DOCTYPE html>
@@ -321,7 +326,7 @@ export async function handleTipFrameCallback(request: Request, env: Env): Promis
   <meta property="og:title" content="Tip on DegenFeed" />
 </head>
 <body>
-  <p>${success ? 'Tip sent! Tx: ' + txHash : 'Tip could not be completed.'}</p>
+  <p>${success ? `Tip sent! Tx: ${txHash}` : 'Tip could not be completed.'}</p>
 </body>
 </html>`;
 
@@ -329,7 +334,7 @@ export async function handleTipFrameCallback(request: Request, env: Env): Promis
       status: 200,
       headers: { 'content-type': 'text/html; charset=utf-8' },
     });
-  } catch (err) {
+  } catch (_err) {
     return new Response('Error', { status: 500 });
   }
 }

@@ -1,28 +1,3 @@
-/**
- * @degenfeed/auth
- *
- * All sign-in methods. Each method returns a StoredIdentity that the
- * caller persists via @degenfeed/storage. The auth layer is responsible
- * for encryption-at-rest (AES-GCM with PBKDF2 key derivation).
- *
- * Threat model summary:
- *   - Keys never leave the browser in plaintext.
- *   - The user chooses a passphrase; we never see it.
- *   - The passphrase is held in memory only.
- *   - Encrypted blobs go to IndexedDB via @degenfeed/storage.
- *   - The "active session" is also memory-only.
- */
-
-import {
-  type StoredIdentity,
-  clearActiveSession,
-  deleteIdentity,
-  getIdentity,
-  saveIdentity,
-  setActiveSession,
-} from '@degenfeed/storage';
-import type { Protocol } from '@degenfeed/types';
-
 // ─── Encryption layer ───────────────────────────────────────────────────
 
 /**
@@ -101,4 +76,3 @@ function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
-

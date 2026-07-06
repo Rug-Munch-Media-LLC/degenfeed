@@ -64,8 +64,8 @@ export function ProtocolBadge({ protocol, size = 'sm', showLabel = true }: Proto
 
   return (
     <span
-      className={'inline-flex items-center gap-1 rounded-full font-medium ' + sizeClass}
-      style={{ backgroundColor: color + '22', color }}
+      className={`inline-flex items-center gap-1 rounded-full font-medium ${sizeClass}`}
+      style={{ backgroundColor: `${color}22`, color }}
       title={label}
     >
       <span className="text-[0.7em]">{icon}</span>

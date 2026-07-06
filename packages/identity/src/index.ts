@@ -184,20 +184,11 @@ async function resolveLensHandle(
 }
 
 async function resolveThreadsHandle(
-  handle: string,
-  fetchFn: typeof fetch,
+  _handle: string,
+  _fetchFn: typeof fetch,
 ): Promise<HandleResolution | null> {
-  try {
-    const url =
-      'https://public.threads.net/xrpc/com.atproto.identity.resolveHandle?handle=' +
-      encodeURIComponent(handle);
-    const res = await fetchFn(url);
-    if (!res.ok) return null;
-    const json = (await res.json()) as { did: string };
-    return { protocol: 'threads', id: json.did, handle: 'threads/' + handle };
-  } catch {
-    return null;
-  }
+  // TODO: Threads resolution not yet wired in resolveHandle dispatcher.
+  return null;
 }
 
 async function resolveBlueskyHandle(
@@ -229,12 +220,11 @@ export async function resolveFediverseHandle(
   // Format: user@instance.com
   const atIndex = handle.indexOf('@');
   if (atIndex <= 0 || atIndex === handle.length - 1) return null;
-  const username = handle.slice(0, atIndex);
+  const _username = handle.slice(0, atIndex);
   const domain = handle.slice(atIndex + 1);
 
   try {
-    const webfingerUrl =
-      'https://' + domain + '/.well-known/webfinger?resource=acct:' + encodeURIComponent(handle);
+    const webfingerUrl = `https://${domain}/.well-known/webfinger?resource=acct:${encodeURIComponent(handle)}`;
     const res = await fetchFn(webfingerUrl);
     if (!res.ok) return null;
     const json = (await res.json()) as { links?: { rel: string; href: string; type?: string }[] };

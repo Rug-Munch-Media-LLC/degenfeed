@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { ErrorTracker } from '../components/ErrorTracker';
 import { AuthProvider } from '../components/AuthProvider';
-import { SolanaProvider } from "../components/SolanaProvider";
+import { ErrorTracker } from '../components/ErrorTracker';
+import { SolanaProvider } from '../components/SolanaProvider';
 import { Web3Provider } from '../components/Web3Provider';
 
 export const metadata: Metadata = {
@@ -39,9 +39,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <ErrorTracker />
-        <SolanaProvider><Web3Provider>
-          <AuthProvider>{children}</AuthProvider>
-        </Web3Provider></SolanaProvider>
+        <SolanaProvider>
+          <Web3Provider>
+            <AuthProvider>{children}</AuthProvider>
+          </Web3Provider>
+        </SolanaProvider>
       </body>
     </html>
   );

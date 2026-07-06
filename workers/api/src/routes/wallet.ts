@@ -1,8 +1,8 @@
-import { type Env, jsonResponse } from '../index';
-import { secp256k1 } from '@noble/curves/secp256k1';
 import { ed25519 } from '@noble/curves/ed25519';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { type Env, jsonResponse } from '../index';
 
 const nonces = new Map<string, { nonce: string; expiresAt: number }>();
 const GTS_SCOPES = 'read write follow push';
@@ -12,7 +12,7 @@ function generateNonce(): string {
   return bytesToHex(bytes);
 }
 
-export async function handleWalletNonce(request: Request, env: Env): Promise<Response> {
+export async function handleWalletNonce(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
   const address = url.searchParams.get('address')?.toLowerCase() || '';
   if (!address) return jsonResponse({ error: 'Address required' }, 400);
@@ -31,22 +31,28 @@ export async function handleWalletNonce(request: Request, env: Env): Promise<Res
   return jsonResponse({ nonce });
 }
 
-function verifyEthereumSignature(message: string, signature: string, expectedAddress: string): boolean {
+function verifyEthereumSignature(
+  message: string,
+  signature: string,
+  expectedAddress: string,
+): boolean {
   try {
-    const prefix = '\x19Ethereum Signed Message:\n' + message.length;
+    const prefix = `\x19Ethereum Signed Message:\n${message.length}`;
     const msgHash = keccak_256(new TextEncoder().encode(prefix + message));
 
     const sig = signature.startsWith('0x') ? signature.slice(2) : signature;
     const rHex = sig.slice(0, 64);
     const sHex = sig.slice(64, 128);
-    const v = parseInt(sig.slice(128, 130), 16);
+    const v = Number.parseInt(sig.slice(128, 130), 16);
     const recovery = v - 27;
     if (recovery < 0 || recovery > 3) return false;
 
-    const sigObj = secp256k1.Signature.fromCompact(hexToBytes(rHex + sHex)).addRecoveryBit(recovery);
+    const sigObj = secp256k1.Signature.fromCompact(hexToBytes(rHex + sHex)).addRecoveryBit(
+      recovery,
+    );
     const pubKey = sigObj.recoverPublicKey(msgHash);
     const pubBytes = pubKey.toRawBytes(false).slice(1);
-    const address = '0x' + bytesToHex(keccak_256(pubBytes).slice(-20));
+    const address = `0x${bytesToHex(keccak_256(pubBytes).slice(-20))}`;
 
     return address.toLowerCase() === expectedAddress.toLowerCase();
   } catch {
@@ -54,7 +60,11 @@ function verifyEthereumSignature(message: string, signature: string, expectedAdd
   }
 }
 
-function verifySolanaSignature(message: string, signature: string, expectedAddress: string): boolean {
+function verifySolanaSignature(
+  message: string,
+  signature: string,
+  expectedAddress: string,
+): boolean {
   try {
     const msgBytes = new TextEncoder().encode(message);
     const sigBytes = hexToBytes(signature);
@@ -65,7 +75,9 @@ function verifySolanaSignature(message: string, signature: string, expectedAddre
   }
 }
 
-async function tryGtsAuth(env: Env): Promise<{ accessToken: string; clientId: string; clientSecret: string } | null> {
+async function tryGtsAuth(
+  env: Env,
+): Promise<{ accessToken: string; clientId: string; clientSecret: string } | null> {
   // If static GTS credentials are configured in env vars, use them.
   // Otherwise do NOT create a new OAuth app on every request — that pollutes
   // the instance with stale apps. Wallet-only auth still works without GTS.
@@ -84,7 +96,9 @@ async function tryGtsAuth(env: Env): Promise<{ accessToken: string; clientId: st
       }).toString(),
     });
     if (!tokenRes.ok) return null;
-    const token = await tokenRes.json() as any;
+    const token = (await tokenRes.json()) as { access_token?: string; token_type?: string };
+
+    if (!token.access_token) return null;
 
     return {
       accessToken: token.access_token,
@@ -147,8 +161,8 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
       identity: {
         protocol: body.chain,
         id: body.address.toLowerCase(),
-        displayName: body.address.slice(0, 6) + '...' + body.address.slice(-4),
-        handle: body.address.slice(0, 6) + '...' + body.address.slice(-4),
+        displayName: `${body.address.slice(0, 6)}...${body.address.slice(-4)}`,
+        handle: `${body.address.slice(0, 6)}...${body.address.slice(-4)}`,
         avatarUrl: null,
       },
       // GTS link is optional — user can set up later

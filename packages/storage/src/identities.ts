@@ -1,6 +1,6 @@
 import type { Protocol } from '@degenfeed/types';
-import { StoredIdentity } from './types';
 import { getDb } from './db';
+import type { StoredIdentity } from './types';
 
 export async function saveIdentity(identity: StoredIdentity): Promise<void> {
   const db = await getDb();
@@ -34,8 +34,8 @@ export async function setPrimaryIdentity(id: string): Promise<void> {
   const all = await tx.store.getAll();
   await Promise.all(
     all.map((identity: StoredIdentity) =>
-      tx.store.put({ ...identity, isPrimary: identity.id === id })
-    )
+      tx.store.put({ ...identity, isPrimary: identity.id === id }),
+    ),
   );
   await tx.done;
 }

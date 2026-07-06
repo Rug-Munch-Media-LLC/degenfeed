@@ -51,7 +51,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
   let exchangeError = '';
 
   try {
-    const res = await fetch(apiBase + '/api/auth/gotosocial/callback', {
+    const res = await fetch(`${apiBase}/api/auth/gotosocial/callback`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ code: params.code }),
@@ -80,7 +80,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
   if (exchangeOk) {
     // Store auth state and redirect to home — client-side code picks up the token
     return (
-      <html>
+      <html lang="en">
         <body>
           <div className="mx-auto max-w-md px-4 py-20 text-center">
             <div className="mb-6 text-5xl text-degen-400">\u2713</div>
@@ -89,18 +89,9 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
             <p className="mb-8 text-gray-400">Redirecting to your feed...</p>
           </div>
           <script
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: server-generated JSON stringified token stored client-side
             dangerouslySetInnerHTML={{
-              __html:
-                'const token = ' +
-                JSON.stringify(params.code) +
-                ';' +
-                'try {' +
-                '  const stored = JSON.parse(localStorage.getItem("degenfeed_identities") || "[]");' +
-                '  stored.push({ protocol: "mastodon", instance: "https://social.degenfeed.xyz", token: token, createdAt: Date.now() });' +
-                '  localStorage.setItem("degenfeed_identities", JSON.stringify(stored));' +
-                '  localStorage.setItem("degenfeed_auth_updated", Date.now().toString());' +
-                '} catch(e) { console.error("Token storage failed", e); }' +
-                'window.location.href = "/home";',
+              __html: `const token = ${JSON.stringify(params.code)};try {  const stored = JSON.parse(localStorage.getItem("degenfeed_identities") || "[]");  stored.push({ protocol: "mastodon", instance: "https://social.degenfeed.xyz", token: token, createdAt: Date.now() });  localStorage.setItem("degenfeed_identities", JSON.stringify(stored));  localStorage.setItem("degenfeed_auth_updated", Date.now().toString());} catch(e) { console.error("Token storage failed", e); }window.location.href = "/home";`,
             }}
           />
         </body>

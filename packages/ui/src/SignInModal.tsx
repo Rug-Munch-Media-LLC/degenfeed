@@ -88,7 +88,11 @@ const PROTOCOLS: ProtocolOption[] = [
   },
 ];
 
-function WalletSection({ onSignIn, walletAddress, walletSigningIn }: {
+function WalletSection({
+  onSignIn,
+  walletAddress,
+  walletSigningIn,
+}: {
   onSignIn: (protocol: string) => void;
   walletAddress?: string;
   walletSigningIn?: boolean;
@@ -131,7 +135,13 @@ function WalletSection({ onSignIn, walletAddress, walletSigningIn }: {
   );
 }
 
-export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSigningIn }: SignInModalProps) {
+export function SignInModal({
+  open,
+  onClose,
+  onSignIn,
+  walletAddress,
+  walletSigningIn,
+}: SignInModalProps) {
   if (!open) return null;
 
   const handleProtocolClick = (protocol: string) => {
@@ -143,17 +153,18 @@ export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSign
   };
 
   return (
-    <div
+    <section
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
       onClick={onClose}
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
-      role="dialog"
       aria-modal="true"
       aria-label="Sign in to DegenFeed"
     >
       <div
         className="mx-4 w-full max-w-lg rounded-2xl border border-gray-800 bg-gray-950 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="presentation"
       >
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -168,25 +179,44 @@ export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSign
             aria-label="Close"
             type="button"
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              role="img"
+              aria-label="Close icon"
+            >
+              <title>Close</title>
+              <path
+                d="M15 5L5 15M5 5l10 10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
 
         <div className="mb-6 space-y-2">
           {/* Social protocols */}
-          <h3 className="text-xs font-medium uppercase tracking-widest text-gray-500">Social Protocols</h3>
-          {PROTOCOLS.filter(p => p.method !== 'wallet').map((proto) => (
+          <h3 className="text-xs font-medium uppercase tracking-widest text-gray-500">
+            Social Protocols
+          </h3>
+          {PROTOCOLS.filter((p) => p.method !== 'wallet').map((proto) => (
             <button
               key={proto.id}
               onClick={() => handleProtocolClick(proto.id)}
               className="flex w-full items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left transition-all hover:border-gray-600 hover:bg-gray-800/50 group"
               type="button"
             >
-              <span className="text-2xl" style={{ color: proto.color }}>{proto.icon}</span>
+              <span className="text-2xl" style={{ color: proto.color }}>
+                {proto.icon}
+              </span>
               <div className="flex-1">
-                <div className="text-sm font-semibold text-white group-hover:text-degen-400 transition-colors">{proto.label}</div>
+                <div className="text-sm font-semibold text-white group-hover:text-degen-400 transition-colors">
+                  {proto.label}
+                </div>
                 <div className="text-xs text-gray-500">{proto.description}</div>
               </div>
               <span className="text-xs text-gray-600">→</span>
@@ -196,7 +226,11 @@ export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSign
 
         {/* Wallet section */}
         <div className="mb-6">
-          <WalletSection onSignIn={(p) => onSignIn(p)} walletAddress={walletAddress} walletSigningIn={walletSigningIn} />
+          <WalletSection
+            onSignIn={(p) => onSignIn(p)}
+            walletAddress={walletAddress}
+            walletSigningIn={walletSigningIn}
+          />
         </div>
 
         <div className="relative mb-6">
@@ -222,9 +256,11 @@ export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSign
 
         <p className="mt-6 text-center text-xs text-gray-600">
           No account needed to browse.{' '}
-          <a href="/home" className="text-degen-500 hover:underline">Start reading now</a>
+          <a href="/home" className="text-degen-500 hover:underline">
+            Start reading now
+          </a>
         </p>
       </div>
-    </div>
+    </section>
   );
 }

@@ -4,11 +4,10 @@
  */
 
 // Mock fetch — each test sets up its own responses
-import { vi, afterEach } from "vitest";
+import { afterEach, vi } from 'vitest';
 
 // Mock global fetch
-const originalFetch = globalThis.fetch;
-globalThis.fetch = vi.fn().mockImplementation(async (url: string | URL, opts?: RequestInit) => {
+globalThis.fetch = vi.fn().mockImplementation(async (_url: string | URL, _opts?: RequestInit) => {
   return new Response(JSON.stringify({}), {
     status: 200,
     headers: { 'content-type': 'application/json' },
@@ -20,15 +19,18 @@ class MockWebSocket {
   url: string;
   onopen: (() => void) | null = null;
   onmessage: ((event: { data: string }) => void) | null = null;
-  onerror: ((event: any) => void) | null = null;
+  onerror: ((event: ErrorEvent) => void) | null = null;
   onclose: (() => void) | null = null;
   readyState = 3; // CLOSED
-  constructor(url: string) { this.url = url; }
+  constructor(url: string) {
+    this.url = url;
+  }
   close() {}
   send() {}
 }
 
-(globalThis as any).WebSocket = MockWebSocket;
+(globalThis as unknown as { WebSocket: typeof WebSocket }).WebSocket =
+  MockWebSocket as unknown as typeof WebSocket;
 
 // Clean up after each test
 afterEach(() => {

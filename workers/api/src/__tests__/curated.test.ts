@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@degenfeed/nostr-sdk', () => ({
   RelayPool: vi.fn().mockImplementation(() => ({
@@ -27,14 +27,15 @@ vi.mock('@degenfeed/mastodon-sdk', () => ({
   })),
 }));
 
-import { handleTopFeed, handleNewsletterFeed } from '../routes/curated';
+import type { Env } from '../index';
+import { handleNewsletterFeed, handleTopFeed } from '../routes/curated';
 
 describe('handleTopFeed', () => {
   it('should return top posts with heat scores', async () => {
     const req = new Request('http://localhost/api/feed/top?limit=10');
-    const res = await handleTopFeed(req, {} as any);
+    const res = await handleTopFeed(req, {} as Env);
     expect(res.status).toBe(200);
-    const body = await res.json() as any;
+    const body = (await res.json()) as { meta: Record<string, unknown> };
     expect(body.meta).toBeDefined();
     expect(body.meta.type).toBe('top');
   });
@@ -43,7 +44,7 @@ describe('handleTopFeed', () => {
 describe('handleNewsletterFeed', () => {
   it('should fetch from newsletter sources', async () => {
     const req = new Request('http://localhost/api/feed/newsletters?limit=5');
-    const res = await handleNewsletterFeed(req, {} as any);
+    const res = await handleNewsletterFeed(req, {} as Env);
     expect(res.status).toBe(200);
   });
 });

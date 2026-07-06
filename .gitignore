@@ -4,6 +4,7 @@
 # ── Secrets (zero tolerance) ───────────────────────────────────
 .env
 .env.*
+.dev.vars
 !.env.example
 !.env.template
 *.pem

@@ -63,7 +63,15 @@ export function emptyIdentity(): UnifiedIdentity {
   return {
     id: '',
     primary: { protocol: 'nostr', id: '' },
-    handles: { nostr: null, farcaster: null, lens: null, bluesky: null, threads: null, rss: null, mastodon: null },
+    handles: {
+      nostr: null,
+      farcaster: null,
+      lens: null,
+      bluesky: null,
+      threads: null,
+      rss: null,
+      mastodon: null,
+    },
     displayName: '',
     bio: '',
     avatarUrl: '',

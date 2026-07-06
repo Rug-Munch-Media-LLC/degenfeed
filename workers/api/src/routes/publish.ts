@@ -1,20 +1,20 @@
+import {
+  RelayPool,
+  createTextNote,
+  generateSecretKey,
+  getEventHash,
+  getPublicKey,
+  signEvent,
+} from '@degenfeed/nostr-sdk';
 import { type Env, jsonResponse } from '../index';
-import { generateSecretKey, getPublicKey, getEventHash, signEvent, createTextNote, RelayPool } from '@degenfeed/nostr-sdk';
-
-// Helper: hex string to Uint8Array
-function hexToBytes(hex: string): Uint8Array {
-  const bytes = new Uint8Array((hex.match(/.{2}/g) || []).map(b => parseInt(b, 16)));
-  return bytes;
-}
-
 
 // ─── RSS-to-Nostr bridge ─────────────────────────────────────────────
 // Fetches an RSS feed, converts each item to a Nostr text event,
 // signs with the provided key, and publishes to Nostr relays.
 
-export async function handleRssToNostrBridge(request: Request, env: Env): Promise<Response> {
+export async function handleRssToNostrBridge(request: Request, _env: Env): Promise<Response> {
   try {
-    const body: Record<string, string> = await request.json() as any;
+    const body = (await request.json()) as Record<string, string>;
     const feedUrl = body.feedUrl;
     const nsec = body.nsec;
     if (!feedUrl || !nsec) {
@@ -31,19 +31,21 @@ export async function handleRssToNostrBridge(request: Request, env: Env): Promis
     const nostr = await import('@degenfeed/nostr-sdk');
     // nsec is a hex string — nostr-sdk functions expect hex strings
     const pk = nostr.getPublicKey(nsec);
-    const pool = new (nostr.RelayPool)(['wss://relay.damus.io', 'wss://nos.lol'], { eoseTimeout: 3000 });
+    const pool = new nostr.RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
+      eoseTimeout: 3000,
+    });
 
     const results: Array<{ title: string; ok: boolean; error?: string }> = [];
     const maxItems = Math.min(posts.length, 5); // Limit to 5 to avoid spam
 
     for (const post of posts.slice(0, maxItems)) {
       try {
-        const linkUrl = post.embeds.find(e => e.kind === 'link');
-        const text = post.protocol + ': ' + post.text.slice(0, 200) + (linkUrl ? '\n\n' + linkUrl.url : '');
-        const ev: any = nostr.createTextNote(text, nsec, []);
+        const linkUrl = post.embeds.find((e) => e.kind === 'link');
+        const text = `${post.protocol}: ${post.text.slice(0, 200)}${linkUrl ? `\n\n${linkUrl.url}` : ''}`;
+        const ev = nostr.createTextNote(text, nsec, []);
         ev.pubkey = pk;
         ev.id = nostr.getEventHash(ev);
-        nostr.signEvent(ev, nsec as any);
+        nostr.signEvent(ev, nsec);
         await pool.publish(ev);
         results.push({ title: post.text.slice(0, 50), ok: true });
       } catch (e) {
@@ -69,10 +71,10 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
       typedDataId?: string;
       signature?: string;
     }
-    const body: PublishRequest = await request.json() as PublishRequest;
+    const body: PublishRequest = (await request.json()) as PublishRequest;
     if (!body.text?.trim()) return jsonResponse({ error: 'Text required' }, 400);
     if (!body.targets?.length) return jsonResponse({ error: 'Targets required' }, 400);
-    const auth = body.auth ?? {} as Record<string, string>;
+    const auth = body.auth ?? ({} as Record<string, string>);
 
     const results: Record<string, { ok: boolean; error?: string; hash?: string }> = {};
 
@@ -81,13 +83,15 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
         switch (target) {
           case 'nostr': {
             const skHex: string = auth.nostr ?? '';
-            const sk: any = skHex ? hexToBytes(skHex) : generateSecretKey();
-            const pk = getPublicKey(sk as any);
-            const ev: any = createTextNote(body.text, sk as string, []);
+            const sk: string = skHex || generateSecretKey();
+            const pk = getPublicKey(sk);
+            const ev = createTextNote(body.text, sk, []);
             ev.pubkey = pk;
             ev.id = getEventHash(ev);
-            signEvent(ev, sk as any);
-            const pool = new RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], { eoseTimeout: 2000 });
+            signEvent(ev, sk);
+            const pool = new RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
+              eoseTimeout: 2000,
+            });
             await pool.publish(ev);
             pool.disconnectAll();
             results[target] = { ok: true };
@@ -102,21 +106,28 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
             const signedMessage = body.signedMessage || body.auth?.farcaster_message;
             if (signedMessage) {
               // Submit pre-signed message to Hub
-              const submitRes = await fetch(hubUrl + '/v1/submitMessage', {
+              const submitRes = await fetch(`${hubUrl}/v1/submitMessage`, {
                 method: 'PUT',
                 headers: { 'content-type': 'application/octet-stream' },
                 body: signedMessage,
               });
               if (submitRes.ok) {
-                const submitData = await submitRes.json() as Record<string, unknown>;
-                results[target] = { ok: true, hash: String(submitData.hash || "") || undefined };
+                const submitData = (await submitRes.json()) as Record<string, unknown>;
+                results[target] = { ok: true, hash: String(submitData.hash || '') || undefined };
               } else {
                 const errText = await submitRes.text();
-                results[target] = { ok: false, error: 'Farcaster Hub rejected: ' + errText.slice(0, 100) };
+                results[target] = {
+                  ok: false,
+                  error: `Farcaster Hub rejected: ${errText.slice(0, 100)}`,
+                };
               }
             } else {
               // No pre-signed message — return stub asking client to sign
-              results[target] = { ok: false, error: 'Client must sign cast using @farcaster/hub-web, then submit signedMessage in publish request.' };
+              results[target] = {
+                ok: false,
+                error:
+                  'Client must sign cast using @farcaster/hub-web, then submit signedMessage in publish request.',
+              };
             }
             break;
           }
@@ -132,20 +143,34 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify({
-                  query: 'mutation Broadcast($request: BroadcastRequest!) { broadcast(request: $request) { ... on RelayerResult { txHash } ... on RelayError { reason } } }',
+                  query:
+                    'mutation Broadcast($request: BroadcastRequest!) { broadcast(request: $request) { ... on RelayerResult { txHash } ... on RelayError { reason } } }',
                   variables: { request: { id: typedDataId, signature } },
                 }),
               });
               if (broadcastRes.ok) {
-                const broadcastData = await broadcastRes.json() as Record<string, unknown>;
-                const result = (broadcastData as any)?.data?.broadcast;
-                results[target] = { ok: !!(result as any)?.txHash, hash: (result as any)?.txHash as string | undefined, error: (result as any)?.reason as string | undefined };
+                const broadcastData = (await broadcastRes.json()) as Record<string, unknown>;
+                const result = (broadcastData.data as Record<string, unknown>)?.broadcast as
+                  | Record<string, unknown>
+                  | undefined;
+                results[target] = {
+                  ok: !!result?.txHash,
+                  hash: result?.txHash as string | undefined,
+                  error: result?.reason as string | undefined,
+                };
               } else {
                 const errText = await broadcastRes.text();
-                results[target] = { ok: false, error: 'Lens broadcast failed: ' + errText.slice(0, 100) };
+                results[target] = {
+                  ok: false,
+                  error: `Lens broadcast failed: ${errText.slice(0, 100)}`,
+                };
               }
             } else {
-              results[target] = { ok: false, error: 'Client must sign typed data using wallet, then submit typedDataId + signature in publish request.' };
+              results[target] = {
+                ok: false,
+                error:
+                  'Client must sign typed data using wallet, then submit typedDataId + signature in publish request.',
+              };
             }
             break;
           }
@@ -154,17 +179,21 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
           case 'threads': {
             // AT Protocol repo.createRecord
             // Requires PDS session token (accessJwt) stored during sign-in
-            const pdsUrl = target === 'bluesky' ? (env.BSKY_PUBLIC_URL || 'https://public.api.bsky.app') : (env.THREADS_PDS_URL || 'https://public.threads.net');
-            const accessJwt = auth[target + '_jwt'] || auth[target + '_accessJwt'] || auth.accessJwt;
+            const pdsUrl =
+              target === 'bluesky'
+                ? env.BSKY_PUBLIC_URL || 'https://public.api.bsky.app'
+                : env.THREADS_PDS_URL || 'https://public.threads.net';
+            const accessJwt =
+              auth[`${target}_jwt`] || auth[`${target}_accessJwt`] || auth.accessJwt;
             if (!accessJwt) {
-              results[target] = { ok: false, error: 'Not signed into ' + target };
+              results[target] = { ok: false, error: `Not signed into ${target}` };
               break;
             }
             // Create record via XRPC — uses the DID from auth or extracts from JWT
-            const repoDid = auth[target + '_did'] || '';
-            const recordRes = await fetch(pdsUrl + '/xrpc/com.atproto.repo.createRecord', {
+            const repoDid = auth[`${target}_did`] || '';
+            const recordRes = await fetch(`${pdsUrl}/xrpc/com.atproto.repo.createRecord`, {
               method: 'POST',
-              headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + accessJwt },
+              headers: { 'content-type': 'application/json', authorization: `Bearer ${accessJwt}` },
               body: JSON.stringify({
                 repo: repoDid,
                 collection: 'app.bsky.feed.post',
@@ -175,7 +204,10 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
               results[target] = { ok: true };
             } else {
               const errText = await recordRes.text();
-              results[target] = { ok: false, error: target + ' publish failed: ' + errText.slice(0, 100) };
+              results[target] = {
+                ok: false,
+                error: `${target} publish failed: ${errText.slice(0, 100)}`,
+              };
             }
             break;
           }
@@ -195,7 +227,7 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
           }
 
           default:
-            results[target] = { ok: false, error: target + ' not supported' };
+            results[target] = { ok: false, error: `${target} not supported` };
         }
       } catch (e) {
         results[target] = { ok: false, error: String(e) };
@@ -207,7 +239,7 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
   }
 }
 
-export async function handleEngage(request: Request, env: Env): Promise<Response> {
+export async function handleEngage(request: Request, _env: Env): Promise<Response> {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
   try {
     interface EngageRequest {
@@ -217,11 +249,11 @@ export async function handleEngage(request: Request, env: Env): Promise<Response
       auth?: Record<string, string>;
       authToken?: string;
     }
-    const body: EngageRequest = await request.json() as EngageRequest;
+    const body: EngageRequest = (await request.json()) as EngageRequest;
     const action = body.action ?? '';
     const postId = body.postId ?? '';
     const protocol = body.protocol ?? '';
-    const auth = body.auth;
+    const auth = body.auth as Record<string, string> | undefined;
 
     if (!action || !postId || !protocol) {
       return jsonResponse({ error: 'action, postId, protocol required' }, 400);
@@ -229,14 +261,16 @@ export async function handleEngage(request: Request, env: Env): Promise<Response
 
     switch (protocol) {
       case 'nostr': {
-        // Nostr reaction via signed event
-        results: { nostr: 'Reaction signing requires user key — coming soon' };
-        break;
+        return jsonResponse({
+          ok: false,
+          error: 'Reaction signing requires user key — coming soon',
+        });
       }
       case 'mastodon': {
         // Mastodon like/repost via GtSClient
         const instance = auth?.mastodon_instance || 'https://social.degenfeed.xyz';
-        const token = body.authToken as string || auth?.mastodon || '';
+        const token =
+          ((body as Record<string, unknown>).authToken as string) || auth?.mastodon || '';
         if (!token) return jsonResponse({ error: 'Not signed into Mastodon' }, 401);
         const { GtSClient } = await import('@degenfeed/mastodon-sdk');
         const client = new GtSClient(instance, token);

@@ -6,23 +6,29 @@
  * re-exported for route module use.
  */
 
-import { handleRelaysHealth } from './routes/health';
-import { handleHomeFeed } from './routes/feed';
-import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
-import { handleNewsFeed } from './routes/news';
-import { handleRssFeed } from './routes/rss';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
-import { handleTipResolve, handleTipCreate, handleTipFrame, handleTipFrameTx, handleTipFrameCallback, handleLightningInvoice } from './routes/tip';
-import { handlePublish, handleEngage } from './routes/publish';
-import { handleFundingFeed } from './routes/funding';
-import { handleNotifications } from './routes/notifications';
-import { handleResolveIdentity } from './routes/identity';
 import { handleTopFeed } from './routes/curated';
 import { handleNewsletterFeed } from './routes/curated';
+import { handleHomeFeed } from './routes/feed';
 import { handleTrendingFeed } from './routes/feed';
+import { handleFundingFeed } from './routes/funding';
+import { handleRelaysHealth } from './routes/health';
+import { handleResolveIdentity } from './routes/identity';
+import { handleNewsFeed } from './routes/news';
+import { handleNotifications } from './routes/notifications';
 import { handlePrices } from './routes/prices';
+import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
+import { handleEngage, handlePublish } from './routes/publish';
+import { handleRssFeed } from './routes/rss';
+import {
+  handleLightningInvoice,
+  handleTipCreate,
+  handleTipFrame,
+  handleTipFrameCallback,
+  handleTipFrameTx,
+  handleTipResolve,
+} from './routes/tip';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
-import type { Protocol } from '@degenfeed/types';
 
 // ─── Environment variables ───────────────────────────────────────────
 
@@ -44,8 +50,17 @@ export interface Env {
 
 // ─── Shared constants ────────────────────────────────────────────────
 
-export const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net', 'wss://relay.nostr.band', 'wss://nostr.wine'];
-export const FARCASTER_HUBS = ['https://hub.farcaster.standardcrypto.vc:2281', 'https://hub-grpc.pinata.cloud'];
+export const DEFAULT_RELAYS = [
+  'wss://relay.damus.io',
+  'wss://nos.lol',
+  'wss://relay.primal.net',
+  'wss://relay.nostr.band',
+  'wss://nostr.wine',
+];
+export const FARCASTER_HUBS = [
+  'https://hub.farcaster.standardcrypto.vc:2281',
+  'https://hub-grpc.pinata.cloud',
+];
 export const LENS_APIS = ['https://api.lens.xyz/graphql', 'https://api-v2.lens.dev/graphql'];
 export const BSKY_PUBLIC = 'https://public.api.bsky.app';
 export const THREADS_PUBLIC = 'https://public.threads.net';
@@ -56,7 +71,11 @@ const requestLog = new Map<string, { count: number; resetAt: number }>();
 const DEFAULT_RATE_WINDOW = 5000;
 const DEFAULT_RATE_MAX = 20;
 
-export function rateLimit(ip: string, maxReq: number = DEFAULT_RATE_MAX, windowMs: number = DEFAULT_RATE_WINDOW): { allowed: boolean; retryAfter: number } {
+export function rateLimit(
+  ip: string,
+  maxReq: number = DEFAULT_RATE_MAX,
+  windowMs: number = DEFAULT_RATE_WINDOW,
+): { allowed: boolean; retryAfter: number } {
   const now = Date.now();
   // Inline cleanup: purge expired entries
   if (requestLog.size > 10000) {
@@ -81,8 +100,8 @@ export function rateLimit(ip: string, maxReq: number = DEFAULT_RATE_MAX, windowM
 // ─── GotoSocial config ───────────────────────────────────────────────
 
 export const GTS_AUTH_CONFIG = {
-  clientId: '',  // Must be set via GTS_CLIENT_ID env var
-  clientSecret: '',  // Must be set via GTS_CLIENT_SECRET env var
+  clientId: '', // Must be set via GTS_CLIENT_ID env var
+  clientSecret: '', // Must be set via GTS_CLIENT_SECRET env var
   instanceUrl: 'https://social.degenfeed.xyz',
   apiBase: 'http://127.0.0.1:8082',
   redirectUri: 'https://degenfeed.xyz/auth/callback',
@@ -105,7 +124,11 @@ export function getGtsConfig(env: Env) {
 export function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'cache-control': 'public, max-age=30' },
+    headers: {
+      'content-type': 'application/json',
+      'access-control-allow-origin': '*',
+      'cache-control': 'public, max-age=30',
+    },
   });
 }
 
@@ -117,14 +140,20 @@ export default {
     const path = url.pathname;
 
     // Rate limiting
-    const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
+    const ip =
+      request.headers.get('cf-connecting-ip') ||
+      request.headers.get('x-forwarded-for') ||
+      'unknown';
     const maxReq = Number(env.RATE_MAX_REQ) || DEFAULT_RATE_MAX;
     const windowMs = Number(env.RATE_WINDOW_MS) || DEFAULT_RATE_WINDOW;
     const rl = rateLimit(ip, maxReq, windowMs);
     if (!rl.allowed) {
       return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
         status: 429,
-        headers: { 'content-type': 'application/json', 'retry-after': String(Math.ceil(rl.retryAfter / 1000)) },
+        headers: {
+          'content-type': 'application/json',
+          'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+        },
       });
     }
 
@@ -148,7 +177,7 @@ export default {
       if (path === '/api/feed/news') {
         return handleNewsFeed(request, env);
       }
-            if (path === '/api/bridge/rss-to-nostr') {
+      if (path === '/api/bridge/rss-to-nostr') {
         const { handleRssToNostrBridge } = await import('./routes/publish');
         return handleRssToNostrBridge(request, env);
       }
@@ -170,20 +199,48 @@ export default {
       if (path === '/api/engage') {
         return handleEngage(request, env);
       }
-      if (path === '/api/feed/top') { return handleTopFeed(request, env); }
-      if (path === '/api/feed/newsletters') { return handleNewsletterFeed(request, env); }
-      if (path === '/api/feed/trending') { return handleTrendingFeed(request, env); }
-      if (path === '/api/prices') { return handlePrices(request, env); }
-      if (path === '/api/auth/wallet/nonce') { return handleWalletNonce(request, env); }
-      if (path === '/api/auth/wallet/verify') { return handleWalletVerify(request, env); }
-      if (path === '/api/tip/lightning/invoice') { return handleLightningInvoice(request, env); }
-      if (path.startsWith('/api/tip/frame/tx/')) { return handleTipFrameTx(request, env); }
-      if (path.startsWith('/api/tip/frame/callback/')) { return handleTipFrameCallback(request, env); }
-      if (path.startsWith('/api/tip/frame/')) { return handleTipFrame(request, env); }
-      if (path === '/api/tip/resolve') { return handleTipResolve(request, env); }
-      if (path === '/api/tip/create') { return handleTipCreate(request, env); }
-      if (path === '/api/feed/funding') { return handleFundingFeed(request, env); }
-      if (path === '/api/notifications') { return handleNotifications(request, env); }
+      if (path === '/api/feed/top') {
+        return handleTopFeed(request, env);
+      }
+      if (path === '/api/feed/newsletters') {
+        return handleNewsletterFeed(request, env);
+      }
+      if (path === '/api/feed/trending') {
+        return handleTrendingFeed(request, env);
+      }
+      if (path === '/api/prices') {
+        return handlePrices(request, env);
+      }
+      if (path === '/api/auth/wallet/nonce') {
+        return handleWalletNonce(request, env);
+      }
+      if (path === '/api/auth/wallet/verify') {
+        return handleWalletVerify(request, env);
+      }
+      if (path === '/api/tip/lightning/invoice') {
+        return handleLightningInvoice(request, env);
+      }
+      if (path.startsWith('/api/tip/frame/tx/')) {
+        return handleTipFrameTx(request, env);
+      }
+      if (path.startsWith('/api/tip/frame/callback/')) {
+        return handleTipFrameCallback(request, env);
+      }
+      if (path.startsWith('/api/tip/frame/')) {
+        return handleTipFrame(request, env);
+      }
+      if (path === '/api/tip/resolve') {
+        return handleTipResolve(request, env);
+      }
+      if (path === '/api/tip/create') {
+        return handleTipCreate(request, env);
+      }
+      if (path === '/api/feed/funding') {
+        return handleFundingFeed(request, env);
+      }
+      if (path === '/api/notifications') {
+        return handleNotifications(request, env);
+      }
       if (path === '/api/identity/resolve') {
         return handleResolveIdentity(request, env);
       }

@@ -66,7 +66,7 @@ export interface FetchOpts {
  */
 export async function fetchFeed(
   url: string,
-  opts: FetchOpts = {},
+  _opts: FetchOpts = {},
 ): Promise<Parser.Output<Record<string, unknown>>> {
   const feed = await feedParser.parseURL(url);
   return feed as unknown as Parser.Output<Record<string, unknown>>;
@@ -180,7 +180,7 @@ export interface FeedMeta {
 /**
  * Build a stable author identity string from feed metadata.
  */
-function buildAuthorId(meta: FeedMeta, authorName: string, feedLink: string): string {
+function buildAuthorId(meta: FeedMeta, authorName: string, _feedLink: string): string {
   const parts = ['rss', meta.source];
   if (meta.handle) parts.push(meta.handle);
   if (meta.subreddit) parts.push('r', meta.subreddit);
@@ -206,7 +206,7 @@ function buildPostId(meta: FeedMeta, guid: string, link: string, title: string):
 function parseDate(dateStr: string | undefined): number {
   if (!dateStr) return Date.now();
   const parsed = new Date(dateStr).getTime();
-  return isNaN(parsed) ? Date.now() : parsed;
+  return Number.isNaN(parsed) ? Date.now() : parsed;
 }
 
 /**
@@ -349,9 +349,10 @@ function stripHtml(html: string): string {
 function extractImageUrls(html: string): string[] {
   const urls: string[] = [];
   const imgRe = /<img[^>]+src\s*=\s*["']([^"']+)["']/gi;
-  let match: RegExpExecArray | null;
-  while ((match = imgRe.exec(html)) !== null) {
+  let match: RegExpExecArray | null = imgRe.exec(html);
+  while (match !== null) {
     if (match[1]) urls.push(match[1]);
+    match = imgRe.exec(html);
   }
   return urls;
 }

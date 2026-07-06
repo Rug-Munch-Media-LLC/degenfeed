@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * DegenFeed — Main App Shell
@@ -7,7 +7,7 @@
  * Wraps the entire /home area with AuthProvider.
  */
 
-import { AuthProvider } from "./AuthProvider";
+import { AuthProvider } from './AuthProvider';
 
 export function FeedShell({ children }: { children: React.ReactNode }) {
   return <AuthProvider>{children}</AuthProvider>;

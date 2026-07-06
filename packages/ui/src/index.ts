@@ -1,4 +1,12 @@
-export { ProtocolBadge, PROTOCOL_COLORS, PROTOCOL_LABELS, PROTOCOL_ICONS, getProtocolColor, getProtocolLabel, getProtocolIcon } from './ProtocolBadge';
+export {
+  ProtocolBadge,
+  PROTOCOL_COLORS,
+  PROTOCOL_LABELS,
+  PROTOCOL_ICONS,
+  getProtocolColor,
+  getProtocolLabel,
+  getProtocolIcon,
+} from './ProtocolBadge';
 export { PostCard } from './PostCard';
 export { FeedList } from './FeedList';
 export { ComposeModal } from './ComposeModal';

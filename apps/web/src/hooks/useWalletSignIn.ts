@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
+import { buildSiweMessage, requestWalletNonce, verifyWalletSignature } from '@degenfeed/auth';
+import type { WalletSession } from '@degenfeed/auth';
 import { useCallback, useState } from 'react';
 import { useWeb3 } from '../components/Web3Provider';
-import { requestWalletNonce, buildSiweMessage, verifyWalletSignature } from '@degenfeed/auth';
-import type { WalletSession } from '@degenfeed/auth';
 
 export function useWalletSignIn() {
   const { account, isConnected, connect, signMessage } = useWeb3();
@@ -11,11 +11,12 @@ export function useWalletSignIn() {
   const [error, setError] = useState<string | null>(null);
 
   const signInWithEthereum = useCallback(async (): Promise<WalletSession | null> => {
-    if (!account) {
+    let address = account?.toLowerCase();
+    if (!address) {
       try {
-        await connect();
-      } catch (err: any) {
-        setError(err?.message || 'Wallet connection failed');
+        address = (await connect()).toLowerCase();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Wallet connection failed');
         return null;
       }
     }
@@ -24,26 +25,20 @@ export function useWalletSignIn() {
     setError(null);
 
     try {
-      const nonce = await requestWalletNonce(account!.toLowerCase());
-      const message = buildSiweMessage(account!.toLowerCase(), nonce);
+      const nonce = await requestWalletNonce(address);
+      const message = buildSiweMessage(address, nonce);
       const signature = await signMessage(message);
 
-      const session = await verifyWalletSignature(
-        account!.toLowerCase(),
-        signature,
-        message,
-        'ethereum',
-        nonce,
-      );
+      const session = await verifyWalletSignature(address, signature, message, 'ethereum', nonce);
 
       return session;
-    } catch (err: any) {
-      setError(err?.message || 'Ethereum sign-in failed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ethereum sign-in failed');
       return null;
     } finally {
       setSigningIn(false);
     }
-  }, [account, isConnected, connect, signMessage]);
+  }, [account, connect, signMessage]);
 
   return {
     address: account,

@@ -1,6 +1,20 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { type ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
+
+interface EIP1193Provider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on: (event: string, handler: (...args: unknown[]) => void) => void;
+  removeListener: (event: string, handler: (...args: unknown[]) => void) => void;
+  selectedAddress?: string;
+  isMetaMask?: boolean;
+}
+
+declare global {
+  interface Window {
+    ethereum?: EIP1193Provider;
+  }
+}
 
 interface Web3ContextValue {
   account: string | null;
@@ -16,9 +30,13 @@ const DEFAULT_CONTEXT: Web3ContextValue = {
   account: null,
   chainId: null,
   isConnected: false,
-  connect: async () => { throw new Error('Web3 not available'); },
+  connect: async () => {
+    throw new Error('Web3 not available');
+  },
   disconnect: () => {},
-  signMessage: async () => { throw new Error('Web3 not available'); },
+  signMessage: async () => {
+    throw new Error('Web3 not available');
+  },
   isMetaMask: false,
 };
 
@@ -28,15 +46,15 @@ export function useWeb3(): Web3ContextValue {
   return useContext(Web3Context);
 }
 
-function getProvider() {
-  if (typeof window === 'undefined' || !(window as any).ethereum) return null;
-  return (window as any).ethereum;
+function getProvider(): EIP1193Provider | null {
+  if (typeof window === 'undefined' || !window.ethereum) return null;
+  return window.ethereum;
 }
 
 export function Web3Provider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<string | null>(null);
   const [chainId, setChainId] = useState<number | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const [_mounted, setMounted] = useState(false);
 
   const isConnected = !!account;
 
@@ -46,21 +64,24 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       const provider = getProvider();
       if (!provider) return;
       try {
-        const accounts = await provider.request({ method: 'eth_accounts' });
+        const accounts = (await provider.request({ method: 'eth_accounts' })) as string[];
         if (accounts?.[0]) {
           setAccount(accounts[0]);
           const id = await provider.request({ method: 'eth_chainId' });
-          setChainId(parseInt(id, 16));
+          setChainId(Number.parseInt(id as string, 16));
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     };
     check();
 
-    const handleAccountsChanged = (accounts: string[]) => {
-      setAccount(accounts[0] || null);
+    const handleAccountsChanged = (accounts: unknown) => {
+      const addrs = Array.isArray(accounts) ? (accounts as string[]) : [];
+      setAccount(addrs[0] || null);
     };
-    const handleChainChanged = (chainIdHex: string) => {
-      setChainId(parseInt(chainIdHex, 16));
+    const handleChainChanged = (chainIdHex: unknown) => {
+      setChainId(Number.parseInt(String(chainIdHex), 16));
     };
 
     const provider = getProvider();
@@ -78,14 +99,14 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     const provider = getProvider();
     if (!provider) throw new Error('No Ethereum wallet detected');
     try {
-      const accounts = await provider.request({ method: 'eth_requestAccounts' });
+      const accounts = (await provider.request({ method: 'eth_requestAccounts' })) as string[];
       const selected = accounts?.[0] || provider.selectedAddress;
       if (selected) setAccount(selected);
       const id = await provider.request({ method: 'eth_chainId' });
-      setChainId(parseInt(id, 16));
+      setChainId(Number.parseInt(id as string, 16));
       return selected || '';
-    } catch (err: any) {
-      throw new Error(err.message || 'User rejected connection');
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'User rejected connection');
     }
   }, []);
 
@@ -94,15 +115,18 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     setChainId(null);
   }, []);
 
-  const signMessage = useCallback(async (message: string): Promise<string> => {
-    const provider = getProvider();
-    if (!provider || !account) throw new Error('No wallet connected');
-    const signature = await provider.request({
-      method: 'personal_sign',
-      params: [message, account],
-    });
-    return signature;
-  }, [account]);
+  const signMessage = useCallback(
+    async (message: string): Promise<string> => {
+      const provider = getProvider();
+      if (!provider || !account) throw new Error('No wallet connected');
+      const signature = (await provider.request({
+        method: 'personal_sign',
+        params: [message, account],
+      })) as string;
+      return signature;
+    },
+    [account],
+  );
 
   const value: Web3ContextValue = {
     account,
@@ -111,12 +135,8 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     connect,
     disconnect,
     signMessage,
-    isMetaMask: typeof window !== 'undefined' && !!(window as any)?.ethereum?.isMetaMask,
+    isMetaMask: typeof window !== 'undefined' && !!window.ethereum?.isMetaMask,
   };
 
-  return (
-    <Web3Context.Provider value={value}>
-      {children}
-    </Web3Context.Provider>
-  );
+  return <Web3Context.Provider value={value}>{children}</Web3Context.Provider>;
 }

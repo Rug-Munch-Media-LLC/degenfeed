@@ -5,15 +5,20 @@
  * Uses AES-GCM encrypted blobs stored via @degenfeed/storage.
  */
 
+import {
+  clearActiveSession,
+  deleteIdentity,
+  getIdentity,
+  setActiveSession,
+} from '@degenfeed/storage';
 import { decryptSecret } from './crypto';
-import { getIdentity, deleteIdentity, setActiveSession, clearActiveSession } from '@degenfeed/storage';
 
 export async function unlockIdentity(identityId: string, passphrase: string): Promise<void> {
   const record = await getIdentity(identityId);
-  if (!record) throw new Error('Identity not found: ' + identityId);
+  if (!record) throw new Error(`Identity not found: ${identityId}`);
 
   const secret = await decryptSecret(
-    { ciphertext: record.encryptedSecret ?? "", salt: record.salt, iv: record.iv },
+    { ciphertext: record.encryptedSecret ?? '', salt: record.salt, iv: record.iv },
     passphrase,
   );
   const parsed = JSON.parse(secret) as Record<string, string | undefined>;
@@ -21,7 +26,7 @@ export async function unlockIdentity(identityId: string, passphrase: string): Pr
   const session: Record<string, unknown> = {
     identityId: record.id,
     protocol: record.protocol,
-    publicId: record.publicId ?? "",
+    publicId: record.publicId ?? '',
     handle: record.handle,
     displayName: record.displayName,
     avatarUrl: record.avatarUrl,

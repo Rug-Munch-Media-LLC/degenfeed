@@ -1,28 +1,9 @@
-/**
- * @degenfeed/storage
- *
- * Typed IndexedDB wrapper for all client-side persistence.
- * Uses `idb` for a clean promise-based API without raw IDB transactions.
- *
- * Stores:
- *   identities   — Encrypted identity records (protocol keys)
- *   follows      — Follow graph per identity
- *   drafts       — Composer drafts (per-protocol, per-identity)
- *   cached-posts — LRU cache of recently fetched posts
- *   muted        — Muted identities and words
- *   prefs        — User preferences (ranking weights, theme, etc.)
- *
- * Encryption is handled by @degenfeed/auth; this package only persists
- * the pre-encrypted blobs and decryptable fields.
- */
-
-import type { Protocol } from '@degenfeed/types';
-import { type IDBPDatabase, openDB } from 'idb';
+import type { IDBPDatabase } from 'idb';
 
 // ─── Follows CRUD ──────────────────────────────────────────────────────
 
-import { StoredFollow } from './types';
 import { getDb } from './db';
+import type { StoredFollow } from './types';
 export async function saveFollow(follow: StoredFollow): Promise<void> {
   const db = await getDb();
   await db.put('follows', follow);
@@ -46,4 +27,3 @@ export async function isFollowing(identityId: string, targetId: string): Promise
   const result = await db.get('follows', [identityId, targetId]);
   return result !== undefined;
 }
-

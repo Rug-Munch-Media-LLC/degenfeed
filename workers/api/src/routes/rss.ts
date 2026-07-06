@@ -1,6 +1,14 @@
-import { type Env, jsonResponse } from '../index';
-import { GenericRssSource, RedditSource, MirrorSource, SubstackSource, MediumSource, ParagraphSource, feedToUnifiedPosts } from '@degenfeed/rss-sdk';
+import {
+  GenericRssSource,
+  MediumSource,
+  MirrorSource,
+  ParagraphSource,
+  RedditSource,
+  SubstackSource,
+  feedToUnifiedPosts,
+} from '@degenfeed/rss-sdk';
 import type { SourcePosts } from '@degenfeed/rss-sdk';
+import { type Env, jsonResponse } from '../index';
 
 export async function handleRssFeed(request: Request, _env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;

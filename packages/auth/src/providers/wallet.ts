@@ -1,17 +1,8 @@
-/**
- * @degenfeed/auth — Web3 Wallet Authentication
- *
- * Sign in with Ethereum (SIWE) or Solana wallet.
- * Uses the Worker's /api/auth/wallet/* endpoints for nonce exchange and verification.
- */
-
-import type { StoredIdentity } from '@degenfeed/storage';
-
 export interface WalletSession {
   address: string;
   chain: 'ethereum' | 'solana';
   accessToken: string;
-  profile?: Record<string, any> | null;
+  profile?: Record<string, unknown> | null;
 }
 
 /**

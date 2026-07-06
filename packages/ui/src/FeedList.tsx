@@ -11,10 +11,9 @@
  *   error    → Error message + retry button
  */
 
-import { PostCard } from './PostCard';
-import { ProtocolBadge } from './ProtocolBadge';
 import type { UnifiedPost } from '@degenfeed/types';
 import { useEffect, useRef } from 'react';
+import { PostCard } from './PostCard';
 
 export type { UnifiedPost };
 
@@ -73,7 +72,7 @@ function EmptyState({ protocolLabel }: { protocolLabel?: string }) {
     <div className="card py-16 text-center">
       <div className="mb-4 text-5xl opacity-30">{protocolLabel ? '○' : '◆'}</div>
       <p className="mb-2 text-gray-500">
-        {protocolLabel ? 'No ' + protocolLabel + ' posts yet' : 'No posts yet'}
+        {protocolLabel ? `No ${protocolLabel} posts yet` : 'No posts yet'}
       </p>
       <p className="text-sm text-gray-600">
         Posts will appear here as they are published across connected networks.
@@ -96,8 +95,20 @@ function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => vo
   );
 }
 
-export function FeedList({ state, posts, error, protocolLabel, protocolColor, onTip, onRetry, onPostClick, onEngage, hasMore, onLoadMore }: FeedListProps) {
-  const sentinelRef = useRef<HTMLDivElement>(null);
+export function FeedList({
+  state,
+  posts,
+  error,
+  protocolLabel,
+
+  onTip,
+  onRetry,
+  onPostClick,
+  onEngage,
+  hasMore,
+  onLoadMore,
+}: FeedListProps) {
+  const sentinelRef = useRef<HTMLLIElement>(null);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -118,9 +129,11 @@ export function FeedList({ state, posts, error, protocolLabel, protocolColor, on
   // Loading state
   if (state === 'loading') {
     return (
-      <div className="space-y-4" role="status" aria-label="Loading feed">
-        {[1,2,3,4,5].map((i) => <SkeletonCard key={i} />)}
-      </div>
+      <output className="space-y-4" aria-label="Loading feed">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </output>
     );
   }
 
@@ -136,21 +149,20 @@ export function FeedList({ state, posts, error, protocolLabel, protocolColor, on
 
   // Loaded state
   return (
-    <div className="space-y-4" role="feed" aria-label={protocolLabel ? protocolLabel + ' feed' : 'Feed'}>
+    <ul
+      className="space-y-4 list-none"
+      aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
+    >
       {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onClick={onPostClick}
-          onTip={onTip}
-          onEngage={onEngage}
-        />
+        <li key={post.id}>
+          <PostCard post={post} onClick={onPostClick} onTip={onTip} onEngage={onEngage} />
+        </li>
       ))}
       {hasMore && (
-        <div ref={sentinelRef} className="py-4 text-center text-sm text-gray-600">
+        <li ref={sentinelRef} className="py-4 text-center text-sm text-gray-600">
           Loading more...
-        </div>
+        </li>
       )}
-    </div>
+    </ul>
   );
 }

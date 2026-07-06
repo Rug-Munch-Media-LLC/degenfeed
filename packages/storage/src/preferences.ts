@@ -1,29 +1,14 @@
-/**
- * @degenfeed/storage
- *
- * Typed IndexedDB wrapper for all client-side persistence.
- * Uses `idb` for a clean promise-based API without raw IDB transactions.
- *
- * Stores:
- *   identities   — Encrypted identity records (protocol keys)
- *   follows      — Follow graph per identity
- *   drafts       — Composer drafts (per-protocol, per-identity)
- *   cached-posts — LRU cache of recently fetched posts
- *   muted        — Muted identities and words
- *   prefs        — User preferences (ranking weights, theme, etc.)
- *
- * Encryption is handled by @degenfeed/auth; this package only persists
- * the pre-encrypted blobs and decryptable fields.
- */
-
-import type { Protocol } from '@degenfeed/types';
-import { type IDBPDatabase, openDB } from 'idb';
-
 // ─── Preferences ───────────────────────────────────────────────────────
 
-import { StoredIdentity, StoredFollow, UserPreferences, StoredMutedIdentity, StoredMutedWord } from './types';
-import { getDb, dbPromise as _dbPromise } from './db';
+import { getDb } from './db';
 import { clearAllSessions } from './session';
+import type {
+  StoredFollow,
+  StoredIdentity,
+  StoredMutedIdentity,
+  StoredMutedWord,
+  UserPreferences,
+} from './types';
 export async function savePreferences(prefs: UserPreferences): Promise<void> {
   const db = await getDb();
   await db.put('prefs', prefs);
@@ -106,5 +91,5 @@ export async function wipeAll(): Promise<void> {
  * Close the database connection. Call on app unmount.
  */
 export function closeDb(): void {
-  const dbPromise = null;
+  const _dbPromise = null;
 }

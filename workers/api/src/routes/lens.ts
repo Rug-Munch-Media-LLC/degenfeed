@@ -1,17 +1,8 @@
 import { keccak_256 } from '@noble/hashes/sha3';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { bytesToHex } from '@noble/hashes/utils';
 
 // LensHub v1 proxy on Polygon mainnet
 export const LENS_HUB_ADDRESS = '0xDb46d1Dc155634FbC732f92E853b10B288AD5a1d';
-
-function strip0x(hex: string): string {
-  return hex.startsWith('0x') ? hex.slice(2) : hex;
-}
-
-function pad32(hex: string): string {
-  const stripped = strip0x(hex);
-  return stripped.padStart(64, '0').toLowerCase();
-}
 
 /**
  * Encode a uint256 value as 32-byte hex string.
@@ -24,11 +15,14 @@ function encodeUint256(value: bigint | number | string): string {
 /**
  * Parse a Lens v1 publication id like \"0x01-0x01\" into profileId and pubId.
  */
-export function parsePublicationId(publicationId: string): { profileId: string; pubId: string } | null {
+export function parsePublicationId(
+  publicationId: string,
+): { profileId: string; pubId: string } | null {
   const parts = publicationId.split('-');
   if (parts.length !== 2) return null;
-  const profileId = parts[0]!.trim();
-  const pubId = parts[1]!.trim();
+  const profileId = parts[0]?.trim();
+  const pubId = parts[1]?.trim();
+  if (!profileId || !pubId) return null;
   if (!/^0x[0-9a-fA-F]+$/.test(profileId) || !/^0x[0-9a-fA-F]+$/.test(pubId)) return null;
   return { profileId, pubId };
 }
@@ -43,14 +37,11 @@ export function buildLensCollectCalldata(profileId: string, pubId: string): stri
 
   // ABI encoding for collect(uint256,uint256,bytes)
   // profileId (32), pubId (32), bytes offset (32 = 0x60), bytes length (32 = 0)
-  const calldata =
-    selector +
-    encodeUint256(profileId) +
-    encodeUint256(pubId) +
-    '0000000000000000000000000000000000000000000000000000000000000060' +
-    '0000000000000000000000000000000000000000000000000000000000000000';
+  const calldata = `${
+    selector + encodeUint256(profileId) + encodeUint256(pubId)
+  }00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000000`;
 
-  return '0x' + calldata;
+  return `0x${calldata}`;
 }
 
 /**

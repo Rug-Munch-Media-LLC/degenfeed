@@ -13,16 +13,8 @@
  *   - The "active session" is also memory-only.
  */
 
+import { type StoredIdentity, saveIdentity } from '@degenfeed/storage';
 import { buildIdentityRecord } from '../persistence';
-import {
-  type StoredIdentity,
-  clearActiveSession,
-  deleteIdentity,
-  getIdentity,
-  saveIdentity,
-  setActiveSession,
-} from '@degenfeed/storage';
-import type { Protocol } from '@degenfeed/types';
 
 // ─── 6. GotoSocial / ActivityPub sign-in ───────────────────────────────
 
@@ -52,7 +44,7 @@ export async function signInWithGtS(
     publicId: account.id,
     handle: account.acct.includes('@')
       ? account.acct
-      : account.acct + '@' + new URL(instanceUrl).hostname,
+      : `${account.acct}@${new URL(instanceUrl).hostname}`,
     displayName: account.display_name || account.username,
     avatarUrl: account.avatar,
     secret: accessToken,
@@ -61,4 +53,3 @@ export async function signInWithGtS(
   await saveIdentity(record);
   return record;
 }
-

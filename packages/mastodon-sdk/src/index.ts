@@ -166,7 +166,7 @@ export class GtSClient {
       for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
     }
     const headers: Record<string, string> = { accept: 'application/json' };
-    if (this.accessToken) headers.authorization = 'Bearer ' + this.accessToken;
+    if (this.accessToken) headers.authorization = `Bearer ${this.accessToken}`;
     if (body && method !== 'GET') headers['content-type'] = 'application/json';
     const res = await fetch(url.toString(), {
       method,
@@ -176,11 +176,7 @@ export class GtSClient {
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
       throw new Error(
-        'GtS API error: ' +
-          res.status +
-          ' ' +
-          res.statusText +
-          (errText ? ' - ' + errText.slice(0, 200) : ''),
+        `GtS API error: ${res.status} ${res.statusText}${errText ? ` - ${errText.slice(0, 200)}` : ''}`,
       );
     }
     return res.json() as Promise<T>;
@@ -219,7 +215,7 @@ export class GtSClient {
 
   /** Get a hashtag timeline. */
   async getHashtagTimeline(hashtag: string, limit = 20): Promise<GtSStatus[]> {
-    return this.get<GtSStatus[]>('/api/v1/timelines/tag/' + encodeURIComponent(hashtag), { limit });
+    return this.get<GtSStatus[]>(`/api/v1/timelines/tag/${encodeURIComponent(hashtag)}`, { limit });
   }
 
   // ─── Account endpoints ─────────────────────────────────────────────
@@ -229,7 +225,7 @@ export class GtSClient {
   }
 
   async getAccount(accountId: string): Promise<GtSAccount> {
-    return this.get<GtSAccount>('/api/v1/accounts/' + encodeURIComponent(accountId));
+    return this.get<GtSAccount>(`/api/v1/accounts/${encodeURIComponent(accountId)}`);
   }
 
   async lookupAccount(acct: string): Promise<GtSAccount> {
@@ -246,7 +242,7 @@ export class GtSClient {
     if (excludeReplies) params.exclude_replies = 'true';
     if (maxId) params.max_id = maxId;
     return this.get<GtSStatus[]>(
-      '/api/v1/accounts/' + encodeURIComponent(accountId) + '/statuses',
+      `/api/v1/accounts/${encodeURIComponent(accountId)}/statuses`,
       params,
     );
   }
@@ -254,14 +250,14 @@ export class GtSClient {
   // ─── Status endpoints ──────────────────────────────────────────────
 
   async getStatus(statusId: string): Promise<GtSStatus> {
-    return this.get<GtSStatus>('/api/v1/statuses/' + encodeURIComponent(statusId));
+    return this.get<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}`);
   }
 
   async getStatusContext(
     statusId: string,
   ): Promise<{ ancestors: GtSStatus[]; descendants: GtSStatus[] }> {
     return this.get<{ ancestors: GtSStatus[]; descendants: GtSStatus[] }>(
-      '/api/v1/statuses/' + encodeURIComponent(statusId) + '/context',
+      `/api/v1/statuses/${encodeURIComponent(statusId)}/context`,
     );
   }
 
@@ -287,23 +283,23 @@ export class GtSClient {
   }
 
   async like(statusId: string): Promise<GtSStatus> {
-    return this.post<GtSStatus>('/api/v1/statuses/' + encodeURIComponent(statusId) + '/favourite');
+    return this.post<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}/favourite`);
   }
 
   async repost(statusId: string): Promise<GtSStatus> {
-    return this.post<GtSStatus>('/api/v1/statuses/' + encodeURIComponent(statusId) + '/reblog');
+    return this.post<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}/reblog`);
   }
 
   async bookmark(statusId: string): Promise<GtSStatus> {
-    return this.post<GtSStatus>('/api/v1/statuses/' + encodeURIComponent(statusId) + '/bookmark');
+    return this.post<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}/bookmark`);
   }
 
   async follow(accountId: string): Promise<GtSAccount> {
-    return this.post<GtSAccount>('/api/v1/accounts/' + encodeURIComponent(accountId) + '/follow');
+    return this.post<GtSAccount>(`/api/v1/accounts/${encodeURIComponent(accountId)}/follow`);
   }
 
   async unfollow(accountId: string): Promise<GtSAccount> {
-    return this.post<GtSAccount>('/api/v1/accounts/' + encodeURIComponent(accountId) + '/unfollow');
+    return this.post<GtSAccount>(`/api/v1/accounts/${encodeURIComponent(accountId)}/unfollow`);
   }
 
   // ─── Search ────────────────────────────────────────────────────────
@@ -365,11 +361,11 @@ export function statusToUnifiedPost(
     });
   }
 
-  const finalText = original.spoiler_text ? '[CW: ' + original.spoiler_text + ']\n\n' + text : text;
+  const finalText = original.spoiler_text ? `[CW: ${original.spoiler_text}]\n\n${text}` : text;
 
-  const niches = detectNiches(finalText + ' ' + original.tags.map((t) => t.name).join(' '));
+  const _niches = detectNiches(`${finalText} ${original.tags.map((t) => t.name).join(' ')}`);
 
-  const nativeId = isBoost ? 'boost:' + status.id + ':' + original.id : original.id;
+  const nativeId = isBoost ? `boost:${status.id}:${original.id}` : original.id;
 
   return buildUnifiedPost({
     protocol: 'mastodon',
@@ -400,10 +396,10 @@ export function accountToIdentity(
   existing?: UnifiedIdentity,
 ): UnifiedIdentity {
   const hostname = new URL(instanceUrl).hostname;
-  const handle = account.acct.includes('@') ? account.acct : account.acct + '@' + hostname;
+  const handle = account.acct.includes('@') ? account.acct : `${account.acct}@${hostname}`;
 
   const identity: UnifiedIdentity = {
-    id: existing?.id ?? 'mastodon:' + account.id + '@' + hostname,
+    id: existing?.id ?? `mastodon:${account.id}@${hostname}`,
     primary: existing?.primary ?? { protocol: 'mastodon', id: account.id },
     handles: {
       nostr: null,

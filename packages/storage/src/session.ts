@@ -1,27 +1,6 @@
-/**
- * @degenfeed/storage
- *
- * Typed IndexedDB wrapper for all client-side persistence.
- * Uses `idb` for a clean promise-based API without raw IDB transactions.
- *
- * Stores:
- *   identities   — Encrypted identity records (protocol keys)
- *   follows      — Follow graph per identity
- *   drafts       — Composer drafts (per-protocol, per-identity)
- *   cached-posts — LRU cache of recently fetched posts
- *   muted        — Muted identities and words
- *   prefs        — User preferences (ranking weights, theme, etc.)
- *
- * Encryption is handled by @degenfeed/auth; this package only persists
- * the pre-encrypted blobs and decryptable fields.
- */
-
-import type { Protocol } from '@degenfeed/types';
-import { type IDBPDatabase, openDB } from 'idb';
-
 // ─── Active Session (in-memory only) ───────────────────────────────────
 
-import { StoredIdentity } from './types';
+import type { StoredIdentity } from './types';
 export interface ActiveSession {
   identity: StoredIdentity;
   /** Decrypted key material. NEVER written to disk. */
@@ -46,4 +25,3 @@ export function clearActiveSession(identityId: string): void {
 export function clearAllSessions(): void {
   activeSessions.clear();
 }
-

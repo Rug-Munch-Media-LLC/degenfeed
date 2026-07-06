@@ -59,20 +59,17 @@ const TICKER_TO_KR: Record<string, string> = {
 };
 
 async function fetchCoingecko(ids: string[]) {
-  const url =
-    'https://api.coingecko.com/api/v3/simple/price?ids=' +
-    ids.join(',') +
-    '&vs_currencies=usd&include_24hr_change=true&include_7d_change=true&include_30d_change=true&include_market_cap=true';
+  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd&include_24hr_change=true&include_7d_change=true&include_30d_change=true&include_market_cap=true`;
   const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
   if (!res.ok) return null;
-  return res.json() as Record<string, any>;
+  return (await res.json()) as Record<string, unknown>;
 }
 
 async function fetchKraken(pairs: string[]) {
-  const url = 'https://api.kraken.com/0/public/Ticker?pair=' + pairs.join(',');
+  const url = `https://api.kraken.com/0/public/Ticker?pair=${pairs.join(',')}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
   if (!res.ok) return null;
-  return res.json() as Record<string, any>;
+  return (await res.json()) as Record<string, unknown>;
 }
 
 export async function GET(request: Request) {
@@ -96,7 +93,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ prices: {}, error: 'No known tickers' });
   }
 
-  const prices: Record<string, any> = {};
+  const prices: Record<
+    string,
+    {
+      usd?: number;
+      usd_24h_change?: number;
+      usd_7d_change?: number;
+      usd_30d_change?: number;
+      usd_market_cap?: number;
+    }
+  > = {};
   let source = '';
 
   try {
@@ -107,12 +113,13 @@ export async function GET(request: Request) {
         for (const [id, data] of Object.entries(cgData)) {
           const ticker = idToTicker[id];
           if (ticker && data) {
+            const d = data as Record<string, number | undefined>;
             prices[ticker] = {
-              usd: data.usd,
-              usd_24h_change: data.usd_24h_change,
-              usd_7d_change: data.usd_7d_change,
-              usd_30d_change: data.usd_30d_change,
-              usd_market_cap: data.usd_market_cap,
+              usd: d.usd,
+              usd_24h_change: d.usd_24h_change,
+              usd_7d_change: d.usd_7d_change,
+              usd_30d_change: d.usd_30d_change,
+              usd_market_cap: d.usd_market_cap,
             };
           }
         }
@@ -143,10 +150,10 @@ export async function GET(request: Request) {
         for (const [pair, data] of Object.entries(krData.result)) {
           const ticker = krakenSymbolMap[pair];
           if (ticker && data) {
-            const tick = data as any;
+            const tick = data as { c?: [string]; p?: [string, string] };
             prices[ticker] = {
-              usd: Number.parseFloat(tick.c?.[0] || '0'),
-              usd_24h_change: Number.parseFloat(tick.p?.[1] || '0'),
+              usd: Number.parseFloat(tick.c?.[0] ?? '0'),
+              usd_24h_change: Number.parseFloat(tick.p?.[1] ?? '0'),
             };
           }
         }

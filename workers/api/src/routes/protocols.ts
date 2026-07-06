@@ -1,6 +1,6 @@
-import { type Env, jsonResponse } from '../index';
-import { GtSClient, statusToUnifiedPost } from '@degenfeed/mastodon-sdk';
+import { GtSClient, type GtSStatus, statusToUnifiedPost } from '@degenfeed/mastodon-sdk';
 import { ThreadsClient } from '@degenfeed/threads-sdk';
+import { type Env, jsonResponse } from '../index';
 
 export async function handleActivityPubFeed(request: Request, _env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
@@ -11,7 +11,7 @@ export async function handleActivityPubFeed(request: Request, _env: Env): Promis
 
   try {
     const client = new GtSClient(instance);
-    let statuses;
+    let statuses: unknown[];
     if (type === 'hashtag' && hashtag) {
       statuses = await client.getHashtagTimeline(hashtag, limit);
     } else if (type === 'federated') {
@@ -19,7 +19,7 @@ export async function handleActivityPubFeed(request: Request, _env: Env): Promis
     } else {
       statuses = await client.getPublicTimeline(limit);
     }
-    const unified = statuses.map((s: any) => statusToUnifiedPost(s, instance));
+    const unified = statuses.map((s: unknown) => statusToUnifiedPost(s as GtSStatus, instance));
     return jsonResponse({ data: unified, meta: { total: unified.length, limit, instance } });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'ActivityPub fetch failed';
@@ -36,7 +36,10 @@ export async function handleThreadsFeed(request: Request, _env: Env): Promise<Re
     const client = new ThreadsClient();
     const { posts: rawPosts, cursor } = await client.getAuthorFeed(actor, limit);
     const unified = rawPosts.map((p) => client.postToUnifiedPost(p));
-    return jsonResponse({ data: unified.slice(0, limit), meta: { total: unified.length, limit, cursor } });
+    return jsonResponse({
+      data: unified.slice(0, limit),
+      meta: { total: unified.length, limit, cursor },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Threads fetch failed';
     return jsonResponse({ error: message }, 502);

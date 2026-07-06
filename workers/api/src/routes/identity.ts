@@ -1,5 +1,5 @@
-import { type Env, jsonResponse } from '../index';
 import { resolveHandle } from '@degenfeed/identity';
+import { type Env, jsonResponse } from '../index';
 
 export async function handleResolveIdentity(request: Request, _env: Env): Promise<Response> {
   const handle = new URL(request.url).searchParams.get('handle');
@@ -8,7 +8,7 @@ export async function handleResolveIdentity(request: Request, _env: Env): Promis
   }
 
   // Dynamic import to avoid worker size issues
-    const result = await resolveHandle(handle);
+  const result = await resolveHandle(handle);
   if (!result) {
     return jsonResponse({ error: 'Handle not found', handle }, 404);
   }

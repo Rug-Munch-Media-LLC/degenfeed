@@ -1,4 +1,4 @@
-import { type Env, jsonResponse, getGtsConfig } from '../index';
+import { type Env, getGtsConfig, jsonResponse } from '../index';
 
 export async function handleGtSAuthorize(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
@@ -49,7 +49,7 @@ export async function handleGtSCallback(request: Request, env: Env): Promise<Res
     // Fetch user profile
     const accessToken = tokenData.access_token as string;
     const userRes = await fetch(`${getGtsConfig(env).apiBase}/api/v1/accounts/verify_credentials`, {
-      headers: { authorization: 'Bearer ' + accessToken },
+      headers: { authorization: `Bearer ${accessToken}` },
     });
     const profile = userRes.ok ? ((await userRes.json()) as Record<string, unknown>) : null;
 

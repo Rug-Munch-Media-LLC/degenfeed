@@ -2,8 +2,15 @@
  * @degenfeed/ui — component tests
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import { PROTOCOL_COLORS, PROTOCOL_LABELS, PROTOCOL_ICONS, getProtocolColor, getProtocolLabel, getProtocolIcon } from './ProtocolBadge';
+import { beforeAll, describe, expect, it } from 'vitest';
+import {
+  PROTOCOL_COLORS,
+  PROTOCOL_ICONS,
+  PROTOCOL_LABELS,
+  getProtocolColor,
+  getProtocolIcon,
+  getProtocolLabel,
+} from './ProtocolBadge';
 
 describe('ProtocolBadge', () => {
   it('should have colors for all 7 protocols', () => {

@@ -107,11 +107,11 @@ export class ThreadsClient {
   /** Get a single post by AT URI. */
   async getPost(uri: string): Promise<ThreadsPostView> {
     const baseUrl = this.bsky instanceof BskyClient ? THREADS_PUBLIC_URL : THREADS_PUBLIC_URL;
-    const url = new URL(baseUrl + '/xrpc/app.bsky.feed.getPostThread');
+    const url = new URL(`${baseUrl}/xrpc/app.bsky.feed.getPostThread`);
     url.searchParams.set('uri', uri);
     url.searchParams.set('depth', '0');
     const res = await fetch(url.toString());
-    if (!res.ok) throw new Error('Threads API error: ' + res.status);
+    if (!res.ok) throw new Error(`Threads API error: ${res.status}`);
     const json = (await res.json()) as { thread: { post: ThreadsPostView } };
     return json.thread.post;
   }
@@ -119,10 +119,10 @@ export class ThreadsClient {
   /** Resolve a handle to its AT Protocol DID. */
   async resolveHandle(handle: string): Promise<string> {
     const baseUrl = this.bsky instanceof BskyClient ? THREADS_PUBLIC_URL : THREADS_PUBLIC_URL;
-    const url = new URL(baseUrl + '/xrpc/com.atproto.identity.resolveHandle');
+    const url = new URL(`${baseUrl}/xrpc/com.atproto.identity.resolveHandle`);
     url.searchParams.set('handle', handle);
     const res = await fetch(url.toString());
-    if (!res.ok) throw new Error('Failed to resolve Threads handle: ' + res.status);
+    if (!res.ok) throw new Error(`Failed to resolve Threads handle: ${res.status}`);
     const json = (await res.json()) as { did: string };
     return json.did;
   }
@@ -140,10 +140,10 @@ export class ThreadsClient {
     postsCount?: number;
   }> {
     const baseUrl = this.bsky instanceof BskyClient ? THREADS_PUBLIC_URL : THREADS_PUBLIC_URL;
-    const url = new URL(baseUrl + '/xrpc/app.bsky.actor.getProfile');
+    const url = new URL(`${baseUrl}/xrpc/app.bsky.actor.getProfile`);
     url.searchParams.set('actor', did);
     const res = await fetch(url.toString());
-    if (!res.ok) throw new Error('Threads profile error: ' + res.status);
+    if (!res.ok) throw new Error(`Threads profile error: ${res.status}`);
     return res.json() as Promise<{
       did: string;
       handle: string;
@@ -177,7 +177,7 @@ export class ThreadsClient {
     const imageEmbeds = post.record.embed?.images
       ? post.record.embed.images.map((img) => ({
           kind: 'image' as const,
-          url: 'https://threads.net' + img.image.ref,
+          url: `https://threads.net${img.image.ref}`,
         }))
       : [];
 

@@ -59,14 +59,14 @@ describe('@degenfeed/rss-sdk', () => {
     const posts = feedToUnifiedPosts(mockSource);
     expect(posts).toHaveLength(1);
 
-    const post = posts[0]!;
-    expect(post.protocol).toBe('rss');
-    expect(post.text).toContain('Bitcoin');
-    expect(post.id).toContain('rss:reddit:');
-    expect(post.author.displayName).toBe('satoshi');
-    expect(post.niches).toContain('crypto');
-    expect(post.embeds.length).toBeGreaterThanOrEqual(1); // link embed
-    expect(post.createdAt).toBe(new Date('2026-07-04T10:00:00.000Z').getTime());
+    const post = posts[0];
+    expect(post?.protocol).toBe('rss');
+    expect(post?.text).toContain('Bitcoin');
+    expect(post?.id).toContain('rss:reddit:');
+    expect(post?.author.displayName).toBe('satoshi');
+    expect(post?.niches).toContain('crypto');
+    expect(post?.embeds.length).toBeGreaterThanOrEqual(1); // link embed
+    expect(post?.createdAt).toBe(new Date('2026-07-04T10:00:00.000Z').getTime());
   });
 
   it('should handle feeds with no items', async () => {
@@ -104,9 +104,9 @@ describe('@degenfeed/rss-sdk', () => {
     expect(posts).toHaveLength(1);
 
     // Should have image embed + link embed
-    const imageEmbeds = posts[0]!.embeds.filter((e) => e.kind === 'image');
-    expect(imageEmbeds.length).toBeGreaterThanOrEqual(1);
-    expect(imageEmbeds[0]?.url).toBe('https://mirror.xyz/image.png');
+    const imageEmbeds = posts[0]?.embeds?.filter((e) => e.kind === 'image');
+    expect(imageEmbeds?.length).toBeGreaterThanOrEqual(1);
+    expect(imageEmbeds?.[0]?.url).toBe('https://mirror.xyz/image.png');
   });
 
   it('should handle feeds with content:encoded', async () => {
@@ -133,8 +133,8 @@ describe('@degenfeed/rss-sdk', () => {
 
     const posts = feedToUnifiedPosts(mockSource);
     expect(posts).toHaveLength(1);
-    expect(posts[0]!.author.displayName).toBe('Crypto Native Author');
-    expect(posts[0]!.niches).toContain('crypto');
+    expect(posts[0]?.author.displayName).toBe('Crypto Native Author');
+    expect(posts[0]?.niches).toContain('crypto');
   });
 
   it('should handle dates in various formats', async () => {
@@ -156,10 +156,10 @@ describe('@degenfeed/rss-sdk', () => {
     const posts = feedToUnifiedPosts(mockSource);
     expect(posts).toHaveLength(3);
     // No date → falls back to now (reasonable default)
-    expect(posts[0]!.createdAt).toBeGreaterThan(ts - 1000);
+    expect(posts[0]?.createdAt).toBeGreaterThan(ts - 1000);
     // ISO date
-    expect(posts[1]!.createdAt).toBe(new Date('2026-07-04T12:00:00.000Z').getTime());
+    expect(posts[1]?.createdAt).toBe(new Date('2026-07-04T12:00:00.000Z').getTime());
     // Invalid date → falls back to now
-    expect(posts[2]!.createdAt).toBeGreaterThan(ts - 1000);
+    expect(posts[2]?.createdAt).toBeGreaterThan(ts - 1000);
   });
 });

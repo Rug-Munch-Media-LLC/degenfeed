@@ -13,16 +13,8 @@
  *   - The "active session" is also memory-only.
  */
 
+import { type StoredIdentity, saveIdentity } from '@degenfeed/storage';
 import { buildIdentityRecord } from '../persistence';
-import {
-  type StoredIdentity,
-  clearActiveSession,
-  deleteIdentity,
-  getIdentity,
-  saveIdentity,
-  setActiveSession,
-} from '@degenfeed/storage';
-import type { Protocol } from '@degenfeed/types';
 
 // ─── 5. Threads sign-in ──────────────────────────────────────────────────
 
@@ -87,4 +79,3 @@ export async function signInWithThreads(
   await saveIdentity(record);
   return record;
 }
-

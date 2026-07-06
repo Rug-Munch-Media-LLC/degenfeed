@@ -20,7 +20,7 @@ describe('@degenfeed/threads-sdk', () => {
   });
 
   it('should normalize post to UnifiedPost', async () => {
-    const { ThreadsClient, THREADS_PUBLIC_URL } = await import('./index');
+    const { ThreadsClient } = await import('./index');
     const client = new ThreadsClient();
     const mockPost = {
       uri: 'at://did:plc:test/app.bsky.feed.post/abc123',

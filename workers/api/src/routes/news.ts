@@ -4,8 +4,8 @@
  * Top-tier crypto / AI / tech news aggregator.
  */
 
+import type { UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
-import type { UnifiedPost, UnifiedIdentity } from '@degenfeed/types';
 
 interface NewsSource {
   name: string;
@@ -18,40 +18,250 @@ interface NewsSource {
 }
 
 const NEWS_SOURCES: NewsSource[] = [
-  { name: 'CoinDesk', type: 'rss', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', tier: 1, mustRead: true, weight: 1.5 },
-  { name: 'CoinTelegraph', type: 'rss', url: 'https://cointelegraph.com/rss', tier: 1, mustRead: true, weight: 1.5 },
-  { name: 'The Block', type: 'rss', url: 'https://www.theblockcrypto.com/rss.xml', tier: 1, mustRead: true, weight: 1.5 },
-  { name: 'Decrypt', type: 'rss', url: 'https://decrypt.co/feed', tier: 1, mustRead: true, weight: 1.4 },
-  { name: 'Blockworks', type: 'rss', url: 'https://blockworks.co/feed', tier: 1, mustRead: true, weight: 1.4 },
-  { name: 'Bitcoin Magazine', type: 'rss', url: 'https://bitcoinmagazine.com/feed', tier: 1, mustRead: true, weight: 1.3 },
-  { name: 'CryptoSlate', type: 'rss', url: 'https://cryptoslate.com/feed/', tier: 1, mustRead: false, weight: 1.1 },
+  {
+    name: 'CoinDesk',
+    type: 'rss',
+    url: 'https://www.coindesk.com/arc/outboundfeeds/rss/',
+    tier: 1,
+    mustRead: true,
+    weight: 1.5,
+  },
+  {
+    name: 'CoinTelegraph',
+    type: 'rss',
+    url: 'https://cointelegraph.com/rss',
+    tier: 1,
+    mustRead: true,
+    weight: 1.5,
+  },
+  {
+    name: 'The Block',
+    type: 'rss',
+    url: 'https://www.theblockcrypto.com/rss.xml',
+    tier: 1,
+    mustRead: true,
+    weight: 1.5,
+  },
+  {
+    name: 'Decrypt',
+    type: 'rss',
+    url: 'https://decrypt.co/feed',
+    tier: 1,
+    mustRead: true,
+    weight: 1.4,
+  },
+  {
+    name: 'Blockworks',
+    type: 'rss',
+    url: 'https://blockworks.co/feed',
+    tier: 1,
+    mustRead: true,
+    weight: 1.4,
+  },
+  {
+    name: 'Bitcoin Magazine',
+    type: 'rss',
+    url: 'https://bitcoinmagazine.com/feed',
+    tier: 1,
+    mustRead: true,
+    weight: 1.3,
+  },
+  {
+    name: 'CryptoSlate',
+    type: 'rss',
+    url: 'https://cryptoslate.com/feed/',
+    tier: 1,
+    mustRead: false,
+    weight: 1.1,
+  },
 
-  { name: 'Bankless', type: 'rss', url: 'https://bankless.substack.com/feed', tier: 2, mustRead: true, weight: 1.3 },
-  { name: 'The Defiant', type: 'rss', url: 'https://thedefiant.io/feed', tier: 2, mustRead: true, weight: 1.3 },
-  { name: 'Week in Ethereum', type: 'rss', url: 'https://weekinethereumnews.com/feed', tier: 2, mustRead: true, weight: 1.2 },
-  { name: 'ETH Daily', type: 'rss', url: 'https://ethdaily.substack.com/feed', tier: 2, mustRead: false, weight: 1.1 },
-  { name: 'Messari', type: 'rss', url: 'https://messari.io/rss', tier: 2, mustRead: false, weight: 1.1 },
-  { name: 'Unchained', type: 'rss', url: 'https://unchainedcrypto.com/feed/', tier: 2, mustRead: false, weight: 1.1 },
-  { name: 'Milk Road', type: 'rss', url: 'https://milkroad.substack.com/feed', tier: 2, mustRead: false, weight: 1.0 },
-  { name: 'The DeFi Edge', type: 'rss', url: 'https://thedefiedge.substack.com/feed', tier: 2, mustRead: false, weight: 1.0 },
+  {
+    name: 'Bankless',
+    type: 'rss',
+    url: 'https://bankless.substack.com/feed',
+    tier: 2,
+    mustRead: true,
+    weight: 1.3,
+  },
+  {
+    name: 'The Defiant',
+    type: 'rss',
+    url: 'https://thedefiant.io/feed',
+    tier: 2,
+    mustRead: true,
+    weight: 1.3,
+  },
+  {
+    name: 'Week in Ethereum',
+    type: 'rss',
+    url: 'https://weekinethereumnews.com/feed',
+    tier: 2,
+    mustRead: true,
+    weight: 1.2,
+  },
+  {
+    name: 'ETH Daily',
+    type: 'rss',
+    url: 'https://ethdaily.substack.com/feed',
+    tier: 2,
+    mustRead: false,
+    weight: 1.1,
+  },
+  {
+    name: 'Messari',
+    type: 'rss',
+    url: 'https://messari.io/rss',
+    tier: 2,
+    mustRead: false,
+    weight: 1.1,
+  },
+  {
+    name: 'Unchained',
+    type: 'rss',
+    url: 'https://unchainedcrypto.com/feed/',
+    tier: 2,
+    mustRead: false,
+    weight: 1.1,
+  },
+  {
+    name: 'Milk Road',
+    type: 'rss',
+    url: 'https://milkroad.substack.com/feed',
+    tier: 2,
+    mustRead: false,
+    weight: 1.0,
+  },
+  {
+    name: 'The DeFi Edge',
+    type: 'rss',
+    url: 'https://thedefiedge.substack.com/feed',
+    tier: 2,
+    mustRead: false,
+    weight: 1.0,
+  },
 
-  { name: 'Dune Analytics', type: 'rss', url: 'https://dune.com/feed', tier: 3, mustRead: false, weight: 1.0 },
-  { name: 'Glassnode', type: 'rss', url: 'https://glassnode.com/blog/feed', tier: 3, mustRead: false, weight: 1.0 },
-  { name: 'Nansen', type: 'rss', url: 'https://nansen.substack.com/feed', tier: 3, mustRead: false, weight: 1.0 },
-  { name: 'Token Terminal', type: 'rss', url: 'https://tokenterminal.com/feed', tier: 3, mustRead: false, weight: 1.0 },
-  { name: 'DeFiLlama', type: 'rss', url: 'https://defillama.com/feed', tier: 3, mustRead: false, weight: 1.0 },
-  { name: 'L2Beat', type: 'rss', url: 'https://l2beat.com/feed.xml', tier: 3, mustRead: false, weight: 1.0 },
-  { name: 'Rekt News', type: 'rss', url: 'https://rekt.news/feed.xml', tier: 3, mustRead: true, weight: 1.2 },
-  { name: 'Immunefi', type: 'rss', url: 'https://medium.com/feed/immunefi', tier: 3, mustRead: false, weight: 1.0 },
-  { name: 'SlowMist', type: 'rss', url: 'https://slowmist.medium.com/feed', tier: 3, mustRead: false, weight: 1.0 },
+  {
+    name: 'Dune Analytics',
+    type: 'rss',
+    url: 'https://dune.com/feed',
+    tier: 3,
+    mustRead: false,
+    weight: 1.0,
+  },
+  {
+    name: 'Glassnode',
+    type: 'rss',
+    url: 'https://glassnode.com/blog/feed',
+    tier: 3,
+    mustRead: false,
+    weight: 1.0,
+  },
+  {
+    name: 'Nansen',
+    type: 'rss',
+    url: 'https://nansen.substack.com/feed',
+    tier: 3,
+    mustRead: false,
+    weight: 1.0,
+  },
+  {
+    name: 'Token Terminal',
+    type: 'rss',
+    url: 'https://tokenterminal.com/feed',
+    tier: 3,
+    mustRead: false,
+    weight: 1.0,
+  },
+  {
+    name: 'DeFiLlama',
+    type: 'rss',
+    url: 'https://defillama.com/feed',
+    tier: 3,
+    mustRead: false,
+    weight: 1.0,
+  },
+  {
+    name: 'L2Beat',
+    type: 'rss',
+    url: 'https://l2beat.com/feed.xml',
+    tier: 3,
+    mustRead: false,
+    weight: 1.0,
+  },
+  {
+    name: 'Rekt News',
+    type: 'rss',
+    url: 'https://rekt.news/feed.xml',
+    tier: 3,
+    mustRead: true,
+    weight: 1.2,
+  },
+  {
+    name: 'Immunefi',
+    type: 'rss',
+    url: 'https://medium.com/feed/immunefi',
+    tier: 3,
+    mustRead: false,
+    weight: 1.0,
+  },
+  {
+    name: 'SlowMist',
+    type: 'rss',
+    url: 'https://slowmist.medium.com/feed',
+    tier: 3,
+    mustRead: false,
+    weight: 1.0,
+  },
 
-  { name: 'TechCrunch', type: 'rss', url: 'https://techcrunch.com/feed/', tier: 4, mustRead: false, weight: 0.9 },
-  { name: 'The Verge', type: 'rss', url: 'https://www.theverge.com/rss/index.xml', tier: 4, mustRead: false, weight: 0.9 },
+  {
+    name: 'TechCrunch',
+    type: 'rss',
+    url: 'https://techcrunch.com/feed/',
+    tier: 4,
+    mustRead: false,
+    weight: 0.9,
+  },
+  {
+    name: 'The Verge',
+    type: 'rss',
+    url: 'https://www.theverge.com/rss/index.xml',
+    tier: 4,
+    mustRead: false,
+    weight: 0.9,
+  },
 
-  { name: 'r/CryptoCurrency', type: 'reddit', url: 'https://old.reddit.com/r/CryptoCurrency/hot.rss?limit=25', tier: 3, mustRead: false, weight: 0.8 },
-  { name: 'r/ethfinance', type: 'reddit', url: 'https://old.reddit.com/r/ethfinance/hot.rss?limit=25', tier: 3, mustRead: false, weight: 0.8 },
-  { name: 'r/solana', type: 'reddit', url: 'https://old.reddit.com/r/solana/hot.rss?limit=25', tier: 3, mustRead: false, weight: 0.8 },
-  { name: 'r/ethdev', type: 'reddit', url: 'https://old.reddit.com/r/ethdev/hot.rss?limit=25', tier: 3, mustRead: false, weight: 0.8 },
+  {
+    name: 'r/CryptoCurrency',
+    type: 'reddit',
+    url: 'https://old.reddit.com/r/CryptoCurrency/hot.rss?limit=25',
+    tier: 3,
+    mustRead: false,
+    weight: 0.8,
+  },
+  {
+    name: 'r/ethfinance',
+    type: 'reddit',
+    url: 'https://old.reddit.com/r/ethfinance/hot.rss?limit=25',
+    tier: 3,
+    mustRead: false,
+    weight: 0.8,
+  },
+  {
+    name: 'r/solana',
+    type: 'reddit',
+    url: 'https://old.reddit.com/r/solana/hot.rss?limit=25',
+    tier: 3,
+    mustRead: false,
+    weight: 0.8,
+  },
+  {
+    name: 'r/ethdev',
+    type: 'reddit',
+    url: 'https://old.reddit.com/r/ethdev/hot.rss?limit=25',
+    tier: 3,
+    mustRead: false,
+    weight: 0.8,
+  },
 
   { name: 'Hacker News', type: 'hackernews', url: '', tier: 4, mustRead: false, weight: 1.1 },
 ];
@@ -90,7 +300,7 @@ function decodeXmlEntities(str: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
     .replace(/&#(\d+);/g, (_m, d) => String.fromCodePoint(Number(d)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_m, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_m, h) => String.fromCodePoint(Number.parseInt(h, 16)))
     .trim();
 }
 
@@ -103,9 +313,10 @@ function extractText(tag: string, xml: string): string {
 function extractAll(tag: string, xml: string): string[] {
   const re = new RegExp(`<${tag}(?:[^>]*)>([\\s\\S]*?)<\\/${tag}>`, 'gi');
   const out: string[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(xml)) !== null) {
+  let m: RegExpExecArray | null = re.exec(xml);
+  while (m !== null) {
     out.push(decodeXmlEntities(m[1] || ''));
+    m = re.exec(xml);
   }
   return out;
 }
@@ -113,15 +324,18 @@ function extractAll(tag: string, xml: string): string[] {
 function parseRss(xml: string): RssItem[] {
   const items: RssItem[] = [];
   const itemRe = /<item([^>]*)>([\s\S]*?)<\/item>/gi;
-  let m: RegExpExecArray | null;
+  let m: RegExpExecArray | null = itemRe.exec(xml);
 
-  while ((m = itemRe.exec(xml)) !== null) {
+  while (m !== null) {
     const itemXml = m[2] || '';
     const title = extractText('title', itemXml);
     const link = extractText('link', itemXml) || extractText('guid', itemXml);
     const description = extractText('description', itemXml);
     const content = extractText('content:encoded', itemXml) || extractText('content', itemXml);
-    const pubDate = extractText('pubDate', itemXml) || extractText('dc:date', itemXml) || extractText('published', itemXml);
+    const pubDate =
+      extractText('pubDate', itemXml) ||
+      extractText('dc:date', itemXml) ||
+      extractText('published', itemXml);
     const creator = extractText('dc:creator', itemXml) || extractText('author', itemXml);
     const categories = extractAll('category', itemXml);
 
@@ -136,6 +350,7 @@ function parseRss(xml: string): RssItem[] {
     if (title && link) {
       items.push({ title, link, description, pubDate, creator, content, image, categories });
     }
+    m = itemRe.exec(xml);
   }
 
   return items;
@@ -144,9 +359,9 @@ function parseRss(xml: string): RssItem[] {
 function parseAtom(xml: string): RssItem[] {
   const items: RssItem[] = [];
   const entryRe = /<entry([^>]*)>([\s\S]*?)<\/entry>/gi;
-  let m: RegExpExecArray | null;
+  const m: RegExpExecArray | null = entryRe.exec(xml);
 
-  while ((m = entryRe.exec(xml)) !== null) {
+  while (m !== null) {
     const entryXml = m[2] || '';
     const title = extractText('title', entryXml);
     const linkMatch = entryXml.match(/<link[^>]+href\s*=\s*["']([^"']+)["']/i);
@@ -216,9 +431,11 @@ async function fetchHackerNews(): Promise<RssItem[]> {
     try {
       const res = await fetchWithTimeout(url, 6000);
       if (!res?.ok) continue;
-      const data = await res.json() as { hits?: HnHit[] };
+      const data = (await res.json()) as { hits?: HnHit[] };
       if (data.hits) hits.push(...data.hits);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   return hits.map((h) => ({
@@ -243,7 +460,9 @@ function normalizeUrl(url: string): string {
   try {
     const u = new URL(url);
     u.hash = '';
-    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ref', 'source'].forEach(p => u.searchParams.delete(p));
+    for (const p of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ref', 'source']) {
+      u.searchParams.delete(p);
+    }
     return u.toString();
   } catch {
     return url;
@@ -255,7 +474,7 @@ function toUnifiedPost(item: RssItem, source: NewsSource): UnifiedPost {
   const text = stripTags(item.content || item.description || item.title).slice(0, 600);
   const html = item.content || item.description || '';
   const pubDate = item.pubDate ? new Date(item.pubDate).getTime() : Date.now();
-  const createdAt = isNaN(pubDate) ? Date.now() : pubDate;
+  const createdAt = Number.isNaN(pubDate) ? Date.now() : pubDate;
 
   const embeds: { kind: 'image' | 'link' | 'video'; url: string }[] = [];
   if (item.image) embeds.push({ kind: 'image', url: item.image });
@@ -265,7 +484,15 @@ function toUnifiedPost(item: RssItem, source: NewsSource): UnifiedPost {
   const author: UnifiedIdentity = {
     id: authorId,
     primary: { protocol: 'rss', id: authorId },
-    handles: { nostr: null, farcaster: null, lens: null, bluesky: null, threads: null, rss: null, mastodon: null },
+    handles: {
+      nostr: null,
+      farcaster: null,
+      lens: null,
+      bluesky: null,
+      threads: null,
+      rss: null,
+      mastodon: null,
+    },
     displayName: source.name,
     bio: '',
     avatarUrl: '',
@@ -276,7 +503,9 @@ function toUnifiedPost(item: RssItem, source: NewsSource): UnifiedPost {
     keys: {},
   };
 
-  const categories = [...new Set([...(source.category ? [source.category] : []), ...item.categories])];
+  const categories = [
+    ...new Set([...(source.category ? [source.category] : []), ...item.categories]),
+  ];
   const niches = detectNiches(`${text} ${categories.join(' ')} ${source.name}`);
 
   return {
@@ -288,9 +517,13 @@ function toUnifiedPost(item: RssItem, source: NewsSource): UnifiedPost {
     embeds,
     createdAt,
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    engagement: { viewerLiked: false, viewerReposted: false, raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 } },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+    },
     raw: { item, source },
-    niches: [...new Set([...niches, ...categories.map(c => c.toLowerCase())])],
+    niches: [...new Set([...niches, ...categories.map((c) => c.toLowerCase())])],
   };
 }
 
@@ -300,9 +533,27 @@ const NICHE_KEYWORDS: Record<string, string[]> = {
   solana: ['solana', 'sol ', 'solana-based'],
   defi: ['defi', 'lending', 'yield', 'liquidity', 'amm', 'dex', 'swap', 'staking', 'restaking'],
   nft: ['nft', 'nfts', 'collectible', 'punk', 'azuki', 'opensea', 'blur'],
-  ai: ['ai ', 'artificial intelligence', 'machine learning', 'llm', 'gpt', 'openai', 'anthropic', 'deepseek'],
+  ai: [
+    'ai ',
+    'artificial intelligence',
+    'machine learning',
+    'llm',
+    'gpt',
+    'openai',
+    'anthropic',
+    'deepseek',
+  ],
   regulation: ['sec', 'regulation', 'mica', 'cftc', 'congress', 'senate', 'policy', 'compliance'],
-  security: ['hack', 'exploit', 'vulnerability', 'audit', 'phishing', 'rug pull', 'rekt', 'immunefi'],
+  security: [
+    'hack',
+    'exploit',
+    'vulnerability',
+    'audit',
+    'phishing',
+    'rug pull',
+    'rekt',
+    'immunefi',
+  ],
   macro: ['fed', 'fomc', 'inflation', 'interest rate', 'dollar', 'recession', 'nasdaq', 'spx'],
   stablecoin: ['stablecoin', 'usdt', 'usdc', 'tether', 'circle'],
   layer2: ['layer 2', 'l2', 'rollup', 'arbitrum', 'optimism', 'base', 'zk-', 'zero knowledge'],
@@ -315,7 +566,7 @@ function detectNiches(text: string): string[] {
   const lower = text.toLowerCase();
   const niches: string[] = [];
   for (const [niche, terms] of Object.entries(NICHE_KEYWORDS)) {
-    if (terms.some(t => lower.includes(t))) niches.push(niche);
+    if (terms.some((t) => lower.includes(t))) niches.push(niche);
   }
   return [...new Set(niches)];
 }
@@ -344,7 +595,9 @@ function extractTrending(posts: UnifiedPost[], limit = 12): TrendingTopic[] {
       counts[niche].score += 1;
     }
     const text = `${post.text} ${post.author.displayName}`.toUpperCase();
-    const tickers = Array.from(text.matchAll(/\$([A-Z]{2,5})\b/g)).map(m => m[1]).filter((t): t is string => !!t);
+    const tickers = Array.from(text.matchAll(/\$([A-Z]{2,5})\b/g))
+      .map((m) => m[1])
+      .filter((t): t is string => !!t);
     for (const t of tickers) {
       if (!counts[t]) counts[t] = { count: 0, score: 0 };
       counts[t].count++;
@@ -372,14 +625,16 @@ export async function handleNewsFeed(request: Request, env: Env): Promise<Respon
       const parsed = JSON.parse(cached);
       return jsonResponse(parsed);
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   const now = Date.now();
 
   const results = await Promise.allSettled(
     NEWS_SOURCES.map(async (source) => {
       const items = await fetchSource(source);
-      return items.map(i => ({ item: i, source }));
+      return items.map((i) => ({ item: i, source }));
     }),
   );
 
@@ -406,28 +661,35 @@ export async function handleNewsFeed(request: Request, env: Env): Promise<Respon
       if (mustRead && !source.mustRead) continue;
 
       if (query) {
-        const haystack = `${post.text} ${post.author.displayName} ${post.niches.join(' ')}`.toLowerCase();
+        const haystack =
+          `${post.text} ${post.author.displayName} ${post.niches.join(' ')}`.toLowerCase();
         if (!haystack.includes(query)) continue;
       }
 
       const score = rankPost(post, source, now);
       posts.push({ post, source, score });
-    } catch { /* skip */ }
+    } catch {
+      /* skip */
+    }
   }
 
   posts.sort((a, b) => b.score - a.score);
 
   for (const p of posts) {
-    (p.post.raw as any).mustRead = p.source.mustRead;
-    (p.post.raw as any).tier = p.source.tier;
+    const raw = p.post.raw as Record<string, unknown>;
+    raw.mustRead = p.source.mustRead;
+    raw.tier = p.source.tier;
   }
 
-  const topPosts = posts.slice(0, limit).map(p => p.post);
-  const trending = extractTrending(posts.map(p => p.post));
-  const sourceCounts = NEWS_SOURCES.reduce((acc, s) => {
-    acc[s.name] = posts.filter(p => p.source.name === s.name).length;
-    return acc;
-  }, {} as Record<string, number>);
+  const topPosts = posts.slice(0, limit).map((p) => p.post);
+  const trending = extractTrending(posts.map((p) => p.post));
+  const sourceCounts = NEWS_SOURCES.reduce(
+    (acc, s) => {
+      acc[s.name] = posts.filter((p) => p.source.name === s.name).length;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   const response = {
     data: topPosts,
@@ -446,7 +708,9 @@ export async function handleNewsFeed(request: Request, env: Env): Promise<Respon
 
   try {
     await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 900 });
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   return jsonResponse(response);
 }

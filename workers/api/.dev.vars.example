@@ -1,0 +1,20 @@
+# ── DegenFeed API Worker .dev.vars.example ─────────────────────
+# Copy to .dev.vars and fill in real values for local development.
+# .dev.vars is NOT committed — it holds secrets only.
+# For production, use `wrangler secret put <NAME>`.
+
+# Cloudflare API token used by Wrangler for deploys and local dev auth.
+# Not used by the worker runtime itself.
+CLOUDFLARE_API_TOKEN=
+
+# GotoSocial OAuth2 client secret.
+# Register an application at your GTS instance to obtain this.
+GTS_CLIENT_SECRET=
+
+# ── Cloudflare platform bindings ───────────────────────────────
+# CACHE is a KV namespace binding used by workers/api/src/routes/news.ts.
+# It is configured in wrangler.toml, NOT in .dev.vars:
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "<your-kv-namespace-id>"
+# preview_id = "<your-preview-kv-namespace-id>"

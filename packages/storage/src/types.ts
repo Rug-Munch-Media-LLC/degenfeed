@@ -17,7 +17,6 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
-import { type IDBPDatabase, openDB } from 'idb';
 
 // ─── Schema Types ──────────────────────────────────────────────────────
 
@@ -97,4 +96,3 @@ export interface UserPreferences {
   reducedMotion: boolean;
   fontSize: 'small' | 'medium' | 'large';
 }
-

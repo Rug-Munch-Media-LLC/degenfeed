@@ -9,10 +9,10 @@ import { bytesToHex } from '@noble/hashes/utils';
  */
 
 export interface ZapInvoice {
-  pr: string;       // Bolt11 invoice
+  pr: string; // Bolt11 invoice
   description: string;
   description_hash: string;
-  amount: number;   // msat
+  amount: number; // msat
   expires_at: number;
   // LNURL-pay response extras
   allowsNsec?: boolean;
@@ -21,10 +21,36 @@ export interface ZapInvoice {
   reason?: string;
 }
 
+interface NostrProfileResponse {
+  profile?: { content?: string };
+  content?: string;
+}
+
+interface LnurlPayParams {
+  status?: string;
+  callback: string;
+  minSendable?: number;
+  maxSendable?: number;
+  commentAllowed?: number;
+  allowsNsec?: boolean;
+  reason?: string;
+}
+
+interface LnurlInvoiceResponse {
+  status?: string;
+  pr?: string;
+  description?: string;
+  description_hash?: string;
+  reason?: string;
+}
+
 /**
  * Resolve LNURL from a Nostr pubkey by fetching their kind 0 metadata.
  */
-export async function resolveLnurlFromPubkey(pubkey: string, relays: string[]): Promise<string | null> {
+export async function resolveLnurlFromPubkey(
+  pubkey: string,
+  relays: string[],
+): Promise<string | null> {
   // Try popular relay aggregators first (faster)
   const aggregators = [
     `https://api.nostr.best/nprofile/${pubkey}`,
@@ -35,13 +61,15 @@ export async function resolveLnurlFromPubkey(pubkey: string, relays: string[]): 
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
       if (!res.ok) continue;
-      const data = await res.json() as any;
+      const data = (await res.json()) as NostrProfileResponse;
       const metadata = data?.profile?.content || data?.content;
       if (metadata) {
         const lnurl = extractLnurl(metadata);
         if (lnurl) return lnurl;
       }
-    } catch { /* try next */ }
+    } catch {
+      /* try next */
+    }
   }
 
   // Fallback: subscribe to relays via WebSocket for kind 0 metadata
@@ -62,7 +90,7 @@ function extractLnurl(metadataStr: string): string | null {
     if (lnurl) return lnurl.toString();
 
     // Check in nip05 field (sometimes contains LNURL)
-    if (raw.nip05 && raw.nip05.includes('@')) {
+    if (raw.nip05?.includes('@')) {
       // Convert user@domain.com to lnurl
       return lnaddressToLnurl(raw.nip05);
     }
@@ -81,7 +109,6 @@ function lnaddressToLnurl(address: string): string {
 /**
  * Fetch an invoice from an LNURL-pay endpoint.
  */
-
 
 /**
  * Fetch LNURL from a Nostr relay by subscribing to kind 0 metadata.
@@ -105,7 +132,11 @@ function fetchLnurlFromRelay(pubkey: string, relay: string): Promise<string | nu
       const cleanup = () => {
         if (!settled) {
           settled = true;
-          try { ws.close(); } catch { /* ignore */ }
+          try {
+            ws.close();
+          } catch {
+            /* ignore */
+          }
         }
       };
 
@@ -120,14 +151,17 @@ function fetchLnurlFromRelay(pubkey: string, relay: string): Promise<string | nu
 
       ws.addEventListener('message', (event) => {
         try {
-          const msg = JSON.parse(event.data as string);
-          if (msg[0] === 'EVENT' && msg[1] === subId && msg[2]?.content) {
-            const lnurl = extractLnurl(msg[2].content);
-            if (lnurl) {
-              clearTimeout(timer);
-              cleanup();
-              resolve(lnurl);
-              return;
+          const msg = JSON.parse(event.data as string) as unknown[];
+          if (msg[0] === 'EVENT' && msg[1] === subId) {
+            const content = (msg[2] as { content?: string } | undefined)?.content;
+            if (content) {
+              const lnurl = extractLnurl(content);
+              if (lnurl) {
+                clearTimeout(timer);
+                cleanup();
+                resolve(lnurl);
+                return;
+              }
             }
           }
           if (msg[0] === 'EOSE' && msg[1] === subId) {
@@ -135,7 +169,9 @@ function fetchLnurlFromRelay(pubkey: string, relay: string): Promise<string | nu
             cleanup();
             resolve(null);
           }
-        } catch { /* ignore malformed */ }
+        } catch {
+          /* ignore malformed */
+        }
       });
 
       ws.addEventListener('error', () => {
@@ -164,7 +200,7 @@ function bech32Polymod(values: number[]): number {
     const b = chk >> 25;
     chk = ((chk & 0x1ffffff) << 5) ^ v;
     for (let i = 0; i < 5; i++) {
-      chk ^= ((b >> i) & 1) ? GEN[i]! : 0;
+      chk ^= (b >> i) & 1 ? (GEN[i] ?? 0) : 0;
     }
   }
   return chk;
@@ -186,7 +222,8 @@ function bech32Decode(bech: string): Uint8Array {
   let hasLower = false;
   let hasUpper = false;
   for (let i = 0; i < bech.length; i++) {
-    const c = bech[i]!;
+    const c = bech[i];
+    if (c === undefined) continue;
     if (c >= 'a' && c <= 'z') hasLower = true;
     if (c >= 'A' && c <= 'Z') hasUpper = true;
   }
@@ -203,7 +240,9 @@ function bech32Decode(bech: string): Uint8Array {
 
   const data = new Uint8Array(dataPart.length);
   for (let i = 0; i < dataPart.length; i++) {
-    const idx = CHARSET.indexOf(dataPart[i]!);
+    const c = dataPart[i];
+    if (c === undefined) throw new Error('Invalid bech32 character');
+    const idx = CHARSET.indexOf(c);
     if (idx < 0) throw new Error('Invalid bech32 character');
     data[i] = idx;
     values.push(idx);
@@ -237,9 +276,7 @@ export async function fetchZapInvoice(
 ): Promise<ZapInvoice | { status: 'ERROR'; reason: string }> {
   try {
     // If it's a lightning address, convert to URL first
-    const url = lnurl.includes('@') && !lnurl.startsWith('http')
-      ? lnaddressToLnurl(lnurl)
-      : lnurl;
+    const url = lnurl.includes('@') && !lnurl.startsWith('http') ? lnaddressToLnurl(lnurl) : lnurl;
 
     // Check if it's already a bech32 LNURL
     let endpoint: string;
@@ -256,7 +293,7 @@ export async function fetchZapInvoice(
     if (!paramsRes.ok) {
       return { status: 'ERROR', reason: 'LNURL endpoint unreachable' };
     }
-    const params = await paramsRes.json() as any;
+    const params = (await paramsRes.json()) as LnurlPayParams;
 
     if (params.status === 'ERROR') {
       return { status: 'ERROR', reason: params.reason || 'LNURL error' };
@@ -288,10 +325,14 @@ export async function fetchZapInvoice(
     if (!invoiceRes.ok) {
       return { status: 'ERROR', reason: 'Invoice endpoint unreachable' };
     }
-    const invoice = await invoiceRes.json() as any;
+    const invoice = (await invoiceRes.json()) as LnurlInvoiceResponse;
 
     if (invoice.status === 'ERROR') {
       return { status: 'ERROR', reason: invoice.reason || 'Invoice error' };
+    }
+
+    if (!invoice.pr) {
+      return { status: 'ERROR', reason: 'No payment request in invoice response' };
     }
 
     return {

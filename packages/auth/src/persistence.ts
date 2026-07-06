@@ -1,5 +1,5 @@
-import type { Protocol } from '@degenfeed/types';
 import type { StoredIdentity } from '@degenfeed/storage';
+import type { Protocol } from '@degenfeed/types';
 import { encryptSecret } from './crypto';
 
 export async function buildIdentityRecord(args: {
@@ -24,7 +24,7 @@ export async function buildIdentityRecord(args: {
     iv = blob.iv;
   }
   return {
-    id: args.protocol + ':' + args.publicId,
+    id: `${args.protocol}:${args.publicId}`,
     protocol: args.protocol,
     publicId: args.publicId,
     handle: args.handle,
