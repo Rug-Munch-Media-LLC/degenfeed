@@ -1,5 +1,7 @@
 'use client';
 
+import { addBookmark, removeBookmark } from '@degenfeed/storage';
+import type { EngagementAction } from '@degenfeed/types';
 import { FeedList, type Notification, NotificationBell, type UnifiedPost } from '@degenfeed/ui';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
@@ -116,6 +118,27 @@ function SectionContent({ section }: { section: string }) {
   const color = meta?.color ?? '#666';
   const icon = meta?.icon ?? '●';
 
+  const handleEngage = async (
+    action: EngagementAction,
+    postId: string,
+    content?: string,
+  ): Promise<{ ok: boolean; error?: string }> => {
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return { ok: false, error: 'Post not found' };
+
+    if ((action === 'bookmark' || action === 'unbookmark') && post.protocol !== 'mastodon') {
+      try {
+        if (action === 'bookmark') await addBookmark(postId);
+        else await removeBookmark(postId);
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : 'Bookmark failed' };
+      }
+    }
+
+    return engage(action, postId, post.protocol, { content });
+  };
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-4">
       <SectionNav current={section} />
@@ -184,7 +207,7 @@ function SectionContent({ section }: { section: string }) {
         onPostClick={(id) => {
           window.location.href = `/post/${encodeURIComponent(id)}`;
         }}
-        onEngage={(action, postId) => engage(action, postId, section)}
+        onEngage={handleEngage}
         onTip={(post) => setTipPost(post)}
         onRetry={() => setState('loading')}
       />

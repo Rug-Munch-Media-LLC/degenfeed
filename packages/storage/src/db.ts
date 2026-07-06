@@ -3,7 +3,7 @@ import { type IDBPDatabase, openDB } from 'idb';
 // ─── Database ──────────────────────────────────────────────────────────
 
 const DB_NAME = 'degenfeed';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export let dbPromise: Promise<IDBPDatabase<unknown>> | null = null;
 
@@ -61,6 +61,13 @@ export async function getDb(): Promise<IDBPDatabase<unknown>> {
           db.createObjectStore('prefs', {
             keyPath: 'identityId',
           });
+        }
+        // Bookmarks store
+        if (!db.objectStoreNames.contains('bookmarks')) {
+          const store = db.createObjectStore('bookmarks', {
+            keyPath: 'postId',
+          });
+          store.createIndex('savedAt', 'savedAt');
         }
       },
     });

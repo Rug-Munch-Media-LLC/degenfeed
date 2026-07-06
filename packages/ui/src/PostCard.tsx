@@ -1,12 +1,23 @@
-import type { UnifiedPost } from '@degenfeed/types';
-import { useState } from 'react';
+import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
+import { useEffect, useState } from 'react';
 import { ProtocolBadge, getProtocolColor } from './ProtocolBadge';
 
 export type { UnifiedPost };
 
+export interface EngageResult {
+  ok: boolean;
+  error?: string;
+}
+
+export type EngageHandler = (
+  action: EngagementAction,
+  postId: string,
+  content?: string,
+) => Promise<EngageResult> | EngageResult;
+
 export interface PostCardProps {
   post: UnifiedPost;
-  onEngage?: (action: 'like' | 'repost' | 'reply', postId: string) => void;
+  onEngage?: EngageHandler;
   onClick?: (postId: string) => void;
   expanded?: boolean;
   /** Called when user clicks the tip button for this post's author */
@@ -14,6 +25,7 @@ export interface PostCardProps {
 }
 
 const MAX_TEXT_LENGTH = 500;
+const REACTIONS = ['👍', '❤️', '🔥', '🚀', '😂'];
 
 function formatTime(ts: number): string {
   const diff = Date.now() - ts;
@@ -33,11 +45,86 @@ function formatCount(n: number): string {
   return String(n);
 }
 
+interface LocalState {
+  engagement: UnifiedPost['engagement'];
+  metrics: UnifiedPost['metrics'];
+}
+
+function applyOptimistic(state: LocalState, action: EngagementAction): LocalState {
+  const { engagement, metrics } = state;
+  switch (action) {
+    case 'like':
+      return {
+        engagement: { ...engagement, viewerLiked: true },
+        metrics: { ...metrics, likes: metrics.likes + 1 },
+      };
+    case 'unlike':
+      return {
+        engagement: { ...engagement, viewerLiked: false },
+        metrics: { ...metrics, likes: Math.max(0, metrics.likes - 1) },
+      };
+    case 'repost':
+      return {
+        engagement: { ...engagement, viewerReposted: true },
+        metrics: { ...metrics, reposts: metrics.reposts + 1 },
+      };
+    case 'unrepost':
+      return {
+        engagement: { ...engagement, viewerReposted: false },
+        metrics: { ...metrics, reposts: Math.max(0, metrics.reposts - 1) },
+      };
+    case 'bookmark':
+      return {
+        engagement: { ...engagement, viewerBookmarked: true },
+        metrics,
+      };
+    case 'unbookmark':
+      return {
+        engagement: { ...engagement, viewerBookmarked: false },
+        metrics,
+      };
+    case 'reply':
+      return {
+        engagement,
+        metrics: { ...metrics, replies: metrics.replies + 1 },
+      };
+    case 'react':
+      return { engagement, metrics };
+    default:
+      return state;
+  }
+}
+
 export function PostCard({ post, onEngage, onClick, expanded, onTip }: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
+  const [localState, setLocalState] = useState<LocalState>({
+    engagement: post.engagement,
+    metrics: post.metrics,
+  });
+  const [showReply, setShowReply] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [showReactions, setShowReactions] = useState(false);
+
+  useEffect(() => {
+    setLocalState({ engagement: post.engagement, metrics: post.metrics });
+  }, [post.engagement, post.metrics]);
+
   const needsTruncation = !expanded && post.text.length > MAX_TEXT_LENGTH;
   const displayText =
     needsTruncation && !showFullText ? `${post.text.slice(0, MAX_TEXT_LENGTH)}...` : post.text;
+
+  async function perform(action: EngagementAction, content?: string) {
+    if (!onEngage) return;
+    const previous = localState;
+    setLocalState((s) => applyOptimistic(s, action));
+    const result = await onEngage(action, post.id, content);
+    if (!result.ok) {
+      setLocalState(previous);
+    } else if (action === 'reply') {
+      setReplyText('');
+      setShowReply(false);
+    }
+  }
 
   return (
     <article
@@ -137,36 +224,83 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip }: PostCardP
       <div className="flex items-center gap-4 text-xs text-gray-500">
         <button
           type="button"
-          className={`flex items-center gap-1 transition-colors hover:text-red-400 ${post.engagement.viewerLiked ? 'text-red-400' : ''}`}
+          className={`flex items-center gap-1 transition-colors hover:text-red-400 ${localState.engagement.viewerLiked ? 'text-red-400' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
-            onEngage?.('like', post.id);
+            void perform(localState.engagement.viewerLiked ? 'unlike' : 'like');
           }}
-          aria-label={`${post.metrics.likes} likes`}
+          aria-label={`${localState.metrics.likes} likes`}
         >
-          {post.engagement.viewerLiked ? '❤' : '♡'} {formatCount(post.metrics.likes)}
+          {localState.engagement.viewerLiked ? '❤' : '♡'} {formatCount(localState.metrics.likes)}
         </button>
         <button
           type="button"
-          className={`flex items-center gap-1 transition-colors hover:text-green-400 ${post.engagement.viewerReposted ? 'text-green-400' : ''}`}
+          className={`flex items-center gap-1 transition-colors hover:text-green-400 ${localState.engagement.viewerReposted ? 'text-green-400' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
-            onEngage?.('repost', post.id);
+            void perform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
           }}
-          aria-label={`${post.metrics.reposts} reposts`}
+          aria-label={`${localState.metrics.reposts} reposts`}
         >
-          ↻ {formatCount(post.metrics.reposts)}
+          ↻ {formatCount(localState.metrics.reposts)}
         </button>
         <button
           type="button"
           className="flex items-center gap-1 transition-colors hover:text-blue-400"
           onClick={(e) => {
             e.stopPropagation();
-            onEngage?.('reply', post.id);
+            setShowReply((v) => !v);
           }}
-          aria-label={`${post.metrics.replies} replies`}
+          aria-label={`${localState.metrics.replies} replies`}
         >
-          ↩ {formatCount(post.metrics.replies)}
+          ↩ {formatCount(localState.metrics.replies)}
+        </button>
+        <div className="relative">
+          <button
+            type="button"
+            className="flex items-center gap-1 transition-colors hover:text-yellow-400"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowReactions((v) => !v);
+            }}
+            aria-label="React"
+          >
+            😊
+          </button>
+          {showReactions && (
+            <div
+              className="absolute bottom-6 left-0 z-10 flex gap-1 rounded-lg border border-gray-700 bg-gray-800 p-1 shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              {REACTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className="rounded p-1 hover:bg-gray-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void perform('react', emoji);
+                    setShowReactions(false);
+                  }}
+                  aria-label={`React with ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          className={`flex items-center gap-1 transition-colors hover:text-purple-400 ${localState.engagement.viewerBookmarked ? 'text-purple-400' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            void perform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
+          }}
+          aria-label={localState.engagement.viewerBookmarked ? 'Bookmarked' : 'Bookmark'}
+        >
+          {localState.engagement.viewerBookmarked ? '🔖' : '🔖'}
         </button>
         {/* Tip button */}
         {onTip && (
@@ -184,6 +318,31 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip }: PostCardP
           </button>
         )}
       </div>
+
+      {showReply && (
+        <form
+          className="mt-3 flex gap-2"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!replyText.trim()) return;
+            void perform('reply', replyText.trim());
+          }}
+        >
+          <input
+            type="text"
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder="Write a reply..."
+            className="flex-1 rounded border border-gray-700 bg-gray-900 px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:border-degen-500 focus:outline-none"
+            maxLength={1000}
+          />
+          <button type="submit" className="btn-primary text-xs">
+            Reply
+          </button>
+        </form>
+      )}
     </article>
   );
 }

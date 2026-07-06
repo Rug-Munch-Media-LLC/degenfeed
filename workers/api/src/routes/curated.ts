@@ -79,6 +79,7 @@ async function fetchNostrTop(limit: number): Promise<UnifiedPost[]> {
         engagement: {
           viewerLiked: false,
           viewerReposted: false,
+          viewerBookmarked: false,
           raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
         },
         raw: ev,
@@ -165,6 +166,7 @@ async function fetchMastodonTop(limit: number): Promise<UnifiedPost[]> {
         engagement: {
           viewerLiked: false,
           viewerReposted: false,
+          viewerBookmarked: false,
           raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
         },
         raw: s,

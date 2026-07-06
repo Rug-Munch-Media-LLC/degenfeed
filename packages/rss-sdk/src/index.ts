@@ -304,6 +304,7 @@ export function feedToUnifiedPosts(source: SourcePosts, meta?: FeedMeta): Unifie
       engagement: {
         viewerLiked: false,
         viewerReposted: false,
+        viewerBookmarked: false,
         raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
       },
       raw: { item, feed, source: effectiveMeta },

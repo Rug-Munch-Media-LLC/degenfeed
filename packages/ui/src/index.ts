@@ -17,7 +17,7 @@ export { PricePill, usePricesForText } from './PricePill';
 export { FundingCard } from './FundingCard';
 export type { ComposeModalProps } from './ComposeModal';
 export type { FeedListProps, FeedState } from './FeedList';
-export type { PostCardProps } from './PostCard';
+export type { EngageHandler, EngageResult, PostCardProps } from './PostCard';
 export type { ProtocolBadgeProps } from './ProtocolBadge';
 export type { SignInModalProps, ProtocolOption } from './SignInModal';
 export type { Notification, NotificationBellProps } from './NotificationBell';

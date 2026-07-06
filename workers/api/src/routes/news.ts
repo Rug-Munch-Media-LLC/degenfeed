@@ -520,6 +520,7 @@ function toUnifiedPost(item: RssItem, source: NewsSource): UnifiedPost {
     engagement: {
       viewerLiked: false,
       viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     raw: { item, source },

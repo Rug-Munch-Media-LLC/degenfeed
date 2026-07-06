@@ -68,17 +68,47 @@ export interface ThreadsPostView extends BskyPostView {
  */
 export class ThreadsClient {
   private bsky: BskyClient;
+  private writeClient: BskyClient;
 
   /**
    * @param pdsUrl AT Protocol PDS URL. Defaults to Threads public AppView.
    */
   constructor(pdsUrl: string = THREADS_PUBLIC_URL) {
     this.bsky = new BskyClient(pdsUrl);
+    this.writeClient = new BskyClient(THREADS_PDS_URL);
   }
 
   /** Set auth JWT for authenticated requests. */
   setAuth(accessJwt: string): void {
     this.bsky.setAuth(accessJwt);
+    this.writeClient.setAuth(accessJwt);
+  }
+
+  async like(uri: string, cid: string, actorDid: string): Promise<void> {
+    return this.writeClient.like(uri, cid, actorDid);
+  }
+
+  async unlike(uri: string, actorDid: string): Promise<void> {
+    return this.writeClient.unlike(uri, actorDid);
+  }
+
+  async repost(uri: string, cid: string, actorDid: string): Promise<void> {
+    return this.writeClient.repost(uri, cid, actorDid);
+  }
+
+  async unrepost(uri: string, actorDid: string): Promise<void> {
+    return this.writeClient.unrepost(uri, actorDid);
+  }
+
+  async reply(
+    parentUri: string,
+    parentCid: string,
+    actorDid: string,
+    text: string,
+    rootUri?: string,
+    rootCid?: string,
+  ): Promise<void> {
+    return this.writeClient.reply(parentUri, parentCid, actorDid, text, rootUri, rootCid);
   }
 
   /** Get the Threads homepage / timeline. */

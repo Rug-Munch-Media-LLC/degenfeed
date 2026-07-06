@@ -51,6 +51,16 @@ export interface Embed {
   meta?: Record<string, unknown>;
 }
 
+export type EngagementAction =
+  | 'like'
+  | 'unlike'
+  | 'repost'
+  | 'unrepost'
+  | 'bookmark'
+  | 'unbookmark'
+  | 'reply'
+  | 'react';
+
 export interface EngagementMetrics {
   likes: number;
   reposts: number;
@@ -63,6 +73,7 @@ export interface EngagementVector {
   /** Per-protocol reaction ids from the current viewer (for UI state) */
   viewerLiked: boolean;
   viewerReposted: boolean;
+  viewerBookmarked: boolean;
   /** Raw engagement counts at fetch time (for ranking delta calculation) */
   raw: EngagementMetrics;
 }

@@ -71,6 +71,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
           engagement: {
             viewerLiked: false,
             viewerReposted: false,
+            viewerBookmarked: false,
             raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
           },
           raw: ev,
@@ -148,6 +149,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
           engagement: {
             viewerLiked: false,
             viewerReposted: false,
+            viewerBookmarked: false,
             raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
           },
           raw: pub,

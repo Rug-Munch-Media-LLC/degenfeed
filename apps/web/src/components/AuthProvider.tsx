@@ -9,6 +9,7 @@ import {
   saveIdentity,
   setPrimaryIdentity as setPrimaryIdentityInDb,
 } from '@degenfeed/storage';
+import type { EngagementAction } from '@degenfeed/types';
 import { ComposeModal, SignInModal } from '@degenfeed/ui';
 import {
   type ReactNode,
@@ -36,7 +37,16 @@ export interface AuthContextValue {
     text: string,
     targets: string[],
   ) => Promise<Record<string, { ok: boolean; error?: string }>>;
-  engage: (action: string, postId: string, protocol: string) => Promise<void>;
+  engage: (
+    action: EngagementAction,
+    postId: string,
+    protocol: string,
+    opts?: {
+      content?: string;
+      reaction?: string;
+      target?: { authorId?: string; publicationId?: string };
+    },
+  ) => Promise<{ ok: boolean; error?: string }>;
   ready: boolean;
   setPrimaryIdentity: (id: string) => Promise<void>;
   unlinkIdentity: (id: string) => Promise<void>;
@@ -134,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           avatarUrl: profile.avatar,
           secret: pending.accessToken,
           passphrase: 'auto-unlock',
+          keys: { accessToken: pending.accessToken },
           isPrimary: false,
         });
         await saveIdentity(record);
@@ -248,19 +259,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const handleEngage = useCallback(
-    async (action: string, postId: string, protocol: string) => {
+    async (
+      action: EngagementAction,
+      postId: string,
+      protocol: string,
+      opts: {
+        content?: string;
+        reaction?: string;
+        target?: { authorId?: string; publicationId?: string };
+      } = {},
+    ): Promise<{ ok: boolean; error?: string }> => {
+      const identity = identities.find((i) => i.protocol === protocol);
+      const auth: Record<string, string> = {};
+      if (identity?.keys?.accessToken) auth[protocol] = identity.keys.accessToken;
+      if (protocol === 'mastodon') {
+        auth.mastodon_instance = identity?.keys?.instanceUrl || 'https://social.degenfeed.xyz';
+      }
+      if (protocol === 'bluesky' || protocol === 'threads') {
+        auth[`${protocol}_did`] = identity?.publicId ?? '';
+      }
+      if (protocol === 'lens') {
+        auth.lens_profileId = identity?.publicId ?? '';
+      }
+
       try {
-        await fetch('/api/engage', {
+        const res = await fetch('/api/engage', {
           method: 'POST',
           credentials: 'include',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ action, postId, protocol, auth: tokens[protocol] }),
+          body: JSON.stringify({
+            action,
+            postId,
+            protocol,
+            content: opts.content,
+            reaction: opts.reaction,
+            target: opts.target,
+            auth,
+          }),
         });
-      } catch {
-        /* silently fail */
+        const data = (await res.json()) as { ok?: boolean; error?: string };
+        return { ok: data.ok ?? false, error: data.error };
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : 'Network error' };
       }
     },
-    [tokens],
+    [identities],
   );
 
   const handleSetPrimary = useCallback(

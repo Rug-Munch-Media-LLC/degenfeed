@@ -14,10 +14,9 @@ import {
   parseOriginHeader,
 } from './cors';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
-import { handleTopFeed } from './routes/curated';
-import { handleNewsletterFeed } from './routes/curated';
-import { handleHomeFeed } from './routes/feed';
-import { handleTrendingFeed } from './routes/feed';
+import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
+import { handleEngage } from './routes/engage';
+import { handleHomeFeed, handleTrendingFeed } from './routes/feed';
 import { handleFundingFeed } from './routes/funding';
 import { handleRelaysHealth } from './routes/health';
 import { handleResolveIdentity } from './routes/identity';
@@ -25,7 +24,7 @@ import { handleNewsFeed } from './routes/news';
 import { handleNotifications } from './routes/notifications';
 import { handlePrices } from './routes/prices';
 import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
-import { handleEngage, handlePublish } from './routes/publish';
+import { handlePublish } from './routes/publish';
 import { handleRssFeed } from './routes/rss';
 import {
   handleLightningInvoice,
@@ -52,6 +51,7 @@ export interface Env {
   FARCASTER_HUB_URL?: string;
   LENS_API_URL?: string;
   BSKY_PUBLIC_URL?: string;
+  BSKY_SOCIAL_URL?: string;
   THREADS_PDS_URL?: string;
   RATE_WINDOW_MS?: string;
   RATE_MAX_REQ?: string;
@@ -72,6 +72,7 @@ export const FARCASTER_HUBS = [
 ];
 export const LENS_APIS = ['https://api.lens.xyz/graphql', 'https://api-v2.lens.dev/graphql'];
 export const BSKY_PUBLIC = 'https://public.api.bsky.app';
+export const BSKY_SOCIAL = 'https://bsky.social';
 export const THREADS_PUBLIC = 'https://public.threads.net';
 
 // ─── Rate limiting ───────────────────────────────────────────────────

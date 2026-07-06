@@ -286,12 +286,24 @@ export class GtSClient {
     return this.post<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}/favourite`);
   }
 
+  async unlike(statusId: string): Promise<GtSStatus> {
+    return this.post<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}/unfavourite`);
+  }
+
   async repost(statusId: string): Promise<GtSStatus> {
     return this.post<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}/reblog`);
   }
 
+  async unrepost(statusId: string): Promise<GtSStatus> {
+    return this.post<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}/unreblog`);
+  }
+
   async bookmark(statusId: string): Promise<GtSStatus> {
     return this.post<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}/bookmark`);
+  }
+
+  async unbookmark(statusId: string): Promise<GtSStatus> {
+    return this.post<GtSStatus>(`/api/v1/statuses/${encodeURIComponent(statusId)}/unbookmark`);
   }
 
   async follow(accountId: string): Promise<GtSAccount> {

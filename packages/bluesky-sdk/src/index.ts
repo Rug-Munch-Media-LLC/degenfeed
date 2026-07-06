@@ -139,4 +139,87 @@ export class BskyClient {
       raw: post,
     });
   }
+
+  /** Create a like record. Requires setAuth(). */
+  async like(uri: string, cid: string, actorDid: string): Promise<void> {
+    await this.createRecord(actorDid, 'app.bsky.feed.like', {
+      subject: { uri, cid },
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  /** Remove a like record. */
+  async unlike(uri: string, actorDid: string): Promise<void> {
+    await this.deleteRecord(actorDid, 'app.bsky.feed.like', uri);
+  }
+
+  /** Create a repost record. Requires setAuth(). */
+  async repost(uri: string, cid: string, actorDid: string): Promise<void> {
+    await this.createRecord(actorDid, 'app.bsky.feed.repost', {
+      subject: { uri, cid },
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  /** Remove a repost record. */
+  async unrepost(uri: string, actorDid: string): Promise<void> {
+    await this.deleteRecord(actorDid, 'app.bsky.feed.repost', uri);
+  }
+
+  /** Create a reply record. */
+  async reply(
+    parentUri: string,
+    parentCid: string,
+    actorDid: string,
+    text: string,
+    rootUri?: string,
+    rootCid?: string,
+  ): Promise<void> {
+    await this.createRecord(actorDid, 'app.bsky.feed.post', {
+      text,
+      createdAt: new Date().toISOString(),
+      reply: {
+        root: { uri: rootUri ?? parentUri, cid: rootCid ?? parentCid },
+        parent: { uri: parentUri, cid: parentCid },
+      },
+    });
+  }
+
+  private async createRecord(
+    repo: string,
+    collection: string,
+    record: Record<string, unknown>,
+  ): Promise<void> {
+    if (!this.accessJwt) throw new Error('Not authenticated');
+    const res = await fetch(`${this.pdsUrl}/xrpc/com.atproto.repo.createRecord`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${this.accessJwt}`,
+      },
+      body: JSON.stringify({ repo, collection, record }),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`Bluesky createRecord failed: ${errText.slice(0, 100)}`);
+    }
+  }
+
+  private async deleteRecord(repo: string, collection: string, uri: string): Promise<void> {
+    if (!this.accessJwt) throw new Error('Not authenticated');
+    const parts = uri.split('/');
+    const rkey = parts[parts.length - 1] ?? '';
+    const res = await fetch(`${this.pdsUrl}/xrpc/com.atproto.repo.deleteRecord`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${this.accessJwt}`,
+      },
+      body: JSON.stringify({ repo, collection, rkey }),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`Bluesky deleteRecord failed: ${errText.slice(0, 100)}`);
+    }
+  }
 }

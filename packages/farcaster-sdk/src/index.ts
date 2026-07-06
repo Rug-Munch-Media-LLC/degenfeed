@@ -117,6 +117,19 @@ export class HubClient {
       raw: cast,
     });
   }
+
+  /** Submit a pre-signed Message protobuf to the Hub. */
+  async submitMessage(signedMessage: string | ArrayBuffer): Promise<void> {
+    const res = await fetch(`${this.baseUrl}/v1/submitMessage`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/octet-stream' },
+      body: signedMessage,
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`Farcaster Hub rejected: ${errText.slice(0, 100)}`);
+    }
+  }
 }
 
 export { buildUnifiedPost, emptyIdentity, emptyMetrics };

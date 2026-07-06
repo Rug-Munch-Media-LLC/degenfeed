@@ -120,6 +120,11 @@ export async function signInWithLens(opts: {
     avatarUrl: profile.metadata.picture ?? undefined,
     secret: tokensBlob,
     passphrase: '',
+    keys: {
+      accessToken: authData.authenticate.accessToken,
+      refreshToken: authData.authenticate.refreshToken,
+      address: address ?? null,
+    },
   });
   await saveIdentity(record);
   return record;

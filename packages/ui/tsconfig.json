@@ -6,7 +6,5 @@
     "jsx": "react-jsx",
     "noImplicitOverride": false
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

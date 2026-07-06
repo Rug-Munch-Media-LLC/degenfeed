@@ -75,6 +75,7 @@ export async function signInWithBluesky(
     avatarUrl,
     secret: jwtBlob,
     passphrase,
+    keys: { accessToken: session.accessJwt, refreshJwt: session.refreshJwt },
   });
   await saveIdentity(record);
   return record;

@@ -49,6 +49,7 @@ export async function signInWithGtS(
     avatarUrl: account.avatar,
     secret: accessToken,
     passphrase,
+    keys: { accessToken },
   });
   await saveIdentity(record);
   return record;

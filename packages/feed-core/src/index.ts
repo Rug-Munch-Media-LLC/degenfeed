@@ -98,7 +98,7 @@ export function buildUnifiedPost(args: {
   rootNativeId?: string;
   createdAt: number;
   metrics?: Partial<EngagementMetrics>;
-  viewer?: { liked?: boolean; reposted?: boolean };
+  viewer?: { liked?: boolean; reposted?: boolean; bookmarked?: boolean };
   raw: unknown;
 }): UnifiedPost {
   const metrics = { ...emptyMetrics(), ...args.metrics };
@@ -116,6 +116,7 @@ export function buildUnifiedPost(args: {
     engagement: {
       viewerLiked: args.viewer?.liked ?? false,
       viewerReposted: args.viewer?.reposted ?? false,
+      viewerBookmarked: args.viewer?.bookmarked ?? false,
       raw: metrics,
     },
     raw: args.raw,

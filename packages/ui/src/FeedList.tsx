@@ -13,7 +13,7 @@
 
 import type { UnifiedPost } from '@degenfeed/types';
 import { useEffect, useRef } from 'react';
-import { PostCard } from './PostCard';
+import { type EngageHandler, PostCard } from './PostCard';
 
 export type { UnifiedPost };
 
@@ -36,7 +36,7 @@ export interface FeedListProps {
   onPostClick?: (postId: string) => void;
   /** Called when user engages with a post. */
   onTip?: (post: UnifiedPost) => void;
-  onEngage?: (action: 'like' | 'repost' | 'reply', postId: string) => void;
+  onEngage?: EngageHandler;
   /** If true, enables infinite scroll callback. */
   hasMore?: boolean;
   /** Called when user scrolls near the bottom (for infinite scroll). */

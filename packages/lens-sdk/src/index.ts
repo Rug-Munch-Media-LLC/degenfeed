@@ -54,21 +54,80 @@ export interface LensPublication {
 
 export class LensClient {
   private apiUrl: string;
+  private accessToken: string | null = null;
 
   constructor(apiUrl: string = LENS_API_URL) {
     this.apiUrl = apiUrl;
   }
 
-  async query(query: string, variables: Record<string, unknown> = {}): Promise<unknown> {
+  setAuth(accessToken: string): void {
+    this.accessToken = accessToken;
+  }
+
+  private async authQuery(
+    query: string,
+    variables: Record<string, unknown> = {},
+  ): Promise<unknown> {
+    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    if (this.accessToken) headers.authorization = `Bearer ${this.accessToken}`;
     const res = await fetch(this.apiUrl, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers,
       body: JSON.stringify({ query, variables }),
     });
     if (!res.ok) throw new Error(`Lens API error: ${res.status}`);
     const json = (await res.json()) as { data?: unknown; errors?: unknown };
     if (json.errors) throw new Error(`Lens query error: ${JSON.stringify(json.errors)}`);
     return json.data;
+  }
+
+  async query(query: string, variables: Record<string, unknown> = {}): Promise<unknown> {
+    return this.authQuery(query, variables);
+  }
+
+  async like(publicationId: string): Promise<void> {
+    await this.authQuery(
+      `mutation AddReaction($request: ReactionRequest!) {
+        addReaction(request: $request)
+      }`,
+      { request: { publicationId, reaction: 'UPVOTE' } },
+    );
+  }
+
+  async unlike(publicationId: string): Promise<void> {
+    await this.authQuery(
+      `mutation RemoveReaction($request: ReactionRequest!) {
+        removeReaction(request: $request)
+      }`,
+      { request: { publicationId, reaction: 'UPVOTE' } },
+    );
+  }
+
+  async mirror(publicationId: string): Promise<void> {
+    await this.authQuery(
+      `mutation Mirror($request: MirrorRequest!) {
+        mirror(request: $request) { ... on RelayResult { txHash } ... on RelayError { reason } }
+      }`,
+      { request: { publicationId } },
+    );
+  }
+
+  async unmirror(publicationId: string): Promise<void> {
+    await this.authQuery(
+      `mutation HidePublication($request: HidePublicationRequest!) {
+        hidePublication(request: $request)
+      }`,
+      { request: { publicationId } },
+    );
+  }
+
+  async comment(publicationId: string, content: string): Promise<void> {
+    await this.authQuery(
+      `mutation Comment($request: CommentRequest!) {
+        comment(request: $request) { ... on RelayResult { txHash } ... on RelayError { reason } }
+      }`,
+      { request: { publicationId, content } },
+    );
   }
 
   async getPublications(profileId: string, limit = 50): Promise<LensPublication[]> {

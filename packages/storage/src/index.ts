@@ -9,6 +9,7 @@ export type {
   UserPreferences,
 } from './types';
 export type { ActiveSession } from './session';
+export type { StoredBookmark } from './bookmarks';
 export {
   setActiveSession,
   getActiveSession,
@@ -37,4 +38,5 @@ export {
   unmuteWord,
   getMutedWords,
 } from './muting';
+export { addBookmark, removeBookmark, isBookmarked, getBookmarks } from './bookmarks';
 export { getPreferences, savePreferences, getDefaultPreferences } from './preferences';
