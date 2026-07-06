@@ -97,6 +97,7 @@ export class ThreadsClient {
       handles.map(async (handle) => {
         try {
           const did = await this.resolveHandle(handle);
+          if (!did) return [];
           const feed = await this.getAuthorFeed(did, limitPerHandle);
           return feed.posts;
         } catch {
@@ -111,28 +112,36 @@ export class ThreadsClient {
     return posts;
   }
 
-  async getPost(uri: string): Promise<ThreadsPostView> {
-    const url = new URL(`${THREADS_PUBLIC_URL}/xrpc/app.bsky.feed.getPostThread`);
-    url.searchParams.set('uri', uri);
-    url.searchParams.set('depth', '0');
-    const res = await fetch(url.toString(), {
-      headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
-    });
-    if (!res.ok) throw new Error(`Threads API error: ${res.status}`);
-    const json = (await res.json()) as { thread: { post: ThreadsPostView } };
-    return json.thread.post;
+  async getPost(uri: string): Promise<ThreadsPostView | null> {
+    try {
+      const url = new URL(`${THREADS_PUBLIC_URL}/xrpc/app.bsky.feed.getPostThread`);
+      url.searchParams.set('uri', uri);
+      url.searchParams.set('depth', '0');
+      const res = await fetch(url.toString(), {
+        headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
+      });
+      if (!res.ok) return null;
+      const json = (await res.json()) as { thread: { post: ThreadsPostView } };
+      return json.thread.post;
+    } catch {
+      return null;
+    }
   }
 
-  async resolveHandle(handle: string): Promise<string> {
-    const normalized = handle.replace(/^@/, '').replace(/\.threads\.net$/, '');
-    const url = new URL(`${THREADS_PUBLIC_URL}/xrpc/com.atproto.identity.resolveHandle`);
-    url.searchParams.set('handle', `${normalized}.threads.net`);
-    const res = await fetch(url.toString(), {
-      headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
-    });
-    if (!res.ok) throw new Error(`Failed to resolve Threads handle: ${res.status}`);
-    const json = (await res.json()) as { did: string };
-    return json.did;
+  async resolveHandle(handle: string): Promise<string | null> {
+    try {
+      const normalized = handle.replace(/^@/, '').replace(/\.threads\.net$/, '');
+      const url = new URL(`${THREADS_PUBLIC_URL}/xrpc/com.atproto.identity.resolveHandle`);
+      url.searchParams.set('handle', `${normalized}.threads.net`);
+      const res = await fetch(url.toString(), {
+        headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
+      });
+      if (!res.ok) return null;
+      const json = (await res.json()) as { did: string };
+      return json.did;
+    } catch {
+      return null;
+    }
   }
 
   async getProfile(did: string): Promise<{
@@ -145,24 +154,28 @@ export class ThreadsClient {
     followersCount?: number;
     followsCount?: number;
     postsCount?: number;
-  }> {
-    const url = new URL(`${THREADS_PUBLIC_URL}/xrpc/app.bsky.actor.getProfile`);
-    url.searchParams.set('actor', did);
-    const res = await fetch(url.toString(), {
-      headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
-    });
-    if (!res.ok) throw new Error(`Threads profile error: ${res.status}`);
-    return res.json() as Promise<{
-      did: string;
-      handle: string;
-      displayName?: string;
-      description?: string;
-      avatar?: string;
-      banner?: string;
-      followersCount?: number;
-      followsCount?: number;
-      postsCount?: number;
-    }>;
+  } | null> {
+    try {
+      const url = new URL(`${THREADS_PUBLIC_URL}/xrpc/app.bsky.actor.getProfile`);
+      url.searchParams.set('actor', did);
+      const res = await fetch(url.toString(), {
+        headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
+      });
+      if (!res.ok) return null;
+      return res.json() as Promise<{
+        did: string;
+        handle: string;
+        displayName?: string;
+        description?: string;
+        avatar?: string;
+        banner?: string;
+        followersCount?: number;
+        followsCount?: number;
+        postsCount?: number;
+      }>;
+    } catch {
+      return null;
+    }
   }
 
   authorToIdentity(author: BskyAuthor): UnifiedIdentity {

@@ -8,6 +8,8 @@ export type {
   StoredMutedWord,
   UserPreferences,
   MonetizationPreferences,
+  SubscriptionRecord,
+  SubscriptionTier,
 } from './types';
 export type { ActiveSession } from './session';
 export type { StoredBookmark } from './bookmarks';
@@ -46,3 +48,12 @@ export {
   saveMonetizationPreferences,
   getDefaultMonetizationPreferences,
 } from './monetization';
+export {
+  saveSubscription,
+  getSubscription,
+  isSubscriptionActive,
+  getTier,
+  isPremium,
+  isCreator,
+  buildSubscriptionRecord,
+} from './subscription';

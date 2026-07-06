@@ -87,8 +87,20 @@ export interface SourcePosts {
  * Uses old.reddit.com which provides free RSS feeds without API keys.
  * Rate limit: ~60 req/min (standard Reddit rate limit for unauthenticated).
  */
+export const DEFAULT_SUBREDDITS = [
+  'CryptoCurrency',
+  'Bitcoin',
+  'ethereum',
+  'solana',
+  'defi',
+  'NFTs',
+  'CryptoMarkets',
+  'technology',
+];
+
 export const RedditSource = {
   BASE_URL: 'https://old.reddit.com',
+  FALLBACK_URL: 'https://www.reddit.com',
 
   async fetch(
     subreddit: string,
@@ -96,15 +108,30 @@ export const RedditSource = {
     limit = 25,
     opts: FetchOpts = {},
   ): Promise<SourcePosts> {
-    const url = `${this.BASE_URL}/r/${encodeURIComponent(subreddit)}/${sort}.rss?limit=${Math.min(limit, 100)}`;
-    const feed = await fetchFeed(url, opts);
-    return { source: 'reddit', handle: subreddit, url, feed };
+    const maxLimit = Math.min(limit, 100);
+    const path = `/r/${encodeURIComponent(subreddit)}/${sort}.rss?limit=${maxLimit}`;
+    try {
+      const url = `${this.BASE_URL}${path}`;
+      const feed = await fetchFeed(url, opts);
+      return { source: 'reddit', handle: subreddit, url, feed };
+    } catch {
+      const url = `${this.FALLBACK_URL}${path}`;
+      const feed = await fetchFeed(url, opts);
+      return { source: 'reddit', handle: subreddit, url, feed };
+    }
   },
 
   async fetchUser(username: string, opts: FetchOpts = {}): Promise<SourcePosts> {
-    const url = `${this.BASE_URL}/user/${encodeURIComponent(username)}/.rss`;
-    const feed = await fetchFeed(url, opts);
-    return { source: 'reddit', handle: username, url, feed };
+    const path = `/user/${encodeURIComponent(username)}/.rss`;
+    try {
+      const url = `${this.BASE_URL}${path}`;
+      const feed = await fetchFeed(url, opts);
+      return { source: 'reddit', handle: username, url, feed };
+    } catch {
+      const url = `${this.FALLBACK_URL}${path}`;
+      const feed = await fetchFeed(url, opts);
+      return { source: 'reddit', handle: username, url, feed };
+    }
   },
 };
 

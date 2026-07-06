@@ -6,13 +6,15 @@ export type { Protocol, UnifiedIdentity, UnifiedPost };
 export const DEFAULT_HUB_URL = 'https://hub.farcaster.standardcrypto.vc:2281';
 export const FALLBACK_HUB_URLS = [
   DEFAULT_HUB_URL,
-  'https://hub-grpc.pinata.cloud',
   'https://hoyt.farcaster.standardcrypto.vc:2281',
+  'https://hub-grpc.pinata.cloud',
+  'https://hub.pinata.cloud',
 ];
 
 export const CURATED_FARCASTER_FIDS = [
   1, 2, 3, 99, 100, 200, 500, 1000, 1234, 2000, 5000, 5650, 11276, 215, 320, 602, 1337, 4242, 69420,
-  100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000,
+  100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000, 1100000, 1200000,
+  1300000, 1400000, 1500000,
 ];
 
 export interface FarcasterCast {
@@ -50,15 +52,25 @@ export interface HubCastMessage {
   hash: string;
 }
 
+function hubTimestampToMs(ts: number): number {
+  return (ts + 1609459200) * 1000;
+}
+
 export class HubClient {
   private baseUrl: string;
+  private fallbackUrls: string[];
 
-  constructor(hubUrl: string = DEFAULT_HUB_URL) {
+  constructor(hubUrl: string = DEFAULT_HUB_URL, fallbackUrls: string[] = FALLBACK_HUB_URLS) {
     this.baseUrl = hubUrl.replace(/\/$/, '');
+    this.fallbackUrls = fallbackUrls.filter((u) => u !== hubUrl);
   }
 
-  private async get<T>(path: string, params?: Record<string, string>): Promise<T> {
-    const url = new URL(`${this.baseUrl}${path}`);
+  private async getOne<T>(
+    baseUrl: string,
+    path: string,
+    params?: Record<string, string>,
+  ): Promise<T> {
+    const url = new URL(`${baseUrl}${path}`);
     if (params) {
       for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
     }
@@ -72,20 +84,37 @@ export class HubClient {
     return res.json() as Promise<T>;
   }
 
+  private async get<T>(path: string, params?: Record<string, string>): Promise<T> {
+    const urls = [this.baseUrl, ...this.fallbackUrls];
+    let lastErr: Error | undefined;
+    for (const base of urls) {
+      try {
+        return await this.getOne<T>(base, path, params);
+      } catch (err) {
+        lastErr = err instanceof Error ? err : new Error('Farcaster hub request failed');
+      }
+    }
+    throw lastErr ?? new Error('Farcaster hub request failed');
+  }
+
   async getCastsByFid(fid: number, limit = 50): Promise<FarcasterCast[]> {
     const json = await this.get<{ messages: HubCastMessage[] }>('/v1/castsByFid', {
       fid: String(fid),
       pageSize: String(limit),
     });
-    return (json.messages ?? []).map((msg) => ({
+    return (json.messages ?? []).map((msg) => this.hubMessageToCast(msg, fid));
+  }
+
+  private hubMessageToCast(msg: HubCastMessage, fid: number): FarcasterCast {
+    return {
       hash: msg.hash,
       fid,
       text: msg.data.castAddBody.text,
       embeds: msg.data.castAddBody.embeds ?? [],
       parentHash: msg.data.castAddBody.parentCastId?.hash,
-      timestamp: msg.data.timestamp,
+      timestamp: hubTimestampToMs(msg.data.timestamp),
       reactions: { likes: 0, recasts: 0, replies: 0 },
-    }));
+    };
   }
 
   async getCastsByParent(
@@ -98,20 +127,21 @@ export class HubClient {
       parentFid: String(parentFid),
       pageSize: String(limit),
     });
-    return (json.messages ?? []).map((msg) => ({
-      hash: msg.hash,
-      fid: msg.data.castAddBody.parentCastId?.fid ?? parentFid,
-      text: msg.data.castAddBody.text,
-      embeds: msg.data.castAddBody.embeds ?? [],
-      parentHash,
-      timestamp: msg.data.timestamp,
-      reactions: { likes: 0, recasts: 0, replies: 0 },
-    }));
+    return (json.messages ?? []).map((msg) => this.hubMessageToCast(msg, parentFid));
   }
 
   async getCastsByFids(fids: number[], limitPerFid = 30): Promise<FarcasterCast[]> {
     const results = await Promise.allSettled(
-      fids.map((fid) => this.getCastsByFid(fid, limitPerFid)),
+      fids.map(async (fid) => {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            return await this.getCastsByFid(fid, limitPerFid);
+          } catch {
+            await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+          }
+        }
+        return [];
+      }),
     );
     const casts: FarcasterCast[] = [];
     for (const r of results) {
@@ -138,15 +168,7 @@ export class HubClient {
         fid: String(fid),
       });
       if (!json.cast) return null;
-      return {
-        hash: json.cast.hash,
-        fid,
-        text: json.cast.data.castAddBody.text,
-        embeds: json.cast.data.castAddBody.embeds ?? [],
-        parentHash: json.cast.data.castAddBody.parentCastId?.hash,
-        timestamp: json.cast.data.timestamp,
-        reactions: { likes: 0, recasts: 0, replies: 0 },
-      };
+      return this.hubMessageToCast(json.cast, fid);
     } catch {
       return null;
     }
@@ -203,6 +225,50 @@ export class HubClient {
       const errText = await res.text().catch(() => '');
       throw new Error(`Farcaster Hub rejected: ${errText.slice(0, 100)}`);
     }
+  }
+}
+
+export interface FarcasterFeedResult {
+  posts: UnifiedPost[];
+  notice?: string;
+}
+
+export async function fetchFarcasterCuratedFeed(
+  hubUrl?: string,
+  fids = CURATED_FARCASTER_FIDS,
+  limitPerFid = 10,
+): Promise<FarcasterFeedResult> {
+  const client = new HubClient(hubUrl);
+  try {
+    const casts = await client.getCastsByFids(fids.slice(0, 20), limitPerFid);
+    const profileCache = new Map<number, FarcasterProfile>();
+    const posts: UnifiedPost[] = [];
+    for (const cast of casts) {
+      let profile = profileCache.get(cast.fid);
+      if (!profile) {
+        const proof = await client.getUserNameProofByName(String(cast.fid));
+        profile = {
+          fid: cast.fid,
+          username: proof?.name ?? `fid:${cast.fid}`,
+          displayName: proof?.name ?? `FID ${cast.fid}`,
+          bio: '',
+          avatarUrl: '',
+          pfp: '',
+          followerCount: 0,
+          followingCount: 0,
+        };
+        profileCache.set(cast.fid, profile);
+      }
+      const author = client.profileToIdentity(profile);
+      posts.push(client.castToUnifiedPost(cast, author));
+    }
+    return { posts };
+  } catch {
+    return {
+      posts: [],
+      notice:
+        'Farcaster hubs are currently unreachable from this server. Curated Farcaster feed is unavailable.',
+    };
   }
 }
 

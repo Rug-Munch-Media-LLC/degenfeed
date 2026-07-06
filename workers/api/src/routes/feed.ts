@@ -1,10 +1,11 @@
 import { BskyClient, CURATED_BSKY_ACTORS } from '@degenfeed/bluesky-sdk';
-import { CURATED_FARCASTER_FIDS, type FarcasterProfile, HubClient } from '@degenfeed/farcaster-sdk';
-import { deduplicatePosts, enrichPostNiches, isSpamPost, rankPosts } from '@degenfeed/feed-core';
+import { CURATED_FARCASTER_FIDS, fetchFarcasterCuratedFeed } from '@degenfeed/farcaster-sdk';
+import { deduplicatePosts, enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
 import { CURATED_LENS_HANDLES, LensClient, type LensProfile } from '@degenfeed/lens-sdk';
 import { GtSClient } from '@degenfeed/mastodon-sdk';
 import { RelayPool } from '@degenfeed/nostr-sdk';
-import { RedditSource, feedToUnifiedPosts } from '@degenfeed/rss-sdk';
+import { type UserAlgorithmPreferences, rank } from '@degenfeed/ranking';
+import { DEFAULT_SUBREDDITS, RedditSource, feedToUnifiedPosts } from '@degenfeed/rss-sdk';
 import { CURATED_THREADS_HANDLES, ThreadsClient } from '@degenfeed/threads-sdk';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
@@ -29,10 +30,11 @@ const FALLBACK_RELAYS = [
 
 const FALLBACK_HUBS = [
   'https://hub.farcaster.standardcrypto.vc:2281',
+  'https://hoyt.farcaster.standardcrypto.vc:2281',
   'https://hub-grpc.pinata.cloud',
 ];
 
-const LENS_FALLBACK = ['https://api-v2.lens.dev/graphql', 'https://api.lens.xyz/graphql'];
+const LENS_FALLBACK = ['https://api.lens.xyz/graphql', 'https://api-v2.lens.dev/graphql'];
 const BSKY_FALLBACK = 'https://public.api.bsky.app';
 const GTS_INSTANCE = 'https://social.degenfeed.xyz';
 const THREADS_FALLBACK = 'https://public.threads.net';
@@ -118,37 +120,15 @@ async function fetchFarcaster(
   env: Env,
   limit: number,
   timeoutMs = DEFAULT_TIMEOUT_MS,
-): Promise<UnifiedPost[]> {
+): Promise<{ posts: UnifiedPost[]; notice?: string }> {
   const hubUrl = env.FARCASTER_HUB_URL || FALLBACK_HUBS[0];
-  if (!hubUrl) return [];
-  const client = new HubClient(hubUrl);
-  const casts = await withTimeout(
-    client.getCastsByFids(CURATED_FARCASTER_FIDS, Math.max(5, Math.ceil(limit / 4))),
-    timeoutMs,
-    'farcaster',
-  );
-  const profileCache = new Map<number, FarcasterProfile>();
-  const posts: UnifiedPost[] = [];
-  for (const cast of casts) {
-    let profile = profileCache.get(cast.fid);
-    if (!profile) {
-      const proof = await client.getUserNameProofByName(String(cast.fid));
-      profile = {
-        fid: cast.fid,
-        username: proof?.name ?? `fid:${cast.fid}`,
-        displayName: proof?.name ?? `FID ${cast.fid}`,
-        bio: '',
-        avatarUrl: '',
-        pfp: '',
-        followerCount: 0,
-        followingCount: 0,
-      };
-      profileCache.set(cast.fid, profile);
-    }
-    const author = client.profileToIdentity(profile);
-    posts.push(enrichPostNiches(client.castToUnifiedPost(cast, author)));
-  }
-  return posts;
+  const result = await Promise.race([
+    fetchFarcasterCuratedFeed(hubUrl, CURATED_FARCASTER_FIDS, Math.max(3, Math.ceil(limit / 6))),
+    new Promise<{ posts: UnifiedPost[]; notice?: string }>((resolve) =>
+      setTimeout(() => resolve({ posts: [], notice: 'Farcaster fetch timed out' }), timeoutMs),
+    ),
+  ]);
+  return result;
 }
 
 async function fetchLens(
@@ -258,7 +238,7 @@ async function fetchRss(
   limit: number,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 ): Promise<UnifiedPost[]> {
-  const subreddits = ['CryptoCurrency', 'defi', 'ethereum', 'solana', 'Bitcoin'];
+  const subreddits = DEFAULT_SUBREDDITS;
   const results = await Promise.allSettled(
     subreddits.map((sub) =>
       withTimeout(
@@ -277,18 +257,82 @@ async function fetchRss(
   return posts.slice(0, limit).map(enrichPostNiches);
 }
 
+function buildRankingContext(
+  now: number,
+  prefs?: UserAlgorithmPreferences | null,
+): {
+  viewer: null;
+  recentAuthors: Map<string, number>;
+  sourceQuality: Map<string, number>;
+  viewerNiches: Set<string>;
+  followed: Set<string>;
+  now: number;
+  preferences?: UserAlgorithmPreferences | null;
+} {
+  return {
+    viewer: null,
+    recentAuthors: new Map(),
+    sourceQuality: new Map(),
+    viewerNiches: new Set(prefs?.preferredNiches ?? []),
+    followed: new Set(),
+    now,
+    preferences: prefs ?? null,
+  };
+}
+
+function filterByCategory(posts: UnifiedPost[], category: string): UnifiedPost[] {
+  const target = category.toLowerCase();
+  return posts.filter((p) => p.niches.map((n) => n.toLowerCase()).includes(target));
+}
+
+function extractTrendingTopics(posts: UnifiedPost[], now: number) {
+  const counts = new Map<string, { count: number; score: number }>();
+  const cutoff = now - 24 * 60 * 60 * 1000;
+  for (const post of posts) {
+    if (post.createdAt < cutoff) continue;
+    for (const niche of post.niches) {
+      const cur = counts.get(niche) ?? { count: 0, score: 0 };
+      cur.count++;
+      cur.score += 1;
+      counts.set(niche, cur);
+    }
+    const text = `${post.text} ${post.author.displayName}`;
+    const tickers = Array.from(text.matchAll(/\$([A-Z]{2,5})\b/g)).map((m) => m[1]);
+    for (const t of tickers) {
+      const cur = counts.get(`$${t}`) ?? { count: 0, score: 0 };
+      cur.count++;
+      cur.score += 2;
+      counts.set(`$${t}`, cur);
+    }
+    const hashtags = Array.from(text.matchAll(/#[a-zA-Z0-9_]+/g)).map((m) => m[0]);
+    for (const h of hashtags) {
+      const cur = counts.get(h) ?? { count: 0, score: 0 };
+      cur.count++;
+      cur.score += 1.5;
+      counts.set(h, cur);
+    }
+  }
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1].score - a[1].score)
+    .slice(0, 12)
+    .map(([topic, v]) => ({ topic, count: v.count, score: v.score }));
+}
+
 export async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'));
   const limit = Math.min(Number(params.get('limit')) || 25, 100);
+  const category = params.get('category')?.toLowerCase() ?? '';
+  const prefs: UserAlgorithmPreferences | null = null;
 
   const allPosts: UnifiedPost[] = [];
   const errors: string[] = [];
   const perProtocol: Record<string, number> = {};
+  const notices: string[] = [];
 
   const fetchers: {
     protocol: Protocol;
-    fn: () => Promise<UnifiedPost[]>;
+    fn: () => Promise<UnifiedPost[] | { posts: UnifiedPost[]; notice?: string }>;
   }[] = [
     { protocol: 'nostr', fn: () => fetchNostr(env, limit) },
     { protocol: 'farcaster', fn: () => fetchFarcaster(env, limit) },
@@ -301,7 +345,15 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
 
   const activeFetchers = fetchers.filter((f) => requestedProtocols.includes(f.protocol));
   const results = await Promise.allSettled(
-    activeFetchers.map((f) => f.fn().then((posts) => ({ protocol: f.protocol, posts }))),
+    activeFetchers.map((f) =>
+      f.fn().then((result) => {
+        if ('posts' in result) {
+          if (result.notice) notices.push(result.notice);
+          return { protocol: f.protocol, posts: result.posts };
+        }
+        return { protocol: f.protocol, posts: result };
+      }),
+    ),
   );
 
   for (const [index, result] of results.entries()) {
@@ -317,8 +369,13 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     }
   }
 
-  const deduped = deduplicatePosts(allPosts);
-  const ranked = rankPosts(deduped).slice(0, Math.min(limit, 100));
+  let deduped = deduplicatePosts(allPosts);
+  if (category) {
+    deduped = filterByCategory(deduped, category);
+  }
+  const ctx = buildRankingContext(Date.now(), prefs);
+  const ranked = rank(deduped, ctx).slice(0, Math.min(limit, 100));
+  const trending = extractTrendingTopics(deduped, Date.now());
 
   if (ranked.length === 0 && errors.length > 0) {
     return jsonResponse(
@@ -329,6 +386,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
           limit,
           perProtocol,
           errors,
+          notices,
           fetchedAt: Date.now(),
           note: 'All sources failed',
         },
@@ -344,6 +402,8 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       limit,
       perProtocol,
       errors: errors.length > 0 ? errors : undefined,
+      notices: notices.length > 0 ? notices : undefined,
+      trending,
       fetchedAt: Date.now(),
     },
   });
@@ -352,5 +412,15 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
 export async function handleTrendingFeed(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   url.searchParams.set('protocols', DEFAULT_PROTOCOLS.join(','));
+  return handleHomeFeed(new Request(url.toString()), env);
+}
+
+export async function handleCategoryFeed(
+  request: Request,
+  env: Env,
+  category: string,
+): Promise<Response> {
+  const url = new URL(request.url);
+  url.searchParams.set('category', category);
   return handleHomeFeed(new Request(url.toString()), env);
 }

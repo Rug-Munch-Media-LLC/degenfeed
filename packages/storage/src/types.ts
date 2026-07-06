@@ -90,12 +90,28 @@ export interface StoredMutedWord {
 export interface UserPreferences {
   identityId: string;
   theme: 'dark' | 'light' | 'auto';
-  rankingWeights: Record<string, number> | null; // null = use defaults
+  rankingWeights: Record<string, number> | null;
   pinnedRelays: string[];
   pinnedHubs: string[];
   defaultProtocols: Protocol[];
   reducedMotion: boolean;
   fontSize: 'small' | 'medium' | 'large';
+  preferredNiches: string[];
+  preferredPlatforms: Protocol[];
+  recencyWeight: number;
+  engagementWeight: number;
+  diversityBoost: boolean;
+}
+
+export type SubscriptionTier = 'free' | 'pro' | 'creator';
+
+export interface SubscriptionRecord {
+  identityId: string;
+  tier: SubscriptionTier;
+  expiresAt: number;
+  startedAt: number;
+  txSignature?: string;
+  paymentAddress?: string;
 }
 
 export interface MonetizationPreferences {

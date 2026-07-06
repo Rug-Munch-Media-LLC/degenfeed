@@ -87,6 +87,61 @@ export const NICHE_KEYWORDS: Record<string, string[]> = {
   onchain: ['onchain', 'on-chain', 'blockchain data', 'whale', 'wallet'],
 };
 
+export const BOOST_TERMS = [
+  'bitcoin',
+  'ethereum',
+  'solana',
+  'defi',
+  'nft',
+  'ai',
+  'regulation',
+  'security',
+  'macro',
+  'stablecoin',
+  'etf',
+  'layer2',
+  'memecoin',
+  'onchain',
+];
+
+export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
+  nostr: 1.0,
+  farcaster: 1.0,
+  lens: 1.0,
+  bluesky: 1.0,
+  mastodon: 1.0,
+  threads: 0.7,
+  reddit: 0.8,
+  rss: 0.6,
+};
+
+export interface SignalScores {
+  recency: number;
+  platform: number;
+  engagement: number;
+  relevance: number;
+  quality: number;
+  diversity: number;
+  total: number;
+}
+
+export function keywordRelevance(text: string): number {
+  const lower = text.toLowerCase();
+  let hits = 0;
+  for (const term of BOOST_TERMS) {
+    if (lower.includes(term)) hits++;
+  }
+  return Math.min(1 + hits * 0.15, 2.0);
+}
+
+export function tickerCount(text: string): number {
+  return Array.from(text.matchAll(/\$[A-Z]{2,5}\b/g)).length;
+}
+
+export function hashtagCount(text: string): number {
+  return Array.from(text.matchAll(/#[a-zA-Z0-9_]+/g)).length;
+}
+
 export function extractEmbeds(text: string, native: unknown[] = []): Embed[] {
   const urlRe = /https?:\/\/[^\s<>"']+/gi;
   const urls = text.match(urlRe) ?? [];

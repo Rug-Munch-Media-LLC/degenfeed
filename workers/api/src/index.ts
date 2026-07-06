@@ -14,6 +14,7 @@ import {
   parseOriginHeader,
 } from './cors';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
+import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from './routes/billing';
 import { handleBlinkTip } from './routes/blink';
 import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import { handleEngage } from './routes/engage';
@@ -46,6 +47,7 @@ import { handleSessionVerify, requireSession } from './session';
 export interface Env {
   AUTH_SECRET?: string;
   CACHE?: KVNamespace;
+  SUBSCRIPTIONS?: KVNamespace;
   GTS_CLIENT_ID?: string;
   GTS_CLIENT_SECRET?: string;
   GTS_INSTANCE_URL?: string;
@@ -226,6 +228,12 @@ export default {
         response = await handleHomeFeed(request, env);
       } else if (path === '/api/feed/trending') {
         response = await handleTrendingFeed(request, env);
+      } else if (path.startsWith('/api/feed/category/')) {
+        const category = path.replace('/api/feed/category/', '');
+        response = await handleHomeFeed(
+          new Request(`${url.origin}/api/feed/home?category=${encodeURIComponent(category)}`),
+          env,
+        );
       } else if (path === '/api/feed/activitypub') {
         response = await handleActivityPubFeed(request, env);
       } else if (path === '/api/feed/threads') {
@@ -307,6 +315,12 @@ export default {
         response = await handleResolveIdentity(request, env);
       } else if (path === '/api/blink/tip') {
         response = await handleBlinkTip(request, env);
+      } else if (path === '/api/billing/checkout') {
+        response = await handleBillingCheckout(request, env);
+      } else if (path === '/api/billing/verify') {
+        response = await handleBillingVerify(request, env);
+      } else if (path === '/api/billing/status') {
+        response = await handleBillingStatus(request, env);
       } else if (path === '/api/x402/paywall') {
         response = await handleX402Paywall(request, env);
       } else if (path === '/api/x402/verify') {

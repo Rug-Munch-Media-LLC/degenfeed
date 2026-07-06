@@ -1,4 +1,5 @@
 import {
+  DEFAULT_SUBREDDITS,
   GenericRssSource,
   MediumSource,
   MirrorSource,
@@ -9,8 +10,6 @@ import {
 } from '@degenfeed/rss-sdk';
 import type { SourcePosts, UnifiedPost } from '@degenfeed/rss-sdk';
 import { type Env, jsonResponse } from '../index';
-
-const DEFAULT_SUBREDDITS = ['CryptoCurrency', 'defi', 'ethereum', 'solana', 'Bitcoin'];
 
 export async function handleRssFeed(request: Request, _env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;

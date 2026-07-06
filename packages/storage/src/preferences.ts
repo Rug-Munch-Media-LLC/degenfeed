@@ -29,6 +29,11 @@ export async function getDefaultPreferences(identityId: string): Promise<UserPre
     defaultProtocols: ['nostr', 'farcaster', 'lens', 'bluesky'],
     reducedMotion: false,
     fontSize: 'medium',
+    preferredNiches: [],
+    preferredPlatforms: ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'],
+    recencyWeight: 1,
+    engagementWeight: 1,
+    diversityBoost: true,
   } satisfies UserPreferences;
 }
 

@@ -12,6 +12,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/home', label: 'Feed' },
   { href: '/news', label: 'News' },
+  { href: '/premium', label: 'Premium' },
   { href: '/profile', label: 'Profile' },
 ];
 
@@ -176,6 +177,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </a>
             <a href="/news" className="transition-colors hover:text-white">
               News
+            </a>
+            <a href="/premium" className="transition-colors hover:text-white">
+              Premium
             </a>
             <a href="/profile" className="transition-colors hover:text-white">
               Profile

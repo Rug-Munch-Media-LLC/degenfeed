@@ -46,6 +46,16 @@ function SectionNav({ current }: { current: string }) {
   );
 }
 
+interface FeedMeta {
+  total?: number;
+  limit?: number;
+  perProtocol?: Record<string, number>;
+  errors?: string[];
+  notices?: string[];
+  trending?: { topic: string; count: number; score: number }[];
+  fetchedAt?: number;
+}
+
 function SectionContent({ section }: { section: string }) {
   const { signedInProtocols, engage, openSignIn, openCompose } = useAuth();
   const meta = SECTIONS.find((s) => s.id === section);
@@ -54,6 +64,7 @@ function SectionContent({ section }: { section: string }) {
   const [error, setError] = useState<string>();
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
 
   useEffect(() => {
@@ -89,17 +100,18 @@ function SectionContent({ section }: { section: string }) {
           for (const [k, v] of Object.entries(meta.params)) url.searchParams.set(k, v);
         }
         let res = await fetch(url.toString(), { credentials: 'include' });
-        let data = (await res.json()) as { data?: UnifiedPost[] };
+        let data = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
         if (!data.data?.length && section === 'all') {
           const rssUrl = new URL('/api/feed/rss', window.location.origin);
           rssUrl.searchParams.set('source', 'reddit');
           rssUrl.searchParams.set('handle', 'CryptoCurrency');
           rssUrl.searchParams.set('limit', '25');
           res = await fetch(rssUrl.toString(), { credentials: 'include' });
-          data = (await res.json()) as { data?: UnifiedPost[] };
+          data = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
         }
         if (cancelled) return;
         setPosts(data.data || []);
+        setFeedMeta(data.meta || {});
         setState(data.data?.length ? 'loaded' : 'empty');
       } catch (err) {
         if (!cancelled) {
@@ -180,6 +192,27 @@ function SectionContent({ section }: { section: string }) {
           )}
         </div>
       </div>
+
+      {feedMeta.notices && feedMeta.notices.length > 0 && (
+        <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-3 text-xs text-yellow-400">
+          {feedMeta.notices.map((n) => (
+            <div key={n}>{n}</div>
+          ))}
+        </div>
+      )}
+
+      {feedMeta.trending && feedMeta.trending.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {feedMeta.trending.map((t) => (
+            <span
+              key={t.topic}
+              className="rounded-full border border-degen-500/30 bg-degen-500/10 px-2 py-0.5 text-xs text-degen-400"
+            >
+              {t.topic}
+            </span>
+          ))}
+        </div>
+      )}
 
       {hasSignedIn && (
         <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">

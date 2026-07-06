@@ -265,6 +265,18 @@ const NEWSLETTER_SOURCES = [
   { name: 'The DeFi Edge', url: 'https://thedefiedge.substack.com/feed', category: 'alpha_leaks' },
   { name: 'Alpha Leak', url: 'https://alphaleak.substack.com/feed', category: 'alpha_leaks' },
   { name: 'Degen News', url: 'https://degennews.substack.com/feed', category: 'alpha_leaks' },
+  { name: 'Bitcoin Magazine', url: 'https://bitcoinmagazine.com/feed', category: 'headlines' },
+  { name: 'Unchained', url: 'https://unchainedcrypto.com/feed/', category: 'deep_dives' },
+  { name: 'Milk Road', url: 'https://milkroad.substack.com/feed', category: 'deep_dives' },
+  { name: 'The Defiant', url: 'https://thedefiant.io/feed', category: 'deep_dives' },
+  { name: 'a16z crypto', url: 'https://a16zcrypto.com/feed/', category: 'deep_dives' },
+  { name: 'Paradigm', url: 'https://paradigm.xyz/feed/', category: 'deep_dives' },
+  { name: 'EigenLayer', url: 'https://eigenlayer.substack.com/feed', category: 'defi' },
+  { name: 'Aave', url: 'https://aave.substack.com/feed', category: 'defi' },
+  { name: 'Compound', url: 'https://compound.substack.com/feed', category: 'defi' },
+  { name: 'Lido', url: 'https://lido.substack.com/feed', category: 'defi' },
+  { name: 'Solana Foundation', url: 'https://solana.com/news/feed', category: 'headlines' },
+  { name: 'Ethereum Foundation', url: 'https://blog.ethereum.org/feed.xml', category: 'headlines' },
 ];
 
 export async function handleNewsletterFeed(request: Request, _env: Env): Promise<Response> {
@@ -278,9 +290,10 @@ export async function handleNewsletterFeed(request: Request, _env: Env): Promise
     : NEWSLETTER_SOURCES;
 
   if (sources.length === 0) {
+    const categories = [...new Set(NEWSLETTER_SOURCES.map((s) => s.category))];
     return jsonResponse({
       data: [],
-      meta: { total: 0, category, available: Object.keys(NEWSLETTER_SOURCES).filter(Boolean) },
+      meta: { total: 0, category, available: categories },
     });
   }
 

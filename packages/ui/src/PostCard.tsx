@@ -20,14 +20,11 @@ export interface PostCardProps {
   onEngage?: EngageHandler;
   onClick?: (postId: string) => void;
   expanded?: boolean;
-  /** Called when user clicks the tip button for this post's author */
   onTip?: (post: UnifiedPost) => void;
-  /** Called when user clicks the paywall unlock button */
   onPaywall?: (post: UnifiedPost) => void;
 }
 
 const MAX_TEXT_LENGTH = 500;
-const REACTIONS = ['👍', '❤️', '🔥', '🚀', '😂'];
 
 function formatTime(ts: number): string {
   const diff = Date.now() - ts;
@@ -105,7 +102,6 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
   });
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState('');
-  const [showReactions, setShowReactions] = useState(false);
 
   useEffect(() => {
     setLocalState({ engagement: post.engagement, metrics: post.metrics });
@@ -238,6 +234,19 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
         </div>
       )}
 
+      {post.niches.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1">
+          {post.niches.slice(0, 5).map((n) => (
+            <span
+              key={n}
+              className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] font-medium text-gray-400"
+            >
+              {n}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Engagement metrics + Tip */}
       <div className="flex items-center gap-4 text-xs text-gray-500">
         <button
@@ -273,42 +282,6 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
         >
           ↩ {formatCount(localState.metrics.replies)}
         </button>
-        <div className="relative">
-          <button
-            type="button"
-            className="flex items-center gap-1 transition-colors hover:text-yellow-400"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowReactions((v) => !v);
-            }}
-            aria-label="React"
-          >
-            😊
-          </button>
-          {showReactions && (
-            <div
-              className="absolute bottom-6 left-0 z-10 flex gap-1 rounded-lg border border-gray-700 bg-gray-800 p-1 shadow-lg"
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-            >
-              {REACTIONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  className="rounded p-1 hover:bg-gray-700"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void perform('react', emoji);
-                    setShowReactions(false);
-                  }}
-                  aria-label={`React with ${emoji}`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
         <button
           type="button"
           className={`flex items-center gap-1 transition-colors hover:text-purple-400 ${localState.engagement.viewerBookmarked ? 'text-purple-400' : ''}`}
@@ -320,11 +293,23 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
         >
           {localState.engagement.viewerBookmarked ? '🔖' : '🔖'}
         </button>
-        {/* Tip button */}
+        <button
+          type="button"
+          className="flex items-center gap-1 transition-colors hover:text-purple-400"
+          onClick={(e) => {
+            e.stopPropagation();
+            void navigator.clipboard.writeText(
+              `${window.location.origin}/post/${encodeURIComponent(post.id)}`,
+            );
+          }}
+          aria-label="Share"
+        >
+          ↗ Share
+        </button>
         {onTip && (
           <button
             type="button"
-            className="flex items-center gap-1 transition-colors hover:text-yellow-400 ml-auto"
+            className="ml-auto flex items-center gap-1 transition-colors hover:text-yellow-400"
             onClick={(e) => {
               e.stopPropagation();
               onTip(post);
