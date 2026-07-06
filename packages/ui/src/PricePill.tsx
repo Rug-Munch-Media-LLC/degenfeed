@@ -67,7 +67,7 @@ export function usePricesForText(text: string): { PricePills: () => React.ReactN
   const [loading, setLoading] = useState(false);
 
   const tickers = [...new Set(
-    (text ? Array.from(text.matchAll(TICKER_RE)) : []).map(m => m[1].toUpperCase())
+    (text ? Array.from(text.matchAll(TICKER_RE)).filter(m => m[1]) : []).map(m => m[1]!.toUpperCase())
   )].slice(0, 5); // Max 5 price pills per post
 
   useEffect(() => {

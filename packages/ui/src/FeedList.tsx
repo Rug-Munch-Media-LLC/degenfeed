@@ -36,6 +36,7 @@ export interface FeedListProps {
   /** Called when a post is clicked. */
   onPostClick?: (postId: string) => void;
   /** Called when user engages with a post. */
+  onTip?: (post: UnifiedPost) => void;
   onEngage?: (action: 'like' | 'repost' | 'reply', postId: string) => void;
   /** If true, enables infinite scroll callback. */
   hasMore?: boolean;
@@ -95,7 +96,7 @@ function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => vo
   );
 }
 
-export function FeedList({ state, posts, error, protocolLabel, protocolColor, onRetry, onPostClick, onEngage, hasMore, onLoadMore }: FeedListProps) {
+export function FeedList({ state, posts, error, protocolLabel, protocolColor, onTip, onRetry, onPostClick, onEngage, hasMore, onLoadMore }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Infinite scroll observer
@@ -141,6 +142,7 @@ export function FeedList({ state, posts, error, protocolLabel, protocolColor, on
           key={post.id}
           post={post}
           onClick={onPostClick}
+          onTip={onTip}
           onEngage={onEngage}
         />
       ))}

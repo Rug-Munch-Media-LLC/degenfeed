@@ -77,7 +77,7 @@ export default function ProfilePage() {
         displayName: "Ethereum Wallet",
         handle: shortenAddress(addr),
         address: addr,
-        color: PROTOCOL_COLORS.ethereum,
+        color: PROTOCOL_COLORS.ethereum ?? "#627eea",
       });
     }
 
@@ -103,12 +103,12 @@ export default function ProfilePage() {
       <div className="mb-8 text-center">
         <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 to-purple-500/30 text-3xl">
           {identities.length > 0
-            ? (identities[0].displayName || "?").charAt(0).toUpperCase()
+            ? (identities[0]?.displayName ?? "?").charAt(0).toUpperCase()
             : "?"
           }
         </div>
         <h1 className="text-2xl font-bold text-white">
-          {identities.length > 0 ? identities[0].displayName || "Unnamed" : "DegenFeed User"}
+          {identities.length > 0 ? (identities[0]?.displayName ?? "Unnamed") : "DegenFeed User"}
         </h1>
         <p className="mt-1 text-sm text-gray-500">
           {hasSignedIn
@@ -177,37 +177,99 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Tipping Section */}
-          {identities.some(i => i.address) && (
-            <div className="mb-6">
-              <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
-                Receive Tips
-              </h2>
-              <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 p-4">
-                <p className="mb-3 text-sm text-gray-400">
-                  Send tips directly to this wallet address:
-                </p>
-                {identities.filter(i => i.address).map((id, i) => (
-                  <div key={i} className="mb-2 flex items-center justify-between rounded-lg bg-gray-900/50 px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <span style={{ color: id.color }}>{PROTOCOL_ICONS[id.protocol]}</span>
-                      <code className="text-xs font-mono text-gray-300">{shortenAddress(id.address!)}</code>
+          {/* Cross-Platform Tipping Section */}
+          <div className="mb-6">
+            <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+              Receive Tips
+            </h2>
+            <div className="space-y-3">
+              {/* Wallet addresses (if linked) */}
+              {identities.filter(i => i.address).length > 0 && (
+                <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 p-4">
+                  <h3 className="mb-2 text-xs font-semibold text-degen-400">Direct Crypto</h3>
+                  <p className="mb-3 text-xs text-gray-400">
+                    Anyone can send you tips on these chains — no DegenFeed account needed.
+                  </p>
+                  {identities.filter(i => i.address).map((id, i) => (
+                    <div key={i} className="mb-2 flex items-center justify-between rounded-lg bg-gray-900/50 px-3 py-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span style={{ color: id.color }}>{PROTOCOL_ICONS[id.protocol]}</span>
+                        <div className="min-w-0">
+                          <div className="text-xs font-medium text-white">{id.protocol === 'ethereum' ? 'EVM Chain' : 'Solana'}</div>
+                          <code className="text-xs font-mono text-gray-400 truncate block">{shortenAddress(id.address!)}</code>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(id.address!)}
+                        className="shrink-0 rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                        type="button"
+                      >
+                        Copy
+                      </button>
                     </div>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(id.address!)}
-                      className="rounded-lg bg-gray-800 px-3 py-1 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
-                      type="button"
-                    >
-                      Copy Address
-                    </button>
+                  ))}
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">Ethereum</span>
+                    <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">Base</span>
+                    <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">Optimism</span>
+                    <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">Arbitrum</span>
+                    <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">Polygon</span>
+                    <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">Solana</span>
                   </div>
-                ))}
-                <p className="mt-2 text-xs text-gray-600">
-                  Ethereum, Base, Optimism, Arbitrum, Polygon — any EVM chain.
-                </p>
+                </div>
+              )}
+
+              {/* Platform-specific tipping */}
+              <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="text-lg">⚡</span>
+                  <h3 className="text-xs font-semibold text-yellow-400">Platform Tipping</h3>
+                </div>
+                <div className="space-y-2">
+                  {identities.map((id, i) => (
+                    <div key={i} className="flex items-center justify-between rounded-lg bg-gray-900/50 px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span style={{ color: id.color }}>{PROTOCOL_ICONS[id.protocol]}</span>
+                        <div>
+                          <div className="text-xs text-white">{id.protocol === 'ethereum' ? 'Ethereum Wallet' : id.protocol.charAt(0).toUpperCase() + id.protocol.slice(1)}</div>
+                          <div className="text-[10px] text-gray-600">
+                            {id.protocol === 'nostr' ? 'Lightning Zaps available' :
+                             id.protocol === 'lens' ? 'Lens Collect available' :
+                             id.protocol === 'farcaster' ? 'Farcaster Frames available' :
+                             id.protocol === 'ethereum' || id.protocol === 'solana' ? 'Direct crypto transfer' :
+                             'Coming soon'}
+                          </div>
+                        </div>
+                      </div>
+                      {id.protocol === 'nostr' && (
+                        <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-[10px] text-yellow-400">⚡ Zap</span>
+                      )}
+                      {(id.protocol === 'ethereum' || id.protocol === 'solana') && id.address && (
+                        <button
+                          onClick={() => navigator.clipboard.writeText(id.address!)}
+                          className="rounded-lg bg-gray-800 px-2 py-1 text-[10px] text-gray-500 hover:text-white transition-colors"
+                          type="button"
+                        >
+                          Copy
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="rounded-lg bg-gray-900/30 p-3">
+                <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-600">How it works</h4>
+                <ul className="space-y-1 text-[10px] text-gray-500">
+                  <li>• Tips are sent directly — DegenFeed never holds funds</li>
+                  <li>• Each connected protocol enables its own tipping method</li>
+                  <li>• Link more accounts to unlock more ways to receive tips</li>
+                  <li>• Tippers use their own wallets — no platform account needed</li>
+                </ul>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Display Order Note */}
           <div className="card border-degen-500/20 bg-degen-500/5 py-6 text-center">

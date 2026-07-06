@@ -13,10 +13,8 @@ import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import { handleRmiNewsFeed } from './routes/news';
 import { handleRssFeed } from './routes/rss';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
+import { handleTipResolve, handleTipCreate } from './routes/tip';
 import { handlePublish, handleEngage } from './routes/publish';
-import { handleTopFeed, handleNewsletterFeed, handleTrendingFeed } from './routes/curated';
-import { handlePrices } from './routes/prices';
-import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleFundingFeed } from './routes/funding';
 import { handleNotifications } from './routes/notifications';
 import { handleResolveIdentity } from './routes/identity';
@@ -174,6 +172,8 @@ export default {
             if (path === '/api/prices') { return handlePrices(request, env); }
       if (path === '/api/auth/wallet/nonce') { return handleWalletNonce(request, env); }
       if (path === '/api/auth/wallet/verify') { return handleWalletVerify(request, env); }
+      if (path === '/api/tip/resolve') { return handleTipResolve(request, env); }
+      if (path === '/api/tip/create') { return handleTipCreate(request, env); }
       if (path === '/api/feed/funding') { return handleFundingFeed(request, env); }
       if (path === '/api/notifications') { return handleNotifications(request, env); }
       if (path === '/api/identity/resolve') {

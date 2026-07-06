@@ -1,7 +1,9 @@
 "use client";
+import { TipModal } from "../../../components/TipModal";
 
 import { useState, useEffect } from "react";
 import { FeedShell } from "../../../components/FeedShell";
+
 import { useAuth } from "../../../components/AuthProvider";
 import { FeedList, ComposeModal, SignInModal, NotificationBell, type UnifiedPost, type Notification } from "@degenfeed/ui";
 import { SECTIONS } from "../sections";
@@ -34,6 +36,7 @@ function SectionContent({ section }: { section: string }) {
   const [error, setError] = useState<string>();
   const [showCompose, setShowCompose] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
+  const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
 
@@ -132,6 +135,7 @@ function SectionContent({ section }: { section: string }) {
       <FeedList state={state} posts={posts} error={error} protocolLabel={displayName}
         onPostClick={(id) => { window.location.href = "/post/" + encodeURIComponent(id); }}
         onEngage={(action, postId) => engage(action, postId, section)}
+        onTip={(post) => setTipPost(post)}
         onRetry={() => setState("loading")}
       />
 
@@ -141,6 +145,16 @@ function SectionContent({ section }: { section: string }) {
           <p className="mb-4 text-sm text-gray-400">Create a free @degenfeed.xyz Mastodon account to see posts from the fediverse.</p>
           <a href="/api/auth/gotosocial/register" className="btn-primary text-sm">Create free account \u2192</a>
         </div>
+      )}
+
+      {tipPost && (
+        <TipModal
+          open={!!tipPost}
+          onClose={() => setTipPost(null)}
+          recipientProtocol={tipPost.protocol}
+          recipientAuthorId={tipPost.author.id}
+          recipientDisplayName={tipPost.author.displayName}
+        />
       )}
 
       <SignInModal open={showSignIn} onClose={() => setShowSignIn(false)}

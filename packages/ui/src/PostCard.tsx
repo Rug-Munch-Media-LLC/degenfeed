@@ -1,17 +1,3 @@
-/**
- * @degenfeed/ui — PostCard
- *
- * Renders a single UnifiedPost as a feed card.
- * Protocol badge, author row, content, embeds, engagement actions.
- *
- * Design:
- *   Dark card with protocol-colored left accent border.
- *   Avatar + name + handle + badge row.
- *   Expandable text with "Show more" for long posts.
- *   Image gallery for embeds.
- *   Like / repost / reply / bookmark action bar.
- */
-
 import { ProtocolBadge, getProtocolColor } from './ProtocolBadge';
 import type { UnifiedPost } from '@degenfeed/types';
 import { useState } from 'react';
@@ -20,12 +6,11 @@ export type { UnifiedPost };
 
 export interface PostCardProps {
   post: UnifiedPost;
-  /** Called when user clicks an action button. Returns the new state. */
   onEngage?: (action: 'like' | 'repost' | 'reply', postId: string) => void;
-  /** Called when the post is clicked (navigate to detail view). */
   onClick?: (postId: string) => void;
-  /** If true, show full content without truncation. Default: false */
   expanded?: boolean;
+  /** Called when user clicks the tip button for this post's author */
+  onTip?: (post: UnifiedPost) => void;
 }
 
 const MAX_TEXT_LENGTH = 500;
@@ -48,7 +33,7 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-export function PostCard({ post, onEngage, onClick, expanded }: PostCardProps) {
+export function PostCard({ post, onEngage, onClick, expanded, onTip }: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const needsTruncation = !expanded && post.text.length > MAX_TEXT_LENGTH;
   const displayText = needsTruncation && !showFullText ? post.text.slice(0, MAX_TEXT_LENGTH) + '...' : post.text;
@@ -131,7 +116,7 @@ export function PostCard({ post, onEngage, onClick, expanded }: PostCardProps) {
         </div>
       )}
 
-      {/* Engagement metrics */}
+      {/* Engagement metrics + Tip */}
       <div className="flex items-center gap-4 text-xs text-gray-500">
         <button
           type="button"
@@ -157,8 +142,19 @@ export function PostCard({ post, onEngage, onClick, expanded }: PostCardProps) {
         >
           ↩ {formatCount(post.metrics.replies)}
         </button>
+        {/* Tip button */}
+        {onTip && (
+          <button
+            type="button"
+            className="flex items-center gap-1 transition-colors hover:text-yellow-400 ml-auto"
+            onClick={(e) => { e.stopPropagation(); onTip(post); }}
+            aria-label="Tip this author"
+            title={`Tip ${post.author.displayName}`}
+          >
+            ⚡ Tip
+          </button>
+        )}
       </div>
     </article>
   );
 }
-

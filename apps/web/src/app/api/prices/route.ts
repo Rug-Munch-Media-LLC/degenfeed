@@ -10,7 +10,7 @@ const TICKER_TO_CG: Record<string, string> = {
   FTM: 'fantom', NEAR: 'near', APT: 'aptos', SUI: 'sui',
   SEI: 'sei-network', INJ: 'injective-protocol', RUNE: 'thorchain',
   XRP: 'ripple', ADA: 'cardano', LTC: 'litecoin', TRX: 'tron',
-  FIL: 'filecoin', DOT: 'polkadot', ATOM: 'cosmos',
+  FIL: 'filecoin',
 };
 
 const TICKER_TO_KR: Record<string, string> = {
@@ -44,8 +44,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ prices: {}, error: 'No tickers provided' });
   }
 
-  const cgIds = [...new Set(requested.map(t => TICKER_TO_CG[t]).filter(Boolean))];
-  const krPairs = [...new Set(requested.map(t => TICKER_TO_KR[t]).filter(Boolean))];
+  const cgIds = [...new Set(requested.map(t => TICKER_TO_CG[t]).filter((x): x is string => !!x))];
+  const krPairs = [...new Set(requested.map(t => TICKER_TO_KR[t]).filter((x): x is string => !!x))];
 
   if (cgIds.length === 0 && krPairs.length === 0) {
     return NextResponse.json({ prices: {}, error: 'No known tickers' });

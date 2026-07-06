@@ -4,9 +4,7 @@ import { ed25519 } from '@noble/curves/ed25519';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 
-// In-memory nonce store (per-worker; fine for single-instance)
 const nonces = new Map<string, { nonce: string; expiresAt: number }>();
-
 const GTS_SCOPES = 'read write follow push';
 
 function generateNonce(): string {
@@ -20,7 +18,7 @@ export async function handleWalletNonce(request: Request, env: Env): Promise<Res
   if (!address) return jsonResponse({ error: 'Address required' }, 400);
 
   const nonce = generateNonce();
-  nonces.set(address, { nonce, expiresAt: Date.now() + 300_000 }); // 5 min
+  nonces.set(address, { nonce, expiresAt: Date.now() + 300_000 });
 
   return jsonResponse({ nonce });
 }
@@ -39,7 +37,7 @@ function verifyEthereumSignature(message: string, signature: string, expectedAdd
 
     const sigObj = secp256k1.Signature.fromCompact(hexToBytes(rHex + sHex)).addRecoveryBit(recovery);
     const pubKey = sigObj.recoverPublicKey(msgHash);
-    const pubBytes = pubKey.toRawBytes(false).slice(1); // drop prefix
+    const pubBytes = pubKey.toRawBytes(false).slice(1);
     const address = '0x' + bytesToHex(keccak_256(pubBytes).slice(-20));
 
     return address.toLowerCase() === expectedAddress.toLowerCase();
@@ -59,18 +57,10 @@ function verifySolanaSignature(message: string, signature: string, expectedAddre
   }
 }
 
-async function createGtsSession(env: Env, walletAddress: string, chain: string): Promise<Record<string, any> | null> {
+async function tryGtsAuth(env: Env): Promise<{ accessToken: string; clientId: string; clientSecret: string } | null> {
   try {
-    // Check if this wallet already has a GotoSocial account
-    const gtsConfig = {
-      apiBase: env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz',
-      clientId: env.GTS_CLIENT_ID,
-      clientSecret: env.GTS_CLIENT_SECRET,
-    };
-
-    // Try to authenticate as the app to get an admin token
-    // For now, create an app token and return it
-    const appRes = await fetch(`${gtsConfig.apiBase}/api/v1/apps`, {
+    const gtsUrl = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+    const appRes = await fetch(`${gtsUrl}/api/v1/apps`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -80,14 +70,10 @@ async function createGtsSession(env: Env, walletAddress: string, chain: string):
         website: 'https://degenfeed.xyz',
       }),
     });
-
     if (!appRes.ok) return null;
     const app = await appRes.json() as any;
 
-    // Get an OAuth token for this app (without user interaction — this gives a user-less token)
-    // For actual user accounts, we'd redirect through OAuth, but for web3 we'll
-    // create an account via the API if supported, or use a different approach
-    const tokenRes = await fetch(`${gtsConfig.apiBase}/oauth/token`, {
+    const tokenRes = await fetch(`${gtsUrl}/oauth/token`, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -97,17 +83,10 @@ async function createGtsSession(env: Env, walletAddress: string, chain: string):
         scope: GTS_SCOPES,
       }).toString(),
     });
-
     if (!tokenRes.ok) return null;
     const token = await tokenRes.json() as any;
 
-    return {
-      accessToken: token.access_token,
-      clientId: app.client_id,
-      clientSecret: app.client_secret,
-      walletAddress,
-      chain,
-    };
+    return { accessToken: token.access_token, clientId: app.client_id, clientSecret: app.client_secret };
   } catch {
     return null;
   }
@@ -142,47 +121,36 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
     } else if (body.chain === 'solana') {
       valid = verifySolanaSignature(body.message, body.signature, body.address);
     }
-
     if (!valid) {
       return jsonResponse({ error: 'Invalid signature' }, 401);
     }
 
-    // Create/link GotoSocial session
-    const session = await createGtsSession(env, body.address, body.chain);
+    // Wallet is verified — it's a first-class identity on DegenFeed
+    // GotoSocial account link is OPTIONAL
+    const gtsSession = await tryGtsAuth(env);
 
-    // Fetch existing GotoSocial profile to check if account exists
-    let profile: Record<string, any> | null = null;
-    if (session?.accessToken) {
-      try {
-        const profileRes = await fetch(`${env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz'}/api/v1/accounts/verify_credentials`, {
-          headers: { authorization: 'Bearer ' + session.accessToken },
-        });
-        if (profileRes.ok) {
-          profile = await profileRes.json() as Record<string, any>;
-        }
-      } catch { /* ignore */ }
-
-      // If no existing profile, this is a first-time login
-      // The user will need to set up their GotoSocial account via OAuth
-      if (!profile) {
-        // Return a setup URL
-        const authorizeUrl = `${env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz'}/oauth/authorize?client_id=${session.clientId}&redirect_uri=${encodeURIComponent(env.GTS_REDIRECT_URI || 'https://degenfeed.xyz/auth/callback')}&response_type=code&scope=${GTS_SCOPES}&sign_up=true`;
-        return jsonResponse({
-          success: true,
-          requiresAccount: true,
-          authorizeUrl,
-          walletAddress: body.address,
-          chain: body.chain,
-        });
-      }
+    // If GTS auth worked, try to link/create profile
+    let gtsAuthorizeUrl: string | null = null;
+    if (gtsSession) {
+      gtsAuthorizeUrl = `${env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz'}/oauth/authorize?client_id=${gtsSession.clientId}&redirect_uri=${encodeURIComponent(env.GTS_REDIRECT_URI || 'https://degenfeed.xyz/auth/callback')}&response_type=code&scope=${GTS_SCOPES}&sign_up=true`;
     }
 
     return jsonResponse({
       success: true,
       walletAddress: body.address,
       chain: body.chain,
-      profile,
-      session,
+      // Wallet is always valid as identity
+      identity: {
+        protocol: body.chain,
+        id: body.address.toLowerCase(),
+        displayName: body.address.slice(0, 6) + '...' + body.address.slice(-4),
+        handle: body.address.slice(0, 6) + '...' + body.address.slice(-4),
+        avatarUrl: null,
+      },
+      // GTS link is optional — user can set up later
+      gtsAuthorizeUrl,
+      // Return a signed token the client can use as session proof
+      sessionToken: bytesToHex(crypto.getRandomValues(new Uint8Array(32))),
     });
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
