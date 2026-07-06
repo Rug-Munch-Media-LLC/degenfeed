@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTip, type TipMethod } from '../hooks/useTip';
 import { useWeb3 } from './Web3Provider';
+import { useSolana } from './SolanaProvider';
 import { useAuth } from './AuthProvider';
 
 interface TipModalProps {
@@ -22,6 +23,7 @@ const PROTOCOL_ICONS: Record<string, string> = {
 export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, recipientDisplayName }: TipModalProps) {
   const { state, resolveMethods, sendTip } = useTip();
   const { account, isConnected, connect: connectWallet } = useWeb3();
+  const { account: solanaAccount, isConnected: solanaConnected, connect: connectSolana, signAndSendTransaction } = useSolana();
   const { walletAddress } = useAuth();
   const [amount, setAmount] = useState('0.001');
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
@@ -41,9 +43,16 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
     if (!selectedMethod || !amount) return;
 
     // Ensure wallet is connected for crypto tips
-    if (['ethereum', 'solana'].includes(selectedMethod) && !account) {
+    if (selectedMethod === 'ethereum' && !account) {
       try {
         await connectWallet();
+      } catch {
+        return;
+      }
+    }
+    if (selectedMethod === 'solana' && !solanaAccount) {
+      try {
+        await connectSolana();
       } catch {
         return;
       }
@@ -179,10 +188,17 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
               </div>
 
               {/* Wallet status */}
-              {['ethereum', 'solana'].includes(selectedMethod || '') && !account && (
+              {selectedMethod === 'ethereum' && !account && (
                 <div className="mb-4 rounded-lg border border-yellow-900/50 bg-yellow-900/10 p-3">
                   <p className="text-xs text-yellow-400">
-                    Connect your wallet to send this tip.
+                    Connect your Ethereum wallet (MetaMask, Rabby, Rainbow) to send this tip.
+                  </p>
+                </div>
+              )}
+              {selectedMethod === 'solana' && !solanaAccount && (
+                <div className="mb-4 rounded-lg border border-purple-900/50 bg-purple-900/10 p-3">
+                  <p className="text-xs text-purple-400">
+                    Connect your Solana wallet (Phantom, Solflare, Backpack) to send this tip.
                   </p>
                 </div>
               )}

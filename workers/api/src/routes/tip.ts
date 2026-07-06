@@ -10,13 +10,10 @@ interface ResolvedTipMethod {
   chain?: string;
   minAmount?: number;
   fee?: string;
+  /** For methods that need a URL (Farcaster Frame, Lens collect) */
+  actionUrl?: string;
 }
 
-/**
- * Resolve tipping methods for a given identity.
- * Takes a protocol + author ID and checks all linked identities/wallets
- * to determine what tipping methods are available.
- */
 export async function handleTipResolve(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const protocol = url.searchParams.get('protocol') || '';
@@ -28,51 +25,52 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
 
   const methods: ResolvedTipMethod[] = [];
 
-  // For now, return available methods based on protocol
-  // In production, this would query the identity resolution system
+  // Common crypto methods — always available
+  methods.push({
+    method: 'ethereum',
+    label: 'Ethereum / EVM',
+    description: 'Send ETH, USDC, or any ERC-20 on Ethereum, Base, Optimism, Arbitrum, Polygon',
+    icon: '◆',
+    available: true,
+    chain: 'ethereum',
+    minAmount: 0.0001,
+    fee: '~$0.05-5 (varies by chain)',
+  });
+
+  methods.push({
+    method: 'solana',
+    label: 'Solana',
+    description: 'Send SOL, USDC, or any SPL token — sub-cent fees',
+    icon: '◎',
+    available: true,
+    chain: 'solana',
+    minAmount: 0.001,
+    fee: '< $0.01',
+  });
+
+  // Protocol-specific methods
   switch (protocol) {
     case 'nostr':
       methods.push({
         method: 'lightning_zap',
         label: 'Lightning Zap',
-        description: 'Send a Bitcoin Lightning tip via Nostr zaps',
+        description: 'Bitcoin Lightning via Nostr zaps — instant, near-zero fees',
         icon: '⚡',
         available: true,
-        minAmount: 0.00001,
-        fee: '< $0.01',
-      });
-      methods.push({
-        method: 'ethereum',
-        label: 'Ethereum',
-        description: 'Send ETH or ERC-20 tokens',
-        icon: '◆',
-        available: true,
-        chain: 'ethereum',
-        minAmount: 0.001,
-        fee: '~$0.50-5',
-      });
-      methods.push({
-        method: 'solana',
-        label: 'Solana',
-        description: 'Send SOL or SPL tokens',
-        icon: '◎',
-        available: true,
-        chain: 'solana',
-        minAmount: 0.01,
-        fee: '< $0.01',
+        minAmount: 1, // sats
+        fee: '< $0.001',
       });
       break;
 
     case 'farcaster':
       methods.push({
-        method: 'ethereum',
-        label: 'Ethereum',
-        description: 'Send ETH or ERC-20 tokens',
-        icon: '◆',
+        method: 'farcaster_frame',
+        label: 'Farcaster Frame',
+        description: 'Tip via Farcaster Frame — embeddable in any cast',
+        icon: '◈',
         available: true,
-        chain: 'ethereum',
-        minAmount: 0.001,
-        fee: '~$0.50-5',
+        actionUrl: `${env.GTS_INSTANCE_URL || 'https://degenfeed.xyz'}/api/tip/frame/${encodeURIComponent(authorId)}`,
+        fee: '~$0.01-0.50',
       });
       break;
 
@@ -80,20 +78,10 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
       methods.push({
         method: 'lens_collect',
         label: 'Lens Collect',
-        description: 'Collect this post via Lens protocol',
+        description: 'Collect this post via Lens protocol — supports free + paid collects',
         icon: '◎',
         available: true,
-        fee: '~$0.10-1',
-      });
-      methods.push({
-        method: 'ethereum',
-        label: 'Ethereum',
-        description: 'Send ETH or ERC-20 tokens',
-        icon: '◆',
-        available: true,
-        chain: 'ethereum',
-        minAmount: 0.001,
-        fee: '~$0.50-5',
+        fee: '~$0.01-1',
       });
       break;
 
@@ -101,13 +89,13 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
     case 'threads':
       methods.push({
         method: 'ethereum',
-        label: 'Ethereum',
-        description: 'Send ETH or ERC-20 tokens',
+        label: 'Ethereum / EVM',
+        description: 'Send ETH, USDC, or any ERC-20',
         icon: '◆',
         available: true,
         chain: 'ethereum',
-        minAmount: 0.001,
-        fee: '~$0.50-5',
+        minAmount: 0.0001,
+        fee: '~$0.05-5',
       });
       methods.push({
         method: 'solana',
@@ -116,7 +104,7 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
         icon: '◎',
         available: true,
         chain: 'solana',
-        minAmount: 0.01,
+        minAmount: 0.001,
         fee: '< $0.01',
       });
       break;
@@ -124,13 +112,13 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
     case 'mastodon':
       methods.push({
         method: 'ethereum',
-        label: 'Ethereum',
-        description: 'Send ETH or ERC-20 tokens',
+        label: 'Ethereum / EVM',
+        description: 'Send ETH, USDC, or any ERC-20',
         icon: '◆',
         available: true,
         chain: 'ethereum',
-        minAmount: 0.001,
-        fee: '~$0.50-5',
+        minAmount: 0.0001,
+        fee: '~$0.05-5',
       });
       methods.push({
         method: 'solana',
@@ -139,42 +127,19 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
         icon: '◎',
         available: true,
         chain: 'solana',
-        minAmount: 0.01,
+        minAmount: 0.001,
         fee: '< $0.01',
       });
       break;
 
     default:
       // Unknown protocol — offer generic crypto
-      methods.push({
-        method: 'ethereum',
-        label: 'Ethereum',
-        description: 'Send ETH or ERC-20 tokens',
-        icon: '◆',
-        available: true,
-        chain: 'ethereum',
-        minAmount: 0.001,
-        fee: '~$0.50-5',
-      });
-      methods.push({
-        method: 'solana',
-        label: 'Solana',
-        description: 'Send SOL or SPL tokens',
-        icon: '◎',
-        available: true,
-        chain: 'solana',
-        minAmount: 0.01,
-        fee: '< $0.01',
-      });
+      break;
   }
 
   return jsonResponse({ methods, resolved: true });
 }
 
-/**
- * Create a tip intent.
- * Returns transaction data that the client signs with their wallet.
- */
 export async function handleTipCreate(request: Request, env: Env): Promise<Response> {
   try {
     const body = (await request.json()) as {
@@ -190,51 +155,98 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
       return jsonResponse({ error: 'recipient, method, and amount required' }, 400);
     }
 
-    // For Ethereum/Solana direct transfers:
-    // Return the transaction data that the sender signs
-    if (body.method === 'ethereum') {
-      // In a full implementation, this would:
-      // 1. Look up the recipient's address from their linked identities
-      // 2. Create a transaction object
-      // 3. Return it for the sender to sign
-      return jsonResponse({
-        method: 'ethereum',
-        intent: {
-          to: body.recipient,
-          value: body.amount,
-          chain: body.chain || 'ethereum',
-          // The client signs this with e.g. ethereum.request({ method: 'eth_sendTransaction', params: [{...}] })
-        },
-        instructions: 'Sign with your Ethereum wallet to send the tip',
-      });
-    }
+    switch (body.method) {
+      case 'ethereum':
+        return jsonResponse({
+          method: 'ethereum',
+          intent: {
+            to: body.recipient,
+            value: body.amount,
+            chain: body.chain || 'ethereum',
+          },
+          instructions: 'Sign with your Ethereum wallet (MetaMask, Rabby, Rainbow, etc.) to send the tip',
+        });
 
-    if (body.method === 'solana') {
-      return jsonResponse({
-        method: 'solana',
-        intent: {
-          to: body.recipient,
-          amount: body.amount,
-          chain: 'solana',
-        },
-        instructions: 'Sign with your Solana wallet to send the tip',
-      });
-    }
+      case 'solana':
+        return jsonResponse({
+          method: 'solana',
+          intent: {
+            to: body.recipient,
+            amount: body.amount,
+            chain: 'solana',
+          },
+          instructions: 'Sign with your Solana wallet (Phantom, Solflare, Backpack, etc.) to send the tip',
+        });
 
-    if (body.method === 'lightning_zap') {
-      // Would generate an LNURL invoice
-      return jsonResponse({
-        method: 'lightning_zap',
-        intent: {
-          amount: body.amount,
-          note: 'Tip from DegenFeed',
-        },
-        instructions: 'Pay the Lightning invoice with your Nostr-compatible wallet',
-      });
-    }
+      case 'lightning_zap':
+        return jsonResponse({
+          method: 'lightning_zap',
+          intent: {
+            amount: body.amount,
+            note: 'Tip from DegenFeed',
+          },
+          instructions: 'Pay the Lightning invoice with your Nostr-compatible wallet (Alby, Wallet of Satoshi, etc.)',
+        });
 
-    return jsonResponse({ error: 'Unknown tipping method: ' + body.method }, 400);
+      case 'farcaster_frame':
+        return jsonResponse({
+          method: 'farcaster_frame',
+          intent: {
+            recipient: body.recipient,
+            amount: body.amount,
+            actionUrl: `/api/tip/frame/${encodeURIComponent(body.recipient)}`,
+          },
+          instructions: 'Complete the tip via the Farcaster Frame',
+          actionUrl: `/api/tip/frame/${encodeURIComponent(body.recipient)}?amount=${body.amount}`,
+        });
+
+      case 'lens_collect':
+        return jsonResponse({
+          method: 'lens_collect',
+          intent: {
+            recipient: body.recipient,
+            amount: body.amount,
+          },
+          instructions: 'Collect this post via Lens Protocol',
+        });
+
+      default:
+        return jsonResponse({ error: 'Unknown tipping method: ' + body.method }, 400);
+    }
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
   }
+}
+
+/**
+ * Farcaster Frame endpoint for tipping.
+ * Returns Open Graph meta tags that Farcaster clients render as a tipping Frame.
+ */
+export async function handleTipFrame(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const parts = url.pathname.split('/');
+  const recipientId = parts[parts.length - 1] || '';
+  const amount = url.searchParams.get('amount') || '0.001';
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta property="fc:frame" content="vNext" />
+  <meta property="fc:frame:image" content="https://degenfeed.xyz/og/tip.png" />
+  <meta property="fc:frame:button:1" content="⚡ Tip ${amount} ETH" />
+  <meta property="fc:frame:button:1:action" content="tx" />
+  <meta property="fc:frame:button:1:target" content="https://degenfeed.xyz/api/tip/frame/tx/${recipientId}?amount=${amount}" />
+  <meta property="fc:frame:post_url" content="https://degenfeed.xyz/api/tip/frame/callback" />
+  <meta property="og:title" content="Tip on DegenFeed" />
+  <meta property="og:description" content="Send a tip via DegenFeed — cross-platform, no platform fees" />
+</head>
+<body>
+  <p>DegenFeed Tipping Frame — open this in a Farcaster client to send a tip.</p>
+</body>
+</html>`;
+
+  return new Response(html, {
+    status: 200,
+    headers: { 'content-type': 'text/html; charset=utf-8' },
+  });
 }

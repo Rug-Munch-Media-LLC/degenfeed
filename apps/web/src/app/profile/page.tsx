@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../components/AuthProvider";
 import { useWeb3 } from "../../components/Web3Provider";
+import { QRCodeSVG } from "qrcode.react";
 
 export const dynamic = 'force-dynamic';
 
@@ -183,6 +184,25 @@ export default function ProfilePage() {
               Receive Tips
             </h2>
             <div className="space-y-3">
+              {/* QR Code for primary wallet */}
+              {(() => {
+                const tipAddr = identities.find(i => i.address)?.address;
+                if (!tipAddr || typeof window === "undefined") return null;
+                const tipUrl = tipAddr.startsWith("0x")
+                  ? "ethereum:" + tipAddr
+                  : "solana:" + tipAddr;
+                return (
+                  <div className="flex flex-col items-center rounded-xl border border-degen-500/20 bg-degen-500/5 p-4">
+                    <h3 className="mb-2 text-xs font-semibold text-degen-400">Scan to Tip</h3>
+                    <div className="mb-2 rounded-xl bg-white p-3">
+                      <QRCodeSVG value={tipUrl} size={140} />
+                    </div>
+                    <p className="text-[10px] text-gray-500 text-center">
+                      Scan with any wallet app to send crypto
+                    </p>
+                  </div>
+                );
+              })()}
               {/* Wallet addresses (if linked) */}
               {identities.filter(i => i.address).length > 0 && (
                 <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 p-4">
@@ -192,15 +212,23 @@ export default function ProfilePage() {
                   </p>
                   {identities.filter(i => i.address).map((id, i) => (
                     <div key={i} className="mb-2 flex items-center justify-between rounded-lg bg-gray-900/50 px-3 py-2">
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="hidden sm:block rounded-lg bg-white p-1">
+                          {typeof window !== "undefined" && (
+                            <QRCodeSVG
+                              value={(id.address || "").startsWith("0x") ? "ethereum:" + id.address : "solana:" + id.address}
+                              size={40}
+                            />
+                          )}
+                        </div>
                         <span style={{ color: id.color }}>{PROTOCOL_ICONS[id.protocol]}</span>
                         <div className="min-w-0">
                           <div className="text-xs font-medium text-white">{id.protocol === 'ethereum' ? 'EVM Chain' : 'Solana'}</div>
-                          <code className="text-xs font-mono text-gray-400 truncate block">{shortenAddress(id.address!)}</code>
+                          <code className="text-xs font-mono text-gray-400 truncate block">{shortenAddress(id.address || "")}</code>
                         </div>
                       </div>
                       <button
-                        onClick={() => navigator.clipboard.writeText(id.address!)}
+                        onClick={() => navigator.clipboard.writeText(id.address || "")}
                         className="shrink-0 rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
                         type="button"
                       >
@@ -215,6 +243,16 @@ export default function ProfilePage() {
                     <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">Arbitrum</span>
                     <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">Polygon</span>
                     <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">Solana</span>
+                    <button
+                      onClick={() => {
+                        const addr = identities.find(i => i.address)?.address;
+                        if (addr) navigator.clipboard.writeText(addr);
+                      }}
+                      className="rounded-full bg-degen-500/20 px-2 py-0.5 text-[10px] text-degen-400 hover:bg-degen-500/30 transition-colors"
+                      type="button"
+                    >
+                      Copy All
+                    </button>
                   </div>
                 </div>
               )}
