@@ -321,12 +321,12 @@ function extractAll(tag: string, xml: string): string[] {
   return out;
 }
 
-function parseRss(xml: string): RssItem[] {
+function parseRss(xml: string, maxItems = 20): RssItem[] {
   const items: RssItem[] = [];
   const itemRe = /<item([^>]*)>([\s\S]*?)<\/item>/gi;
   let m: RegExpExecArray | null = itemRe.exec(xml);
 
-  while (m !== null) {
+  while (m !== null && items.length < maxItems) {
     const itemXml = m[2] || '';
     const title = extractText('title', itemXml);
     const link = extractText('link', itemXml) || extractText('guid', itemXml);
@@ -356,12 +356,12 @@ function parseRss(xml: string): RssItem[] {
   return items;
 }
 
-function parseAtom(xml: string): RssItem[] {
+function parseAtom(xml: string, maxItems = 20): RssItem[] {
   const items: RssItem[] = [];
   const entryRe = /<entry([^>]*)>([\s\S]*?)<\/entry>/gi;
-  const m: RegExpExecArray | null = entryRe.exec(xml);
+  let m: RegExpExecArray | null = entryRe.exec(xml);
 
-  while (m !== null) {
+  while (m !== null && items.length < maxItems) {
     const entryXml = m[2] || '';
     const title = extractText('title', entryXml);
     const linkMatch = entryXml.match(/<link[^>]+href\s*=\s*["']([^"']+)["']/i);
@@ -379,6 +379,7 @@ function parseAtom(xml: string): RssItem[] {
     if (title && link) {
       items.push({ title, link, description, pubDate, creator, content, image, categories });
     }
+    m = entryRe.exec(xml);
   }
 
   return items;
@@ -386,20 +387,25 @@ function parseAtom(xml: string): RssItem[] {
 
 function parseFeed(xml: string): RssItem[] {
   const trimmed = xml.trim();
-  if (trimmed.includes('<feed') || trimmed.includes('<feed')) return parseAtom(trimmed);
+  if (trimmed.includes('<feed')) return parseAtom(trimmed);
   return parseRss(trimmed);
 }
 
 async function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response | null> {
   if (!url) return null;
   try {
-    return await fetch(url, {
+    const res = await fetch(url, {
       signal: AbortSignal.timeout(timeoutMs),
       headers: {
         'user-agent': 'DegenFeed/0.1 (news aggregator; +https://degenfeed.xyz)',
         accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
       },
     });
+    if (!res.ok) {
+      res.body?.cancel().catch(() => {});
+      return null;
+    }
+    return res;
   } catch {
     return null;
   }
@@ -409,7 +415,8 @@ async function fetchRss(source: NewsSource): Promise<RssItem[]> {
   const res = await fetchWithTimeout(source.url);
   if (!res?.ok) return [];
   const xml = await res.text();
-  return parseFeed(xml);
+  if (xml.length > 2_000_000) return [];
+  return parseFeed(xml).slice(0, 15);
 }
 
 interface HnHit {
@@ -427,7 +434,7 @@ async function fetchHackerNews(): Promise<RssItem[]> {
   const hits: HnHit[] = [];
 
   for (const tag of tags) {
-    const url = `https://hn.algolia.com/api/v1/search_by_date?tags=${tag}&hitsPerPage=20`;
+    const url = `https://hn.algolia.com/api/v1/search_by_date?tags=${tag}&hitsPerPage=10`;
     try {
       const res = await fetchWithTimeout(url, 6000);
       if (!res?.ok) continue;
@@ -448,6 +455,28 @@ async function fetchHackerNews(): Promise<RssItem[]> {
     image: '',
     categories: ['hackernews'],
   }));
+}
+
+async function withConcurrencyLimit<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<void>,
+): Promise<void> {
+  const queue = [...items];
+  const runners = new Set<Promise<void>>();
+  while (queue.length > 0 || runners.size > 0) {
+    while (runners.size < limit && queue.length > 0) {
+      const item = queue.shift();
+      if (item === undefined) break;
+      const promise = fn(item)
+        .catch(() => {})
+        .finally(() => {
+          runners.delete(promise);
+        });
+      runners.add(promise);
+    }
+    if (runners.size > 0) await Promise.race(runners);
+  }
 }
 
 async function fetchSource(source: NewsSource): Promise<RssItem[]> {
@@ -523,7 +552,7 @@ function toUnifiedPost(item: RssItem, source: NewsSource): UnifiedPost {
       viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
-    raw: { item, source },
+    raw: { sourceName: source.name, tier: source.tier, mustRead: source.mustRead },
     niches: [...new Set([...niches, ...categories.map((c) => c.toLowerCase())])],
   };
 }
@@ -632,17 +661,11 @@ export async function handleNewsFeed(request: Request, env: Env): Promise<Respon
 
   const now = Date.now();
 
-  const results = await Promise.allSettled(
-    NEWS_SOURCES.map(async (source) => {
-      const items = await fetchSource(source);
-      return items.map((i) => ({ item: i, source }));
-    }),
-  );
-
   const allItems: { item: RssItem; source: NewsSource }[] = [];
-  for (const r of results) {
-    if (r.status === 'fulfilled') allItems.push(...r.value);
-  }
+  await withConcurrencyLimit(NEWS_SOURCES, 3, async (source) => {
+    const items = await fetchSource(source);
+    allItems.push(...items.map((i) => ({ item: i, source })));
+  });
 
   const seenUrls = new Set<string>();
   const posts: { post: UnifiedPost; source: NewsSource; score: number }[] = [];
