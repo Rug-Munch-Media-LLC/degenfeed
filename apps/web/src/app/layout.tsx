@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ErrorTracker } from '../components/ErrorTracker';
+import { AuthProvider } from '../components/AuthProvider';
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
@@ -35,7 +36,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a className="skip-link" href="#main">
           Skip to content
         </a>
-        <ErrorTracker />{children}
+        <ErrorTracker />
+          <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

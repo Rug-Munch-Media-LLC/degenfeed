@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { FeedShell } from "../../components/FeedShell";
 import { useAuth } from "../../components/AuthProvider";
+
+export const dynamic = 'force-dynamic';
 import { ComposeModal, SignInModal } from "@degenfeed/ui";
 import { SECTIONS } from "./sections";
 
