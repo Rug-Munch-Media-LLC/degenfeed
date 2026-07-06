@@ -32,6 +32,7 @@ export function corsHeaders(origin: string | null): Headers {
   }
   headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   headers.set('Access-Control-Allow-Headers', 'content-type, authorization');
+  headers.set('Access-Control-Expose-Headers', 'X-Payment-Required');
   return headers;
 }
 

@@ -14,6 +14,7 @@ import {
   parseOriginHeader,
 } from './cors';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
+import { handleBlinkTip } from './routes/blink';
 import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import { handleEngage } from './routes/engage';
 import { handleHomeFeed, handleTrendingFeed } from './routes/feed';
@@ -37,6 +38,7 @@ import {
   handleTipSettingsPost,
 } from './routes/tip';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
+import { handleX402Paywall, handleX402Verify } from './routes/x402';
 import { handleSessionVerify, requireSession } from './session';
 
 // ─── Environment variables ───────────────────────────────────────────
@@ -57,6 +59,7 @@ export interface Env {
   THREADS_PDS_URL?: string;
   RATE_WINDOW_MS?: string;
   RATE_MAX_REQ?: string;
+  SOLANA_RPC_URL?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
@@ -149,6 +152,8 @@ const CSRF_EXEMPT_PATHS = [
   '/api/auth/gotosocial/callback',
   '/api/tip/frame/',
   '/api/bridge/rss-to-nostr',
+  '/api/blink/tip',
+  '/api/x402/verify',
 ];
 
 function isStateChanging(method: string): boolean {
@@ -300,6 +305,12 @@ export default {
         response = await handleNotifications(request, env);
       } else if (path === '/api/identity/resolve') {
         response = await handleResolveIdentity(request, env);
+      } else if (path === '/api/blink/tip') {
+        response = await handleBlinkTip(request, env);
+      } else if (path === '/api/x402/paywall') {
+        response = await handleX402Paywall(request, env);
+      } else if (path === '/api/x402/verify') {
+        response = await handleX402Verify(request, env);
       } else {
         response = jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.1.0' });
       }

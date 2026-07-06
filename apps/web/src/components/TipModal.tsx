@@ -32,6 +32,7 @@ export function TipModal({
   const [amount, setAmount] = useState('0.001');
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [_invoice, setInvoice] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Resolve tipping methods on open
   useEffect(() => {
@@ -345,6 +346,23 @@ export function TipModal({
                     Connect your Solana wallet (Phantom, Solflare, Backpack) to send this tip.
                   </p>
                 </div>
+              )}
+
+              {selectedMethod === 'solana' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const recipient =
+                      selected?.address ?? postContext?.author?.solanaAddress ?? recipientAuthorId;
+                    const url = `https://app.degenfeed.xyz/api/blink/tip?recipient=${encodeURIComponent(recipient)}&amount=${encodeURIComponent(amount)}`;
+                    void navigator.clipboard.writeText(url);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="mb-4 w-full rounded-lg border border-purple-900/50 bg-purple-900/10 px-3 py-2 text-xs font-medium text-purple-400 hover:bg-purple-900/20 transition-colors"
+                >
+                  {copied ? 'Blink URL copied!' : 'Share as Blink'}
+                </button>
               )}
 
               <button

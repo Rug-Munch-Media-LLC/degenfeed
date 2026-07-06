@@ -22,6 +22,8 @@ export interface PostCardProps {
   expanded?: boolean;
   /** Called when user clicks the tip button for this post's author */
   onTip?: (post: UnifiedPost) => void;
+  /** Called when user clicks the paywall unlock button */
+  onPaywall?: (post: UnifiedPost) => void;
 }
 
 const MAX_TEXT_LENGTH = 500;
@@ -95,7 +97,7 @@ function applyOptimistic(state: LocalState, action: EngagementAction): LocalStat
   }
 }
 
-export function PostCard({ post, onEngage, onClick, expanded, onTip }: PostCardProps) {
+export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
     engagement: post.engagement,
@@ -173,6 +175,22 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip }: PostCardP
       </div>
 
       {/* Content */}
+      {post.paywall && (
+        <div className="mb-3 rounded-xl border border-purple-900/30 bg-purple-900/10 p-4 text-center">
+          <div className="mb-2 text-2xl">🔒</div>
+          <p className="mb-3 text-sm text-gray-400">This post is locked.</p>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPaywall?.(post);
+            }}
+            className="rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-500 transition-colors"
+          >
+            Unlock for {post.paywall.amount} SOL
+          </button>
+        </div>
+      )}
       <div className="mb-3 text-sm text-gray-300 whitespace-pre-wrap break-words">
         {displayText}
         {needsTruncation && !showFullText && (

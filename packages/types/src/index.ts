@@ -101,6 +101,8 @@ export interface UnifiedPost {
   raw: unknown;
   /** Niche tags derived from content (crypto, ai, oss, security, art, music) */
   niches: string[];
+  /** Optional paywall requirement for paid content */
+  paywall?: { amount: string; recipient: string };
 }
 
 export interface NewPost {
