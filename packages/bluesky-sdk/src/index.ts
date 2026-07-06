@@ -1,49 +1,40 @@
-/**
- * @degenfeed/bluesky-sdk
- *
- * Bluesky/AT Protocol client. Communicates with the Bluesky API (XRPC)
- * for reading/writing posts, feeds, follows, and profiles.
- *
- * All posts normalize to @degenfeed/types `UnifiedPost`.
- *
- * ## Architecture
- *
- *   BskyClient.connect(service, auth) → BskyClient
- *     .getTimeline(limit, cursor)  → UnifiedPost[]
- *     .getAuthorFeed(did)          → UnifiedPost[]
- *     .getPost(uri)                → UnifiedPost
- *     .publish(text, opts)         → UnifiedPost
- *     .getProfile(did)             → UnifiedIdentity
- *
- * Free endpoints:
- *   - https://public.api.bsky.app (read-only, unauthenticated)
- *   - https://bsky.social (authenticated for writes)
- *
- * TODO(v1):
- *   - Implement full XRPC client with all endpoints
- *   - Add auth session management (refresh JWT)
- *   - Add post/like/repost/reply helpers
- *   - Add embed support (images, external links, record embeds)
- *   - Add feed generator integration
- */
-
-import { buildUnifiedPost, emptyIdentity } from '@degenfeed/feed-core';
+import { buildUnifiedPost } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
 export type { Protocol, UnifiedIdentity, UnifiedPost };
 
 export const BSKY_PUBLIC_URL = 'https://public.api.bsky.app';
 export const BSKY_SOCIAL_URL = 'https://bsky.social';
+export const DEFAULT_USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
+
+export const CURATED_BSKY_ACTORS = [
+  'jay.bsky.social',
+  'naval.bsky.social',
+  'balajis.com',
+  'vitalik.eth.xyz',
+  'a16z.com',
+  'coinbase.com',
+  'solana.com',
+  'joe.bsky.social',
+  'shipyard.bsky.social',
+  'dappgem.bsky.social',
+  'defi.bsky.social',
+  'mert.bsky.social',
+  'ansem.bsky.social',
+  'blknoiz06.bsky.social',
+];
+
+export interface BskyAuthor {
+  did: string;
+  handle: string;
+  displayName?: string;
+  avatar?: string;
+}
 
 export interface BskyPostView {
   uri: string;
   cid: string;
-  author: {
-    did: string;
-    handle: string;
-    displayName?: string;
-    avatar?: string;
-  };
+  author: BskyAuthor;
   record: {
     text: string;
     createdAt: string;
@@ -60,12 +51,26 @@ export interface BskyPostView {
   indexedAt: string;
 }
 
+export interface BskyProfile {
+  did: string;
+  handle: string;
+  displayName?: string;
+  description?: string;
+  avatar?: string;
+  banner?: string;
+  followersCount?: number;
+  followsCount?: number;
+  postsCount?: number;
+}
+
 export class BskyClient {
   private pdsUrl: string;
   private accessJwt: string | null = null;
+  private userAgent: string;
 
-  constructor(pdsUrl: string = BSKY_PUBLIC_URL) {
+  constructor(pdsUrl: string = BSKY_PUBLIC_URL, userAgent: string = DEFAULT_USER_AGENT) {
     this.pdsUrl = pdsUrl;
+    this.userAgent = userAgent;
   }
 
   setAuth(accessJwt: string): void {
@@ -77,14 +82,16 @@ export class BskyClient {
     if (params) {
       for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
     }
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      'user-agent': this.userAgent,
+      accept: 'application/json',
+    };
     if (this.accessJwt) headers.authorization = `Bearer ${this.accessJwt}`;
     const res = await fetch(url.toString(), { headers });
     if (!res.ok) throw new Error(`XRPC error: ${res.status} ${res.statusText}`);
     return res.json();
   }
 
-  /** Get the authenticated user's home timeline. */
   async getTimeline(
     limit = 50,
     cursor?: string,
@@ -101,7 +108,6 @@ export class BskyClient {
     };
   }
 
-  /** Get an author's feed. */
   async getAuthorFeed(
     actor: string,
     limit = 50,
@@ -119,12 +125,90 @@ export class BskyClient {
     };
   }
 
-  /** Normalize a BskyPostView to UnifiedPost. */
+  async getActorFeeds(actors: string[], limitPerActor = 15): Promise<BskyPostView[]> {
+    const results = await Promise.allSettled(
+      actors.map((actor) => this.getAuthorFeed(actor, limitPerActor)),
+    );
+    const posts: BskyPostView[] = [];
+    for (const r of results) {
+      if (r.status === 'fulfilled') posts.push(...r.value.posts);
+    }
+    return posts;
+  }
+
+  async resolveHandle(handle: string): Promise<string> {
+    const data = (await this.xrpc('/xrpc/com.atproto.identity.resolveHandle', {
+      handle,
+    })) as { did: string };
+    return data.did;
+  }
+
+  async getProfile(actor: string): Promise<BskyProfile> {
+    return (await this.xrpc('/xrpc/app.bsky.actor.getProfile', { actor })) as BskyProfile;
+  }
+
+  async searchActorsTypeahead(query: string, limit = 25): Promise<{ actors: BskyAuthor[] }> {
+    const data = (await this.xrpc('/xrpc/app.bsky.actor.searchActorsTypeahead', {
+      q: query,
+      limit: String(limit),
+    })) as { actors: BskyAuthor[] };
+    return { actors: data.actors ?? [] };
+  }
+
+  authorToIdentity(author: BskyAuthor): UnifiedIdentity {
+    return {
+      id: `bluesky:${author.did}`,
+      primary: { protocol: 'bluesky', id: author.did },
+      handles: {
+        nostr: null,
+        farcaster: null,
+        lens: null,
+        bluesky: author.handle,
+        threads: null,
+        rss: null,
+        mastodon: null,
+      },
+      displayName: author.displayName || author.handle,
+      bio: '',
+      avatarUrl: author.avatar || '',
+      verified: [],
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: { did: author.did },
+    };
+  }
+
+  profileToIdentity(profile: BskyProfile): UnifiedIdentity {
+    return {
+      id: `bluesky:${profile.did}`,
+      primary: { protocol: 'bluesky', id: profile.did },
+      handles: {
+        nostr: null,
+        farcaster: null,
+        lens: null,
+        bluesky: profile.handle,
+        threads: null,
+        rss: null,
+        mastodon: null,
+      },
+      displayName: profile.displayName || profile.handle,
+      bio: profile.description || '',
+      avatarUrl: profile.avatar || '',
+      verified: [],
+      followerCount: profile.followersCount ?? 0,
+      followingCount: profile.followsCount ?? 0,
+      links: [],
+      keys: { did: profile.did },
+    };
+  }
+
   postToUnifiedPost(post: BskyPostView, author?: UnifiedIdentity): UnifiedPost {
+    const identity = author ?? this.authorToIdentity(post.author);
     return buildUnifiedPost({
       protocol: 'bluesky',
       nativeId: post.uri,
-      author: author ?? emptyIdentity(),
+      author: identity,
       text: post.record.text,
       parentNativeId: post.record.reply?.parent.uri,
       rootNativeId: post.record.reply?.root.uri,
@@ -140,7 +224,6 @@ export class BskyClient {
     });
   }
 
-  /** Create a like record. Requires setAuth(). */
   async like(uri: string, cid: string, actorDid: string): Promise<void> {
     await this.createRecord(actorDid, 'app.bsky.feed.like', {
       subject: { uri, cid },
@@ -148,12 +231,10 @@ export class BskyClient {
     });
   }
 
-  /** Remove a like record. */
   async unlike(uri: string, actorDid: string): Promise<void> {
     await this.deleteRecord(actorDid, 'app.bsky.feed.like', uri);
   }
 
-  /** Create a repost record. Requires setAuth(). */
   async repost(uri: string, cid: string, actorDid: string): Promise<void> {
     await this.createRecord(actorDid, 'app.bsky.feed.repost', {
       subject: { uri, cid },
@@ -161,12 +242,10 @@ export class BskyClient {
     });
   }
 
-  /** Remove a repost record. */
   async unrepost(uri: string, actorDid: string): Promise<void> {
     await this.deleteRecord(actorDid, 'app.bsky.feed.repost', uri);
   }
 
-  /** Create a reply record. */
   async reply(
     parentUri: string,
     parentCid: string,
@@ -195,6 +274,7 @@ export class BskyClient {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
+        'user-agent': this.userAgent,
         authorization: `Bearer ${this.accessJwt}`,
       },
       body: JSON.stringify({ repo, collection, record }),
@@ -213,6 +293,7 @@ export class BskyClient {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
+        'user-agent': this.userAgent,
         authorization: `Bearer ${this.accessJwt}`,
       },
       body: JSON.stringify({ repo, collection, rkey }),

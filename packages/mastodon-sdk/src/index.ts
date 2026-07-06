@@ -131,18 +131,21 @@ export interface GtSPoll {
 
 // ─── Client ───────────────────────────────────────────────────────────
 
+export const DEFAULT_USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
+
 export class GtSClient {
   private instanceUrl: string;
   private accessToken: string | null = null;
+  private userAgent: string;
 
-  /**
-   * @param instanceUrl The base URL of the GotoSocial instance
-   *   (e.g. 'https://social.degenfeed.xyz' or 'https://mastodon.social')
-   * @param accessToken Optional OAuth2 access token
-   */
-  constructor(instanceUrl: string, accessToken?: string) {
+  constructor(instanceUrl: string, accessToken?: string, userAgent: string = DEFAULT_USER_AGENT) {
     this.instanceUrl = instanceUrl.replace(/\/$/, '');
     if (accessToken) this.accessToken = accessToken;
+    this.userAgent = userAgent;
+  }
+
+  setUserAgent(userAgent: string): void {
+    this.userAgent = userAgent;
   }
 
   setAuth(accessToken: string): void {
@@ -165,7 +168,10 @@ export class GtSClient {
     if (params) {
       for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
     }
-    const headers: Record<string, string> = { accept: 'application/json' };
+    const headers: Record<string, string> = {
+      accept: 'application/json',
+      'user-agent': this.userAgent,
+    };
     if (this.accessToken) headers.authorization = `Bearer ${this.accessToken}`;
     if (body && method !== 'GET') headers['content-type'] = 'application/json';
     const res = await fetch(url.toString(), {

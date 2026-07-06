@@ -8,9 +8,12 @@ describe('@degenfeed/threads-sdk', () => {
   });
 
   it('should export constants', async () => {
-    const { THREADS_PUBLIC_URL, THREADS_PDS_URL } = await import('./index');
+    const { THREADS_PUBLIC_URL, THREADS_PDS_URL, CURATED_THREADS_HANDLES } = await import(
+      './index'
+    );
     expect(THREADS_PUBLIC_URL).toBe('https://public.threads.net');
     expect(THREADS_PDS_URL).toBe('https://threads.net');
+    expect(CURATED_THREADS_HANDLES.length).toBeGreaterThan(3);
   });
 
   it('should support setting auth', async () => {
@@ -46,6 +49,7 @@ describe('@degenfeed/threads-sdk', () => {
     expect(unified.text).toBe('Hello from Threads!');
     expect(unified.metrics.likes).toBe(42);
     expect(unified.id).toContain('threads:');
+    expect(unified.author.handles.threads).toBe('testuser.threads.net');
   });
 
   it('should normalize post with embeds', async () => {

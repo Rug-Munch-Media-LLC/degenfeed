@@ -15,6 +15,14 @@ describe('@degenfeed/mastodon-sdk', () => {
     expect(client.isAuthenticated).toBe(true);
   });
 
+  it('should default to DegenFeed user-agent', async () => {
+    const { GtSClient, DEFAULT_USER_AGENT } = await import('./index');
+    expect(DEFAULT_USER_AGENT).toContain('DegenFeed');
+    const client = new GtSClient('https://social.example.com');
+    client.setUserAgent('CustomAgent/1.0');
+    expect(() => client.setUserAgent('test')).not.toThrow();
+  });
+
   it('should normalize status to UnifiedPost', async () => {
     const { statusToUnifiedPost } = await import('./index');
     const mockStatus = {

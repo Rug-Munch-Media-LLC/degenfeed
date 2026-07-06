@@ -1,10 +1,23 @@
-import { BskyClient } from '@degenfeed/bluesky-sdk';
-import { HubClient } from '@degenfeed/farcaster-sdk';
-import { LensClient } from '@degenfeed/lens-sdk';
+import { BskyClient, CURATED_BSKY_ACTORS } from '@degenfeed/bluesky-sdk';
+import { CURATED_FARCASTER_FIDS, type FarcasterProfile, HubClient } from '@degenfeed/farcaster-sdk';
+import { deduplicatePosts, enrichPostNiches, isSpamPost, rankPosts } from '@degenfeed/feed-core';
+import { CURATED_LENS_HANDLES, LensClient, type LensProfile } from '@degenfeed/lens-sdk';
+import { GtSClient } from '@degenfeed/mastodon-sdk';
 import { RelayPool } from '@degenfeed/nostr-sdk';
-import { type RankingContext, rank } from '@degenfeed/ranking';
+import { RedditSource, feedToUnifiedPosts } from '@degenfeed/rss-sdk';
+import { CURATED_THREADS_HANDLES, ThreadsClient } from '@degenfeed/threads-sdk';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
+
+const DEFAULT_PROTOCOLS: Protocol[] = [
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'threads',
+  'rss',
+];
 
 const FALLBACK_RELAYS = [
   'wss://relay.damus.io',
@@ -13,198 +26,331 @@ const FALLBACK_RELAYS = [
   'wss://relay.nostr.band',
   'wss://nostr.wine',
 ];
+
 const FALLBACK_HUBS = [
   'https://hub.farcaster.standardcrypto.vc:2281',
   'https://hub-grpc.pinata.cloud',
 ];
+
 const LENS_FALLBACK = ['https://api-v2.lens.dev/graphql', 'https://api.lens.xyz/graphql'];
 const BSKY_FALLBACK = 'https://public.api.bsky.app';
+const GTS_INSTANCE = 'https://social.degenfeed.xyz';
+const THREADS_FALLBACK = 'https://public.threads.net';
+const DEFAULT_TIMEOUT_MS = 6000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  const timeout = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(`${label} timeout`)), ms);
+  });
+  return Promise.race([promise, timeout]);
+}
+
+function parseProtocols(raw: string | null): Protocol[] {
+  if (!raw) return DEFAULT_PROTOCOLS;
+  const parts = raw.split(',').map((p) => p.trim()) as Protocol[];
+  const valid = new Set<Protocol>(DEFAULT_PROTOCOLS);
+  return parts.filter((p): p is Protocol => valid.has(p));
+}
+
+async function fetchNostr(
+  env: Env,
+  limit: number,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<UnifiedPost[]> {
+  const relayUrls = (env.RELAY_URLS ?? '').split(',').filter(Boolean);
+  const pool = new RelayPool(relayUrls.length > 0 ? relayUrls : FALLBACK_RELAYS, {
+    eoseTimeout: 2000,
+  });
+  try {
+    const events = await withTimeout(
+      pool.list({ kinds: [1], limit: limit * 3 }, 3000),
+      timeoutMs,
+      'nostr',
+    );
+    const posts: UnifiedPost[] = [];
+    for (const ev of events) {
+      const post: UnifiedPost = {
+        id: `nostr:${ev.id}`,
+        protocol: 'nostr',
+        author: {
+          id: `nostr:${ev.pubkey}`,
+          primary: { protocol: 'nostr', id: ev.pubkey },
+          handles: {
+            nostr: ev.pubkey,
+            farcaster: null,
+            lens: null,
+            bluesky: null,
+            threads: null,
+            rss: null,
+            mastodon: null,
+          },
+          displayName: ev.pubkey.slice(0, 12),
+          bio: '',
+          avatarUrl: '',
+          verified: [],
+          followerCount: 0,
+          followingCount: 0,
+          links: [],
+          keys: { nostrPubkey: ev.pubkey },
+        },
+        text: ev.content,
+        embeds: [],
+        createdAt: ev.created_at * 1000,
+        metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        engagement: {
+          viewerLiked: false,
+          viewerReposted: false,
+          viewerBookmarked: false,
+          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        },
+        raw: ev,
+        niches: [],
+      };
+      if (!isSpamPost(post)) posts.push(enrichPostNiches(post));
+    }
+    return posts;
+  } finally {
+    pool.disconnectAll();
+  }
+}
+
+async function fetchFarcaster(
+  env: Env,
+  limit: number,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<UnifiedPost[]> {
+  const hubUrl = env.FARCASTER_HUB_URL || FALLBACK_HUBS[0];
+  if (!hubUrl) return [];
+  const client = new HubClient(hubUrl);
+  const casts = await withTimeout(
+    client.getCastsByFids(CURATED_FARCASTER_FIDS, Math.max(5, Math.ceil(limit / 4))),
+    timeoutMs,
+    'farcaster',
+  );
+  const profileCache = new Map<number, FarcasterProfile>();
+  const posts: UnifiedPost[] = [];
+  for (const cast of casts) {
+    let profile = profileCache.get(cast.fid);
+    if (!profile) {
+      const proof = await client.getUserNameProofByName(String(cast.fid));
+      profile = {
+        fid: cast.fid,
+        username: proof?.name ?? `fid:${cast.fid}`,
+        displayName: proof?.name ?? `FID ${cast.fid}`,
+        bio: '',
+        avatarUrl: '',
+        pfp: '',
+        followerCount: 0,
+        followingCount: 0,
+      };
+      profileCache.set(cast.fid, profile);
+    }
+    const author = client.profileToIdentity(profile);
+    posts.push(enrichPostNiches(client.castToUnifiedPost(cast, author)));
+  }
+  return posts;
+}
+
+async function fetchLens(
+  env: Env,
+  limit: number,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<UnifiedPost[]> {
+  const url = env.LENS_API_URL || LENS_FALLBACK[0];
+  const client = new LensClient(url);
+  const pubs = await withTimeout(
+    client.getPublicationsByHandles(CURATED_LENS_HANDLES, Math.ceil(limit / 2)),
+    timeoutMs,
+    'lens',
+  );
+  const profileCache = new Map<string, LensProfile>();
+  const posts: UnifiedPost[] = [];
+  for (const pub of pubs) {
+    let profile = profileCache.get(pub.by.id);
+    if (!profile) {
+      profile = {
+        id: pub.by.id,
+        handle: pub.by.handle,
+        metadata: pub.by.metadata,
+      };
+      profileCache.set(pub.by.id, profile);
+    }
+    const author = client.profileToIdentity(profile);
+    posts.push(enrichPostNiches(client.publicationToUnifiedPost(pub, author)));
+  }
+  return posts;
+}
+
+async function fetchBluesky(
+  env: Env,
+  limit: number,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<UnifiedPost[]> {
+  const url = env.BSKY_PUBLIC_URL || BSKY_FALLBACK;
+  const client = new BskyClient(url);
+  let posts = await withTimeout(
+    client.getActorFeeds(CURATED_BSKY_ACTORS, Math.max(3, Math.ceil(limit / 5))),
+    timeoutMs,
+    'bluesky',
+  );
+  if (posts.length === 0) {
+    const search = await withTimeout(
+      client.searchActorsTypeahead('crypto', 10),
+      timeoutMs,
+      'bluesky-search',
+    );
+    const actors = search.actors.map((a) => a.handle).slice(0, 5);
+    if (actors.length > 0) {
+      posts = await client.getActorFeeds(actors, 5);
+    }
+  }
+  const unified: UnifiedPost[] = [];
+  for (const post of posts) {
+    unified.push(enrichPostNiches(client.postToUnifiedPost(post)));
+  }
+  return unified;
+}
+
+const PUBLIC_MASTODON_FALLBACKS = ['https://fosstodon.org'];
+
+async function fetchMastodon(
+  env: Env,
+  limit: number,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<UnifiedPost[]> {
+  const instances = [env.GTS_INSTANCE_URL || GTS_INSTANCE, ...PUBLIC_MASTODON_FALLBACKS];
+  const { statusToUnifiedPost } = await import('@degenfeed/mastodon-sdk');
+  for (const instance of instances) {
+    try {
+      const client = new GtSClient(instance);
+      const statuses = await withTimeout(client.getPublicTimeline(limit), timeoutMs, 'mastodon');
+      if (statuses.length > 0) {
+        return statuses.map((s) => enrichPostNiches(statusToUnifiedPost(s, instance)));
+      }
+    } catch {
+      /* try next instance */
+    }
+  }
+  return [];
+}
+
+async function fetchThreads(
+  env: Env,
+  limit: number,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<UnifiedPost[]> {
+  const url = env.THREADS_PDS_URL || THREADS_FALLBACK;
+  const client = new ThreadsClient(url);
+  const posts = await withTimeout(
+    client.getAuthorFeeds(CURATED_THREADS_HANDLES, Math.max(2, Math.ceil(limit / 6))),
+    timeoutMs,
+    'threads',
+  );
+  const unified: UnifiedPost[] = [];
+  for (const post of posts) {
+    unified.push(enrichPostNiches(client.postToUnifiedPost(post)));
+  }
+  return unified;
+}
+
+async function fetchRss(
+  _env: Env,
+  limit: number,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<UnifiedPost[]> {
+  const subreddits = ['CryptoCurrency', 'defi', 'ethereum', 'solana', 'Bitcoin'];
+  const results = await Promise.allSettled(
+    subreddits.map((sub) =>
+      withTimeout(
+        RedditSource.fetch(sub, 'hot', Math.ceil(limit / subreddits.length)),
+        timeoutMs,
+        `rss:${sub}`,
+      ),
+    ),
+  );
+  const posts: UnifiedPost[] = [];
+  for (const r of results) {
+    if (r.status === 'fulfilled') {
+      posts.push(...feedToUnifiedPosts(r.value));
+    }
+  }
+  return posts.slice(0, limit).map(enrichPostNiches);
+}
 
 export async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
-  const requestedProtocols = (params.get('protocols') ?? 'nostr,farcaster').split(
-    ',',
-  ) as Protocol[];
-  const limit = Number(params.get('limit')) || 25;
+  const requestedProtocols = parseProtocols(params.get('protocols'));
+  const limit = Math.min(Number(params.get('limit')) || 25, 100);
 
   const allPosts: UnifiedPost[] = [];
   const errors: string[] = [];
+  const perProtocol: Record<string, number> = {};
 
-  // 1. Nostr
-  if (requestedProtocols.includes('nostr')) {
-    try {
-      const relayUrls = (env.RELAY_URLS ?? '').split(',').filter(Boolean);
-      const pool = new RelayPool(relayUrls.length > 0 ? relayUrls : FALLBACK_RELAYS, {
-        eoseTimeout: 2000,
-      });
-      const events = await pool.list({ kinds: [1], limit: limit * 3 }, 3000);
-      pool.disconnectAll();
-      for (const ev of events) {
-        allPosts.push({
-          id: `nostr:${ev.id}`,
-          protocol: 'nostr' as Protocol,
-          author: {
-            id: `nostr:${ev.pubkey}`,
-            primary: { protocol: 'nostr' as const, id: ev.pubkey },
-            handles: {
-              nostr: ev.pubkey,
-              farcaster: null,
-              lens: null,
-              bluesky: null,
-              threads: null,
-              rss: null,
-              mastodon: null,
-            },
-            displayName: ev.pubkey.slice(0, 12),
-            bio: '',
-            avatarUrl: '',
-            verified: [],
-            followerCount: 0,
-            followingCount: 0,
-            links: [],
-            keys: { nostrPubkey: ev.pubkey },
-          },
-          text: ev.content,
-          embeds: [],
-          createdAt: ev.created_at * 1000,
-          metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-          engagement: {
-            viewerLiked: false,
-            viewerReposted: false,
-            viewerBookmarked: false,
-            raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-          },
-          raw: ev,
-          niches: [],
-        });
-      }
-    } catch (e) {
-      errors.push(`nostr: ${e instanceof Error ? e.message : 'unknown'}`);
+  const fetchers: {
+    protocol: Protocol;
+    fn: () => Promise<UnifiedPost[]>;
+  }[] = [
+    { protocol: 'nostr', fn: () => fetchNostr(env, limit) },
+    { protocol: 'farcaster', fn: () => fetchFarcaster(env, limit) },
+    { protocol: 'lens', fn: () => fetchLens(env, limit) },
+    { protocol: 'bluesky', fn: () => fetchBluesky(env, limit) },
+    { protocol: 'mastodon', fn: () => fetchMastodon(env, limit) },
+    { protocol: 'threads', fn: () => fetchThreads(env, limit) },
+    { protocol: 'rss', fn: () => fetchRss(env, limit) },
+  ];
+
+  const activeFetchers = fetchers.filter((f) => requestedProtocols.includes(f.protocol));
+  const results = await Promise.allSettled(
+    activeFetchers.map((f) => f.fn().then((posts) => ({ protocol: f.protocol, posts }))),
+  );
+
+  for (const [index, result] of results.entries()) {
+    if (result.status === 'fulfilled') {
+      const { protocol, posts } = result.value;
+      perProtocol[protocol] = posts.length;
+      allPosts.push(...posts);
+    } else {
+      const protocol = activeFetchers[index]?.protocol ?? 'unknown';
+      const message = result.reason instanceof Error ? result.reason.message : 'unknown';
+      errors.push(`${protocol}: ${message}`);
+      perProtocol[protocol] = 0;
     }
   }
 
-  // 2. Farcaster
-  if (requestedProtocols.includes('farcaster')) {
-    try {
-      const hubUrl = env.FARCASTER_HUB_URL || FALLBACK_HUBS[0];
-      if (hubUrl) {
-        const client = new HubClient(hubUrl);
-        const sampleFids = [1, 2, 3, 5650, 1234];
-        const results = await Promise.allSettled(
-          sampleFids.slice(0, 3).map((fid) => client.getCastsByFid(fid, Math.ceil(limit / 3))),
-        );
-        for (const result of results) {
-          if (result.status === 'fulfilled') {
-            for (const cast of result.value) {
-              allPosts.push(client.castToUnifiedPost(cast));
-            }
-          }
-        }
-      }
-    } catch (e) {
-      errors.push(`farcaster: ${e instanceof Error ? e.message : 'unknown'}`);
-    }
-  }
-
-  // 3. Lens
-  if (requestedProtocols.includes('lens')) {
-    try {
-      const client = new LensClient(LENS_FALLBACK[0]);
-      const pubs = await client.getPublications('0x01', Math.ceil(limit / 2));
-      for (const pub of pubs) {
-        allPosts.push({
-          id: `lens:${pub.id}`,
-          protocol: 'lens' as Protocol,
-          author: {
-            id: `lens:${pub.by.id}`,
-            primary: { protocol: 'lens' as const, id: pub.by.id },
-            handles: {
-              nostr: null,
-              farcaster: null,
-              lens: pub.by.handle,
-              bluesky: null,
-              threads: null,
-              rss: null,
-              mastodon: null,
-            },
-            displayName: pub.by.metadata?.displayName ?? pub.by.handle,
-            bio: '',
-            avatarUrl: pub.by.metadata?.picture ?? '',
-            verified: [],
-            followerCount: 0,
-            followingCount: 0,
-            links: [],
-            keys: {},
-          },
-          text: pub.metadata.content.slice(0, 500),
-          embeds:
-            pub.metadata.media?.map((m) => ({ kind: 'image' as const, url: m.original.url })) ?? [],
-          createdAt: new Date(pub.createdAt).getTime(),
-          metrics: {
-            likes: pub.stats.totalAmountOfReactions,
-            reposts: pub.stats.totalAmountOfMirrors,
-            replies: pub.stats.totalAmountOfComments,
-            quotes: 0,
-          },
-          engagement: {
-            viewerLiked: false,
-            viewerReposted: false,
-            viewerBookmarked: false,
-            raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-          },
-          raw: pub,
-          niches: [],
-        });
-      }
-    } catch (e) {
-      errors.push(`lens: ${e instanceof Error ? e.message : 'unknown'}`);
-    }
-  }
-
-  // 4. Bluesky
-  if (requestedProtocols.includes('bluesky')) {
-    try {
-      const client = new BskyClient(BSKY_FALLBACK);
-      const { posts: bskyPosts } = await client.getTimeline(limit);
-      for (const post of bskyPosts) {
-        allPosts.push(client.postToUnifiedPost(post));
-      }
-    } catch (e) {
-      errors.push(`bluesky: ${e instanceof Error ? e.message : 'unknown'}`);
-    }
-  }
-
-  // Rank
-  let ranked = allPosts;
-  if (ranked.length > 1) {
-    const ctx: RankingContext = {
-      viewer: null,
-      recentAuthors: new Map(),
-      sourceQuality: new Map(),
-      viewerNiches: new Set(),
-      followed: new Set(),
-      now: Date.now(),
-    };
-    ranked = rank(ranked, ctx);
-  }
+  const deduped = deduplicatePosts(allPosts);
+  const ranked = rankPosts(deduped).slice(0, Math.min(limit, 100));
 
   if (ranked.length === 0 && errors.length > 0) {
     return jsonResponse(
-      { data: [], meta: { total: 0, limit, errors, note: 'All sources failed' } },
+      {
+        data: [],
+        meta: {
+          total: 0,
+          limit,
+          perProtocol,
+          errors,
+          fetchedAt: Date.now(),
+          note: 'All sources failed',
+        },
+      },
       200,
     );
   }
+
   return jsonResponse({
-    data: ranked.slice(0, limit),
-    meta: { total: ranked.length, limit, errors: errors.length > 0 ? errors : undefined },
+    data: ranked,
+    meta: {
+      total: ranked.length,
+      limit,
+      perProtocol,
+      errors: errors.length > 0 ? errors : undefined,
+      fetchedAt: Date.now(),
+    },
   });
 }
 
 export async function handleTrendingFeed(request: Request, env: Env): Promise<Response> {
-  const _limit = Number(new URL(request.url).searchParams.get('limit')) || 25;
-  // Trending = home feed with broader fetch
-  return handleHomeFeed(
-    new Request(`${request.url}&protocols=nostr,farcaster,lens,bluesky,threads`),
-    env,
-  );
+  const url = new URL(request.url);
+  url.searchParams.set('protocols', DEFAULT_PROTOCOLS.join(','));
+  return handleHomeFeed(new Request(url.toString()), env);
 }

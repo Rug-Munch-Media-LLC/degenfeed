@@ -7,8 +7,10 @@ import {
   SubstackSource,
   feedToUnifiedPosts,
 } from '@degenfeed/rss-sdk';
-import type { SourcePosts } from '@degenfeed/rss-sdk';
+import type { SourcePosts, UnifiedPost } from '@degenfeed/rss-sdk';
 import { type Env, jsonResponse } from '../index';
+
+const DEFAULT_SUBREDDITS = ['CryptoCurrency', 'defi', 'ethereum', 'solana', 'Bitcoin'];
 
 export async function handleRssFeed(request: Request, _env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
@@ -18,7 +20,7 @@ export async function handleRssFeed(request: Request, _env: Env): Promise<Respon
   const limit = Number(params.get('limit')) || 25;
 
   try {
-    let src: SourcePosts;
+    let src: SourcePosts | undefined;
 
     if (source === 'reddit' && handle) {
       const sort = (params.get('sort') as 'hot' | 'new' | 'top' | 'rising') || 'hot';
@@ -35,7 +37,26 @@ export async function handleRssFeed(request: Request, _env: Env): Promise<Respon
       src = await ParagraphSource.fetch(handle);
     } else if (url) {
       src = await GenericRssSource.fetch(url);
-    } else {
+    } else if (!source && !handle && !url) {
+      const results = await Promise.allSettled(
+        DEFAULT_SUBREDDITS.map((sub) =>
+          RedditSource.fetch(sub, 'hot', Math.ceil(limit / DEFAULT_SUBREDDITS.length)),
+        ),
+      );
+      const posts: UnifiedPost[] = [];
+      for (const r of results) {
+        if (r.status === 'fulfilled') {
+          posts.push(...feedToUnifiedPosts(r.value));
+        }
+      }
+      const sliced = posts.slice(0, limit);
+      return jsonResponse({
+        data: sliced,
+        meta: { total: sliced.length, limit, source: 'reddit' },
+      });
+    }
+
+    if (!src) {
       return jsonResponse({ error: 'Missing source/handle or url' }, 400);
     }
 

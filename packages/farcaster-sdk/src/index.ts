@@ -1,37 +1,7 @@
-/**
- * @degenfeed/farcaster-sdk
- *
- * Farcaster protocol client. Communicates with Farcaster Hubs via gRPC
- * (or REST fallback) for reading/writing casts, follows, and profiles.
- *
- * All posts normalize to @degenfeed/types `UnifiedPost`.
- *
- * ## Architecture
- *
- *   HubClient.connect(hubUrl) → HubClient
- *     .getCastsByFid(fid, pageSize) → UnifiedPost[]
- *     .getFeed(fid, pageSize)       → UnifiedPost[] (following feed)
- *     .publishCast(text, embeds)    → UnifiedPost
- *     .publishReaction(castHash, type) → void
- *     .getProfile(fid)              → UnifiedIdentity
- *
- * Free Hubs:
- *   - hub.farcaster.standardcrypto.vc:2281 (read-only)
- *   - hub-grpc.pinata.cloud (read-write with key)
- *
- * TODO(v1):
- *   - Implement @farcaster/hub-web gRPC-web client
- *   - Add signer key management
- *   - Add reaction and follow helpers
- *   - Add frame validation
- */
-
 import { buildUnifiedPost, emptyIdentity, emptyMetrics } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
 export type { Protocol, UnifiedIdentity, UnifiedPost };
-
-// ─── Placeholder hub URL ────────────────────────────────────────────────
 
 export const DEFAULT_HUB_URL = 'https://hub.farcaster.standardcrypto.vc:2281';
 export const FALLBACK_HUB_URLS = [
@@ -40,7 +10,10 @@ export const FALLBACK_HUB_URLS = [
   'https://hoyt.farcaster.standardcrypto.vc:2281',
 ];
 
-// ─── Farcaster-specific types ──────────────────────────────────────────
+export const CURATED_FARCASTER_FIDS = [
+  1, 2, 3, 99, 100, 200, 500, 1000, 1234, 2000, 5000, 5650, 11276, 215, 320, 602, 1337, 4242, 69420,
+  100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000,
+];
 
 export interface FarcasterCast {
   hash: string;
@@ -64,7 +37,18 @@ export interface FarcasterProfile {
   followingCount: number;
 }
 
-// ─── Hub client ─────────────────────────────────────────────────────────
+export interface HubCastMessage {
+  data: {
+    castAddBody: {
+      text: string;
+      embeds: { url: string }[];
+      parentCastId?: { hash: string; fid: number };
+      parentUrl?: string;
+    };
+    timestamp: number;
+  };
+  hash: string;
+}
 
 export class HubClient {
   private baseUrl: string;
@@ -73,25 +57,26 @@ export class HubClient {
     this.baseUrl = hubUrl.replace(/\/$/, '');
   }
 
-  /** Fetch casts by FID. Falls back to REST API. */
-  async getCastsByFid(fid: number, limit = 50): Promise<FarcasterCast[]> {
-    const url = `${this.baseUrl}/v1/castsByFid?fid=${fid}&pageSize=${limit}`;
-    const res = await fetch(url);
+  private async get<T>(path: string, params?: Record<string, string>): Promise<T> {
+    const url = new URL(`${this.baseUrl}${path}`);
+    if (params) {
+      for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+    }
+    const res = await fetch(url.toString(), {
+      headers: {
+        accept: 'application/json',
+        'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
+      },
+    });
     if (!res.ok) throw new Error(`Hub error: ${res.status} ${res.statusText}`);
-    const json = (await res.json()) as {
-      messages: {
-        data: {
-          castAddBody: {
-            text: string;
-            embeds: { url: string }[];
-            parentCastId?: { hash: string; fid: number };
-            parentUrl?: string;
-          };
-          timestamp: number;
-        };
-        hash: string;
-      }[];
-    };
+    return res.json() as Promise<T>;
+  }
+
+  async getCastsByFid(fid: number, limit = 50): Promise<FarcasterCast[]> {
+    const json = await this.get<{ messages: HubCastMessage[] }>('/v1/castsByFid', {
+      fid: String(fid),
+      pageSize: String(limit),
+    });
     return (json.messages ?? []).map((msg) => ({
       hash: msg.hash,
       fid,
@@ -103,7 +88,70 @@ export class HubClient {
     }));
   }
 
-  /** Normalize a FarcasterCast to UnifiedPost. */
+  async getCastsByParent(
+    parentHash: string,
+    parentFid: number,
+    limit = 50,
+  ): Promise<FarcasterCast[]> {
+    const json = await this.get<{ messages: HubCastMessage[] }>('/v1/castsByParent', {
+      parentHash,
+      parentFid: String(parentFid),
+      pageSize: String(limit),
+    });
+    return (json.messages ?? []).map((msg) => ({
+      hash: msg.hash,
+      fid: msg.data.castAddBody.parentCastId?.fid ?? parentFid,
+      text: msg.data.castAddBody.text,
+      embeds: msg.data.castAddBody.embeds ?? [],
+      parentHash,
+      timestamp: msg.data.timestamp,
+      reactions: { likes: 0, recasts: 0, replies: 0 },
+    }));
+  }
+
+  async getCastsByFids(fids: number[], limitPerFid = 30): Promise<FarcasterCast[]> {
+    const results = await Promise.allSettled(
+      fids.map((fid) => this.getCastsByFid(fid, limitPerFid)),
+    );
+    const casts: FarcasterCast[] = [];
+    for (const r of results) {
+      if (r.status === 'fulfilled') casts.push(...r.value);
+    }
+    return casts;
+  }
+
+  async getUserNameProofByName(name: string): Promise<{ fid: number; name: string } | null> {
+    try {
+      const json = await this.get<{ fid: number; name: string }>('/v1/userNameProofByName', {
+        name,
+      });
+      return json;
+    } catch {
+      return null;
+    }
+  }
+
+  async getCastById(hash: string, fid: number): Promise<FarcasterCast | null> {
+    try {
+      const json = await this.get<{ cast: HubCastMessage }>('/v1/castById', {
+        hash,
+        fid: String(fid),
+      });
+      if (!json.cast) return null;
+      return {
+        hash: json.cast.hash,
+        fid,
+        text: json.cast.data.castAddBody.text,
+        embeds: json.cast.data.castAddBody.embeds ?? [],
+        parentHash: json.cast.data.castAddBody.parentCastId?.hash,
+        timestamp: json.cast.data.timestamp,
+        reactions: { likes: 0, recasts: 0, replies: 0 },
+      };
+    } catch {
+      return null;
+    }
+  }
+
   castToUnifiedPost(cast: FarcasterCast, author?: UnifiedIdentity): UnifiedPost {
     return buildUnifiedPost({
       protocol: 'farcaster',
@@ -118,11 +166,37 @@ export class HubClient {
     });
   }
 
-  /** Submit a pre-signed Message protobuf to the Hub. */
+  profileToIdentity(profile: FarcasterProfile): UnifiedIdentity {
+    return {
+      id: `farcaster:${profile.fid}`,
+      primary: { protocol: 'farcaster', id: String(profile.fid) },
+      handles: {
+        nostr: null,
+        farcaster: profile.username,
+        lens: null,
+        bluesky: null,
+        threads: null,
+        rss: null,
+        mastodon: null,
+      },
+      displayName: profile.displayName || profile.username || `fid:${profile.fid}`,
+      bio: profile.bio,
+      avatarUrl: profile.avatarUrl || profile.pfp,
+      verified: [],
+      followerCount: profile.followerCount,
+      followingCount: profile.followingCount,
+      links: [],
+      keys: { fid: profile.fid },
+    };
+  }
+
   async submitMessage(signedMessage: string | ArrayBuffer): Promise<void> {
     const res = await fetch(`${this.baseUrl}/v1/submitMessage`, {
       method: 'PUT',
-      headers: { 'content-type': 'application/octet-stream' },
+      headers: {
+        'content-type': 'application/octet-stream',
+        'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
+      },
       body: signedMessage,
     });
     if (!res.ok) {

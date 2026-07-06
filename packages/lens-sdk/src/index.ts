@@ -1,55 +1,71 @@
-/**
- * @degenfeed/lens-sdk
- *
- * Lens Protocol client. Communicates with the Lens API (GraphQL) for
- * reading/writing publications, profiles, follows, and reactions.
- *
- * All posts normalize to @degenfeed/types `UnifiedPost`.
- *
- * ## Architecture
- *
- *   LensClient.connect() → LensClient
- *     .getPublications(profileId) → UnifiedPost[]
- *     .getFeed(profileId)         → UnifiedPost[]
- *     .publish(text, opts)        → UnifiedPost
- *     .getProfile(profileId)      → UnifiedIdentity
- *
- * API endpoint: https://api.lens.xyz/graphql (auth'd for writes)
- * Free read endpoint: https://api-v2.lens.dev (rate-limited)
- *
- * TODO(v1):
- *   - Implement full GraphQL queries for all operations
- *   - Add authentication via SIWL (Sign-In With Lens)
- *   - Add reaction and follow helpers
- *   - Add Momoka support
- *   - Add module/interaction support
- */
-
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
 export type { Protocol, UnifiedIdentity, UnifiedPost };
 
-export const LENS_API_URL = 'https://api.lens.xyz/graphql';
-export const FALLBACK_LENS_URLS = [LENS_API_URL, 'https://api-v2.lens.dev/graphql'];
+export const LENS_API_URL = 'https://api-v2.lens.dev/graphql';
+export const FALLBACK_LENS_URLS = [LENS_API_URL, 'https://api.lens.xyz/graphql'];
+
+export const CURATED_LENS_PROFILE_IDS = [
+  '0x01',
+  '0x05',
+  '0x0b',
+  '0x14',
+  '0x1e',
+  '0x32',
+  '0x64',
+  '0xc8',
+  '0x12c',
+  '0x1f4',
+];
+
+export const CURATED_LENS_HANDLES = [
+  'lensprotocol',
+  'aaveaave',
+  'stani',
+  'bradorbradley',
+  'wagmi',
+  'chriscomrie',
+  'jouni',
+  'maguila',
+  'yoginth',
+  'james',
+];
 
 export interface LensPublication {
   id: string;
-  profileId: string;
-  metadata: {
-    content: string;
-    media: { original: { url: string } }[];
-  };
-  createdAt: string;
-  stats: {
-    totalAmountOfComments: number;
-    totalAmountOfMirrors: number;
-    totalAmountOfReactions: number;
-  };
   by: {
     id: string;
-    handle: string;
-    metadata: { displayName: string | null; picture: string | null };
+    handle?: { localName: string } | null;
+    metadata?: {
+      displayName?: string | null;
+      picture?: { optimized?: { uri?: string } | null } | null;
+    } | null;
   };
+  metadata?: {
+    content?: string | null;
+    asset?: { image?: { optimized?: { uri?: string } | null } | null } | null;
+  } | null;
+  createdAt: string;
+  stats?: {
+    comments?: number;
+    mirrors?: number;
+    reactions?: number;
+    quotes?: number;
+  } | null;
+}
+
+export interface LensProfile {
+  id: string;
+  handle?: { localName: string } | null;
+  metadata?: {
+    displayName?: string | null;
+    picture?: { optimized?: { uri?: string } | null } | null;
+    bio?: string | null;
+  } | null;
+  stats?: {
+    followers?: number;
+    following?: number;
+  } | null;
 }
 
 export class LensClient {
@@ -64,11 +80,11 @@ export class LensClient {
     this.accessToken = accessToken;
   }
 
-  private async authQuery(
-    query: string,
-    variables: Record<string, unknown> = {},
-  ): Promise<unknown> {
-    const headers: Record<string, string> = { 'content-type': 'application/json' };
+  private async request(query: string, variables: Record<string, unknown> = {}): Promise<unknown> {
+    const headers: Record<string, string> = {
+      'content-type': 'application/json',
+      'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
+    };
     if (this.accessToken) headers.authorization = `Bearer ${this.accessToken}`;
     const res = await fetch(this.apiUrl, {
       method: 'POST',
@@ -82,11 +98,125 @@ export class LensClient {
   }
 
   async query(query: string, variables: Record<string, unknown> = {}): Promise<unknown> {
-    return this.authQuery(query, variables);
+    return this.request(query, variables);
+  }
+
+  async getProfilesByHandles(handles: string[]): Promise<LensProfile[]> {
+    const data = (await this.request(
+      `query Profiles($request: ProfilesRequest!) {
+        profiles(request: $request) {
+          items { id handle { localName } metadata { displayName picture { optimized { uri } } bio } stats { followers following } }
+        }
+      }`,
+      {
+        request: {
+          where: { handles: handles.map((h) => (h.endsWith('.lens') ? h : `${h}.lens`)) },
+        },
+      },
+    )) as { profiles: { items: LensProfile[] } };
+    return data.profiles?.items ?? [];
+  }
+
+  async getPublicationsByProfileIds(profileIds: string[], limit = 50): Promise<LensPublication[]> {
+    const data = (await this.request(
+      `query Publications($request: PublicationsRequest!) {
+        publications(request: $request) {
+          items {
+            ... on Post {
+              id
+              by { id handle { localName } metadata { displayName picture { optimized { uri } } } }
+              metadata { content asset { ... on PublicationMetadataMediaImage { image { optimized { uri } } } } }
+              createdAt
+              stats { comments mirrors reactions quotes }
+            }
+          }
+        }
+      }`,
+      { request: { where: { from: profileIds }, limit } },
+    )) as { publications: { items: LensPublication[] } };
+    return data.publications?.items ?? [];
+  }
+
+  async getPublicationsByHandles(handles: string[], limit = 50): Promise<LensPublication[]> {
+    const profiles = await this.getProfilesByHandles(handles);
+    const ids = profiles.map((p) => p.id).filter(Boolean);
+    if (ids.length === 0) return [];
+    return this.getPublicationsByProfileIds(ids, limit);
+  }
+
+  async getPublications(profileId: string, limit = 50): Promise<LensPublication[]> {
+    return this.getPublicationsByProfileIds([profileId], limit);
+  }
+
+  profileToIdentity(profile: LensProfile): UnifiedIdentity {
+    const handle = profile.handle?.localName ?? profile.id;
+    return {
+      id: `lens:${profile.id}`,
+      primary: { protocol: 'lens', id: profile.id },
+      handles: {
+        nostr: null,
+        farcaster: null,
+        lens: `${handle}.lens`,
+        bluesky: null,
+        threads: null,
+        rss: null,
+        mastodon: null,
+      },
+      displayName: profile.metadata?.displayName ?? handle,
+      bio: profile.metadata?.bio ?? '',
+      avatarUrl: profile.metadata?.picture?.optimized?.uri ?? '',
+      verified: [],
+      followerCount: profile.stats?.followers ?? 0,
+      followingCount: profile.stats?.following ?? 0,
+      links: [],
+      keys: { lensProfileId: profile.id },
+    };
+  }
+
+  publicationToUnifiedPost(pub: LensPublication, author?: UnifiedIdentity): UnifiedPost {
+    const identity =
+      author ??
+      this.profileToIdentity({
+        id: pub.by.id,
+        handle: pub.by.handle,
+        metadata: pub.by.metadata,
+      });
+    const text = pub.metadata?.content ?? '';
+    const embeds: { kind: 'image'; url: string }[] = [];
+    const imageUrl = pub.metadata?.asset?.image?.optimized?.uri;
+    if (imageUrl) embeds.push({ kind: 'image', url: imageUrl });
+    const stats = pub.stats ?? {};
+    return {
+      id: `lens:${pub.id}`,
+      protocol: 'lens',
+      author: identity,
+      text: text.slice(0, 1000),
+      embeds,
+      createdAt: new Date(pub.createdAt).getTime(),
+      metrics: {
+        likes: stats.reactions ?? 0,
+        reposts: stats.mirrors ?? 0,
+        replies: stats.comments ?? 0,
+        quotes: stats.quotes ?? 0,
+      },
+      engagement: {
+        viewerLiked: false,
+        viewerReposted: false,
+        viewerBookmarked: false,
+        raw: {
+          likes: stats.reactions ?? 0,
+          reposts: stats.mirrors ?? 0,
+          replies: stats.comments ?? 0,
+          quotes: stats.quotes ?? 0,
+        },
+      },
+      raw: pub,
+      niches: [],
+    };
   }
 
   async like(publicationId: string): Promise<void> {
-    await this.authQuery(
+    await this.request(
       `mutation AddReaction($request: ReactionRequest!) {
         addReaction(request: $request)
       }`,
@@ -95,7 +225,7 @@ export class LensClient {
   }
 
   async unlike(publicationId: string): Promise<void> {
-    await this.authQuery(
+    await this.request(
       `mutation RemoveReaction($request: ReactionRequest!) {
         removeReaction(request: $request)
       }`,
@@ -104,7 +234,7 @@ export class LensClient {
   }
 
   async mirror(publicationId: string): Promise<void> {
-    await this.authQuery(
+    await this.request(
       `mutation Mirror($request: MirrorRequest!) {
         mirror(request: $request) { ... on RelayResult { txHash } ... on RelayError { reason } }
       }`,
@@ -113,7 +243,7 @@ export class LensClient {
   }
 
   async unmirror(publicationId: string): Promise<void> {
-    await this.authQuery(
+    await this.request(
       `mutation HidePublication($request: HidePublicationRequest!) {
         hidePublication(request: $request)
       }`,
@@ -122,25 +252,11 @@ export class LensClient {
   }
 
   async comment(publicationId: string, content: string): Promise<void> {
-    await this.authQuery(
+    await this.request(
       `mutation Comment($request: CommentRequest!) {
         comment(request: $request) { ... on RelayResult { txHash } ... on RelayError { reason } }
       }`,
       { request: { publicationId, content } },
     );
-  }
-
-  async getPublications(profileId: string, limit = 50): Promise<LensPublication[]> {
-    const data = (await this.query(
-      `query Publications($profileId: ProfileId!, $limit: LimitScalar!) {
-        publications(request: { profileId: $profileId, limit: $limit, publicationTypes: [POST] }) {
-          items { id profileId metadata { content media { original { url } } } createdAt stats { totalAmountOfComments totalAmountOfMirrors totalAmountOfReactions } by { id handle metadata { displayName picture } } }
-        }
-      }`,
-      { profileId, limit },
-    )) as {
-      publications: { items: LensPublication[] };
-    };
-    return (data as Record<string, { items: LensPublication[] }>).publications?.items ?? [];
   }
 }
