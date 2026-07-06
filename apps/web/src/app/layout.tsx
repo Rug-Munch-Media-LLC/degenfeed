@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ErrorTracker } from '../components/ErrorTracker';
 import { AuthProvider } from '../components/AuthProvider';
+import { Web3Provider } from '../components/Web3Provider';
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
@@ -37,7 +38,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <ErrorTracker />
+        <Web3Provider>
           <AuthProvider>{children}</AuthProvider>
+        </Web3Provider>
       </body>
     </html>
   );

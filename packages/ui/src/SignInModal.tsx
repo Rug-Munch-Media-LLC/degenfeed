@@ -1,22 +1,3 @@
-/**
- * @degenfeed/ui — SignInModal
- *
- * Protocol picker sign-in/sign-up modal.
- *
- * Three tiers:
- *   BROWSE  → No account needed, visible immediately
- *   SIGN IN → Connect an existing protocol account (Nostr, Farcaster, Lens, Bluesky, Threads, Mastodon)
- *   JOIN    → Create a free @degenfeed.xyz account (GotoSocial-powered)
- *
- * Once signed in with any protocol, users can:
- *   - Like, reply, repost on that network
- *   - Link additional accounts for cross-posting
- *
- * Design:
- *   Dark overlay + centered card. Protocol buttons with brand colors.
- *   Clean, minimal. No unnecessary text. Keyboard-navigable.
- */
-
 import type { ReactNode } from 'react';
 
 export type { ReactNode };
@@ -27,9 +8,7 @@ export interface ProtocolOption {
   color: string;
   icon: string;
   description: string;
-  /** Sign-in method: redirect URL for OAuth, or keyboard input for private key */
-  method: 'oauth' | 'key' | 'extension' | 'password';
-  /** If method is 'oauth', the authorize endpoint */
+  method: 'oauth' | 'key' | 'extension' | 'password' | 'wallet';
   authUrl?: string;
 }
 
@@ -37,6 +16,8 @@ export interface SignInModalProps {
   open: boolean;
   onClose: () => void;
   onSignIn: (protocol: string, token?: string) => void;
+  walletAddress?: string;
+  walletSigningIn?: boolean;
 }
 
 const PROTOCOLS: ProtocolOption[] = [
@@ -89,14 +70,77 @@ const PROTOCOLS: ProtocolOption[] = [
     method: 'oauth',
     authUrl: '/api/auth/gotosocial/authorize',
   },
+  {
+    id: 'ethereum',
+    label: 'Ethereum',
+    color: '#627eea',
+    icon: '◆',
+    description: 'Sign in with Ethereum wallet',
+    method: 'wallet',
+  },
+  {
+    id: 'solana',
+    label: 'Solana',
+    color: '#9945ff',
+    icon: '◎',
+    description: 'Sign in with Solana wallet',
+    method: 'wallet',
+  },
 ];
 
-/**
- * Sign-in & sign-up modal.
- * Renders protocol buttons + "Create free account" section.
- */
-export function SignInModal({ open, onClose, onSignIn }: SignInModalProps) {
+function WalletSection({ onSignIn, walletAddress, walletSigningIn }: {
+  onSignIn: (protocol: string) => void;
+  walletAddress?: string;
+  walletSigningIn?: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <h3 className="text-xs font-medium uppercase tracking-widest text-gray-500">Web3 Wallets</h3>
+      {walletAddress ? (
+        <div className="rounded-xl border border-degen-500/30 bg-degen-500/10 px-4 py-3">
+          <div className="text-xs text-gray-500 mb-1">Connected Wallet</div>
+          <div className="text-sm font-mono text-degen-400 break-all">{walletAddress}</div>
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={() => onSignIn('ethereum')}
+              disabled={walletSigningIn}
+              className="rounded-lg bg-[#627eea]/20 px-3 py-1.5 text-xs font-medium text-[#627eea] hover:bg-[#627eea]/30 transition-colors disabled:opacity-50"
+              type="button"
+            >
+              {walletSigningIn ? 'Signing...' : 'Sign in with ETH'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => onSignIn('ethereum')}
+          className="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left transition-all hover:border-gray-600 hover:bg-gray-800/50 group"
+          type="button"
+        >
+          <span className="text-2xl text-[#627eea]">◆</span>
+          <div className="flex-1">
+            <div className="text-sm font-semibold text-white group-hover:text-degen-400 transition-colors">
+              Connect Wallet
+            </div>
+            <div className="text-xs text-gray-500">MetaMask, WalletConnect, or any EVM wallet</div>
+          </div>
+          <span className="text-xs text-gray-600">→</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSigningIn }: SignInModalProps) {
   if (!open) return null;
+
+  const handleProtocolClick = (protocol: string) => {
+    if (protocol === 'ethereum' || protocol === 'solana') {
+      onSignIn(protocol);
+      return;
+    }
+    onSignIn(protocol);
+  };
 
   return (
     <div
@@ -111,7 +155,6 @@ export function SignInModal({ open, onClose, onSignIn }: SignInModalProps) {
         className="mx-4 w-full max-w-lg rounded-2xl border border-gray-800 bg-gray-950 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-white">Sign In</h2>
@@ -126,32 +169,24 @@ export function SignInModal({ open, onClose, onSignIn }: SignInModalProps) {
             type="button"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path
-                d="M15 5L5 15M5 5l10 10"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
+              <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </button>
         </div>
 
-        {/* Protocol buttons */}
         <div className="mb-6 space-y-2">
-          {PROTOCOLS.map((proto) => (
+          {/* Social protocols */}
+          <h3 className="text-xs font-medium uppercase tracking-widest text-gray-500">Social Protocols</h3>
+          {PROTOCOLS.filter(p => p.method !== 'wallet').map((proto) => (
             <button
               key={proto.id}
-              onClick={() => onSignIn(proto.id)}
+              onClick={() => handleProtocolClick(proto.id)}
               className="flex w-full items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left transition-all hover:border-gray-600 hover:bg-gray-800/50 group"
               type="button"
             >
-              <span className="text-2xl" style={{ color: proto.color }}>
-                {proto.icon}
-              </span>
+              <span className="text-2xl" style={{ color: proto.color }}>{proto.icon}</span>
               <div className="flex-1">
-                <div className="text-sm font-semibold text-white group-hover:text-degen-400 transition-colors">
-                  {proto.label}
-                </div>
+                <div className="text-sm font-semibold text-white group-hover:text-degen-400 transition-colors">{proto.label}</div>
                 <div className="text-xs text-gray-500">{proto.description}</div>
               </div>
               <span className="text-xs text-gray-600">→</span>
@@ -159,7 +194,11 @@ export function SignInModal({ open, onClose, onSignIn }: SignInModalProps) {
           ))}
         </div>
 
-        {/* Divider */}
+        {/* Wallet section */}
+        <div className="mb-6">
+          <WalletSection onSignIn={(p) => onSignIn(p)} walletAddress={walletAddress} walletSigningIn={walletSigningIn} />
+        </div>
+
         <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-800" />
@@ -169,7 +208,6 @@ export function SignInModal({ open, onClose, onSignIn }: SignInModalProps) {
           </div>
         </div>
 
-        {/* Create free account */}
         <a
           href="/api/auth/gotosocial/register"
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-degen-500/30 bg-degen-500/10 px-4 py-3 text-sm font-semibold text-degen-400 transition-all hover:bg-degen-500/20 hover:border-degen-500/50"
@@ -179,15 +217,12 @@ export function SignInModal({ open, onClose, onSignIn }: SignInModalProps) {
           <span className="text-xs text-degen-600">(30 seconds)</span>
         </a>
         <p className="mt-2 text-center text-xs text-gray-600">
-          Powered by GotoSocial. No email required. Username + password only.
+          Powered by GotoSocial. No email required.
         </p>
 
-        {/* Browse note */}
         <p className="mt-6 text-center text-xs text-gray-600">
           No account needed to browse.{' '}
-          <a href="/home" className="text-degen-500 hover:underline">
-            Start reading now
-          </a>
+          <a href="/home" className="text-degen-500 hover:underline">Start reading now</a>
         </p>
       </div>
     </div>

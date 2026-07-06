@@ -1,34 +1,18 @@
 "use client";
 
-/**
- * AuthProvider — Client-side auth state management.
- *
- * Reads stored identities from localStorage, provides them via React context,
- * and wires the SignInModal to the actual auth package functions.
- *
- * Also provides:
- *   - signedInProtocols map for ComposeModal
- *   - handlePublish function that POSTs to /api/publish
- *   - handleEngage function that POSTs to /api/engage
- */
-
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { SignInModal, ComposeModal, type UnifiedPost } from "@degenfeed/ui";
+import { useWalletSignIn } from "../hooks/useWalletSignIn";
+import { useWeb3 } from "../components/Web3Provider";
 
 export interface AuthContextValue {
-  /** Map of protocol IDs the user is signed into */
   signedInProtocols: Record<string, boolean>;
-  /** Stored identity tokens keyed by protocol */
   tokens: Record<string, string>;
-  /** Open the sign-in modal */
+  walletAddress?: string;
   openSignIn: () => void;
-  /** Open the compose modal */
   openCompose: () => void;
-  /** Publish a post to selected protocols */
   publish: (text: string, targets: string[]) => Promise<Record<string, { ok: boolean; error?: string }>>;
-  /** Engage with a post (like/repost/reply) */
   engage: (action: string, postId: string, protocol: string) => Promise<void>;
-  /** Whether the auth state has been loaded from storage */
   ready: boolean;
 }
 
@@ -43,9 +27,13 @@ export function useAuth(): AuthContextValue {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [signedInProtocols, setSignedInProtocols] = useState<Record<string, boolean>>({});
   const [tokens, setTokens] = useState<Record<string, string>>({});
+  const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
   const [ready, setReady] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
+
+  const { account: wagmiAddress, isConnected } = useWeb3();
+  const { signInWithEthereum, signingIn: walletSigningIn } = useWalletSignIn();
 
   // Load stored identities on mount
   useEffect(() => {
@@ -62,13 +50,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSignedInProtocols(protocols);
         setTokens(toks);
       }
-    } catch { /* localStorage not available or corrupt */ }
+      const storedWallet = localStorage.getItem("degenfeed_wallet");
+      if (storedWallet) setWalletAddress(storedWallet);
+    } catch { /* ignore */ }
     setReady(true);
   }, []);
 
-  // Sign-in handler
+  // Sync wagmi wallet address
+  useEffect(() => {
+    if (isConnected && wagmiAddress) {
+      setWalletAddress(wagmiAddress);
+      localStorage.setItem("degenfeed_wallet", wagmiAddress);
+    }
+  }, [isConnected, wagmiAddress]);
+
   const handleSignIn = useCallback(async (protocol: string, token?: string) => {
     try {
+      if (protocol === "ethereum") {
+        const session = await signInWithEthereum();
+        if (session) {
+          setWalletAddress(session.address);
+          localStorage.setItem("degenfeed_wallet", session.address);
+          setSignedInProtocols((prev) => ({ ...prev, ethereum: true }));
+          if (session.accessToken) {
+            setTokens((prev) => ({ ...prev, ethereum: session.accessToken }));
+          }
+          setShowSignIn(false);
+        }
+        return;
+      }
+
       switch (protocol) {
         case "nostr": {
           const { signInWithNostrNsec } = await import("@degenfeed/auth");
@@ -117,9 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         default:
           throw new Error("Unknown protocol: " + protocol);
       }
-      // Update local state
       setSignedInProtocols((prev) => ({ ...prev, [protocol]: true }));
-      // Reload tokens from storage (in case sign-in added JWT/access keys)
       try {
         const stored = localStorage.getItem("degenfeed_identities");
         if (stored) {
@@ -136,9 +145,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const message = err instanceof Error ? err.message : "Sign-in failed";
       alert("Sign-in failed: " + message);
     }
-  }, []);
+  }, [signInWithEthereum]);
 
-  // Publish handler
   const handlePublish = useCallback(
     async (text: string, targets: string[]): Promise<Record<string, { ok: boolean; error?: string }>> => {
       try {
@@ -158,7 +166,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [tokens],
   );
 
-  // Engage handler
   const handleEngage = useCallback(
     async (action: string, postId: string, protocol: string) => {
       try {
@@ -167,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ action, postId, protocol, auth: tokens[protocol] }),
         });
-      } catch { /* silently fail — engagement is best-effort */ }
+      } catch { /* silently fail */ }
     },
     [tokens],
   );
@@ -177,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         signedInProtocols,
         tokens,
+        walletAddress,
         openSignIn: () => setShowSignIn(true),
         openCompose: () => setShowCompose(true),
         publish: handlePublish,
@@ -190,6 +198,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         open={showSignIn}
         onClose={() => setShowSignIn(false)}
         onSignIn={handleSignIn}
+        walletAddress={walletAddress}
+        walletSigningIn={walletSigningIn}
       />
 
       <ComposeModal

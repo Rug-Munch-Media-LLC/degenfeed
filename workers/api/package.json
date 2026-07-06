@@ -12,17 +12,19 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@degenfeed/types": "workspace:*",
-    "@degenfeed/feed-core": "workspace:*",
-    "@degenfeed/ranking": "workspace:*",
-    "@degenfeed/nostr-sdk": "workspace:*",
-    "@degenfeed/farcaster-sdk": "workspace:*",
-    "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/bluesky-sdk": "workspace:*",
+    "@degenfeed/farcaster-sdk": "workspace:*",
+    "@degenfeed/feed-core": "workspace:*",
     "@degenfeed/identity": "workspace:*",
-    "@degenfeed/threads-sdk": "workspace:*",
+    "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/mastodon-sdk": "workspace:*",
-    "@degenfeed/rss-sdk": "workspace:*"
+    "@degenfeed/nostr-sdk": "workspace:*",
+    "@degenfeed/ranking": "workspace:*",
+    "@degenfeed/rss-sdk": "workspace:*",
+    "@degenfeed/threads-sdk": "workspace:*",
+    "@degenfeed/types": "workspace:*",
+    "@noble/curves": "^1.9.7",
+    "@noble/hashes": "^1.8.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",

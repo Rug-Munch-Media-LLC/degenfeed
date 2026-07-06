@@ -7,5 +7,7 @@ export { signInWithThreads } from './providers/threads';
 export { signInWithGtS } from './providers/mastodon';
 export { unlockIdentity, lockIdentity, forgetIdentity } from './session';
 export { encryptSecret, decryptSecret } from './crypto';
+export { requestWalletNonce, buildSiweMessage, buildSolanaMessage, verifyWalletSignature } from './providers/wallet';
+export type { WalletSession } from './providers/wallet';
 export type { EncryptedBlob } from './crypto';
 export type { StoredIdentity, ActiveSession } from '@degenfeed/storage';
