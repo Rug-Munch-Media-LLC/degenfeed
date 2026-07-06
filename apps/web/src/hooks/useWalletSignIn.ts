@@ -2,6 +2,7 @@
 
 import { buildSiweMessage, requestWalletNonce, verifyWalletSignature } from '@degenfeed/auth';
 import type { WalletSession } from '@degenfeed/auth';
+import { saveWalletIdentity } from '@degenfeed/storage';
 import { useCallback, useState } from 'react';
 import { useWeb3 } from '../components/Web3Provider';
 
@@ -30,6 +31,7 @@ export function useWalletSignIn() {
       const signature = await signMessage(message);
 
       const session = await verifyWalletSignature(address, signature, message, 'ethereum', nonce);
+      await saveWalletIdentity(session.address, session.chain);
 
       return session;
     } catch (err) {

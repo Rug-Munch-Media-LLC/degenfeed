@@ -6,6 +6,13 @@
  * re-exported for route module use.
  */
 
+import {
+  applyCors,
+  corsHeaders,
+  getAllowedOrigin,
+  isAllowedOrigin,
+  parseOriginHeader,
+} from './cors';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
 import { handleTopFeed } from './routes/curated';
 import { handleNewsletterFeed } from './routes/curated';
@@ -29,10 +36,12 @@ import {
   handleTipResolve,
 } from './routes/tip';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
+import { handleSessionVerify, requireSession } from './session';
 
 // ─── Environment variables ───────────────────────────────────────────
 
 export interface Env {
+  AUTH_SECRET?: string;
   CACHE?: KVNamespace;
   GTS_CLIENT_ID?: string;
   GTS_CLIENT_SECRET?: string;
@@ -126,10 +135,37 @@ export function jsonResponse(data: unknown, status = 200): Response {
     status,
     headers: {
       'content-type': 'application/json',
-      'access-control-allow-origin': '*',
       'cache-control': 'public, max-age=30',
     },
   });
+}
+
+// ─── CORS / CSRF helpers ─────────────────────────────────────────────
+
+const CSRF_EXEMPT_PATHS = [
+  '/api/auth/gotosocial/callback',
+  '/api/tip/frame/',
+  '/api/bridge/rss-to-nostr',
+];
+
+function isStateChanging(method: string): boolean {
+  return method === 'POST' || method === 'PUT' || method === 'DELETE';
+}
+
+function isCsrfExempt(path: string): boolean {
+  return CSRF_EXEMPT_PATHS.some((prefix) => path.startsWith(prefix));
+}
+
+function validateOrigin(request: Request, path: string): boolean {
+  if (isCsrfExempt(path)) return true;
+  const origin = request.headers.get('origin');
+  if (origin) return isAllowedOrigin(origin);
+  const referer = request.headers.get('referer');
+  if (referer) {
+    const refererOrigin = parseOriginHeader(referer);
+    return refererOrigin ? isAllowedOrigin(refererOrigin) : false;
+  }
+  return false;
 }
 
 // ─── Worker fetch handler ────────────────────────────────────────────
@@ -138,6 +174,12 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
+    const origin = getAllowedOrigin(request);
+
+    // CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
 
     // Rate limiting
     const ip =
@@ -148,107 +190,110 @@ export default {
     const windowMs = Number(env.RATE_WINDOW_MS) || DEFAULT_RATE_WINDOW;
     const rl = rateLimit(ip, maxReq, windowMs);
     if (!rl.allowed) {
-      return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
-        status: 429,
-        headers: {
-          'content-type': 'application/json',
-          'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+      const response = new Response(
+        JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }),
+        {
+          status: 429,
+          headers: {
+            'content-type': 'application/json',
+            'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+          },
         },
-      });
+      );
+      return applyCors(response, origin);
     }
+
+    // CSRF origin check for state-changing requests
+    if (isStateChanging(request.method) && !validateOrigin(request, path)) {
+      return applyCors(jsonResponse({ error: 'Forbidden' }, 403), origin);
+    }
+
+    let response: Response;
 
     try {
       // Route dispatch — each handler is a separate module
       if (path === '/api/health') {
-        return handleRelaysHealth(env);
-      }
-      if (path === '/api/feed/home') {
-        return handleHomeFeed(request, env);
-      }
-      if (path === '/api/feed/trending') {
-        return handleTrendingFeed(request, env);
-      }
-      if (path === '/api/feed/activitypub') {
-        return handleActivityPubFeed(request, env);
-      }
-      if (path === '/api/feed/threads') {
-        return handleThreadsFeed(request, env);
-      }
-      if (path === '/api/feed/news') {
-        return handleNewsFeed(request, env);
-      }
-      if (path === '/api/bridge/rss-to-nostr') {
+        response = await handleRelaysHealth(env);
+      } else if (path === '/api/feed/home') {
+        response = await handleHomeFeed(request, env);
+      } else if (path === '/api/feed/trending') {
+        response = await handleTrendingFeed(request, env);
+      } else if (path === '/api/feed/activitypub') {
+        response = await handleActivityPubFeed(request, env);
+      } else if (path === '/api/feed/threads') {
+        response = await handleThreadsFeed(request, env);
+      } else if (path === '/api/feed/news') {
+        response = await handleNewsFeed(request, env);
+      } else if (path === '/api/bridge/rss-to-nostr') {
         const { handleRssToNostrBridge } = await import('./routes/publish');
-        return handleRssToNostrBridge(request, env);
+        response = await handleRssToNostrBridge(request, env);
+      } else if (path === '/api/feed/rss') {
+        response = await handleRssFeed(request, env);
+      } else if (path === '/api/auth/gotosocial/authorize') {
+        response = await handleGtSAuthorize(request, env);
+      } else if (path === '/api/auth/gotosocial/callback') {
+        response = await handleGtSCallback(request, env);
+      } else if (path === '/api/auth/gotosocial/register') {
+        response = await handleGtSRegister(request, env);
+      } else if (path === '/api/auth/session') {
+        response = await handleSessionVerify(request, env);
+      } else if (path === '/api/publish') {
+        const session = await requireSession(request, env);
+        if (session instanceof Response) {
+          response = session;
+        } else {
+          response = await handlePublish(request, env);
+        }
+      } else if (path === '/api/engage') {
+        const session = await requireSession(request, env);
+        if (session instanceof Response) {
+          response = session;
+        } else {
+          response = await handleEngage(request, env);
+        }
+      } else if (path === '/api/feed/top') {
+        response = await handleTopFeed(request, env);
+      } else if (path === '/api/feed/newsletters') {
+        response = await handleNewsletterFeed(request, env);
+      } else if (path === '/api/feed/trending') {
+        response = await handleTrendingFeed(request, env);
+      } else if (path === '/api/prices') {
+        response = await handlePrices(request, env);
+      } else if (path === '/api/auth/wallet/nonce') {
+        response = await handleWalletNonce(request, env);
+      } else if (path === '/api/auth/wallet/verify') {
+        response = await handleWalletVerify(request, env);
+      } else if (path === '/api/tip/lightning/invoice') {
+        response = await handleLightningInvoice(request, env);
+      } else if (path.startsWith('/api/tip/frame/tx/')) {
+        response = await handleTipFrameTx(request, env);
+      } else if (path.startsWith('/api/tip/frame/callback/')) {
+        response = await handleTipFrameCallback(request, env);
+      } else if (path.startsWith('/api/tip/frame/')) {
+        response = await handleTipFrame(request, env);
+      } else if (path === '/api/tip/resolve') {
+        response = await handleTipResolve(request, env);
+      } else if (path === '/api/tip/create') {
+        const session = await requireSession(request, env);
+        if (session instanceof Response) {
+          response = session;
+        } else {
+          response = await handleTipCreate(request, env);
+        }
+      } else if (path === '/api/feed/funding') {
+        response = await handleFundingFeed(request, env);
+      } else if (path === '/api/notifications') {
+        response = await handleNotifications(request, env);
+      } else if (path === '/api/identity/resolve') {
+        response = await handleResolveIdentity(request, env);
+      } else {
+        response = jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.1.0' });
       }
-      if (path === '/api/feed/rss') {
-        return handleRssFeed(request, env);
-      }
-      if (path === '/api/auth/gotosocial/authorize') {
-        return handleGtSAuthorize(request, env);
-      }
-      if (path === '/api/auth/gotosocial/callback') {
-        return handleGtSCallback(request, env);
-      }
-      if (path === '/api/auth/gotosocial/register') {
-        return handleGtSRegister(request, env);
-      }
-      if (path === '/api/publish') {
-        return handlePublish(request, env);
-      }
-      if (path === '/api/engage') {
-        return handleEngage(request, env);
-      }
-      if (path === '/api/feed/top') {
-        return handleTopFeed(request, env);
-      }
-      if (path === '/api/feed/newsletters') {
-        return handleNewsletterFeed(request, env);
-      }
-      if (path === '/api/feed/trending') {
-        return handleTrendingFeed(request, env);
-      }
-      if (path === '/api/prices') {
-        return handlePrices(request, env);
-      }
-      if (path === '/api/auth/wallet/nonce') {
-        return handleWalletNonce(request, env);
-      }
-      if (path === '/api/auth/wallet/verify') {
-        return handleWalletVerify(request, env);
-      }
-      if (path === '/api/tip/lightning/invoice') {
-        return handleLightningInvoice(request, env);
-      }
-      if (path.startsWith('/api/tip/frame/tx/')) {
-        return handleTipFrameTx(request, env);
-      }
-      if (path.startsWith('/api/tip/frame/callback/')) {
-        return handleTipFrameCallback(request, env);
-      }
-      if (path.startsWith('/api/tip/frame/')) {
-        return handleTipFrame(request, env);
-      }
-      if (path === '/api/tip/resolve') {
-        return handleTipResolve(request, env);
-      }
-      if (path === '/api/tip/create') {
-        return handleTipCreate(request, env);
-      }
-      if (path === '/api/feed/funding') {
-        return handleFundingFeed(request, env);
-      }
-      if (path === '/api/notifications') {
-        return handleNotifications(request, env);
-      }
-      if (path === '/api/identity/resolve') {
-        return handleResolveIdentity(request, env);
-      }
-
-      return jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.1.0' });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Internal error';
-      return jsonResponse({ error: message }, 500);
+      response = jsonResponse({ error: message }, 500);
     }
+
+    return applyCors(response, origin);
   },
 };

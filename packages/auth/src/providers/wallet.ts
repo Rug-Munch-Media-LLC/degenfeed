@@ -1,15 +1,24 @@
 export interface WalletSession {
   address: string;
   chain: 'ethereum' | 'solana';
-  accessToken: string;
+  accessToken?: string;
+  gtsAuthorizeUrl?: string | null;
   profile?: Record<string, unknown> | null;
 }
 
-/**
- * Request a nonce from the server for wallet authentication.
- */
+interface WalletVerifyResponse {
+  success: boolean;
+  walletAddress: string;
+  chain: 'ethereum' | 'solana';
+  sessionToken?: string;
+  gtsAuthorizeUrl?: string | null;
+  identity?: Record<string, unknown> | null;
+}
+
 export async function requestWalletNonce(address: string): Promise<string> {
-  const res = await fetch(`/api/auth/wallet/nonce?address=${encodeURIComponent(address)}`);
+  const res = await fetch(`/api/auth/wallet/nonce?address=${encodeURIComponent(address)}`, {
+    credentials: 'include',
+  });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Nonce request failed' }));
     throw new Error(err.error || 'Nonce request failed');
@@ -51,6 +60,7 @@ export async function verifyWalletSignature(
 ): Promise<WalletSession> {
   const res = await fetch('/api/auth/wallet/verify', {
     method: 'POST',
+    credentials: 'include',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ address, signature, message, chain, nonce }),
   });
@@ -60,5 +70,15 @@ export async function verifyWalletSignature(
     throw new Error(err.error || 'Verification failed');
   }
 
-  return res.json();
+  const data = (await res.json()) as WalletVerifyResponse;
+  if (!data.success) {
+    throw new Error('Invalid verification response');
+  }
+
+  return {
+    address: data.walletAddress,
+    chain: data.chain,
+    gtsAuthorizeUrl: data.gtsAuthorizeUrl ?? null,
+    profile: data.identity ?? null,
+  };
 }

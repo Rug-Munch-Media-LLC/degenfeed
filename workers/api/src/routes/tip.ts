@@ -1,4 +1,10 @@
 import { type Env, jsonResponse } from '../index';
+import {
+  hasSuspiciousPayload,
+  isAllowedProtocol,
+  isValidAmount,
+  sanitizeString,
+} from '../sanitize';
 import { buildLensCollectIntent } from './lens';
 import { fetchZapInvoice, resolveLnurlFromPubkey } from './lightning';
 
@@ -18,10 +24,10 @@ interface ResolvedTipMethod {
 
 export async function handleTipResolve(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const protocol = url.searchParams.get('protocol') || '';
-  const authorId = url.searchParams.get('authorId') || '';
+  const protocol = sanitizeString(url.searchParams.get('protocol'), 32);
+  const authorId = sanitizeString(url.searchParams.get('authorId'), 256);
 
-  if (!protocol || !authorId) {
+  if (!protocol || !authorId || !isAllowedProtocol(protocol) || hasSuspiciousPayload(authorId)) {
     return jsonResponse({ error: 'protocol and authorId required' }, 400);
   }
 
@@ -113,18 +119,41 @@ export async function handleTipCreate(request: Request, _env: Env): Promise<Resp
       publicationId?: string;
     };
 
-    if (!body.recipient || !body.method || !body.amount) {
+    const recipient = sanitizeString(body.recipient, 128);
+    const recipientProtocol = sanitizeString(body.recipientProtocol, 32);
+    const method = sanitizeString(body.method, 32);
+    const amount = sanitizeString(body.amount, 64);
+    const chain = sanitizeString(body.chain, 32);
+    const sender = sanitizeString(body.sender, 128);
+    const publicationId = sanitizeString(body.publicationId, 128);
+
+    if (
+      !recipient ||
+      !method ||
+      !amount ||
+      !isValidAmount(amount) ||
+      hasSuspiciousPayload(
+        `${recipient}${recipientProtocol}${method}${amount}${sender}${publicationId}`,
+      )
+    ) {
       return jsonResponse({ error: 'recipient, method, and amount required' }, 400);
     }
 
-    switch (body.method) {
+    if (recipientProtocol && !isAllowedProtocol(recipientProtocol)) {
+      return jsonResponse({ error: 'Invalid recipientProtocol' }, 400);
+    }
+    if (chain && chain !== 'ethereum' && chain !== 'solana') {
+      return jsonResponse({ error: 'Invalid chain' }, 400);
+    }
+
+    switch (method) {
       case 'ethereum':
         return jsonResponse({
           method: 'ethereum',
           intent: {
-            to: body.recipient,
-            value: body.amount,
-            chain: body.chain || 'ethereum',
+            to: recipient,
+            value: amount,
+            chain: chain || 'ethereum',
           },
           instructions:
             'Sign with your Ethereum wallet (MetaMask, Rabby, Rainbow, etc.) to send the tip',
@@ -134,8 +163,8 @@ export async function handleTipCreate(request: Request, _env: Env): Promise<Resp
         return jsonResponse({
           method: 'solana',
           intent: {
-            to: body.recipient,
-            amount: body.amount,
+            to: recipient,
+            amount: amount,
             chain: 'solana',
           },
           instructions:
@@ -143,12 +172,11 @@ export async function handleTipCreate(request: Request, _env: Env): Promise<Resp
         });
 
       case 'lightning_zap':
-        // Fetch a real invoice from the LNURL-pay endpoint
         return jsonResponse({
           method: 'lightning_zap',
           intent: {
-            to: body.recipient,
-            amount: body.amount,
+            to: recipient,
+            amount: amount,
             note: 'Tip from DegenFeed',
             zapEndpoint: '/api/tip/lightning/invoice',
           },
@@ -160,18 +188,18 @@ export async function handleTipCreate(request: Request, _env: Env): Promise<Resp
         return jsonResponse({
           method: 'farcaster_frame',
           intent: {
-            recipient: body.recipient,
-            amount: body.amount,
-            actionUrl: `/api/tip/frame/${encodeURIComponent(body.recipient)}?amount=${body.amount}`,
+            recipient: recipient,
+            amount: amount,
+            actionUrl: `/api/tip/frame/${encodeURIComponent(recipient)}?amount=${amount}`,
           },
           instructions: 'Complete the tip via the Farcaster Frame',
         });
 
       case 'lens_collect': {
-        if (!body.publicationId) {
+        if (!publicationId) {
           return jsonResponse({ error: 'publicationId required for Lens collect' }, 400);
         }
-        const lensIntent = buildLensCollectIntent(body.publicationId, body.sender);
+        const lensIntent = buildLensCollectIntent(publicationId, sender);
         if (!lensIntent) {
           return jsonResponse({ error: 'Invalid Lens publicationId format' }, 400);
         }
@@ -183,7 +211,7 @@ export async function handleTipCreate(request: Request, _env: Env): Promise<Resp
       }
 
       default:
-        return jsonResponse({ error: `Unknown tipping method: ${body.method}` }, 400);
+        return jsonResponse({ error: `Unknown tipping method: ${method}` }, 400);
     }
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
@@ -235,8 +263,17 @@ export async function handleLightningInvoice(request: Request, env: Env): Promis
 export async function handleTipFrame(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
   const parts = url.pathname.split('/');
-  const recipientId = parts[parts.length - 1] || '';
-  const amount = url.searchParams.get('amount') || '0.001';
+  const recipientId = sanitizeString(parts[parts.length - 1], 128);
+  const amount = sanitizeString(url.searchParams.get('amount') || '0.001', 64);
+
+  if (
+    !recipientId ||
+    !amount ||
+    !isValidAmount(amount) ||
+    hasSuspiciousPayload(`${recipientId}${amount}`)
+  ) {
+    return jsonResponse({ error: 'Invalid frame params' }, 400);
+  }
 
   const html = `<!DOCTYPE html>
 <html>
@@ -269,11 +306,18 @@ export async function handleTipFrameTx(request: Request, _env: Env): Promise<Res
   try {
     const url = new URL(request.url);
     const parts = url.pathname.split('/');
-    const recipientId = parts[parts.length - 1] || '';
-    const amount = url.searchParams.get('amount') || '0.001';
+    const recipientId = sanitizeString(parts[parts.length - 1], 128);
+    const amount = sanitizeString(url.searchParams.get('amount') || '0.001', 64);
 
-    // In production, validate the FrameActionPayload signature against a Farcaster hub.
-    // For now we accept the client's signed message and rely on the user approving the tx in their wallet.
+    if (
+      !recipientId ||
+      !amount ||
+      !isValidAmount(amount) ||
+      hasSuspiciousPayload(`${recipientId}${amount}`)
+    ) {
+      return jsonResponse({ error: 'Invalid frame params' }, 400);
+    }
+
     const body = (await request.json()) as Record<string, unknown>;
     const fid =
       ((body.untrustedData as Record<string, unknown>)?.fid as number) || (body.fid as number);

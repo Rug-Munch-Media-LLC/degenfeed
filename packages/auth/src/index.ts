@@ -11,6 +11,7 @@ export { signInWithThreads } from './providers/threads';
 export { signInWithGtS } from './providers/mastodon';
 export { unlockIdentity, lockIdentity, forgetIdentity } from './session';
 export { encryptSecret, decryptSecret } from './crypto';
+export { buildIdentityRecord } from './persistence';
 export {
   requestWalletNonce,
   buildSiweMessage,

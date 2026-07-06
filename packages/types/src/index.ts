@@ -4,7 +4,16 @@
  * normalizes to these shapes. UI components consume only these.
  */
 
-export type Protocol = 'nostr' | 'farcaster' | 'lens' | 'bluesky' | 'threads' | 'rss' | 'mastodon';
+export type Protocol =
+  | 'nostr'
+  | 'farcaster'
+  | 'lens'
+  | 'bluesky'
+  | 'threads'
+  | 'rss'
+  | 'mastodon'
+  | 'ethereum'
+  | 'solana';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */

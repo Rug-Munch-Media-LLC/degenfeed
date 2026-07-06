@@ -60,6 +60,7 @@ export function useTip() {
     try {
       const res = await fetch(
         `/api/tip/resolve?protocol=${encodeURIComponent(protocol)}&authorId=${encodeURIComponent(authorId)}`,
+        { credentials: 'include' },
       );
       const data = (await res.json()) as { methods?: TipMethod[] };
       const methods: TipMethod[] = data.methods || [];
@@ -92,18 +93,16 @@ export function useTip() {
       try {
         const res = await fetch('/api/tip/create', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ recipient, recipientProtocol, method, amount, publicationId }),
         });
-        const intent: TipIntent = await res.json();
+        const data = (await res.json()) as TipIntent & { error?: string };
         if (!res.ok) {
-          const err = (await res.json().catch(() => ({ error: 'Failed to create tip' }))) as {
-            error?: string;
-          };
-          throw new Error(err.error || 'Failed to create tip');
+          throw new Error(data.error || 'Failed to create tip');
         }
         setState((s) => ({ ...s, status: 'idle' }));
-        return intent;
+        return data;
       } catch (err) {
         setState((s) => ({
           ...s,
@@ -128,8 +127,15 @@ export function useTip() {
           amount,
           comment: comment || 'Tip from DegenFeed',
         });
-        const res = await fetch(`/api/tip/lightning/invoice?${params.toString()}`);
-        const data = (await res.json()) as { methods?: TipMethod[]; error?: string };
+        const res = await fetch(`/api/tip/lightning/invoice?${params.toString()}`, {
+          credentials: 'include',
+        });
+        const data = (await res.json()) as {
+          invoice?: string;
+          amount?: number;
+          expiresAt?: number;
+          error?: string;
+        };
         if (!res.ok) throw new Error(data.error || 'Failed to get invoice');
         return data as { invoice: string; amount: number; expiresAt: number };
       } catch (err) {

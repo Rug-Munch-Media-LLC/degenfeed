@@ -1,19 +1,22 @@
 'use client';
 
+import type { StoredIdentity } from '@degenfeed/storage';
 import { QRCodeSVG } from 'qrcode.react';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { useWeb3 } from '../../components/Web3Provider';
 
 export const dynamic = 'force-dynamic';
 
 interface ResolvedIdentity {
+  id: string;
   protocol: string;
   displayName?: string;
   handle?: string;
   avatarUrl?: string;
   address?: string;
   color: string;
+  isPrimary: boolean;
 }
 
 const PROTOCOL_COLORS: Record<string, string> = {
@@ -43,79 +46,62 @@ function shortenAddress(addr: string): string {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
 
+function toResolved(identity: StoredIdentity): ResolvedIdentity {
+  const isWallet = identity.protocol === 'ethereum' || identity.protocol === 'solana';
+  return {
+    id: identity.id,
+    protocol: identity.protocol,
+    displayName: identity.displayName,
+    handle: identity.handle,
+    avatarUrl: identity.avatarUrl,
+    address: isWallet ? identity.publicId : undefined,
+    color: PROTOCOL_COLORS[identity.protocol] ?? '#666',
+    isPrimary: identity.isPrimary,
+  };
+}
+
 export default function ProfilePage() {
-  const { signedInProtocols, walletAddress, ready, openSignIn } = useAuth();
-  const { account: wagmiAddress, isConnected } = useWeb3();
-  const [identities, setIdentities] = useState<ResolvedIdentity[]>([]);
-  const hasSignedIn = Object.values(signedInProtocols).some(Boolean) || isConnected;
+  const {
+    primaryIdentity,
+    linkedIdentities,
+    ready,
+    openSignIn,
+    setPrimaryIdentity: setPrimary,
+    unlinkIdentity: unlink,
+    linkGtsUrl,
+    isWalletOnly,
+  } = useAuth();
+  const { isConnected } = useWeb3();
 
-  // Resolve identities from all sources
-  useEffect(() => {
-    const resolved: ResolvedIdentity[] = [];
+  const identities = useMemo(() => {
+    const list: ResolvedIdentity[] = [];
+    if (primaryIdentity) list.push(toResolved(primaryIdentity));
+    for (const identity of linkedIdentities) list.push(toResolved(identity));
+    return list;
+  }, [primaryIdentity, linkedIdentities]);
 
-    // From localStorage
-    try {
-      const stored = localStorage.getItem('degenfeed_identities');
-      if (stored) {
-        const storedIds: Array<{
-          protocol: string;
-          displayName?: string;
-          handle?: string;
-          avatarUrl?: string;
-        }> = JSON.parse(stored);
-        for (const id of storedIds) {
-          resolved.push({
-            protocol: id.protocol,
-            displayName: id.displayName,
-            handle: id.handle,
-            avatarUrl: id.avatarUrl,
-            color: PROTOCOL_COLORS[id.protocol] || '#666',
-          });
-        }
-      }
-    } catch {
-      /* ignore */
-    }
+  const hasSignedIn = identities.length > 0 || isConnected;
 
-    // Wallet address
-    const addr = walletAddress || wagmiAddress;
-    if (addr) {
-      resolved.push({
-        protocol: 'ethereum',
-        displayName: 'Ethereum Wallet',
-        handle: shortenAddress(addr),
-        address: addr,
-        color: PROTOCOL_COLORS.ethereum ?? '#627eea',
-      });
-    }
-
-    // Deduplicate
-    const seen = new Set<string>();
-    const unique = resolved.filter((r) => {
-      const key = `${r.protocol}:${r.address || r.handle || ''}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    setIdentities(unique);
-  }, [walletAddress, wagmiAddress]);
+  const primaryIsWallet =
+    primaryIdentity?.protocol === 'ethereum' || primaryIdentity?.protocol === 'solana';
 
   if (!ready) {
-    return <div className="mx-auto max-w-2xl px-4 py-20 text-center text-gray-500">Loading...</div>;
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center text-gray-500">
+        <div className="mx-auto mb-4 h-2 w-32 animate-pulse rounded-full bg-gray-800" />
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 to-purple-500/30 text-3xl">
-          {identities.length > 0
-            ? (identities[0]?.displayName ?? '?').charAt(0).toUpperCase()
-            : '?'}
+      <div className="card mb-8 py-8 text-center">
+        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 via-purple-500/30 to-fuchsia-500/30 text-3xl font-bold text-white shadow-[0_0_30px_rgba(34,197,94,0.2)]">
+          {primaryIdentity?.displayName ? primaryIdentity.displayName.charAt(0).toUpperCase() : '?'}
         </div>
         <h1 className="text-2xl font-bold text-white">
-          {identities.length > 0 ? (identities[0]?.displayName ?? 'Unnamed') : 'DegenFeed User'}
+          {primaryIdentity?.displayName ?? 'DegenFeed User'}
         </h1>
         <p className="mt-1 text-sm text-gray-500">
           {hasSignedIn
@@ -134,17 +120,13 @@ export default function ProfilePage() {
         </div>
       ) : (
         <>
-          {/* Connected Identities */}
           <div className="mb-6">
             <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
               Connected Identities
             </h2>
             <div className="space-y-2">
               {identities.map((id) => (
-                <div
-                  key={`${id.protocol}-${id.handle || id.address || id.displayName || Math.random()}`}
-                  className="flex items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3"
-                >
+                <div key={id.id} className="card-hover flex items-center gap-4">
                   <div
                     className="flex h-10 w-10 items-center justify-center rounded-full text-lg"
                     style={{ backgroundColor: `${id.color}22`, color: id.color }}
@@ -170,6 +152,11 @@ export default function ProfilePage() {
                       >
                         {id.protocol}
                       </span>
+                      {id.isPrimary && (
+                        <span className="shrink-0 rounded-full bg-degen-500/20 px-2 py-0.5 text-xs font-medium text-degen-400">
+                          Primary
+                        </span>
+                      )}
                     </div>
                     {id.address ? (
                       <div className="flex items-center gap-2">
@@ -188,18 +175,67 @@ export default function ProfilePage() {
                       <div className="text-xs text-gray-500 truncate">{id.handle || ''}</div>
                     )}
                   </div>
+                  <div className="flex shrink-0 gap-2">
+                    {!id.isPrimary &&
+                      (!primaryIsWallet ||
+                        id.protocol === 'ethereum' ||
+                        id.protocol === 'solana') && (
+                        <>
+                          <button
+                            onClick={() => setPrimary(id.id)}
+                            className="rounded-lg bg-gray-800 px-2 py-1 text-xs text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                            type="button"
+                          >
+                            Set primary
+                          </button>
+                          <button
+                            onClick={() => unlink(id.id)}
+                            className="rounded-lg bg-red-500/10 px-2 py-1 text-xs text-red-400 hover:bg-red-500/20 transition-colors"
+                            type="button"
+                          >
+                            Unlink
+                          </button>
+                        </>
+                      )}
+                    {!id.isPrimary &&
+                      primaryIsWallet &&
+                      id.protocol !== 'ethereum' &&
+                      id.protocol !== 'solana' && (
+                        <button
+                          onClick={() => unlink(id.id)}
+                          className="rounded-lg bg-red-500/10 px-2 py-1 text-xs text-red-400 hover:bg-red-500/20 transition-colors"
+                          type="button"
+                        >
+                          Unlink
+                        </button>
+                      )}
+                  </div>
                 </div>
               ))}
             </div>
+
+            {linkGtsUrl && !identities.some((i) => i.protocol === 'mastodon') && (
+              <a
+                href={linkGtsUrl}
+                className="card-hover mt-3 flex w-full items-center justify-center gap-2 border-degen-500/30 bg-degen-500/10 px-4 py-3 text-sm font-semibold text-degen-400 hover:bg-degen-500/20"
+              >
+                <span>✦</span>
+                Link @degenfeed.xyz account
+              </a>
+            )}
+
+            {isWalletOnly && (
+              <p className="mt-3 text-center text-xs text-gray-500">
+                Your wallet is your primary identity. Link a social account to cross-post.
+              </p>
+            )}
           </div>
 
-          {/* Cross-Platform Tipping Section */}
           <div className="mb-6">
             <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
               Receive Tips
             </h2>
             <div className="space-y-3">
-              {/* QR Code for primary wallet */}
               {(() => {
                 const tipAddr = identities.find((i) => i.address)?.address;
                 if (!tipAddr || typeof window === 'undefined') return null;
@@ -207,9 +243,9 @@ export default function ProfilePage() {
                   ? `ethereum:${tipAddr}`
                   : `solana:${tipAddr}`;
                 return (
-                  <div className="flex flex-col items-center rounded-xl border border-degen-500/20 bg-degen-500/5 p-4">
+                  <div className="card flex flex-col items-center border-degen-500/20 bg-degen-500/5 p-4">
                     <h3 className="mb-2 text-xs font-semibold text-degen-400">Scan to Tip</h3>
-                    <div className="mb-2 rounded-xl bg-white p-3">
+                    <div className="mb-2 rounded-xl bg-white p-3 shadow-lg">
                       <QRCodeSVG value={tipUrl} size={140} />
                     </div>
                     <p className="text-[10px] text-gray-500 text-center">
@@ -218,9 +254,9 @@ export default function ProfilePage() {
                   </div>
                 );
               })()}
-              {/* Wallet addresses (if linked) */}
+
               {identities.filter((i) => i.address).length > 0 && (
-                <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 p-4">
+                <div className="card border-degen-500/20 bg-degen-500/5 p-4">
                   <h3 className="mb-2 text-xs font-semibold text-degen-400">Direct Crypto</h3>
                   <p className="mb-3 text-xs text-gray-400">
                     Anyone can send you tips on these chains — no DegenFeed account needed.
@@ -230,10 +266,10 @@ export default function ProfilePage() {
                     .map((id) => (
                       <div
                         key={`${id.protocol}-${id.address}`}
-                        className="mb-2 flex items-center justify-between rounded-lg bg-gray-900/50 px-3 py-2"
+                        className="card-hover mb-2 flex items-center justify-between !bg-gray-900/40 px-3 py-2"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="hidden sm:block rounded-lg bg-white p-1">
+                          <div className="hidden sm:block rounded-lg bg-white p-1 shadow-sm">
                             {typeof window !== 'undefined' && (
                               <QRCodeSVG
                                 value={
@@ -297,18 +333,14 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Platform-specific tipping */}
-              <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
+              <div className="card border-yellow-500/20 bg-yellow-500/5 p-4">
                 <div className="mb-2 flex items-center gap-2">
                   <span className="text-lg">⚡</span>
                   <h3 className="text-xs font-semibold text-yellow-400">Platform Tipping</h3>
                 </div>
                 <div className="space-y-2">
                   {identities.map((id) => (
-                    <div
-                      key={`${id.protocol}-${id.handle || id.address || id.displayName || Math.random()}`}
-                      className="flex items-center justify-between rounded-lg bg-gray-900/50 px-3 py-2"
-                    >
+                    <div key={`tip-${id.id}`} className="card !bg-gray-900/40 px-3 py-2">
                       <div className="flex items-center gap-2">
                         <span style={{ color: id.color }}>{PROTOCOL_ICONS[id.protocol]}</span>
                         <div>
@@ -349,8 +381,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Instructions */}
-              <div className="rounded-lg bg-gray-900/30 p-3">
+              <div className="card !bg-gray-900/30 p-3">
                 <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-600">
                   How it works
                 </h4>
@@ -364,24 +395,17 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Display Order Note */}
           <div className="card border-degen-500/20 bg-degen-500/5 py-6 text-center">
             <p className="mb-2 text-sm text-degen-400">
               Your profile is automatically assembled from all connected accounts.
             </p>
             <p className="text-xs text-gray-500">
-              The first connected account becomes your primary display name and avatar.
-              Drag-and-drop reordering coming soon.
+              The primary identity is used for your display name and avatar. Use the buttons above
+              to manage your identities.
             </p>
           </div>
         </>
       )}
-
-      <div className="mt-6 text-center">
-        <a href="/home" className="text-sm text-gray-600 hover:text-white transition-colors">
-          &larr; Back to feed
-        </a>
-      </div>
     </div>
   );
 }

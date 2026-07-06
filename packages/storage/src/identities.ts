@@ -44,3 +44,40 @@ export async function deleteIdentity(id: string): Promise<void> {
   const db = await getDb();
   await db.delete('identities', id);
 }
+
+function shortenAddress(addr: string): string {
+  if (addr.length < 10) return addr;
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+export async function saveWalletIdentity(
+  address: string,
+  chain: 'ethereum' | 'solana',
+  accessToken?: string,
+): Promise<StoredIdentity> {
+  const normalized = chain === 'ethereum' ? address.toLowerCase() : address;
+  const all = await getAllIdentities();
+  const record: StoredIdentity = {
+    id: `${chain}:${normalized}`,
+    protocol: chain,
+    publicId: normalized,
+    handle: shortenAddress(normalized),
+    displayName: shortenAddress(normalized),
+    linkedAt: Date.now(),
+    verified: true,
+    encryptedSecret: null,
+    salt: '',
+    iv: '',
+    isPrimary: true,
+    keys: accessToken ? { accessToken } : {},
+  };
+
+  for (const identity of all) {
+    if (identity.isPrimary) {
+      await saveIdentity({ ...identity, isPrimary: false });
+    }
+  }
+
+  await saveIdentity(record);
+  return record;
+}

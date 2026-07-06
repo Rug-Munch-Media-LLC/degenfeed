@@ -1,24 +1,28 @@
 'use client';
-import { TipModal } from '../../../components/TipModal';
 
+import { FeedList, type Notification, NotificationBell, type UnifiedPost } from '@degenfeed/ui';
 import { useEffect, useState } from 'react';
-import { FeedShell } from '../../../components/FeedShell';
-
-import {
-  ComposeModal,
-  FeedList,
-  type Notification,
-  NotificationBell,
-  SignInModal,
-  type UnifiedPost,
-} from '@degenfeed/ui';
 import { useAuth } from '../../../components/AuthProvider';
+import { TipModal } from '../../../components/TipModal';
 import { SECTIONS } from '../sections';
 
 export const runtime = 'edge';
 
 interface Props {
   params: Promise<{ section: string }>;
+}
+
+function getProtocolColor(p: string): string {
+  const colors: Record<string, string> = {
+    nostr: '#8e30eb',
+    farcaster: '#8a63d2',
+    lens: '#abfe2c',
+    bluesky: '#1185fe',
+    threads: '#888',
+    mastodon: '#6364ff',
+    rss: '#ffa500',
+  };
+  return colors[p] ?? '#666';
 }
 
 function SectionNav({ current }: { current: string }) {
@@ -28,7 +32,9 @@ function SectionNav({ current }: { current: string }) {
         <a
           key={s.id}
           href={`/home/${s.id}`}
-          className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all ${s.id === current ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+          className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+            s.id === current ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+          }`}
           style={s.id === current ? { backgroundColor: `${s.color}22`, color: s.color } : {}}
         >
           {s.icon} {s.label}
@@ -39,32 +45,29 @@ function SectionNav({ current }: { current: string }) {
 }
 
 function SectionContent({ section }: { section: string }) {
-  const { signedInProtocols, engage } = useAuth();
+  const { signedInProtocols, engage, openSignIn, openCompose } = useAuth();
   const meta = SECTIONS.find((s) => s.id === section);
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
   const [error, setError] = useState<string>();
-  const [showCompose, setShowCompose] = useState(false);
-  const [showSignIn, setShowSignIn] = useState(false);
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
 
-  // Poll notifications every 60s while signed in
   useEffect(() => {
     if (!hasSignedIn) return;
     const fetchNotifs = async () => {
       try {
         const stored = localStorage.getItem('degenfeed_identities');
         if (!stored) return;
-        const parsed = JSON.parse(stored);
+        const parsed = JSON.parse(stored) as Array<{ protocol: string; token?: string }>;
         const auth = JSON.stringify({
-          mastodon: (parsed as Array<{ protocol: string; token?: string }>).find(
-            (i) => i.protocol === 'mastodon',
-          )?.token,
+          mastodon: parsed.find((i) => i.protocol === 'mastodon')?.token,
         });
-        const res = await fetch(`/api/notifications?auth=${encodeURIComponent(auth)}`);
-        const data = await res.json();
+        const res = await fetch(`/api/notifications?auth=${encodeURIComponent(auth)}`, {
+          credentials: 'include',
+        });
+        const data = (await res.json()) as { notifications?: Notification[] };
         setNotifications(data.notifications || []);
       } catch {}
     };
@@ -73,7 +76,6 @@ function SectionContent({ section }: { section: string }) {
     return () => clearInterval(interval);
   }, [hasSignedIn]);
 
-  // Fetch feed data
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -84,14 +86,14 @@ function SectionContent({ section }: { section: string }) {
         if (meta?.params) {
           for (const [k, v] of Object.entries(meta.params)) url.searchParams.set(k, v);
         }
-        let res = await fetch(url.toString());
+        let res = await fetch(url.toString(), { credentials: 'include' });
         let data = (await res.json()) as { data?: UnifiedPost[] };
         if (!data.data?.length && section === 'all') {
           const rssUrl = new URL('/api/feed/rss', window.location.origin);
           rssUrl.searchParams.set('source', 'reddit');
           rssUrl.searchParams.set('handle', 'CryptoCurrency');
           rssUrl.searchParams.set('limit', '25');
-          res = await fetch(rssUrl.toString());
+          res = await fetch(rssUrl.toString(), { credentials: 'include' });
           data = (await res.json()) as { data?: UnifiedPost[] };
         }
         if (cancelled) return;
@@ -145,19 +147,11 @@ function SectionContent({ section }: { section: string }) {
             />
           )}
           {hasSignedIn ? (
-            <button
-              type="button"
-              className="btn-primary text-xs"
-              onClick={() => setShowCompose(true)}
-            >
+            <button type="button" className="btn-primary text-xs" onClick={openCompose}>
               Compose
             </button>
           ) : (
-            <button
-              type="button"
-              className="btn-secondary text-xs"
-              onClick={() => setShowSignIn(true)}
-            >
+            <button type="button" className="btn-secondary text-xs" onClick={openSignIn}>
               Sign In
             </button>
           )}
@@ -165,13 +159,13 @@ function SectionContent({ section }: { section: string }) {
       </div>
 
       {hasSignedIn && (
-        <div className="mb-3 flex items-center gap-2 text-xs text-gray-500">
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
           <span className="text-degen-400">Signed in:</span>
           {Object.keys(signedInProtocols).map((p) => (
             <span
               key={p}
               className="rounded-full px-2 py-0.5 font-medium"
-              style={{ backgroundColor: `${getPC(p)}22`, color: getPC(p) }}
+              style={{ backgroundColor: `${getProtocolColor(p)}22`, color: getProtocolColor(p) }}
             >
               {p}
             </span>
@@ -196,7 +190,7 @@ function SectionContent({ section }: { section: string }) {
       />
 
       {state === 'empty' && !hasSignedIn && (
-        <div className="mt-6 rounded-xl border border-degen-500/20 bg-degen-500/5 p-6 text-center">
+        <div className="card mt-6 border-degen-500/20 bg-degen-500/5 py-6 text-center">
           <h3 className="mb-2 text-base font-bold text-degen-400">See the fediverse</h3>
           <p className="mb-4 text-sm text-gray-400">
             Create a free @degenfeed.xyz Mastodon account to see posts from the fediverse.
@@ -219,91 +213,11 @@ function SectionContent({ section }: { section: string }) {
           }
         />
       )}
-
-      <SignInModal
-        open={showSignIn}
-        onClose={() => setShowSignIn(false)}
-        onSignIn={async (protocol, token) => {
-          try {
-            const h: Record<string, () => Promise<unknown>> = {
-              nostr: () =>
-                import('@degenfeed/auth').then((m) => m.signInWithNostrNsec(token || '', 'auto')),
-              bluesky: () =>
-                import('@degenfeed/auth').then((m) =>
-                  m.signInWithBluesky(
-                    prompt('Bluesky handle:') || '',
-                    prompt('App password:') || '',
-                    'auto',
-                  ),
-                ),
-              threads: () =>
-                import('@degenfeed/auth').then((m) =>
-                  m.signInWithThreads(
-                    prompt('Threads identifier:') || '',
-                    prompt('App password:') || '',
-                    'auto',
-                  ),
-                ),
-              mastodon: () =>
-                import('@degenfeed/auth').then((m) =>
-                  m.signInWithGtS(
-                    prompt('Instance URL:') || 'https://social.degenfeed.xyz',
-                    prompt('Access token:') || '',
-                    'auto',
-                  ),
-                ),
-            };
-            await (h[protocol]?.() ?? Promise.resolve());
-            setShowSignIn(false);
-            window.location.reload();
-          } catch (e) {
-            alert(`Sign-in failed: ${e instanceof Error ? e.message : String(e)}`);
-          }
-        }}
-      />
-      <ComposeModal
-        open={showCompose}
-        onClose={() => setShowCompose(false)}
-        signedInProtocols={signedInProtocols}
-        onPublish={async (text, targets) => {
-          try {
-            const res = await fetch('/api/publish', {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ text, targets }),
-            });
-            return (await res.json()).results ?? {};
-          } catch {
-            const r: Record<string, { ok: boolean; error?: string }> = {};
-            for (const t of targets) {
-              r[t] = { ok: false, error: 'Network error' };
-            }
-            return r;
-          }
-        }}
-      />
     </div>
   );
 }
 
-function getPC(p: string): string {
-  const c: Record<string, string> = {
-    nostr: '#8e30eb',
-    farcaster: '#8a63d2',
-    lens: '#abfe2c',
-    bluesky: '#1185fe',
-    threads: '#888',
-    mastodon: '#6364ff',
-    rss: '#ffa500',
-  };
-  return c[p] ?? '#666';
-}
-
 export default async function SectionPage({ params }: Props) {
   const section = (await params).section;
-  return (
-    <FeedShell>
-      <SectionContent section={section} />
-    </FeedShell>
-  );
+  return <SectionContent section={section} />;
 }

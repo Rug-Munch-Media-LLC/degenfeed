@@ -7,6 +7,12 @@ import {
   signEvent,
 } from '@degenfeed/nostr-sdk';
 import { type Env, jsonResponse } from '../index';
+import {
+  hasSuspiciousPayload,
+  isAllowedProtocol,
+  sanitizeString,
+  sanitizeStringArray,
+} from '../sanitize';
 
 // ─── RSS-to-Nostr bridge ─────────────────────────────────────────────
 // Fetches an RSS feed, converts each item to a Nostr text event,
@@ -72,20 +78,27 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
       signature?: string;
     }
     const body: PublishRequest = (await request.json()) as PublishRequest;
-    if (!body.text?.trim()) return jsonResponse({ error: 'Text required' }, 400);
-    if (!body.targets?.length) return jsonResponse({ error: 'Targets required' }, 400);
+    const text = sanitizeString(body.text, 10000);
+    const targets = sanitizeStringArray(body.targets, 64).filter(isAllowedProtocol);
+
+    if (!text || hasSuspiciousPayload(text)) {
+      return jsonResponse({ error: 'Invalid text' }, 400);
+    }
+    if (targets.length === 0) {
+      return jsonResponse({ error: 'Invalid targets' }, 400);
+    }
     const auth = body.auth ?? ({} as Record<string, string>);
 
     const results: Record<string, { ok: boolean; error?: string; hash?: string }> = {};
 
-    for (const target of body.targets) {
+    for (const target of targets) {
       try {
         switch (target) {
           case 'nostr': {
             const skHex: string = auth.nostr ?? '';
             const sk: string = skHex || generateSecretKey();
             const pk = getPublicKey(sk);
-            const ev = createTextNote(body.text, sk, []);
+            const ev = createTextNote(text, sk, []);
             ev.pubkey = pk;
             ev.id = getEventHash(ev);
             signEvent(ev, sk);
@@ -197,7 +210,7 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
               body: JSON.stringify({
                 repo: repoDid,
                 collection: 'app.bsky.feed.post',
-                record: { text: body.text, createdAt: new Date().toISOString() },
+                record: { text: text, createdAt: new Date().toISOString() },
               }),
             });
             if (recordRes.ok) {
@@ -221,7 +234,7 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
               break;
             }
             const client = new GtSClient(instance, accessToken);
-            await client.publish(body.text, { visibility: 'public' });
+            await client.publish(text, { visibility: 'public' });
             results[target] = { ok: true };
             break;
           }
@@ -250,12 +263,18 @@ export async function handleEngage(request: Request, _env: Env): Promise<Respons
       authToken?: string;
     }
     const body: EngageRequest = (await request.json()) as EngageRequest;
-    const action = body.action ?? '';
-    const postId = body.postId ?? '';
-    const protocol = body.protocol ?? '';
+    const action = sanitizeString(body.action, 32);
+    const postId = sanitizeString(body.postId, 256);
+    const protocol = sanitizeString(body.protocol, 32);
     const auth = body.auth as Record<string, string> | undefined;
 
-    if (!action || !postId || !protocol) {
+    if (
+      !action ||
+      !postId ||
+      !protocol ||
+      !isAllowedProtocol(protocol) ||
+      hasSuspiciousPayload(`${action}${postId}${protocol}`)
+    ) {
       return jsonResponse({ error: 'action, postId, protocol required' }, 400);
     }
 

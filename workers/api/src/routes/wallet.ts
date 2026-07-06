@@ -3,6 +3,7 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { type Env, jsonResponse } from '../index';
+import { createSession } from '../session';
 
 const nonces = new Map<string, { nonce: string; expiresAt: number }>();
 const GTS_SCOPES = 'read write follow push';
@@ -153,23 +154,35 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
       gtsAuthorizeUrl = `${env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz'}/oauth/authorize?client_id=${gtsSession.clientId}&redirect_uri=${encodeURIComponent(env.GTS_REDIRECT_URI || 'https://degenfeed.xyz/auth/callback')}&response_type=code&scope=${GTS_SCOPES}&sign_up=true`;
     }
 
-    return jsonResponse({
-      success: true,
-      walletAddress: body.address,
-      chain: body.chain,
-      // Wallet is always valid as identity
-      identity: {
-        protocol: body.chain,
-        id: body.address.toLowerCase(),
-        displayName: `${body.address.slice(0, 6)}...${body.address.slice(-4)}`,
-        handle: `${body.address.slice(0, 6)}...${body.address.slice(-4)}`,
-        avatarUrl: null,
+    if (!env.AUTH_SECRET) {
+      return jsonResponse({ error: 'Auth secret not configured' }, 500);
+    }
+
+    const { setCookie, payload } = await createSession(body.address, body.chain, env.AUTH_SECRET);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        walletAddress: payload.address,
+        chain: payload.chain,
+        identity: {
+          protocol: payload.chain,
+          id: payload.address,
+          displayName: `${payload.address.slice(0, 6)}...${payload.address.slice(-4)}`,
+          handle: `${payload.address.slice(0, 6)}...${payload.address.slice(-4)}`,
+          avatarUrl: null,
+        },
+        gtsAuthorizeUrl,
+      }),
+      {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+          'set-cookie': setCookie,
+          'cache-control': 'no-store',
+        },
       },
-      // GTS link is optional — user can set up later
-      gtsAuthorizeUrl,
-      // Return a signed token the client can use as session proof
-      sessionToken: bytesToHex(crypto.getRandomValues(new Uint8Array(32))),
-    });
+    );
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
   }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '../components/AuthProvider';
 import { ErrorTracker } from '../components/ErrorTracker';
+import { Shell } from '../components/Shell';
 import { SolanaProvider } from '../components/SolanaProvider';
 import { Web3Provider } from '../components/Web3Provider';
 
@@ -34,14 +35,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-black text-gray-200 antialiased">
-        <a className="skip-link" href="#main">
-          Skip to content
-        </a>
+      <body>
         <ErrorTracker />
         <SolanaProvider>
           <Web3Provider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <Shell>{children}</Shell>
+            </AuthProvider>
           </Web3Provider>
         </SolanaProvider>
       </body>

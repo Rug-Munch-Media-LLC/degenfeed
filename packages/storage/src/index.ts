@@ -18,6 +18,7 @@ export {
 export { getDb } from './db';
 export {
   saveIdentity,
+  saveWalletIdentity,
   getIdentity,
   getAllIdentities,
   getIdentitiesByProtocol,

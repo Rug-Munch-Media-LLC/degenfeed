@@ -19,7 +19,7 @@ export default function FundingPage() {
         if (chainFilter) url.searchParams.set('chain', chainFilter);
         if (stageFilter) url.searchParams.set('stage', stageFilter);
         url.searchParams.set('limit', '50');
-        const res = await fetch(url.toString());
+        const res = await fetch(url.toString(), { credentials: 'include' });
         if (!res.ok) throw new Error('API error');
         const data = (await res.json()) as {
           data?: FundingRound[];
@@ -61,15 +61,15 @@ export default function FundingPage() {
         ) : null}
       </div>
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         {['', 'ethereum', 'solana', 'bitcoin'].map((c) => (
           <button
             key={c}
             type="button"
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
               chainFilter === c
-                ? 'bg-degen-500/20 text-degen-500'
-                : 'bg-gray-800 text-gray-400 hover:text-white'
+                ? 'border-degen-500 bg-degen-500/20 text-degen-400'
+                : 'border-white/10 bg-gray-950/50 text-gray-400 hover:border-degen-500/30 hover:text-white'
             }`}
             onClick={() => setChainFilter(c)}
           >
@@ -80,8 +80,8 @@ export default function FundingPage() {
 
       {state === 'loading' && (
         <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="card h-32 animate-pulse" />
+          {['a', 'b', 'c'].map((k) => (
+            <div key={k} className="card h-32 animate-pulse" />
           ))}
         </div>
       )}
