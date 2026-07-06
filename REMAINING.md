@@ -60,7 +60,7 @@
 
 **What to do:**
 
-1. Log in to `https://git.rugmunch.io` as `crmuncher`
+1. Log in to `https://git.rugmunch.io` as `cryptorugmunch`
 2. Go to Settings → Applications → Generate Token
 3. Scopes: `repository`, `write:repository`, `admin:organization`, `admin:org_hook`
 4. Edit `/etc/renovate/env` on Talos — replace `PASTE_TOKEN_HERE` with the token
@@ -75,9 +75,9 @@
 1. Generate PATs at each platform (GitHub, GitLab, HuggingFace) with `repo` scope
 2. On Talos, create `/root/.git-credentials` (chmod 600):
    ```
-   https://crmuncher:<GH_TOKEN>@github.com
-   https://crmuncher:<GL_TOKEN>@gitlab.com
-   https://crmuncher:<HF_TOKEN>@huggingface.co
+   https://cryptorugmunch:<GH_TOKEN>@github.com
+   https://cryptorugmunch:<GL_TOKEN>@gitlab.com
+   https://cryptorugmunch:<HF_TOKEN>@huggingface.co
    ```
 3. `git config --global credential.helper store`
 4. Test: `cd /srv/work/repos/rmi-backend && /root/scripts/external-push.sh`
@@ -142,7 +142,7 @@ Verify cloudflared still has ingress rules for any of these that need to be publ
 
 ## STILL OPEN — Tier 4 (when convenient)
 
-- Standardize git author emails to `crmuncher@rugmunch.io` across machines.
+- Standardize git author emails to `admin@rugmunch.io` across machines. **Done**: all 3 machines, all 16 repos.
 - Symlink `bin/ai` → `bin/aider` (one canonical wrapper).
 - Remove `main.py.bak` (382KB) from rmi-backend git history.
 - Remove unused `requests` from `rmi-backend/requirements.txt`.
