@@ -1,12 +1,53 @@
+# TypeScript / Node .gitignore — Rug Munch Media fleet standard
+# See https://git.rugmunch.io/RugMunchMedia/standards for source of truth.
+
+# ── Secrets (zero tolerance) ───────────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+*.session
+credentials.json
+service-account.json
+.secrets/
+
+# ── Node ───────────────────────────────────────────────────────
 node_modules/
+.npm/
+.pnpm-store/
+yarn-error.log
+yarn-debug.log
+
+# ── Build artifacts ────────────────────────────────────────────
+dist/
+build/
 .next/
 .turbo/
-dist/
+out/
+*.tsbuildinfo
+
+# ── Coverage ───────────────────────────────────────────────────
 coverage/
-.env
-.env.local
-*.log
+*.lcov
+
+# ── IDE ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
 
-# Build artifacts
-*.tsbuildinfo
+# ── Logs ───────────────────────────────────────────────────────
+*.log
+logs/
+pnpm-debug.log*
+
+# ── Cache / temp ───────────────────────────────────────────────
+.cache/
+tmp/
+*.tmp
