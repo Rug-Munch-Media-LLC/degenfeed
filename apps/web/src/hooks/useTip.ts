@@ -21,6 +21,10 @@ export interface TipIntent {
     to: string;
     amount: string;
     chain?: string;
+    chainId?: number;
+    data?: string;
+    value?: string;
+    from?: string;
     note?: string;
     actionUrl?: string;
     zapEndpoint?: string;
@@ -78,6 +82,7 @@ export function useTip() {
     recipientProtocol: string,
     method: string,
     amount: string,
+    publicationId?: string,
   ): Promise<TipIntent | null> => {
     setState(s => ({ ...s, status: 'creating', selectedMethod: method, amount }));
 
@@ -85,7 +90,7 @@ export function useTip() {
       const res = await fetch('/api/tip/create', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ recipient, recipientProtocol, method, amount }),
+        body: JSON.stringify({ recipient, recipientProtocol, method, amount, publicationId }),
       });
       const intent: TipIntent = await res.json();
       if (!res.ok) throw new Error((intent as any).error || 'Failed to create tip');

@@ -12,9 +12,10 @@ interface TipModalProps {
   recipientProtocol: string;
   recipientAuthorId: string;
   recipientDisplayName: string;
+  publicationId?: string;
 }
 
-export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, recipientDisplayName }: TipModalProps) {
+export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, recipientDisplayName, publicationId }: TipModalProps) {
   const { state, resolveMethods, createTip, fetchLightningInvoice, setTipStatus } = useTip();
   const { account, connect: connectWallet } = useWeb3();
   const { account: solanaAccount, connect: connectSolana, signAndSendTransaction } = useSolana();
@@ -47,7 +48,7 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
         if (!ethAccount) ethAccount = await connectWallet();
         if (!ethAccount) throw new Error('No Ethereum wallet connected');
 
-        const intent = await createTip(recipientAuthorId, recipientProtocol, selectedMethod, amount);
+        const intent = await createTip(recipientAuthorId, recipientProtocol, selectedMethod, amount, publicationId);
         if (!intent) return;
 
         setTipStatus('signing');
@@ -65,7 +66,7 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
         if (!solAccount) solAccount = await connectSolana();
         if (!solAccount) throw new Error('No Solana wallet connected');
 
-        const intent = await createTip(recipientAuthorId, recipientProtocol, selectedMethod, amount);
+        const intent = await createTip(recipientAuthorId, recipientProtocol, selectedMethod, amount, publicationId);
         if (!intent) return;
 
         setTipStatus('signing');
@@ -83,8 +84,31 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
         return;
       }
 
-      // Fallback: Frame / Lens / other methods
-      const intent = await createTip(recipientAuthorId, recipientProtocol, selectedMethod, amount);
+      // Lens Collect
+      if (selectedMethod === 'lens_collect') {
+        const intent = await createTip(recipientAuthorId, recipientProtocol, selectedMethod, amount, publicationId);
+        if (!intent) return;
+
+        setTipStatus('signing');
+        const provider = (window as any).ethereum;
+        if (!provider) throw new Error('No Ethereum wallet detected');
+
+        const txHash = await provider.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: account,
+            to: intent.intent.to,
+            data: intent.intent.data,
+            value: intent.intent.value,
+            chainId: '0x' + (intent.intent.chainId ?? 137).toString(16),
+          }],
+        });
+        setTipStatus('sent', txHash);
+        return;
+      }
+
+      // Fallback: Frame / other methods
+      const intent = await createTip(recipientAuthorId, recipientProtocol, selectedMethod, amount, publicationId);
       if (!intent) return;
       setTipStatus('sent', intent.actionUrl || 'ok');
 
@@ -275,6 +299,8 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
                             ? `https://etherscan.io/tx/${state.txHash}`
                             : selectedMethod === 'solana'
                             ? `https://solscan.io/tx/${state.txHash}`
+                            : selectedMethod === 'lens_collect'
+                            ? `https://polygonscan.com/tx/${state.txHash}`
                             : '#'
                         }
                         target="_blank"

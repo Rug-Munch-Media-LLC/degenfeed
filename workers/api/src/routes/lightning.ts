@@ -1,3 +1,4 @@
+import { bytesToHex } from '@noble/hashes/utils';
 /**
  * Lightning zap support via LNURL-pay (NIP-57).
  *
@@ -43,8 +44,9 @@ export async function resolveLnurlFromPubkey(pubkey: string, relays: string[]): 
     } catch { /* try next */ }
   }
 
-  // TODO: fallback via WebSocket relay subscription if aggregators fail
-  return null;
+  // Fallback: subscribe to relays via WebSocket for kind 0 metadata
+  const lnurl = await fetchLnurlFromRelays(pubkey, relays);
+  return lnurl;
 }
 
 /**
@@ -79,6 +81,78 @@ function lnaddressToLnurl(address: string): string {
 /**
  * Fetch an invoice from an LNURL-pay endpoint.
  */
+
+
+/**
+ * Fetch LNURL from a Nostr relay by subscribing to kind 0 metadata.
+ * Uses WebSocket; works in Cloudflare Workers.
+ */
+async function fetchLnurlFromRelays(pubkey: string, relays: string[]): Promise<string | null> {
+  for (const relay of relays) {
+    const lnurl = await fetchLnurlFromRelay(pubkey, relay);
+    if (lnurl) return lnurl;
+  }
+  return null;
+}
+
+function fetchLnurlFromRelay(pubkey: string, relay: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    try {
+      const ws = new WebSocket(relay);
+      const subId = bytesToHex(crypto.getRandomValues(new Uint8Array(8)));
+      let settled = false;
+
+      const cleanup = () => {
+        if (!settled) {
+          settled = true;
+          try { ws.close(); } catch { /* ignore */ }
+        }
+      };
+
+      const timer = setTimeout(() => {
+        cleanup();
+        resolve(null);
+      }, 5000);
+
+      ws.addEventListener('open', () => {
+        ws.send(JSON.stringify(['REQ', subId, { kinds: [0], authors: [pubkey], limit: 1 }]));
+      });
+
+      ws.addEventListener('message', (event) => {
+        try {
+          const msg = JSON.parse(event.data as string);
+          if (msg[0] === 'EVENT' && msg[1] === subId && msg[2]?.content) {
+            const lnurl = extractLnurl(msg[2].content);
+            if (lnurl) {
+              clearTimeout(timer);
+              cleanup();
+              resolve(lnurl);
+              return;
+            }
+          }
+          if (msg[0] === 'EOSE' && msg[1] === subId) {
+            clearTimeout(timer);
+            cleanup();
+            resolve(null);
+          }
+        } catch { /* ignore malformed */ }
+      });
+
+      ws.addEventListener('error', () => {
+        clearTimeout(timer);
+        cleanup();
+        resolve(null);
+      });
+
+      ws.addEventListener('close', () => {
+        clearTimeout(timer);
+        if (!settled) resolve(null);
+      });
+    } catch {
+      resolve(null);
+    }
+  });
+}
 
 /**
  * Bech32 polymod checksum generator (BIP-0173).

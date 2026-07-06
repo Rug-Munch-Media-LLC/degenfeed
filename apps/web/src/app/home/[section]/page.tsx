@@ -154,6 +154,7 @@ function SectionContent({ section }: { section: string }) {
           recipientProtocol={tipPost.protocol}
           recipientAuthorId={tipPost.author.id}
           recipientDisplayName={tipPost.author.displayName}
+          publicationId={tipPost.protocol === 'lens' ? (tipPost.raw as any)?.id : undefined}
         />
       )}
 

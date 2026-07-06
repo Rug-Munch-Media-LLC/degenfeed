@@ -1,5 +1,6 @@
 import { type Env, jsonResponse } from '../index';
 import { resolveLnurlFromPubkey, fetchZapInvoice } from './lightning';
+import { buildLensCollectIntent } from './lens';
 
 interface ResolvedTipMethod {
   method: string;
@@ -109,6 +110,7 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
       amount: string;
       chain?: string;
       sender?: string;
+      publicationId?: string;
     };
 
     if (!body.recipient || !body.method || !body.amount) {
@@ -162,15 +164,20 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
           instructions: 'Complete the tip via the Farcaster Frame',
         });
 
-      case 'lens_collect':
+      case 'lens_collect': {
+        if (!body.publicationId) {
+          return jsonResponse({ error: 'publicationId required for Lens collect' }, 400);
+        }
+        const lensIntent = buildLensCollectIntent(body.publicationId, body.sender);
+        if (!lensIntent) {
+          return jsonResponse({ error: 'Invalid Lens publicationId format' }, 400);
+        }
         return jsonResponse({
           method: 'lens_collect',
-          intent: {
-            recipient: body.recipient,
-            amount: body.amount,
-          },
-          instructions: 'Collect this post via Lens Protocol',
+          intent: lensIntent,
+          instructions: 'Sign the Polygon transaction to collect this Lens post',
         });
+      }
 
       default:
         return jsonResponse({ error: 'Unknown tipping method: ' + body.method }, 400);
@@ -220,6 +227,7 @@ export async function handleLightningInvoice(request: Request, env: Env): Promis
 /**
  * Farcaster Frame endpoint for tipping.
  * Returns Open Graph meta tags that Farcaster clients render as a tipping Frame.
+ * recipientId should be the creator's Ethereum address.
  */
 export async function handleTipFrame(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
@@ -235,7 +243,7 @@ export async function handleTipFrame(request: Request, env: Env): Promise<Respon
   <meta property="fc:frame:button:1" content="⚡ Tip ${amount} ETH" />
   <meta property="fc:frame:button:1:action" content="tx" />
   <meta property="fc:frame:button:1:target" content="https://degenfeed.xyz/api/tip/frame/tx/${recipientId}?amount=${amount}" />
-  <meta property="fc:frame:post_url" content="https://degenfeed.xyz/api/tip/frame/callback" />
+  <meta property="fc:frame:post_url" content="https://degenfeed.xyz/api/tip/frame/callback/${recipientId}?amount=${amount}" />
   <meta property="og:title" content="Tip on DegenFeed" />
   <meta property="og:description" content="Send a tip via DegenFeed — cross-platform, no platform fees" />
 </head>
@@ -248,4 +256,80 @@ export async function handleTipFrame(request: Request, env: Env): Promise<Respon
     status: 200,
     headers: { 'content-type': 'text/html; charset=utf-8' },
   });
+}
+
+/**
+ * Farcaster Frame transaction endpoint.
+ * Receives a POST from the Farcaster client and returns eth_sendTransaction params.
+ */
+export async function handleTipFrameTx(request: Request, env: Env): Promise<Response> {
+  try {
+    const url = new URL(request.url);
+    const parts = url.pathname.split('/');
+    const recipientId = parts[parts.length - 1] || '';
+    const amount = url.searchParams.get('amount') || '0.001';
+
+    // In production, validate the FrameActionPayload signature against a Farcaster hub.
+    // For now we accept the client's signed message and rely on the user approving the tx in their wallet.
+    const body = (await request.json()) as any;
+    const fid = body?.untrustedData?.fid || body?.fid;
+    if (!fid) {
+      return jsonResponse({ error: 'Invalid Frame action: missing fid' }, 400);
+    }
+
+    const to = recipientId.startsWith('0x') ? recipientId : null;
+    if (!to) {
+      return jsonResponse({ error: 'Invalid recipient address' }, 400);
+    }
+
+    const valueHex = '0x' + (BigInt(Math.floor(parseFloat(amount) * 1e18))).toString(16);
+
+    return jsonResponse({
+      chainId: 'eip155:1',
+      method: 'eth_sendTransaction',
+      params: {
+        to,
+        value: valueHex,
+      },
+    });
+  } catch (err) {
+    return jsonResponse({ error: String(err) }, 500);
+  }
+}
+
+/**
+ * Farcaster Frame callback endpoint.
+ * Receives the transaction hash after the user signs in their wallet.
+ */
+export async function handleTipFrameCallback(request: Request, env: Env): Promise<Response> {
+  try {
+    const url = new URL(request.url);
+    const parts = url.pathname.split('/');
+    const recipientId = parts[parts.length - 1] || '';
+    const amount = url.searchParams.get('amount') || '0.001';
+
+    const body = (await request.json()) as any;
+    const txHash = (body?.untrustedData?.transactionId || body?.txHash) as string | undefined;
+    const success = !!txHash;
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta property="fc:frame" content="vNext" />
+  <meta property="fc:frame:image" content="https://degenfeed.xyz/og/tip.png" />
+  <meta property="fc:frame:button:1" content="${success ? '✓ Tip sent!' : 'Tip failed'}" />
+  <meta property="og:title" content="Tip on DegenFeed" />
+</head>
+<body>
+  <p>${success ? 'Tip sent! Tx: ' + txHash : 'Tip could not be completed.'}</p>
+</body>
+</html>`;
+
+    return new Response(html, {
+      status: 200,
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    });
+  } catch (err) {
+    return new Response('Error', { status: 500 });
+  }
 }

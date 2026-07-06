@@ -12,7 +12,7 @@ import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import { handleRmiNewsFeed } from './routes/news';
 import { handleRssFeed } from './routes/rss';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
-import { handleTipResolve, handleTipCreate, handleTipFrame, handleLightningInvoice } from './routes/tip';
+import { handleTipResolve, handleTipCreate, handleTipFrame, handleTipFrameTx, handleTipFrameCallback, handleLightningInvoice } from './routes/tip';
 import { handlePublish, handleEngage } from './routes/publish';
 import { handleFundingFeed } from './routes/funding';
 import { handleNotifications } from './routes/notifications';
@@ -177,7 +177,9 @@ export default {
       if (path === '/api/auth/wallet/nonce') { return handleWalletNonce(request, env); }
       if (path === '/api/auth/wallet/verify') { return handleWalletVerify(request, env); }
       if (path === '/api/tip/lightning/invoice') { return handleLightningInvoice(request, env); }
-      if (path.startsWith('/api/tip/frame/') && !path.includes('/tx/') && !path.endsWith('/callback')) { return handleTipFrame(request, env); }
+      if (path.startsWith('/api/tip/frame/tx/')) { return handleTipFrameTx(request, env); }
+      if (path.startsWith('/api/tip/frame/callback/')) { return handleTipFrameCallback(request, env); }
+      if (path.startsWith('/api/tip/frame/')) { return handleTipFrame(request, env); }
       if (path === '/api/tip/resolve') { return handleTipResolve(request, env); }
       if (path === '/api/tip/create') { return handleTipCreate(request, env); }
       if (path === '/api/feed/funding') { return handleFundingFeed(request, env); }
