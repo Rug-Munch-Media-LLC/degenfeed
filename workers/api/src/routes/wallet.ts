@@ -17,6 +17,14 @@ export async function handleWalletNonce(request: Request, env: Env): Promise<Res
   const address = url.searchParams.get('address')?.toLowerCase() || '';
   if (!address) return jsonResponse({ error: 'Address required' }, 400);
 
+  // Prevent memory exhaustion from unlimited nonce generation
+  if (nonces.size > 10000) {
+    const now = Date.now();
+    for (const [key, entry] of nonces) {
+      if (entry.expiresAt < now) nonces.delete(key);
+    }
+  }
+
   const nonce = generateNonce();
   nonces.set(address, { nonce, expiresAt: Date.now() + 300_000 });
 
@@ -58,35 +66,31 @@ function verifySolanaSignature(message: string, signature: string, expectedAddre
 }
 
 async function tryGtsAuth(env: Env): Promise<{ accessToken: string; clientId: string; clientSecret: string } | null> {
+  // If static GTS credentials are configured in env vars, use them.
+  // Otherwise do NOT create a new OAuth app on every request — that pollutes
+  // the instance with stale apps. Wallet-only auth still works without GTS.
+  if (!env.GTS_CLIENT_ID || !env.GTS_CLIENT_SECRET) return null;
+
   try {
     const gtsUrl = env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
-    const appRes = await fetch(`${gtsUrl}/api/v1/apps`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        client_name: 'DegenFeed Web3',
-        redirect_uris: 'urn:ietf:wg:oauth:2.0:oob',
-        scopes: GTS_SCOPES,
-        website: 'https://degenfeed.xyz',
-      }),
-    });
-    if (!appRes.ok) return null;
-    const app = await appRes.json() as any;
-
     const tokenRes = await fetch(`${gtsUrl}/oauth/token`, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'client_credentials',
-        client_id: app.client_id,
-        client_secret: app.client_secret,
+        client_id: env.GTS_CLIENT_ID,
+        client_secret: env.GTS_CLIENT_SECRET,
         scope: GTS_SCOPES,
       }).toString(),
     });
     if (!tokenRes.ok) return null;
     const token = await tokenRes.json() as any;
 
-    return { accessToken: token.access_token, clientId: app.client_id, clientSecret: app.client_secret };
+    return {
+      accessToken: token.access_token,
+      clientId: env.GTS_CLIENT_ID,
+      clientSecret: env.GTS_CLIENT_SECRET,
+    };
   } catch {
     return null;
   }

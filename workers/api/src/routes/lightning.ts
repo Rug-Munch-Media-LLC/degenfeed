@@ -43,22 +43,7 @@ export async function resolveLnurlFromPubkey(pubkey: string, relays: string[]): 
     } catch { /* try next */ }
   }
 
-  // Fallback: query relays directly for kind 0 event
-  for (const relay of relays) {
-    try {
-      const wsUrl = relay.replace('wss://', 'https://').replace('ws://', 'http://');
-      const res = await fetch(`${wsUrl}/api/v1/events?kinds=0&authors=${pubkey}&limit=1`, {
-        signal: AbortSignal.timeout(3000),
-      });
-      if (!res.ok) continue;
-      const events = await res.json() as any[];
-      if (events?.[0]?.content) {
-        const lnurl = extractLnurl(events[0].content);
-        if (lnurl) return lnurl;
-      }
-    } catch { /* try next */ }
-  }
-
+  // TODO: fallback via WebSocket relay subscription if aggregators fail
   return null;
 }
 
@@ -67,7 +52,7 @@ export async function resolveLnurlFromPubkey(pubkey: string, relays: string[]): 
  */
 function extractLnurl(metadataStr: string): string | null {
   try {
-    const meta = JSON.parse(typeof metadataStr === 'string' ? metadataStr : metadataStr);
+    const meta = JSON.parse(metadataStr);
     const raw = typeof meta === 'string' ? JSON.parse(meta) : meta;
 
     // Check standard field names
@@ -96,25 +81,70 @@ function lnaddressToLnurl(address: string): string {
  */
 
 /**
- * Minimal bech32 decoder for LNURLs (BIP-0173).
+ * Bech32 polymod checksum generator (BIP-0173).
+ */
+function bech32Polymod(values: number[]): number {
+  const GEN = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3];
+  let chk = 1;
+  for (const v of values) {
+    const b = chk >> 25;
+    chk = ((chk & 0x1ffffff) << 5) ^ v;
+    for (let i = 0; i < 5; i++) {
+      chk ^= ((b >> i) & 1) ? GEN[i]! : 0;
+    }
+  }
+  return chk;
+}
+
+/**
+ * Minimal bech32 decoder for LNURLs (BIP-0173) with checksum verification.
  */
 function bech32Decode(bech: string): Uint8Array {
   const CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
   const bechLower = bech.toLowerCase();
   const sep = bechLower.lastIndexOf('1');
-  if (sep < 1) throw new Error('Invalid bech32');
+  if (sep < 1) throw new Error('Invalid bech32: no separator');
+
+  const hrp = bechLower.slice(0, sep);
   const dataPart = bechLower.slice(sep + 1);
-  const values = new Uint8Array(dataPart.length);
+  if (dataPart.length < 6) throw new Error('Invalid bech32: data part too short');
+
+  let hasLower = false;
+  let hasUpper = false;
+  for (let i = 0; i < bech.length; i++) {
+    const c = bech[i]!;
+    if (c >= 'a' && c <= 'z') hasLower = true;
+    if (c >= 'A' && c <= 'Z') hasUpper = true;
+  }
+  if (hasLower && hasUpper) throw new Error('Invalid bech32: mixed case');
+
+  const values: number[] = [];
+  for (let i = 0; i < hrp.length; i++) {
+    values.push(hrp.charCodeAt(i) >> 5);
+  }
+  values.push(0);
+  for (let i = 0; i < hrp.length; i++) {
+    values.push(hrp.charCodeAt(i) & 31);
+  }
+
+  const data = new Uint8Array(dataPart.length);
   for (let i = 0; i < dataPart.length; i++) {
     const idx = CHARSET.indexOf(dataPart[i]!);
     if (idx < 0) throw new Error('Invalid bech32 character');
-    values[i] = idx;
+    data[i] = idx;
+    values.push(idx);
   }
-  const data = values.slice(0, -6);
+
+  if (bech32Polymod(values) !== 1) {
+    throw new Error('Invalid bech32: checksum mismatch');
+  }
+
+  // Convert 5-bit data words to 8-bit bytes (excluding 6-word checksum)
+  const payload = data.slice(0, -6);
   const result: number[] = [];
   let buffer = 0;
   let bitsLeft = 0;
-  for (const val of data) {
+  for (const val of payload) {
     buffer = (buffer << 5) | val;
     bitsLeft += 5;
     if (bitsLeft >= 8) {
@@ -122,6 +152,7 @@ function bech32Decode(bech: string): Uint8Array {
       bitsLeft -= 8;
     }
   }
+
   return new Uint8Array(result);
 }
 

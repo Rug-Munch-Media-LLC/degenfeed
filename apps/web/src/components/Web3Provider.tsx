@@ -6,7 +6,7 @@ interface Web3ContextValue {
   account: string | null;
   chainId: number | null;
   isConnected: boolean;
-  connect: () => Promise<void>;
+  connect: () => Promise<string>;
   disconnect: () => void;
   signMessage: (message: string) => Promise<string>;
   isMetaMask: boolean;
@@ -79,9 +79,11 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     if (!provider) throw new Error('No Ethereum wallet detected');
     try {
       const accounts = await provider.request({ method: 'eth_requestAccounts' });
-      if (accounts?.[0]) setAccount(accounts[0]);
+      const selected = accounts?.[0] || provider.selectedAddress;
+      if (selected) setAccount(selected);
       const id = await provider.request({ method: 'eth_chainId' });
       setChainId(parseInt(id, 16));
+      return selected || '';
     } catch (err: any) {
       throw new Error(err.message || 'User rejected connection');
     }

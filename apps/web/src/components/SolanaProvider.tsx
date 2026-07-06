@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 interface SolanaContextValue {
   account: string | null;
   isConnected: boolean;
-  connect: () => Promise<void>;
+  connect: () => Promise<string>;
   disconnect: () => void;
   signAndSendTransaction: (to: string, amount: number) => Promise<{ signature: string }>;
   providerName: string;
@@ -63,8 +63,9 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
     if (!provider) throw new Error('No Solana wallet detected. Install Phantom, Solflare, or Backpack.');
     try {
       const resp = await provider.connect();
-      const pubKey = resp.publicKey?.toString() || provider.publicKey?.toString();
+      const pubKey = resp.publicKey?.toString() || provider.publicKey?.toString() || '';
       if (pubKey) setAccount(pubKey);
+      return pubKey;
     } catch (err: any) {
       throw new Error(err.message || 'User rejected Solana connection');
     }

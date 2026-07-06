@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useTip, type TipMethod } from '../hooks/useTip';
 import { useWeb3 } from './Web3Provider';
 import { useSolana } from './SolanaProvider';
-import { useAuth } from './AuthProvider';
 
 interface TipModalProps {
   open: boolean;
@@ -14,24 +14,18 @@ interface TipModalProps {
   recipientDisplayName: string;
 }
 
-const PROTOCOL_ICONS: Record<string, string> = {
-  nostr: "☰", farcaster: "◈", lens: "◎", bluesky: "☁",
-  threads: "⊞", mastodon: "🐘", ethereum: "◆", solana: "◎",
-  lightning_zap: "⚡",
-};
-
 export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, recipientDisplayName }: TipModalProps) {
-  const { state, resolveMethods, sendTip } = useTip();
-  const { account, isConnected, connect: connectWallet } = useWeb3();
-  const { account: solanaAccount, isConnected: solanaConnected, connect: connectSolana, signAndSendTransaction } = useSolana();
-  const { walletAddress } = useAuth();
+  const { state, resolveMethods, createTip, fetchLightningInvoice, setTipStatus } = useTip();
+  const { account, connect: connectWallet } = useWeb3();
+  const { account: solanaAccount, connect: connectSolana, signAndSendTransaction } = useSolana();
   const [amount, setAmount] = useState('0.001');
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const tipperAddress = account || walletAddress;
+  const [invoice, setInvoice] = useState<string | null>(null);
 
   // Resolve tipping methods on open
   useEffect(() => {
     if (open) {
+      setInvoice(null);
       resolveMethods(recipientProtocol, recipientAuthorId).then(methods => {
         const firstAvailable = methods.find(m => m.available);
         if (firstAvailable) setSelectedMethod(firstAvailable.method);
@@ -39,33 +33,69 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
     }
   }, [open, recipientProtocol, recipientAuthorId, resolveMethods]);
 
+  const handleClose = useCallback(() => {
+    setInvoice(null);
+    onClose();
+  }, [onClose]);
+
   const handleSend = useCallback(async () => {
     if (!selectedMethod || !amount) return;
 
-    // Ensure wallet is connected for crypto tips
-    if (selectedMethod === 'ethereum' && !account) {
-      try {
-        await connectWallet();
-      } catch {
-        return;
-      }
-    }
-    if (selectedMethod === 'solana' && !solanaAccount) {
-      try {
-        await connectSolana();
-      } catch {
-        return;
-      }
-    }
-
     try {
-      await sendTip(recipientAuthorId, recipientProtocol, selectedMethod, amount);
-    } catch {
-      // Error is in state
-    }
-  }, [selectedMethod, amount, account, connectWallet, sendTip, recipientAuthorId, recipientProtocol]);
+      if (selectedMethod === 'ethereum') {
+        let ethAccount = account;
+        if (!ethAccount) ethAccount = await connectWallet();
+        if (!ethAccount) throw new Error('No Ethereum wallet connected');
 
-  const quickAmounts = ['0.001', '0.005', '0.01', '0.05', '0.1'];
+        const intent = await createTip(recipientAuthorId, recipientProtocol, selectedMethod, amount);
+        if (!intent) return;
+
+        setTipStatus('signing');
+        const valueHex = '0x' + (BigInt(Math.floor(parseFloat(amount) * 1e18))).toString(16);
+        const txHash = await (window as any).ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{ to: intent.intent.to, value: valueHex }],
+        });
+        setTipStatus('sent', txHash);
+        return;
+      }
+
+      if (selectedMethod === 'solana') {
+        let solAccount = solanaAccount;
+        if (!solAccount) solAccount = await connectSolana();
+        if (!solAccount) throw new Error('No Solana wallet connected');
+
+        const intent = await createTip(recipientAuthorId, recipientProtocol, selectedMethod, amount);
+        if (!intent) return;
+
+        setTipStatus('signing');
+        const { signature } = await signAndSendTransaction(intent.intent.to, parseFloat(amount));
+        setTipStatus('sent', signature);
+        return;
+      }
+
+      if (selectedMethod === 'lightning_zap') {
+        setTipStatus('creating');
+        const result = await fetchLightningInvoice(recipientAuthorId, amount, 'Tip from DegenFeed');
+        if (!result) return;
+        setInvoice(result.invoice);
+        setTipStatus('sent', result.invoice);
+        return;
+      }
+
+      // Fallback: Frame / Lens / other methods
+      const intent = await createTip(recipientAuthorId, recipientProtocol, selectedMethod, amount);
+      if (!intent) return;
+      setTipStatus('sent', intent.actionUrl || 'ok');
+
+    } catch (err: any) {
+      setTipStatus('failed', undefined, err.message || String(err));
+    }
+  }, [selectedMethod, amount, account, solanaAccount, connectWallet, connectSolana, signAndSendTransaction, createTip, fetchLightningInvoice, setTipStatus, recipientAuthorId, recipientProtocol]);
+
+  const quickAmounts = selectedMethod === 'lightning_zap'
+    ? ['1000', '5000', '10000', '50000', '100000']
+    : ['0.001', '0.005', '0.01', '0.05', '0.1'];
 
   if (!open) return null;
 
@@ -75,7 +105,7 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={handleClose}
       role="dialog"
       aria-modal="true"
       aria-label={"Tip " + recipientDisplayName}
@@ -84,13 +114,10 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
         className="w-full max-w-sm rounded-2xl border border-gray-800 bg-gray-950 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
-          <h2 className="text-sm font-semibold text-white">
-            Tip {recipientDisplayName}
-          </h2>
+          <h2 className="text-sm font-semibold text-white">Tip {recipientDisplayName}</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
             type="button"
             aria-label="Close"
@@ -101,7 +128,6 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
           </button>
         </div>
 
-        {/* Body */}
         <div className="px-4 py-4">
           {state.status === 'resolving' ? (
             <div className="py-8 text-center">
@@ -111,17 +137,12 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
           ) : state.methods.length === 0 ? (
             <div className="py-8 text-center">
               <p className="mb-2 text-gray-500">No tipping methods available for this creator</p>
-              <p className="text-xs text-gray-600">
-                They may not have linked any wallets or payment accounts yet.
-              </p>
+              <p className="text-xs text-gray-600">They may not have linked any wallets or payment accounts yet.</p>
             </div>
           ) : (
             <>
-              {/* Method selection */}
               <div className="mb-4">
-                <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-gray-500">
-                  Method
-                </label>
+                <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-gray-500">Method</label>
                 <div className="space-y-1.5">
                   {availableMethods.map(m => (
                     <button
@@ -150,24 +171,21 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
                 </div>
               </div>
 
-              {/* Amount input */}
               <div className="mb-4">
-                <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-gray-500">
-                  Amount
-                </label>
+                <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-gray-500">Amount</label>
                 <div className="relative mb-2">
                   <input
                     type="text"
                     value={amount}
                     onChange={e => setAmount(e.target.value)}
                     className="w-full rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-lg font-mono text-white outline-none focus:border-degen-500 transition-colors"
-                    placeholder="0.001"
+                    placeholder={selectedMethod === 'lightning_zap' ? '1000' : '0.001'}
                     aria-label="Tip amount"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
-                    {selected?.method === 'ethereum' ? 'ETH' :
-                     selected?.method === 'solana' ? 'SOL' :
-                     selected?.method === 'lightning_zap' ? 'sats' : ''}
+                    {selected?.method === 'lightning_zap' ? 'sats' :
+                     selected?.method === 'ethereum' ? 'ETH' :
+                     selected?.method === 'solana' ? 'SOL' : ''}
                   </span>
                 </div>
                 <div className="flex gap-2">
@@ -187,26 +205,20 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
                 </div>
               </div>
 
-              {/* Wallet status */}
               {selectedMethod === 'ethereum' && !account && (
                 <div className="mb-4 rounded-lg border border-yellow-900/50 bg-yellow-900/10 p-3">
-                  <p className="text-xs text-yellow-400">
-                    Connect your Ethereum wallet (MetaMask, Rabby, Rainbow) to send this tip.
-                  </p>
+                  <p className="text-xs text-yellow-400">Connect your Ethereum wallet (MetaMask, Rabby, Rainbow) to send this tip.</p>
                 </div>
               )}
               {selectedMethod === 'solana' && !solanaAccount && (
                 <div className="mb-4 rounded-lg border border-purple-900/50 bg-purple-900/10 p-3">
-                  <p className="text-xs text-purple-400">
-                    Connect your Solana wallet (Phantom, Solflare, Backpack) to send this tip.
-                  </p>
+                  <p className="text-xs text-purple-400">Connect your Solana wallet (Phantom, Solflare, Backpack) to send this tip.</p>
                 </div>
               )}
 
-              {/* Send button */}
               <button
                 type="button"
-                disabled={!selectedMethod || state.status === 'creating' || state.status === 'signing' || state.status === 'sending'}
+                disabled={!selectedMethod || ['creating', 'signing', 'sending'].includes(state.status)}
                 onClick={handleSend}
                 className="btn-primary w-full text-sm disabled:opacity-50"
               >
@@ -218,12 +230,10 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
                  'Send Tip'}
               </button>
 
-              {/* Error */}
               {state.status === 'failed' && state.error && (
                 <p className="mt-2 text-xs text-red-400 text-center">{state.error}</p>
               )}
 
-              {/* Success */}
               {state.status === 'sent' && state.txHash && (
                 <div className="mt-3 rounded-lg bg-green-900/20 border border-green-900/50 p-3">
                   {selectedMethod === 'lightning_zap' ? (
@@ -236,9 +246,7 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
                           </div>
                         )}
                       </div>
-                      <p className="mb-2 text-center text-[10px] text-gray-500">
-                        Scan with any Lightning wallet (Alby, Wallet of Satoshi, Phoenix)
-                      </p>
+                      <p className="mb-2 text-center text-[10px] text-gray-500">Scan with any Lightning wallet</p>
                       <div className="flex gap-2">
                         <code className="flex-1 rounded bg-gray-900 px-2 py-1 text-[10px] text-gray-400 font-mono truncate">
                           {state.txHash.slice(0, 40)}...
@@ -283,11 +291,8 @@ export function TipModal({ open, onClose, recipientProtocol, recipientAuthorId, 
           )}
         </div>
 
-        {/* Footer */}
         <div className="border-t border-gray-800 px-4 py-3">
-          <p className="text-center text-[10px] text-gray-600">
-            Powered by DegenFeed • Cross-platform tipping • No platform fees
-          </p>
+          <p className="text-center text-[10px] text-gray-600">Powered by DegenFeed • Cross-platform tipping • No platform fees</p>
         </div>
       </div>
     </div>

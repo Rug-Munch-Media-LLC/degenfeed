@@ -88,49 +88,8 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
 
     case 'bluesky':
     case 'threads':
-      methods.push({
-        method: 'ethereum',
-        label: 'Ethereum / EVM',
-        description: 'Send ETH, USDC, or any ERC-20',
-        icon: '◆',
-        available: true,
-        chain: 'ethereum',
-        minAmount: 0.0001,
-        fee: '~$0.05-5',
-      });
-      methods.push({
-        method: 'solana',
-        label: 'Solana',
-        description: 'Send SOL or SPL tokens',
-        icon: '◎',
-        available: true,
-        chain: 'solana',
-        minAmount: 0.001,
-        fee: '< $0.01',
-      });
-      break;
-
     case 'mastodon':
-      methods.push({
-        method: 'ethereum',
-        label: 'Ethereum / EVM',
-        description: 'Send ETH, USDC, or any ERC-20',
-        icon: '◆',
-        available: true,
-        chain: 'ethereum',
-        minAmount: 0.0001,
-        fee: '~$0.05-5',
-      });
-      methods.push({
-        method: 'solana',
-        label: 'Solana',
-        description: 'Send SOL or SPL tokens',
-        icon: '◎',
-        available: true,
-        chain: 'solana',
-        minAmount: 0.001,
-        fee: '< $0.01',
-      });
+      // Ethereum + Solana already added above
       break;
 
     default:
@@ -184,6 +143,7 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
         return jsonResponse({
           method: 'lightning_zap',
           intent: {
+            to: body.recipient,
             amount: body.amount,
             note: 'Tip from DegenFeed',
             zapEndpoint: '/api/tip/lightning/invoice',
@@ -197,10 +157,9 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
           intent: {
             recipient: body.recipient,
             amount: body.amount,
-            actionUrl: `/api/tip/frame/${encodeURIComponent(body.recipient)}`,
+            actionUrl: `/api/tip/frame/${encodeURIComponent(body.recipient)}?amount=${body.amount}`,
           },
           instructions: 'Complete the tip via the Farcaster Frame',
-          actionUrl: `/api/tip/frame/${encodeURIComponent(body.recipient)}?amount=${body.amount}`,
         });
 
       case 'lens_collect':
@@ -227,7 +186,7 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
 export async function handleLightningInvoice(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const pubkey = url.searchParams.get('pubkey') || '';
-  const amountBtc = parseFloat(url.searchParams.get('amount') || '0.00001');
+  const amountSats = parseFloat(url.searchParams.get('amount') || '1000');
   const comment = url.searchParams.get('comment') || 'Tip from DegenFeed';
 
   if (!pubkey) {
@@ -241,8 +200,8 @@ export async function handleLightningInvoice(request: Request, env: Env): Promis
     return jsonResponse({ error: 'No LNURL found for this Nostr pubkey' }, 404);
   }
 
-  // Convert BTC to msat (1 BTC = 100,000,000 sats = 100,000,000,000 msat)
-  const amountMsat = Math.floor(amountBtc * 100_000_000_000);
+  // Convert sats to msat (1 sat = 1,000 msat)
+  const amountMsat = Math.floor(amountSats * 1000);
   const result = await fetchZapInvoice(lnurl, amountMsat, comment);
 
   if (result.status === 'ERROR') {
