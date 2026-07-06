@@ -15,6 +15,8 @@ import { handleRssFeed } from './routes/rss';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
 import { handlePublish, handleEngage } from './routes/publish';
 import { handleTopFeed, handleNewsletterFeed, handleTrendingFeed } from './routes/curated';
+import { handlePrices } from './routes/prices';
+import { handleFundingFeed } from './routes/funding';
 import { handleNotifications } from './routes/notifications';
 import { handleResolveIdentity } from './routes/identity';
 import type { Protocol } from '@degenfeed/types';
@@ -167,6 +169,8 @@ export default {
                   if (path === '/api/feed/top') { return handleTopFeed(request, env); }
       if (path === '/api/feed/newsletters') { return handleNewsletterFeed(request, env); }
       if (path === '/api/feed/trending') { return handleTrendingFeed(request, env); }
+            if (path === '/api/prices') { return handlePrices(request, env); }
+      if (path === '/api/feed/funding') { return handleFundingFeed(request, env); }
       if (path === '/api/notifications') { return handleNotifications(request, env); }
       if (path === '/api/identity/resolve') {
         return handleResolveIdentity(request, env);

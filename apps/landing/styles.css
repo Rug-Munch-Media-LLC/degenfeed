@@ -225,3 +225,113 @@ ul { list-style: none; }
   .stats-row { gap: 24px; }
   .cta-card { padding: 40px 20px; }
 }
+
+/* ─── Additional polish ─────────────────────────────────────── */
+
+/* Smoother card hover */
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+/* Protocol pill glow on hover */
+.ps-item:hover .ps-dot {
+  box-shadow: 0 0 12px var(--pcolor);
+}
+
+/* PD card left border animation */
+.pd-card {
+  transition: all 0.25s ease, border-left-width 0.15s ease;
+}
+.pd-card:hover {
+  border-left-width: 4px;
+  padding-left: 23px;
+}
+
+/* Better stat numbers */
+.stat-value {
+  background: linear-gradient(135deg, var(--accent), #00ccff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hero title gradient accent */
+.accent {
+  background: linear-gradient(135deg, #00ff41, #00ccff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient border on CTA card */
+.cta-card {
+  position: relative;
+}
+.cta-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(0,255,65,0.3), rgba(0,204,255,0.1));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.cta-card:hover::before {
+  opacity: 1;
+}
+
+/* Stack items with gradient */
+.stack-item:hover {
+  background: linear-gradient(135deg, rgba(0,255,65,0.1), rgba(0,204,255,0.05));
+}
+
+/* Better what-card */
+.what-card {
+  position: relative;
+  overflow: hidden;
+}
+.what-card::after {
+  content: "";
+  position: absolute;
+  top: 0; right: 0;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle, rgba(0,255,65,0.05), transparent);
+  border-radius: 50%;
+  transform: translate(30%, -30%);
+}
+
+/* Footer link hover */
+.footer-links a {
+  transition: color 0.15s;
+}
+.footer-links a:hover {
+  color: var(--accent);
+}
+
+/* Loading animation for skeleton states */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-raised) 25%, var(--border) 50%, var(--surface-raised) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Responsive improvements */
+@media (max-width: 640px) {
+  .hero-title { font-size: 32px; }
+  .stats-row { gap: 16px; }
+  .stat-value { font-size: 22px; }
+  .pd-grid { grid-template-columns: 1fr 1fr; }
+  .cta-card { padding: 32px 20px; }
+}
+
+@media (max-width: 480px) {
+  .pd-grid { grid-template-columns: 1fr; }
+  .protocol-strip { gap: 6px; }
+  .ps-item { font-size: 11px; padding: 4px 10px; }
+}

@@ -4,7 +4,7 @@
  */
 
 // Mock fetch — each test sets up its own responses
-import { vi } from 'vitest';
+import { vi, afterEach } from "vitest";
 
 // Mock global fetch
 const originalFetch = globalThis.fetch;

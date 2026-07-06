@@ -127,29 +127,76 @@ export async function handleTopFeed(request: Request, env: Env): Promise<Respons
     .filter(p => p.score > 0)
     .slice(0, limit);
   
+  // Dedup by content similarity
+  const seen = new Set<string>();
+  const deduped = scored.filter(s => {
+    const key = s.post.text.slice(0, 60);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, limit);
+  
   return jsonResponse({
-    data: scored.map(s => s.post),
-    meta: { total: scored.length, limit, type: 'top' },
+    data: deduped.map(s => s.post),
+    meta: { total: deduped.length, limit, type: 'top' },
   });
 }
 
 // ─── 2. Newsletter Feed — /api/feed/newsletters ───────────────
 
 const NEWSLETTER_SOURCES = [
-  { name: 'Bankless', url: 'https://bankless.substack.com/feed' },
-  { name: 'The Defiant', url: 'https://thedefiant.io/feed' },
-  { name: 'Blockworks', url: 'https://blockworks.co/feed' },
-  { name: 'Decrypt', url: 'https://decrypt.co/feed' },
-  { name: 'Week in Ethereum', url: 'https://weekinethereumnews.com/feed' },
-  { name: 'Crypto Native', url: 'https://cryptonative.substack.com/feed' },
+  { name: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', category: 'headlines' },
+  { name: 'CoinTelegraph', url: 'https://cointelegraph.com/rss', category: 'headlines' },
+  { name: 'The Block', url: 'https://www.theblockcrypto.com/rss.xml', category: 'headlines' },
+  { name: 'Decrypt', url: 'https://decrypt.co/feed', category: 'headlines' },
+  { name: 'Blockworks', url: 'https://blockworks.co/feed', category: 'headlines' },
+  { name: 'CryptoSlate', url: 'https://cryptoslate.com/feed/', category: 'headlines' },
+  { name: 'U_Today', url: 'https://u.today/rss', category: 'headlines' },
+  { name: 'Bankless', url: 'https://bankless.substack.com/feed', category: 'deep_dives' },
+  { name: 'Week in Ethereum', url: 'https://weekinethereumnews.com/feed', category: 'deep_dives' },
+  { name: 'ETH Daily', url: 'https://ethdaily.substack.com/feed', category: 'deep_dives' },
+  { name: 'Messari', url: 'https://messari.io/rss', category: 'deep_dives' },
+  { name: 'Delphi Digital', url: 'https://members.delphidigital.com/feed/', category: 'deep_dives' },
+  { name: 'Kerman Kohli', url: 'https://kermankohli.substack.com/feed', category: 'deep_dives' },
+  { name: 'The DeFi Investor', url: 'https://thedefiinvestor.substack.com/feed', category: 'deep_dives' },
+  { name: 'Dune Analytics', url: 'https://dune.com/feed', category: 'onchain_data' },
+  { name: 'Glassnode', url: 'https://glassnode.com/blog/feed', category: 'onchain_data' },
+  { name: 'Token Terminal', url: 'https://tokenterminal.com/feed', category: 'onchain_data' },
+  { name: 'Nansen', url: 'https://nansen.substack.com/feed', category: 'onchain_data' },
+  { name: 'Artemis', url: 'https://artemis.xyz/feed', category: 'onchain_data' },
+  { name: 'DeFi Pulse', url: 'https://defipulse.com/blog/feed', category: 'defi' },
+  { name: 'DeFi Prime', url: 'https://defiprime.com/feed', category: 'defi' },
+  { name: 'DeFi Llama', url: 'https://defillama.com/feed', category: 'defi' },
+  { name: 'Yearn', url: 'https://yearn.substack.com/feed', category: 'defi' },
+  { name: 'Uniswap', url: 'https://uniswap.org/feed.xml', category: 'defi' },
+  { name: 'The Sequence', url: 'https://thesequence.substack.com/feed', category: 'ai_crypto' },
+  { name: 'AI in Crypto', url: 'https://aicrypto.substack.com/feed', category: 'ai_crypto' },
+  { name: 'Crypto AI Daily', url: 'https://cryptoaidaily.substack.com/feed', category: 'ai_crypto' },
+  { name: 'Modular', url: 'https://modular.substack.com/feed', category: 'ai_crypto' },
+  { name: 'SEC Crypto', url: 'https://www.sec.gov/rss/crypto', category: 'regulation' },
+  { name: 'CFTC', url: 'https://www.cftc.gov/rss', category: 'regulation' },
+  { name: 'Crypto Law', url: 'https://cryptolaw.substack.com/feed', category: 'regulation' },
+  { name: 'The DeFi Edge', url: 'https://thedefiedge.substack.com/feed', category: 'alpha_leaks' },
+  { name: 'Alpha Leak', url: 'https://alphaleak.substack.com/feed', category: 'alpha_leaks' },
+  { name: 'Degen News', url: 'https://degennews.substack.com/feed', category: 'alpha_leaks' },
 ];
 
 export async function handleNewsletterFeed(request: Request, env: Env): Promise<Response> {
-  const limit = Number(new URL(request.url).searchParams.get('limit')) || 25;
+  const url = new URL(request.url);
+  const limit = Number(url.searchParams.get('limit')) || 25;
+  const category = url.searchParams.get('category') || '';
   const allPosts: UnifiedPost[] = [];
   
+  const sources = category 
+    ? NEWSLETTER_SOURCES.filter(s => s.category === category)
+    : NEWSLETTER_SOURCES;
+  
+  if (sources.length === 0) {
+    return jsonResponse({ data: [], meta: { total: 0, category, available: Object.keys(NEWSLETTER_SOURCES).filter(Boolean) } });
+  }
+
   const results = await Promise.allSettled(
-    NEWSLETTER_SOURCES.map(async (src) => {
+    sources.slice(0, 15).map(async (src) => {
       try {
         const { GenericRssSource, feedToUnifiedPosts } = await import('@degenfeed/rss-sdk');
         const s = await GenericRssSource.fetch(src.url);
@@ -160,7 +207,46 @@ export async function handleNewsletterFeed(request: Request, env: Env): Promise<
   );
   
   allPosts.sort((a, b) => b.createdAt - a.createdAt);
-  return jsonResponse({ data: allPosts.slice(0, limit), meta: { total: allPosts.length, sources: NEWSLETTER_SOURCES.length } });
+  
+  // Enhanced niche detection from combined content
+  const nicheCounts: Record<string, number> = {};
+  for (const post of allPosts.slice(0, 50)) {
+    const text = (post.text + ' ' + (post.niches || []).join(' ')).toLowerCase();
+    const keywords: Record<string, string[]> = {
+      bitcoin: ['bitcoin', 'btc', 'satoshi'],
+      ethereum: ['ethereum', 'eth', 'vitalik'],
+      solana: ['solana', 'sol'],
+      defi: ['defi', 'lending', 'yield', 'liquidity', 'amm', 'swap'],
+      nft: ['nft', 'nfts', 'collectible', 'art block', 'punk'],
+      ai: ['ai', 'artificial intelligence', 'machine learning', 'llm', 'gpt'],
+      regulation: ['sec', 'regulation', 'cftc', 'biden', 'congress'],
+      degen: ['degen', 'ape', 'moon', 'rug', 'pump', 'dump', 'memecoin'],
+      layer2: ['layer 2', 'l2', 'rollup', 'arbitrum', 'optimism', 'base'],
+      privacy: ['privacy', 'monero', 'zero knowledge', 'zkp'],
+      gaming: ['gaming', 'gamefi', 'metaverse', 'play to earn'],
+    };
+    for (const [niche, terms] of Object.entries(keywords)) {
+      if (terms.some(t => text.includes(t))) {
+        nicheCounts[niche] = (nicheCounts[niche] || 0) + 1;
+      }
+    }
+  }
+  
+  // Sort niches by frequency
+  const trending = Object.entries(nicheCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([topic, count]) => ({ topic, count }));
+  
+  return jsonResponse({
+    data: allPosts.slice(0, limit),
+    meta: {
+      total: allPosts.length,
+      sources: sources.length,
+      category: category || 'all',
+      trending,
+    },
+  });
 }
 
 // ─── 3. Trending Topics — /api/feed/trending ─────────────────
