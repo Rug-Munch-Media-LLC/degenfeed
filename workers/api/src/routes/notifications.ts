@@ -36,8 +36,24 @@ interface MastodonNotification {
   status?: MastodonStatus;
 }
 
+function npubToHex(npubOrHex: string): string {
+  if (!npubOrHex) return '';
+  if (npubOrHex.startsWith('npub1') && npubOrHex.length === 62) {
+    try {
+      const mod = require('@degenfeed/nostr-sdk') as { nip19?: { decode?: (s: string) => { type: string; data: string } } };
+      const decoded = mod.nip19?.decode?.(npubOrHex);
+      if (decoded && decoded.type === 'npub' && typeof decoded.data === 'string') {
+        return decoded.data;
+      }
+    } catch { /* fall through */ }
+  }
+  return npubOrHex;
+}
+
 async function fetchNostrNotifications(pubkey: string): Promise<Notification[]> {
   const results: Notification[] = [];
+  const hexPubkey = npubToHex(pubkey);
+  if (!hexPubkey) return results;
   try {
     const mod = await import('@degenfeed/nostr-sdk');
     const pool = new mod.RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
@@ -45,7 +61,7 @@ async function fetchNostrNotifications(pubkey: string): Promise<Notification[]> 
     });
     const reactions = await pool.list({ kinds: [7], limit: 20 }, 3000);
     for (const ev of reactions) {
-      if (!ev.tags.some((t: string[]) => t[0] === 'p' && t[1] === pubkey)) continue;
+      if (!ev.tags.some((t: string[]) => t[0] === 'p' && t[1] === hexPubkey)) continue;
       results.push({
         id: `nostr:reaction:${ev.id}`,
         type: 'like' as const,
@@ -59,7 +75,7 @@ async function fetchNostrNotifications(pubkey: string): Promise<Notification[]> 
     }
     const mentions = await pool.list({ kinds: [1], limit: 20 }, 3000);
     for (const ev of mentions) {
-      if (ev.pubkey === pubkey || !ev.tags.some((t: string[]) => t[0] === 'p' && t[1] === pubkey))
+      if (ev.pubkey === hexPubkey || !ev.tags.some((t: string[]) => t[0] === 'p' && t[1] === hexPubkey))
         continue;
       results.push({
         id: `nostr:mention:${ev.id}`,

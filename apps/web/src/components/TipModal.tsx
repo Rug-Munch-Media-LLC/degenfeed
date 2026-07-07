@@ -127,6 +127,22 @@ export function TipModal({
         const provider = window.ethereum;
         if (!provider) throw new Error('No Ethereum wallet detected');
 
+        // Ensure the wallet is on the correct chain for this tip
+        const requiredChainId = intent.intent.chainId ?? 137;
+        const requiredChainHex = `0x${requiredChainId.toString(16)}`;
+        try {
+          const currentChain = await provider.request({ method: 'eth_chainId' });
+          if (currentChain !== requiredChainHex) {
+            await provider.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: requiredChainHex }],
+            });
+          }
+        } catch {
+          // User rejected chain switch or chain not added — proceed anyway
+          // and let eth_sendTransaction surface the real error.
+        }
+
         const txHash = await provider.request({
           method: 'eth_sendTransaction',
           params: [

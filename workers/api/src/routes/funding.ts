@@ -103,7 +103,7 @@ export async function handleFundingFeed(request: Request, _env: Env): Promise<Re
             const extracted = extractFunding(post.text);
             if (extracted) {
               allRounds.push({
-                id: `funding:${Buffer.from(post.text.slice(0, 50)).toString('base64').slice(0, 20)}`,
+                id: `funding:${btoa(post.text.slice(0, 50)).slice(0, 20)}`,
                 project: post.author.displayName || 'Unknown',
                 description: post.text.slice(0, 300),
                 amount: extracted.amount || 'Unknown',

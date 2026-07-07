@@ -24,6 +24,7 @@ import {
   handleFeedHealth,
   handleHomeFeed,
   handleProviderFeed,
+  handleRedditFeed,
   handleTrendingFeed,
 } from './routes/feed';
 import { handleFundingFeed } from './routes/funding';
@@ -273,6 +274,12 @@ export default {
       } else if (path.startsWith('/api/feed/post/')) {
         const postId = path.replace('/api/feed/post/', '');
         response = await handlePostById(request, env, postId);
+      } else if (path === '/api/feed/reddit') {
+        response = await handleRedditFeed(request, env);
+      } else if (path === '/api/feed/activitypub') {
+        response = await handleActivityPubFeed(request, env);
+      } else if (path === '/api/feed/threads') {
+        response = await handleThreadsFeed(request, env);
       } else if (path.startsWith('/api/feed/') && !path.startsWith('/api/feed/category/')) {
         const provider = path.replace('/api/feed/', '');
         response = await handleProviderFeed(request, env, provider);

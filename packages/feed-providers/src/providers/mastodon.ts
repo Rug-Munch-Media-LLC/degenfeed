@@ -14,8 +14,14 @@ export const DEFAULT_GTS_INSTANCE = 'https://social.degenfeed.xyz';
 export const PUBLIC_MASTODON_INSTANCES = [
   'https://bitcoinhackers.org',
   'https://mastodon.social',
-  'https://fosstodon.org',
-  'https://mstdn.social',
+  'https://infosec.exchange',
+  'https://hachyderm.io',
+  'https://ioc.exchange',
+  'https://cryptodon.lol',
+  'https://social.linux.pizza',
+  'https://mathstodon.xyz',
+  'https://mas.to',
+  'https://universeodon.com',
 ];
 
 export const CRYPTO_HASHTAGS = [

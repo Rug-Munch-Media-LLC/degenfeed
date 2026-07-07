@@ -33,6 +33,23 @@ export const DEFAULT_SUBREDDITS = [
   'NFTs',
   'CryptoMarkets',
   'technology',
+  'btc',
+  'ethtrader',
+  'solanatrader',
+  'NFTMarketplace',
+  'uniswap',
+  'aave',
+  'defi_bluechips',
+  'BitcoinMining',
+  'web3dev',
+  'defi_yield',
+  'ethdev',
+  'polygon',
+  'optimism',
+  'cryptobounties',
+  'cryptotrader',
+  'Crypto_General',
+  'cryptomining',
 ];
 
 // Open-source Reddit API frontends (libreddit, teddit, etc.)

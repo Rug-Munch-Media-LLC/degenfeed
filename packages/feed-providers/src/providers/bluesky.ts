@@ -28,6 +28,17 @@ export const CURATED_BSKY_ACTORS = [
   'mert.bsky.social',
   'ansem.bsky.social',
   'blknoiz06.bsky.social',
+  'pmarca.bsky.social',
+  'cdixon.bsky.social',
+  'spencernoon.bsky.social',
+  'autismcapital.bsky.social',
+  'tier10k.bsky.social',
+  'karbonbased.bsky.social',
+  'lisafed.bsky.social',
+  'mollywhite.bsky.social',
+  'defiprime.bsky.social',
+  'mehowbrian.bsky.social',
+  'crypto_birb.bsky.social',
 ];
 
 export const CRYPTO_SEARCH_QUERIES = [

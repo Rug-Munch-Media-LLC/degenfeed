@@ -282,6 +282,40 @@ export async function handleCategoryFeed(
   return handleHomeFeed(new Request(url.toString()), env);
 }
 
+export async function handleRedditFeed(request: Request, env: Env): Promise<Response> {
+  const params = new URL(request.url).searchParams;
+  const subreddit = params.get('subreddit');
+  const limit = Math.min(Number(params.get('limit')) || 25, 100);
+  const cacheKey = `reddit:v1:${subreddit || 'all'}:${limit}`;
+  try {
+    const cached = await env.CACHE?.get(cacheKey);
+    if (cached) return jsonResponse(JSON.parse(cached));
+  } catch { /* ignore */ }
+
+  const { RedditProvider } = await import('@degenfeed/feed-providers') as unknown as {
+    RedditProvider: new (options?: { subreddits?: string[] }) => { fetchFeed: (opts?: { timeoutMs?: number }) => Promise<{ posts: import('@degenfeed/types').UnifiedPost[]; notice?: string }> };
+  };
+  const provider = subreddit
+    ? new RedditProvider({ subreddits: [subreddit] })
+    : new RedditProvider();
+  const result = await provider.fetchFeed({ timeoutMs: 5000 });
+  const posts = result.posts.slice(0, limit);
+  const response = {
+    data: posts,
+    meta: {
+      total: posts.length,
+      limit,
+      subreddit: subreddit || 'all',
+      notice: result.notice,
+      fetchedAt: Date.now(),
+    },
+  };
+  try {
+    await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 180 });
+  } catch { /* ignore */ }
+  return jsonResponse(response);
+}
+
 export async function handleProviderFeed(
   request: Request,
   env: Env,

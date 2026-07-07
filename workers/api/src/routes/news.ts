@@ -731,7 +731,7 @@ export async function handleNewsFeed(request: Request, env: Env): Promise<Respon
   };
 
   try {
-    await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 900 });
+    await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
   } catch {
     /* ignore */
   }

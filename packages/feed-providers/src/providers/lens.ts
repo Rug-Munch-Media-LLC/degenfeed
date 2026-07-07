@@ -195,11 +195,6 @@ async function fetchPublicationsByProfileIds(
   return data.publications?.items ?? [];
 }
 
-async function fetchHeyPublicFeed(): Promise<UnifiedPost[]> {
-  // hey.xyz does not expose a public JSON feed; placeholder for graceful empty fallback
-  return [];
-}
-
 export interface LensProviderOptions {
   apiUrl?: string;
   fallbackUrls?: string[];
@@ -253,14 +248,7 @@ export class LensProvider implements FeedProvider {
         return { posts: posts.map(enrichPostNiches) };
       }
     } catch {
-      /* fall through to hey/lenster */
-    }
-
-    try {
-      const hey = await fetchHeyPublicFeed();
-      if (hey.length > 0) return { posts: hey.map(enrichPostNiches) };
-    } catch {
-      /* ignore */
+      /* fall through to public Lens discovery */
     }
 
     return { posts: [], notice: 'Lens feed unavailable' };
