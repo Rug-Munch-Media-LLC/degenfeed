@@ -24,13 +24,6 @@ import {
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
 
-interface FeedSource {
-  protocol: Protocol;
-  fetch(env: Env, timeoutMs: number): Promise<UnifiedPost[]>;
-}
-
-const DEFAULT_TIMEOUT_MS = 5000;
-
 function rmiUrl(env: Env): string {
   return (env as Env & { RMI_BACKEND_URL?: string }).RMI_BACKEND_URL || 'http://127.0.0.1:8000';
 }
@@ -107,30 +100,50 @@ function postToAtomEntry(post: UnifiedPost, updated: string): string {
 </entry>`;
 }
 
-async function gather(env: Env, requested: Protocol[]): Promise<UnifiedPost[]> {
+async function gather(env: Env, _requested: Protocol[]): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
-  const timeoutMs = 3000;
-  const sources: FeedSource[] = [
-    {
-      protocol: 'rss',
-      fetch: async (e, t) =>
-        (await new RmiDataBusProvider({ backendUrl: rmiUrl(e) }).fetchFeed({ timeoutMs: t })).posts,
-    },
-    {
-      protocol: 'rss',
-      fetch: async (e, t) => (await new RssProvider().fetchFeed({ timeoutMs: t })).posts,
-    },
-  ];
-  const filtered = sources.filter((s) => requested.includes(s.protocol));
-  const results = await Promise.allSettled(
-    filtered.map(async (s) => {
-      const posts = await s.fetch(env, timeoutMs);
-      return posts.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
-    }),
-  );
-  for (const r of results) {
-    if (r.status === 'fulfilled') all.push(...r.value);
+  const timeoutMs = 5000;
+
+  // Try RMI DataBus first (only works from Talos internal network).
+  try {
+    const rmi = new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
+    const rmiPosts = await rmi.fetchFeed({ timeoutMs });
+    if (rmiPosts.posts.length > 0) {
+      all.push(...rmiPosts.posts.filter((p) => !isSpamPost(p)).map(enrichPostNiches));
+    }
+  } catch {
+    /* RMI unavailable from edge */
   }
+
+  // Fall back to a small curated set of fast RSS feeds fetched in parallel.
+  if (all.length < 5) {
+    const fastFeeds = [
+      'https://cointelegraph.com/rss',
+      'https://decrypt.co/feed',
+      'https://bitcoinmagazine.com/.rss/full/',
+      'https://blog.ethereum.org/feed.xml',
+      'https://blog.chain.link/feed/',
+      'https://bankless.substack.com/feed',
+      'https://weekinethereumnews.com/feed',
+    ];
+    const results = await Promise.allSettled(
+      fastFeeds.map(async (url) => {
+        try {
+          const rss = new RssProvider({ feeds: [url] });
+          const r = await rss.fetchFeed({ timeoutMs: 3000 });
+          return r.posts;
+        } catch {
+          return [] as UnifiedPost[];
+        }
+      }),
+    );
+    for (const r of results) {
+      if (r.status === 'fulfilled') {
+        all.push(...r.value.filter((p) => !isSpamPost(p)).map(enrichPostNiches));
+      }
+    }
+  }
+
   return all;
 }
 
