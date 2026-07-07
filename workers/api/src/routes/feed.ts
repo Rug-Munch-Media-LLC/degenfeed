@@ -1,5 +1,4 @@
-import { rmiUrl } from '@degenfeed/utils';import { parseProtocols }
-from '@degenfeed/utils';
+import { parseProtocols, rmiUrl } from '@degenfeed/utils';
 import {
   deduplicatePosts,
   enrichPostNiches,
@@ -162,6 +161,49 @@ function filterByCategory(posts: UnifiedPost[], category: string): UnifiedPost[]
   return posts.filter((p) => p.niches.map((n) => n.toLowerCase()).includes(target));
 }
 
+interface UserRankingContext {
+  followed: Set<string>;
+  mutedAuthors: Set<string>;
+  mutedWords: Set<string>;
+  preferences: { preferredNiches: string[]; preferredPlatforms: Protocol[]; recencyWeight: number; engagementWeight: number; diversityBoost: boolean } | null;
+}
+
+async function loadUserRankingContext(request: Request, env: Env): Promise<UserRankingContext> {
+  const empty: UserRankingContext = {
+    followed: new Set(),
+    mutedAuthors: new Set(),
+    mutedWords: new Set(),
+    preferences: null,
+  };
+  const cookie = request.headers.get('cookie');
+  if (!cookie) return empty;
+  // Parse session cookie
+  const match = cookie.split(';').map((s) => s.trim()).find((s) => s.startsWith('__Host-dfid='));
+  if (!match) return empty;
+  const value = match.slice('__Host-dfid='.length);
+  // Verify session
+  if (!env.AUTH_SECRET) return empty;
+  const { verifySessionCookie } = await import('../session');
+  const payload = await verifySessionCookie(value, env.AUTH_SECRET);
+  if (!payload) return empty;
+  // Load user-specific KV entries
+  try {
+    const [followsRaw, mutedAuthorsRaw, mutedWordsRaw, prefsRaw] = await Promise.all([
+      env.CACHE?.get(`user:follows:${payload.address}`),
+      env.CACHE?.get(`user:muted_authors:${payload.address}`),
+      env.CACHE?.get(`user:muted_words:${payload.address}`),
+      env.CACHE?.get(`user:prefs:${payload.address}`),
+    ]);
+    const followed = new Set<string>(followsRaw ? JSON.parse(followsRaw) : []);
+    const mutedAuthors = new Set<string>(mutedAuthorsRaw ? JSON.parse(mutedAuthorsRaw) : []);
+    const mutedWords = new Set<string>(mutedWordsRaw ? JSON.parse(mutedWordsRaw) : []);
+    const preferences = prefsRaw ? JSON.parse(prefsRaw) : null;
+    return { followed, mutedAuthors, mutedWords, preferences };
+  } catch {
+    return empty;
+  }
+}
+
 export async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'));
@@ -205,7 +247,35 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   if (category) {
     deduped = filterByCategory(deduped, category);
   }
+  // Load per-user ranking context (followed, muted, preferences) from KV
+  // via the session cookie. Unauthenticated users get an empty context.
+  const userCtx = await loadUserRankingContext(request, env);
+  // Filter out muted authors and posts containing muted words
+  if (userCtx.mutedAuthors.size > 0 || userCtx.mutedWords.size > 0) {
+    deduped = deduped.filter((p) => {
+      if (p.author.id && userCtx.mutedAuthors.has(p.author.id)) return false;
+      if (userCtx.mutedWords.size > 0) {
+        const text = `${p.text} ${p.html ?? ''}`.toLowerCase();
+        for (const word of userCtx.mutedWords) {
+          if (text.includes(word.toLowerCase())) return false;
+        }
+      }
+      return true;
+    });
+  }
   const relevant = deduped.filter(isRelevantPost);
+  // Merge per-user preferred niches/platforms into the query params
+  if (userCtx.preferences) {
+    for (const n of userCtx.preferences.preferredNiches) {
+      if (!prefs.preferredNiches?.includes(n)) prefs.preferredNiches = [...(prefs.preferredNiches ?? []), n];
+    }
+    for (const p of userCtx.preferences.preferredPlatforms) {
+      if (!prefs.preferredPlatforms?.includes(p)) prefs.preferredPlatforms = [...(prefs.preferredPlatforms ?? []), p];
+    }
+    if (userCtx.preferences.recencyWeight) prefs.recencyWeight = userCtx.preferences.recencyWeight;
+    if (userCtx.preferences.engagementWeight) prefs.engagementWeight = userCtx.preferences.engagementWeight;
+    if (userCtx.preferences.diversityBoost === false) prefs.diversityBoost = false;
+  }
   // Populate recentAuthors for the diversity bonus: count how many times
   // each author appears. Authors that appear more than once get penalized
   // so one noisy account doesn't dominate the feed.

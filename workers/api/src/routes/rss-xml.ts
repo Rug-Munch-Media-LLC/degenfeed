@@ -11,8 +11,7 @@
  *   q        — free-text query filter
  */
 
-import { rmiUrl } from '@degenfeed/utils';import { parseProtocols }
-from '@degenfeed/utils';
+import { parseProtocols, rmiUrl } from '@degenfeed/utils';
 import {
   deduplicatePosts,
   enrichPostNiches,
