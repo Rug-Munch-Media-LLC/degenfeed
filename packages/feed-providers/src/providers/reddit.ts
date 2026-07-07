@@ -1,3 +1,16 @@
+/**
+ * RedditProvider — Multi-strategy Reddit fetcher.
+ *
+ * Reddit blocks direct API access from CF Workers (no auth, bad UA).
+ * Strategy:
+ *   1. Reddit's own RSS feeds at www.reddit.com/r/{sub}/.rss (public, needs proper UA)
+ *   2. Open-source Reddit frontends: libreddit/teddit instances (CORS-friendly)
+ *   3. JSON API at www.reddit.com with proper User-Agent
+ *
+ * All strategies set a browser-like User-Agent. RSS is preferred — it's
+ * public, no auth, and parses cleanly.
+ */
+
 import { detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
@@ -7,7 +20,6 @@ import {
   DEFAULT_USER_AGENT,
   fetchJson,
   fetchRss,
-  fetchWithFallbacks,
   withConcurrencyLimit,
   withTimeout,
 } from '../utils';
@@ -23,18 +35,34 @@ export const DEFAULT_SUBREDDITS = [
   'technology',
 ];
 
-export const LIBREDDIT_INSTANCES = [
-  'https://teddit.net',
+// Open-source Reddit API frontends (libreddit, teddit, etc.)
+// These proxy Reddit without auth and return JSON.
+const REDDIT_FRONTENDS = [
   'https://libreddit.kavin.rocks',
+  'https://libreddit.privacydev.net',
   'https://lr.vern.cc',
+  'https://teddit.net',
+  'https://red.ngn.tf',
 ];
+
+// Reddit's own RSS feeds — these are public, no auth needed.
+// We use www.reddit.com (old.reddit.com is deprecated).
+const REDDIT_RSS_BASE = 'https://www.reddit.com';
+
+function redditHeaders(): Record<string, string> {
+  return {
+    'user-agent': 'Mozilla/5.0 (compatible; DegenFeed/1.0; +https://degenfeed.xyz)',
+    accept: 'application/rss+xml, application/atom+xml, application/json, text/xml, */*',
+  };
+}
 
 interface RssItem {
   title?: string;
   link?: string;
   pubDate?: string;
-  contentSnippet?: string;
+  description?: string;
   content?: string;
+  contentSnippet?: string;
   author?: string;
   categories?: string[];
 }
@@ -47,97 +75,64 @@ function parseDate(dateStr: string | undefined): number {
 
 function stripHtml(html: string): string {
   return html
-    .replace(/\u003cbr\s*\/?\u003e/gi, '\n')
-    .replace(/\u003c[^\u003e]*\u003e/g, ' ')
-    .replace(/\u0026amp;/g, '\u0026')
-    .replace(/\u0026lt;/g, '\u003c')
-    .replace(/\u0026gt;/g, '\u003e')
-    .replace(/\u0026quot;/g, '"')
-    .replace(/\u0026nbsp;/g, ' ')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-function parseRss(xml: string): RssItem[] {
+function parseRssXml(xml: string): RssItem[] {
   const items: RssItem[] = [];
-  const itemRe = /\u003citem([^\u003e]*)\u003e([\s\S]*?)\u003c\/item\u003e/gi;
-  let m: RegExpExecArray | null;
-  // biome-ignore lint/suspicious/noAssignInExpressions: parser loop
-  while ((m = itemRe.exec(xml)) !== null) {
-    const itemXml = m[2] ?? '';
-    const extract = (tag: string) => {
-      const re = new RegExp(
-        `\u003c${tag}(?:[^\u003e]*)\u003e([\\s\\S]*?)\u003c\\/${tag}\u003e`,
-        'i',
-      );
-      const match = itemXml.match(re);
-      return match ? stripHtml(match[1] ?? '') : '';
-    };
-    const title = extract('title');
-    const link = extract('link');
-    if (title && link) {
+  const itemRe = /<entry([^>]*)>([\s\S]*?)<\/entry>/gi;
+  let m: RegExpExecArray | null = itemRe.exec(xml);
+  while (m !== null) {
+    const entryXml = m[2] ?? '';
+    const titleMatch = entryXml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const linkMatch = entryXml.match(/<link[^>]+href=["']([^"']+)["']/i);
+    const pubDateMatch = entryXml.match(/<updated[^>]*>([\s\S]*?)<\/updated>/i)
+      ?? entryXml.match(/<published[^>]*>([\s\S]*?)<\/published>/i);
+    const contentMatch = entryXml.match(/<content[^>]*>([\s\S]*?)<\/content>/i)
+      ?? entryXml.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
+    if (titleMatch && linkMatch) {
       items.push({
-        title,
-        link,
-        pubDate: extract('pubDate'),
-        contentSnippet: extract('description'),
-        author: extract('author') || extract('dc:creator'),
-        categories: [],
+        title: stripHtml(titleMatch[1] ?? ''),
+        link: linkMatch[1] ?? '',
+        pubDate: pubDateMatch?.[1]?.trim(),
+        description: stripHtml(contentMatch?.[1] ?? ''),
+        content: contentMatch?.[1] ?? '',
       });
     }
+    m = itemRe.exec(xml);
   }
+
+  if (items.length === 0) {
+    const rssItemRe = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+    let rm: RegExpExecArray | null = rssItemRe.exec(xml);
+    while (rm !== null) {
+      const itemXml = rm[1] ?? '';
+      const titleMatch = itemXml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+      const linkMatch = itemXml.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
+      const pubDateMatch = itemXml.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i);
+      const descMatch = itemXml.match(/<description[^>]*>([\s\S]*?)<\/description>/i);
+      if (titleMatch && linkMatch) {
+        items.push({
+          title: stripHtml(titleMatch[1] ?? ''),
+          link: stripHtml(linkMatch[1] ?? ''),
+          pubDate: pubDateMatch?.[1]?.trim(),
+          description: stripHtml(descMatch?.[1] ?? ''),
+        });
+      }
+      rm = rssItemRe.exec(xml);
+    }
+  }
+
   return items;
-}
-
-function itemToUnifiedPost(item: RssItem, subreddit: string): UnifiedPost {
-  const text = item.contentSnippet ?? item.title ?? '';
-  const author: UnifiedIdentity = {
-    id: `reddit:r:${subreddit}`,
-    primary: { protocol: 'rss', id: `reddit:r:${subreddit}` },
-    handles: {
-      nostr: null,
-      farcaster: null,
-      lens: null,
-      bluesky: null,
-      threads: null,
-      rss: null,
-      mastodon: null,
-    },
-    displayName: `r/${subreddit}`,
-    bio: '',
-    avatarUrl: '',
-    verified: [],
-    followerCount: 0,
-    followingCount: 0,
-    links: [{ label: 'subreddit', url: `https://old.reddit.com/r/${subreddit}` }],
-    keys: {},
-  };
-
-  return {
-    id: `reddit:${subreddit}:${item.link?.replace(/[^a-zA-Z0-9_-]/g, '_') ?? Date.now()}`,
-    protocol: 'rss',
-    author,
-    text: `${item.title ?? ''}\n\n${text}`.slice(0, 1000),
-    embeds: item.link ? [{ kind: 'link', url: item.link }] : [],
-    createdAt: parseDate(item.pubDate),
-    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    engagement: {
-      viewerLiked: false,
-      viewerReposted: false,
-      viewerBookmarked: false,
-      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    },
-    raw: item,
-    niches: detectNiches(text),
-  };
-}
-
-async function fetchRedditRss(subreddit: string, limit: number): Promise<UnifiedPost[]> {
-  const path = `/r/${encodeURIComponent(subreddit)}/hot.rss?limit=${Math.min(limit, 100)}`;
-  return fetchWithFallbacks(['https://old.reddit.com', 'https://www.reddit.com'], async (base) => {
-    const xml = await fetchRss(`${base}${path}`, { headers: { 'user-agent': DEFAULT_USER_AGENT } });
-    return parseRss(xml).map((item) => itemToUnifiedPost(item, subreddit));
-  });
 }
 
 interface RedditJsonPost {
@@ -149,15 +144,112 @@ interface RedditJsonPost {
     selftext?: string;
     author?: string;
     subreddit?: string;
+    score?: number;
+    num_comments?: number;
   };
 }
 
-async function fetchRedditJson(subreddit: string, limit: number): Promise<UnifiedPost[]> {
-  const url = buildUrl('https://www.reddit.com', `/r/${encodeURIComponent(subreddit)}/hot.json`, {
-    limit: String(Math.min(limit, 100)),
+function itemToUnifiedPost(item: RssItem, subreddit: string, score = 0, comments = 0): UnifiedPost {
+  const text = item.contentSnippet || item.description || item.title || '';
+  const author: UnifiedIdentity = {
+    id: `reddit:r:${subreddit}`,
+    primary: { protocol: 'reddit' as Protocol, id: subreddit },
+    handles: {
+      nostr: null, farcaster: null, lens: null, bluesky: null,
+      threads: null, rss: null, mastodon: null,
+    },
+    displayName: `r/${subreddit}`,
+    bio: item.author ? `Posted by u/${item.author}` : '',
+    avatarUrl: '',
+    verified: [],
+    followerCount: 0,
+    followingCount: 0,
+    links: [{ label: 'subreddit', url: `https://www.reddit.com/r/${subreddit}` }],
+    keys: {},
+  };
+
+  const id = item.link
+    ? `reddit:${subreddit}:${item.link.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 120)}`
+    : `reddit:${subreddit}:${Date.now()}`;
+
+  return {
+    id,
+    protocol: 'reddit' as Protocol,
+    author,
+    text: `${item.title ?? ''}\n\n${text}`.slice(0, 1500),
+    embeds: item.link ? [{ kind: 'link', url: item.link }] : [],
+    createdAt: parseDate(item.pubDate),
+    metrics: { likes: score, reposts: 0, replies: comments, quotes: 0 },
+    engagement: {
+      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      raw: { likes: score, reposts: 0, replies: comments, quotes: 0 },
+    },
+    raw: item,
+    niches: detectNiches(`${item.title ?? ''} ${text} r/${subreddit}`),
+  };
+}
+
+interface FrontendListing {
+  posts: Array<{
+    title?: string;
+    url?: string;
+    permalink?: string;
+    selftext?: string;
+    author?: string;
+    subreddit?: string;
+    score?: number;
+    num_comments?: number;
+    created?: number;
+    created_utc?: number;
+  }>;
+}
+
+/**
+ * Strategy 1: Open-source Reddit frontends (libreddit, teddit).
+ * These are community-run instances that proxy Reddit's API without auth.
+ * Returns JSON with post data.
+ */
+async function fetchFromFrontend(
+  frontend: string,
+  subreddit: string,
+  sort: string,
+  limit: number,
+): Promise<UnifiedPost[]> {
+  const path = sort === 'hot' ? '' : sort === 'new' ? '/new' : sort === 'top' ? '/top' : '';
+  const url = `${frontend}/r/${encodeURIComponent(subreddit)}${path}.json?limit=${Math.min(limit, 50)}`;
+  const data = await fetchJson<FrontendListing>(url, { headers: redditHeaders() });
+  return (data.posts ?? []).map((p) => {
+    const sub = p.subreddit ?? subreddit;
+    const link = p.permalink
+      ? p.permalink.startsWith('http') ? p.permalink : `${frontend}${p.permalink}`
+      : p.url ?? `https://www.reddit.com/r/${sub}`;
+    const item: RssItem = {
+      title: p.title,
+      link,
+      contentSnippet: p.selftext,
+      author: p.author,
+    };
+    const post = itemToUnifiedPost(item, sub, p.score ?? 0, p.num_comments ?? 0);
+    post.createdAt = (p.created_utc ?? p.created ?? Date.now() / 1000) * 1000;
+    return post;
+  });
+}
+
+/**
+ * Strategy 2: Reddit's own JSON API with proper User-Agent.
+ * www.reddit.com serves JSON if you send a browser-like User-Agent.
+ */
+async function fetchFromRedditJson(
+  subreddit: string,
+  sort: string,
+  limit: number,
+): Promise<UnifiedPost[]> {
+  const sortPath = sort === 'new' ? 'new' : sort === 'top' ? 'top' : 'hot';
+  const url = buildUrl(REDDIT_RSS_BASE, `/r/${encodeURIComponent(subreddit)}/${sortPath}.json`, {
+    limit: String(Math.min(limit, 50)),
   });
   const data = await fetchJson<{ data?: { children?: RedditJsonPost[] } }>(url, {
-    headers: { 'user-agent': DEFAULT_USER_AGENT },
+    headers: redditHeaders(),
   });
   return (data.data?.children ?? []).map((child) => {
     const d = child.data;
@@ -169,74 +261,116 @@ async function fetchRedditJson(subreddit: string, limit: number): Promise<Unifie
       contentSnippet: d.selftext,
       author: d.author,
     };
-    const post = itemToUnifiedPost(item, sub);
+    const post = itemToUnifiedPost(item, sub, d.score ?? 0, d.num_comments ?? 0);
     if (link) post.embeds.unshift({ kind: 'link', url: link });
     post.createdAt = d.created_utc * 1000;
     return post;
   });
 }
 
+/**
+ * Strategy 3: Reddit's own RSS feed at www.reddit.com.
+ * Public, no auth, parses cleanly.
+ */
+async function fetchFromRedditRss(
+  subreddit: string,
+  sort: string,
+  limit: number,
+): Promise<UnifiedPost[]> {
+  const sortPath = sort === 'new' ? 'new' : sort === 'top' ? 'top' : 'hot';
+  const xml = await fetchRss(
+    `${REDDIT_RSS_BASE}/r/${encodeURIComponent(subreddit)}/${sortPath}/.rss?limit=${Math.min(limit, 50)}`,
+    { headers: redditHeaders() },
+  );
+  return parseRssXml(xml).map((item) => itemToUnifiedPost(item, subreddit));
+}
+
+/**
+ * Fetch from a single subreddit using all available strategies in parallel.
+ * Returns the first non-empty result.
+ */
+async function fetchSubreddit(
+  subreddit: string,
+  sort: string,
+  limit: number,
+  timeoutMs: number,
+): Promise<UnifiedPost[]> {
+  // Try all strategies in parallel, pick the first non-empty result
+  const strategies: Array<{ name: string; fn: () => Promise<UnifiedPost[]> }> = [
+    { name: 'rss', fn: () => fetchFromRedditRss(subreddit, sort, limit) },
+    { name: 'json', fn: () => fetchFromRedditJson(subreddit, sort, limit) },
+    ...REDDIT_FRONTENDS.map((frontend) => ({
+      name: `frontend:${frontend}`,
+      fn: () => fetchFromFrontend(frontend, subreddit, sort, limit),
+    })),
+  ];
+
+  const results = await Promise.allSettled(
+    strategies.map((s) => withTimeout(s.fn(), timeoutMs, `reddit:${s.name}`)),
+  );
+
+  // Return the first strategy that produced posts
+  for (const r of results) {
+    if (r.status === 'fulfilled' && r.value.length > 0) {
+      return r.value;
+    }
+  }
+  return [];
+}
+
 export interface RedditProviderOptions {
   subreddits?: string[];
+  sort?: 'hot' | 'new' | 'top';
 }
 
 export class RedditProvider implements FeedProvider {
-  readonly protocol: Protocol = 'rss';
+  readonly protocol: Protocol = 'reddit';
   private readonly subreddits: string[];
+  private readonly sort: 'hot' | 'new' | 'top';
 
   constructor(options: RedditProviderOptions = {}) {
     this.subreddits = options.subreddits ?? DEFAULT_SUBREDDITS;
+    this.sort = options.sort ?? 'hot';
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const limit = 50;
+    const perSub = Math.ceil(limit / this.subreddits.length);
 
     const results = await withConcurrencyLimit(
       this.subreddits,
-      opts.concurrency ?? 4,
+      4,
       async (sub) => {
         try {
-          return await withTimeout(
-            fetchRedditRss(sub, Math.ceil(limit / this.subreddits.length)),
-            timeoutMs,
-            `reddit:${sub}`,
-          );
+          return await fetchSubreddit(sub, this.sort, perSub, timeoutMs);
         } catch {
-          try {
-            return await withTimeout(
-              fetchRedditJson(sub, Math.ceil(limit / this.subreddits.length)),
-              timeoutMs,
-              `reddit:json:${sub}`,
-            );
-          } catch {
-            return [];
-          }
+          return [] as UnifiedPost[];
         }
       },
     );
 
     const posts = results.flat().slice(0, limit);
     if (posts.length > 0) return { posts };
-
-    return { posts: [], notice: 'Reddit feed unavailable' };
+    return { posts: [], notice: 'Reddit feed unavailable — all strategies failed' };
   }
 
   async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {
-    const start = performance.now();
+    const start = Date.now();
     try {
-      await withTimeout(
-        fetchRss('https://old.reddit.com/r/Bitcoin/hot.rss?limit=1', {
-          headers: { 'user-agent': DEFAULT_USER_AGENT },
-        }),
+      const xml = await withTimeout(
+        fetchRss(`${REDDIT_RSS_BASE}/r/Bitcoin/hot/.rss?limit=1`, { headers: redditHeaders() }),
         opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         'reddit:health',
       );
-      return { healthy: true, latencyMs: Math.round(performance.now() - start) };
+      if (xml && xml.length > 50) {
+        return { healthy: true, latencyMs: Date.now() - start };
+      }
+      return { healthy: false, latencyMs: Date.now() - start, error: 'empty response' };
     } catch (err) {
       return {
         healthy: false,
-        latencyMs: Math.round(performance.now() - start),
+        latencyMs: Date.now() - start,
         error: err instanceof Error ? err.message : 'unknown',
       };
     }

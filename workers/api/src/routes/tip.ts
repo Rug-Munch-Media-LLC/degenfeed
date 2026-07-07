@@ -431,34 +431,49 @@ function sanitizeSettings(input: unknown): CreatorTipSettings | null {
 }
 
 /**
- * GET /api/tip/settings
- * Returns the creator's configured addresses. KV not wired yet, so this is a
- * passthrough that returns an empty/default payload.
+ * GET /api/tip/settings?wallet=0x...
+ * Returns the creator's configured addresses from KV.
  */
-export async function handleTipSettingsGet(_request: Request, _env: Env): Promise<Response> {
-  return jsonResponse({
-    settings: {},
-    localFirst: true,
-  });
+export async function handleTipSettingsGet(request: Request, env: Env): Promise<Response> {
+  const wallet = new URL(request.url).searchParams.get('wallet')?.toLowerCase();
+  if (!wallet) {
+    return jsonResponse({ settings: {}, localFirst: false });
+  }
+  try {
+    const key = `tip:settings:${wallet}`;
+    const stored = await env.CACHE?.get(key);
+    if (stored) {
+      return jsonResponse({ settings: JSON.parse(stored), localFirst: false });
+    }
+  } catch {
+    /* KV unavailable */
+  }
+  return jsonResponse({ settings: {}, localFirst: false });
 }
 
 /**
  * POST /api/tip/settings
- * Stores creator monetization settings. KV not wired yet, so this validates
- * and returns success; the client is expected to persist locally.
+ * Stores creator monetization settings in KV, keyed by wallet address.
+ * Body: { wallet: '0x...', settings: {...} }
  */
-export async function handleTipSettingsPost(request: Request, _env: Env): Promise<Response> {
+export async function handleTipSettingsPost(request: Request, env: Env): Promise<Response> {
   try {
-    const body = (await request.json()) as Record<string, unknown>;
-    const settings = sanitizeSettings(body);
+    const body = (await request.json()) as { wallet?: string; settings?: Record<string, unknown> };
+    const wallet = (body.wallet ?? '').toLowerCase();
+    if (!wallet || !/^(0x[a-f0-9]{40}|[1-9a-hj-z]{32,44})$/.test(wallet)) {
+      return jsonResponse({ error: 'Valid wallet address required' }, 400);
+    }
+    const settings = sanitizeSettings(body.settings ?? {});
     if (!settings) {
       return jsonResponse({ error: 'Invalid settings' }, 400);
     }
-    return jsonResponse({
-      success: true,
-      settings,
-      localFirst: true,
-    });
+    const key = `tip:settings:${wallet}`;
+    try {
+      await env.CACHE?.put(key, JSON.stringify(settings), { expirationTtl: 60 * 60 * 24 * 90 });
+    } catch {
+      /* KV unavailable */
+    }
+    return jsonResponse({ success: true, settings, localFirst: false });
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
   }

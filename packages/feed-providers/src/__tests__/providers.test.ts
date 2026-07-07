@@ -199,37 +199,28 @@ describe('feed providers', () => {
   });
 
   describe('RedditProvider', () => {
-    it('falls back to json when rss fails', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
-        if (url.includes('.rss')) {
-          return Promise.resolve(mockResponse({ ok: false, status: 500, statusText: 'Error' }));
-        }
-        return Promise.resolve(
-          mockResponse({
-            json: async () => ({
-              data: {
-                children: [
-                  {
-                    data: {
-                      title: 'Bitcoin news',
-                      permalink: '/r/Bitcoin/comments/1/x',
-                      url: 'https://example.com',
-                      created_utc: Math.floor(Date.now() / 1000),
-                      selftext: '',
-                      author: 'user',
-                      subreddit: 'Bitcoin',
-                    },
-                  },
-                ],
-              },
-            }),
-          }),
-        );
-      });
+    it('parses RSS from www.reddit.com', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockResponse({
+          text: async () =>
+            `<?xml version="1.0"?><rss><channel><title>Bitcoin</title><item><title>Bitcoin hits new ATH</title><link>https://www.reddit.com/r/Bitcoin/comments/1/x</link><description>Bitcoin crypto news</description><pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate></item></channel></rss>`,
+        }),
+      );
       const provider = new RedditProvider({ subreddits: ['Bitcoin'] });
       const result = await provider.fetchFeed({ timeoutMs: 1000 });
       expect(result.posts.length).toBeGreaterThan(0);
+      expect(result.posts[0]?.protocol).toBe('reddit');
       expect(result.posts[0]?.text).toContain('Bitcoin');
+    });
+
+    it('returns empty when all strategies fail', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockResponse({ ok: false, status: 403, statusText: 'Forbidden' }),
+      );
+      const provider = new RedditProvider({ subreddits: ['Bitcoin'] });
+      const result = await provider.fetchFeed({ timeoutMs: 1000 });
+      expect(result.posts.length).toBe(0);
+      expect(result.notice).toBeDefined();
     });
   });
 
@@ -249,22 +240,18 @@ describe('feed providers', () => {
   });
 
   describe('ThreadsProvider', () => {
-    it('falls back to HTML scrape when AT Protocol fails', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
-        if (url.includes('public.threads.net')) {
-          return Promise.resolve(mockResponse({ ok: false, status: 500, statusText: 'Error' }));
-        }
-        return Promise.resolve(
-          mockResponse({
-            text: async () =>
-              `<script type="application/ld+json">{"@type":"SocialMediaPosting","articleBody":"Threads post about crypto","url":"https://threads.net/p/1","datePublished":"2024-01-01T00:00:00Z","author":{"name":"threads","identifier":"threads","image":""}}</script>`,
-          }),
-        );
-      });
-      const provider = new ThreadsProvider({ curatedHandles: ['threads'] });
+    it('scrapes JSON-LD from public Threads profile pages', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+        mockResponse({
+          text: async () =>
+            `<html><head><script type="application/ld+json">{"@type":"SocialMediaPosting","articleBody":"Threads post about crypto","url":"https://www.threads.net/@mosseri/post/abc123","datePublished":"2024-01-01T00:00:00Z","author":{"name":"Adam Mosseri","identifier":"mosseri","image":""},"interactionStatistic":[{"name":"Like","userInteractionCount":42},{"name":"Reply","userInteractionCount":3}]}</script></head></html>`,
+        }),
+      );
+      const provider = new ThreadsProvider({ curatedHandles: ['mosseri'] });
       const result = await provider.fetchFeed({ timeoutMs: 1000 });
       expect(result.posts.length).toBeGreaterThan(0);
       expect(result.posts[0]?.text).toContain('crypto');
+      expect(result.posts[0]?.metrics.likes).toBe(42);
     });
   });
 });

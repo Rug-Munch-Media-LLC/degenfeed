@@ -3,7 +3,7 @@
 import { addBookmark, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction } from '@degenfeed/types';
 import { FeedList, type Notification, NotificationBell, type UnifiedPost } from '@degenfeed/ui';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { TipModal } from '../../../components/TipModal';
 import { SECTIONS } from '../sections';

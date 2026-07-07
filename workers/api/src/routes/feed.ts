@@ -14,6 +14,7 @@ import {
   LensProvider,
   MastodonProvider,
   NostrProvider,
+  RedditProvider,
   RmiDataBusProvider,
   RssProvider,
   ThreadsProvider,
@@ -28,6 +29,7 @@ import { type Env, jsonResponse } from '../index';
 
 const DEFAULT_PROTOCOLS: Protocol[] = [
   'rss',
+  'reddit',
   'nostr',
   'farcaster',
   'lens',
@@ -65,6 +67,8 @@ function getProvider(protocol: Protocol, env: Env): FeedProvider {
       return new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL });
     case 'threads':
       return new ThreadsProvider({ pdsUrl: env.THREADS_PDS_URL });
+    case 'reddit':
+      return new RedditProvider();
     case 'rss':
       return new RssWithFallbackProvider(env);
     default:
@@ -119,8 +123,11 @@ class RssWithFallbackProvider implements FeedProvider {
 function buildRankingContext(
   now: number,
   prefs?: UserAlgorithmPreferences | null,
+  recentAuthors?: Map<string, number>,
+  followed?: Set<string>,
+  sourceQuality?: Map<string, number>,
 ): {
-  viewer: null;
+  viewer: UnifiedIdentity | null;
   recentAuthors: Map<string, number>;
   sourceQuality: Map<string, number>;
   viewerNiches: Set<string>;
@@ -130,12 +137,30 @@ function buildRankingContext(
 } {
   return {
     viewer: null,
-    recentAuthors: new Map(),
-    sourceQuality: new Map(),
+    recentAuthors: recentAuthors ?? new Map(),
+    sourceQuality: sourceQuality ?? new Map(),
     viewerNiches: new Set(prefs?.preferredNiches ?? []),
-    followed: new Set(),
+    followed: followed ?? new Set(prefs?.followed ?? []),
     now,
     preferences: prefs ?? null,
+  };
+}
+
+function parsePrefsFromQuery(params: URLSearchParams): UserAlgorithmPreferences | null {
+  const niches = params.get('niches');
+  const platforms = params.get('platforms');
+  const recencyWeight = Number(params.get('recencyWeight'));
+  const engagementWeight = Number(params.get('engagementWeight'));
+  const diversityBoost = params.get('diversityBoost');
+  if (!niches && !platforms && !recencyWeight && !engagementWeight) return null;
+  return {
+    preferredNiches: niches ? niches.split(',').filter(Boolean) : [],
+    preferredPlatforms: platforms
+      ? (platforms.split(',').filter(Boolean) as Protocol[])
+      : [],
+    recencyWeight: recencyWeight || 1,
+    engagementWeight: engagementWeight || 1,
+    diversityBoost: diversityBoost !== 'false',
   };
 }
 
@@ -149,7 +174,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   const requestedProtocols = parseProtocols(params.get('protocols'));
   const limit = Math.min(Number(params.get('limit')) || 25, 100);
   const category = params.get('category')?.toLowerCase() ?? '';
-  const prefs: UserAlgorithmPreferences | null = null;
+  const prefs = parsePrefsFromQuery(params);
   const diverse = params.get('diverse') !== 'false';
 
   const allPosts: UnifiedPost[] = [];
@@ -188,7 +213,19 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     deduped = filterByCategory(deduped, category);
   }
   const relevant = deduped.filter(isRelevantPost);
-  const ctx = buildRankingContext(Date.now(), prefs);
+  // Populate recentAuthors for the diversity bonus: count how many times
+  // each author appears. Authors that appear more than once get penalized
+  // so one noisy account doesn't dominate the feed.
+  const recentAuthors = new Map<string, number>();
+  const sourceQuality = new Map<string, number>();
+  for (const p of relevant) {
+    const key = p.author.id;
+    recentAuthors.set(key, (recentAuthors.get(key) ?? 0) + 1);
+    if (p.author.followerCount > 0) {
+      sourceQuality.set(key, Math.min(1.5, p.author.followerCount / 10000));
+    }
+  }
+  const ctx = buildRankingContext(Date.now(), prefs, recentAuthors, undefined, sourceQuality);
   // rankDiverse: greedy per-author cap ensures a balanced feed
   // (otherwise one noisy author can dominate).
   const ranked = (diverse ? rankDiverse(relevant, ctx, { maxPerAuthor: 2 }) : [...relevant]).slice(

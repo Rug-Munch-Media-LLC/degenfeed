@@ -12,6 +12,7 @@ export type Protocol =
   | 'threads'
   | 'rss'
   | 'mastodon'
+  | 'reddit'
   | 'ethereum'
   | 'solana';
 

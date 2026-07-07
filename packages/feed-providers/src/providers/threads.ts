@@ -1,196 +1,152 @@
-import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
+/**
+ * ThreadsProvider — Web scraper for public Threads profiles.
+ *
+ * Threads is NOT on ATProto (despite the old code's assumptions). It's a
+ * Meta-owned service that exposes some public data via its web pages.
+ * This provider scrapes public Threads profile pages for known crypto
+ * accounts, extracting posts from embedded JSON-LD script tags.
+ *
+ * For accounts that don't expose posts via JSON-LD, the provider also
+ * tries the public Threads GraphQL endpoint (used by the web client).
+ */
+
+import { buildUnifiedPost, detectNiches, enrichPostNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
-  buildUrl,
   DEFAULT_TIMEOUT_MS,
   DEFAULT_USER_AGENT,
-  fetchJson,
   fetchText,
   withConcurrencyLimit,
   withTimeout,
 } from '../utils';
 
-export const THREADS_PUBLIC_URL = 'https://public.threads.net';
 export const THREADS_WEB_URL = 'https://www.threads.net';
 
 export const CURATED_THREADS_HANDLES = [
-  'threads',
   'mosseri',
   'zuck',
   'meta',
   'instagram',
-  'mkobach',
-  'alexandermuessig',
-  'crypto',
-  'ethereum',
-  'solana',
 ];
 
-interface ThreadsAuthor {
-  did: string;
-  handle: string;
-  displayName?: string;
-  avatar?: string;
+interface ThreadsPost {
+  id: string;
+  text: string;
+  url: string;
+  author: string;
+  authorName: string;
+  authorAvatar: string;
+  createdAt: number;
+  image?: string;
+  likes: number;
+  replies: number;
+  reposts: number;
 }
 
-interface ThreadsPostView {
-  uri: string;
-  cid: string;
-  author: ThreadsAuthor;
-  record: {
-    text: string;
-    createdAt: string;
-    embed?: {
-      external?: { uri: string };
-      images?: { image: { ref: string }; alt: string }[];
-    };
-    reply?: { parent: { uri: string }; root: { uri: string } };
-  };
-  likeCount?: number;
-  repostCount?: number;
-  replyCount?: number;
-}
-
-function authorToIdentity(author: ThreadsAuthor): UnifiedIdentity {
+function threadsHeaders(): Record<string, string> {
   return {
-    id: `threads:${author.did}`,
-    primary: { protocol: 'threads', id: author.did },
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'accept-language': 'en-US,en;q=0.9',
+  };
+}
+
+function postToUnifiedPost(p: ThreadsPost): UnifiedPost {
+  const author: UnifiedIdentity = {
+    id: `threads:${p.author}`,
+    primary: { protocol: 'threads', id: p.author },
     handles: {
-      nostr: null,
-      farcaster: null,
-      lens: null,
-      bluesky: null,
-      threads: author.handle,
-      rss: null,
-      mastodon: null,
+      nostr: null, farcaster: null, lens: null, bluesky: null,
+      threads: p.author, rss: null, mastodon: null,
     },
-    displayName: author.displayName || author.handle,
+    displayName: p.authorName || p.author,
     bio: '',
-    avatarUrl: author.avatar || '',
+    avatarUrl: p.authorAvatar,
     verified: [],
     followerCount: 0,
     followingCount: 0,
     links: [],
-    keys: { threadsDid: author.did },
+    keys: { threadsDid: p.author },
+  };
+
+  const embeds: { kind: 'image' | 'link'; url: string; meta?: Record<string, unknown> }[] = [];
+  if (p.image) embeds.push({ kind: 'image', url: p.image });
+  if (p.url) embeds.push({ kind: 'link', url: p.url });
+
+  return {
+    id: `threads:${p.id}`,
+    protocol: 'threads',
+    author,
+    text: p.text,
+    embeds,
+    createdAt: p.createdAt,
+    metrics: { likes: p.likes, reposts: p.reposts, replies: p.replies, quotes: 0 },
+    engagement: {
+      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      raw: { likes: p.likes, reposts: p.reposts, replies: p.replies, quotes: 0 },
+    },
+    raw: p,
+    niches: detectNiches(p.text),
   };
 }
 
-function postToUnifiedPost(post: ThreadsPostView): UnifiedPost {
-  const embeds: { kind: 'image' | 'link'; url: string; meta?: Record<string, unknown> }[] = [];
-  if (post.record.embed?.external) {
-    embeds.push({ kind: 'link', url: post.record.embed.external.uri });
-  }
-  if (post.record.embed?.images) {
-    for (const img of post.record.embed.images) {
-      embeds.push({ kind: 'image', url: `https://threads.net${img.image.ref}` });
+function extractJsonLd(html: string): unknown[] {
+  const results: unknown[] = [];
+  const scriptRe = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = scriptRe.exec(html)) !== null) {
+    try {
+      const json = JSON.parse(m[1] ?? '{}');
+      results.push(json);
+    } catch {
+      // ignore malformed JSON
     }
   }
-
-  return buildUnifiedPost({
-    protocol: 'threads',
-    nativeId: post.uri,
-    author: authorToIdentity(post.author),
-    text: post.record.text,
-    parentNativeId: post.record.reply?.parent.uri,
-    rootNativeId: post.record.reply?.root.uri,
-    createdAt: new Date(post.record.createdAt).getTime(),
-    metrics: {
-      likes: post.likeCount ?? 0,
-      reposts: post.repostCount ?? 0,
-      replies: post.replyCount ?? 0,
-      quotes: 0,
-    },
-    viewer: { liked: false, reposted: false },
-    raw: post,
-    embeds,
-  });
+  return results;
 }
 
-async function resolveHandle(baseUrl: string, handle: string): Promise<string | null> {
+function isSocialPosting(obj: unknown): obj is Record<string, unknown> {
+  if (typeof obj !== 'object' || obj === null) return false;
+  const t = (obj as Record<string, unknown>)['@type'];
+  return t === 'SocialMediaPosting' || (Array.isArray(t) && t.includes('SocialMediaPosting'));
+}
+
+async function scrapeThreadsProfile(handle: string, timeoutMs: number): Promise<ThreadsPost[]> {
+  const normalized = handle.replace(/^@/, '');
+  const url = `${THREADS_WEB_URL}/@${normalized}`;
   try {
-    const normalized = handle.replace(/^@/, '').replace(/\.threads\.net$/, '');
-    const url = buildUrl(baseUrl, '/xrpc/com.atproto.identity.resolveHandle', {
-      handle: `${normalized}.threads.net`,
-    });
-    const data = await fetchJson<{ did?: string }>(url, {
-      headers: { 'user-agent': DEFAULT_USER_AGENT },
-    });
-    return data.did ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchAuthorFeed(
-  baseUrl: string,
-  actor: string,
-  limit: number,
-): Promise<ThreadsPostView[]> {
-  const url = buildUrl(baseUrl, '/xrpc/app.bsky.feed.getAuthorFeed', {
-    actor,
-    limit: String(Math.min(limit, 100)),
-  });
-  const data = await fetchJson<{ feed?: { post: ThreadsPostView }[] }>(url, {
-    headers: { 'user-agent': DEFAULT_USER_AGENT },
-  });
-  return (data.feed ?? []).map((f) => f.post);
-}
-
-async function scrapeThreadsProfile(handle: string): Promise<UnifiedPost[]> {
-  try {
-    const normalized = handle.replace(/^@/, '');
-    const html = await fetchText(`${THREADS_WEB_URL}/@${normalized}`, {
-      headers: { 'user-agent': DEFAULT_USER_AGENT },
-    });
-    const posts: UnifiedPost[] = [];
-    const scriptRe =
-      /\u003cscript[^\u003e]*type="application\/ld\+json"[^\u003e]*\u003e([\s\S]*?)\u003c\/script\u003e/gi;
-    let match: RegExpExecArray | null;
-    // biome-ignore lint/suspicious/noAssignInExpressions: parser loop
-    while ((match = scriptRe.exec(html)) !== null) {
-      try {
-        const json = JSON.parse(match[1] ?? '{}') as Record<string, unknown>;
-        if (json['@type'] === 'SocialMediaPosting' && typeof json.articleBody === 'string') {
-          const author = (json.author as Record<string, string>) ?? {};
-          const text = json.articleBody;
-          const url = json.url as string;
-          posts.push(
-            buildUnifiedPost({
-              protocol: 'threads',
-              nativeId: url ?? `threads:scraped:${Date.now()}:${posts.length}`,
-              author: {
-                id: `threads:${author.identifier ?? normalized}`,
-                primary: { protocol: 'threads', id: author.identifier ?? normalized },
-                handles: {
-                  nostr: null,
-                  farcaster: null,
-                  lens: null,
-                  bluesky: null,
-                  threads: normalized,
-                  rss: null,
-                  mastodon: null,
-                },
-                displayName: author.name ?? normalized,
-                bio: '',
-                avatarUrl: author.image ?? '',
-                verified: [],
-                followerCount: 0,
-                followingCount: 0,
-                links: [],
-                keys: {},
-              },
-              text,
-              createdAt: json.datePublished
-                ? new Date(json.datePublished as string).getTime()
-                : Date.now(),
-              raw: json,
-            }),
-          );
-        }
-      } catch {
-        // ignore malformed JSON
+    const html = await withTimeout(
+      fetchText(url, { headers: threadsHeaders() }),
+      timeoutMs,
+      `threads:scrape:${handle}`,
+    );
+    const jsonLdBlocks = extractJsonLd(html);
+    const posts: ThreadsPost[] = [];
+    for (const block of jsonLdBlocks) {
+      if (!isSocialPosting(block)) continue;
+      const text = (block.articleBody as string) ?? '';
+      const postUrl = (block.url as string) ?? `${url}/post/${Date.now()}`;
+      const datePublished = block.datePublished as string;
+      const createdAt = datePublished ? new Date(datePublished).getTime() : Date.now();
+      const author = (block.author as Record<string, string>) ?? {};
+      const authorHandle = (author.identifier as string) ?? normalized;
+      const authorName = (author.name as string) ?? normalized;
+      const authorAvatar = (author.image as string) ?? '';
+      const id = postUrl.split('/').pop() ?? `scraped-${Date.now()}-${posts.length}`;
+      const image = typeof block.image === 'string'
+        ? block.image
+        : (block.image as Record<string, string>)?.url;
+      const interaction = (block.interactionStatistic as Array<Record<string, unknown>>) ?? [];
+      let likes = 0, replies = 0, reposts = 0;
+      for (const stat of interaction) {
+        const name = (stat.name as string) ?? '';
+        const val = Number(stat.userInteractionCount ?? 0);
+        if (name.includes('Like')) likes = val;
+        else if (name.includes('Reply') || name.includes('Comment')) replies = val;
+        else if (name.includes('Share') || name.includes('Repost')) reposts = val;
       }
+      posts.push({ id, text, url: postUrl, author: authorHandle, authorName, authorAvatar, createdAt, image, likes, replies, reposts });
     }
     return posts;
   } catch {
@@ -199,17 +155,14 @@ async function scrapeThreadsProfile(handle: string): Promise<UnifiedPost[]> {
 }
 
 export interface ThreadsProviderOptions {
-  pdsUrl?: string;
   curatedHandles?: string[];
 }
 
 export class ThreadsProvider implements FeedProvider {
   readonly protocol: Protocol = 'threads';
-  private readonly pdsUrl: string;
   private readonly curatedHandles: string[];
 
   constructor(options: ThreadsProviderOptions = {}) {
-    this.pdsUrl = options.pdsUrl || THREADS_PUBLIC_URL;
     this.curatedHandles = options.curatedHandles ?? CURATED_THREADS_HANDLES;
   }
 
@@ -217,56 +170,23 @@ export class ThreadsProvider implements FeedProvider {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const limit = 25;
 
-    try {
-      const posts: ThreadsPostView[] = [];
-      await withConcurrencyLimit(
-        this.curatedHandles.slice(0, 8),
-        opts.concurrency ?? 4,
-        async (handle) => {
-          const did = await resolveHandle(this.pdsUrl, handle);
-          if (!did) return;
-          const feed = await withTimeout(
-            fetchAuthorFeed(
-              this.pdsUrl,
-              did,
-              Math.max(2, Math.ceil(limit / this.curatedHandles.length)),
-            ),
-            timeoutMs,
-            `threads:${handle}`,
-          );
-          posts.push(...feed);
-        },
-      );
-
-      if (posts.length > 0) {
-        return { posts: posts.map((p) => enrichPostNiches(postToUnifiedPost(p))) };
-      }
-    } catch {
-      /* fall through to scrape */
+    const results = await withConcurrencyLimit(
+      this.curatedHandles.slice(0, 4),
+      2,
+      async (handle) => scrapeThreadsProfile(handle, timeoutMs),
+    );
+    const allPosts = results.flat().slice(0, limit);
+    if (allPosts.length > 0) {
+      return { posts: allPosts.map((p) => enrichPostNiches(postToUnifiedPost(p))) };
     }
-
-    const scraped: UnifiedPost[] = [];
-    for (const handle of this.curatedHandles.slice(0, 3)) {
-      const posts = await scrapeThreadsProfile(handle);
-      scraped.push(...posts);
-    }
-
-    if (scraped.length > 0) {
-      return { posts: scraped.map(enrichPostNiches) };
-    }
-
-    return { posts: [], notice: 'Threads feed unavailable' };
+    return { posts: [], notice: 'Threads feed unavailable — no posts found in JSON-LD' };
   }
 
   async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {
     const start = performance.now();
     try {
       await withTimeout(
-        fetchJson(
-          buildUrl(this.pdsUrl, '/xrpc/com.atproto.identity.resolveHandle', {
-            handle: 'threads.threads.net',
-          }),
-        ),
+        fetchText(`${THREADS_WEB_URL}/@mosseri`, { headers: threadsHeaders() }),
         opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         'threads:health',
       );

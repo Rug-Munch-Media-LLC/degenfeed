@@ -202,16 +202,7 @@ function parseAtom(xml: string): {
   };
 
   const entryRe = /\u003centry([^\u003e]*)\u003e([\s\S]*?)\u003c\/entry\u003e/gi;
-  let m: RegExpExecArray | null;
-  // biome-ignore lint/suspicious/noAssignInExpressions: parser loop
-  while ((m = entryRe.exec(xml)) !== null) {
-    const _entryXml = m[2] ?? '';
-    const _title = extract.call(null, 'title'); // re-bound below
-  }
-
-  // Re-parse entries with local extract
   let em: RegExpExecArray | null;
-  entryRe.lastIndex = 0;
   // biome-ignore lint/suspicious/noAssignInExpressions: parser loop
   while ((em = entryRe.exec(xml)) !== null) {
     const entryXml = em[2] ?? '';

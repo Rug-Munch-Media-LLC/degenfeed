@@ -54,12 +54,10 @@ function getProvider(): EIP1193Provider | null {
 export function Web3Provider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<string | null>(null);
   const [chainId, setChainId] = useState<number | null>(null);
-  const [_mounted, setMounted] = useState(false);
 
   const isConnected = !!account;
 
   useEffect(() => {
-    setMounted(true);
     const check = async () => {
       const provider = getProvider();
       if (!provider) return;

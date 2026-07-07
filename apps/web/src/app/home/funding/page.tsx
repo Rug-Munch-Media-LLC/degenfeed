@@ -7,7 +7,7 @@ export default function FundingPage() {
   const [rounds, setRounds] = useState<FundingRound[]>([]);
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
   const [chainFilter, setChainFilter] = useState<string>('');
-  const [stageFilter, _setStageFilter] = useState<string>('');
+  const [stageFilter, setStageFilter] = useState<string>('');
   const [meta, setMeta] = useState<{ totalRaised?: number }>({});
 
   useEffect(() => {

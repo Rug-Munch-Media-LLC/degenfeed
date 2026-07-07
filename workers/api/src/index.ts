@@ -49,6 +49,7 @@ import {
 import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
 import { handleSearch, handleSearchIdentity } from './routes/search';
+import { handlePostById } from './routes/post';
 import {
   handleLightningInvoice,
   handleTipCreate,
@@ -269,6 +270,9 @@ export default {
         response = await handleThreadsFeed(request, env);
       } else if (path === '/api/feed/news') {
         response = await handleNewsFeed(request, env);
+      } else if (path.startsWith('/api/feed/post/')) {
+        const postId = path.replace('/api/feed/post/', '');
+        response = await handlePostById(request, env, postId);
       } else if (path === '/api/bridge/rss-to-nostr') {
         const { handleRssToNostrBridge } = await import('./routes/publish');
         response = await handleRssToNostrBridge(request, env);
@@ -300,8 +304,6 @@ export default {
         response = await handleTopFeed(request, env);
       } else if (path === '/api/feed/newsletters') {
         response = await handleNewsletterFeed(request, env);
-      } else if (path === '/api/feed/trending') {
-        response = await handleTrendingFeed(request, env);
       } else if (path === '/api/prices') {
         response = await handlePrices(request, env);
       } else if (path === '/api/auth/wallet/nonce') {
