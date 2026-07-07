@@ -258,6 +258,11 @@ export default {
         response = await handleFeedHealth(request, env);
       } else if (path === '/api/feed/rss.xml' || path === '/api/feed/atom.xml') {
         response = await handleRssXml(request, env);
+      } else if (path === '/api/feed/news') {
+        response = await handleNewsFeed(request, env);
+      } else if (path.startsWith('/api/feed/post/')) {
+        const postId = path.replace('/api/feed/post/', '');
+        response = await handlePostById(request, env, postId);
       } else if (path.startsWith('/api/feed/') && !path.startsWith('/api/feed/category/')) {
         const provider = path.replace('/api/feed/', '');
         response = await handleProviderFeed(request, env, provider);
