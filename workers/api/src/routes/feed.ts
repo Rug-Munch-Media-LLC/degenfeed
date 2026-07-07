@@ -8,10 +8,14 @@ import {
   BlueskyProvider,
   FarcasterProvider,
   type FeedProvider,
+  type FeedResult,
+  type FetchOptions,
+  type HealthResult,
   LensProvider,
   MastodonProvider,
   NostrProvider,
   RmiDataBusProvider,
+  RssProvider,
   ThreadsProvider,
 } from '@degenfeed/feed-providers';
 import {
@@ -62,11 +66,41 @@ function getProvider(protocol: Protocol, env: Env): FeedProvider {
     case 'threads':
       return new ThreadsProvider({ pdsUrl: env.THREADS_PDS_URL });
     case 'rss':
-      // Use RMI DataBus (institutional-grade news) as primary, fall back
-      // to the curated RssProvider for community / blog content.
-      return new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
+      return new RssWithFallbackProvider(env);
     default:
       throw new Error(`Unknown protocol: ${protocol}`);
+  }
+}
+
+// Wrapper that tries RMI first, falls back to public RSS.
+// This is needed because RMI is only reachable from Talos internal
+// network, not from the Cloudflare edge.
+class RssWithFallbackProvider implements FeedProvider {
+  readonly protocol: Protocol = 'rss';
+  private readonly rmi: RmiDataBusProvider;
+  private readonly rss: RssProvider;
+
+  constructor(env: Env) {
+    this.rmi = new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
+    this.rss = new RssProvider();
+  }
+
+  async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
+    try {
+      const result = await this.rmi.fetchFeed(opts);
+      if (result.posts.length > 0) return result;
+    } catch {
+      /* RMI unavailable — fall through */
+    }
+    return this.rss.fetchFeed(opts);
+  }
+
+  async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {
+    try {
+      return await this.rmi.healthCheck!(opts);
+    } catch {
+      return this.rss.healthCheck!(opts);
+    }
   }
 }
 
