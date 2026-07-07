@@ -18,14 +18,8 @@ import {
   isSpamPost,
 } from '@degenfeed/feed-core';
 import {
-  BlueskyProvider,
-  FarcasterProvider,
-  LensProvider,
-  MastodonProvider,
-  NostrProvider,
   RmiDataBusProvider,
   RssProvider,
-  ThreadsProvider,
 } from '@degenfeed/feed-providers';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
@@ -115,6 +109,7 @@ function postToAtomEntry(post: UnifiedPost, updated: string): string {
 
 async function gather(env: Env, requested: Protocol[]): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
+  const timeoutMs = 3000;
   const sources: FeedSource[] = [
     {
       protocol: 'rss',
@@ -125,52 +120,11 @@ async function gather(env: Env, requested: Protocol[]): Promise<UnifiedPost[]> {
       protocol: 'rss',
       fetch: async (e, t) => (await new RssProvider().fetchFeed({ timeoutMs: t })).posts,
     },
-    {
-      protocol: 'nostr',
-      fetch: async (e, t) =>
-        (
-          await new NostrProvider({
-            relays: (e.RELAY_URLS ?? '').split(',').filter(Boolean),
-          }).fetchFeed({ timeoutMs: t })
-        ).posts,
-    },
-    {
-      protocol: 'farcaster',
-      fetch: async (e, t) =>
-        (await new FarcasterProvider({ hubUrl: e.FARCASTER_HUB_URL }).fetchFeed({ timeoutMs: t }))
-          .posts,
-    },
-    {
-      protocol: 'lens',
-      fetch: async (e, t) =>
-        (await new LensProvider({ apiUrl: e.LENS_API_URL }).fetchFeed({ timeoutMs: t })).posts,
-    },
-    {
-      protocol: 'bluesky',
-      fetch: async (e, t) =>
-        (await new BlueskyProvider({ baseUrl: e.BSKY_PUBLIC_URL }).fetchFeed({ timeoutMs: t }))
-          .posts,
-    },
-    {
-      protocol: 'mastodon',
-      fetch: async (e, t) =>
-        (
-          await new MastodonProvider({ instanceUrl: e.GTS_INSTANCE_URL }).fetchFeed({
-            timeoutMs: t,
-          })
-        ).posts,
-    },
-    {
-      protocol: 'threads',
-      fetch: async (e, t) =>
-        (await new ThreadsProvider({ pdsUrl: e.THREADS_PDS_URL }).fetchFeed({ timeoutMs: t }))
-          .posts,
-    },
   ];
   const filtered = sources.filter((s) => requested.includes(s.protocol));
   const results = await Promise.allSettled(
     filtered.map(async (s) => {
-      const posts = await s.fetch(env, DEFAULT_TIMEOUT_MS);
+      const posts = await s.fetch(env, timeoutMs);
       return posts.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
     }),
   );
