@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
+import { SearchOverlay } from './SearchOverlay';
 
 interface NavItem {
   href: string;
@@ -51,6 +52,7 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
 export function Shell({ children }: { children: React.ReactNode }) {
   const { ready, signedInProtocols, openSignIn, openCompose } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
 
   const closeMobile = () => setMobileOpen(false);
@@ -75,6 +77,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+              aria-label="Search"
+            >
+              ⌕
+            </button>
             {!ready ? (
               <div className="h-9 w-24 animate-pulse rounded-lg bg-gray-800" />
             ) : hasSignedIn ? (
@@ -191,6 +201,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </p>
         </div>
       </footer>
+
+      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
 }

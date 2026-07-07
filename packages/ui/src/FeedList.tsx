@@ -2,17 +2,18 @@
  * @degenfeed/ui — FeedList
  *
  * Scrollable list of PostCards with loading, empty, and error states.
- * Supports infinite scroll, pull-to-refresh, and protocol filtering.
+ * Supports infinite scroll, pull-to-refresh, protocol filtering, and
+ * virtualized rendering (only visible posts are in the DOM).
  *
  * States:
  *   loading  → Skeleton cards (animated pulses)
- *   loaded   → PostCard list
+ *   loaded   → PostCard list (virtualized)
  *   empty    → Illustration + message + CTA
  *   error    → Error message + retry button
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { type EngageHandler, PostCard } from './PostCard';
 
 export type { UnifiedPost };
@@ -20,32 +21,25 @@ export type { UnifiedPost };
 export type FeedState = 'loading' | 'loaded' | 'empty' | 'error';
 
 export interface FeedListProps {
-  /** Current feed state. */
   state: FeedState;
-  /** Posts to render (only used when state === 'loaded'). */
   posts: UnifiedPost[];
-  /** Error message (only used when state === 'error'). */
   error?: string;
-  /** Protocol filter label displayed in the header. */
   protocolLabel?: string;
-  /** Protocol color for accent. */
   protocolColor?: string;
-  /** Called when the user triggers a retry. */
   onRetry?: () => void;
-  /** Called when a post is clicked. */
   onPostClick?: (postId: string) => void;
-  /** Called when user engages with a post. */
   onTip?: (post: UnifiedPost) => void;
   onEngage?: EngageHandler;
-  /** If true, enables infinite scroll callback. */
   hasMore?: boolean;
-  /** Called when user scrolls near the bottom (for infinite scroll). */
   onLoadMore?: () => void;
 }
 
+const CARD_HEIGHT = 200;
+const OVERSCAN = 4;
+
 function SkeletonCard() {
   return (
-    <div className="card animate-pulse">
+    <div className="card animate-pulse" style={{ height: CARD_HEIGHT }}>
       <div className="mb-3 flex items-center gap-3">
         <div className="h-8 w-8 rounded-full bg-gray-800" />
         <div className="flex-1">
@@ -100,7 +94,6 @@ export function FeedList({
   posts,
   error,
   protocolLabel,
-
   onTip,
   onRetry,
   onPostClick,
@@ -109,13 +102,15 @@ export function FeedList({
   onLoadMore,
 }: FeedListProps) {
   const sentinelRef = useRef<HTMLLIElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(800);
 
   // Infinite scroll observer
   useEffect(() => {
     if (!hasMore || !onLoadMore) return;
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) onLoadMore();
@@ -125,6 +120,22 @@ export function FeedList({
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [hasMore, onLoadMore]);
+
+  // Track scroll position and container height for virtualization
+  const handleScroll = useCallback(() => {
+    if (containerRef.current) {
+      setScrollTop(containerRef.current.scrollTop);
+      setContainerHeight(containerRef.current.clientHeight);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setContainerHeight(el.clientHeight);
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   // Loading state
   if (state === 'loading') {
@@ -147,22 +158,36 @@ export function FeedList({
     return <EmptyState protocolLabel={protocolLabel} />;
   }
 
-  // Loaded state
+  // Virtualized rendering
+  const totalHeight = posts.length * CARD_HEIGHT;
+  const startIndex = Math.max(0, Math.floor(scrollTop / CARD_HEIGHT) - OVERSCAN);
+  const endIndex = Math.min(
+    posts.length,
+    Math.ceil((scrollTop + containerHeight) / CARD_HEIGHT) + OVERSCAN,
+  );
+  const visiblePosts = posts.slice(startIndex, endIndex);
+  const offsetY = startIndex * CARD_HEIGHT;
+
   return (
-    <ul
-      className="space-y-4 list-none"
+    <div
+      ref={containerRef}
+      className="overflow-y-auto"
+      style={{ height: '100%', maxHeight: 'calc(100vh - 200px)' }}
       aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
     >
-      {posts.map((post) => (
-        <li key={post.id}>
-          <PostCard post={post} onClick={onPostClick} onTip={onTip} onEngage={onEngage} />
-        </li>
-      ))}
-      {hasMore && (
-        <li ref={sentinelRef} className="py-4 text-center text-sm text-gray-600">
-          Loading more...
-        </li>
-      )}
-    </ul>
+      <ul className="relative list-none" style={{ height: totalHeight }}>
+        <li style={{ height: offsetY }} aria-hidden="true" />
+        {visiblePosts.map((post) => (
+          <li key={post.id} style={{ height: CARD_HEIGHT }}>
+            <PostCard post={post} onClick={onPostClick} onTip={onTip} onEngage={onEngage} />
+          </li>
+        ))}
+        {hasMore && (
+          <li ref={sentinelRef} className="py-4 text-center text-sm text-gray-600">
+            Loading more...
+          </li>
+        )}
+      </ul>
+    </div>
   );
 }

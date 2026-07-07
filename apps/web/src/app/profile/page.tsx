@@ -4,6 +4,7 @@ import type { StoredIdentity } from '@degenfeed/storage';
 import { QRCodeSVG } from 'qrcode.react';
 import { useMemo } from 'react';
 import { useAuth } from '../../components/AuthProvider';
+import { IdentityLinker } from '../../components/IdentityLinker';
 import { useWeb3 } from '../../components/Web3Provider';
 
 export const dynamic = 'force-dynamic';
@@ -229,6 +230,10 @@ export default function ProfilePage() {
                 Your wallet is your primary identity. Link a social account to cross-post.
               </p>
             )}
+
+            <div className="mt-4">
+              <IdentityLinker onSignIn={openSignIn} />
+            </div>
           </div>
 
           <div className="mb-6">

@@ -48,6 +48,7 @@ import {
 } from './routes/rmi';
 import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
+import { handleSearch, handleSearchIdentity } from './routes/search';
 import {
   handleLightningInvoice,
   handleTipCreate,
@@ -371,6 +372,10 @@ export default {
         response = await handleNewsletterStatus(request, env);
       } else if (path === '/api/newsletter/digest' || path.startsWith('/api/newsletter/digest')) {
         response = await handleNewsletterDigest(request, env);
+      } else if (path === '/api/search/identity') {
+        response = await handleSearchIdentity(request, env);
+      } else if (path === '/api/search') {
+        response = await handleSearch(request, env);
       } else {
         response = jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.2.0' });
       }

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { AuthProvider } from '../components/AuthProvider';
 import { ErrorTracker } from '../components/ErrorTracker';
@@ -37,6 +38,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <body>
         <ErrorTracker />
+        <Script
+          defer
+          data-domain="degenfeed.xyz"
+          src="https://plausible.io/js/script.js"
+          strategy="afterInteractive"
+        />
         <SolanaProvider>
           <Web3Provider>
             <AuthProvider>
