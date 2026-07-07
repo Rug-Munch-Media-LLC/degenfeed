@@ -10,9 +10,9 @@ describe('@degenfeed/feed-core', () => {
     expect(typeof mod.emptyIdentity).toBe('function');
     expect(typeof mod.emptyMetrics).toBe('function');
     expect(typeof mod.isSpamPost).toBe('function');
+    expect(typeof mod.isRelevantPost).toBe('function');
     expect(typeof mod.deduplicatePosts).toBe('function');
-    expect(typeof mod.scorePost).toBe('function');
-    expect(typeof mod.rankPosts).toBe('function');
+    expect(typeof mod.contentFingerprint).toBe('function');
   });
 
   it('should detect crypto niche from text', async () => {
@@ -100,41 +100,4 @@ describe('@degenfeed/feed-core', () => {
     expect(deduplicatePosts([a, b])).toHaveLength(1);
   });
 
-  it('should score posts by engagement', async () => {
-    const { buildUnifiedPost, emptyIdentity, scorePost } = await import('./index');
-    const post = buildUnifiedPost({
-      protocol: 'farcaster',
-      nativeId: 'a',
-      author: emptyIdentity(),
-      text: 'Crypto alpha',
-      createdAt: Date.now(),
-      raw: {},
-      metrics: { likes: 10, reposts: 5, replies: 2, quotes: 0 },
-    });
-    expect(scorePost(post)).toBeGreaterThan(0);
-  });
-
-  it('should rank posts', async () => {
-    const { buildUnifiedPost, emptyIdentity, rankPosts } = await import('./index');
-    const now = Date.now();
-    const a = buildUnifiedPost({
-      protocol: 'nostr',
-      nativeId: 'a',
-      author: emptyIdentity(),
-      text: 'Old post',
-      createdAt: now - 86400000,
-      raw: {},
-    });
-    const b = buildUnifiedPost({
-      protocol: 'farcaster',
-      nativeId: 'b',
-      author: emptyIdentity(),
-      text: 'New post',
-      createdAt: now,
-      raw: {},
-      metrics: { likes: 10, reposts: 0, replies: 0, quotes: 0 },
-    });
-    const ranked = rankPosts([a, b], now);
-    expect(ranked[0]?.id).toBe('farcaster:b');
-  });
 });

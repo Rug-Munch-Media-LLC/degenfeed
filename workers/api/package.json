@@ -22,6 +22,7 @@
     "@degenfeed/nostr-sdk": "workspace:*",
     "@degenfeed/ranking": "workspace:*",
     "@degenfeed/rss-sdk": "workspace:*",
+    "@degenfeed/utils": "workspace:*",
     "@degenfeed/threads-sdk": "workspace:*",
     "@degenfeed/types": "workspace:*",
     "@noble/curves": "^1.9.7",

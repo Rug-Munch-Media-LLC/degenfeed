@@ -380,24 +380,6 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
   return out;
 }
 
-export function scorePost(post: UnifiedPost, now = Date.now()): number {
-  const m = post.metrics;
-  // Weighted engagement: replies/quotes are 3-4x as valuable as likes
-  // because they signal conversation vs passive approval.
-  const engagementRaw = m.likes + m.reposts * 2 + m.replies * 3 + m.quotes * 4;
-  const engagement = Math.log(1 + engagementRaw);
-  // 12-hour half-life — most crypto content has a useful half-life
-  // under a day; we want fresh stuff rising and old stuff decaying.
-  const ageHrs = Math.max(0, (now - post.createdAt) / 3600000);
-  const recency = 0.5 ** (ageHrs / 12);
-  // Niche boost — only meaningful if the post actually has niches
-  const nicheBoost = post.niches.length > 0 ? 1 + Math.min(post.niches.length, 5) * 0.08 : 1;
-  // Ticker boost — posts mentioning $TICKER are time-sensitive signals
-  const tickerCount = (post.text.match(/\$[A-Z]{2,5}\b/g) ?? []).length;
-  const tickerBoost = 1 + Math.min(tickerCount, 3) * 0.15;
-  return engagement * recency * nicheBoost * tickerBoost;
-}
-
 export function enrichPostNiches(post: UnifiedPost): UnifiedPost {
   const textParts = [post.text, post.html ?? '', post.author.displayName, post.author.bio];
   for (const e of post.embeds) {
@@ -408,13 +390,6 @@ export function enrichPostNiches(post: UnifiedPost): UnifiedPost {
   const allText = textParts.join(' ');
   post.niches = [...new Set([...post.niches, ...detectNiches(allText)])];
   return post;
-}
-
-export function rankPosts(posts: UnifiedPost[], now = Date.now()): UnifiedPost[] {
-  return [...posts]
-    .map((p) => ({ post: enrichPostNiches(p), score: scorePost(p, now) }))
-    .sort((a, b) => b.score - a.score)
-    .map((p) => p.post);
 }
 
 export function dedupeKey(protocol: Protocol, nativeId: string): string {

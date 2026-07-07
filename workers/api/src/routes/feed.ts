@@ -1,3 +1,5 @@
+import { rmiUrl } from '@degenfeed/utils';import { parseProtocols }
+from '@degenfeed/utils';
 import {
   deduplicatePosts,
   enrichPostNiches,
@@ -40,16 +42,7 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
 
 const DEFAULT_TIMEOUT_MS = 6000;
 
-function rmiUrl(env: Env): string {
-  return (env as Env & { RMI_BACKEND_URL?: string }).RMI_BACKEND_URL || 'http://127.0.0.1:8000';
-}
 
-function parseProtocols(raw: string | null): Protocol[] {
-  if (!raw) return DEFAULT_PROTOCOLS;
-  const parts = raw.split(',').map((p) => p.trim()) as Protocol[];
-  const valid = new Set<Protocol>(DEFAULT_PROTOCOLS);
-  return parts.filter((p): p is Protocol => valid.has(p));
-}
 
 function getProvider(protocol: Protocol, env: Env): FeedProvider {
   switch (protocol) {

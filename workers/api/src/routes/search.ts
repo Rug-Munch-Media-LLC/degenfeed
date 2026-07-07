@@ -9,6 +9,7 @@
  *   GET /api/search/identity?q=handle&limit=5
  */
 
+import { rmiUrl } from '@degenfeed/utils';
 import {
   deduplicatePosts,
   enrichPostNiches,
@@ -26,9 +27,6 @@ import { type Env, jsonResponse } from '../index';
 
 const DEFAULT_PROTOCOLS: Protocol[] = ['rss', 'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
 
-function rmiUrl(env: Env): string {
-  return (env as Env & { RMI_BACKEND_URL?: string }).RMI_BACKEND_URL || 'http://127.0.0.1:8000';
-}
 
 export async function handleSearch(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);

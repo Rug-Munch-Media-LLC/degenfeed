@@ -11,6 +11,8 @@
  *   q        — free-text query filter
  */
 
+import { rmiUrl } from '@degenfeed/utils';import { parseProtocols }
+from '@degenfeed/utils';
 import {
   deduplicatePosts,
   enrichPostNiches,
@@ -24,9 +26,6 @@ import {
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
 
-function rmiUrl(env: Env): string {
-  return (env as Env & { RMI_BACKEND_URL?: string }).RMI_BACKEND_URL || 'http://127.0.0.1:8000';
-}
 
 function escapeXml(s: string): string {
   return s
@@ -149,14 +148,6 @@ async function gather(env: Env, _requested: Protocol[]): Promise<UnifiedPost[]> 
 
 const DEFAULT_PROTOCOLS: Protocol[] = ['rss', 'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
 
-function parseProtocols(raw: string | null): Protocol[] {
-  if (!raw) return DEFAULT_PROTOCOLS;
-  const valid = new Set<Protocol>(DEFAULT_PROTOCOLS);
-  return raw
-    .split(',')
-    .map((p) => p.trim() as Protocol)
-    .filter((p): p is Protocol => valid.has(p));
-}
 
 export async function handleRssXml(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);

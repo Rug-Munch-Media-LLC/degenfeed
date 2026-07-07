@@ -5,6 +5,7 @@
  * Cached for 5 minutes in KV.
  */
 
+import { rmiUrl } from '@degenfeed/utils';
 import { enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
 import {
   BlueskyProvider,
@@ -20,9 +21,6 @@ import {
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
 
-function rmiUrl(env: Env): string {
-  return (env as Env & { RMI_BACKEND_URL?: string }).RMI_BACKEND_URL || 'http://127.0.0.1:8000';
-}
 
 function providerFor(protocol: Protocol, env: Env) {
   switch (protocol) {

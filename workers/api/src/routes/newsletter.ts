@@ -16,6 +16,7 @@
  * ranked by the v2 algorithm, and formatted for email consumption.
  */
 
+import { rmiUrl } from '@degenfeed/utils';
 import {
   deduplicatePosts,
   enrichPostNiches,
@@ -58,9 +59,6 @@ const ALLOWED_NICHES = new Set([
   'crypto',
 ]);
 
-function rmiUrl(env: Env): string {
-  return (env as Env & { RMI_BACKEND_URL?: string }).RMI_BACKEND_URL || 'http://127.0.0.1:8000';
-}
 
 function isValidEmail(s: string): boolean {
   if (typeof s !== 'string') return false;
