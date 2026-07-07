@@ -132,7 +132,7 @@ function formatTime(ts: number): string {
 
 async function gatherDigestPosts(
   env: Env,
-  _protocols: Protocol[],
+  protocols: Protocol[],
   niches: string[],
 ): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
