@@ -18,6 +18,7 @@ import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from 
 import { handleBlinkTip } from './routes/blink';
 import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import { handleEngage } from './routes/engage';
+import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import {
   handleCategoryFeed,
   handleFeedHealth,
@@ -247,8 +248,17 @@ export default {
     let response: Response;
 
     try {
-      // Route dispatch — each handler is a separate module
-      if (path === '/api/health') {
+      // Landing page assets — served by the Worker to avoid the 301 loop
+      // caused by the tunnel routing degenfeed.xyz to port 80 (which serves
+      // a different app). Must be checked BEFORE the /api/* routes so
+      // /styles.css and /app.js are not treated as API paths.
+      if (path === '/styles.css') {
+        response = handleLandingCss(request, env);
+      } else if (path === '/app.js') {
+        response = handleLandingJs(request, env);
+      } else if (path === '/' || path === '/index.html' || path === '') {
+        response = handleLandingHtml(request, env);
+      } else if (path === '/api/health') {
         response = await handleRelaysHealth(env);
       } else if (path === '/api/feed/home') {
         response = await handleHomeFeed(request, env);

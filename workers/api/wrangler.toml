@@ -5,7 +5,8 @@ compatibility_flags = ["nodejs_compat"]
 
 routes = [
   { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
-  { pattern = "app.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
+  { pattern = "app.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
+  { pattern = "degenfeed.xyz/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
 ]
 
 # GTS_CLIENT_SECRET is a secret. Set it via:
