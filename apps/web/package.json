@@ -30,7 +30,7 @@
     "@tanstack/react-query": "^5.101.2",
     "@web3modal/wagmi": "^5.1.11",
     "dompurify": "^3.2.3",
-    "next": "^15.0.0",
+    "next": "^16.2.10",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -38,7 +38,7 @@
     "wagmi": "^3.6.21"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "^2.5.2",
     "@cloudflare/next-on-pages": "^1.13.16",
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
