@@ -254,6 +254,8 @@ export default {
         response = await handleTrendingFeed(request, env);
       } else if (path === '/api/feed/health') {
         response = await handleFeedHealth(request, env);
+      } else if (path === '/api/feed/rss.xml' || path === '/api/feed/atom.xml') {
+        response = await handleRssXml(request, env);
       } else if (path.startsWith('/api/feed/') && !path.startsWith('/api/feed/category/')) {
         const provider = path.replace('/api/feed/', '');
         response = await handleProviderFeed(request, env, provider);
@@ -266,8 +268,6 @@ export default {
         response = await handleThreadsFeed(request, env);
       } else if (path === '/api/feed/news') {
         response = await handleNewsFeed(request, env);
-      } else if (path === '/api/feed/rss.xml' || path === '/api/feed/atom.xml') {
-        response = await handleRssXml(request, env);
       } else if (path === '/api/bridge/rss-to-nostr') {
         const { handleRssToNostrBridge } = await import('./routes/publish');
         response = await handleRssToNostrBridge(request, env);
