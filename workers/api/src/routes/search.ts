@@ -17,13 +17,9 @@ import {
 } from '@degenfeed/feed-core';
 import {
   BlueskyProvider,
-  FarcasterProvider,
-  LensProvider,
   MastodonProvider,
   NostrProvider,
-  RmiDataBusProvider,
   RssProvider,
-  ThreadsProvider,
 } from '@degenfeed/feed-providers';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
@@ -51,21 +47,44 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
   } catch { /* ignore */ }
 
   const all: UnifiedPost[] = [];
-  const timeoutMs = 3000;
+  const timeoutMs = 2000;
+  // Hard deadline for the entire search: 5 seconds from the edge.
+  // Each provider gets 2s, and we race all of them against a 5s deadline.
+  const hardDeadline = 5000;
 
   const providers: { protocol: Protocol; fetch: () => Promise<UnifiedPost[]> }[] = [
-    { protocol: 'rss', fetch: async () => (await new RmiDataBusProvider({ backendUrl: rmiUrl(env) }).fetchFeed({ timeoutMs })).posts },
-    { protocol: 'rss', fetch: async () => (await new RssProvider({ feeds: ['https://cointelegraph.com/rss', 'https://decrypt.co/feed', 'https://bitcoinmagazine.com/.rss/full/'] }).fetchFeed({ timeoutMs })).posts },
-    { protocol: 'nostr', fetch: async () => (await new NostrProvider({ relays: (env.RELAY_URLS ?? '').split(',').filter(Boolean) }).fetchFeed({ timeoutMs })).posts },
-    { protocol: 'farcaster', fetch: async () => (await new FarcasterProvider({ hubUrl: env.FARCASTER_HUB_URL }).fetchFeed({ timeoutMs })).posts },
-    { protocol: 'lens', fetch: async () => (await new LensProvider({ apiUrl: env.LENS_API_URL }).fetchFeed({ timeoutMs })).posts },
-    { protocol: 'bluesky', fetch: async () => (await new BlueskyProvider({ baseUrl: env.BSKY_PUBLIC_URL }).fetchFeed({ timeoutMs })).posts },
-    { protocol: 'mastodon', fetch: async () => (await new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL }).fetchFeed({ timeoutMs })).posts },
+    { protocol: 'rss', fetch: async () => {
+      const rss = new RssProvider({ feeds: ['https://cointelegraph.com/rss', 'https://decrypt.co/feed', 'https://bitcoinmagazine.com/.rss/full/', 'https://www.theblock.co/rss'] });
+      const r = await rss.fetchFeed({ timeoutMs });
+      return r.posts;
+    } },
+    { protocol: 'nostr', fetch: async () => {
+      const p = new NostrProvider({ relays: (env.RELAY_URLS ?? '').split(',').filter(Boolean) });
+      const r = await p.fetchFeed({ timeoutMs });
+      return r.posts;
+    } },
+    { protocol: 'bluesky', fetch: async () => {
+      const p = new BlueskyProvider({ baseUrl: env.BSKY_PUBLIC_URL });
+      const r = await p.fetchFeed({ timeoutMs });
+      return r.posts;
+    } },
+    { protocol: 'mastodon', fetch: async () => {
+      const p = new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL });
+      const r = await p.fetchFeed({ timeoutMs });
+      return r.posts;
+    } },
   ];
 
   const selected = providers.filter((p) => protocols.includes(p.protocol));
-  const results = await Promise.allSettled(selected.map((p) => p.fetch()));
-  for (const r of results) {
+  // Race all providers against a hard deadline
+  const deadlinePromise = new Promise<never>((resolve) => {
+    setTimeout(() => resolve(), hardDeadline);
+  });
+  const results = await Promise.race([
+    Promise.allSettled(selected.map((p) => p.fetch())),
+    deadlinePromise.then(() => [] as PromiseSettledResult<UnifiedPost[]>[]),
+  ]);
+  for (const r of results as PromiseSettledResult<UnifiedPost[]>[]) {
     if (r.status === 'fulfilled') all.push(...r.value);
   }
 

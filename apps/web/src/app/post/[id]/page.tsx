@@ -5,6 +5,7 @@ import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { TipModal } from '../../../components/TipModal';
+import { sanitizeHtml } from '../../../lib/sanitize';
 
 function formatTime(ts: number): string {
   const diff = Date.now() - ts;
@@ -96,7 +97,7 @@ function PostCard({ post, onEngage, onTip }: {
         {post.html && (
           <div
             className="mt-2 text-sm leading-relaxed text-gray-400"
-            dangerouslySetInnerHTML={{ __html: post.html }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.html) }}
           />
         )}
       </div>
@@ -203,22 +204,19 @@ export default function PostPage({ params }: Props) {
     async function load() {
       setState('loading');
       try {
-        // Fetch the home feed and find the post by ID
-        const res = await fetch('/api/feed/home?limit=100', { credentials: 'include' });
-        const data = (await res.json()) as { data?: UnifiedPost[]; error?: string };
-        if (!res.ok) throw new Error(data.error || 'Failed to load');
+        // Use dedicated post endpoint — doesn't hammer the rate limit
+        // or fetch the entire home feed for one post.
+        const res = await fetch(`/api/feed/post/${encodeURIComponent(id)}`, {
+          credentials: 'include',
+        });
+        const data = (await res.json()) as { data?: UnifiedPost; error?: string };
+        if (!res.ok || !data.data) throw new Error(data.error || 'Post not found');
         if (cancelled) return;
-        const found = (data.data ?? []).find((p) => p.id === id);
-        if (found) {
-          setPost(found);
-          setState('loaded');
-        } else {
-          setError('Post not found');
-          setState('error');
-        }
+        setPost(data.data);
+        setState('loaded');
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load post');
+          setError(err instanceof Error ? err.message : 'Post not found');
           setState('error');
         }
       }

@@ -24,10 +24,21 @@ import {
 export const THREADS_WEB_URL = 'https://www.threads.net';
 
 export const CURATED_THREADS_HANDLES = [
-  'mosseri',
-  'zuck',
-  'meta',
-  'instagram',
+  'vitalik.eth',
+  'dwr.eth',
+  'balajis',
+  'cdixon.eth',
+  'sama',
+  'naval',
+  'jessepollak',
+  'stani',
+  'sassal0x',
+  'hosseeb',
+  '0xfoobar',
+  'rleshner',
+  'coopahtroopa',
+  'pmarca',
+  'twobitidiot',
 ];
 
 interface ThreadsPost {
