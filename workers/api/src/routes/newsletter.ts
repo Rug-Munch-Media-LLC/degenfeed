@@ -23,14 +23,8 @@ import {
   isSpamPost,
 } from '@degenfeed/feed-core';
 import {
-  BlueskyProvider,
-  FarcasterProvider,
-  LensProvider,
-  MastodonProvider,
-  NostrProvider,
   RmiDataBusProvider,
   RssProvider,
-  ThreadsProvider,
 } from '@degenfeed/feed-providers';
 import { computeTrendingTopics, rankDiverse } from '@degenfeed/ranking';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
@@ -138,73 +132,42 @@ function formatTime(ts: number): string {
 
 async function gatherDigestPosts(
   env: Env,
-  protocols: Protocol[],
+  _protocols: Protocol[],
   niches: string[],
 ): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
   const timeoutMs = 5000;
 
-  const providers: { protocol: Protocol; fetch: () => Promise<UnifiedPost[]> }[] = [
-    {
-      protocol: 'rss',
-      fetch: async () => {
-        const rmi = new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
-        const r = await rmi.fetchFeed({ timeoutMs });
-        return r.posts;
-      },
-    },
-    {
-      protocol: 'nostr',
-      fetch: async () => {
-        const p = new NostrProvider({ relays: (env.RELAY_URLS ?? '').split(',').filter(Boolean) });
-        const r = await p.fetchFeed({ timeoutMs });
-        return r.posts;
-      },
-    },
-    {
-      protocol: 'farcaster',
-      fetch: async () => {
-        const p = new FarcasterProvider({ hubUrl: env.FARCASTER_HUB_URL });
-        const r = await p.fetchFeed({ timeoutMs });
-        return r.posts;
-      },
-    },
-    {
-      protocol: 'lens',
-      fetch: async () => {
-        const p = new LensProvider({ apiUrl: env.LENS_API_URL });
-        const r = await p.fetchFeed({ timeoutMs });
-        return r.posts;
-      },
-    },
-    {
-      protocol: 'bluesky',
-      fetch: async () => {
-        const p = new BlueskyProvider({ baseUrl: env.BSKY_PUBLIC_URL });
-        const r = await p.fetchFeed({ timeoutMs });
-        return r.posts;
-      },
-    },
-    {
-      protocol: 'mastodon',
-      fetch: async () => {
-        const p = new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL });
-        const r = await p.fetchFeed({ timeoutMs });
-        return r.posts;
-      },
-    },
-    {
-      protocol: 'threads',
-      fetch: async () => {
-        const p = new ThreadsProvider({ pdsUrl: env.THREADS_PDS_URL });
-        const r = await p.fetchFeed({ timeoutMs });
-        return r.posts;
-      },
-    },
-  ];
+  // RMI DataBus (institutional-grade news, 200+ sources)
+  try {
+    const rmi = new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
+    const r = await rmi.fetchFeed({ timeoutMs });
+    if (r.posts.length > 0) all.push(...r.posts);
+  } catch {
+    /* RMI unavailable from edge */
+  }
 
-  const selected = providers.filter((p) => protocols.includes(p.protocol));
-  const results = await Promise.allSettled(selected.map((p) => p.fetch()));
+  // Public RSS feeds (fast, reliable)
+  const fastFeeds = [
+    'https://cointelegraph.com/rss',
+    'https://decrypt.co/feed',
+    'https://bitcoinmagazine.com/.rss/full/',
+    'https://blog.ethereum.org/feed.xml',
+    'https://blog.chain.link/feed/',
+    'https://bankless.substack.com/feed',
+    'https://weekinethereumnews.com/feed',
+  ];
+  const results = await Promise.allSettled(
+    fastFeeds.map(async (url) => {
+      try {
+        const rss = new RssProvider({ feeds: [url] });
+        const r = await rss.fetchFeed({ timeoutMs: 3000 });
+        return r.posts;
+      } catch {
+        return [] as UnifiedPost[];
+      }
+    }),
+  );
   for (const r of results) {
     if (r.status === 'fulfilled') all.push(...r.value);
   }
