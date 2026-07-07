@@ -57,7 +57,7 @@ interface FeedMeta {
 }
 
 function SectionContent({ section }: { section: string }) {
-  const { signedInProtocols, engage, openSignIn, openCompose } = useAuth();
+  const { signedInProtocols, engage, openSignIn, openCompose, tokens } = useAuth();
   const meta = SECTIONS.find((s) => s.id === section);
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
@@ -67,27 +67,28 @@ function SectionContent({ section }: { section: string }) {
   const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
 
-  useEffect(() => {
+  const fetchNotifs = useCallback(async () => {
     if (!hasSignedIn) return;
-    const fetchNotifs = async () => {
-      try {
-        const stored = localStorage.getItem('degenfeed_identities');
-        if (!stored) return;
-        const parsed = JSON.parse(stored) as Array<{ protocol: string; token?: string }>;
-        const auth = JSON.stringify({
-          mastodon: parsed.find((i) => i.protocol === 'mastodon')?.token,
-        });
-        const res = await fetch(`/api/notifications?auth=${encodeURIComponent(auth)}`, {
-          credentials: 'include',
-        });
-        const data = (await res.json()) as { notifications?: Notification[] };
-        setNotifications(data.notifications || []);
-      } catch {}
-    };
+    try {
+      const stored = localStorage.getItem('degenfeed_identities');
+      if (!stored) return;
+      const parsed = JSON.parse(stored) as Array<{ protocol: string; token?: string }>;
+      const auth = JSON.stringify({
+        mastodon: parsed.find((i) => i.protocol === 'mastodon')?.token,
+      });
+      const res = await fetch(`/api/notifications?auth=${encodeURIComponent(auth)}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { notifications?: Notification[] };
+      setNotifications(data.notifications || []);
+    } catch {}
+  }, [hasSignedIn]);
+
+  useEffect(() => {
     fetchNotifs();
     const interval = setInterval(fetchNotifs, 60000);
     return () => clearInterval(interval);
-  }, [hasSignedIn]);
+  }, [fetchNotifs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -175,7 +176,7 @@ function SectionContent({ section }: { section: string }) {
             <NotificationBell
               notifications={notifications}
               unreadCount={notifications.filter((n) => !n.read).length}
-              onFetch={() => {}}
+              onFetch={fetchNotifs}
               onMarkRead={(id) =>
                 setNotifications(notifications.map((n) => (n.id === id ? { ...n, read: true } : n)))
               }

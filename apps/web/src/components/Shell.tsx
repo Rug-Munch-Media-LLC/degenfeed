@@ -12,6 +12,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/home', label: 'Feed' },
   { href: '/news', label: 'News' },
+  { href: '/newsletter', label: 'Daily' },
   { href: '/premium', label: 'Premium' },
   { href: '/profile', label: 'Profile' },
 ];
