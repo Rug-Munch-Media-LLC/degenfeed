@@ -10,7 +10,7 @@ const TIERS = [
       'Read all ranked feeds',
       'Public likes/replies where supported',
       'Basic tipping',
-      'Wallet sign-in',
+      'Wallet sign-in (ETH + SOL)',
     ],
     cta: 'Get started',
     popular: false,
@@ -19,15 +19,13 @@ const TIERS = [
     id: 'pro',
     name: 'Pro',
     price: '$5/mo',
-    description: 'Cross-post and control your algorithm.',
+    description: 'Support the network and unlock power-user tools.',
     features: [
       'Cross-post to all connected platforms',
-      'Advanced algorithm controls',
-      'Custom feeds and saved searches',
-      'Priority support',
-      'Analytics dashboard',
-      'Boosted profile in discovery',
+      'Advanced algorithm controls (recency/engagement/diversity)',
+      'Follow authors and mute across the open social graph',
       'Bookmark sync across devices',
+      'Priority support',
     ],
     cta: 'Upgrade to Pro',
     popular: true,
@@ -39,11 +37,9 @@ const TIERS = [
     description: 'Monetize with paywalls and premium content.',
     features: [
       'Everything in Pro',
-      'Paywalled premium posts (x402)',
-      'Subscriber-only threads/newsletters',
-      'Tip jar + monetization dashboard',
+      'Paywalled premium posts (x402 protocol)',
+      'Tip jar + monetization settings',
       'Verified creator badge',
-      'Early access to new platforms',
     ],
     cta: 'Become a Creator',
     popular: false,
@@ -53,14 +49,17 @@ const TIERS = [
 export const dynamic = 'force-dynamic';
 
 function handleSubscribe(tier: string) {
-  window.location.href = `/api/billing/checkout?tier=${tier}`;
+  // Open the billing checkout in a new tab. The endpoint returns JSON
+  // with a payment URL; for now we open a direct link to the endpoint
+  // and the user can follow the payment flow from there.
+  window.open(`/api/billing/checkout?tier=${tier}`, '_blank');
 }
 
 export default function PremiumPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <div className="mb-10 text-center">
-        <h1 className="text-3xl font-bold text-white">Unlock the full DegenFeed experience</h1>
+        <h1 className="text-3xl font-bold text-white">Support DegenFeed</h1>
         <p className="mx-auto mt-2 max-w-xl text-sm text-gray-500">
           Upgrade with crypto to support the network and unlock pro tools for power users and
           creators.
@@ -109,6 +108,9 @@ export default function PremiumPage() {
       <div className="card mt-8 border-degen-500/20 bg-degen-500/5 py-6 text-center">
         <p className="text-sm text-gray-400">
           Payments are processed on Solana via Blinks. No fiat. No KYC. Cancel anytime.
+        </p>
+        <p className="mt-2 text-xs text-gray-600">
+          All paid features are open source and available in our self-hosted build.
         </p>
       </div>
     </div>
