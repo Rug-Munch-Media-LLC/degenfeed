@@ -1,3 +1,11 @@
+import {
+  deleteFollow,
+  isAuthorMuted,
+  isFollowing,
+  muteAuthor,
+  saveFollow,
+  unmuteAuthor,
+} from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { useEffect, useState } from 'react';
 import { ProtocolBadge, getProtocolColor } from './ProtocolBadge';
@@ -102,6 +110,17 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
   });
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState('');
+  const [following, setFollowing] = useState(false);
+  const [muted, setMuted] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !post.author.id) return;
+    let cancelled = false;
+    Promise.all([isFollowing(post.author.id), isAuthorMuted(post.author.id)])
+      .then(([f, m]) => { if (!cancelled) { setFollowing(f); setMuted(m); } })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [post.author.id]);
 
   useEffect(() => {
     setLocalState({ engagement: post.engagement, metrics: post.metrics });
@@ -123,6 +142,46 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
       setShowReply(false);
     }
   }
+
+  const toggleFollow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const authorId = post.author.id;
+    if (!authorId) return;
+    const next = !following;
+    setFollowing(next);
+    try {
+      if (next) {
+        await saveFollow({
+          identityId: 'self',
+          targetId: authorId,
+          protocol: post.protocol,
+          targetHandle: post.author.handles[post.protocol] ?? post.author.displayName,
+          createdAt: Date.now(),
+        });
+      } else {
+        await deleteFollow('self', authorId);
+      }
+    } catch {
+      setFollowing(!next);
+    }
+  };
+
+  const toggleMute = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const authorId = post.author.id;
+    if (!authorId) return;
+    const next = !muted;
+    setMuted(next);
+    try {
+      if (next) {
+        await muteAuthor({ id: authorId, displayName: post.author.displayName, protocol: post.protocol });
+      } else {
+        await unmuteAuthor(authorId);
+      }
+    } catch {
+      setMuted(!next);
+    }
+  };
 
   return (
     <article
@@ -154,6 +213,32 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
               {post.author.displayName}
             </span>
             <ProtocolBadge protocol={post.protocol} />
+            <button
+              type="button"
+              onClick={toggleFollow}
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                following
+                  ? 'bg-degen-500/20 text-degen-400'
+                  : 'border border-gray-700 text-gray-500 hover:border-degen-500/30 hover:text-degen-400'
+              }`}
+              aria-label={following ? 'Unfollow' : 'Follow'}
+              title={following ? 'Unfollow' : 'Follow'}
+            >
+              {following ? '✓ Following' : '+ Follow'}
+            </button>
+            <button
+              type="button"
+              onClick={toggleMute}
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                muted
+                  ? 'bg-red-500/20 text-red-400'
+                  : 'border border-gray-700 text-gray-600 hover:border-red-500/30 hover:text-red-400'
+              }`}
+              aria-label={muted ? 'Unmute' : 'Mute'}
+              title={muted ? 'Unmute author' : 'Mute author'}
+            >
+              {muted ? '🔇 Muted' : '🔇'}
+            </button>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span className="truncate">

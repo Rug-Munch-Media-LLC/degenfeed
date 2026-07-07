@@ -2,7 +2,36 @@
  * @degenfeed/ui — component tests
  */
 
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+
+// Mock the storage module to avoid IndexedDB in test environment
+vi.mock('@degenfeed/storage', () => ({
+  addBookmark: vi.fn().mockResolvedValue(undefined),
+  removeBookmark: vi.fn().mockResolvedValue(undefined),
+  getBookmarks: vi.fn().mockResolvedValue([]),
+  isBookmarked: vi.fn().mockResolvedValue(false),
+  saveFollow: vi.fn().mockResolvedValue(undefined),
+  deleteFollow: vi.fn().mockResolvedValue(undefined),
+  getFollows: vi.fn().mockResolvedValue([]),
+  isFollowing: vi.fn().mockResolvedValue(false),
+  muteAuthor: vi.fn().mockResolvedValue(undefined),
+  unmuteAuthor: vi.fn().mockResolvedValue(undefined),
+  getMutedAuthors: vi.fn().mockResolvedValue([]),
+  isAuthorMuted: vi.fn().mockResolvedValue(false),
+  muteWord: vi.fn().mockResolvedValue(undefined),
+  unmuteWord: vi.fn().mockResolvedValue(undefined),
+  isWordMuted: vi.fn().mockResolvedValue(false),
+  saveIdentity: vi.fn().mockResolvedValue(undefined),
+  saveDraft: vi.fn().mockResolvedValue(undefined),
+  getDrafts: vi.fn().mockResolvedValue([]),
+  saveMonetizationPreferences: vi.fn().mockResolvedValue(undefined),
+  savePreferences: vi.fn().mockResolvedValue(undefined),
+  getAllIdentities: vi.fn().mockResolvedValue([]),
+  getPrimaryIdentity: vi.fn().mockResolvedValue(undefined),
+  setPrimaryIdentity: vi.fn().mockResolvedValue(undefined),
+  deleteIdentity: vi.fn().mockResolvedValue(undefined),
+}));
+
 import {
   PROTOCOL_COLORS,
   PROTOCOL_ICONS,

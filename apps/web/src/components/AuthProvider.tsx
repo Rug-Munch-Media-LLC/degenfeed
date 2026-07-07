@@ -160,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [ready, refresh]);
 
   const handleSignIn = useCallback(
-    async (protocol: string, token?: string) => {
+    async (protocol: string, credentials?: string | Record<string, string>) => {
       try {
         if (protocol === 'ethereum') {
           const session = await signInWithEthereum();
@@ -171,6 +171,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           return;
         }
+
+        // Backwards compat: if credentials is a string, treat as token
+        const creds = typeof credentials === 'string'
+          ? { token: credentials }
+          : credentials ?? {};
+        const token = creds.token as string | undefined;
 
         switch (protocol) {
           case 'solana': {
@@ -184,15 +190,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           case 'nostr': {
             const { signInWithNostrNsec } = await import('@degenfeed/auth');
-            if (!token) throw new Error('Nostr nsec required');
-            await signInWithNostrNsec(token, 'auto-unlock-passphrase');
+            if (creds.method === 'extension') {
+              const win = window as unknown as { nostr?: { getPublicKey: () => Promise<string>; signEvent: (e: { kind: number; content: string; tags: string[][]; created_at: number }) => Promise<{ sig: string }> } };
+              if (!win.nostr) throw new Error('NIP-07 extension not detected');
+              const pubkey = await win.nostr.getPublicKey();
+              await saveIdentity({
+                id: `nostr:${pubkey}`,
+                protocol: 'nostr',
+                publicId: pubkey,
+                handle: pubkey.slice(0, 12),
+                displayName: pubkey.slice(0, 12),
+                secret: '',
+                passphrase: 'auto-unlock',
+                isPrimary: false,
+              });
+              await refresh();
+              setShowSignIn(false);
+              return;
+            }
+            const nsec = (creds.nsec as string) || token;
+            if (!nsec) throw new Error('Nostr nsec required');
+            await signInWithNostrNsec(nsec, 'auto-unlock-passphrase');
             break;
           }
           case 'farcaster': {
             const { signInWithFarcasterSigner } = await import('@degenfeed/auth');
-            const fid = prompt('Farcaster FID (numeric):');
-            const username = prompt('Farcaster username:');
-            const signerKey = prompt('Signer private key hex:');
+            if (creds.method === 'warpcast') {
+              window.location.href = '/api/auth/warpcast/authorize';
+              return;
+            }
+            const fid = creds.fid as string;
+            const username = creds.username as string;
+            const signerKey = creds.signerKey as string;
             if (!fid || !username || !signerKey) throw new Error('Farcaster credentials required');
             await signInWithFarcasterSigner(signerKey, Number(fid), username, 'auto');
             break;
@@ -205,26 +234,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           case 'bluesky': {
             const { signInWithBluesky } = await import('@degenfeed/auth');
-            const handle = prompt('Bluesky handle (user.bsky.social):');
-            const appPass = prompt('Bluesky app password:');
+            const handle = creds.handle as string;
+            const appPass = creds.appPassword as string;
             if (!handle || !appPass) throw new Error('Bluesky credentials required');
             await signInWithBluesky(handle, appPass, 'auto-unlock');
             break;
           }
           case 'threads': {
             const { signInWithThreads } = await import('@degenfeed/auth');
-            const identifier = prompt('Threads/AT Protocol identifier:');
-            const apPass = prompt('App password:');
+            const identifier = creds.handle as string;
+            const apPass = creds.appPassword as string;
             if (!identifier || !apPass) throw new Error('Threads credentials required');
             await signInWithThreads(identifier, apPass, 'auto-unlock');
             break;
           }
           case 'mastodon': {
             const { signInWithGtS } = await import('@degenfeed/auth');
-            const instance =
-              prompt('Mastodon instance URL (https://social.degenfeed.xyz):') ||
-              'https://social.degenfeed.xyz';
-            const accessToken = prompt('Access token:');
+            const instance = (creds.instance as string) || 'https://social.degenfeed.xyz';
+            const accessToken = creds.accessToken as string;
             if (!accessToken) throw new Error('Access token required');
             await signInWithGtS(instance, accessToken, 'auto-unlock');
             break;
