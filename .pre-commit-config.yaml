@@ -32,6 +32,6 @@ repos:
         name: Biome lint + format check
         entry: bash -c 'npx @biomejs/biome check . --no-errors-on-unmatched || true'
         language: system
-        types_or: [javascript, jsx, ts, tsx, json, jsonc]
+        types_or: [javascript, jsx, ts, tsx, json]
         pass_filenames: false
         stages: [pre-push]
