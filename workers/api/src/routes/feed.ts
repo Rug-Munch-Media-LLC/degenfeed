@@ -82,7 +82,19 @@ class RssWithFallbackProvider implements FeedProvider {
 
   constructor(env: Env) {
     this.rmi = new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
-    this.rss = new RssProvider();
+    // Use a small curated set for edge reliability — the full 40+ feed
+    // list is too slow from Cloudflare Workers.
+    this.rss = new RssProvider({
+      feeds: [
+        'https://cointelegraph.com/rss',
+        'https://decrypt.co/feed',
+        'https://bitcoinmagazine.com/.rss/full/',
+        'https://blog.ethereum.org/feed.xml',
+        'https://blog.chain.link/feed/',
+        'https://bankless.substack.com/feed',
+        'https://weekinethereumnews.com/feed',
+      ],
+    });
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
