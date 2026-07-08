@@ -32,7 +32,7 @@ export const WEIGHTS = {
 
 export const WEIGHTS_V2 = {
   recency: 2.4,
-  engagement: 2.2,
+  engagement: 3.5,
   relevance: 1.8,
   quality: 1.4,
   diversity: 1.0,

@@ -135,7 +135,7 @@ export default function FeedPage() {
   const [newAvailable, setNewAvailable] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [loadedLimit, setLoadedLimit] = useState(50);
-  const hasMore = loadedLimit < 100;
+  const hasMore = loadedLimit < 200;
 
   const loadMore = useCallback(() => {
     setLoadedLimit((prev) => Math.min(prev + 25, 100));

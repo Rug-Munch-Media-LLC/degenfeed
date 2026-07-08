@@ -293,6 +293,63 @@ export const DEFAULT_CRYPTO_FEEDS = [
   'https://www.reddit.com/r/cybersecurity/.rss',
   'https://www.reddit.com/r/netsec/.rss',
   'https://www.reddit.com/r/hacking/.rss',
+
+  // ── Tier 15: Premium Newsletters (more Substack/Paragraph/Ghost) ──
+  'https://www.readthegeneralist.com/feed', // The Generalist
+  'https://www.notboring.co/feed', // Not Boring (Packy)
+  'https://lennysnewsletter.com/feed', // Lenny's Newsletter
+  'https://first1000.substack.com/feed', // First 1000 (Lenny)
+  'https://www.platformer.news/feed', // Platformer (Casey Newton)
+  'https://every.to/feed', // Every.to
+  'https://www.bigtechnology.com/feed', // Big Technology (Alex Kantrowitz)
+  'https://www.piratewires.com/feed', // Pirate Wires
+  'https://theankler.com/feed', // The Ankler (entertainment+biz)
+  'https://www.semaphore.substack.com/feed', // Semaphore (tech/biz)
+  'https://www.theredphone.xyz/feed', // The Red Phone (geopolitics)
+  'https://www.foreignaffairs.com/feed', // Foreign Affairs
+  'https://www.economist.com/feed', // The Economist
+  'https://www.ft.com/rss', // Financial Times
+  'https://www.wsj.com/feed', // Wall Street Journal
+  'https://www.nature.com/nature.rss', // Nature
+  'https://www.science.org/rss/current.xml', // Science
+  'https://www.cell.com/cell/current.rss', // Cell
+  'https://www.nejm.org/feed', // NEJM
+  'https://arxiv.org/rss/cs.AI', // arxiv CS.AI
+  'https://arxiv.org/rss/cs.CL', // arxiv CS.CL (NLP)
+  'https://arxiv.org/rss/cs.CR', // arxiv CS.CR (security)
+  'https://arxiv.org/rss/stat.ML', // arxiv stat.ML
+  'https://news.ycombinator.com/rss', // Hacker News
+  'https://lobste.rs/rss', // Lobsters (tech)
+  'https://www.producthunt.com/feed', // Product Hunt
+  'https://www.indiehackers.com/feed', // Indie Hackers
+  'https://cointelegraph.com/rss/tag/defi', // CoinTelegraph DeFi
+  'https://cointelegraph.com/rss/tag/regulation', // CoinTelegraph Regulation
+  'https://www.coindesk.com/arc/outboundfeeds/rss/', // CoinDesk
+  'https://www.theblock.co/rss', // The Block
+  'https://blockworks.co/feed', // Blockworks
+  'https://decrypt.co/feed', // Decrypt
+  'https://www.dlnews.com/feed/', // DL News
+  'https://unchainedcrypto.com/feed/', // Unchained
+  'https://thedefiant.io/feed', // The Defiant
+  'https://www.cryptopolitan.com/feed/', // Cryptopolitan
+  'https://coinjournal.net/feed/', // Coin Journal
+  'https://www.fxstreet.com/cryptocurrencies/news/feed', // FXStreet Crypto
+  // ── Mirror/Paragraph writers ─────────────────────────────────
+  'https://paragraph.xyz/@andrew/feed', // Andrew (Paragraph)
+  'https://paragraph.xyz/@divine/feed', // Divine (Paragraph)
+  'https://mirror.xyz/0x25B0/feed', // Mirror writer 1
+  'https://mirror.xyz/0xc0FFee/feed', // Mirror writer 2
+  // ── YouTube More ────────────────────────────────────────────
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCWN3xxRkmTPmbKwht9FuE5A', // Siraj Raval (AI)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC0rqucBdTuFTjJiefW5t-IQ', // Theo - t3.gg (tech)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCs_tLP3AiwYKwdUHpltJPuA', // GOTO Conferences (tech talks)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9x0AN7BWHpCDHSm9NiJFJQ', // NetworkChuck (tech)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCmRtPmgnQ04CMUpSUqPfhxQ', // Fireship (code)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCYbK_tjZ2OrIZFBvU6CCMiA', // Ben Eater (CS)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCh9IsIpGx-RxGc2gzwx7E2A', // Traversy Media (webdev)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC29ju8bIPH5as8OGnQzwJyA', // Web Dev Simplified
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCfzlCWGWYyIQ0aLC5w48gBQ', // Sentdex (Python/AI)
+
   // ── Reddit JSON hot posts (free, no auth) ───────────────────────
   'https://old.reddit.com/r/CryptoCurrency/hot.rss?limit=25',
   'https://old.reddit.com/r/Bitcoin/hot.rss?limit=25',

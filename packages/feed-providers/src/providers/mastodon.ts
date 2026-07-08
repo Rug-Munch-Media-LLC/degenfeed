@@ -27,6 +27,11 @@ export const TRENDING_INSTANCES = [
   { url: 'https://mas.to', weight: 0.7, label: 'General' },
   { url: 'https://mstdn.social', weight: 0.7, label: 'General' },
   { url: 'https://techhub.social', weight: 0.9, label: 'Tech' },
+  { url: 'https://mastodon.world', weight: 0.8, label: 'World' },
+  { url: 'https://mastodon.online', weight: 0.7, label: 'Online' },
+  { url: 'https://defcon.social', weight: 0.9, label: 'DEFCON' },
+  { url: 'https://hackers.town', weight: 0.8, label: 'Hackers' },
+  { url: 'https://layer8.space', weight: 0.8, label: 'Layer8' },
 ];
 
 export const PUBLIC_MASTODON_INSTANCES = [

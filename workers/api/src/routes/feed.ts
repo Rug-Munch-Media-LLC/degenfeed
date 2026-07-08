@@ -281,7 +281,7 @@ async function resetCircuit(env: Env, protocol: string): Promise<void> {
 export async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
-  const limit = Math.min(Number(params.get('limit')) || 25, 100);
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
   const category = params.get('category')?.toLowerCase() ?? '';
   const prefs = parsePrefsFromQuery(params);
   const diverse = params.get('diverse') !== 'false';
