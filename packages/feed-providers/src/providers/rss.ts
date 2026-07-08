@@ -112,7 +112,22 @@ export const DEFAULT_CRYPTO_FEEDS = [
   'https://axieinfinity.com/feed/', // Axie Infinity (gaming)
   'https://godsunchained.com/feed/', // Gods Unchained
   // ── Mastodon / Fediverse feeds ──────────────────────────────────
-  'https://social.degenfeed.xyz/@admin.rss', // Our own Mastodon instance
+  'https://social.degenfeed.xyz/@admin.rss',
+  // ── YouTube / Video ─────────────────────────────────────────────
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCAl9Ld79qaZxp9JzEOwd3aA', // Bankless
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCqK_GSMbpiV8spgD3ZGloSw', // Coin Bureau
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCcQ_2g7TDmI7Tpc4PqFFY_w', // Benjamin Cowen
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCVraXPw8VUQaGXAVBg-ZkyA', // DataDash
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC67TmGtqUPdHq9kFtnWZIKQ', // Into The Cryptoverse
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw', // 3Blue1Brown
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCr8UAVlECQNTpMEYfzt8nDQ', // Lex Fridman (AI/tech)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCznv7Vf9nBdXFXz2L9n7bLQ', // Finematics (DeFi)
+  // ── Reddit JSON hot posts (free, no auth) ───────────────────────
+  'https://old.reddit.com/r/CryptoCurrency/hot.json?limit=25',
+  'https://old.reddit.com/r/Bitcoin/hot.json?limit=25',
+  'https://old.reddit.com/r/ethereum/hot.json?limit=25',
+  'https://old.reddit.com/r/solana/hot.json?limit=25',
+  'https://old.reddit.com/r/defi/hot.json?limit=25', // Our own Mastodon instance
   'https://bitcoinops.org/en/feed.xml',
   'https://lightning.engineering/rss/',
   'https://unchainedcrypto.com/feed/',

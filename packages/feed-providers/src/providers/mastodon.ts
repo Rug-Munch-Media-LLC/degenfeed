@@ -250,6 +250,20 @@ export class MastodonProvider implements FeedProvider {
     try {
       const allStatuses: GtSStatus[] = [];
 
+      // 0. Trending API — free public endpoint with high-engagement posts
+      try {
+        const trending = await withTimeout(
+          fetchJson<GtSStatus[]>('https://mastodon.social/api/v1/trends/statuses?limit=20', {
+            headers: { 'user-agent': DEFAULT_USER_AGENT },
+          }),
+          timeoutMs + 2000,
+          'mastodon:trending',
+        );
+        if (Array.isArray(trending)) allStatuses.push(...trending);
+      } catch {
+        /* trending unavailable */
+      }
+
       // 1. Primary public timeline
       try {
         const primaryPublic = await withTimeout(

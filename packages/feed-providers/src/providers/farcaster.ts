@@ -24,7 +24,7 @@ import {
   withTimeout,
 } from '../utils';
 
-export const DEFAULT_HUB_URL = 'https://hub.farcaster.standardcrypto.vc:2281';
+export const DEFAULT_HUB_URL = 'https://hub.pinata.cloud';
 export const FALLBACK_HUB_URLS = [
   'https://hoyt.farcaster.standardcrypto.vc:2281',
   'https://hub-grpc.pinata.cloud',

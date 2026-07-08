@@ -132,7 +132,25 @@ export class LensProvider implements FeedProvider {
         }),
       );
       const addrs = [...new Set(allResults.flat())].filter(Boolean).slice(0, 6);
-      if (!addrs.length) return { posts: [], notice: 'No Lens profiles resolved' };
+      if (!addrs.length) {
+        // Fallback: use ML-powered explore feed (no auth needed)
+        try {
+          const explore = await withTimeout(
+            lensGql(
+              this.apiUrl,
+              'query{mlPostsExplore(request:{pageSize:FIFTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}',
+            ),
+            Math.min(t, 3000),
+            'lens:explore',
+          );
+          const items =
+            (explore as { mlPostsExplore?: { items?: LensPost[] } })?.mlPostsExplore?.items ?? [];
+          if (items.length) return { posts: items.map(postToUnified).map(enrichPostNiches) };
+        } catch {
+          /* explore failed — return empty */
+        }
+        return { posts: [], notice: 'No Lens profiles resolved' };
+      }
       const p = await withTimeout(
         lensGql(
           this.apiUrl,
