@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — DegenFeed',
+  title: 'Privacy Policy',
+  description: 'Privacy policy for DegenFeed, operated by Rug Munch Media LLC. No tracking, no ads, no data sales.',
 };
 
 export default function PrivacyPage() {
@@ -56,15 +57,51 @@ export default function PrivacyPage() {
         <li>All data is stored in Cloudflare KV. Deletion is immediate and permanent.</li>
       </ul>
 
-      <h2 className="mb-2 text-lg font-semibold text-white">5. Third Parties</h2>
+      <h2 className="mb-2 text-lg font-semibold text-white">5. GDPR Rights (EU/EEA Users)</h2>
+      <p className="mb-4">
+        If you are in the EU or EEA, you have the right to access, rectify, delete, and port your
+        data. To exercise these rights, contact{' '}
+        <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
+          admin@rugmunch.io
+        </a>
+        . Our Data Protection Officer can be reached at{' '}
+        <a href="mailto:legal@rugmunch.io" className="text-degen-400 underline">
+          legal@rugmunch.io
+        </a>
+        .
+      </p>
+
+      <h2 className="mb-2 text-lg font-semibold text-white">6. CCPA Rights (California Users)</h2>
+      <p className="mb-4">
+        California residents have the right to know what personal data we collect, request deletion,
+        and opt out of data sales. DegenFeed does not sell personal data. To exercise CCPA rights,
+        email{' '}
+        <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
+          admin@rugmunch.io
+        </a>
+        .
+      </p>
+
+      <h2 className="mb-2 text-lg font-semibold text-white">7. COPPA Compliance</h2>
+      <p className="mb-4">
+        DegenFeed does not knowingly collect personal information from children under 13. If you
+        believe a child has provided us with personal data, contact{' '}
+        <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
+          admin@rugmunch.io
+        </a>{' '}
+        and we will delete it promptly.
+      </p>
+
+      <h2 className="mb-2 text-lg font-semibold text-white">8. Third Parties</h2>
       <p className="mb-4">
         We use Cloudflare (infrastructure) and Plausible (anonymous analytics). No ad networks, no
         trackers, no data brokers.
       </p>
 
-      <h2 className="mb-2 text-lg font-semibold text-white">6. Contact</h2>
+      <h2 className="mb-2 text-lg font-semibold text-white">9. Contact</h2>
       <p>
-        Questions? Email{' '}
+        DegenFeed is operated by Rug Munch Media LLC, a Wyoming limited liability company. For
+        privacy questions, contact{' '}
         <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
           admin@rugmunch.io
         </a>

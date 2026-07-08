@@ -10,22 +10,38 @@ import { Web3Provider } from '../components/Web3Provider';
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
-  title: 'DegenFeed — The social feed of web3',
+  metadataBase: new URL('https://degenfeed.xyz'),
+  title: {
+    default: 'DegenFeed — The social feed of web3',
+    template: '%s — DegenFeed',
+  },
   description:
-    'See every network. Zero sign-ups. DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Threads, Reddit, and RSS into one window.',
+    'See every network. Zero sign-ups. DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one window.',
   openGraph: {
     title: 'DegenFeed — The social feed of web3',
     description:
-      'See every network. Zero sign-ups. Nostr, Farcaster, Lens, Bluesky, Threads, Reddit, RSS in one window.',
+      'See every network. Zero sign-ups. Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one window.',
     url: 'https://degenfeed.xyz',
     siteName: 'DegenFeed',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed — The social feed of web3',
+      },
+    ],
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'DegenFeed — The social feed of web3',
-    description:
-      'See every network. Zero sign-ups. Nostr, Farcaster, Lens, Bluesky, Threads, Reddit, RSS in one window.',
+  robots: {
+    index: true,
+    follow: true,
+    'max-image-preview': 'large',
+    'max-snippet': -1,
+    'max-video-preview': -1,
+  },
+  alternates: {
+    canonical: 'https://degenfeed.xyz',
   },
 };
 
@@ -49,6 +65,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           id="sw-register"
           strategy="afterInteractive"
         >{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}</Script>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebApplication',
+              name: 'DegenFeed',
+              url: 'https://degenfeed.xyz',
+              description:
+                'Open-source multi-protocol social aggregator for web3. Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one feed.',
+              applicationCategory: 'SocialNetworkingApplication',
+              operatingSystem: 'Web',
+              offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'USD',
+              },
+              author: {
+                '@type': 'Organization',
+                name: 'Rug Munch Media LLC',
+                url: 'https://degenfeed.xyz',
+              },
+            }),
+          }}
+        />
         <SolanaProvider>
           <Web3Provider>
             <ToastProvider>

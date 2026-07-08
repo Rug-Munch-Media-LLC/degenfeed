@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = { title: 'Terms of Service — DegenFeed' };
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'Terms of Service for DegenFeed, operated by Rug Munch Media LLC, a Wyoming limited liability company.',
+};
 
 export default function TermsPage() {
   return (
@@ -15,7 +18,7 @@ export default function TermsPage() {
 
       <h2 className="mb-2 text-lg font-semibold text-white">2. Eligibility</h2>
       <p className="mb-4">
-        You must be at least 13 years old. If you are under 18, you need parental consent.
+        You must be at least 16 years old. If you are under 18, you need parental consent.
       </p>
 
       <h2 className="mb-2 text-lg font-semibold text-white">3. Your Content</h2>
@@ -36,7 +39,18 @@ export default function TermsPage() {
         .
       </p>
 
-      <h2 className="mb-2 text-lg font-semibold text-white">5. Disclaimer</h2>
+      <h2 className="mb-2 text-lg font-semibold text-white">5. DMCA Notice</h2>
+      <p className="mb-4">
+        If you believe content on DegenFeed infringes your copyright, send a DMCA notice to{' '}
+        <a href="mailto:dmca@degenfeed.xyz" className="text-degen-400 underline">
+          dmca@degenfeed.xyz
+        </a>{' '}
+        with: identification of the copyrighted work, the infringing URL, a statement of good faith
+        belief, your contact information, and a physical or electronic signature. We respond to
+        valid DMCA notices within 48 hours.
+      </p>
+
+      <h2 className="mb-2 text-lg font-semibold text-white">6. Disclaimer</h2>
       <p className="mb-4">
         DegenFeed is provided &ldquo;as is&rdquo; without warranty. We are not responsible for
         content posted by third parties on connected networks. Content may include financial
@@ -49,8 +63,17 @@ export default function TermsPage() {
         any indirect, incidental, or consequential damages arising from your use of the service.
       </p>
 
-      <h2 className="mb-2 text-lg font-semibold text-white">7. Changes</h2>
-      <p>We may update these terms. Continued use after changes constitutes acceptance.</p>
+      <h2 className="mb-2 text-lg font-semibold text-white">7. Governing Law</h2>
+      <p className="mb-4">
+        These terms are governed by the laws of the State of Wyoming, United States, without regard
+        to conflict of law principles.
+      </p>
+
+      <h2 className="mb-2 text-lg font-semibold text-white">8. Changes</h2>
+      <p>
+        We may update these terms. Continued use after changes constitutes acceptance. DegenFeed is
+        operated by Rug Munch Media LLC, a Wyoming limited liability company.
+      </p>
     </div>
   );
 }
