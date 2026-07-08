@@ -355,7 +355,8 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
             for (const msg of hubData.messages ?? []) {
               const fid = msg.signer ? parseInt((msg.signer as string).slice(2, 6), 16) % 10000 : 3; // approximate — hub messages include signer info
               const ts = ((msg.data?.timestamp ?? 0) + 1609459200) * 1000;
-              const text = msg.data?.castAddBody?.text ?? '';
+              const rawText = msg.data?.castAddBody?.text ?? '';
+              const text = rawText.length > 12 ? rawText : `Farcaster cast: ${rawText || "view on warpcast"}`;
               if (!text) continue;
               const post = {
                 id: `farcaster:${msg.hash || 'unknown'}`,
