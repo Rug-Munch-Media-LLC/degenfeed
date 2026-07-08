@@ -514,6 +514,15 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     };
   });
   const trending = computeTrendingTopics(relevant, Date.now());
+  // Top-of-hour: highest-engagement post from the last 60 minutes.
+  const now = Date.now();
+  const recentPosts = scoredRelevant.filter((s) => now - s.post.createdAt < 3600000);
+  const topOfHour =
+    recentPosts.length > 0
+      ? recentPosts.reduce((best, cur) =>
+          cur.breakdown.engagement > best.breakdown.engagement ? cur : best,
+        ).post.id
+      : null;
 
   if (ranked.length === 0 && errors.length > 0) {
     return jsonResponse(
@@ -543,6 +552,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
       trending,
+      topOfHour,
       fetchedAt: Date.now(),
     },
   });

@@ -2,7 +2,7 @@
 
 import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { FeedList, NotificationBell } from '@degenfeed/ui';
+import { FeedList, NotificationBell, PostCard } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
@@ -22,6 +22,7 @@ interface FeedMeta {
   errors?: string[];
   notices?: string[];
   trending?: { topic: string; count: number; score: number }[];
+  topOfHour?: string | null;
   fetchedAt?: number;
 }
 
@@ -585,6 +586,28 @@ export default function FeedPage() {
             ))}
           </div>
         )}
+
+        {/* Top of Hour — highest engagement post in the last 60 min */}
+        {feedMeta.topOfHour &&
+          state === 'loaded' &&
+          (() => {
+            const pinnedPost = posts.find((p) => p.id === feedMeta.topOfHour);
+            if (!pinnedPost) return null;
+            return (
+              <div className="mx-4 mb-2 rounded-xl border border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 to-transparent p-3">
+                <div className="mb-1 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-yellow-400">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-400" />
+                  Top of the Hour
+                </div>
+                <PostCard
+                  post={pinnedPost}
+                  onClick={handlePostClick}
+                  onEngage={handleEngage}
+                  onTip={handleTip}
+                />
+              </div>
+            );
+          })()}
 
         {/* Feed */}
         <FeedList
