@@ -461,6 +461,14 @@ export default {
         response = await handleSearchIdentity(request, env);
       } else if (path === '/api/search') {
         response = await handleSearch(request, env);
+      } else if (path === '/docs') {
+        response = new Response(null, { status: 302, headers: { location: 'https://app.degenfeed.xyz/docs' } });
+      } else if (
+        ['/about', '/faq', '/legal', '/privacy', '/terms', '/acceptable-use',
+         '/community-guidelines', '/premium', '/newsletter', '/status',
+         '/discover', '/feed', '/news', '/home'].includes(path)
+      ) {
+        response = new Response(null, { status: 302, headers: { location: `https://app.degenfeed.xyz${path}` } });
       } else {
         response = jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.2.0' });
       }

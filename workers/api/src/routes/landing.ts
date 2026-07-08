@@ -16,7 +16,9 @@ export const LANDING_HTML = `<!doctype html>
     <meta property="og:description" content="Browse 7 protocols + RSS from one window. Zero sign-ups. One composer, all networks." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://degenfeed.xyz" />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="og:image" content="https://degenfeed.xyz/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' fill=''%2300ff41' font-family='ui-monospace,monospace' font-size='20' font-weight='700'%3ED%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -30,9 +32,10 @@ export const LANDING_HTML = `<!doctype html>
       <nav class="nav" aria-label="Primary">
         <a href="#how">How it works</a>
         <a href="#protocols">Protocols</a>
+        <a href="/docs">Docs</a>
+        <a href="/premium">Premium</a>
         <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">Mastodon</a>
-        <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener">Source</a>
-        <a href="https://app.degenfeed.xyz" class="nav-cta">Launch app →</a>
+        <a href="https://app.degenfeed.xyz" class="nav-cta">Open feed →</a>
       </nav>
     </header>
     <main id="main">
@@ -40,9 +43,9 @@ export const LANDING_HTML = `<!doctype html>
         <div class="hero-grid" aria-hidden="true"></div>
         <div class="hero-inner">
           <div class="hero-badges">
-            <span class="badge badge-green">✦ v0.1 — Now live</span>
-            <span class="badge badge-gray">7 protocols + RSS</span>
-            <span class="badge badge-blue">Self-hosted · MIT</span>
+            <span class="badge badge-green">✦ Now live — 8 networks</span>
+            <span class="badge badge-gray">Open source</span>
+            <span class="badge badge-blue">No sign-up needed</span>
           </div>
           <h1 id="hero-title" class="hero-title">
             One window. <span class="accent">Every</span> network.
@@ -118,7 +121,7 @@ export const LANDING_HTML = `<!doctype html>
           <div class="what-card">
             <div class="what-icon">◆</div>
             <h3>Open source &amp; free</h3>
-            <p>MIT license. Self-hostable. Public API. No tokens. No ads. Operating cost at scale is dinner money — <strong>we can run this forever without charging.</strong></p>
+            <p>Licensed under MIT. Self-hostable. Public API. No tokens, no ads, no tracking. Operating cost at scale is minimal — <strong>DegenFeed can run forever without charging.</strong></p>
           </div>
         </div>
       </section>
@@ -185,13 +188,30 @@ export const LANDING_HTML = `<!doctype html>
           <span>DegenFeed</span>
         </div>
         <p class="footer-tag">The social feed of web3.</p>
-        <p class="footer-meta">Built by <strong>Rug Munch Media LLC</strong> · Open source (MIT) · Hosted on Cloudflare</p>
+        <p class="footer-meta">Built by <strong>Rug Munch Media LLC</strong> · Wyoming, USA · Open source (MIT)</p>
         <nav class="footer-links" aria-label="Footer">
-          <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener">Forgejo</a>
+          <a href="/about">About</a>
+          <span aria-hidden="true">·</span>
+          <a href="/faq">FAQ</a>
           <span aria-hidden="true">·</span>
           <a href="/docs">Docs</a>
           <span aria-hidden="true">·</span>
           <a href="/status">Status</a>
+          <span aria-hidden="true">·</span>
+          <a href="/privacy">Privacy</a>
+          <span aria-hidden="true">·</span>
+          <a href="/terms">Terms</a>
+          <span aria-hidden="true">·</span>
+          <a href="/legal">Legal</a>
+          <span aria-hidden="true">·</span>
+          <a href="/community-guidelines">Rules</a>
+        </nav>
+        <nav class="footer-links footer-social" aria-label="Source code">
+          <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener">Forgejo</a>
+          <span aria-hidden="true">·</span>
+          <a href="https://gitlab.com/cryptorugmuncher/degenfeed-web" target="_blank" rel="noopener">GitLab</a>
+          <span aria-hidden="true">·</span>
+          <a href="https://codeberg.org/cryptorugmunch/degenfeed-web" target="_blank" rel="noopener">Codeberg</a>
           <span aria-hidden="true">·</span>
           <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">@cryptorugmunch@degenfeed.xyz</a>
         </nav>
