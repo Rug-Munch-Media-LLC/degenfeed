@@ -115,7 +115,7 @@ function formatTime(ts: number): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
-async function gatherDigestPosts(
+export async function gatherDigestPosts(
   env: Env,
   protocols: Protocol[],
   niches: string[],
@@ -206,7 +206,7 @@ async function gatherDigestPosts(
   return rankDiverse(relevant, ctx, { maxPerAuthor: 2 });
 }
 
-function buildDigestHtml(
+export function buildDigestHtml(
   posts: UnifiedPost[],
   trending: { topic: string; count: number; score: number }[],
   niches: string[],

@@ -7,7 +7,7 @@
  * Both require a valid session cookie.
  */
 
-import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { type Env, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
 
 export async function handleAccountExport(request: Request, env: Env): Promise<Response> {

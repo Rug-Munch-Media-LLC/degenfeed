@@ -218,6 +218,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <a href="/terms" className="transition-colors hover:text-gray-400">
               Terms
             </a>
+            <a
+              href="/status"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-gray-400"
+              title="Protocol health"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-degen-500 shadow-[0_0_4px_rgba(34,197,94,0.5)]" />
+              <span>Status</span>
+            </a>
           </div>
           <p className="text-xs text-gray-600">
             © {new Date().getFullYear()} DegenFeed. No account required.

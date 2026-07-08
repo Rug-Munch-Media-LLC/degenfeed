@@ -68,3 +68,9 @@ routes = [
 [env.preview.vars]
 ALLOWED_ORIGINS = "https://preview.degenfeed.xyz,https://app.preview.degenfeed.xyz,http://localhost:3000"
 RATE_MAX_REQ = "600"
+
+# Cron triggers — scheduled Worker invocations.
+# Daily digest fires at 14:00 UTC (9 AM Eastern).
+# Remove the [triggers] block to disable; ideal cost is ~zero.
+[triggers]
+crons = ["0 14 * * *"]

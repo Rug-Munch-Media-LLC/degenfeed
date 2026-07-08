@@ -17,6 +17,7 @@ import { handleAccountDelete, handleAccountExport } from './routes/account';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
 import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from './routes/billing';
 import { handleBlinkTip } from './routes/blink';
+import { handleCron } from './routes/cron';
 import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import { handleEngage } from './routes/engage';
 import {
@@ -104,6 +105,8 @@ export interface Env {
   RMI_API_KEY?: string;
   /** Optional Sentry DSN for error reporting */
   SENTRY_DSN?: string;
+  /** Optional Postmark server token for transactional email delivery */
+  POSTMARK_SERVER_TOKEN?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
@@ -461,5 +464,11 @@ export default {
     }
 
     return applyCors(response, origin);
+  },
+  async scheduled(
+    _controller: { cron: string; scheduledTime: number; noRetry: () => void },
+    env: Env,
+  ): Promise<void> {
+    await handleCron(env);
   },
 };

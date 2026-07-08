@@ -43,6 +43,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -63,14 +64,17 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     }
     setLoading(true);
     setSearched(true);
+    setError(null);
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=20`, {
         credentials: 'include',
       });
+      if (!res.ok) throw new Error(`Search returned ${res.status}`);
       const data = (await res.json()) as { data?: SearchResult[]; meta?: { total: number } };
       setResults(data.data ?? []);
-    } catch {
+    } catch (err) {
       setResults([]);
+      setError(err instanceof Error ? err.message : 'Search failed');
     }
     setLoading(false);
   }, []);
@@ -119,7 +123,27 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </button>
         </div>
 
-        {searched && !loading && results.length === 0 && (
+        {loading && (
+          <div className="mb-2 space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="card animate-pulse flex items-center gap-3 p-3">
+                <div className="h-8 w-8 rounded-full bg-gray-800" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-24 rounded bg-gray-800" />
+                  <div className="h-3 w-full rounded bg-gray-800" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {error && (
+          <div className="card border-red-900/50 bg-red-900/10 py-4 text-center">
+            <p className="text-sm text-red-400">{error}</p>
+          </div>
+        )}
+
+        {searched && !loading && !error && results.length === 0 && (
           <div className="card py-8 text-center">
             <p className="text-sm text-gray-500">No results for &ldquo;{query}&rdquo;</p>
           </div>

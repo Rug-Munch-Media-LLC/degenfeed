@@ -445,19 +445,30 @@ export class FarcasterProvider implements FeedProvider {
 
   async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {
     const start = performance.now();
-    try {
-      await withTimeout(
-        fetchJson(buildUrl(this.primaryUrl, '/v1/castsByFid', { fid: '3', pageSize: '1' })),
-        opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-        'farcaster:health',
-      );
-      return { healthy: true, latencyMs: Math.round(performance.now() - start) };
-    } catch (err) {
-      return {
-        healthy: false,
-        latencyMs: Math.round(performance.now() - start),
-        error: err instanceof Error ? err.message : 'unknown',
-      };
-    }
+    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+
+    // Probe multiple hubs in parallel — only one needs to respond.
+    const hubUrls = [this.primaryUrl, ...FALLBACK_HUB_URLS.slice(0, 3)];
+    const probe = async (url: string): Promise<boolean> => {
+      try {
+        await withTimeout(
+          fetchJson(buildUrl(url, '/v1/castsByFid', { fid: '3', pageSize: '1' })),
+          Math.min(timeoutMs, 4000),
+          `farcaster:health:${new URL(url).hostname}`,
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const results = await Promise.allSettled(hubUrls.map(probe));
+    const anyOk = results.some((r) => r.status === 'fulfilled' && r.value);
+
+    return {
+      healthy: anyOk,
+      latencyMs: Math.round(performance.now() - start),
+      error: anyOk ? undefined : 'All Farcaster hubs unreachable',
+    };
   }
 }
