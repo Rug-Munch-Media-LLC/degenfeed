@@ -114,6 +114,18 @@ export const DEFAULT_CRYPTO_FEEDS = [
   // ── Mastodon / Fediverse feeds ──────────────────────────────────
   'https://social.degenfeed.xyz/@admin.rss',
   // ── YouTube / Video ─────────────────────────────────────────────
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7-gGJFlRPPSK4hBbbST6YA', // Whiteboard Crypto
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC57i8xkdqJm42AsVr_jgpBQ', // The Coin Bureau Club
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC6nSFpj9HTCZ5t-N3Ra3-HA', // TechLead
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPvezykHz9Qd0VBLg', // Joma Tech
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC8butISFwT-Wl7EV0hUK0BQ', // freeCodeCamp
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA', // Computerphile
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCznv7Vf9nBdXFXz2L9n7bLQ', // Altcoin Daily
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCvJJ_dziViPnd-hmwjM8k0w', // CoinDesk TV
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsT0YIqwnpJCM-mx7-gSA4Q', // TEDx Talks
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA', // Veritasium
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCX6b17PVsYBQ0ip5gyeme-Q', // CrashCourse (tech/econ)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCqZQJzTlBvT5GpB1mqGzMxw', // Two Minute Papers (AI papers)
   'https://www.youtube.com/feeds/videos.xml?channel_id=UCAl9Ld79qaZxp9JzEOwd3aA', // Bankless
   'https://www.youtube.com/feeds/videos.xml?channel_id=UCqK_GSMbpiV8spgD3ZGloSw', // Coin Bureau
   'https://www.youtube.com/feeds/videos.xml?channel_id=UCcQ_2g7TDmI7Tpc4PqFFY_w', // Benjamin Cowen

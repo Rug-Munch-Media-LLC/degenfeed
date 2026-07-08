@@ -11,6 +11,24 @@ import {
 } from '../utils';
 
 export const DEFAULT_GTS_INSTANCE = 'https://social.degenfeed.xyz';
+/**
+ * Public Mastodon instances that support trending API and are popular
+ * in crypto, tech, AI, and infosec communities. We pull from multiple
+ * instances to get diverse content, weighted by relevance to our users.
+ */
+export const TRENDING_INSTANCES = [
+  { url: 'https://mastodon.social', weight: 0.8, label: 'General' },
+  { url: 'https://bitcoinhackers.org', weight: 1.0, label: 'Bitcoin' },
+  { url: 'https://hachyderm.io', weight: 0.9, label: 'Tech' },
+  { url: 'https://fosstodon.org', weight: 0.9, label: 'FOSS' },
+  { url: 'https://infosec.exchange', weight: 1.0, label: 'InfoSec' },
+  { url: 'https://ioc.exchange', weight: 0.8, label: 'ThreatIntel' },
+  { url: 'https://cryptodon.lol', weight: 1.0, label: 'Crypto' },
+  { url: 'https://mas.to', weight: 0.7, label: 'General' },
+  { url: 'https://mstdn.social', weight: 0.7, label: 'General' },
+  { url: 'https://techhub.social', weight: 0.9, label: 'Tech' },
+];
+
 export const PUBLIC_MASTODON_INSTANCES = [
   // Crypto-first instances
   'https://bitcoinhackers.org',
@@ -252,14 +270,22 @@ export class MastodonProvider implements FeedProvider {
 
       // 0. Trending API — free public endpoint with high-engagement posts
       try {
-        const trending = await withTimeout(
-          fetchJson<GtSStatus[]>('https://mastodon.social/api/v1/trends/statuses?limit=20', {
-            headers: { 'user-agent': DEFAULT_USER_AGENT },
-          }),
-          timeoutMs + 2000,
-          'mastodon:trending',
+        const trendingResults = await Promise.allSettled(
+          TRENDING_INSTANCES.map(({ url, label }) =>
+            withTimeout(
+              fetchJson<GtSStatus[]>(`${url}/api/v1/trends/statuses?limit=15`, {
+                headers: { 'user-agent': DEFAULT_USER_AGENT },
+              }),
+              Math.min(timeoutMs, 4000),
+              `mastodon:trending:${label}`,
+            ),
+          ),
         );
-        if (Array.isArray(trending)) allStatuses.push(...trending);
+        for (const r of trendingResults) {
+          if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+            allStatuses.push(...r.value);
+          }
+        }
       } catch {
         /* trending unavailable */
       }
