@@ -109,6 +109,8 @@ export interface Env {
   SENTRY_DSN?: string;
   /** Optional Postmark server token for transactional email delivery */
   POSTMARK_SERVER_TOKEN?: string;
+  ALLOW_DEV_OAUTH?: string;
+  ADMIN_API_KEY?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

@@ -35,3 +35,4 @@ export {
   withRetry,
   withTimeout,
 } from './utils';
+export { PonderProvider } from "./providers/ponder";

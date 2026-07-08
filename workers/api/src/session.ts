@@ -18,7 +18,7 @@ function jsonResponse(data: unknown, status = 200): Response {
   });
 }
 
-function hexToBytes(hex: string): Uint8Array {
+function decodeHex(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < hex.length; i += 2) {
     bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
@@ -28,11 +28,11 @@ function hexToBytes(hex: string): Uint8Array {
 
 async function importKey(secret: string): Promise<CryptoKey> {
   const keyBytes = /^[0-9a-fA-F]+$/.test(secret) && secret.length >= 64
-    ? hexToBytes(secret)
+    ? decodeHex(secret)
     : new TextEncoder().encode(secret);
   return crypto.subtle.importKey(
     'raw',
-    keyBytes,
+    keyBytes as Uint8Array<ArrayBuffer>,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign', 'verify'],

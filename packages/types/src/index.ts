@@ -14,6 +14,7 @@ export type Protocol =
   | 'mastodon'
   | 'reddit'
   | 'ethereum'
+  | 'ponder'
   | 'solana';
 
 export interface UnifiedIdentity {
