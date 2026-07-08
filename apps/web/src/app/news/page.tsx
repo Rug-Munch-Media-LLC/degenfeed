@@ -1,10 +1,11 @@
+export const runtime = 'edge';
 import type { UnifiedPost } from '@degenfeed/types';
 import { headers } from 'next/headers';
 import { Suspense } from 'react';
 import NewsLoading from './loading';
 import NewsClient from './NewsClient';
 
-export const runtime = 'edge';
+
 export const dynamic = 'force-dynamic';
 
 interface NewsApiResponse {

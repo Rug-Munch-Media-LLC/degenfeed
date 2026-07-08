@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 'use client';
 
 import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
@@ -11,7 +12,7 @@ import { FeedSidebar } from '../../components/FeedSidebar';
 import { TipModal } from '../../components/TipModal';
 import { useNotifications } from '../../hooks/useNotifications';
 
-export const runtime = 'edge';
+
 
 type Tab = 'for-you' | 'following';
 

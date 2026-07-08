@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 /**
  * /status — Protocol health dashboard
  *
@@ -10,7 +11,7 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { StatusClient } from './StatusClient';
 
-export const runtime = 'edge';
+
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
