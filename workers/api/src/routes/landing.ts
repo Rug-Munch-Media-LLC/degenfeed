@@ -19,7 +19,21 @@ export const LANDING_HTML = `<!doctype html>
     <meta property="og:image" content="https://degenfeed.xyz/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Ctext x='50%25' y='50%25' dy='.35em' text-anchor='middle' fill=''%2300ff41' font-family='ui-monospace,monospace' font-size='20' font-weight='700'%3ED%3C/text%3E%3C/svg%3E" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "DegenFeed",
+        "url": "https://degenfeed.xyz",
+        "description": "Open-source multi-protocol social aggregator for web3. Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one feed. Zero sign-ups required.",
+        "applicationCategory": "SocialNetworkingApplication",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": { "@type": "Organization", "name": "Rug Munch Media LLC", "url": "https://degenfeed.xyz" }
+      }
+    </script>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -33,6 +47,7 @@ export const LANDING_HTML = `<!doctype html>
         <a href="#how">How it works</a>
         <a href="#protocols">Protocols</a>
         <a href="/docs">Docs</a>
+        <a href="/newsletter">Newsletter</a>
         <a href="/premium">Premium</a>
         <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">Mastodon</a>
         <a href="https://app.degenfeed.xyz" class="nav-cta">Open feed →</a>
@@ -368,10 +383,14 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 24px;
-  transition: border-color 0.15s;
+  padding: 28px;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
-.card:hover { border-color: rgba(0,255,65,0.3); }
+.card:hover {
+  border-color: rgba(0,255,65,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
 .card-num { font-family: ui-monospace, monospace; color: var(--accent); font-size: 0.8rem; margin-bottom: 8px; }
 .card h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--fg); }
 .card p { color: var(--muted); font-size: 0.95rem; }
@@ -410,17 +429,19 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .footer {
   border-top: 1px solid var(--border);
-  padding: 40px 0;
+  padding: 48px 0 40px;
   text-align: center;
+  background: linear-gradient(to top, rgba(0,255,65,0.03), transparent);
 }
 .footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 .footer-brand { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; font-weight: 700; }
 .footer-tag { color: var(--accent); font-size: 0.9rem; margin-bottom: 4px; }
-.footer-meta { color: var(--muted); font-size: 0.8rem; margin-bottom: 12px; }
+.footer-meta { color: var(--muted); font-size: 0.8rem; margin-bottom: 16px; }
 .footer-meta strong { color: var(--fg); }
-.footer-links { display: flex; gap: 8px; justify-content: center; font-size: 0.85rem; color: var(--muted); }
+.footer-links { display: flex; gap: 12px; justify-content: center; font-size: 0.85rem; color: var(--muted); flex-wrap: wrap; padding: 4px 0; }
 .footer-links a { color: var(--muted); }
-.footer-links a:hover { color: var(--fg); }
+.footer-links a:hover { color: var(--accent); }
+.footer-social { margin-top: 8px; font-size: 0.8rem; }
 @media (max-width: 640px) {
   .topbar { flex-direction: column; gap: 12px; }
   .nav { flex-wrap: wrap; justify-content: center; }

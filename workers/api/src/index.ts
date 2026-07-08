@@ -331,6 +331,11 @@ export default {
         response = handleLandingCss(request, env);
       } else if (path === '/app.js') {
         response = handleLandingJs(request, env);
+      } else if (path === '/favicon.svg') {
+        response = new Response(
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#000"/><path d="M8 8h16l-6 16H12L8 8Z" fill="#00ff41" stroke="#00ff41" stroke-width=".5"/><text x="16" y="21" text-anchor="middle" fill="#000" font-family="ui-monospace,monospace" font-size="10" font-weight="900">DF</text></svg>',
+          { status: 200, headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=604800' } }
+        );
       } else if (path === '/' || path === '/index.html' || path === '') {
         response = handleLandingHtml(request, env);
       } else if (path === '/api/health') {
