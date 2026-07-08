@@ -367,10 +367,9 @@ export class FarcasterProvider implements FeedProvider {
             replies?: { count?: number };
             embeds?: Array<{ url?: string; cast_id?: { hash: string } }>;
           }>;
-        }>(
-          'https://api.neynar.com/v2/farcaster/feed/trending?limit=5&api_key=NEYNAR_API_DOCS',
-          { headers: { accept: 'application/json', 'user-agent': DEFAULT_USER_AGENT } },
-        ),
+        }>('https://api.neynar.com/v2/farcaster/feed/trending?limit=5&api_key=NEYNAR_API_DOCS', {
+          headers: { accept: 'application/json', 'user-agent': DEFAULT_USER_AGENT },
+        }),
         Math.min(timeoutMs, 5000),
         'farcaster:trending',
       );
