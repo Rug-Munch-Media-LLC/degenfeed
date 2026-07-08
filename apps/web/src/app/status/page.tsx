@@ -11,7 +11,6 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { StatusClient } from './StatusClient';
 
-
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {

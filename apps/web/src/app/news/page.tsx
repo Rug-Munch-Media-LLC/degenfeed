@@ -5,7 +5,6 @@ import { Suspense } from 'react';
 import NewsLoading from './loading';
 import NewsClient from './NewsClient';
 
-
 export const dynamic = 'force-dynamic';
 
 interface NewsApiResponse {

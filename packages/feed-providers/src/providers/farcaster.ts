@@ -348,77 +348,70 @@ export class FarcasterProvider implements FeedProvider {
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const fids = [3, 1, 2, 99, 100, 5650, 15211, 307834, 6591, 269091];
+    const hub = this.primaryUrl;
     try {
-      // Neynar free trending API — high-engagement casts across the network
-      const data = await withTimeout(
-        fetchJson<{
-          casts?: Array<{
-            hash: string;
-            text: string;
-            timestamp: string;
-            author: {
-              fid: number;
-              username: string;
-              display_name: string;
-              pfp_url: string;
-              follower_count: number;
-            };
-            reactions?: { likes_count?: number; recasts_count?: number };
-            replies?: { count?: number };
-            embeds?: Array<{ url?: string; cast_id?: { hash: string } }>;
-          }>;
-        }>('https://api.neynar.com/v2/farcaster/feed/trending?limit=5&api_key=NEYNAR_API_DOCS', {
-          headers: { accept: 'application/json', 'user-agent': DEFAULT_USER_AGENT },
+      const results = await Promise.allSettled(
+        fids.slice(0, 5).map(async (fid) => {
+          try {
+            const data = await withTimeout(
+              fetchJson<{
+                messages?: Array<{
+                  data: {
+                    timestamp: number;
+                    castAddBody?: { text?: string; embedsDeprecated?: Array<{ url?: string }> };
+                  };
+                  hash: string;
+                }>;
+              }>(buildUrl(hub, '/v1/castsByFid', { fid: String(fid), pageSize: '3' }), {
+                headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
+              }),
+              Math.min(timeoutMs, 4000),
+              'farcaster:fid:' + fid,
+            );
+            return (data.messages ?? []).map((m) => {
+              const ts = (m.data.timestamp + 1609459200) * 1000;
+              const text = m.data.castAddBody?.text ?? '';
+              return buildUnifiedPost({
+                protocol: 'farcaster',
+                nativeId: m.hash,
+                author: {
+                  id: `farcaster:${fid}`,
+                  primary: { protocol: 'farcaster', id: String(fid) },
+                  handles: {
+                    nostr: null,
+                    farcaster: `fid:${fid}`,
+                    lens: null,
+                    bluesky: null,
+                    threads: null,
+                    rss: null,
+                    mastodon: null,
+                  },
+                  displayName: `FID ${fid}`,
+                  bio: '',
+                  avatarUrl: '',
+                  verified: [],
+                  followerCount: 0,
+                  followingCount: 0,
+                  links: [],
+                  keys: {},
+                },
+                text,
+                createdAt: isNaN(ts) ? Date.now() : ts,
+                metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+                raw: m,
+              });
+            });
+          } catch {
+            return [];
+          }
         }),
-        Math.min(timeoutMs, 5000),
-        'farcaster:trending',
       );
-      const casts = data.casts ?? [];
-      if (!casts.length) return { posts: [], notice: 'Farcaster trending unavailable' };
-
-      const posts: UnifiedPost[] = casts.map((c) => {
-        const author: UnifiedPost['author'] = {
-          id: `farcaster:${c.author.fid}`,
-          primary: { protocol: 'farcaster', id: String(c.author.fid) },
-          handles: {
-            nostr: null,
-            farcaster: c.author.username,
-            lens: null,
-            bluesky: null,
-            threads: null,
-            rss: null,
-            mastodon: null,
-          },
-          displayName: c.author.display_name || c.author.username,
-          bio: '',
-          avatarUrl: c.author.pfp_url,
-          verified: [],
-          followerCount: c.author.follower_count,
-          followingCount: 0,
-          links: [],
-          keys: {},
-        };
-        const embeds = (c.embeds ?? []).map((e) => ({
-          kind: 'link' as const,
-          url: e.url || `https://warpcast.com/${c.author.username}/${c.hash.slice(0, 10)}`,
-        }));
-        return buildUnifiedPost({
-          protocol: 'farcaster',
-          nativeId: c.hash,
-          author,
-          text: c.text,
-          createdAt: new Date(c.timestamp).getTime(),
-          metrics: {
-            likes: c.reactions?.likes_count ?? 0,
-            reposts: c.reactions?.recasts_count ?? 0,
-            replies: c.replies?.count ?? 0,
-            quotes: 0,
-          },
-          embeds,
-          raw: c,
-        });
-      });
-      return { posts: posts.map(enrichPostNiches) };
+      const all: UnifiedPost[] = [];
+      for (const r of results) if (r.status === 'fulfilled') all.push(...r.value);
+      return all.length
+        ? { posts: all.map(enrichPostNiches) }
+        : { posts: [], notice: 'Farcaster unavailable' };
     } catch (e) {
       return { posts: [], notice: e instanceof Error ? e.message : 'Farcaster unavailable' };
     }

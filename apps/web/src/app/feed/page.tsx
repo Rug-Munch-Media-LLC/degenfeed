@@ -13,8 +13,6 @@ import { FeedSidebar } from '../../components/FeedSidebar';
 import { TipModal } from '../../components/TipModal';
 import { useNotifications } from '../../hooks/useNotifications';
 
-
-
 type Tab = 'for-you' | 'following';
 
 interface FeedMeta {
@@ -136,13 +134,19 @@ export default function FeedPage() {
 
   const [newAvailable, setNewAvailable] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [loadedLimit, setLoadedLimit] = useState(50);
+  const hasMore = loadedLimit < 100;
+
+  const loadMore = useCallback(() => {
+    setLoadedLimit((prev) => Math.min(prev + 25, 100));
+  }, []);
 
   const fetchFeed = useCallback(
     async (checkOnly = false) => {
       if (!checkOnly) setState('loading');
       try {
         const url = new URL('/api/feed/home', window.location.origin);
-        url.searchParams.set('limit', '80');
+        url.searchParams.set('limit', String(loadedLimit));
         const protocolsToFetch = protocolFilter
           ? [protocolFilter]
           : ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'threads', 'reddit', 'rss'];
@@ -621,6 +625,8 @@ export default function FeedPage() {
           onTip={handleTip}
           onRetry={fetchFeed}
           onSignIn={openSignIn}
+          hasMore={hasMore}
+          onLoadMore={loadMore}
         />
 
         {activeTab === 'following' && state === 'empty' && (
