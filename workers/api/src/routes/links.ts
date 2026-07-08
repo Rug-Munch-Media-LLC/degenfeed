@@ -68,8 +68,8 @@ body { font-family: 'Inter', system-ui, sans-serif; background: #000; color: #ff
     <div class="product-name">Rug Munch Intelligence</div>
     <div class="product-badge">Flagship</div>
   </div>
-  <p class="product-desc">The Bloomberg Terminal of Shitcoins. 234 crypto security tools across 13 chains. Rug pull detection, honeypot checks, wallet intelligence, AI investigation reports. Pay per use via x402 — no API keys.</p>
-  <p class="product-meta">rugmunch.io · 13 chains · 234 tools · 194K labeled wallets</p>
+  <p class="product-desc">The Bloomberg Terminal of Shitcoins. 43 scanner modules, 13 MCP tools across 18 chains. Rug pull detection, honeypot checks, wallet intelligence (39.4M labeled wallets), AI investigation reports. 1,300+ API endpoints. Pay per use via x402 — no API keys.</p>
+  <p class="product-meta">rugmunch.io · 18 chains · 56 tools · 39.4M labeled wallets · v5.0 MCP</p>
 </a>
 
 <a href="https://degenfeed.xyz" class="product">
