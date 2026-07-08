@@ -29,6 +29,7 @@ import {
   handleRedditFeed,
   handleTrendingFeed,
 } from './routes/feed';
+import { handleFarcasterFeed } from './routes/farcaster-feed';
 import { handleFundingFeed } from './routes/funding';
 import { handleRelaysHealth } from './routes/health';
 import { handleResolveIdentity } from './routes/identity';
@@ -366,6 +367,8 @@ export default {
         });
       } else if (path === '/api/feed/rss') {
         response = await handleRssFeed(request, env);
+      } else if (path === '/api/feed/farcaster') {
+        response = await handleFarcasterFeed(request, env);
       } else if (path === '/api/auth/signout') {
         response = await handleSessionSignOut(request, env);
       } else if (path === '/api/auth/gotosocial/authorize') {
