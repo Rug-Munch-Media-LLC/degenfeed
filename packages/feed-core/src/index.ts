@@ -406,20 +406,75 @@ export function isRelevantPost(post: UnifiedPost): boolean {
   return false;
 }
 
-export function contentFingerprint(post: UnifiedPost): string {
-  // Build a 12-word shingle from text — used to detect near-duplicate
-  // reposts across protocols (e.g. someone cross-posting the same content
-  // to Farcaster, Lens, and Nostr).
-  const text = post.text
+const URL_RE = /https?:\/\/[^\s<>"']+/gi;
+const TICKER_RE = /\$[A-Z]{2,10}\b/g;
+const NON_ALPHA_RE = /[^a-z0-9\s]/g;
+
+function normalizeStripped(text: string): string {
+  return text
     .toLowerCase()
     .replace(/https?:\/\/\S+/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(NON_ALPHA_RE, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function primaryUrl(post: UnifiedPost): string | null {
+  const urls = post.text.match(URL_RE);
+  if (urls && urls.length > 0) return urls[0].toLowerCase();
+  const embed = post.embeds.find(
+    (e) => e.kind === 'link' || e.kind === 'image' || e.kind === 'video',
+  );
+  return embed ? embed.url.toLowerCase() : null;
+}
+
+function tickerSnapshot(text: string): string {
+  const tickers = new Set(text.match(TICKER_RE) ?? []);
+  const sorted = [...tickers].sort().join(',');
+  const firstSentence = text
+    .replace(URL_RE, '')
+    .replace(/[.!?].*/, '')
+    .replace(NON_ALPHA_RE, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 60);
+  return sorted ? `${sorted}|${firstSentence}` : firstSentence;
+}
+
+function embedFingerprint(post: UnifiedPost): string | null {
+  if (post.text.trim().length > 20) return null;
+  const media = post.embeds.filter((e) => e.kind === 'image' || e.kind === 'video');
+  if (media.length === 0) return null;
+  return `embed:${media
+    .map((e) => e.url)
+    .sort()
+    .join('|')}`;
+}
+
+function authorKey(post: UnifiedPost): string {
+  const displayName = post.author.displayName.toLowerCase().trim();
+  const id = post.author.id.toLowerCase();
+  return `${id}|${displayName}`;
+}
+
+function extractQuotedId(post: UnifiedPost): string | null {
+  if (post.html && /<\s*blockquote/i.test(post.html)) {
+    const urls = post.html.match(URL_RE);
+    return urls ? `quoted:${urls.join(',')}` : null;
+  }
+  if (/\bRT\s+@/i.test(post.text) || /\bvia\s+@/i.test(post.text) || /^RT\b/i.test(post.text)) {
+    const urls = post.text.match(URL_RE);
+    return urls ? `quoted:${urls.join(',')}` : null;
+  }
+  return null;
+}
+
+export function contentFingerprint(post: UnifiedPost): string {
+  const words = normalizeStripped(post.text)
     .split(/\s+/)
     .filter((w) => w.length > 2)
-    .slice(0, 12)
-    .join(' ');
-  if (text.length > 0) return text;
-  // Fallback to link-based fingerprint for media-only posts
+    .slice(0, 12);
+  if (words.length > 0) return words.join(' ');
   const link = post.embeds.find(
     (e) => e.kind === 'link' || e.kind === 'image' || e.kind === 'video',
   );
@@ -427,19 +482,63 @@ export function contentFingerprint(post: UnifiedPost): string {
 }
 
 export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
-  const seenId = new Set<string>();
-  const seenFingerprint = new Set<string>();
-  const seenText = new Set<string>();
+  const seen = {
+    id: new Set<string>(),
+    fingerprint: new Set<string>(),
+    normalized: new Set<string>(),
+    url: new Set<string>(),
+    prefix: new Set<string>(),
+    shortExact: new Set<string>(),
+    authorWindow: new Set<string>(),
+    quoted: new Set<string>(),
+    ticker: new Set<string>(),
+    embed: new Set<string>(),
+  };
   const out: UnifiedPost[] = [];
+
   for (const p of posts) {
-    if (seenId.has(p.id)) continue;
+    if (seen.id.has(p.id)) continue;
+
     const fp = contentFingerprint(p);
-    if (fp && seenFingerprint.has(fp)) continue;
-    const textKey = p.text.trim().slice(0, 80).toLowerCase();
-    if (textKey.length > 12 && seenText.has(textKey)) continue;
-    seenId.add(p.id);
-    if (fp) seenFingerprint.add(fp);
-    if (textKey.length > 12) seenText.add(textKey);
+    if (fp && seen.fingerprint.has(fp)) continue;
+
+    const norm = normalizeStripped(p.text);
+    if (norm.length > 15 && seen.normalized.has(norm)) continue;
+
+    const purl = primaryUrl(p);
+    if (purl && seen.url.has(purl)) continue;
+
+    const prefix = p.text.trim().slice(0, 120).toLowerCase();
+    if (prefix.length > 12 && seen.prefix.has(prefix)) continue;
+
+    if (p.text.trim().length <= 80) {
+      const exact = p.text.trim().toLowerCase();
+      if (exact.length > 0 && seen.shortExact.has(exact)) continue;
+      if (exact.length > 0) seen.shortExact.add(exact);
+    }
+
+    const windowKey = `${authorKey(p)}|${fp}`;
+    if (fp && seen.authorWindow.has(windowKey)) continue;
+
+    const qid = extractQuotedId(p);
+    if (qid && seen.quoted.has(qid)) continue;
+
+    const ts = tickerSnapshot(p.text);
+    if (ts.length > 3 && seen.ticker.has(ts)) continue;
+
+    const eid = embedFingerprint(p);
+    if (eid && seen.embed.has(eid)) continue;
+
+    seen.id.add(p.id);
+    if (fp) seen.fingerprint.add(fp);
+    if (norm.length > 15) seen.normalized.add(norm);
+    if (purl) seen.url.add(purl);
+    if (prefix.length > 12) seen.prefix.add(prefix);
+    if (fp) seen.authorWindow.add(windowKey);
+    if (qid) seen.quoted.add(qid);
+    if (ts.length > 3) seen.ticker.add(ts);
+    if (eid) seen.embed.add(eid);
+
     out.push(p);
   }
   return out;
