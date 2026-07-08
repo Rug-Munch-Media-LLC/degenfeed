@@ -104,8 +104,8 @@ export class LensProvider implements FeedProvider {
       const acc = await withTimeout(
         lensGql(
           this.apiUrl,
-          `query($q:String!,$l:PageSize!){accounts(request:{filter:{searchBy:{localNameQuery:$q}},pageSize:$l}){items{address username{localName value}}}}`,
-          { q: names.join(','), l: 10 },
+          `query($q:String!,FIFTY:PageSize){accounts(request:{filter:{searchBy:{localNameQuery:$q}},pageSize:FIFTY}){items{address username{localName value}}}}`,
+          { q: names.join(',') },
         ),
         t,
         'lens:accts',
@@ -118,8 +118,8 @@ export class LensProvider implements FeedProvider {
       const p = await withTimeout(
         lensGql(
           this.apiUrl,
-          `query($a:[String!]!,$l:PageSize!){posts(request:{filter:{authors:$a},pageSize:$l}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}`,
-          { a: addrs.slice(0, 6), l: 50 },
+          `query($a:[String!]!,FIFTY:PageSize){posts(request:{filter:{authors:$a},pageSize:FIFTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}`,
+          { a: addrs.slice(0, 6) },
         ),
         t,
         'lens:posts',
