@@ -43,6 +43,15 @@ const PROTOCOL_ICONS: Record<string, string> = {
   solana: '◎',
 };
 
+const ALL_NETWORKS = [
+  { id: 'mastodon', label: 'Mastodon / GotoSocial', desc: 'your @degenfeed.xyz handle' },
+  { id: 'nostr', label: 'Nostr', desc: 'decentralized notes' },
+  { id: 'bluesky', label: 'Bluesky', desc: 'AT Protocol' },
+  { id: 'lens', label: 'Lens', desc: 'Lens Protocol' },
+  { id: 'farcaster', label: 'Farcaster', desc: 'Farcaster Hub' },
+  { id: 'threads', label: 'Threads', desc: 'Meta Threads' },
+];
+
 function shortenAddress(addr: string): string {
   if (addr.length < 10) return addr;
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -238,6 +247,102 @@ export default function ProfilePage() {
             <div className="mt-4">
               <IdentityLinker onSignIn={openSignIn} />
             </div>
+
+            {/* Cross-network posting status */}
+            <div className="mt-6">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+                Cross-Network Posting
+              </h2>
+              <div className="card space-y-2 p-4">
+                {ALL_NETWORKS.map((n) => {
+                  const linked = !!identities.find((i) => i.protocol === n.id);
+                  return (
+                    <div key={n.id} className="flex items-center gap-3">
+                      <span
+                        className={`h-2 w-2 shrink-0 rounded-full ${linked ? 'bg-degen-400 shadow-[0_0_4px_rgba(34,197,94,0.5)]' : 'bg-gray-700'}`}
+                      />
+                      <div className="flex-1">
+                        <span
+                          className={`text-sm ${linked ? 'font-medium text-white' : 'text-gray-500'}`}
+                        >
+                          {n.label}
+                        </span>
+                        <span className="ml-2 text-[10px] text-gray-600">{n.desc}</span>
+                      </div>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${linked ? 'bg-degen-500/15 text-degen-400' : 'bg-gray-800 text-gray-600'}`}
+                      >
+                        {linked ? 'Active' : 'Not linked'}
+                      </span>
+                    </div>
+                  );
+                })}
+                {!identities.length && (
+                  <p className="text-xs text-gray-500">
+                    Link accounts to cross-post across all networks.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Mastodon profile card */}
+            {(() => {
+              const mastoId = identities.find((i) => i.protocol === 'mastodon');
+              if (!mastoId) return null;
+              return (
+                <div className="mt-6">
+                  <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+                    Mastodon Profile
+                  </h2>
+                  <div className="card border-degen-500/20 bg-gradient-to-br from-degen-500/5 to-transparent p-4">
+                    <div className="flex items-center gap-4">
+                      <Image
+                        src={mastoId.avatarUrl || '/icon.svg'}
+                        alt=""
+                        width={56}
+                        height={56}
+                        className="h-14 w-14 rounded-xl object-cover"
+                        unoptimized
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-base font-bold text-white">
+                          {mastoId.displayName || mastoId.handle}
+                        </div>
+                        {mastoId.handle && (
+                          <div className="mt-0.5 text-xs font-mono text-degen-400">
+                            @{mastoId.handle}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center gap-3 text-xs text-gray-400">
+                      <a
+                        href={`https://social.degenfeed.xyz/@${mastoId.handle}`}
+                        target="_blank"
+                        rel="noopener"
+                        className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:border-degen-500/30 hover:text-white"
+                      >
+                        View Profile →
+                      </a>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(mastoId.handle || '')}
+                        className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:border-degen-500/30 hover:text-white"
+                      >
+                        Copy Handle
+                      </button>
+                      {mastoId.handle && (
+                        <button
+                          onClick={() => unlink(mastoId.id)}
+                          className="ml-auto rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-red-400 transition-colors hover:bg-red-500/20"
+                        >
+                          Unlink
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="mb-6">

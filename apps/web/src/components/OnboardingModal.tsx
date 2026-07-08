@@ -39,7 +39,8 @@ export function OnboardingModal() {
     },
   ];
 
-  const s = steps[step]; if (!s) return null;
+  const s = steps[step];
+  if (!s) return null;
 
   return (
     <div
