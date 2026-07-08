@@ -123,11 +123,11 @@ export const DEFAULT_CRYPTO_FEEDS = [
   'https://www.youtube.com/feeds/videos.xml?channel_id=UCr8UAVlECQNTpMEYfzt8nDQ', // Lex Fridman (AI/tech)
   'https://www.youtube.com/feeds/videos.xml?channel_id=UCznv7Vf9nBdXFXz2L9n7bLQ', // Finematics (DeFi)
   // ── Reddit JSON hot posts (free, no auth) ───────────────────────
-  'https://old.reddit.com/r/CryptoCurrency/hot.json?limit=25',
-  'https://old.reddit.com/r/Bitcoin/hot.json?limit=25',
-  'https://old.reddit.com/r/ethereum/hot.json?limit=25',
-  'https://old.reddit.com/r/solana/hot.json?limit=25',
-  'https://old.reddit.com/r/defi/hot.json?limit=25', // Our own Mastodon instance
+  'https://old.reddit.com/r/CryptoCurrency/hot.rss?limit=25',
+  'https://old.reddit.com/r/Bitcoin/hot.rss?limit=25',
+  'https://old.reddit.com/r/ethereum/hot.rss?limit=25',
+  'https://old.reddit.com/r/solana/hot.rss?limit=25',
+  'https://old.reddit.com/r/defi/hot.rss?limit=25', // Our own Mastodon instance
   'https://bitcoinops.org/en/feed.xml',
   'https://lightning.engineering/rss/',
   'https://unchainedcrypto.com/feed/',
