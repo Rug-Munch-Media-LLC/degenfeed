@@ -93,7 +93,7 @@ describe('feed providers', () => {
       });
       const result = await provider.fetchFeed({ timeoutMs: 100 });
       expect(result.posts.length).toBe(0);
-      expect(result.notice).toContain('unreachable');
+      expect(result.notice).toContain('unavailable');
     });
   });
 
@@ -241,11 +241,10 @@ describe('feed providers', () => {
 
   describe('ThreadsProvider', () => {
     it('scrapes JSON-LD from public Threads profile pages', async () => {
+      const html =
+        '<html><head><script type="application/ld+json">{"@type":"ItemList","mainEntity":{"itemListElement":[{"name":"Threads post about crypto","url":"https://www.threads.net/@mosseri/post/abc123","datePublished":"2024-01-01T00:00:00Z","author":{"name":"Adam Mosseri","identifier":"mosseri","image":""},"interactionStatistic":[{"@type":"InteractionCounter","name":"Like","userInteractionCount":42}]}]}}</script></head></html>';
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse({
-          text: async () =>
-            `<html><head><script type="application/ld+json">{"@type":"SocialMediaPosting","articleBody":"Threads post about crypto","url":"https://www.threads.net/@mosseri/post/abc123","datePublished":"2024-01-01T00:00:00Z","author":{"name":"Adam Mosseri","identifier":"mosseri","image":""},"interactionStatistic":[{"name":"Like","userInteractionCount":42},{"name":"Reply","userInteractionCount":3}]}</script></head></html>`,
-        }),
+        mockResponse({ text: async () => html }),
       );
       const provider = new ThreadsProvider({ curatedHandles: ['mosseri'] });
       const result = await provider.fetchFeed({ timeoutMs: 1000 });
