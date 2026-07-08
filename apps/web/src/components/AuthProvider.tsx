@@ -24,7 +24,7 @@ import {
 import { useWeb3 } from '../components/Web3Provider';
 import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
-import { publishNoteToNostr } from '../lib/nostr';
+import { engageNostr, publishNoteToNostr } from '../lib/nostr';
 import { useToast } from './Toast';
 
 export interface AuthContextValue {
@@ -323,17 +323,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         target?: { authorId?: string; publicationId?: string };
       } = {},
     ): Promise<{ ok: boolean; error?: string }> => {
+      // Nostr — sign and publish client-side (never send nsec to the server).
+      if (protocol === 'nostr') {
+        const nostrIdent = identities.find((i) => i.protocol === 'nostr');
+        if (!nostrIdent) return { ok: false, error: 'No Nostr identity linked' };
+        const nativeId = postId.startsWith('nostr:') ? postId.slice('nostr:'.length) : postId;
+        const targetPubkey = opts.target?.authorId || '';
+        if (
+          action === 'like' ||
+          action === 'unlike' ||
+          action === 'repost' ||
+          action === 'unrepost' ||
+          action === 'reply'
+        ) {
+          return engageNostr({
+            action: action === 'unlike' ? 'like' : action === 'unrepost' ? 'repost' : action,
+            eventId: nativeId,
+            pubkey: targetPubkey,
+            content: opts.content,
+            publicId: nostrIdent.publicId,
+          });
+        }
+        return { ok: false, error: `${action} not supported on Nostr` };
+      }
+
+      // Build auth payload for server-side engagement.
       const identity = identities.find((i) => i.protocol === protocol);
       const auth: Record<string, string> = {};
-      if (identity?.keys?.accessToken) auth[protocol] = identity.keys.accessToken;
+
+      // Mastodon — access token + instance URL.
       if (protocol === 'mastodon') {
+        const token = identity?.keys?.accessToken ?? identity?.keys?.mastodon_token ?? '';
+        if (!token) return { ok: false, error: 'Not signed into Mastodon' };
+        auth.mastodon = token;
         auth.mastodon_instance = identity?.keys?.instanceUrl || 'https://social.degenfeed.xyz';
       }
-      if (protocol === 'bluesky' || protocol === 'threads') {
-        auth[`${protocol}_did`] = identity?.publicId ?? '';
+      // Bluesky / Threads — access JWT + DID.
+      else if (protocol === 'bluesky' || protocol === 'threads') {
+        const jwt = identity?.keys?.accessJwt ?? '';
+        const did = identity?.publicId ?? '';
+        if (!jwt || !did) return { ok: false, error: `Not signed into ${protocol}` };
+        auth.accessJwt = jwt;
+        auth[`${protocol}_did`] = did;
+        auth[`${protocol}_jwt`] = jwt;
+        // Also set them as the bare keys the backend reads.
+        if (protocol === 'bluesky') auth.bluesky = jwt;
+        if (protocol === 'threads') auth.threads = jwt;
       }
-      if (protocol === 'lens') {
+      // Lens — access token.
+      else if (protocol === 'lens') {
+        const token = identity?.keys?.accessToken ?? '';
+        if (!token) return { ok: false, error: 'Not signed into Lens' };
+        auth.lens = token;
+        auth.accessToken = token;
         auth.lens_profileId = identity?.publicId ?? '';
+      }
+      // Farcaster — requires a pre-signed message (complex, not auto-done yet).
+      else if (protocol === 'farcaster') {
+        return {
+          ok: false,
+          error: 'Farcaster engagement requires a client-signed message. Coming soon.',
+        };
+      }
+      // Generic fallback — send accessToken as protocol key.
+      else {
+        if (identity?.keys?.accessToken) auth[protocol] = identity.keys.accessToken;
       }
 
       try {

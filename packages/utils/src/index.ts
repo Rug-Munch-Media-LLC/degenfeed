@@ -204,3 +204,7 @@ export function isValidEmail(s: string): boolean {
   if (typeof s !== 'string' || s.length > 254) return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
 }
+
+// ─── Error reporting (lightweight Sentry) ─────────────────────────────
+
+export { reportError } from './sentry';

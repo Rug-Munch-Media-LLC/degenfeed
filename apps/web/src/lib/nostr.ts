@@ -98,3 +98,72 @@ export async function publishNoteToNostr(opts: {
     return { ok: false, relays: [], error: String(e) };
   }
 }
+
+/**
+ * Client-side Nostr engage: like (kind 7 reaction), repost (kind 6),
+ * or reply (kind 1 with e/p reply tags). Signs locally with the
+ * decrypted nsec and publishes to relays. Returns success if any
+ * relay accepts the event.
+ */
+export async function engageNostr(opts: {
+  action: 'like' | 'repost' | 'reply';
+  eventId: string;
+  pubkey: string;
+  content?: string;
+  publicId: string; // our Nostr hex public key
+}): Promise<{ ok: boolean; error?: string }> {
+  const record = await loadNostrIdentity(opts.publicId);
+  if (!record) return { ok: false, error: 'No Nostr identity linked' };
+  const nsec = await decryptNsec(record);
+  if (!nsec) return { ok: false, error: 'Could not unlock Nostr key' };
+
+  try {
+    const nostr = await import('@degenfeed/nostr-sdk');
+    const ev =
+      opts.action === 'reply'
+        ? (() => {
+            const unsigned = {
+              pubkey: nostr.getPublicKey(nsec),
+              created_at: Math.floor(Date.now() / 1000),
+              kind: 1,
+              tags: [
+                ['e', opts.eventId, '', 'reply'],
+                ['p', opts.pubkey],
+              ],
+              content: opts.content ?? '',
+            };
+            return nostr.signEvent(unsigned, nsec);
+          })()
+        : opts.action === 'like'
+          ? nostr.createReaction('+', opts.eventId, opts.pubkey, nsec)
+          : (() => {
+              // repost: create a text note with the original event in tags
+              const unsigned = {
+                pubkey: nostr.getPublicKey(nsec),
+                created_at: Math.floor(Date.now() / 1000),
+                kind: 6,
+                tags: [
+                  ['e', opts.eventId],
+                  ['p', opts.pubkey],
+                ],
+                content: opts.content ?? '',
+              };
+              return nostr.signEvent(unsigned, nsec);
+            })();
+
+    const pool = new nostr.RelayPool(DEFAULT_RELAYS, { eoseTimeout: 3000 });
+    let published = false;
+    for (const _url of DEFAULT_RELAYS) {
+      try {
+        pool.publish(ev);
+        published = true;
+      } catch {
+        /* continue */
+      }
+    }
+    pool.disconnectAll();
+    return published ? { ok: true } : { ok: false, error: 'No relay accepted the event' };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}

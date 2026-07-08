@@ -518,6 +518,10 @@ export async function handleProviderFeed(
 }
 
 export async function handleFeedHealth(_request: Request, env: Env): Promise<Response> {
+  const cacheKey = 'health:v2:default';
+  const cached = await readCachedHealth(env, cacheKey);
+  if (cached) return jsonResponse(cached);
+
   const results = await Promise.allSettled(
     DEFAULT_PROTOCOLS.map(async (protocol) => {
       const provider = getProvider(protocol, env);
@@ -544,5 +548,37 @@ export async function handleFeedHealth(_request: Request, env: Env): Promise<Res
     }
   }
 
-  return jsonResponse({ health, checkedAt: Date.now() });
+  const body = { health, checkedAt: Date.now() };
+  await writeCachedHealth(env, cacheKey, body);
+  return jsonResponse(body);
+}
+
+async function readCachedHealth(
+  env: Env,
+  key: string,
+): Promise<{ health: Record<string, unknown>; checkedAt: number } | null> {
+  if (!env.CACHE) return null;
+  try {
+    const raw = await env.CACHE.get(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { health: Record<string, unknown>; checkedAt: number };
+    // 30s stale-while-revalidate: return cached data if it's within the window.
+    if (Date.now() - parsed.checkedAt < 30_000) return parsed;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+async function writeCachedHealth(
+  env: Env,
+  key: string,
+  body: { health: Record<string, unknown>; checkedAt: number },
+): Promise<void> {
+  if (!env.CACHE) return;
+  try {
+    await env.CACHE.put(key, JSON.stringify(body), { expirationTtl: 60 });
+  } catch {
+    /* ignore */
+  }
 }

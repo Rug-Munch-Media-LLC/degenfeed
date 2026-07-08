@@ -1,20 +1,16 @@
 'use client';
 
+import { reportError } from '@degenfeed/utils';
 import { useEffect } from 'react';
 
 export function ErrorTracker() {
   useEffect(() => {
     const onError = (event: ErrorEvent) => {
-      console.error('[DegenFeed Error]', {
-        message: event.message,
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        stack: event.error?.stack,
-      });
+      reportError(event.error ?? new Error(event.message), { tags: { source: 'browser' } });
     };
     const onRejection = (event: PromiseRejectionEvent) => {
-      console.error('[DegenFeed Unhandled Promise]', { reason: event.reason });
+      const reason = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+      reportError(reason, { tags: { source: 'browser-unhandled' } });
     };
     window.addEventListener('error', onError);
     window.addEventListener('unhandledrejection', onRejection);
