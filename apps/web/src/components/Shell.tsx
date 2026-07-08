@@ -245,16 +245,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
               rel="noopener noreferrer"
               className="text-gray-500 underline transition-colors hover:text-gray-400"
             >
-              git.rugmunch.io
-            </a>{' '}
-            and{' '}
+              Forgejo
+            </a>
+            ,{' '}
+            <a
+              href="https://gitlab.com/rug-munch-media-group/degenfeed-web"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-500 underline transition-colors hover:text-gray-400"
+            >
+              GitLab
+            </a>
+            , and{' '}
             <a
               href="https://codeberg.org/degenfeed/degenfeed-web"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 underline transition-colors hover:text-gray-400"
             >
-              codeberg.org
+              Codeberg
             </a>
             .
           </p>
