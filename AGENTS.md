@@ -11,6 +11,7 @@ note: Single source of truth. Every AI agent reads this first.
 built_with:
   - builder_menu: type `menu` on any machine
   - pre_commit: ruff, mypy, gitleaks, bandit, hallucination-check
+  - ai_review: .github/workflows/ai-review.yml (OpenRouter-compatible, PR comments)
   - conventional_commits: commitizen + commitlint
   - ci_cd: GitHub Actions (lint + test + security)
   - makefile: standardized targets (lint, test, check, dev)
@@ -70,7 +71,8 @@ All products built on Talos under Rug Munch Media LLC. Separate git repos. No mo
 - `/srv/work/repos/fleet-infra/` — infra as code (nginx, systemd, compose, scripts)
 - `/srv/work/repos/fleet-template/` — scaffold for new repos
 - `/srv/work/repos/standards/` — AGENTS.md, STANDARDS.md, CONVENTIONS.md, TOOLCHAIN.md
-- (also: rmi-docs, rmi-local-services, rmi-rag, rmi-mcp-x402, rugmunchbot, rugcharts, rugmaps, x402-gateway)
+- Active: rmi-docs, rmi-local-services, rmi-rag, rmi-mcp-x402
+- Archived / vaporware: rugmunchbot, rugcharts, rugmaps, x402-gateway (not deployed or superseded)
 
 *Deploy paths (docker-compose + data — DO NOT EDIT CODE HERE):*
 - `/root/backend/` — rmi-backend deploy dir (`.rmi/` data, `.secrets/`, compose) — NOT a git repo
@@ -167,9 +169,9 @@ The V110 is fully optimized:
 
 ### RMI — rmi-backend (`/srv/work/repos/rmi-backend/`)
 - FastAPI + SQLAlchemy + Celery + Redis
-- Telegram bot at `app/telegram_bot/` (@rugmunchbot)
-- Scanner at `app/scanners/` — token risk scoring, address labeling
-- DataBus at `app/databus/` — 52 files, 25K lines, 30+ third-party APIs
+- Telegram bot at `app/domains/telegram/rugmunchbot/bot.py` (@rugmunchbot)
+- Scanner at `app/domains/scanners/core/` — token risk scoring, address labeling
+- DataBus at `app/domains/databus/` — 52 files, 25K lines, 30+ third-party APIs
 - Provider interface: `DataProvider` ABC with `ThirdPartyProvider`, `SelfHostedNodeProvider`, `PonderIndexerProvider`
 
 ### RMI — Frontend (`/srv/work/repos/rmi-frontend/`)
@@ -222,20 +224,23 @@ The V110 is fully optimized:
 - **ClickHouse** (rmi-clickhouse:8123) — analytics, 39M address labels
 - **DuckDB** (embedded) — Parquet querying (offloaded Ponder data)
 
-### Ponder EVM Indexers
+### Ponder EVM Indexers (NOT DEPLOYED — containers not running as of 2026-07-08)
+
+The table below reflects the planned deployment. No Ponder containers are
+currently running on Talos. Stable views (`ponder.token_transfer`, etc.)
+are not available. Re-deployment tracked in GAPS.md.
+
 | Chain | Container | RPC | Status |
 |-------|-----------|-----|--------|
-| Ethereum | `rmi-ponder` | BlastAPI+GatewayFM+Lava | syncing |
-| BSC | `rmi-ponder-bsc` | bsc-dataseed.binance.org | syncing |
-| Arbitrum | `rmi-ponder-arbitrum` | arb1.arbitrum.io/rpc | syncing |
-| Polygon | `rmi-ponder-polygon` | polygon.drpc.org | syncing |
-
-Stable views: `ponder.token_transfer`, `ponder_bsc.token_transfer`, etc.
+| Ethereum | `rmi-ponder` | BlastAPI+GatewayFM+Lava | **offline** |
+| BSC | `rmi-ponder-bsc` | bsc-dataseed.binance.org | **offline** |
+| Arbitrum | `rmi-ponder-arbitrum` | arb1.arbitrum.io/rpc | **offline** |
+| Polygon | `rmi-ponder-polygon` | polygon.drpc.org | **offline** |
 
 ### Scanner Pipeline
 - `POST /scanner/scan` — live risk scoring
 - Address labeler (39M labels from ClickHouse)
-- Shared utils: `app/scanners/shared.py` (helius_rpc, dexscreener_fetch, score_to_risk)
+- Shared utils are provided by modules under `app/domains/scanners/` (e.g., per-detector helpers for helius_rpc, dexscreener_fetch, score_to_risk)
 - Telegram `/scan`, `/portfolio`, `/simulate`, `/chart`, `/watch` commands
 - Rate limiting: 10 req/s per provider
 
