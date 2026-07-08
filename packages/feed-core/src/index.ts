@@ -406,42 +406,110 @@ export function isRelevantPost(post: UnifiedPost): boolean {
   return false;
 }
 
-export function contentFingerprint(post: UnifiedPost): string {
-  // Build a 12-word shingle from text — used to detect near-duplicate
-  // reposts across protocols (e.g. someone cross-posting the same content
-  // to Farcaster, Lens, and Nostr).
-  const text = post.text
+// ─── Cross-protocol deduplication ──────────────────────────────────
+
+function normalizeText(text: string): string {
+  return text
     .toLowerCase()
-    .replace(/https?:\/\/\S+/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
+    .replace(/https?:\/\/\S+/g, ' ')  // strip URLs
+    .replace(/[^a-z0-9\s]/g, ' ')       // strip punctuation
+    .replace(/\s+/g, ' ')               // collapse whitespace
+    .trim();
+}
+
+function wordSet(text: string): Set<string> {
+  return new Set(normalizeText(text).split(' ').filter((w) => w.length > 2));
+}
+
+/** Jaccard similarity: intersection / union of word sets. */
+function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  const smaller = a.size < b.size ? a : b;
+  const larger = a.size < b.size ? b : a;
+  for (const w of smaller) {
+    if (larger.has(w)) intersection++;
+  }
+  return intersection / (a.size + b.size - intersection);
+}
+
+/** Extract normalized URLs from post text + embeds. */
+function extractUrls(post: UnifiedPost): string[] {
+  const textUrls = (post.text.match(/https?:\/\/[^\s<>"']+/gi) ?? [])
+    .map((u) => u.replace(/\/$/, '').toLowerCase());
+  const embedUrls = post.embeds
+    .filter((e) => e.kind === 'link' || e.kind === 'image' || e.kind === 'video')
+    .map((e) => e.url.replace(/\/$/, '').toLowerCase());
+  return [...new Set([...textUrls, ...embedUrls])];
+}
+
+function contentFingerprint(post: UnifiedPost): string {
+  const words = normalizeText(post.text)
+    .split(' ')
     .filter((w) => w.length > 2)
-    .slice(0, 12)
-    .join(' ');
-  if (text.length > 0) return text;
-  // Fallback to link-based fingerprint for media-only posts
+    .slice(0, 12);
+  if (words.length > 0) return words.join(' ');
   const link = post.embeds.find(
     (e) => e.kind === 'link' || e.kind === 'image' || e.kind === 'video',
   );
   return link ? `link:${link.url}` : '';
 }
 
+const JACCARD_THRESHOLD = 0.7;
+const MIN_TEXT_LENGTH = 20; // skip tiny posts for similarity check
+
 export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
   const seenId = new Set<string>();
   const seenFingerprint = new Set<string>();
   const seenText = new Set<string>();
+  const seenUrls = new Set<string>();
+  // Track word sets for Jaccard comparison across protocols
+  const candidates: { words: Set<string>; index: number }[] = [];
   const out: UnifiedPost[] = [];
+
   for (const p of posts) {
+    // Layer 1: exact ID match
     if (seenId.has(p.id)) continue;
+
+    // Layer 2: URL-based match (same link shared to multiple protocols)
+    const urls = extractUrls(p);
+    if (urls.some((u) => seenUrls.has(u))) continue;
+
+    // Layer 3: shingle fingerprint match
     const fp = contentFingerprint(p);
     if (fp && seenFingerprint.has(fp)) continue;
+
+    // Layer 4: 80-char text prefix match (fast path)
     const textKey = p.text.trim().slice(0, 80).toLowerCase();
-    if (textKey.length > 12 && seenText.has(textKey)) continue;
+    if (textKey.length > MIN_TEXT_LENGTH && seenText.has(textKey)) continue;
+
+    // Layer 5: Jaccard word-set similarity against recent candidates
+    const ws = wordSet(p.text);
+    let matchedProtocol: Protocol | undefined;
+    if (ws.size >= 3 && p.text.length > MIN_TEXT_LENGTH) {
+      for (const cand of candidates) {
+        const sim = jaccardSimilarity(ws, cand.words);
+        if (sim >= JACCARD_THRESHOLD) {
+          matchedProtocol = out[cand.index].protocol;
+          // Enrich the original post with cross-protocol info
+          const cross = out[cand.index].crossPostedTo ?? [];
+          if (!cross.includes(p.protocol)) cross.push(p.protocol);
+          out[cand.index].crossPostedTo = cross;
+          break;
+        }
+      }
+    }
+    if (matchedProtocol) continue;
+
+    // Track this post
     seenId.add(p.id);
     if (fp) seenFingerprint.add(fp);
-    if (textKey.length > 12) seenText.add(textKey);
+    if (textKey.length > MIN_TEXT_LENGTH) seenText.add(textKey);
+    for (const u of urls) seenUrls.add(u);
+    candidates.push({ words: ws, index: out.length });
     out.push(p);
   }
+
   return out;
 }
 

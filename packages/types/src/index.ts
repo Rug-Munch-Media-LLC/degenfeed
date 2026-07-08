@@ -118,6 +118,8 @@ export interface UnifiedPost {
   /** Niche tags derived from content (crypto, ai, oss, security, art, music) */
   niches: string[];
   /** Optional ranking breakdown for transparency / hover signals. */
+  /** Protocols this post was also found on (cross-post dedup). */
+  crossPostedTo?: Protocol[];
   score?: PostScore;
   /** Optional paywall requirement for paid content */
   paywall?: { amount: string; recipient: string };
