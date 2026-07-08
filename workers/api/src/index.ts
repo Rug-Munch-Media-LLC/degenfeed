@@ -13,6 +13,7 @@ import {
   isAllowedOrigin,
   parseOriginHeader,
 } from './cors';
+import { handleAccountDelete, handleAccountExport } from './routes/account';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
 import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from './routes/billing';
 import { handleBlinkTip } from './routes/blink';
@@ -37,6 +38,7 @@ import {
   handleNewsletterSubscribe,
 } from './routes/newsletter';
 import { handleNotifications } from './routes/notifications';
+import { handleNotify } from './routes/notify';
 import { handlePostById } from './routes/post';
 import { handlePreferences } from './routes/preferences';
 import { handlePrices } from './routes/prices';
@@ -65,7 +67,12 @@ import {
 } from './routes/tip';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleX402Paywall, handleX402Verify } from './routes/x402';
-import { handleSessionSignOut, handleSessionVerify, requireSession } from './session';
+import {
+  applySessionRefresh,
+  handleSessionSignOut,
+  handleSessionVerify,
+  requireSession,
+} from './session';
 
 // ─── Environment variables ───────────────────────────────────────────
 
@@ -267,6 +274,15 @@ export default {
     const path = url.pathname;
     const origin = getAllowedOrigin(request, env.ALLOWED_ORIGINS);
 
+    // Helper: require session, run handler, attach refreshed cookie.
+    const withSession = async (handler: () => Promise<Response>): Promise<Response> => {
+      const session = await requireSession(request, env);
+      if (session instanceof Response) return session;
+      const resp = await handler();
+      if (!env.AUTH_SECRET) return resp;
+      return applySessionRefresh(resp, session, env.AUTH_SECRET);
+    };
+
     // CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
@@ -340,13 +356,10 @@ export default {
         const category = path.replace('/api/feed/category/', '');
         response = await handleCategoryFeed(request, env, category);
       } else if (path === '/api/bridge/rss-to-nostr') {
-        const session = await requireSession(request, env);
-        if (session instanceof Response) {
-          response = session;
-        } else {
+        response = await withSession(async () => {
           const { handleRssToNostrBridge } = await import('./routes/publish');
-          response = await handleRssToNostrBridge(request, env);
-        }
+          return handleRssToNostrBridge(request, env);
+        });
       } else if (path === '/api/feed/rss') {
         response = await handleRssFeed(request, env);
       } else if (path === '/api/auth/signout') {
@@ -359,20 +372,14 @@ export default {
         response = await handleGtSRegister(request, env);
       } else if (path === '/api/auth/session') {
         response = await handleSessionVerify(request, env);
+      } else if (path === '/api/account/export') {
+        response = await handleAccountExport(request, env);
+      } else if (path === '/api/account/delete') {
+        response = await handleAccountDelete(request, env);
       } else if (path === '/api/publish') {
-        const session = await requireSession(request, env);
-        if (session instanceof Response) {
-          response = session;
-        } else {
-          response = await handlePublish(request, env);
-        }
+        response = await withSession(() => handlePublish(request, env));
       } else if (path === '/api/engage') {
-        const session = await requireSession(request, env);
-        if (session instanceof Response) {
-          response = session;
-        } else {
-          response = await handleEngage(request, env);
-        }
+        response = await withSession(() => handleEngage(request, env));
       } else if (path === '/api/feed/top') {
         response = await handleTopFeed(request, env);
       } else if (path === '/api/feed/newsletters') {
@@ -394,23 +401,13 @@ export default {
       } else if (path === '/api/tip/resolve') {
         response = await handleTipResolve(request, env);
       } else if (path === '/api/tip/create') {
-        const session = await requireSession(request, env);
-        if (session instanceof Response) {
-          response = session;
-        } else {
-          response = await handleTipCreate(request, env);
-        }
+        response = await withSession(() => handleTipCreate(request, env));
       } else if (path === '/api/tip/settings') {
-        const session = await requireSession(request, env);
-        if (session instanceof Response) {
-          response = session;
-        } else if (request.method === 'GET') {
-          response = await handleTipSettingsGet(request, env);
-        } else if (request.method === 'POST') {
-          response = await handleTipSettingsPost(request, env);
-        } else {
-          response = jsonResponse({ error: 'Method not allowed' }, 405);
-        }
+        response = await withSession(async () => {
+          if (request.method === 'GET') return handleTipSettingsGet(request, env);
+          if (request.method === 'POST') return handleTipSettingsPost(request, env);
+          return jsonResponse({ error: 'Method not allowed' }, 405);
+        });
       } else if (path === '/api/feed/funding') {
         response = await handleFundingFeed(request, env);
       } else if (path === '/api/notifications') {
@@ -443,6 +440,8 @@ export default {
         response = await handleRmiHealth(request, env);
       } else if (path === '/api/rmi/news' || path.startsWith('/api/rmi/news/')) {
         response = await handleRmiNews(request, env);
+      } else if (path === '/api/notify') {
+        response = await handleNotify(request, env);
       } else if (path === '/api/newsletter/subscribe') {
         response = await handleNewsletterSubscribe(request, env);
       } else if (path === '/api/newsletter/status') {

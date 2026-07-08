@@ -211,6 +211,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
               Profile
             </a>
           </div>
+          <div className="flex items-center gap-4 text-xs text-gray-600">
+            <a href="/privacy" className="transition-colors hover:text-gray-400">
+              Privacy
+            </a>
+            <a href="/terms" className="transition-colors hover:text-gray-400">
+              Terms
+            </a>
+          </div>
           <p className="text-xs text-gray-600">
             © {new Date().getFullYear()} DegenFeed. No account required.
           </p>

@@ -121,6 +121,18 @@ export function clearSessionCookie(): string {
   return `${COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax`;
 }
 
+/**
+ * Re-issue the session cookie with a fresh 7-day TTL. Call this after
+ * every authenticated request so active users never get logged out.
+ */
+export async function refreshSessionCookie(
+  payload: SessionPayload,
+  secret: string,
+): Promise<string> {
+  const { setCookie } = await createSession(payload.address, payload.chain, secret);
+  return setCookie;
+}
+
 export async function handleSessionSignOut(_request: Request, _env: Env): Promise<Response> {
   return new Response(JSON.stringify({ success: true }), {
     status: 200,
@@ -146,4 +158,24 @@ export async function requireSession(
   if (!payload) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   return payload;
+}
+
+/**
+ * Take an existing response and attach a refreshed session cookie
+ * (sliding 7-day TTL). Call this after any authenticated handler
+ * to keep the session alive.
+ */
+export async function applySessionRefresh(
+  response: Response,
+  payload: SessionPayload,
+  secret: string,
+): Promise<Response> {
+  const setCookie = await refreshSessionCookie(payload, secret);
+  const headers = new Headers(response.headers);
+  headers.set('set-cookie', setCookie);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
