@@ -15,7 +15,9 @@
   },
   "dependencies": {
     "@degenfeed/types": "workspace:*",
-    "@degenfeed/feed-core": "workspace:*"
+    "@degenfeed/feed-core": "workspace:*",
+    "@noble/curves": "^1.6.0",
+    "@noble/hashes": "^1.5.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.2",

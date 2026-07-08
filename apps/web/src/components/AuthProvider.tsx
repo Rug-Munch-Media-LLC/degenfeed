@@ -378,12 +378,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         auth.accessToken = token;
         auth.lens_profileId = identity?.publicId ?? '';
       }
-      // Farcaster — requires a pre-signed message (complex, not auto-done yet).
+      // Farcaster — sign and publish client-side (never send signer key to the server).
       else if (protocol === 'farcaster') {
-        return {
-          ok: false,
-          error: 'Farcaster engagement requires a client-signed message. Coming soon.',
-        };
+        const farcasterIdent = identities.find((i) => i.protocol === "farcaster");
+        if (!farcasterIdent) return { ok: false, error: "No Farcaster identity linked" };
+
+        let signerKeyHex = null;
+        if (farcasterIdent.encryptedSecret) {
+          try {
+            const { decryptSecret } = await import("@degenfeed/auth");
+            signerKeyHex = await decryptSecret(
+              {
+                ciphertext: farcasterIdent.encryptedSecret,
+                salt: farcasterIdent.salt,
+                iv: farcasterIdent.iv,
+              },
+              "auto-unlock-passphrase",
+            );
+          } catch {
+            return { ok: false, error: "Could not decrypt Farcaster signer key. Re-link your account." };
+          }
+        }
+        if (!signerKeyHex) {
+          return { ok: false, error: "Farcaster signer key not found. Sign in with a self-custody signer key." };
+        }
+
+        const fid = parseInt(farcasterIdent.publicId, 10);
+        if (isNaN(fid)) return { ok: false, error: "Invalid Farcaster FID" };
+
+        const nativeId = postId.startsWith("farcaster:")
+          ? postId.slice("farcaster:".length)
+          : postId.startsWith("fc:")
+            ? postId.slice("fc:".length)
+            : postId;
+
+        const targetFid = opts.target?.authorId
+          ? parseInt(opts.target.authorId, 10)
+          : 0;
+        const castHashHex = nativeId;
+
+        if (castHashHex.length < 40) {
+          return { ok: false, error: "Invalid Farcaster cast hash" };
+        }
+
+        if (action !== "like" && action !== "unlike" && action !== "repost" && action !== "reply") {
+          return { ok: false, error: `${action} not supported on Farcaster` };
+        }
+
+        const { engageFarcaster } = await import("@degenfeed/farcaster-sdk");
+        const result = await engageFarcaster({
+          action: action,
+          signerKeyHex,
+          fid,
+          targetFid,
+          castHashHex,
+          content: opts.content,
+        });
+
+        return result;
       }
       // Generic fallback — send accessToken as protocol key.
       else {
