@@ -56,6 +56,8 @@ export default function FeedPage() {
   const [hideLowQuality, setHideLowQuality] = useState(false);
   const [hideThreshold, setHideThreshold] = useState(1.0);
   const [allowNonCrypto, setAllowNonCrypto] = useState(false);
+  const [recencyWeight, setRecencyWeight] = useState(1.0);
+  const [engagementWeight, setEngagementWeight] = useState(1.0);
   const [protocolFilter, setProtocolFilter] = useState<string | null>(null);
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const { notifications, unreadCount, fetchNotifications, markRead } =
@@ -71,12 +73,16 @@ export default function FeedPage() {
           hideLowQuality?: boolean;
           hideLowQualityThreshold?: number;
           allowNonCrypto?: boolean;
+          recencyWeight?: number;
+          engagementWeight?: number;
         };
         if (typeof data.hideLowQuality === 'boolean') setHideLowQuality(data.hideLowQuality);
         if (typeof data.hideLowQualityThreshold === 'number') {
           setHideThreshold(data.hideLowQualityThreshold);
         }
         if (typeof data.allowNonCrypto === 'boolean') setAllowNonCrypto(data.allowNonCrypto);
+        if (typeof data.recencyWeight === 'number') setRecencyWeight(data.recencyWeight);
+        if (typeof data.engagementWeight === 'number') setEngagementWeight(data.engagementWeight);
       } catch {
         /* ignore — user has no session yet */
       }
@@ -148,6 +154,9 @@ export default function FeedPage() {
         if (allowNonCrypto) {
           url.searchParams.set('allowNonCrypto', 'true');
         }
+        if (recencyWeight !== 1) url.searchParams.set('recencyWeight', String(recencyWeight));
+        if (engagementWeight !== 1)
+          url.searchParams.set('engagementWeight', String(engagementWeight));
         const res = await fetch(url.toString(), {
           credentials: 'include',
           cache: 'no-store',
@@ -182,7 +191,16 @@ export default function FeedPage() {
         }
       }
     },
-    [activeTab, posts, hideLowQuality, hideThreshold, allowNonCrypto, protocolFilter],
+    [
+      activeTab,
+      posts,
+      hideLowQuality,
+      hideThreshold,
+      allowNonCrypto,
+      recencyWeight,
+      engagementWeight,
+      protocolFilter,
+    ],
   );
 
   useEffect(() => {
@@ -463,6 +481,44 @@ export default function FeedPage() {
                 className="h-3 w-3 rounded border-white/20 bg-gray-900 text-degen-500 focus:ring-degen-500"
               />
               <span>Non-crypto</span>
+            </label>
+            <label className="flex items-center gap-1.5">
+              <span>Recency</span>
+              <input
+                type="range"
+                min="0.1"
+                max="3"
+                step="0.1"
+                value={recencyWeight}
+                onChange={(e) => {
+                  setRecencyWeight(Number(e.target.value));
+                  persistPrefs({ recencyWeight: Number(e.target.value) });
+                }}
+                className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                aria-label="Recency weight"
+              />
+              <span className="font-mono text-[10px] text-gray-500">
+                {recencyWeight.toFixed(1)}
+              </span>
+            </label>
+            <label className="flex items-center gap-1.5">
+              <span>Engage</span>
+              <input
+                type="range"
+                min="0.1"
+                max="3"
+                step="0.1"
+                value={engagementWeight}
+                onChange={(e) => {
+                  setEngagementWeight(Number(e.target.value));
+                  persistPrefs({ engagementWeight: Number(e.target.value) });
+                }}
+                className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                aria-label="Engagement weight"
+              />
+              <span className="font-mono text-[10px] text-gray-500">
+                {engagementWeight.toFixed(1)}
+              </span>
             </label>
             <span className="ml-auto hidden text-[10px] text-gray-600 sm:inline">
               Hover ★ on any post for ranking breakdown

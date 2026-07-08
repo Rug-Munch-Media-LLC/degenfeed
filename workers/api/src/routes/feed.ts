@@ -410,9 +410,73 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       sourceQuality.set(key, Math.min(1.5, p.author.followerCount / 10000));
     }
   }
-  const ctx = buildRankingContext(Date.now(), mergedPrefs, recentAuthors, undefined, sourceQuality);
+
+  // Load previous engagement snapshots from KV for velocity tracking.
+  // Each key is eng:<postId> with TTL 300s, storing {likes, reposts, replies, at}.
+  const previousEngagement = new Map<
+    string,
+    { likes: number; reposts: number; replies: number; at: number }
+  >();
+  if (env.CACHE) {
+    try {
+      const keys = relevant.slice(0, 200).map((p) => `eng:${p.id}`);
+      const results = await Promise.allSettled(keys.map((k) => env.CACHE!.get(k)));
+      for (let i = 0; i < results.length; i++) {
+        const r = results[i] as PromiseFulfilledResult<string | null> | PromiseRejectedResult;
+        const postId = relevant[i]?.id;
+        if (r.status === 'fulfilled' && r.value && postId) {
+          try {
+            const snap = JSON.parse(r.value) as {
+              likes: number;
+              reposts: number;
+              replies: number;
+              at: number;
+            };
+            previousEngagement.set(postId, snap);
+          } catch {
+            /* skip */
+          }
+        }
+      }
+    } catch {
+      /* skip velocity — non-critical */
+    }
+  }
+
+  const ctx = buildRankingContext(
+    Date.now(),
+    mergedPrefs,
+    recentAuthors,
+    userCtx.followed,
+    sourceQuality,
+  );
+  // Inject previous engagement for velocity scoring.
+  (ctx as Record<string, unknown>).previousEngagement = previousEngagement;
+
   // Compute score breakdowns for transparency / hover signals.
   const scoredRelevant = relevant.map((p) => ({ post: p, breakdown: scoreBreakdownV2(p, ctx) }));
+
+  // Store current engagement snapshots for next velocity calculation.
+  // Fire-and-forget — non-critical.
+  void (async () => {
+    if (!env.CACHE) return;
+    const now = Date.now();
+    const puts = relevant.slice(0, 100).map((p) =>
+      env
+        .CACHE!.put(
+          `eng:${p.id}`,
+          JSON.stringify({
+            likes: p.metrics.likes,
+            reposts: p.metrics.reposts,
+            replies: p.metrics.replies,
+            at: now,
+          }),
+          { expirationTtl: 300 },
+        )
+        .catch(() => {}),
+    );
+    await Promise.allSettled(puts);
+  })();
   // Optionally filter low-quality posts at the user's preferred threshold.
   // Threshold 0 means "only drop truly negative scores"; higher is stricter.
   const filteredScored = hideLowQuality
