@@ -14,11 +14,10 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { href: '/home', label: 'Feed' },
   { href: '/feed', label: 'Feed' },
   { href: '/news', label: 'News' },
-  { href: '/newsletter', label: 'Daily' },
   { href: '/discover', label: 'Discover' },
+  { href: '/docs', label: 'Docs' },
   { href: '/premium', label: 'Premium' },
   { href: '/profile', label: 'Profile' },
 ];
@@ -202,17 +201,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-semibold text-white">DegenFeed</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-500">
-            <a href="/home" className="transition-colors hover:text-white">
-              Feed
-            </a>
             <a href="/feed" className="transition-colors hover:text-white">
               Feed
             </a>
             <a href="/news" className="transition-colors hover:text-white">
               News
             </a>
-            <a href="/status" className="transition-colors hover:text-white">
-              Status
+            <a href="/docs" className="transition-colors hover:text-white">
+              Docs
             </a>
             <a href="/premium" className="transition-colors hover:text-white">
               Premium

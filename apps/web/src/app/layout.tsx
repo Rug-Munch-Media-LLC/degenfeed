@@ -33,6 +33,7 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: null,
   robots: {
     index: true,
     follow: true,
