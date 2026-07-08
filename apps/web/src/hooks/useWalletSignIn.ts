@@ -1,7 +1,7 @@
 'use client';
 
-import { buildSiweMessage, requestWalletNonce, verifyWalletSignature } from '@degenfeed/auth';
 import type { WalletSession } from '@degenfeed/auth';
+import { buildSiweMessage, requestWalletNonce, verifyWalletSignature } from '@degenfeed/auth';
 import { saveWalletIdentity } from '@degenfeed/storage';
 import { useCallback, useState } from 'react';
 import { useWeb3 } from '../components/Web3Provider';

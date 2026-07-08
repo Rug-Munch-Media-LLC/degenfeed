@@ -33,12 +33,12 @@ vi.mock('@degenfeed/storage', () => ({
 }));
 
 import {
-  PROTOCOL_COLORS,
-  PROTOCOL_ICONS,
-  PROTOCOL_LABELS,
   getProtocolColor,
   getProtocolIcon,
   getProtocolLabel,
+  PROTOCOL_COLORS,
+  PROTOCOL_ICONS,
+  PROTOCOL_LABELS,
 } from './ProtocolBadge';
 
 describe('ProtocolBadge', () => {

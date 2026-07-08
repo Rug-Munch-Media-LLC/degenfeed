@@ -1,6 +1,7 @@
 'use client';
 
 import type { UnifiedPost } from '@degenfeed/types';
+import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface NewsMeta {
@@ -49,7 +50,6 @@ const CATEGORIES = [
 
 const SOURCE_TABS = [
   { id: 'all', label: 'All Sources' },
-  { id: 'rmi', label: 'RMI DataBus' },
   { id: 'rss', label: 'RSS' },
   { id: 'reddit', label: 'Reddit' },
   { id: 'hackernews', label: 'HN' },
@@ -114,7 +114,8 @@ function NewsCard({ post }: { post: UnifiedPost }) {
   const imageEmbed = post.embeds.find((e) => e.kind === 'image');
   const linkEmbed = post.embeds.find((e) => e.kind === 'link');
   const url = linkEmbed?.url || '#';
-  const title = stripTags(post.text).slice(0, 120).split(' ').slice(0, -1).join(' ') || post.text.slice(0, 100);
+  const title =
+    stripTags(post.text).slice(0, 120).split(' ').slice(0, -1).join(' ') || post.text.slice(0, 100);
   const desc = stripTags(post.html || post.text).slice(0, 200);
 
   return (
@@ -126,11 +127,14 @@ function NewsCard({ post }: { post: UnifiedPost }) {
           rel="noopener noreferrer"
           className="block aspect-video w-full overflow-hidden"
         >
-          <img
+          <Image
             src={imageEmbed.url}
             alt=""
+            width={800}
+            height={450}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
+            unoptimized
           />
         </a>
       )}
@@ -150,7 +154,9 @@ function NewsCard({ post }: { post: UnifiedPost }) {
             </span>
           )}
           {sentiment && (
-            <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${sentimentColor(sentiment)}`}>
+            <span
+              className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${sentimentColor(sentiment)}`}
+            >
               {sentimentEmoji(sentiment)} {sentiment}
             </span>
           )}
@@ -166,9 +172,7 @@ function NewsCard({ post }: { post: UnifiedPost }) {
           {title}
         </a>
 
-        <p className="mb-3 text-xs leading-relaxed text-gray-500 line-clamp-2">
-          {desc}
-        </p>
+        <p className="mb-3 text-xs leading-relaxed text-gray-500 line-clamp-2">{desc}</p>
 
         <div className="mt-auto flex flex-wrap gap-1">
           {post.niches.slice(0, 4).map((niche) => (
@@ -227,34 +231,45 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
   const [newAvailable, setNewAvailable] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchNews = useCallback(async (showIndicator = false) => {
-    if (!showIndicator) setState('loading');
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', '50');
-      if (category) params.set('category', category);
-      if (query) params.set('q', query);
-      if (mustRead) params.set('mustRead', 'true');
+  const fetchNews = useCallback(
+    async (showIndicator = false) => {
+      if (!showIndicator) setState('loading');
+      try {
+        const params = new URLSearchParams();
+        params.set('limit', '50');
+        if (category) params.set('category', category);
+        if (query) params.set('q', query);
+        if (mustRead) params.set('mustRead', 'true');
 
-      const res = await fetch(`/api/feed/news?${params.toString()}`, { credentials: 'include' });
-      const data = (await res.json()) as { data?: UnifiedPost[]; meta?: NewsMeta; error?: string };
-      if (!res.ok) throw new Error(data.error || 'Failed to load news');
+        const res = await fetch(`/api/feed/news?${params.toString()}`, {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'cache-control': 'no-store' },
+        });
+        const data = (await res.json()) as {
+          data?: UnifiedPost[];
+          meta?: NewsMeta;
+          error?: string;
+        };
+        if (!res.ok) throw new Error(data.error || 'Failed to load news');
 
-      if (showIndicator && data.data && data.data.length > 0) {
-        setNewAvailable(true);
-        return;
+        if (showIndicator && data.data && data.data.length > 0) {
+          setNewAvailable(true);
+          return;
+        }
+
+        setPosts(data.data || []);
+        setMeta(data.meta || null);
+        setState('loaded');
+      } catch (err) {
+        if (!showIndicator) {
+          setError(err instanceof Error ? err.message : 'Failed to load news');
+          setState('error');
+        }
       }
-
-      setPosts(data.data || []);
-      setMeta(data.meta || null);
-      setState('loaded');
-    } catch (err) {
-      if (!showIndicator) {
-        setError(err instanceof Error ? err.message : 'Failed to load news');
-        setState('error');
-      }
-    }
-  }, [category, query, mustRead]);
+    },
+    [category, query, mustRead],
+  );
 
   const refreshNow = useCallback(() => {
     setNewAvailable(false);
@@ -278,17 +293,19 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
     setQuery(searchInput);
   };
 
-  const filteredPosts = sourceTab === 'all'
-    ? posts
-    : posts.filter((p) => {
-        const raw = getRaw(p);
-        const kind = (raw.kind ?? '').toLowerCase();
-        if (sourceTab === 'rmi') return kind === 'rss' || kind === 'internal' || kind === 'api';
-        if (sourceTab === 'rss') return kind === 'rss' && !raw.sourceName?.toLowerCase().includes('reddit');
-        if (sourceTab === 'reddit') return kind === 'reddit' || raw.sourceName?.toLowerCase().includes('reddit');
-        if (sourceTab === 'hackernews') return kind === 'hackernews';
-        return true;
-      });
+  const filteredPosts =
+    sourceTab === 'all'
+      ? posts
+      : posts.filter((p) => {
+          const raw = getRaw(p);
+          const kind = (raw.kind ?? '').toLowerCase();
+          if (sourceTab === 'rss')
+            return kind === 'rss' && !raw.sourceName?.toLowerCase().includes('reddit');
+          if (sourceTab === 'reddit')
+            return kind === 'reddit' || raw.sourceName?.toLowerCase().includes('reddit');
+          if (sourceTab === 'hackernews') return kind === 'hackernews';
+          return true;
+        });
 
   const sentiment = meta?.sentiment ?? undefined;
   const sourceCount = meta?.sourceCount ?? meta?.sources ?? 0;
@@ -306,7 +323,8 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               </span>
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Curated intelligence from {sourceCount || '200+'} sources across the RMI DataBus, RSS, Reddit, and Hacker News — ranked by quality, recency, and sentiment.
+              Curated intelligence from {sourceCount || '200+'} sources across RSS, Reddit, and
+              Hacker News — ranked by quality, recency, and sentiment.
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3 text-right">
@@ -508,7 +526,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               <li>• Deduplicated by canonical URL</li>
               <li>• Categorized by AI keyword extraction</li>
               <li>• Updated every 15 minutes</li>
-              <li>• Powered by RMI DataBus (200+ sources)</li>
+              <li>• Aggregated from RSS, Reddit, and Hacker News</li>
             </ul>
           </div>
         </aside>

@@ -1,14 +1,14 @@
 import {
   deleteFollow,
-  isAuthorMuted,
+  getMutedIdentities,
   isFollowing,
-  muteAuthor,
+  muteIdentity,
   saveFollow,
-  unmuteAuthor,
+  unmuteIdentity,
 } from '@degenfeed/storage';
-import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
+import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { useEffect, useState } from 'react';
-import { ProtocolBadge, getProtocolColor } from './ProtocolBadge';
+import { ProtocolBadge } from './ProtocolBadge';
 
 export type { UnifiedPost };
 
@@ -50,6 +50,99 @@ function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
+}
+
+function buildScoreTooltip(score: NonNullable<UnifiedPost['score']>): string {
+  const lines = [
+    `Score: ${score.total.toFixed(2)}`,
+    `  recency: ${score.recency.toFixed(2)}`,
+    `  engagement: ${score.engagement.toFixed(2)}`,
+    `  relevance: ${score.relevance.toFixed(2)}`,
+    `  quality: ${score.quality.toFixed(2)}`,
+    `  source: ${score.source.toFixed(2)}`,
+    `  velocity: ${score.velocity.toFixed(2)}`,
+  ];
+  if (score.reasons.length > 0) {
+    lines.push(`Signals: ${score.reasons.join(', ')}`);
+  }
+  return lines.join('\n');
+}
+
+function LinkPreview({ embed }: { embed: Embed }) {
+  const meta = embed.meta as { title?: string; description?: string; image?: string } | undefined;
+  const title = meta?.title;
+  const description = meta?.description;
+  const image = meta?.image;
+  const host = embed.url ? embed.url.replace(/^https?:\/\//, '').split('/')[0] : '';
+
+  return (
+    <a
+      href={embed.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group mt-2 block overflow-hidden rounded-xl border border-gray-700 bg-gray-800/30 transition-colors hover:border-degen-500/30 hover:bg-gray-800/50"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      {image && (
+        <div className="aspect-video w-full overflow-hidden">
+          <img
+            src={image}
+            alt={title || ''}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        </div>
+      )}
+      <div className="p-3">
+        {host && <p className="mb-1 text-[11px] text-gray-500 uppercase tracking-wide">{host}</p>}
+        {title && <p className="mb-1 text-sm font-semibold text-white line-clamp-1">{title}</p>}
+        {description && <p className="text-xs text-gray-400 line-clamp-2">{description}</p>}
+        {!title && !description && (
+          <p className="truncate text-xs text-degen-500">{embed.url.replace(/^https?:\/\//, '')}</p>
+        )}
+      </div>
+    </a>
+  );
+}
+
+function ImageGrid({ images }: { images: string[] }) {
+  if (images.length === 1) {
+    return (
+      <div className="mt-2 max-h-80 overflow-hidden rounded-xl">
+        <img src={images[0]} alt="" className="h-full w-full object-cover" loading="lazy" />
+      </div>
+    );
+  }
+  if (images.length === 2) {
+    return (
+      <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
+        {images.map((url) => (
+          <img
+            key={url}
+            src={url}
+            alt=""
+            className="aspect-square w-full object-cover"
+            loading="lazy"
+          />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
+      {images.slice(0, 4).map((url, idx) => (
+        <div key={url} className="relative aspect-square">
+          <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+          {idx === 3 && images.length > 4 && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm font-bold text-white">
+              +{images.length - 4}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 interface LocalState {
@@ -116,10 +209,20 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
   useEffect(() => {
     if (typeof window === 'undefined' || !post.author.id) return;
     let cancelled = false;
-    Promise.all([isFollowing(post.author.id), isAuthorMuted(post.author.id)])
-      .then(([f, m]) => { if (!cancelled) { setFollowing(f); setMuted(m); } })
+    Promise.all([
+      isFollowing('self', post.author.id),
+      getMutedIdentities('self').then((m) => m.some((x) => x.targetId === post.author.id)),
+    ])
+      .then(([f, m]) => {
+        if (!cancelled) {
+          setFollowing(f);
+          setMuted(m);
+        }
+      })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [post.author.id]);
 
   useEffect(() => {
@@ -154,9 +257,9 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
         await saveFollow({
           identityId: 'self',
           targetId: authorId,
-          protocol: post.protocol,
+          targetProtocol: post.protocol,
           targetHandle: post.author.handles[post.protocol] ?? post.author.displayName,
-          createdAt: Date.now(),
+          followedAt: Date.now(),
         });
       } else {
         await deleteFollow('self', authorId);
@@ -174,9 +277,9 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
     setMuted(next);
     try {
       if (next) {
-        await muteAuthor({ id: authorId, displayName: post.author.displayName, protocol: post.protocol });
+        await muteIdentity(authorId, post.author.displayName, 'self');
       } else {
-        await unmuteAuthor(authorId);
+        await unmuteIdentity(authorId, 'self');
       }
     } catch {
       setMuted(!next);
@@ -185,8 +288,7 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
 
   return (
     <article
-      className="card cursor-pointer border-l-2 transition-all hover:border-l-4 hover:bg-gray-800/30"
-      style={{ borderLeftColor: getProtocolColor(post.protocol) }}
+      className="cursor-pointer border-b border-white/5 px-4 py-3 transition-colors hover:bg-white/[0.03]"
       onClick={() => onClick?.(post.id)}
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && onClick) {
@@ -251,6 +353,17 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
             >
               {formatTime(post.createdAt)}
             </time>
+            {post.score && (
+              <>
+                <span>·</span>
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-1.5 py-0.5 text-[10px] font-medium text-degen-400"
+                  title={buildScoreTooltip(post.score)}
+                >
+                  ★ {Math.round(post.score.total * 10) / 10}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -290,32 +403,33 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
 
       {/* Embeds */}
       {post.embeds.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2">
-          {post.embeds.slice(0, 4).map((embed) =>
-            embed.kind === 'image' ? (
-              <img
-                key={`img-${embed.url}`}
-                src={embed.url}
-                alt=""
-                className="max-h-48 rounded-lg object-cover"
-                loading="lazy"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-              />
-            ) : embed.kind === 'link' ? (
-              <a
-                key={`link-${embed.url}`}
-                href={embed.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full rounded-lg border border-gray-700 bg-gray-800/50 p-2 text-xs text-degen-500 hover:text-degen-400 transition-colors truncate"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-              >
-                {embed.url.replace(/^https?:\/\//, '').slice(0, 60)}
-              </a>
-            ) : null,
-          )}
+        <div className="mb-3">
+          {(() => {
+            const images = post.embeds.filter((e) => e.kind === 'image').map((e) => e.url);
+            const links = post.embeds.filter((e) => e.kind === 'link');
+            const videos = post.embeds.filter((e) => e.kind === 'video');
+            return (
+              <>
+                {images.length > 0 && <ImageGrid images={images} />}
+                {links.map((embed) => (
+                  <LinkPreview key={`link-${embed.url}`} embed={embed} />
+                ))}
+                {videos.map((embed) => (
+                  <a
+                    key={`video-${embed.url}`}
+                    href={embed.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 block w-full rounded-lg border border-gray-700 bg-gray-800/50 p-3 text-xs text-degen-500 hover:text-degen-400 transition-colors truncate"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    ▶ {embed.url.replace(/^https?:\/\//, '').slice(0, 60)}
+                  </a>
+                ))}
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -376,7 +490,7 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
           }}
           aria-label={localState.engagement.viewerBookmarked ? 'Bookmarked' : 'Bookmark'}
         >
-          {localState.engagement.viewerBookmarked ? '🔖' : '🔖'}
+          {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
         </button>
         <button
           type="button"

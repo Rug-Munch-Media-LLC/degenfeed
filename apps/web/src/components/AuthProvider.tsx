@@ -1,19 +1,20 @@
 'use client';
 
 import { buildIdentityRecord } from '@degenfeed/auth';
-import type { StoredIdentity } from '@degenfeed/storage';
 import {
+  clearAllSessions,
   deleteIdentity,
   getAllIdentities,
   getPrimaryIdentity,
+  type StoredIdentity,
   saveIdentity,
   setPrimaryIdentity as setPrimaryIdentityInDb,
 } from '@degenfeed/storage';
 import type { EngagementAction } from '@degenfeed/types';
 import { ComposeModal, SignInModal } from '@degenfeed/ui';
 import {
-  type ReactNode,
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -23,6 +24,8 @@ import {
 import { useWeb3 } from '../components/Web3Provider';
 import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
+import { publishNoteToNostr } from '../lib/nostr';
+import { useToast } from './Toast';
 
 export interface AuthContextValue {
   signedInProtocols: Record<string, boolean>;
@@ -32,8 +35,10 @@ export interface AuthContextValue {
   linkedIdentities: StoredIdentity[];
   isWalletOnly: boolean;
   linkGtsUrl?: string | null;
+  nostrPublicId?: string;
   openSignIn: () => void;
   openCompose: () => void;
+  signOut: () => Promise<void>;
   publish: (
     text: string,
     targets: string[],
@@ -68,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [tokens, setTokens] = useState<Record<string, string>>({});
   const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
   const [linkGtsUrl, setLinkGtsUrl] = useState<string | null>(null);
+  const [nostrPublicId, setNostrPublicId] = useState<string | undefined>(undefined);
   const [ready, setReady] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
@@ -75,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { account: wagmiAddress, isConnected } = useWeb3();
   const { signInWithEthereum, signingIn: walletSigningIn } = useWalletSignIn();
   const { signInWithSolana, signingIn: solanaSigningIn } = useSolanaSignIn();
+  const { showToast } = useToast();
 
   const refresh = useCallback(async () => {
     const all = await getAllIdentities();
@@ -95,6 +102,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const wallet = all.find((i) => i.protocol === 'ethereum' || i.protocol === 'solana');
     setWalletAddress(wallet?.publicId ?? (isConnected ? (wagmiAddress ?? undefined) : undefined));
+
+    const nostrId = all.find((i) => i.protocol === 'nostr');
+    setNostrPublicId(nostrId?.publicId);
   }, [isConnected, wagmiAddress]);
 
   useEffect(() => {
@@ -173,9 +183,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // Backwards compat: if credentials is a string, treat as token
-        const creds = typeof credentials === 'string'
-          ? { token: credentials }
-          : credentials ?? {};
+        const creds =
+          typeof credentials === 'string' ? { token: credentials } : (credentials ?? {});
         const token = creds.token as string | undefined;
 
         switch (protocol) {
@@ -191,19 +200,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           case 'nostr': {
             const { signInWithNostrNsec } = await import('@degenfeed/auth');
             if (creds.method === 'extension') {
-              const win = window as unknown as { nostr?: { getPublicKey: () => Promise<string>; signEvent: (e: { kind: number; content: string; tags: string[][]; created_at: number }) => Promise<{ sig: string }> } };
+              const win = window as unknown as {
+                nostr?: {
+                  getPublicKey: () => Promise<string>;
+                  signEvent: (e: {
+                    kind: number;
+                    content: string;
+                    tags: string[][];
+                    created_at: number;
+                  }) => Promise<{ sig: string }>;
+                };
+              };
               if (!win.nostr) throw new Error('NIP-07 extension not detected');
               const pubkey = await win.nostr.getPublicKey();
-              await saveIdentity({
-                id: `nostr:${pubkey}`,
+              const record = await buildIdentityRecord({
                 protocol: 'nostr',
                 publicId: pubkey,
                 handle: pubkey.slice(0, 12),
                 displayName: pubkey.slice(0, 12),
-                secret: '',
+                secret: null,
                 passphrase: 'auto-unlock',
                 isPrimary: false,
               });
+              await saveIdentity(record);
               await refresh();
               setShowSignIn(false);
               return;
@@ -264,10 +283,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setShowSignIn(false);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Sign-in failed';
-        alert(`Sign-in failed: ${message}`);
+        showToast('error', `Sign-in failed: ${message}`);
       }
     },
-    [signInWithEthereum, refresh],
+    [signInWithEthereum, refresh, signInWithSolana, showToast],
   );
 
   const handlePublish = useCallback(
@@ -341,6 +360,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [identities],
   );
 
+  const handleSignOut = useCallback(async () => {
+    try {
+      await fetch('/api/auth/signout', { method: 'POST', credentials: 'include' });
+    } catch {
+      /* ignore network errors — still clear local state */
+    }
+    try {
+      await clearAllSessions();
+      for (const identity of identities) {
+        await deleteIdentity(identity.id);
+      }
+    } catch {
+      /* ignore */
+    }
+    setIdentities([]);
+    setPrimaryIdentity(undefined);
+    setSignedInProtocols({});
+    setTokens({});
+    setWalletAddress(undefined);
+    setLinkGtsUrl(null);
+    showToast('success', 'Signed out');
+  }, [identities, showToast]);
+
   const handleSetPrimary = useCallback(
     async (id: string) => {
       await setPrimaryIdentityInDb(id);
@@ -382,6 +424,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         linkGtsUrl,
         openSignIn: () => setShowSignIn(true),
         openCompose: () => setShowCompose(true),
+        signOut: handleSignOut,
+        nostrPublicId,
         publish: handlePublish,
         engage: handleEngage,
         ready,
@@ -404,6 +448,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         onClose={() => setShowCompose(false)}
         signedInProtocols={signedInProtocols}
         onPublish={handlePublish}
+        onRequestSignIn={() => {
+          setShowCompose(false);
+          setShowSignIn(true);
+        }}
+        primaryIdentity={
+          primaryIdentity
+            ? {
+                displayName: primaryIdentity.displayName,
+                handle: primaryIdentity.handle,
+                avatarUrl: primaryIdentity.avatarUrl,
+              }
+            : undefined
+        }
+        nostrBridgePublicId={nostrPublicId}
+        onNostrBridge={async (text) => {
+          if (!nostrPublicId) return;
+          await publishNoteToNostr({ text, publicId: nostrPublicId });
+        }}
       />
     </AuthContext.Provider>
   );

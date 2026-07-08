@@ -9,7 +9,6 @@
  *   GET /api/search/identity?q=handle&limit=5
  */
 
-import { rmiUrl } from '@degenfeed/utils';
 import {
   deduplicatePosts,
   enrichPostNiches,
@@ -27,7 +26,6 @@ import { type Env, jsonResponse } from '../index';
 
 const DEFAULT_PROTOCOLS: Protocol[] = ['rss', 'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
 
-
 export async function handleSearch(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const q = url.searchParams.get('q')?.toLowerCase().trim() ?? '';
@@ -35,14 +33,18 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
   const limit = Math.min(Number(url.searchParams.get('limit')) || 25, 100);
   const protocolsParam = url.searchParams.get('protocols') ?? '';
   const protocols = protocolsParam
-    ? protocolsParam.split(',').filter((p): p is Protocol => DEFAULT_PROTOCOLS.includes(p as Protocol))
+    ? protocolsParam
+        .split(',')
+        .filter((p): p is Protocol => DEFAULT_PROTOCOLS.includes(p as Protocol))
     : DEFAULT_PROTOCOLS;
 
   const cacheKey = `search:v1:${q}:${protocols.join(',')}:${limit}`;
   try {
     const cached = await env.CACHE?.get(cacheKey);
     if (cached) return jsonResponse(JSON.parse(cached));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   const all: UnifiedPost[] = [];
   const timeoutMs = 2000;
@@ -51,31 +53,50 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
   const hardDeadline = 5000;
 
   const providers: { protocol: Protocol; fetch: () => Promise<UnifiedPost[]> }[] = [
-    { protocol: 'rss', fetch: async () => {
-      const rss = new RssProvider({ feeds: ['https://cointelegraph.com/rss', 'https://decrypt.co/feed', 'https://bitcoinmagazine.com/.rss/full/', 'https://www.theblock.co/rss'] });
-      const r = await rss.fetchFeed({ timeoutMs });
-      return r.posts;
-    } },
-    { protocol: 'nostr', fetch: async () => {
-      const p = new NostrProvider({ relays: (env.RELAY_URLS ?? '').split(',').filter(Boolean) });
-      const r = await p.fetchFeed({ timeoutMs });
-      return r.posts;
-    } },
-    { protocol: 'bluesky', fetch: async () => {
-      const p = new BlueskyProvider({ baseUrl: env.BSKY_PUBLIC_URL });
-      const r = await p.fetchFeed({ timeoutMs });
-      return r.posts;
-    } },
-    { protocol: 'mastodon', fetch: async () => {
-      const p = new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL });
-      const r = await p.fetchFeed({ timeoutMs });
-      return r.posts;
-    } },
+    {
+      protocol: 'rss',
+      fetch: async () => {
+        const rss = new RssProvider({
+          feeds: [
+            'https://cointelegraph.com/rss',
+            'https://decrypt.co/feed',
+            'https://bitcoinmagazine.com/.rss/full/',
+            'https://www.theblock.co/rss',
+          ],
+        });
+        const r = await rss.fetchFeed({ timeoutMs });
+        return r.posts;
+      },
+    },
+    {
+      protocol: 'nostr',
+      fetch: async () => {
+        const p = new NostrProvider({ relays: (env.RELAY_URLS ?? '').split(',').filter(Boolean) });
+        const r = await p.fetchFeed({ timeoutMs });
+        return r.posts;
+      },
+    },
+    {
+      protocol: 'bluesky',
+      fetch: async () => {
+        const p = new BlueskyProvider({ baseUrl: env.BSKY_PUBLIC_URL });
+        const r = await p.fetchFeed({ timeoutMs });
+        return r.posts;
+      },
+    },
+    {
+      protocol: 'mastodon',
+      fetch: async () => {
+        const p = new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL });
+        const r = await p.fetchFeed({ timeoutMs });
+        return r.posts;
+      },
+    },
   ];
 
   const selected = providers.filter((p) => protocols.includes(p.protocol));
   // Race all providers against a hard deadline
-  const deadlinePromise = new Promise<never>((resolve) => {
+  const deadlinePromise = new Promise<void>((resolve) => {
     setTimeout(() => resolve(), hardDeadline);
   });
   const results = await Promise.race([
@@ -90,7 +111,8 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
     .filter((p) => !isSpamPost(p))
     .map(enrichPostNiches)
     .filter((p) => {
-      const text = `${p.text} ${p.author.displayName} ${p.author.bio} ${p.niches.join(' ')}`.toLowerCase();
+      const text =
+        `${p.text} ${p.author.displayName} ${p.author.bio} ${p.niches.join(' ')}`.toLowerCase();
       return text.includes(q);
     });
 
@@ -115,7 +137,9 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
 
   try {
     await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 120 });
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   return jsonResponse(response);
 }
@@ -124,7 +148,6 @@ export async function handleSearchIdentity(request: Request, _env: Env): Promise
   const url = new URL(request.url);
   const q = url.searchParams.get('q')?.toLowerCase().trim() ?? '';
   if (!q || q.length < 2) return jsonResponse({ error: 'Query too short' }, 400);
-  const limit = Math.min(Number(url.searchParams.get('limit')) || 5, 20);
 
   // Resolve via the identity package
   try {
@@ -136,7 +159,9 @@ export async function handleSearchIdentity(request: Request, _env: Env): Promise
         meta: { query: q, total: 1 },
       });
     }
-  } catch { /* identity resolution unavailable */ }
+  } catch {
+    /* identity resolution unavailable */
+  }
 
   return jsonResponse({
     data: [],

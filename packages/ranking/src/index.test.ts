@@ -88,8 +88,8 @@ describe('@degenfeed/ranking', () => {
       viewer: null,
       recentAuthors: new Map(),
       sourceQuality: new Map(),
-      viewerNiches: new Set(['bitcoin']),
-      followed: new Set(),
+      viewerNiches: new Set<string>(['bitcoin']),
+      followed: new Set<string>(),
       now,
     };
     const bd = scoreBreakdownV2(post, ctx);
@@ -144,8 +144,8 @@ describe('@degenfeed/ranking', () => {
       viewer: null,
       recentAuthors: new Map(),
       sourceQuality: new Map(),
-      viewerNiches: new Set(),
-      followed: new Set(),
+      viewerNiches: new Set<string>(),
+      followed: new Set<string>(),
       now: Date.now(),
     };
     const ranked = rankDiverse(posts, ctx, { maxPerAuthor: 2 });

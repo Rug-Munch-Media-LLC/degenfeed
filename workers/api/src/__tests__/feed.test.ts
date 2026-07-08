@@ -127,6 +127,60 @@ describe('handleHomeFeed', () => {
     const body = (await res.json()) as { data: unknown[]; meta: Record<string, unknown> };
     expect(body.data.length).toBe(1);
   });
+
+  it('should attach score breakdown to each post', async () => {
+    mockFetchFeed.mockResolvedValue({
+      posts: [
+        {
+          id: 'nostr:test',
+          protocol: 'nostr',
+          author: {
+            id: 'nostr:pk',
+            primary: { protocol: 'nostr', id: 'pk' },
+            handles: {
+              nostr: 'pk',
+              farcaster: null,
+              lens: null,
+              bluesky: null,
+              threads: null,
+              rss: null,
+              mastodon: null,
+            },
+            displayName: 'pk',
+            bio: '',
+            avatarUrl: '',
+            verified: [],
+            followerCount: 0,
+            followingCount: 0,
+            links: [],
+            keys: {},
+          },
+          text: 'fresh post about bitcoin and ethereum',
+          embeds: [],
+          createdAt: Date.now(),
+          metrics: { likes: 1, reposts: 0, replies: 0, quotes: 0 },
+          engagement: {
+            viewerLiked: false,
+            viewerReposted: false,
+            viewerBookmarked: false,
+            raw: { likes: 1, reposts: 0, replies: 0, quotes: 0 },
+          },
+          raw: null,
+          niches: [],
+        },
+      ],
+    });
+    const req = new Request('http://localhost/api/feed/home?protocols=nostr');
+    const res = await handleHomeFeed(req, mockEnv);
+    const body = (await res.json()) as {
+      data: Array<{ score?: { total: number; recency: number; reasons: string[] } }>;
+    };
+    expect(body.data.length).toBe(1);
+    const score = body.data[0]?.score;
+    expect(score).toBeDefined();
+    expect(typeof score?.total).toBe('number');
+    expect(typeof score?.recency).toBe('number');
+  });
 });
 
 describe('handleTrendingFeed', () => {

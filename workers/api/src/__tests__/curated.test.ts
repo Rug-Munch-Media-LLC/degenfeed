@@ -21,10 +21,49 @@ vi.mock('@degenfeed/bluesky-sdk', () => ({
   })),
 }));
 
-vi.mock('@degenfeed/mastodon-sdk', () => ({
-  GtSClient: vi.fn().mockImplementation(() => ({
-    getPublicTimeline: vi.fn().mockResolvedValue([]),
-  })),
+vi.mock('@degenfeed/rss-sdk', () => ({
+  GenericRssSource: {
+    fetch: vi.fn().mockResolvedValue({
+      source: 'generic',
+      url: 'https://example.com/feed',
+      feed: {
+        title: 'Mock Feed',
+        link: 'https://example.com',
+        items: [
+          {
+            title: 'Mock Post',
+            contentSnippet: 'This is a mock newsletter post.',
+            link: 'https://example.com/post',
+            pubDate: new Date().toISOString(),
+          },
+        ],
+      },
+    }),
+  },
+  feedToUnifiedPosts: vi.fn().mockReturnValue([
+    {
+      id: 'rss:generic:mock',
+      protocol: 'rss',
+      author: {
+        id: 'rss:generic:Mock Feed',
+        primary: { protocol: 'rss', id: 'rss:generic:Mock Feed' },
+        handles: {},
+        displayName: 'Mock Feed',
+      },
+      text: 'This is a mock newsletter post.',
+      html: '<p>This is a mock newsletter post.</p>',
+      embeds: [],
+      createdAt: Date.now(),
+      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      engagement: {
+        viewerLiked: false,
+        viewerReposted: false,
+        viewerBookmarked: false,
+        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      },
+      niches: [],
+    },
+  ]),
 }));
 
 import type { Env } from '../index';

@@ -157,6 +157,9 @@ const NEWSLETTER_SOURCES = [
   { name: 'Ethereum Foundation', url: 'https://blog.ethereum.org/feed.xml', category: 'headlines' },
 ];
 
+const NEWSLETTER_MAX_SOURCES = 15;
+const NEWSLETTER_SOURCE_TIMEOUT_MS = 5000;
+
 export async function handleNewsletterFeed(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
   const limit = Number(url.searchParams.get('limit')) || 25;
@@ -175,11 +178,12 @@ export async function handleNewsletterFeed(request: Request, _env: Env): Promise
     });
   }
 
-  const _results = await Promise.allSettled(
-    sources.slice(0, 15).map(async (src) => {
+  const { GenericRssSource, feedToUnifiedPosts } = await import('@degenfeed/rss-sdk');
+  await Promise.allSettled(
+    sources.slice(0, NEWSLETTER_MAX_SOURCES).map(async (src) => {
       try {
-        const { GenericRssSource, feedToUnifiedPosts } = await import('@degenfeed/rss-sdk');
-        const s = await GenericRssSource.fetch(src.url);
+        const signal = AbortSignal.timeout(NEWSLETTER_SOURCE_TIMEOUT_MS);
+        const s = await GenericRssSource.fetch(src.url, { signal });
         const posts = feedToUnifiedPosts(s);
         allPosts.push(...posts);
       } catch {}

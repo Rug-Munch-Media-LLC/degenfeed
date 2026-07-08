@@ -3,24 +3,68 @@ main = "src/index.ts"
 compatibility_date = "2026-07-07"
 compatibility_flags = ["nodejs_compat"]
 
+# KV namespaces
+# Create once with:
+#   wrangler kv:namespace create CACHE
+#   wrangler kv:namespace create CACHE --preview
+#   wrangler kv:namespace create SUBSCRIPTIONS
+#   wrangler kv:namespace create SUBSCRIPTIONS --preview
+# Then paste the returned ids below (and update [env.preview] if you use --env).
+#
+# Production ids must match `[[kv_namespaces]]` ids. Preview ids go under [env.preview].
+[[kv_namespaces]]
+binding = "CACHE"
+id = "7a27990414c444efa9116e843ee03e19"
+preview_id = "49c1ba7cfab84768886507b3a3778fc1"
+
+[[kv_namespaces]]
+binding = "SUBSCRIPTIONS"
+id = "f7051e909e5b46cfbbea872741955828"
+preview_id = "6c8cec9665dd44fda8c869ce1e675ae8"
+
+# Routes — main app + api on degenfeed.xyz domain
 routes = [
   { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
   { pattern = "app.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
   { pattern = "degenfeed.xyz/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
 ]
 
-# GTS_CLIENT_SECRET is a secret. Set it via:
+# Secrets — set with:
+#   wrangler secret put AUTH_SECRET
 #   wrangler secret put GTS_CLIENT_SECRET
-# Do not add it to [vars].
+# Generate AUTH_SECRET with:  openssl rand -hex 32
+# GTS_CLIENT_SECRET is from your GotoSocial app config.
+# Secrets are NEVER committed to git; only set via wrangler.
+#
+# [env.preview] secrets can be different (use --env preview on wrangler).
+
 [vars]
-GTS_CLIENT_ID = "01X3AAWH39P71TXZVKMEGAKMVC"
+# Non-secret config — safe to commit
+GTS_CLIENT_ID = "01X3AAWH39P71TXZVKMEGAKMVC" # gitleaks:allow
 GTS_INSTANCE_URL = "https://social.degenfeed.xyz"
 GTS_API_BASE = "https://social.degenfeed.xyz"
 GTS_REDIRECT_URI = "https://app.degenfeed.xyz/auth/callback"
-RELAY_URLS = "wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net,wss://relay.nostr.band,wss://nostr.wine"
+RELAY_URLS = "wss://relay.damus.io,wss://relay.primal.net"
 FARCASTER_HUB_URL = "https://hub.farcaster.standardcrypto.vc:2281"
 LENS_API_URL = "https://api.lens.xyz/graphql"
 BSKY_PUBLIC_URL = "https://public.api.bsky.app"
 THREADS_PDS_URL = "https://public.threads.net"
+# Comma-separated list of allowed CORS origins for state-changing requests.
+# Add your own preview hosts here.
+ALLOWED_ORIGINS = "https://degenfeed.xyz,https://app.degenfeed.xyz,https://social.degenfeed.xyz,http://localhost:3000"
 RATE_WINDOW_MS = "5000"
-RATE_MAX_REQ = "20"
+RATE_MAX_REQ = "60"
+RATE_LIMIT_DISABLED = "false"
+# Optional: analytics / monitoring
+SENTRY_DSN = ""
+
+# Per-environment overrides. Preview deploys (PR builds) use --env preview.
+[env.preview]
+name = "degenfeed-api-preview"
+routes = [
+  { pattern = "preview.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
+  { pattern = "preview.degenfeed.xyz/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
+]
+[env.preview.vars]
+ALLOWED_ORIGINS = "https://preview.degenfeed.xyz,https://app.preview.degenfeed.xyz,http://localhost:3000"
+RATE_MAX_REQ = "600"

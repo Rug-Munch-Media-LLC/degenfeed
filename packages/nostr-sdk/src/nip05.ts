@@ -51,7 +51,7 @@ export async function resolveNip05(
       relays?: Record<string, string[]>;
     };
 
-    if (!json.names || !json.names[name]) return null;
+    if (!json.names?.[name]) return null;
 
     const pubkey = json.names[name];
     const relays = json.relays?.[pubkey];

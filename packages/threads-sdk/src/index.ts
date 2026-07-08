@@ -45,4 +45,4 @@ export class ThreadsClient {
   }
 }
 
-export { BskyClient, BSKY_PUBLIC_URL, BSKY_SOCIAL_URL };
+export { BSKY_PUBLIC_URL, BSKY_SOCIAL_URL, BskyClient };

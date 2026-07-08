@@ -18,7 +18,6 @@ import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from 
 import { handleBlinkTip } from './routes/blink';
 import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import { handleEngage } from './routes/engage';
-import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import {
   handleCategoryFeed,
   handleFeedHealth,
@@ -30,6 +29,7 @@ import {
 import { handleFundingFeed } from './routes/funding';
 import { handleRelaysHealth } from './routes/health';
 import { handleResolveIdentity } from './routes/identity';
+import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import { handleNewsFeed } from './routes/news';
 import {
   handleNewsletterDigest,
@@ -37,6 +37,8 @@ import {
   handleNewsletterSubscribe,
 } from './routes/newsletter';
 import { handleNotifications } from './routes/notifications';
+import { handlePostById } from './routes/post';
+import { handlePreferences } from './routes/preferences';
 import { handlePrices } from './routes/prices';
 import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import { handlePublish } from './routes/publish';
@@ -51,7 +53,6 @@ import {
 import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
 import { handleSearch, handleSearchIdentity } from './routes/search';
-import { handlePostById } from './routes/post';
 import {
   handleLightningInvoice,
   handleTipCreate,
@@ -64,7 +65,7 @@ import {
 } from './routes/tip';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleX402Paywall, handleX402Verify } from './routes/x402';
-import { handleSessionVerify, requireSession } from './session';
+import { handleSessionSignOut, handleSessionVerify, requireSession } from './session';
 
 // ─── Environment variables ───────────────────────────────────────────
 
@@ -85,11 +86,17 @@ export interface Env {
   THREADS_PDS_URL?: string;
   RATE_WINDOW_MS?: string;
   RATE_MAX_REQ?: string;
+  /** When "true", disables in-process rate limiting (use only for local dev). */
+  RATE_LIMIT_DISABLED?: string;
+  /** Comma-separated list of allowed CORS origins for state-changing requests. */
+  ALLOWED_ORIGINS?: string;
   SOLANA_RPC_URL?: string;
   /** Base URL of the rmi-backend (default: http://127.0.0.1:8000) */
   RMI_BACKEND_URL?: string;
   /** Optional bearer for rmi-backend if gated */
   RMI_API_KEY?: string;
+  /** Optional Sentry DSN for error reporting */
+  SENTRY_DSN?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
@@ -112,30 +119,65 @@ export const THREADS_PUBLIC = 'https://public.threads.net';
 
 // ─── Rate limiting ───────────────────────────────────────────────────
 
-const requestLog = new Map<string, { count: number; resetAt: number }>();
 const DEFAULT_RATE_WINDOW = 5000;
 const DEFAULT_RATE_MAX = 20;
 
-export function rateLimit(
+interface RateLimitResult {
+  allowed: boolean;
+  retryAfter: number;
+}
+
+/**
+ * KV-backed fixed-window rate limiter.
+ *
+ * Cloudflare Workers can spin up many isolates per zone, so any in-memory
+ * counter is unreliable. We use the CACHE KV namespace with a per-bucket
+ * TTL equal to the window. Each bucket key = `${ip}:${path}:${windowMs/1000}`,
+ * storing a JSON `{ count, resetAt }`. The bucket auto-expires after one
+ * window so the counter resets.
+ *
+ * If `CACHE` is not bound (local dev), the function falls back to a
+ * permissive "always allow" result and logs once — never blocks real users.
+ */
+export async function rateLimit(
+  env: Env,
   ip: string,
+  path: string,
   maxReq: number = DEFAULT_RATE_MAX,
   windowMs: number = DEFAULT_RATE_WINDOW,
-): { allowed: boolean; retryAfter: number } {
-  const now = Date.now();
-  // Inline cleanup: purge expired entries
-  if (requestLog.size > 10000) {
-    for (const [key, entry] of requestLog) {
-      if (now > entry.resetAt) requestLog.delete(key);
-    }
-  }
-  const entry = requestLog.get(ip);
-  if (!entry || now > entry.resetAt) {
-    requestLog.set(ip, { count: 1, resetAt: now + windowMs });
+): Promise<RateLimitResult> {
+  if (env.RATE_LIMIT_DISABLED === 'true') {
     return { allowed: true, retryAfter: 0 };
   }
-  entry.count++;
-  if (entry.count > maxReq) {
-    return { allowed: false, retryAfter: entry.resetAt - now };
+  if (!env.CACHE) {
+    // No KV bound (local dev). Skip throttling so the dev experience works.
+    return { allowed: true, retryAfter: 0 };
+  }
+  const bucketSec = Math.max(1, Math.ceil(windowMs / 1000));
+  const key = `rl:${ip}:${path}:${bucketSec}`;
+  const now = Date.now();
+  const resetAt = now + windowMs;
+
+  let count = 1;
+  try {
+    const raw = await env.CACHE.get(key);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { count: number; resetAt: number };
+      if (parsed.resetAt > now) {
+        count = parsed.count + 1;
+      }
+    }
+    // TTL covers the window so the key expires automatically.
+    await env.CACHE.put(key, JSON.stringify({ count, resetAt }), {
+      expirationTtl: bucketSec,
+    });
+  } catch {
+    // KV hiccup — fail open so a single KV outage doesn't break the API.
+    return { allowed: true, retryAfter: 0 };
+  }
+
+  if (count > maxReq) {
+    return { allowed: false, retryAfter: Math.max(0, resetAt - now) };
   }
   return { allowed: true, retryAfter: 0 };
 }
@@ -148,7 +190,7 @@ export const GTS_AUTH_CONFIG = {
   clientId: '', // Must be set via GTS_CLIENT_ID env var
   clientSecret: '', // Must be set via GTS_CLIENT_SECRET env var
   instanceUrl: 'https://social.degenfeed.xyz',
-  apiBase: 'http://127.0.0.1:8082',
+  apiBase: 'https://social.degenfeed.xyz',
   redirectUri: 'https://degenfeed.xyz/auth/callback',
   scopes: 'read write follow push',
 };
@@ -176,10 +218,21 @@ export function jsonResponse(data: unknown, status = 200): Response {
   });
 }
 
+export function noCacheJsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'content-type': 'application/json',
+      'cache-control': 'no-store, must-revalidate',
+    },
+  });
+}
+
 // ─── CORS / CSRF helpers ─────────────────────────────────────────────
 
 const CSRF_EXEMPT_PATHS = [
-  '/api/auth/gotosocial/callback',
+  // /api/auth/gotosocial/callback is now protected by a signed state nonce
+  // (see routes/auth.ts) AND a normal origin check, so it's no longer exempt.
   '/api/tip/frame/',
   '/api/bridge/rss-to-nostr',
   '/api/blink/tip',
@@ -194,14 +247,14 @@ function isCsrfExempt(path: string): boolean {
   return CSRF_EXEMPT_PATHS.some((prefix) => path.startsWith(prefix));
 }
 
-function validateOrigin(request: Request, path: string): boolean {
+function validateOrigin(request: Request, path: string, env: Env): boolean {
   if (isCsrfExempt(path)) return true;
   const origin = request.headers.get('origin');
-  if (origin) return isAllowedOrigin(origin);
+  if (origin) return isAllowedOrigin(origin, env.ALLOWED_ORIGINS);
   const referer = request.headers.get('referer');
   if (referer) {
     const refererOrigin = parseOriginHeader(referer);
-    return refererOrigin ? isAllowedOrigin(refererOrigin) : false;
+    return refererOrigin ? isAllowedOrigin(refererOrigin, env.ALLOWED_ORIGINS) : false;
   }
   return false;
 }
@@ -212,7 +265,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
-    const origin = getAllowedOrigin(request);
+    const origin = getAllowedOrigin(request, env.ALLOWED_ORIGINS);
 
     // CORS preflight
     if (request.method === 'OPTIONS') {
@@ -226,7 +279,7 @@ export default {
       'unknown';
     const maxReq = Number(env.RATE_MAX_REQ) || DEFAULT_RATE_MAX;
     const windowMs = Number(env.RATE_WINDOW_MS) || DEFAULT_RATE_WINDOW;
-    const rl = rateLimit(ip, maxReq, windowMs);
+    const rl = await rateLimit(env, ip, path, maxReq, windowMs);
     if (!rl.allowed) {
       const response = new Response(
         JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }),
@@ -242,7 +295,7 @@ export default {
     }
 
     // CSRF origin check for state-changing requests
-    if (isStateChanging(request.method) && !validateOrigin(request, path)) {
+    if (isStateChanging(request.method) && !validateOrigin(request, path, env)) {
       return applyCors(jsonResponse({ error: 'Forbidden' }, 403), origin);
     }
 
@@ -286,20 +339,18 @@ export default {
       } else if (path.startsWith('/api/feed/category/')) {
         const category = path.replace('/api/feed/category/', '');
         response = await handleCategoryFeed(request, env, category);
-      } else if (path === '/api/feed/activitypub') {
-        response = await handleActivityPubFeed(request, env);
-      } else if (path === '/api/feed/threads') {
-        response = await handleThreadsFeed(request, env);
-      } else if (path === '/api/feed/news') {
-        response = await handleNewsFeed(request, env);
-      } else if (path.startsWith('/api/feed/post/')) {
-        const postId = path.replace('/api/feed/post/', '');
-        response = await handlePostById(request, env, postId);
       } else if (path === '/api/bridge/rss-to-nostr') {
-        const { handleRssToNostrBridge } = await import('./routes/publish');
-        response = await handleRssToNostrBridge(request, env);
+        const session = await requireSession(request, env);
+        if (session instanceof Response) {
+          response = session;
+        } else {
+          const { handleRssToNostrBridge } = await import('./routes/publish');
+          response = await handleRssToNostrBridge(request, env);
+        }
       } else if (path === '/api/feed/rss') {
         response = await handleRssFeed(request, env);
+      } else if (path === '/api/auth/signout') {
+        response = await handleSessionSignOut(request, env);
       } else if (path === '/api/auth/gotosocial/authorize') {
         response = await handleGtSAuthorize(request, env);
       } else if (path === '/api/auth/gotosocial/callback') {
@@ -374,6 +425,8 @@ export default {
         response = await handleBillingVerify(request, env);
       } else if (path === '/api/billing/status') {
         response = await handleBillingStatus(request, env);
+      } else if (path === '/api/preferences') {
+        response = await handlePreferences(request, env);
       } else if (path === '/api/x402/paywall') {
         response = await handleX402Paywall(request, env);
       } else if (path === '/api/x402/verify') {

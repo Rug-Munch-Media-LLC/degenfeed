@@ -11,7 +11,7 @@
  * post crypto/web3 content.
  */
 
-import { buildUnifiedPost, detectNiches, enrichPostNiches } from '@degenfeed/feed-core';
+import { detectNiches, enrichPostNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
@@ -35,9 +35,7 @@ export const FALLBACK_HUB_URLS = [
 
 export const DEFAULT_FARCASTER_PUBLIC_API = 'https://api.farcaster.xyz';
 
-export const CURATED_FARCASTER_FIDS = [
-  3, 2, 1, 99, 100, 215, 320, 602, 1234, 4242,
-];
+export const CURATED_FARCASTER_FIDS = [3, 2, 1, 99, 100, 215, 320, 602, 1234, 4242];
 
 export const CURATED_FARCASTER_USERNAMES = [
   'vitalik.eth',
@@ -85,8 +83,16 @@ export const CURATED_FARCASTER_USERNAMES = [
 ];
 
 export const CRYPTO_SEARCH_TERMS = [
-  'bitcoin', 'ethereum', 'crypto', 'defi', 'web3',
-  'solana', 'nft', 'blockchain', 'btc', 'eth',
+  'bitcoin',
+  'ethereum',
+  'crypto',
+  'defi',
+  'web3',
+  'solana',
+  'nft',
+  'blockchain',
+  'btc',
+  'eth',
 ];
 
 interface HubCastMessage {
@@ -153,8 +159,13 @@ function authorFromFid(fid: number, userData: FarcasterUserData | null): Unified
     id: `farcaster:${fid}`,
     primary: { protocol: 'farcaster', id: String(fid) },
     handles: {
-      nostr: null, farcaster: handle, lens: null, bluesky: null,
-      threads: null, rss: null, mastodon: null,
+      nostr: null,
+      farcaster: handle,
+      lens: null,
+      bluesky: null,
+      threads: null,
+      rss: null,
+      mastodon: null,
     },
     displayName: userData?.displayName || userData?.username || `FID ${fid}`,
     bio: '',
@@ -181,11 +192,13 @@ function castToUnifiedPost(
     embeds: (body.embeds ?? [])
       .filter((e): e is { url: string } => typeof e.url === 'string')
       .map((e) => ({ kind: 'link' as const, url: e.url })),
-    parentNativeId: body.parentCastId?.hash,
+    parentId: body.parentCastId?.hash,
     createdAt: hubTimestampToMs(msg.data.timestamp),
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     raw: msg,
@@ -203,7 +216,11 @@ function publicApiCastToUnifiedPost(c: PublicApiCast): UnifiedPost | null {
     handles: {
       nostr: null,
       farcaster: c.author?.username ?? null,
-      lens: null, bluesky: null, threads: null, rss: null, mastodon: null,
+      lens: null,
+      bluesky: null,
+      threads: null,
+      rss: null,
+      mastodon: null,
     },
     displayName: c.author?.displayName || c.author?.username || `FID ${fid}`,
     bio: '',
@@ -226,7 +243,9 @@ function publicApiCastToUnifiedPost(c: PublicApiCast): UnifiedPost | null {
     createdAt: c.timestamp ? c.timestamp * 1000 : Date.now(),
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     raw: c,
@@ -249,10 +268,7 @@ async function fetchCastsByFid(
   return data.messages ?? [];
 }
 
-async function fetchUserData(
-  baseUrl: string,
-  fid: number,
-): Promise<FarcasterUserData | null> {
+async function fetchUserData(baseUrl: string, fid: number): Promise<FarcasterUserData | null> {
   try {
     const data = await fetchJson<HubUserDataResponse>(
       buildUrl(baseUrl, '/v1/userDataByFid', { fid: String(fid) }),
@@ -362,7 +378,11 @@ export class FarcasterProvider implements FeedProvider {
         const results = await withConcurrencyLimit(allFids, opts.concurrency ?? 4, async (fid) => {
           try {
             const msgs = await fetchWithFallbacks(endpoints, (base) => {
-              return withTimeout(fetchCastsByFid(base, fid, perFidLimit), timeoutMs, `farcaster:${fid}`);
+              return withTimeout(
+                fetchCastsByFid(base, fid, perFidLimit),
+                timeoutMs,
+                `farcaster:${fid}`,
+              );
             });
             return msgs.map((msg) => ({ msg, fid }));
           } catch {
@@ -403,7 +423,10 @@ export class FarcasterProvider implements FeedProvider {
       const unique: PublicApiCast[] = [];
       for (const c of casts) {
         const key = c.hash ?? '';
-        if (key && !seen.has(key)) { seen.add(key); unique.push(c); }
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          unique.push(c);
+        }
       }
       const posts: UnifiedPost[] = [];
       for (const c of unique) {

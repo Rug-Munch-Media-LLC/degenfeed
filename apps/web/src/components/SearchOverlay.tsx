@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -17,8 +18,13 @@ interface SearchResult {
 
 function protocolColor(p: string): string {
   const c: Record<string, string> = {
-    nostr: '#8e30eb', farcaster: '#8a63d2', lens: '#abfe2c',
-    bluesky: '#1185fe', threads: '#888', mastodon: '#6364ff', rss: '#ffa500',
+    nostr: '#8e30eb',
+    farcaster: '#8a63d2',
+    lens: '#abfe2c',
+    bluesky: '#1185fe',
+    threads: '#888',
+    mastodon: '#6364ff',
+    rss: '#ffa500',
   };
   return c[p] ?? '#666';
 }
@@ -50,12 +56,18 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   }, [open]);
 
   const doSearch = useCallback(async (q: string) => {
-    if (q.length < 2) { setResults([]); setSearched(false); return; }
+    if (q.length < 2) {
+      setResults([]);
+      setSearched(false);
+      return;
+    }
     setLoading(true);
     setSearched(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=20`, { credentials: 'include' });
-      const data = await res.json() as { data?: SearchResult[]; meta?: { total: number } };
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=20`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { data?: SearchResult[]; meta?: { total: number } };
       setResults(data.data ?? []);
     } catch {
       setResults([]);
@@ -63,16 +75,22 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     setLoading(false);
   }, []);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-  const handleChange = useCallback((val: string) => {
-    setQuery(val);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => doSearch(val), 300);
-  }, [doSearch]);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const handleChange = useCallback(
+    (val: string) => {
+      setQuery(val);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => doSearch(val), 300);
+    },
+    [doSearch],
+  );
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-  }, [onClose]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    },
+    [onClose],
+  );
 
   if (!open) return null;
 
@@ -113,19 +131,27 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               <button
                 key={r.id}
                 type="button"
-                onClick={() => { router.push(`/post/${encodeURIComponent(r.id)}`); onClose(); }}
+                onClick={() => {
+                  router.push(`/post/${encodeURIComponent(r.id)}`);
+                  onClose();
+                }}
                 className="card-hover flex w-full items-start gap-3 p-3 text-left"
               >
                 <div
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                  style={{ backgroundColor: `${protocolColor(r.protocol)}22`, color: protocolColor(r.protocol) }}
+                  style={{
+                    backgroundColor: `${protocolColor(r.protocol)}22`,
+                    color: protocolColor(r.protocol),
+                  }}
                 >
                   {r.author.displayName[0]?.toUpperCase() || '?'}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-xs">
                     <span className="font-medium text-white truncate">{r.author.displayName}</span>
-                    <span className="text-gray-500" style={{ color: protocolColor(r.protocol) }}>{r.protocol}</span>
+                    <span className="text-gray-500" style={{ color: protocolColor(r.protocol) }}>
+                      {r.protocol}
+                    </span>
                     <span className="ml-auto text-gray-600">{formatTime(r.createdAt)}</span>
                   </div>
                   <p className="mt-0.5 text-sm text-gray-400 line-clamp-2">{r.text}</p>
@@ -136,7 +162,15 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                   </div>
                 </div>
                 {r.image && (
-                  <img src={r.image} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" loading="lazy" />
+                  <Image
+                    src={r.image}
+                    alt=""
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                    loading="lazy"
+                    unoptimized
+                  />
                 )}
               </button>
             ))}

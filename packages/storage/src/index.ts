@@ -1,59 +1,60 @@
 // ─── @degenfeed/storage — barrel exports ──────────────────────────
-export type {
-  StoredIdentity,
-  StoredFollow,
-  StoredDraft,
-  StoredCachedPost,
-  StoredMutedIdentity,
-  StoredMutedWord,
-  UserPreferences,
-  MonetizationPreferences,
-  SubscriptionRecord,
-  SubscriptionTier,
-} from './types';
-export type { ActiveSession } from './session';
+
 export type { StoredBookmark } from './bookmarks';
-export {
-  setActiveSession,
-  getActiveSession,
-  clearActiveSession,
-  clearAllSessions,
-} from './session';
+export { addBookmark, getBookmarks, isBookmarked, removeBookmark } from './bookmarks';
+export { cachePost, clearCache, getCachedPost } from './cache';
 export { getDb } from './db';
+export { deleteDraft, getDrafts, saveDraft } from './drafts';
+export { deleteFollow, getFollows, isFollowing, saveFollow } from './follows';
 export {
-  saveIdentity,
-  saveWalletIdentity,
-  getIdentity,
+  deleteIdentity,
   getAllIdentities,
   getIdentitiesByProtocol,
+  getIdentity,
   getPrimaryIdentity,
+  saveIdentity,
+  saveWalletIdentity,
   setPrimaryIdentity,
-  deleteIdentity,
 } from './identities';
-export { saveFollow, deleteFollow, getFollows, isFollowing } from './follows';
-export { saveDraft, deleteDraft, getDrafts } from './drafts';
-export { cachePost, getCachedPost, clearCache } from './cache';
 export {
-  muteIdentity,
-  unmuteIdentity,
-  getMutedIdentities,
-  muteWord,
-  unmuteWord,
-  getMutedWords,
-} from './muting';
-export { addBookmark, removeBookmark, isBookmarked, getBookmarks } from './bookmarks';
-export { getPreferences, savePreferences, getDefaultPreferences } from './preferences';
-export {
+  getDefaultMonetizationPreferences,
   getMonetizationPreferences,
   saveMonetizationPreferences,
-  getDefaultMonetizationPreferences,
 } from './monetization';
 export {
-  saveSubscription,
-  getSubscription,
-  isSubscriptionActive,
-  getTier,
-  isPremium,
-  isCreator,
+  getMutedIdentities,
+  getMutedWords,
+  muteIdentity,
+  muteWord,
+  unmuteIdentity,
+  unmuteWord,
+} from './muting';
+export { getDefaultPreferences, getPreferences, savePreferences } from './preferences';
+export type { ActiveSession } from './session';
+export {
+  clearActiveSession,
+  clearAllSessions,
+  getActiveSession,
+  setActiveSession,
+} from './session';
+export {
   buildSubscriptionRecord,
+  getSubscription,
+  getTier,
+  isCreator,
+  isPremium,
+  isSubscriptionActive,
+  saveSubscription,
 } from './subscription';
+export type {
+  MonetizationPreferences,
+  StoredCachedPost,
+  StoredDraft,
+  StoredFollow,
+  StoredIdentity,
+  StoredMutedIdentity,
+  StoredMutedWord,
+  SubscriptionRecord,
+  SubscriptionTier,
+  UserPreferences,
+} from './types';

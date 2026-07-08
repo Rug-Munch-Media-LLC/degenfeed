@@ -238,30 +238,103 @@ export class NostrProvider implements FeedProvider {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const limit = 25;
 
+    // Fetch NIP-23 long-form articles (kind 30023) and short notes (kind 1)
+    const [notes, articles] = await Promise.all([
+      this.fetchNotes(timeoutMs, limit),
+      this.fetchLongForm(timeoutMs, Math.ceil(limit / 4)),
+    ]);
+
+    const allEvents: NostrEvent[] = [...notes, ...articles];
+    if (allEvents.length > 0) {
+      // Sort by created_at desc, dedup by id
+      const seen = new Set<string>();
+      const unique = allEvents
+        .sort((a, b) => b.created_at - a.created_at)
+        .filter((e) => {
+          if (seen.has(e.id)) return false;
+          seen.add(e.id);
+          return true;
+        });
+      return {
+        posts: unique.slice(0, limit).map((e) => enrichPostNiches(eventToUnifiedPost(e))),
+      };
+    }
+    return { posts: [], notice: 'Nostr feed unavailable' };
+  }
+
+  private async fetchNotes(timeoutMs: number, limit: number): Promise<NostrEvent[]> {
     try {
       const events = await fetchFromRelays(this.relays, limit, timeoutMs);
-      if (events.length > 0) {
-        return {
-          posts: events.slice(0, limit).map((e) => enrichPostNiches(eventToUnifiedPost(e))),
-        };
-      }
+      if (events.length > 0) return events;
     } catch {
-      /* fall through to HTTP */
+      /* fall through to HTTP fallback */
     }
-
     try {
-      const events = await withTimeout(fetchFromHttp(limit, timeoutMs), timeoutMs, 'nostr:http');
-      return {
-        posts: events.slice(0, limit).map((e) => enrichPostNiches(eventToUnifiedPost(e))),
-      };
-    } catch (err) {
-      return {
-        posts: [],
-        notice: err instanceof Error ? err.message : 'Nostr feed unavailable',
-      };
+      return await withTimeout(fetchFromHttp(limit, timeoutMs), timeoutMs, 'nostr:http');
+    } catch {
+      return [];
     }
   }
 
+  /** Fetch NIP-23 long-form articles (kind 30023) from relays. */
+  private async fetchLongForm(timeoutMs: number, limit: number): Promise<NostrEvent[]> {
+    return new Promise((resolve) => {
+      const events: NostrEvent[] = [];
+      const timer = setTimeout(() => resolve(events), timeoutMs);
+      const targetRelay = this.relays[0];
+      if (!targetRelay) {
+        clearTimeout(timer);
+        resolve(events);
+        return;
+      }
+      let ws: WebSocket;
+      try {
+        ws = new WebSocket(targetRelay);
+      } catch {
+        clearTimeout(timer);
+        resolve(events);
+        return;
+      }
+      const subId = `longform-${Date.now()}`;
+      const cleanup = () => {
+        clearTimeout(timer);
+        try {
+          ws.close();
+        } catch {
+          /* ignore */
+        }
+      };
+      ws.onopen = () => {
+        try {
+          ws.send(JSON.stringify(['REQ', subId, { kinds: [30023], limit }]));
+        } catch {
+          cleanup();
+          resolve(events);
+        }
+      };
+      ws.onmessage = (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data as string) as unknown[];
+          if (Array.isArray(data) && data[0] === 'EVENT' && data[2]) {
+            events.push(data[2] as NostrEvent);
+          } else if (Array.isArray(data) && data[0] === 'EOSE') {
+            cleanup();
+            resolve(events);
+          }
+        } catch {
+          /* ignore */
+        }
+      };
+      ws.onerror = () => {
+        cleanup();
+        resolve(events);
+      };
+      ws.onclose = () => {
+        clearTimeout(timer);
+        resolve(events);
+      };
+    });
+  }
   async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {
     const start = performance.now();
     try {

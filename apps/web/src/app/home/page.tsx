@@ -1,216 +1,121 @@
 'use client';
 
+import Image from 'next/image';
 import { useAuth } from '../../components/AuthProvider';
-import { SECTIONS } from './sections';
 
-function getProtocolColor(p: string): string {
-  const colors: Record<string, string> = {
-    nostr: '#8e30eb',
-    farcaster: '#8a63d2',
-    lens: '#abfe2c',
-    bluesky: '#1185fe',
-    threads: '#888',
-    mastodon: '#6364ff',
-    rss: '#ffa500',
-  };
-  return colors[p] ?? '#666';
-}
-
-const CATEGORIES = SECTIONS.filter((s) =>
-  [
-    'crypto',
-    'bitcoin',
-    'ethereum',
-    'solana',
-    'defi',
-    'nft',
-    'ai',
-    'regulation',
-    'security',
-    'macro',
-    'news',
-  ].includes(s.id),
-);
-
-const PLATFORMS = SECTIONS.filter((s) =>
-  ['nostr', 'farcaster', 'lens', 'bluesky', 'threads', 'mastodon', 'articles'].includes(s.id),
-);
-
-export const dynamic = 'force-dynamic';
+const PROTOCOLS = [
+  { id: 'nostr', label: 'Nostr', emoji: '⚡', color: '#8e30eb', desc: 'Decentralized notes' },
+  {
+    id: 'farcaster',
+    label: 'Farcaster',
+    emoji: '🟣',
+    color: '#8a63d2',
+    desc: 'Sufficiently decentralized',
+  },
+  { id: 'lens', label: 'Lens', emoji: '🌿', color: '#abfe2c', desc: 'User-owned graph' },
+  { id: 'bluesky', label: 'Bluesky', emoji: '🦋', color: '#1185fe', desc: 'AT Protocol' },
+  { id: 'mastodon', label: 'Mastodon', emoji: '🐘', color: '#6364ff', desc: 'Fediverse' },
+  { id: 'reddit', label: 'Reddit', emoji: '🔴', color: '#ff4500', desc: 'Reddit feeds' },
+  { id: 'rss', label: 'News', emoji: '📰', color: '#ffa500', desc: '150+ RSS sources' },
+  { id: 'threads', label: 'Threads', emoji: '🧵', color: '#888', desc: 'Meta threads' },
+] as const;
 
 export default function HomePage() {
   const { signedInProtocols, ready, openSignIn, openCompose } = useAuth();
-  const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
-  const count = Object.keys(signedInProtocols).length;
-
-  if (!ready) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-        <div className="mx-auto mb-4 h-1 w-48 animate-pulse rounded-full bg-gray-800" />
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
-  }
+  const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <aside className="hidden lg:col-span-3 lg:block">
-          <div className="card sticky top-24 border-degen-500/20 bg-degen-500/5">
-            <h2 className="mb-3 text-sm font-semibold text-degen-400">Feeds</h2>
-            <nav className="space-y-1">
-              {CATEGORIES.map((s) => (
-                <a
-                  key={s.id}
-                  href={`/home/${s.id}`}
-                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-400 hover:bg-white/5 hover:text-white"
-                >
-                  <span style={{ color: s.color }}>{s.icon}</span>
-                  <span>{s.label}</span>
-                </a>
-              ))}
-            </nav>
-            <h2 className="mb-3 mt-6 text-sm font-semibold text-degen-400">Platforms</h2>
-            <nav className="space-y-1">
-              {PLATFORMS.map((s) => (
-                <a
-                  key={s.id}
-                  href={`/home/${s.id}`}
-                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-400 hover:bg-white/5 hover:text-white"
-                >
-                  <span style={{ color: s.color }}>{s.icon}</span>
-                  <span>{s.label}</span>
-                </a>
-              ))}
-            </nav>
-          </div>
-        </aside>
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      {/* Hero */}
+      <div className="mb-10 text-center">
+        <div className="mb-4 flex justify-center">
+          <Image
+            src="/icon.svg"
+            alt="DegenFeed"
+            width={80}
+            height={80}
+            className="h-20 w-20 drop-shadow-[0_0_24px_rgba(34,197,94,0.4)]"
+          />
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          The social feed of <span className="gradient-text">web3</span>
+        </h1>
+        <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+          Pick a network. Browse, search, and cross-post everywhere.
+        </p>
+      </div>
 
-        <main className="lg:col-span-6">
-          <header className="mb-6">
-            <h1 className="text-3xl font-bold tracking-tight text-white">
-              The home of web3 social
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {hasSignedIn
-                ? `Connected: ${count} network${count > 1 ? 's' : ''}`
-                : 'Every network. One window. Zero sign-ups required.'}
-            </p>
-          </header>
+      {/* Protocol grid — single click into any feed */}
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {PROTOCOLS.map((p) => (
+          <a
+            key={p.id}
+            href={`/home/${p.id}`}
+            className="card-hover group flex flex-col items-center gap-2 p-4 text-center"
+            style={{ borderColor: `${p.color}33` }}
+          >
+            <span className="text-3xl transition-transform group-hover:scale-110">{p.emoji}</span>
+            <span className="text-sm font-semibold text-white" style={{ color: p.color }}>
+              {p.label}
+            </span>
+            <span className="text-[10px] text-gray-600">{p.desc}</span>
+          </a>
+        ))}
+      </div>
 
-          <div className="card mb-6 border-degen-500/30 bg-gradient-to-r from-degen-500/10 via-purple-500/10 to-fuchsia-500/10">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="mb-1 text-xs font-semibold uppercase tracking-widest text-degen-400">
-                  Live
-                </div>
-                <h2 className="text-lg font-bold text-white">DegenFeed News</h2>
-                <p className="text-sm text-gray-500">
-                  Curated crypto, AI, and tech news from 45+ sources.
-                </p>
-              </div>
-              <a href="/news" className="btn-primary text-center text-sm">
-                Open News →
-              </a>
-            </div>
-          </div>
+      {/* Quick actions */}
+      <div className="mb-8 flex flex-wrap items-center justify-center gap-3">
+        <a href="/news" className="btn-secondary text-sm">
+          📰 News
+        </a>
+        <a href="/newsletter" className="btn-secondary text-sm">
+          📬 Daily Digest
+        </a>
+        {hasSignedIn ? (
+          <button type="button" onClick={openCompose} className="btn-primary text-sm">
+            ✏️ Compose
+          </button>
+        ) : (
+          <button type="button" onClick={openSignIn} className="btn-primary text-sm">
+            🔑 Sign In
+          </button>
+        )}
+      </div>
 
-          <div className="mb-6 flex gap-2 overflow-x-auto pb-2 lg:hidden">
-            {CATEGORIES.map((s) => (
-              <a
-                key={s.id}
-                href={`/home/${s.id}`}
-                className="whitespace-nowrap rounded-full border border-gray-800 bg-gray-900 px-3 py-1.5 text-xs text-gray-400 hover:border-degen-500/50 hover:text-white"
-              >
-                {s.icon} {s.label}
-              </a>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {SECTIONS.map((section) => (
-              <a
-                key={section.id}
-                href={`/home/${section.id}`}
-                className="card-hover group cursor-pointer"
-                style={{ borderColor: `${section.color}33` }}
-              >
-                <div className="mb-2 text-2xl" style={{ color: section.color }}>
-                  {section.icon}
-                </div>
-                <div className="text-sm font-semibold text-white group-hover:text-degen-400">
-                  {section.label}
-                </div>
-                <div className="mt-1 text-xs text-gray-500 line-clamp-2">{section.description}</div>
-              </a>
-            ))}
-          </div>
-
-          <div className="card mt-6 border-degen-500/20 bg-degen-500/5">
-            <h3 className="mb-2 text-sm font-semibold text-degen-400">
-              {hasSignedIn ? 'Ready to post?' : 'No account? No problem.'}
-            </h3>
-            <p className="text-sm text-gray-400">
-              {hasSignedIn
-                ? 'Click Compose to write a post. Select which networks to publish to.'
-                : 'All content is visible without signing in. Connect an account to like, reply, and repost. Add multiple to cross-post.'}
-            </p>
-            {!hasSignedIn ? (
-              <button type="button" className="btn-primary mt-3 text-sm" onClick={openSignIn}>
-                Sign in with any protocol
-              </button>
-            ) : (
-              <button type="button" className="btn-primary mt-3 text-sm" onClick={openCompose}>
-                Compose a post
-              </button>
-            )}
-          </div>
-        </main>
-
-        <aside className="hidden lg:col-span-3 lg:block">
-          <div className="card sticky top-24 border-purple-500/20 bg-purple-500/5">
-            <h2 className="mb-3 text-sm font-semibold text-purple-400">Trending</h2>
-            <p className="text-xs text-gray-500">
-              Hot tickers and topics update as you browse feeds.
-            </p>
-            <a href="/home/trending" className="btn-primary mt-3 block text-center text-xs">
-              See Trending
-            </a>
-          </div>
-
-          <div className="card mt-4 border-yellow-500/20 bg-yellow-500/5">
-            <h2 className="mb-2 text-sm font-semibold text-yellow-400">Premium</h2>
-            <p className="text-xs text-gray-400">
-              Unlock cross-posting, algorithm controls, analytics, and creator monetization.
-            </p>
+      {/* Trending niches — one click into a feed */}
+      <div className="card">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-500">
+          Browse by Topic
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: 'crypto', label: 'Crypto', color: '#f59e0b' },
+            { id: 'bitcoin', label: 'Bitcoin', color: '#f7931a' },
+            { id: 'ethereum', label: 'Ethereum', color: '#627eea' },
+            { id: 'solana', label: 'Solana', color: '#14f195' },
+            { id: 'defi', label: 'DeFi', color: '#6366f1' },
+            { id: 'ai', label: 'AI', color: '#06b6d4' },
+            { id: 'nft', label: 'NFTs', color: '#ec4899' },
+            { id: 'regulation', label: 'Regulation', color: '#ef4444' },
+            { id: 'security', label: 'Security', color: '#dc2626' },
+            { id: 'macro', label: 'Macro', color: '#10b981' },
+          ].map((n) => (
             <a
-              href="/premium"
-              className="mt-3 block text-center text-xs text-yellow-400 hover:underline"
+              key={n.id}
+              href={`/home/${n.id}`}
+              className="rounded-full border border-gray-800 bg-gray-900/50 px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/50 hover:text-white"
             >
-              Compare plans →
+              #{n.label}
             </a>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          {hasSignedIn && (
-            <div className="card mt-4 border-degen-500/20 bg-degen-500/5">
-              <h2 className="mb-2 text-sm font-semibold text-degen-400">Signed in</h2>
-              <div className="flex flex-wrap gap-2">
-                {Object.keys(signedInProtocols).map((p) => (
-                  <span
-                    key={p}
-                    className="rounded-full px-2 py-0.5 text-xs font-medium"
-                    style={{
-                      backgroundColor: `${getProtocolColor(p)}22`,
-                      color: getProtocolColor(p),
-                    }}
-                  >
-                    {p}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </aside>
+      {/* Status footer */}
+      <div className="mt-8 text-center">
+        <p className="text-[10px] text-gray-700">
+          No account required to browse · Zero cookies · Zero tracking · MIT licensed
+        </p>
       </div>
     </div>
   );

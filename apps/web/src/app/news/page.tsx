@@ -1,8 +1,8 @@
 import type { UnifiedPost } from '@degenfeed/types';
 import { headers } from 'next/headers';
 import { Suspense } from 'react';
-import NewsClient from './NewsClient';
 import NewsLoading from './loading';
+import NewsClient from './NewsClient';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -35,6 +35,8 @@ async function NewsData() {
   const res = await fetch(url, {
     credentials: 'include',
     next: { revalidate: 0 },
+    cache: 'no-store',
+    headers: { 'cache-control': 'no-store' },
   });
   const json = (await res.json()) as NewsApiResponse;
   const initialPosts = (json.data || []) as UnifiedPost[];

@@ -59,9 +59,23 @@ export function decodeXmlEntities(str: string): string {
 
 // ─── Protocol parsing ────────────────────────────────────────────────
 
-const VALID_PROTOCOLS: Protocol[] = ['nostr', 'farcaster', 'lens', 'bluesky', 'threads', 'rss', 'mastodon', 'reddit', 'ethereum', 'solana'];
+const VALID_PROTOCOLS: Protocol[] = [
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'threads',
+  'rss',
+  'mastodon',
+  'reddit',
+  'ethereum',
+  'solana',
+];
 
-export function parseProtocols(raw: string | null, allowed: Protocol[] = VALID_PROTOCOLS): Protocol[] {
+export function parseProtocols(
+  raw: string | null,
+  allowed: Protocol[] = VALID_PROTOCOLS,
+): Protocol[] {
   if (!raw) return allowed;
   const valid = new Set<Protocol>(allowed);
   return raw
@@ -78,7 +92,11 @@ export function rmiUrl(env: { RMI_BACKEND_URL?: string }): string {
 
 // ─── URL building ────────────────────────────────────────────────────
 
-export function buildUrl(base: string, path: string, params?: Record<string, string | undefined>): string {
+export function buildUrl(
+  base: string,
+  path: string,
+  params?: Record<string, string | undefined>,
+): string {
   const url = new URL(path, base);
   if (params) {
     for (const [k, v] of Object.entries(params)) {

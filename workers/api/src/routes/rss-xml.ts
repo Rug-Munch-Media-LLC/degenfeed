@@ -11,20 +11,16 @@
  *   q        — free-text query filter
  */
 
-import { parseProtocols, rmiUrl } from '@degenfeed/utils';
 import {
   deduplicatePosts,
   enrichPostNiches,
   isRelevantPost,
   isSpamPost,
 } from '@degenfeed/feed-core';
-import {
-  RmiDataBusProvider,
-  RssProvider,
-} from '@degenfeed/feed-providers';
+import { RmiDataBusProvider, RssProvider } from '@degenfeed/feed-providers';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
-import { type Env, jsonResponse } from '../index';
-
+import { parseProtocols, rmiUrl } from '@degenfeed/utils';
+import type { Env } from '../index';
 
 function escapeXml(s: string): string {
   return s
@@ -144,9 +140,6 @@ async function gather(env: Env, _requested: Protocol[]): Promise<UnifiedPost[]> 
 
   return all;
 }
-
-const DEFAULT_PROTOCOLS: Protocol[] = ['rss', 'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
-
 
 export async function handleRssXml(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);

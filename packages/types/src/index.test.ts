@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('@degenfeed/types', () => {
   it('should support all 7 protocol identifiers', () => {

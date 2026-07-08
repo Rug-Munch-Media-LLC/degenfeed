@@ -2,13 +2,12 @@
 
 import { addBookmark, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction } from '@degenfeed/types';
-import { FeedList, type Notification, NotificationBell, type UnifiedPost } from '@degenfeed/ui';
-import { useCallback, useEffect, useState } from 'react';
+import { FeedList, NotificationBell, type UnifiedPost } from '@degenfeed/ui';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { TipModal } from '../../../components/TipModal';
+import { useNotifications } from '../../../hooks/useNotifications';
 import { SECTIONS } from '../sections';
-
-export const runtime = 'edge';
 
 interface Props {
   params: Promise<{ section: string }>;
@@ -46,6 +45,116 @@ function SectionNav({ current }: { current: string }) {
   );
 }
 
+interface SectionEmptyStateProps {
+  section: string;
+  state: 'loading' | 'loaded' | 'empty' | 'error';
+  hasSignedIn: boolean;
+  onSignIn: () => void;
+  onRetry: () => void;
+}
+
+function SectionEmptyState({
+  section,
+  state,
+  hasSignedIn,
+  onSignIn,
+  onRetry,
+}: SectionEmptyStateProps) {
+  if (state === 'loading') return null;
+  if (state === 'error') {
+    return (
+      <div className="card mt-6 border-red-500/20 bg-red-500/5 py-8 text-center">
+        <h3 className="mb-2 text-base font-bold text-red-400">Feed unavailable</h3>
+        <p className="mb-4 text-sm text-gray-400">
+          The {section} source failed to load. This is usually a network or rate-limit issue.
+        </p>
+        <button type="button" onClick={onRetry} className="btn-primary text-sm">
+          Retry
+        </button>
+      </div>
+    );
+  }
+  if (state !== 'empty') return null;
+
+  const messages: Record<
+    string,
+    { title: string; body: string; cta?: { label: string; href: string } }
+  > = {
+    mastodon: {
+      title: 'The fediverse is quiet',
+      body: hasSignedIn
+        ? 'No posts from the Mastodon/GotoSocial timeline right now. Try posting first.'
+        : 'Create a free @degenfeed.xyz account to see posts from our own Mastodon instance.',
+      cta: hasSignedIn
+        ? undefined
+        : { label: 'Create free account →', href: '/api/auth/gotosocial/register' },
+    },
+    nostr: {
+      title: 'No Nostr notes found',
+      body: 'Public relays returned no recent notes. This can happen when relays are slow or no one is posting on crypto hashtags.',
+    },
+    farcaster: {
+      title: 'No Farcaster casts found',
+      body: 'Farcaster hubs returned no recent casts. This may be a hub connectivity issue.',
+    },
+    lens: {
+      title: 'No Lens posts found',
+      body: 'Lens API returned no recent publications. This may be an API access issue.',
+    },
+    bluesky: {
+      title: 'No Bluesky posts found',
+      body: 'Bluesky search returned no recent posts. Try again later.',
+    },
+    threads: {
+      title: 'No Threads posts found',
+      body: 'Threads public pages returned no posts. Scraping is fragile; this may improve.',
+    },
+    reddit: {
+      title: 'No Reddit posts found',
+      body: 'Reddit feeds returned no posts. Reddit frequently blocks automated access.',
+    },
+    'reddit-crypto': {
+      title: 'r/CryptoCurrency is empty',
+      body: 'Reddit returned no posts. This is usually a rate-limit or block from Reddit.',
+    },
+    'reddit-bitcoin': {
+      title: 'r/Bitcoin is empty',
+      body: 'Reddit returned no posts. This is usually a rate-limit or block from Reddit.',
+    },
+    'reddit-ethereum': {
+      title: 'r/ethereum is empty',
+      body: 'Reddit returned no posts. This is usually a rate-limit or block from Reddit.',
+    },
+  };
+
+  const msg = messages[section] ?? {
+    title: 'No posts found',
+    body: 'This feed is empty right now. Try another section or sign in to see more.',
+  };
+
+  return (
+    <div className="card mt-6 border-degen-500/20 bg-degen-500/5 py-8 text-center">
+      <h3 className="mb-2 text-base font-bold text-degen-400">{msg.title}</h3>
+      <p className="mb-4 text-sm text-gray-400">{msg.body}</p>
+      <div className="flex justify-center gap-2">
+        {msg.cta ? (
+          <a href={msg.cta.href} className="btn-primary text-sm">
+            {msg.cta.label}
+          </a>
+        ) : null}
+        {!hasSignedIn && !msg.cta && (
+          <button type="button" onClick={onSignIn} className="btn-primary text-sm">
+            Sign in to connect {section}
+          </button>
+        )}
+        <button type="button" onClick={onRetry} className="btn-secondary text-sm">
+          Retry
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface FeedMeta {
   total?: number;
   limit?: number;
@@ -57,40 +166,24 @@ interface FeedMeta {
 }
 
 function SectionContent({ section }: { section: string }) {
-  const { signedInProtocols, engage, openSignIn, openCompose, tokens } = useAuth();
+  const { signedInProtocols, engage, openSignIn, openCompose } = useAuth();
   const meta = SECTIONS.find((s) => s.id === section);
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
   const [error, setError] = useState<string>();
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
+  const [refreshKey, setRefreshKey] = useState(0);
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
-
-  const fetchNotifs = useCallback(async () => {
-    if (!hasSignedIn) return;
-    try {
-      const stored = localStorage.getItem('degenfeed_identities');
-      if (!stored) return;
-      const parsed = JSON.parse(stored) as Array<{ protocol: string; token?: string }>;
-      const auth = JSON.stringify({
-        mastodon: parsed.find((i) => i.protocol === 'mastodon')?.token,
-      });
-      const res = await fetch(`/api/notifications?auth=${encodeURIComponent(auth)}`, {
-        credentials: 'include',
-      });
-      const data = (await res.json()) as { notifications?: Notification[] };
-      setNotifications(data.notifications || []);
-    } catch {}
-  }, [hasSignedIn]);
+  const { notifications, unreadCount, fetchNotifications, markRead } =
+    useNotifications(hasSignedIn);
+  useEffect(() => {
+    const feedInterval = setInterval(() => setRefreshKey((k) => k + 1), 60000);
+    return () => clearInterval(feedInterval);
+  }, []);
 
   useEffect(() => {
-    fetchNotifs();
-    const interval = setInterval(fetchNotifs, 60000);
-    return () => clearInterval(interval);
-  }, [fetchNotifs]);
-
-  useEffect(() => {
+    void refreshKey;
     let cancelled = false;
     async function load() {
       setState('loading');
@@ -100,14 +193,22 @@ function SectionContent({ section }: { section: string }) {
         if (meta?.params) {
           for (const [k, v] of Object.entries(meta.params)) url.searchParams.set(k, v);
         }
-        let res = await fetch(url.toString(), { credentials: 'include' });
+        let res = await fetch(url.toString(), {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'cache-control': 'no-store' },
+        });
         let data = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
         if (!data.data?.length && section === 'all') {
           const rssUrl = new URL('/api/feed/rss', window.location.origin);
           rssUrl.searchParams.set('source', 'reddit');
           rssUrl.searchParams.set('handle', 'CryptoCurrency');
           rssUrl.searchParams.set('limit', '25');
-          res = await fetch(rssUrl.toString(), { credentials: 'include' });
+          res = await fetch(rssUrl.toString(), {
+            credentials: 'include',
+            cache: 'no-store',
+            headers: { 'cache-control': 'no-store' },
+          });
           data = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
         }
         if (cancelled) return;
@@ -125,7 +226,7 @@ function SectionContent({ section }: { section: string }) {
     return () => {
       cancelled = true;
     };
-  }, [section, meta]);
+  }, [section, meta, refreshKey]);
 
   const displayName = meta?.label ?? section;
   const color = meta?.color ?? '#666';
@@ -152,6 +253,8 @@ function SectionContent({ section }: { section: string }) {
     return engage(action, postId, post.protocol, { content });
   };
 
+  const handleRetry = () => setRefreshKey((k) => k + 1);
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-4">
       <SectionNav current={section} />
@@ -175,11 +278,9 @@ function SectionContent({ section }: { section: string }) {
           {hasSignedIn && (
             <NotificationBell
               notifications={notifications}
-              unreadCount={notifications.filter((n) => !n.read).length}
-              onFetch={fetchNotifs}
-              onMarkRead={(id) =>
-                setNotifications(notifications.map((n) => (n.id === id ? { ...n, read: true } : n)))
-              }
+              unreadCount={unreadCount}
+              onFetch={fetchNotifications}
+              onMarkRead={markRead}
             />
           )}
           {hasSignedIn ? (
@@ -198,6 +299,14 @@ function SectionContent({ section }: { section: string }) {
         <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-3 text-xs text-yellow-400">
           {feedMeta.notices.map((n) => (
             <div key={n}>{n}</div>
+          ))}
+        </div>
+      )}
+
+      {feedMeta.errors && feedMeta.errors.length > 0 && (
+        <div className="mb-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
+          {feedMeta.errors.map((e) => (
+            <div key={e}>{e}</div>
           ))}
         </div>
       )}
@@ -243,20 +352,16 @@ function SectionContent({ section }: { section: string }) {
         }}
         onEngage={handleEngage}
         onTip={(post) => setTipPost(post)}
-        onRetry={() => setState('loading')}
+        onRetry={handleRetry}
       />
 
-      {state === 'empty' && !hasSignedIn && (
-        <div className="card mt-6 border-degen-500/20 bg-degen-500/5 py-6 text-center">
-          <h3 className="mb-2 text-base font-bold text-degen-400">See the fediverse</h3>
-          <p className="mb-4 text-sm text-gray-400">
-            Create a free @degenfeed.xyz Mastodon account to see posts from the fediverse.
-          </p>
-          <a href="/api/auth/gotosocial/register" className="btn-primary text-sm">
-            Create free account →
-          </a>
-        </div>
-      )}
+      <SectionEmptyState
+        section={section}
+        state={state}
+        hasSignedIn={hasSignedIn}
+        onSignIn={openSignIn}
+        onRetry={handleRetry}
+      />
 
       {tipPost && (
         <TipModal

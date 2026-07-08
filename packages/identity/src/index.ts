@@ -183,7 +183,7 @@ async function resolveLensHandle(
   }
 }
 
-async function resolveThreadsHandle(
+async function _resolveThreadsHandle(
   _handle: string,
   _fetchFn: typeof fetch,
 ): Promise<HandleResolution | null> {

@@ -2,6 +2,7 @@
 
 import { addBookmark, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
+import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { TipModal } from '../../../components/TipModal';
@@ -16,30 +17,37 @@ function formatTime(ts: number): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
-function stripTags(html: string): string {
-  return html.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ').trim();
-}
-
 function protocolColor(p: string): string {
   const c: Record<string, string> = {
-    nostr: '#8e30eb', farcaster: '#8a63d2', lens: '#abfe2c',
-    bluesky: '#1185fe', threads: '#888', mastodon: '#6364ff', rss: '#ffa500',
+    nostr: '#8e30eb',
+    farcaster: '#8a63d2',
+    lens: '#abfe2c',
+    bluesky: '#1185fe',
+    threads: '#888',
+    mastodon: '#6364ff',
+    rss: '#ffa500',
   };
   return c[p] ?? '#666';
 }
 
 function protocolEmoji(p: string): string {
   const m: Record<string, string> = {
-    nostr: '⚡', farcaster: '🟣', lens: '🌿', bluesky: '🦋',
-    mastodon: '🐘', threads: '🧵', rss: '📡',
+    nostr: '⚡',
+    farcaster: '🟣',
+    lens: '🌿',
+    bluesky: '🦋',
+    mastodon: '🐘',
+    threads: '🧵',
+    rss: '📡',
   };
   return m[p] ?? '●';
 }
 
-function PostCard({ post, onEngage, onTip }: {
+function PostCard({
+  post,
+  onEngage,
+  onTip,
+}: {
   post: UnifiedPost;
   onEngage: (action: EngagementAction, id: string) => Promise<{ ok: boolean; error?: string }>;
   onTip: (post: UnifiedPost) => void;
@@ -50,17 +58,30 @@ function PostCard({ post, onEngage, onTip }: {
   const [metrics, setMetrics] = useState(post.metrics);
   const [engaging, setEngaging] = useState<string | null>(null);
 
-  const handleAction = useCallback(async (action: EngagementAction) => {
-    setEngaging(action);
-    const result = await onEngage(action, post.id);
-    if (result.ok) {
-      if (action === 'like') { setLiked((v) => !v); setMetrics((m) => ({ ...m, likes: m.likes + (liked ? -1 : 1) })); }
-      if (action === 'repost') { setReposted((v) => !v); setMetrics((m) => ({ ...m, reposts: m.reposts + (reposted ? -1 : 1) })); }
-      if (action === 'bookmark') { setBookmarked(true); }
-      if (action === 'unbookmark') { setBookmarked(false); }
-    }
-    setEngaging(null);
-  }, [post.id, onEngage, liked, reposted]);
+  const handleAction = useCallback(
+    async (action: EngagementAction) => {
+      setEngaging(action);
+      const result = await onEngage(action, post.id);
+      if (result.ok) {
+        if (action === 'like') {
+          setLiked((v) => !v);
+          setMetrics((m) => ({ ...m, likes: m.likes + (liked ? -1 : 1) }));
+        }
+        if (action === 'repost') {
+          setReposted((v) => !v);
+          setMetrics((m) => ({ ...m, reposts: m.reposts + (reposted ? -1 : 1) }));
+        }
+        if (action === 'bookmark') {
+          setBookmarked(true);
+        }
+        if (action === 'unbookmark') {
+          setBookmarked(false);
+        }
+      }
+      setEngaging(null);
+    },
+    [post.id, onEngage, liked, reposted],
+  );
 
   const imageEmbed = post.embeds.find((e) => e.kind === 'image');
   const linkEmbed = post.embeds.find((e) => e.kind === 'link');
@@ -71,14 +92,22 @@ function PostCard({ post, onEngage, onTip }: {
       <div className="mb-4 flex items-center gap-3">
         <div
           className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
-          style={{ backgroundColor: `${protocolColor(post.protocol)}22`, color: protocolColor(post.protocol) }}
+          style={{
+            backgroundColor: `${protocolColor(post.protocol)}22`,
+            color: protocolColor(post.protocol),
+          }}
         >
           {post.author.displayName[0]?.toUpperCase() || '?'}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-white truncate">{post.author.displayName}</span>
-            <span className="text-[10px] text-gray-500" style={{ color: protocolColor(post.protocol) }}>
+            <span className="text-sm font-semibold text-white truncate">
+              {post.author.displayName}
+            </span>
+            <span
+              className="text-[10px] text-gray-500"
+              style={{ color: protocolColor(post.protocol) }}
+            >
               {protocolEmoji(post.protocol)} {post.protocol}
             </span>
           </div>
@@ -96,8 +125,9 @@ function PostCard({ post, onEngage, onTip }: {
         </p>
         {post.html && (
           <div
-            className="mt-2 text-sm leading-relaxed text-gray-400"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: content is sanitized via DOMPurify before rendering
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.html) }}
+            className="mt-2 text-sm leading-relaxed text-gray-400"
           />
         )}
       </div>
@@ -105,7 +135,15 @@ function PostCard({ post, onEngage, onTip }: {
       {/* Embeds */}
       {imageEmbed && (
         <div className="mb-4 overflow-hidden rounded-xl">
-          <img src={imageEmbed.url} alt="" className="w-full object-cover" loading="lazy" />
+          <Image
+            src={imageEmbed.url}
+            alt=""
+            width={800}
+            height={400}
+            className="w-full object-cover"
+            loading="lazy"
+            unoptimized
+          />
         </div>
       )}
       {linkEmbed && (
@@ -123,7 +161,10 @@ function PostCard({ post, onEngage, onTip }: {
       {post.niches.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-1">
           {post.niches.map((n) => (
-            <span key={n} className="rounded-full bg-gray-800/60 px-2 py-0.5 text-[10px] text-gray-500">
+            <span
+              key={n}
+              className="rounded-full bg-gray-800/60 px-2 py-0.5 text-[10px] text-gray-500"
+            >
               #{n}
             </span>
           ))}
@@ -145,7 +186,9 @@ function PostCard({ post, onEngage, onTip }: {
           onClick={() => handleAction('like')}
           disabled={engaging === 'like'}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-            liked ? 'bg-degen-500/20 text-degen-400' : 'text-gray-500 hover:bg-gray-800 hover:text-white'
+            liked
+              ? 'bg-degen-500/20 text-degen-400'
+              : 'text-gray-500 hover:bg-gray-800 hover:text-white'
           }`}
         >
           {liked ? '♥' : '♡'} {metrics.likes}
@@ -155,7 +198,9 @@ function PostCard({ post, onEngage, onTip }: {
           onClick={() => handleAction('repost')}
           disabled={engaging === 'repost'}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-            reposted ? 'bg-green-500/20 text-green-400' : 'text-gray-500 hover:bg-gray-800 hover:text-white'
+            reposted
+              ? 'bg-green-500/20 text-green-400'
+              : 'text-gray-500 hover:bg-gray-800 hover:text-white'
           }`}
         >
           ↻ {metrics.reposts}
@@ -165,7 +210,9 @@ function PostCard({ post, onEngage, onTip }: {
           onClick={() => handleAction(bookmarked ? 'unbookmark' : 'bookmark')}
           disabled={engaging === 'bookmark' || engaging === 'unbookmark'}
           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-            bookmarked ? 'bg-yellow-500/20 text-yellow-400' : 'text-gray-500 hover:bg-gray-800 hover:text-white'
+            bookmarked
+              ? 'bg-yellow-500/20 text-yellow-400'
+              : 'text-gray-500 hover:bg-gray-800 hover:text-white'
           }`}
         >
           {bookmarked ? '★' : '☆'}
@@ -200,13 +247,14 @@ export default function PostPage({ params }: Props) {
 
   useEffect(() => {
     if (!id) return;
+    const postId = id;
     let cancelled = false;
     async function load() {
       setState('loading');
       try {
         // Use dedicated post endpoint — doesn't hammer the rate limit
         // or fetch the entire home feed for one post.
-        const res = await fetch(`/api/feed/post/${encodeURIComponent(id)}`, {
+        const res = await fetch(`/api/feed/post/${encodeURIComponent(postId)}`, {
           credentials: 'include',
         });
         const data = (await res.json()) as { data?: UnifiedPost; error?: string };
@@ -222,21 +270,26 @@ export default function PostPage({ params }: Props) {
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
-  const handleEngage = useCallback(async (action: EngagementAction, postId: string) => {
-    if (action === 'bookmark' || action === 'unbookmark') {
-      try {
-        if (action === 'bookmark') await addBookmark(postId);
-        else await removeBookmark(postId);
-        return { ok: true };
-      } catch (err) {
-        return { ok: false, error: err instanceof Error ? err.message : 'Bookmark failed' };
+  const handleEngage = useCallback(
+    async (action: EngagementAction, postId: string) => {
+      if (action === 'bookmark' || action === 'unbookmark') {
+        try {
+          if (action === 'bookmark') await addBookmark(postId);
+          else await removeBookmark(postId);
+          return { ok: true };
+        } catch (err) {
+          return { ok: false, error: err instanceof Error ? err.message : 'Bookmark failed' };
+        }
       }
-    }
-    return engage(action, postId, post?.protocol ?? 'rss');
-  }, [engage, post]);
+      return engage(action, postId, post?.protocol ?? 'rss');
+    },
+    [engage, post],
+  );
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
@@ -279,7 +332,13 @@ export default function PostPage({ params }: Props) {
           {post.parentId && (
             <div className="mt-4 rounded-xl border border-white/5 bg-gray-900/30 p-3">
               <p className="text-[11px] text-gray-500">
-                This is a reply. <a href={`/post/${encodeURIComponent(post.parentId)}`} className="text-degen-500 hover:underline">View parent post</a>
+                This is a reply.{' '}
+                <a
+                  href={`/post/${encodeURIComponent(post.parentId)}`}
+                  className="text-degen-500 hover:underline"
+                >
+                  View parent post
+                </a>
               </p>
             </div>
           )}
@@ -303,7 +362,9 @@ export default function PostPage({ params }: Props) {
           recipientProtocol={tipPost.protocol}
           recipientAuthorId={tipPost.author.id}
           recipientDisplayName={tipPost.author.displayName}
-          publicationId={tipPost.protocol === 'lens' ? (tipPost.raw as { id?: string })?.id : undefined}
+          publicationId={
+            tipPost.protocol === 'lens' ? (tipPost.raw as { id?: string })?.id : undefined
+          }
         />
       )}
     </div>

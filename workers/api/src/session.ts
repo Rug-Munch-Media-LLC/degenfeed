@@ -117,6 +117,21 @@ export async function handleSessionVerify(request: Request, env: Env): Promise<R
   });
 }
 
+export function clearSessionCookie(): string {
+  return `${COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax`;
+}
+
+export async function handleSessionSignOut(_request: Request, _env: Env): Promise<Response> {
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: {
+      'content-type': 'application/json',
+      'set-cookie': clearSessionCookie(),
+      'cache-control': 'no-store',
+    },
+  });
+}
+
 export async function requireSession(
   request: Request,
   env: Env,

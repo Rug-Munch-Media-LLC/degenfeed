@@ -28,5 +28,14 @@
   },
   "json": {
     "formatter": { "indentWidth": 2, "trailingCommas": "none" }
-  }
+  },
+  "css": {
+    "parser": { "tailwindDirectives": true }
+  },
+  "overrides": [
+    {
+      "includes": ["apps/web/src/app/globals.css"],
+      "linter": { "enabled": false }
+    }
+  ]
 }

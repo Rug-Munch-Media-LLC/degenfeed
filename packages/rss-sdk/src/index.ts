@@ -27,10 +27,9 @@ import { detectNiches } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import Parser from 'rss-parser';
 
-export type { Protocol, UnifiedIdentity, UnifiedPost, Embed };
-
 // Re-export parser type for consumers
-export type { Output as RssFeedShape, Item as RssItemShape } from 'rss-parser';
+export type { Item as RssItemShape, Output as RssFeedShape } from 'rss-parser';
+export type { Embed, Protocol, UnifiedIdentity, UnifiedPost };
 
 // ─── Feed type constants ───────────────────────────────────────────────
 

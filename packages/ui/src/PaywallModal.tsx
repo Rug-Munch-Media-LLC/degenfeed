@@ -38,12 +38,13 @@ export function PaywallModal({ open, onClose, requirement, onVerify }: PaywallMo
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
       aria-modal="true"
       aria-label="Paywall"
+      role="dialog"
     >
       <div
         className="mx-4 w-full max-w-sm rounded-2xl border border-gray-800 bg-gray-950 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        role="presentation"
+        role="dialog"
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Unlock content</h2>

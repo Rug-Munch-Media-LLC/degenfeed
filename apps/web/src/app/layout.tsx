@@ -5,6 +5,7 @@ import { AuthProvider } from '../components/AuthProvider';
 import { ErrorTracker } from '../components/ErrorTracker';
 import { Shell } from '../components/Shell';
 import { SolanaProvider } from '../components/SolanaProvider';
+import { ToastProvider } from '../components/Toast';
 import { Web3Provider } from '../components/Web3Provider';
 
 export const metadata: Metadata = {
@@ -46,9 +47,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <SolanaProvider>
           <Web3Provider>
-            <AuthProvider>
-              <Shell>{children}</Shell>
-            </AuthProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <Shell>{children}</Shell>
+              </AuthProvider>
+            </ToastProvider>
           </Web3Provider>
         </SolanaProvider>
       </body>

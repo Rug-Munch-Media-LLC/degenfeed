@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
+import { BottomNav } from './BottomNav';
 import { SearchOverlay } from './SearchOverlay';
 
 interface NavItem {
@@ -12,6 +14,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: '/home', label: 'Feed' },
+  { href: '/twitter', label: 'Twitter' },
   { href: '/news', label: 'News' },
   { href: '/newsletter', label: 'Daily' },
   { href: '/premium', label: 'Premium' },
@@ -21,9 +24,13 @@ const NAV: NavItem[] = [
 function Logo() {
   return (
     <a href="/" className="flex items-center gap-2 group">
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-degen-500 to-emerald-600 text-black text-lg font-bold shadow-[0_0_16px_rgba(34,197,94,0.35)] transition-shadow group-hover:shadow-[0_0_24px_rgba(34,197,94,0.5)]">
-        ◆
-      </span>
+      <Image
+        src="/icon.svg"
+        alt="DegenFeed"
+        width={32}
+        height={32}
+        className="h-8 w-8 rounded-lg transition-shadow group-hover:shadow-[0_0_16px_rgba(34,197,94,0.4)]"
+      />
       <span className="text-lg font-bold tracking-tight text-white">DegenFeed</span>
     </a>
   );
@@ -172,11 +179,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      <main id="main" className="relative z-10 flex-1 pt-16">
+      <main id="main" className="relative z-10 flex-1 pt-16 pb-20 lg:pb-0">
         {children}
       </main>
 
-      <footer className="relative z-10 border-t border-white/10 bg-gray-950/50 py-8">
+      <BottomNav />
+
+      <footer className="relative z-10 hidden border-t border-white/10 bg-gray-950/50 py-8 lg:block">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row">
           <div className="flex items-center gap-2">
             <span className="text-degen-500">◆</span>
@@ -186,8 +195,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <a href="/home" className="transition-colors hover:text-white">
               Feed
             </a>
+            <a href="/twitter" className="transition-colors hover:text-white">
+              Twitter
+            </a>
             <a href="/news" className="transition-colors hover:text-white">
               News
+            </a>
+            <a href="/status" className="transition-colors hover:text-white">
+              Status
             </a>
             <a href="/premium" className="transition-colors hover:text-white">
               Premium

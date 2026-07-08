@@ -230,6 +230,20 @@ export class MastodonProvider implements FeedProvider {
     const generalInstances = endpoints.filter((u) => !cryptoInstances.includes(u));
 
     try {
+      // Start with the public timeline from the primary instance so our own
+      // GotoSocial server is always represented, even if hashtag search is thin.
+      const allStatuses: GtSStatus[] = [];
+      try {
+        const primaryPublic = await withTimeout(
+          fetchPublicTimeline(this.primaryUrl, Math.ceil(limit / 2)),
+          timeoutMs,
+          `mastodon:public:${this.primaryUrl}`,
+        );
+        allStatuses.push(...primaryPublic);
+      } catch {
+        /* primary public timeline may be restricted; continue with hashtags */
+      }
+
       // Build all (instance, tag) pairs in parallel. Bound concurrency so
       // we don't slam a single instance.
       const tagTargets: { instanceUrl: string; tag: string }[] = [];
@@ -250,7 +264,6 @@ export class MastodonProvider implements FeedProvider {
           return [];
         }
       });
-      const allStatuses: GtSStatus[] = [];
       for (const r of tagResults) allStatuses.push(...r);
 
       // Fallback: public timeline from general instances if crypto

@@ -10,16 +10,10 @@
  * tries the public Threads GraphQL endpoint (used by the web client).
  */
 
-import { buildUnifiedPost, detectNiches, enrichPostNiches } from '@degenfeed/feed-core';
+import { detectNiches, enrichPostNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
-import {
-  DEFAULT_TIMEOUT_MS,
-  DEFAULT_USER_AGENT,
-  fetchText,
-  withConcurrencyLimit,
-  withTimeout,
-} from '../utils';
+import { DEFAULT_TIMEOUT_MS, fetchText, withConcurrencyLimit, withTimeout } from '../utils';
 
 export const THREADS_WEB_URL = 'https://www.threads.net';
 
@@ -57,7 +51,8 @@ interface ThreadsPost {
 
 function threadsHeaders(): Record<string, string> {
   return {
-    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'user-agent':
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'accept-language': 'en-US,en;q=0.9',
   };
@@ -68,8 +63,13 @@ function postToUnifiedPost(p: ThreadsPost): UnifiedPost {
     id: `threads:${p.author}`,
     primary: { protocol: 'threads', id: p.author },
     handles: {
-      nostr: null, farcaster: null, lens: null, bluesky: null,
-      threads: p.author, rss: null, mastodon: null,
+      nostr: null,
+      farcaster: null,
+      lens: null,
+      bluesky: null,
+      threads: p.author,
+      rss: null,
+      mastodon: null,
     },
     displayName: p.authorName || p.author,
     bio: '',
@@ -94,7 +94,9 @@ function postToUnifiedPost(p: ThreadsPost): UnifiedPost {
     createdAt: p.createdAt,
     metrics: { likes: p.likes, reposts: p.reposts, replies: p.replies, quotes: 0 },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: p.likes, reposts: p.reposts, replies: p.replies, quotes: 0 },
     },
     raw: p,
@@ -105,14 +107,15 @@ function postToUnifiedPost(p: ThreadsPost): UnifiedPost {
 function extractJsonLd(html: string): unknown[] {
   const results: unknown[] = [];
   const scriptRe = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = scriptRe.exec(html)) !== null) {
+  let m: RegExpExecArray | null = scriptRe.exec(html);
+  while (m !== null) {
     try {
       const json = JSON.parse(m[1] ?? '{}');
       results.push(json);
     } catch {
       // ignore malformed JSON
     }
+    m = scriptRe.exec(html);
   }
   return results;
 }
@@ -145,11 +148,14 @@ async function scrapeThreadsProfile(handle: string, timeoutMs: number): Promise<
       const authorName = (author.name as string) ?? normalized;
       const authorAvatar = (author.image as string) ?? '';
       const id = postUrl.split('/').pop() ?? `scraped-${Date.now()}-${posts.length}`;
-      const image = typeof block.image === 'string'
-        ? block.image
-        : (block.image as Record<string, string>)?.url;
+      const image =
+        typeof block.image === 'string'
+          ? block.image
+          : (block.image as Record<string, string>)?.url;
       const interaction = (block.interactionStatistic as Array<Record<string, unknown>>) ?? [];
-      let likes = 0, replies = 0, reposts = 0;
+      let likes = 0,
+        replies = 0,
+        reposts = 0;
       for (const stat of interaction) {
         const name = (stat.name as string) ?? '';
         const val = Number(stat.userInteractionCount ?? 0);
@@ -157,7 +163,19 @@ async function scrapeThreadsProfile(handle: string, timeoutMs: number): Promise<
         else if (name.includes('Reply') || name.includes('Comment')) replies = val;
         else if (name.includes('Share') || name.includes('Repost')) reposts = val;
       }
-      posts.push({ id, text, url: postUrl, author: authorHandle, authorName, authorAvatar, createdAt, image, likes, replies, reposts });
+      posts.push({
+        id,
+        text,
+        url: postUrl,
+        author: authorHandle,
+        authorName,
+        authorAvatar,
+        createdAt,
+        image,
+        likes,
+        replies,
+        reposts,
+      });
     }
     return posts;
   } catch {
@@ -181,10 +199,8 @@ export class ThreadsProvider implements FeedProvider {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const limit = 25;
 
-    const results = await withConcurrencyLimit(
-      this.curatedHandles.slice(0, 4),
-      2,
-      async (handle) => scrapeThreadsProfile(handle, timeoutMs),
+    const results = await withConcurrencyLimit(this.curatedHandles.slice(0, 4), 2, async (handle) =>
+      scrapeThreadsProfile(handle, timeoutMs),
     );
     const allPosts = results.flat().slice(0, limit);
     if (allPosts.length > 0) {

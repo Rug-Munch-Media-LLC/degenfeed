@@ -5,7 +5,6 @@
  * Cached for 5 minutes in KV.
  */
 
-import { rmiUrl } from '@degenfeed/utils';
 import { enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
 import {
   BlueskyProvider,
@@ -19,8 +18,8 @@ import {
   ThreadsProvider,
 } from '@degenfeed/feed-providers';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { rmiUrl } from '@degenfeed/utils';
 import { type Env, jsonResponse } from '../index';
-
 
 function providerFor(protocol: Protocol, env: Env) {
   switch (protocol) {
@@ -46,11 +45,18 @@ function providerFor(protocol: Protocol, env: Env) {
 }
 
 const ALL_PROTOCOLS: Protocol[] = [
-  'rss', 'reddit', 'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'threads',
+  'rss',
+  'reddit',
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'threads',
 ];
 
 export async function handlePostById(
-  request: Request,
+  _request: Request,
   env: Env,
   postId: string,
 ): Promise<Response> {
@@ -59,14 +65,16 @@ export async function handlePostById(
   try {
     const cached = await env.CACHE?.get(cacheKey);
     if (cached) return jsonResponse(JSON.parse(cached));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   for (const protocol of ALL_PROTOCOLS) {
     const provider = providerFor(protocol, env);
     if (!provider) continue;
     try {
       const result = await Promise.race([
-        provider.fetchFeed({ timeoutMs: 4000, limit: 50 }),
+        provider.fetchFeed({ timeoutMs: 4000 }),
         new Promise<{ posts: UnifiedPost[] }>((resolve) =>
           setTimeout(() => resolve({ posts: [] }), 4000),
         ),
@@ -78,7 +86,9 @@ export async function handlePostById(
         const response = { data: enriched };
         try {
           await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         return jsonResponse(response);
       }
     } catch {
@@ -87,18 +97,24 @@ export async function handlePostById(
   }
 
   try {
-    const rss = new RssProvider({ feeds: ['https://cointelegraph.com/rss', 'https://decrypt.co/feed'] });
-    const r = await rss.fetchFeed({ timeoutMs: 4000, limit: 50 });
+    const rss = new RssProvider({
+      feeds: ['https://cointelegraph.com/rss', 'https://decrypt.co/feed'],
+    });
+    const r = await rss.fetchFeed({ timeoutMs: 4000 });
     const found = r.posts.find((p) => p.id === decoded);
     if (found && !isSpamPost(found)) {
       const enriched = enrichPostNiches(found);
       const response = { data: enriched };
       try {
         await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       return jsonResponse(response);
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   return jsonResponse({ error: 'Post not found', id: decoded }, 404);
 }

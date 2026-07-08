@@ -79,6 +79,20 @@ export interface EngagementVector {
   raw: EngagementMetrics;
 }
 
+/** Per-post ranking score breakdown exposed to the UI. */
+export interface PostScore {
+  total: number;
+  recency: number;
+  engagement: number;
+  relevance: number;
+  quality: number;
+  diversity: number;
+  source: number;
+  velocity: number;
+  /** Human-readable signals ("fresh", "viral", "on-topic", etc.) */
+  reasons: string[];
+}
+
 export interface UnifiedPost {
   /** Canonical id: `${protocol}:${nativeId}` */
   id: string;
@@ -102,6 +116,8 @@ export interface UnifiedPost {
   raw: unknown;
   /** Niche tags derived from content (crypto, ai, oss, security, art, music) */
   niches: string[];
+  /** Optional ranking breakdown for transparency / hover signals. */
+  score?: PostScore;
   /** Optional paywall requirement for paid content */
   paywall?: { amount: string; recipient: string };
 }

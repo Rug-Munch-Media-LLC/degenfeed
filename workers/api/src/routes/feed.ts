@@ -1,4 +1,3 @@
-import { parseProtocols, rmiUrl } from '@degenfeed/utils';
 import {
   deduplicatePosts,
   enrichPostNiches,
@@ -23,12 +22,14 @@ import {
 import {
   computeTrendingTopics,
   rankDiverse,
+  scoreBreakdownV2,
   type UserAlgorithmPreferences,
 } from '@degenfeed/ranking';
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import { parseProtocols, rmiUrl } from '@degenfeed/utils';
 import { type Env, jsonResponse } from '../index';
 
-const DEFAULT_PROTOCOLS: Protocol[] = [
+export const DEFAULT_PROTOCOLS: Protocol[] = [
   'rss',
   'reddit',
   'nostr',
@@ -41,9 +42,7 @@ const DEFAULT_PROTOCOLS: Protocol[] = [
 
 const DEFAULT_TIMEOUT_MS = 6000;
 
-
-
-function getProvider(protocol: Protocol, env: Env): FeedProvider {
+export function getProvider(protocol: Protocol, env: Env): FeedProvider {
   switch (protocol) {
     case 'nostr':
       return new NostrProvider({
@@ -58,7 +57,7 @@ function getProvider(protocol: Protocol, env: Env): FeedProvider {
     case 'mastodon':
       return new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL });
     case 'threads':
-      return new ThreadsProvider({ pdsUrl: env.THREADS_PDS_URL });
+      return new ThreadsProvider();
     case 'reddit':
       return new RedditProvider();
     case 'rss':
@@ -73,10 +72,12 @@ function getProvider(protocol: Protocol, env: Env): FeedProvider {
 // network, not from the Cloudflare edge.
 class RssWithFallbackProvider implements FeedProvider {
   readonly protocol: Protocol = 'rss';
+  private readonly env: Env;
   private readonly rmi: RmiDataBusProvider;
   private readonly rss: RssProvider;
 
   constructor(env: Env) {
+    this.env = env;
     this.rmi = new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
     // Use a small curated set for edge reliability — the full 40+ feed
     // list is too slow from Cloudflare Workers.
@@ -94,21 +95,28 @@ class RssWithFallbackProvider implements FeedProvider {
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    try {
-      const result = await this.rmi.fetchFeed(opts);
-      if (result.posts.length > 0) return result;
-    } catch {
-      /* RMI unavailable — fall through */
+    const rmiUrlValue = rmiUrl(this.env);
+    const rmiConfigured =
+      rmiUrlValue && !rmiUrlValue.includes('127.0.0.1') && !rmiUrlValue.includes('localhost');
+    if (rmiConfigured) {
+      try {
+        const result = await this.rmi.fetchFeed({
+          ...opts,
+          timeoutMs: Math.min(opts.timeoutMs ?? 2000, 2000),
+        });
+        if (result.posts.length > 0) return result;
+      } catch {
+        /* RMI unavailable — fall through */
+      }
     }
     return this.rss.fetchFeed(opts);
   }
 
   async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {
-    try {
-      return await this.rmi.healthCheck!(opts);
-    } catch {
-      return this.rss.healthCheck!(opts);
+    if (!this.rmi.healthCheck) {
+      return { healthy: false, latencyMs: 0, error: 'No health check implemented' };
     }
+    return this.rmi.healthCheck(opts);
   }
 }
 
@@ -147,9 +155,7 @@ function parsePrefsFromQuery(params: URLSearchParams): UserAlgorithmPreferences 
   if (!niches && !platforms && !recencyWeight && !engagementWeight) return null;
   return {
     preferredNiches: niches ? niches.split(',').filter(Boolean) : [],
-    preferredPlatforms: platforms
-      ? (platforms.split(',').filter(Boolean) as Protocol[])
-      : [],
+    preferredPlatforms: platforms ? (platforms.split(',').filter(Boolean) as Protocol[]) : [],
     recencyWeight: recencyWeight || 1,
     engagementWeight: engagementWeight || 1,
     diversityBoost: diversityBoost !== 'false',
@@ -165,7 +171,16 @@ interface UserRankingContext {
   followed: Set<string>;
   mutedAuthors: Set<string>;
   mutedWords: Set<string>;
-  preferences: { preferredNiches: string[]; preferredPlatforms: Protocol[]; recencyWeight: number; engagementWeight: number; diversityBoost: boolean } | null;
+  preferences: {
+    preferredNiches: string[];
+    preferredPlatforms: Protocol[];
+    recencyWeight: number;
+    engagementWeight: number;
+    diversityBoost: boolean;
+    hideLowQuality?: boolean;
+    hideLowQualityThreshold?: number;
+    allowNonCrypto?: boolean;
+  } | null;
 }
 
 async function loadUserRankingContext(request: Request, env: Env): Promise<UserRankingContext> {
@@ -178,7 +193,10 @@ async function loadUserRankingContext(request: Request, env: Env): Promise<UserR
   const cookie = request.headers.get('cookie');
   if (!cookie) return empty;
   // Parse session cookie
-  const match = cookie.split(';').map((s) => s.trim()).find((s) => s.startsWith('__Host-dfid='));
+  const match = cookie
+    .split(';')
+    .map((s) => s.trim())
+    .find((s) => s.startsWith('__Host-dfid='));
   if (!match) return empty;
   const value = match.slice('__Host-dfid='.length);
   // Verify session
@@ -198,6 +216,15 @@ async function loadUserRankingContext(request: Request, env: Env): Promise<UserR
     const mutedAuthors = new Set<string>(mutedAuthorsRaw ? JSON.parse(mutedAuthorsRaw) : []);
     const mutedWords = new Set<string>(mutedWordsRaw ? JSON.parse(mutedWordsRaw) : []);
     const preferences = prefsRaw ? JSON.parse(prefsRaw) : null;
+    if (preferences && typeof preferences.hideLowQuality !== 'boolean') {
+      preferences.hideLowQuality = false;
+    }
+    if (preferences && typeof preferences.allowNonCrypto !== 'boolean') {
+      preferences.allowNonCrypto = false;
+    }
+    if (preferences && typeof preferences.hideLowQualityThreshold !== 'number') {
+      preferences.hideLowQualityThreshold = 1.0;
+    }
     return { followed, mutedAuthors, mutedWords, preferences };
   } catch {
     return empty;
@@ -206,11 +233,12 @@ async function loadUserRankingContext(request: Request, env: Env): Promise<UserR
 
 export async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
-  const requestedProtocols = parseProtocols(params.get('protocols'));
+  const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
   const limit = Math.min(Number(params.get('limit')) || 25, 100);
   const category = params.get('category')?.toLowerCase() ?? '';
   const prefs = parsePrefsFromQuery(params);
   const diverse = params.get('diverse') !== 'false';
+  const queryAllowNonCrypto = params.get('allowNonCrypto') === 'true';
 
   const allPosts: UnifiedPost[] = [];
   const errors: string[] = [];
@@ -250,6 +278,9 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   // Load per-user ranking context (followed, muted, preferences) from KV
   // via the session cookie. Unauthenticated users get an empty context.
   const userCtx = await loadUserRankingContext(request, env);
+  // Resolve allowNonCrypto from query param OR stored preference early so the
+  // relevance filter below can use it.
+  const allowNonCrypto = queryAllowNonCrypto || userCtx.preferences?.allowNonCrypto === true;
   // Filter out muted authors and posts containing muted words
   if (userCtx.mutedAuthors.size > 0 || userCtx.mutedWords.size > 0) {
     deduped = deduped.filter((p) => {
@@ -263,19 +294,44 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       return true;
     });
   }
-  const relevant = deduped.filter(isRelevantPost);
+  // Skip the crypto-gating relevance filter when the user opts into non-crypto
+  // content. The spam filter still applies so we don't drown in junk.
+  const relevant = allowNonCrypto ? deduped : deduped.filter(isRelevantPost);
   // Merge per-user preferred niches/platforms into the query params
+  const mergedPrefs: UserAlgorithmPreferences = prefs ?? {
+    preferredNiches: [],
+    preferredPlatforms: [],
+    recencyWeight: 1,
+    engagementWeight: 1,
+    diversityBoost: true,
+  };
   if (userCtx.preferences) {
     for (const n of userCtx.preferences.preferredNiches) {
-      if (!prefs.preferredNiches?.includes(n)) prefs.preferredNiches = [...(prefs.preferredNiches ?? []), n];
+      if (!mergedPrefs.preferredNiches.includes(n)) {
+        mergedPrefs.preferredNiches = [...mergedPrefs.preferredNiches, n];
+      }
     }
     for (const p of userCtx.preferences.preferredPlatforms) {
-      if (!prefs.preferredPlatforms?.includes(p)) prefs.preferredPlatforms = [...(prefs.preferredPlatforms ?? []), p];
+      if (!mergedPrefs.preferredPlatforms.includes(p)) {
+        mergedPrefs.preferredPlatforms = [...mergedPrefs.preferredPlatforms, p];
+      }
     }
-    if (userCtx.preferences.recencyWeight) prefs.recencyWeight = userCtx.preferences.recencyWeight;
-    if (userCtx.preferences.engagementWeight) prefs.engagementWeight = userCtx.preferences.engagementWeight;
-    if (userCtx.preferences.diversityBoost === false) prefs.diversityBoost = false;
+    if (userCtx.preferences.recencyWeight)
+      mergedPrefs.recencyWeight = userCtx.preferences.recencyWeight;
+    if (userCtx.preferences.engagementWeight)
+      mergedPrefs.engagementWeight = userCtx.preferences.engagementWeight;
+    if (userCtx.preferences.diversityBoost === false) mergedPrefs.diversityBoost = false;
   }
+  // Resolve hide-low-quality controls. Query params override stored prefs
+  // for the duration of the request; the persisted preference still wins
+  // on subsequent fetches.
+  const queryHideLowQuality = params.get('hideLowQuality') === 'true';
+  const queryThreshold = Number(params.get('hideLowQualityThreshold'));
+  const hideLowQuality = queryHideLowQuality || userCtx.preferences?.hideLowQuality === true;
+  const hideLowQualityThreshold =
+    Number.isFinite(queryThreshold) && queryThreshold > 0
+      ? queryThreshold
+      : (userCtx.preferences?.hideLowQualityThreshold ?? 1.0);
   // Populate recentAuthors for the diversity bonus: count how many times
   // each author appears. Authors that appear more than once get penalized
   // so one noisy account doesn't dominate the feed.
@@ -288,13 +344,45 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       sourceQuality.set(key, Math.min(1.5, p.author.followerCount / 10000));
     }
   }
-  const ctx = buildRankingContext(Date.now(), prefs, recentAuthors, undefined, sourceQuality);
+  const ctx = buildRankingContext(Date.now(), mergedPrefs, recentAuthors, undefined, sourceQuality);
+  // Compute score breakdowns for transparency / hover signals.
+  const scoredRelevant = relevant.map((p) => ({ post: p, breakdown: scoreBreakdownV2(p, ctx) }));
+  // Optionally filter low-quality posts at the user's preferred threshold.
+  // Threshold 0 means "only drop truly negative scores"; higher is stricter.
+  const filteredScored = hideLowQuality
+    ? scoredRelevant.filter((s) => s.breakdown.total >= hideLowQualityThreshold)
+    : scoredRelevant;
   // rankDiverse: greedy per-author cap ensures a balanced feed
   // (otherwise one noisy author can dominate).
-  const ranked = (diverse ? rankDiverse(relevant, ctx, { maxPerAuthor: 2 }) : [...relevant]).slice(
-    0,
-    Math.min(limit, 100),
-  );
+  const rankedPosts = (
+    diverse
+      ? rankDiverse(
+          filteredScored.map((s) => s.post),
+          ctx,
+          { maxPerAuthor: 2 },
+        )
+      : filteredScored.map((s) => s.post)
+  ).slice(0, Math.min(limit, 100));
+  // Attach score breakdowns by id lookup
+  const scoreById = new Map(filteredScored.map((s) => [s.post.id, s.breakdown]));
+  const ranked = rankedPosts.map((p) => {
+    const breakdown = scoreById.get(p.id);
+    if (!breakdown) return p;
+    return {
+      ...p,
+      score: {
+        total: breakdown.total,
+        recency: breakdown.recency,
+        engagement: breakdown.engagement,
+        relevance: breakdown.relevance,
+        quality: breakdown.quality,
+        diversity: breakdown.diversity,
+        source: breakdown.source,
+        velocity: breakdown.velocity,
+        reasons: breakdown.reasons,
+      },
+    };
+  });
   const trending = computeTrendingTopics(relevant, Date.now());
 
   if (ranked.length === 0 && errors.length > 0) {
@@ -308,7 +396,8 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
           errors,
           notices,
           fetchedAt: Date.now(),
-          note: relevant.length === 0 ? 'No relevant posts found' : 'All sources failed',
+          note:
+            relevant.length === 0 ? 'No relevant posts found' : 'All sources failed or filtered',
         },
       },
       200,
@@ -353,10 +442,18 @@ export async function handleRedditFeed(request: Request, env: Env): Promise<Resp
   try {
     const cached = await env.CACHE?.get(cacheKey);
     if (cached) return jsonResponse(JSON.parse(cached));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
-  const { RedditProvider } = await import('@degenfeed/feed-providers') as unknown as {
-    RedditProvider: new (options?: { subreddits?: string[] }) => { fetchFeed: (opts?: { timeoutMs?: number }) => Promise<{ posts: import('@degenfeed/types').UnifiedPost[]; notice?: string }> };
+  const { RedditProvider } = (await import('@degenfeed/feed-providers')) as unknown as {
+    RedditProvider: new (options?: {
+      subreddits?: string[];
+    }) => {
+      fetchFeed: (opts?: {
+        timeoutMs?: number;
+      }) => Promise<{ posts: import('@degenfeed/types').UnifiedPost[]; notice?: string }>;
+    };
   };
   const provider = subreddit
     ? new RedditProvider({ subreddits: [subreddit] })
@@ -375,7 +472,9 @@ export async function handleRedditFeed(request: Request, env: Env): Promise<Resp
   };
   try {
     await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 180 });
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return jsonResponse(response);
 }
 

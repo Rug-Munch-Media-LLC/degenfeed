@@ -90,7 +90,7 @@ export default function HealthPage() {
                     <div className="flex items-center gap-3">
                       {StatusDot(h.healthy)}
                       <span className={h.healthy ? 'text-green-400' : 'text-red-400'}>
-                        {h.healthy ? `${h.latencyMs}ms` : h.error ?? 'down'}
+                        {h.healthy ? `${h.latencyMs}ms` : (h.error ?? 'down')}
                       </span>
                     </div>
                   </div>
@@ -121,8 +121,10 @@ export default function HealthPage() {
                 <span className="text-degen-400">social.degenfeed.xyz (GotoSocial)</span>
               </div>
               <div className="flex justify-between">
-                <span>RMI DataBus</span>
-                <span className="text-degen-400">api.rugmunch.io (Talos)</span>
+                <span>Sources</span>
+                <span className="text-degen-400">
+                  RSS, Reddit, Hacker News, Nostr, Farcaster, Bluesky, Lens, Mastodon
+                </span>
               </div>
             </div>
           </div>

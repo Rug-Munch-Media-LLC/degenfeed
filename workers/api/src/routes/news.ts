@@ -5,7 +5,7 @@
  */
 
 import type { UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import { type Env, jsonResponse } from '../index';
+import { type Env, noCacheJsonResponse } from '../index';
 
 interface NewsSource {
   name: string;
@@ -653,7 +653,7 @@ export async function handleNewsFeed(request: Request, env: Env): Promise<Respon
     const cached = await env.CACHE?.get(cacheKey);
     if (cached) {
       const parsed = JSON.parse(cached);
-      return jsonResponse(parsed);
+      return noCacheJsonResponse(parsed);
     }
   } catch {
     /* ignore */
@@ -736,5 +736,5 @@ export async function handleNewsFeed(request: Request, env: Env): Promise<Respon
     /* ignore */
   }
 
-  return jsonResponse(response);
+  return noCacheJsonResponse(response);
 }

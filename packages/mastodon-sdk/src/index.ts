@@ -7,7 +7,7 @@
 import { buildUnifiedPost } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
-export type { Protocol, UnifiedIdentity, UnifiedPost, Embed };
+export type { Embed, Protocol, UnifiedIdentity, UnifiedPost };
 
 export interface GtSStatus {
   id: string;

@@ -72,13 +72,32 @@ describe('CSRF origin check', () => {
     expect(res.status).toBe(403);
   });
 
-  it('skips origin check for GTS callback', async () => {
+  it('GTS callback is now origin-protected (was CSRF-exempt before)', async () => {
+    // The callback previously bypassed origin checks via CSRF_EXEMPT_PATHS.
+    // It now requires (a) an allowed origin AND (b) a valid state nonce.
     const req = new Request('http://localhost/api/auth/gotosocial/callback', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ code: 'abc' }),
     });
     const res = await worker.fetch(req, env);
-    expect([200, 400, 500]).toContain(res.status);
+    expect(res.status).toBe(403);
+  });
+
+  it('GTS callback accepts requests with an allowed origin', async () => {
+    const req = new Request('http://localhost/api/auth/gotosocial/callback', {
+      method: 'POST',
+      headers: {
+        origin: 'https://app.degenfeed.xyz',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ code: 'abc', state: 'missing' }),
+    });
+    const res = await worker.fetch(req, env);
+    // Origin passes (no 403). The state is invalid so the route reaches
+    // token exchange which 500s without a real GTS_CLIENT_SECRET. The key
+    // assertion is that the origin check passed — the actual state/token
+    // flow is covered in auth.state.test.ts.
+    expect(res.status).not.toBe(403);
   });
 });

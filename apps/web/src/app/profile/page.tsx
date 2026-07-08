@@ -1,6 +1,7 @@
 'use client';
 
 import type { StoredIdentity } from '@degenfeed/storage';
+import Image from 'next/image';
 import { QRCodeSVG } from 'qrcode.react';
 import { useMemo } from 'react';
 import { useAuth } from '../../components/AuthProvider';
@@ -133,10 +134,13 @@ export default function ProfilePage() {
                     style={{ backgroundColor: `${id.color}22`, color: id.color }}
                   >
                     {id.avatarUrl ? (
-                      <img
+                      <Image
                         src={id.avatarUrl}
                         alt=""
+                        width={40}
+                        height={40}
                         className="h-10 w-10 rounded-full object-cover"
+                        unoptimized
                       />
                     ) : (
                       PROTOCOL_ICONS[id.protocol] || '?'

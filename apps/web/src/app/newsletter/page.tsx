@@ -59,16 +59,26 @@ function formatTime(ts: number): string {
 
 function protocolColor(p: string): string {
   const map: Record<string, string> = {
-    nostr: '#8e30eb', farcaster: '#8a63d2', lens: '#abfe2c',
-    bluesky: '#1185fe', mastodon: '#6364ff', threads: '#888', rss: '#ffa500',
+    nostr: '#8e30eb',
+    farcaster: '#8a63d2',
+    lens: '#abfe2c',
+    bluesky: '#1185fe',
+    mastodon: '#6364ff',
+    threads: '#888',
+    rss: '#ffa500',
   };
   return map[p] ?? '#666';
 }
 
 function protocolEmoji(p: string): string {
   const map: Record<string, string> = {
-    nostr: '⚡', farcaster: '🟣', lens: '🌿', bluesky: '🦋',
-    mastodon: '🐘', threads: '🧵', rss: '📡',
+    nostr: '⚡',
+    farcaster: '🟣',
+    lens: '🌿',
+    bluesky: '🦋',
+    mastodon: '🐘',
+    threads: '🧵',
+    rss: '📡',
   };
   return map[p] ?? '●';
 }
@@ -84,9 +94,7 @@ export default function NewsletterPage() {
   const [digestLoading, setDigestLoading] = useState(false);
 
   const toggleNiche = (id: string) => {
-    setSelectedNiches((prev) =>
-      prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id],
-    );
+    setSelectedNiches((prev) => (prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id]));
   };
 
   const toggleProtocol = (id: string) => {
@@ -95,33 +103,36 @@ export default function NewsletterPage() {
     );
   };
 
-  const handleSubscribe = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-      setStatus('error');
-      setStatusMsg('Please enter a valid email address.');
-      return;
-    }
-    setStatus('subscribing');
-    try {
-      const res = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          niches: selectedNiches,
-          protocols: selectedProtocols.length > 0 ? selectedProtocols : undefined,
-        }),
-      });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Subscription failed');
-      setStatus('subscribed');
-      setStatusMsg('You are subscribed! Check your inbox for the daily digest.');
-    } catch (err) {
-      setStatus('error');
-      setStatusMsg(err instanceof Error ? err.message : 'Subscription failed');
-    }
-  }, [email, selectedNiches, selectedProtocols]);
+  const handleSubscribe = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        setStatus('error');
+        setStatusMsg('Please enter a valid email address.');
+        return;
+      }
+      setStatus('subscribing');
+      try {
+        const res = await fetch('/api/newsletter/subscribe', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            niches: selectedNiches,
+            protocols: selectedProtocols.length > 0 ? selectedProtocols : undefined,
+          }),
+        });
+        const data = (await res.json()) as { ok?: boolean; error?: string };
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Subscription failed');
+        setStatus('subscribed');
+        setStatusMsg('You are subscribed! Check your inbox for the daily digest.');
+      } catch (err) {
+        setStatus('error');
+        setStatusMsg(err instanceof Error ? err.message : 'Subscription failed');
+      }
+    },
+    [email, selectedNiches, selectedProtocols],
+  );
 
   const loadDigest = useCallback(async () => {
     setDigestLoading(true);
@@ -129,7 +140,11 @@ export default function NewsletterPage() {
       const params = new URLSearchParams();
       if (selectedNiches.length > 0) params.set('niches', selectedNiches.join(','));
       if (selectedProtocols.length > 0) params.set('protocols', selectedProtocols.join(','));
-      const res = await fetch(`/api/newsletter/digest?${params.toString()}`, { credentials: 'include' });
+      const res = await fetch(`/api/newsletter/digest?${params.toString()}`, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'cache-control': 'no-store' },
+      });
       const data = (await res.json()) as { data?: DigestItem[]; meta?: DigestMeta };
       setDigest(data.data ?? []);
       setDigestMeta(data.meta ?? null);
@@ -147,11 +162,11 @@ export default function NewsletterPage() {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500 to-emerald-600 text-2xl shadow-[0_0_24px_rgba(34,197,94,0.3)]">
           ◆
         </div>
-        <h1 className="mb-2 text-4xl font-bold tracking-tight text-white">
-          DegenFeed Daily
-        </h1>
+        <h1 className="mb-2 text-4xl font-bold tracking-tight text-white">DegenFeed Daily</h1>
         <p className="mx-auto max-w-xl text-sm leading-relaxed text-gray-500">
-          The best of web3, AI, and tech — aggregated from Nostr, Farcaster, Lens, Bluesky, Mastodon, and 200+ RSS sources. Ranked by quality, recency, and diversity. Delivered to your inbox every morning.
+          The best of web3, AI, and tech — aggregated from Nostr, Farcaster, Lens, Bluesky,
+          Mastodon, and 200+ RSS sources. Ranked by quality, recency, and diversity. Delivered to
+          your inbox every morning.
         </p>
       </div>
 
@@ -167,10 +182,13 @@ export default function NewsletterPage() {
             <form onSubmit={handleSubscribe}>
               {/* Niche selection */}
               <div className="mb-5">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-gray-500">
+                <label
+                  htmlFor="newsletter-topics"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-widest text-gray-500"
+                >
                   Topics
                 </label>
-                <div className="flex flex-wrap gap-1.5">
+                <div id="newsletter-topics" className="flex flex-wrap gap-1.5">
                   {ALL_NICHES.map((n) => (
                     <button
                       key={n.id}
@@ -190,10 +208,13 @@ export default function NewsletterPage() {
 
               {/* Protocol selection */}
               <div className="mb-5">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-gray-500">
+                <label
+                  htmlFor="newsletter-sources"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-widest text-gray-500"
+                >
                   Sources
                 </label>
-                <div className="flex flex-wrap gap-1.5">
+                <div id="newsletter-sources" className="flex flex-wrap gap-1.5">
                   {ALL_PROTOCOLS.map((p) => (
                     <button
                       key={p.id}
@@ -213,7 +234,10 @@ export default function NewsletterPage() {
 
               {/* Email input */}
               <div className="mb-4">
-                <label htmlFor="newsletter-email" className="mb-1.5 block text-xs font-medium text-gray-400">
+                <label
+                  htmlFor="newsletter-email"
+                  className="mb-1.5 block text-xs font-medium text-gray-400"
+                >
                   Email address
                 </label>
                 <input
@@ -232,12 +256,14 @@ export default function NewsletterPage() {
                 disabled={status === 'subscribing' || status === 'subscribed'}
                 className="btn-primary w-full"
               >
-                {status === 'subscribing' ? 'Subscribing...' : status === 'subscribed' ? 'Subscribed ✓' : 'Subscribe'}
+                {status === 'subscribing'
+                  ? 'Subscribing...'
+                  : status === 'subscribed'
+                    ? 'Subscribed ✓'
+                    : 'Subscribe'}
               </button>
 
-              {status === 'error' && (
-                <p className="mt-2 text-xs text-red-400">{statusMsg}</p>
-              )}
+              {status === 'error' && <p className="mt-2 text-xs text-red-400">{statusMsg}</p>}
               {status === 'subscribed' && (
                 <p className="mt-2 text-xs text-degen-400">{statusMsg}</p>
               )}
@@ -261,7 +287,8 @@ export default function NewsletterPage() {
             {digest.length === 0 && !digestLoading && (
               <div className="card py-8 text-center">
                 <p className="text-xs text-gray-500">
-                  Select topics/sources above and click "Load Preview" to see what your daily digest will look like.
+                  Select topics/sources above and click "Load Preview" to see what your daily digest
+                  will look like.
                 </p>
               </div>
             )}
@@ -306,9 +333,7 @@ export default function NewsletterPage() {
                         {formatTime(item.createdAt)}
                       </span>
                     </div>
-                    <p className="text-sm leading-snug text-gray-300 line-clamp-2">
-                      {item.text}
-                    </p>
+                    <p className="text-sm leading-snug text-gray-300 line-clamp-2">{item.text}</p>
                     {item.url && (
                       <a
                         href={item.url}
@@ -349,11 +374,13 @@ export default function NewsletterPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>
-                  <span>Multi-protocol aggregation (Nostr, Farcaster, Lens, Bluesky, Mastodon, RSS)</span>
+                  <span>
+                    Multi-protocol aggregation (Nostr, Farcaster, Lens, Bluesky, Mastodon, RSS)
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>
-                  <span>RMI DataBus institutional-grade news (200+ sources)</span>
+                  <span>Curated RSS and protocol feeds (50+ sources)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>

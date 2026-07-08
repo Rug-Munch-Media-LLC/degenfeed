@@ -21,17 +21,80 @@ export interface SignInModalProps {
 }
 
 const PROTOCOLS: ProtocolOption[] = [
-  { id: 'nostr', label: 'Nostr', color: '#8e30eb', icon: '☰', description: 'npub/nsec key or browser extension', method: 'key' },
-  { id: 'farcaster', label: 'Farcaster', color: '#8a63d2', icon: '◈', description: 'FID + signer key (or Warpcast)', method: 'key' },
-  { id: 'lens', label: 'Lens', color: '#abfe2c', icon: '◎', description: 'Connect wallet (MetaMask, Rainbow)', method: 'extension' },
-  { id: 'bluesky', label: 'Bluesky', color: '#1185fe', icon: '☁', description: 'Handle + app password', method: 'password' },
-  { id: 'threads', label: 'Threads', color: '#888888', icon: '⊞', description: 'Handle + AT Protocol app password', method: 'password' },
-  { id: 'mastodon', label: 'Mastodon', color: '#6364ff', icon: '🐘', description: 'Any Mastodon/GotoSocial server', method: 'oauth', authUrl: '/api/auth/gotosocial/authorize' },
-  { id: 'ethereum', label: 'Ethereum', color: '#627eea', icon: '◆', description: 'Sign in with Ethereum wallet', method: 'wallet' },
-  { id: 'solana', label: 'Solana', color: '#9945ff', icon: '◎', description: 'Sign in with Solana wallet', method: 'wallet' },
+  {
+    id: 'nostr',
+    label: 'Nostr',
+    color: '#8e30eb',
+    icon: '☰',
+    description: 'npub/nsec key or browser extension',
+    method: 'key',
+  },
+  {
+    id: 'farcaster',
+    label: 'Farcaster',
+    color: '#8a63d2',
+    icon: '◈',
+    description: 'FID + signer key (or Warpcast)',
+    method: 'key',
+  },
+  {
+    id: 'lens',
+    label: 'Lens',
+    color: '#abfe2c',
+    icon: '◎',
+    description: 'Connect wallet (MetaMask, Rainbow)',
+    method: 'extension',
+  },
+  {
+    id: 'bluesky',
+    label: 'Bluesky',
+    color: '#1185fe',
+    icon: '☁',
+    description: 'Handle + app password',
+    method: 'password',
+  },
+  {
+    id: 'threads',
+    label: 'Threads',
+    color: '#888888',
+    icon: '⊞',
+    description: 'Handle + AT Protocol app password',
+    method: 'password',
+  },
+  {
+    id: 'mastodon',
+    label: 'Mastodon',
+    color: '#6364ff',
+    icon: '🐘',
+    description: 'Any Mastodon/GotoSocial server',
+    method: 'oauth',
+    authUrl: '/api/auth/gotosocial/authorize',
+  },
+  {
+    id: 'ethereum',
+    label: 'Ethereum',
+    color: '#627eea',
+    icon: '◆',
+    description: 'Sign in with Ethereum wallet',
+    method: 'wallet',
+  },
+  {
+    id: 'solana',
+    label: 'Solana',
+    color: '#9945ff',
+    icon: '◎',
+    description: 'Sign in with Solana wallet',
+    method: 'wallet',
+  },
 ];
 
-function NostrForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, string>) => void; onBack: () => void }) {
+function NostrForm({
+  onSignIn,
+  onBack,
+}: {
+  onSignIn: (creds: Record<string, string>) => void;
+  onBack: () => void;
+}) {
   const [mode, setMode] = useState<'choice' | 'nsec' | 'extension'>('choice');
   const [nsec, setNsec] = useState('');
   const [error, setError] = useState('');
@@ -47,7 +110,9 @@ function NostrForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, stri
           <span className="text-lg">🔑</span>
           <div>
             <div className="text-sm font-semibold text-white">Paste nsec / NIP-07</div>
-            <div className="text-xs text-gray-500">Enter your secret key or use a browser extension</div>
+            <div className="text-xs text-gray-500">
+              Enter your secret key or use a browser extension
+            </div>
           </div>
         </button>
         <button
@@ -61,13 +126,20 @@ function NostrForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, stri
             <div className="text-xs text-gray-500">Alby, nos2x, or any NIP-07 signer</div>
           </div>
         </button>
-        <button type="button" onClick={onBack} className="w-full text-center text-xs text-gray-500 hover:text-gray-300">← Back</button>
+        <button
+          type="button"
+          onClick={onBack}
+          className="w-full text-center text-xs text-gray-500 hover:text-gray-300"
+        >
+          ← Back
+        </button>
       </div>
     );
   }
 
   if (mode === 'extension') {
-    const hasNip07 = typeof window !== 'undefined' && !!(window as unknown as { nostr?: unknown }).nostr;
+    const hasNip07 =
+      typeof window !== 'undefined' && !!(window as unknown as { nostr?: unknown }).nostr;
     if (hasNip07) {
       onSignIn({ method: 'extension' });
       return null;
@@ -75,9 +147,33 @@ function NostrForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, stri
     return (
       <div className="space-y-3">
         <p className="text-sm text-gray-400">
-          No NIP-07 extension detected. Install <a href="https://getalby.com" target="_blank" rel="noopener" className="text-degen-400 underline">Alby</a> or <a href="https://github.com/fiatjaf/nos2x" target="_blank" rel="noopener" className="text-degen-400 underline">nos2x</a>.
+          No NIP-07 extension detected. Install{' '}
+          <a
+            href="https://getalby.com"
+            target="_blank"
+            rel="noopener"
+            className="text-degen-400 underline"
+          >
+            Alby
+          </a>{' '}
+          or{' '}
+          <a
+            href="https://github.com/fiatjaf/nos2x"
+            target="_blank"
+            rel="noopener"
+            className="text-degen-400 underline"
+          >
+            nos2x
+          </a>
+          .
         </p>
-        <button type="button" onClick={() => setMode('choice')} className="w-full text-center text-xs text-gray-500 hover:text-gray-300">← Back</button>
+        <button
+          type="button"
+          onClick={() => setMode('choice')}
+          className="w-full text-center text-xs text-gray-500 hover:text-gray-300"
+        >
+          ← Back
+        </button>
       </div>
     );
   }
@@ -89,10 +185,12 @@ function NostrForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, stri
         <input
           type="password"
           value={nsec}
-          onChange={(e) => { setNsec(e.target.value); setError(''); }}
+          onChange={(e) => {
+            setNsec(e.target.value);
+            setError('');
+          }}
           placeholder="nsec1..."
           className="input w-full font-mono text-xs"
-          autoFocus
         />
       </label>
       <p className="text-[10px] text-gray-600">
@@ -100,12 +198,24 @@ function NostrForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, stri
       </p>
       {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex gap-2">
-        <button type="button" onClick={() => setMode('choice')} className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white">Back</button>
+        <button
+          type="button"
+          onClick={() => setMode('choice')}
+          className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white"
+        >
+          Back
+        </button>
         <button
           type="button"
           onClick={() => {
-            if (!nsec.trim()) { setError('Please enter your nsec'); return; }
-            if (!nsec.startsWith('nsec1') && nsec.length !== 64) { setError('Invalid nsec format'); return; }
+            if (!nsec.trim()) {
+              setError('Please enter your nsec');
+              return;
+            }
+            if (!nsec.startsWith('nsec1') && nsec.length !== 64) {
+              setError('Invalid nsec format');
+              return;
+            }
             onSignIn({ nsec: nsec.trim(), method: 'nsec' });
           }}
           className="btn-primary flex-1"
@@ -117,7 +227,13 @@ function NostrForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, stri
   );
 }
 
-function FarcasterForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, string>) => void; onBack: () => void }) {
+function FarcasterForm({
+  onSignIn,
+  onBack,
+}: {
+  onSignIn: (creds: Record<string, string>) => void;
+  onBack: () => void;
+}) {
   const [mode, setMode] = useState<'choice' | 'form'>('choice');
   const [fid, setFid] = useState('');
   const [username, setUsername] = useState('');
@@ -149,7 +265,13 @@ function FarcasterForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, 
             <div className="text-xs text-gray-500">Use your Warpcast account via OAuth</div>
           </div>
         </button>
-        <button type="button" onClick={onBack} className="w-full text-center text-xs text-gray-500 hover:text-gray-300">← Back</button>
+        <button
+          type="button"
+          onClick={onBack}
+          className="w-full text-center text-xs text-gray-500 hover:text-gray-300"
+        >
+          ← Back
+        </button>
       </div>
     );
   }
@@ -158,24 +280,56 @@ function FarcasterForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, 
     <div className="space-y-3">
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-gray-400">Username</span>
-        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="alice" className="input w-full" autoFocus />
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="alice"
+          className="input w-full"
+        />
       </label>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-gray-400">FID (numeric)</span>
-        <input type="text" value={fid} onChange={(e) => setFid(e.target.value)} placeholder="12345" className="input w-full" inputMode="numeric" />
+        <input
+          type="text"
+          value={fid}
+          onChange={(e) => setFid(e.target.value)}
+          placeholder="12345"
+          className="input w-full"
+          inputMode="numeric"
+        />
       </label>
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">Signer private key (hex)</span>
-        <input type="password" value={signerKey} onChange={(e) => setSignerKey(e.target.value)} placeholder="0x... or hex" className="input w-full font-mono text-xs" />
+        <span className="mb-1 block text-xs font-medium text-gray-400">
+          Signer private key (hex)
+        </span>
+        <input
+          type="password"
+          value={signerKey}
+          onChange={(e) => setSignerKey(e.target.value)}
+          placeholder="0x... or hex"
+          className="input w-full font-mono text-xs"
+        />
       </label>
-      <p className="text-[10px] text-gray-600">Signer key is used to sign casts. Stored encrypted in your browser.</p>
+      <p className="text-[10px] text-gray-600">
+        Signer key is used to sign casts. Stored encrypted in your browser.
+      </p>
       {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex gap-2">
-        <button type="button" onClick={() => setMode('choice')} className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white">Back</button>
+        <button
+          type="button"
+          onClick={() => setMode('choice')}
+          className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white"
+        >
+          Back
+        </button>
         <button
           type="button"
           onClick={() => {
-            if (!username.trim() || !fid.trim() || !signerKey.trim()) { setError('All fields required'); return; }
+            if (!username.trim() || !fid.trim() || !signerKey.trim()) {
+              setError('All fields required');
+              return;
+            }
             onSignIn({ username: username.trim(), fid: fid.trim(), signerKey: signerKey.trim() });
           }}
           className="btn-primary flex-1"
@@ -187,7 +341,13 @@ function FarcasterForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, 
   );
 }
 
-function BlueskyForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, string>) => void; onBack: () => void }) {
+function BlueskyForm({
+  onSignIn,
+  onBack,
+}: {
+  onSignIn: (creds: Record<string, string>) => void;
+  onBack: () => void;
+}) {
   const [handle, setHandle] = useState('');
   const [appPassword, setAppPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -197,7 +357,13 @@ function BlueskyForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, st
     <div className="space-y-3">
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-gray-400">Handle</span>
-        <input type="text" value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="alice.bsky.social" className="input w-full" autoFocus />
+        <input
+          type="text"
+          value={handle}
+          onChange={(e) => setHandle(e.target.value)}
+          placeholder="alice.bsky.social"
+          className="input w-full"
+        />
       </label>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-gray-400">App Password</span>
@@ -217,17 +383,31 @@ function BlueskyForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, st
             {showPassword ? 'Hide' : 'Show'}
           </button>
         </div>
-        <a href="https://bsky.app/settings/app-passwords" target="_blank" rel="noopener" className="text-[10px] text-degen-400 hover:underline">
+        <a
+          href="https://bsky.app/settings/app-passwords"
+          target="_blank"
+          rel="noopener"
+          className="text-[10px] text-degen-400 hover:underline"
+        >
           Create one at bsky.app/settings/app-passwords →
         </a>
       </label>
       {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex gap-2">
-        <button type="button" onClick={onBack} className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white">Back</button>
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white"
+        >
+          Back
+        </button>
         <button
           type="button"
           onClick={() => {
-            if (!handle.trim() || !appPassword.trim()) { setError('All fields required'); return; }
+            if (!handle.trim() || !appPassword.trim()) {
+              setError('All fields required');
+              return;
+            }
             onSignIn({ handle: handle.trim(), appPassword: appPassword.trim() });
           }}
           className="btn-primary flex-1"
@@ -239,7 +419,13 @@ function BlueskyForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, st
   );
 }
 
-function ThreadsForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, string>) => void; onBack: () => void }) {
+function ThreadsForm({
+  onSignIn,
+  onBack,
+}: {
+  onSignIn: (creds: Record<string, string>) => void;
+  onBack: () => void;
+}) {
   const [handle, setHandle] = useState('');
   const [appPassword, setAppPassword] = useState('');
   const [error, setError] = useState('');
@@ -253,19 +439,40 @@ function ThreadsForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, st
       </div>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-gray-400">Handle</span>
-        <input type="text" value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="alice.bsky.social" className="input w-full" autoFocus />
+        <input
+          type="text"
+          value={handle}
+          onChange={(e) => setHandle(e.target.value)}
+          placeholder="alice.bsky.social"
+          className="input w-full"
+        />
       </label>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-gray-400">App Password</span>
-        <input type="password" value={appPassword} onChange={(e) => setAppPassword(e.target.value)} placeholder="xxxx-xxxx-xxxx-xxxx" className="input w-full font-mono text-xs" />
+        <input
+          type="password"
+          value={appPassword}
+          onChange={(e) => setAppPassword(e.target.value)}
+          placeholder="xxxx-xxxx-xxxx-xxxx"
+          className="input w-full font-mono text-xs"
+        />
       </label>
       {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex gap-2">
-        <button type="button" onClick={onBack} className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white">Back</button>
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white"
+        >
+          Back
+        </button>
         <button
           type="button"
           onClick={() => {
-            if (!handle.trim() || !appPassword.trim()) { setError('All fields required'); return; }
+            if (!handle.trim() || !appPassword.trim()) {
+              setError('All fields required');
+              return;
+            }
             onSignIn({ handle: handle.trim(), appPassword: appPassword.trim() });
           }}
           className="btn-primary flex-1"
@@ -277,7 +484,13 @@ function ThreadsForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, st
   );
 }
 
-function LensForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, string>) => void; onBack: () => void }) {
+function LensForm({
+  onSignIn,
+  onBack,
+}: {
+  onSignIn: (creds: Record<string, string>) => void;
+  onBack: () => void;
+}) {
   const [hasWallet, setHasWallet] = useState(false);
 
   if (typeof window !== 'undefined') {
@@ -287,7 +500,8 @@ function LensForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, strin
   return (
     <div className="space-y-3">
       <p className="text-sm text-gray-400">
-        Lens uses your Ethereum wallet to sign in. Make sure MetaMask, Rainbow, or another EVM wallet is installed.
+        Lens uses your Ethereum wallet to sign in. Make sure MetaMask, Rainbow, or another EVM
+        wallet is installed.
       </p>
       <button
         type="button"
@@ -296,21 +510,39 @@ function LensForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, strin
       >
         {hasWallet ? 'Sign in with wallet' : 'Connect wallet'}
       </button>
-      <button type="button" onClick={onBack} className="w-full text-center text-xs text-gray-500 hover:text-gray-300">← Back</button>
+      <button
+        type="button"
+        onClick={onBack}
+        className="w-full text-center text-xs text-gray-500 hover:text-gray-300"
+      >
+        ← Back
+      </button>
     </div>
   );
 }
 
-function MastodonForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, string>) => void; onBack: () => void }) {
+function MastodonForm({
+  onSignIn,
+  onBack,
+}: {
+  onSignIn: (creds: Record<string, string>) => void;
+  onBack: () => void;
+}) {
   const [instance, setInstance] = useState('https://social.degenfeed.xyz');
   const [accessToken, setAccessToken] = useState('');
-  const [error, setError] = useState('');
+  const [error, _setError] = useState('');
 
   return (
     <div className="space-y-3">
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-gray-400">Instance URL</span>
-        <input type="url" value={instance} onChange={(e) => setInstance(e.target.value)} placeholder="https://mastodon.social" className="input w-full" autoFocus />
+        <input
+          type="url"
+          value={instance}
+          onChange={(e) => setInstance(e.target.value)}
+          placeholder="https://mastodon.social"
+          className="input w-full"
+        />
       </label>
       <div className="text-center text-xs text-gray-600">— or —</div>
       <a
@@ -321,11 +553,23 @@ function MastodonForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, s
       </a>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-gray-400">Or paste access token</span>
-        <input type="password" value={accessToken} onChange={(e) => setAccessToken(e.target.value)} placeholder="paste from /settings/applications" className="input w-full font-mono text-xs" />
+        <input
+          type="password"
+          value={accessToken}
+          onChange={(e) => setAccessToken(e.target.value)}
+          placeholder="paste from /settings/applications"
+          className="input w-full font-mono text-xs"
+        />
       </label>
       {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex gap-2">
-        <button type="button" onClick={onBack} className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white">Back</button>
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white"
+        >
+          Back
+        </button>
         {accessToken && (
           <button
             type="button"
@@ -340,57 +584,86 @@ function MastodonForm({ onSignIn, onBack }: { onSignIn: (creds: Record<string, s
   );
 }
 
-function ProtocolForm({ protocol, onSignIn, onBack }: { protocol: ProtocolOption; onSignIn: (creds: Record<string, string>) => void; onBack: () => void }) {
+function ProtocolForm({
+  protocol,
+  onSignIn,
+  onBack,
+}: {
+  protocol: ProtocolOption;
+  onSignIn: (creds: Record<string, string>) => void;
+  onBack: () => void;
+}) {
   const props = { onSignIn, onBack };
   switch (protocol.id) {
-    case 'nostr': return <NostrForm {...props} />;
-    case 'farcaster': return <FarcasterForm {...props} />;
-    case 'lens': return <LensForm {...props} />;
-    case 'bluesky': return <BlueskyForm {...props} />;
-    case 'threads': return <ThreadsForm {...props} />;
-    case 'mastodon': return <MastodonForm {...props} />;
-    default: return <p className="text-sm text-gray-500">Unknown protocol</p>;
+    case 'nostr':
+      return <NostrForm {...props} />;
+    case 'farcaster':
+      return <FarcasterForm {...props} />;
+    case 'lens':
+      return <LensForm {...props} />;
+    case 'bluesky':
+      return <BlueskyForm {...props} />;
+    case 'threads':
+      return <ThreadsForm {...props} />;
+    case 'mastodon':
+      return <MastodonForm {...props} />;
+    default:
+      return <p className="text-sm text-gray-500">Unknown protocol</p>;
   }
 }
 
-function WalletSection({ onSignIn, walletAddress, walletSigningIn }: { onSignIn: (p: string) => void; walletAddress?: string; walletSigningIn?: boolean }) {
+function WalletSection({
+  onSignIn,
+  walletAddress,
+  walletSigningIn,
+}: {
+  onSignIn: (p: string) => void;
+  walletAddress?: string;
+  walletSigningIn?: boolean;
+}) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <h3 className="text-xs font-medium uppercase tracking-widest text-gray-500">Web3 Wallets</h3>
       {walletAddress ? (
         <div className="rounded-xl border border-degen-500/30 bg-degen-500/10 px-4 py-3">
           <div className="text-xs text-gray-500 mb-1">Connected Wallet</div>
           <div className="text-sm font-mono text-degen-400 break-all">{walletAddress}</div>
-          <div className="mt-2 flex gap-2">
-            <button
-              onClick={() => onSignIn('ethereum')}
-              disabled={walletSigningIn}
-              className="rounded-lg bg-[#627eea]/20 px-3 py-1.5 text-xs font-medium text-[#627eea] hover:bg-[#627eea]/30 transition-colors disabled:opacity-50"
-              type="button"
-            >
-              {walletSigningIn ? 'Signing...' : 'Sign in with ETH'}
-            </button>
-          </div>
         </div>
-      ) : (
+      ) : null}
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => onSignIn('ethereum')}
-          className="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left transition-all hover:border-gray-600 hover:bg-gray-800/50 group"
+          disabled={walletSigningIn}
+          className="flex items-center justify-center gap-2 rounded-xl border border-[#627eea]/30 bg-[#627eea]/10 px-4 py-3 text-sm font-semibold text-[#627eea] transition-all hover:bg-[#627eea]/20 disabled:opacity-50"
           type="button"
         >
-          <span className="text-2xl text-[#627eea]">◆</span>
-          <div className="flex-1">
-            <div className="text-sm font-semibold text-white group-hover:text-degen-400 transition-colors">Connect Wallet</div>
-            <div className="text-xs text-gray-500">MetaMask, WalletConnect, or any EVM wallet</div>
-          </div>
-          <span className="text-xs text-gray-600">→</span>
+          <span className="text-lg">◆</span>
+          {walletSigningIn ? 'Signing...' : 'Ethereum'}
         </button>
-      )}
+        <button
+          onClick={() => onSignIn('solana')}
+          disabled={walletSigningIn}
+          className="flex items-center justify-center gap-2 rounded-xl border border-[#9945ff]/30 bg-[#9945ff]/10 px-4 py-3 text-sm font-semibold text-[#9945ff] transition-all hover:bg-[#9945ff]/20 disabled:opacity-50"
+          type="button"
+        >
+          <span className="text-lg">◎</span>
+          {walletSigningIn ? 'Signing...' : 'Solana'}
+        </button>
+      </div>
+      <p className="text-center text-xs text-gray-600">
+        No emails, no passwords. Sign in with your wallet.
+      </p>
     </div>
   );
 }
 
-export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSigningIn }: SignInModalProps) {
+export function SignInModal({
+  open,
+  onClose,
+  onSignIn,
+  walletAddress,
+  walletSigningIn,
+}: SignInModalProps) {
   const [selectedProtocol, setSelectedProtocol] = useState<ProtocolOption | null>(null);
 
   if (!open) return null;
@@ -408,16 +681,25 @@ export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSign
   return (
     <section
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      onClick={() => { setSelectedProtocol(null); onClose(); }}
-      onKeyDown={(e) => e.key === 'Escape' && (setSelectedProtocol(null), onClose())}
+      onClick={() => {
+        setSelectedProtocol(null);
+        onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          setSelectedProtocol(null);
+          onClose();
+        }
+      }}
       aria-modal="true"
       aria-label="Sign in to DegenFeed"
+      role="dialog"
     >
       <div
         className="mx-4 w-full max-w-lg rounded-2xl border border-gray-800 bg-gray-950 p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        role="presentation"
+        role="dialog"
       >
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -425,47 +707,38 @@ export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSign
               {selectedProtocol ? `Sign in with ${selectedProtocol.label}` : 'Sign In'}
             </h2>
             <p className="text-sm text-gray-500">
-              {selectedProtocol ? selectedProtocol.description : 'Connect an account to like, reply, and post. Link multiple to cross-post.'}
+              {selectedProtocol
+                ? selectedProtocol.description
+                : 'Sign in with your wallet to post, tip, and cross-post across the open social graph.'}
             </p>
           </div>
           <button
-            onClick={() => { setSelectedProtocol(null); onClose(); }}
+            onClick={() => {
+              setSelectedProtocol(null);
+              onClose();
+            }}
             className="rounded-lg p-2 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
             aria-label="Close"
             type="button"
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" role="img" aria-label="Close icon">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              role="img"
+              aria-label="Close icon"
+            >
               <title>Close</title>
-              <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M15 5L5 15M5 5l10 10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
-
-        {selectedProtocol ? (
-          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-white/5">
-            <span className="text-2xl" style={{ color: selectedProtocol.color }}>{selectedProtocol.icon}</span>
-            <span className="text-sm font-medium" style={{ color: selectedProtocol.color }}>{selectedProtocol.label}</span>
-          </div>
-        ) : (
-          <div className="mb-6 space-y-2">
-            <h3 className="text-xs font-medium uppercase tracking-widest text-gray-500">Social Protocols</h3>
-            {PROTOCOLS.filter((p) => p.method !== 'wallet').map((proto) => (
-              <button
-                key={proto.id}
-                onClick={() => handleProtocolClick(proto)}
-                className="flex w-full items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left transition-all hover:border-gray-600 hover:bg-gray-800/50 group"
-                type="button"
-              >
-                <span className="text-2xl" style={{ color: proto.color }}>{proto.icon}</span>
-                <div className="flex-1">
-                  <div className="text-sm font-semibold text-white group-hover:text-degen-400 transition-colors">{proto.label}</div>
-                  <div className="text-xs text-gray-500">{proto.description}</div>
-                </div>
-                <span className="text-xs text-gray-600">→</span>
-              </button>
-            ))}
-          </div>
-        )}
 
         {selectedProtocol ? (
           <ProtocolForm
@@ -482,14 +755,40 @@ export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSign
                 walletSigningIn={walletSigningIn}
               />
             </div>
+
             <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-800" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-gray-950 px-3 text-xs text-gray-600">or</span>
+                <span className="bg-gray-950 px-3 text-xs text-gray-600">
+                  or link a social protocol
+                </span>
               </div>
             </div>
+
+            <div className="mb-6 space-y-2">
+              {PROTOCOLS.filter((p) => p.method !== 'wallet').map((proto) => (
+                <button
+                  key={proto.id}
+                  onClick={() => handleProtocolClick(proto)}
+                  className="flex w-full items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left transition-all hover:border-gray-600 hover:bg-gray-800/50 group"
+                  type="button"
+                >
+                  <span className="text-2xl" style={{ color: proto.color }}>
+                    {proto.icon}
+                  </span>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-white group-hover:text-degen-400 transition-colors">
+                      {proto.label}
+                    </div>
+                    <div className="text-xs text-gray-500">{proto.description}</div>
+                  </div>
+                  <span className="text-xs text-gray-600">→</span>
+                </button>
+              ))}
+            </div>
+
             <a
               href="/api/auth/gotosocial/register"
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-degen-500/30 bg-degen-500/10 px-4 py-3 text-sm font-semibold text-degen-400 transition-all hover:bg-degen-500/20 hover:border-degen-500/50"
@@ -498,13 +797,18 @@ export function SignInModal({ open, onClose, onSignIn, walletAddress, walletSign
               Create free @degenfeed.xyz account
               <span className="text-xs text-degen-600">(30 seconds)</span>
             </a>
-            <p className="mt-2 text-center text-xs text-gray-600">Powered by GotoSocial. No email required.</p>
+            <p className="mt-2 text-center text-xs text-gray-600">
+              Powered by GotoSocial. No email required.
+            </p>
           </>
         )}
 
         {!selectedProtocol && (
           <p className="mt-6 text-center text-xs text-gray-600">
-            No account needed to browse. <a href="/home" className="text-degen-500 hover:underline">Start reading now</a>
+            No account needed to browse.{' '}
+            <a href="/home" className="text-degen-500 hover:underline">
+              Start reading now
+            </a>
           </p>
         )}
       </div>

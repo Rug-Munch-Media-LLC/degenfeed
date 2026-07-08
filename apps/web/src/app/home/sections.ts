@@ -269,7 +269,8 @@ export const SECTIONS: FeedSection[] = [
     label: 'Reddit',
     icon: 'R',
     color: '#ff4500',
-    description: 'Reddit crypto hot posts (r/CryptoCurrency, r/Bitcoin, r/ethereum, r/solana, r/defi)',
+    description:
+      'Reddit crypto hot posts (r/CryptoCurrency, r/Bitcoin, r/ethereum, r/solana, r/defi)',
     endpoint: '/api/feed/home',
     limit: 25,
     params: { protocols: 'reddit' },

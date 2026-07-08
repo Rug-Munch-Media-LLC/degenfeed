@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 interface IdentityResult {
   id: string;
@@ -12,8 +12,13 @@ interface IdentityResult {
 
 function protocolColor(p: string): string {
   const c: Record<string, string> = {
-    nostr: '#8e30eb', farcaster: '#8a63d2', lens: '#abfe2c',
-    bluesky: '#1185fe', threads: '#888', mastodon: '#6364ff', rss: '#ffa500',
+    nostr: '#8e30eb',
+    farcaster: '#8a63d2',
+    lens: '#abfe2c',
+    bluesky: '#1185fe',
+    threads: '#888',
+    mastodon: '#6364ff',
+    rss: '#ffa500',
   };
   return c[p] ?? '#666';
 }
@@ -24,14 +29,19 @@ export function IdentityLinker({ onSignIn }: { onSignIn?: () => void }) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const doSearch = useCallback(async (q: string) => {
-    if (q.length < 2) { setResults([]); return; }
+    if (q.length < 2) {
+      setResults([]);
+      return;
+    }
     setLoading(true);
     try {
-      const res = await fetch(`/api/search/identity?q=${encodeURIComponent(q)}&limit=5`, { credentials: 'include' });
-      const data = await res.json() as { data?: IdentityResult[] };
+      const res = await fetch(`/api/search/identity?q=${encodeURIComponent(q)}&limit=5`, {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { data?: IdentityResult[] };
       setResults(data.data ?? []);
     } catch {
       setResults([]);
@@ -39,32 +49,44 @@ export function IdentityLinker({ onSignIn }: { onSignIn?: () => void }) {
     setLoading(false);
   }, []);
 
-  const handleChange = useCallback((val: string) => {
-    setQuery(val);
-    setOpen(true);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => doSearch(val), 300);
-  }, [doSearch]);
+  const handleChange = useCallback(
+    (val: string) => {
+      setQuery(val);
+      setOpen(true);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => doSearch(val), 300);
+    },
+    [doSearch],
+  );
 
-  const handleSelect = useCallback((_result: IdentityResult) => {
-    setQuery('');
-    setResults([]);
-    setOpen(false);
-    onSignIn?.();
-  }, [onSignIn]);
+  const handleSelect = useCallback(
+    (_result: IdentityResult) => {
+      setQuery('');
+      setResults([]);
+      setOpen(false);
+      onSignIn?.();
+    },
+    [onSignIn],
+  );
 
   return (
     <div className="relative">
-      <label className="mb-2 block text-xs font-semibold uppercase tracking-widest text-gray-500">
+      <label
+        htmlFor="identity-link-input"
+        className="mb-2 block text-xs font-semibold uppercase tracking-widest text-gray-500"
+      >
         Link Another Identity
       </label>
       <div className="relative">
         <input
+          id="identity-link-input"
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => handleChange(e.target.value)}
-          onFocus={() => { if (results.length > 0) setOpen(true); }}
+          onFocus={() => {
+            if (results.length > 0) setOpen(true);
+          }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           placeholder="Search by handle, address, or name..."
           className="input pr-10"
@@ -85,17 +107,25 @@ export function IdentityLinker({ onSignIn }: { onSignIn?: () => void }) {
             >
               <div
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                style={{ backgroundColor: `${protocolColor(r.protocol)}22`, color: protocolColor(r.protocol) }}
+                style={{
+                  backgroundColor: `${protocolColor(r.protocol)}22`,
+                  color: protocolColor(r.protocol),
+                }}
               >
                 {r.displayName?.[0]?.toUpperCase() || '?'}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-white truncate">{r.displayName || r.handle || r.id}</div>
+                <div className="text-sm font-medium text-white truncate">
+                  {r.displayName || r.handle || r.id}
+                </div>
                 <div className="text-xs text-gray-500">{r.handle || r.protocol}</div>
               </div>
               <span
                 className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
-                style={{ backgroundColor: `${protocolColor(r.protocol)}22`, color: protocolColor(r.protocol) }}
+                style={{
+                  backgroundColor: `${protocolColor(r.protocol)}22`,
+                  color: protocolColor(r.protocol),
+                }}
               >
                 {r.protocol}
               </span>

@@ -1,28 +1,95 @@
 import { type Env, getGtsConfig, jsonResponse } from '../index';
 
+const STATE_KEY_PREFIX = 'gts:state:';
+const STATE_TTL_SECONDS = 600; // 10 minutes
+
+function generateState(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function storeState(env: Env, state: string): Promise<void> {
+  if (!env.CACHE) return; // dev mode: skip state persistence
+  try {
+    await env.CACHE.put(STATE_KEY_PREFIX + state, '1', {
+      expirationTtl: STATE_TTL_SECONDS,
+    });
+  } catch {
+    /* KV hiccup — fall through; we'll fail-closed on callback */
+  }
+}
+
+async function consumeState(env: Env, state: string): Promise<boolean> {
+  if (!env.CACHE) return true; // dev mode: trust all states
+  try {
+    const existing = await env.CACHE.get(STATE_KEY_PREFIX + state);
+    if (!existing) return false;
+    // Best-effort delete to prevent replay.
+    await env.CACHE.delete(STATE_KEY_PREFIX + state);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * GET /api/auth/gotosocial/authorize?redirect=...
+ *
+ * Generates a CSRF `state` nonce, stores it in KV, and returns the
+ * authorize URL the client should redirect the user to. The `state`
+ * parameter must be echoed back to /api/auth/gotosocial/callback.
+ */
 export async function handleGtSAuthorize(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const redirect = url.searchParams.get('redirect') || getGtsConfig(env).redirectUri;
   const devMode = url.searchParams.get('dev') === 'true';
 
-  const authorizeUrl = devMode
-    ? `http://127.0.0.1:8082/oauth/authorize?client_id=${getGtsConfig(env).clientId}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&scope=${getGtsConfig(env).scopes}`
-    : `https://social.degenfeed.xyz/oauth/authorize?client_id=${getGtsConfig(env).clientId}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&scope=${getGtsConfig(env).scopes}`;
+  const state = generateState();
+  await storeState(env, state);
 
-  return jsonResponse({ authorizeUrl, instanceUrl: getGtsConfig(env).instanceUrl, dev: devMode });
+  const params = new URLSearchParams({
+    client_id: getGtsConfig(env).clientId,
+    redirect_uri: devMode ? 'urn:ietf:wg:oauth:2.0:oob' : redirect,
+    response_type: 'code',
+    scope: getGtsConfig(env).scopes,
+    state,
+  });
+  const authorizeUrl = devMode
+    ? `http://127.0.0.1:8082/oauth/authorize?${params.toString()}`
+    : `https://social.degenfeed.xyz/oauth/authorize?${params.toString()}`;
+
+  return jsonResponse({
+    authorizeUrl,
+    state,
+    instanceUrl: getGtsConfig(env).instanceUrl,
+    dev: devMode,
+  });
 }
 
 /**
  * POST /api/auth/gotosocial/callback
- * Exchange an OAuth authorization code for an access token.
- * Body: { code: string, redirect_uri?: string }
+ * Body: { code: string, state: string, redirect_uri?: string }
+ *
+ * Verifies the `state` nonce against KV (CSRF protection) before exchanging
+ * the OAuth authorization code for an access token.
  */
-
 export async function handleGtSCallback(request: Request, env: Env): Promise<Response> {
   try {
-    const body = (await request.json()) as { code: string; redirect_uri?: string };
+    const body = (await request.json()) as {
+      code?: string;
+      state?: string;
+      redirect_uri?: string;
+    };
     if (!body.code) {
       return jsonResponse({ error: 'Missing authorization code' }, 400);
+    }
+    if (!body.state) {
+      return jsonResponse({ error: 'Missing state nonce' }, 400);
+    }
+
+    const stateValid = await consumeState(env, body.state);
+    if (!stateValid) {
+      return jsonResponse({ error: 'Invalid or expired state' }, 400);
     }
 
     const redirectUri = body.redirect_uri || getGtsConfig(env).redirectUri;
@@ -79,29 +146,35 @@ export async function handleGtSCallback(request: Request, env: Env): Promise<Res
 
 /**
  * POST /api/auth/gotosocial/register
- * Proxy for creating a new account on GotoSocial.
- * This requires an admin token (stored server-side).
- *
- * For v1, this proxies the standard OAuth registration flow.
- * Returns the authorization URL the user should visit.
+ * Generates a state nonce and the authorize URL the user should visit.
+ * The state must be echoed back to /api/auth/gotosocial/callback.
  */
-
 export async function handleGtSRegister(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const redirect = url.searchParams.get('redirect') || getGtsConfig(env).redirectUri;
   const devMode = url.searchParams.get('dev') === 'true';
 
+  const state = generateState();
+  await storeState(env, state);
+
+  const params = new URLSearchParams({
+    client_id: getGtsConfig(env).clientId,
+    redirect_uri: devMode ? 'urn:ietf:wg:oauth:2.0:oob' : redirect,
+    response_type: 'code',
+    scope: getGtsConfig(env).scopes,
+    state,
+    sign_up: 'true',
+  });
   const authorizeUrl = devMode
-    ? `http://127.0.0.1:8082/oauth/authorize?client_id=${getGtsConfig(env).clientId}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&scope=${getGtsConfig(env).scopes}&sign_up=true`
-    : `https://social.degenfeed.xyz/oauth/authorize?client_id=${getGtsConfig(env).clientId}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&scope=${getGtsConfig(env).scopes}&sign_up=true`;
+    ? `http://127.0.0.1:8082/oauth/authorize?${params.toString()}`
+    : `https://social.degenfeed.xyz/oauth/authorize?${params.toString()}`;
 
   return jsonResponse({
     success: true,
     message:
       'Redirect user to the authorize URL. They will be prompted to sign up if they do not have an account.',
     authorizeUrl,
+    state,
     instanceUrl: getGtsConfig(env).instanceUrl,
   });
 }
-
-// ─── Feed Handlers ─────────────────────────────────────────────────────

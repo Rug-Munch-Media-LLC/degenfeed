@@ -13,13 +13,11 @@
  *   GET /api/rmi/news/stats     → /api/v1/news/stats
  *   GET /api/rmi/health         → rmi-backend up check
  */
-import { rmiUrl } from '@degenfeed/utils';
+
 import { RmiDataBusProvider, type RmiFeedResponse } from '@degenfeed/feed-providers';
-import type { Env, UnifiedPost } from '../index';
-import { jsonResponse, type Env as WorkerEnv } from '../index';
-
-const DEFAULT_RMI_URL = 'http://127.0.0.1:8000';
-
+import { rmiUrl } from '@degenfeed/utils';
+import type { Env } from '../index';
+import { jsonResponse } from '../index';
 
 function provider(env: Env): RmiDataBusProvider {
   return new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
@@ -35,7 +33,6 @@ export async function handleRmiNews(request: Request, env: Env): Promise<Respons
   const refresh = url.searchParams.get('refresh') === 'true';
 
   try {
-    const p = provider(env);
     const backendUrl = buildUrl(rmiUrl(env), '/api/v1/news/feed', {
       limit: String(limit),
       ...(category ? { category } : {}),

@@ -1,7 +1,13 @@
 import { detectNiches } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions } from '../types';
-import { DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchRss, withConcurrencyLimit, withTimeout } from '../utils';
+import {
+  DEFAULT_TIMEOUT_MS,
+  DEFAULT_USER_AGENT,
+  fetchRss,
+  withConcurrencyLimit,
+  withTimeout,
+} from '../utils';
 
 export const DEFAULT_CRYPTO_FEEDS = [
   // Tier 1 — Major outlets
@@ -317,23 +323,19 @@ export class RssProvider implements FeedProvider {
     const concurrency = opts.concurrency ?? 4;
     const posts: UnifiedPost[] = [];
 
-    const results = await withConcurrencyLimit(
-      this.feeds,
-      concurrency,
-      async (feedUrl) => {
-        try {
-          const xml = await withTimeout(
-            fetchRss(feedUrl, { headers: { 'user-agent': DEFAULT_USER_AGENT, ...opts.headers } }),
-            timeoutMs,
-            `rss:${feedUrl}`,
-          );
-          const feed = parseRss(xml);
-          return feedToUnifiedPosts(feedUrl, feed);
-        } catch {
-          return [] as UnifiedPost[];
-        }
-      },
-    );
+    const results = await withConcurrencyLimit(this.feeds, concurrency, async (feedUrl) => {
+      try {
+        const xml = await withTimeout(
+          fetchRss(feedUrl, { headers: { 'user-agent': DEFAULT_USER_AGENT, ...opts.headers } }),
+          timeoutMs,
+          `rss:${feedUrl}`,
+        );
+        const feed = parseRss(xml);
+        return feedToUnifiedPosts(feedUrl, feed);
+      } catch {
+        return [] as UnifiedPost[];
+      }
+    });
     for (const r of results) posts.push(...r);
 
     return { posts };

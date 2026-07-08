@@ -16,30 +16,18 @@
  * ranked by the v2 algorithm, and formatted for email consumption.
  */
 
-import { rmiUrl } from '@degenfeed/utils';
 import {
   deduplicatePosts,
   enrichPostNiches,
   isRelevantPost,
   isSpamPost,
 } from '@degenfeed/feed-core';
-import {
-  RmiDataBusProvider,
-  RssProvider,
-} from '@degenfeed/feed-providers';
+import { RmiDataBusProvider, RssProvider } from '@degenfeed/feed-providers';
 import { computeTrendingTopics, rankDiverse } from '@degenfeed/ranking';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
-import { type Env, jsonResponse } from '../index';
-
-const DEFAULT_PROTOCOLS: Protocol[] = [
-  'rss',
-  'nostr',
-  'farcaster',
-  'lens',
-  'bluesky',
-  'mastodon',
-  'threads',
-];
+import { rmiUrl } from '@degenfeed/utils';
+import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { DEFAULT_PROTOCOLS, getProvider } from './feed';
 
 const ALLOWED_NICHES = new Set([
   'bitcoin',
@@ -58,7 +46,6 @@ const ALLOWED_NICHES = new Set([
   'onchain',
   'crypto',
 ]);
-
 
 function isValidEmail(s: string): boolean {
   if (typeof s !== 'string') return false;
@@ -136,38 +123,63 @@ async function gatherDigestPosts(
   const all: UnifiedPost[] = [];
   const timeoutMs = 5000;
 
-  // RMI DataBus (institutional-grade news, 200+ sources)
+  // RMI DataBus (institutional-grade news, 200+ sources) — only reachable from internal network.
   try {
-    const rmi = new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
-    const r = await rmi.fetchFeed({ timeoutMs });
-    if (r.posts.length > 0) all.push(...r.posts);
+    const rmiUrlValue = rmiUrl(env);
+    const rmiConfigured =
+      rmiUrlValue && !rmiUrlValue.includes('127.0.0.1') && !rmiUrlValue.includes('localhost');
+    if (rmiConfigured) {
+      const rmi = new RmiDataBusProvider({ backendUrl: rmiUrlValue });
+      const r = await rmi.fetchFeed({ timeoutMs });
+      if (r.posts.length > 0) all.push(...r.posts);
+    }
   } catch {
     /* RMI unavailable from edge */
   }
 
-  // Public RSS feeds (fast, reliable)
-  const fastFeeds = [
-    'https://cointelegraph.com/rss',
-    'https://decrypt.co/feed',
-    'https://bitcoinmagazine.com/.rss/full/',
-    'https://blog.ethereum.org/feed.xml',
-    'https://blog.chain.link/feed/',
-    'https://bankless.substack.com/feed',
-    'https://weekinethereumnews.com/feed',
-  ];
-  const results = await Promise.allSettled(
-    fastFeeds.map(async (url) => {
-      try {
-        const rss = new RssProvider({ feeds: [url] });
-        const r = await rss.fetchFeed({ timeoutMs: 3000 });
-        return r.posts;
-      } catch {
-        return [] as UnifiedPost[];
-      }
-    }),
+  // Fetch from each selected protocol so the digest is truly multi-protocol.
+  const providerResults = await Promise.allSettled(
+    protocols
+      .filter((p) => p !== 'rss')
+      .map(async (protocol) => {
+        try {
+          const provider = getProvider(protocol, env);
+          const result = await provider.fetchFeed({ timeoutMs, concurrency: 4 });
+          return result.posts;
+        } catch {
+          return [] as UnifiedPost[];
+        }
+      }),
   );
-  for (const r of results) {
+  for (const r of providerResults) {
     if (r.status === 'fulfilled') all.push(...r.value);
+  }
+
+  // Public RSS feeds (fast, reliable) — used when RSS is selected or as a fallback.
+  if (protocols.includes('rss')) {
+    const fastFeeds = [
+      'https://cointelegraph.com/rss',
+      'https://decrypt.co/feed',
+      'https://bitcoinmagazine.com/.rss/full/',
+      'https://blog.ethereum.org/feed.xml',
+      'https://blog.chain.link/feed/',
+      'https://bankless.substack.com/feed',
+      'https://weekinethereumnews.com/feed',
+    ];
+    const results = await Promise.allSettled(
+      fastFeeds.map(async (url) => {
+        try {
+          const rss = new RssProvider({ feeds: [url] });
+          const r = await rss.fetchFeed({ timeoutMs: 3000 });
+          return r.posts;
+        } catch {
+          return [] as UnifiedPost[];
+        }
+      }),
+    );
+    for (const r of results) {
+      if (r.status === 'fulfilled') all.push(...r.value);
+    }
   }
 
   let filtered = all.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
@@ -203,7 +215,7 @@ function buildDigestHtml(
 ): string {
   const list = posts
     .slice(0, 15)
-    .map((p, i) => {
+    .map((p) => {
       const link =
         p.embeds.find((e) => e.kind === 'link')?.url ||
         `https://degenfeed.xyz/post/${encodeURIComponent(p.id)}`;
@@ -376,10 +388,12 @@ export async function handleNewsletterDigest(request: Request, env: Env): Promis
         .filter((p): p is Protocol => DEFAULT_PROTOCOLS.includes(p as Protocol))
     : DEFAULT_PROTOCOLS;
 
-  const cacheKey = `newsletter:digest:v2:${niches.join(',') || 'all'}:${protocols.join(',')}:${new Date().toDateString()}`;
+  // Cache bucketed to 5 minutes so preview loads stay fast but never stale.
+  const fiveMinBucket = Math.floor(Date.now() / (1000 * 60 * 5));
+  const cacheKey = `newsletter:digest:v3:${niches.join(',') || 'all'}:${protocols.join(',')}:${fiveMinBucket}`;
   try {
     const cached = await env.CACHE?.get(cacheKey);
-    if (cached && fmt === 'json') return jsonResponse(JSON.parse(cached));
+    if (cached && fmt === 'json') return noCacheJsonResponse(JSON.parse(cached));
   } catch {
     /* ignore */
   }
@@ -394,7 +408,7 @@ export async function handleNewsletterDigest(request: Request, env: Env): Promis
       status: 200,
       headers: {
         'content-type': 'text/html; charset=utf-8',
-        'cache-control': 'public, max-age=600',
+        'cache-control': 'no-store, must-revalidate',
       },
     });
   }
@@ -404,7 +418,7 @@ export async function handleNewsletterDigest(request: Request, env: Env): Promis
       status: 200,
       headers: {
         'content-type': 'text/plain; charset=utf-8',
-        'cache-control': 'public, max-age=600',
+        'cache-control': 'no-store, must-revalidate',
       },
     });
   }
@@ -431,11 +445,11 @@ export async function handleNewsletterDigest(request: Request, env: Env): Promis
     },
   };
   try {
-    await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 600 });
+    await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
   } catch {
     /* ignore */
   }
-  return jsonResponse(response);
+  return noCacheJsonResponse(response);
 }
 
 export async function handleNewsletterStatus(_request: Request, env: Env): Promise<Response> {

@@ -10,7 +10,7 @@
  * includes 'rss' (via RssProvider) and this provider can be added
  * alongside it for the dedicated RMI signal.
  */
-import { buildUnifiedPost, detectNiches } from '@degenfeed/feed-core';
+import { detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
@@ -100,7 +100,7 @@ function authorFromSource(source: string): UnifiedIdentity {
   };
 }
 
-function articleToUnifiedPost(a: RmiArticle, backendUrl: string): UnifiedPost | null {
+function articleToUnifiedPost(a: RmiArticle, _backendUrl: string): UnifiedPost | null {
   const title = (a.title ?? '').trim();
   const url = (a.url ?? '').trim();
   if (!title || !url) return null;

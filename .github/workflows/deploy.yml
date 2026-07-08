@@ -1,0 +1,115 @@
+name: Deploy
+
+# Deploy the worker to a Cloudflare preview environment on every PR,
+# and to production on every push to main. The worker is the single
+# source of truth for the API surface (degenfeed.xyz/api/* and
+# app.degenfeed.xyz/api/*). The Next.js frontend is built separately
+# (see the Pages deploy job below).
+#
+# Required GitHub Actions secrets (Settings → Secrets → Actions):
+#   CLOUDFLARE_API_TOKEN      — Cloudflare API token with Workers Scripts:Edit
+#                                and Workers KV Storage:Edit scopes
+#   CLOUDFLARE_ACCOUNT_ID     — Cloudflare account id (32 hex chars)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    # PR build → deploy to a Cloudflare Workers preview environment so the
+    # PR has a stable URL to test against. PRs don't get a custom domain;
+    # the preview URL is `https://degenfeed-api-preview.<workers subdomain>`.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: preview
+      url: ${{ steps.deploy.outputs.deployment-url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm --filter @degenfeed/api-worker typecheck
+
+      - name: Test
+        run: pnpm --filter @degenfeed/api-worker test
+
+      - name: Build (dry-run)
+        run: pnpm --filter @degenfeed/api-worker build
+
+      - name: Deploy worker (preview)
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/api
+          command: deploy --env preview --var ALLOWED_ORIGINS:https://preview.degenfeed.xyz,https://app.preview.degenfeed.xyz
+          # Note: AUTH_SECRET and GTS_CLIENT_SECRET must already exist as
+          # encrypted secrets on the preview environment (set once via
+          # `wrangler secret put`). This job never sees them in plaintext.
+
+  production:
+    # main → deploy to production with the routes configured in wrangler.toml.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://degenfeed.xyz
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: pnpm/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm --filter @degenfeed/api-worker typecheck
+
+      - name: Test
+        run: pnpm --filter @degenfeed/api-worker test
+
+      - name: Build (dry-run)
+        run: pnpm --filter @degenfeed/api-worker build
+
+      - name: Deploy worker (production)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/api
+          command: deploy
+          # Secrets (AUTH_SECRET, GTS_CLIENT_SECRET) must already be set
+          # via `wrangler secret put` before the first deploy. They live
+          # only on the Cloudflare side; this job never sees plaintext.
+
+  notify-failure:
+    if: failure()
+    runs-on: ubuntu-latest
+    needs: [preview, production]
+    steps:
+      - name: Ping on deploy failure
+        run: |
+          echo "::error::Deploy failed for ${{ github.ref }} — see run logs"
+          # Add Slack/Discord/PagerDuty webhook here when ready.
+          exit 1

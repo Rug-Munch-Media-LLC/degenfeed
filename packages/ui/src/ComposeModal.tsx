@@ -19,7 +19,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getProtocolColor } from './ProtocolBadge';
+import { ComposePreview } from './ComposePreview';
+import { getProtocolColor, getProtocolIcon } from './ProtocolBadge';
 
 interface ComposeTarget {
   id: string;
@@ -51,12 +52,33 @@ export interface ComposeModalProps {
     text: string,
     targets: string[],
   ) => Promise<Record<string, { ok: boolean; error?: string }>>;
+  /** Called when a disconnected protocol is clicked. */
+  onRequestSignIn?: (protocol: string) => void;
+  /** Primary identity used for publish preview. */
+  primaryIdentity?: {
+    displayName?: string;
+    handle?: string;
+    avatarUrl?: string;
+  };
+  /** Public key of the user's Nostr identity, if any. Used to enable the bridge toggle. */
+  nostrBridgePublicId?: string;
+  /** Called when the bridge toggle fires. Receives the trimmed post text. */
+  onNostrBridge?: (text: string) => void | Promise<void>;
 }
 
 const DRAFT_KEY = 'degenfeed_compose_draft';
 const MAX_CHARS = 50000;
 
-export function ComposeModal({ open, onClose, signedInProtocols, onPublish }: ComposeModalProps) {
+export function ComposeModal({
+  open,
+  onClose,
+  signedInProtocols,
+  onPublish,
+  onRequestSignIn,
+  primaryIdentity,
+  nostrBridgePublicId,
+  onNostrBridge,
+}: ComposeModalProps) {
   const [text, setText] = useState('');
   const [targets, setTargets] = useState<ComposeTarget[]>(() =>
     TARGETS.map((t) => ({
@@ -69,6 +91,7 @@ export function ComposeModal({ open, onClose, signedInProtocols, onPublish }: Co
   const [publishing, setPublishing] = useState(false);
   const publishingRef = useRef(false);
   const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [bridgeToNostr, setBridgeToNostr] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Load draft from localStorage
@@ -126,11 +149,21 @@ export function ComposeModal({ open, onClose, signedInProtocols, onPublish }: Co
     [text],
   );
 
-  const toggleTarget = useCallback((id: string) => {
-    setTargets((prev) =>
-      prev.map((t) => (t.id === id && t.connected ? { ...t, enabled: !t.enabled } : t)),
-    );
-  }, []);
+  const toggleTarget = useCallback(
+    (id: string) => {
+      setTargets((prev) =>
+        prev.map((t) => {
+          if (t.id !== id) return t;
+          if (!t.connected) {
+            onRequestSignIn?.(id);
+            return t;
+          }
+          return { ...t, enabled: !t.enabled };
+        }),
+      );
+    },
+    [onRequestSignIn],
+  );
 
   const handlePublish = useCallback(async () => {
     if (!text.trim() || publishingRef.current) return;
@@ -156,6 +189,19 @@ export function ComposeModal({ open, onClose, signedInProtocols, onPublish }: Co
       );
 
       const allOk = selectedTargets.every((id) => results[id]?.ok);
+      // Mastodon -> Nostr bridge: fire locally-signed Nostr note in parallel
+      if (
+        bridgeToNostr &&
+        nostrBridgePublicId &&
+        selectedTargets.includes('mastodon') &&
+        results.mastodon?.ok !== false
+      ) {
+        try {
+          await onNostrBridge?.(text);
+        } catch {
+          /* bridge failure is non-fatal — main post already went out */
+        }
+      }
       if (allOk) {
         // Clear draft on success
         try {
@@ -175,7 +221,7 @@ export function ComposeModal({ open, onClose, signedInProtocols, onPublish }: Co
       publishingRef.current = false;
       setPublishing(false);
     }
-  }, [text, targets, onPublish, onClose]);
+  }, [text, targets, onPublish, onClose, bridgeToNostr, nostrBridgePublicId, onNostrBridge]);
 
   // Keyboard shortcut
   useEffect(() => {
@@ -203,12 +249,13 @@ export function ComposeModal({ open, onClose, signedInProtocols, onPublish }: Co
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
       aria-modal="true"
       aria-label="Compose post"
+      role="dialog"
     >
       <div
         className="flex w-full max-w-lg flex-col rounded-t-2xl border border-gray-800 bg-gray-950 shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
-        role="presentation"
+        role="dialog"
         style={{ maxHeight: '90vh' }}
       >
         {/* Header */}
@@ -292,46 +339,96 @@ export function ComposeModal({ open, onClose, signedInProtocols, onPublish }: Co
         {hasSignedIn && (
           <div className="border-t border-gray-800 px-4 py-3">
             <div className="mb-3 flex flex-wrap gap-2">
-              {targets.map((target) => (
-                <button
-                  key={target.id}
-                  type="button"
-                  disabled={!target.connected}
-                  onClick={() => toggleTarget(target.id)}
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
-                    target.enabled
-                      ? 'border-current opacity-100'
-                      : 'border-gray-800 opacity-40 hover:opacity-70'
-                  }`}
-                  style={{
-                    color: target.connected ? getProtocolColor(target.id) : '#666',
-                    backgroundColor: target.enabled
-                      ? `${getProtocolColor(target.id)}15`
-                      : 'transparent',
-                  }}
-                  title={
-                    !target.connected
-                      ? `Not connected — sign in with ${target.label}`
-                      : `${target.label} (${text.length}/${target.charLimit})`
-                  }
-                >
-                  {target.status === 'sending' && '\u23F3'}
-                  {target.status === 'sent' && '\u2713'}
-                  {target.status === 'failed' && '\u2717'}
-                  {target.label}
-                  <span className="text-[0.65rem] opacity-60">
-                    {text.length}/{target.charLimit}
-                  </span>
-                </button>
-              ))}
+              {targets.map((target) => {
+                const overLimit = target.enabled && text.length > target.charLimit;
+                return (
+                  <button
+                    key={target.id}
+                    type="button"
+                    onClick={() => toggleTarget(target.id)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
+                      target.enabled
+                        ? 'border-current opacity-100'
+                        : 'border-gray-800 opacity-40 hover:opacity-70'
+                    }`}
+                    style={{
+                      color: target.connected
+                        ? overLimit
+                          ? '#f87171'
+                          : getProtocolColor(target.id)
+                        : '#666',
+                      backgroundColor: target.enabled
+                        ? `${getProtocolColor(target.id)}15`
+                        : 'transparent',
+                    }}
+                    title={
+                      !target.connected
+                        ? `Not connected — sign in with ${target.label}`
+                        : `${target.label} (${text.length}/${target.charLimit})`
+                    }
+                  >
+                    {target.status === 'sending' && '\u23F3'}
+                    {target.status === 'sent' && '\u2713'}
+                    {target.status === 'failed' && '\u2717'}
+                    {!target.connected ? (
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M8 1C5.5 1 3.5 3 3.5 5.5v2C3 8 2 8.5 2 10v3h12v-3c0-1.5-1-2-1.5-2.5v-2C12.5 3 10.5 1 8 1zM8 13.5c-1 0-1.8-.8-1.8-1.8h3.6c0 1-.8 1.8-1.8 1.8z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    ) : (
+                      <span className="text-[0.7em]">{getProtocolIcon(target.id)}</span>
+                    )}
+                    {target.label}
+                    <span className="text-[0.65rem] opacity-60">
+                      {text.length}/{target.charLimit}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
+            {targets.find((t) => t.id === 'mastodon')?.enabled && nostrBridgePublicId && (
+              <label className="mb-3 flex items-center gap-2 text-xs text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={bridgeToNostr}
+                  onChange={(e) => setBridgeToNostr(e.target.checked)}
+                  className="h-3 w-3 rounded border-white/20 bg-gray-900 text-degen-500 focus:ring-degen-500"
+                />
+                <span>
+                  Also cross-post to <span className="font-medium text-white">Nostr</span>
+                </span>
+                <span className="text-[10px] text-gray-600">
+                  (signed locally with your Nostr key)
+                </span>
+              </label>
+            )}
+
+            <ComposePreview
+              text={text}
+              targets={targets.map((t) => ({
+                id: t.id,
+                label: t.label,
+                charLimit: t.charLimit,
+                enabled: t.enabled,
+              }))}
+              author={text.trim() ? primaryIdentity : undefined}
+            />
+
             {/* Publish button */}
-            <div className="flex items-center justify-between">
+            <div className="mt-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span
                   className={`text-xs ${
-                    text.length > Math.max(...TARGETS.map((t) => t.charLimit))
+                    targets.some((t) => t.enabled && text.length > t.charLimit)
                       ? 'text-red-400'
                       : 'text-gray-500'
                   }`}
@@ -346,7 +443,11 @@ export function ComposeModal({ open, onClose, signedInProtocols, onPublish }: Co
                 type="button"
                 className="btn-primary text-sm disabled:opacity-50"
                 disabled={
-                  !text.trim() || publishing || selectedCount === 0 || text.length > MAX_CHARS
+                  !text.trim() ||
+                  publishing ||
+                  selectedCount === 0 ||
+                  text.length > MAX_CHARS ||
+                  targets.some((t) => t.enabled && text.length > t.charLimit)
                 }
                 onClick={handlePublish}
               >

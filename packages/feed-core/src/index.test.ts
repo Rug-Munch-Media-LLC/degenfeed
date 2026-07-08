@@ -99,5 +99,4 @@ describe('@degenfeed/feed-core', () => {
     });
     expect(deduplicatePosts([a, b])).toHaveLength(1);
   });
-
 });

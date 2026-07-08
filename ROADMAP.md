@@ -13,6 +13,8 @@
 - Core packages: types, feed-core, ranking, ui, identity, auth, storage
 - `/news` news aggregation
 - Wallet sign-in (Solana + EVM)
+- **Twitter/X-style timeline at `/twitter`** with inline composer and For You / Following tabs
+- New DegenFeed icon/logo wired across app and home page
 
 ## Week 1 — Polish and observability
 - Add `/health` route to `workers/api` and `apps/web`

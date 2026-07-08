@@ -17,7 +17,6 @@ import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../ty
 import {
   buildUrl,
   DEFAULT_TIMEOUT_MS,
-  DEFAULT_USER_AGENT,
   fetchJson,
   fetchRss,
   withConcurrencyLimit,
@@ -112,10 +111,12 @@ function parseRssXml(xml: string): RssItem[] {
     const entryXml = m[2] ?? '';
     const titleMatch = entryXml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const linkMatch = entryXml.match(/<link[^>]+href=["']([^"']+)["']/i);
-    const pubDateMatch = entryXml.match(/<updated[^>]*>([\s\S]*?)<\/updated>/i)
-      ?? entryXml.match(/<published[^>]*>([\s\S]*?)<\/published>/i);
-    const contentMatch = entryXml.match(/<content[^>]*>([\s\S]*?)<\/content>/i)
-      ?? entryXml.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
+    const pubDateMatch =
+      entryXml.match(/<updated[^>]*>([\s\S]*?)<\/updated>/i) ??
+      entryXml.match(/<published[^>]*>([\s\S]*?)<\/published>/i);
+    const contentMatch =
+      entryXml.match(/<content[^>]*>([\s\S]*?)<\/content>/i) ??
+      entryXml.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
     if (titleMatch && linkMatch) {
       items.push({
         title: stripHtml(titleMatch[1] ?? ''),
@@ -172,8 +173,13 @@ function itemToUnifiedPost(item: RssItem, subreddit: string, score = 0, comments
     id: `reddit:r:${subreddit}`,
     primary: { protocol: 'reddit' as Protocol, id: subreddit },
     handles: {
-      nostr: null, farcaster: null, lens: null, bluesky: null,
-      threads: null, rss: null, mastodon: null,
+      nostr: null,
+      farcaster: null,
+      lens: null,
+      bluesky: null,
+      threads: null,
+      rss: null,
+      mastodon: null,
     },
     displayName: `r/${subreddit}`,
     bio: item.author ? `Posted by u/${item.author}` : '',
@@ -198,7 +204,9 @@ function itemToUnifiedPost(item: RssItem, subreddit: string, score = 0, comments
     createdAt: parseDate(item.pubDate),
     metrics: { likes: score, reposts: 0, replies: comments, quotes: 0 },
     engagement: {
-      viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: { likes: score, reposts: 0, replies: comments, quotes: 0 },
     },
     raw: item,
@@ -238,8 +246,10 @@ async function fetchFromFrontend(
   return (data.posts ?? []).map((p) => {
     const sub = p.subreddit ?? subreddit;
     const link = p.permalink
-      ? p.permalink.startsWith('http') ? p.permalink : `${frontend}${p.permalink}`
-      : p.url ?? `https://www.reddit.com/r/${sub}`;
+      ? p.permalink.startsWith('http')
+        ? p.permalink
+        : `${frontend}${p.permalink}`
+      : (p.url ?? `https://www.reddit.com/r/${sub}`);
     const item: RssItem = {
       title: p.title,
       link,
@@ -355,17 +365,13 @@ export class RedditProvider implements FeedProvider {
     const limit = 50;
     const perSub = Math.ceil(limit / this.subreddits.length);
 
-    const results = await withConcurrencyLimit(
-      this.subreddits,
-      4,
-      async (sub) => {
-        try {
-          return await fetchSubreddit(sub, this.sort, perSub, timeoutMs);
-        } catch {
-          return [] as UnifiedPost[];
-        }
-      },
-    );
+    const results = await withConcurrencyLimit(this.subreddits, 4, async (sub) => {
+      try {
+        return await fetchSubreddit(sub, this.sort, perSub, timeoutMs);
+      } catch {
+        return [] as UnifiedPost[];
+      }
+    });
 
     const posts = results.flat().slice(0, limit);
     if (posts.length > 0) return { posts };

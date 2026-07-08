@@ -9,37 +9,43 @@
 
 // ─── Core re-exports ───────────────────────────────────────────────────
 
-export { generateSecretKey, getPublicKey, getEventHash, signEvent, verifyEvent } from './event';
-export { createTextNote, createReaction, createRepost, createDeletion } from './event';
-export { serializeEvent, deserializeEvent } from './event';
 export type { NostrEvent, UnsignedEvent } from './event';
-
-export { RelayPool } from './relay';
-export type {
-  RelaySubscription,
-  RelayEvent,
-  NostrFilter,
-  RelayPoolOptions,
-  RelayEventKind,
-} from './relay';
-
+export {
+  createDeletion,
+  createReaction,
+  createRepost,
+  createTextNote,
+  deserializeEvent,
+  generateSecretKey,
+  getEventHash,
+  getPublicKey,
+  serializeEvent,
+  signEvent,
+  verifyEvent,
+} from './event';
+export type { Nip05Result } from './nip05';
+export { parseNip05, resolveNip05, verifyNip05 } from './nip05';
+export type { Nip19Type, NsecDecodeResult } from './nip19';
 export {
   decodeNip19,
   encodeNip19,
-  npubEncode,
-  npubDecode,
-  nsecEncode,
-  nsecDecode,
-  noteEncode,
   noteDecode,
+  noteEncode,
+  npubDecode,
+  npubEncode,
+  nsecDecode,
+  nsecEncode,
 } from './nip19';
-export type { Nip19Type, NsecDecodeResult } from './nip19';
-
-export { parseNip05, resolveNip05, verifyNip05 } from './nip05';
-export type { Nip05Result } from './nip05';
-
-export { connectNostrConnect } from './nip46';
 export type { Nip46ConnectOptions } from './nip46';
+export { connectNostrConnect } from './nip46';
+export type {
+  NostrFilter,
+  RelayEvent,
+  RelayEventKind,
+  RelayPoolOptions,
+  RelaySubscription,
+} from './relay';
+export { RelayPool } from './relay';
 
 // ─── Normalizers ───────────────────────────────────────────────────────
 

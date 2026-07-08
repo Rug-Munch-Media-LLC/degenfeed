@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 interface EIP1193Provider {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;

@@ -1,19 +1,18 @@
 /**
  * @degenfeed/ui — FeedList
  *
- * Scrollable list of PostCards with loading, empty, and error states.
- * Supports infinite scroll, pull-to-refresh, protocol filtering, and
- * virtualized rendering (only visible posts are in the DOM).
+ * Renders a flat, scrollable list of PostCards. The previous implementation
+ * tried to virtualize a fixed-CARD_HEIGHT layout, which clipped real content
+ * because PostCard heights vary widely. Real scrolling + JSX lists perform
+ * fine for the 50–100 posts we load per page, so we render them all.
  *
- * States:
- *   loading  → Skeleton cards (animated pulses)
- *   loaded   → PostCard list (virtualized)
- *   empty    → Illustration + message + CTA
- *   error    → Error message + retry button
+ * States: loading (skeleton cards), loaded (real cards), empty (CTA), error
+ * (retry). `hasMore` + `onLoadMore` enables future infinite scroll without
+ * forcing virtualization today.
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { type EngageHandler, PostCard } from './PostCard';
 
 export type { UnifiedPost };
@@ -34,55 +33,74 @@ export interface FeedListProps {
   onLoadMore?: () => void;
 }
 
-const CARD_HEIGHT = 200;
-const OVERSCAN = 4;
-
 function SkeletonCard() {
   return (
-    <div className="card animate-pulse" style={{ height: CARD_HEIGHT }}>
+    <div className="border-b border-white/5 px-4 py-3">
       <div className="mb-3 flex items-center gap-3">
-        <div className="h-8 w-8 rounded-full bg-gray-800" />
+        <div className="h-10 w-10 animate-pulse rounded-full bg-gray-800" />
         <div className="flex-1">
-          <div className="mb-1 h-3 w-32 rounded bg-gray-800" />
-          <div className="h-2 w-20 rounded bg-gray-800" />
+          <div className="mb-1.5 h-3 w-32 animate-pulse rounded bg-gray-800" />
+          <div className="h-2.5 w-20 animate-pulse rounded bg-gray-800" />
         </div>
       </div>
-      <div className="mb-2 space-y-1.5">
-        <div className="h-3 w-full rounded bg-gray-800" />
-        <div className="h-3 w-4/5 rounded bg-gray-800" />
-        <div className="h-3 w-3/5 rounded bg-gray-800" />
+      <div className="mb-2 space-y-2">
+        <div className="h-3 w-full animate-pulse rounded bg-gray-800" />
+        <div className="h-3 w-11/12 animate-pulse rounded bg-gray-800" />
+        <div className="h-3 w-3/4 animate-pulse rounded bg-gray-800" />
       </div>
       <div className="flex gap-4">
-        <div className="h-3 w-12 rounded bg-gray-800" />
-        <div className="h-3 w-12 rounded bg-gray-800" />
-        <div className="h-3 w-12 rounded bg-gray-800" />
+        <div className="h-3 w-12 animate-pulse rounded bg-gray-800" />
+        <div className="h-3 w-12 animate-pulse rounded bg-gray-800" />
+        <div className="h-3 w-12 animate-pulse rounded bg-gray-800" />
       </div>
     </div>
   );
 }
 
-function EmptyState({ protocolLabel }: { protocolLabel?: string }) {
+function EmptyState({
+  protocolLabel,
+  onSignIn,
+}: {
+  protocolLabel?: string;
+  onSignIn?: () => void;
+}) {
   return (
-    <div className="card py-16 text-center">
-      <div className="mb-4 text-5xl opacity-30">{protocolLabel ? '○' : '◆'}</div>
-      <p className="mb-2 text-gray-500">
-        {protocolLabel ? `No ${protocolLabel} posts yet` : 'No posts yet'}
+    <div className="border-b border-white/5 px-4 py-16 text-center">
+      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-degen-500/10">
+        <span className="text-3xl text-degen-400">{protocolLabel ? '○' : '◆'}</span>
+      </div>
+      <h3 className="mb-2 text-lg font-semibold text-white">
+        {protocolLabel ? `No ${protocolLabel} posts yet` : 'The feed is warming up'}
+      </h3>
+      <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">
+        {protocolLabel
+          ? 'This network is quiet right now. Try another tab or sign in to compose.'
+          : 'Pulling the first posts from every network. This usually takes a few seconds.'}
       </p>
-      <p className="text-sm text-gray-600">
-        Posts will appear here as they are published across connected networks.
-      </p>
+      {onSignIn && (
+        <button type="button" onClick={onSignIn} className="btn-primary text-sm">
+          Sign in to compose
+        </button>
+      )}
     </div>
   );
 }
 
 function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   return (
-    <div className="card border-red-900/50 bg-red-900/10 py-12 text-center">
-      <div className="mb-4 text-4xl text-red-400">!</div>
-      <p className="mb-2 text-red-300">{message || 'Failed to load feed'}</p>
+    <div className="border-b border-white/5 px-4 py-12 text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10">
+        <span className="text-2xl text-red-400">!</span>
+      </div>
+      <p className="mb-1 text-sm font-medium text-red-300">
+        {message || 'Could not load the feed'}
+      </p>
+      <p className="mb-5 text-xs text-gray-600">
+        The worker may be cold-starting or a source provider is down.
+      </p>
       {onRetry && (
-        <button type="button" className="btn-primary text-sm" onClick={onRetry}>
-          Retry
+        <button type="button" onClick={onRetry} className="btn-primary text-sm">
+          Try again
         </button>
       )}
     </div>
@@ -100,13 +118,10 @@ export function FeedList({
   onEngage,
   hasMore,
   onLoadMore,
-}: FeedListProps) {
-  const sentinelRef = useRef<HTMLLIElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scrollTop, setScrollTop] = useState(0);
-  const [containerHeight, setContainerHeight] = useState(800);
+  onSignIn,
+}: FeedListProps & { onSignIn?: () => void }) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Infinite scroll observer
   useEffect(() => {
     if (!hasMore || !onLoadMore) return;
     const sentinel = sentinelRef.current;
@@ -115,32 +130,15 @@ export function FeedList({
       (entries) => {
         if (entries[0]?.isIntersecting) onLoadMore();
       },
-      { rootMargin: '200px' },
+      { rootMargin: '400px' },
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [hasMore, onLoadMore]);
 
-  // Track scroll position and container height for virtualization
-  const handleScroll = useCallback(() => {
-    if (containerRef.current) {
-      setScrollTop(containerRef.current.scrollTop);
-      setContainerHeight(containerRef.current.clientHeight);
-    }
-  }, []);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    setContainerHeight(el.clientHeight);
-    el.addEventListener('scroll', handleScroll, { passive: true });
-    return () => el.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
-
-  // Loading state
   if (state === 'loading') {
     return (
-      <output className="space-y-4" aria-label="Loading feed">
+      <output className="block" aria-label="Loading feed">
         {[1, 2, 3, 4, 5].map((i) => (
           <SkeletonCard key={i} />
         ))}
@@ -148,46 +146,36 @@ export function FeedList({
     );
   }
 
-  // Error state
   if (state === 'error') {
     return <ErrorState message={error} onRetry={onRetry} />;
   }
 
-  // Empty state
   if (state === 'empty' || posts.length === 0) {
-    return <EmptyState protocolLabel={protocolLabel} />;
+    return <EmptyState protocolLabel={protocolLabel} onSignIn={onSignIn} />;
   }
 
-  // Virtualized rendering
-  const totalHeight = posts.length * CARD_HEIGHT;
-  const startIndex = Math.max(0, Math.floor(scrollTop / CARD_HEIGHT) - OVERSCAN);
-  const endIndex = Math.min(
-    posts.length,
-    Math.ceil((scrollTop + containerHeight) / CARD_HEIGHT) + OVERSCAN,
-  );
-  const visiblePosts = posts.slice(startIndex, endIndex);
-  const offsetY = startIndex * CARD_HEIGHT;
-
   return (
-    <div
-      ref={containerRef}
-      className="overflow-y-auto"
-      style={{ height: '100%', maxHeight: 'calc(100vh - 200px)' }}
-      aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
-    >
-      <ul className="relative list-none" style={{ height: totalHeight }}>
-        <li style={{ height: offsetY }} aria-hidden="true" />
-        {visiblePosts.map((post) => (
-          <li key={post.id} style={{ height: CARD_HEIGHT }}>
-            <PostCard post={post} onClick={onPostClick} onTip={onTip} onEngage={onEngage} />
-          </li>
-        ))}
-        {hasMore && (
-          <li ref={sentinelRef} className="py-4 text-center text-sm text-gray-600">
-            Loading more...
-          </li>
-        )}
-      </ul>
+    <div role="feed" aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}>
+      {posts.map((post) => (
+        <PostCard
+          key={post.id}
+          post={post}
+          onClick={onPostClick}
+          onTip={onTip}
+          onEngage={onEngage}
+        />
+      ))}
+      {hasMore && (
+        <div
+          ref={sentinelRef}
+          className="border-b border-white/5 px-4 py-6 text-center text-sm text-gray-500"
+        >
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-degen-500" />
+            Loading more…
+          </span>
+        </div>
+      )}
     </div>
   );
 }
