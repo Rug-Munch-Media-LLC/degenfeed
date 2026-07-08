@@ -720,8 +720,44 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     }
   }
 
+  // Farcaster fallback: merge KV cached posts into final response
+  let finalData = ranked;
+  if (perProtocol["farcaster"] === 0 && env.CACHE) {
+    try {
+      const cached = await env.CACHE.get("farcaster:trending:v4");
+      if (cached) {
+        const parts = cached.split("|").filter(Boolean);
+        const extraPosts = [];
+        for (const part of parts.slice(0, 2)) {
+          try {
+            const hubData = JSON.parse(part);
+            for (const msg of (hubData.messages ?? []).slice(0, 2)) {
+              const text = msg.data?.castAddBody?.text || "";
+              if (text.length < 3) continue;
+              extraPosts.push({
+                id: "fc:kv:" + (msg.hash || "").slice(0, 16),
+                protocol: "farcaster",
+                author: { id: "fc:kv", primary: { protocol: "farcaster", id: "1" }, handles: { nostr: null, farcaster: "farcaster", lens: null, bluesky: null, threads: null, rss: null, mastodon: null }, displayName: "Farcaster", bio: "", avatarUrl: "", verified: [], followerCount: 0, followingCount: 0, links: [], keys: {} },
+                text, embeds: [], niches: ["crypto", "farcaster"],
+                createdAt: Date.now(),
+                metrics: { likes: 1, reposts: 0, replies: 0, quotes: 0 },
+                engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false, raw: { likes: 1, reposts: 0, replies: 0, quotes: 0 } },
+                raw: msg,
+                score: { total: 3, recency: 1, engagement: 0.5, relevance: 1, quality: 1, diversity: 0, source: 0.5, velocity: 1, reasons: ["farcaster-cached"] },
+              });
+            }
+          } catch { continue; }
+        }
+        if (extraPosts.length > 0) {
+          finalData = [...ranked.slice(0, ranked.length - extraPosts.length), ...extraPosts, ...ranked.slice(-2)];
+          perProtocol["farcaster"] = extraPosts.length;
+        }
+      }
+    } catch { /* KV read failed */ }
+  }
+
   return jsonResponse({
-    data: ranked,
+    data: finalData,
     meta: {
       total: ranked.length,
       limit,
