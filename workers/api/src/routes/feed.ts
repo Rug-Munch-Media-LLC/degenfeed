@@ -349,6 +349,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       const cached = await env.CACHE.get('farcaster:trending:v4');
       if (cached) {
         const parts = cached.split('|').filter(Boolean);
+        console.log(`[farcaster] KV cache loaded ${parts.filter(Boolean).length} entries`);
         for (const part of parts) {
           try {
             const hubData = JSON.parse(part);
