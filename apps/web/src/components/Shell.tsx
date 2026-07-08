@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
+import { OnboardingModal } from './OnboardingModal';
 import { SearchOverlay } from './SearchOverlay';
 
 interface NavItem {
@@ -17,6 +18,7 @@ const NAV: NavItem[] = [
   { href: '/feed', label: 'Feed' },
   { href: '/news', label: 'News' },
   { href: '/newsletter', label: 'Daily' },
+  { href: '/discover', label: 'Discover' },
   { href: '/premium', label: 'Premium' },
   { href: '/profile', label: 'Profile' },
 ];
@@ -29,7 +31,7 @@ function Logo() {
         alt="DegenFeed"
         width={32}
         height={32}
-        className="h-8 w-8 rounded-lg transition-shadow group-hover:shadow-[0_0_16px_rgba(34,197,94,0.4)]"
+        className="h-8 w-8 rounded-lg logo-glow transition-shadow group-hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
       />
       <span className="text-lg font-bold tracking-tight text-white">DegenFeed</span>
     </a>
@@ -99,9 +101,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 Compose
               </button>
             ) : (
-              <button type="button" onClick={openSignIn} className="btn-primary">
-                Connect Wallet
-              </button>
+              <div className="flex items-center gap-2">
+                <a
+                  href="/api/auth/gotosocial/register"
+                  className="rounded-lg border border-degen-500/30 bg-degen-500/10 px-3 py-1.5 text-xs font-semibold text-degen-400 transition-all hover:bg-degen-500/20 hover:shadow-[0_0_12px_rgba(34,197,94,0.3)]"
+                >
+                  Get @degenfeed.xyz
+                </a>
+                <button type="button" onClick={openSignIn} className="btn-primary text-sm">
+                  Connect Wallet
+                </button>
+              </div>
             )}
           </div>
 
@@ -234,6 +244,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </footer>
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <OnboardingModal />
     </div>
   );
 }

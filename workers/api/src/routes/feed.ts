@@ -409,6 +409,9 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     if (p.author.followerCount > 0) {
       sourceQuality.set(key, Math.min(1.5, p.author.followerCount / 10000));
     }
+    if (p.author.id && p.author.id.includes('social.degenfeed.xyz')) {
+      sourceQuality.set(key, (sourceQuality.get(key) ?? 0.5) + 1.5);
+    }
   }
 
   // Load previous engagement snapshots from KV for velocity tracking.
@@ -514,6 +517,25 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     };
   });
   const trending = computeTrendingTopics(relevant, Date.now());
+  // Merge trending hashtags from our Mastodon instance
+  try {
+    const mastoTrends = await fetch('https://social.degenfeed.xyz/api/v1/trends/tags?limit=8', {
+      headers: { 'user-agent': 'DegenFeed/0.1' },
+    });
+    if (mastoTrends.ok) {
+      const tags = (await mastoTrends.json()) as Array<{
+        name: string;
+        history: Array<{ accounts: string }>;
+      }>;
+      for (const tag of tags) {
+        const existing = trending.find((t) => t.topic === tag.name);
+        if (existing) existing.score += tag.history?.length || 0;
+        else trending.push({ topic: tag.name, count: tag.history?.length || 1, score: 3 });
+      }
+    }
+  } catch {
+    /* trending unavailable */
+  }
   // Top-of-hour: highest-engagement post from the last 60 minutes.
   const now = Date.now();
   const recentPosts = scoredRelevant.filter((s) => now - s.post.createdAt < 3600000);

@@ -19,6 +19,7 @@ import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from 
 import { handleBlinkTip } from './routes/blink';
 import { handleCron } from './routes/cron';
 import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
+import { handleDiscover } from './routes/discover';
 import { handleEngage } from './routes/engage';
 import {
   handleCategoryFeed,
@@ -445,6 +446,8 @@ export default {
         response = await handleRmiNews(request, env);
       } else if (path === '/api/notify') {
         response = await handleNotify(request, env);
+      } else if (path === '/api/discover') {
+        response = await handleDiscover(request, env);
       } else if (path === '/api/newsletter/subscribe') {
         response = await handleNewsletterSubscribe(request, env);
       } else if (path === '/api/newsletter/status') {

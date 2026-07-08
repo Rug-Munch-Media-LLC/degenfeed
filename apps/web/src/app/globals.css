@@ -132,3 +132,40 @@
     transform: scale(1);
   }
 }
+
+/* ── Glass morphism + DegenFeed design upgrade ── */
+@keyframes logo-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(0, 255, 65, 0.5);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.logo-glow {
+  animation: logo-glow 3s ease-in-out infinite;
+}
+.feed-enter {
+  animation: fade-in 0.3s ease-out;
+}
+.card-glass {
+  background: rgba(17, 17, 27, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.top-of-hour-card {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.08), rgba(17, 17, 27, 0.8));
+  border: 1px solid rgba(234, 179, 8, 0.2);
+}

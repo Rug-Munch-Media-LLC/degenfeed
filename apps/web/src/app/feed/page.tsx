@@ -337,7 +337,7 @@ export default function FeedPage() {
                 alt="DegenFeed"
                 width={32}
                 height={32}
-                className="h-8 w-8 rounded-lg shadow-[0_0_14px_rgba(0,255,65,0.3)]"
+                className="h-9 w-9 rounded-xl logo-glow shadow-[0_0_14px_rgba(0,255,65,0.3)]"
               />
               <div>
                 <h1 className="text-lg font-bold text-white leading-none">DegenFeed</h1>

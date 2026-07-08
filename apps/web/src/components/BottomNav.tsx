@@ -18,6 +18,7 @@ const NAV: NavItem[] = [
   { href: '/feed', label: 'Feed', icon: <Icon>✦</Icon> },
   { href: '/news', label: 'News', icon: <Icon>◉</Icon> },
   { href: '/newsletter', label: 'Daily', icon: <Icon>✉</Icon> },
+  { href: '/discover', label: 'Discover', icon: <Icon>◉</Icon> },
   { href: '/profile', label: 'Profile', icon: <Icon>◍</Icon> },
 ];
 
@@ -29,7 +30,7 @@ export function BottomNav() {
       aria-label="Primary mobile"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-gray-950/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-6">
         {NAV.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (

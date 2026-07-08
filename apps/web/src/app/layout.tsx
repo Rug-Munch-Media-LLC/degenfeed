@@ -45,6 +45,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           src="https://plausible.io/js/script.js"
           strategy="afterInteractive"
         />
+        <Script
+          id="sw-register"
+          strategy="afterInteractive"
+        >{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}</Script>
         <SolanaProvider>
           <Web3Provider>
             <ToastProvider>

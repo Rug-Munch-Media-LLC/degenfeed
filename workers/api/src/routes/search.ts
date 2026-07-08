@@ -117,7 +117,35 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
     });
 
   const deduped = deduplicatePosts(filtered);
-  const relevant = deduped.filter(isRelevantPost);
+  // Add our own Mastodon instance search results
+  try {
+    const encodedQ = encodeURIComponent(q);
+    const mastoRes = await fetch(
+      'https://social.degenfeed.xyz/api/v2/search?q=' +
+        encodedQ +
+        '&type=statuses,accounts,hashtags&limit=10&resolve=true',
+      {
+        headers: { 'user-agent': 'DegenFeed/0.1' },
+      },
+    );
+    if (mastoRes.ok) {
+      const mastoData = (await mastoRes.json()) as { statuses?: Array<Record<string, unknown>> };
+      if (mastoData.statuses?.length) {
+        const { MastodonProvider } = await import('@degenfeed/feed-providers');
+        const mp = new MastodonProvider({ instanceUrl: 'https://social.degenfeed.xyz' });
+        const result = await mp.fetchFeed({ timeoutMs: 2000 });
+        for (const p of result.posts) {
+          if (p.text.toLowerCase().includes(q) || p.author.displayName.toLowerCase().includes(q)) {
+            deduped.push(p);
+          }
+        }
+      }
+    }
+  } catch {
+    /* Mastodon search unavailable */
+  }
+  const relevant = deduplicatePosts(deduped).filter(isRelevantPost);
+
   const sorted = relevant.sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
 
   const response = {
