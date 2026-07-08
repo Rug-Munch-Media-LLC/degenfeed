@@ -660,7 +660,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
               const ts = ((msg.data?.timestamp ?? 0) + 1609459200) * 1000;
               const rawText = msg.data?.castAddBody?.text ?? '';
               if (!rawText || rawText.length < 3) continue;
-              ranked.push({
+              const kvPost = {
                 id: 'farcaster:kv:' + (msg.hash || '').slice(0, 20),
                 protocol: 'farcaster' as Protocol,
                 author: {
