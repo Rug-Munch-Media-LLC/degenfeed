@@ -1,4 +1,5 @@
 export const runtime = 'edge';
+import type { Metadata } from 'next';
 import type { UnifiedPost } from '@degenfeed/types';
 import { headers } from 'next/headers';
 import { Suspense } from 'react';
@@ -6,6 +7,12 @@ import NewsLoading from './loading';
 import NewsClient from './NewsClient';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'News',
+  description:
+    'Curated crypto, web3, and AI news from RSS feeds, Mastodon, Bluesky, and Reddit. No paywalls.',
+};
 
 interface NewsApiResponse {
   data?: unknown[];
