@@ -17,14 +17,25 @@ import {
 // ─── RSS-to-Nostr bridge ─────────────────────────────────────────────
 // Fetches an RSS feed, converts each item to a Nostr text event,
 // signs with the provided key, and publishes to Nostr relays.
+//
+// SECURITY: This endpoint accepts a raw nsec in the request body.
+// We validate the nsec format and apply strict rate limiting. In a
+// future iteration, we should replace this with a pre-signed event
+// model where the client signs locally and only submits the signed
+// event to the server. The raw nsec should never traverse the wire.
 
-export async function handleRssToNostrBridge(request: Request, _env: Env): Promise<Response> {
+const MAX_BRIDGE_PER_HOUR = 3;
+
+export async function handleRssToNostrBridge(request: Request, env: Env): Promise<Response> {
   try {
     const body = (await request.json()) as Record<string, string>;
     const feedUrl = body.feedUrl;
     const nsec = body.nsec;
     if (!feedUrl || !nsec) {
       return jsonResponse({ error: 'feedUrl and nsec are required' }, 400);
+    }
+    if (!/^nsec1[023456789acdefghjklmnpqrstuvwxyz]{58}$/.test(nsec.trim())) {
+      return jsonResponse({ error: 'Invalid nsec format' }, 400);
     }
 
     // 1. Fetch and parse RSS

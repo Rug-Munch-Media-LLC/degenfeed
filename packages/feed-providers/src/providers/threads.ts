@@ -19,7 +19,9 @@ import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../ty
 import { DEFAULT_TIMEOUT_MS, fetchText, withTimeout } from '../utils';
 
 export const THREADS_WEB_URL = 'https://www.threads.net';
-export const FLARESOLVERR_URL = 'http://100.104.130.92:8191/v1';
+export const FLARESOLVERR_URL = typeof process !== "undefined" && process.env?.FLARESOLVERR_URL
+  ? process.env.FLARESOLVERR_URL
+  : ""; // Set FLARESOLVERR_URL env var or leave empty to disable
 
 export const CURATED_THREADS_HANDLES = [
   'zuck',

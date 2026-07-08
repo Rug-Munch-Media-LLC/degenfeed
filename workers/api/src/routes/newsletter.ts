@@ -452,12 +452,16 @@ export async function handleNewsletterDigest(request: Request, env: Env): Promis
   return noCacheJsonResponse(response);
 }
 
-export async function handleNewsletterStatus(_request: Request, env: Env): Promise<Response> {
+export async function handleNewsletterStatus(request: Request, env: Env): Promise<Response> {
+  const auth = request.headers.get('authorization') ?? '';
+  if (auth !== `Bearer ${env.ADMIN_API_KEY ?? ''}`) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
   try {
     const idx = (await env.CACHE?.get('newsletter:subscribers')) ?? '';
     const emails = idx.split('\n').filter(Boolean);
-    return jsonResponse({ count: emails.length, sample: emails.slice(0, 5) });
+    return jsonResponse({ count: emails.length });
   } catch {
-    return jsonResponse({ count: 0, sample: [], warning: 'KV unavailable' });
+    return jsonResponse({ count: 0, warning: 'KV unavailable' });
   }
 }

@@ -246,7 +246,7 @@ const CSRF_EXEMPT_PATHS = [
   // /api/auth/gotosocial/callback is now protected by a signed state nonce
   // (see routes/auth.ts) AND a normal origin check, so it's no longer exempt.
   '/api/tip/frame/',
-  '/api/bridge/rss-to-nostr',
+  // '/api/bridge/rss-to-nostr' is NO LONGER exempt — requires CSRF check
   '/api/blink/tip',
   '/api/x402/verify',
 ];
