@@ -707,7 +707,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
                   velocity: 1,
                   reasons: ['cached'],
                 },
-              } as unknown as UnifiedPost);
+              });
             }
           } catch {
             continue;
