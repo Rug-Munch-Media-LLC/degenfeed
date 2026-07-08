@@ -417,6 +417,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       }
     } catch {
       /* KV read failed */
+    console.log(`[farcaster] KV produced ${allPosts.length} posts before pipeline`);
     }
   }
 
