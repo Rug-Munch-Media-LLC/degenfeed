@@ -99,6 +99,24 @@ body { font-family: 'Inter', system-ui, sans-serif; background: #000; color: #ff
   <p class="product-meta">pry.rugmunch.io · MCP Server · Python CLI · Docker</p>
 </a>
 
+<a href="https://rugcharts.rugmunch.io" class="product">
+  <div class="product-header">
+    <div class="product-icon" style="background:rgba(236,72,153,0.12);color:#ec4899">📊</div>
+    <div class="product-name">RugCharts</div>
+  </div>
+  <p class="product-desc">DEX charting with built-in risk scoring. OHLCV candles, real-time trade tape, wallet-labeled traders (whale/sniper/bot), AI signals, cross-chain comparison. 43 RMI scanners integrated — see risk before you ape.</p>
+  <p class="product-meta">rugcharts.rugmunch.io · 9 chains · Trade Tape · AI Signals</p>
+</a>
+
+<a href="https://rugmaps.rugmunch.io" class="product">
+  <div class="product-header">
+    <div class="product-icon" style="background:rgba(59,130,246,0.12);color:#3b82f6">🗺️</div>
+    <div class="product-name">RugMaps</div>
+  </div>
+  <p class="product-desc">Visual blockchain forensics. Bubble maps, deployer networks, funding source tracing, gas funding analysis, bot network detection, temporal playback. See exactly where the money flows.</p>
+  <p class="product-meta">rugmaps.rugmunch.io · Bubble Maps · Network Graphs · Forensics</p>
+</a>
+
 <div class="section-title">Social & Code</div>
 
 <a href="https://social.degenfeed.xyz/@cryptorugmunch" class="social-link">
