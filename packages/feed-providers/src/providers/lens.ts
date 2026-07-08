@@ -1,8 +1,4 @@
-/**
- * LensProvider v2 — updated for Lens API (2026 schema).
- * Uses `accounts(request:{filter:{searchBy:{localNameQuery}}})` to resolve
- * profiles and `posts(request:{filter:{authors}})` to fetch their posts.
- */
+/** LensProvider v2 — Lens API (2026). Uses accounts + posts with filter.searchBy.localNameQuery. */
 
 import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
@@ -10,7 +6,6 @@ import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../ty
 import { DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
 
 export const LENS_API_URL = 'https://api.lens.xyz/graphql';
-
 export const CURATED_LENS_HANDLES = [
   'lensprotocol.lens',
   'stani.lens',
@@ -25,9 +20,8 @@ export const CURATED_LENS_HANDLES = [
 interface LensAccount {
   address: string;
   username?: { localName?: string };
-  metadata?: { displayName?: string; bio?: string; picture?: string };
+  metadata?: { displayName?: string; picture?: string };
 }
-
 interface LensPost {
   id: string;
   metadata?: { content?: string; asset?: { image?: { raw?: { uri?: string } } } };
@@ -36,9 +30,14 @@ interface LensPost {
   stats?: { reactions?: number; comments?: number; mirrors?: number; quotes?: number };
 }
 
+export interface LensProviderOptions {
+  apiUrl?: string;
+}
+
 function postToUnified(pub: LensPost): UnifiedPost {
-  const addr = pub.author?.address ?? 'unknown';
-  const handle = pub.author?.username?.localName ?? null;
+  const a = pub.author;
+  const addr = a?.address ?? 'unknown';
+  const h = a?.username?.localName ?? null;
   return buildUnifiedPost({
     protocol: 'lens',
     nativeId: pub.id,
@@ -48,15 +47,15 @@ function postToUnified(pub: LensPost): UnifiedPost {
       handles: {
         nostr: null,
         farcaster: null,
-        lens: handle,
+        lens: h,
         bluesky: null,
         threads: null,
         rss: null,
         mastodon: null,
       },
-      displayName: pub.author?.metadata?.displayName ?? handle ?? '',
-      bio: pub.author?.metadata?.bio ?? '',
-      avatarUrl: pub.author?.metadata?.picture ?? '',
+      displayName: a?.metadata?.displayName ?? h ?? '',
+      bio: '',
+      avatarUrl: a?.metadata?.picture ?? '',
       verified: [],
       followerCount: 0,
       followingCount: 0,
@@ -75,24 +74,19 @@ function postToUnified(pub: LensPost): UnifiedPost {
   });
 }
 
-async function lensGql(url: string, query: string, v?: unknown): Promise<unknown> {
+async function lensGql(url: string, q: string, v?: unknown): Promise<unknown> {
   const d = await fetchJson<{ data?: unknown; errors?: Array<{ message: string }> }>(url, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'user-agent': DEFAULT_USER_AGENT },
-    body: JSON.stringify({ query, variables: v }),
+    body: JSON.stringify({ query: q, variables: v }),
   });
   if (d.errors?.length) throw new Error(`Lens: ${d.errors[0]?.message ?? '?'}`);
   return d.data;
 }
 
-export interface LensProviderOptions {
-  apiUrl?: string;
-}
-
 export class LensProvider implements FeedProvider {
   readonly protocol: Protocol = 'lens';
   private readonly apiUrl: string;
-
   constructor(options: LensProviderOptions | string = LENS_API_URL) {
     this.apiUrl = typeof options === 'string' ? options : options.apiUrl || LENS_API_URL;
   }
@@ -100,26 +94,34 @@ export class LensProvider implements FeedProvider {
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     const t = Math.min(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS, 5000);
     try {
-      const names = CURATED_LENS_HANDLES.map((h) => h.replace('.lens', '')).slice(0, 6);
-      const acc = await withTimeout(
-        lensGql(
-          this.apiUrl,
-          `query($q:String!,FIFTY:PageSize){accounts(request:{filter:{searchBy:{localNameQuery:$q}},pageSize:FIFTY}){items{address username{localName value}}}}`,
-          { q: names.join(',') },
-        ),
-        t,
-        'lens:accts',
+      const names = CURATED_LENS_HANDLES.map((h) => h.replace('.lens', '')).slice(0, 5);
+      const allResults = await Promise.all(
+        names.map(async (name) => {
+          try {
+            const acc = await withTimeout(
+              lensGql(
+                this.apiUrl,
+                'query($q:String!){accounts(request:{filter:{searchBy:{localNameQuery:$q}},pageSize:FIFTY}){items{address username{localName}}}}',
+                { q: name },
+              ),
+              Math.min(t, 3000),
+              'lens:acct:' + name,
+            );
+            return ((acc as { accounts?: { items?: LensAccount[] } })?.accounts?.items ?? [])
+              .filter((a) => a.username?.localName === name)
+              .map((a) => a.address);
+          } catch {
+            return [] as string[];
+          }
+        }),
       );
-      const addrs = ((acc as { accounts?: { items?: LensAccount[] } })?.accounts?.items ?? [])
-        .map((a) => a.address)
-        .filter(Boolean);
+      const addrs = [...new Set(allResults.flat())].filter(Boolean).slice(0, 6);
       if (!addrs.length) return { posts: [], notice: 'No Lens profiles resolved' };
-
       const p = await withTimeout(
         lensGql(
           this.apiUrl,
-          `query($a:[String!]!,FIFTY:PageSize){posts(request:{filter:{authors:$a},pageSize:FIFTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}`,
-          { a: addrs.slice(0, 6) },
+          'query($a:[String!]!){posts(request:{filter:{authors:$a},pageSize:FIFTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}',
+          { a: addrs },
         ),
         t,
         'lens:posts',
