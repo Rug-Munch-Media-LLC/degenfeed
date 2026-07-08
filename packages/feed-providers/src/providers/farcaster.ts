@@ -368,8 +368,8 @@ export class FarcasterProvider implements FeedProvider {
             embeds?: Array<{ url?: string; cast_id?: { hash: string } }>;
           }>;
         }>(
-          buildUrl('https://api.neynar.com/v2/farcaster/feed/trending', undefined, {
-            limit: '25',
+          buildUrl('https://api.neynar.com/v2/farcaster/feed/trending', '', {
+            limit: '5',
             api_key: 'NEYNAR_API_DOCS',
           }),
           { headers: { accept: 'application/json', 'user-agent': DEFAULT_USER_AGENT } },
