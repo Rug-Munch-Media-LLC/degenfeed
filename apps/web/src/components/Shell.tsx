@@ -238,7 +238,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </a>
           </div>
           <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} DegenFeed — a Rug Munch Media LLC product. No account required. Open source on{' '}
+            © {new Date().getFullYear()} DegenFeed — a Rug Munch Media LLC product. No account
+            required. Open source on{' '}
             <a
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
               target="_blank"

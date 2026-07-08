@@ -31,7 +31,7 @@ export const LANDING_HTML = `<!doctype html>
         <a href="#how">How it works</a>
         <a href="#protocols">Protocols</a>
         <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">Mastodon</a>
-        <a href="https://github.com/RugMunchMedia" target="_blank" rel="noopener">Source</a>
+        <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener">Source</a>
         <a href="https://app.degenfeed.xyz" class="nav-cta">Launch app →</a>
       </nav>
     </header>
@@ -187,7 +187,7 @@ export const LANDING_HTML = `<!doctype html>
         <p class="footer-tag">The social feed of web3.</p>
         <p class="footer-meta">Built by <strong>Rug Munch Media LLC</strong> · Open source (MIT) · Hosted on Cloudflare</p>
         <nav class="footer-links" aria-label="Footer">
-          <a href="https://github.com/RugMunchMedia" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener">Forgejo</a>
           <span aria-hidden="true">·</span>
           <a href="/docs">Docs</a>
           <span aria-hidden="true">·</span>

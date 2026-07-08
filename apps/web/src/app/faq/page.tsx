@@ -36,7 +36,7 @@ const faqs = [
     a: 'DegenFeed runs a GotoSocial instance at social.degenfeed.xyz that federates via ActivityPub. This means your @degenfeed.xyz account can follow and be followed by users on Mastodon, Lemmy, Pixelfed, and other Fediverse platforms.',
   },
   {
-    q: "What is ActivityPub?",
+    q: 'What is ActivityPub?',
     a: 'ActivityPub is a W3C standard for decentralized social networking. It powers Mastodon, Lemmy, Pixelfed, PeerTube, GotoSocial, and millions of federated accounts. It is the protocol that makes the Fediverse work without a central server.',
   },
   {
@@ -49,7 +49,7 @@ const faqs = [
   },
   {
     q: 'How do tips work?',
-    a: 'Tip ETH, SOL, or USDC directly to any post. Tips go directly to the creator\'s wallet with no intermediary. Lightning Network support is in development.',
+    a: "Tip ETH, SOL, or USDC directly to any post. Tips go directly to the creator's wallet with no intermediary. Lightning Network support is in development.",
   },
   {
     q: 'Is my data sold?',
@@ -61,7 +61,7 @@ const faqs = [
   },
   {
     q: 'Is there an RSS feed?',
-    a: 'Yes. Subscribe to /api/feed/rss.xml in your RSS reader to get DegenFeed\'s top posts. Atom format is also available at /api/feed/atom.xml.',
+    a: "Yes. Subscribe to /api/feed/rss.xml in your RSS reader to get DegenFeed's top posts. Atom format is also available at /api/feed/atom.xml.",
   },
   {
     q: 'How do I report content?',
@@ -75,8 +75,8 @@ export default function FAQPage() {
       <h1 className="mb-6 text-2xl font-bold text-white">Frequently Asked Questions</h1>
 
       <div className="space-y-6">
-        {faqs.map((faq, i) => (
-          <div key={i}>
+        {faqs.map((faq) => (
+          <div key={faq.q}>
             <h2 className="mb-1 text-base font-semibold text-white">{faq.q}</h2>
             <p>{faq.a}</p>
           </div>

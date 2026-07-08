@@ -65,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           id="sw-register"
           strategy="afterInteractive"
         >{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}</Script>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data requires innerHTML */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

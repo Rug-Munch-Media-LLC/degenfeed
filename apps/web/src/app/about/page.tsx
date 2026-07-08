@@ -25,11 +25,10 @@ export default function AboutPage() {
 
       <h2 className="mb-2 text-lg font-semibold text-white">3. Who Built This</h2>
       <p className="mb-4">
-        DegenFeed is a product of{' '}
-        <strong className="text-white">Rug Munch Media LLC</strong>, a Wyoming limited liability
-        company. Built by crypto native engineers who live and breathe on-chain. This is not a VC-
-        backed startup — it is an independent, self-funded project by people who actually use the
-        protocols they build for.
+        DegenFeed is a product of <strong className="text-white">Rug Munch Media LLC</strong>, a
+        Wyoming limited liability company. Built by crypto native engineers who live and breathe
+        on-chain. This is not a VC- backed startup — it is an independent, self-funded project by
+        people who actually use the protocols they build for.
       </p>
 
       <h2 className="mb-2 text-lg font-semibold text-white">4. Open Source</h2>
@@ -44,10 +43,7 @@ export default function AboutPage() {
           git.rugmunch.io/RugMunchMedia/degenfeed-web
         </a>{' '}
         and mirrored at{' '}
-        <a
-          href="https://codeberg.org/degenfeed/degenfeed-web"
-          className="text-degen-400 underline"
-        >
+        <a href="https://codeberg.org/degenfeed/degenfeed-web" className="text-degen-400 underline">
           codeberg.org/degenfeed/degenfeed-web
         </a>
         . Contributions are welcome — submit pull requests, report bugs, or suggest features.

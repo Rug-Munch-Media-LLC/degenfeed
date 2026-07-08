@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms of Service for DegenFeed, operated by Rug Munch Media LLC, a Wyoming limited liability company.',
+  description:
+    'Terms of Service for DegenFeed, operated by Rug Munch Media LLC, a Wyoming limited liability company.',
 };
 
 export default function TermsPage() {

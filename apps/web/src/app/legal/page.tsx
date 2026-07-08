@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Legal Notice — DegenFeed',
-  description: 'Legal notice and company information for DegenFeed, operated by Rug Munch Media LLC.',
+  description:
+    'Legal notice and company information for DegenFeed, operated by Rug Munch Media LLC.',
 };
 
 export default function LegalPage() {

@@ -12,9 +12,8 @@ export default function SecurityPage() {
       'Canonical: https://app.degenfeed.xyz/.well-known/security.txt',
       'Expires: 2027-07-08T00:00:00Z',
       '',
-      '# We accept vulnerability reports via email.',
-      '# PGP key available at:',
-      '# https://github.com/RugMunchMedia/degenfeed-web/security',
+      '# Security policy: https://git.rugmunch.io/RugMunchMedia/degenfeed-web/raw/branch/main/SECURITY.md',
+      '# PGP key available on request to security@degenfeed.xyz',
     ].join('\n'),
     {
       headers: { 'content-type': 'text/plain; charset=utf-8' },

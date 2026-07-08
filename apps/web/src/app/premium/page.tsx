@@ -170,8 +170,8 @@ export default function PremiumPage() {
           <div className="card">
             <h3 className="font-semibold text-white">What is x402 paywall?</h3>
             <p className="mt-1 text-sm text-gray-400">
-              x402 is an open protocol for HTTP 402 Payment Required. Creator-tier users can
-              paywall individual posts — readers pay per-view in USDC. Learn more at x402.org.
+              x402 is an open protocol for HTTP 402 Payment Required. Creator-tier users can paywall
+              individual posts — readers pay per-view in USDC. Learn more at x402.org.
             </p>
           </div>
           <div className="card">

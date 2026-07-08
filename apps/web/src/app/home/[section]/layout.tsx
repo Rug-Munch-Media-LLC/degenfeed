@@ -7,10 +7,10 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { section } = await params;
-  const label = SECTIONS.find(s => s.id === section)?.title ?? section;
+  const label = SECTIONS.find((s) => s.id === section)?.title ?? section;
   return {
     title: label,
-    description: `Browse ${label} posts on DegenFeed. ${SECTIONS.find(s => s.id === section)?.description ?? ''}`,
+    description: `Browse ${label} posts on DegenFeed. ${SECTIONS.find((s) => s.id === section)?.description ?? ''}`,
   };
 }
 

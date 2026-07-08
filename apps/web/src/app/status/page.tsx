@@ -1,4 +1,5 @@
 export const runtime = 'edge';
+
 /**
  * /status — Protocol health dashboard
  *

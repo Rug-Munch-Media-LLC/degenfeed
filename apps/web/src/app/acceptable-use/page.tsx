@@ -22,8 +22,8 @@ export default function AcceptableUsePage() {
       <p className="mb-4">
         The following are strictly prohibited: pump-and-dump coordination, Ponzi or pyramid schemes,
         rug pull planning or promotion, fake token launches, phishing links, wallet drainers, fake
-        airdrops, impersonation of projects or founders for financial gain, and any other
-        activity designed to defraud or deceive users for monetary benefit.
+        airdrops, impersonation of projects or founders for financial gain, and any other activity
+        designed to defraud or deceive users for monetary benefit.
       </p>
 
       <h2 className="mb-2 text-lg font-semibold text-white">3. No Hate Speech</h2>

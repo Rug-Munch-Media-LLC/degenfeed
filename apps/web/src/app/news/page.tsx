@@ -1,6 +1,7 @@
 export const runtime = 'edge';
-import type { Metadata } from 'next';
+
 import type { UnifiedPost } from '@degenfeed/types';
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { Suspense } from 'react';
 import NewsLoading from './loading';
