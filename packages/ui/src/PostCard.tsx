@@ -11,6 +11,37 @@ import { useEffect, useState } from 'react';
 import { formatTimeAgo } from '@degenfeed/utils';
 import { ProtocolBadge } from './ProtocolBadge';
 
+interface FrameData { image: string; title?: string; buttons: Array<{ index: number; label: string; action?: string }>; postUrl?: string; version: string; }
+
+function FrameCard({ url }: { url: string }) {
+  const [frame, setFrame] = useState<FrameData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/frame/resolve?url=${encodeURIComponent(url)}`)
+      .then((r) => r.ok ? r.json() as Promise<FrameData> : null)
+      .then((d) => { if (!cancelled && d?.image) setFrame(d); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [url]);
+
+  if (!frame) return null;
+
+  return (
+    <div className="mt-2 overflow-hidden rounded-xl border border-purple-500/20">
+      <img src={frame.image} alt={frame.title || 'Frame'} className="w-full object-cover" loading="lazy" />
+      {frame.buttons.length > 0 && (
+        <div className="flex gap-1 border-t border-white/5 p-1.5">
+          {frame.buttons.map((b) => (
+            <span key={b.index} className="flex-1 rounded bg-purple-900/20 px-2 py-1 text-center text-[10px] text-purple-400">{b.label}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export type { UnifiedPost };
 
 export interface EngageResult {
@@ -303,6 +334,9 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
             <span className="truncate text-sm font-semibold text-white">
               {post.author.displayName}
             </span>
+            {post.protocol === 'nostr' && post.author.handles.nostr?.includes('@') && (
+              <span className="flex-shrink-0 text-blue-400 text-xs" title="NIP-05 verified">✓</span>
+            )}
             <ProtocolBadge protocol={post.protocol} />
             <button
               type="button"
@@ -403,6 +437,9 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
                 {links.map((embed) => (
                   <LinkPreview key={`link-${embed.url}`} embed={embed} />
                 ))}
+                {post.protocol === 'farcaster' && links.length > 0 && (
+                  <FrameCard url={links[0]!.url} />
+                )}
                 {videos.map((embed) => (
                   <a
                     key={`video-${embed.url}`}
