@@ -532,17 +532,13 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
           ↗ Share
         </button>
         {onTip && (
-          <button
-            type="button"
-            className="ml-auto flex items-center gap-1 transition-colors hover:text-yellow-400"
-            onClick={(e) => {
-              e.stopPropagation();
-              onTip(post);
-            }}
-            aria-label="Tip this author"
-            title={`Tip ${post.author.displayName}`}
-          >
+          <button type="button" className="ml-auto flex items-center gap-1 transition-colors hover:text-yellow-400" onClick={(e) => { e.stopPropagation(); onTip(post); }} aria-label="Tip this author" title={`Tip ${post.author.displayName}`}>
             ⚡ Tip
+          </button>
+        )}
+        {post.protocol === 'nostr' && post.metrics.quotes > 0 && onTip && (
+          <button type="button" className="flex items-center gap-1 text-yellow-400 text-xs" onClick={(e) => { e.stopPropagation(); onTip(post); }} title={`${post.metrics.quotes} zaps`}>
+            ⚡{post.metrics.quotes}
           </button>
         )}
       </div>

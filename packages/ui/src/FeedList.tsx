@@ -164,6 +164,24 @@ export function FeedList({
     return () => window.removeEventListener('keydown', handler);
   }, [posts.length]);
 
+  // Pull-to-refresh
+  useEffect(() => {
+    let startY = 0;
+    const el = containerRef.current;
+    if (!el) return;
+    const onTouchStart = (e: TouchEvent) => { startY = e.touches[0]?.clientY ?? 0; };
+    const onTouchEnd = (e: TouchEvent) => {
+      const endY = e.changedTouches[0]?.clientY ?? 0;
+      if (endY - startY > 80 && window.scrollY < 10 && onRetry) onRetry();
+    };
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [onRetry]);
+
   useEffect(() => {
     if (!hasMore || !onLoadMore) return;
     const sentinel = sentinelRef.current;

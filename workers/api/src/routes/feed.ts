@@ -775,8 +775,25 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     } catch { /* ignore */ }
   }
 
-  return jsonResponse(responseBody);
+  return cachedJsonResponse(responseBody);
 }
+
+function cachedJsonResponse(data: unknown, status = 200, maxAge = 30): Response {
+  const body = JSON.stringify(data);
+  const hash = String(body.length);
+  return new Response(body, {
+    status,
+    headers: {
+      'content-type': 'application/json',
+      'cache-control': `public, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}`,
+      'etag': `"${hash}"`,
+      'vary': 'Accept-Language',
+    },
+  });
+}
+
+// Replace the final return in handleHomeFeed — use cachedJsonResponse instead of jsonResponse.
+// (applied below)
 
 export async function handleTrendingFeed(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);

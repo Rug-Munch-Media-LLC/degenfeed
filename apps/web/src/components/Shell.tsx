@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
 import { OnboardingModal } from './OnboardingModal';
@@ -61,7 +61,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const { ready, signedInProtocols, openSignIn, openCompose } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('df_theme');
+    if (stored === 'light' || stored === 'dark') setTheme(stored as 'dark' | 'light');
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('df_theme', theme);
+  }, [theme]);
 
   const closeMobile = () => setMobileOpen(false);
 
@@ -92,6 +103,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
               aria-label="Search"
             >
               ⌕
+            </button>
+            <button
+              type="button"
+              onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+              className="rounded-lg px-2 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? '☀' : '☾'}
             </button>
             {!ready ? (
               <div className="h-9 w-24 animate-pulse rounded-lg bg-gray-800" />

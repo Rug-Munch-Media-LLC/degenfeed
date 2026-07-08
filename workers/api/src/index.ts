@@ -47,6 +47,7 @@ import {
 } from './routes/newsletter';
 import { handleNotifications } from './routes/notifications';
 import { handleNotify } from './routes/notify';
+import { handlePostOg } from './routes/og';
 import { handleDiscoverPeople } from './routes/people';
 import { handlePostById } from './routes/post';
 import { handleFeedPresets } from './routes/presets';
@@ -128,6 +129,10 @@ export interface Env {
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
+
+export function log(level: 'info' | 'warn' | 'error', msg: string, data?: unknown): void {
+  console.log(JSON.stringify({ l: level, m: msg, t: Date.now(), ...(data ? { d: data } : {}) }));
+}
 
 export const DEFAULT_RELAYS = [
   'wss://relay.damus.io',
@@ -368,7 +373,11 @@ export default {
         response = await handleNewsFeed(request, env);
       } else if (path.startsWith('/api/feed/post/')) {
         const postId = path.replace('/api/feed/post/', '');
-        response = await handlePostById(request, env, postId);
+        if (postId.includes('?format=og')) {
+          response = await handlePostOg(request, env, postId.replace('?format=og', ''));
+        } else {
+          response = await handlePostById(request, env, postId);
+        }
       } else if (path === '/api/feed/reddit') {
         response = await handleRedditFeed(request, env);
       } else if (path === '/api/feed/activitypub') {
@@ -520,6 +529,7 @@ export default {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Internal error';
+      log('error', message, { path });
       response = jsonResponse({ error: message }, 500);
     }
 
