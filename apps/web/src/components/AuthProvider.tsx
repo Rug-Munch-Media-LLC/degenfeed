@@ -259,14 +259,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await signInWithBluesky(handle, appPass, 'auto-unlock');
             break;
           }
-          case 'threads': {
-            const { signInWithThreads } = await import('@degenfeed/auth');
-            const identifier = creds.handle as string;
-            const apPass = creds.appPassword as string;
-            if (!identifier || !apPass) throw new Error('Threads credentials required');
-            await signInWithThreads(identifier, apPass, 'auto-unlock');
-            break;
-          }
           case 'mastodon': {
             const { signInWithGtS } = await import('@degenfeed/auth');
             const instance = (creds.instance as string) || 'https://social.degenfeed.xyz';
@@ -293,13 +285,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (
       text: string,
       targets: string[],
+      opts?: { lensCollect?: boolean },
     ): Promise<Record<string, { ok: boolean; error?: string }>> => {
       try {
         const res = await fetch('/api/publish', {
           method: 'POST',
           credentials: 'include',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ text, targets, auth: tokens }),
+          body: JSON.stringify({ text, targets, auth: tokens, lensCollect: opts?.lensCollect }),
         });
         const data = await res.json();
         return data.results ?? {};
@@ -358,17 +351,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         auth.mastodon = token;
         auth.mastodon_instance = identity?.keys?.instanceUrl || 'https://social.degenfeed.xyz';
       }
-      // Bluesky / Threads — access JWT + DID.
-      else if (protocol === 'bluesky' || protocol === 'threads') {
+      // Bluesky — access JWT + DID.
+      else if (protocol === 'bluesky') {
         const jwt = identity?.keys?.accessJwt ?? '';
         const did = identity?.publicId ?? '';
-        if (!jwt || !did) return { ok: false, error: `Not signed into ${protocol}` };
-        auth.accessJwt = jwt;
-        auth[`${protocol}_did`] = did;
-        auth[`${protocol}_jwt`] = jwt;
-        // Also set them as the bare keys the backend reads.
-        if (protocol === 'bluesky') auth.bluesky = jwt;
-        if (protocol === 'threads') auth.threads = jwt;
+        if (!jwt || !did) return { ok: false, error: 'Not signed into Bluesky' };
+        auth.bluesky = jwt;
       }
       // Lens — access token.
       else if (protocol === 'lens') {

@@ -160,6 +160,7 @@ export const PROTOCOL_COLORS: Record<string, string> = {
   bluesky: '#1185fe',
   threads: '#888888',
   mastodon: '#6364ff',
+  lemmy: '#00b868',
   rss: '#ffa500',
   reddit: '#ff4500',
   ethereum: '#627eea',

@@ -17,10 +17,13 @@ import { handleAccountDelete, handleAccountExport } from './routes/account';
 import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
 import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from './routes/billing';
 import { handleBlinkTip } from './routes/blink';
+import { handleCommunities } from './routes/communities';
 import { handleCron } from './routes/cron';
 import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import { handleDiscover } from './routes/discover';
+import { handleEmbedResolve } from './routes/embed';
 import { handleEngage } from './routes/engage';
+import { handleFrameAction, handleFrameResolve } from './routes/frame';
 import { handlePushSend, handlePushSubscribe } from "./routes/push";
 import {
   handleCategoryFeed,
@@ -34,6 +37,7 @@ import { handleFarcasterFeed } from './routes/farcaster-feed';
 import { handleFundingFeed } from './routes/funding';
 import { handleRelaysHealth } from './routes/health';
 import { handleResolveIdentity } from './routes/identity';
+import { handleIdentityProfile } from './routes/profile';
 import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import { handleNewsFeed } from './routes/news';
 import {
@@ -43,7 +47,11 @@ import {
 } from './routes/newsletter';
 import { handleNotifications } from './routes/notifications';
 import { handleNotify } from './routes/notify';
+import { handleDiscoverPeople } from './routes/people';
 import { handlePostById } from './routes/post';
+import { handleFeedPresets } from './routes/presets';
+import { handlePostReplies } from './routes/replies';
+import { handleRelatedPosts } from './routes/related';
 import { handlePreferences } from './routes/preferences';
 import { handlePrices } from './routes/prices';
 import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
@@ -57,6 +65,7 @@ import {
   handleRmiStats,
 } from './routes/rmi';
 import { handleRssFeed } from './routes/rss';
+import { handleStreamFeed } from './routes/stream';
 import { handleRssXml } from './routes/rss-xml';
 import { handleSearch, handleSearchIdentity } from './routes/search';
 import {
@@ -112,6 +121,10 @@ export interface Env {
   POSTMARK_SERVER_TOKEN?: string;
   ALLOW_DEV_OAUTH?: string;
   ADMIN_API_KEY?: string;
+  /** VAPID keys for Web Push (generate with: npx web-push generate-vapid-notes) */
+  VAPID_SUBJECT?: string;
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
@@ -397,6 +410,8 @@ export default {
         response = await withSession(() => handleEngage(request, env));
       } else if (path === '/api/feed/top') {
         response = await handleTopFeed(request, env);
+      } else if (path === '/api/feed/communities') {
+        response = await handleCommunities(request, env);
       } else if (path === '/api/feed/newsletters') {
         response = await handleNewsletterFeed(request, env);
       } else if (path === '/api/prices') {
@@ -459,28 +474,39 @@ export default {
         response = await handleNotify(request, env);
       } else if (path === '/api/discover') {
         response = await handleDiscover(request, env);
-      } else if (path === "/api/push/subscribe") {
+      } else if (path === '/api/push/subscribe') {
         response = await handlePushSubscribe(request, env);
-      } else if (path === "/api/push/send") {
+      } else if (path === '/api/push/send') {
         response = await handlePushSend(request, env);
       } else if (path === '/api/newsletter/subscribe') {
         response = await handleNewsletterSubscribe(request, env);
-      } else if (path === "/api/push/subscribe") {
-        response = await handlePushSubscribe(request, env);
-      } else if (path === "/api/push/send") {
-        response = await handlePushSend(request, env);
       } else if (path === '/api/newsletter/status') {
         response = await handleNewsletterStatus(request, env);
-      } else if (path === "/api/push/subscribe") {
-        response = await handlePushSubscribe(request, env);
-      } else if (path === "/api/push/send") {
-        response = await handlePushSend(request, env);
       } else if (path === '/api/newsletter/digest' || path.startsWith('/api/newsletter/digest')) {
         response = await handleNewsletterDigest(request, env);
       } else if (path === '/api/search/identity') {
         response = await handleSearchIdentity(request, env);
       } else if (path === '/api/search') {
         response = await handleSearch(request, env);
+      } else if (path === '/api/feed/related') {
+        response = await handleRelatedPosts(request, env);
+      } else if (path === '/api/feed/presets') {
+        response = await handleFeedPresets(request, env);
+      } else if (path === '/api/embed/resolve') {
+        response = await handleEmbedResolve(request, env);
+      } else if (path === '/api/frame/resolve') {
+        response = await handleFrameResolve(request, env);
+      } else if (path === '/api/frame/action') {
+        response = await handleFrameAction(request, env);
+      } else if (path === '/api/identity/profile') {
+        response = await handleIdentityProfile(request, env);
+      } else if (path === '/api/discover/people') {
+        response = await handleDiscoverPeople(request, env);
+      } else if (path === '/api/feed/stream') {
+        response = await handleStreamFeed(request, env);
+      } else if (path.endsWith('/replies')) {
+        const postId = path.replace('/api/feed/post/', '').replace('/replies', '');
+        response = await handlePostReplies(request, env, postId);
       } else if (path === '/docs') {
         response = new Response(null, { status: 302, headers: { location: 'https://app.degenfeed.xyz/docs' } });
       } else if (

@@ -104,24 +104,19 @@ export async function signInWithLens(opts: { wallet: Eip1193Provider }): Promise
     data: { authenticate: { accessToken: string; refreshToken: string } };
   };
 
-  // 6. Store encrypted tokens
-  const tokensBlob = JSON.stringify({
-    accessToken: authData.authenticate.accessToken,
-    refreshToken: authData.authenticate.refreshToken,
-    address,
-  });
+  // 6. Store tokens — no local encryption passphrase needed;
+  // the tokens live in browser-local IndexedDB behind the wallet auth gate.
   const record = await buildIdentityRecord({
     protocol: 'lens',
     publicId: profile.id,
     handle: `lens/${profile.handle}`,
     displayName: profile.metadata.displayName ?? undefined,
     avatarUrl: profile.metadata.picture ?? undefined,
-    secret: tokensBlob,
-    passphrase: '',
+    secret: null,
     keys: {
       accessToken: authData.authenticate.accessToken,
       refreshToken: authData.authenticate.refreshToken,
-      address: address ?? null,
+      address,
     },
   });
   await saveIdentity(record);

@@ -49,12 +49,67 @@ export const DEFAULT_SUBREDDITS = [
   'cryptotrader',
   'Crypto_General',
   'cryptomining',
+  // ── Tech / Programming ─────────────────────────────────────────
+  'programming',
+  'rust',
+  'golang',
+  'python',
+  'typescript',
+  'javascript',
+  'MachineLearning',
+  'artificial',
+  'LocalLLaMA',
+  'OpenAI',
+  'ChatGPT',
+  'stableDiffusion',
+  'datascience',
+  'learnmachinelearning',
+  'computerscience',
+  'cybersecurity',
+  'netsec',
+  'hacking',
+  'ReverseEngineering',
+  'devops',
+  'kubernetes',
+  'docker',
+  'linux',
+  'selfhosted',
+  'homelab',
+  // ── Science / Engineering ──────────────────────────────────────
+  'science',
+  'space',
+  'physics',
+  'Futurology',
+  'singularity',
+  'robotics',
+  'energy',
+  'nuclear',
+  'climatescience',
+  // ── Finance / Economics ────────────────────────────────────────
+  'stocks',
+  'investing',
+  'wallstreetbets',
+  'economics',
+  'finance',
+  'personalfinance',
+  'quant',
+  'algotrading',
+  // ── Tech News / Discussion ─────────────────────────────────────
+  'startups',
+  'entrepreneur',
+  'SideProject',
+  'SaaS',
+  'webdev',
+  'frontend',
+  'opensource',
+  'github',
 ];
 
 // Self-hosted Redlib on Talos (primary). Falls back to community instances.
-const SELF_HOSTED_REDLIB = typeof process !== "undefined"
-  ? (process.env?.REDLIB_URL ?? "http://127.0.0.1:8281")
-  : "http://127.0.0.1:8281";
+const SELF_HOSTED_REDLIB =
+  typeof process !== 'undefined'
+    ? (process.env?.REDLIB_URL ?? 'http://127.0.0.1:8281')
+    : 'http://127.0.0.1:8281';
 
 const COMMUNITY_REDDIT_FRONTENDS = [
   'https://libreddit.kavin.rocks',

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { getProtocolColor } from '@degenfeed/ui';
 
 interface SearchResult {
   id: string;
@@ -14,19 +15,6 @@ interface SearchResult {
   niches: string[];
   createdAt: number;
   metrics: { likes: number; reposts: number; replies: number; quotes: number };
-}
-
-function protocolColor(p: string): string {
-  const c: Record<string, string> = {
-    nostr: '#8e30eb',
-    farcaster: '#8a63d2',
-    lens: '#abfe2c',
-    bluesky: '#1185fe',
-    threads: '#888',
-    mastodon: '#6364ff',
-    rss: '#ffa500',
-  };
-  return c[p] ?? '#666';
 }
 
 function formatTime(ts: number): string {
@@ -164,8 +152,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 <div
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
                   style={{
-                    backgroundColor: `${protocolColor(r.protocol)}22`,
-                    color: protocolColor(r.protocol),
+                    backgroundColor: `${getProtocolColor(r.protocol)}22`,
+                    color: getProtocolColor(r.protocol),
                   }}
                 >
                   {r.author.displayName[0]?.toUpperCase() || '?'}
@@ -173,7 +161,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-xs">
                     <span className="font-medium text-white truncate">{r.author.displayName}</span>
-                    <span className="text-gray-500" style={{ color: protocolColor(r.protocol) }}>
+                    <span className="text-gray-500" style={{ color: getProtocolColor(r.protocol) }}>
                       {r.protocol}
                     </span>
                     <span className="ml-auto text-gray-600">{formatTime(r.createdAt)}</span>

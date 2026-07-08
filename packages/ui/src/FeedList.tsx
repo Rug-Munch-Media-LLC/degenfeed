@@ -121,6 +121,48 @@ export function FeedList({
   onSignIn,
 }: FeedListProps & { onSignIn?: () => void }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const SCROLL_KEY = 'df_scroll';
+
+  // Scroll position restore
+  useEffect(() => {
+    if (state !== 'loaded' || posts.length === 0) return;
+    const saved = sessionStorage.getItem(SCROLL_KEY);
+    if (saved) {
+      const { y, id } = JSON.parse(saved) as { y: number; id: string };
+      const el = document.getElementById(`post-${id}`);
+      if (el) { el.scrollIntoView(); return; }
+      window.scrollTo(0, y);
+    }
+  }, [state, posts.length]);
+
+  // Save scroll position on post click
+  const handlePostClick = (postId: string) => {
+    sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ y: window.scrollY, id: postId }));
+    onPostClick?.(postId);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const articles = containerRef.current?.querySelectorAll('article');
+      if (!articles?.length) return;
+      const focused = document.activeElement;
+      const idx = Array.from(articles).indexOf(focused as Element);
+
+      if (e.key === 'j' && idx < articles.length - 1) {
+        e.preventDefault();
+        (articles[idx + 1] as HTMLElement)?.focus({ preventScroll: false });
+      }
+      if (e.key === 'k' && idx > 0) {
+        e.preventDefault();
+        (articles[idx - 1] as HTMLElement)?.focus({ preventScroll: false });
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [posts.length]);
 
   useEffect(() => {
     if (!hasMore || !onLoadMore) return;
@@ -155,12 +197,12 @@ export function FeedList({
   }
 
   return (
-    <div role="feed" aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}>
+    <div ref={containerRef} role="feed" aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}>
       {posts.map((post) => (
         <PostCard
           key={post.id}
           post={post}
-          onClick={onPostClick}
+          onClick={() => handlePostClick(post.id)}
           onTip={onTip}
           onEngage={onEngage}
         />

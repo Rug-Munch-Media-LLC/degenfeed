@@ -1,6 +1,9 @@
 import {
+  contentQualityScore,
   deduplicatePosts,
+  detectContentType,
   enrichPostNiches,
+  isEnglishPost,
   isRelevantPost,
   isSpamPost,
 } from '@degenfeed/feed-core';
@@ -12,6 +15,7 @@ import {
   type FeedResult,
   type FetchOptions,
   type HealthResult,
+  LemmyProvider,
   LensProvider,
   MastodonProvider,
   NostrProvider,
@@ -38,6 +42,7 @@ export const DEFAULT_PROTOCOLS: Protocol[] = [
   'lens',
   'bluesky',
   'mastodon',
+  'lemmy',
   'threads',
   'ponder',
 ];
@@ -58,6 +63,8 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
       return new BlueskyProvider({ baseUrl: env.BSKY_PUBLIC_URL });
     case 'mastodon':
       return new MastodonProvider({ instanceUrl: env.GTS_INSTANCE_URL });
+    case 'lemmy':
+      return new LemmyProvider();
     case 'threads':
       return new ThreadsProvider();
     case 'reddit':
@@ -282,6 +289,54 @@ async function resetCircuit(env: Env, protocol: string): Promise<void> {
   }
 }
 
+// ─── Per-provider short-term KV cache ──────────────────────────────
+// Eliminates redundant API calls: if the same protocol was fetched
+// within the last 60s, reuse the cached result instead of hitting
+// the external API again.
+
+async function readProviderCache(
+  env: Env,
+  protocol: string,
+): Promise<UnifiedPost[] | null> {
+  if (!env.CACHE) return null;
+  try {
+    const key = `prov:${protocol}:v1`;
+    const raw = await env.CACHE.get(key);
+    if (!raw) return null;
+    const { posts, at } = JSON.parse(raw) as { posts: UnifiedPost[]; at: number };
+    if (Date.now() - at < 60_000) return posts;
+  } catch { /* ignore */ }
+  return null;
+}
+
+async function writeProviderCache(
+  env: Env,
+  protocol: string,
+  posts: UnifiedPost[],
+): Promise<void> {
+  if (!env.CACHE || posts.length === 0) return;
+  try {
+    await env.CACHE.put(
+      `prov:${protocol}:v1`,
+      JSON.stringify({ posts, at: Date.now() }),
+      { expirationTtl: 90 },
+    );
+  } catch { /* ignore */ }
+}
+
+// ─── Post KV store ─────────────────────────────────────────────────
+// After dedup, every post is written to KV for O(1) ID lookups.
+
+async function writePostsToKV(env: Env, posts: UnifiedPost[]): Promise<void> {
+  if (!env.CACHE || posts.length === 0) return;
+  try {
+    const puts = posts.slice(0, 100).map((p) =>
+      env.CACHE!.put(`post:${p.id}`, JSON.stringify(p), { expirationTtl: 3600 }).catch(() => {}),
+    );
+    await Promise.allSettled(puts);
+  } catch { /* ignore */ }
+}
+
 export async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
@@ -290,11 +345,38 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   const prefs = parsePrefsFromQuery(params);
   const diverse = params.get('diverse') !== 'false';
   const queryAllowNonCrypto = params.get('allowNonCrypto') === 'true';
+  const sort = params.get('sort') || 'scored'; // scored | hot | new | top
+  const cursor = Number(params.get('cursor')) || 0;
+  const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
+
+  // Anonymous cookie preferences: personalized feed without sign-in.
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const cookieMatch = cookieHeader.split(';').map((s) => s.trim()).find((s) => s.startsWith('df_prefs='));
+  let cookiePrefs: UserAlgorithmPreferences | null = null;
+  if (cookieMatch) {
+    try {
+      cookiePrefs = JSON.parse(decodeURIComponent(cookieMatch.slice('df_prefs='.length))) as UserAlgorithmPreferences;
+    } catch { /* ignore */ }
+  }
 
   const allPosts: UnifiedPost[] = [];
   const errors: string[] = [];
   const perProtocol: Record<string, number> = {};
   const notices: string[] = [];
+
+  // Feed-level cache: skip all provider fetches if we have a fresh result.
+  const feedCacheKey = `feed:v1:${requestedProtocols.join(',')}:${category}:${sort}`;
+  if (env.CACHE && !cursor) {
+    try {
+      const cached = await env.CACHE.get(feedCacheKey);
+      if (cached) {
+        const { data, meta } = JSON.parse(cached) as { data: unknown; meta: Record<string, unknown> };
+        if (Date.now() - (meta.fetchedAt as number) < 30_000) {
+          return jsonResponse({ data, meta });
+        }
+      }
+    } catch { /* ignore */ }
+  }
 
   const results = await Promise.allSettled(
     requestedProtocols.map(async (protocol) => {
@@ -302,6 +384,12 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       // last 60s window. KV-backed so it survives worker restarts.
       if (await isCircuitOpen(env, protocol)) {
         return { protocol, posts: [] as UnifiedPost[], skipped: true };
+      }
+      // Per-provider short-term cache: skip API call if we have a fresh result.
+      const cachedPosts = await readProviderCache(env, protocol);
+      if (cachedPosts) {
+        void resetCircuit(env, protocol);
+        return { protocol, posts: cachedPosts };
       }
       try {
         const provider = getProvider(protocol, env);
@@ -311,8 +399,8 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
         });
         const filtered = result.posts.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
         if (result.notice) notices.push(result.notice);
-        // Success → reset the circuit breaker count.
         void resetCircuit(env, protocol);
+        void writeProviderCache(env, protocol, filtered);
         return { protocol, posts: filtered };
       } catch (err) {
         // Failure → bump the circuit breaker count.
@@ -345,6 +433,13 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   if (category) {
     deduped = filterByCategory(deduped, category);
   }
+  // Content type filter: ?type=video|article|image|thread|link|text
+  const typeFilter = params.get('type') || '';
+  if (typeFilter) {
+    deduped = deduped.filter((p) => detectContentType(p) === typeFilter);
+  }
+  // Write posts to KV for O(1) ID lookups.
+  void writePostsToKV(env, deduped);
   // Load per-user ranking context (followed, muted, preferences) from KV
   // via the session cookie. Unauthenticated users get an empty context.
   const userCtx = await loadUserRankingContext(request, env);
@@ -366,7 +461,41 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   }
   // Skip the crypto-gating relevance filter when the user opts into non-crypto
   // content. The spam filter still applies so we don't drown in junk.
-  const relevant = allowNonCrypto ? deduped : deduped.filter(isRelevantPost);
+  let relevant = allowNonCrypto ? deduped : deduped.filter(isRelevantPost);
+
+  // Language filter: check Accept-Language header, default to English-only.
+  // Users can opt into all languages with ?lang=all.
+  const langParam = params.get('lang') || '';
+  const acceptLang = request.headers.get('accept-language') || '';
+  const preferEnglish = langParam !== 'all' && (langParam === 'en' || acceptLang.startsWith('en') || !langParam);
+  if (preferEnglish) {
+    relevant = relevant.filter((p) => isEnglishPost(p.text));
+  }
+
+  // Batch-fetch Nostr zap counts for engagement enrichment.
+  void (async () => {
+    const nostrIds = relevant.filter((p) => p.protocol === 'nostr').map((p) => p.id.replace('nostr:', ''));
+    if (nostrIds.length === 0) return;
+    try {
+      const res = await fetch('https://api.nostr.band/v0/stats/events', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ids: nostrIds.slice(0, 50) }),
+      });
+      if (!res.ok) return;
+      const stats = await res.json() as Record<string, { reactions?: number; reposts?: number; replies?: number; zaps?: number }>;
+      for (const p of relevant.filter((p) => p.protocol === 'nostr')) {
+        const nativeId = p.id.replace('nostr:', '');
+        const s = stats[nativeId];
+        if (s) {
+          if (s.zaps) p.metrics.quotes = s.zaps;
+          if (s.reactions) p.metrics.likes = Math.max(p.metrics.likes, s.reactions);
+          if (s.reposts) p.metrics.reposts = Math.max(p.metrics.reposts, s.reposts);
+          if (s.replies) p.metrics.replies = Math.max(p.metrics.replies, s.replies);
+        }
+      }
+    } catch { /* non-critical */ }
+  })();
   // Merge per-user preferred niches/platforms into the query params
   const mergedPrefs: UserAlgorithmPreferences = prefs ?? {
     preferredNiches: [],
@@ -392,6 +521,17 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       mergedPrefs.engagementWeight = userCtx.preferences.engagementWeight;
     if (userCtx.preferences.diversityBoost === false) mergedPrefs.diversityBoost = false;
   }
+  // Merge anonymous cookie preferences (lowest priority — overridden by query params and auth'd prefs)
+  if (cookiePrefs) {
+    for (const n of cookiePrefs.preferredNiches) {
+      if (!mergedPrefs.preferredNiches.includes(n)) mergedPrefs.preferredNiches.push(n);
+    }
+    for (const p of cookiePrefs.preferredPlatforms) {
+      if (!mergedPrefs.preferredPlatforms.includes(p)) mergedPrefs.preferredPlatforms.push(p);
+    }
+    if (cookiePrefs.recencyWeight) mergedPrefs.recencyWeight = cookiePrefs.recencyWeight;
+    if (cookiePrefs.engagementWeight) mergedPrefs.engagementWeight = cookiePrefs.engagementWeight;
+  }
   // Resolve hide-low-quality controls. Query params override stored prefs
   // for the duration of the request; the persisted preference still wins
   // on subsequent fetches.
@@ -412,9 +552,6 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     recentAuthors.set(key, (recentAuthors.get(key) ?? 0) + 1);
     if (p.author.followerCount > 0) {
       sourceQuality.set(key, Math.min(1.5, p.author.followerCount / 10000));
-    }
-    if (p.author.id && p.author.id.includes('social.degenfeed.xyz')) {
-      sourceQuality.set(key, (sourceQuality.get(key) ?? 0.5) + 1.5);
     }
   }
 
@@ -484,27 +621,58 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     );
     await Promise.allSettled(puts);
   })();
-  // Optionally filter low-quality posts at the user's preferred threshold.
-  // Threshold 0 means "only drop truly negative scores"; higher is stricter.
+  // Cursor-based pagination: filter posts by createdAt relative to cursor.
+  let cursorScored = scoredRelevant;
+  if (cursor > 0) {
+    cursorScored = direction === 'asc'
+      ? scoredRelevant.filter((s) => s.post.createdAt > cursor)
+      : scoredRelevant.filter((s) => s.post.createdAt < cursor);
+  }
+
+  // Sort modes. 'scored' uses the diversity ranker; 'hot'/'top'/'new' are
+  // simple sorts that bypass the diversity algorithm so the user sees exactly
+  // what they asked for (but we still apply the low-quality filter first).
   const filteredScored = hideLowQuality
-    ? scoredRelevant.filter((s) => s.breakdown.total >= hideLowQualityThreshold)
-    : scoredRelevant;
-  // rankDiverse: greedy per-author cap ensures a balanced feed
-  // (otherwise one noisy author can dominate).
-  const rankedPosts = (
-    diverse
-      ? rankDiverse(
-          filteredScored.map((s) => s.post),
-          ctx,
-          { maxPerAuthor: 2 },
-        )
-      : filteredScored.map((s) => s.post)
-  ).slice(0, Math.min(limit, 100));
+    ? cursorScored.filter((s) => s.breakdown.total >= hideLowQualityThreshold)
+    : cursorScored;
+
+  const rankedPosts = (() => {
+    if (sort === 'new') {
+      return [...filteredScored]
+        .sort((a, b) => b.post.createdAt - a.post.createdAt)
+        .map((s) => s.post)
+        .slice(0, Math.min(limit, 100));
+    }
+    if (sort === 'top') {
+      return [...filteredScored]
+        .sort((a, b) => b.breakdown.engagement - a.breakdown.engagement)
+        .map((s) => s.post)
+        .slice(0, Math.min(limit, 100));
+    }
+    if (sort === 'hot') {
+      return [...filteredScored]
+        .sort((a, b) => b.breakdown.total - a.breakdown.total)
+        .map((s) => s.post)
+        .slice(0, Math.min(limit, 100));
+    }
+    // Default 'scored': use diversity ranker
+    return (
+      diverse
+        ? rankDiverse(
+            filteredScored.map((s) => s.post),
+            ctx,
+            { maxPerAuthor: 2, perProtocolMin: { farcaster: 2, lens: 2, bluesky: 2, nostr: 2, lemmy: 2 } },
+          )
+        : filteredScored.map((s) => s.post)
+    ).slice(0, Math.min(limit, 100));
+  })();
   // Attach score breakdowns by id lookup
   const scoreById = new Map(filteredScored.map((s) => [s.post.id, s.breakdown]));
   const ranked = rankedPosts.map((p) => {
     const breakdown = scoreById.get(p.id);
     if (!breakdown) return p;
+    const now = Date.now();
+    const ageMin = (now - p.createdAt) / 60000;
     return {
       ...p,
       score: {
@@ -518,9 +686,13 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
         velocity: breakdown.velocity,
         reasons: breakdown.reasons,
       },
+      isNew: ageMin < 15,
+      isHot: breakdown.velocity > 2.0,
+      isTrending: breakdown.engagement > 3,
     };
   });
-  const trending = computeTrendingTopics(relevant, Date.now());
+  const trendingWindow = Number(params.get('trending')) || 24; // hours
+  const trending = computeTrendingTopics(relevant, Date.now(), 12, trendingWindow * 3600000);
   // Merge trending hashtags from our Mastodon instance
   try {
     const mastoTrends = await fetch('https://social.degenfeed.xyz/api/v1/trends/tags?limit=8', {
@@ -540,13 +712,13 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   } catch {
     /* trending unavailable */
   }
-  // Top-of-hour: highest-engagement post from the last 60 minutes.
+  // Top-of-hour: highest-scoring post from the last 60 minutes.
   const now = Date.now();
   const recentPosts = scoredRelevant.filter((s) => now - s.post.createdAt < 3600000);
   const topOfHour =
     recentPosts.length > 0
       ? recentPosts.reduce((best, cur) =>
-          cur.breakdown.engagement > best.breakdown.engagement ? cur : best,
+          cur.breakdown.total > best.breakdown.total ? cur : best,
         ).post.id
       : null;
 
@@ -569,7 +741,17 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     );
   }
 
-  return jsonResponse({
+  const nextCursor = ranked.length > 0 ? ranked[ranked.length - 1]!.createdAt : null;
+
+  // New posts since last visit: reads a cookie, counts newer posts.
+  const lastVisitCookie = cookieHeader.split(';').map((s) => s.trim()).find((s) => s.startsWith('df_last_visit='));
+  let newSinceLastVisit = 0;
+  if (lastVisitCookie) {
+    const lastVisit = Number(lastVisitCookie.slice('df_last_visit='.length));
+    if (lastVisit > 0) newSinceLastVisit = ranked.filter((p) => p.createdAt > lastVisit).length;
+  }
+
+  const responseBody = {
     data: ranked,
     meta: {
       total: ranked.length,
@@ -579,9 +761,21 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       notices: notices.length > 0 ? notices : undefined,
       trending,
       topOfHour,
+      nextCursor,
+      sort,
+      newSinceLastVisit,
       fetchedAt: Date.now(),
     },
-  });
+  };
+
+  // Write feed-level cache for subsequent requests.
+  if (env.CACHE && !cursor) {
+    try {
+      await env.CACHE.put(feedCacheKey, JSON.stringify(responseBody), { expirationTtl: 45 });
+    } catch { /* ignore */ }
+  }
+
+  return jsonResponse(responseBody);
 }
 
 export async function handleTrendingFeed(request: Request, env: Env): Promise<Response> {

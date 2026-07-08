@@ -58,6 +58,32 @@ interface VerifyBody {
   transaction?: string;
 }
 
+async function verifySolanaTransaction(
+  signature: string,
+  rpcUrl: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getSignatureStatuses',
+        params: [[signature], { searchTransactionHistory: true }],
+      }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json() as {
+      result?: { value?: Array<{ confirmationStatus?: string; err?: unknown } | null> };
+    };
+    const status = data?.result?.value?.[0];
+    return status?.confirmationStatus === 'confirmed' || status?.confirmationStatus === 'finalized';
+  } catch {
+    return false;
+  }
+}
+
 export async function handleBillingVerify(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const tier = sanitizeString(url.searchParams.get('tier'), 16) as SubscriptionTier;
@@ -74,12 +100,18 @@ export async function handleBillingVerify(request: Request, env: Env): Promise<R
 
   const account = sanitizeString(body.account, 128);
   const signature = sanitizeString(body.signature, 128);
-  const transaction = sanitizeString(body.transaction, 8192);
   if (!account || !isValidSolanaAddress(account)) {
     return jsonResponse({ error: 'Valid Solana account required' }, 400);
   }
-  if (!signature && !transaction) {
-    return jsonResponse({ error: 'signature or transaction required' }, 400);
+  if (!signature) {
+    return jsonResponse({ error: 'Transaction signature required' }, 400);
+  }
+
+  // Verify the transaction on-chain before granting subscription.
+  const rpcUrl = env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+  const confirmed = await verifySolanaTransaction(signature, rpcUrl);
+  if (!confirmed) {
+    return jsonResponse({ error: 'Transaction not confirmed on-chain. Wait for confirmation and try again.' }, 402);
   }
 
   const identityId = `solana:${account}`;
@@ -89,7 +121,7 @@ export async function handleBillingVerify(request: Request, env: Env): Promise<R
     identityId,
     startedAt: now,
     expiresAt: now + 30 * 24 * 60 * 60 * 1000,
-    txSignature: signature || transaction,
+    txSignature: signature,
   };
 
   try {

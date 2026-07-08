@@ -19,9 +19,10 @@ import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../ty
 import { DEFAULT_TIMEOUT_MS, fetchText, withTimeout } from '../utils';
 
 export const THREADS_WEB_URL = 'https://www.threads.net';
-export const FLARESOLVERR_URL = typeof process !== "undefined" && process.env?.FLARESOLVERR_URL
-  ? process.env.FLARESOLVERR_URL
-  : ""; // Set FLARESOLVERR_URL env var or leave empty to disable
+export const FLARESOLVERR_URL =
+  typeof process !== 'undefined' && process.env?.FLARESOLVERR_URL
+    ? process.env.FLARESOLVERR_URL
+    : ''; // Set FLARESOLVERR_URL env var or leave empty to disable
 
 export const CURATED_THREADS_HANDLES = [
   'zuck',
@@ -61,26 +62,22 @@ function threadsHeaders(): Record<string, string> {
 }
 
 async function fetchViaFlareSolverr(url: string, timeoutMs: number): Promise<string> {
-  try {
-    const resp = await withTimeout(
-      fetch(FLARESOLVERR_URL, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          cmd: 'request.get',
-          url,
-          maxTimeout: Math.min(timeoutMs, 30000),
-        }),
+  const resp = await withTimeout(
+    fetch(FLARESOLVERR_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        cmd: 'request.get',
+        url,
+        maxTimeout: Math.min(timeoutMs, 30000),
       }),
-      timeoutMs + 5000,
-      'threads:flaresolverr',
-    );
-    const data = (await resp.json()) as { solution?: { response?: string }; status?: string };
-    if (data.solution?.response) return data.solution.response;
-    throw new Error(data.status || 'no response');
-  } catch (e) {
-    throw e;
-  }
+    }),
+    timeoutMs + 5000,
+    'threads:flaresolverr',
+  );
+  const data = (await resp.json()) as { solution?: { response?: string }; status?: string };
+  if (data.solution?.response) return data.solution.response;
+  throw new Error(data.status || 'no response');
 }
 
 async function scrapeProfile(handle: string, timeoutMs: number): Promise<ThreadsPost[]> {
@@ -112,18 +109,19 @@ async function scrapeProfile(handle: string, timeoutMs: number): Promise<Threads
               id: `threads:${normalized}:${e.url || ''}`.slice(0, 128),
               text: String(e.name || ''),
               createdAt: Date.now(),
-              likes: e.interactionStatistic?.[0]?.userInteractionCount || 0,
+              likes:
+                (
+                  e.interactionStatistic as Array<{ userInteractionCount?: number }> | undefined
+                )?.[0]?.userInteractionCount || 0,
               replies: e.commentCount || 0,
             }));
         }
-      } catch {
-        continue;
-      }
+      } catch {}
     }
 
     // Strategy 2: Extract from __INITIAL_STATE__ or similar state blobs
     const stateMatch = html.match(/"thread_items":\s*(\[[^\]]*\])/);
-    if (stateMatch) {
+    if (stateMatch?.[1]) {
       try {
         const items = JSON.parse(stateMatch[1]) as Array<{
           post?: {
@@ -139,16 +137,16 @@ async function scrapeProfile(handle: string, timeoutMs: number): Promise<Threads
         return items
           .filter((p) => p?.post)
           .map((p) => ({
-            id: `threads:${p.post!.code || p.post!.pk}`,
-            text: p.post!.caption?.text || '',
-            createdAt: (p.post!.taken_at || 0) * 1000,
-            likes: p.post!.like_count || 0,
-            replies: p.post!.comment_count || 0,
-            author: p.post!.user
+            id: `threads:${p.post?.code || p.post?.pk}`,
+            text: p.post?.caption?.text || '',
+            createdAt: (p.post?.taken_at || 0) * 1000,
+            likes: p.post?.like_count || 0,
+            replies: p.post?.comment_count || 0,
+            author: p.post?.user
               ? {
-                  username: p.post!.user.username,
-                  name: p.post!.user.full_name,
-                  avatar: p.post!.user.profile_pic_url,
+                  username: p.post?.user.username,
+                  name: p.post?.user.full_name,
+                  avatar: p.post?.user.profile_pic_url,
                 }
               : undefined,
           }));

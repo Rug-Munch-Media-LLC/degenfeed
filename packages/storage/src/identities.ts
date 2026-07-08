@@ -19,12 +19,12 @@ export async function getAllIdentities(): Promise<StoredIdentity[]> {
 
 export async function getIdentitiesByProtocol(protocol: Protocol): Promise<StoredIdentity[]> {
   const db = await getDb();
-  return db.getAllFromIndex('identities', 'byProtocol', protocol);
+  return db.getAllFromIndex('identities', 'protocol', protocol);
 }
 
 export async function getPrimaryIdentity(): Promise<StoredIdentity | undefined> {
   const db = await getDb();
-  const all = await db.getAllFromIndex('identities', 'byPrimary', 1);
+  const all = await db.getAllFromIndex('identities', 'isPrimary', 1);
   return all[0];
 }
 

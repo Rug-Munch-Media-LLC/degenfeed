@@ -87,10 +87,12 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
       signedMessage?: string;
       typedDataId?: string;
       signature?: string;
+      lensCollect?: boolean;
     }
     const body: PublishRequest = (await request.json()) as PublishRequest;
     const text = sanitizeString(body.text, 10000);
     const targets = sanitizeStringArray(body.targets, 64).filter(isAllowedProtocol);
+    const lensCollect = body.lensCollect ?? false;
 
     if (!text || hasSuspiciousPayload(text)) {
       return jsonResponse({ error: 'Invalid text' }, 400);

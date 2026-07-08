@@ -25,7 +25,7 @@ import {
 import { RmiDataBusProvider, RssProvider } from '@degenfeed/feed-providers';
 import { computeTrendingTopics, rankDiverse } from '@degenfeed/ranking';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
-import { rmiUrl } from '@degenfeed/utils';
+import { getProtocolColor, rmiUrl } from '@degenfeed/utils';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { DEFAULT_PROTOCOLS, getProvider } from './feed';
 
@@ -91,19 +91,6 @@ function protocolEmoji(p: Protocol): string {
     rss: '📡',
   };
   return map[p] ?? '●';
-}
-
-function protocolColor(p: Protocol): string {
-  const map: Record<string, string> = {
-    nostr: '#8e30eb',
-    farcaster: '#8a63d2',
-    lens: '#abfe2c',
-    bluesky: '#1185fe',
-    mastodon: '#6364ff',
-    threads: '#888',
-    rss: '#ffa500',
-  };
-  return map[p] ?? '#666';
 }
 
 function formatTime(ts: number): string {
@@ -223,7 +210,7 @@ export function buildDigestHtml(
         p.text.slice(0, 140).replace(/\s+/g, ' ').trim() || `Post by ${p.author.displayName}`;
       const desc = stripTags(p.html || p.text).slice(0, 200);
       const img = p.embeds.find((e) => e.kind === 'image')?.url;
-      const color = protocolColor(p.protocol);
+      const color = getProtocolColor(p.protocol);
       const emoji = protocolEmoji(p.protocol);
       const nichesHtml = p.niches
         .slice(0, 3)

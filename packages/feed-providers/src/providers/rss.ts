@@ -80,6 +80,51 @@ export const DEFAULT_CRYPTO_FEEDS = [
   'https://ai.meta.com/blog/feed/', // Meta AI
   'https://research.facebook.com/feed/', // Meta Research
   'https://www.anthropic.com/feed/', // Anthropic
+  // ── AI/ML Research + Papers ────────────────────────────────────
+  'https://arxiv.org/rss/cs.AI', // arXiv — Artificial Intelligence
+  'https://arxiv.org/rss/cs.CL', // arXiv — Computation & Language (NLP)
+  'https://arxiv.org/rss/cs.CR', // arXiv — Cryptography & Security
+  'https://arxiv.org/rss/cs.LG', // arXiv — Machine Learning
+  'https://arxiv.org/rss/stat.ML', // arXiv — Machine Learning (Stats)
+  'https://arxiv.org/rss/q-fin.TR', // arXiv — Trading & Market Microstructure
+  'https://arxiv.org/rss/cs.CY', // arXiv — Computers & Society
+  // ── Hacker News + Dev Communities ──────────────────────────────
+  'https://hnrss.org/frontpage?points=20', // Hacker News (20+ points)
+  'https://hnrss.org/newest?points=10', // Hacker News new
+  'https://lobste.rs/rss', // Lobsters (curated tech)
+  'https://dev.to/feed', // Dev.to
+  'https://css-tricks.com/feed/', // CSS-Tricks
+  'https://www.smashingmagazine.com/feed/', // Smashing Magazine
+  'https://news.ycombinator.com/rss', // Hacker News (native RSS)
+  // ── Engineering / Dev Blogs ────────────────────────────────────
+  'https://blog.rust-lang.org/feed.xml', // Rust Blog
+  'https://go.dev/blog/feed.atom', // Go Blog
+  'https://nodejs.org/en/feed/blog.xml', // Node.js Blog
+  'https://deno.com/feed', // Deno Blog
+  'https://bun.sh/blog/rss.xml', // Bun Blog
+  'https://tailwindcss.com/feeds/feed.xml', // Tailwind CSS
+  'https://vercel.com/atom', // Vercel
+  'https://netflixtechblog.com/feed', // Netflix Tech Blog
+  'https://engineering.fb.com/feed/', // Meta Engineering
+  'https://github.blog/feed/', // GitHub Blog
+  'https://stackoverflow.blog/feed/', // Stack Overflow Blog
+  'https://blog.cloudflare.com/rss/', // Cloudflare Blog
+  'https://aws.amazon.com/blogs/aws/feed/', // AWS Blog
+  'https://martinfowler.com/feed.atom', // Martin Fowler
+  'https://blog.pragmaticengineer.com/feed.xml', // Pragmatic Engineer
+  'https://www.joelonsoftware.com/feed/', // Joel on Software
+  // ── Tech News / Analysis ───────────────────────────────────────
+  'https://www.wired.com/feed/rss', // Wired
+  'https://www.theinformation.com/feed', // The Information
+  'https://restofworld.org/feed/', // Rest of World (tech + global)
+  'https://www.protocol.com/feed', // Protocol
+  'https://www.platformer.news/feed', // Platformer (Casey Newton)
+  // ── Podcast RSS Feeds ──────────────────────────────────────────
+  'https://feeds.megaphone.fm/HS1319961881', // All-In Podcast
+  'https://feeds.simplecast.com/54nAGcIl', // Lex Fridman Podcast
+  'https://feeds.simplecast.com/wjQvYtdl', // Acquired
+  'https://feeds.megaphone.fm/recruitthebest', // My First Million
+  'https://feeds.transistor.fm/the-ai-report', // The AI Report
   // ── Tier 5 — Research / Data ────────────────────────────────────
   'https://messari.io/feed', // Messari
   'https://insights.glassnode.com/feed/', // Glassnode
@@ -134,6 +179,87 @@ export const DEFAULT_CRYPTO_FEEDS = [
   'https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw', // 3Blue1Brown
   'https://www.youtube.com/feeds/videos.xml?channel_id=UCr8UAVlECQNTpMEYfzt8nDQ', // Lex Fridman (AI/tech)
   'https://www.youtube.com/feeds/videos.xml?channel_id=UCznv7Vf9nBdXFXz2L9n7bLQ', // Finematics (DeFi)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCrKmtqq2k1DJz7SEqGdVG_A', // Ivan on Tech
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCC3fP7QBYlJ4f5RxCq7g6kw', // Crypto Banter
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCjemGQqVxmg4JUPhhDqKGQw', // BitBoy Crypto
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1CjAajqD4Mzq_FhzcAS1iA', // EllioTrades
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCjGQKQb1nWPDGXJGPbMDGXA', // Crypto Casey
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCwEFqN_0R3zMBq6E1cplVnQ', // Max Maher
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC2D1kG9TJd5L8Ipg0Lf38FQ', // JRNY Crypto
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCgp1stxfB8YQJik2qJ0JOyg', // Crypto Zombie
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCWKP7gn6sRJ2Fw3aKKxRGIA', // Sheldon Evans
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9CqMgm3A7p4Zn1PqGuZ06g', // Andrei Jikh
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCcjvB2XOoWTjbKtA5VCT9aw', // Meet Kevin
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsX3E_uK9RbyqGJXuqE0_ag', // CoinMarketCap
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC8oB7HqgqF9WjAmoRkHrbOg', // Crypto.com
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCbqwBs5VG5qF0Sm2UzRg2PQ', // LunarCrush
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCJhnGQeUxgjY2JHJnjnxUuA', // Messari
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7QGxNssSsPQDRb3Rf3UCFQ', // The Defiant
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCxK1qEkrbn1U9NCoC1mG1BQ', // Empire Podcast
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCepXJTPh_0SHzzQZ5o2H6Bg', // Unchained Podcast
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1ZmxGzXxKBd9q_FSYpBikA', // The Block
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsMGFpzgUMaXxjKVY8KgYNA', // Bankless Shows
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCL0XJbZlRZSGZeLQmLHZxRw', // Laura Shin (Unchained)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsK1oK2D1iYtGxxPHDaGgAA', // Scott Melker (Wolf of All Streets)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC4udlEvPqhDGD5qj1xw6bEA', // Peter McCormack (What Bitcoin Did)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsN9s6i3Xp1LJuPthv3LtEA', // Preston Pysh
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1aLUb4TlJsNTp7M0QZiPrA', // Robert Breedlove
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC4oKxVUYjAMRnG_Jyn4KsNg', // Natalie Brunell
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCOfb-MWr4hk7TO-M9V2w8oA', // Crypto Tips (Heidi)
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCIgNWGYPmJbHjKQxB7F0DXA', // DataDash Shorts
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCI8gT3EnC_xlLrPvQF-t3Pg', // Graham Stephan
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7-GmEFHWsyGGXIDkjQ5Qrg', // The Cryptoviser
+  // ── Tech / Programming YouTube ──────────────────────────────
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPvezykHz9Qd0VBLg', // Fireship
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC2D1kG9TJd5L8Ipg0Lf38FQ', // Theo - t3.gg
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1CjAajqD4Mzq_FhzcAS1iA', // ThePrimeagen
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCZ9qFEC82qbsLsVRLpHU1Mw', // Jack Herrington
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCcZcW8ZO7jKmDYgpSgjkIIw', // Ben Awad
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCFbNIlppjAuEX4znoultaCQ', // Web Dev Simplified
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC29ju8bIPH5as8OGnQzwJyA', // Traversy Media
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA', // Computerphile
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCX6b17PVsYBQ0ip5gyeme-Q', // CrashCourse
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw', // 3Blue1Brown
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC8butISFwT-Wl7EV0hUK0BQ', // freeCodeCamp
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPvezykHz9Qd0VBLg', // Joma Tech (dup channel id fix)
+  // ── AI / ML YouTube ──────────────────────────────────────────
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew', // Yannic Kilcher
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCqZQJzTlBvT5GpB1mqGzMxw', // Two Minute Papers
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1KSUGdI_mDEhF3D8kXdJfQ', // AI Explained
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCbgXRMcKO1yFIodMGh3CbrQ', // Matt Wolfe
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCudyV83kDjeQHhYmRiZY28A', // Machine Learning Street Talk
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCXUPKb5X0HaLBzhEzK8kIGA', // Andrej Karpathy
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCWN3xxRkmTPmbKwht9FuE5A', // sentdex
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCBa659QWEk1AI4Tg--mrJ2A', // Robert Miles AI Safety
+  // ── Science / Engineering YouTube ────────────────────────────
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA', // Veritasium
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsXVk37bltHxD1rDPwtNM8Q', // Kurzgesagt
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC6107grRI4m0o2-emgoDnAA', // SmarterEveryDay
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCY1kMZp36IQSyNx_9h4mpCg', // Mark Rober
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCXgnow0F1bgBSHBhMTrEF4Q', // Real Engineering
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9RM2cVmymS0EekooMfRDYA', // Wendover Productions
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCH4BNI0-FOK2dMXoFtViWHw', // Be Smart
+  // ── Tech / Hardware / Reviews ─────────────────────────────────
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC0Y7bI8o8p3q1qN6a9rYTNg', // Dave2D
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCBJycsmduvYEL83R_U4JriQ', // MKBHD
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCXuqSBlHAE6Xw-yeJA0Tunw', // Linus Tech Tips
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UChIs72whgZI9w6d6DAhvS0Q', // Gamers Nexus
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCI8iQa1Gjo3g1qB_hYxRhXQ', // Hardware Unboxed
+  // ── Finance / Economics YouTube ───────────────────────────────
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCbKUvAU67W3BkSg7Ph5qFmw', // Patrick Boyle
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCbop4i8qPqnhUKrYnC5o_Wg', // The Plain Bagel
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCRoEaeVTHOyTm1XgZJOlUKg', // Economics Explained
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCKZwzGzYnUnEYYqicm2r5Xg', // Money & Macro
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC4K10PNjqgGLKa3rl5dBTVw', // ColdFusion
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCZThQqed5JPFRq2Z5YpBcJA', // New Money
+  // ── Startup / VC YouTube ──────────────────────────────────────
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCcefcZRL2oaA_uBNMYjGZ_g', // Y Combinator
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCkFcF1VzD0P3QyP_PBpA5Jw', // a16z
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCZ6xkNmStwFjN7G0xGqRGFQ', // Greylock
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC5ZBfQ7y7AHg0cJxKZLOdEg', // NFX
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCGwuxdEeCf0TIA2RbPOj-8g', // Stanford GSB
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCr8UAVlECQNTpMEYfzt8nDQ', // Lex Fridman
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7-GmEFHWsyGGXIDkjQ5Qrg', // The Cryptoviser
 
   // ── Tier 8: Expanded Crypto Sources ──────────────────────────────
   'https://www.coindesk.com/arc/outboundfeeds/rss/',
@@ -385,6 +511,27 @@ export const DEFAULT_CRYPTO_FEEDS = [
   // Mirror / Paragraph creator feeds
   'https://mirror.xyz/feed',
   'https://paragraph.xyz/feed',
+  // ── Lemmy — Federated Reddit (ActivityPub) ────────────────────────
+  'https://lemmy.world/feeds/c/cryptocurrency.xml?sort=Hot',
+  'https://lemmy.ml/feeds/c/bitcoin.xml?sort=Hot',
+  'https://lemmy.world/feeds/c/technology.xml?sort=Hot',
+  'https://lemmy.ml/feeds/c/opensource.xml?sort=Hot',
+  'https://lemmy.world/feeds/c/privacy.xml?sort=Hot',
+  'https://lemmy.world/feeds/c/cybersecurity.xml?sort=Hot',
+  'https://lemmy.world/feeds/c/ai.xml?sort=Hot',
+  'https://lemmy.world/feeds/c/defi.xml?sort=Hot',
+  'https://lemmy.world/feeds/c/blockchain.xml?sort=Hot',
+  'https://lemmy.world/feeds/c/web3.xml?sort=Hot',
+  'https://lemmy.ml/feeds/c/ethereum.xml?sort=Hot',
+  'https://lemmy.world/feeds/c/solana.xml?sort=Hot',
+  'https://programming.dev/feeds/c/rust.xml?sort=Hot',
+  'https://programming.dev/feeds/c/python.xml?sort=Hot',
+  'https://lemmy.world/feeds/c/nostr.xml?sort=Hot',
+  // ── PeerTube — Federated Video (ActivityPub) ────────────────────
+  'https://tube.cryptoconomy.com/feeds/videos.xml',
+  'https://tilvids.com/feeds/videos.xml',
+  'https://diode.zone/feeds/videos.xml?sort=-publishedAt',
+  'https://video.ploud.fr/feeds/videos.xml?sort=-publishedAt',
 ];
 
 export interface RssProviderOptions {

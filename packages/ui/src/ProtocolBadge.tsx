@@ -12,6 +12,7 @@ export const PROTOCOL_COLORS: Record<string, string> = {
   bluesky: '#1185fe',
   threads: '#888888',
   mastodon: '#6364ff',
+  lemmy: '#00b868',
   activitypub: '#6364ff',
   rss: '#ffa500',
 };
@@ -23,6 +24,7 @@ export const PROTOCOL_LABELS: Record<string, string> = {
   bluesky: 'Bluesky',
   threads: 'Threads',
   mastodon: 'Mastodon',
+  lemmy: 'Lemmy',
   activitypub: 'Mastodon',
   rss: 'RSS',
 };
@@ -34,6 +36,7 @@ export const PROTOCOL_ICONS: Record<string, string> = {
   bluesky: '☁',
   threads: '+',
   mastodon: 'M',
+  lemmy: 'L',
   activitypub: 'M',
   rss: 'A',
 };
