@@ -263,9 +263,9 @@ export class MastodonProvider implements FeedProvider {
       }
 
       // 2. Hashtag searches across crypto+tech instances for crypto+AI topics
-      const allHashes = [...CRYPTO_HASHTAGS.slice(0, 3), ...TECH_HASHTAGS.slice(0, 3)];
+      const allHashes = [...CRYPTO_HASHTAGS.slice(0, 2), ...TECH_HASHTAGS.slice(0, 2)];
       const hashtagTargets = [];
-      for (const instanceUrl of endpoints.slice(0, 3)) {
+      for (const instanceUrl of endpoints.slice(0, 2)) {
         for (const tag of allHashes) {
           hashtagTargets.push({ instanceUrl, tag });
         }
@@ -289,7 +289,7 @@ export class MastodonProvider implements FeedProvider {
 
       // 3. Public timelines from general instances
       const generalResults = await withConcurrencyLimit(
-        endpoints.slice(0, 6),
+        endpoints.slice(0, 1),
         2,
         async (instanceUrl) => {
           try {
