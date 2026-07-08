@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 export default function RootPage() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/twitter');
+    router.replace('/feed');
   }, [router]);
   return (
     <div className="flex min-h-[60vh] items-center justify-center">

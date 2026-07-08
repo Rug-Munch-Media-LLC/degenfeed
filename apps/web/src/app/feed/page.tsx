@@ -6,9 +6,9 @@ import { FeedList, NotificationBell } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
+import { FeedComposer } from '../../components/FeedComposer';
+import { FeedSidebar } from '../../components/FeedSidebar';
 import { TipModal } from '../../components/TipModal';
-import { TwitterComposer } from '../../components/TwitterComposer';
-import { TwitterSidebar } from '../../components/TwitterSidebar';
 import { useNotifications } from '../../hooks/useNotifications';
 
 export const runtime = 'edge';
@@ -43,7 +43,7 @@ const PROTOCOL_META: Record<string, { label: string; color: string; emoji: strin
   rss: { label: 'News', color: '#ffa500', emoji: '📰' },
 };
 
-export default function TwitterPage() {
+export default function FeedPage() {
   const { signedInProtocols, engage, openSignIn, publish, ready, signOut, nostrPublicId } =
     useAuth();
 
@@ -472,7 +472,7 @@ export default function TwitterPage() {
 
         {/* Composer / sign-in CTA */}
         {hasSignedIn ? (
-          <TwitterComposer
+          <FeedComposer
             onPost={publish}
             signedInProtocols={signedInProtocols}
             nostrPublicId={nostrPublicId}
@@ -568,7 +568,7 @@ export default function TwitterPage() {
       {/* Right sidebar */}
       <aside className="hidden lg:col-span-4 lg:block xl:col-span-3">
         <div className="sticky top-20">
-          <TwitterSidebar
+          <FeedSidebar
             trending={feedMeta.trending ?? []}
             protocolSummaries={protocolSummaries}
             activeProtocolFilter={protocolFilter}

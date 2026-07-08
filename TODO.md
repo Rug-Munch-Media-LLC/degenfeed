@@ -15,49 +15,49 @@
 
 ### 15 Next Moves (ranked by impact)
 
-1. **Make `/home` per-protocol sections actually work**  
+1. **Make `/home` per-protocol sections actually work**
    Ensure `/home/nostr`, `/home/farcaster`, `/home/bluesky`, `/home/lens`, `/home/mastodon`, `/home/threads`, and `/home/reddit` each call the correct provider endpoint and render a real feed with loading, error, and empty states. Fix `/home/mastodon` to use `/api/feed/home?protocols=mastodon` (or keep `/api/feed/activitypub` but wire it to the deployed GotoSocial instance).
 
-2. **Rebuild the landing experience**  
+2. **Rebuild the landing experience**
    The current app looks like a generic dashboard. Design a web3-first `/twitter` timeline with: compact PostCards, hover actions, quote/repost counts, protocol badges, embedded link previews, and image lightbox. Copy the best parts of Warpcast / Bluesky / X, not a Bootstrap card layout.
 
-3. **Fix the empty-state problem everywhere**  
+3. **Fix the empty-state problem everywhere**
    Every feed currently shows an empty card with no personality. Add protocol-specific empty states: "No Nostr notes found — try a different relay", "Mastodon timeline is quiet — create the first post @social.degenfeed.xyz", etc., with one-click fixes (switch relay, create account, sign in).
 
-4. **Add real-time / polling updates**  
+4. **Add real-time / polling updates**
    The news page polls every 60s for new stories but other timelines do not. Add a global `useFeedPoller` hook that shows a "New posts" banner and lets users pull-to-refresh on mobile and click-to-refresh on desktop.
 
-5. **Replace the RMI hard dependency with a resilient pipeline**  
+5. **Replace the RMI hard dependency with a resilient pipeline**
    RMI is unreachable from Cloudflare edge. The feed should always fall back to public sources without the user noticing. Remove all user-facing "RMI DataBus" copy until the backend is actually deployed and reachable from the edge.
 
-6. **Harden the Mastodon/GotoSocial integration**  
+6. **Harden the Mastodon/GotoSocial integration**
    Our own instance is the most important protocol. Add a dedicated GotoSocial provider path that reads the public timeline from `https://social.degenfeed.xyz/api/v1/timelines/public`, supports hashtag timelines, and lets signed-in users see their home timeline.
 
-7. **Add protocol-aware composer**  
+7. **Add protocol-aware composer**
    The composer now shows all protocols. Signed-in protocols are selectable; unsigned protocols show a lock icon and open sign-in when clicked. Added live publish preview (`ComposePreview`) and per-protocol character-limit warnings that disable the Post button when exceeded. Updated both the inline `TwitterComposer` and the `ComposeModal`.
 
-8. **Implement wallet-first authentication**  
+8. **Implement wallet-first authentication**
    Wallet sign-in is now the primary path in the `SignInModal` (Ethereum + Solana buttons at the top). Added `/api/auth/signout` to clear the `__Host-dfid` cookie, added `signOut` to `AuthProvider`, and exposed it in the `/twitter` header and sidebar. `/api/bridge/rss-to-nostr` now requires the session cookie too.
 
-9. **Add a unified notifications stream**  
+9. **Add a unified notifications stream**
    Added `useNotifications` hook that builds auth from all linked identities, polls `POST /api/notifications` every 60s, and persists read state in localStorage. Extended the backend to aggregate notifications from Nostr, Mastodon, and Bluesky. Added the `NotificationBell` to the `/twitter` header and kept it in `/home/[section]`.
 
-10. **Fix ranking and deduplication**  
+10. **Fix ranking and deduplication**
     Backend now computes and attaches a per-post score breakdown (recency, engagement, relevance, quality, diversity, source, velocity, reasons). `PostCard` shows a `★` badge with hover tooltip exposing each component. Added a "hide low-quality" toggle in `/twitter` (persisted in localStorage) that filters posts with `score.total < 1.0`. The toggle respects the session-bound `hideLowQuality` preference so it can later be moved to a profile page.
 
 11. **Add cross-posting to the bridge**
     Wire `/api/bridge/rss-to-nostr` and a general `/api/publish` to cross-post from Mastodon to Nostr, Farcaster to Bluesky, etc. Start with one working pair (Mastodon → Nostr) and expose it in the composer.
 
-12. **Build a mobile-first responsive layout**  
+12. **Build a mobile-first responsive layout**
     The current layout is desktop-only with a hidden right sidebar. Implement a bottom nav (Home, Search, Notifications, Profile) for mobile, collapsible sidebars, and proper safe-area handling.
 
-13. **Add protocol health dashboard**  
+13. **Add protocol health dashboard**
     `/api/feed/health` exists but is not exposed in the UI. Add a `/status` page (or admin panel) showing each protocol's latency, success rate, and last fetched time so users know when a feed is degraded.
 
-14. **Add search that actually searches**  
+14. **Add search that actually searches**
     `/api/search` and `/api/search/identity` are wired. Add a global search bar in the shell that searches posts, identities, and niches across protocols, with filters for protocol and time range.
 
-15. **Ship the newsletter as a real product**  
+15. **Ship the newsletter as a real product**
     After the digest works, add an actual email-sending path (Postmark / SES) and a cron trigger that builds the daily digest from live data and sends it to subscribers. Add a `/newsletter/manage` page with preferences and unsubscribe.
 
 ## Active

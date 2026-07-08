@@ -14,7 +14,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: '/home', label: 'Feed' },
-  { href: '/twitter', label: 'Twitter' },
+  { href: '/feed', label: 'Feed' },
   { href: '/news', label: 'News' },
   { href: '/newsletter', label: 'Daily' },
   { href: '/premium', label: 'Premium' },
@@ -195,8 +195,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <a href="/home" className="transition-colors hover:text-white">
               Feed
             </a>
-            <a href="/twitter" className="transition-colors hover:text-white">
-              Twitter
+            <a href="/feed" className="transition-colors hover:text-white">
+              Feed
             </a>
             <a href="/news" className="transition-colors hover:text-white">
               News

@@ -15,7 +15,7 @@ function Icon({ children }: { children: React.ReactNode }) {
 
 const NAV: NavItem[] = [
   { href: '/home', label: 'Feed', icon: <Icon>⌂</Icon> },
-  { href: '/twitter', label: 'Twitter', icon: <Icon>✦</Icon> },
+  { href: '/feed', label: 'Feed', icon: <Icon>✦</Icon> },
   { href: '/news', label: 'News', icon: <Icon>◉</Icon> },
   { href: '/newsletter', label: 'Daily', icon: <Icon>✉</Icon> },
   { href: '/profile', label: 'Profile', icon: <Icon>◍</Icon> },

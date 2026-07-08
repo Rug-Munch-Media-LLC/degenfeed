@@ -9,7 +9,7 @@ interface ProtocolSummary {
   count: number;
 }
 
-interface TwitterSidebarProps {
+interface FeedSidebarProps {
   trending?: { topic: string; count: number; score: number }[];
   protocolSummaries?: ProtocolSummary[];
   activeProtocolFilter?: string | null;
@@ -27,12 +27,12 @@ const NETWORK_HINTS: Record<string, string> = {
   rss: '30+ news sources',
 };
 
-export function TwitterSidebar({
+export function FeedSidebar({
   trending,
   protocolSummaries,
   activeProtocolFilter,
   onProtocolClick,
-}: TwitterSidebarProps) {
+}: FeedSidebarProps) {
   const { walletAddress, signOut, openSignIn } = useAuth();
   const items = trending ?? [];
   const protocols = protocolSummaries ?? [];

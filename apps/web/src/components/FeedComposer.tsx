@@ -15,7 +15,7 @@ const TARGETS = [
   { id: 'mastodon', label: 'Mastodon', charLimit: 5000 },
 ];
 
-interface TwitterComposerProps {
+interface FeedComposerProps {
   signedInProtocols: Record<string, boolean>;
   nostrPublicId?: string;
   onPost: (
@@ -25,12 +25,12 @@ interface TwitterComposerProps {
   onRequestSignIn?: (protocol: string) => void;
 }
 
-export function TwitterComposer({
+export function FeedComposer({
   signedInProtocols,
   nostrPublicId,
   onPost,
   onRequestSignIn,
-}: TwitterComposerProps) {
+}: FeedComposerProps) {
   const [text, setText] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bridgeToNostr, setBridgeToNostr] = useState(false);
