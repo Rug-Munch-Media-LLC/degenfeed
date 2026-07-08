@@ -32,7 +32,6 @@ import { buildIdentityRecord } from '../persistence';
 export async function signInWithGtS(
   instanceUrl: string,
   accessToken: string,
-  passphrase: string,
 ): Promise<StoredIdentity> {
   // Verify the token by fetching the authenticated user's profile
   const { GtSClient } = await import('@degenfeed/mastodon-sdk');
@@ -48,7 +47,6 @@ export async function signInWithGtS(
     displayName: account.display_name || account.username,
     avatarUrl: account.avatar,
     secret: accessToken,
-    passphrase,
     keys: { accessToken },
   });
   await saveIdentity(record);

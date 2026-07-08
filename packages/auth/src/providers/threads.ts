@@ -26,7 +26,6 @@ import { buildIdentityRecord } from '../persistence';
 export async function signInWithThreads(
   identifier: string,
   appPassword: string,
-  passphrase: string,
 ): Promise<StoredIdentity> {
   // 1. Create session via XRPC (AT Protocol same as Bluesky)
   const sessionRes = await fetch('https://threads.net/xrpc/com.atproto.server.createSession', {
@@ -74,7 +73,6 @@ export async function signInWithThreads(
     displayName,
     avatarUrl,
     secret: jwtBlob,
-    passphrase,
   });
   await saveIdentity(record);
   return record;

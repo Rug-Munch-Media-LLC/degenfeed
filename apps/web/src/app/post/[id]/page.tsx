@@ -8,15 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { TipModal } from '../../../components/TipModal';
 import { sanitizeHtml } from '../../../lib/sanitize';
-
-function formatTime(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
-}
+import { formatTimeAgo } from '@degenfeed/utils';
 
 interface EmbedData { title?: string; description?: string; image?: string; siteName?: string; }
 
@@ -110,7 +102,7 @@ function PostCard({
             <span className="text-[10px] text-gray-500" style={{ color: getProtocolColor(post.protocol) }}>{post.protocol}</span>
           </div>
           <div className="flex items-center gap-2 text-[11px] text-gray-600">
-            <span>{formatTime(post.createdAt)} ago</span>
+            <span>{formatTimeAgo(post.createdAt)} ago</span>
             {post.parentId && <span>· reply</span>}
           </div>
         </div>
@@ -209,7 +201,7 @@ function ReplyCard({ reply }: { reply: UnifiedPost }) {
     <div className="rounded-xl border border-white/5 bg-white/[0.01] p-4">
       <div className="mb-2 flex items-center gap-2">
         <span className="font-medium text-xs text-white truncate">{reply.author.displayName}</span>
-        <span className="text-[10px] text-gray-600">{formatTime(reply.createdAt)} ago</span>
+        <span className="text-[10px] text-gray-600">{formatTimeAgo(reply.createdAt)} ago</span>
       </div>
       <p className="text-xs leading-relaxed text-gray-400 whitespace-pre-wrap break-words line-clamp-6">{reply.text}</p>
       <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-600">

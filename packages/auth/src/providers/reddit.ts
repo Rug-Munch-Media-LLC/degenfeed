@@ -1,6 +1,6 @@
 /**
  * Reddit OAuth provider for real engagement (voting, commenting, posting).
- * 
+ *
  * Setup: Register a Reddit app at https://www.reddit.com/prefs/apps
  * Set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET in wrangler secrets.
  */
@@ -44,7 +44,6 @@ export async function handleRedditCallback(code: string, state: string): Promise
     displayName: data.name,
     avatarUrl: data.icon_img,
     secret: data.accessToken,
-    passphrase: "auto-unlock",
     keys: { accessToken: data.accessToken, refreshToken: data.refreshToken ?? "" },
   });
   const { saveIdentity } = await import("@degenfeed/storage");

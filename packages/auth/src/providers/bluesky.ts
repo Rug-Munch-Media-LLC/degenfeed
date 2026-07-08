@@ -26,7 +26,6 @@ import { buildIdentityRecord } from '../persistence';
 export async function signInWithBluesky(
   identifier: string,
   appPassword: string,
-  passphrase: string,
 ): Promise<StoredIdentity> {
   // 1. Create session via XRPC
   const sessionRes = await fetch('https://bsky.social/xrpc/com.atproto.server.createSession', {
@@ -74,7 +73,6 @@ export async function signInWithBluesky(
     displayName,
     avatarUrl,
     secret: jwtBlob,
-    passphrase,
     keys: { accessToken: session.accessJwt, refreshJwt: session.refreshJwt },
   });
   await saveIdentity(record);

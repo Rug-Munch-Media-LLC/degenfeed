@@ -3,20 +3,13 @@
  *
  * Used by the Mastodon->Nostr bridge in the composer.
  *
- * Looks up the user's Nostr identity in IndexedDB, decrypts the saved
- * nsec using the auto-unlock passphrase, signs a text note, and
- * publishes to a small set of public relays.
- *
- * Returns per-relay publish results. We consider the publish successful
- * if at least one relay accepts the event.
+ * Looks up the user's Nostr identity in IndexedDB, reads the nsec
+ * from the keys field, signs a text note, and publishes to relays.
  */
 
-import { decryptSecret } from '@degenfeed/auth';
 import { getIdentity, type StoredIdentity } from '@degenfeed/storage';
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
-
-const AUTO_UNLOCK_PASSPHRASE = 'auto-unlock-passphrase';
 
 export interface NostrPublishResult {
   ok: boolean;
@@ -39,17 +32,8 @@ async function loadNostrIdentity(publicId: string): Promise<StoredIdentity | nul
   }
 }
 
-async function decryptNsec(record: StoredIdentity): Promise<string | null> {
-  if (!record.encryptedSecret) return null;
-  try {
-    const secret = await decryptSecret(
-      { ciphertext: record.encryptedSecret, salt: record.salt, iv: record.iv },
-      AUTO_UNLOCK_PASSPHRASE,
-    );
-    return secret;
-  } catch {
-    return null;
-  }
+function getNsec(record: StoredIdentity): string | null {
+  return (record.keys?.nsec || record.keys?._secret || record.encryptedSecret) as string | null;
 }
 
 export async function publishNoteToNostr(opts: {
@@ -61,7 +45,7 @@ export async function publishNoteToNostr(opts: {
   if (!record) {
     return { ok: false, relays: [], error: 'No Nostr identity linked' };
   }
-  const nsec = await decryptNsec(record);
+  const nsec = getNsec(record);
   if (!nsec) {
     return { ok: false, relays: [], error: 'Could not unlock Nostr key' };
   }
@@ -114,7 +98,7 @@ export async function engageNostr(opts: {
 }): Promise<{ ok: boolean; error?: string }> {
   const record = await loadNostrIdentity(opts.publicId);
   if (!record) return { ok: false, error: 'No Nostr identity linked' };
-  const nsec = await decryptNsec(record);
+  const nsec = getNsec(record);
   if (!nsec) return { ok: false, error: 'Could not unlock Nostr key' };
 
   try {

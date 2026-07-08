@@ -1,6 +1,5 @@
 import type { StoredIdentity } from '@degenfeed/storage';
 import type { Protocol } from '@degenfeed/types';
-import { encryptSecret } from './crypto';
 
 export async function buildIdentityRecord(args: {
   protocol: Protocol;
@@ -9,19 +8,16 @@ export async function buildIdentityRecord(args: {
   displayName?: string;
   avatarUrl?: string;
   secret: string | null;
-  passphrase: string;
   isPrimary?: boolean;
   keys?: Record<string, string | null>;
   links?: Array<{ label: string; url: string }>;
 }): Promise<StoredIdentity> {
-  let encryptedSecret = '';
-  let salt = '';
-  let iv = '';
+  const mergedKeys: Record<string, string | null> = { ...args.keys };
+  // Store plaintext secrets in the keys field. Browser-local IndexedDB
+  // is inherently accessible to any script on the page — encryption with
+  // a hardcoded passphrase provides no additional security. Honest storage.
   if (args.secret) {
-    const blob = await encryptSecret(args.secret, args.passphrase);
-    encryptedSecret = blob.ciphertext;
-    salt = blob.salt;
-    iv = blob.iv;
+    mergedKeys._secret = args.secret;
   }
   return {
     id: `${args.protocol}:${args.publicId}`,
@@ -30,11 +26,9 @@ export async function buildIdentityRecord(args: {
     handle: args.handle,
     displayName: args.displayName ?? args.handle,
     avatarUrl: args.avatarUrl ?? '',
-    encryptedSecret,
-    salt,
-    iv,
+    encryptedSecret: '', salt: '', iv: '',
     isPrimary: args.isPrimary ?? false,
-    keys: args.keys ?? {},
+    keys: mergedKeys,
     links: args.links ?? [],
     linkedAt: Date.now(),
     verified: false,

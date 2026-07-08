@@ -155,7 +155,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           displayName: profile.displayName,
           avatarUrl: profile.avatar,
           secret: pending.accessToken,
-          passphrase: 'auto-unlock',
           keys: { accessToken: pending.accessToken },
           isPrimary: false,
         });
@@ -218,9 +217,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 publicId: pubkey,
                 handle: pubkey.slice(0, 12),
                 displayName: pubkey.slice(0, 12),
-                secret: null,
-                passphrase: 'auto-unlock',
-                isPrimary: false,
+              secret: null,
+              isPrimary: false,
               });
               await saveIdentity(record);
               await refresh();
@@ -229,7 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             const nsec = (creds.nsec as string) || token;
             if (!nsec) throw new Error('Nostr nsec required');
-            await signInWithNostrNsec(nsec, 'auto-unlock-passphrase');
+            await signInWithNostrNsec(nsec);
             break;
           }
           case 'farcaster': {
@@ -256,7 +254,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const handle = creds.handle as string;
             const appPass = creds.appPassword as string;
             if (!handle || !appPass) throw new Error('Bluesky credentials required');
-            await signInWithBluesky(handle, appPass, 'auto-unlock');
+            await signInWithBluesky(handle, appPass);
             break;
           }
           case 'mastodon': {
@@ -264,7 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const instance = (creds.instance as string) || 'https://social.degenfeed.xyz';
             const accessToken = creds.accessToken as string;
             if (!accessToken) throw new Error('Access token required');
-            await signInWithGtS(instance, accessToken, 'auto-unlock');
+            await signInWithGtS(instance, accessToken);
             break;
           }
           default:
@@ -376,16 +374,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             const { decryptSecret } = await import("@degenfeed/auth");
             signerKeyHex = await decryptSecret(
-              {
-                ciphertext: farcasterIdent.encryptedSecret,
-                salt: farcasterIdent.salt,
-                iv: farcasterIdent.iv,
-              },
+              { ciphertext: farcasterIdent.encryptedSecret, salt: farcasterIdent.salt, iv: farcasterIdent.iv },
               "auto-unlock-passphrase",
             );
           } catch {
             return { ok: false, error: "Could not decrypt Farcaster signer key. Re-link your account." };
           }
+        }
+        if (!signerKeyHex) {
+          // Try the keys field (honest storage path)
+          signerKeyHex = farcasterIdent.keys?._secret as string | undefined;
         }
         if (!signerKeyHex) {
           return { ok: false, error: "Farcaster signer key not found. Sign in with a self-custody signer key." };

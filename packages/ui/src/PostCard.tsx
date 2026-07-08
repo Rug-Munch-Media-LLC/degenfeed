@@ -8,6 +8,7 @@ import {
 } from '@degenfeed/storage';
 import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { useEffect, useState } from 'react';
+import { formatTimeAgo } from '@degenfeed/utils';
 import { ProtocolBadge } from './ProtocolBadge';
 
 export type { UnifiedPost };
@@ -33,18 +34,6 @@ export interface PostCardProps {
 }
 
 const MAX_TEXT_LENGTH = 500;
-
-function formatTime(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'now';
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d`;
-  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -351,7 +340,7 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
               dateTime={new Date(post.createdAt).toISOString()}
               title={new Date(post.createdAt).toLocaleString()}
             >
-              {formatTime(post.createdAt)}
+              {formatTimeAgo(post.createdAt)}
             </time>
             {post.score && (
               <>
