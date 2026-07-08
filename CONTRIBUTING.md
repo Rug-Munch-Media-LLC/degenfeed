@@ -14,7 +14,7 @@ Part of DegenFeed Web — https://git.rugmunch.io/RugMunchMedia/degenfeed-web
 |----------|-----|
 | **Primary** | https://git.rugmunch.io/RugMunchMedia/degenfeed-web |
 | **GitLab mirror** | https://gitlab.com/rug-munch-media-group/degenfeed-web |
-| **Codeberg mirror** | https://codeberg.org/degenfeed/degenfeed-web |
+| **Codeberg mirror** | https://codeberg.org/cryptorugmuncher/degenfeed-web |
 
 PRs accepted on All platforms. Issues tracked on the primary Forgejo instance.
 
