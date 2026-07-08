@@ -353,7 +353,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
           try {
             const hubData = JSON.parse(part);
             for (const msg of hubData.messages ?? []) {
-              const fid = 3; // approximate — hub messages include signer info
+              const fid = msg.signer ? parseInt((msg.signer as string).slice(2, 6), 16) % 10000 : 3; // approximate — hub messages include signer info
               const ts = ((msg.data?.timestamp ?? 0) + 1609459200) * 1000;
               const text = msg.data?.castAddBody?.text ?? '';
               if (!text) continue;
