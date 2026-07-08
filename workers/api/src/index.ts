@@ -354,6 +354,8 @@ export default {
         response = await handleActivityPubFeed(request, env);
       } else if (path === '/api/feed/threads') {
         response = await handleThreadsFeed(request, env);
+      } else if (path === '/api/feed/farcaster') {
+        response = await handleFarcasterFeed(request, env);
       } else if (path.startsWith('/api/feed/') && !path.startsWith('/api/feed/category/')) {
         const provider = path.replace('/api/feed/', '');
         response = await handleProviderFeed(request, env, provider);
@@ -367,8 +369,6 @@ export default {
         });
       } else if (path === '/api/feed/rss') {
         response = await handleRssFeed(request, env);
-      } else if (path === '/api/feed/farcaster') {
-        response = await handleFarcasterFeed(request, env);
       } else if (path === '/api/auth/signout') {
         response = await handleSessionSignOut(request, env);
       } else if (path === '/api/auth/gotosocial/authorize') {
