@@ -249,7 +249,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </a>
             ,{' '}
             <a
-              href="https://gitlab.com/rug-munch-media-group/degenfeed-web"
+              href="https://gitlab.com/cryptorugmuncher/degenfeed-web"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 underline transition-colors hover:text-gray-400"
