@@ -263,9 +263,9 @@ export class MastodonProvider implements FeedProvider {
       }
 
       // 2. Hashtag searches across crypto+tech instances for crypto+AI topics
-      const allHashes = [...CRYPTO_HASHTAGS.slice(0, 5), ...TECH_HASHTAGS.slice(0, 5)];
+      const allHashes = [...CRYPTO_HASHTAGS.slice(0, 3), ...TECH_HASHTAGS.slice(0, 3)];
       const hashtagTargets = [];
-      for (const instanceUrl of endpoints.slice(0, 8)) {
+      for (const instanceUrl of endpoints.slice(0, 3)) {
         for (const tag of allHashes) {
           hashtagTargets.push({ instanceUrl, tag });
         }

@@ -1,6 +1,7 @@
 /**
- * LensProvider v2 — updated for the current Lens API schema (2026).
- * Uses `accounts` + `posts` instead of the deprecated `profiles` + `publications`.
+ * LensProvider v2 — updated for Lens API (2026 schema).
+ * Uses `accounts(request:{filter:{searchBy:{localNameQuery}}})` to resolve
+ * profiles and `posts(request:{filter:{authors}})` to fetch their posts.
  */
 
 import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
@@ -19,81 +20,49 @@ export const CURATED_LENS_HANDLES = [
   'uniswap.lens',
   'lido.lens',
   'makerdao.lens',
-  'bradorbradley.lens',
-  'jouni.lens',
-  'yoginth.lens',
 ];
 
 interface LensAccount {
-  address: string; // profile ID is now the EVM address
+  address: string;
   username?: { localName?: string };
-  metadata?: {
-    displayName?: string;
-    bio?: string;
-    picture?: string;
-  };
-  stats?: {
-    followers?: number;
-    following?: number;
-  };
+  metadata?: { displayName?: string; bio?: string; picture?: string };
 }
 
 interface LensPost {
   id: string;
-  metadata?: {
-    content?: string;
-    asset?: {
-      image?: { raw?: { uri?: string } };
-    };
-  };
+  metadata?: { content?: string; asset?: { image?: { raw?: { uri?: string } } } };
   author?: LensAccount;
   createdAt?: string;
-  stats?: {
-    reactions?: number;
-    comments?: number;
-    mirrors?: number;
-    quotes?: number;
-  };
+  stats?: { reactions?: number; comments?: number; mirrors?: number; quotes?: number };
 }
 
-async function lensQuery(url: string, query: string, variables?: unknown): Promise<unknown> {
-  const data = await fetchJson<{ data?: unknown; errors?: Array<{ message: string }> }>(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'user-agent': DEFAULT_USER_AGENT },
-    body: JSON.stringify({ query, variables }),
-  });
-  if (data.errors && data.errors.length > 0) {
-    throw new Error(`Lens query error: ${data.errors[0]?.message ?? 'unknown'}`);
-  }
-  return data.data;
-}
-
-function publicationToUnifiedPost(pub: LensPost): UnifiedPost {
-  const author: UnifiedPost['author'] = {
-    id: `lens:${pub.author?.address ?? pub.id}`,
-    primary: { protocol: 'lens', id: pub.author?.address ?? pub.id },
-    handles: {
-      nostr: null,
-      farcaster: null,
-      lens: pub.author?.username?.localName ?? null,
-      bluesky: null,
-      threads: null,
-      rss: null,
-      mastodon: null,
-    },
-    displayName: pub.author?.metadata?.displayName ?? pub.author?.username?.localName ?? '',
-    bio: pub.author?.metadata?.bio ?? '',
-    avatarUrl: pub.author?.metadata?.picture ?? '',
-    verified: [],
-    followerCount: pub.author?.stats?.followers ?? 0,
-    followingCount: pub.author?.stats?.following ?? 0,
-    links: [],
-    keys: {},
-  };
+function postToUnified(pub: LensPost): UnifiedPost {
+  const addr = pub.author?.address ?? 'unknown';
+  const handle = pub.author?.username?.localName ?? null;
   return buildUnifiedPost({
     protocol: 'lens',
     nativeId: pub.id,
-    author,
+    author: {
+      id: `lens:${addr}`,
+      primary: { protocol: 'lens', id: addr },
+      handles: {
+        nostr: null,
+        farcaster: null,
+        lens: handle,
+        bluesky: null,
+        threads: null,
+        rss: null,
+        mastodon: null,
+      },
+      displayName: pub.author?.metadata?.displayName ?? handle ?? '',
+      bio: pub.author?.metadata?.bio ?? '',
+      avatarUrl: pub.author?.metadata?.picture ?? '',
+      verified: [],
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: {},
+    },
     text: pub.metadata?.content ?? '',
     createdAt: pub.createdAt ? new Date(pub.createdAt).getTime() : Date.now(),
     metrics: {
@@ -106,6 +75,16 @@ function publicationToUnifiedPost(pub: LensPost): UnifiedPost {
   });
 }
 
+async function lensGql(url: string, query: string, v?: unknown): Promise<unknown> {
+  const d = await fetchJson<{ data?: unknown; errors?: Array<{ message: string }> }>(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'user-agent': DEFAULT_USER_AGENT },
+    body: JSON.stringify({ query, variables: v }),
+  });
+  if (d.errors?.length) throw new Error(`Lens: ${d.errors[0]?.message ?? '?'}`);
+  return d.data;
+}
+
 export interface LensProviderOptions {
   apiUrl?: string;
 }
@@ -114,74 +93,61 @@ export class LensProvider implements FeedProvider {
   readonly protocol: Protocol = 'lens';
   private readonly apiUrl: string;
 
-  constructor(options: LensProviderOptions = {}) {
-    this.apiUrl = options.apiUrl || LENS_API_URL;
+  constructor(options: LensProviderOptions | string = LENS_API_URL) {
+    this.apiUrl = typeof options === 'string' ? options : options.apiUrl || LENS_API_URL;
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const limit = 50;
-
+    const t = Math.min(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS, 5000);
     try {
-      // Step 1: Try curated usernames via `accounts` query
-      const accounts = await withTimeout(
-        lensQuery(
+      const names = CURATED_LENS_HANDLES.map((h) => h.replace('.lens', '')).slice(0, 6);
+      const acc = await withTimeout(
+        lensGql(
           this.apiUrl,
-          `query($handles:[String!]!) { accounts(request:{where:{handles:$handles}}) { items { address username { localName } metadata { displayName bio picture } } } }`,
-          {
-            handles: CURATED_LENS_HANDLES.slice(0, 8),
-          },
+          `query($q:String!,$l:PageSize!){accounts(request:{filter:{searchBy:{localNameQuery:$q}},pageSize:$l}){items{address username{localName value}}}}`,
+          { q: names.join(','), l: 10 },
         ),
-        Math.min(timeoutMs, 4000),
-        'lens:accounts',
+        t,
+        'lens:accts',
       );
-      const addrs = (
-        (accounts as { accounts?: { items?: Array<{ address: string }> } })?.accounts?.items ?? []
-      )
-        .map((a: { address: string }) => a.address)
+      const addrs = ((acc as { accounts?: { items?: LensAccount[] } })?.accounts?.items ?? [])
+        .map((a) => a.address)
         .filter(Boolean);
+      if (!addrs.length) return { posts: [], notice: 'No Lens profiles resolved' };
 
-      if (addrs.length === 0) {
-        return { posts: [], notice: 'No Lens profiles resolved' };
-      }
-
-      // Step 2: Fetch posts by these addresses
-      const postsData = await withTimeout(
-        lensQuery(
+      const p = await withTimeout(
+        lensGql(
           this.apiUrl,
-          `query($addrs:[String!]!,$limit:Limit!) { posts(request:{where:{from:$addrs},limit:$limit}) { items { id metadata { content asset { ... on PostMetadataMediaImage { image { raw { uri } } } } } author { address username { localName } metadata { displayName picture } } createdAt stats { reactions comments mirrors quotes } } } }`,
-          {
-            addrs: addrs.slice(0, 6),
-            limit: Math.min(limit, 50),
-          },
+          `query($a:[String!]!,$l:PageSize!){posts(request:{filter:{authors:$a},pageSize:$l}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}`,
+          { a: addrs.slice(0, 6), l: 50 },
         ),
-        Math.min(timeoutMs, 4000),
+        t,
         'lens:posts',
       );
-      const items = ((postsData as { posts?: { items?: LensPost[] } })?.posts?.items ?? []).map(
-        publicationToUnifiedPost,
-      );
-
-      return { posts: items.map(enrichPostNiches) };
-    } catch (err) {
-      return { posts: [], notice: err instanceof Error ? err.message : 'Lens feed unavailable' };
+      return {
+        posts: ((p as { posts?: { items?: LensPost[] } })?.posts?.items ?? [])
+          .map(postToUnified)
+          .map(enrichPostNiches),
+      };
+    } catch (e) {
+      return { posts: [], notice: e instanceof Error ? e.message : 'Lens unavailable' };
     }
   }
 
   async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {
-    const start = performance.now();
+    const s = performance.now();
     try {
       await withTimeout(
-        lensQuery(this.apiUrl, '{ __typename }'),
+        lensGql(this.apiUrl, '{__typename}'),
         opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-        'lens:health',
+        'lens:hlth',
       );
-      return { healthy: true, latencyMs: Math.round(performance.now() - start) };
-    } catch (err) {
+      return { healthy: true, latencyMs: Math.round(performance.now() - s) };
+    } catch (e) {
       return {
         healthy: false,
-        latencyMs: Math.round(performance.now() - start),
-        error: err instanceof Error ? err.message : 'unknown',
+        latencyMs: Math.round(performance.now() - s),
+        error: (e as Error).message,
       };
     }
   }
