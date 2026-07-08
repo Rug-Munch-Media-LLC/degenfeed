@@ -44,6 +44,21 @@ const TIERS = [
     cta: 'Become a Creator',
     popular: false,
   },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: 'Custom',
+    description: 'White-label, API access, and custom integrations.',
+    features: [
+      'Everything in Creator',
+      'White-label embeddable feed',
+      'API access with SLA',
+      'Custom domains and branding',
+      'Dedicated support channel',
+    ],
+    cta: 'Contact us',
+    popular: false,
+  },
 ];
 
 export const dynamic = 'force-dynamic';
@@ -66,7 +81,7 @@ export default function PremiumPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-4">
         {TIERS.map((tier) => (
           <div
             key={tier.id}
@@ -112,6 +127,61 @@ export default function PremiumPage() {
         <p className="mt-2 text-xs text-gray-600">
           All paid features are open source and available in our self-hosted build.
         </p>
+      </div>
+
+      <div className="mt-12 grid gap-8 md:grid-cols-3">
+        <div className="card">
+          <h3 className="text-lg font-semibold text-white">Open Source</h3>
+          <p className="mt-2 text-sm text-gray-400">
+            All code is AGPL-licensed on Forgejo, GitLab, and Codeberg. Self-host if you prefer.
+          </p>
+        </div>
+        <div className="card">
+          <h3 className="text-lg font-semibold text-white">No Lock-In</h3>
+          <p className="mt-2 text-sm text-gray-400">
+            Cancel anytime. Your data is always yours — export it with one click.
+          </p>
+        </div>
+        <div className="card">
+          <h3 className="text-lg font-semibold text-white">Privacy First</h3>
+          <p className="mt-2 text-sm text-gray-400">
+            No tracking, no ads, no data sales. Premium funds development directly.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-12">
+        <h2 className="mb-6 text-xl font-bold text-white">FAQ</h2>
+        <div className="space-y-4">
+          <div className="card">
+            <h3 className="font-semibold text-white">How do payments work?</h3>
+            <p className="mt-1 text-sm text-gray-400">
+              Payments are processed on-chain via Solana Blinks. Connect your wallet, sign a
+              transaction, and you are upgraded instantly. No credit cards, no KYC.
+            </p>
+          </div>
+          <div className="card">
+            <h3 className="font-semibold text-white">Can I cancel anytime?</h3>
+            <p className="mt-1 text-sm text-gray-400">
+              Yes. Cancel from your profile settings. Your subscription ends at the current billing
+              period. No questions asked.
+            </p>
+          </div>
+          <div className="card">
+            <h3 className="font-semibold text-white">What is x402 paywall?</h3>
+            <p className="mt-1 text-sm text-gray-400">
+              x402 is an open protocol for HTTP 402 Payment Required. Creator-tier users can
+              paywall individual posts — readers pay per-view in USDC. Learn more at x402.org.
+            </p>
+          </div>
+          <div className="card">
+            <h3 className="font-semibold text-white">Do I need premium to browse?</h3>
+            <p className="mt-1 text-sm text-gray-400">
+              No. Browsing DegenFeed is free forever. Premium unlocks power-user and creator tools
+              while directly funding open-source development.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -7,9 +7,10 @@
  * frequently. When it breaks, we silently return an empty feed.
  *
  * Strategy:
- *   1. Fetch public profile page (/@handle)
- *   2. Extract the <script> tag containing __INITIAL_STATE__ or similar
- *   3. Parse the JSON and extract posts
+ *   1. Try direct fetch with browser UA
+ *   2. Fallback to FlareSolverr proxy (100.104.130.92:8191) if blocked
+ *   3. Extract the <script> tag containing __INITIAL_STATE__ or JSON-LD
+ *   4. Parse the JSON and extract posts
  */
 
 import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
@@ -18,6 +19,7 @@ import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../ty
 import { DEFAULT_TIMEOUT_MS, fetchText, withTimeout } from '../utils';
 
 export const THREADS_WEB_URL = 'https://www.threads.net';
+export const FLARESOLVERR_URL = 'http://100.104.130.92:8191/v1';
 
 export const CURATED_THREADS_HANDLES = [
   'zuck',
@@ -56,15 +58,43 @@ function threadsHeaders(): Record<string, string> {
   };
 }
 
+async function fetchViaFlareSolverr(url: string, timeoutMs: number): Promise<string> {
+  try {
+    const resp = await withTimeout(
+      fetch(FLARESOLVERR_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          cmd: 'request.get',
+          url,
+          maxTimeout: Math.min(timeoutMs, 30000),
+        }),
+      }),
+      timeoutMs + 5000,
+      'threads:flaresolverr',
+    );
+    const data = (await resp.json()) as { solution?: { response?: string }; status?: string };
+    if (data.solution?.response) return data.solution.response;
+    throw new Error(data.status || 'no response');
+  } catch (e) {
+    throw e;
+  }
+}
+
 async function scrapeProfile(handle: string, timeoutMs: number): Promise<ThreadsPost[]> {
   const normalized = handle.replace(/^@/, '');
   const url = `${THREADS_WEB_URL}/@${normalized}`;
   try {
-    const html = await withTimeout(
-      fetchText(url, { headers: threadsHeaders() }),
-      Math.min(timeoutMs, 3000),
-      `threads:${handle}`,
-    );
+    let html: string;
+    try {
+      html = await withTimeout(
+        fetchText(url, { headers: threadsHeaders() }),
+        Math.min(timeoutMs, 3000),
+        `threads:${handle}`,
+      );
+    } catch {
+      html = await fetchViaFlareSolverr(url, timeoutMs);
+    }
 
     // Strategy 1: Extract from JSON-LD (still present for SEO on threads.net)
     const ldMatches = [
@@ -147,8 +177,8 @@ export class ThreadsProvider implements FeedProvider {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const allPosts: UnifiedPost[] = [];
 
-    // Scrape 3 handles per request to keep latency reasonable
-    const handles = this.curatedHandles.slice(0, 3);
+    // Scrape 6 handles per request, rotating through the full list
+    const handles = this.curatedHandles.slice(0, 6);
     const results = await Promise.allSettled(
       handles.map(async (handle) => {
         const posts = await scrapeProfile(handle, timeoutMs);

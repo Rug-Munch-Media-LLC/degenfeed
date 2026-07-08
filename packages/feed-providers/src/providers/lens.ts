@@ -7,32 +7,56 @@ import { DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '
 
 export const LENS_API_URL = 'https://api.lens.xyz/graphql';
 export const CURATED_LENS_HANDLES = [
-  'lensprotocol.lens',
   'stani.lens',
-  'aaveaave.lens',
-  'pooltogether.lens',
-  'balancer.lens',
-  'uniswap.lens',
-  'lido.lens',
-  'makerdao.lens',
+  'lensprotocol.lens',
   'jessepollak.lens',
   'nader.lens',
   'christina.lens',
+  'sassal0x.lens',
+  'dcposch.lens',
+  'vbuterin.lens',
+  '0xpolygon.lens',
+  'base.lens',
+  'optimism.lens',
+  'arbitrum.lens',
+  'zksync.lens',
+  'aaveaave.lens',
+  'uniswap.lens',
+  'lido.lens',
+  'makerdao.lens',
+  'pooltogether.lens',
+  'balancer.lens',
   'coinbase.lens',
   'opensea.lens',
   'gitcoin.lens',
   'ens.lens',
   'safe.lens',
   'worldcoin.lens',
-  'superrare.lens',
-  'rarible.lens',
+  'chainlink.lens',
+  'graphprotocol.lens',
+  'arweave.lens',
   'sushiswap.lens',
   '1inch.lens',
   'paraswap.lens',
   'dydx.lens',
-  'chainlink.lens',
-  'graphprotocol.lens',
-  'arweave.lens',
+  'eigenlayer.lens',
+  'starkware.lens',
+  'curve.lens',
+  'compoundfinance.lens',
+  'yearn.lens',
+  'fraxfinance.lens',
+  'pancakeswap.lens',
+  'velodrome.lens',
+  'aerodrome.lens',
+  'lyra.lens',
+  'sky.lens',
+  'etherfi.lens',
+  'renzo.lens',
+  'puffer.lens',
+  'kelpdao.lens',
+  'ethena.lens',
+  'pendle.lens',
+  'eigenfoundation.lens',
 ];
 
 interface LensAccount {
@@ -112,7 +136,7 @@ export class LensProvider implements FeedProvider {
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     const t = Math.min(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS, 5000);
     try {
-      const names = CURATED_LENS_HANDLES.map((h) => h.replace('.lens', '')).slice(0, 5);
+      const names = CURATED_LENS_HANDLES.map((h) => h.replace('.lens', '')).slice(0, 12);
       const allResults = await Promise.all(
         names.map(async (name) => {
           try {
@@ -133,7 +157,7 @@ export class LensProvider implements FeedProvider {
           }
         }),
       );
-      const addrs = [...new Set(allResults.flat())].filter(Boolean).slice(0, 6);
+      const addrs = [...new Set(allResults.flat())].filter(Boolean).slice(0, 12);
       if (!addrs.length) {
         // Fallback: use ML-powered explore feed (no auth needed)
         try {
