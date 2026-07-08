@@ -1,5 +1,6 @@
-export const runtime = 'edge';
 'use client';
+
+export const runtime = 'edge';
 
 import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
