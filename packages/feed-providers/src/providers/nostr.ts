@@ -1,5 +1,6 @@
 import { buildUnifiedPost, enrichPostNiches, extractEmbeds } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { isNostrEvent } from '../schemas';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
   buildUrl,
@@ -168,7 +169,12 @@ function fetchFromWebSocket(
       try {
         const data = JSON.parse(event.data as string) as unknown[];
         if (Array.isArray(data) && data[0] === 'EVENT' && data[2]) {
-          events.push(data[2] as NostrEvent);
+          const ev = data[2] as unknown;
+          if (!isNostrEvent(ev)) {
+            console.warn('[nostr] malformed event received, skipping', typeof ev);
+            return;
+          }
+          events.push(ev as NostrEvent);
         } else if (Array.isArray(data) && data[0] === 'EOSE') {
           cleanup();
           resolve(events);

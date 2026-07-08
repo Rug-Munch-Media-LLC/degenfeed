@@ -45,7 +45,11 @@ async function shipToSentry(dsn: string, body: unknown): Promise<void> {
     '\n' +
     JSON.stringify(body);
   try {
-    await fetch(url, { method: 'POST', body: envelope, headers: { 'content-type': 'application/x-sentry-envelope' } });
+    await fetch(url, {
+      method: 'POST',
+      body: envelope,
+      headers: { 'content-type': 'application/x-sentry-envelope' },
+    });
   } catch {
     /* Fire-and-forget */
   }
@@ -67,11 +71,13 @@ export function reportError(error: Error | string, ctx: ReportContext = {}): voi
     timestamp: Date.now() / 1000,
     level: 'error',
     exception: {
-      values: [{
-        type: typeof error === 'string' ? 'Error' : error.name,
-        value: message,
-        stacktrace: stack ? { frames: [] } : undefined,
-      }],
+      values: [
+        {
+          type: typeof error === 'string' ? 'Error' : error.name,
+          value: message,
+          stacktrace: stack ? { frames: [] } : undefined,
+        },
+      ],
     },
     tags: ctx.tags ?? {},
     environment: ctx.env ?? 'production',

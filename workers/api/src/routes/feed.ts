@@ -231,6 +231,53 @@ async function loadUserRankingContext(request: Request, env: Env): Promise<UserR
   }
 }
 
+// ─── Circuit breaker ─────────────────────────────────────────────
+// Per-provider KV-backed failure counter. After 3 consecutive
+// failures in a 60s window, the provider is skipped on subsequent
+// feed requests until a successful probe clears the breaker.
+
+const CB_TTL = 60;
+const CB_THRESHOLD = 3;
+
+async function cbKey(protocol: string): Promise<string> {
+  return `cb:${protocol}:${Math.floor(Date.now() / 60000)}`;
+}
+
+async function isCircuitOpen(env: Env, protocol: string): Promise<boolean> {
+  if (!env.CACHE) return false;
+  try {
+    const key = await cbKey(protocol);
+    const raw = await env.CACHE.get(key);
+    if (!raw) return false;
+    const { count } = JSON.parse(raw) as { count: number };
+    return count >= CB_THRESHOLD;
+  } catch {
+    return false;
+  }
+}
+
+async function incrCircuit(env: Env, protocol: string): Promise<void> {
+  if (!env.CACHE) return;
+  try {
+    const key = await cbKey(protocol);
+    const raw = await env.CACHE.get(key);
+    const count = raw ? (JSON.parse(raw) as { count: number }).count + 1 : 1;
+    await env.CACHE.put(key, JSON.stringify({ count }), { expirationTtl: CB_TTL });
+  } catch {
+    /* ignore */
+  }
+}
+
+async function resetCircuit(env: Env, protocol: string): Promise<void> {
+  if (!env.CACHE) return;
+  try {
+    const key = await cbKey(protocol);
+    await env.CACHE.delete(key);
+  } catch {
+    /* ignore */
+  }
+}
+
 export async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
@@ -247,14 +294,28 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
 
   const results = await Promise.allSettled(
     requestedProtocols.map(async (protocol) => {
-      const provider = getProvider(protocol, env);
-      const result = await provider.fetchFeed({
-        timeoutMs: DEFAULT_TIMEOUT_MS,
-        concurrency: 4,
-      });
-      const filtered = result.posts.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
-      if (result.notice) notices.push(result.notice);
-      return { protocol, posts: filtered };
+      // Circuit breaker: skip providers that have failed 3+ times in the
+      // last 60s window. KV-backed so it survives worker restarts.
+      if (await isCircuitOpen(env, protocol)) {
+        return { protocol, posts: [] as UnifiedPost[], skipped: true };
+      }
+      try {
+        const provider = getProvider(protocol, env);
+        const result = await provider.fetchFeed({
+          timeoutMs: DEFAULT_TIMEOUT_MS,
+          concurrency: 4,
+        });
+        const filtered = result.posts.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
+        if (result.notice) notices.push(result.notice);
+        // Success → reset the circuit breaker count.
+        void resetCircuit(env, protocol);
+        return { protocol, posts: filtered };
+      } catch (err) {
+        // Failure → bump the circuit breaker count.
+        void incrCircuit(env, protocol);
+        const message = err instanceof Error ? err.message : 'unknown';
+        return { protocol, posts: [] as UnifiedPost[], error: message };
+      }
     }),
   );
 
@@ -262,8 +323,13 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     const protocol = requestedProtocols[index];
     if (!protocol) continue;
     if (result.status === 'fulfilled') {
-      perProtocol[protocol] = result.value.posts.length;
-      allPosts.push(...result.value.posts);
+      if ('skipped' in result.value && result.value.skipped) {
+        errors.push(`${protocol}: circuit breaker open — skipping`);
+        perProtocol[protocol] = 0;
+      } else {
+        perProtocol[protocol] = result.value.posts.length;
+        allPosts.push(...result.value.posts);
+      }
     } else {
       const message = result.reason instanceof Error ? result.reason.message : 'unknown';
       errors.push(`${protocol}: ${message}`);

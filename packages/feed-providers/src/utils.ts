@@ -75,6 +75,28 @@ export async function fetchJson<T = unknown>(url: string, init?: RequestInit): P
   return res.json() as Promise<T>;
 }
 
+/**
+ * Like fetchJson, but also runs a runtime type guard on the returned data.
+ * If the guard returns false, the promise is rejected with a descriptive
+ * error, preventing silent feed breakage when external APIs change shape.
+ */
+export async function fetchJsonWithGuard<T>(
+  url: string,
+  name: string,
+  guard: (data: unknown) => data is T,
+  init?: RequestInit,
+): Promise<T> {
+  const data = await fetchJson<T>(url, init);
+  if (!guard(data)) {
+    throw new FetchError(
+      `Provider ${name}: response failed runtime schema guard. API may have changed shape.`,
+      undefined,
+      url,
+    );
+  }
+  return data;
+}
+
 export async function fetchText(url: string, init?: RequestInit): Promise<string> {
   const res = await fetchRaw(url, {
     ...init,
