@@ -15,6 +15,22 @@ export const CURATED_LENS_HANDLES = [
   'uniswap.lens',
   'lido.lens',
   'makerdao.lens',
+  'jessepollak.lens',
+  'nader.lens',
+  'christina.lens',
+  'wagmi.lens',
+  'yoginth.lens',
+  'dev.lens',
+  'sasicodes.lens',
+  'defidad.lens',
+  'lensport.lens',
+  'orb.lens',
+  'phaver.lens',
+  'lenster.lens',
+  'hey.lens',
+  'buttrfly.lens',
+  'rugradio.lens',
+  'taetae.lens',
 ];
 
 interface LensAccount {

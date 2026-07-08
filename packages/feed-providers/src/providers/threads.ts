@@ -18,21 +18,26 @@ import { DEFAULT_TIMEOUT_MS, fetchText, withConcurrencyLimit, withTimeout } from
 export const THREADS_WEB_URL = 'https://www.threads.net';
 
 export const CURATED_THREADS_HANDLES = [
+  'zuck',
+  'mosseri',
   'vitalik.eth',
-  'dwr.eth',
   'balajis',
-  'cdixon.eth',
   'sama',
   'naval',
   'jessepollak',
   'stani',
   'sassal0x',
   'hosseeb',
-  '0xfoobar',
-  'rleshner',
-  'coopahtroopa',
+  'cdixon',
   'pmarca',
-  'twobitidiot',
+  'a16zcrypto',
+  'coinbase',
+  'opensea',
+  'crypto',
+  'bitcoin',
+  'ethereum',
+  'solana',
+  'uniswap',
 ];
 
 interface ThreadsPost {
