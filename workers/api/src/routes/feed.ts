@@ -37,7 +37,7 @@ export const DEFAULT_PROTOCOLS: Protocol[] = [
   'lens',
   'bluesky',
   'mastodon',
-  // 'threads',  // HTML scraper broken — temporarily disabled
+  'threads',
 ];
 
 const DEFAULT_TIMEOUT_MS = 6000;

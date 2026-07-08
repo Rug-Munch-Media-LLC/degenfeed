@@ -347,101 +347,84 @@ export class FarcasterProvider implements FeedProvider {
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    const timeoutMs = Math.min(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS, 4000);
-    const perFidLimit = 2; // lower for faster response per request
-    const endpoints = [this.primaryUrl, ...this.fallbackUrls];
-
-    let allFids = this.curatedFids.slice(0, 10);
-
+    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     try {
-      const usernameFids = await withConcurrencyLimit(
-        this.curatedUsernames.slice(0, 6),
-        2,
-        async (username) => {
-          const proof = await withTimeout(
-            fetchUserNameProof(this.primaryUrl, username),
-            timeoutMs,
-            `farcaster:proof:${username}`,
-          );
-          return proof?.fid ?? null;
-        },
+      // Neynar free trending API — high-engagement casts across the network
+      const data = await withTimeout(
+        fetchJson<{
+          casts?: Array<{
+            hash: string;
+            text: string;
+            timestamp: string;
+            author: {
+              fid: number;
+              username: string;
+              display_name: string;
+              pfp_url: string;
+              follower_count: number;
+            };
+            reactions?: { likes_count?: number; recasts_count?: number };
+            replies?: { count?: number };
+            embeds?: Array<{ url?: string; cast_id?: { hash: string } }>;
+          }>;
+        }>(
+          buildUrl('https://api.neynar.com/v2/farcaster/feed/trending', undefined, {
+            limit: '25',
+            api_key: 'NEYNAR_API_DOCS',
+          }),
+          { headers: { accept: 'application/json', 'user-agent': DEFAULT_USER_AGENT } },
+        ),
+        Math.min(timeoutMs, 5000),
+        'farcaster:trending',
       );
-      const resolved = usernameFids.filter((fid): fid is number => fid !== null);
-      allFids = [...new Set([...allFids, ...resolved])].slice(0, 16);
-    } catch {
-      /* username resolution failed, use curated FIDs only */
-    }
+      const casts = data.casts ?? [];
+      if (!casts.length) return { posts: [], notice: 'Farcaster trending unavailable' };
 
-    try {
-      const fidsToFetch = allFids.slice(0, 4);
-      const results = await withTimeout(
-        withConcurrencyLimit(fidsToFetch, 2, async (fid) => {
-          try {
-            const msgs = await fetchWithFallbacks(endpoints, (base) => {
-              return withTimeout(
-                fetchCastsByFid(base, fid, perFidLimit),
-                Math.min(timeoutMs, 3000),
-                `farcaster:${fid}`,
-              );
-            });
-            return msgs.map((msg) => ({ msg, fid }));
-          } catch {
-            return [];
-          }
-        }),
-        timeoutMs + 1000,
-        `farcaster:fetch`,
-      );
-      const messagesWithFid = results.flat();
-
-      if (messagesWithFid.length > 0) {
-        const fidToUserData = new Map<number, FarcasterUserData | null>();
-        const posts: UnifiedPost[] = [];
-        for (const { msg, fid } of messagesWithFid) {
-          if (!fidToUserData.has(fid)) {
-            const userData = await fetchUserData(this.primaryUrl, fid);
-            fidToUserData.set(fid, userData);
-          }
-          const userData = fidToUserData.get(fid) ?? null;
-          const post = castToUnifiedPost(msg, fid, userData);
-          posts.push(enrichPostNiches(post));
-        }
-        return { posts };
-      }
-    } catch {
-      /* fall through to public API */
-    }
-
-    try {
-      const allSearchResults = await withConcurrencyLimit(
-        CRYPTO_SEARCH_TERMS.slice(0, 6),
-        2,
-        async (term) => {
-          return searchPublicApi(this.publicApiUrl, term, 5);
-        },
-      );
-      const casts = allSearchResults.flat();
-      const seen = new Set<string>();
-      const unique: PublicApiCast[] = [];
-      for (const c of casts) {
-        const key = c.hash ?? '';
-        if (key && !seen.has(key)) {
-          seen.add(key);
-          unique.push(c);
-        }
-      }
-      const posts: UnifiedPost[] = [];
-      for (const c of unique) {
-        const post = publicApiCastToUnifiedPost(c);
-        if (post) posts.push(enrichPostNiches(post));
-      }
-      if (posts.length > 0) return { posts };
-      return { posts: [], notice: 'Farcaster hubs and public API unreachable' };
-    } catch (err) {
-      return {
-        posts: [],
-        notice: err instanceof Error ? err.message : 'Farcaster feed unavailable',
-      };
+      const posts: UnifiedPost[] = casts.map((c) => {
+        const author: UnifiedPost['author'] = {
+          id: `farcaster:${c.author.fid}`,
+          primary: { protocol: 'farcaster', id: String(c.author.fid) },
+          handles: {
+            nostr: null,
+            farcaster: c.author.username,
+            lens: null,
+            bluesky: null,
+            threads: null,
+            rss: null,
+            mastodon: null,
+          },
+          displayName: c.author.display_name || c.author.username,
+          bio: '',
+          avatarUrl: c.author.pfp_url,
+          verified: [],
+          followerCount: c.author.follower_count,
+          followingCount: 0,
+          links: [],
+          keys: {},
+        };
+        const embeds = (c.embeds ?? []).map((e) => ({
+          kind: 'link' as const,
+          url: e.url || `https://warpcast.com/${c.author.username}/${c.hash.slice(0, 10)}`,
+        }));
+        return buildUnifiedPost({
+          protocol: 'farcaster',
+          nativeId: c.hash,
+          author,
+          text: c.text,
+          createdAt: new Date(c.timestamp).getTime(),
+          metrics: {
+            likes: c.reactions?.likes_count ?? 0,
+            reposts: c.reactions?.recasts_count ?? 0,
+            replies: c.replies?.count ?? 0,
+            quotes: 0,
+          },
+          embeds,
+          raw: c,
+        });
+      });
+      return { posts: posts.map(enrichPostNiches) };
+    } catch (e) {
+      return { posts: [], notice: e instanceof Error ? e.message : 'Farcaster unavailable' };
     }
   }
 
