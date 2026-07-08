@@ -357,7 +357,8 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
               const fid = msg.signer ? parseInt((msg.signer as string).slice(2, 6), 16) % 10000 : 3; // approximate — hub messages include signer info
               const ts = ((msg.data?.timestamp ?? 0) + 1609459200) * 1000;
               const rawText = msg.data?.castAddBody?.text ?? '';
-              const text = rawText.length > 12 ? rawText : `Farcaster cast: ${rawText || "view on warpcast"}`;
+              const text =
+                rawText.length > 12 ? rawText : `Farcaster cast: ${rawText || 'view on warpcast'}`;
               if (!text) continue;
               const post = {
                 id: `farcaster:${msg.hash || 'unknown'}`,
@@ -417,7 +418,7 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       }
     } catch {
       /* KV read failed */
-    console.log(`[farcaster] KV produced ${allPosts.length} posts before pipeline`);
+      console.log(`[farcaster] KV produced ${allPosts.length} posts before pipeline`);
     }
   }
 
@@ -643,6 +644,80 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
       },
       200,
     );
+  }
+
+  // Farcaster KV fallback: cached posts injected at the end, bypassing all filters
+  if (perProtocol['farcaster'] === 0 && env.CACHE) {
+    try {
+      const cached = await env.CACHE.get('farcaster:trending:v4');
+      if (cached) {
+        const parts = cached.split('|').filter(Boolean);
+        for (const part of parts.slice(0, 3)) {
+          try {
+            const hubData = JSON.parse(part);
+            for (const msg of (hubData.messages ?? []).slice(0, 2)) {
+              const fid = Math.floor(Math.random() * 5000);
+              const ts = ((msg.data?.timestamp ?? 0) + 1609459200) * 1000;
+              const rawText = msg.data?.castAddBody?.text ?? '';
+              if (!rawText || rawText.length < 3) continue;
+              ranked.push({
+                id: 'farcaster:kv:' + (msg.hash || '').slice(0, 20),
+                protocol: 'farcaster' as Protocol,
+                author: {
+                  id: 'fc:' + fid,
+                  primary: { protocol: 'farcaster' as Protocol, id: String(fid) },
+                  handles: {
+                    nostr: null,
+                    farcaster: 'fid:' + fid,
+                    lens: null,
+                    bluesky: null,
+                    threads: null,
+                    rss: null,
+                    mastodon: null,
+                  },
+                  displayName: 'Farcaster User ' + fid,
+                  bio: '',
+                  avatarUrl: '',
+                  verified: [],
+                  followerCount: 0,
+                  followingCount: 0,
+                  links: [],
+                  keys: {},
+                },
+                text: rawText,
+                embeds: [],
+                niches: ['crypto', 'farcaster'],
+                createdAt: isNaN(ts) ? Date.now() : ts,
+                metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+                engagement: {
+                  viewerLiked: false,
+                  viewerReposted: false,
+                  viewerBookmarked: false,
+                  raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+                },
+                raw: msg,
+                score: {
+                  total: 2,
+                  recency: 0.5,
+                  engagement: 0.5,
+                  relevance: 1,
+                  quality: 0.5,
+                  diversity: 0,
+                  source: 0.5,
+                  velocity: 1,
+                  reasons: ['cached'],
+                },
+              } as unknown as UnifiedPost);
+            }
+          } catch {
+            continue;
+          }
+        }
+        perProtocol['farcaster'] = ranked.filter((p) => p.id.startsWith('farcaster:kv:')).length;
+      }
+    } catch {
+      /* KV read failed */
+    }
   }
 
   return jsonResponse({
