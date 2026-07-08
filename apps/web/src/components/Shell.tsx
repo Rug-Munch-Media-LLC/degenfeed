@@ -258,7 +258,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </a>
             , and{' '}
             <a
-              href="https://codeberg.org/cryptorugmuncher/degenfeed-web"
+              href="https://codeberg.org/cryptorugmunch/degenfeed-web"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-500 underline transition-colors hover:text-gray-400"
