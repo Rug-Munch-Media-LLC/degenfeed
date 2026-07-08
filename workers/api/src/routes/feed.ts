@@ -5,6 +5,7 @@ import {
   isSpamPost,
 } from '@degenfeed/feed-core';
 import {
+  PonderProvider,
   BlueskyProvider,
   FarcasterProvider,
   type FeedProvider,
@@ -38,6 +39,7 @@ export const DEFAULT_PROTOCOLS: Protocol[] = [
   'bluesky',
   'mastodon',
   'threads',
+  'ponder',
 ];
 
 const DEFAULT_TIMEOUT_MS = 6000;
@@ -60,6 +62,8 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
       return new ThreadsProvider();
     case 'reddit':
       return new RedditProvider();
+    case 'ponder':
+      return new PonderProvider();
     case 'rss':
       return new RssWithFallbackProvider(env);
     default:

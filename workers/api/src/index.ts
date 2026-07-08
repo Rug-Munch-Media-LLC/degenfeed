@@ -21,6 +21,7 @@ import { handleCron } from './routes/cron';
 import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import { handleDiscover } from './routes/discover';
 import { handleEngage } from './routes/engage';
+import { handlePushSend, handlePushSubscribe } from "./routes/push";
 import {
   handleCategoryFeed,
   handleFeedHealth,
@@ -109,6 +110,8 @@ export interface Env {
   SENTRY_DSN?: string;
   /** Optional Postmark server token for transactional email delivery */
   POSTMARK_SERVER_TOKEN?: string;
+  ALLOW_DEV_OAUTH?: string;
+  ADMIN_API_KEY?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
@@ -246,7 +249,7 @@ const CSRF_EXEMPT_PATHS = [
   // /api/auth/gotosocial/callback is now protected by a signed state nonce
   // (see routes/auth.ts) AND a normal origin check, so it's no longer exempt.
   '/api/tip/frame/',
-  '/api/bridge/rss-to-nostr',
+  // '/api/bridge/rss-to-nostr' is NO LONGER exempt — requires CSRF check
   '/api/blink/tip',
   '/api/x402/verify',
 ];
@@ -456,10 +459,22 @@ export default {
         response = await handleNotify(request, env);
       } else if (path === '/api/discover') {
         response = await handleDiscover(request, env);
+      } else if (path === "/api/push/subscribe") {
+        response = await handlePushSubscribe(request, env);
+      } else if (path === "/api/push/send") {
+        response = await handlePushSend(request, env);
       } else if (path === '/api/newsletter/subscribe') {
         response = await handleNewsletterSubscribe(request, env);
+      } else if (path === "/api/push/subscribe") {
+        response = await handlePushSubscribe(request, env);
+      } else if (path === "/api/push/send") {
+        response = await handlePushSend(request, env);
       } else if (path === '/api/newsletter/status') {
         response = await handleNewsletterStatus(request, env);
+      } else if (path === "/api/push/subscribe") {
+        response = await handlePushSubscribe(request, env);
+      } else if (path === "/api/push/send") {
+        response = await handlePushSend(request, env);
       } else if (path === '/api/newsletter/digest' || path.startsWith('/api/newsletter/digest')) {
         response = await handleNewsletterDigest(request, env);
       } else if (path === '/api/search/identity') {

@@ -22,3 +22,4 @@ export {
   verifyWalletSignature,
 } from './providers/wallet';
 export { forgetIdentity, lockIdentity, unlockIdentity } from './session';
+export { signInWithReddit, handleRedditCallback } from "./providers/reddit";

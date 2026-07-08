@@ -51,6 +51,7 @@ export const PLATFORM_TIER: Record<Protocol, number> = {
   threads: 0.7,
   reddit: 0.8,
   rss: 0.8,
+  ponder: 0.8,
   ethereum: 0.6,
   solana: 0.6,
 };

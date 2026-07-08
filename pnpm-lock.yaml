@@ -213,6 +213,12 @@ importers:
       '@degenfeed/types':
         specifier: workspace:*
         version: link:../types
+      '@noble/curves':
+        specifier: ^1.6.0
+        version: 1.9.7
+      '@noble/hashes':
+        specifier: ^1.5.0
+        version: 1.8.0
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.2
@@ -7951,7 +7957,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -12799,8 +12805,8 @@ snapshots:
   ox@0.6.7(typescript@5.9.3)(zod@3.22.4):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
-      '@noble/curves': 1.8.1
-      '@noble/hashes': 1.7.1
+      '@noble/curves': 1.9.7
+      '@noble/hashes': 1.8.0
       '@scure/bip32': 1.6.2
       '@scure/bip39': 1.5.4
       abitype: 1.0.8(typescript@5.9.3)(zod@3.22.4)

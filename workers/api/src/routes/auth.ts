@@ -41,8 +41,16 @@ async function consumeState(env: Env, state: string): Promise<boolean> {
  */
 export async function handleGtSAuthorize(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const redirect = url.searchParams.get('redirect') || getGtsConfig(env).redirectUri;
-  const devMode = url.searchParams.get('dev') === 'true';
+  const rawRedirect = url.searchParams.get('redirect');
+  const allowedRedirects = [
+    getGtsConfig(env).redirectUri,
+    'https://degenfeed.xyz/auth/callback',
+    'https://app.degenfeed.xyz/auth/callback',
+  ];
+  const redirect = rawRedirect && allowedRedirects.some((r) => rawRedirect.startsWith(r))
+    ? rawRedirect
+    : getGtsConfig(env).redirectUri;
+  const devMode = env.ALLOW_DEV_OAUTH === 'true' && url.searchParams.get('dev') === 'true';
 
   const state = generateState();
   await storeState(env, state);

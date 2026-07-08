@@ -622,7 +622,7 @@ export class RssProvider implements FeedProvider {
   private readonly feeds: string[];
 
   constructor(options: RssProviderOptions = {}) {
-    this.feeds = options.feeds ?? DEFAULT_CRYPTO_FEEDS;
+    this.feeds = [...new Set(options.feeds ?? DEFAULT_CRYPTO_FEEDS)];
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {

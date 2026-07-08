@@ -51,15 +51,19 @@ export const DEFAULT_SUBREDDITS = [
   'cryptomining',
 ];
 
-// Open-source Reddit API frontends (libreddit, teddit, etc.)
-// These proxy Reddit without auth and return JSON.
-const REDDIT_FRONTENDS = [
+// Self-hosted Redlib on Talos (primary). Falls back to community instances.
+const SELF_HOSTED_REDLIB = typeof process !== "undefined"
+  ? (process.env?.REDLIB_URL ?? "http://127.0.0.1:8281")
+  : "http://127.0.0.1:8281";
+
+const COMMUNITY_REDDIT_FRONTENDS = [
   'https://libreddit.kavin.rocks',
   'https://libreddit.privacydev.net',
   'https://lr.vern.cc',
-  'https://teddit.net',
   'https://red.ngn.tf',
 ];
+
+const REDDIT_FRONTENDS = [SELF_HOSTED_REDLIB, ...COMMUNITY_REDDIT_FRONTENDS];
 
 // Reddit's own RSS feeds — these are public, no auth needed.
 // We use www.reddit.com (old.reddit.com is deprecated).

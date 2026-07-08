@@ -419,6 +419,30 @@ function normalizeStripped(text: string): string {
     .trim();
 }
 
+function wordSet(text: string): Set<string> {
+  return new Set(normalizeStripped(text).split(' ').filter((w) => w.length > 2));
+}
+
+function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  const smaller = a.size < b.size ? a : b;
+  const larger = a.size < b.size ? b : a;
+  for (const w of smaller) {
+    if (larger.has(w)) intersection++;
+  }
+  return intersection / (a.size + b.size - intersection);
+}
+
+function extractUrls(post: UnifiedPost): string[] {
+  const textUrls = (post.text.match(/https?:\/\/[^\s<>"']+/gi) ?? [])
+    .map((u) => u.replace(/\/$/, '').toLowerCase());
+  const embedUrls = post.embeds
+    .filter((e) => e.kind === 'link' || e.kind === 'image' || e.kind === 'video')
+    .map((e) => e.url.replace(/\/$/, '').toLowerCase());
+  return [...new Set([...textUrls, ...embedUrls])];
+}
+
 function primaryUrl(post: UnifiedPost): string | null {
   const urls = post.text.match(URL_RE);
   if (urls && urls.length > 0) return urls[0].toLowerCase();
@@ -481,6 +505,9 @@ export function contentFingerprint(post: UnifiedPost): string {
   return link ? `link:${link.url}` : '';
 }
 
+const JACCARD_THRESHOLD = 0.7;
+const MIN_TEXT_LENGTH = 20;
+
 export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
   const seen = {
     id: new Set<string>(),
@@ -494,6 +521,7 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     ticker: new Set<string>(),
     embed: new Set<string>(),
   };
+  const candidates: { words: Set<string>; index: number }[] = [];
   const out: UnifiedPost[] = [];
 
   for (const p of posts) {
@@ -529,6 +557,22 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     const eid = embedFingerprint(p);
     if (eid && seen.embed.has(eid)) continue;
 
+    const ws = wordSet(p.text);
+    let matchedProtocol: Protocol | undefined;
+    if (ws.size >= 3 && p.text.length > MIN_TEXT_LENGTH) {
+      for (const cand of candidates) {
+        const sim = jaccardSimilarity(ws, cand.words);
+        if (sim >= JACCARD_THRESHOLD) {
+          matchedProtocol = out[cand.index].protocol;
+          const cross = out[cand.index].crossPostedTo ?? [];
+          if (!cross.includes(p.protocol)) cross.push(p.protocol);
+          out[cand.index].crossPostedTo = cross;
+          break;
+        }
+      }
+    }
+    if (matchedProtocol) continue;
+
     seen.id.add(p.id);
     if (fp) seen.fingerprint.add(fp);
     if (norm.length > 15) seen.normalized.add(norm);
@@ -538,9 +582,10 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     if (qid) seen.quoted.add(qid);
     if (ts.length > 3) seen.ticker.add(ts);
     if (eid) seen.embed.add(eid);
-
+    candidates.push({ words: ws, index: out.length });
     out.push(p);
   }
+
   return out;
 }
 
