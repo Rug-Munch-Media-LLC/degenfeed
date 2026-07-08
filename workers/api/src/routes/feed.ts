@@ -392,7 +392,18 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
                   raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
                 },
                 raw: msg,
-                niches: [],
+                niches: ['crypto', 'farcaster', 'tech'],
+                score: {
+                  total: 2,
+                  recency: 0.5,
+                  engagement: 0.5,
+                  relevance: 1,
+                  quality: 0.5,
+                  diversity: 0,
+                  source: 0.5,
+                  velocity: 1,
+                  reasons: ['cached'],
+                },
               };
               allPosts.push(post as unknown as UnifiedPost);
             }
