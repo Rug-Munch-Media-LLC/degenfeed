@@ -341,6 +341,72 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   if (category) {
     deduped = filterByCategory(deduped, category);
   }
+
+  // Farcaster fallback: load from KV cache when the hub is unreachable
+  // from the Cloudflare edge. Cache is populated by Talos cron.
+  if (perProtocol['farcaster'] === 0 && env.CACHE) {
+    try {
+      const cached = await env.CACHE.get('farcaster:trending:v4');
+      if (cached) {
+        const parts = cached.split('|').filter(Boolean);
+        for (const part of parts) {
+          try {
+            const hubData = JSON.parse(part);
+            for (const msg of hubData.messages ?? []) {
+              const fid = 3; // approximate — hub messages include signer info
+              const ts = ((msg.data?.timestamp ?? 0) + 1609459200) * 1000;
+              const text = msg.data?.castAddBody?.text ?? '';
+              if (!text) continue;
+              const post = {
+                id: `farcaster:${msg.hash || 'unknown'}`,
+                protocol: 'farcaster' as Protocol,
+                author: {
+                  id: `farcaster:${fid}`,
+                  primary: { protocol: 'farcaster' as Protocol, id: String(fid) },
+                  handles: {
+                    nostr: null,
+                    farcaster: `fid:${fid}`,
+                    lens: null,
+                    bluesky: null,
+                    threads: null,
+                    rss: null,
+                    mastodon: null,
+                  },
+                  displayName: `FID ${fid}`,
+                  bio: '',
+                  avatarUrl: '',
+                  verified: [],
+                  followerCount: 0,
+                  followingCount: 0,
+                  links: [],
+                  keys: {},
+                },
+                text,
+                embeds: [],
+                createdAt: isNaN(ts) ? Date.now() : ts,
+                metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+                engagement: {
+                  viewerLiked: false,
+                  viewerReposted: false,
+                  viewerBookmarked: false,
+                  raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+                },
+                raw: msg,
+                niches: [],
+              };
+              allPosts.push(post as unknown as UnifiedPost);
+            }
+          } catch {
+            /* skip malformed cache entries */
+          }
+        }
+        perProtocol['farcaster'] = cached.split('|').filter(Boolean).length * 2;
+      }
+    } catch {
+      /* KV read failed */
+    }
+  }
+
   // Load per-user ranking context (followed, muted, preferences) from KV
   // via the session cookie. Unauthenticated users get an empty context.
   const userCtx = await loadUserRankingContext(request, env);
