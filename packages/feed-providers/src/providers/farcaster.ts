@@ -21,7 +21,6 @@ import {
   fetchJson,
   fetchWithFallbacks,
   withConcurrencyLimit,
-  withRetry,
   withTimeout,
 } from '../utils';
 
@@ -348,8 +347,8 @@ export class FarcasterProvider implements FeedProvider {
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const perFidLimit = 3;
+    const timeoutMs = Math.min(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS, 4000);
+    const perFidLimit = 2; // lower for faster response per request
     const endpoints = [this.primaryUrl, ...this.fallbackUrls];
 
     let allFids = this.curatedFids.slice(0, 10);
@@ -374,13 +373,14 @@ export class FarcasterProvider implements FeedProvider {
     }
 
     try {
-      const messagesWithFid = await withRetry(async () => {
-        const results = await withConcurrencyLimit(allFids, opts.concurrency ?? 4, async (fid) => {
+      const fidsToFetch = allFids.slice(0, 4);
+      const results = await withTimeout(
+        withConcurrencyLimit(fidsToFetch, 2, async (fid) => {
           try {
             const msgs = await fetchWithFallbacks(endpoints, (base) => {
               return withTimeout(
                 fetchCastsByFid(base, fid, perFidLimit),
-                timeoutMs,
+                Math.min(timeoutMs, 3000),
                 `farcaster:${fid}`,
               );
             });
@@ -388,9 +388,11 @@ export class FarcasterProvider implements FeedProvider {
           } catch {
             return [];
           }
-        });
-        return results.flat();
-      });
+        }),
+        timeoutMs + 1000,
+        `farcaster:fetch`,
+      );
+      const messagesWithFid = results.flat();
 
       if (messagesWithFid.length > 0) {
         const fidToUserData = new Map<number, FarcasterUserData | null>();

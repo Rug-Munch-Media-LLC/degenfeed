@@ -12,16 +12,32 @@ import {
 
 export const DEFAULT_GTS_INSTANCE = 'https://social.degenfeed.xyz';
 export const PUBLIC_MASTODON_INSTANCES = [
+  // Crypto-first instances
   'https://bitcoinhackers.org',
-  'https://mastodon.social',
-  'https://infosec.exchange',
+  'https://cryptodon.lol',
+  'https://noagendasocial.com',
+  // Tech/AI instances
+  'https://fosstodon.org',
   'https://hachyderm.io',
   'https://ioc.exchange',
-  'https://cryptodon.lol',
-  'https://social.linux.pizza',
+  'https://infosec.exchange',
   'https://mathstodon.xyz',
+  'https://techhub.social',
+  'https://mastodon.social',
   'https://mas.to',
   'https://universeodon.com',
+  'https://mstdn.social',
+  'https://mastodon.world',
+  'https://mastodon.online',
+  'https://mastodon.cloud',
+  'https://mastodon.energy',
+  'https://fedi.social',
+  'https://ohai.social',
+  'https://social.linux.pizza',
+  'https://hackers.town',
+  'https://layer8.space',
+  'https://defcon.social',
+  'https://infosec.town',
 ];
 
 export const CRYPTO_HASHTAGS = [
@@ -35,6 +51,20 @@ export const CRYPTO_HASHTAGS = [
   'defi',
   'nft',
   'altcoin',
+];
+export const TECH_HASHTAGS = [
+  'ai',
+  'machinelearning',
+  'programming',
+  'linux',
+  'opensource',
+  'rust',
+  'golang',
+  'python',
+  'typescript',
+  'privacy',
+  'security',
+  'infosec',
 ];
 
 interface GtSAccount {
@@ -216,23 +246,11 @@ export class MastodonProvider implements FeedProvider {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const limit = 30;
     const endpoints = [this.primaryUrl, ...this.fallbackUrls];
-    // "Crypto-leaning" instances that have meaningful #bitcoin / #ethereum
-    // timelines. The hostname check is explicit so adding a new instance
-    // doesn't silently land in either bucket.
-    const CRYPTO_HOSTS = new Set(['bitcoinhackers.org', 'social.degenfeed.xyz']);
-    const cryptoInstances = endpoints.filter((u) => {
-      try {
-        return CRYPTO_HOSTS.has(new URL(u).hostname);
-      } catch {
-        return false;
-      }
-    });
-    const generalInstances = endpoints.filter((u) => !cryptoInstances.includes(u));
 
     try {
-      // Start with the public timeline from the primary instance so our own
-      // GotoSocial server is always represented, even if hashtag search is thin.
       const allStatuses: GtSStatus[] = [];
+
+      // 1. Primary public timeline
       try {
         const primaryPublic = await withTimeout(
           fetchPublicTimeline(this.primaryUrl, Math.ceil(limit / 2)),
@@ -241,47 +259,51 @@ export class MastodonProvider implements FeedProvider {
         );
         allStatuses.push(...primaryPublic);
       } catch {
-        /* primary public timeline may be restricted; continue with hashtags */
+        /* continue */
       }
 
-      // Build all (instance, tag) pairs in parallel. Bound concurrency so
-      // we don't slam a single instance.
-      const tagTargets: { instanceUrl: string; tag: string }[] = [];
-      const tagInstances = cryptoInstances.length > 0 ? cryptoInstances : endpoints.slice(0, 2);
-      for (const instanceUrl of tagInstances) {
-        for (const tag of CRYPTO_HASHTAGS.slice(0, 4)) {
-          tagTargets.push({ instanceUrl, tag });
+      // 2. Hashtag searches across crypto+tech instances for crypto+AI topics
+      const allHashes = [...CRYPTO_HASHTAGS.slice(0, 5), ...TECH_HASHTAGS.slice(0, 5)];
+      const hashtagTargets = [];
+      for (const instanceUrl of endpoints.slice(0, 8)) {
+        for (const tag of allHashes) {
+          hashtagTargets.push({ instanceUrl, tag });
         }
       }
-      const tagResults = await withConcurrencyLimit(tagTargets, 3, async ({ instanceUrl, tag }) => {
-        try {
-          return await withTimeout(
-            fetchHashtagTimeline(instanceUrl, tag, Math.ceil(limit / 2)),
-            timeoutMs,
-            `mastodon:${instanceUrl}#${tag}`,
-          );
-        } catch {
-          return [];
-        }
-      });
-      for (const r of tagResults) allStatuses.push(...r);
-
-      // Fallback: public timeline from general instances if crypto
-      // hashtag fetches came back thin.
-      if (allStatuses.length < limit) {
-        const fallback = await withConcurrencyLimit(generalInstances, 2, async (instanceUrl) => {
+      const tagResults = await withConcurrencyLimit(
+        hashtagTargets,
+        4,
+        async ({ instanceUrl, tag }) => {
           try {
             return await withTimeout(
-              fetchPublicTimeline(instanceUrl, limit),
-              timeoutMs,
+              fetchHashtagTimeline(instanceUrl, tag, 5),
+              Math.min(timeoutMs, 3000),
+              `mastodon:${new URL(instanceUrl).hostname}#${tag}`,
+            );
+          } catch {
+            return [];
+          }
+        },
+      );
+      for (const r of tagResults) allStatuses.push(...r);
+
+      // 3. Public timelines from general instances
+      const generalResults = await withConcurrencyLimit(
+        endpoints.slice(0, 6),
+        2,
+        async (instanceUrl) => {
+          try {
+            return await withTimeout(
+              fetchPublicTimeline(instanceUrl, 5),
+              Math.min(timeoutMs, 3000),
               `mastodon:${instanceUrl}`,
             );
           } catch {
             return [];
           }
-        });
-        for (const r of fallback) allStatuses.push(...r);
-      }
+        },
+      );
+      for (const r of generalResults) allStatuses.push(...r);
 
       if (allStatuses.length === 0) {
         return { posts: [], notice: 'Mastodon feed unavailable' };

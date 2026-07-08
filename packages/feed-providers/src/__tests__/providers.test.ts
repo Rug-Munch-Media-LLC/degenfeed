@@ -102,7 +102,7 @@ describe('feed providers', () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockResponse({ ok: false, status: 500, statusText: 'Error' }),
       );
-      const provider = new LensProvider({ curatedHandles: ['stani'] });
+      const provider = new LensProvider();
       const result = await provider.fetchFeed({ timeoutMs: 100 });
       expect(result.posts).toEqual([]);
       expect(result.notice).toBeDefined();

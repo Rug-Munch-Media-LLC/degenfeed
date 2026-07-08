@@ -10,7 +10,7 @@ import {
 } from '../utils';
 
 export const DEFAULT_CRYPTO_FEEDS = [
-  // Tier 1 — Major outlets
+  // ── Tier 1 — Major Crypto News ──────────────────────────────────
   'https://cointelegraph.com/rss',
   'https://decrypt.co/feed',
   'https://www.coindesk.com/arc/outboundfeeds/rss/',
@@ -26,28 +26,93 @@ export const DEFAULT_CRYPTO_FEEDS = [
   'https://zycrypto.com/feed/',
   'https://bitcoinist.com/feed/',
   'https://cryptonews.com/feed/',
-  // Tier 2 — Protocol / chain
-  'https://blog.ethereum.org/feed.xml',
-  'https://solana.com/feed',
-  'https://polkadot.network/blog/feed/',
-  'https://blog.chain.link/feed/',
-  'https://a16zcrypto.com/feed/',
-  // Tier 3 — Research / data
-  'https://messari.io/feed',
-  'https://insights.glassnode.com/feed/',
-  'https://blog.kaiko.com/feed',
-  'https://defillama.com/feed',
-  'https://dune.com/blog/rss.xml',
-  // Tier 4 — DeFi / trading / newsletters
-  'https://defipulse.com/blog/feed/',
-  'https://newsletter.banklesshq.com/feed',
-  'https://thedefiant.io/feed',
-  'https://www.coingecko.com/en/blog/rss',
-  'https://coinmarketcap.com/feed/',
-  // Tier 5 — Regulation
-  'https://www.consumerfinance.gov/feed/',
-  // Tier 6 — High-signal / security
-  'https://bitcoincore.org/en/rss.xml',
+  'https://blockworks.co/feed',
+  'https://unchainedcrypto.com/feed/',
+  // ── Tier 2 — Premium Newsletters (Substack, Mirror, Paragraph, Ghost) ──
+  'https://newsletter.banklesshq.com/feed', // Bankless — daily crypto
+  'https://banklesshq.substack.com/feed', // Bankless (alt feed)
+  'https://thedefiant.io/feed', // The Defiant — DeFi news
+  'https://milkroad.substack.com/feed', // Milk Road — daily digest
+  'https://thedefiedge.substack.com/feed', // The DeFi Edge — research
+  'https://messari.substack.com/feed', // Messari — crypto research
+  'https://delphidigital.substack.com/feed', // Delphi Digital — macro crypto
+  'https://variant.fund/feed', // Variant Fund (Mirror variant)
+  'https://variantfund.substack.com/feed', // Variant (Substack)
+  'https://multicoin.capital/feed', // Multicoin Capital
+  'https://dune.com/blog/rss.xml', // Dune Analytics
+  'https://blog.chainalysis.com/feed/', // Chainalysis — on-chain intel
+  'https://nansen.substack.com/feed', // Nansen — on-chain analytics
+  'https://nansen.ai/feed/', // Nansen (alt)
+  'https://tokenterminal.com/feed', // Token Terminal
+  'https://paragraph.xyz/@bitcoin/feed', // Bitcoin on Paragraph
+  'https://paragraph.xyz/@crypto/feed', // Crypto on Paragraph
+  'https://mirror.xyz/dashboard/feed', // Mirror (global)
+  // ── Tier 3 — Protocol / Chain Blogs ──────────────────────────────
+  'https://blog.ethereum.org/feed.xml', // Ethereum Foundation
+  'https://solana.com/feed', // Solana
+  'https://polkadot.network/blog/feed/', // Polkadot
+  'https://blog.chain.link/feed/', // Chainlink
+  'https://a16zcrypto.com/feed/', // a16z Crypto
+  'https://vitalik.eth.limo/feed.xml', // Vitalik Buterin
+  'https://www.paradigm.xyz/feed/atom', // Paradigm (research)
+  'https://eips.ethereum.org/feed.xml', // Ethereum EIPs
+  'https://weekinethereumnews.com/feed', // Week in Ethereum News
+  'https://ethdaily.substack.com/feed', // ETH Daily
+  'https://l2beat.com/feed/', // L2Beat
+  'https://blog.arbitrum.io/feed.xml', // Arbitrum
+  'https://optimism.mirror.xyz/feed/atom', // Optimism (Mirror)
+  'https://base.mirror.xyz/feed/atom', // Base (Mirror)
+  'https://starknet.io/feed.xml', // StarkNet
+  'https://zksync.io/feed.xml', // zkSync
+  // ── Tier 4 — AI x Crypto / Tech ──────────────────────────────────
+  'https://www.interconnects.ai/feed/', // Interconnects (AI newsletter)
+  'https://thesequence.substack.com/feed', // The Sequence (AI/ML)
+  'https://jack-clark.net/feed/', // Import AI (Jack Clark / Anthropic)
+  'https://stratechery.com/feed/', // Stratechery (Ben Thompson)
+  'https://technically.substack.com/feed', // Technically (AI+economics)
+  'https://www.semiconductor-digest.com/feed/', // SemiEngineering
+  'https://techcrunch.com/feed/', // TechCrunch (general tech)
+  'https://www.theverge.com/rss/index.xml', // The Verge
+  'https://arstechnica.com/feed/', // Ars Technica
+  'https://blog.google/technology/ai/rss/', // Google AI Blog
+  'https://openai.com/blog/rss.xml', // OpenAI Blog
+  'https://www.deepmind.com/blog/rss.xml', // DeepMind
+  'https://ai.meta.com/blog/feed/', // Meta AI
+  'https://research.facebook.com/feed/', // Meta Research
+  'https://www.anthropic.com/feed/', // Anthropic
+  // ── Tier 5 — Research / Data ────────────────────────────────────
+  'https://messari.io/feed', // Messari
+  'https://insights.glassnode.com/feed/', // Glassnode
+  'https://blog.kaiko.com/feed', // Kaiko
+  'https://defillama.com/feed', // DeFi Llama
+  'https://www.coingecko.com/en/blog/rss', // CoinGecko
+  'https://coinmarketcap.com/feed/', // CoinMarketCap
+  'https://blog.coinbase.com/feed/', // Coinbase
+  'https://www.gemini.com/feed.xml', // Gemini
+  'https://blog.kraken.com/feed/', // Kraken
+  'https://blog.binance.com/feed/', // Binance
+  'https://www.galaxy.com/feed/', // Galaxy Digital
+  'https://www.vanryun.com/feed/', // VanEck
+  // ── Tier 6 — Security / Policy / Macro ──────────────────────────
+  'https://rekt.news/feed.xml', // Rekt News
+  'https://slowmist.medium.com/feed', // SlowMist (Medium)
+  'https://immunefi.medium.com/feed', // Immunefi (Medium)
+  'https://certik.medium.com/feed', // CertiK (Medium)
+  'https://blog.trailofbits.com/feed/', // Trail of Bits
+  'https://www.coincenter.org/feed/', // Coin Center (policy)
+  'https://cointelegraph.com/tags/regulation/feed', // Regulation tag
+  'https://www.sec.gov/news/pressreleases.rss', // SEC Press Releases
+  'https://www.federalreserve.gov/feeds/press.xml', // Federal Reserve
+  'https://www.imf.org/en/News/RSS', // IMF
+  // ── Tier 7 — Web3 / NFT / Gaming ────────────────────────────────
+  'https://opensea.io/blog/feed.xml', // OpenSea
+  'https://blog.decentraland.org/feed/', // Decentraland
+  'https://thetruthmatters.substack.com/feed', // Yuga Labs / BAYC news
+  'https://www.nftnow.com/feed/', // NFT Now
+  'https://axieinfinity.com/feed/', // Axie Infinity (gaming)
+  'https://godsunchained.com/feed/', // Gods Unchained
+  // ── Mastodon / Fediverse feeds ──────────────────────────────────
+  'https://social.degenfeed.xyz/@admin.rss', // Our own Mastodon instance
   'https://bitcoinops.org/en/feed.xml',
   'https://lightning.engineering/rss/',
   'https://unchainedcrypto.com/feed/',
