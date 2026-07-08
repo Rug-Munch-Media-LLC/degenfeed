@@ -39,6 +39,7 @@ import { handleRelaysHealth } from './routes/health';
 import { handleResolveIdentity } from './routes/identity';
 import { handleIdentityProfile } from './routes/profile';
 import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
+import { handleLinksPage } from './routes/links';
 import { handleNewsFeed } from './routes/news';
 import {
   handleNewsletterDigest,
@@ -350,6 +351,8 @@ export default {
       // /styles.css and /app.js are not treated as API paths.
       if (path === '/styles.css') {
         response = handleLandingCss(request, env);
+      } else if (path === '/links') {
+        response = handleLinksPage(request, env);
       } else if (path === '/app.js') {
         response = handleLandingJs(request, env);
       } else if (path === '/favicon.svg') {

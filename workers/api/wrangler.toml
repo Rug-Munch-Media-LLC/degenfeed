@@ -26,7 +26,8 @@ preview_id = "6c8cec9665dd44fda8c869ce1e675ae8"
 routes = [
   { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
   { pattern = "app.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
-  { pattern = "degenfeed.xyz/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
+  { pattern = "degenfeed.xyz/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
+  { pattern = "rugmunch.io/links", zone_id = "116a9676c3358def6796910ccb96f1fc" }
 ]
 
 # Secrets — set with:
