@@ -1,0 +1,36 @@
+'use client';
+
+import { useEffect } from 'react';
+
+interface NewsErrorProps {
+  error: Error & { digest?: string };
+  reset: () => void;
+}
+
+export default function NewsError({ error, reset }: NewsErrorProps) {
+  useEffect(() => {
+    console.error('[DegenFeed /news error]', error);
+  }, [error]);
+
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-20">
+      <div className="card border-red-900/30 bg-red-950/20 py-12 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-2xl text-red-400">
+          !
+        </div>
+        <h2 className="mb-2 text-xl font-bold text-white">News feed failed to load</h2>
+        <p className="mb-4 text-sm text-gray-400">
+          Something went wrong while fetching the latest stories.
+        </p>
+        {error.message && (
+          <code className="mb-6 block rounded-lg bg-black/40 px-4 py-3 text-left text-xs font-mono text-red-300">
+            {error.message}
+          </code>
+        )}
+        <button type="button" onClick={reset} className="btn-primary text-sm">
+          Try again
+        </button>
+      </div>
+    </div>
+  );
+}

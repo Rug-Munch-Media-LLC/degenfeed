@@ -1,0 +1,550 @@
+import {
+  deleteFollow,
+  getMutedIdentities,
+  isFollowing,
+  muteIdentity,
+  saveFollow,
+  unmuteIdentity,
+} from '@degenfeed/storage';
+import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
+import { useEffect, useState } from 'react';
+import { ProtocolBadge } from './ProtocolBadge';
+
+export type { UnifiedPost };
+
+export interface EngageResult {
+  ok: boolean;
+  error?: string;
+}
+
+export type EngageHandler = (
+  action: EngagementAction,
+  postId: string,
+  content?: string,
+) => Promise<EngageResult> | EngageResult;
+
+export interface PostCardProps {
+  post: UnifiedPost;
+  onEngage?: EngageHandler;
+  onClick?: (postId: string) => void;
+  expanded?: boolean;
+  onTip?: (post: UnifiedPost) => void;
+  onPaywall?: (post: UnifiedPost) => void;
+}
+
+const MAX_TEXT_LENGTH = 500;
+
+function formatTime(ts: number): string {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
+function buildScoreTooltip(score: NonNullable<UnifiedPost['score']>): string {
+  const lines = [
+    `Score: ${score.total.toFixed(2)}`,
+    `  recency: ${score.recency.toFixed(2)}`,
+    `  engagement: ${score.engagement.toFixed(2)}`,
+    `  relevance: ${score.relevance.toFixed(2)}`,
+    `  quality: ${score.quality.toFixed(2)}`,
+    `  source: ${score.source.toFixed(2)}`,
+    `  velocity: ${score.velocity.toFixed(2)}`,
+  ];
+  if (score.reasons.length > 0) {
+    lines.push(`Signals: ${score.reasons.join(', ')}`);
+  }
+  return lines.join('\n');
+}
+
+function LinkPreview({ embed }: { embed: Embed }) {
+  const meta = embed.meta as { title?: string; description?: string; image?: string } | undefined;
+  const title = meta?.title;
+  const description = meta?.description;
+  const image = meta?.image;
+  const host = embed.url ? embed.url.replace(/^https?:\/\//, '').split('/')[0] : '';
+
+  return (
+    <a
+      href={embed.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group mt-2 block overflow-hidden rounded-xl border border-gray-700 bg-gray-800/30 transition-colors hover:border-degen-500/30 hover:bg-gray-800/50"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      {image && (
+        <div className="aspect-video w-full overflow-hidden">
+          <img
+            src={image}
+            alt={title || ''}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        </div>
+      )}
+      <div className="p-3">
+        {host && <p className="mb-1 text-[11px] text-gray-500 uppercase tracking-wide">{host}</p>}
+        {title && <p className="mb-1 text-sm font-semibold text-white line-clamp-1">{title}</p>}
+        {description && <p className="text-xs text-gray-400 line-clamp-2">{description}</p>}
+        {!title && !description && (
+          <p className="truncate text-xs text-degen-500">{embed.url.replace(/^https?:\/\//, '')}</p>
+        )}
+      </div>
+    </a>
+  );
+}
+
+function ImageGrid({ images }: { images: string[] }) {
+  if (images.length === 1) {
+    return (
+      <div className="mt-2 max-h-80 overflow-hidden rounded-xl">
+        <img src={images[0]} alt="" className="h-full w-full object-cover" loading="lazy" />
+      </div>
+    );
+  }
+  if (images.length === 2) {
+    return (
+      <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
+        {images.map((url) => (
+          <img
+            key={url}
+            src={url}
+            alt=""
+            className="aspect-square w-full object-cover"
+            loading="lazy"
+          />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
+      {images.slice(0, 4).map((url, idx) => (
+        <div key={url} className="relative aspect-square">
+          <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+          {idx === 3 && images.length > 4 && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm font-bold text-white">
+              +{images.length - 4}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+interface LocalState {
+  engagement: UnifiedPost['engagement'];
+  metrics: UnifiedPost['metrics'];
+}
+
+function applyOptimistic(state: LocalState, action: EngagementAction): LocalState {
+  const { engagement, metrics } = state;
+  switch (action) {
+    case 'like':
+      return {
+        engagement: { ...engagement, viewerLiked: true },
+        metrics: { ...metrics, likes: metrics.likes + 1 },
+      };
+    case 'unlike':
+      return {
+        engagement: { ...engagement, viewerLiked: false },
+        metrics: { ...metrics, likes: Math.max(0, metrics.likes - 1) },
+      };
+    case 'repost':
+      return {
+        engagement: { ...engagement, viewerReposted: true },
+        metrics: { ...metrics, reposts: metrics.reposts + 1 },
+      };
+    case 'unrepost':
+      return {
+        engagement: { ...engagement, viewerReposted: false },
+        metrics: { ...metrics, reposts: Math.max(0, metrics.reposts - 1) },
+      };
+    case 'bookmark':
+      return {
+        engagement: { ...engagement, viewerBookmarked: true },
+        metrics,
+      };
+    case 'unbookmark':
+      return {
+        engagement: { ...engagement, viewerBookmarked: false },
+        metrics,
+      };
+    case 'reply':
+      return {
+        engagement,
+        metrics: { ...metrics, replies: metrics.replies + 1 },
+      };
+    case 'react':
+      return { engagement, metrics };
+    default:
+      return state;
+  }
+}
+
+export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }: PostCardProps) {
+  const [showFullText, setShowFullText] = useState(expanded ?? false);
+  const [localState, setLocalState] = useState<LocalState>({
+    engagement: post.engagement,
+    metrics: post.metrics,
+  });
+  const [showReply, setShowReply] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [following, setFollowing] = useState(false);
+  const [muted, setMuted] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !post.author.id) return;
+    let cancelled = false;
+    Promise.all([
+      isFollowing('self', post.author.id),
+      getMutedIdentities('self').then((m) => m.some((x) => x.targetId === post.author.id)),
+    ])
+      .then(([f, m]) => {
+        if (!cancelled) {
+          setFollowing(f);
+          setMuted(m);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [post.author.id]);
+
+  useEffect(() => {
+    setLocalState({ engagement: post.engagement, metrics: post.metrics });
+  }, [post.engagement, post.metrics]);
+
+  const needsTruncation = !expanded && post.text.length > MAX_TEXT_LENGTH;
+  const displayText =
+    needsTruncation && !showFullText ? `${post.text.slice(0, MAX_TEXT_LENGTH)}...` : post.text;
+
+  async function perform(action: EngagementAction, content?: string) {
+    if (!onEngage) return;
+    const previous = localState;
+    setLocalState((s) => applyOptimistic(s, action));
+    const result = await onEngage(action, post.id, content);
+    if (!result.ok) {
+      setLocalState(previous);
+    } else if (action === 'reply') {
+      setReplyText('');
+      setShowReply(false);
+    }
+  }
+
+  const toggleFollow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const authorId = post.author.id;
+    if (!authorId) return;
+    const next = !following;
+    setFollowing(next);
+    try {
+      if (next) {
+        await saveFollow({
+          identityId: 'self',
+          targetId: authorId,
+          targetProtocol: post.protocol,
+          targetHandle: post.author.handles[post.protocol] ?? post.author.displayName,
+          followedAt: Date.now(),
+        });
+      } else {
+        await deleteFollow('self', authorId);
+      }
+    } catch {
+      setFollowing(!next);
+    }
+  };
+
+  const toggleMute = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const authorId = post.author.id;
+    if (!authorId) return;
+    const next = !muted;
+    setMuted(next);
+    try {
+      if (next) {
+        await muteIdentity(authorId, post.author.displayName, 'self');
+      } else {
+        await unmuteIdentity(authorId, 'self');
+      }
+    } catch {
+      setMuted(!next);
+    }
+  };
+
+  return (
+    <article
+      className="cursor-pointer border-b border-white/5 px-4 py-3 transition-colors hover:bg-white/[0.03]"
+      onClick={() => onClick?.(post.id)}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && onClick) {
+          e.preventDefault();
+          onClick(post.id);
+        }
+      }}
+      aria-label={`Post by ${post.author.displayName}`}
+    >
+      {/* Author row */}
+      <div className="mb-2 flex items-center gap-3">
+        <img
+          src={
+            post.author.avatarUrl ||
+            'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23333%22/%3E%3Ctext x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22%3E%40%3C/text%3E%3C/svg%3E'
+          }
+          alt={post.author.displayName}
+          className="h-8 w-8 rounded-full bg-gray-800 object-cover"
+          loading="lazy"
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-semibold text-white">
+              {post.author.displayName}
+            </span>
+            <ProtocolBadge protocol={post.protocol} />
+            <button
+              type="button"
+              onClick={toggleFollow}
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                following
+                  ? 'bg-degen-500/20 text-degen-400'
+                  : 'border border-gray-700 text-gray-500 hover:border-degen-500/30 hover:text-degen-400'
+              }`}
+              aria-label={following ? 'Unfollow' : 'Follow'}
+              title={following ? 'Unfollow' : 'Follow'}
+            >
+              {following ? '✓ Following' : '+ Follow'}
+            </button>
+            <button
+              type="button"
+              onClick={toggleMute}
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                muted
+                  ? 'bg-red-500/20 text-red-400'
+                  : 'border border-gray-700 text-gray-600 hover:border-red-500/30 hover:text-red-400'
+              }`}
+              aria-label={muted ? 'Unmute' : 'Mute'}
+              title={muted ? 'Unmute author' : 'Mute author'}
+            >
+              {muted ? '🔇 Muted' : '🔇'}
+            </button>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span className="truncate">
+              {post.author.handles[post.protocol] ?? post.author.id.slice(0, 16)}
+            </span>
+            <span>·</span>
+            <time
+              dateTime={new Date(post.createdAt).toISOString()}
+              title={new Date(post.createdAt).toLocaleString()}
+            >
+              {formatTime(post.createdAt)}
+            </time>
+            {post.score && (
+              <>
+                <span>·</span>
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-1.5 py-0.5 text-[10px] font-medium text-degen-400"
+                  title={buildScoreTooltip(post.score)}
+                >
+                  ★ {Math.round(post.score.total * 10) / 10}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      {post.paywall && (
+        <div className="mb-3 rounded-xl border border-purple-900/30 bg-purple-900/10 p-4 text-center">
+          <div className="mb-2 text-2xl">🔒</div>
+          <p className="mb-3 text-sm text-gray-400">This post is locked.</p>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPaywall?.(post);
+            }}
+            className="rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-500 transition-colors"
+          >
+            Unlock for {post.paywall.amount} SOL
+          </button>
+        </div>
+      )}
+      <div className="mb-3 text-sm text-gray-300 whitespace-pre-wrap break-words">
+        {displayText}
+        {needsTruncation && !showFullText && (
+          <button
+            type="button"
+            className="ml-1 text-degen-500 hover:text-degen-400 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowFullText(true);
+            }}
+          >
+            Show more
+          </button>
+        )}
+      </div>
+
+      {/* Embeds */}
+      {post.embeds.length > 0 && (
+        <div className="mb-3">
+          {(() => {
+            const images = post.embeds.filter((e) => e.kind === 'image').map((e) => e.url);
+            const links = post.embeds.filter((e) => e.kind === 'link');
+            const videos = post.embeds.filter((e) => e.kind === 'video');
+            return (
+              <>
+                {images.length > 0 && <ImageGrid images={images} />}
+                {links.map((embed) => (
+                  <LinkPreview key={`link-${embed.url}`} embed={embed} />
+                ))}
+                {videos.map((embed) => (
+                  <a
+                    key={`video-${embed.url}`}
+                    href={embed.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 block w-full rounded-lg border border-gray-700 bg-gray-800/50 p-3 text-xs text-degen-500 hover:text-degen-400 transition-colors truncate"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    ▶ {embed.url.replace(/^https?:\/\//, '').slice(0, 60)}
+                  </a>
+                ))}
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      {post.niches.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1">
+          {post.niches.slice(0, 5).map((n) => (
+            <span
+              key={n}
+              className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] font-medium text-gray-400"
+            >
+              {n}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Engagement metrics + Tip */}
+      <div className="flex items-center gap-4 text-xs text-gray-500">
+        <button
+          type="button"
+          className={`flex items-center gap-1 transition-colors hover:text-red-400 ${localState.engagement.viewerLiked ? 'text-red-400' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            void perform(localState.engagement.viewerLiked ? 'unlike' : 'like');
+          }}
+          aria-label={`${localState.metrics.likes} likes`}
+        >
+          {localState.engagement.viewerLiked ? '❤' : '♡'} {formatCount(localState.metrics.likes)}
+        </button>
+        <button
+          type="button"
+          className={`flex items-center gap-1 transition-colors hover:text-green-400 ${localState.engagement.viewerReposted ? 'text-green-400' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            void perform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
+          }}
+          aria-label={`${localState.metrics.reposts} reposts`}
+        >
+          ↻ {formatCount(localState.metrics.reposts)}
+        </button>
+        <button
+          type="button"
+          className="flex items-center gap-1 transition-colors hover:text-blue-400"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowReply((v) => !v);
+          }}
+          aria-label={`${localState.metrics.replies} replies`}
+        >
+          ↩ {formatCount(localState.metrics.replies)}
+        </button>
+        <button
+          type="button"
+          className={`flex items-center gap-1 transition-colors hover:text-purple-400 ${localState.engagement.viewerBookmarked ? 'text-purple-400' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            void perform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
+          }}
+          aria-label={localState.engagement.viewerBookmarked ? 'Bookmarked' : 'Bookmark'}
+        >
+          {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
+        </button>
+        <button
+          type="button"
+          className="flex items-center gap-1 transition-colors hover:text-purple-400"
+          onClick={(e) => {
+            e.stopPropagation();
+            void navigator.clipboard.writeText(
+              `${window.location.origin}/post/${encodeURIComponent(post.id)}`,
+            );
+          }}
+          aria-label="Share"
+        >
+          ↗ Share
+        </button>
+        {onTip && (
+          <button
+            type="button"
+            className="ml-auto flex items-center gap-1 transition-colors hover:text-yellow-400"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTip(post);
+            }}
+            aria-label="Tip this author"
+            title={`Tip ${post.author.displayName}`}
+          >
+            ⚡ Tip
+          </button>
+        )}
+      </div>
+
+      {showReply && (
+        <form
+          className="mt-3 flex gap-2"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!replyText.trim()) return;
+            void perform('reply', replyText.trim());
+          }}
+        >
+          <input
+            type="text"
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder="Write a reply..."
+            className="flex-1 rounded border border-gray-700 bg-gray-900 px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:border-degen-500 focus:outline-none"
+            maxLength={1000}
+          />
+          <button type="submit" className="btn-primary text-xs">
+            Reply
+          </button>
+        </form>
+      )}
+    </article>
+  );
+}

@@ -1,0 +1,257 @@
+import { type Env, noCacheJsonResponse } from '../index';
+import { requireSession } from '../session';
+
+interface Notification {
+  id: string;
+  type: 'like' | 'repost' | 'reply' | 'follow' | 'mention';
+  protocol: string;
+  actorName: string;
+  actorHandle: string;
+  actorAvatar?: string;
+  postId?: string;
+  postText?: string;
+  createdAt: number;
+  read: boolean;
+}
+
+export type { Notification };
+
+interface NotificationAuth {
+  nostr_pubkey?: string;
+  mastodon?: string;
+  mastodon_instance?: string;
+  bluesky?: {
+    handle?: string;
+    did?: string;
+    accessJwt?: string;
+  };
+  farcaster?: {
+    fid?: string;
+    signerKey?: string;
+  };
+}
+
+interface MastodonAccount {
+  id: string;
+  display_name?: string;
+  username?: string;
+  acct?: string;
+  avatar?: string;
+}
+
+interface MastodonStatus {
+  id: string;
+  content?: string;
+}
+
+interface MastodonNotification {
+  id: string;
+  type: string;
+  created_at: string;
+  account?: MastodonAccount;
+  status?: MastodonStatus;
+}
+
+interface BlueskyNotification {
+  uri: string;
+  cid: string;
+  author: {
+    did: string;
+    handle: string;
+    displayName?: string;
+    avatar?: string;
+  };
+  reason: 'like' | 'repost' | 'follow' | 'mention' | 'reply' | string;
+  reasonSubject?: string;
+  record?: { text?: string };
+  isRead: boolean;
+  indexedAt: string;
+}
+
+function npubToHex(npubOrHex: string): string {
+  if (!npubOrHex) return '';
+  if (npubOrHex.startsWith('npub1') && npubOrHex.length === 62) {
+    try {
+      const mod = require('@degenfeed/nostr-sdk') as {
+        nip19?: { decode?: (s: string) => { type: string; data: string } };
+      };
+      const decoded = mod.nip19?.decode?.(npubOrHex);
+      if (decoded && decoded.type === 'npub' && typeof decoded.data === 'string') {
+        return decoded.data;
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+  return npubOrHex;
+}
+
+async function fetchNostrNotifications(pubkey: string): Promise<Notification[]> {
+  const results: Notification[] = [];
+  const hexPubkey = npubToHex(pubkey);
+  if (!hexPubkey) return results;
+  try {
+    const mod = await import('@degenfeed/nostr-sdk');
+    const pool = new mod.RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
+      eoseTimeout: 3000,
+    });
+    const reactions = await pool.list({ kinds: [7], limit: 20 }, 3000);
+    for (const ev of reactions) {
+      if (!ev.tags.some((t: string[]) => t[0] === 'p' && t[1] === hexPubkey)) continue;
+      results.push({
+        id: `nostr:reaction:${ev.id}`,
+        type: 'like' as const,
+        protocol: 'nostr',
+        actorName: ev.pubkey.slice(0, 12),
+        actorHandle: ev.pubkey.slice(0, 12),
+        postId: ev.tags.find((t: string[]) => t[0] === 'e')?.[1],
+        createdAt: ev.created_at * 1000,
+        read: false,
+      });
+    }
+    const mentions = await pool.list({ kinds: [1], limit: 20 }, 3000);
+    for (const ev of mentions) {
+      if (
+        ev.pubkey === hexPubkey ||
+        !ev.tags.some((t: string[]) => t[0] === 'p' && t[1] === hexPubkey)
+      )
+        continue;
+      results.push({
+        id: `nostr:mention:${ev.id}`,
+        type: 'mention' as const,
+        protocol: 'nostr',
+        actorName: ev.pubkey.slice(0, 12),
+        actorHandle: ev.pubkey.slice(0, 12),
+        postText: ev.content.slice(0, 100),
+        postId: ev.id,
+        createdAt: ev.created_at * 1000,
+        read: false,
+      });
+    }
+    pool.disconnectAll();
+  } catch {}
+  return results;
+}
+
+async function fetchMastodonNotifications(
+  instance: string,
+  token: string,
+): Promise<Notification[]> {
+  const results: Notification[] = [];
+  try {
+    const res = await fetch(`${instance}/api/v1/notifications?limit=30`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return results;
+    const data = (await res.json()) as MastodonNotification[];
+    for (const n of data) {
+      const typeMap: Record<string, 'like' | 'repost' | 'reply' | 'follow' | 'mention'> = {
+        favourite: 'like',
+        reblog: 'repost',
+        mention: 'mention',
+        follow: 'follow',
+      };
+      results.push({
+        id: `mastodon:${n.id}`,
+        type: typeMap[n.type] || 'mention',
+        protocol: 'mastodon',
+        actorName: n.account?.display_name || n.account?.username || '',
+        actorHandle: n.account?.acct || '',
+        actorAvatar: n.account?.avatar,
+        postId: n.status?.id,
+        postText: n.status?.content?.replace(/<[^>]*>/g, '').slice(0, 100),
+        createdAt: new Date(n.created_at).getTime(),
+        read: false,
+      });
+    }
+  } catch {}
+  return results;
+}
+
+async function fetchBlueskyNotifications(
+  pdsUrl: string,
+  accessJwt: string,
+): Promise<Notification[]> {
+  const results: Notification[] = [];
+  try {
+    const res = await fetch(`${pdsUrl}/xrpc/app.bsky.notification.listNotifications?limit=30`, {
+      headers: {
+        authorization: `Bearer ${accessJwt}`,
+        accept: 'application/json',
+        'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
+      },
+    });
+    if (!res.ok) return results;
+    const data = (await res.json()) as { notifications?: BlueskyNotification[] };
+    for (const n of data.notifications ?? []) {
+      const typeMap: Record<string, 'like' | 'repost' | 'reply' | 'follow' | 'mention'> = {
+        like: 'like',
+        repost: 'repost',
+        reply: 'reply',
+        follow: 'follow',
+        mention: 'mention',
+      };
+      results.push({
+        id: `bluesky:${n.uri}`,
+        type: typeMap[n.reason] || 'mention',
+        protocol: 'bluesky',
+        actorName: n.author.displayName || n.author.handle,
+        actorHandle: n.author.handle,
+        actorAvatar: n.author.avatar,
+        postId: n.reasonSubject || n.uri,
+        postText: n.record?.text?.slice(0, 100),
+        createdAt: new Date(n.indexedAt).getTime(),
+        read: n.isRead,
+      });
+    }
+  } catch {}
+  return results;
+}
+
+async function parseAuth(request: Request): Promise<NotificationAuth> {
+  if (request.method === 'POST') {
+    try {
+      const body = (await request.json()) as { auth?: NotificationAuth };
+      return body.auth ?? {};
+    } catch {}
+  }
+  try {
+    const url = new URL(request.url);
+    return JSON.parse(decodeURIComponent(url.searchParams.get('auth') || '{}')) as NotificationAuth;
+  } catch {}
+  return {};
+}
+
+export async function handleNotifications(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const auth = await parseAuth(request);
+  const all: Notification[] = [];
+
+  if (auth.nostr_pubkey) {
+    try {
+      all.push(...(await fetchNostrNotifications(auth.nostr_pubkey)));
+    } catch {}
+  }
+
+  if (auth.mastodon) {
+    try {
+      all.push(
+        ...(await fetchMastodonNotifications(
+          auth.mastodon_instance || 'https://social.degenfeed.xyz',
+          auth.mastodon,
+        )),
+      );
+    } catch {}
+  }
+
+  if (auth.bluesky?.accessJwt) {
+    try {
+      all.push(...(await fetchBlueskyNotifications('https://bsky.social', auth.bluesky.accessJwt)));
+    } catch {}
+  }
+
+  all.sort((a, b) => b.createdAt - a.createdAt);
+  return noCacheJsonResponse({ notifications: all.slice(0, 50), meta: { total: all.length } });
+}

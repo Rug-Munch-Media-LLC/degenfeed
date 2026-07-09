@@ -15,23 +15,66 @@
 .hermes/cache/
 .hermes/logs/
 
-# IDE
-.vscode/
-.idea/
+# Secrets (zero tolerance)
+.env
+.env.*
+.dev.vars
+!.env.example
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+*.session
+credentials.json
+service-account.json
+.secrets/
+
+# Node
+node_modules/
+.npm/
+.pnpm-store/
+yarn-error.log
+yarn-debug.log
+
+# Build artifacts
+dist/
+build/
+.next/
+.turbo/
+out/
+*.tsbuildinfo
+
+# Coverage
+coverage/
+*.lcov
 
 # Python
 __pycache__/
 *.pyc
 
-# Node
-node_modules/
+# IDE
+.vscode/
+.idea/
 
 # Shell history
 .bash_history
 .zsh_history
 
+# Logs
+*.log
+logs/
+pnpm-debug.log*
+
+# Cache / temp
+.cache/
+tmp/
+.vercel/
+*.tmp.vercel/
+
 # Temp
 *.swp
 *.swo
+*~
 .DS_Store
 .aider*
