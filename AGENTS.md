@@ -2,7 +2,7 @@
 title: AGENTS.md — Server Contract for AI Agents
 status: canonical
 owner: Rug Munch Media LLC Engineering
-last_updated: 2026-07-02 (locations corrected)
+last_updated: 2026-07-09 (quality gates overhaul — Biome 30 a11y rules, Stylelint, Lighthouse CI, Axe-core, semgrep fleet-wide, mise, fleet-infra rebuild, multi-agent opencode setup, spec-driven dev)
 audience:
   - agents
   - engineers
@@ -10,7 +10,7 @@ audience:
 note: Single source of truth. Every AI agent reads this first.
 built_with:
   - builder_menu: type `menu` on any machine
-  - pre_commit: ruff, mypy, gitleaks, bandit, hallucination-check
+  - pre_commit: lefthook + ruff, mypy, biome, dprint, gitleaks, deptry, cspell
   - ai_review: .github/workflows/ai-review.yml (OpenRouter-compatible, PR comments)
   - conventional_commits: commitizen + commitlint
   - ci_cd: GitHub Actions (lint + test + security)
@@ -342,6 +342,32 @@ Configuration follows current Ollama best practices for shared CPU hosts.
 
 Always prefer layer 1. Fall back only if blocked.
 
+## AI Guardrails (see GUARDRAILS.md for full contract)
+
+Every AI agent (opencode, aider, Claude Code, Hermes) operates under strict guardrails:
+
+| Gate | Enforcement | Tool |
+|------|------------|------|
+| **No hallucinated imports** | Pre-commit + semgrep | Hallucination checker |
+| **No bare except** | Pre-commit | ruff BLE |
+| **No sync I/O in async** | Pre-commit | ruff ASYNC |
+| **No untyped public APIs** | Pre-commit + CI | mypy strict / tsc |
+| **No fake test data** | CI | pytest --strict-markers |
+| **No raw fetch() in frontend** | Pre-commit + CI | ESLint + architecture-review |
+| **No invented config keys** | CI | semgrep ai-guardrails |
+| **No skipped verification** | CI | All gates must pass |
+| **Conventional commits** | Commit-msg | lefthook commit-msg hook |
+
+### AI Prompt Library
+`~/.ai-prompts/` — 10 guardrail prompts loaded by every AI session:
+`code-review` `architecture-review` `type-safety` `error-handling`
+`api-contract` `dependency-check` `security-review` `test-amplification`
+`test-generation` `commit-message`
+
+### Project Guardrails
+Each repo has `.agentrules` defining project-specific AI constraints.
+See: `rmi-backend/.agentrules`, `rmi-frontend/.agentrules`
+
 ## Builder System (see TOOLCHAIN.md for full reference)
 
 | Feature | Details |
@@ -349,14 +375,13 @@ Always prefer layer 1. Fall back only if blocked.
 | **Fleet Menu** | `menu` — RMI ASCII art, time greeting, @cryptorugmuncher, unified on all machines |
 | **Conventional Commits** | `make commit` → commitizen + commitlint; types: feat, fix, docs, refactor, style, test, chore, ops, security, ci, build, perf, revert |
 | **Makefile Targets** | Every project has `make lint test check dev commit clean ci` |
-| **Pre-commit** | ruff, mypy, gitleaks, bandit, AI hallucination checker |
-| **AI Prompts** | `~/.ai-prompts/` — code review, commit messages, test generation, security review |
-| **CI/CD** | `.github/workflows/ci.yml` — lint + test + security + pre-commit |
-| **PR/Issue Templates** | `.github/` — standardized templates per project |
-| **IDE** | VS Code with Continue.dev (chat + autocomplete) + Kilo Code (agentic) |
-| **AI Providers** | 20 providers — set WP_AI_PROVIDER + WP_AI_API_KEY |
-| **Dev Env** | mise (tool versions), .editorconfig, .mise.toml |
-| **Static Analysis** | ruff, mypy, bandit, safety, semgrep, gitleaks, shellcheck, hadolint, actionlint, typos, lychee, vale |
+| **Testing** | pytest + pytest-xdist (parallel) + pytest-randomly (flaky detection) + mutmut (mutation), vitest, Playwright, axe-core a11y |
+| **Pre-commit** | lefthook (parallel, Go-native) + ruff, mypy, biome, dprint, gitleaks, deptry, cspell |
+| **Frontend QA** | Biome 2.5.3 (30 a11y rules), Stylelint 17.x, Prettier + Tailwind plugin, Axe-core, Lighthouse CI, dompurify, Playwright, dprint, knip, cspell, openapi-typescript |
+| **Static Analysis** | ruff, mypy, bandit, safety, semgrep, gitleaks, shellcheck, hadolint, actionlint, stylelint, knip, deptry, cspell, typos, lychee, vale |
+| **CI/CD** | `.github/workflows/ci.yml` — lint + typecheck + test + e2e + a11y + lighthouse + security + knip + links + build; release-please for automated releases |
+| **Quality Gates** | stylelint → biome check (30 a11y) → tsc → vitest → playwright → axe-core → knip → gitleaks → semgrep → deptry → cspell → lychee → build |
+| **Dev Env** | mise (python/node/bun + mise tasks), direnv (auto-env), .editorconfig, .mise.toml, .mise-tasks.toml, .envrc |
 | **Web3 Safety** | Mainnet RPC/addr guard in pre-commit. Blocks mainnet data from codebase. |
 | **Local Devnet** | `make devnet` — Solana test validator + Anvil + x402 local mint |
 | **AI PR Review** | `.github/workflows/ai-review.yml` — automated AI review on every PR |
