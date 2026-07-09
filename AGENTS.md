@@ -48,7 +48,7 @@ All products built on Talos under Rug Munch Media LLC. Separate git repos. No mo
 |---------|----------------------|-------------|------|--------|
 | **RMI Backend** | `/srv/work/repos/rmi-backend/` | `/root/backend/` (data+compose) | FastAPI | Production |
 | **RMI Frontend** | `/srv/work/repos/rmi-frontend/` | (static build → tunnel) | React 19 | Production |
-| **Pry (munchcrawl)** | `/srv/work/repos/pryscraper/` | `/srv/pry/` | Python CLI + API | Active dev |
+| **Pry** | `/srv/work/repos/pryscraper/` | `/srv/pry/` | Python CLI + API | Active dev |
 | **WalletPress** | `/srv/work/repos/walletpress/` | `/srv/walletpress/` | Python + WP plugin | Active dev |
 | **DegenFeed** | `/srv/work/repos/degenfeed-web/` | `/srv/degenfeed/` | GotoSocial v0.22.0 + Next.js client | Active dev |
 
@@ -183,7 +183,7 @@ The V110 is fully optimized:
 ### Pry (`/srv/work/repos/pryscraper/` · deploy `/srv/pry/`)
 - Multi-source crypto intelligence crawler
 - FastAPI + Docker (deployed at `/srv/pry/` on Talos)
-- CLI + MCP server + SDK (`munchcrawl_sdk.py`)
+- CLI + MCP server + SDK (`pry_sdk.py`)
 - Features: scraper, extractor, parser, automator, job queue
 - Referral proxy rotation (proxy_referrals.py, proxy_rotation.py)
 

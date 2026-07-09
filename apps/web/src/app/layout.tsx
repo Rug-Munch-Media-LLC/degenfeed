@@ -10,7 +10,7 @@ import { Web3Provider } from '../components/Web3Provider';
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
-  metadataBase: new URL('https://degenfeed.xyz'),
+  metadataBase: new URL('https://app.degenfeed.xyz'),
   title: {
     default: 'DegenFeed — The social feed of web3',
     template: '%s — DegenFeed',
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     title: 'DegenFeed — The social feed of web3',
     description:
       'See every network. Zero sign-ups. Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one window.',
-    url: 'https://degenfeed.xyz',
+    url: 'https://app.degenfeed.xyz',
     siteName: 'DegenFeed',
     type: 'website',
     images: [
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     'max-video-preview': -1,
   },
   alternates: {
-    canonical: 'https://degenfeed.xyz',
+    canonical: 'https://app.degenfeed.xyz',
   },
 };
 
@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               '@context': 'https://schema.org',
               '@type': 'WebApplication',
               name: 'DegenFeed',
-              url: 'https://degenfeed.xyz',
+              url: 'https://app.degenfeed.xyz',
               description:
                 'Open-source multi-protocol social aggregator for web3. Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one feed.',
               applicationCategory: 'SocialNetworkingApplication',
@@ -86,7 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               author: {
                 '@type': 'Organization',
                 name: 'Rug Munch Media LLC',
-                url: 'https://degenfeed.xyz',
+                url: 'https://app.degenfeed.xyz',
               },
             }),
           }}
