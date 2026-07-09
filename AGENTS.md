@@ -301,7 +301,6 @@ Configuration follows current Ollama best practices for shared CPU hosts.
 | WalletPress | `git.rugmunch.io/RugMunchMedia/walletpress` | `/srv/git/walletpress.git` | _(to be added)_ |
 | DegenFeed Web | `git.rugmunch.io/RugMunchMedia/degenfeed-web` | — | — |
 | Fleet Infra | `git.rugmunch.io/RugMunchMedia/fleet-infra` | — | — |
-| Standards | `git.rugmunch.io/RugMunchMedia/standards` | — | — |
 
 > **Forgejo is the primary remote.** Clone with `git clone https://git.rugmunch.io/RugMunchMedia/<repo>.git`. The `/srv/git/` bare repos are legacy backups.
 >
