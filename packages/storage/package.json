@@ -1,0 +1,25 @@
+{
+  "name": "@degenfeed/storage",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "biome check src/"
+  },
+  "dependencies": {
+    "@degenfeed/types": "workspace:*",
+    "idb": "^8.0.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.2",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["npm"],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "branch",
+      "platformAutomerge": true,
+      "description": "Auto-merge patch updates (bug fixes) after CI passes"
+    },
+    {
+      "matchPackageNames": [
+        "@solana/web3.js",
+        "@solana/wallet-adapter-base",
+        "@solana/wallet-adapter-react",
+        "@solana/wallet-adapter-wallets",
+        "@web3modal/wagmi",
+        "viem",
+        "wagmi"
+      ],
+      "matchUpdateTypes": ["minor"],
+      "automerge": false,
+      "description": "Web3 deps need manual review on minor bumps"
+    },
+    {
+      "matchPackageNames": ["next", "react", "react-dom"],
+      "matchUpdateTypes": ["minor"],
+      "automerge": false,
+      "description": "Framework deps — always manual review"
+    },
+    {
+      "matchPackageNames": ["@biomejs/biome", "typescript", "vitest"],
+      "groupName": "dev-tooling",
+      "automerge": true,
+      "automergeType": "branch",
+      "platformAutomerge": true,
+      "description": "Dev tooling can auto-merge"
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "branch"
+    },
+    {
+      "matchPackageNames": [
+        "@degenfeed/api-worker",
+        "@degenfeed/auth",
+        "@degenfeed/bluesky-sdk",
+        "@degenfeed/farcaster-sdk",
+        "@degenfeed/feed-core",
+        "@degenfeed/feed-providers",
+        "@degenfeed/identity",
+        "@degenfeed/lens-sdk",
+        "@degenfeed/mastodon-sdk",
+        "@degenfeed/nostr-sdk",
+        "@degenfeed/ranking",
+        "@degenfeed/rss-sdk",
+        "@degenfeed/storage",
+        "@degenfeed/threads-sdk",
+        "@degenfeed/types",
+        "@degenfeed/ui",
+        "@degenfeed/utils"
+      ],
+      "enabled": false,
+      "description": "Internal workspace packages — never bump externally"
+    }
+  ],
+  "labels": ["dependencies"],
+  "prHourlyLimit": 5,
+  "schedule": ["before 6am on Monday"],
+  "timezone": "UTC",
+  "dependencyDashboard": true
+}

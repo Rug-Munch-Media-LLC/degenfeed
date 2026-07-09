@@ -1,0 +1,3 @@
+# Cloudflare Pages _redirects for DegenFeed landing
+# Serve index.html at root, no infinite loops
+/  /index.html  200
