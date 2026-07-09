@@ -1,0 +1,17 @@
+---
+title: AGENTS.md — degenfeed-web
+repo: frontend
+stack: Next.js 15 + TypeScript + React 19 + Turborepo
+domain: degenfeed.xyz
+deploy: Cloudflare Pages
+status: active
+---
+
+## Rules
+1. No raw fetch() in components — use SDK packages
+2. All components must have loading and error states
+3. CSS via Tailwind only — no inline styles except framer-motion
+4. OpenAPI types auto-generated at apps/web/src/types/api.ts
+5. Cross-protocol compatibility: test Nostr, Farcaster, Bluesky, Mastodon
+6. No hardcoded URLs — use env vars or config
+
