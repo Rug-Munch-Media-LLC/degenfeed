@@ -20,6 +20,7 @@ export {
   RmiDataBusProvider,
 } from './providers/rmi-databus';
 export { DEFAULT_CRYPTO_FEEDS, RssProvider } from './providers/rss';
+export { RssBridgeProvider } from './providers/rss-bridge';
 export { CURATED_THREADS_HANDLES, ThreadsProvider } from './providers/threads';
 export type { FeedProvider, FeedResult, FetchOptions, HealthResult } from './types';
 export {

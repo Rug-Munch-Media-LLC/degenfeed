@@ -8,7 +8,6 @@ import {
   isSpamPost,
 } from '@degenfeed/feed-core';
 import {
-  PonderProvider,
   BlueskyProvider,
   FarcasterProvider,
   type FeedProvider,
@@ -19,6 +18,7 @@ import {
   LensProvider,
   MastodonProvider,
   NostrProvider,
+  PonderProvider,
   RedditProvider,
   RmiDataBusProvider,
   RssProvider,
@@ -48,6 +48,7 @@ export const DEFAULT_PROTOCOLS: Protocol[] = [
 ];
 
 const DEFAULT_TIMEOUT_MS = 6000;
+const CACHE_PROVIDER_TTL = 120;
 
 export function getProvider(protocol: Protocol, env: Env): FeedProvider {
   switch (protocol) {
@@ -68,7 +69,7 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
     case 'threads':
       return new ThreadsProvider();
     case 'reddit':
-      return new RedditProvider();
+      return new RedditProvider({ redlibUrl: env.REDLIB_URL });
     case 'ponder':
       return new PonderProvider();
     case 'rss':
@@ -289,39 +290,48 @@ async function resetCircuit(env: Env, protocol: string): Promise<void> {
   }
 }
 
-// ─── Per-provider short-term KV cache ──────────────────────────────
-// Eliminates redundant API calls: if the same protocol was fetched
-// within the last 60s, reuse the cached result instead of hitting
-// the external API again.
+// ─── Per-provider KV cache (stale-while-revalidate) ────────────────
+// Caches provider results in KV with CACHE_PROVIDER_TTL expiry.
+// On cache hit the response is returned immediately and a background
+// refresh is triggered so subsequent requests see fresh data.
+
+function providerCacheKey(protocol: string, limit: number): string {
+  return `feed:provider:${protocol}:l=${limit}`;
+}
 
 async function readProviderCache(
   env: Env,
   protocol: string,
+  limit: number,
 ): Promise<UnifiedPost[] | null> {
   if (!env.CACHE) return null;
   try {
-    const key = `prov:${protocol}:v1`;
+    const key = providerCacheKey(protocol, limit);
     const raw = await env.CACHE.get(key);
     if (!raw) return null;
-    const { posts, at } = JSON.parse(raw) as { posts: UnifiedPost[]; at: number };
-    if (Date.now() - at < 60_000) return posts;
-  } catch { /* ignore */ }
+    const { posts } = JSON.parse(raw) as { posts: UnifiedPost[]; fetchedAt: number };
+    return posts;
+  } catch {
+    /* ignore */
+  }
   return null;
 }
 
 async function writeProviderCache(
   env: Env,
   protocol: string,
+  limit: number,
   posts: UnifiedPost[],
 ): Promise<void> {
   if (!env.CACHE || posts.length === 0) return;
   try {
-    await env.CACHE.put(
-      `prov:${protocol}:v1`,
-      JSON.stringify({ posts, at: Date.now() }),
-      { expirationTtl: 90 },
-    );
-  } catch { /* ignore */ }
+    const key = providerCacheKey(protocol, limit);
+    await env.CACHE.put(key, JSON.stringify({ posts, fetchedAt: Date.now() }), {
+      expirationTtl: CACHE_PROVIDER_TTL,
+    });
+  } catch {
+    /* ignore */
+  }
 }
 
 // ─── Post KV store ─────────────────────────────────────────────────
@@ -330,14 +340,22 @@ async function writeProviderCache(
 async function writePostsToKV(env: Env, posts: UnifiedPost[]): Promise<void> {
   if (!env.CACHE || posts.length === 0) return;
   try {
-    const puts = posts.slice(0, 100).map((p) =>
-      env.CACHE!.put(`post:${p.id}`, JSON.stringify(p), { expirationTtl: 3600 }).catch(() => {}),
-    );
+    const puts = posts
+      .slice(0, 100)
+      .map((p) =>
+        env.CACHE!.put(`post:${p.id}`, JSON.stringify(p), { expirationTtl: 3600 }).catch(() => {}),
+      );
     await Promise.allSettled(puts);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
-export async function handleHomeFeed(request: Request, env: Env): Promise<Response> {
+export async function handleHomeFeed(
+  request: Request,
+  env: Env,
+  execCtx?: { waitUntil: (p: Promise<unknown>) => void },
+): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
@@ -351,12 +369,19 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
 
   // Anonymous cookie preferences: personalized feed without sign-in.
   const cookieHeader = request.headers.get('cookie') ?? '';
-  const cookieMatch = cookieHeader.split(';').map((s) => s.trim()).find((s) => s.startsWith('df_prefs='));
+  const cookieMatch = cookieHeader
+    .split(';')
+    .map((s) => s.trim())
+    .find((s) => s.startsWith('df_prefs='));
   let cookiePrefs: UserAlgorithmPreferences | null = null;
   if (cookieMatch) {
     try {
-      cookiePrefs = JSON.parse(decodeURIComponent(cookieMatch.slice('df_prefs='.length))) as UserAlgorithmPreferences;
-    } catch { /* ignore */ }
+      cookiePrefs = JSON.parse(
+        decodeURIComponent(cookieMatch.slice('df_prefs='.length)),
+      ) as UserAlgorithmPreferences;
+    } catch {
+      /* ignore */
+    }
   }
 
   const allPosts: UnifiedPost[] = [];
@@ -370,27 +395,51 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
     try {
       const cached = await env.CACHE.get(feedCacheKey);
       if (cached) {
-        const { data, meta } = JSON.parse(cached) as { data: unknown; meta: Record<string, unknown> };
+        const { data, meta } = JSON.parse(cached) as {
+          data: unknown;
+          meta: Record<string, unknown>;
+        };
         if (Date.now() - (meta.fetchedAt as number) < 30_000) {
           return jsonResponse({ data, meta });
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   const results = await Promise.allSettled(
     requestedProtocols.map(async (protocol) => {
-      // Circuit breaker: skip providers that have failed 3+ times in the
-      // last 60s window. KV-backed so it survives worker restarts.
       if (await isCircuitOpen(env, protocol)) {
         return { protocol, posts: [] as UnifiedPost[], skipped: true };
       }
-      // Per-provider short-term cache: skip API call if we have a fresh result.
-      const cachedPosts = await readProviderCache(env, protocol);
+
+      const cachedPosts = await readProviderCache(env, protocol, limit);
       if (cachedPosts) {
         void resetCircuit(env, protocol);
+        const refreshP = (async () => {
+          try {
+            const provider = getProvider(protocol, env);
+            const result = await provider.fetchFeed({
+              timeoutMs: DEFAULT_TIMEOUT_MS,
+              concurrency: 4,
+            });
+            const filtered = result.posts.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
+            if (result.notice) notices.push(result.notice);
+            void resetCircuit(env, protocol);
+            await writeProviderCache(env, protocol, limit, filtered);
+          } catch {
+            void incrCircuit(env, protocol);
+          }
+        })();
+        if (execCtx?.waitUntil) {
+          execCtx.waitUntil(refreshP);
+        } else {
+          void refreshP;
+        }
         return { protocol, posts: cachedPosts };
       }
+
       try {
         const provider = getProvider(protocol, env);
         const result = await provider.fetchFeed({
@@ -400,10 +449,9 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
         const filtered = result.posts.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
         if (result.notice) notices.push(result.notice);
         void resetCircuit(env, protocol);
-        void writeProviderCache(env, protocol, filtered);
+        void writeProviderCache(env, protocol, limit, filtered);
         return { protocol, posts: filtered };
       } catch (err) {
-        // Failure → bump the circuit breaker count.
         void incrCircuit(env, protocol);
         const message = err instanceof Error ? err.message : 'unknown';
         return { protocol, posts: [] as UnifiedPost[], error: message };
@@ -467,35 +515,45 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   // Users can opt into all languages with ?lang=all.
   const langParam = params.get('lang') || '';
   const acceptLang = request.headers.get('accept-language') || '';
-  const preferEnglish = langParam !== 'all' && (langParam === 'en' || acceptLang.startsWith('en') || !langParam);
+  const preferEnglish =
+    langParam !== 'all' && (langParam === 'en' || acceptLang.startsWith('en') || !langParam);
   if (preferEnglish) {
     relevant = relevant.filter((p) => isEnglishPost(p.text));
   }
 
-  // Batch-fetch Nostr zap counts for engagement enrichment.
-  void (async () => {
-    const nostrIds = relevant.filter((p) => p.protocol === 'nostr').map((p) => p.id.replace('nostr:', ''));
-    if (nostrIds.length === 0) return;
+  // Fetch Nostr zap counts for engagement enrichment before scoring.
+  const nostrIds = relevant
+    .filter((p) => p.protocol === 'nostr')
+    .map((p) => p.id.replace('nostr:', ''));
+  if (nostrIds.length > 0) {
     try {
       const res = await fetch('https://api.nostr.band/v0/stats/events', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ ids: nostrIds.slice(0, 50) }),
       });
-      if (!res.ok) return;
-      const stats = await res.json() as Record<string, { reactions?: number; reposts?: number; replies?: number; zaps?: number }>;
-      for (const p of relevant.filter((p) => p.protocol === 'nostr')) {
-        const nativeId = p.id.replace('nostr:', '');
-        const s = stats[nativeId];
-        if (s) {
-          if (s.zaps) p.metrics.quotes = s.zaps;
-          if (s.reactions) p.metrics.likes = Math.max(p.metrics.likes, s.reactions);
-          if (s.reposts) p.metrics.reposts = Math.max(p.metrics.reposts, s.reposts);
-          if (s.replies) p.metrics.replies = Math.max(p.metrics.replies, s.replies);
+      if (res.ok) {
+        const stats = (await res.json()) as Record<
+          string,
+          { reactions?: number; reposts?: number; replies?: number; zaps?: number }
+        >;
+        for (const p of relevant) {
+          if (p.protocol !== 'nostr') continue;
+          const nativeId = p.id.replace('nostr:', '');
+          const s = stats[nativeId];
+          if (s) {
+            if (s.zaps) p.metrics.quotes = s.zaps;
+            if (s.reactions) p.metrics.likes = Math.max(p.metrics.likes, s.reactions);
+            if (s.reposts) p.metrics.reposts = Math.max(p.metrics.reposts, s.reposts);
+            if (s.replies) p.metrics.replies = Math.max(p.metrics.replies, s.replies);
+          }
         }
       }
-    } catch { /* non-critical */ }
-  })();
+    } catch {
+      /* non-critical */
+    }
+  }
+
   // Merge per-user preferred niches/platforms into the query params
   const mergedPrefs: UserAlgorithmPreferences = prefs ?? {
     preferredNiches: [],
@@ -624,9 +682,10 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   // Cursor-based pagination: filter posts by createdAt relative to cursor.
   let cursorScored = scoredRelevant;
   if (cursor > 0) {
-    cursorScored = direction === 'asc'
-      ? scoredRelevant.filter((s) => s.post.createdAt > cursor)
-      : scoredRelevant.filter((s) => s.post.createdAt < cursor);
+    cursorScored =
+      direction === 'asc'
+        ? scoredRelevant.filter((s) => s.post.createdAt > cursor)
+        : scoredRelevant.filter((s) => s.post.createdAt < cursor);
   }
 
   // Sort modes. 'scored' uses the diversity ranker; 'hot'/'top'/'new' are
@@ -661,7 +720,10 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
         ? rankDiverse(
             filteredScored.map((s) => s.post),
             ctx,
-            { maxPerAuthor: 2, perProtocolMin: { farcaster: 2, lens: 2, bluesky: 2, nostr: 2, lemmy: 2 } },
+            {
+              maxPerAuthor: 2,
+              perProtocolMin: { farcaster: 2, lens: 2, bluesky: 2, nostr: 2, lemmy: 2 },
+            },
           )
         : filteredScored.map((s) => s.post)
     ).slice(0, Math.min(limit, 100));
@@ -714,12 +776,11 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   }
   // Top-of-hour: highest-scoring post from the last 60 minutes.
   const now = Date.now();
-  const recentPosts = scoredRelevant.filter((s) => now - s.post.createdAt < 3600000);
+  const recentPosts = filteredScored.filter((s) => now - s.post.createdAt < 3600000);
   const topOfHour =
     recentPosts.length > 0
-      ? recentPosts.reduce((best, cur) =>
-          cur.breakdown.total > best.breakdown.total ? cur : best,
-        ).post.id
+      ? recentPosts.reduce((best, cur) => (cur.breakdown.total > best.breakdown.total ? cur : best))
+          .post.id
       : null;
 
   if (ranked.length === 0 && errors.length > 0) {
@@ -744,7 +805,10 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   const nextCursor = ranked.length > 0 ? ranked[ranked.length - 1]!.createdAt : null;
 
   // New posts since last visit: reads a cookie, counts newer posts.
-  const lastVisitCookie = cookieHeader.split(';').map((s) => s.trim()).find((s) => s.startsWith('df_last_visit='));
+  const lastVisitCookie = cookieHeader
+    .split(';')
+    .map((s) => s.trim())
+    .find((s) => s.startsWith('df_last_visit='));
   let newSinceLastVisit = 0;
   if (lastVisitCookie) {
     const lastVisit = Number(lastVisitCookie.slice('df_last_visit='.length));
@@ -772,7 +836,9 @@ export async function handleHomeFeed(request: Request, env: Env): Promise<Respon
   if (env.CACHE && !cursor) {
     try {
       await env.CACHE.put(feedCacheKey, JSON.stringify(responseBody), { expirationTtl: 45 });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   return cachedJsonResponse(responseBody);
@@ -786,8 +852,8 @@ function cachedJsonResponse(data: unknown, status = 200, maxAge = 30): Response 
     headers: {
       'content-type': 'application/json',
       'cache-control': `public, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}`,
-      'etag': `"${hash}"`,
-      'vary': 'Accept-Language',
+      etag: `"${hash}"`,
+      vary: 'Accept-Language',
     },
   });
 }
@@ -795,20 +861,25 @@ function cachedJsonResponse(data: unknown, status = 200, maxAge = 30): Response 
 // Replace the final return in handleHomeFeed — use cachedJsonResponse instead of jsonResponse.
 // (applied below)
 
-export async function handleTrendingFeed(request: Request, env: Env): Promise<Response> {
+export async function handleTrendingFeed(
+  request: Request,
+  env: Env,
+  execCtx?: { waitUntil: (p: Promise<unknown>) => void },
+): Promise<Response> {
   const url = new URL(request.url);
   url.searchParams.set('protocols', DEFAULT_PROTOCOLS.join(','));
-  return handleHomeFeed(new Request(url.toString()), env);
+  return handleHomeFeed(new Request(url.toString()), env, execCtx);
 }
 
 export async function handleCategoryFeed(
   request: Request,
   env: Env,
   category: string,
+  execCtx?: { waitUntil: (p: Promise<unknown>) => void },
 ): Promise<Response> {
   const url = new URL(request.url);
   url.searchParams.set('category', category);
-  return handleHomeFeed(new Request(url.toString()), env);
+  return handleHomeFeed(new Request(url.toString()), env, execCtx);
 }
 
 export async function handleRedditFeed(request: Request, env: Env): Promise<Response> {
@@ -826,6 +897,7 @@ export async function handleRedditFeed(request: Request, env: Env): Promise<Resp
   const { RedditProvider } = (await import('@degenfeed/feed-providers')) as unknown as {
     RedditProvider: new (options?: {
       subreddits?: string[];
+      redlibUrl?: string;
     }) => {
       fetchFeed: (opts?: {
         timeoutMs?: number;
@@ -833,10 +905,18 @@ export async function handleRedditFeed(request: Request, env: Env): Promise<Resp
     };
   };
   const provider = subreddit
-    ? new RedditProvider({ subreddits: [subreddit] })
-    : new RedditProvider();
-  const result = await provider.fetchFeed({ timeoutMs: 5000 });
-  const posts = result.posts.slice(0, limit);
+    ? new RedditProvider({ subreddits: [subreddit], redlibUrl: env.REDLIB_URL })
+    : new RedditProvider({ redlibUrl: env.REDLIB_URL });
+  let posts: UnifiedPost[] = [];
+  try {
+    const result = await provider.fetchFeed({ timeoutMs: 5000 });
+    posts = result.posts.slice(0, limit);
+  } catch (err) {
+    return jsonResponse({
+      data: [],
+      meta: { total: 0, limit, subreddit: subreddit || 'all', error: 'Reddit provider failed' },
+    });
+  }
   const response = {
     data: posts,
     meta: {

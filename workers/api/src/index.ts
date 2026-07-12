@@ -14,17 +14,26 @@ import {
   parseOriginHeader,
 } from './cors';
 import { handleAccountDelete, handleAccountExport } from './routes/account';
-import { handleGtSAuthorize, handleGtSCallback, handleGtSRegister } from './routes/auth';
+import {
+  handleGtSAuthorize,
+  handleGtSCallback,
+  handleGtSRegister,
+  handleRedditCallback,
+  handleThreadsAuthorize,
+  handleThreadsCallback,
+  handleWarpcastAuthorize,
+  handleWarpcastCallback,
+} from './routes/auth';
 import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from './routes/billing';
 import { handleBlinkTip } from './routes/blink';
 import { handleCommunities } from './routes/communities';
 import { handleCron } from './routes/cron';
-import { handleNewsletterFeed, handleTopFeed } from './routes/curated';
+import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import { handleDiscover } from './routes/discover';
 import { handleEmbedResolve } from './routes/embed';
 import { handleEngage } from './routes/engage';
-import { handleFrameAction, handleFrameResolve } from './routes/frame';
-import { handlePushSend, handlePushSubscribe } from "./routes/push";
+import { handleFarcasterFeed } from './routes/farcaster-feed';
+import { handleFeatures } from './routes/features';
 import {
   handleCategoryFeed,
   handleFeedHealth,
@@ -33,11 +42,10 @@ import {
   handleRedditFeed,
   handleTrendingFeed,
 } from './routes/feed';
-import { handleFarcasterFeed } from './routes/farcaster-feed';
+import { handleFrameAction, handleFrameResolve } from './routes/frame';
 import { handleFundingFeed } from './routes/funding';
 import { handleRelaysHealth } from './routes/health';
 import { handleResolveIdentity } from './routes/identity';
-import { handleIdentityProfile } from './routes/profile';
 import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import { handleLinksPage } from './routes/links';
 import { handleNewsFeed } from './routes/news';
@@ -51,13 +59,15 @@ import { handleNotify } from './routes/notify';
 import { handlePostOg } from './routes/og';
 import { handleDiscoverPeople } from './routes/people';
 import { handlePostById } from './routes/post';
-import { handleFeedPresets } from './routes/presets';
-import { handlePostReplies } from './routes/replies';
-import { handleRelatedPosts } from './routes/related';
 import { handlePreferences } from './routes/preferences';
+import { handleFeedPresets } from './routes/presets';
 import { handlePrices } from './routes/prices';
+import { handleIdentityProfile } from './routes/profile';
 import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import { handlePublish } from './routes/publish';
+import { handlePushSend, handlePushSubscribe } from './routes/push';
+import { handleRelatedPosts } from './routes/related';
+import { handlePostReplies } from './routes/replies';
 import {
   handleRmiHeadlines,
   handleRmiHealth,
@@ -67,9 +77,9 @@ import {
   handleRmiStats,
 } from './routes/rmi';
 import { handleRssFeed } from './routes/rss';
-import { handleStreamFeed } from './routes/stream';
 import { handleRssXml } from './routes/rss-xml';
 import { handleSearch, handleSearchIdentity } from './routes/search';
+import { handleStreamFeed } from './routes/stream';
 import {
   handleLightningInvoice,
   handleTipCreate,
@@ -82,6 +92,7 @@ import {
 } from './routes/tip';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleX402Paywall, handleX402Verify } from './routes/x402';
+import { validateBodySize } from './sanitize';
 import {
   applySessionRefresh,
   handleSessionSignOut,
@@ -106,6 +117,11 @@ export interface Env {
   BSKY_PUBLIC_URL?: string;
   BSKY_SOCIAL_URL?: string;
   THREADS_PDS_URL?: string;
+  THREADS_APP_ID?: string;
+  THREADS_APP_SECRET?: string;
+  FARCASTER_CLIENT_ID?: string;
+  REDDIT_CLIENT_ID?: string;
+  REDDIT_CLIENT_SECRET?: string;
   RATE_WINDOW_MS?: string;
   RATE_MAX_REQ?: string;
   /** When "true", disables in-process rate limiting (use only for local dev). */
@@ -115,6 +131,10 @@ export interface Env {
   SOLANA_RPC_URL?: string;
   /** Base URL of the rmi-backend (default: http://127.0.0.1:8000) */
   RMI_BACKEND_URL?: string;
+  /** Self-hosted Redlib instance for Reddit feed proxying */
+  REDLIB_URL?: string;
+  /** Self-hosted RSS-Bridge instance for proxied RSS feed fetching */
+  RSS_BRIDGE_URL?: string;
   /** Optional bearer for rmi-backend if gated */
   RMI_API_KEY?: string;
   /** Optional Sentry DSN for error reporting */
@@ -122,11 +142,18 @@ export interface Env {
   /** Optional Postmark server token for transactional email delivery */
   POSTMARK_SERVER_TOKEN?: string;
   ALLOW_DEV_OAUTH?: string;
+  /** @deprecated Use PUSH_API_KEY or NEWSLETTER_API_KEY instead. Retained for backward compatibility. */
   ADMIN_API_KEY?: string;
+  /** Scoped API key for push notification sending (Bearer token). */
+  PUSH_API_KEY?: string;
+  /** Scoped API key for newsletter admin operations (subscriber count, etc.). */
+  NEWSLETTER_API_KEY?: string;
   /** VAPID keys for Web Push (generate with: npx web-push generate-vapid-notes) */
   VAPID_SUBJECT?: string;
   VAPID_PUBLIC_KEY?: string;
   VAPID_PRIVATE_KEY?: string;
+  /** Comma-separated list of feature flag keys that default to enabled */
+  FEATURE_FLAGS_DEFAULT?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
@@ -293,255 +320,15 @@ function validateOrigin(request: Request, path: string, env: Env): boolean {
   return false;
 }
 
-// ─── Worker fetch handler ────────────────────────────────────────────
+// ─── Cron handler ───────────────────────────────────────────────
 
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    const path = url.pathname;
-    const origin = getAllowedOrigin(request, env.ALLOWED_ORIGINS);
-
-    // Helper: require session, run handler, attach refreshed cookie.
-    const withSession = async (handler: () => Promise<Response>): Promise<Response> => {
-      const session = await requireSession(request, env);
-      if (session instanceof Response) return session;
-      const resp = await handler();
-      if (!env.AUTH_SECRET) return resp;
-      return applySessionRefresh(resp, session, env.AUTH_SECRET);
-    };
-
-    // CORS preflight
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders(origin) });
-    }
-
-    // Rate limiting
-    const ip =
-      request.headers.get('cf-connecting-ip') ||
-      request.headers.get('x-forwarded-for') ||
-      'unknown';
-    const maxReq = Number(env.RATE_MAX_REQ) || DEFAULT_RATE_MAX;
-    const windowMs = Number(env.RATE_WINDOW_MS) || DEFAULT_RATE_WINDOW;
-    const rl = await rateLimit(env, ip, path, maxReq, windowMs);
-    if (!rl.allowed) {
-      const response = new Response(
-        JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }),
-        {
-          status: 429,
-          headers: {
-            'content-type': 'application/json',
-            'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-          },
-        },
-      );
-      return applyCors(response, origin);
-    }
-
-    // CSRF origin check for state-changing requests
-    if (isStateChanging(request.method) && !validateOrigin(request, path, env)) {
-      return applyCors(jsonResponse({ error: 'Forbidden' }, 403), origin);
-    }
-
-    let response: Response;
-
-    try {
-      // Landing page assets — served by the Worker to avoid the 301 loop
-      // caused by the tunnel routing degenfeed.xyz to port 80 (which serves
-      // a different app). Must be checked BEFORE the /api/* routes so
-      // /styles.css and /app.js are not treated as API paths.
-      if (path === '/styles.css') {
-        response = handleLandingCss(request, env);
-      } else if (path === '/links') {
-        response = handleLinksPage(request, env);
-      } else if (path === '/app.js') {
-        response = handleLandingJs(request, env);
-      } else if (path === '/favicon.svg') {
-        response = new Response(
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#000"/><path d="M8 8h16l-6 16H12L8 8Z" fill="#00ff41" stroke="#00ff41" stroke-width=".5"/><text x="16" y="21" text-anchor="middle" fill="#000" font-family="ui-monospace,monospace" font-size="10" font-weight="900">DF</text></svg>',
-          { status: 200, headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=604800' } }
-        );
-      } else if (path === '/' || path === '/index.html' || path === '') {
-        response = handleLandingHtml(request, env);
-      } else if (path === '/api/health') {
-        response = await handleRelaysHealth(env);
-      } else if (path === '/api/feed/home') {
-        response = await handleHomeFeed(request, env);
-      } else if (path === '/api/feed/trending') {
-        response = await handleTrendingFeed(request, env);
-      } else if (path === '/api/feed/health') {
-        response = await handleFeedHealth(request, env);
-      } else if (path === '/api/feed/rss.xml' || path === '/api/feed/atom.xml') {
-        response = await handleRssXml(request, env);
-      } else if (path === '/api/feed/news') {
-        response = await handleNewsFeed(request, env);
-      } else if (path.startsWith('/api/feed/post/')) {
-        const postId = path.replace('/api/feed/post/', '');
-        if (postId.includes('?format=og')) {
-          response = await handlePostOg(request, env, postId.replace('?format=og', ''));
-        } else {
-          response = await handlePostById(request, env, postId);
-        }
-      } else if (path === '/api/feed/reddit') {
-        response = await handleRedditFeed(request, env);
-      } else if (path === '/api/feed/activitypub') {
-        response = await handleActivityPubFeed(request, env);
-      } else if (path === '/api/feed/threads') {
-        response = await handleThreadsFeed(request, env);
-      } else if (path === '/api/feed/farcaster') {
-        response = await handleFarcasterFeed(request, env);
-      } else if (path.startsWith('/api/feed/') && !path.startsWith('/api/feed/category/')) {
-        const provider = path.replace('/api/feed/', '');
-        response = await handleProviderFeed(request, env, provider);
-      } else if (path.startsWith('/api/feed/category/')) {
-        const category = path.replace('/api/feed/category/', '');
-        response = await handleCategoryFeed(request, env, category);
-      } else if (path === '/api/bridge/rss-to-nostr') {
-        response = await withSession(async () => {
-          const { handleRssToNostrBridge } = await import('./routes/publish');
-          return handleRssToNostrBridge(request, env);
-        });
-      } else if (path === '/api/feed/rss') {
-        response = await handleRssFeed(request, env);
-      } else if (path === '/api/auth/signout') {
-        response = await handleSessionSignOut(request, env);
-      } else if (path === '/api/auth/gotosocial/authorize') {
-        response = await handleGtSAuthorize(request, env);
-      } else if (path === '/api/auth/gotosocial/callback') {
-        response = await handleGtSCallback(request, env);
-      } else if (path === '/api/auth/gotosocial/register') {
-        response = await handleGtSRegister(request, env);
-      } else if (path === '/api/auth/session') {
-        response = await handleSessionVerify(request, env);
-      } else if (path === '/api/account/export') {
-        response = await handleAccountExport(request, env);
-      } else if (path === '/api/account/delete') {
-        response = await handleAccountDelete(request, env);
-      } else if (path === '/api/publish') {
-        response = await withSession(() => handlePublish(request, env));
-      } else if (path === '/api/engage') {
-        response = await withSession(() => handleEngage(request, env));
-      } else if (path === '/api/feed/top') {
-        response = await handleTopFeed(request, env);
-      } else if (path === '/api/feed/communities') {
-        response = await handleCommunities(request, env);
-      } else if (path === '/api/feed/newsletters') {
-        response = await handleNewsletterFeed(request, env);
-      } else if (path === '/api/prices') {
-        response = await handlePrices(request, env);
-      } else if (path === '/api/auth/wallet/nonce') {
-        response = await handleWalletNonce(request, env);
-      } else if (path === '/api/auth/wallet/verify') {
-        response = await handleWalletVerify(request, env);
-      } else if (path === '/api/tip/lightning/invoice') {
-        response = await handleLightningInvoice(request, env);
-      } else if (path.startsWith('/api/tip/frame/tx/')) {
-        response = await handleTipFrameTx(request, env);
-      } else if (path.startsWith('/api/tip/frame/callback/')) {
-        response = await handleTipFrameCallback(request, env);
-      } else if (path.startsWith('/api/tip/frame/')) {
-        response = await handleTipFrame(request, env);
-      } else if (path === '/api/tip/resolve') {
-        response = await handleTipResolve(request, env);
-      } else if (path === '/api/tip/create') {
-        response = await withSession(() => handleTipCreate(request, env));
-      } else if (path === '/api/tip/settings') {
-        response = await withSession(async () => {
-          if (request.method === 'GET') return handleTipSettingsGet(request, env);
-          if (request.method === 'POST') return handleTipSettingsPost(request, env);
-          return jsonResponse({ error: 'Method not allowed' }, 405);
-        });
-      } else if (path === '/api/feed/funding') {
-        response = await handleFundingFeed(request, env);
-      } else if (path === '/api/notifications') {
-        response = await handleNotifications(request, env);
-      } else if (path === '/api/identity/resolve') {
-        response = await handleResolveIdentity(request, env);
-      } else if (path === '/api/blink/tip') {
-        response = await handleBlinkTip(request, env);
-      } else if (path === '/api/billing/checkout') {
-        response = await handleBillingCheckout(request, env);
-      } else if (path === '/api/billing/verify') {
-        response = await handleBillingVerify(request, env);
-      } else if (path === '/api/billing/status') {
-        response = await handleBillingStatus(request, env);
-      } else if (path === '/api/preferences') {
-        response = await handlePreferences(request, env);
-      } else if (path === '/api/x402/paywall') {
-        response = await handleX402Paywall(request, env);
-      } else if (path === '/api/x402/verify') {
-        response = await handleX402Verify(request, env);
-      } else if (path === '/api/rmi/news/headlines') {
-        response = await handleRmiHeadlines(request, env);
-      } else if (path === '/api/rmi/news/sources') {
-        response = await handleRmiSources(request, env);
-      } else if (path === '/api/rmi/news/sentiment') {
-        response = await handleRmiSentiment(request, env);
-      } else if (path === '/api/rmi/news/stats') {
-        response = await handleRmiStats(request, env);
-      } else if (path === '/api/rmi/health') {
-        response = await handleRmiHealth(request, env);
-      } else if (path === '/api/rmi/news' || path.startsWith('/api/rmi/news/')) {
-        response = await handleRmiNews(request, env);
-      } else if (path === '/api/notify') {
-        response = await handleNotify(request, env);
-      } else if (path === '/api/discover') {
-        response = await handleDiscover(request, env);
-      } else if (path === '/api/push/subscribe') {
-        response = await handlePushSubscribe(request, env);
-      } else if (path === '/api/push/send') {
-        response = await handlePushSend(request, env);
-      } else if (path === '/api/newsletter/subscribe') {
-        response = await handleNewsletterSubscribe(request, env);
-      } else if (path === '/api/newsletter/status') {
-        response = await handleNewsletterStatus(request, env);
-      } else if (path === '/api/newsletter/digest' || path.startsWith('/api/newsletter/digest')) {
-        response = await handleNewsletterDigest(request, env);
-      } else if (path === '/api/search/identity') {
-        response = await handleSearchIdentity(request, env);
-      } else if (path === '/api/search') {
-        response = await handleSearch(request, env);
-      } else if (path === '/api/feed/related') {
-        response = await handleRelatedPosts(request, env);
-      } else if (path === '/api/feed/presets') {
-        response = await handleFeedPresets(request, env);
-      } else if (path === '/api/embed/resolve') {
-        response = await handleEmbedResolve(request, env);
-      } else if (path === '/api/frame/resolve') {
-        response = await handleFrameResolve(request, env);
-      } else if (path === '/api/frame/action') {
-        response = await handleFrameAction(request, env);
-      } else if (path === '/api/identity/profile') {
-        response = await handleIdentityProfile(request, env);
-      } else if (path === '/api/discover/people') {
-        response = await handleDiscoverPeople(request, env);
-      } else if (path === '/api/feed/stream') {
-        response = await handleStreamFeed(request, env);
-      } else if (path.endsWith('/replies')) {
-        const postId = path.replace('/api/feed/post/', '').replace('/replies', '');
-        response = await handlePostReplies(request, env, postId);
-      } else if (path === '/docs') {
-        response = new Response(null, { status: 302, headers: { location: 'https://app.degenfeed.xyz/docs' } });
-      } else if (
-        ['/about', '/faq', '/legal', '/privacy', '/terms', '/acceptable-use',
-         '/community-guidelines', '/premium', '/newsletter', '/status',
-         '/discover', '/feed', '/news', '/home'].includes(path)
-      ) {
-        response = new Response(null, { status: 302, headers: { location: `https://app.degenfeed.xyz${path}` } });
-      } else {
-        response = jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.2.0' });
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Internal error';
-      log('error', message, { path });
-      response = jsonResponse({ error: message }, 500);
-    }
-
-    return applyCors(response, origin);
-  },
-  async scheduled(
-    _controller: { cron: string; scheduledTime: number; noRetry: () => void },
-    env: Env,
-  ): Promise<void> {
-    await handleCron(env);
-  },
-};
+/**
+ * Called by the CF Workers cron trigger (daily digest at 14:00 UTC).
+ * Re-exported from app.ts for the wrangler entry point.
+ */
+export async function scheduled(
+  _controller: { cron: string; scheduledTime: number; noRetry: () => void },
+  env: Env,
+): Promise<void> {
+  await handleCron(env);
+}

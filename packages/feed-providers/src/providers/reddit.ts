@@ -105,20 +105,14 @@ export const DEFAULT_SUBREDDITS = [
   'github',
 ];
 
-// Self-hosted Redlib on Talos (primary). Falls back to community instances.
-const SELF_HOSTED_REDLIB =
-  typeof process !== 'undefined'
-    ? (process.env?.REDLIB_URL ?? 'http://127.0.0.1:8281')
-    : 'http://127.0.0.1:8281';
-
+// Community-run Reddit frontends used as fallback when self-hosted Redlib
+// is unreachable (e.g., from Cloudflare Workers if REDLIB_URL is not set).
 const COMMUNITY_REDDIT_FRONTENDS = [
   'https://libreddit.kavin.rocks',
   'https://libreddit.privacydev.net',
   'https://lr.vern.cc',
   'https://red.ngn.tf',
 ];
-
-const REDDIT_FRONTENDS = [SELF_HOSTED_REDLIB, ...COMMUNITY_REDDIT_FRONTENDS];
 
 // Reddit's own RSS feeds — these are public, no auth needed.
 // We use www.reddit.com (old.reddit.com is deprecated).
@@ -380,12 +374,13 @@ async function fetchSubreddit(
   sort: string,
   limit: number,
   timeoutMs: number,
+  frontends: string[],
 ): Promise<UnifiedPost[]> {
   // Try all strategies in parallel, pick the first non-empty result
   const strategies: Array<{ name: string; fn: () => Promise<UnifiedPost[]> }> = [
     { name: 'rss', fn: () => fetchFromRedditRss(subreddit, sort, limit) },
     { name: 'json', fn: () => fetchFromRedditJson(subreddit, sort, limit) },
-    ...REDDIT_FRONTENDS.map((frontend) => ({
+    ...frontends.map((frontend) => ({
       name: `frontend:${frontend}`,
       fn: () => fetchFromFrontend(frontend, subreddit, sort, limit),
     })),
@@ -407,16 +402,21 @@ async function fetchSubreddit(
 export interface RedditProviderOptions {
   subreddits?: string[];
   sort?: 'hot' | 'new' | 'top';
+  /** Base URL of a self-hosted Redlib instance (e.g. https://redlib.degenfeed.xyz) */
+  redlibUrl?: string;
 }
 
 export class RedditProvider implements FeedProvider {
   readonly protocol: Protocol = 'reddit';
   private readonly subreddits: string[];
   private readonly sort: 'hot' | 'new' | 'top';
+  private readonly frontends: string[];
 
   constructor(options: RedditProviderOptions = {}) {
     this.subreddits = options.subreddits ?? DEFAULT_SUBREDDITS;
     this.sort = options.sort ?? 'hot';
+    const selfHostedRedlib = options.redlibUrl ?? 'http://127.0.0.1:8281';
+    this.frontends = [selfHostedRedlib, ...COMMUNITY_REDDIT_FRONTENDS];
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
@@ -426,7 +426,7 @@ export class RedditProvider implements FeedProvider {
 
     const results = await withConcurrencyLimit(this.subreddits, 4, async (sub) => {
       try {
-        return await fetchSubreddit(sub, this.sort, perSub, timeoutMs);
+        return await fetchSubreddit(sub, this.sort, perSub, timeoutMs, this.frontends);
       } catch {
         return [] as UnifiedPost[];
       }
