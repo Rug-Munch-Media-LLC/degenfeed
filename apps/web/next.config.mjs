@@ -11,7 +11,6 @@ const nextConfig = {
     '@degenfeed/identity',
     '@degenfeed/ui',
   ],
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
+  typescript: { ignoreBuildErrors: false },
 };
 export default nextConfig;

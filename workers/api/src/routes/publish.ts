@@ -3,75 +3,154 @@ import {
   generateSecretKey,
   getEventHash,
   getPublicKey,
+  type NostrEvent,
   RelayPool,
   signEvent,
+  verifyEvent,
 } from '@degenfeed/nostr-sdk';
-import { type Env, jsonResponse } from '../index';
+import { type Env, jsonResponse, log, rateLimit } from '../index';
 import {
   hasSuspiciousPayload,
   isAllowedProtocol,
   sanitizeString,
   sanitizeStringArray,
+  validateBodySize,
 } from '../sanitize';
 
 // ─── RSS-to-Nostr bridge ─────────────────────────────────────────────
-// Fetches an RSS feed, converts each item to a Nostr text event,
-// signs with the provided key, and publishes to Nostr relays.
 //
-// SECURITY: This endpoint accepts a raw nsec in the request body.
-// We validate the nsec format and apply strict rate limiting. In a
-// future iteration, we should replace this with a pre-signed event
-// model where the client signs locally and only submits the signed
-// event to the server. The raw nsec should never traverse the wire.
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  MIGRATION NOTICE (2026-07)                                         ║
+// ║                                                                    ║
+// ║  Server-side nsec signing is DEPRECATED. The `nsec` field is no    ║
+// ║  longer accepted. Requests with `nsec` get HTTP 410 Gone.          ║
+// ║                                                                    ║
+// ║  MIGRATION PATH:                                                    ║
+// ║  1. Client generates & signs events locally using nostr-tools or     ║
+// ║     @degenfeed/nostr-sdk:                                           ║
+// ║       import { signEvent, createTextNote } from 'nostr-tools';      ║
+// ║       const ev = createTextNote(text, privateKey, tags);             ║
+// ║       signEvent(ev, privateKey);                                    ║
+// ║       // ev is now a fully signed NostrEvent with id, pubkey, sig   ║
+// ║  2. POST the signed event object to this endpoint:                   ║
+// ║       POST /api/bridge/rss-to-nostr                                 ║
+// ║       { "signedEvent": { "id": "...", "pubkey": "...", ... } }      ║
+// ║  3. Server validates the structure and signature, then publishes    ║
+// ║     to relays. No private key touches the wire.                     ║
+// ║                                                                    ║
+// ║  See: https://docs.degenfeed.xyz/bridge/nostr                      ║
+// ║ ╚══════════════════════════════════════════════════════════════════════╝
 
 const MAX_BRIDGE_PER_HOUR = 3;
 
+/** Required fields on a NostrEvent for server-side validation. */
+const NOSTR_EVENT_REQUIRED_FIELDS = [
+  'id',
+  'pubkey',
+  'created_at',
+  'kind',
+  'tags',
+  'content',
+  'sig',
+] as const;
+
 export async function handleRssToNostrBridge(request: Request, env: Env): Promise<Response> {
   try {
-    const body = (await request.json()) as Record<string, string>;
-    const feedUrl = body.feedUrl;
-    const nsec = body.nsec;
-    if (!feedUrl || !nsec) {
-      return jsonResponse({ error: 'feedUrl and nsec are required' }, 400);
+    // ── Rate limit: 3 requests per hour per IP ────────────────────────
+    const ip =
+      request.headers.get('cf-connecting-ip') ||
+      request.headers.get('x-forwarded-for') ||
+      'unknown';
+    const rl = await rateLimit(env, ip, 'bridge:rss-to-nostr', MAX_BRIDGE_PER_HOUR, 3_600_000);
+    if (!rl.allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded', retryAfterMs: rl.retryAfter }),
+        {
+          status: 429,
+          headers: {
+            'content-type': 'application/json',
+            'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+          },
+        },
+      );
     }
-    if (!/^nsec1[023456789acdefghjklmnpqrstuvwxyz]{58}$/.test(nsec.trim())) {
-      return jsonResponse({ error: 'Invalid nsec format' }, 400);
+
+    // ── Body size limit ───────────────────────────────────────────────
+    const bodySizeCheck = validateBodySize(request, 10 * 1024);
+    if (!bodySizeCheck.ok) {
+      return jsonResponse({ error: bodySizeCheck.error }, 413);
     }
 
-    // 1. Fetch and parse RSS
-    const { GenericRssSource, feedToUnifiedPosts } = await import('@degenfeed/rss-sdk');
-    const src = await GenericRssSource.fetch(feedUrl);
-    const posts = feedToUnifiedPosts(src);
-    if (posts.length === 0) return jsonResponse({ error: 'No items in feed' }, 400);
+    const body = (await request.json()) as Record<string, unknown>;
 
-    // 2. Publish each item as a Nostr event
-    const nostr = await import('@degenfeed/nostr-sdk');
-    // nsec is a hex string — nostr-sdk functions expect hex strings
-    const pk = nostr.getPublicKey(nsec);
-    const pool = new nostr.RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
-      eoseTimeout: 3000,
-    });
+    // ╔══════════════════════════════════════════════════════════════════╗
+    // ║  DEPRECATED: server-side nsec signing                          ║
+    // ║  Returning 410 Gone to signal permanent removal with a clear    ║
+    // ║  migration path.                                               ║
+    // ╚══════════════════════════════════════════════════════════════════╝
+    if (body.nsec) {
+      log('warn', 'RSS-to-Nostr bridge received deprecated nsec — rejecting', {
+        ip: `${ip.slice(0, 8)}...`,
+      });
+      return new Response(
+        JSON.stringify({
+          error: 'server_side_signing_deprecated',
+          message:
+            'Server-side nsec signing has been deprecated for security. Please sign events client-side using nostr-tools or your preferred Nostr SDK and POST the signed event instead.',
+          docs: 'https://docs.degenfeed.xyz/bridge/nostr',
+        }),
+        {
+          status: 410,
+          headers: { 'content-type': 'application/json' },
+        },
+      );
+    }
 
-    const results: Array<{ title: string; ok: boolean; error?: string }> = [];
-    const maxItems = Math.min(posts.length, 5); // Limit to 5 to avoid spam
+    // ── Accept pre-signed Nostr event (no nsec required) ──────────────
+    if (body.signedEvent) {
+      const signedEvent = body.signedEvent as Record<string, unknown>;
 
-    for (const post of posts.slice(0, maxItems)) {
-      try {
-        const linkUrl = post.embeds.find((e) => e.kind === 'link');
-        const text = `${post.protocol}: ${post.text.slice(0, 200)}${linkUrl ? `\n\n${linkUrl.url}` : ''}`;
-        const ev = nostr.createTextNote(text, nsec, []);
-        ev.pubkey = pk;
-        ev.id = nostr.getEventHash(ev);
-        nostr.signEvent(ev, nsec);
-        await pool.publish(ev);
-        results.push({ title: post.text.slice(0, 50), ok: true });
-      } catch (e) {
-        results.push({ title: post.text.slice(0, 50), ok: false, error: String(e) });
+      // Validate required fields exist
+      for (const field of NOSTR_EVENT_REQUIRED_FIELDS) {
+        if (!(field in signedEvent)) {
+          return jsonResponse({ error: `Missing required field: ${field}` }, 400);
+        }
       }
-    }
-    pool.disconnectAll();
 
-    return jsonResponse({ results, total: posts.length, bridged: results.length });
+      // Validate field types
+      if (
+        typeof signedEvent.id !== 'string' ||
+        typeof signedEvent.pubkey !== 'string' ||
+        typeof signedEvent.created_at !== 'number' ||
+        typeof signedEvent.kind !== 'number' ||
+        !Array.isArray(signedEvent.tags) ||
+        typeof signedEvent.content !== 'string' ||
+        typeof signedEvent.sig !== 'string'
+      ) {
+        return jsonResponse({ error: 'Invalid event field types' }, 400);
+      }
+
+      // Verify the cryptographic signature
+      const event = signedEvent as unknown as NostrEvent;
+      if (!verifyEvent(event)) {
+        return jsonResponse({ error: 'Invalid event signature' }, 400);
+      }
+
+      // Publish to relays
+      const pool = new RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
+        eoseTimeout: 3000,
+      });
+      await pool.publish(event);
+      pool.disconnectAll();
+
+      return jsonResponse({ ok: true, eventId: event.id });
+    }
+
+    // ── Neither nsec nor signedEvent provided ─────────────────────────
+    return jsonResponse(
+      { error: 'Provide signedEvent (a pre-signed Nostr event object) for publishing.' },
+      400,
+    );
   } catch (e) {
     return jsonResponse({ error: String(e) }, 500);
   }
@@ -79,6 +158,8 @@ export async function handleRssToNostrBridge(request: Request, env: Env): Promis
 
 export async function handlePublish(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  const bodySizeCheck = validateBodySize(request, 10 * 1024);
+  if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
   try {
     interface PublishRequest {
       text?: string;
@@ -92,7 +173,7 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
     const body: PublishRequest = (await request.json()) as PublishRequest;
     const text = sanitizeString(body.text, 10000);
     const targets = sanitizeStringArray(body.targets, 64).filter(isAllowedProtocol);
-    const lensCollect = body.lensCollect ?? false;
+    const _lensCollect = body.lensCollect ?? false;
 
     if (!text || hasSuspiciousPayload(text)) {
       return jsonResponse({ error: 'Invalid text' }, 400);
@@ -201,22 +282,14 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
             break;
           }
 
-          case 'bluesky':
-          case 'threads': {
-            // AT Protocol repo.createRecord
-            // Requires PDS session token (accessJwt) stored during sign-in
-            const pdsUrl =
-              target === 'bluesky'
-                ? env.BSKY_PUBLIC_URL || 'https://public.api.bsky.app'
-                : env.THREADS_PDS_URL || 'https://public.threads.net';
-            const accessJwt =
-              auth[`${target}_jwt`] || auth[`${target}_accessJwt`] || auth.accessJwt;
+          case 'bluesky': {
+            const pdsUrl = env.BSKY_PUBLIC_URL || 'https://public.api.bsky.app';
+            const accessJwt = auth.bluesky_jwt || auth.bluesky_accessJwt || auth.accessJwt;
             if (!accessJwt) {
-              results[target] = { ok: false, error: `Not signed into ${target}` };
+              results[target] = { ok: false, error: 'Not signed into bluesky' };
               break;
             }
-            // Create record via XRPC — uses the DID from auth or extracts from JWT
-            const repoDid = auth[`${target}_did`] || '';
+            const repoDid = auth.bluesky_did || '';
             const recordRes = await fetch(`${pdsUrl}/xrpc/com.atproto.repo.createRecord`, {
               method: 'POST',
               headers: { 'content-type': 'application/json', authorization: `Bearer ${accessJwt}` },
@@ -232,7 +305,29 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
               const errText = await recordRes.text();
               results[target] = {
                 ok: false,
-                error: `${target} publish failed: ${errText.slice(0, 100)}`,
+                error: `bluesky publish failed: ${errText.slice(0, 100)}`,
+              };
+            }
+            break;
+          }
+
+          case 'threads': {
+            const accessToken = auth.threads_accessToken || auth.threads;
+            const userId = auth.threads_userId || auth.threads_did;
+            if (!accessToken || !userId) {
+              results[target] = { ok: false, error: 'Not signed into Threads' };
+              break;
+            }
+            try {
+              const { ThreadsClient } = await import('@degenfeed/threads-sdk');
+              const client = new ThreadsClient(accessToken, userId);
+              const creationId = await client.createThread(text);
+              await client.publishThread(creationId);
+              results[target] = { ok: true, hash: creationId };
+            } catch (e) {
+              results[target] = {
+                ok: false,
+                error: `threads publish failed: ${(e as Error).message.slice(0, 100)}`,
               };
             }
             break;

@@ -2,7 +2,7 @@ import { ed25519 } from '@noble/curves/ed25519';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
-import { type Env, jsonResponse } from '../index';
+import { type Env, jsonResponse, rateLimit } from '../index';
 import { createSession } from '../session';
 
 const GTS_SCOPES = 'read write follow push';
@@ -62,6 +62,19 @@ export async function handleWalletNonce(request: Request, env: Env): Promise<Res
   const url = new URL(request.url);
   const address = url.searchParams.get('address')?.toLowerCase() || '';
   if (!address) return jsonResponse({ error: 'Address required' }, 400);
+
+  const ip =
+    request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
+  const rl = await rateLimit(env, ip, 'wallet:nonce', 20, 60_000);
+  if (!rl.allowed) {
+    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
+      status: 429,
+      headers: {
+        'content-type': 'application/json',
+        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+      },
+    });
+  }
 
   const nonce = generateNonce();
   try {
@@ -166,6 +179,19 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
 
     if (!body.address || !body.signature || !body.message || !body.chain || !body.nonce) {
       return jsonResponse({ error: 'Missing required fields' }, 400);
+    }
+
+    const clientIp =
+      request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
+    const rl = await rateLimit(env, `${clientIp}:${body.address.toLowerCase()}`, 'wallet:verify', 5, 60_000);
+    if (!rl.allowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
+        status: 429,
+        headers: {
+          'content-type': 'application/json',
+          'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+        },
+      });
     }
 
     // Verify nonce from KV
