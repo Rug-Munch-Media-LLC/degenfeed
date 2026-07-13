@@ -21,10 +21,7 @@ import { buildIdentityRecord } from '../persistence';
 /**
  * Sign in with a Nostr nsec.
  */
-export async function signInWithNostrNsec(
-  nsec: string,
-  passphrase: string,
-): Promise<StoredIdentity> {
+export async function signInWithNostrNsec(nsec: string): Promise<StoredIdentity> {
   const { nsecDecode, getPublicKey, npubEncode } = await import('@degenfeed/nostr-sdk');
   const { hex: sk } = nsecDecode(nsec);
   const pk = getPublicKey(sk);
@@ -35,7 +32,7 @@ export async function signInWithNostrNsec(
     handle: npub,
     displayName: `${npub.slice(0, 12)}…`,
     secret: sk,
-    passphrase,
+    keys: { nsec },
   });
   await saveIdentity(record);
   return record;
@@ -73,7 +70,6 @@ export async function signInWithNostrExtension(): Promise<StoredIdentity> {
     handle: npub,
     displayName: `${npub.slice(0, 12)}…`,
     secret: null, // extension-managed
-    passphrase: '',
   });
   await saveIdentity(record);
   return record;
@@ -101,7 +97,6 @@ export async function signInWithNostrRemoteSigner(opts: {
     handle: npub,
     displayName: `${npub.slice(0, 12)}…`,
     secret: null,
-    passphrase: '',
   });
   await saveIdentity(record);
   return record;

@@ -1,16 +1,20 @@
 /**
- * ThreadsProvider — HTML scraper for public Threads profiles.
+ * ThreadsProvider — Dual-path Threads content fetcher.
  *
- * Threads does not offer a public API. The internal API requires login.
- * We scrape the public HTML page and extract the embedded JSON state
- * that contains post data. This is brittle — Meta changes page structure
- * frequently. When it breaks, we silently return an empty feed.
+ * Threads has NO public read API for arbitrary profiles. Meta's official
+ * Threads API (graph.threads.net) is a PUBLISHING API only — it lets
+ * authenticated users read their OWN threads, not arbitrary public feeds.
  *
  * Strategy:
- *   1. Try direct fetch with browser UA
- *   2. Fallback to FlareSolverr proxy (100.104.130.92:8191) if blocked
- *   3. Extract the <script> tag containing __INITIAL_STATE__ or JSON-LD
- *   4. Parse the JSON and extract posts
+ *   1. READ curated handles: HTML scraper (public profile pages).
+ *      Brittle but there is no alternative. Meta does not offer a public
+ *      read API and has no RSS feeds for Threads.
+ *   2. READ authenticated user's feed: official graph.threads.net API.
+ *      Used via @degenfeed/threads-sdk when the user has signed in.
+ *   3. WRITE (publish): official graph.threads.net API (see publish.ts).
+ *   4. ENGAGE: NOT supported. The Threads API does not support liking,
+ *      reposting, or replying to other people's threads. Users must use
+ *      the Threads app for engagement.
  */
 
 import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
@@ -19,9 +23,10 @@ import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../ty
 import { DEFAULT_TIMEOUT_MS, fetchText, withTimeout } from '../utils';
 
 export const THREADS_WEB_URL = 'https://www.threads.net';
-export const FLARESOLVERR_URL = typeof process !== "undefined" && process.env?.FLARESOLVERR_URL
-  ? process.env.FLARESOLVERR_URL
-  : ""; // Set FLARESOLVERR_URL env var or leave empty to disable
+export const FLARESOLVERR_URL =
+  typeof process !== 'undefined' && process.env?.FLARESOLVERR_URL
+    ? process.env.FLARESOLVERR_URL
+    : ''; // Set FLARESOLVERR_URL env var or leave empty to disable
 
 export const CURATED_THREADS_HANDLES = [
   'zuck',
@@ -61,26 +66,22 @@ function threadsHeaders(): Record<string, string> {
 }
 
 async function fetchViaFlareSolverr(url: string, timeoutMs: number): Promise<string> {
-  try {
-    const resp = await withTimeout(
-      fetch(FLARESOLVERR_URL, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          cmd: 'request.get',
-          url,
-          maxTimeout: Math.min(timeoutMs, 30000),
-        }),
+  const resp = await withTimeout(
+    fetch(FLARESOLVERR_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        cmd: 'request.get',
+        url,
+        maxTimeout: Math.min(timeoutMs, 30000),
       }),
-      timeoutMs + 5000,
-      'threads:flaresolverr',
-    );
-    const data = (await resp.json()) as { solution?: { response?: string }; status?: string };
-    if (data.solution?.response) return data.solution.response;
-    throw new Error(data.status || 'no response');
-  } catch (e) {
-    throw e;
-  }
+    }),
+    timeoutMs + 5000,
+    'threads:flaresolverr',
+  );
+  const data = (await resp.json()) as { solution?: { response?: string }; status?: string };
+  if (data.solution?.response) return data.solution.response;
+  throw new Error(data.status || 'no response');
 }
 
 async function scrapeProfile(handle: string, timeoutMs: number): Promise<ThreadsPost[]> {
@@ -112,18 +113,19 @@ async function scrapeProfile(handle: string, timeoutMs: number): Promise<Threads
               id: `threads:${normalized}:${e.url || ''}`.slice(0, 128),
               text: String(e.name || ''),
               createdAt: Date.now(),
-              likes: e.interactionStatistic?.[0]?.userInteractionCount || 0,
+              likes:
+                (
+                  e.interactionStatistic as Array<{ userInteractionCount?: number }> | undefined
+                )?.[0]?.userInteractionCount || 0,
               replies: e.commentCount || 0,
             }));
         }
-      } catch {
-        continue;
-      }
+      } catch {}
     }
 
     // Strategy 2: Extract from __INITIAL_STATE__ or similar state blobs
     const stateMatch = html.match(/"thread_items":\s*(\[[^\]]*\])/);
-    if (stateMatch) {
+    if (stateMatch?.[1]) {
       try {
         const items = JSON.parse(stateMatch[1]) as Array<{
           post?: {
@@ -139,16 +141,16 @@ async function scrapeProfile(handle: string, timeoutMs: number): Promise<Threads
         return items
           .filter((p) => p?.post)
           .map((p) => ({
-            id: `threads:${p.post!.code || p.post!.pk}`,
-            text: p.post!.caption?.text || '',
-            createdAt: (p.post!.taken_at || 0) * 1000,
-            likes: p.post!.like_count || 0,
-            replies: p.post!.comment_count || 0,
-            author: p.post!.user
+            id: `threads:${p.post?.code || p.post?.pk}`,
+            text: p.post?.caption?.text || '',
+            createdAt: (p.post?.taken_at || 0) * 1000,
+            likes: p.post?.like_count || 0,
+            replies: p.post?.comment_count || 0,
+            author: p.post?.user
               ? {
-                  username: p.post!.user.username,
-                  name: p.post!.user.full_name,
-                  avatar: p.post!.user.profile_pic_url,
+                  username: p.post?.user.username,
+                  name: p.post?.user.full_name,
+                  avatar: p.post?.user.profile_pic_url,
                 }
               : undefined,
           }));

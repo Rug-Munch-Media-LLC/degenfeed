@@ -1,0 +1,13 @@
+- description: "Fix null reference bug"
+  vars:
+    language: "typescript"
+    issue: "App crashes when user has no posts"
+    code: |
+      function getLatestPost(user: User) {
+          return user.posts[0].title;
+      }
+  assert:
+    - type: not-contains
+      value: "posts[0]"
+    - type: contains
+      value: "optional" or "?." or "undefined" or "length"

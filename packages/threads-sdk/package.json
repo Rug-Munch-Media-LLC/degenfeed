@@ -15,8 +15,7 @@
   },
   "dependencies": {
     "@degenfeed/types": "workspace:*",
-    "@degenfeed/feed-core": "workspace:*",
-    "@degenfeed/bluesky-sdk": "workspace:*"
+    "@degenfeed/feed-core": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.2",

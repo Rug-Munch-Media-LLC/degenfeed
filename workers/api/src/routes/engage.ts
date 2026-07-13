@@ -2,12 +2,10 @@ import { BskyClient } from '@degenfeed/bluesky-sdk';
 import { HubClient } from '@degenfeed/farcaster-sdk';
 import { LensClient } from '@degenfeed/lens-sdk';
 import { GtSClient } from '@degenfeed/mastodon-sdk';
-import { createReaction, getPublicKey, RelayPool, signEvent } from '@degenfeed/nostr-sdk';
 import { ThreadsClient } from '@degenfeed/threads-sdk';
 import type { EngagementAction } from '@degenfeed/types';
 import {
   BSKY_SOCIAL,
-  DEFAULT_RELAYS,
   type Env,
   FARCASTER_HUBS,
   jsonResponse,
@@ -102,61 +100,27 @@ export async function handleEngage(request: Request, env: Env): Promise<Response
 }
 
 function handleNostr(
-  action: EngagementAction,
-  eventId: string,
-  target: { authorId: string; publicationId: string },
-  content: string,
-  reaction: string,
-  auth: Record<string, string>,
-  env: Env,
+  _action: EngagementAction,
+  _eventId: string,
+  _target: { authorId: string; publicationId: string },
+  _content: string,
+  _reaction: string,
+  _auth: Record<string, string>,
+  _env: Env,
 ): Response {
-  const sk = auth.nostr ?? '';
-  if (!sk) {
-    return jsonResponse(noAccountError('nostr'), 401);
-  }
-
-  const relays = env.RELAY_URLS ? env.RELAY_URLS.split(',') : DEFAULT_RELAYS;
-  const pubkey = target.authorId || '';
-  const pool = new RelayPool(relays, { eoseTimeout: 3000 });
-
-  try {
-    if (action === 'like' || action === 'react') {
-      const emoji = action === 'react' && reaction ? reaction : '+';
-      const ev = createReaction(emoji, eventId, pubkey, sk);
-      pool.publish(ev);
-    } else if (action === 'repost') {
-      const unsigned = {
-        pubkey: getPublicKey(sk),
-        created_at: Math.floor(Date.now() / 1000),
-        kind: 6,
-        tags: [
-          ['e', eventId],
-          ['p', pubkey],
-        ],
-        content: '',
-      };
-      const ev = signEvent(unsigned, sk);
-      pool.publish(ev);
-    } else if (action === 'reply') {
-      const unsigned = {
-        pubkey: getPublicKey(sk),
-        created_at: Math.floor(Date.now() / 1000),
-        kind: 1,
-        tags: [
-          ['e', eventId, '', 'reply'],
-          ['p', pubkey],
-        ],
-        content,
-      };
-      const ev = signEvent(unsigned, sk);
-      pool.publish(ev);
-    } else {
-      return jsonResponse({ ok: false, error: `${action} not supported on nostr` }, 400);
-    }
-    return jsonResponse({ ok: true });
-  } finally {
-    pool.disconnectAll();
-  }
+  // SECURITY: Server-side nsec no longer accepted (2026-07-13).
+  // Clients must sign engagement events locally using @degenfeed/nostr-sdk
+  // and submit pre-signed events. Raw nsec in request body is rejected.
+  return jsonResponse(
+    {
+      ok: false,
+      error: 'Server-side Nostr signing is deprecated.',
+      detail: 'Sign engagement events client-side using @degenfeed/nostr-sdk.',
+      migration: 'Use the client-side engageNostr() in apps/web/src/lib/nostr.ts',
+      docs: 'https://degenfeed.xyz/docs/nostr-publish',
+    },
+    410,
+  );
 }
 
 async function handleFarcaster(

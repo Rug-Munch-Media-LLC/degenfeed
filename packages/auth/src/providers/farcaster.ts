@@ -58,7 +58,6 @@ export async function signInWithFarcaster(opts: {
     displayName,
     avatarUrl,
     secret: null,
-    passphrase: '',
   });
   await saveIdentity(record);
   return record;
@@ -71,14 +70,12 @@ export async function signInWithFarcasterSigner(
   signerKey: string,
   fid: number,
   username: string,
-  passphrase: string,
 ): Promise<StoredIdentity> {
   const record = await buildIdentityRecord({
     protocol: 'farcaster',
     publicId: String(fid),
     handle: `@${username}`,
     secret: signerKey,
-    passphrase,
   });
   await saveIdentity(record);
   return record;

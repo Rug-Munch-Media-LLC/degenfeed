@@ -20,7 +20,7 @@ Crypto-native users consume content across Nostr, Farcaster, Lens, Bluesky, Mast
 - Wallet sign-in (Solana + EVM)
 - News aggregation (`/news`)
 - Cloudflare Worker edge API (`workers/api/`)
-- Static landing page at `degenfeed.xyz`
+- Landing page served by Worker at `degenfeed.xyz` (in `workers/api/src/routes/landing.ts`)
 
 ## Anti-scope
 - This repo does NOT run the DegenFeed GotoSocial server
@@ -37,7 +37,7 @@ Crypto-native users consume content across Nostr, Farcaster, Lens, Bluesky, Mast
 - No source file greater than 500 lines
 
 ## Current reality
-- `apps/landing` is live at `https://degenfeed.xyz`
+- Landing page is served by the Cloudflare Worker from `workers/api/src/routes/landing.ts` at `https://degenfeed.xyz`
 - `apps/web` is live at `https://app.degenfeed.xyz`
 - `workers/api` is deployed as Cloudflare Worker `degenfeed-api`
 - CI and pre-commit are configured

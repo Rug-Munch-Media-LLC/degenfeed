@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 
 export type { ReactNode } from 'react';
 
@@ -51,14 +51,6 @@ const PROTOCOLS: ProtocolOption[] = [
     color: '#1185fe',
     icon: '☁',
     description: 'Handle + app password',
-    method: 'password',
-  },
-  {
-    id: 'threads',
-    label: 'Threads',
-    color: '#888888',
-    icon: '⊞',
-    description: 'Handle + AT Protocol app password',
     method: 'password',
   },
   {
@@ -419,71 +411,6 @@ function BlueskyForm({
   );
 }
 
-function ThreadsForm({
-  onSignIn,
-  onBack,
-}: {
-  onSignIn: (creds: Record<string, string>) => void;
-  onBack: () => void;
-}) {
-  const [handle, setHandle] = useState('');
-  const [appPassword, setAppPassword] = useState('');
-  const [error, setError] = useState('');
-
-  return (
-    <div className="space-y-3">
-      <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-2">
-        <p className="text-[10px] text-yellow-400">
-          ⚠ Threads AT Protocol support is limited. Most posts are scraped from public web pages.
-        </p>
-      </div>
-      <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">Handle</span>
-        <input
-          type="text"
-          value={handle}
-          onChange={(e) => setHandle(e.target.value)}
-          placeholder="alice.bsky.social"
-          className="input w-full"
-        />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">App Password</span>
-        <input
-          type="password"
-          value={appPassword}
-          onChange={(e) => setAppPassword(e.target.value)}
-          placeholder="xxxx-xxxx-xxxx-xxxx"
-          className="input w-full font-mono text-xs"
-        />
-      </label>
-      {error && <p className="text-xs text-red-400">{error}</p>}
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white"
-        >
-          Back
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            if (!handle.trim() || !appPassword.trim()) {
-              setError('All fields required');
-              return;
-            }
-            onSignIn({ handle: handle.trim(), appPassword: appPassword.trim() });
-          }}
-          className="btn-primary flex-1"
-        >
-          Sign in
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function LensForm({
   onSignIn,
   onBack,
@@ -532,6 +459,17 @@ function MastodonForm({
   const [accessToken, setAccessToken] = useState('');
   const [error, _setError] = useState('');
 
+  const handleMastodonOAuth = async () => {
+    try {
+      const res = await fetch('/api/auth/gotosocial/authorize', { credentials: 'include' });
+      if (!res.ok) throw new Error('Authorization not available');
+      const data = (await res.json()) as { authorizeUrl: string };
+      window.location.href = data.authorizeUrl;
+    } catch {
+      window.location.href = `${instance}/oauth/authorize?client_id=degenfeed&response_type=code&scope=read+write+follow+push&redirect_uri=${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`;
+    }
+  };
+
   return (
     <div className="space-y-3">
       <label className="block">
@@ -545,12 +483,13 @@ function MastodonForm({
         />
       </label>
       <div className="text-center text-xs text-gray-600">— or —</div>
-      <a
-        href={`${instance}/oauth/authorize?client_id=degenfeed&response_type=code&scope=read+write+follow+push&redirect_uri=${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
+      <button
+        type="button"
+        onClick={handleMastodonOAuth}
         className="btn-secondary flex w-full items-center justify-center text-xs"
       >
-        🔗 OAuth with {instance.replace(/^https?:\/\//, '')}
-      </a>
+        OAuth with {instance.replace(/^https?:\/\//, '')}
+      </button>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-gray-400">Or paste access token</span>
         <input
@@ -603,8 +542,6 @@ function ProtocolForm({
       return <LensForm {...props} />;
     case 'bluesky':
       return <BlueskyForm {...props} />;
-    case 'threads':
-      return <ThreadsForm {...props} />;
     case 'mastodon':
       return <MastodonForm {...props} />;
     default:
@@ -657,7 +594,7 @@ function WalletSection({
   );
 }
 
-export function SignInModal({
+export const SignInModal = memo(function SignInModal({
   open,
   onClose,
   onSignIn,
@@ -814,4 +751,4 @@ export function SignInModal({
       </div>
     </section>
   );
-}
+});

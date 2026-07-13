@@ -7,8 +7,60 @@ import {
   unmuteIdentity,
 } from '@degenfeed/storage';
 import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { useEffect, useState } from 'react';
+import { formatTimeAgo } from '@degenfeed/utils';
+import { memo, useEffect, useState } from 'react';
 import { ProtocolBadge } from './ProtocolBadge';
+
+interface FrameData {
+  image: string;
+  title?: string;
+  buttons: Array<{ index: number; label: string; action?: string }>;
+  postUrl?: string;
+  version: string;
+}
+
+function FrameCard({ url }: { url: string }) {
+  const [frame, setFrame] = useState<FrameData | null>(null);
+  const [_loading, _setLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/frame/resolve?url=${encodeURIComponent(url)}`)
+      .then((r) => (r.ok ? (r.json() as Promise<FrameData>) : null))
+      .then((d) => {
+        if (!cancelled && d?.image) setFrame(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  if (!frame) return null;
+
+  return (
+    <div className="mt-2 overflow-hidden rounded-xl border border-purple-500/20">
+      <img
+        src={frame.image}
+        alt={frame.title || 'Frame'}
+        className="w-full object-cover"
+        loading="lazy"
+      />
+      {frame.buttons.length > 0 && (
+        <div className="flex gap-1 border-t border-white/5 p-1.5">
+          {frame.buttons.map((b) => (
+            <span
+              key={b.index}
+              className="flex-1 rounded bg-purple-900/20 px-2 py-1 text-center text-[10px] text-purple-400"
+            >
+              {b.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export type { UnifiedPost };
 
@@ -33,18 +85,6 @@ export interface PostCardProps {
 }
 
 const MAX_TEXT_LENGTH = 500;
-
-function formatTime(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'now';
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d`;
-  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -195,7 +235,14 @@ function applyOptimistic(state: LocalState, action: EngagementAction): LocalStat
   }
 }
 
-export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }: PostCardProps) {
+export const PostCard = memo(function PostCard({
+  post,
+  onEngage,
+  onClick,
+  expanded,
+  onTip,
+  onPaywall,
+}: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
     engagement: post.engagement,
@@ -314,6 +361,11 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
             <span className="truncate text-sm font-semibold text-white">
               {post.author.displayName}
             </span>
+            {post.protocol === 'nostr' && post.author.handles.nostr?.includes('@') && (
+              <span className="flex-shrink-0 text-blue-400 text-xs" title="NIP-05 verified">
+                ✓
+              </span>
+            )}
             <ProtocolBadge protocol={post.protocol} />
             <button
               type="button"
@@ -351,7 +403,7 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
               dateTime={new Date(post.createdAt).toISOString()}
               title={new Date(post.createdAt).toLocaleString()}
             >
-              {formatTime(post.createdAt)}
+              {formatTimeAgo(post.createdAt)}
             </time>
             {post.score && (
               <>
@@ -414,6 +466,9 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
                 {links.map((embed) => (
                   <LinkPreview key={`link-${embed.url}`} embed={embed} />
                 ))}
+                {post.protocol === 'farcaster' && links.length > 0 && (
+                  <FrameCard url={links[0]?.url} />
+                )}
                 {videos.map((embed) => (
                   <a
                     key={`video-${embed.url}`}
@@ -519,6 +574,19 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
             ⚡ Tip
           </button>
         )}
+        {post.protocol === 'nostr' && post.metrics.quotes > 0 && onTip && (
+          <button
+            type="button"
+            className="flex items-center gap-1 text-yellow-400 text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTip(post);
+            }}
+            title={`${post.metrics.quotes} zaps`}
+          >
+            ⚡{post.metrics.quotes}
+          </button>
+        )}
       </div>
 
       {showReply && (
@@ -547,4 +615,4 @@ export function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }
       )}
     </article>
   );
-}
+});

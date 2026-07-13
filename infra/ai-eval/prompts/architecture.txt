@@ -1,0 +1,11 @@
+Design a solution for the following requirement in a {{project_type}} project:
+
+Requirement: {{requirement}}
+Constraints: {{constraints}}
+
+Provide:
+1. Architecture diagram (ASCII art)
+2. Component breakdown
+3. Data flow
+4. Trade-offs considered
+5. Recommended approach

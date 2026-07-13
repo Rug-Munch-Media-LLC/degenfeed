@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "apps/web": {},
+    "workers/api": {},
+    "packages/*": {}
+  },
+  "entry": ["apps/web/src/app/layout.tsx", "workers/api/src/index.ts"],
+  "ignore": ["**/*.d.ts", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],
+  "ignoreDependencies": ["turbo", "vitest", "@biomejs/biome", "@types/*"],
+  "ignoreBinaries": ["biome", "prettier", "stylelint", "playwright", "wrangler"],
+  "rules": {
+    "files": "error",
+    "dependencies": "error",
+    "devDependencies": "warn",
+    "unlisted": "error",
+    "duplicates": "warn"
+  }
+}

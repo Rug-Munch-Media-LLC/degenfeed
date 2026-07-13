@@ -1,11 +1,3 @@
-import {
-  createTextNote,
-  generateSecretKey,
-  getEventHash,
-  getPublicKey,
-  RelayPool,
-  signEvent,
-} from '@degenfeed/nostr-sdk';
 import { type Env, jsonResponse } from '../index';
 import {
   hasSuspiciousPayload,
@@ -24,9 +16,9 @@ import {
 // model where the client signs locally and only submits the signed
 // event to the server. The raw nsec should never traverse the wire.
 
-const MAX_BRIDGE_PER_HOUR = 3;
+const _MAX_BRIDGE_PER_HOUR = 3;
 
-export async function handleRssToNostrBridge(request: Request, env: Env): Promise<Response> {
+export async function handleRssToNostrBridge(request: Request, _env: Env): Promise<Response> {
   try {
     const body = (await request.json()) as Record<string, string>;
     const feedUrl = body.feedUrl;
@@ -106,19 +98,20 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
       try {
         switch (target) {
           case 'nostr': {
-            const skHex: string = auth.nostr ?? '';
-            const sk: string = skHex || generateSecretKey();
-            const pk = getPublicKey(sk);
-            const ev = createTextNote(text, sk, []);
-            ev.pubkey = pk;
-            ev.id = getEventHash(ev);
-            signEvent(ev, sk);
-            const pool = new RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
-              eoseTimeout: 2000,
-            });
-            await pool.publish(ev);
-            pool.disconnectAll();
-            results[target] = { ok: true };
+            // SECURITY: Server-side nsec usage deprecated (2026-07-13).
+            // Clients must sign locally and submit pre-signed events.
+            // Raw nsec in request body is no longer accepted.
+            return jsonResponse(
+              {
+                error: 'Server-side Nostr signing is deprecated.',
+                detail:
+                  'Sign your event client-side using @degenfeed/nostr-sdk, then submit the signed event.',
+                migration:
+                  'Use the client-side Nostr publish flow in apps/web/src/lib/nostr.ts (publishNoteToNostr)',
+                docs: 'https://degenfeed.xyz/docs/nostr-publish',
+              },
+              410,
+            );
             break;
           }
 

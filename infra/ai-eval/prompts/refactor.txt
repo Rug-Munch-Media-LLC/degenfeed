@@ -1,0 +1,11 @@
+Refactor the following {{language}} code to improve {{focus_area}}:
+
+```{{language}}
+{{code}}
+```
+
+Requirements:
+- Maintain existing functionality
+- Improve readability
+- Follow best practices
+- Add type hints where missing
