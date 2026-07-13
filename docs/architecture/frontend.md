@@ -14,9 +14,9 @@ The primary client application. Uses the Next.js App Router with React 19. Hoste
 - `/composer` — multi-protocol post composer
 - `/settings` — protocol connections and preferences
 
-### `apps/landing` — Static Landing Page
+### Landing page
 
-Static site at `degenfeed.xyz`. Built with minimal dependencies. No JS runtime.
+Served by the Cloudflare Worker from `workers/api/src/routes/landing.ts` at `degenfeed.xyz`. Contains the HTML, CSS, and JS inline — deployed as part of the Worker.
 
 ## Shared Packages
 

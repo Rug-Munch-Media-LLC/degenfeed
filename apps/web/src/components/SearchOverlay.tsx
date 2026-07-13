@@ -1,9 +1,9 @@
 'use client';
 
+import { getProtocolColor } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getProtocolColor } from '@degenfeed/ui';
 
 interface SearchResult {
   id: string;

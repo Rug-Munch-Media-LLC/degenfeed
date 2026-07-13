@@ -5,7 +5,6 @@ export const ALLOWED_PROTOCOLS = new Set([
   'farcaster',
   'lens',
   'bluesky',
-  'threads',
   'rss',
   'mastodon',
   'ethereum',

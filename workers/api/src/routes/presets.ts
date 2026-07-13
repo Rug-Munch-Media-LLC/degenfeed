@@ -47,7 +47,9 @@ export async function handleFeedPresets(request: Request, env: Env): Promise<Res
           }
         }
       }
-    } catch {}
+    } catch (err) {
+      console.warn('[presets] GET failed:', err instanceof Error ? err.message : err);
+    }
 
     return jsonResponse({ data: presets, meta: { total: presets.length } });
   }
@@ -85,11 +87,13 @@ export async function handleFeedPresets(request: Request, env: Env): Promise<Res
           await env.CACHE.put(presetsKey, JSON.stringify(all.slice(-20)), {
             expirationTtl: 90 * 86400,
           });
-        } catch {}
+        } catch (err) {
+          console.warn('[presets] POST KV save failed:', err instanceof Error ? err.message : err);
+        }
       }
 
       return jsonResponse({ ok: true, preset });
-    } catch {
+    } catch (_err) {
       return jsonResponse({ error: 'Invalid request' }, 400);
     }
   }
@@ -105,7 +109,9 @@ export async function handleFeedPresets(request: Request, env: Env): Promise<Res
           const all = (JSON.parse(existing) as FeedPreset[]).filter((p) => p.id !== id);
           await env.CACHE.put(presetsKey, JSON.stringify(all), { expirationTtl: 90 * 86400 });
         }
-      } catch {}
+      } catch (err) {
+        console.warn('[presets] DELETE KV failed:', err instanceof Error ? err.message : err);
+      }
     }
     return jsonResponse({ ok: true });
   }

@@ -136,7 +136,7 @@ echo 'GTS_CLIENT_SECRET=unused-locally' >> workers/api/.dev.vars
 ## Adding the Next.js Pages deploy
 
 `apps/web/wrangler.toml` is a stub. The full Cloudflare Pages deploy is
-out of scope for this iteration (the landing HTML at `apps/landing/`
+out of scope for this iteration (the landing HTML was at `apps/landing/` — now served by the Worker from `workers/api/src/routes/landing.ts`)
 covers the `degenfeed.xyz` root today). When the Next.js app is ready
 to ship, add a Pages job to `.github/workflows/deploy.yml`:
 

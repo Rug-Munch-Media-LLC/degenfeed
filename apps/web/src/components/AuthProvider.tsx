@@ -413,7 +413,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const fid = parseInt(farcasterIdent.publicId, 10);
-        if (isNaN(fid)) return { ok: false, error: 'Invalid Farcaster FID' };
+        if (Number.isNaN(fid)) return { ok: false, error: 'Invalid Farcaster FID' };
 
         const nativeId = postId.startsWith('farcaster:')
           ? postId.slice('farcaster:'.length)

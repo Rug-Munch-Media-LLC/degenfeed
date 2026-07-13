@@ -63,7 +63,7 @@ const sections: DocSection[] = [
 ];
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const _pathname = usePathname();
   const [activeId, setActiveId] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

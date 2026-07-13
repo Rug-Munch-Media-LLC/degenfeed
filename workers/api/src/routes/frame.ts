@@ -49,7 +49,7 @@ export async function handleFrameResolve(request: Request, env: Env): Promise<Re
   }
 }
 
-export async function handleFrameAction(request: Request, env: Env): Promise<Response> {
+export async function handleFrameAction(request: Request, _env: Env): Promise<Response> {
   try {
     const body = (await request.json()) as {
       postUrl?: string;

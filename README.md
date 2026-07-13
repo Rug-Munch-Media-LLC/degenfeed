@@ -13,7 +13,7 @@ Planned stack: Next.js 14 App Router, React 19, Tailwind, Radix, Zustand, TanSta
 - A backend API. Protocol adapters live in packages/.
 
 ## Status
-- apps/landing is a static landing page live at degenfeed.xyz
+- Landing page is served by the Cloudflare Worker from `workers/api/src/routes/landing.ts` at degenfeed.xyz
 - apps/web is scaffolding; not deployed
 - This repo currently has no health endpoint because apps/web is not running
 

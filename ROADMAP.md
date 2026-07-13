@@ -5,7 +5,7 @@
 ## Completed
 - Upgrade to Next.js 15 + React 19
 - Turborepo + pnpm workspace structure (`apps/*`, `packages/*`, `workers/*`)
-- Static landing page at `degenfeed.xyz`
+- Landing page live at `degenfeed.xyz` (served by Worker from `workers/api/src/routes/landing.ts`)
 - Deploy `apps/web` to Cloudflare Pages at `app.degenfeed.xyz`
 - Deploy `workers/api` as Cloudflare Worker `degenfeed-api`
 - CI pipeline, pre-commit hooks, and Makefile

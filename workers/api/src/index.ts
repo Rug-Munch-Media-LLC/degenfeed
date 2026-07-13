@@ -6,99 +6,8 @@
  * re-exported for route module use.
  */
 
-import {
-  applyCors,
-  corsHeaders,
-  getAllowedOrigin,
-  isAllowedOrigin,
-  parseOriginHeader,
-} from './cors';
-import { handleAccountDelete, handleAccountExport } from './routes/account';
-import {
-  handleGtSAuthorize,
-  handleGtSCallback,
-  handleGtSRegister,
-  handleRedditCallback,
-  handleThreadsAuthorize,
-  handleThreadsCallback,
-  handleWarpcastAuthorize,
-  handleWarpcastCallback,
-} from './routes/auth';
-import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from './routes/billing';
-import { handleBlinkTip } from './routes/blink';
-import { handleCommunities } from './routes/communities';
+import { isAllowedOrigin, parseOriginHeader } from './cors';
 import { handleCron } from './routes/cron';
-import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
-import { handleDiscover } from './routes/discover';
-import { handleEmbedResolve } from './routes/embed';
-import { handleEngage } from './routes/engage';
-import { handleFarcasterFeed } from './routes/farcaster-feed';
-import { handleFeatures } from './routes/features';
-import {
-  handleCategoryFeed,
-  handleFeedHealth,
-  handleHomeFeed,
-  handleProviderFeed,
-  handleRedditFeed,
-  handleTrendingFeed,
-} from './routes/feed';
-import { handleFrameAction, handleFrameResolve } from './routes/frame';
-import { handleFundingFeed } from './routes/funding';
-import { handleRelaysHealth } from './routes/health';
-import { handleResolveIdentity } from './routes/identity';
-import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
-import { handleLinksPage } from './routes/links';
-import { handleNewsFeed } from './routes/news';
-import {
-  handleNewsletterDigest,
-  handleNewsletterStatus,
-  handleNewsletterSubscribe,
-} from './routes/newsletter';
-import { handleNotifications } from './routes/notifications';
-import { handleNotify } from './routes/notify';
-import { handlePostOg } from './routes/og';
-import { handleDiscoverPeople } from './routes/people';
-import { handlePostById } from './routes/post';
-import { handlePreferences } from './routes/preferences';
-import { handleFeedPresets } from './routes/presets';
-import { handlePrices } from './routes/prices';
-import { handleIdentityProfile } from './routes/profile';
-import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
-import { handlePublish } from './routes/publish';
-import { handlePushSend, handlePushSubscribe } from './routes/push';
-import { handleRelatedPosts } from './routes/related';
-import { handlePostReplies } from './routes/replies';
-import {
-  handleRmiHeadlines,
-  handleRmiHealth,
-  handleRmiNews,
-  handleRmiSentiment,
-  handleRmiSources,
-  handleRmiStats,
-} from './routes/rmi';
-import { handleRssFeed } from './routes/rss';
-import { handleRssXml } from './routes/rss-xml';
-import { handleSearch, handleSearchIdentity } from './routes/search';
-import { handleStreamFeed } from './routes/stream';
-import {
-  handleLightningInvoice,
-  handleTipCreate,
-  handleTipFrame,
-  handleTipFrameCallback,
-  handleTipFrameTx,
-  handleTipResolve,
-  handleTipSettingsGet,
-  handleTipSettingsPost,
-} from './routes/tip';
-import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
-import { handleX402Paywall, handleX402Verify } from './routes/x402';
-import { validateBodySize } from './sanitize';
-import {
-  applySessionRefresh,
-  handleSessionSignOut,
-  handleSessionVerify,
-  requireSession,
-} from './session';
 
 // ─── Environment variables ───────────────────────────────────────────
 
@@ -300,7 +209,7 @@ const CSRF_EXEMPT_PATHS = [
   '/api/x402/verify',
 ];
 
-function isStateChanging(method: string): boolean {
+function _isStateChanging(method: string): boolean {
   return method === 'POST' || method === 'PUT' || method === 'DELETE';
 }
 
@@ -308,7 +217,7 @@ function isCsrfExempt(path: string): boolean {
   return CSRF_EXEMPT_PATHS.some((prefix) => path.startsWith(prefix));
 }
 
-function validateOrigin(request: Request, path: string, env: Env): boolean {
+function _validateOrigin(request: Request, path: string, env: Env): boolean {
   if (isCsrfExempt(path)) return true;
   const origin = request.headers.get('origin');
   if (origin) return isAllowedOrigin(origin, env.ALLOWED_ORIGINS);

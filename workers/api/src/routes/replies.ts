@@ -4,13 +4,6 @@
  * GET /api/feed/post/:id/replies
  */
 
-import {
-  BlueskyProvider,
-  FarcasterProvider,
-  LensProvider,
-  MastodonProvider,
-  NostrProvider,
-} from '@degenfeed/feed-providers';
 import type { UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
 
