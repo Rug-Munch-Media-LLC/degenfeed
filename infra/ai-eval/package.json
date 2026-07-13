@@ -1,0 +1,11 @@
+{
+  "name": "degenfeed-ai-eval",
+  "private": true,
+  "scripts": {
+    "eval": "promptfoo eval",
+    "view": "promptfoo view"
+  },
+  "dependencies": {
+    "promptfoo": "^0.121.18"
+  }
+}

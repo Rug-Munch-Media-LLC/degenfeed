@@ -16,7 +16,8 @@
         "@solana/wallet-adapter-base",
         "@solana/wallet-adapter-react",
         "@solana/wallet-adapter-wallets",
-        "@web3modal/wagmi",
+        "@reown/appkit",
+        "@reown/appkit-adapter-wagmi",
         "viem",
         "wagmi"
       ],

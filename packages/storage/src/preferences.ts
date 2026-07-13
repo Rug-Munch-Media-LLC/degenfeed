@@ -93,9 +93,5 @@ export async function wipeAll(): Promise<void> {
   ]);
 }
 
-/**
- * Close the database connection. Call on app unmount.
- */
-export function closeDb(): void {
-  const _dbPromise = null;
-}
+// Re-export the real closeDb from db.ts
+export { closeDb } from './db';

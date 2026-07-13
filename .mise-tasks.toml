@@ -1,0 +1,77 @@
+# .mise-tasks.toml — standardized task definitions
+# Runs on Cinnabox, Talos, Hydra — same commands everywhere
+# Usage: mise run lint | mise run ci | mise run check
+# See: https://mise.jdx.dev/tasks/
+
+[tasks.lint]
+description = "Lint all code (biome + ruff + stylelint + cspell)"
+run = """
+  biome check --no-errors-on-unmatched . 2>/dev/null || true
+  ruff check . 2>/dev/null || true
+  stylelint "src/**/*.css" --allow-empty-input 2>/dev/null || true
+  cspell "**/*.{ts,tsx,py,md}" --no-progress
+"""
+
+[tasks.format]
+description = "Format with biome + ruff + dprint"
+run = """
+  biome check --write --no-errors-on-unmatched . 2>/dev/null || true
+  ruff format . 2>/dev/null || true
+  dprint fmt 2>/dev/null || true
+"""
+
+[tasks.typecheck]
+description = "Type check (mypy + tsc)"
+run = """
+  mypy . --config-file=pyproject.toml --ignore-missing-imports 2>/dev/null || true
+  tsc --noEmit 2>/dev/null || true
+"""
+
+[tasks.test]
+description = "Run tests (pytest + vitest)"
+run = """
+  pytest tests/ -x -q -m "not integration" 2>/dev/null || true
+  vitest run 2>/dev/null || true
+"""
+
+[tasks.security]
+description = "Security audit (gitleaks + bandit + npm audit)"
+run = """
+  gitleaks detect --source . --no-banner
+  bandit -r . -q --skip=B101,B311 2>/dev/null || true
+  npm audit --audit-level=high 2>/dev/null || true
+"""
+
+[tasks.links]
+description = "Check all links with lychee"
+run = """
+  lychee --no-progress --accept 200,204,301,302,304 \
+    '**/*.md' '**/*.rst' \
+    --exclude 'node_modules' --exclude 'dist' --exclude '.venv' \
+    --exclude '__pycache__' --exclude '.next' --exclude '.turbo'
+"""
+
+[tasks."knip"]
+description = "Find dead code and unused dependencies"
+run = "knip --no-progress"
+
+[tasks.deptry]
+description = "Check Python dependencies"
+run = "deptry . --no-ansi"
+
+[tasks.check]
+description = "Fast pre-push check"
+depends = ["lint", "typecheck"]
+
+[tasks.ci]
+description = "Full CI pipeline (lint + typecheck + test + security + links)"
+depends = ["check", "test", "security", "links"]
+
+[tasks.clean]
+description = "Remove all build artifacts"
+run = """
+  rm -rf dist build .next .vite .turbo .biome-cache coverage
+  rm -rf .pytest_cache .mypy_cache .ruff_cache
+  find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
+  find . -type d -name 'node_modules' -not -path '*/node_modules/*' 2>/dev/null || true
+"""

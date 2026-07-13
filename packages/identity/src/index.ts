@@ -262,7 +262,7 @@ export function mergeIdentities(identities: Partial<UnifiedIdentity>[]): Unified
     if (ident.id) merged.id = ident.id;
     if (ident.primary) merged.primary = ident.primary;
     if (ident.handles) {
-      for (const p of ['nostr', 'farcaster', 'lens', 'bluesky', 'threads', 'rss'] as Protocol[]) {
+      for (const p of ['nostr', 'farcaster', 'lens', 'bluesky', 'rss'] as Protocol[]) {
         if (ident.handles[p]) merged.handles[p] = ident.handles[p];
       }
     }

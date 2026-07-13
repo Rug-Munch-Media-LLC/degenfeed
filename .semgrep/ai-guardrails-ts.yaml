@@ -1,0 +1,54 @@
+# AI-Specific Semgrep Rules (TypeScript)
+# Detects patterns that AI agents commonly hallucinate in TS/React
+
+rules:
+  - id: no-any-props
+    pattern: |
+      { data }: { data: any }
+    message: "Component props use 'any'. Define a proper interface or use openapi-typescript generated types."
+    severity: ERROR
+    languages: [typescript, tsx]
+
+  - id: no-dangerously-set-innerhtml
+    pattern: dangerouslySetInnerHTML
+    message: "Avoid dangerouslySetInnerHTML. Use DOMPurify sanitization if unavoidable."
+    severity: ERROR
+    languages: [typescript, tsx]
+
+  - id: no-as-cast-bypass
+    pattern: as unknown as $TYPE
+    message: "Double 'as' cast bypasses type checking. Fix the underlying type issue instead."
+    severity: ERROR
+    languages: [typescript, tsx]
+
+  - id: no-console-log-in-production
+    pattern: console.log(...)
+    message: "Remove console.log() before committing to production code."
+    severity: WARNING
+    languages: [typescript, javascript, tsx]
+    paths:
+      exclude:
+        - "**/*.test.*"
+        - "**/*.spec.*"
+        - "e2e/"
+
+  - id: no-unused-parameter
+    pattern: |
+      function $FUNC(..., $UNUSED, ...)
+    message: "Suspicious unused parameter — possible hallucinated function signature."
+    severity: WARNING
+    languages: [typescript, tsx]
+
+  - id: no-empty-catch
+    pattern: |
+      catch ($ERR) { }
+    message: "Empty catch block silently swallows errors. Handle or re-throw."
+    severity: ERROR
+    languages: [typescript, tsx]
+
+  - id: no-missing-key-prop
+    pattern: |
+      {items.map(($ITEM) => <$COMP />)}
+    message: "Missing 'key' prop in list rendering. React requires unique keys."
+    severity: WARNING
+    languages: [typescript, tsx]

@@ -27,9 +27,10 @@ function decodeHex(hex: string): Uint8Array {
 }
 
 async function importKey(secret: string): Promise<CryptoKey> {
-  const keyBytes = /^[0-9a-fA-F]+$/.test(secret) && secret.length >= 64
-    ? decodeHex(secret)
-    : new TextEncoder().encode(secret);
+  const keyBytes =
+    /^[0-9a-fA-F]+$/.test(secret) && secret.length >= 64
+      ? decodeHex(secret)
+      : new TextEncoder().encode(secret);
   return crypto.subtle.importKey(
     'raw',
     keyBytes as Uint8Array<ArrayBuffer>,
@@ -106,7 +107,7 @@ export async function createSession(
   };
   const value = await signSession(payload, secret);
   const maxAge = Math.floor(SESSION_TTL_MS / 1000);
-  const setCookie = `${COOKIE_NAME}=${value}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`;
+  const setCookie = `${COOKIE_NAME}=${value}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Strict`;
   return { setCookie, payload };
 }
 
@@ -129,7 +130,7 @@ export async function handleSessionVerify(request: Request, env: Env): Promise<R
 }
 
 export function clearSessionCookie(): string {
-  return `${COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax`;
+  return `${COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Strict`;
 }
 
 /**

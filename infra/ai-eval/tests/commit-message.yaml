@@ -1,0 +1,20 @@
+- description: "Feature commit"
+  vars:
+    diff: |
+      + // Added user authentication middleware
+      + app.use(authMiddleware);
+      + app.post('/login', loginHandler);
+  assert:
+    - type: starts-with
+      value: "feat"
+    - type: contains
+      value: "("
+
+- description: "Bug fix commit"
+  vars:
+    diff: |
+      - const result = data[0].name;
+      + const result = data?.[0]?.name ?? 'unknown';
+  assert:
+    - type: starts-with
+      value: "fix"

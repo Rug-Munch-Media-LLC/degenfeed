@@ -1,0 +1,11 @@
+Review the following {{language}} code for bugs, security issues, and style violations:
+
+```{{language}}
+{{code}}
+```
+
+Provide a structured review with:
+1. Severity (critical/high/medium/low)
+2. File and line reference
+3. Issue description
+4. Suggested fix

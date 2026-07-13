@@ -11,18 +11,10 @@
  * post crypto/web3 content.
  */
 
-import { detectNiches, enrichPostNiches } from '@degenfeed/feed-core';
-import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
+import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
-import {
-  buildUrl,
-  DEFAULT_TIMEOUT_MS,
-  DEFAULT_USER_AGENT,
-  fetchJson,
-  fetchWithFallbacks,
-  withConcurrencyLimit,
-  withTimeout,
-} from '../utils';
+import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
 
 export const DEFAULT_HUB_URL = 'https://hub.pinata.cloud';
 export const FALLBACK_HUB_URLS = [
@@ -36,342 +28,107 @@ export const DEFAULT_FARCASTER_PUBLIC_API = 'https://api.farcaster.xyz';
 
 export const CURATED_FARCASTER_FIDS = [3, 2, 1, 99, 100, 215, 320, 602, 1234, 4242];
 
-export const CURATED_FARCASTER_USERNAMES = [
-  'vitalik.eth',
-  'dwr.eth',
-  'jessepollak',
-  'balajis',
-  'pmarca',
-  'naval',
-  'sama',
-  'twobitidiot',
-  'cdixon.eth',
-  'danromero',
-  'jessewldn',
-  'tonytradz',
-  'cryptoyieldinfo',
-  'defiprime',
-  'coopahtroopa',
-  'rleshner',
-  'stani',
-  'aaboronin',
-  'hosseeb',
-  'sassal0x',
-  '0xfoobar',
-  'kermankohli',
-  '0x_bentley',
-  'mikedemarais',
-  'bountykinds',
-  'brycent',
-  'ted',
-  'bendi',
-  'gavi',
-  'saori',
-  'rambles',
-  'midena',
-  'tushar',
-  'dom',
-  'nibnalin',
-  'steven',
-  'calaxy',
-  'jessica',
-  'yuga',
-  'farcaster',
-  'warpcast',
-  'kurt',
-];
-
-export const CRYPTO_SEARCH_TERMS = [
-  'bitcoin',
-  'ethereum',
-  'crypto',
-  'defi',
-  'web3',
-  'solana',
-  'nft',
-  'blockchain',
-  'btc',
-  'eth',
-];
-
-interface HubCastMessage {
-  data: {
-    castAddBody: {
-      text: string;
-      embeds: { url?: string }[];
-      parentCastId?: { hash: string; fid: number };
-      parentUrl?: string;
-    };
-    timestamp: number;
-  };
-  hash: string;
-}
-
-interface HubCastResponse {
-  messages?: HubCastMessage[];
-}
-
-interface HubUserDataBody {
-  type: string;
-  value: string;
-}
-
-interface HubUserDataMessage {
-  data: {
-    fid: number;
-    userDataBody: HubUserDataBody;
-  };
-  hash: string;
-}
-
-interface HubUserDataResponse {
-  messages?: HubUserDataMessage[];
-}
-
-interface FarcasterUserData {
-  username?: string;
-  displayName?: string;
-  pfp?: string;
-}
-
-interface PublicApiCast {
-  hash?: string;
-  fid?: number;
-  text?: string;
-  timestamp?: number;
-  embeds?: Array<{ url?: string; castId?: { fid: number; hash: string } }>;
-  author?: {
-    fid?: number;
-    username?: string;
-    displayName?: string;
-    pfp?: { url?: string };
-  };
-}
-
-function hubTimestampToMs(ts: number): number {
-  return (ts + 1609459200) * 1000;
-}
-
-function authorFromFid(fid: number, userData: FarcasterUserData | null): UnifiedIdentity {
-  const handle = userData?.username ? `${userData.username}` : `fid:${fid}`;
-  return {
-    id: `farcaster:${fid}`,
-    primary: { protocol: 'farcaster', id: String(fid) },
-    handles: {
-      nostr: null,
-      farcaster: handle,
-      lens: null,
-      bluesky: null,
-      threads: null,
-      rss: null,
-      mastodon: null,
-    },
-    displayName: userData?.displayName || userData?.username || `FID ${fid}`,
-    bio: '',
-    avatarUrl: userData?.pfp || '',
-    verified: [],
-    followerCount: 0,
-    followingCount: 0,
-    links: [],
-    keys: { fid },
-  };
-}
-
-function castToUnifiedPost(
-  msg: HubCastMessage,
-  fid: number,
-  userData: FarcasterUserData | null,
-): UnifiedPost {
-  const body = msg.data.castAddBody;
-  return {
-    id: `farcaster:${msg.hash}`,
-    protocol: 'farcaster',
-    author: authorFromFid(fid, userData),
-    text: body.text,
-    embeds: (body.embeds ?? [])
-      .filter((e): e is { url: string } => typeof e.url === 'string')
-      .map((e) => ({ kind: 'link' as const, url: e.url })),
-    parentId: body.parentCastId?.hash,
-    createdAt: hubTimestampToMs(msg.data.timestamp),
-    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    engagement: {
-      viewerLiked: false,
-      viewerReposted: false,
-      viewerBookmarked: false,
-      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    },
-    raw: msg,
-    niches: detectNiches(body.text),
-  };
-}
-
-function publicApiCastToUnifiedPost(c: PublicApiCast): UnifiedPost | null {
-  const fid = c.fid ?? c.author?.fid;
-  const text = c.text;
-  if (!fid || !text || !c.hash) return null;
-  const author: UnifiedIdentity = {
-    id: `farcaster:${fid}`,
-    primary: { protocol: 'farcaster', id: String(fid) },
-    handles: {
-      nostr: null,
-      farcaster: c.author?.username ?? null,
-      lens: null,
-      bluesky: null,
-      threads: null,
-      rss: null,
-      mastodon: null,
-    },
-    displayName: c.author?.displayName || c.author?.username || `FID ${fid}`,
-    bio: '',
-    avatarUrl: c.author?.pfp?.url || '',
-    verified: [],
-    followerCount: 0,
-    followingCount: 0,
-    links: [],
-    keys: { fid },
-  };
-  const embeds = (c.embeds ?? [])
-    .filter((e) => typeof e.url === 'string')
-    .map((e) => ({ kind: 'link' as const, url: e.url as string }));
-  return {
-    id: `farcaster:${c.hash}`,
-    protocol: 'farcaster',
-    author,
-    text,
-    embeds,
-    createdAt: c.timestamp ? c.timestamp * 1000 : Date.now(),
-    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    engagement: {
-      viewerLiked: false,
-      viewerReposted: false,
-      viewerBookmarked: false,
-      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    },
-    raw: c,
-    niches: detectNiches(text),
-  };
-}
-
-async function fetchCastsByFid(
-  baseUrl: string,
-  fid: number,
-  limit: number,
-): Promise<HubCastMessage[]> {
-  const url = buildUrl(baseUrl, '/v1/castsByFid', {
-    fid: String(fid),
-    pageSize: String(limit),
-  });
-  const data = await fetchJson<HubCastResponse>(url, {
-    headers: { 'user-agent': DEFAULT_USER_AGENT },
-  });
-  return data.messages ?? [];
-}
-
-async function fetchUserData(baseUrl: string, fid: number): Promise<FarcasterUserData | null> {
-  try {
-    const data = await fetchJson<HubUserDataResponse>(
-      buildUrl(baseUrl, '/v1/userDataByFid', { fid: String(fid) }),
-      { headers: { 'user-agent': DEFAULT_USER_AGENT } },
-    );
-    const result: FarcasterUserData = {};
-    for (const msg of data.messages ?? []) {
-      const body = msg.data?.userDataBody;
-      if (!body) continue;
-      if (body.type === 'USER_DATA_TYPE_USERNAME') result.username = body.value;
-      else if (body.type === 'USER_DATA_TYPE_DISPLAY') result.displayName = body.value;
-      else if (body.type === 'USER_DATA_TYPE_PFP') result.pfp = body.value;
-    }
-    return result.username ? result : null;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchUserNameProof(
-  baseUrl: string,
-  name: string,
-): Promise<{ fid: number; name: string } | null> {
-  try {
-    const data = await fetchJson<{ fid?: number; name?: string }>(
-      buildUrl(baseUrl, '/v1/userNameProofByName', { name }),
-      { headers: { 'user-agent': DEFAULT_USER_AGENT } },
-    );
-    return data.fid ? { fid: data.fid, name: data.name ?? name } : null;
-  } catch {
-    return null;
-  }
-}
-
-async function searchPublicApi(
-  apiUrl: string,
-  term: string,
-  limit: number,
-): Promise<PublicApiCast[]> {
-  try {
-    const url = buildUrl(apiUrl, '/v2/cast-search', {
-      q: term,
-      limit: String(limit),
-    });
-    const data = await fetchJson<{ result?: { casts?: PublicApiCast[] } }>(url, {
-      headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
-    });
-    return data.result?.casts ?? [];
-  } catch {
-    return [];
-  }
-}
-
 export interface FarcasterProviderOptions {
   hubUrl?: string;
   fallbackHubUrls?: string[];
   publicApiUrl?: string;
   curatedFids?: number[];
-  curatedUsernames?: string[];
 }
 
 export class FarcasterProvider implements FeedProvider {
   readonly protocol: Protocol = 'farcaster';
   private readonly primaryUrl: string;
-  private readonly fallbackUrls: string[];
   private readonly publicApiUrl: string;
   private readonly curatedFids: number[];
-  private readonly curatedUsernames: string[];
 
   constructor(options: FarcasterProviderOptions = {}) {
     this.primaryUrl = options.hubUrl || DEFAULT_HUB_URL;
-    this.fallbackUrls =
-      options.fallbackHubUrls ?? FALLBACK_HUB_URLS.filter((u) => u !== this.primaryUrl);
     this.publicApiUrl = options.publicApiUrl || DEFAULT_FARCASTER_PUBLIC_API;
     this.curatedFids = options.curatedFids ?? CURATED_FARCASTER_FIDS;
-    this.curatedUsernames = options.curatedUsernames ?? CURATED_FARCASTER_USERNAMES;
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const fids = [3, 1, 2, 99, 100, 5650, 15211, 307834, 6591, 269091];
+    const fids = this.curatedFids;
     const hub = this.primaryUrl;
+
     try {
+      const userDataMap = new Map<
+        number,
+        { username?: string; displayName?: string; pfp?: string }
+      >();
+
       const results = await Promise.allSettled(
-        fids.slice(0, 5).map(async (fid) => {
+        fids.slice(0, 8).map(async (fid) => {
           try {
-            const data = await withTimeout(
-              fetchJson<{
-                messages?: Array<{
-                  data: {
-                    timestamp: number;
-                    castAddBody?: { text?: string; embedsDeprecated?: Array<{ url?: string }> };
-                  };
-                  hash: string;
-                }>;
-              }>(buildUrl(hub, '/v1/castsByFid', { fid: String(fid), pageSize: '3' }), {
-                headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
+            const [castData, userData] = await Promise.all([
+              withTimeout(
+                fetchJson<{
+                  messages?: Array<{
+                    data: {
+                      timestamp: number;
+                      castAddBody?: { text?: string; embedsDeprecated?: Array<{ url?: string }> };
+                    };
+                    hash: string;
+                  }>;
+                }>(buildUrl(hub, '/v1/castsByFid', { fid: String(fid), pageSize: '3' }), {
+                  headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
+                }),
+                Math.min(timeoutMs, 5000),
+                `farcaster:fid:${fid}`,
+              ),
+              withTimeout(
+                fetchJson<{
+                  messages?: Array<{
+                    data: { userDataBody: { type: string; value: string } };
+                  }>;
+                }>(buildUrl(hub, '/v1/userDataByFid', { fid: String(fid) }), {
+                  headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
+                }),
+                Math.min(timeoutMs, 4000),
+                `farcaster:user:${fid}`,
+              ).catch(() => null),
+            ]);
+
+            const ud: { username?: string; displayName?: string; pfp?: string } = {};
+            for (const msg of userData?.messages ?? []) {
+              const body = msg.data?.userDataBody;
+              if (!body) continue;
+              if (body.type === 'USER_DATA_TYPE_USERNAME') ud.username = body.value;
+              else if (body.type === 'USER_DATA_TYPE_DISPLAY') ud.displayName = body.value;
+              else if (body.type === 'USER_DATA_TYPE_PFP') ud.pfp = body.value;
+            }
+            if (ud.username) userDataMap.set(fid, ud);
+
+            // Fetch reaction counts for each cast
+            const messages = castData.messages ?? [];
+            const reactionCounts = new Map<string, number>();
+            await Promise.allSettled(
+              messages.slice(0, 3).map(async (m) => {
+                try {
+                  const reactions = await withTimeout(
+                    fetchJson<{ messages?: Array<{ data: { reactionBody?: { type: string } } }> }>(
+                      buildUrl(hub, '/v1/reactionsByCast', {
+                        hash: m.hash,
+                        reaction_type: '1', // like
+                        pageSize: '100',
+                      }),
+                      { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
+                    ),
+                    Math.min(timeoutMs, 3000),
+                    `farcaster:reactions:${m.hash.slice(0, 8)}`,
+                  );
+                  reactionCounts.set(m.hash, (reactions.messages ?? []).length);
+                } catch {
+                  reactionCounts.set(m.hash, 0);
+                }
               }),
-              Math.min(timeoutMs, 4000),
-              'farcaster:fid:' + fid,
             );
-            return (data.messages ?? []).map((m) => {
+
+            return messages.map((m) => {
               const ts = (m.data.timestamp + 1609459200) * 1000;
               const text = m.data.castAddBody?.text ?? '';
+              const handle = ud.username ? `${ud.username}` : `fid:${fid}`;
               return buildUnifiedPost({
                 protocol: 'farcaster',
                 nativeId: m.hash,
@@ -380,25 +137,30 @@ export class FarcasterProvider implements FeedProvider {
                   primary: { protocol: 'farcaster', id: String(fid) },
                   handles: {
                     nostr: null,
-                    farcaster: `fid:${fid}`,
+                    farcaster: handle,
                     lens: null,
                     bluesky: null,
                     threads: null,
                     rss: null,
                     mastodon: null,
                   },
-                  displayName: `FID ${fid}`,
+                  displayName: ud.displayName || ud.username || `FID ${fid}`,
                   bio: '',
-                  avatarUrl: '',
+                  avatarUrl: ud.pfp || '',
                   verified: [],
                   followerCount: 0,
                   followingCount: 0,
                   links: [],
-                  keys: {},
+                  keys: { fid },
                 },
                 text,
-                createdAt: isNaN(ts) ? Date.now() : ts,
-                metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+                createdAt: Number.isNaN(ts) ? Date.now() : ts,
+                metrics: {
+                  likes: reactionCounts.get(m.hash) ?? 0,
+                  reposts: 0,
+                  replies: 0,
+                  quotes: 0,
+                },
                 raw: m,
               });
             });
@@ -407,10 +169,78 @@ export class FarcasterProvider implements FeedProvider {
           }
         }),
       );
+
       const all: UnifiedPost[] = [];
       for (const r of results) if (r.status === 'fulfilled') all.push(...r.value);
-      return all.length
-        ? { posts: all.map(enrichPostNiches) }
+
+      // Parallel: trending search via public API
+      const searchResults: UnifiedPost[] = [];
+      try {
+        const searchData = await withTimeout(
+          fetchJson<{
+            result?: {
+              casts?: Array<{
+                hash: string;
+                fid?: number;
+                text?: string;
+                timestamp?: number;
+                author?: {
+                  fid?: number;
+                  username?: string;
+                  displayName?: string;
+                  pfp?: { url?: string };
+                };
+              }>;
+            };
+          }>(buildUrl(this.publicApiUrl, '/v2/cast-search', { q: 'crypto', limit: '10' }), {
+            headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
+          }),
+          Math.min(timeoutMs, 5000),
+          'farcaster:search',
+        );
+        for (const c of searchData?.result?.casts ?? []) {
+          const fid = c.fid ?? c.author?.fid;
+          const text = c.text;
+          if (!fid || !text || !c.hash) continue;
+          searchResults.push(
+            buildUnifiedPost({
+              protocol: 'farcaster',
+              nativeId: c.hash,
+              author: {
+                id: `farcaster:${fid}`,
+                primary: { protocol: 'farcaster', id: String(fid) },
+                handles: {
+                  nostr: null,
+                  farcaster: c.author?.username ?? null,
+                  lens: null,
+                  bluesky: null,
+                  threads: null,
+                  rss: null,
+                  mastodon: null,
+                },
+                displayName: c.author?.displayName || c.author?.username || `FID ${fid}`,
+                bio: '',
+                avatarUrl: c.author?.pfp?.url || '',
+                verified: [],
+                followerCount: 0,
+                followingCount: 0,
+                links: [],
+                keys: { fid },
+              },
+              text,
+              createdAt: c.timestamp ? c.timestamp * 1000 : Date.now(),
+              metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+              raw: c,
+            }),
+          );
+        }
+      } catch {
+        /* search unavailable */
+      }
+
+      const merged = [...all, ...searchResults];
+      return merged.length
+        ? { posts: merged.map(enrichPostNiches) }
         : { posts: [], notice: 'Farcaster unavailable' };
     } catch (e) {
       return { posts: [], notice: e instanceof Error ? e.message : 'Farcaster unavailable' };

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { getProtocolColor } from './ProtocolBadge';
 
 export interface Notification {
   id: string;
@@ -145,17 +146,4 @@ export function NotificationBell({
       )}
     </div>
   );
-}
-
-function getProtocolColor(p: string): string {
-  const c: Record<string, string> = {
-    nostr: '#8e30eb',
-    farcaster: '#8a63d2',
-    lens: '#abfe2c',
-    bluesky: '#1185fe',
-    threads: '#888',
-    mastodon: '#6364ff',
-    rss: '#ffa500',
-  };
-  return c[p] ?? '#666';
 }

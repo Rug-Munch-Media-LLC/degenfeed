@@ -1,8 +1,6 @@
-import type { Metadata } from 'next';
-
 export const runtime = 'edge';
 
-export default function SecurityPage() {
+export function GET() {
   return new Response(
     [
       '# DegenFeed security.txt',

@@ -3,7 +3,7 @@
 export type { StoredBookmark } from './bookmarks';
 export { addBookmark, getBookmarks, isBookmarked, removeBookmark } from './bookmarks';
 export { cachePost, clearCache, getCachedPost } from './cache';
-export { getDb } from './db';
+export { closeDb, getDb } from './db';
 export { deleteDraft, getDrafts, saveDraft } from './drafts';
 export { deleteFollow, getFollows, isFollowing, saveFollow } from './follows';
 export {

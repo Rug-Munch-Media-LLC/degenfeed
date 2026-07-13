@@ -3,7 +3,7 @@ import { requireSession } from '../session';
 
 interface Notification {
   id: string;
-  type: 'like' | 'repost' | 'reply' | 'follow' | 'mention';
+  type: 'like' | 'repost' | 'reply' | 'follow' | 'mention' | 'mirror' | 'collect';
   protocol: string;
   actorName: string;
   actorHandle: string;
@@ -26,9 +26,11 @@ interface NotificationAuth {
     accessJwt?: string;
   };
   farcaster?: {
-    fid?: string;
+    fid?: number;
     signerKey?: string;
   };
+  lens?: string;
+  lens_profileId?: string;
 }
 
 interface MastodonAccount {
@@ -68,19 +70,68 @@ interface BlueskyNotification {
   indexedAt: string;
 }
 
-function npubToHex(npubOrHex: string): string {
+interface LensNotificationItem {
+  id: string;
+  notificationId?: string;
+  createdAt: string;
+  reactions?: Array<{
+    profile: {
+      id: string;
+      handle?: { localName: string };
+      metadata?: { displayName?: string; picture?: { optimized?: { uri?: string } } };
+    };
+  }>;
+  mirrors?: Array<{
+    profile: {
+      id: string;
+      handle?: { localName: string };
+      metadata?: { displayName?: string; picture?: { optimized?: { uri?: string } } };
+    };
+  }>;
+  comments?: Array<{
+    id: string;
+    profile: {
+      id: string;
+      handle?: { localName: string };
+      metadata?: { displayName?: string; picture?: { optimized?: { uri?: string } } };
+    };
+    metadata?: { content?: string };
+  }>;
+  quotes?: Array<{
+    id: string;
+    profile: {
+      id: string;
+      handle?: { localName: string };
+      metadata?: { displayName?: string; picture?: { optimized?: { uri?: string } } };
+    };
+    metadata?: { content?: string };
+  }>;
+  collects?: Array<{
+    profile: {
+      id: string;
+      handle?: { localName: string };
+      metadata?: { displayName?: string; picture?: { optimized?: { uri?: string } } };
+    };
+  }>;
+  follows?: Array<{
+    profile: {
+      id: string;
+      handle?: { localName: string };
+      metadata?: { displayName?: string; picture?: { optimized?: { uri?: string } } };
+    };
+  }>;
+  publication?: { id: string; metadata?: { content?: string } };
+}
+
+async function npubToHex(npubOrHex: string): Promise<string> {
   if (!npubOrHex) return '';
   if (npubOrHex.startsWith('npub1') && npubOrHex.length === 62) {
     try {
-      const mod = require('@degenfeed/nostr-sdk') as {
-        nip19?: { decode?: (s: string) => { type: string; data: string } };
-      };
-      const decoded = mod.nip19?.decode?.(npubOrHex);
-      if (decoded && decoded.type === 'npub' && typeof decoded.data === 'string') {
-        return decoded.data;
-      }
-    } catch {
-      /* fall through */
+      const mod = await import('@degenfeed/nostr-sdk');
+      const hex = mod.npubDecode(npubOrHex);
+      if (hex && typeof hex === 'string') return hex;
+    } catch (err) {
+      console.warn('[notifications] npub decode failed:', err instanceof Error ? err.message : err);
     }
   }
   return npubOrHex;
@@ -88,7 +139,7 @@ function npubToHex(npubOrHex: string): string {
 
 async function fetchNostrNotifications(pubkey: string): Promise<Notification[]> {
   const results: Notification[] = [];
-  const hexPubkey = npubToHex(pubkey);
+  const hexPubkey = await npubToHex(pubkey);
   if (!hexPubkey) return results;
   try {
     const mod = await import('@degenfeed/nostr-sdk');
@@ -100,7 +151,7 @@ async function fetchNostrNotifications(pubkey: string): Promise<Notification[]> 
       if (!ev.tags.some((t: string[]) => t[0] === 'p' && t[1] === hexPubkey)) continue;
       results.push({
         id: `nostr:reaction:${ev.id}`,
-        type: 'like' as const,
+        type: 'like',
         protocol: 'nostr',
         actorName: ev.pubkey.slice(0, 12),
         actorHandle: ev.pubkey.slice(0, 12),
@@ -118,7 +169,7 @@ async function fetchNostrNotifications(pubkey: string): Promise<Notification[]> 
         continue;
       results.push({
         id: `nostr:mention:${ev.id}`,
-        type: 'mention' as const,
+        type: 'mention',
         protocol: 'nostr',
         actorName: ev.pubkey.slice(0, 12),
         actorHandle: ev.pubkey.slice(0, 12),
@@ -129,7 +180,12 @@ async function fetchNostrNotifications(pubkey: string): Promise<Notification[]> 
       });
     }
     pool.disconnectAll();
-  } catch {}
+  } catch (err) {
+    console.error(
+      '[notifications] fetchNostrNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
   return results;
 }
 
@@ -164,7 +220,12 @@ async function fetchMastodonNotifications(
         read: false,
       });
     }
-  } catch {}
+  } catch (err) {
+    console.error(
+      '[notifications] fetchMastodonNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
   return results;
 }
 
@@ -204,8 +265,208 @@ async function fetchBlueskyNotifications(
         read: n.isRead,
       });
     }
-  } catch {}
+  } catch (err) {
+    console.error(
+      '[notifications] fetchBlueskyNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
   return results;
+}
+
+async function fetchFarcasterNotifications(env: Env, fid: number): Promise<Notification[]> {
+  const results: Notification[] = [];
+  const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.pinata.cloud';
+  try {
+    // Fetch reactions targeting the user's casts
+    const reactionsRes = await fetch(
+      `${hubUrl}/v1/reactionsByFid?fid=${fid}&reaction_type=1&pageSize=20`,
+      { headers: { 'user-agent': 'DegenFeed/0.1', accept: 'application/json' } },
+    );
+    if (reactionsRes.ok) {
+      const data = (await reactionsRes.json()) as {
+        messages?: Array<{
+          data: {
+            timestamp: number;
+            reactionBody?: { targetCastId?: { fid: number; hash: string }; type: string };
+          };
+          hash: string;
+        }>;
+      };
+      for (const m of data.messages ?? []) {
+        results.push({
+          id: `farcaster:reaction:${m.hash}`,
+          type: 'like',
+          protocol: 'farcaster',
+          actorName: `FID ${fid}`,
+          actorHandle: `fid:${fid}`,
+          postId: m.data.reactionBody?.targetCastId?.hash,
+          createdAt: (m.data.timestamp + 1609459200) * 1000,
+          read: false,
+        });
+      }
+    }
+  } catch (err) {
+    console.error(
+      '[notifications] fetchFarcasterNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
+  return results;
+}
+
+interface LensProfileRef {
+  profile?: {
+    id?: string;
+    handle?: { localName?: string };
+    metadata?: {
+      displayName?: string;
+      picture?: { optimized?: { uri?: string } };
+    };
+  };
+}
+
+function processLensProfile(p: LensProfileRef | undefined) {
+  return {
+    name: p?.profile?.metadata?.displayName || p?.profile?.handle?.localName || '',
+    handle: p?.profile?.handle?.localName || '',
+    avatar: p?.profile?.metadata?.picture?.optimized?.uri,
+  };
+}
+
+async function fetchLensNotifications(
+  accessToken: string,
+  profileId: string,
+): Promise<Notification[]> {
+  const results: Notification[] = [];
+  try {
+    const res = await fetch('https://api-v2.lens.dev/graphql', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({
+        query: `query Notifications($request: NotificationRequest!) {
+          notifications(request: $request) {
+            items {
+              ... on ReactionNotification { id createdAt reactions { profile { id handle { localName } metadata { displayName picture { optimized { uri } } } } } publication { id metadata { content } } }
+              ... on MirrorNotification { id createdAt mirrors { profile { id handle { localName } metadata { displayName picture { optimized { uri } } } } } publication { id metadata { content } } }
+              ... on CommentNotification { id createdAt comment { id profile { id handle { localName } metadata { displayName picture { optimized { uri } } } } metadata { content } } publication { id metadata { content } } }
+              ... on QuoteNotification { id createdAt quote { id profile { id handle { localName } metadata { displayName picture { optimized { uri } } } } metadata { content } } publication { id metadata { content } } }
+              ... on FollowNotification { id createdAt followers { profile { id handle { localName } metadata { displayName picture { optimized { uri } } } } } }
+              ... on CollectNotification { id createdAt collectors { profile { id handle { localName } metadata { displayName picture { optimized { uri } } } } } publication { id metadata { content } } }
+            }
+          }
+        }`,
+        variables: { request: { for: profileId, limit: '30' } },
+      }),
+    });
+    if (!res.ok) return results;
+    const data = (await res.json()) as {
+      data?: { notifications?: { items?: LensNotificationItem[] } };
+    };
+    for (const item of data?.data?.notifications?.items ?? []) {
+      if (item.reactions && item.reactions.length > 0) {
+        const actor = processLensProfile(item.reactions?.[0]);
+        results.push({
+          id: `lens:${item.id}`,
+          type: 'like',
+          protocol: 'lens',
+          actorName: actor.name,
+          actorHandle: actor.handle,
+          actorAvatar: actor.avatar,
+          postId: item.publication?.id,
+          postText: item.publication?.metadata?.content?.slice(0, 100),
+          createdAt: new Date(item.createdAt).getTime(),
+          read: false,
+        });
+      }
+      if (item.mirrors && item.mirrors.length > 0) {
+        const actor = processLensProfile(item.mirrors[0]);
+        results.push({
+          id: `lens:mirror:${item.id}`,
+          type: 'mirror',
+          protocol: 'lens',
+          actorName: actor.name,
+          actorHandle: actor.handle,
+          actorAvatar: actor.avatar,
+          postId: item.publication?.id,
+          postText: item.publication?.metadata?.content?.slice(0, 100),
+          createdAt: new Date(item.createdAt).getTime(),
+          read: false,
+        });
+      }
+      if (item.comments && item.comments.length > 0) {
+        const c = item.comments[0]!;
+        results.push({
+          id: `lens:comment:${c.id}`,
+          type: 'reply',
+          protocol: 'lens',
+          actorName: c.profile?.metadata?.displayName || c.profile?.handle?.localName || '',
+          actorHandle: c.profile?.handle?.localName || '',
+          actorAvatar: c.profile?.metadata?.picture?.optimized?.uri,
+          postId: c.id,
+          postText: c.metadata?.content?.slice(0, 100),
+          createdAt: new Date(item.createdAt).getTime(),
+          read: false,
+        });
+      }
+      if (item.collects && item.collects.length > 0) {
+        const actor = processLensProfile(item.collects?.[0]);
+        results.push({
+          id: `lens:collect:${item.id}`,
+          type: 'collect',
+          protocol: 'lens',
+          actorName: actor.name,
+          actorHandle: actor.handle,
+          actorAvatar: actor.avatar,
+          postId: item.publication?.id,
+          createdAt: new Date(item.createdAt).getTime(),
+          read: false,
+        });
+      }
+      if (item.follows && item.follows.length > 0) {
+        const actor = processLensProfile(item.follows?.[0]);
+        results.push({
+          id: `lens:follow:${item.id}`,
+          type: 'follow',
+          protocol: 'lens',
+          actorName: actor.name,
+          actorHandle: actor.handle,
+          actorAvatar: actor.avatar,
+          createdAt: new Date(item.createdAt).getTime(),
+          read: false,
+        });
+      }
+    }
+  } catch (err) {
+    console.error(
+      '[notifications] fetchLensNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
+  return results;
+}
+
+async function loadReadState(env: Env, userId: string): Promise<Set<string>> {
+  if (!env.CACHE) return new Set();
+  try {
+    const raw = await env.CACHE.get(`notif:read:${userId}`);
+    if (!raw) return new Set();
+    return new Set<string>(JSON.parse(raw) as string[]);
+  } catch (err) {
+    console.warn('[notifications] loadReadState failed:', err instanceof Error ? err.message : err);
+    return new Set();
+  }
+}
+
+async function saveReadState(env: Env, userId: string, readIds: Set<string>): Promise<void> {
+  if (!env.CACHE) return;
+  try {
+    await env.CACHE.put(`notif:read:${userId}`, JSON.stringify([...readIds]), {
+      expirationTtl: 30 * 86400,
+    });
+  } catch (err) {
+    console.warn('[notifications] saveReadState failed:', err instanceof Error ? err.message : err);
+  }
 }
 
 async function parseAuth(request: Request): Promise<NotificationAuth> {
@@ -213,12 +474,13 @@ async function parseAuth(request: Request): Promise<NotificationAuth> {
     try {
       const body = (await request.json()) as { auth?: NotificationAuth };
       return body.auth ?? {};
-    } catch {}
+    } catch (err) {
+      console.warn(
+        '[notifications] parseAuth JSON parse failed:',
+        err instanceof Error ? err.message : err,
+      );
+    }
   }
-  try {
-    const url = new URL(request.url);
-    return JSON.parse(decodeURIComponent(url.searchParams.get('auth') || '{}')) as NotificationAuth;
-  } catch {}
   return {};
 }
 
@@ -226,32 +488,105 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
+  const userId = session.address || 'anon';
   const auth = await parseAuth(request);
   const all: Notification[] = [];
 
+  const fetchers: Promise<void>[] = [];
+
   if (auth.nostr_pubkey) {
-    try {
-      all.push(...(await fetchNostrNotifications(auth.nostr_pubkey)));
-    } catch {}
+    fetchers.push(
+      (async () => {
+        try {
+          all.push(...(await fetchNostrNotifications(auth.nostr_pubkey!)));
+        } catch (err) {
+          console.error(
+            '[notifications] nostr fetcher failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
+      })(),
+    );
   }
-
   if (auth.mastodon) {
-    try {
-      all.push(
-        ...(await fetchMastodonNotifications(
-          auth.mastodon_instance || 'https://social.degenfeed.xyz',
-          auth.mastodon,
-        )),
-      );
-    } catch {}
+    fetchers.push(
+      (async () => {
+        try {
+          all.push(
+            ...(await fetchMastodonNotifications(
+              auth.mastodon_instance || 'https://social.degenfeed.xyz',
+              auth.mastodon!,
+            )),
+          );
+        } catch (err) {
+          console.error(
+            '[notifications] mastodon fetcher failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
+      })(),
+    );
+  }
+  if (auth.bluesky?.accessJwt) {
+    fetchers.push(
+      (async () => {
+        try {
+          all.push(
+            ...(await fetchBlueskyNotifications('https://bsky.social', auth.bluesky?.accessJwt!)),
+          );
+        } catch (err) {
+          console.error(
+            '[notifications] bluesky fetcher failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
+      })(),
+    );
+  }
+  if (auth.farcaster?.fid) {
+    fetchers.push(
+      (async () => {
+        try {
+          all.push(...(await fetchFarcasterNotifications(env, auth.farcaster?.fid!)));
+        } catch (err) {
+          console.error(
+            '[notifications] farcaster fetcher failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
+      })(),
+    );
+  }
+  if (auth.lens && auth.lens_profileId) {
+    fetchers.push(
+      (async () => {
+        try {
+          all.push(...(await fetchLensNotifications(auth.lens!, auth.lens_profileId!)));
+        } catch (err) {
+          console.error(
+            '[notifications] lens fetcher failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
+      })(),
+    );
   }
 
-  if (auth.bluesky?.accessJwt) {
-    try {
-      all.push(...(await fetchBlueskyNotifications('https://bsky.social', auth.bluesky.accessJwt)));
-    } catch {}
+  await Promise.allSettled(fetchers);
+
+  // Merge read state from KV
+  const readIds = await loadReadState(env, userId);
+  for (const n of all) {
+    if (readIds.has(n.id)) n.read = true;
   }
 
   all.sort((a, b) => b.createdAt - a.createdAt);
+
+  // Auto-save read state for seen notifications
+  void (async () => {
+    const ids = new Set(all.slice(0, 50).map((n) => n.id));
+    await saveReadState(env, userId, ids);
+  })();
+
   return noCacheJsonResponse({ notifications: all.slice(0, 50), meta: { total: all.length } });
 }

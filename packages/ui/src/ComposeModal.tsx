@@ -51,6 +51,7 @@ export interface ComposeModalProps {
   onPublish: (
     text: string,
     targets: string[],
+    opts?: { lensCollect?: boolean },
   ) => Promise<Record<string, { ok: boolean; error?: string }>>;
   /** Called when a disconnected protocol is clicked. */
   onRequestSignIn?: (protocol: string) => void;
@@ -92,6 +93,7 @@ export function ComposeModal({
   const publishingRef = useRef(false);
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [bridgeToNostr, setBridgeToNostr] = useState(false);
+  const [lensCollect, setLensCollect] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Load draft from localStorage
@@ -175,7 +177,9 @@ export function ComposeModal({
     setTargets((prev) => prev.map((t) => (t.enabled ? { ...t, status: 'sending' as const } : t)));
 
     try {
-      const results = await onPublish(text, selectedTargets);
+      const opts =
+        selectedTargets.includes('lens') && lensCollect ? { lensCollect: true } : undefined;
+      const results = await onPublish(text, selectedTargets, opts);
       setTargets((prev) =>
         prev.map((t) => {
           if (!t.enabled) return t;
@@ -221,7 +225,16 @@ export function ComposeModal({
       publishingRef.current = false;
       setPublishing(false);
     }
-  }, [text, targets, onPublish, onClose, bridgeToNostr, nostrBridgePublicId, onNostrBridge]);
+  }, [
+    text,
+    targets,
+    onPublish,
+    onClose,
+    bridgeToNostr,
+    nostrBridgePublicId,
+    onNostrBridge,
+    lensCollect,
+  ]);
 
   // Keyboard shortcut
   useEffect(() => {
@@ -408,6 +421,23 @@ export function ComposeModal({
                 </span>
                 <span className="text-[10px] text-gray-600">
                   (signed locally with your Nostr key)
+                </span>
+              </label>
+            )}
+
+            {targets.find((t) => t.id === 'lens')?.enabled && (
+              <label className="mb-3 flex items-center gap-2 text-xs text-gray-400">
+                <input
+                  type="checkbox"
+                  checked={lensCollect}
+                  onChange={(e) => setLensCollect(e.target.checked)}
+                  className="h-3 w-3 rounded border-white/20 bg-gray-900 text-degen-500 focus:ring-degen-500"
+                />
+                <span>
+                  Enable <span className="font-medium text-green-400">Free Collect</span> on Lens
+                </span>
+                <span className="text-[10px] text-gray-600">
+                  (anyone can mint this post as an NFT)
                 </span>
               </label>
             )}

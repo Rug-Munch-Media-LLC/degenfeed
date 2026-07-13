@@ -2,10 +2,13 @@
 
 import { addBookmark, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction } from '@degenfeed/types';
-import { FeedList, NotificationBell, type UnifiedPost } from '@degenfeed/ui';
-import { useEffect, useState } from 'react';
+import { ErrorBoundary, FeedList, NotificationBell, type UnifiedPost } from '@degenfeed/ui';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
+import { FeedPollerBanner } from '../../../components/FeedPollerBanner';
 import { TipModal } from '../../../components/TipModal';
+import { useFeedPoller } from '../../../hooks/useFeedPoller';
 import { useNotifications } from '../../../hooks/useNotifications';
 import { SECTIONS } from '../sections';
 
@@ -167,6 +170,7 @@ interface FeedMeta {
 
 function SectionContent({ section }: { section: string }) {
   const { signedInProtocols, engage, openSignIn, openCompose } = useAuth();
+  const router = useRouter();
   const meta = SECTIONS.find((s) => s.id === section);
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
@@ -177,10 +181,50 @@ function SectionContent({ section }: { section: string }) {
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
   const { notifications, unreadCount, fetchNotifications, markRead } =
     useNotifications(hasSignedIn);
-  useEffect(() => {
-    const feedInterval = setInterval(() => setRefreshKey((k) => k + 1), 60000);
-    return () => clearInterval(feedInterval);
-  }, []);
+
+  // Stable fetch function shared by the main loader and the poller.
+  // Returns the raw API response so the caller can destructure both posts
+  // and metadata (notices, errors, trending).
+  const fetchFeed = useCallback(async (): Promise<{
+    data: UnifiedPost[];
+    meta?: FeedMeta;
+  }> => {
+    const currentMeta = SECTIONS.find((s) => s.id === section);
+    const url = new URL(currentMeta?.endpoint || '/api/feed/home', window.location.origin);
+    url.searchParams.set('limit', String(currentMeta?.limit || 25));
+    if (currentMeta?.params) {
+      for (const [k, v] of Object.entries(currentMeta.params)) url.searchParams.set(k, v);
+    }
+    let res = await fetch(url.toString(), {
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { 'cache-control': 'no-store' },
+    });
+    let body = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
+    if (!body.data?.length && section === 'all') {
+      const rssUrl = new URL('/api/feed/rss', window.location.origin);
+      rssUrl.searchParams.set('source', 'reddit');
+      rssUrl.searchParams.set('handle', 'CryptoCurrency');
+      rssUrl.searchParams.set('limit', '25');
+      res = await fetch(rssUrl.toString(), {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'cache-control': 'no-store' },
+      });
+      body = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
+    }
+    return { data: body.data || [], meta: body.meta };
+  }, [section]);
+
+  // Poll for new posts in the background (only needs the data array)
+  const { newPostCount, refresh: resetNewPosts } = useFeedPoller(
+    async () => {
+      const result = await fetchFeed();
+      return result.data;
+    },
+    60_000,
+    true,
+  );
 
   useEffect(() => {
     void refreshKey;
@@ -188,33 +232,11 @@ function SectionContent({ section }: { section: string }) {
     async function load() {
       setState('loading');
       try {
-        const url = new URL(meta?.endpoint || '/api/feed/home', window.location.origin);
-        url.searchParams.set('limit', String(meta?.limit || 25));
-        if (meta?.params) {
-          for (const [k, v] of Object.entries(meta.params)) url.searchParams.set(k, v);
-        }
-        let res = await fetch(url.toString(), {
-          credentials: 'include',
-          cache: 'no-store',
-          headers: { 'cache-control': 'no-store' },
-        });
-        let data = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
-        if (!data.data?.length && section === 'all') {
-          const rssUrl = new URL('/api/feed/rss', window.location.origin);
-          rssUrl.searchParams.set('source', 'reddit');
-          rssUrl.searchParams.set('handle', 'CryptoCurrency');
-          rssUrl.searchParams.set('limit', '25');
-          res = await fetch(rssUrl.toString(), {
-            credentials: 'include',
-            cache: 'no-store',
-            headers: { 'cache-control': 'no-store' },
-          });
-          data = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
-        }
+        const result = await fetchFeed();
         if (cancelled) return;
-        setPosts(data.data || []);
-        setFeedMeta(data.meta || {});
-        setState(data.data?.length ? 'loaded' : 'empty');
+        setPosts(result.data);
+        setFeedMeta(result.meta ?? {});
+        setState(result.data.length ? 'loaded' : 'empty');
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed');
@@ -226,7 +248,7 @@ function SectionContent({ section }: { section: string }) {
     return () => {
       cancelled = true;
     };
-  }, [section, meta, refreshKey]);
+  }, [fetchFeed, refreshKey]);
 
   const displayName = meta?.label ?? section;
   const color = meta?.color ?? '#666';
@@ -253,133 +275,137 @@ function SectionContent({ section }: { section: string }) {
     return engage(action, postId, post.protocol, { content });
   };
 
-  const handleRetry = () => setRefreshKey((k) => k + 1);
+  const handleRetry = () => {
+    resetNewPosts();
+    setRefreshKey((k) => k + 1);
+  };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-4">
-      <SectionNav current={section} />
+    <ErrorBoundary>
+      <div className="mx-auto max-w-2xl px-4 py-4">
+        <FeedPollerBanner count={newPostCount} onRefresh={handleRetry} />
+        <SectionNav current={section} />
 
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl" style={{ color }}>
-            {icon}
-          </span>
-          <div>
-            <h1 className="text-lg font-bold text-white">{displayName}</h1>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl" style={{ color }}>
+              {icon}
+            </span>
+            <div>
+              <h1 className="text-lg font-bold text-white">{displayName}</h1>
+            </div>
+            <span
+              className="rounded-full px-2 py-0.5 text-xs font-medium"
+              style={{ backgroundColor: `${color}22`, color }}
+            >
+              {displayName}
+            </span>
           </div>
-          <span
-            className="rounded-full px-2 py-0.5 text-xs font-medium"
-            style={{ backgroundColor: `${color}22`, color }}
-          >
-            {displayName}
-          </span>
+          <div className="flex items-center gap-2">
+            {hasSignedIn && (
+              <NotificationBell
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onFetch={fetchNotifications}
+                onMarkRead={markRead}
+              />
+            )}
+            {hasSignedIn ? (
+              <button type="button" className="btn-primary text-xs" onClick={openCompose}>
+                Compose
+              </button>
+            ) : (
+              <button type="button" className="btn-secondary text-xs" onClick={openSignIn}>
+                Sign In
+              </button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {hasSignedIn && (
-            <NotificationBell
-              notifications={notifications}
-              unreadCount={unreadCount}
-              onFetch={fetchNotifications}
-              onMarkRead={markRead}
-            />
-          )}
-          {hasSignedIn ? (
-            <button type="button" className="btn-primary text-xs" onClick={openCompose}>
-              Compose
-            </button>
-          ) : (
-            <button type="button" className="btn-secondary text-xs" onClick={openSignIn}>
-              Sign In
-            </button>
-          )}
-        </div>
-      </div>
 
-      {feedMeta.notices && feedMeta.notices.length > 0 && (
-        <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-3 text-xs text-yellow-400">
-          {feedMeta.notices.map((n) => (
-            <div key={n}>{n}</div>
-          ))}
-        </div>
-      )}
+        {feedMeta.notices && feedMeta.notices.length > 0 && (
+          <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-3 text-xs text-yellow-400">
+            {feedMeta.notices.map((n) => (
+              <div key={n}>{n}</div>
+            ))}
+          </div>
+        )}
 
-      {feedMeta.errors && feedMeta.errors.length > 0 && (
-        <div className="mb-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
-          {feedMeta.errors.map((e) => (
-            <div key={e}>{e}</div>
-          ))}
-        </div>
-      )}
+        {feedMeta.errors && feedMeta.errors.length > 0 && (
+          <div className="mb-3 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
+            {feedMeta.errors.map((e) => (
+              <div key={e}>{e}</div>
+            ))}
+          </div>
+        )}
 
-      {feedMeta.trending && feedMeta.trending.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2">
-          {feedMeta.trending.map((t) => (
-            <span
-              key={t.topic}
-              className="rounded-full border border-degen-500/30 bg-degen-500/10 px-2 py-0.5 text-xs text-degen-400"
-            >
-              {t.topic}
-            </span>
-          ))}
-        </div>
-      )}
+        {feedMeta.trending && feedMeta.trending.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {feedMeta.trending.map((t) => (
+              <span
+                key={t.topic}
+                className="rounded-full border border-degen-500/30 bg-degen-500/10 px-2 py-0.5 text-xs text-degen-400"
+              >
+                {t.topic}
+              </span>
+            ))}
+          </div>
+        )}
 
-      {hasSignedIn && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-          <span className="text-degen-400">Signed in:</span>
-          {Object.keys(signedInProtocols).map((p) => (
-            <span
-              key={p}
-              className="rounded-full px-2 py-0.5 font-medium"
-              style={{ backgroundColor: `${getProtocolColor(p)}22`, color: getProtocolColor(p) }}
-            >
-              {p}
-            </span>
-          ))}
-          <a href="/profile" className="ml-auto text-degen-500 hover:underline">
-            Profile
-          </a>
-        </div>
-      )}
+        {hasSignedIn && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+            <span className="text-degen-400">Signed in:</span>
+            {Object.keys(signedInProtocols).map((p) => (
+              <span
+                key={p}
+                className="rounded-full px-2 py-0.5 font-medium"
+                style={{ backgroundColor: `${getProtocolColor(p)}22`, color: getProtocolColor(p) }}
+              >
+                {p}
+              </span>
+            ))}
+            <a href="/profile" className="ml-auto text-degen-500 hover:underline">
+              Profile
+            </a>
+          </div>
+        )}
 
-      <FeedList
-        state={state}
-        posts={posts}
-        error={error}
-        protocolLabel={displayName}
-        onPostClick={(id) => {
-          window.location.href = `/post/${encodeURIComponent(id)}`;
-        }}
-        onEngage={handleEngage}
-        onTip={(post) => setTipPost(post)}
-        onRetry={handleRetry}
-      />
-
-      <SectionEmptyState
-        section={section}
-        state={state}
-        hasSignedIn={hasSignedIn}
-        onSignIn={openSignIn}
-        onRetry={handleRetry}
-      />
-
-      {tipPost && (
-        <TipModal
-          open={!!tipPost}
-          onClose={() => setTipPost(null)}
-          recipientProtocol={tipPost.protocol}
-          recipientAuthorId={tipPost.author.id}
-          recipientDisplayName={tipPost.author.displayName}
-          publicationId={
-            tipPost.protocol === 'lens' ? (tipPost.raw as { id?: string })?.id : undefined
-          }
+        <FeedList
+          state={state}
+          posts={posts}
+          error={error}
+          protocolLabel={displayName}
+          onPostClick={(id) => router.push(`/post/${encodeURIComponent(id)}`)}
+          onEngage={handleEngage}
+          onTip={(post) => setTipPost(post)}
+          onRetry={handleRetry}
         />
-      )}
-    </div>
+
+        <SectionEmptyState
+          section={section}
+          state={state}
+          hasSignedIn={hasSignedIn}
+          onSignIn={openSignIn}
+          onRetry={handleRetry}
+        />
+
+        {tipPost && (
+          <TipModal
+            open={!!tipPost}
+            onClose={() => setTipPost(null)}
+            recipientProtocol={tipPost.protocol}
+            recipientAuthorId={tipPost.author.id}
+            recipientDisplayName={tipPost.author.displayName}
+            publicationId={
+              tipPost.protocol === 'lens' ? (tipPost.raw as { id?: string })?.id : undefined
+            }
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 
 export default async function SectionPage({ params }: Props) {
   const section = (await params).section;
-  return <SectionContent section={section} />;
+  return <SectionContent key={section} section={section} />;
 }

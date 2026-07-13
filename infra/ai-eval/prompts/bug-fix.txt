@@ -1,0 +1,10 @@
+Fix the following bug in {{language}}:
+
+Issue: {{issue}}
+
+Code:
+```{{language}}
+{{code}}
+```
+
+Provide ONLY the fixed code with a brief explanation of the change.
