@@ -217,8 +217,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 publicId: pubkey,
                 handle: pubkey.slice(0, 12),
                 displayName: pubkey.slice(0, 12),
-              secret: null,
-              isPrimary: false,
+                secret: null,
+                isPrimary: false,
               });
               await saveIdentity(record);
               await refresh();
@@ -366,52 +366,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       // Farcaster — sign and publish client-side (never send signer key to the server).
       else if (protocol === 'farcaster') {
-        const farcasterIdent = identities.find((i) => i.protocol === "farcaster");
-        if (!farcasterIdent) return { ok: false, error: "No Farcaster identity linked" };
+        const farcasterIdent = identities.find((i) => i.protocol === 'farcaster');
+        if (!farcasterIdent) return { ok: false, error: 'No Farcaster identity linked' };
 
         let signerKeyHex = null;
-        if (farcasterIdent.encryptedSecret) {
+        if (farcasterIdent.encryptedSecret && farcasterIdent.salt && farcasterIdent.iv) {
           try {
-            const { decryptSecret } = await import("@degenfeed/auth");
+            const { decryptSecret } = await import('@degenfeed/auth');
+
+            // Derive passphrase from the user's Farcaster FID (unique, stable per identity).
+            // Falls back to a session-stored random value if FID is unavailable.
+            let passphrase = farcasterIdent.publicId;
+            if (!passphrase) {
+              passphrase = sessionStorage.getItem('degenfeed_farcaster_passphrase');
+              if (!passphrase) {
+                passphrase = crypto.randomUUID();
+                sessionStorage.setItem('degenfeed_farcaster_passphrase', passphrase);
+              }
+            }
+
             signerKeyHex = await decryptSecret(
-              { ciphertext: farcasterIdent.encryptedSecret, salt: farcasterIdent.salt, iv: farcasterIdent.iv },
-              "auto-unlock-passphrase",
+              {
+                ciphertext: farcasterIdent.encryptedSecret,
+                salt: farcasterIdent.salt,
+                iv: farcasterIdent.iv,
+              },
+              passphrase,
             );
           } catch {
-            return { ok: false, error: "Could not decrypt Farcaster signer key. Re-link your account." };
+            return {
+              ok: false,
+              error:
+                'Could not decrypt the stored Farcaster signer key. The encryption key may be corrupted or linked to a different session. Re-link your Farcaster account to generate a new signer key.',
+            };
           }
         }
         if (!signerKeyHex) {
-          // Try the keys field (honest storage path)
           signerKeyHex = farcasterIdent.keys?._secret as string | undefined;
         }
         if (!signerKeyHex) {
-          return { ok: false, error: "Farcaster signer key not found. Sign in with a self-custody signer key." };
+          return {
+            ok: false,
+            error:
+              'Farcaster signer key not found. Sign in with a self-custody signer key via Settings.',
+          };
         }
 
         const fid = parseInt(farcasterIdent.publicId, 10);
-        if (isNaN(fid)) return { ok: false, error: "Invalid Farcaster FID" };
+        if (isNaN(fid)) return { ok: false, error: 'Invalid Farcaster FID' };
 
-        const nativeId = postId.startsWith("farcaster:")
-          ? postId.slice("farcaster:".length)
-          : postId.startsWith("fc:")
-            ? postId.slice("fc:".length)
+        const nativeId = postId.startsWith('farcaster:')
+          ? postId.slice('farcaster:'.length)
+          : postId.startsWith('fc:')
+            ? postId.slice('fc:'.length)
             : postId;
 
-        const targetFid = opts.target?.authorId
-          ? parseInt(opts.target.authorId, 10)
-          : 0;
+        const targetFid = opts.target?.authorId ? parseInt(opts.target.authorId, 10) : 0;
         const castHashHex = nativeId;
 
         if (castHashHex.length < 40) {
-          return { ok: false, error: "Invalid Farcaster cast hash" };
+          return { ok: false, error: 'Invalid Farcaster cast hash' };
         }
 
-        if (action !== "like" && action !== "unlike" && action !== "repost" && action !== "reply") {
+        if (action !== 'like' && action !== 'unlike' && action !== 'repost' && action !== 'reply') {
           return { ok: false, error: `${action} not supported on Farcaster` };
         }
 
-        const { engageFarcaster } = await import("@degenfeed/farcaster-sdk");
+        const { engageFarcaster } = await import('@degenfeed/farcaster-sdk');
         const result = await engageFarcaster({
           action: action,
           signerKeyHex,
@@ -504,27 +525,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }, [primaryIdentity, linkedIdentities]);
 
+  const openSignIn = useCallback(() => setShowSignIn(true), []);
+  const openCompose = useCallback(() => setShowCompose(true), []);
+
+  const contextValue = useMemo(
+    () => ({
+      signedInProtocols,
+      tokens,
+      walletAddress,
+      primaryIdentity,
+      linkedIdentities,
+      isWalletOnly,
+      linkGtsUrl,
+      openSignIn,
+      openCompose,
+      signOut: handleSignOut,
+      nostrPublicId,
+      publish: handlePublish,
+      engage: handleEngage,
+      ready,
+      setPrimaryIdentity: handleSetPrimary,
+      unlinkIdentity: handleUnlink,
+    }),
+    [
+      signedInProtocols,
+      tokens,
+      walletAddress,
+      primaryIdentity,
+      linkedIdentities,
+      isWalletOnly,
+      linkGtsUrl,
+      openSignIn,
+      openCompose,
+      handleSignOut,
+      nostrPublicId,
+      handlePublish,
+      handleEngage,
+      ready,
+      handleSetPrimary,
+      handleUnlink,
+    ],
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        signedInProtocols,
-        tokens,
-        walletAddress,
-        primaryIdentity,
-        linkedIdentities,
-        isWalletOnly,
-        linkGtsUrl,
-        openSignIn: () => setShowSignIn(true),
-        openCompose: () => setShowCompose(true),
-        signOut: handleSignOut,
-        nostrPublicId,
-        publish: handlePublish,
-        engage: handleEngage,
-        ready,
-        setPrimaryIdentity: handleSetPrimary,
-        unlinkIdentity: handleUnlink,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
 
       <SignInModal

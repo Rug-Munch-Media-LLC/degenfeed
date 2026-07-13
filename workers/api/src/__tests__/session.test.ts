@@ -7,12 +7,12 @@ const secret = 'test-secret-must-be-at-least-32-bytes';
 const env: Env = { AUTH_SECRET: secret };
 
 describe('session cookie', () => {
-  it('creates an HttpOnly Secure SameSite=Lax cookie', async () => {
+  it('creates an HttpOnly Secure SameSite=Strict cookie', async () => {
     const { setCookie } = await createSession('0xAbCd', 'ethereum', secret);
     expect(setCookie).toContain('__Host-dfid=');
     expect(setCookie).toContain('HttpOnly');
     expect(setCookie).toContain('Secure');
-    expect(setCookie).toContain('SameSite=Lax');
+    expect(setCookie).toContain('SameSite=Strict');
     expect(setCookie).toContain('Path=/');
   });
 

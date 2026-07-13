@@ -1,8 +1,10 @@
 import { type Env, jsonResponse } from '../index';
+import { isValidInstanceUrl } from '../sanitize';
 
 export async function handleDiscover(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
   const instance = url.searchParams.get('instance') || 'https://bitcoinhackers.org';
+  if (!isValidInstanceUrl(instance)) return jsonResponse({ error: 'Invalid instance URL' }, 400);
   const limit = 20;
 
   try {

@@ -122,3 +122,32 @@ export async function signInWithLens(opts: { wallet: Eip1193Provider }): Promise
   await saveIdentity(record);
   return record;
 }
+
+// ─── Session refresh ─────────────────────────────────────────────────────
+
+interface RefreshResponse {
+  data: { refresh: { accessToken: string; refreshToken: string } };
+}
+
+export async function refreshLensSession(
+  refreshToken: string,
+): Promise<{ accessToken: string; refreshToken: string }> {
+  const res = await fetch('https://api.lens.xyz/graphql', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      query: `
+        mutation Refresh($refreshToken: String!) {
+          refresh(request: { refreshToken: $refreshToken }) {
+            accessToken refreshToken
+          }
+        }
+      `,
+      variables: { refreshToken },
+    }),
+  });
+  if (!res.ok) throw new Error(`Lens session refresh failed: ${res.statusText}`);
+  const { data } = (await res.json()) as RefreshResponse;
+  if (!data?.refresh) throw new Error('Lens session refresh failed: no data in response');
+  return { accessToken: data.refresh.accessToken, refreshToken: data.refresh.refreshToken };
+}

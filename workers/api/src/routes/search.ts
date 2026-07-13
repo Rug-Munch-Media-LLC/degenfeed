@@ -32,8 +32,17 @@ const DEFAULT_PROTOCOLS: Protocol[] = ['rss', 'nostr', 'farcaster', 'lens', 'blu
 // The Worker does not need to send its own API key — nginx handles auth at the edge.
 const MEILISEARCH_URL = 'https://search.degenfeed.xyz';
 
+/**
+ * Sanitize a string into a valid MeiliSearch document identifier.
+ * MeiliSearch only allows: a-z, A-Z, 0-9, hyphens (-), underscores (_).
+ */
+function sanitizeMeiliId(id: string): string {
+  return id.replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
 interface MeiliSearchHit {
   id: string;
+  originalId?: string;
   protocol: string;
   text: string;
   authorDisplayName: string;
@@ -95,7 +104,8 @@ async function searchMeiliSearch(
 export async function indexPost(post: UnifiedPost): Promise<boolean> {
   try {
     const doc = {
-      id: post.id,
+      id: sanitizeMeiliId(post.id),
+      originalId: post.id,
       protocol: post.protocol,
       text: post.text,
       authorDisplayName: post.author.displayName,
@@ -155,7 +165,7 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
   const meiliResult = await searchMeiliSearch(q, { protocols, limit, category });
   if (meiliResult && meiliResult.hits.length > 0) {
     const data = meiliResult.hits.map((h) => ({
-      id: h.id,
+      id: h.originalId ?? h.id,
       protocol: h.protocol,
       author: { displayName: h.authorDisplayName, avatarUrl: h.authorAvatarUrl },
       text: h.text.slice(0, 300),

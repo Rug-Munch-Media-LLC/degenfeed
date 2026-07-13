@@ -8,7 +8,9 @@
 import {
   clearActiveSession,
   deleteIdentity,
+  getActiveSession,
   getIdentity,
+  saveIdentity,
   setActiveSession,
 } from '@degenfeed/storage';
 import { decryptSecret } from './crypto';
@@ -50,4 +52,87 @@ export async function lockIdentity(identityId: string): Promise<void> {
 export async function forgetIdentity(identityId: string): Promise<void> {
   clearActiveSession(identityId);
   await deleteIdentity(identityId);
+}
+
+// ─── JWT expiry helper ──────────────────────────────────────────────────
+
+function getJwtExpiry(token: string): number | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))) as {
+      exp?: number;
+    };
+    return payload.exp ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Session refresh ─────────────────────────────────────────────────────
+
+export async function refreshSessionIfNeeded(identityId: string): Promise<void> {
+  const session = getActiveSession(identityId) as Record<string, unknown> | undefined;
+  if (!session) return;
+
+  const protocol = session.protocol as string;
+
+  if (protocol === 'bluesky') {
+    const refreshJwt = session.refreshJwt as string | undefined;
+    const accessJwt = session.accessJwt as string | undefined;
+    if (!refreshJwt) return;
+
+    // Check if the access JWT is expiring within 5 minutes
+    if (accessJwt) {
+      const exp = getJwtExpiry(accessJwt);
+      if (exp !== null) {
+        const fiveMinFromNow = Math.floor(Date.now() / 1000) + 300;
+        if (exp > fiveMinFromNow) return; // Still fresh
+      }
+    }
+
+    const { refreshBlueskySession } = await import('./providers/bluesky');
+    const tokens = await refreshBlueskySession(refreshJwt);
+    session.accessJwt = tokens.accessJwt;
+    session.refreshJwt = tokens.refreshJwt;
+    setActiveSession(identityId, session as never);
+
+    const identity = await getIdentity(identityId);
+    if (identity) {
+      identity.keys = {
+        ...identity.keys,
+        accessJwt: tokens.accessJwt,
+        refreshJwt: tokens.refreshJwt,
+      };
+      if (identity.keys?._secret) {
+        const secret = JSON.parse(identity.keys._secret) as Record<string, unknown>;
+        secret.accessJwt = tokens.accessJwt;
+        secret.refreshJwt = tokens.refreshJwt;
+        identity.keys._secret = JSON.stringify(secret);
+      }
+      await saveIdentity(identity);
+    }
+    return;
+  }
+
+  if (protocol === 'lens') {
+    const refreshToken = session.refreshToken as string | undefined;
+    if (!refreshToken) return;
+
+    const { refreshLensSession } = await import('./providers/lens');
+    const tokens = await refreshLensSession(refreshToken);
+    session.accessToken = tokens.accessToken;
+    session.refreshToken = tokens.refreshToken;
+    setActiveSession(identityId, session as never);
+
+    const identity = await getIdentity(identityId);
+    if (identity) {
+      identity.keys = {
+        ...identity.keys,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
+      await saveIdentity(identity);
+    }
+  }
 }

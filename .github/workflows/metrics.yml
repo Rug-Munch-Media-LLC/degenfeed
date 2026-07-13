@@ -1,0 +1,77 @@
+# .github/workflows/metrics.yml
+#
+# DORA Metrics — scheduled collection of Deployment Frequency, Lead Time
+# for Changes, Mean Time to Recovery, and Change Failure Rate.
+#
+# Runs weekly (Monday 06:00 UTC) and on manual dispatch. Collects metrics
+# from the deploy.yml workflow runs via the GitHub API, commits the JSON
+# to metrics/, and prints a markdown summary to the job summary.
+
+name: DORA Metrics
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Lookback window in days"
+        required: false
+        default: "30"
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ github.token }}
+
+      - name: Collect DORA metrics
+        id: dora
+        run: |
+          args=()
+          if [[ -n "${{ inputs.days }}" ]]; then
+            args+=(--days "${{ inputs.days }}")
+          fi
+          ./scripts/metrics/dora-track.sh "${args[@]}" \
+            | tee /tmp/dora-output.txt
+
+      - name: Generate job summary
+        run: |
+          # Extract markdown table from script output (everything after "## DORA Metrics")
+          sed -n '/^## DORA Metrics/,$p' /tmp/dora-output.txt \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit metrics JSON
+        run: |
+          today=$(date -u +%Y-%m-%d)
+          git config user.name "dora-bot"
+          git config user.email "dora-bot@users.noreply.github.com"
+          git add metrics/
+          if git diff --cached --quiet; then
+            echo "No new metrics to commit."
+          else
+            git commit -m "chore(metrics): update DORA metrics for ${today} [skip ci]"
+            git push
+            echo "Committed metrics/${today}.json"
+          fi
+
+      - name: Summary of collected data
+        run: |
+          echo "### DORA Collection Complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          json_file="metrics/dora-$(date -u +%Y-%m-%d).json"
+          if [[ -f "$json_file" ]]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat "$json_file" >> "$GITHUB_STEP_SUMMARY"
+            echo '' >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi

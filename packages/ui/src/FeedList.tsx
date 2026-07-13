@@ -12,7 +12,7 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { type EngageHandler, PostCard } from './PostCard';
 
 export type { UnifiedPost };
@@ -107,7 +107,7 @@ function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => vo
   );
 }
 
-export function FeedList({
+export const FeedList = memo(function FeedList({
   state,
   posts,
   error,
@@ -131,7 +131,10 @@ export function FeedList({
     if (saved) {
       const { y, id } = JSON.parse(saved) as { y: number; id: string };
       const el = document.getElementById(`post-${id}`);
-      if (el) { el.scrollIntoView(); return; }
+      if (el) {
+        el.scrollIntoView();
+        return;
+      }
       window.scrollTo(0, y);
     }
   }, [state, posts.length]);
@@ -169,7 +172,9 @@ export function FeedList({
     let startY = 0;
     const el = containerRef.current;
     if (!el) return;
-    const onTouchStart = (e: TouchEvent) => { startY = e.touches[0]?.clientY ?? 0; };
+    const onTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0]?.clientY ?? 0;
+    };
     const onTouchEnd = (e: TouchEvent) => {
       const endY = e.changedTouches[0]?.clientY ?? 0;
       if (endY - startY > 80 && window.scrollY < 10 && onRetry) onRetry();
@@ -215,7 +220,11 @@ export function FeedList({
   }
 
   return (
-    <div ref={containerRef} role="feed" aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}>
+    <div
+      ref={containerRef}
+      role="feed"
+      aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
+    >
       {posts.map((post) => (
         <PostCard
           key={post.id}
@@ -238,4 +247,4 @@ export function FeedList({
       )}
     </div>
   );
-}
+});

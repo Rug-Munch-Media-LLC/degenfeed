@@ -10,6 +10,7 @@ import {
   SubstackSource,
 } from '@degenfeed/rss-sdk';
 import { type Env, jsonResponse } from '../index';
+import { isValidFetchUrl } from '../sanitize';
 
 export async function handleRssFeed(request: Request, _env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
@@ -35,6 +36,7 @@ export async function handleRssFeed(request: Request, _env: Env): Promise<Respon
     } else if (source === 'paragraph' && handle) {
       src = await ParagraphSource.fetch(handle);
     } else if (url) {
+      if (!isValidFetchUrl(url)) return jsonResponse({ error: 'Invalid URL' }, 400);
       src = await GenericRssSource.fetch(url);
     } else if (!source && !handle && !url) {
       const results = await Promise.allSettled(

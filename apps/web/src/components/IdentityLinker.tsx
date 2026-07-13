@@ -11,7 +11,6 @@ interface IdentityResult {
   avatarUrl?: string;
 }
 
-
 export function IdentityLinker({ onSignIn }: { onSignIn?: () => void }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<IdentityResult[]>([]);

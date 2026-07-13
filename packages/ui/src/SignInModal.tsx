@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 
 export type { ReactNode } from 'react';
 
@@ -459,6 +459,17 @@ function MastodonForm({
   const [accessToken, setAccessToken] = useState('');
   const [error, _setError] = useState('');
 
+  const handleMastodonOAuth = async () => {
+    try {
+      const res = await fetch('/api/auth/gotosocial/authorize', { credentials: 'include' });
+      if (!res.ok) throw new Error('Authorization not available');
+      const data = (await res.json()) as { authorizeUrl: string };
+      window.location.href = data.authorizeUrl;
+    } catch {
+      window.location.href = `${instance}/oauth/authorize?client_id=degenfeed&response_type=code&scope=read+write+follow+push&redirect_uri=${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`;
+    }
+  };
+
   return (
     <div className="space-y-3">
       <label className="block">
@@ -472,12 +483,13 @@ function MastodonForm({
         />
       </label>
       <div className="text-center text-xs text-gray-600">— or —</div>
-      <a
-        href={`${instance}/oauth/authorize?client_id=degenfeed&response_type=code&scope=read+write+follow+push&redirect_uri=${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`}
+      <button
+        type="button"
+        onClick={handleMastodonOAuth}
         className="btn-secondary flex w-full items-center justify-center text-xs"
       >
-        🔗 OAuth with {instance.replace(/^https?:\/\//, '')}
-      </a>
+        OAuth with {instance.replace(/^https?:\/\//, '')}
+      </button>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-gray-400">Or paste access token</span>
         <input
@@ -582,7 +594,7 @@ function WalletSection({
   );
 }
 
-export function SignInModal({
+export const SignInModal = memo(function SignInModal({
   open,
   onClose,
   onSignIn,
@@ -739,4 +751,4 @@ export function SignInModal({
       </div>
     </section>
   );
-}
+});

@@ -35,6 +35,7 @@ export const LANDING_HTML = `<!doctype html>
       }
     </script>
     <link rel="stylesheet" href="/styles.css" />
+    <script defer data-domain="degenfeed.xyz" src="https://plausible.rugmunch.io/js/script.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>

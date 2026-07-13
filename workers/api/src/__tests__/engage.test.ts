@@ -51,17 +51,6 @@ vi.mock('@degenfeed/bluesky-sdk', () => ({
   },
 }));
 
-vi.mock('@degenfeed/threads-sdk', () => ({
-  ThreadsClient: class {
-    setAuth = vi.fn();
-    like = vi.fn().mockResolvedValue(undefined);
-    unlike = vi.fn().mockResolvedValue(undefined);
-    repost = vi.fn().mockResolvedValue(undefined);
-    unrepost = vi.fn().mockResolvedValue(undefined);
-    reply = vi.fn().mockResolvedValue(undefined);
-  },
-}));
-
 import type { Env } from '../index';
 import worker from '../index';
 import { createSession, parseSessionCookie } from '../session';

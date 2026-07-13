@@ -1,4 +1,9 @@
-import { FarcasterProvider, MastodonProvider, NostrProvider } from '@degenfeed/feed-providers';
+import {
+  FarcasterProvider,
+  LemmyProvider,
+  MastodonProvider,
+  NostrProvider,
+} from '@degenfeed/feed-providers';
 import type { UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
 
@@ -253,4 +258,97 @@ export async function handleTrendingFeed(request: Request, env: Env): Promise<Re
     `http://localhost/api/feed/home?protocols=nostr,farcaster&limit=${limit}`,
   );
   return handleHomeFeed(fakeReq, env);
+}
+
+// ─── 4. Alt Feed — /api/feed/alt — Best of Lemmy + Reddit Alt ──
+
+const ALT_REDDIT_SUBREDDITS = [
+  'privacy',
+  'selfhosted',
+  'opensource',
+  'linux',
+  'fediverse',
+  'homelab',
+  'torrents',
+  'Piracy',
+  'DataHoarder',
+  'degoogle',
+  'fossdroid',
+  'OpenSignups',
+  'trackers',
+  'usenet',
+  'seedboxes',
+  'VPN',
+  'Monero',
+  'darknet',
+  'onions',
+  'CryptoCurrency',
+  'Bitcoin',
+  'ethereum',
+  'solana',
+  'defi',
+  'CryptoTechnology',
+  'ethdev',
+  'web3',
+  'rust',
+  'golang',
+  'ReverseEngineering',
+];
+
+async function fetchLemmyTop(limit: number): Promise<UnifiedPost[]> {
+  const provider = new LemmyProvider();
+  const result = await provider.fetchFeed({ timeoutMs: 8000, concurrency: 3 });
+  return result.posts.slice(0, limit);
+}
+
+async function fetchRedditAlt(limit: number, env: Env): Promise<UnifiedPost[]> {
+  const { handleRedditFeed } = await import('./feed');
+  const redditReq = new Request(
+    `http://localhost/api/feed/reddit?subreddits=${ALT_REDDIT_SUBREDDITS.join(',')}&limit=${limit}`,
+  );
+  const res = await handleRedditFeed(redditReq, env);
+  const data = (await res.json()) as { data?: UnifiedPost[] };
+  return (data.data ?? []).slice(0, limit);
+}
+
+export async function handleAltFeed(_request: Request, _env: Env): Promise<Response> {
+  const now = Date.now();
+
+  const [lemmyPosts, redditPosts] = await Promise.all([
+    fetchLemmyTop(30).catch(() => []),
+    fetchRedditAlt(30, _env).catch(() => []),
+  ]);
+
+  const allPosts = [...lemmyPosts, ...redditPosts];
+  const scored = allPosts
+    .map((p) => {
+      const ageHrs = (now - p.createdAt) / 3600000;
+      const recency = 0.5 ** (ageHrs / 48);
+      const engagement =
+        (p.metrics?.likes ?? 0) * 1.5 +
+        (p.metrics?.replies ?? 0) * 3 +
+        (p.metrics?.reposts ?? 0) * 2;
+      const score = engagement * recency;
+      return { post: p, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .filter((p) => p.score > 0)
+    .slice(0, 50);
+
+  const seen = new Set<string>();
+  const deduped = scored.filter((s) => {
+    const key = s.post.text.slice(0, 80);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return jsonResponse({
+    data: deduped.map((s) => s.post),
+    meta: {
+      total: deduped.length,
+      sources: { lemmy: lemmyPosts.length, reddit: redditPosts.length },
+      type: 'alt',
+    },
+  });
 }

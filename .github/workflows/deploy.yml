@@ -16,6 +16,8 @@ on:
     branches: [main]
   push:
     branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -64,18 +66,17 @@ jobs:
           # encrypted secrets on the preview environment (set once via
           # `wrangler secret put`). This job never sees them in plaintext.
 
-  production:
-    # main → deploy to production with the routes configured in wrangler.toml.
+  deploy-canary:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
-      name: production
-      url: https://degenfeed.xyz
+      name: canary
+      url: https://canary.degenfeed.xyz
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
-      - uses: pnpm/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
@@ -92,21 +93,158 @@ jobs:
       - name: Build (dry-run)
         run: pnpm --filter @degenfeed/api-worker build
 
-      - name: Deploy worker (production)
+      - name: Deploy worker (canary)
+        id: deploy-canary
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/api
+          command: deploy --env canary --var ALLOWED_ORIGINS:https://canary.degenfeed.xyz,http://localhost:3000
+
+      - name: Smoke test canary
+        id: smoke-canary
+        run: |
+          echo "=== Canary API health ==="
+          curl -sf --max-time 10 https://canary.degenfeed.xyz/api/health || (echo "FAIL: canary /api/health" && exit 1)
+          echo "PASS: canary /api/health"
+
+          echo "=== Canary feed endpoint ==="
+          curl -sf --max-time 15 https://canary.degenfeed.xyz/api/feed/home?limit=1 || (echo "FAIL: canary /api/feed/home" && exit 1)
+          echo "PASS: canary /api/feed/home"
+
+      - name: Promote canary to production
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: workers/api
           command: deploy
-          # Secrets (AUTH_SECRET, GTS_CLIENT_SECRET) must already be set
-          # via `wrangler secret put` before the first deploy. They live
-          # only on the Cloudflare side; this job never sees plaintext.
+
+      - name: Smoke test production after promotion
+        run: |
+          echo "=== Production API health ==="
+          curl -sf --max-time 10 https://degenfeed.xyz/api/health || (echo "FAIL: production /api/health" && exit 1)
+          echo "PASS: production /api/health"
+
+          echo "=== Production feed endpoint ==="
+          curl -sf --max-time 15 https://degenfeed.xyz/api/feed/home?limit=1 || (echo "FAIL: production /api/feed/home" && exit 1)
+          echo "PASS: production /api/feed/home"
+
+          echo "=== Canary promotion to production completed successfully ==="
+
+  deploy-web:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://app.degenfeed.xyz
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter degenfeed-web pages:build
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web
+          command: pages deploy .vercel/output/static --project-name degenfeed-web
+
+  smoke-test:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: [deploy-canary, deploy-web]
+    environment:
+      name: production
+      url: https://degenfeed.xyz
+    steps:
+      - name: Smoke test API health
+        run: |
+          echo "=== Worker API health ==="
+          curl -sf --max-time 10 https://degenfeed.xyz/api/health || (echo "FAIL: /api/health" && exit 1)
+          echo "PASS: /api/health"
+
+          echo "=== Feed endpoint ==="
+          curl -sf --max-time 15 https://degenfeed.xyz/api/feed/home?limit=1 || (echo "FAIL: /api/feed/home" && exit 1)
+          echo "PASS: /api/feed/home"
+
+          echo "=== Landing page ==="
+          curl -sf --max-time 10 https://degenfeed.xyz/ | grep -q "DegenFeed" || (echo "FAIL: landing page" && exit 1)
+          echo "PASS: landing page"
+
+          echo "=== Web app ==="
+          curl -sf --max-time 10 https://app.degenfeed.xyz/ | grep -q "DegenFeed" || (echo "FAIL: web app" && exit 1)
+          echo "PASS: web app"
+
+          echo "All smoke tests passed."
+
+  lighthouse:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: smoke-test
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+      - name: Run Lighthouse CI audits
+        run: lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN || '' }}
+
+  promote-canary:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: canary-promote
+      url: https://degenfeed.xyz
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy worker (production promotion)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/api
+          command: deploy
+
+      - name: Smoke test production
+        run: |
+          echo "=== Production API health ==="
+          curl -sf --max-time 10 https://degenfeed.xyz/api/health || (echo "FAIL: production /api/health" && exit 1)
+          echo "PASS: production /api/health"
+
+          echo "=== Production feed endpoint ==="
+          curl -sf --max-time 15 https://degenfeed.xyz/api/feed/home?limit=1 || (echo "FAIL: production /api/feed/home" && exit 1)
+          echo "PASS: production /api/feed/home"
 
   notify-failure:
     if: failure()
     runs-on: ubuntu-latest
-    needs: [preview, production]
+    needs: [preview, deploy-canary, deploy-web, smoke-test, lighthouse]
     steps:
       - name: Ping on deploy failure
         run: |

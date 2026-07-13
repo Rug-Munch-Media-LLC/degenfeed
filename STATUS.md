@@ -16,7 +16,7 @@ Rebuild DegenFeed Web into a usable web3-first social aggregator (TODO.md #1–1
 - `apps/web/src/components/AuthProvider.tsx` — replaced `alert()` with toast, added `signOut` toast, added `nostrPublicId` to context
 - `apps/web/src/app/twitter/page.tsx` — bell+sign-out now gated on `hasSignedIn`, not `walletAddress`
 - `apps/web/src/components/TwitterComposer.tsx` — added Mastodon→Nostr bridge toggle + state
-- `apps/web/src/lib/nostr.ts` — new client-side Nostr publisher that decrypts saved nsec with `auto-unlock-passphrase` and publishes to relays
+- `apps/web/src/lib/nostr.ts` — new client-side Nostr publisher that reads saved nsec from `keys._secret` and publishes to relays
 - `packages/ui/src/ComposeModal.tsx` — same bridge toggle; `nostrBridgePublicId` + `onNostrBridge` props
 - `workers/api/src/routes/preferences.ts` — new GET/POST `/api/preferences` route, requires session
 - `apps/web/src/app/twitter/page.tsx` — `hideLowQuality` toggle now persists to backend KV in addition to localStorage

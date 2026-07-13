@@ -4,7 +4,12 @@ import { getBookmarks, removeBookmark } from '@degenfeed/storage';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
-interface BookmarkEntry { postId: string; savedAt: number; title?: string; protocol?: string; }
+interface BookmarkEntry {
+  postId: string;
+  savedAt: number;
+  title?: string;
+  protocol?: string;
+}
 
 export default function BookmarksPage() {
   const [bookmarks, setBookmarks] = useState<BookmarkEntry[]>([]);
@@ -19,7 +24,9 @@ export default function BookmarksPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleRemove = async (postId: string) => {
     await removeBookmark(postId);
@@ -33,7 +40,9 @@ export default function BookmarksPage() {
           <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">Reading List</p>
           <h1 className="text-2xl font-bold text-white">Bookmarks</h1>
         </div>
-        <Link href="/home" className="text-sm text-gray-500 hover:text-white transition-colors">&larr; Feed</Link>
+        <Link href="/home" className="text-sm text-gray-500 hover:text-white transition-colors">
+          &larr; Feed
+        </Link>
       </div>
 
       {loading && (
@@ -50,8 +59,12 @@ export default function BookmarksPage() {
       {!loading && bookmarks.length === 0 && (
         <div className="card py-16 text-center">
           <p className="text-gray-500">No bookmarks yet.</p>
-          <p className="mt-1 text-sm text-gray-600">Bookmark posts from your feed to save them here.</p>
-          <Link href="/home" className="btn-primary mt-4 inline-block text-sm">Browse the feed</Link>
+          <p className="mt-1 text-sm text-gray-600">
+            Bookmark posts from your feed to save them here.
+          </p>
+          <Link href="/home" className="btn-primary mt-4 inline-block text-sm">
+            Browse the feed
+          </Link>
         </div>
       )}
 
@@ -60,7 +73,10 @@ export default function BookmarksPage() {
           {bookmarks.map((b) => (
             <div key={b.postId} className="card flex items-center justify-between p-4">
               <div className="min-w-0 flex-1">
-                <Link href={`/post/${encodeURIComponent(b.postId)}`} className="font-medium text-sm text-white hover:text-degen-400 transition-colors truncate block">
+                <Link
+                  href={`/post/${encodeURIComponent(b.postId)}`}
+                  className="font-medium text-sm text-white hover:text-degen-400 transition-colors truncate block"
+                >
                   {b.title || b.postId}
                 </Link>
                 <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-600">

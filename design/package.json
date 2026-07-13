@@ -1,0 +1,11 @@
+{
+  "name": "@degenfeed/design",
+  "private": true,
+  "scripts": {
+    "build": "style-dictionary build",
+    "watch": "style-dictionary build --watch"
+  },
+  "devDependencies": {
+    "style-dictionary": "^4.4.0"
+  }
+}

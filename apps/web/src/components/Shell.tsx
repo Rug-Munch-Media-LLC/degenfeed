@@ -2,11 +2,13 @@
 
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
 import { OnboardingModal } from './OnboardingModal';
 import { SearchOverlay } from './SearchOverlay';
+
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
 
 interface NavItem {
   href: string;
@@ -57,7 +59,7 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   );
 }
 
-export function Shell({ children }: { children: React.ReactNode }) {
+export const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   const { ready, signedInProtocols, openSignIn, openCompose } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -253,7 +255,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </a>
           </div>
           <p className="text-xs text-gray-600">
-            © {new Date().getFullYear()} DegenFeed — a Rug Munch Media LLC product. No account
+            v{APP_VERSION} — © {new Date().getFullYear()} DegenFeed — a Rug Munch Media LLC product. No account
             required. Open source on{' '}
             <a
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
@@ -290,4 +292,4 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <OnboardingModal />
     </div>
   );
-}
+});

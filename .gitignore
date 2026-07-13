@@ -4,6 +4,7 @@
 # ── Secrets (zero tolerance) ───────────────────────────────────
 .env
 .env.*
+.envrc
 .dev.vars
 !.env.example
 !.env.template
@@ -48,8 +49,9 @@ coverage/
 logs/
 pnpm-debug.log*
 
-# ── Cache / temp ───────────────────────────────────────────────
+# ── Cache / temp / backups ─────────────────────────────────────
 .cache/
 tmp/
 .vercel/
 *.tmp.vercel/
+*.bak

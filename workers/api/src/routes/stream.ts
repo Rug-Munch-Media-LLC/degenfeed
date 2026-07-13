@@ -7,20 +7,23 @@
  * against already-sent posts, and pushes new ones to the client.
  */
 
-import { type Env } from '../index';
-import { DEFAULT_PROTOCOLS, getProvider } from './feed';
-import { isSpamPost, enrichPostNiches } from '@degenfeed/feed-core';
-import { parseProtocols } from '@degenfeed/utils';
+import { enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
+import { parseProtocols } from '@degenfeed/utils';
+import type { Env } from '../index';
+import { DEFAULT_PROTOCOLS, getProvider } from './feed';
 
 export async function handleStreamFeed(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const protocols = parseProtocols(url.searchParams.get('protocols'), DEFAULT_PROTOCOLS).slice(0, 5);
+  const protocols = parseProtocols(url.searchParams.get('protocols'), DEFAULT_PROTOCOLS).slice(
+    0,
+    5,
+  );
 
   const headers = new Headers({
     'content-type': 'text/event-stream',
     'cache-control': 'no-cache',
-    'connection': 'keep-alive',
+    connection: 'keep-alive',
     'access-control-allow-origin': '*',
   });
 
@@ -82,7 +85,9 @@ export async function handleStreamFeed(request: Request, env: Env): Promise<Resp
     const interval = setInterval(async () => {
       try {
         await poll();
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }, 30_000);
 
     // Clean up on disconnect

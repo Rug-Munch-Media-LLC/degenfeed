@@ -1,0 +1,38 @@
+description: "DegenFeed AI Model Evaluation"
+
+providers:
+  # DeepSeek (primary)
+  - id: deepseek:deepseek-v4-pro
+    config:
+      apiKey: "***REMOVED***"
+      apiBaseUrl: "https://api.deepseek.com/v1"
+  - id: deepseek:deepseek-v4-flash
+    config:
+      apiKey: "***REMOVED***"
+      apiBaseUrl: "https://api.deepseek.com/v1"
+  # Groq (free)
+  - id: groq:llama-3.3-70b-versatile
+    config:
+      apiKey: "***REMOVED***"
+  # OpenRouter (free)
+  - id: openrouter:qwen/qwen3-coder
+    config:
+      apiKey: "***REMOVED***"
+
+prompts:
+  - file://prompts/code-review.txt
+  - file://prompts/commit-message.txt
+  - file://prompts/bug-fix.txt
+  - file://prompts/architecture.txt
+  - file://prompts/refactor.txt
+
+tests:
+  - file://tests/code-review.yaml
+  - file://tests/commit-message.yaml
+  - file://tests/bug-fix.yaml
+
+output:
+  - type: json
+    path: ./results/latest.json
+  - type: html
+    path: ./results/latest.html

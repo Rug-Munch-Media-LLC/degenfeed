@@ -21,9 +21,7 @@ import { buildIdentityRecord } from '../persistence';
 /**
  * Sign in with a Nostr nsec.
  */
-export async function signInWithNostrNsec(
-  nsec: string,
-): Promise<StoredIdentity> {
+export async function signInWithNostrNsec(nsec: string): Promise<StoredIdentity> {
   const { nsecDecode, getPublicKey, npubEncode } = await import('@degenfeed/nostr-sdk');
   const { hex: sk } = nsecDecode(nsec);
   const pk = getPublicKey(sk);

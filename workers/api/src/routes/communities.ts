@@ -5,19 +5,17 @@
  * GET /api/feed/communities
  */
 
+import { DEFAULT_SUBREDDITS, LemmyProvider, RedditProvider } from '@degenfeed/feed-providers';
 import { type Env, jsonResponse } from '../index';
-import {
-  DEFAULT_SUBREDDITS,
-  RedditProvider,
-  LemmyProvider,
-} from '@degenfeed/feed-providers';
 
 export async function handleCommunities(request: Request, env: Env): Promise<Response> {
   const cacheKey = 'communities:v1:default';
   try {
     const cached = await env.CACHE?.get(cacheKey);
     if (cached) return jsonResponse(JSON.parse(cached));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   const communities: Array<{
     id: string;
@@ -59,11 +57,18 @@ export async function handleCommunities(request: Request, env: Env): Promise<Res
         });
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
-  const response = { data: communities.slice(0, 30), meta: { total: communities.length, fetchedAt: Date.now() } };
+  const response = {
+    data: communities.slice(0, 30),
+    meta: { total: communities.length, fetchedAt: Date.now() },
+  };
   try {
     await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return jsonResponse(response);
 }

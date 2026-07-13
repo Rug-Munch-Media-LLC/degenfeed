@@ -182,8 +182,16 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
     }
 
     const clientIp =
-      request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
-    const rl = await rateLimit(env, `${clientIp}:${body.address.toLowerCase()}`, 'wallet:verify', 5, 60_000);
+      request.headers.get('cf-connecting-ip') ||
+      request.headers.get('x-forwarded-for') ||
+      'unknown';
+    const rl = await rateLimit(
+      env,
+      `${clientIp}:${body.address.toLowerCase()}`,
+      'wallet:verify',
+      5,
+      60_000,
+    );
     if (!rl.allowed) {
       return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
         status: 429,
