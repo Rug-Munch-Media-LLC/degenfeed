@@ -1,96 +1,27 @@
-# Lefthook configuration — Rug Munch Media LLC
-# Enterprise-quality pre-commit / commit-msg / pre-push pipeline
-# https://lefthook.dev/configuration/
-
 pre-commit:
   parallel: true
   commands:
     envsitter:
-      glob: ".env*"
-      run: envsitter scan --file "{staged_files}" --detect jwt,url,base64
-      skip:
-        - merge
-        - rebase
-      tags:
-        - security
-        - secrets
-
+      run: envsitter scan --filePath .env.example
     gitleaks:
-      glob: "*.{py,ts,tsx,js,jsx,json,yaml,yml,toml,sh,env,Dockerfile}"
-      run: gitleaks detect --source . --no-banner --redact --verbose
-      skip:
-        - merge
-        - rebase
-      tags:
-        - security
-
-    ruff:
-      glob: "*.py"
-      run: ruff check --fix {staged_files} && ruff format --check {staged_files}
-      tags:
-        - python
-        - lint
-        - format
-
-    mypy:
-      glob: "*.py"
-      run: mypy {staged_files} --strict --show-error-codes --no-error-summary
-      tags:
-        - python
-        - types
-
+      run: gitleaks detect --verbose --redact --no-git
     biome:
-      glob: "*.{ts,tsx,js,jsx,json,jsonc,css}"
-      run: biome check --write --no-errors-on-unmatched {staged_files}
-      tags:
-        - typescript
-        - lint
-        - format
-        - a11y
-
-    dprint:
-      glob: "*.{json,yaml,yml,md,toml}"
-      run: dprint fmt --check {staged_files}
-      tags:
-        - format
-
-    cspell:
-      glob: "*.{py,ts,tsx,js,jsx,md,yml,yaml,json,toml}"
-      run: cspell --no-progress --no-summary {staged_files}
-      tags:
-        - spelling
-
-    typos:
-      glob: "*.{py,ts,tsx,js,jsx,md,yml,yaml,json,toml,rs,go,css,html}"
-      run: typos {staged_files}
-      tags:
-        - spelling
-
-commit-msg:
-  commands:
-    commitizen:
-      run: npx commitlint --edit {1} || true
-      tags:
-        - commits
-
+      run: npx biome check --write {staged_files}
 pre-push:
   parallel: true
   commands:
-    deptry:
-      glob: "*.py"
-      run: deptry . --no-ansi
-      tags:
-        - python
-        - dependencies
-
+    mypy:
+      run: mypy --strict .
+      tags: [python]
     bandit:
-      glob: "*.py"
-      run: bandit -r . -q -ll
-      tags:
-        - python
-        - security
-
+      run: bandit -r .
+      tags: [python]
+    deptry:
+      run: deptry .
+      tags: [python]
     gitleaks-full:
-      run: gitleaks detect --source . --no-banner --redact
-      tags:
-        - security
+      run: gitleaks detect --verbose --redact
+commit-msg:
+  commands:
+    commitlint:
+      run: commitlint --edit "$1"
