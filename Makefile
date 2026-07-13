@@ -2,7 +2,7 @@
 # Source of truth: standards/templates/Makefile.typescript.template
 # Customized for degenfeed-web monorepo.
 
-.PHONY: help install precommit dev build lint format check typecheck test test-watch test-cov security ci audit clean
+.PHONY: help install precommit dev build lint format check typecheck test test-watch test-cov test-e2e test-a11y security links knip dead-code spellcheck ci audit rollback clean
 
 help: ## Show this help. Usage: make <target>
 	@awk 'BEGIN {FS = ":.*?## "; printf "\nUsage: make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -20,11 +20,13 @@ dev: ## Run dev servers via Turbo
 build: ## Build all packages/apps via Turbo
 	pnpm build
 
-lint: ## Lint all packages/apps via Turbo (Biome)
+lint: ## Lint all packages/apps via Turbo (Biome + Stylelint)
 	pnpm lint
+	npx stylelint "**/*.css" --allow-empty-input
 
 format: ## Format all files with Biome
 	pnpm format
+	npx prettier --write --plugin=prettier-plugin-tailwindcss "apps/**/*.{ts,tsx,css}"
 
 check: ## Fast check: lint + typecheck
 	pnpm lint
@@ -42,17 +44,40 @@ test-watch: ## Run tests in watch mode
 test-cov: ## Run tests with coverage
 	pnpm exec vitest run --coverage
 
+test-e2e: ## Playwright E2E tests
+	pnpm --filter degenfeed-web test:e2e
+
+test-a11y: ## Axe-core a11y audit
+	pnpm --filter degenfeed-web test:e2e --project=axe-a11y
+
 security: ## Security audit with gitleaks
 	gitleaks detect --source . --no-banner
+	pnpm audit
+
+knip: ## Find dead code and unused deps
+	npx knip --no-progress
+
+dead-code: knip ## Alias for knip
+
+spellcheck: ## Check spelling with cspell
+	npx cspell "**/*.{ts,tsx,js,jsx,md}" --no-progress
+
+links: ## Check all links in markdown/docs
+	lychee --no-progress --accept 200,204,301,302,304 '**/*.md' --exclude 'node_modules' --exclude 'dist' --exclude '.next' --exclude '.turbo'
 
 ci: ## Full CI pipeline (lint + typecheck + test + build)
 	pnpm lint
 	pnpm typecheck
 	pnpm test
 	pnpm build
+	$(MAKE) knip
+	$(MAKE) links
 
 audit: ## Dependency audit with pnpm
 	pnpm audit
+
+rollback: ## Rollback Cloudflare Worker and Pages deployments to previous versions
+	@./scripts/deploy/rollback.sh $(ARGS)
 
 clean: ## Remove build artifacts + dependencies
 	rm -rf dist .next .vite .turbo .biome-cache coverage

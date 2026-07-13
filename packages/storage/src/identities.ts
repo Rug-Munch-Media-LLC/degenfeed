@@ -53,7 +53,7 @@ function shortenAddress(addr: string): string {
 export async function saveWalletIdentity(
   address: string,
   chain: 'ethereum' | 'solana',
-  accessToken?: string,
+  _accessToken?: string,
 ): Promise<StoredIdentity> {
   const normalized = chain === 'ethereum' ? address.toLowerCase() : address;
   const all = await getAllIdentities();
@@ -69,7 +69,9 @@ export async function saveWalletIdentity(
     salt: '',
     iv: '',
     isPrimary: true,
-    keys: accessToken ? { accessToken } : {},
+    // SECURITY (C-3, 2026-07-13): Do not store access tokens in plaintext keys.
+    // Wallet identities can regenerate tokens via sign-in, so no persistent token storage.
+    keys: {},
   };
 
   for (const identity of all) {

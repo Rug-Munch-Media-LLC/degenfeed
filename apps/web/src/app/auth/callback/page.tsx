@@ -66,7 +66,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
     const res = await fetch(`${apiBase}/api/auth/gotosocial/callback`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code: params.code }),
+      body: JSON.stringify({ code: params.code, state: params.state }),
     });
 
     if (res.ok) {

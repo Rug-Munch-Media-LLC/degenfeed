@@ -18,7 +18,7 @@ export const SECTIONS: FeedSection[] = [
     description: 'Unified feed across all networks',
     endpoint: '/api/feed/home',
     limit: 25,
-    params: { protocols: 'reddit,nostr,farcaster,lens,bluesky,mastodon,threads,rss' },
+    params: { protocols: 'reddit,nostr,farcaster,lens,bluesky,mastodon,rss' },
   },
   {
     id: 'crypto',
@@ -244,15 +244,6 @@ export const SECTIONS: FeedSection[] = [
     endpoint: '/api/feed/home',
     limit: 25,
     params: { protocols: 'bluesky' },
-  },
-  {
-    id: 'threads',
-    label: 'Threads',
-    icon: '+',
-    color: '#888',
-    description: 'Instagram AT Protocol network',
-    endpoint: '/api/feed/threads',
-    limit: 25,
   },
   {
     id: 'mastodon',

@@ -12,6 +12,7 @@ export type Protocol =
   | 'threads'
   | 'rss'
   | 'mastodon'
+  | 'lemmy'
   | 'reddit'
   | 'ethereum'
   | 'ponder'
@@ -123,6 +124,12 @@ export interface UnifiedPost {
   score?: PostScore;
   /** Optional paywall requirement for paid content */
   paywall?: { amount: string; recipient: string };
+  /** Content type: article, video, image, thread, link */
+  contentType?: 'article' | 'video' | 'image' | 'thread' | 'link' | 'text';
+  /** Freshness flags set server-side */
+  isNew?: boolean;
+  isHot?: boolean;
+  isTrending?: boolean;
 }
 
 export interface NewPost {

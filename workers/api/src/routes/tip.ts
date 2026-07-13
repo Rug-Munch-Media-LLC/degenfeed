@@ -6,6 +6,7 @@ import {
   isValidEvmAddress,
   isValidSolanaAddress,
   sanitizeString,
+  validateBodySize,
 } from '../sanitize';
 import { buildLensCollectIntent } from './lens';
 import { fetchZapInvoice, resolveLnurlFromPubkey } from './lightning';
@@ -278,6 +279,8 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
 }
 
 export async function handleTipCreate(request: Request, _env: Env): Promise<Response> {
+  const bodySizeCheck = validateBodySize(request, 10 * 1024);
+  if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
   try {
     const body = (await request.json()) as {
       recipient: string;
@@ -457,6 +460,8 @@ export async function handleTipSettingsGet(request: Request, env: Env): Promise<
  * Body: { wallet: '0x...', settings: {...} }
  */
 export async function handleTipSettingsPost(request: Request, env: Env): Promise<Response> {
+  const bodySizeCheck = validateBodySize(request, 10 * 1024);
+  if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
   try {
     const body = (await request.json()) as { wallet?: string; settings?: Record<string, unknown> };
     const wallet = (body.wallet ?? '').toLowerCase();
@@ -579,6 +584,8 @@ export async function handleTipFrameTx(request: Request, _env: Env): Promise<Res
       return jsonResponse({ error: 'Invalid frame params' }, 400);
     }
 
+    const bodySizeCheck = validateBodySize(request, 10 * 1024);
+    if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
     const body = (await request.json()) as Record<string, unknown>;
     const fid =
       ((body.untrustedData as Record<string, unknown>)?.fid as number) || (body.fid as number);
@@ -617,6 +624,8 @@ export async function handleTipFrameCallback(request: Request, _env: Env): Promi
     const _recipientId = parts[parts.length - 1] || '';
     const _amount = url.searchParams.get('amount') || '0.001';
 
+    const bodySizeCheck = validateBodySize(request, 10 * 1024);
+    if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
     const body = (await request.json()) as Record<string, unknown>;
     const txHash = (((body.untrustedData as Record<string, unknown>)?.transactionId as string) ||
       (body.txHash as string)) as string | undefined;

@@ -1,0 +1,102 @@
+# AI-Specific Semgrep Rules
+# Detects patterns that AI agents commonly hallucinate
+# Applied to all Rug Munch Media Python repos
+
+rules:
+  - id: no-pass-in-except
+    pattern: |
+      except $EXC:
+        pass
+    message: "Bare 'pass' in except block is an anti-pattern. Handle the error or log it."
+    severity: ERROR
+    languages: [python]
+
+  - id: no-return-none-on-error
+    patterns:
+      - pattern: |
+          except $EXC:
+            return None
+    message: "Returning None on error silently swallows failures. Raise or return an explicit error result."
+    severity: WARNING
+    languages: [python]
+
+  - id: no-fake-import
+    patterns:
+      - pattern-either:
+        - pattern: import non_existent_module
+        - pattern: from hallucination import $X
+    message: "Suspicious import detected — this looks like an AI hallucination."
+    severity: ERROR
+    languages: [python]
+
+  - id: no-sync-io-in-async
+    patterns:
+      - pattern: |
+          async def $FUNC(...):
+            ...
+            time.sleep(...)
+            ...
+    message: "time.sleep() in async function. Use asyncio.sleep() instead."
+    severity: ERROR
+    languages: [python]
+
+  - id: no-requests-in-async
+    patterns:
+      - pattern: |
+          async def $FUNC(...):
+            ...
+            requests.$METHOD(...)
+            ...
+    message: "Synchronous requests.get() in async function. Use httpx.AsyncClient."
+    severity: ERROR
+    languages: [python]
+
+  - id: no-untyped-public-function
+    patterns:
+      - pattern: |
+          def $FUNC($ARGS):
+            ...
+    message: "Public function missing type annotations. Add parameter and return types."
+    severity: WARNING
+    languages: [python]
+    paths:
+      exclude:
+        - tests/
+        - "**/test_*.py"
+
+  - id: no-untyped-public-async
+    patterns:
+      - pattern: |
+          async def $FUNC($ARGS):
+            ...
+    message: "Public async function missing type annotations."
+    severity: WARNING
+    languages: [python]
+    paths:
+      exclude:
+        - tests/
+        - "**/test_*.py"
+
+  - id: no-dict-any-return
+    patterns:
+      - pattern: |
+          def $FUNC(...) -> dict:
+            ...
+    message: "Function returns untyped dict. Use TypedDict or Pydantic model instead for public APIs."
+    severity: WARNING
+    languages: [python]
+    paths:
+      include:
+        - "app/**/*.py"
+
+  - id: no-list-any-return
+    patterns:
+      - pattern: |
+          def $FUNC(...) -> list:
+            ...
+    message: "Function returns untyped list. Use list[SpecificType] instead."
+    severity: WARNING
+    languages: [python]
+    paths:
+      include:
+        - "app/**/*.py"

@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  glitchtip:
+    image: glitchtip/glitchtip:latest
+    container_name: degenfeed-glitchtip
+    environment:
+      - SECRET_KEY=${GLITCHTIP_SECRET_KEY:-change-me-in-production}
+      - DATABASE_URL=postgres://glitchtip:${GLITCHTIP_DB_PASSWORD}@glitchtip-db:5432/glitchtip
+      - GLITCHTIP_DOMAIN=https://glitchtip.rugmunch.io
+      - ENABLE_USER_REGISTRATION=true
+      - DEFAULT_FROM_EMAIL=glitchtip@degenfeed.xyz
+      - EMAIL_URL=smtp://cryptorugmuncher@gmail.com:${GMAIL_APP_PASSWORD}@smtp.gmail.com:587
+    ports:
+      - '8000:8000'
+    depends_on:
+      - glitchtip-db
+    restart: unless-stopped
+
+  glitchtip-db:
+    image: postgres:16-alpine
+    container_name: degenfeed-glitchtip-db
+    environment:
+      - POSTGRES_USER=glitchtip
+      - POSTGRES_PASSWORD=${GLITCHTIP_DB_PASSWORD:-change-me-in-production}
+      - POSTGRES_DB=glitchtip
+    volumes:
+      - glitchtip_db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  glitchtip_db:

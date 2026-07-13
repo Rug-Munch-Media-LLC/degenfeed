@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import { AuthProvider } from '../components/AuthProvider';
@@ -7,6 +8,8 @@ import { Shell } from '../components/Shell';
 import { SolanaProvider } from '../components/SolanaProvider';
 import { ToastProvider } from '../components/Toast';
 import { Web3Provider } from '../components/Web3Provider';
+
+const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
@@ -52,13 +55,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={`dark ${inter.className}`}>
       <body>
         <ErrorTracker />
         <Script
           defer
           data-domain="degenfeed.xyz"
-          src="https://plausible.io/js/script.js"
+          src="https://plausible.rugmunch.io/js/script.js"
           strategy="afterInteractive"
         />
         <Script

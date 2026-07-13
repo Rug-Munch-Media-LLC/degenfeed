@@ -1,0 +1,27 @@
+{
+  "ci": {
+    "collect": {
+      "numberOfRuns": 3,
+      "url": [
+        "https://degenfeed.xyz",
+        "https://app.degenfeed.xyz/home/all",
+        "https://degenfeed.xyz/api/health"
+      ],
+      "settings": {
+        "chromeFlags": "--no-sandbox --disable-gpu --headless",
+        "maxWaitForFcp": 30000,
+        "maxWaitForLoad": 60000
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["error", { "minScore": 0.9 }],
+        "categories:accessibility": ["error", { "minScore": 0.95 }],
+        "categories:seo": ["error", { "minScore": 0.9 }]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

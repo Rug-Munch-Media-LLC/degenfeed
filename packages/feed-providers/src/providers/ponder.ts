@@ -1,7 +1,7 @@
-import { detectNiches, buildUnifiedPost } from "@degenfeed/feed-core";
-import type { Protocol, UnifiedIdentity, UnifiedPost } from "@degenfeed/types";
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from "../types";
-import { DEFAULT_TIMEOUT_MS, fetchJson, withTimeout } from "../utils";
+import { buildUnifiedPost, detectNiches } from '@degenfeed/feed-core';
+import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import { DEFAULT_TIMEOUT_MS, fetchJson, withTimeout } from '../utils';
 
 interface PonderTransfer {
   id: string;
@@ -16,19 +16,19 @@ interface PonderTransfer {
 }
 
 const CHAIN_NAMES: Record<number, string> = {
-  1: "Ethereum",
-  56: "BSC",
-  137: "Polygon",
-  42161: "Arbitrum",
-  8453: "Base",
+  1: 'Ethereum',
+  56: 'BSC',
+  137: 'Polygon',
+  42161: 'Arbitrum',
+  8453: 'Base',
 };
 
 const CHAIN_EXPLORERS: Record<number, string> = {
-  1: "https://etherscan.io/tx",
-  56: "https://bscscan.com/tx",
-  137: "https://polygonscan.com/tx",
-  42161: "https://arbiscan.io/tx",
-  8453: "https://basescan.org/tx",
+  1: 'https://etherscan.io/tx',
+  56: 'https://bscscan.com/tx',
+  137: 'https://polygonscan.com/tx',
+  42161: 'https://arbiscan.io/tx',
+  8453: 'https://basescan.org/tx',
 };
 
 const PONDER_ENDPOINTS: { port: number; chainId: number }[] = [
@@ -42,11 +42,12 @@ function transferToUnifiedPost(t: PonderTransfer): UnifiedPost {
   const chainName = CHAIN_NAMES[t.chainId] ?? `Chain ${t.chainId}`;
   const explorer = CHAIN_EXPLORERS[t.chainId];
   const valueNum = Number(t.value) / 1e18;
-  const shortValue = valueNum > 1000000
-    ? `$${(valueNum / 1e6).toFixed(2)}M`
-    : valueNum > 1000
-      ? `$${(valueNum / 1e3).toFixed(1)}K`
-      : `$${valueNum.toFixed(2)}`;
+  const shortValue =
+    valueNum > 1000000
+      ? `$${(valueNum / 1e6).toFixed(2)}M`
+      : valueNum > 1000
+        ? `$${(valueNum / 1e3).toFixed(1)}K`
+        : `$${valueNum.toFixed(2)}`;
 
   const fromShort = `${t.fromAddress.slice(0, 6)}...${t.fromAddress.slice(-4)}`;
   const toShort = `${t.toAddress.slice(0, 6)}...${t.toAddress.slice(-4)}`;
@@ -55,11 +56,19 @@ function transferToUnifiedPost(t: PonderTransfer): UnifiedPost {
 
   const identity: UnifiedIdentity = {
     id: `ponder:${t.chainId}`,
-    primary: { protocol: "ponder" as Protocol, id: String(t.chainId) },
-    handles: { nostr: null, farcaster: null, lens: null, bluesky: null, threads: null, rss: null, mastodon: null },
+    primary: { protocol: 'ponder' as Protocol, id: String(t.chainId) },
+    handles: {
+      nostr: null,
+      farcaster: null,
+      lens: null,
+      bluesky: null,
+      threads: null,
+      rss: null,
+      mastodon: null,
+    },
     displayName: `${chainName} On-Chain`,
     bio: `Token transfers on ${chainName}`,
-    avatarUrl: "",
+    avatarUrl: '',
     verified: [],
     followerCount: 0,
     followingCount: 0,
@@ -67,10 +76,10 @@ function transferToUnifiedPost(t: PonderTransfer): UnifiedPost {
     keys: {},
   };
 
-  const embeds = txUrl ? [{ kind: "link" as const, url: txUrl }] : [];
+  const embeds = txUrl ? [{ kind: 'link' as const, url: txUrl }] : [];
 
   return buildUnifiedPost({
-    protocol: "ponder" as Protocol,
+    protocol: 'ponder' as Protocol,
     nativeId: t.id,
     author: identity,
     text,
@@ -82,10 +91,10 @@ function transferToUnifiedPost(t: PonderTransfer): UnifiedPost {
 }
 
 export class PonderProvider implements FeedProvider {
-  readonly protocol: Protocol = "ponder" as Protocol;
+  readonly protocol: Protocol = 'ponder' as Protocol;
   private readonly baseUrl: string;
 
-  constructor(baseUrl = "http://127.0.0.1") {
+  constructor(baseUrl = 'http://127.0.0.1') {
     this.baseUrl = baseUrl;
   }
 
@@ -101,8 +110,8 @@ export class PonderProvider implements FeedProvider {
         };
         const data = await withTimeout(
           fetchJson<{ data?: { tokenTransfers?: { items?: PonderTransfer[] } } }>(url, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
             body: JSON.stringify(query),
           }),
           timeoutMs,
@@ -131,12 +140,12 @@ export class PonderProvider implements FeedProvider {
       const url = `${this.baseUrl}:42070/graphql`;
       await withTimeout(
         fetchJson(url, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ query: "{ _meta { status { bsc { block ready } } } }" }),
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ query: '{ _meta { status { bsc { block ready } } } }' }),
         }),
         timeoutMs,
-        "ponder-health",
+        'ponder-health',
       );
       return { healthy: true, latencyMs: Date.now() - start };
     } catch {

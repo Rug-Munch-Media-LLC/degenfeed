@@ -16,7 +16,19 @@ import { getIdentity, type StoredIdentity } from '@degenfeed/storage';
 
 const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 
-const AUTO_UNLOCK_PASSPHRASE = 'auto-unlock-passphrase';
+const SESSION_PASSPHRASE_KEY = 'degenfeed_session_passphrase';
+
+function getNostrPassphrase(): string {
+  if (typeof sessionStorage === 'undefined') {
+    return '';
+  }
+  let p = sessionStorage.getItem(SESSION_PASSPHRASE_KEY);
+  if (!p) {
+    p = crypto.randomUUID();
+    sessionStorage.setItem(SESSION_PASSPHRASE_KEY, p);
+  }
+  return p;
+}
 
 export interface NostrPublishResult {
   ok: boolean;
@@ -44,7 +56,7 @@ async function decryptNsec(record: StoredIdentity): Promise<string | null> {
   try {
     const secret = await decryptSecret(
       { ciphertext: record.encryptedSecret, salt: record.salt, iv: record.iv },
-      AUTO_UNLOCK_PASSPHRASE,
+      getNostrPassphrase(),
     );
     return secret;
   } catch {

@@ -1,0 +1,22 @@
+rules:
+  - id: no-console-log
+    pattern: console.log(...)
+    message: "Remove console.log() before committing. Use structured logging or remove."
+    severity: WARNING
+    languages: [typescript, javascript, tsx]
+    paths:
+      exclude:
+        - "**/*.test.*"
+        - "**/*.spec.*"
+
+  - id: no-dangerously-set-innerhtml
+    pattern: dangerouslySetInnerHTML
+    message: "Avoid dangerouslySetInnerHTML. Use DOMPurify sanitization if unavoidable."
+    severity: ERROR
+    languages: [typescript, tsx]
+
+  - id: no-eval
+    pattern: eval(...)
+    message: "eval() is dangerous and should not be used in production code."
+    severity: ERROR
+    languages: [typescript, javascript, tsx]

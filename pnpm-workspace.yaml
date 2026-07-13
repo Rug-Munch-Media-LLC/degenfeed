@@ -1,10 +1,13 @@
 packages:
   - "apps/*"
+  - "design"
+  - "docs"
   - "packages/*"
   - "workers/*"
 
 allowBuilds:
   '@biomejs/biome': true
+  '@reown/appkit': true
   '@stellar/stellar-sdk': true
   blake-hash: true
   bufferutil: true
@@ -15,3 +18,6 @@ allowBuilds:
   usb: true
   utf-8-validate: true
   workerd: true
+
+minimumReleaseAgeExclude:
+  - viem@2.55.1

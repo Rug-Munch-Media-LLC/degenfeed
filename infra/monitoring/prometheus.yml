@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node_exporter:9100']
+
+  - job_name: 'degenfeed-worker'
+    metrics_path: /api/health
+    scheme: https
+    static_configs:
+      - targets: ['degenfeed.xyz']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'degenfeed-worker'
+
+  - job_name: 'degenfeed-social'
+    metrics_path: /api/v1/instance
+    scheme: https
+    static_configs:
+      - targets: ['social.degenfeed.xyz']
+
+  - job_name: 'talos-node'
+    static_configs:
+      - targets: ['100.104.130.92:9100']
+        labels:
+          instance: 'talos'
+
+  - job_name: 'hydra-node'
+    static_configs:
+      - targets: ['localhost:9100']
+        labels:
+          instance: 'hydra'
