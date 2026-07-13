@@ -21,7 +21,7 @@ interface FrameData {
 
 function FrameCard({ url }: { url: string }) {
   const [frame, setFrame] = useState<FrameData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -344,8 +344,6 @@ export const PostCard = memo(function PostCard({
         }
       }}
       aria-label={`Post by ${post.author.displayName}`}
-      tabIndex={0}
-      role="article"
     >
       {/* Author row */}
       <div className="mb-2 flex items-center gap-3">
@@ -469,7 +467,7 @@ export const PostCard = memo(function PostCard({
                   <LinkPreview key={`link-${embed.url}`} embed={embed} />
                 ))}
                 {post.protocol === 'farcaster' && links.length > 0 && (
-                  <FrameCard url={links[0]!.url} />
+                  <FrameCard url={links[0]?.url} />
                 )}
                 {videos.map((embed) => (
                   <a

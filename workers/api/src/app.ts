@@ -130,6 +130,7 @@ const STATIC_REDIRECTS: Record<string, string> = {
 // ─── Session helper ─────────────────────────────────────────
 
 async function withSession(
+  // biome-ignore lint/suspicious/noExplicitAny: conditional type gate — actual shape matches Hono Context
   c: Parameters<typeof handlePublish>[0] extends Request ? any : never,
   handler: () => Promise<Response>,
 ): Promise<Response> {
@@ -217,7 +218,7 @@ app.all('/links', (c) => handleLinksPage(c.req.raw, c.env));
 app.all('/app.js', (c) => handleLandingJs(c.req.raw, c.env));
 app.all(
   '/favicon.svg',
-  (c) =>
+  (_c) =>
     new Response(
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#000"/><path d="M8 8h16l-6 16H12L8 8Z" fill="#00ff41" stroke="#00ff41" stroke-width=".5"/><text x="16" y="21" text-anchor="middle" fill="#000" font-family="ui-monospace,monospace" font-size="10" font-weight="900">DF</text></svg>',
       {
@@ -381,11 +382,11 @@ app.all('/api/prices', async (c) => handlePrices(c.req.raw, c.env));
 
 // ─── Static redirects ──────────────────────────────────────
 for (const [from, to] of Object.entries(STATIC_REDIRECTS)) {
-  app.all(from, (c) => new Response(null, { status: 302, headers: { location: to } }));
+  app.all(from, (_c) => new Response(null, { status: 302, headers: { location: to } }));
 }
 
 // ─── Catch-all: return API info ─────────────────────────────
-app.all('*', (c) => jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.2.0' }));
+app.all('*', (_c) => jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.2.0' }));
 
 // ─── Exports ─────────────────────────────────────────────────
 
