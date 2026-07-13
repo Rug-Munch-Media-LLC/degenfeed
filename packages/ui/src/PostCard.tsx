@@ -7,8 +7,8 @@ import {
   unmuteIdentity,
 } from '@degenfeed/storage';
 import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { memo, useEffect, useState } from 'react';
 import { formatTimeAgo } from '@degenfeed/utils';
+import { memo, useEffect, useState } from 'react';
 import { ProtocolBadge } from './ProtocolBadge';
 
 interface FrameData {
@@ -235,7 +235,14 @@ function applyOptimistic(state: LocalState, action: EngagementAction): LocalStat
   }
 }
 
-export const PostCard = memo(function PostCard({ post, onEngage, onClick, expanded, onTip, onPaywall }: PostCardProps) {
+export const PostCard = memo(function PostCard({
+  post,
+  onEngage,
+  onClick,
+  expanded,
+  onTip,
+  onPaywall,
+}: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
     engagement: post.engagement,

@@ -48,12 +48,13 @@ function PostCard({
     const linkEmbeds = post.embeds.filter((e) => e.kind === 'link');
     if (linkEmbeds.length > 0) {
       const url = linkEmbeds[0]?.url ?? '';
-      if (url) fetch(`/api/embed/resolve?url=${encodeURIComponent(url)}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (d?.title) setEmbedData(d as EmbedData);
-        })
-        .catch(() => {});
+      if (url)
+        fetch(`/api/embed/resolve?url=${encodeURIComponent(url)}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            if (d?.title) setEmbedData(d as EmbedData);
+          })
+          .catch(() => {});
     }
   }, [post.embeds]);
 

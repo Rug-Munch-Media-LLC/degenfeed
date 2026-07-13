@@ -1,8 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
-
 import type { UnifiedPost } from '@degenfeed/types';
+import { describe, expect, it, vi } from 'vitest';
 import type { Env } from '../index';
-import { handleHomeFeed, handleFeedHealth } from '../routes/feed';
+import { handleFeedHealth, handleHomeFeed } from '../routes/feed';
 import { handleRelaysHealth } from '../routes/health';
 import { handleRssXml } from '../routes/rss-xml';
 
@@ -13,7 +12,13 @@ function stripVariableData(obj: unknown): unknown {
   if (obj && typeof obj === 'object') {
     const cleaned: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj)) {
-      if (k === 'id' || k === 'createdAt' || k === 'fetchedAt' || k === 'timestamp' || k === 'updatedAt') {
+      if (
+        k === 'id' ||
+        k === 'createdAt' ||
+        k === 'fetchedAt' ||
+        k === 'timestamp' ||
+        k === 'updatedAt'
+      ) {
         cleaned[k] = '<string>';
       } else if (typeof v === 'string') cleaned[k] = '<string>';
       else if (typeof v === 'number') cleaned[k] = '<number>';
@@ -37,7 +42,15 @@ function mockUnifiedPost(overrides?: Partial<UnifiedPost>): UnifiedPost {
     author: {
       id: 'nostr:author-pubkey',
       primary: { protocol: 'nostr', id: 'author-pubkey' },
-      handles: { nostr: 'author-pubkey', farcaster: null, lens: null, bluesky: null, threads: null, rss: null, mastodon: null },
+      handles: {
+        nostr: 'author-pubkey',
+        farcaster: null,
+        lens: null,
+        bluesky: null,
+        threads: null,
+        rss: null,
+        mastodon: null,
+      },
       displayName: 'TestAuthor',
       bio: 'A test bio',
       avatarUrl: 'https://example.com/avatar.png',
@@ -64,7 +77,17 @@ function mockUnifiedPost(overrides?: Partial<UnifiedPost>): UnifiedPost {
     raw: null,
     niches: ['crypto', 'web3'],
     crossPostedTo: undefined,
-    score: { total: 0.85, recency: 0.3, engagement: 0.4, relevance: 0.1, quality: 0.05, diversity: 0, source: 0, velocity: 0, reasons: ['fresh'] },
+    score: {
+      total: 0.85,
+      recency: 0.3,
+      engagement: 0.4,
+      relevance: 0.1,
+      quality: 0.05,
+      diversity: 0,
+      source: 0,
+      velocity: 0,
+      reasons: ['fresh'],
+    },
     paywall: undefined,
     contentType: 'text',
     isNew: true,
@@ -408,7 +431,7 @@ describe('Contract: Invariant — error shape is consistent everywhere', () => {
     const { handleProviderFeed } = await import('../routes/feed');
     const req = new Request('http://localhost/api/feed/unknown');
     const res = await handleProviderFeed(req, {} as Env, 'unknown');
-    const body = await res.json() as Record<string, unknown>;
+    const body = (await res.json()) as Record<string, unknown>;
     expect(body).toHaveProperty('error');
     expect(typeof body.error).toBe('string');
   });

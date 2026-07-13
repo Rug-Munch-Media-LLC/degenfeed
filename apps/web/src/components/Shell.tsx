@@ -255,8 +255,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             </a>
           </div>
           <p className="text-xs text-gray-600">
-            v{APP_VERSION} — © {new Date().getFullYear()} DegenFeed — a Rug Munch Media LLC product. No account
-            required. Open source on{' '}
+            v{APP_VERSION} — © {new Date().getFullYear()} DegenFeed — a Rug Munch Media LLC product.
+            No account required. Open source on{' '}
             <a
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
               target="_blank"

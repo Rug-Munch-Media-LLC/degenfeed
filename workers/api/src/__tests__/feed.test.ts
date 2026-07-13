@@ -142,8 +142,13 @@ describe('handleHomeFeed', () => {
             id: 'nostr:abc',
             primary: { protocol: 'nostr', id: 'abc' },
             handles: {
-              nostr: 'abc', farcaster: null, lens: null, bluesky: null,
-              threads: null, rss: null, mastodon: null,
+              nostr: 'abc',
+              farcaster: null,
+              lens: null,
+              bluesky: null,
+              threads: null,
+              rss: null,
+              mastodon: null,
             },
             displayName: 'Satoshi',
             bio: '',
@@ -159,7 +164,9 @@ describe('handleHomeFeed', () => {
           createdAt: Date.now(),
           metrics: { likes: 42, reposts: 5, replies: 3, quotes: 1 },
           engagement: {
-            viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+            viewerLiked: false,
+            viewerReposted: false,
+            viewerBookmarked: false,
             raw: { likes: 42, reposts: 5, replies: 3, quotes: 1 },
           },
           raw: null,
@@ -170,7 +177,10 @@ describe('handleHomeFeed', () => {
     const req = new Request('http://localhost/api/feed/home?protocols=nostr&allowNonCrypto=true');
     const res = await handleHomeFeed(req, mockEnv);
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { data: unknown[]; meta: { total: number; limit: number; perProtocol: Record<string, number> } };
+    const body = (await res.json()) as {
+      data: unknown[];
+      meta: { total: number; limit: number; perProtocol: Record<string, number> };
+    };
     expect(body.meta.limit).toBe(50);
     expect(body.meta.perProtocol).toBeDefined();
   });

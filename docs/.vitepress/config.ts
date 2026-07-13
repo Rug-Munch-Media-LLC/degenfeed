@@ -7,7 +7,7 @@ export default defineConfig({
   base: '/docs/',
   lastUpdated: true,
   cleanUrls: true,
-  
+
   head: [
     ['link', { rel: 'icon', href: '/icon.svg' }],
     ['meta', { name: 'theme-color', content: '#00ff41' }],
@@ -15,7 +15,7 @@ export default defineConfig({
 
   themeConfig: {
     logo: '/icon.svg',
-    
+
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/' },
@@ -55,9 +55,7 @@ export default defineConfig({
       ],
     },
 
-    socialLinks: [
-      { icon: 'github', link: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web' },
-    ],
+    socialLinks: [{ icon: 'github', link: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web' }],
 
     search: {
       provider: 'local',
