@@ -1,5 +1,5 @@
+import { check, group, sleep } from 'k6';
 import http from 'k6/http';
-import { check, sleep, group } from 'k6';
 
 export const options = {
   stages: [

@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
 import { getProtocolColor } from '@degenfeed/ui';
+import { useCallback, useRef, useState } from 'react';
 
 interface IdentityResult {
   id: string;

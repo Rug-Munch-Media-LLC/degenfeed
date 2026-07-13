@@ -23,8 +23,16 @@ const KV_KEY = 'ff:all';
 
 const FLAG_DEFINITIONS: Omit<FeatureFlag, 'enabled'>[] = [
   { key: 'video-grid-layout', description: 'New video grid layout in feed', rolloutPercent: 0 },
-  { key: 'reply-composer', description: 'Inline reply composer in post detail', rolloutPercent: 100 },
-  { key: 'dark-mode-only', description: 'Force dark mode — light mode not ready', rolloutPercent: 100 },
+  {
+    key: 'reply-composer',
+    description: 'Inline reply composer in post detail',
+    rolloutPercent: 100,
+  },
+  {
+    key: 'dark-mode-only',
+    description: 'Force dark mode — light mode not ready',
+    rolloutPercent: 100,
+  },
   { key: 'push-notifications', description: 'Web push notifications via VAPID', rolloutPercent: 0 },
   { key: 'newsletter-v2', description: 'New newsletter digest format', rolloutPercent: 0 },
   { key: 'farcaster-frames', description: 'Farcaster Frame embed rendering', rolloutPercent: 100 },
@@ -32,7 +40,12 @@ const FLAG_DEFINITIONS: Omit<FeatureFlag, 'enabled'>[] = [
 
 function defaultEnabledSet(env: Env): Set<string> {
   const raw = env.FEATURE_FLAGS_DEFAULT || '';
-  return new Set(raw.split(',').map((s) => s.trim()).filter(Boolean));
+  return new Set(
+    raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+  );
 }
 
 function buildFlags(env: Env): FeatureFlag[] {

@@ -12,9 +12,9 @@
  */
 
 import { Hono } from 'hono';
+import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from './cors';
 import type { Env } from './index';
 import { jsonResponse, rateLimit } from './index';
-import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from './cors';
 import { validateBodySize } from './sanitize';
 
 // ─── Route handlers ──────────────────────────────────────────
@@ -194,24 +194,18 @@ app.use('*', async (c, next) => {
 // ─── Middleware: rate limiting ───────────────────────────────
 app.use('*', async (c, next) => {
   if (c.req.method === 'OPTIONS') return next();
-  const ip =
-    c.req.header('cf-connecting-ip') ||
-    c.req.header('x-forwarded-for') ||
-    'unknown';
+  const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
   const maxReq = Number(c.env.RATE_MAX_REQ) || DEFAULT_RATE_MAX;
   const windowMs = Number(c.env.RATE_WINDOW_MS) || DEFAULT_RATE_WINDOW;
   const rl = await rateLimit(c.env, ip, c.req.path, maxReq, windowMs);
   if (!rl.allowed) {
-    return new Response(
-      JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }),
-      {
-        status: 429,
-        headers: {
-          'content-type': 'application/json',
-          'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-        },
+    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
+      status: 429,
+      headers: {
+        'content-type': 'application/json',
+        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
       },
-    );
+    });
   }
   await next();
 });
@@ -221,14 +215,16 @@ app.use('*', async (c, next) => {
 app.all('/styles.css', (c) => handleLandingCss(c.req.raw, c.env));
 app.all('/links', (c) => handleLinksPage(c.req.raw, c.env));
 app.all('/app.js', (c) => handleLandingJs(c.req.raw, c.env));
-app.all('/favicon.svg', (c) =>
-  new Response(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#000"/><path d="M8 8h16l-6 16H12L8 8Z" fill="#00ff41" stroke="#00ff41" stroke-width=".5"/><text x="16" y="21" text-anchor="middle" fill="#000" font-family="ui-monospace,monospace" font-size="10" font-weight="900">DF</text></svg>',
-    {
-      status: 200,
-      headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=604800' },
-    },
-  ),
+app.all(
+  '/favicon.svg',
+  (c) =>
+    new Response(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#000"/><path d="M8 8h16l-6 16H12L8 8Z" fill="#00ff41" stroke="#00ff41" stroke-width=".5"/><text x="16" y="21" text-anchor="middle" fill="#000" font-family="ui-monospace,monospace" font-size="10" font-weight="900">DF</text></svg>',
+      {
+        status: 200,
+        headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=604800' },
+      },
+    ),
 );
 app.all('/', (c) => handleLandingHtml(c.req.raw, c.env));
 app.all('/index.html', (c) => handleLandingHtml(c.req.raw, c.env));
@@ -394,5 +390,5 @@ app.all('*', (c) => jsonResponse({ status: 'ok', service: 'degenfeed-api', versi
 // ─── Exports ─────────────────────────────────────────────────
 
 export default app;
-export { app };
 export { scheduled } from './index';
+export { app };
