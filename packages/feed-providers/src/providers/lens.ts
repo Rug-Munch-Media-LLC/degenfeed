@@ -135,9 +135,29 @@ export class LensProvider implements FeedProvider {
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     const t = Math.min(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS, 5000);
+    const posts: UnifiedPost[] = [];
+
+    // Primary: ML-powered explore feed — viral/hot content with real engagement.
+    try {
+      const explore = await withTimeout(
+        lensGql(
+          this.apiUrl,
+          'query{mlPostsExplore(request:{pageSize:FIFTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}',
+        ),
+        Math.min(t, 4000),
+        'lens:explore',
+      );
+      const items =
+        (explore as { mlPostsExplore?: { items?: LensPost[] } })?.mlPostsExplore?.items ?? [];
+      posts.push(...items.map(postToUnified).map(enrichPostNiches));
+    } catch {
+      /* explore unavailable — continue with curated */
+    }
+
+    // Secondary: curated crypto accounts for consistent signal.
     try {
       const names = CURATED_LENS_HANDLES.map((h) => h.replace('.lens', '')).slice(0, 12);
-      const allResults = await Promise.all(
+      const addressResults = await Promise.all(
         names.map(async (name) => {
           try {
             const acc = await withTimeout(
@@ -146,8 +166,8 @@ export class LensProvider implements FeedProvider {
                 'query($q:String!){accounts(request:{filter:{searchBy:{localNameQuery:$q}},pageSize:FIFTY}){items{address username{localName}}}}',
                 { q: name },
               ),
-              Math.min(t, 3000),
-              'lens:acct:' + name,
+              Math.min(t, 2000),
+              `lens:acct:${name}`,
             );
             return ((acc as { accounts?: { items?: LensAccount[] } })?.accounts?.items ?? [])
               .filter((a) => a.username?.localName === name)
@@ -157,43 +177,94 @@ export class LensProvider implements FeedProvider {
           }
         }),
       );
-      const addrs = [...new Set(allResults.flat())].filter(Boolean).slice(0, 12);
-      if (!addrs.length) {
-        // Fallback: use ML-powered explore feed (no auth needed)
-        try {
-          const explore = await withTimeout(
-            lensGql(
-              this.apiUrl,
-              'query{mlPostsExplore(request:{pageSize:FIFTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}',
-            ),
-            Math.min(t, 3000),
-            'lens:explore',
-          );
-          const items =
-            (explore as { mlPostsExplore?: { items?: LensPost[] } })?.mlPostsExplore?.items ?? [];
-          if (items.length) return { posts: items.map(postToUnified).map(enrichPostNiches) };
-        } catch {
-          /* explore failed — return empty */
-        }
-        return { posts: [], notice: 'No Lens profiles resolved' };
+      const addrs = [...new Set(addressResults.flat())].filter(Boolean).slice(0, 8);
+      if (addrs.length > 0) {
+        const curated = await withTimeout(
+          lensGql(
+            this.apiUrl,
+            'query($a:[String!]!){posts(request:{filter:{authors:$a},pageSize:THIRTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}',
+            { a: addrs },
+          ),
+          Math.min(t, 4000),
+          'lens:curated',
+        );
+        const items = (curated as { posts?: { items?: LensPost[] } })?.posts?.items ?? [];
+        // Prepend curated so they float above the explore feed
+        posts.unshift(...items.map(postToUnified).map(enrichPostNiches));
       }
-      const p = await withTimeout(
-        lensGql(
-          this.apiUrl,
-          'query($a:[String!]!){posts(request:{filter:{authors:$a},pageSize:FIFTY}){items{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}',
-          { a: addrs },
-        ),
-        t,
-        'lens:posts',
-      );
-      return {
-        posts: ((p as { posts?: { items?: LensPost[] } })?.posts?.items ?? [])
-          .map(postToUnified)
-          .map(enrichPostNiches),
-      };
-    } catch (e) {
-      return { posts: [], notice: e instanceof Error ? e.message : 'Lens unavailable' };
+    } catch {
+      /* curated unavailable */
     }
+
+    // Tertiary: mirror publications from curated accounts —
+    // surfaces what the crypto thought-leaders are amplifying.
+    try {
+      const names = ['stani.lens', 'lensprotocol.lens', 'nader.lens', 'jessepollak.lens'];
+      const mirrorAddresses = await Promise.all(
+        names.map(async (name) => {
+          try {
+            const acc = await withTimeout(
+              lensGql(
+                this.apiUrl,
+                'query($q:String!){accounts(request:{filter:{searchBy:{localNameQuery:$q}},pageSize:ONE}){items{address}}}',
+                { q: name.replace('.lens', '') },
+              ),
+              Math.min(t, 2000),
+              `lens:mirror:${name}`,
+            );
+            const items =
+              (acc as { accounts?: { items?: Array<{ address: string }> } })?.accounts?.items ?? [];
+            return items[0]?.address ?? null;
+          } catch {
+            return null;
+          }
+        }),
+      );
+      const mirrorAddrs = mirrorAddresses.filter(Boolean) as string[];
+      if (mirrorAddrs.length > 0) {
+        const mirrors = await withTimeout(
+          lensGql(
+            this.apiUrl,
+            'query($a:[String!]!){publications(request:{where:{from:$a, publicationTypes:[MIRROR]}, limit:TEN}){items{__typename ... on Mirror{id createdAt stats{reactions comments mirrors quotes} mirrorOn{... on Post{id metadata{content asset{...on PostMetadataMediaImage{image{raw{uri}}}}} author{username{localName}metadata{displayName picture}} createdAt stats{reactions comments mirrors quotes}}}}}}}',
+            { a: mirrorAddrs },
+          ),
+          Math.min(t, 4000),
+          'lens:mirrors',
+        );
+        const mirrorItems =
+          (
+            mirrors as {
+              publications?: {
+                items?: Array<{
+                  id: string;
+                  createdAt: string;
+                  stats?: LensPost['stats'];
+                  mirrorOn?: LensPost;
+                }>;
+              };
+            }
+          )?.publications?.items ?? [];
+        for (const m of mirrorItems) {
+          const original = m.mirrorOn;
+          if (!original) continue;
+          posts.push(
+            enrichPostNiches(
+              postToUnified({
+                ...original,
+                stats: m.stats ?? original.stats,
+              }),
+            ),
+          );
+        }
+      }
+    } catch {
+      /* mirrors unavailable */
+    }
+
+    if (posts.length === 0) {
+      return { posts: [], notice: 'Lens unavailable' };
+    }
+    return { posts };
   }
 
   async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {

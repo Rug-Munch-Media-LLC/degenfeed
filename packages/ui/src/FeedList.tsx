@@ -12,7 +12,7 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { type EngageHandler, PostCard } from './PostCard';
 
 export type { UnifiedPost };
@@ -107,7 +107,7 @@ function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => vo
   );
 }
 
-export function FeedList({
+export const FeedList = memo(function FeedList({
   state,
   posts,
   error,
@@ -121,6 +121,71 @@ export function FeedList({
   onSignIn,
 }: FeedListProps & { onSignIn?: () => void }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const SCROLL_KEY = 'df_scroll';
+
+  // Scroll position restore
+  useEffect(() => {
+    if (state !== 'loaded' || posts.length === 0) return;
+    const saved = sessionStorage.getItem(SCROLL_KEY);
+    if (saved) {
+      const { y, id } = JSON.parse(saved) as { y: number; id: string };
+      const el = document.getElementById(`post-${id}`);
+      if (el) {
+        el.scrollIntoView();
+        return;
+      }
+      window.scrollTo(0, y);
+    }
+  }, [state, posts.length]);
+
+  // Save scroll position on post click
+  const handlePostClick = (postId: string) => {
+    sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ y: window.scrollY, id: postId }));
+    onPostClick?.(postId);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const articles = containerRef.current?.querySelectorAll('article');
+      if (!articles?.length) return;
+      const focused = document.activeElement;
+      const idx = Array.from(articles).indexOf(focused as Element);
+
+      if (e.key === 'j' && idx < articles.length - 1) {
+        e.preventDefault();
+        (articles[idx + 1] as HTMLElement)?.focus({ preventScroll: false });
+      }
+      if (e.key === 'k' && idx > 0) {
+        e.preventDefault();
+        (articles[idx - 1] as HTMLElement)?.focus({ preventScroll: false });
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  // Pull-to-refresh
+  useEffect(() => {
+    let startY = 0;
+    const el = containerRef.current;
+    if (!el) return;
+    const onTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0]?.clientY ?? 0;
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      const endY = e.changedTouches[0]?.clientY ?? 0;
+      if (endY - startY > 80 && window.scrollY < 10 && onRetry) onRetry();
+    };
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [onRetry]);
 
   useEffect(() => {
     if (!hasMore || !onLoadMore) return;
@@ -155,12 +220,16 @@ export function FeedList({
   }
 
   return (
-    <div role="feed" aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}>
+    <div
+      ref={containerRef}
+      role="feed"
+      aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
+    >
       {posts.map((post) => (
         <PostCard
           key={post.id}
           post={post}
-          onClick={onPostClick}
+          onClick={() => handlePostClick(post.id)}
           onTip={onTip}
           onEngage={onEngage}
         />
@@ -178,4 +247,4 @@ export function FeedList({
       )}
     </div>
   );
-}
+});

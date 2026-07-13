@@ -14,7 +14,12 @@
  * - diversity: penalize repeat authors (anti-feed-spam)
  * - source: protocol tier weight (Nostr > Threads, etc.)
  */
-import { BOOST_TERMS, keywordRelevance, PLATFORM_TIER_WEIGHTS } from '@degenfeed/feed-core';
+import {
+  BOOST_TERMS,
+  contentQualityScore,
+  keywordRelevance,
+  PLATFORM_TIER_WEIGHTS,
+} from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
 export const WEIGHTS = {
@@ -48,6 +53,7 @@ export const PLATFORM_TIER: Record<Protocol, number> = {
   lens: 1,
   bluesky: 1,
   mastodon: 1,
+  lemmy: 1,
   threads: 0.7,
   reddit: 0.8,
   rss: 0.8,
@@ -101,6 +107,14 @@ export interface ScoreBreakdown {
 export function recencyDecay(createdAt: number, now: number, halfLifeHours: number): number {
   const ageHours = Math.max(0, (now - createdAt) / (1000 * 60 * 60));
   return 0.5 ** (ageHours / halfLifeHours);
+}
+
+export function freshnessBoost(createdAt: number, now: number): number {
+  const ageMin = (now - createdAt) / 60000;
+  if (ageMin < 15) return 2.0;
+  if (ageMin < 60) return 1.5;
+  if (ageMin < 120) return 1.2;
+  return 1.0;
 }
 
 export function normalizeEngagement(post: UnifiedPost): number {
@@ -190,8 +204,19 @@ export function scoreBreakdownV2(post: UnifiedPost, ctx: RankingContext): ScoreB
   const quality = qualityBoost(post, ctx.sourceQuality, ctx.followed);
   if (quality > 1) reasons.push('followed-or-high-quality');
 
+  // Media boost: posts with images/video get a small multiplier
+  const hasMedia = post.embeds.some((e) => e.kind === 'image' || e.kind === 'video');
+  const mediaBoost = hasMedia ? 1.2 : 1.0;
+  if (hasMedia) reasons.push('media');
+
+  const contentQuality = contentQualityScore(post.text);
+  if (contentQuality < 1.0) reasons.push('low-effort');
+
   const diversityHit = ctx.recentAuthors.get(post.author.id) ?? 0;
-  const diversity = prefs?.diversityBoost === false ? 0 : Math.max(-1.2, -diversityHit * 0.4);
+  // Allow up to 3 posts from the same author before applying penalty.
+  // Beyond 3, penalize -0.2 per extra post, capped at -0.8.
+  const extra = Math.max(0, diversityHit - 3);
+  const diversity = prefs?.diversityBoost === false ? 0 : Math.max(-0.8, -extra * 0.2);
   if (diversity < 0) reasons.push('author-diversity');
 
   const source = sourceWeight(post.protocol);
@@ -202,13 +227,16 @@ export function scoreBreakdownV2(post: UnifiedPost, ctx: RankingContext): ScoreB
   const rw = prefs?.recencyWeight ?? 1;
   const ew = prefs?.engagementWeight ?? 1;
   const total =
-    recency * rw * WEIGHTS_V2.recency +
-    engagement * ew * WEIGHTS_V2.engagement +
-    relevance * WEIGHTS_V2.relevance +
-    quality * WEIGHTS_V2.quality +
-    diversity * WEIGHTS_V2.diversity +
-    source * WEIGHTS_V2.source +
-    velocity * WEIGHTS_V2.velocity;
+    (recency * rw * WEIGHTS_V2.recency +
+      engagement * ew * WEIGHTS_V2.engagement +
+      relevance * WEIGHTS_V2.relevance +
+      quality * WEIGHTS_V2.quality +
+      diversity * WEIGHTS_V2.diversity +
+      source * WEIGHTS_V2.source +
+      velocity * WEIGHTS_V2.velocity) *
+    freshnessBoost(post.createdAt, ctx.now) *
+    mediaBoost *
+    contentQuality;
 
   if (isMuted) reasons.unshift('muted-penalty');
 
@@ -300,9 +328,10 @@ export function computeTrendingTopics(
   posts: UnifiedPost[],
   now: number,
   limit = 12,
+  windowMs = 24 * 60 * 60 * 1000,
 ): TrendingTopic[] {
   const counts = new Map<string, { count: number; score: number }>();
-  const cutoff = now - 24 * 60 * 60 * 1000;
+  const cutoff = now - windowMs;
 
   for (const post of posts) {
     if (post.createdAt < cutoff) continue;

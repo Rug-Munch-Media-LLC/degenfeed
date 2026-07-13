@@ -4,17 +4,32 @@
 # For production, use `wrangler secret put <NAME>`.
 
 # Cloudflare API token used by Wrangler for deploys and local dev auth.
-# Not used by the worker runtime itself.
 CLOUDFLARE_API_TOKEN=
 
 # GotoSocial OAuth2 client secret.
-# Register an application at your GTS instance to obtain this.
 GTS_CLIENT_SECRET=
 
-# ── Cloudflare platform bindings ───────────────────────────────
-# CACHE is a KV namespace binding used by workers/api/src/routes/news.ts.
-# It is configured in wrangler.toml, NOT in .dev.vars:
-# [[kv_namespaces]]
-# binding = "CACHE"
-# id = "<your-kv-namespace-id>"
-# preview_id = "<your-preview-kv-namespace-id>"
+# Worker HMAC session signing key (generate: openssl rand -hex 32)
+AUTH_SECRET=
+
+# Meta Threads API app secret (from Meta Developer Dashboard)
+THREADS_APP_SECRET=
+
+# Reddit OAuth app secret
+REDDIT_CLIENT_SECRET=
+
+# Postmark server token for transactional email delivery
+POSTMARK_SERVER_TOKEN=
+
+# VAPID keys for Web Push (generate: npx web-push generate-vapid-notes)
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+
+# Optional: RMI backend API key if gated
+RMI_API_KEY=
+
+# Optional: Solana RPC URL override
+SOLANA_RPC_URL=
+
+# Optional: Sentry DSN for error reporting
+SENTRY_DSN=

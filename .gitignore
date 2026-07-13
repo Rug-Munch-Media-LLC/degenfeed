@@ -1,23 +1,10 @@
-# Cinnabox build directory — ignore user/desktop state
-# Only canonical docs + fleet state files are tracked.
+# TypeScript / Node .gitignore — Rug Munch Media fleet standard
+# See https://git.rugmunch.io/RugMunchMedia/standards for source of truth.
 
-# Desktop / user
-.Xauthority
-.aider.chat.history.md
-.aider.input.history
-.aider.models.settings.yml
-
-# Tools / runtimes
-.local/
-.hermes/.hermes_history
-.hermes/state.db*
-.hermes/auth.lock
-.hermes/cache/
-.hermes/logs/
-
-# Secrets (zero tolerance)
+# ── Secrets (zero tolerance) ───────────────────────────────────
 .env
 .env.*
+.envrc
 .dev.vars
 !.env.example
 !.env.template
@@ -30,14 +17,14 @@ credentials.json
 service-account.json
 .secrets/
 
-# Node
+# ── Node ───────────────────────────────────────────────────────
 node_modules/
 .npm/
 .pnpm-store/
 yarn-error.log
 yarn-debug.log
 
-# Build artifacts
+# ── Build artifacts ────────────────────────────────────────────
 dist/
 build/
 .next/
@@ -45,36 +32,26 @@ build/
 out/
 *.tsbuildinfo
 
-# Coverage
+# ── Coverage ───────────────────────────────────────────────────
 coverage/
 *.lcov
 
-# Python
-__pycache__/
-*.pyc
-
-# IDE
+# ── IDE ────────────────────────────────────────────────────────
 .vscode/
 .idea/
-
-# Shell history
-.bash_history
-.zsh_history
-
-# Logs
-*.log
-logs/
-pnpm-debug.log*
-
-# Cache / temp
-.cache/
-tmp/
-.vercel/
-*.tmp.vercel/
-
-# Temp
 *.swp
 *.swo
 *~
 .DS_Store
-.aider*
+
+# ── Logs ───────────────────────────────────────────────────────
+*.log
+logs/
+pnpm-debug.log*
+
+# ── Cache / temp / backups ─────────────────────────────────────
+.cache/
+tmp/
+.vercel/
+*.tmp.vercel/
+*.bak

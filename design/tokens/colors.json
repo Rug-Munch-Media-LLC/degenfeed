@@ -1,0 +1,45 @@
+{
+  "color": {
+    "degen": {
+      "50": { "value": "#f0fff4" },
+      "100": { "value": "#c6f6d5" },
+      "200": { "value": "#9ae6b4" },
+      "300": { "value": "#68d391" },
+      "400": { "value": "#48bb78" },
+      "500": { "value": "#00ff41" },
+      "600": { "value": "#00cc34" },
+      "700": { "value": "#009927" },
+      "800": { "value": "#00661a" },
+      "900": { "value": "#00330d" }
+    },
+    "gray": {
+      "50": { "value": "#f9fafb" },
+      "100": { "value": "#f3f4f6" },
+      "200": { "value": "#e5e7eb" },
+      "300": { "value": "#d1d5db" },
+      "400": { "value": "#9ca3af" },
+      "500": { "value": "#6b7280" },
+      "600": { "value": "#4b5563" },
+      "700": { "value": "#374151" },
+      "800": { "value": "#1f2937" },
+      "900": { "value": "#111827" },
+      "950": { "value": "#030712" }
+    },
+    "protocol": {
+      "nostr": { "value": "#8e30eb" },
+      "farcaster": { "value": "#8a63d2" },
+      "lens": { "value": "#abfe2c" },
+      "bluesky": { "value": "#1185fe" },
+      "mastodon": { "value": "#6364ff" },
+      "threads": { "value": "#888888" },
+      "reddit": { "value": "#ff4500" },
+      "rss": { "value": "#ffa500" }
+    },
+    "semantic": {
+      "success": { "value": "{color.degen.500}" },
+      "warning": { "value": "#f59e0b" },
+      "error": { "value": "#ef4444" },
+      "info": { "value": "#3b82f6" }
+    }
+  }
+}

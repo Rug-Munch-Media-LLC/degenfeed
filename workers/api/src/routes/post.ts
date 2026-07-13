@@ -52,7 +52,6 @@ const ALL_PROTOCOLS: Protocol[] = [
   'lens',
   'bluesky',
   'mastodon',
-  'threads',
 ];
 
 export async function handlePostById(
@@ -65,6 +64,22 @@ export async function handlePostById(
   try {
     const cached = await env.CACHE?.get(cacheKey);
     if (cached) return jsonResponse(JSON.parse(cached));
+  } catch {
+    /* ignore */
+  }
+  // Try the feed-level post KV store first (populated by handleHomeFeed).
+  try {
+    const stored = await env.CACHE?.get(`post:${decoded}`);
+    if (stored) {
+      const post = JSON.parse(stored) as UnifiedPost;
+      const response = { data: post };
+      try {
+        await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
+      } catch {
+        /* ignore */
+      }
+      return jsonResponse(response);
+    }
   } catch {
     /* ignore */
   }

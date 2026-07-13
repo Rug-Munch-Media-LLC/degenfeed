@@ -4,12 +4,11 @@
 **Last updated:** 2026-07-06
 
 ## Overview
-Turborepo monorepo with a Cloudflare Pages-hosted Next.js 15 client, a static landing page, and a Cloudflare Worker edge API. Shared packages provide protocol adapters, feed normalization, identity resolution, UI primitives, and wallet auth.
+Turborepo monorepo with a Cloudflare Pages-hosted Next.js 15 client and a Cloudflare Worker edge API (which also serves the landing page). Shared packages provide protocol adapters, feed normalization, identity resolution, UI primitives, and wallet auth.
 
 ## Structure
 ```
 apps/
-  landing/          static landing page at degenfeed.xyz
   web/              Next.js 15 aggregator client at app.degenfeed.xyz
 packages/
   types/            unified protocol types and interfaces
@@ -35,7 +34,7 @@ infra/
 ## Deployment
 | Component | Target | URL |
 |-----------|--------|-----|
-| Landing page | Cloudflare Pages | `https://degenfeed.xyz` |
+| Landing page | Cloudflare Worker | `https://degenfeed.xyz` (`workers/api/src/routes/landing.ts`) |
 | Web client | Cloudflare Pages | `https://app.degenfeed.xyz` |
 | Edge API | Cloudflare Worker `degenfeed-api` | `https://degenfeed.xyz/api/*` and `https://app.degenfeed.xyz/api/*` |
 | Social server | GotoSocial (separate repo/deploy) | `https://social.degenfeed.xyz` |

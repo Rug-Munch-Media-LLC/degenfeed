@@ -1,5 +1,6 @@
 'use client';
 
+import { getProtocolColor } from '@degenfeed/ui';
 import { useCallback, useRef, useState } from 'react';
 
 interface IdentityResult {
@@ -8,19 +9,6 @@ interface IdentityResult {
   displayName?: string;
   handle?: string;
   avatarUrl?: string;
-}
-
-function protocolColor(p: string): string {
-  const c: Record<string, string> = {
-    nostr: '#8e30eb',
-    farcaster: '#8a63d2',
-    lens: '#abfe2c',
-    bluesky: '#1185fe',
-    threads: '#888',
-    mastodon: '#6364ff',
-    rss: '#ffa500',
-  };
-  return c[p] ?? '#666';
 }
 
 export function IdentityLinker({ onSignIn }: { onSignIn?: () => void }) {
@@ -108,8 +96,8 @@ export function IdentityLinker({ onSignIn }: { onSignIn?: () => void }) {
               <div
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
                 style={{
-                  backgroundColor: `${protocolColor(r.protocol)}22`,
-                  color: protocolColor(r.protocol),
+                  backgroundColor: `${getProtocolColor(r.protocol)}22`,
+                  color: getProtocolColor(r.protocol),
                 }}
               >
                 {r.displayName?.[0]?.toUpperCase() || '?'}
@@ -123,8 +111,8 @@ export function IdentityLinker({ onSignIn }: { onSignIn?: () => void }) {
               <span
                 className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
                 style={{
-                  backgroundColor: `${protocolColor(r.protocol)}22`,
-                  color: protocolColor(r.protocol),
+                  backgroundColor: `${getProtocolColor(r.protocol)}22`,
+                  color: getProtocolColor(r.protocol),
                 }}
               >
                 {r.protocol}

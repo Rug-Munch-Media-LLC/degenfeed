@@ -104,26 +104,50 @@ export async function signInWithLens(opts: { wallet: Eip1193Provider }): Promise
     data: { authenticate: { accessToken: string; refreshToken: string } };
   };
 
-  // 6. Store encrypted tokens
-  const tokensBlob = JSON.stringify({
-    accessToken: authData.authenticate.accessToken,
-    refreshToken: authData.authenticate.refreshToken,
-    address,
-  });
+  // 6. Store tokens — no local encryption passphrase needed;
+  // the tokens live in browser-local IndexedDB behind the wallet auth gate.
   const record = await buildIdentityRecord({
     protocol: 'lens',
     publicId: profile.id,
     handle: `lens/${profile.handle}`,
     displayName: profile.metadata.displayName ?? undefined,
     avatarUrl: profile.metadata.picture ?? undefined,
-    secret: tokensBlob,
-    passphrase: '',
+    secret: null,
     keys: {
       accessToken: authData.authenticate.accessToken,
       refreshToken: authData.authenticate.refreshToken,
-      address: address ?? null,
+      address,
     },
   });
   await saveIdentity(record);
   return record;
+}
+
+// ─── Session refresh ─────────────────────────────────────────────────────
+
+interface RefreshResponse {
+  data: { refresh: { accessToken: string; refreshToken: string } };
+}
+
+export async function refreshLensSession(
+  refreshToken: string,
+): Promise<{ accessToken: string; refreshToken: string }> {
+  const res = await fetch('https://api.lens.xyz/graphql', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      query: `
+        mutation Refresh($refreshToken: String!) {
+          refresh(request: { refreshToken: $refreshToken }) {
+            accessToken refreshToken
+          }
+        }
+      `,
+      variables: { refreshToken },
+    }),
+  });
+  if (!res.ok) throw new Error(`Lens session refresh failed: ${res.statusText}`);
+  const { data } = (await res.json()) as RefreshResponse;
+  if (!data?.refresh) throw new Error('Lens session refresh failed: no data in response');
+  return { accessToken: data.refresh.accessToken, refreshToken: data.refresh.refreshToken };
 }

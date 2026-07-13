@@ -26,7 +26,6 @@ import { buildIdentityRecord } from '../persistence';
 export async function signInWithBluesky(
   identifier: string,
   appPassword: string,
-  passphrase: string,
 ): Promise<StoredIdentity> {
   // 1. Create session via XRPC
   const sessionRes = await fetch('https://bsky.social/xrpc/com.atproto.server.createSession', {
@@ -74,9 +73,30 @@ export async function signInWithBluesky(
     displayName,
     avatarUrl,
     secret: jwtBlob,
-    passphrase,
     keys: { accessToken: session.accessJwt, refreshJwt: session.refreshJwt },
   });
   await saveIdentity(record);
   return record;
+}
+
+// ─── Session refresh ────────────────────────────────────────────────────
+
+export async function refreshBlueskySession(
+  refreshJwt: string,
+): Promise<{ accessJwt: string; refreshJwt: string }> {
+  const res = await fetch('https://bsky.social/xrpc/com.atproto.server.refreshSession', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${refreshJwt}`,
+    },
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+    throw new Error(
+      `Bluesky session refresh failed: ${err.message ?? err.error ?? res.statusText}`,
+    );
+  }
+  const session = (await res.json()) as { accessJwt: string; refreshJwt: string };
+  return { accessJwt: session.accessJwt, refreshJwt: session.refreshJwt };
 }

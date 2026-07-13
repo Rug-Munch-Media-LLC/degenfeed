@@ -92,7 +92,7 @@
 - None
 
 ## Done
-- apps/landing live at degenfeed.xyz
+- Landing page live at degenfeed.xyz (moved from `apps/landing/` to `workers/api/src/routes/landing.ts`)
 - apps/web live at app.degenfeed.xyz
 - CI, Makefile, pre-commit configured
 - Protocol SDKs, feed-core, ranking, identity packages

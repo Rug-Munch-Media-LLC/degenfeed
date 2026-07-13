@@ -1,5 +1,6 @@
 'use client';
 
+import { getProtocolColor } from '@degenfeed/ui';
 import { useCallback, useState } from 'react';
 
 const ALL_NICHES = [
@@ -55,19 +56,6 @@ function formatTime(ts: number): string {
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.floor(hours / 24)}d`;
-}
-
-function protocolColor(p: string): string {
-  const map: Record<string, string> = {
-    nostr: '#8e30eb',
-    farcaster: '#8a63d2',
-    lens: '#abfe2c',
-    bluesky: '#1185fe',
-    mastodon: '#6364ff',
-    threads: '#888',
-    rss: '#ffa500',
-  };
-  return map[p] ?? '#666';
 }
 
 function protocolEmoji(p: string): string {
@@ -324,7 +312,7 @@ export default function NewsletterPage() {
                     <div className="mb-1 flex items-center gap-2">
                       <span
                         className="text-[10px] font-medium"
-                        style={{ color: protocolColor(item.protocol) }}
+                        style={{ color: getProtocolColor(item.protocol) }}
                       >
                         {protocolEmoji(item.protocol)} {item.protocol}
                       </span>

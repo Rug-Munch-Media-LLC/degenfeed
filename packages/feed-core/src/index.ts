@@ -110,6 +110,7 @@ export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
   lens: 1.0,
   bluesky: 1.0,
   mastodon: 1.0,
+  lemmy: 1.0,
   threads: 0.7,
   reddit: 0.8,
   rss: 0.6,
@@ -335,6 +336,71 @@ const TECH_AI_TERMS = new Set([
 ]);
 for (const t of TECH_AI_TERMS) CRYPTO_RELEVANCE_TERMS.add(t);
 
+// Common English function words for language detection.
+const ENGLISH_STOPWORDS = new Set([
+  'the',
+  'is',
+  'and',
+  'for',
+  'that',
+  'with',
+  'this',
+  'are',
+  'was',
+  'not',
+  'have',
+  'from',
+  'but',
+  'can',
+  'has',
+  'all',
+  'will',
+  'its',
+  'about',
+  'been',
+  'more',
+  'when',
+  'they',
+  'what',
+  'like',
+  'just',
+  'into',
+  'over',
+  'some',
+  'would',
+  'make',
+  'them',
+  'than',
+  'then',
+  'also',
+  'very',
+  'your',
+  'which',
+  'their',
+  'other',
+  'only',
+  'even',
+  'most',
+  'being',
+  'after',
+  'could',
+  'still',
+  'first',
+  'those',
+  'every',
+]);
+
+export function isEnglishPost(text: string): boolean {
+  if (!text || text.length < 10) return true;
+  const words = text.toLowerCase().split(/\s+/);
+  let hits = 0;
+  for (const w of words) {
+    if (ENGLISH_STOPWORDS.has(w)) hits++;
+    if (hits >= 3) return true;
+  }
+  return hits >= 3;
+}
+
 export function isSpamPost(post: UnifiedPost): boolean {
   const text = post.text.trim();
   if (text.length < 12) return true;
@@ -354,6 +420,29 @@ export function isSpamPost(post: UnifiedPost): boolean {
   const upperRatio = (text.match(/[A-Z]/g) ?? []).length / Math.max(text.length, 1);
   if (text.length >= 20 && upperRatio > 0.7) return true;
   return false;
+}
+
+export function contentQualityScore(text: string): number {
+  if (!text) return 0.5;
+  const trimmed = text.trim();
+  const words = trimmed.split(/\s+/).filter((w) => w.length > 0);
+
+  if (words.length === 1 && (words[0]?.length ?? 0) < 20) return 0.3;
+
+  const emojiCount = (trimmed.match(/[\p{Emoji}\p{Extended_Pictographic}]/gu) ?? []).length;
+  const emojiRatio = emojiCount / Math.max(trimmed.length, 1);
+  if (emojiRatio > 0.3) return 0.2;
+
+  const capsRatio = (trimmed.match(/[A-Z]/g) ?? []).length / Math.max(trimmed.length, 1);
+  if (capsRatio > 0.8 && trimmed.length > 15) return 0.3;
+
+  const hashtagRatio = (trimmed.match(/#[a-zA-Z0-9_]+/g) ?? []).length / Math.max(words.length, 1);
+  if (hashtagRatio > 0.5 && words.length > 3) return 0.4;
+
+  const urlFree = trimmed.replace(/https?:\/\/\S+/g, '').trim();
+  if (urlFree.length < 10 && trimmed.length > 20) return 0.4;
+
+  return 1.0;
 }
 
 function gatherRelevanceText(post: UnifiedPost): string {
@@ -420,7 +509,11 @@ function normalizeStripped(text: string): string {
 }
 
 function wordSet(text: string): Set<string> {
-  return new Set(normalizeStripped(text).split(' ').filter((w) => w.length > 2));
+  return new Set(
+    normalizeStripped(text)
+      .split(' ')
+      .filter((w) => w.length > 2),
+  );
 }
 
 function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
@@ -434,22 +527,30 @@ function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   return intersection / (a.size + b.size - intersection);
 }
 
-function extractUrls(post: UnifiedPost): string[] {
-  const textUrls = (post.text.match(/https?:\/\/[^\s<>"']+/gi) ?? [])
-    .map((u) => u.replace(/\/$/, '').toLowerCase());
-  const embedUrls = post.embeds
-    .filter((e) => e.kind === 'link' || e.kind === 'image' || e.kind === 'video')
-    .map((e) => e.url.replace(/\/$/, '').toLowerCase());
-  return [...new Set([...textUrls, ...embedUrls])];
-}
-
 function primaryUrl(post: UnifiedPost): string | null {
   const urls = post.text.match(URL_RE);
-  if (urls && urls.length > 0) return urls[0].toLowerCase();
+  if (urls && urls.length > 0) return normalizeUrlForDedup(urls[0]);
   const embed = post.embeds.find(
     (e) => e.kind === 'link' || e.kind === 'image' || e.kind === 'video',
   );
-  return embed ? embed.url.toLowerCase() : null;
+  return embed ? normalizeUrlForDedup(embed.url) : null;
+}
+
+function normalizeUrlForDedup(url: string): string {
+  try {
+    const u = new URL(url.toLowerCase());
+    // Strip instance domain from ActivityPub post URLs so cross-instance
+    // copies of the same post deduplicate. /@user/123 → same across instances.
+    if (u.pathname.startsWith('/@') || u.pathname.includes('/users/')) {
+      const parts = u.pathname.split('/');
+      const lastTwo = parts.filter(Boolean).slice(-2).join('/');
+      const statusId = u.searchParams.get('status') || parts[parts.length - 1];
+      return `ap:${lastTwo}:${statusId || ''}`;
+    }
+    return url.toLowerCase();
+  } catch {
+    return url.toLowerCase();
+  }
 }
 
 function tickerSnapshot(text: string): string {
@@ -475,6 +576,24 @@ function embedFingerprint(post: UnifiedPost): string | null {
     .join('|')}`;
 }
 
+function imageFingerprint(post: UnifiedPost): string | null {
+  const images = post.embeds.filter((e) => e.kind === 'image');
+  if (images.length === 0) return null;
+  const normalized = images
+    .map((e) => {
+      try {
+        const u = new URL(e.url.replace(/\/$/, ''));
+        u.search = '';
+        return `${u.hostname}${u.pathname}`;
+      } catch {
+        return e.url;
+      }
+    })
+    .sort()
+    .join('|');
+  return `img:${normalized}`;
+}
+
 function authorKey(post: UnifiedPost): string {
   const displayName = post.author.displayName.toLowerCase().trim();
   const id = post.author.id.toLowerCase();
@@ -488,7 +607,9 @@ function extractQuotedId(post: UnifiedPost): string | null {
   }
   if (/\bRT\s+@/i.test(post.text) || /\bvia\s+@/i.test(post.text) || /^RT\b/i.test(post.text)) {
     const urls = post.text.match(URL_RE);
-    return urls ? `quoted:${urls.join(',')}` : null;
+    if (urls && urls.length > 0) return `quoted:${urls.join(',')}`;
+    const stripped = normalizeStripped(post.text).slice(0, 80);
+    return stripped ? `quote:text:${stripped}` : null;
   }
   return null;
 }
@@ -520,6 +641,7 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     quoted: new Set<string>(),
     ticker: new Set<string>(),
     embed: new Set<string>(),
+    imageFp: new Set<string>(),
   };
   const candidates: { words: Set<string>; index: number }[] = [];
   const out: UnifiedPost[] = [];
@@ -557,16 +679,21 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     const eid = embedFingerprint(p);
     if (eid && seen.embed.has(eid)) continue;
 
+    const imgFp = imageFingerprint(p);
+    if (imgFp && seen.imageFp.has(imgFp)) continue;
+
     const ws = wordSet(p.text);
     let matchedProtocol: Protocol | undefined;
-    if (ws.size >= 3 && p.text.length > MIN_TEXT_LENGTH) {
+    if (!qid && ws.size >= 3 && p.text.length > MIN_TEXT_LENGTH) {
       for (const cand of candidates) {
         const sim = jaccardSimilarity(ws, cand.words);
         if (sim >= JACCARD_THRESHOLD) {
-          matchedProtocol = out[cand.index].protocol;
-          const cross = out[cand.index].crossPostedTo ?? [];
+          const existing = out[cand.index];
+          if (!existing) continue;
+          matchedProtocol = existing.protocol;
+          const cross = existing.crossPostedTo ?? [];
           if (!cross.includes(p.protocol)) cross.push(p.protocol);
-          out[cand.index].crossPostedTo = cross;
+          existing.crossPostedTo = cross;
           break;
         }
       }
@@ -582,6 +709,7 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     if (qid) seen.quoted.add(qid);
     if (ts.length > 3) seen.ticker.add(ts);
     if (eid) seen.embed.add(eid);
+    if (imgFp) seen.imageFp.add(imgFp);
     candidates.push({ words: ws, index: out.length });
     out.push(p);
   }
@@ -599,6 +727,21 @@ export function enrichPostNiches(post: UnifiedPost): UnifiedPost {
   const allText = textParts.join(' ');
   post.niches = [...new Set([...post.niches, ...detectNiches(allText)])];
   return post;
+}
+
+export function detectContentType(
+  post: UnifiedPost,
+): 'article' | 'video' | 'image' | 'thread' | 'link' | 'text' {
+  const hasVideo = post.embeds.some((e) => e.kind === 'video');
+  if (hasVideo) return 'video';
+  const hasImage = post.embeds.some((e) => e.kind === 'image');
+  if (hasImage) return 'image';
+  const textLen = post.text.trim().length;
+  if (textLen > 500 && post.embeds.length === 0) return 'article';
+  if (post.embeds.some((e) => e.kind === 'link') && textLen < 100) return 'link';
+  if (post.parentId && post.rootId) return 'thread';
+  if (textLen > 200 && post.embeds.some((e) => e.kind === 'link')) return 'article';
+  return 'text';
 }
 
 export function dedupeKey(protocol: Protocol, nativeId: string): string {

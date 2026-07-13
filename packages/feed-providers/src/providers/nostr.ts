@@ -22,17 +22,6 @@ export const DEFAULT_RELAYS = [
   'wss://purplepag.es',
 ];
 
-export const CURATED_NOSTR_PUBKEYS = [
-  '82341f882b6eabcd2ba7f14ef5dda311921d2b6e5b012c3e0c6b0c28d4840d24', // jack
-  '0000000000000000000000000000000000000000000000000000000000000001', // fiatjaf
-  '32e1827635450ebb3c5a0d6057309c54b59d5b7e2b2e057738e7a52c5f4d25e4', // jb55
-  '6e468422143ed10b81f6a7e0b7e0c9c4b1aa7c2c4c0b4c1d8c1c8c8c8c8c8c8', // ODELL
-  '0000000000000000000000000000000000000000000000000000000000000002', // saylor
-  '0000000000000000000000000000000000000000000000000000000000000003', // calle
-  '0000000000000000000000000000000000000000000000000000000000000004', // BTCsessions
-  '0000000000000000000000000000000000000000000000000000000000000005', // BTCandreas
-];
-
 export const CRYPTO_HASHTAGS = [
   'bitcoin',
   'ethereum',
@@ -126,6 +115,7 @@ function fetchFromWebSocket(
   relayUrl: string,
   limit: number,
   timeoutMs: number,
+  filters?: Array<Record<string, unknown>>,
 ): Promise<NostrEvent[]> {
   return new Promise((resolve, reject) => {
     const events: NostrEvent[] = [];
@@ -155,10 +145,17 @@ function fetchFromWebSocket(
 
     ws.onopen = () => {
       try {
-        const filter: Record<string, unknown> = { kinds: [1], limit: limit * 3 };
-        const tags = CRYPTO_HASHTAGS.map((t) => `#${t}`);
-        if (tags.length > 0) filter['#t'] = tags.slice(0, 10);
-        ws.send(JSON.stringify(['REQ', subId, filter]));
+        const filters_ =
+          filters && filters.length > 0
+            ? filters
+            : [
+                {
+                  kinds: [1],
+                  limit: limit * 3,
+                  '#t': CRYPTO_HASHTAGS.map((t) => `#${t}`).slice(0, 10),
+                },
+              ];
+        ws.send(JSON.stringify(['REQ', subId, ...filters_]));
       } catch {
         cleanup();
         resolve(events);
@@ -200,10 +197,15 @@ async function fetchFromRelays(
   relays: string[],
   limit: number,
   timeoutMs: number,
+  filters?: Array<Record<string, unknown>>,
 ): Promise<NostrEvent[]> {
   const results = await Promise.allSettled(
     relays.map((relay) =>
-      withTimeout(fetchFromWebSocket(relay, limit, timeoutMs), timeoutMs, `nostr:${relay}`),
+      withTimeout(
+        fetchFromWebSocket(relay, limit, timeoutMs, filters),
+        timeoutMs,
+        `nostr:${relay}`,
+      ),
     ),
   );
   const events: NostrEvent[] = [];
@@ -244,7 +246,6 @@ export class NostrProvider implements FeedProvider {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const limit = 25;
 
-    // Fetch NIP-23 long-form articles (kind 30023) and short notes (kind 1)
     const [notes, articles] = await Promise.all([
       this.fetchNotes(timeoutMs, limit),
       this.fetchLongForm(timeoutMs, Math.ceil(limit / 4)),
@@ -252,7 +253,6 @@ export class NostrProvider implements FeedProvider {
 
     const allEvents: NostrEvent[] = [...notes, ...articles];
     if (allEvents.length > 0) {
-      // Sort by created_at desc, dedup by id
       const seen = new Set<string>();
       const unique = allEvents
         .sort((a, b) => b.created_at - a.created_at)
@@ -260,12 +260,77 @@ export class NostrProvider implements FeedProvider {
           if (seen.has(e.id)) return false;
           seen.add(e.id);
           return true;
-        });
-      return {
-        posts: unique.slice(0, limit).map((e) => enrichPostNiches(eventToUnifiedPost(e))),
-      };
+        })
+        .slice(0, limit);
+
+      const posts = unique.map((e) => enrichPostNiches(eventToUnifiedPost(e)));
+
+      // Resolve profiles: fetch kind 0 metadata for unique pubkeys
+      const pubkeys = [...new Set(unique.map((e) => e.pubkey))];
+      const profiles = await this.resolveProfiles(pubkeys, timeoutMs);
+
+      for (const post of posts) {
+        const pk = post.author.keys?.nostrPubkey as string;
+        const profile = pk ? profiles.get(pk) : undefined;
+        if (profile) {
+          post.author.displayName = profile.displayName || post.author.displayName;
+          post.author.avatarUrl = profile.avatarUrl || post.author.avatarUrl;
+          post.author.bio = profile.bio || post.author.bio;
+          if (profile.nip05) post.author.handles.nostr = profile.nip05;
+        }
+      }
+
+      return { posts };
     }
     return { posts: [], notice: 'Nostr feed unavailable' };
+  }
+
+  private async resolveProfiles(
+    pubkeys: string[],
+    timeoutMs: number,
+  ): Promise<
+    Map<string, { displayName?: string; avatarUrl?: string; bio?: string; nip05?: string }>
+  > {
+    const profiles = new Map<
+      string,
+      { displayName?: string; avatarUrl?: string; bio?: string; nip05?: string }
+    >();
+    if (pubkeys.length === 0) return profiles;
+
+    try {
+      const filters = pubkeys.map((pk) => ({ kinds: [0], authors: [pk], limit: 1 }));
+      const events = await fetchFromRelays(
+        this.relays.slice(0, 3),
+        50,
+        Math.min(timeoutMs, 4000),
+        filters,
+      );
+      for (const ev of events) {
+        if (ev.kind !== 0) continue;
+        try {
+          const content = JSON.parse(ev.content) as {
+            name?: string;
+            display_name?: string;
+            displayName?: string;
+            picture?: string;
+            about?: string;
+            nip05?: string;
+          };
+          profiles.set(ev.pubkey, {
+            displayName: content.display_name || content.displayName || content.name,
+            avatarUrl: content.picture,
+            bio: content.about,
+            nip05: content.nip05,
+          });
+        } catch {
+          /* skip malformed */
+        }
+      }
+    } catch {
+      /* profile resolution is best-effort */
+    }
+
+    return profiles;
   }
 
   private async fetchNotes(timeoutMs: number, limit: number): Promise<NostrEvent[]> {

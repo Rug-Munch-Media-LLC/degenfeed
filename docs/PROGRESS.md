@@ -9,7 +9,7 @@
 - Built shared types package @degenfeed/types (UnifiedPost, UnifiedIdentity, etc).
 - Built @degenfeed/feed-core (normalization, dedupe, niche detection).
 - Built @degenfeed/ranking (transparent scoring with documented weights).
-- Shipped landing page at https://degenfeed.xyz (live, public).
+- Landing page shipped (now served by Worker from `workers/api/src/routes/landing.ts`).
 - Repointed Cloudflare tunnel from dead Akkoma:4002 to nginx:80.
 
 ### In Progress

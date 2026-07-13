@@ -1,0 +1,9 @@
+Generate a conventional commit message for the following diff. Use the format:
+type(scope): description
+
+Types: feat, fix, docs, refactor, style, test, chore, ops, security, ci, build, perf, revert
+
+Diff:
+```
+{{diff}}
+```
