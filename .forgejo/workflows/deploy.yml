@@ -15,7 +15,7 @@ concurrency:
 jobs:
   preview:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     environment:
       name: preview
       url: ${{ steps.deploy.outputs.deployment-url }}
@@ -52,7 +52,7 @@ jobs:
 
   deploy-canary:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     environment:
       name: canary
       url: https://canary.degenfeed.xyz
@@ -120,7 +120,7 @@ jobs:
 
   deploy-web:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     environment:
       name: production
       url: https://app.degenfeed.xyz
@@ -144,7 +144,7 @@ jobs:
 
   smoke-test:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     needs: [deploy-canary, deploy-web]
     environment:
       name: production
@@ -172,7 +172,7 @@ jobs:
 
   lighthouse:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     needs: smoke-test
     environment:
       name: production
@@ -194,7 +194,7 @@ jobs:
 
   promote-canary:
     if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     environment:
       name: canary-promote
       url: https://degenfeed.xyz
@@ -231,7 +231,7 @@ jobs:
 
   notify-failure:
     if: failure()
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     needs: [preview, deploy-canary, deploy-web, smoke-test, lighthouse]
     steps:
       - name: Ping on deploy failure
