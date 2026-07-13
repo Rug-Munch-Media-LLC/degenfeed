@@ -1,9 +1,6 @@
 import type { UnifiedPost } from '@degenfeed/types';
 import { describe, expect, it, vi } from 'vitest';
 import type { Env } from '../index';
-import { handleFeedHealth, handleHomeFeed } from '../routes/feed';
-import { handleRelaysHealth } from '../routes/health';
-import { handleRssXml } from '../routes/rss-xml';
 
 // ─── Strip variable data for shape-only snapshots ──────────────────────
 
@@ -262,7 +259,7 @@ describe('API Contract: GET /api/feed/rss.xml', () => {
     const xml = mockRssXmlResponse();
     const itemMatch = xml.match(/<item>[\s\S]*?<\/item>/);
     expect(itemMatch).not.toBeNull();
-    const item = itemMatch![0];
+    const item = itemMatch?.[0];
     expect(item).toContain('<title>');
     expect(item).toContain('<link>');
     expect(item).toContain('<guid');

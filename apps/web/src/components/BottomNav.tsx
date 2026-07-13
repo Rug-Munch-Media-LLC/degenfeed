@@ -62,6 +62,7 @@ export function BottomNav() {
                 {item.href === '/home/all' && notifCount > 0 && (
                   <span
                     className="absolute ml-5 mt-[-14px] flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white"
+                    role="status"
                     aria-label={`${notifCount} unread notifications`}
                   >
                     {notifCount > 99 ? '99+' : notifCount}
