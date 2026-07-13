@@ -167,6 +167,7 @@ export async function handleGtSCallback(request: Request, env: Env): Promise<Res
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Callback error';
+    console.error('[auth] handleGtSCallback failed:', err instanceof Error ? err.message : err);
     return jsonResponse({ error: message }, 500);
   }
 }
@@ -346,6 +347,7 @@ export async function handleThreadsCallback(request: Request, env: Env): Promise
 
     return jsonResponse({ userId, username, name, avatar, accessToken: shortLivedToken });
   } catch (err) {
+    console.error('[auth] handleThreadsCallback failed:', err instanceof Error ? err.message : err);
     return jsonResponse({ error: (err as Error).message }, 500);
   }
 }
@@ -441,6 +443,7 @@ export async function handleWarpcastCallback(request: Request, env: Env): Promis
       avatar: data.user?.pfp_url,
     });
   } catch (err) {
+    console.error('[auth] handleWarpcastCallback failed:', err instanceof Error ? err.message : err);
     return jsonResponse({ error: (err as Error).message }, 500);
   }
 }
@@ -529,6 +532,7 @@ export async function handleRedditCallback(request: Request, env: Env): Promise<
       avatar,
     });
   } catch (err) {
+    console.error('[auth] handleRedditCallback failed:', err instanceof Error ? err.message : err);
     return jsonResponse({ error: (err as Error).message }, 500);
   }
 }

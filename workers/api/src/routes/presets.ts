@@ -93,7 +93,8 @@ export async function handleFeedPresets(request: Request, env: Env): Promise<Res
       }
 
       return jsonResponse({ ok: true, preset });
-    } catch (_err) {
+    } catch (err) {
+      console.warn('[presets] POST parse failed:', err instanceof Error ? err.message : err);
       return jsonResponse({ error: 'Invalid request' }, 400);
     }
   }
