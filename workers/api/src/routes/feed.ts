@@ -467,6 +467,7 @@ export async function handleHomeFeed(
       } catch (err) {
         void incrCircuit(env, protocol);
         const message = err instanceof Error ? err.message : 'unknown';
+        console.error('[feed] provider fetch failed:', err instanceof Error ? err.message : err);
         return { protocol, posts: [] as UnifiedPost[], error: message };
       }
     }),
@@ -936,7 +937,8 @@ export async function handleRedditFeed(request: Request, env: Env): Promise<Resp
   try {
     const result = await provider.fetchFeed({ timeoutMs: 5000 });
     posts = result.posts.slice(0, limit);
-  } catch (_err) {
+  } catch (err) {
+    console.error('[feed] Reddit provider fetch failed:', err instanceof Error ? err.message : err);
     return jsonResponse({
       data: [],
       meta: { total: 0, limit, subreddit: subreddit || 'all', error: 'Reddit provider failed' },
@@ -996,6 +998,7 @@ export async function handleProviderFeed(
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Provider fetch failed';
+    console.error('[feed] provider feed fetch failed:', err instanceof Error ? err.message : err);
     return jsonResponse({ error: message }, 502);
   }
 }
