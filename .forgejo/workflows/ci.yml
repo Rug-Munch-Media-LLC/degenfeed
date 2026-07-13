@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,7 +27,7 @@ jobs:
       - run: pnpm lint
 
   stylelint:
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,7 +40,7 @@ jobs:
       - run: npx stylelint "**/*.css" --allow-empty-input
 
   typecheck:
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -53,7 +53,7 @@ jobs:
       - run: pnpm typecheck
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -66,7 +66,7 @@ jobs:
       - run: pnpm test
 
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     needs: [lint, typecheck]
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
       - run: pnpm --filter degenfeed-web test:e2e
 
   a11y:
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     needs: [lint]
     steps:
       - uses: actions/checkout@v4
@@ -96,7 +96,7 @@ jobs:
       - run: pnpm --filter degenfeed-web test:e2e --project=axe-a11y
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     needs: [lint, typecheck, test]
     steps:
       - uses: actions/checkout@v4
@@ -113,7 +113,7 @@ jobs:
         run: pnpm --filter @degenfeed/api-worker build
 
   lighthouse:
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     needs: build
     if: github.event_name == 'pull_request'
     steps:
@@ -135,7 +135,7 @@ jobs:
           || echo "Lighthouse CI requires running server — informational only on PR. Full audit runs post-deploy."
 
   security:
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     steps:
       - uses: actions/checkout@v4
         with:
@@ -146,7 +146,7 @@ jobs:
       - run: gitleaks detect --source . --no-banner --exit-code 1
 
   links:
-    runs-on: ubuntu-latest
+    runs-on: docker-x64
     steps:
       - uses: actions/checkout@v4
       - name: Install lychee
