@@ -8,7 +8,7 @@
 import type { UnifiedPost } from '@degenfeed/types';
 import type { Env } from '../index';
 
-export async function handlePostOg(request: Request, env: Env, postId: string): Promise<Response> {
+export async function handlePostOg(_request: Request, env: Env, postId: string): Promise<Response> {
   const decoded = decodeURIComponent(postId);
 
   let post: UnifiedPost | null = null;

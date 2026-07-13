@@ -130,8 +130,8 @@ async function npubToHex(npubOrHex: string): Promise<string> {
       const mod = await import('@degenfeed/nostr-sdk');
       const hex = mod.npubDecode(npubOrHex);
       if (hex && typeof hex === 'string') return hex;
-    } catch {
-      /* fall through */
+    } catch (err) {
+      console.warn('[notifications] npub decode failed:', err instanceof Error ? err.message : err);
     }
   }
   return npubOrHex;
@@ -180,7 +180,12 @@ async function fetchNostrNotifications(pubkey: string): Promise<Notification[]> 
       });
     }
     pool.disconnectAll();
-  } catch {}
+  } catch (err) {
+    console.error(
+      '[notifications] fetchNostrNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
   return results;
 }
 
@@ -215,7 +220,12 @@ async function fetchMastodonNotifications(
         read: false,
       });
     }
-  } catch {}
+  } catch (err) {
+    console.error(
+      '[notifications] fetchMastodonNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
   return results;
 }
 
@@ -255,7 +265,12 @@ async function fetchBlueskyNotifications(
         read: n.isRead,
       });
     }
-  } catch {}
+  } catch (err) {
+    console.error(
+      '[notifications] fetchBlueskyNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
   return results;
 }
 
@@ -291,7 +306,12 @@ async function fetchFarcasterNotifications(env: Env, fid: number): Promise<Notif
         });
       }
     }
-  } catch {}
+  } catch (err) {
+    console.error(
+      '[notifications] fetchFarcasterNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
   return results;
 }
 
@@ -417,7 +437,12 @@ async function fetchLensNotifications(
         });
       }
     }
-  } catch {}
+  } catch (err) {
+    console.error(
+      '[notifications] fetchLensNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
   return results;
 }
 
@@ -427,7 +452,8 @@ async function loadReadState(env: Env, userId: string): Promise<Set<string>> {
     const raw = await env.CACHE.get(`notif:read:${userId}`);
     if (!raw) return new Set();
     return new Set<string>(JSON.parse(raw) as string[]);
-  } catch {
+  } catch (err) {
+    console.warn('[notifications] loadReadState failed:', err instanceof Error ? err.message : err);
     return new Set();
   }
 }
@@ -438,7 +464,9 @@ async function saveReadState(env: Env, userId: string, readIds: Set<string>): Pr
     await env.CACHE.put(`notif:read:${userId}`, JSON.stringify([...readIds]), {
       expirationTtl: 30 * 86400,
     });
-  } catch {}
+  } catch (err) {
+    console.warn('[notifications] saveReadState failed:', err instanceof Error ? err.message : err);
+  }
 }
 
 async function parseAuth(request: Request): Promise<NotificationAuth> {
@@ -446,7 +474,12 @@ async function parseAuth(request: Request): Promise<NotificationAuth> {
     try {
       const body = (await request.json()) as { auth?: NotificationAuth };
       return body.auth ?? {};
-    } catch {}
+    } catch (err) {
+      console.warn(
+        '[notifications] parseAuth JSON parse failed:',
+        err instanceof Error ? err.message : err,
+      );
+    }
   }
   return {};
 }
@@ -466,7 +499,12 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
       (async () => {
         try {
           all.push(...(await fetchNostrNotifications(auth.nostr_pubkey!)));
-        } catch {}
+        } catch (err) {
+          console.error(
+            '[notifications] nostr fetcher failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
       })(),
     );
   }
@@ -480,7 +518,12 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
               auth.mastodon!,
             )),
           );
-        } catch {}
+        } catch (err) {
+          console.error(
+            '[notifications] mastodon fetcher failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
       })(),
     );
   }
@@ -489,9 +532,14 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
       (async () => {
         try {
           all.push(
-            ...(await fetchBlueskyNotifications('https://bsky.social', auth.bluesky!.accessJwt!)),
+            ...(await fetchBlueskyNotifications('https://bsky.social', auth.bluesky?.accessJwt!)),
           );
-        } catch {}
+        } catch (err) {
+          console.error(
+            '[notifications] bluesky fetcher failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
       })(),
     );
   }
@@ -499,8 +547,13 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
     fetchers.push(
       (async () => {
         try {
-          all.push(...(await fetchFarcasterNotifications(env, auth.farcaster!.fid!)));
-        } catch {}
+          all.push(...(await fetchFarcasterNotifications(env, auth.farcaster?.fid!)));
+        } catch (err) {
+          console.error(
+            '[notifications] farcaster fetcher failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
       })(),
     );
   }
@@ -509,7 +562,12 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
       (async () => {
         try {
           all.push(...(await fetchLensNotifications(auth.lens!, auth.lens_profileId!)));
-        } catch {}
+        } catch (err) {
+          console.error(
+            '[notifications] lens fetcher failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
       })(),
     );
   }

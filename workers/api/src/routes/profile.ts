@@ -7,7 +7,7 @@
  * Returns merged identity with all linked accounts + recent posts from each.
  */
 
-import type { UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import type { UnifiedPost } from '@degenfeed/types';
 import { type Env, jsonResponse } from '../index';
 
 interface LinkedAccount {
@@ -58,7 +58,7 @@ export async function handleIdentityProfile(request: Request, env: Env): Promise
         const metaEvents = await pool.list({ kinds: [0], authors: [hex], limit: 1 }, 3000);
         if (metaEvents.length > 0) {
           try {
-            const meta = JSON.parse(metaEvents[0]!.content) as Record<string, string>;
+            const meta = JSON.parse(metaEvents[0]?.content) as Record<string, string>;
             if (meta.name || meta.display_name) {
               linked[0]!.displayName = meta.display_name || meta.name;
             }

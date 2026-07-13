@@ -165,7 +165,7 @@ export const FeedList = memo(function FeedList({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [posts.length]);
+  }, []);
 
   // Pull-to-refresh
   useEffect(() => {

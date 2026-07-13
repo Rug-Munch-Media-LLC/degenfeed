@@ -64,7 +64,6 @@ const VALID_PROTOCOLS: Protocol[] = [
   'farcaster',
   'lens',
   'bluesky',
-  'threads',
   'rss',
   'mastodon',
   'reddit',

@@ -5,10 +5,10 @@
  * GET /api/feed/communities
  */
 
-import { DEFAULT_SUBREDDITS, LemmyProvider, RedditProvider } from '@degenfeed/feed-providers';
+import { DEFAULT_SUBREDDITS, LemmyProvider } from '@degenfeed/feed-providers';
 import { type Env, jsonResponse } from '../index';
 
-export async function handleCommunities(request: Request, env: Env): Promise<Response> {
+export async function handleCommunities(_request: Request, env: Env): Promise<Response> {
   const cacheKey = 'communities:v1:default';
   try {
     const cached = await env.CACHE?.get(cacheKey);

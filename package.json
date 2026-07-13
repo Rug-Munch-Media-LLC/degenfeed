@@ -25,14 +25,5 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  },
-  "dependencies": {
-    "@solana/wallet-adapter-base": "^0.9.27",
-    "@solana/wallet-adapter-react": "^0.15.39",
-    "@solana/wallet-adapter-wallets": "^0.19.38",
-    "@solana/web3.js": "^1.98.4",
-    "@tanstack/react-query": "^5.101.2",
-    "next": "^16.2.10",
-    "qrcode.react": "^4.2.0"
   }
 }

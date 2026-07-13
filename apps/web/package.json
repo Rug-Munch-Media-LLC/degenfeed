@@ -26,20 +26,12 @@
     "@degenfeed/types": "workspace:*",
     "@degenfeed/ui": "workspace:*",
     "@degenfeed/utils": "workspace:*",
-    "@solana/wallet-adapter-base": "^0.9.27",
-    "@solana/wallet-adapter-react": "^0.15.39",
-    "@solana/wallet-adapter-wallets": "^0.19.38",
     "@solana/web3.js": "^1.98.4",
-    "@tanstack/react-query": "^5.101.2",
-    "@reown/appkit": "^1.8.22",
-    "@reown/appkit-adapter-wagmi": "^1.8.22",
     "dompurify": "^3.2.3",
     "next": "^16.2.10",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "viem": "^2.55.1",
-    "wagmi": "^3.7.1"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
@@ -52,7 +44,6 @@
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.5.0",
-    "wrangler": "^3.114.17"
+    "typescript": "^5.5.0"
   }
 }

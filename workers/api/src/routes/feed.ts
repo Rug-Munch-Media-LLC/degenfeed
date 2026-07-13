@@ -1,5 +1,4 @@
 import {
-  contentQualityScore,
   deduplicatePosts,
   detectContentType,
   enrichPostNiches,
@@ -43,7 +42,6 @@ export const DEFAULT_PROTOCOLS: Protocol[] = [
   'bluesky',
   'mastodon',
   'lemmy',
-  'threads',
   'ponder',
 ];
 
@@ -117,8 +115,11 @@ class RssWithFallbackProvider implements FeedProvider {
           timeoutMs: Math.min(opts.timeoutMs ?? 2000, 2000),
         });
         if (result.posts.length > 0) return result;
-      } catch {
-        /* RMI unavailable — fall through */
+      } catch (err) {
+        console.warn(
+          '[feed] RMI unavailable — falling back to RSS:',
+          err instanceof Error ? err.message : err,
+        );
       }
     }
     return this.rss.fetchFeed(opts);
@@ -238,7 +239,8 @@ async function loadUserRankingContext(request: Request, env: Env): Promise<UserR
       preferences.hideLowQualityThreshold = 1.0;
     }
     return { followed, mutedAuthors, mutedWords, preferences };
-  } catch {
+  } catch (err) {
+    console.warn('[feed] loadUserRankingContext failed:', err instanceof Error ? err.message : err);
     return empty;
   }
 }
@@ -263,7 +265,8 @@ async function isCircuitOpen(env: Env, protocol: string): Promise<boolean> {
     if (!raw) return false;
     const { count } = JSON.parse(raw) as { count: number };
     return count >= CB_THRESHOLD;
-  } catch {
+  } catch (err) {
+    console.warn('[feed] isCircuitOpen failed:', err instanceof Error ? err.message : err);
     return false;
   }
 }
@@ -275,8 +278,9 @@ async function incrCircuit(env: Env, protocol: string): Promise<void> {
     const raw = await env.CACHE.get(key);
     const count = raw ? (JSON.parse(raw) as { count: number }).count + 1 : 1;
     await env.CACHE.put(key, JSON.stringify({ count }), { expirationTtl: CB_TTL });
-  } catch {
-    /* ignore */
+  } catch (err) {
+    // Non-critical cache write — log and continue
+    console.warn('[feed] incrCircuit KV write failed:', err instanceof Error ? err.message : err);
   }
 }
 
@@ -285,8 +289,9 @@ async function resetCircuit(env: Env, protocol: string): Promise<void> {
   try {
     const key = await cbKey(protocol);
     await env.CACHE.delete(key);
-  } catch {
-    /* ignore */
+  } catch (err) {
+    // Non-critical cache write — log and continue
+    console.warn('[feed] resetCircuit KV delete failed:', err instanceof Error ? err.message : err);
   }
 }
 
@@ -311,8 +316,9 @@ async function readProviderCache(
     if (!raw) return null;
     const { posts } = JSON.parse(raw) as { posts: UnifiedPost[]; fetchedAt: number };
     return posts;
-  } catch {
-    /* ignore */
+  } catch (err) {
+    // Non-critical cache read — log and continue
+    console.warn('[feed] readProviderCache failed:', err instanceof Error ? err.message : err);
   }
   return null;
 }
@@ -329,8 +335,9 @@ async function writeProviderCache(
     await env.CACHE.put(key, JSON.stringify({ posts, fetchedAt: Date.now() }), {
       expirationTtl: CACHE_PROVIDER_TTL,
     });
-  } catch {
-    /* ignore */
+  } catch (err) {
+    // Non-critical cache write — log and continue
+    console.warn('[feed] writeProviderCache failed:', err instanceof Error ? err.message : err);
   }
 }
 
@@ -343,11 +350,12 @@ async function writePostsToKV(env: Env, posts: UnifiedPost[]): Promise<void> {
     const puts = posts
       .slice(0, 100)
       .map((p) =>
-        env.CACHE!.put(`post:${p.id}`, JSON.stringify(p), { expirationTtl: 3600 }).catch(() => {}),
+        env.CACHE?.put(`post:${p.id}`, JSON.stringify(p), { expirationTtl: 3600 }).catch(() => {}),
       );
     await Promise.allSettled(puts);
-  } catch {
-    /* ignore */
+  } catch (err) {
+    // Non-critical cache write — log and continue
+    console.warn('[feed] writePostsToKV failed:', err instanceof Error ? err.message : err);
   }
 }
 
@@ -379,8 +387,8 @@ export async function handleHomeFeed(
       cookiePrefs = JSON.parse(
         decodeURIComponent(cookieMatch.slice('df_prefs='.length)),
       ) as UserAlgorithmPreferences;
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.warn('[feed] cookie prefs parse failed:', err instanceof Error ? err.message : err);
     }
   }
 
@@ -403,8 +411,8 @@ export async function handleHomeFeed(
           return jsonResponse({ data, meta });
         }
       }
-    } catch {
-      /* ignore */
+    } catch (err) {
+      console.warn('[feed] feed cache read failed:', err instanceof Error ? err.message : err);
     }
   }
 
@@ -428,7 +436,12 @@ export async function handleHomeFeed(
             if (result.notice) notices.push(result.notice);
             void resetCircuit(env, protocol);
             await writeProviderCache(env, protocol, limit, filtered);
-          } catch {
+          } catch (err) {
+            console.error(
+              '[feed] provider fetch failed (background refresh):',
+              protocol,
+              err instanceof Error ? err.message : err,
+            );
             void incrCircuit(env, protocol);
           }
         })();
@@ -549,8 +562,11 @@ export async function handleHomeFeed(
           }
         }
       }
-    } catch {
-      /* non-critical */
+    } catch (err) {
+      console.warn(
+        '[feed] nostr.band stats fetch failed:',
+        err instanceof Error ? err.message : err,
+      );
     }
   }
 
@@ -622,7 +638,7 @@ export async function handleHomeFeed(
   if (env.CACHE) {
     try {
       const keys = relevant.slice(0, 200).map((p) => `eng:${p.id}`);
-      const results = await Promise.allSettled(keys.map((k) => env.CACHE!.get(k)));
+      const results = await Promise.allSettled(keys.map((k) => env.CACHE?.get(k)));
       for (let i = 0; i < results.length; i++) {
         const r = results[i] as PromiseFulfilledResult<string | null> | PromiseRejectedResult;
         const postId = relevant[i]?.id;
@@ -635,13 +651,20 @@ export async function handleHomeFeed(
               at: number;
             };
             previousEngagement.set(postId, snap);
-          } catch {
-            /* skip */
+          } catch (err) {
+            // Non-critical — log and continue
+            console.warn(
+              '[feed] previousEngagement parse failed:',
+              err instanceof Error ? err.message : err,
+            );
           }
         }
       }
-    } catch {
-      /* skip velocity — non-critical */
+    } catch (err) {
+      console.warn(
+        '[feed] previousEngagement KV fetch failed:',
+        err instanceof Error ? err.message : err,
+      );
     }
   }
 
@@ -664,18 +687,16 @@ export async function handleHomeFeed(
     if (!env.CACHE) return;
     const now = Date.now();
     const puts = relevant.slice(0, 100).map((p) =>
-      env
-        .CACHE!.put(
-          `eng:${p.id}`,
-          JSON.stringify({
-            likes: p.metrics.likes,
-            reposts: p.metrics.reposts,
-            replies: p.metrics.replies,
-            at: now,
-          }),
-          { expirationTtl: 300 },
-        )
-        .catch(() => {}),
+      env.CACHE?.put(
+        `eng:${p.id}`,
+        JSON.stringify({
+          likes: p.metrics.likes,
+          reposts: p.metrics.reposts,
+          replies: p.metrics.replies,
+          at: now,
+        }),
+        { expirationTtl: 300 },
+      ).catch(() => {}),
     );
     await Promise.allSettled(puts);
   })();
@@ -771,8 +792,11 @@ export async function handleHomeFeed(
         else trending.push({ topic: tag.name, count: tag.history?.length || 1, score: 3 });
       }
     }
-  } catch {
-    /* trending unavailable */
+  } catch (err) {
+    console.warn(
+      '[feed] Mastodon trending tags fetch failed:',
+      err instanceof Error ? err.message : err,
+    );
   }
   // Top-of-hour: highest-scoring post from the last 60 minutes.
   const now = Date.now();
@@ -802,7 +826,7 @@ export async function handleHomeFeed(
     );
   }
 
-  const nextCursor = ranked.length > 0 ? ranked[ranked.length - 1]!.createdAt : null;
+  const nextCursor = ranked.length > 0 ? ranked[ranked.length - 1]?.createdAt : null;
 
   // New posts since last visit: reads a cookie, counts newer posts.
   const lastVisitCookie = cookieHeader
@@ -836,8 +860,9 @@ export async function handleHomeFeed(
   if (env.CACHE && !cursor) {
     try {
       await env.CACHE.put(feedCacheKey, JSON.stringify(responseBody), { expirationTtl: 45 });
-    } catch {
-      /* ignore */
+    } catch (err) {
+      // Non-critical cache write — log and continue
+      console.warn('[feed] feed cache write failed:', err instanceof Error ? err.message : err);
     }
   }
 
@@ -890,8 +915,8 @@ export async function handleRedditFeed(request: Request, env: Env): Promise<Resp
   try {
     const cached = await env.CACHE?.get(cacheKey);
     if (cached) return jsonResponse(JSON.parse(cached));
-  } catch {
-    /* ignore */
+  } catch (err) {
+    console.warn('[feed] reddit cache read failed:', err instanceof Error ? err.message : err);
   }
 
   const { RedditProvider } = (await import('@degenfeed/feed-providers')) as unknown as {
@@ -911,7 +936,7 @@ export async function handleRedditFeed(request: Request, env: Env): Promise<Resp
   try {
     const result = await provider.fetchFeed({ timeoutMs: 5000 });
     posts = result.posts.slice(0, limit);
-  } catch (err) {
+  } catch (_err) {
     return jsonResponse({
       data: [],
       meta: { total: 0, limit, subreddit: subreddit || 'all', error: 'Reddit provider failed' },
@@ -929,8 +954,9 @@ export async function handleRedditFeed(request: Request, env: Env): Promise<Resp
   };
   try {
     await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 180 });
-  } catch {
-    /* ignore */
+  } catch (err) {
+    // Non-critical cache write — log and continue
+    console.warn('[feed] reddit cache write failed:', err instanceof Error ? err.message : err);
   }
   return jsonResponse(response);
 }
@@ -1021,8 +1047,8 @@ async function readCachedHealth(
     const parsed = JSON.parse(raw) as { health: Record<string, unknown>; checkedAt: number };
     // 30s stale-while-revalidate: return cached data if it's within the window.
     if (Date.now() - parsed.checkedAt < 30_000) return parsed;
-  } catch {
-    /* ignore */
+  } catch (err) {
+    console.warn('[feed] readCachedHealth failed:', err instanceof Error ? err.message : err);
   }
   return null;
 }
@@ -1035,7 +1061,8 @@ async function writeCachedHealth(
   if (!env.CACHE) return;
   try {
     await env.CACHE.put(key, JSON.stringify(body), { expirationTtl: 60 });
-  } catch {
-    /* ignore */
+  } catch (err) {
+    // Non-critical cache write — log and continue
+    console.warn('[feed] writeCachedHealth failed:', err instanceof Error ? err.message : err);
   }
 }

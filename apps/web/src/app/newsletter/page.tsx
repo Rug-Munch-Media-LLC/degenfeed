@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useState } from 'react';
 import { getProtocolColor } from '@degenfeed/ui';
+import { useCallback, useState } from 'react';
 
 const ALL_NICHES = [
   { id: 'bitcoin', label: 'Bitcoin' },

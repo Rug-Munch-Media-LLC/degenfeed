@@ -12,7 +12,7 @@
  *   provider.fetchDirect(feedUrl) — fetch a specific URL through RSS-Bridge
  */
 
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import type { Protocol } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import { DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, withTimeout } from '../utils';
 
@@ -39,7 +39,7 @@ export class RssBridgeProvider implements FeedProvider {
     this.bridgeUrl = options.bridgeUrl.replace(/\/+$/, '');
   }
 
-  async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
+  async fetchFeed(_opts: FetchOptions = {}): Promise<FeedResult> {
     // RSS-Bridge is used as a proxy — individual feed URLs are fetched
     // through the bridge. This no-op base method returns empty so the
     // caller must provide a specific URL (e.g. via fetchDirect).
@@ -83,8 +83,7 @@ export class RssBridgeProvider implements FeedProvider {
         fetch(proxyUrl, {
           headers: {
             'user-agent': DEFAULT_USER_AGENT,
-            accept:
-              'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
+            accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
           },
         }),
         opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
@@ -92,7 +91,7 @@ export class RssBridgeProvider implements FeedProvider {
       );
       return { ok: res.ok, body: await res.text(), status: res.status };
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'unknown';
+      const _message = err instanceof Error ? err.message : 'unknown';
       return { ok: false, body: '', status: 0 };
     }
   }

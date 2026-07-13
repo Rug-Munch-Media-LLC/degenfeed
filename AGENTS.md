@@ -10,14 +10,14 @@ canonical · owner=crmuncher · last_updated=2026-07-06
 ## What This Repo Is
 Next.js multi-protocol social aggregator client. Aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, and RSS into a single feed and composer.
 
-> **This repo is NOT the deployed DegenFeed social server** — GotoSocial runs separately at `/srv/degenfeed/` behind `social.degenfeed.xyz`. This repo is the web client, landing page, and API worker.
+> **This repo is NOT the deployed DegenFeed social server** — GotoSocial runs separately at `/srv/degenfeed/` behind `social.degenfeed.xyz`. This repo is the web client and API worker.
 
 ## Type
 `frontend` · language=TypeScript 5 + Next.js 15 (App Router) + React 19
 
 ## Where It Lives
 - Source: `https://git.rugmunch.io/RugMunchMedia/degenfeed-web`
-- Landing page: `https://degenfeed.xyz` (Cloudflare Pages, `apps/landing/`)
+- Landing page: `https://degenfeed.xyz` (Cloudflare Worker, `workers/api/src/routes/landing.ts`)
 - Web client: `https://app.degenfeed.xyz` (Cloudflare Pages, `apps/web/`)
 - Edge API: `https://degenfeed.xyz/api/*` and `https://app.degenfeed.xyz/api/*` (Cloudflare Worker `degenfeed-api`, `workers/api/`)
 - Social server: `https://social.degenfeed.xyz` (GotoSocial, separate deployment)
@@ -30,7 +30,7 @@ Next.js multi-protocol social aggregator client. Aggregates Nostr, Farcaster, Le
 - Git topology: [GIT-ARCHITECTURE.md](https://git.rugmunch.io/RugMunchMedia/standards/raw/branch/main/GIT-ARCHITECTURE.md)
 
 ## Components
-- `apps/landing/` — static landing page (live at `degenfeed.xyz`)
+- `workers/api/src/routes/landing.ts` — landing page served by the Worker (live at `degenfeed.xyz`)
 - `apps/web/` — Next.js 15 aggregator client (live at `app.degenfeed.xyz`)
 - `workers/api/` — Cloudflare Worker edge proxy + aggregator (`degenfeed-api`)
 - `packages/types/` — unified protocol types

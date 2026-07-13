@@ -133,6 +133,7 @@ export default function FeedPage() {
 
   const [newAvailable, setNewAvailable] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastPostIdRef = useRef<string | null>(null);
   const [loadedLimit, setLoadedLimit] = useState(50);
   const hasMore = loadedLimit < 200;
 
@@ -182,11 +183,14 @@ export default function FeedPage() {
           }
         }
 
-        if (checkOnly && feed.length > 0 && feed[0]?.id !== posts[0]?.id) {
+        if (checkOnly && feed.length > 0 && feed[0]?.id !== lastPostIdRef.current) {
           setNewAvailable(true);
           return;
         }
 
+        if (feed.length > 0) {
+          lastPostIdRef.current = feed[0].id;
+        }
         setPosts(feed);
         setFeedMeta(data.meta || {});
         setState(feed.length ? 'loaded' : 'empty');
@@ -200,7 +204,6 @@ export default function FeedPage() {
     [
       activeTab,
       loadedLimit,
-      posts,
       hideLowQuality,
       hideThreshold,
       allowNonCrypto,

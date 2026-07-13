@@ -16,7 +16,9 @@ async function storeState(env: Env, state: string, prefix = STATE_KEY_PREFIX): P
     await env.CACHE.put(prefix + state, '1', {
       expirationTtl: STATE_TTL_SECONDS,
     });
-  } catch {}
+  } catch (err) {
+    console.warn('[auth] storeState failed:', err instanceof Error ? err.message : err);
+  }
 }
 
 async function consumeState(env: Env, state: string, prefix = STATE_KEY_PREFIX): Promise<boolean> {
@@ -26,7 +28,8 @@ async function consumeState(env: Env, state: string, prefix = STATE_KEY_PREFIX):
     if (!existing) return false;
     await env.CACHE.delete(prefix + state);
     return true;
-  } catch {
+  } catch (err) {
+    console.warn('[auth] consumeState failed:', err instanceof Error ? err.message : err);
     return false;
   }
 }
@@ -334,7 +337,12 @@ export async function handleThreadsCallback(request: Request, env: Env): Promise
         name = profile.name;
         avatar = profile.profile_picture_url;
       }
-    } catch {}
+    } catch (err) {
+      console.warn(
+        '[auth] Threads profile fetch failed:',
+        err instanceof Error ? err.message : err,
+      );
+    }
 
     return jsonResponse({ userId, username, name, avatar, accessToken: shortLivedToken });
   } catch (err) {
@@ -508,7 +516,9 @@ export async function handleRedditCallback(request: Request, env: Env): Promise<
         username = profile.name ?? '';
         avatar = profile.icon_img;
       }
-    } catch {}
+    } catch (err) {
+      console.warn('[auth] Reddit profile fetch failed:', err instanceof Error ? err.message : err);
+    }
 
     return jsonResponse({
       accessToken: data.access_token,

@@ -52,7 +52,6 @@ const ALL_PROTOCOLS: Protocol[] = [
   'lens',
   'bluesky',
   'mastodon',
-  'threads',
 ];
 
 export async function handlePostById(
