@@ -5,8 +5,8 @@
  * with display names, reaction counts, and trending search.
  */
 
-import { FarcasterProvider } from '@degenfeed/feed-providers';
 import { enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
+import { FarcasterProvider } from '@degenfeed/feed-providers';
 import { type Env, noCacheJsonResponse } from '../index';
 
 export async function handleFarcasterFeed(_request: Request, env: Env): Promise<Response> {
@@ -18,6 +18,9 @@ export async function handleFarcasterFeed(_request: Request, env: Env): Promise<
     const posts = result.posts.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
     return noCacheJsonResponse({ data: posts, meta: { total: posts.length, source: 'hub-live' } });
   } catch (e) {
-    return noCacheJsonResponse({ data: [], meta: { total: 0, error: e instanceof Error ? e.message : 'Farcaster unavailable' } });
+    return noCacheJsonResponse({
+      data: [],
+      meta: { total: 0, error: e instanceof Error ? e.message : 'Farcaster unavailable' },
+    });
   }
 }

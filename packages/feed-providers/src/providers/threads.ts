@@ -1,16 +1,20 @@
 /**
- * ThreadsProvider — HTML scraper for public Threads profiles.
+ * ThreadsProvider — Dual-path Threads content fetcher.
  *
- * Threads does not offer a public API. The internal API requires login.
- * We scrape the public HTML page and extract the embedded JSON state
- * that contains post data. This is brittle — Meta changes page structure
- * frequently. When it breaks, we silently return an empty feed.
+ * Threads has NO public read API for arbitrary profiles. Meta's official
+ * Threads API (graph.threads.net) is a PUBLISHING API only — it lets
+ * authenticated users read their OWN threads, not arbitrary public feeds.
  *
  * Strategy:
- *   1. Try direct fetch with browser UA
- *   2. Fallback to FlareSolverr proxy (100.104.130.92:8191) if blocked
- *   3. Extract the <script> tag containing __INITIAL_STATE__ or JSON-LD
- *   4. Parse the JSON and extract posts
+ *   1. READ curated handles: HTML scraper (public profile pages).
+ *      Brittle but there is no alternative. Meta does not offer a public
+ *      read API and has no RSS feeds for Threads.
+ *   2. READ authenticated user's feed: official graph.threads.net API.
+ *      Used via @degenfeed/threads-sdk when the user has signed in.
+ *   3. WRITE (publish): official graph.threads.net API (see publish.ts).
+ *   4. ENGAGE: NOT supported. The Threads API does not support liking,
+ *      reposting, or replying to other people's threads. Users must use
+ *      the Threads app for engagement.
  */
 
 import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';

@@ -26,6 +26,7 @@ import { RmiDataBusProvider, RssProvider } from '@degenfeed/feed-providers';
 import { computeTrendingTopics, rankDiverse } from '@degenfeed/ranking';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, rmiUrl } from '@degenfeed/utils';
+import { authenticateApiKey } from '../admin';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { DEFAULT_PROTOCOLS, getProvider } from './feed';
 
@@ -441,7 +442,8 @@ export async function handleNewsletterDigest(request: Request, env: Env): Promis
 
 export async function handleNewsletterStatus(request: Request, env: Env): Promise<Response> {
   const auth = request.headers.get('authorization') ?? '';
-  if (auth !== `Bearer ${env.ADMIN_API_KEY ?? ''}`) {
+  const { ok } = authenticateApiKey(auth, env.NEWSLETTER_API_KEY, env.ADMIN_API_KEY);
+  if (!ok) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
   try {

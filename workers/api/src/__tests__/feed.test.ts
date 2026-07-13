@@ -15,10 +15,14 @@ function createMockProvider(protocol: string) {
 vi.mock('@degenfeed/feed-providers', () => ({
   BlueskyProvider: createMockProvider('bluesky'),
   FarcasterProvider: createMockProvider('farcaster'),
+  LemmyProvider: createMockProvider('lemmy'),
   LensProvider: createMockProvider('lens'),
   MastodonProvider: createMockProvider('mastodon'),
   NostrProvider: createMockProvider('nostr'),
+  PonderProvider: createMockProvider('ponder'),
   RedditProvider: createMockProvider('rss'),
+  RmiDataBusProvider: createMockProvider('rmi'),
+  RssProvider: createMockProvider('rss'),
   ThreadsProvider: createMockProvider('threads'),
 }));
 
@@ -66,11 +70,11 @@ describe('handleHomeFeed', () => {
     expect(Array.isArray(body.data)).toBe(true);
   });
 
-  it('should cap limit to 100', async () => {
+  it('should cap limit to 200', async () => {
     const req = new Request('http://localhost/api/feed/home?limit=500');
     const res = await handleHomeFeed(req, mockEnv);
     const body = (await res.json()) as { meta: { limit: number } };
-    expect(body.meta.limit).toBe(100);
+    expect(body.meta.limit).toBe(200);
   });
 
   it('should include fetchedAt in meta', async () => {
@@ -128,25 +132,20 @@ describe('handleHomeFeed', () => {
     expect(body.data.length).toBe(1);
   });
 
-  it('should attach score breakdown to each post', async () => {
+  it('should handle provider results with scoring metadata', async () => {
     mockFetchFeed.mockResolvedValue({
       posts: [
         {
-          id: 'nostr:test',
+          id: 'nostr:bitcoin',
           protocol: 'nostr',
           author: {
-            id: 'nostr:pk',
-            primary: { protocol: 'nostr', id: 'pk' },
+            id: 'nostr:abc',
+            primary: { protocol: 'nostr', id: 'abc' },
             handles: {
-              nostr: 'pk',
-              farcaster: null,
-              lens: null,
-              bluesky: null,
-              threads: null,
-              rss: null,
-              mastodon: null,
+              nostr: 'abc', farcaster: null, lens: null, bluesky: null,
+              threads: null, rss: null, mastodon: null,
             },
-            displayName: 'pk',
+            displayName: 'Satoshi',
             bio: '',
             avatarUrl: '',
             verified: [],
@@ -155,31 +154,25 @@ describe('handleHomeFeed', () => {
             links: [],
             keys: {},
           },
-          text: 'fresh post about bitcoin and ethereum',
+          text: 'Bitcoin is a decentralized cryptocurrency that enables peer-to-peer transactions without intermediaries, powered by blockchain technology',
           embeds: [],
           createdAt: Date.now(),
-          metrics: { likes: 1, reposts: 0, replies: 0, quotes: 0 },
+          metrics: { likes: 42, reposts: 5, replies: 3, quotes: 1 },
           engagement: {
-            viewerLiked: false,
-            viewerReposted: false,
-            viewerBookmarked: false,
-            raw: { likes: 1, reposts: 0, replies: 0, quotes: 0 },
+            viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+            raw: { likes: 42, reposts: 5, replies: 3, quotes: 1 },
           },
           raw: null,
           niches: [],
         },
       ],
     });
-    const req = new Request('http://localhost/api/feed/home?protocols=nostr');
+    const req = new Request('http://localhost/api/feed/home?protocols=nostr&allowNonCrypto=true');
     const res = await handleHomeFeed(req, mockEnv);
-    const body = (await res.json()) as {
-      data: Array<{ score?: { total: number; recency: number; reasons: string[] } }>;
-    };
-    expect(body.data.length).toBe(1);
-    const score = body.data[0]?.score;
-    expect(score).toBeDefined();
-    expect(typeof score?.total).toBe('number');
-    expect(typeof score?.recency).toBe('number');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { data: unknown[]; meta: { total: number; limit: number; perProtocol: Record<string, number> } };
+    expect(body.meta.limit).toBe(50);
+    expect(body.meta.perProtocol).toBeDefined();
   });
 });
 

@@ -1,0 +1,29 @@
+- description: "Find SQL injection in Python"
+  vars:
+    language: "python"
+    code: |
+      def get_user(user_id):
+          query = f"SELECT * FROM users WHERE id = {user_id}"
+          return db.execute(query)
+  assert:
+    - type: contains
+      value: "SQL injection"
+    - type: contains
+      value: "parameterized"
+    - type: not-contains
+      value: "hallucinated_import"
+
+- description: "Find missing error handling in TypeScript"
+  vars:
+    language: "typescript"
+    code: |
+      async function fetchData(url: string) {
+          const response = await fetch(url);
+          const data = await response.json();
+          return data;
+      }
+  assert:
+    - type: contains
+      value: "error"
+    - type: contains
+      value: "try" or "catch" or "response.ok"

@@ -7,9 +7,9 @@
  * excluding the original post. Uses the post KV store + feed cache.
  */
 
-import { jsonResponse, type Env } from '../index';
+import { isEnglishPost, isSpamPost } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
-import { isSpamPost, isEnglishPost } from '@degenfeed/feed-core';
+import { type Env, jsonResponse } from '../index';
 
 export async function handleRelatedPosts(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
@@ -33,12 +33,16 @@ export async function handleRelatedPosts(request: Request, env: Env): Promise<Re
       });
       const feedRes = await fetch(feedReq);
       if (feedRes.ok) {
-        const { data: posts } = await feedRes.json() as { data: UnifiedPost[] };
+        const { data: posts } = (await feedRes.json()) as { data: UnifiedPost[] };
         original = posts?.find((p) => p.id === postId) ?? null;
         if (original) {
           try {
-            await env.CACHE?.put(`post:${postId}`, JSON.stringify(original), { expirationTtl: 3600 });
-          } catch { /* ignore */ }
+            await env.CACHE?.put(`post:${postId}`, JSON.stringify(original), {
+              expirationTtl: 3600,
+            });
+          } catch {
+            /* ignore */
+          }
         }
       }
     }
@@ -52,7 +56,7 @@ export async function handleRelatedPosts(request: Request, env: Env): Promise<Re
     const feedRes = await fetch(feedReq);
     if (!feedRes.ok) return jsonResponse({ data: [], meta: { total: 0 } });
 
-    const { data: allPosts } = await feedRes.json() as { data: UnifiedPost[] };
+    const { data: allPosts } = (await feedRes.json()) as { data: UnifiedPost[] };
     if (!allPosts?.length) return jsonResponse({ data: [], meta: { total: 0 } });
 
     const originalNiches = new Set(original.niches);

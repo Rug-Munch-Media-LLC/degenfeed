@@ -17,6 +17,7 @@
 
 import type { Protocol } from '@degenfeed/types';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
 
 interface PreferencesBody {
@@ -107,6 +108,9 @@ export async function handlePreferences(request: Request, env: Env): Promise<Res
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
+
+  const bodySizeCheck = validateBodySize(request, 16 * 1024);
+  if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
 
   let body: PreferencesBody = {};
   try {

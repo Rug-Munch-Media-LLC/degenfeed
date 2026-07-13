@@ -6,7 +6,7 @@
  * DELETE /api/feed/presets?id=... — delete a preset
  */
 
-import { jsonResponse, type Env } from '../index';
+import { type Env, jsonResponse } from '../index';
 
 interface FeedPreset {
   id: string;
@@ -28,9 +28,14 @@ export async function handleFeedPresets(request: Request, env: Env): Promise<Res
   if (request.method === 'GET') {
     const presets: FeedPreset[] = [];
     try {
-      const cookieMatch = cookieHeader.split(';').map((s) => s.trim()).find((s) => s.startsWith('df_presets='));
+      const cookieMatch = cookieHeader
+        .split(';')
+        .map((s) => s.trim())
+        .find((s) => s.startsWith('df_presets='));
       if (cookieMatch) {
-        const parsed = JSON.parse(decodeURIComponent(cookieMatch.slice('df_presets='.length))) as FeedPreset[];
+        const parsed = JSON.parse(
+          decodeURIComponent(cookieMatch.slice('df_presets='.length)),
+        ) as FeedPreset[];
         presets.push(...parsed);
       }
       if (env.CACHE) {
@@ -50,7 +55,14 @@ export async function handleFeedPresets(request: Request, env: Env): Promise<Res
   // POST — save a preset
   if (request.method === 'POST') {
     try {
-      const body = await request.json() as { name?: string; protocols?: string; niches?: string; category?: string; sort?: string; type?: string };
+      const body = (await request.json()) as {
+        name?: string;
+        protocols?: string;
+        niches?: string;
+        category?: string;
+        sort?: string;
+        type?: string;
+      };
       if (!body.name) return jsonResponse({ error: 'name required' }, 400);
 
       const preset: FeedPreset = {
@@ -70,7 +82,9 @@ export async function handleFeedPresets(request: Request, env: Env): Promise<Res
           const existing = await env.CACHE.get(presetsKey);
           const all = existing ? (JSON.parse(existing) as FeedPreset[]) : [];
           all.push(preset);
-          await env.CACHE.put(presetsKey, JSON.stringify(all.slice(-20)), { expirationTtl: 90 * 86400 });
+          await env.CACHE.put(presetsKey, JSON.stringify(all.slice(-20)), {
+            expirationTtl: 90 * 86400,
+          });
         } catch {}
       }
 

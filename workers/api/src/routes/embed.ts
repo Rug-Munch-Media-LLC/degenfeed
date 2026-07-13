@@ -5,7 +5,8 @@
  * GET /api/embed/resolve?url=https://...
  */
 
-import { jsonResponse, type Env } from '../index';
+import { type Env, jsonResponse } from '../index';
+import { isValidFetchUrl, safeFetch } from '../sanitize';
 
 interface EmbedData {
   title?: string;
@@ -24,12 +25,15 @@ export async function handleEmbedResolve(request: Request, env: Env): Promise<Re
   try {
     const cached = await env.CACHE?.get(cacheKey);
     if (cached) return jsonResponse(JSON.parse(cached));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
+
+  if (!isValidFetchUrl(url)) return jsonResponse({ error: 'Invalid URL' }, 400);
 
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       headers: { 'user-agent': 'DegenFeed/0.1 (LinkPreview; +https://degenfeed.xyz)' },
-      redirect: 'follow',
     });
     if (!res.ok) return jsonResponse({ error: `fetch failed: ${res.status}` }, 502);
 
@@ -37,7 +41,10 @@ export async function handleEmbedResolve(request: Request, env: Env): Promise<Re
     const embed: EmbedData = { url, fetchedAt: Date.now() };
 
     const getMeta = (name: string) => {
-      const re = new RegExp(`<meta[^>]+(?:property|name)=["']${name}["'][^>]+content=["']([^"']+)["']`, 'i');
+      const re = new RegExp(
+        `<meta[^>]+(?:property|name)=["']${name}["'][^>]+content=["']([^"']+)["']`,
+        'i',
+      );
       const m = html.match(re);
       return m?.[1] ?? undefined;
     };
@@ -52,7 +59,9 @@ export async function handleEmbedResolve(request: Request, env: Env): Promise<Re
 
     try {
       await env.CACHE?.put(cacheKey, JSON.stringify(embed), { expirationTtl: 86400 });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     return jsonResponse(embed);
   } catch {

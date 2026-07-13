@@ -5,8 +5,8 @@
  * GET /api/feed/post/:id?format=og
  */
 
-import { type Env } from '../index';
 import type { UnifiedPost } from '@degenfeed/types';
+import type { Env } from '../index';
 
 export async function handlePostOg(request: Request, env: Env, postId: string): Promise<Response> {
   const decoded = decodeURIComponent(postId);
@@ -25,9 +25,10 @@ export async function handlePostOg(request: Request, env: Env, postId: string): 
   }
 
   const text = post.text.slice(0, 200);
-  const image = post.embeds.find((e) => e.kind === 'image')?.url
-    || post.author.avatarUrl
-    || 'https://degenfeed.xyz/og-image.png';
+  const image =
+    post.embeds.find((e) => e.kind === 'image')?.url ||
+    post.author.avatarUrl ||
+    'https://degenfeed.xyz/og-image.png';
   const author = post.author.displayName;
   const protocol = post.protocol;
 
@@ -59,5 +60,9 @@ export async function handlePostOg(request: Request, env: Env, postId: string): 
 }
 
 function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

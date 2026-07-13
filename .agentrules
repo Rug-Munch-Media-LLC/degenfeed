@@ -1,0 +1,29 @@
+────────────────────────────────────────────────────────────
+DEGENFEED WEB — AI Agent Guardrails
+────────────────────────────────────────────────────────────
+
+## Monorepo Rules
+- Use `pnpm --filter` for package-scoped commands, never cd into subdirs
+- Turborepo pipeline enforces build order — don't bypass with raw commands
+- Workspace packages use `workspace:*` protocol — never add external deps to packages
+
+## Protocol SDK Rules
+- Each SDK (`nostr-sdk`, `farcaster-sdk`, etc.) is self-contained
+- SDKs share types from `@degenfeed/types`
+- SDKs never import from `apps/web` (apps import from SDKs, not vice versa)
+
+## Biome Rules
+- All 30 a11y rules enforced — no exceptions
+- Globals.css is excluded from linting (by override)
+- Single quotes, semicolons, trailing commas mandated
+
+## Cloudflare-Specific
+- Workers run on Cloudflare Workers (not Node.js)
+- No `fs`, no `path`, no Node.js builtins in worker code
+- Wrangler is the deployment tool — never deploy via raw curl/API
+
+## UI Component Rules
+- Components in `@degenfeed/ui` are shared across apps
+- Tailwind classes only — no custom CSS files (except globals.css)
+- dompurify sanitize all user-generated HTML
+- Wallet sign-in uses `@degenfeed/auth`, never raw wallet adapter

@@ -1,5 +1,5 @@
-import { blake3 } from "@noble/hashes/blake3";
-import { ed25519 } from "@noble/curves/ed25519";
+import { ed25519 } from '@noble/curves/ed25519';
+import { blake3 } from '@noble/hashes/blake3';
 
 const FARCASTER_NETWORK_MAINNET = 1;
 
@@ -12,7 +12,7 @@ const REACTION_TYPE_RECAST = 2;
 
 const HASH_SCHEME_BLAKE3 = 1;
 
-function varintLen(value: number): number {
+function _varintLen(value: number): number {
   if (value < 128) return 1;
   if (value < 16384) return 2;
   if (value < 2097152) return 3;
@@ -86,11 +86,11 @@ function encodeEmbedCastId(fid: number, hashHex: string): Uint8Array {
 function encodeReactionBody(
   reactionType: number,
   targetFid: number,
-  targetHashHex: string
+  targetHashHex: string,
 ): Uint8Array {
   const inner = concatBytes(
     encodeVarintField(1, reactionType),
-    encodeLengthDelimited(2, encodeCastId(targetFid, targetHashHex))
+    encodeLengthDelimited(2, encodeCastId(targetFid, targetHashHex)),
   );
   return inner;
 }
@@ -109,7 +109,9 @@ function encodeCastAddBody(opts: {
     parts.push(encodeLengthDelimited(1, encoder.encode(opts.text)));
   }
   if (opts.embedCastFid !== undefined && opts.embedCastHashHex) {
-    parts.push(encodeLengthDelimited(2, encodeEmbedCastId(opts.embedCastFid, opts.embedCastHashHex)));
+    parts.push(
+      encodeLengthDelimited(2, encodeEmbedCastId(opts.embedCastFid, opts.embedCastHashHex)),
+    );
   }
   if (opts.parentFid !== undefined && opts.parentHashHex) {
     parts.push(encodeLengthDelimited(5, encodeCastId(opts.parentFid, opts.parentHashHex)));
@@ -142,7 +144,7 @@ export interface FarcasterEngageResult {
 }
 
 export interface FarcasterEngageOpts {
-  action: "like" | "unlike" | "repost" | "reply";
+  action: 'like' | 'unlike' | 'repost' | 'reply';
   signerKeyHex: string;
   fid: number;
   targetFid: number;
@@ -154,7 +156,7 @@ export async function engageFarcaster(opts: FarcasterEngageOpts): Promise<Farcas
   try {
     const signerBytes = hexToBytes(opts.signerKeyHex);
     if (signerBytes.length !== 32) {
-      return { ok: false, error: "Invalid signer key (must be 32 bytes / 64 hex chars)" };
+      return { ok: false, error: 'Invalid signer key (must be 32 bytes / 64 hex chars)' };
     }
 
     const pubKey = ed25519.getPublicKey(signerBytes);
@@ -163,26 +165,26 @@ export async function engageFarcaster(opts: FarcasterEngageOpts): Promise<Farcas
     let bodyField: number;
     let body: Uint8Array;
 
-    if (opts.action === "like") {
+    if (opts.action === 'like') {
       messageType = MESSAGE_TYPE_REACTION_ADD;
       bodyField = 7;
       body = encodeReactionBody(REACTION_TYPE_LIKE, opts.targetFid, opts.castHashHex);
-    } else if (opts.action === "unlike") {
+    } else if (opts.action === 'unlike') {
       messageType = MESSAGE_TYPE_REACTION_REMOVE;
       bodyField = 7;
       body = encodeReactionBody(REACTION_TYPE_LIKE, opts.targetFid, opts.castHashHex);
-    } else if (opts.action === "repost") {
+    } else if (opts.action === 'repost') {
       messageType = MESSAGE_TYPE_CAST_ADD;
       bodyField = 5;
       body = encodeCastAddBody({
         embedCastFid: opts.targetFid,
         embedCastHashHex: opts.castHashHex,
       });
-    } else if (opts.action === "reply") {
+    } else if (opts.action === 'reply') {
       messageType = MESSAGE_TYPE_CAST_ADD;
       bodyField = 5;
       body = encodeCastAddBody({
-        text: opts.content ?? "",
+        text: opts.content ?? '',
         parentFid: opts.targetFid,
         parentHashHex: opts.castHashHex,
       });
@@ -213,23 +215,23 @@ export async function engageFarcaster(opts: FarcasterEngageOpts): Promise<Farcas
 
     return { ok: true };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Farcaster engagement failed";
+    const message = err instanceof Error ? err.message : 'Farcaster engagement failed';
     return { ok: false, error: message };
   }
 }
 
 async function submitToHub(signedMessage: Uint8Array): Promise<void> {
-  const hubUrl = "https://hub.farcaster.standardcrypto.vc:2281";
+  const hubUrl = 'https://hub.farcaster.standardcrypto.vc:2281';
   const res = await fetch(`${hubUrl}/v1/submitMessage`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "content-type": "application/octet-stream",
-      "user-agent": "DegenFeed/0.1 (+https://degenfeed.xyz)",
+      'content-type': 'application/octet-stream',
+      'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
     },
     body: signedMessage.buffer as ArrayBuffer,
   });
   if (!res.ok) {
-    const errText = await res.text().catch(() => "");
+    const errText = await res.text().catch(() => '');
     throw new Error(`Farcaster Hub rejected: ${res.status} ${errText.slice(0, 200)}`);
   }
 }

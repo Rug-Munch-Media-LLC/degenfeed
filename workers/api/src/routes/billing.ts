@@ -58,10 +58,7 @@ interface VerifyBody {
   transaction?: string;
 }
 
-async function verifySolanaTransaction(
-  signature: string,
-  rpcUrl: string,
-): Promise<boolean> {
+async function verifySolanaTransaction(signature: string, rpcUrl: string): Promise<boolean> {
   try {
     const res = await fetch(rpcUrl, {
       method: 'POST',
@@ -74,7 +71,7 @@ async function verifySolanaTransaction(
       }),
     });
     if (!res.ok) return false;
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       result?: { value?: Array<{ confirmationStatus?: string; err?: unknown } | null> };
     };
     const status = data?.result?.value?.[0];
@@ -111,7 +108,10 @@ export async function handleBillingVerify(request: Request, env: Env): Promise<R
   const rpcUrl = env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
   const confirmed = await verifySolanaTransaction(signature, rpcUrl);
   if (!confirmed) {
-    return jsonResponse({ error: 'Transaction not confirmed on-chain. Wait for confirmation and try again.' }, 402);
+    return jsonResponse(
+      { error: 'Transaction not confirmed on-chain. Wait for confirmation and try again.' },
+      402,
+    );
   }
 
   const identityId = `solana:${account}`;

@@ -9,7 +9,9 @@
  *   npx web-push generate-vapid-notes
  * Store in env: VAPID_SUBJECT (mailto:), VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
  */
-import { jsonResponse, type Env } from "../index";
+import { authenticateApiKey } from '../admin';
+import { type Env, jsonResponse } from '../index';
+import { validateBodySize } from '../sanitize';
 
 interface PushSubscription {
   endpoint: string;
@@ -18,17 +20,63 @@ interface PushSubscription {
 }
 
 export async function handlePushSubscribe(request: Request, env: Env): Promise<Response> {
+  const bodySizeCheck = validateBodySize(request, 5 * 1024);
+  if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
   try {
-    const body = await request.json() as PushSubscription;
+    const body = (await request.json()) as PushSubscription;
     if (!body.endpoint || !body.keys?.p256dh || !body.keys?.auth) {
-      return jsonResponse({ error: "Invalid subscription" }, 400);
+      return jsonResponse({ error: 'Invalid subscription' }, 400);
     }
     const sub: PushSubscription = { ...body, subscribedAt: Date.now() };
-    await env.CACHE?.put(`push:sub:${body.endpoint}`, JSON.stringify(sub), { expirationTtl: 30 * 86400 });
+    await env.CACHE?.put(`push:sub:${body.endpoint}`, JSON.stringify(sub), {
+      expirationTtl: 30 * 86400,
+    });
     return jsonResponse({ ok: true });
   } catch {
-    return jsonResponse({ error: "Invalid request" }, 400);
+    return jsonResponse({ error: 'Invalid request' }, 400);
   }
+}
+
+function rawBase64ToJwkPub(raw: string): { x: string; y: string } {
+  const bytes = urlSafeBase64ToBytes(raw);
+  if (bytes.length !== 65 || bytes[0] !== 0x04) {
+    throw new Error('Invalid raw VAPID public key: expected 65-byte uncompressed EC point');
+  }
+  const x = new Uint8Array(32);
+  const y = new Uint8Array(32);
+  x.set(bytes.subarray(1, 33));
+  y.set(bytes.subarray(33, 65));
+  return { x: urlSafeBase64(x), y: urlSafeBase64(y) };
+}
+
+function rawBase64ToJwkPriv(raw: string): { d: string } {
+  const bytes = urlSafeBase64ToBytes(raw);
+  if (bytes.length !== 32) {
+    throw new Error('Invalid raw VAPID private key: expected 32 bytes');
+  }
+  return { d: urlSafeBase64(bytes) };
+}
+
+function parseVapidKey(key: string): { x: string; y: string } {
+  const trimmed = key.trim();
+  if (trimmed.startsWith('{')) {
+    const parsed = JSON.parse(trimmed) as { kty?: string; crv?: string; x: string; y: string };
+    return { x: parsed.x, y: parsed.y };
+  }
+  return rawBase64ToJwkPub(trimmed);
+}
+
+function parseVapidPrivateKey(key: string): { d: string } {
+  const trimmed = key.trim();
+  if (trimmed.startsWith('{')) {
+    const parsed = JSON.parse(trimmed) as {
+      kty?: string;
+      crv?: string;
+      d: string;
+    };
+    return { d: parsed.d };
+  }
+  return rawBase64ToJwkPriv(trimmed);
 }
 
 async function buildVapidHeaders(
@@ -37,17 +85,19 @@ async function buildVapidHeaders(
   publicKey: string,
   privateKey: string,
 ): Promise<Record<string, string>> {
-  const keyData = JSON.parse(publicKey) as { kty: string; crv: string; x: string; y: string };
-  const privData = JSON.parse(privateKey) as { kty: string; crv: string; d: string; x: string; y: string };
+  const keyData = parseVapidKey(publicKey);
+  const privData = parseVapidPrivateKey(privateKey);
 
   const pubKeyBytes = urlSafeBase64ToBytes(keyData.x + keyData.y);
-  const privKeyBytes = urlSafeBase64ToBytes(privData.d);
+  const _privKeyBytes = urlSafeBase64ToBytes(privData.d);
 
   const key = await crypto.subtle.importKey(
     'jwk',
     {
-      kty: 'EC', crv: 'P-256',
-      x: keyData.x, y: keyData.y,
+      kty: 'EC',
+      crv: 'P-256',
+      x: keyData.x,
+      y: keyData.y,
       d: privData.d,
       ext: true,
     },
@@ -79,7 +129,7 @@ async function buildVapidHeaders(
   const vapidKey = urlSafeBase64(pubKeyBytes);
 
   return {
-    'authorization': `vapid t=${jwt}, k=${vapidKey}`,
+    authorization: `vapid t=${jwt}, k=${vapidKey}`,
     'content-encoding': 'aes128gcm',
   };
 }
@@ -100,33 +150,41 @@ function urlSafeBase64ToBytes(base64: string): Uint8Array {
 }
 
 export async function handlePushSend(request: Request, env: Env): Promise<Response> {
-  const auth = request.headers.get("authorization") ?? "";
-  if (auth !== `Bearer ${env.ADMIN_API_KEY ?? ""}`) {
-    return jsonResponse({ error: "Unauthorized" }, 401);
+  const auth = request.headers.get('authorization') ?? '';
+  const { ok } = authenticateApiKey(auth, env.PUSH_API_KEY, env.ADMIN_API_KEY);
+  if (!ok) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
   try {
-    const { title, body, icon, url } = await request.json() as {
-      title: string; body: string; icon?: string; url?: string;
+    const { title, body, icon, url } = (await request.json()) as {
+      title: string;
+      body: string;
+      icon?: string;
+      url?: string;
     };
-    if (!title || !body) return jsonResponse({ error: "title and body required" }, 400);
+    if (!title || !body) return jsonResponse({ error: 'title and body required' }, 400);
 
-    const subs = await listKVKeys(env.CACHE, "push:sub:");
-    const payload = JSON.stringify({ title, body, icon: icon ?? "/icon-192.png", data: { url } });
+    const subs = await listKVKeys(env.CACHE, 'push:sub:');
+    const payload = JSON.stringify({ title, body, icon: icon ?? '/icon-192.png', data: { url } });
     const results: { endpoint: string; ok: boolean; error?: string }[] = [];
 
     // Build VAPID headers if keys are configured
     let vapidHeaders: Record<string, string> | null = null;
     if (env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY && env.VAPID_SUBJECT) {
       try {
-        const audience = new URL(subs[0]?.startsWith('{') ? '' : subs[0] || 'https://fcm.googleapis.com').origin;
+        const audience = new URL(
+          subs[0]?.startsWith('{') ? '' : subs[0] || 'https://fcm.googleapis.com',
+        ).origin;
         vapidHeaders = await buildVapidHeaders(
           audience,
           env.VAPID_SUBJECT,
           env.VAPID_PUBLIC_KEY,
           env.VAPID_PRIVATE_KEY,
         );
-      } catch { /* vapid unavailable */ }
+      } catch {
+        /* vapid unavailable */
+      }
     }
 
     for (const key of subs) {
@@ -151,7 +209,7 @@ export async function handlePushSend(request: Request, env: Env): Promise<Respon
           }
         }
         const res = await fetch(sub.endpoint, {
-          method: "POST",
+          method: 'POST',
           headers,
           body: payload,
         });

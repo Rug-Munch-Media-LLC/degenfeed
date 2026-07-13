@@ -76,10 +76,14 @@ export async function handlePostById(
       const response = { data: post };
       try {
         await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       return jsonResponse(response);
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   for (const protocol of ALL_PROTOCOLS) {
     const provider = providerFor(protocol, env);

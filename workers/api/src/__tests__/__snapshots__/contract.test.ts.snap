@@ -1,0 +1,104 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`API Contract: Error Responses > matches snapshot of error shape 1`] = `
+{
+  "error": "<string>",
+}
+`;
+
+exports[`API Contract: GET /api/feed/home > matches snapshot of response structure 1`] = `
+{
+  "data": [
+    "<array-item>",
+  ],
+  "meta": {
+    "fetchedAt": "<string>",
+    "limit": "<number>",
+    "perProtocol": {
+      "nostr": "<number>",
+    },
+    "total": "<number>",
+  },
+}
+`;
+
+exports[`API Contract: GET /api/feed/rss.xml > matches snapshot of RSS XML structure 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+  <title>DegenFeed — Web3 Social Aggregator</title>
+  <link>https://degenfeed.xyz</link>
+  <description>Top web3 stories across Nostr, Farcaster, Lens, Bluesky, Mastodon, and the RMI DataBus.</description>
+  <language>en-us</language>
+  <lastBuildDate>Fri, 10 Jul 2026 12:00:00 GMT</lastBuildDate>
+  <atom:link href="https://degenfeed.xyz/api/feed/rss.xml" rel="self" type="application/rss+xml"/>
+  <generator>DegenFeed v2.0</generator>
+<item>
+  <title>Test post content about web3 and crypto</title>
+  <link>https://degenfeed.xyz/post/nostr%3Atest-post-id</link>
+  <guid isPermaLink="false">nostr:test-post-id</guid>
+  <pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+  <author>TestAuthor</author>
+  <source url="https://degenfeed.xyz">TestAuthor</source>
+  <category>crypto</category><category>web3</category>
+  <description>&lt;![CDATA[&lt;p&gt;Test post content about web3 and crypto&lt;/p&gt;&lt;br/&gt;&lt;img src=&quot;https://example.com/img.png&quot;/&gt;&lt;br/&gt;&lt;small&gt;via TestAuthor on nostr&lt;/small&gt;]]&gt;</description>
+</item>
+</channel>
+</rss>"
+`;
+
+exports[`API Contract: GET /api/health > matches snapshot of response structure 1`] = `
+{
+  "healthy": "<number>",
+  "relays": {
+    "wss://nos.lol": "<string>",
+    "wss://relay.damus.io": "<string>",
+    "wss://relay.primal.net": "<string>",
+  },
+}
+`;
+
+exports[`API Contract: GET /api/preferences > matches snapshot of defaults shape 1`] = `
+{
+  "allowNonCrypto": "<boolean>",
+  "diversityBoost": "<boolean>",
+  "engagementWeight": "<number>",
+  "hideLowQuality": "<boolean>",
+  "hideLowQualityThreshold": "<number>",
+  "mutedNiches": [
+    "<array-item>",
+  ],
+  "preferredNiches": [
+    "<array-item>",
+  ],
+  "preferredPlatforms": [
+    "<array-item>",
+  ],
+  "recencyWeight": "<number>",
+  "updatedAt": "<string>",
+}
+`;
+
+exports[`API Contract: POST /api/preferences > matches snapshot of response structure 1`] = `
+{
+  "ok": "<boolean>",
+  "preferences": {
+    "allowNonCrypto": "<boolean>",
+    "diversityBoost": "<boolean>",
+    "engagementWeight": "<number>",
+    "hideLowQuality": "<boolean>",
+    "hideLowQualityThreshold": "<number>",
+    "mutedNiches": [
+      "<array-item>",
+    ],
+    "preferredNiches": [
+      "<array-item>",
+    ],
+    "preferredPlatforms": [
+      "<array-item>",
+    ],
+    "recencyWeight": "<number>",
+    "updatedAt": "<string>",
+  },
+}
+`;

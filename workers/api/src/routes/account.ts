@@ -96,7 +96,7 @@ export async function handleAccountDelete(request: Request, env: Env): Promise<R
     status: 200,
     headers: {
       'content-type': 'application/json',
-      'set-cookie': '__Host-dfid=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax',
+      'set-cookie': '__Host-dfid=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Strict',
       'cache-control': 'no-store',
     },
   });

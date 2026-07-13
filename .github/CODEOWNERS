@@ -1,0 +1,12 @@
+# CODEOWNERS — automatic PR reviewer assignment
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global fallback
+* @cryptorugmunch
+
+# Quality/config files — anyone can approve
+*.json @cryptorugmunch
+*.yml @cryptorugmunch
+*.yaml @cryptorugmunch
+*.toml @cryptorugmunch
+Makefile @cryptorugmunch

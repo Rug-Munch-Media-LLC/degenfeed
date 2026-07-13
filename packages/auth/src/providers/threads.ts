@@ -1,78 +1,54 @@
 /**
- * @degenfeed/auth
+ * @degenfeed/auth — Threads sign-in via Meta OAuth.
  *
- * All sign-in methods. Each method returns a StoredIdentity that the
- * caller persists via @degenfeed/storage. The auth layer is responsible
- * for encryption-at-rest (AES-GCM with PBKDF2 key derivation).
- *
- * Threat model summary:
- *   - Keys never leave the browser in plaintext.
- *   - The user chooses a passphrase; we never see it.
- *   - The passphrase is held in memory only.
- *   - Encrypted blobs go to IndexedDB via @degenfeed/storage.
- *   - The "active session" is also memory-only.
+ * Threads uses Meta's standard OAuth 2.0 flow (not AT Protocol).
+ * The server-side exchange happens at /api/auth/threads/callback
+ * to keep the app secret off the client.
  */
 
 import { type StoredIdentity, saveIdentity } from '@degenfeed/storage';
 import { buildIdentityRecord } from '../persistence';
 
-// ─── 5. Threads sign-in ──────────────────────────────────────────────────
+export async function signInWithThreads(): Promise<StoredIdentity> {
+  const res = await fetch('/api/auth/threads/authorize', { credentials: 'include' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Threads auth not available' }));
+    throw new Error(err.error ?? 'Threads auth not available');
+  }
+  const data = (await res.json()) as { authorizeUrl: string; state: string };
+  window.location.href = data.authorizeUrl;
+  return null as unknown as StoredIdentity;
+}
 
-/**
- * Sign in with Threads using an AT Protocol app password.
- * Threads runs on AT Protocol (same as Bluesky), so auth works the same way.
- * The user creates an app password in their Threads settings.
- */
-export async function signInWithThreads(
-  identifier: string,
-  appPassword: string,
-): Promise<StoredIdentity> {
-  // 1. Create session via XRPC (AT Protocol same as Bluesky)
-  const sessionRes = await fetch('https://threads.net/xrpc/com.atproto.server.createSession', {
+export async function handleThreadsCallback(code: string, state: string): Promise<StoredIdentity> {
+  const res = await fetch('/api/auth/threads/callback', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ identifier, password: appPassword }),
+    body: JSON.stringify({ code, state }),
+    credentials: 'include',
   });
-  if (!sessionRes.ok) {
-    const err = (await sessionRes.json()) as { message?: string; error?: string };
-    throw new Error(`Threads auth failed: ${err.message ?? err.error ?? sessionRes.statusText}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Token exchange failed' }));
+    throw new Error(err.error ?? 'Token exchange failed');
   }
-  const session = (await sessionRes.json()) as {
-    did: string;
-    handle: string;
-    accessJwt: string;
-    refreshJwt: string;
+  const data = (await res.json()) as {
+    userId: string;
+    username: string;
+    name?: string;
+    avatar?: string;
+    accessToken: string;
+    longLivedToken?: string;
   };
-
-  // 2. Fetch profile for display info
-  let displayName: string | undefined;
-  let avatarUrl: string | undefined;
-  try {
-    const profileRes = await fetch(
-      `https://public.threads.net/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(session.did)}`,
-    );
-    if (profileRes.ok) {
-      const profile = (await profileRes.json()) as { displayName?: string; avatar?: string };
-      displayName = profile.displayName;
-      avatarUrl = profile.avatar;
-    }
-  } catch {
-    // Non-fatal
-  }
-
-  // 3. Store JWT encrypted
-  const jwtBlob = JSON.stringify({
-    did: session.did,
-    accessJwt: session.accessJwt,
-    refreshJwt: session.refreshJwt,
-  });
   const record = await buildIdentityRecord({
     protocol: 'threads',
-    publicId: session.did,
-    handle: `threads/${session.handle}`,
-    displayName,
-    avatarUrl,
-    secret: jwtBlob,
+    publicId: data.userId,
+    handle: `threads/${data.username}`,
+    displayName: data.name,
+    avatarUrl: data.avatar,
+    secret: JSON.stringify({
+      userId: data.userId,
+      accessToken: data.longLivedToken || data.accessToken,
+    }),
   });
   await saveIdentity(record);
   return record;

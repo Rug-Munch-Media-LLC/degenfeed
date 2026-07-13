@@ -4,16 +4,18 @@
  * GET /api/discover/people
  */
 
-import { jsonResponse, type Env } from '../index';
 import { isSpamPost } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
+import { type Env, jsonResponse } from '../index';
 
 export async function handleDiscoverPeople(request: Request, env: Env): Promise<Response> {
   const cacheKey = 'people:v1:trending';
   try {
     const cached = await env.CACHE?.get(cacheKey);
     if (cached) return jsonResponse(JSON.parse(cached));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   // Reuse feed data to discover trending authors
   try {
@@ -23,16 +25,25 @@ export async function handleDiscoverPeople(request: Request, env: Env): Promise<
     const feedRes = await fetch(feedReq);
     if (!feedRes.ok) return jsonResponse({ error: 'Feed unavailable' }, 502);
 
-    const { data: posts } = await feedRes.json() as { data: UnifiedPost[] };
+    const { data: posts } = (await feedRes.json()) as { data: UnifiedPost[] };
     if (!posts?.length) return jsonResponse({ data: [], meta: { total: 0 } });
 
-    const authorStats = new Map<string, {
-      author: { id: string; displayName: string; handle: string; avatarUrl: string; protocol: string };
-      postCount: number;
-      totalEngagement: number;
-      protocols: Set<string>;
-      niches: Set<string>;
-    }>();
+    const authorStats = new Map<
+      string,
+      {
+        author: {
+          id: string;
+          displayName: string;
+          handle: string;
+          avatarUrl: string;
+          protocol: string;
+        };
+        postCount: number;
+        totalEngagement: number;
+        protocols: Set<string>;
+        niches: Set<string>;
+      }
+    >();
 
     for (const p of posts) {
       if (isSpamPost(p)) continue;
@@ -77,7 +88,9 @@ export async function handleDiscoverPeople(request: Request, env: Env): Promise<
     const response = { data: people, meta: { total: people.length, fetchedAt: Date.now() } };
     try {
       await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     return jsonResponse(response);
   } catch {

@@ -729,7 +729,9 @@ export function enrichPostNiches(post: UnifiedPost): UnifiedPost {
   return post;
 }
 
-export function detectContentType(post: UnifiedPost): 'article' | 'video' | 'image' | 'thread' | 'link' | 'text' {
+export function detectContentType(
+  post: UnifiedPost,
+): 'article' | 'video' | 'image' | 'thread' | 'link' | 'text' {
   const hasVideo = post.embeds.some((e) => e.kind === 'video');
   if (hasVideo) return 'video';
   const hasImage = post.embeds.some((e) => e.kind === 'image');
