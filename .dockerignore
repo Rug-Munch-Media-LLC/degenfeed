@@ -20,13 +20,20 @@
 .DS_Store
 Thumbs.db
 
-# Node
-node_modules
+# Node — use **/ to match at ANY depth (pnpm hoists into nested dirs)
+**/node_modules
 .npm
 .pnpm-store
+**.npmrc
+**/package-lock.json
 
-# Build output (rebuilt in Docker)
+# Build outputs — match at any nesting level
+**/.next
+**/.turbo
+**/dist
+**/build
 .next
+.turbo
 dist
 build
 
@@ -55,3 +62,15 @@ infra
 # DegenFeed-specific
 workers
 scripts
+
+# Cache dirs (can bloat context)
+.cache
+.wrangler
+.vercel
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

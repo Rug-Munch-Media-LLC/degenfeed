@@ -3,6 +3,7 @@
 import type { UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, getProtocolColor } from '@degenfeed/ui';
 import { formatTimeAgo } from '@degenfeed/utils';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -32,11 +33,12 @@ function VideoCard({ post }: { post: UnifiedPost }) {
     >
       {youtubeId ? (
         <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="block">
-          <img
+          <Image
             src={`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`}
-            alt=""
+            alt={post.text}
+            width={480}
+            height={360}
             className="aspect-video w-full object-cover"
-            loading="lazy"
           />
         </a>
       ) : videoUrl ? (

@@ -10,6 +10,8 @@ import { useAuth } from '../../../components/AuthProvider';
 import { TipModal } from '../../../components/TipModal';
 import { sanitizeHtml } from '../../../lib/sanitize';
 
+export const revalidate = 3600;
+
 interface EmbedData {
   title?: string;
   description?: string;
