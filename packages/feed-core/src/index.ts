@@ -15,6 +15,16 @@ export {
 } from './spam';
 export type { SpamContext, SpamResult, SpamTier } from './spam';
 
+// ─── Auto-moderation configuration ────────────────────────────────
+export {
+  checkText,
+  DEFAULT_THRESHOLDS,
+  isUserBanned,
+  SCAM_KEYWORDS,
+  SPAM_PATTERN_REGEXES,
+} from './moderation';
+export type { ModerationCheckResult, ModerationThresholds } from './moderation';
+
 export const NICHE_KEYWORDS: Record<string, string[]> = {
   crypto: ['bitcoin', 'btc', 'crypto', 'cryptocurrency', 'blockchain', 'web3', 'token', 'altcoin'],
   bitcoin: ['bitcoin', 'btc', 'satoshi', 'halving', 'ordinal', 'inscription'],

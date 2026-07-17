@@ -1,11 +1,11 @@
 export const runtime = 'edge';
 
 /**
- * /status — Protocol health dashboard
+ * /status — Protocol health dashboard (public, no login required)
  *
- * SSR-fetches /api/feed/health from the worker so the page works without JS
- * and isn't blocked by CORS. Shows last-checked timestamp, per-protocol
- * status (healthy/degraded/down), latency, and a manual refresh button.
+ * SSR-fetches /api/health/protocols from the worker so the page works
+ * without JS and isn't blocked by CORS. Shows per-protocol status
+ * (up/degraded/down), latency, circuit breaker state, and auto-refresh.
  */
 
 import type { Metadata } from 'next';
@@ -17,17 +17,25 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Status — DegenFeed',
   description:
-    'Live protocol health for Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS.',
+    'Live protocol health for Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS, Lemmy, and Ponder.',
 };
 
-interface ProtocolHealth {
-  healthy: boolean;
-  latencyMs: number;
+export interface ProtocolStatus {
+  status: 'up' | 'degraded' | 'down';
+  latency: number;
+  lastChecked: number;
+  circuitBreakerOpen: boolean;
   error?: string;
 }
 
-interface FeedHealthResponse {
-  health: Record<string, ProtocolHealth>;
+export interface ProtocolsHealthResponse {
+  protocols: Record<string, ProtocolStatus>;
+  summary: {
+    total: number;
+    up: number;
+    degraded: number;
+    down: number;
+  };
   checkedAt: number;
 }
 
@@ -38,14 +46,14 @@ async function getBaseUrl(): Promise<string> {
   return `${protocol}://${host}`;
 }
 
-async function loadHealth(): Promise<FeedHealthResponse | null> {
+async function loadHealth(): Promise<ProtocolsHealthResponse | null> {
   try {
-    const res = await fetch(`${await getBaseUrl()}/api/feed/health`, {
+    const res = await fetch(`${await getBaseUrl()}/api/health/protocols`, {
       cache: 'no-store',
       headers: { 'cache-control': 'no-store' },
     });
     if (!res.ok) return null;
-    return (await res.json()) as FeedHealthResponse;
+    return (await res.json()) as ProtocolsHealthResponse;
   } catch {
     return null;
   }
@@ -57,8 +65,9 @@ export default async function StatusPage() {
     <div className="mx-auto max-w-4xl px-4 py-8">
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--color-fg)]">Protocol Status</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Live health checks for every protocol DegenFeed aggregates from.
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          Live health checks for every protocol DegenFeed aggregates from. This page is public
+          &mdash; share it with users before they report issues.
         </p>
       </header>
       <StatusClient initialData={data} />

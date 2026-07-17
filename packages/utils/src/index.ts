@@ -200,8 +200,8 @@ export function shortenAddress(addr: string, head = 6, tail = 4): string {
 
 // ─── Token detection ──────────────────────────────────────────────────
 
-export { detectTokens } from './detectTokens';
 export type { TokenRef } from './detectTokens';
+export { detectTokens } from './detectTokens';
 
 // ─── Validation ───────────────────────────────────────────────────────
 
@@ -213,42 +213,62 @@ export function isValidEmail(s: string): boolean {
 // ─── Protocol → currency mapping for tipping ──────────────────────────
 
 export {
-  PROTOCOL_DEFAULT_CURRENCY,
   CURRENCY_META,
   getDefaultCurrency,
+  PROTOCOL_DEFAULT_CURRENCY,
 } from './protocolCurrency';
 
 // ─── Cross-protocol identity resolution ────────────────────────────────
 
-export { identityKey, IDENTITY_KV_PREFIX, PROTOCOL_ID_REGISTRY } from './crossProtocolIdentity';
 export type { CrossProtocolIdentity, ProtocolId } from './crossProtocolIdentity';
+export { IDENTITY_KV_PREFIX, identityKey, PROTOCOL_ID_REGISTRY } from './crossProtocolIdentity';
 
 // ─── Universal Content Addressing (df:// URIs) ─────────────────────────
 
+export type { ProtocolSource } from './contentUri';
 export {
-  encodeContentUri,
   decodeContentUri,
+  encodeContentUri,
   getPostContentUri,
 } from './contentUri';
-export type { ProtocolSource } from './contentUri';
 
 // ─── Error reporting (lightweight Sentry) ─────────────────────────────
 
 export { reportError } from './sentry';
 
+// ─── Video detection ─────────────────────────────────────────────────────
+
+export type {
+  DirectVideoInfo,
+  EmbedLike,
+  PeerTubeInfo,
+  PeerTubeVideoData,
+  VideoInfo,
+  YouTubeInfo,
+} from './detectVideo';
+export {
+  detectVideoFromEmbeds,
+  fetchPeerTubeVideo,
+  isShortFormVideo,
+  parseDirectVideoUrl,
+  parsePeerTubeUrl,
+  parseVideoUrl,
+  parseYouTubeUrl,
+} from './detectVideo';
+
 // ─── Protocol content translation ─────────────────────────────────────
 
-export { PROTOCOL_FORMATS, translateContent, estimateTranslationLoss } from './protocolTranslator';
 export type { TranslationResult } from './protocolTranslator';
+export { estimateTranslationLoss, PROTOCOL_FORMATS, translateContent } from './protocolTranslator';
 
 // ─── Cross-protocol communities ────────────────────────────────────────
 
+export type { CrossProtocolCommunity } from './community';
 export {
-  communityKey,
-  COMMUNITY_KV_PREFIX,
   COMMUNITY_INDEX_KEY,
+  COMMUNITY_KV_PREFIX,
   communityFeedKey,
+  communityKey,
   communityMembersKey,
   slugifyCommunity,
 } from './community';
-export type { CrossProtocolCommunity } from './community';

@@ -73,6 +73,12 @@ export interface Env {
   FEATURE_FLAGS_DEFAULT?: string;
   /** KV namespace for deployment requests */
   DEPLOYMENTS?: KVNamespace;
+  /** KV namespace for reports, bans, and moderation state */
+  REPORTS?: KVNamespace;
+  /** Comma-separated admin wallet addresses (lowercase) for moderation dashboard access */
+  ADMIN_WALLETS?: string;
+  /** KV namespace for Audio Spaces data */
+  SPACES?: KVNamespace;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

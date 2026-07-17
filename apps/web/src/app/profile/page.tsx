@@ -9,6 +9,7 @@ import { useAuth } from '../../components/AuthProvider';
 import { IdentityLinker } from '../../components/IdentityLinker';
 import { useWeb3 } from '../../components/Web3Provider';
 import { useSubscription, type SubscriptionStatus } from '../../hooks/useSubscription';
+import { useOnboarding } from '../../hooks/useOnboarding';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,6 +87,7 @@ export default function ProfilePage() {
   } = useAuth();
   const { isConnected } = useWeb3();
   const { getSubscriptionStatus, cancelSubscription } = useSubscription();
+  const { reset: resetOnboarding, open: openOnboarding } = useOnboarding();
 
   const [subscriptions, setSubscriptions] = useState<SubscriptionStatus[]>([]);
   const [subsLoading, setSubsLoading] = useState(true);
@@ -752,6 +754,36 @@ export default function ProfilePage() {
                     <li>• Link more accounts to unlock more ways to receive tips</li>
                     <li>• Tippers use their own wallets — no platform account needed</li>
                   </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Settings */}
+            <div className="mb-6">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+                Settings
+              </h2>
+              <div className="space-y-2">
+                <div className="card-hover flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/10 text-degen-400">
+                      <span className="text-lg">🔄</span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-[var(--color-fg)]">Onboarding Tour</div>
+                      <div className="text-xs text-gray-500">Re-take the onboarding tour to update your preferences</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      resetOnboarding();
+                      openOnboarding();
+                    }}
+                    className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
+                    type="button"
+                  >
+                    Retake
+                  </button>
                 </div>
               </div>
             </div>

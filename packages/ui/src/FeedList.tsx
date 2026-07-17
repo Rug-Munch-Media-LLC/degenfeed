@@ -37,6 +37,12 @@ export interface FeedListProps {
   onSignIn?: () => void;
   /** Called when the user wants to reply to a post from another protocol */
   onCrossReplyOpen?: (post: UnifiedPost) => void;
+  /** If true, the viewer is an admin and sees moderation actions in the menu */
+  isAdmin?: boolean;
+  /** Called when an admin removes a post from the feed */
+  onAdminRemove?: (postId: string) => void;
+  /** Called when an admin bans a user */
+  onAdminBan?: (userId: string, protocol: string, handle?: string) => void;
 }
 
 function SkeletonCard() {
@@ -127,6 +133,9 @@ export const FeedList = memo(function FeedList({
   onSignIn,
   onReport,
   onCrossReplyOpen,
+  isAdmin,
+  onAdminRemove,
+  onAdminBan,
 }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -269,6 +278,9 @@ export const FeedList = memo(function FeedList({
             onEngage={onEngage}
             onReport={onReport}
             onCrossReplyOpen={onCrossReplyOpen}
+            isAdmin={isAdmin}
+            onAdminRemove={onAdminRemove}
+            onAdminBan={onAdminBan}
           />
         </div>
       ))}

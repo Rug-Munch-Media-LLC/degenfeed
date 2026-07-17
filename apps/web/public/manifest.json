@@ -17,6 +17,46 @@
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
-  "screenshots": [],
-  "prefer_related_applications": false
+  "screenshots": [
+    {
+      "src": "/screenshots/feed-mobile.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "DegenFeed — Unified social feed on mobile"
+    },
+    {
+      "src": "/screenshots/feed-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "DegenFeed — Multi-protocol feed on desktop"
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/degenfeed/id0000000000"
+    },
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=xyz.degenfeed.app"
+    }
+  ],
+  "ios": {
+    "apple-touch-icon": "/icon-192.png",
+    "apple-touch-startup-image": "/splash.png",
+    "apple-mobile-web-app-title": "DegenFeed",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent"
+  },
+  "handle_links": "preferred",
+  "edge_side_panel": {},
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "note_taking": {
+    "new_note_url": "/post/new"
+  }
 }

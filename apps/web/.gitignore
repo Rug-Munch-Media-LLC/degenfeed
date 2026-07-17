@@ -14,6 +14,15 @@ coverage/
 # ── TypeScript ──────────────────────────────────────────────────
 *.tsbuildinfo
 
+# ── Capacitor / Mobile ─────────────────────────────────────────
+ios/
+android/
+*.xcarchive
+build/
+
+# ── Screenshots (generated) ────────────────────────────────────
+public/screenshots/
+
 # ── Environment ─────────────────────────────────────────────────
 .env
 .env.local

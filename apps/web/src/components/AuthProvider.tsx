@@ -52,6 +52,7 @@ import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
 import { engageNostr, publishNoteToNostr, signBridgeReplyNote } from '../lib/nostr';
 import { useToast } from './Toast';
+import { triggerOnboarding } from '../hooks/useOnboarding';
 
 /** Cross-protocol reply context passed to ComposeModal. */
 export interface ComposeReplyContext {
@@ -220,6 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (session) {
             setLinkGtsUrl(session.gtsAuthorizeUrl ?? null);
             await refresh();
+            triggerOnboarding();
             setShowSignIn(false);
           }
           return;
@@ -236,6 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (session) {
               setLinkGtsUrl(session.gtsAuthorizeUrl ?? null);
               await refresh();
+              triggerOnboarding();
               setShowSignIn(false);
             }
             return;
@@ -266,6 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               });
               await saveIdentity(record);
               await refresh();
+              triggerOnboarding();
               setShowSignIn(false);
               return;
             }
@@ -314,6 +318,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         await refresh();
+        triggerOnboarding();
         setShowSignIn(false);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Sign-in failed';

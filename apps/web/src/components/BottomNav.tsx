@@ -14,8 +14,10 @@ const NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '🏠' },
   { href: '/search', label: 'Search', icon: '🔍' },
   { href: '/c', label: 'Communities', icon: '🌐' },
+  { href: '/spaces', label: 'Spaces', icon: '🔊' },
   { href: '/trending', label: 'Trending', icon: '🔥' },
   { href: '/news', label: 'News', icon: '📰' },
+  { href: '/messages', label: 'Messages', icon: '💬' },
   { href: '/notifications', label: 'Alerts', icon: '🔔' },
   { href: '/profile/bookmarks', label: 'Saved', icon: '🔖' },
 ];
@@ -23,6 +25,7 @@ const NAV: NavItem[] = [
 export function BottomNav() {
   const pathname = usePathname() ?? '/';
   const [notifCount, setNotifCount] = useState(0);
+  const [dmCount, setDmCount] = useState(0);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -35,8 +38,23 @@ export function BottomNav() {
         setNotifCount(unread);
       } catch {}
     };
+    const pollDm = async () => {
+      try {
+        const res = await fetch('/api/messages/conversations', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          conversations?: Array<{ unreadCount?: number }>;
+        };
+        const total = (data.conversations ?? []).reduce(
+          (s, c) => s + (c.unreadCount ?? 0),
+          0,
+        );
+        setDmCount(total);
+      } catch {}
+    };
     poll();
-    interval = setInterval(poll, 60000);
+    pollDm();
+    interval = setInterval(() => { poll(); pollDm(); }, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -45,7 +63,7 @@ export function BottomNav() {
       aria-label="Mobile"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-card)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <div className="grid grid-cols-7">
+      <div className="grid grid-cols-8">
         {NAV.map((item) => {
           const active =
             pathname === item.href ||
@@ -61,6 +79,11 @@ export function BottomNav() {
                 className={`relative flex h-7 w-12 items-center justify-center rounded-full ${active ? 'bg-degen-500/15' : ''}`}
               >
                 <span className="text-lg leading-none">{item.icon}</span>
+                {dmCount > 0 && item.href === '/messages' && (
+                  <span className="absolute -top-1 -right-1 bg-degen-500 text-[var(--color-fg)] text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                    {dmCount > 9 ? '9+' : dmCount}
+                  </span>
+                )}
                 {notifCount > 0 && item.href === '/notifications' && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-[var(--color-fg)] text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
                     {notifCount > 9 ? '9+' : notifCount}

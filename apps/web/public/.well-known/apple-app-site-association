@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.xyz.degenfeed.app",
+        "paths": [
+          "/home/*",
+          "/post/*",
+          "/profile/*",
+          "/feed/*",
+          "/news/*",
+          "/notifications/*",
+          "/discover/*",
+          "/*"
+        ]
+      }
+    ]
+  }
+}
