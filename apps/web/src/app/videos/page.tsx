@@ -29,7 +29,7 @@ function VideoCard({ post }: { post: UnifiedPost }) {
   return (
     <div
       ref={ref}
-      className={`rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden transition-all ${inView ? 'border-degen-500/20 ring-1 ring-degen-500/10' : ''}`}
+      className={`rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] overflow-hidden transition-all ${inView ? 'border-degen-500/20 ring-1 ring-degen-500/10' : ''}`}
     >
       {youtubeId ? (
         <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="block">
@@ -46,7 +46,7 @@ function VideoCard({ post }: { post: UnifiedPost }) {
           href={videoUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="block aspect-video bg-gray-900 flex items-center justify-center"
+          className="block aspect-video bg-[var(--color-muted)] flex items-center justify-center"
         >
           <span className="text-4xl">▶</span>
         </a>
@@ -61,7 +61,7 @@ function VideoCard({ post }: { post: UnifiedPost }) {
           </span>
           <span className="text-[10px] text-gray-600">{formatTimeAgo(post.createdAt)} ago</span>
         </div>
-        <p className="text-sm text-white line-clamp-2 font-medium">{post.text}</p>
+        <p className="text-sm text-[var(--color-fg)] line-clamp-2 font-medium">{post.text}</p>
         <p className="mt-0.5 text-xs text-gray-500">{post.author.displayName}</p>
         <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-600">
           <span>{post.metrics.likes} likes</span>
@@ -100,14 +100,14 @@ export default function VideosPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">Video Feed</p>
-            <h1 className="text-2xl font-bold text-white">Video</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-fg)]">Video</h1>
             <p className="mt-1 text-sm text-gray-500">
               93 YouTube channels, PeerTube, and video content from all protocols
             </p>
           </div>
           <Link
             href="/home/all"
-            className="text-sm text-gray-500 hover:text-white transition-colors"
+            className="text-sm text-gray-500 hover:text-[var(--color-fg)] transition-colors"
           >
             &larr; Feed
           </Link>
@@ -118,12 +118,12 @@ export default function VideosPage() {
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden animate-pulse"
+                className="rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] overflow-hidden animate-pulse"
               >
-                <div className="aspect-video bg-gray-800" />
+                <div className="aspect-video bg-[var(--color-muted)]" />
                 <div className="p-4 space-y-2">
-                  <div className="h-4 w-3/4 rounded bg-gray-800" />
-                  <div className="h-3 w-1/2 rounded bg-gray-800" />
+                  <div className="h-4 w-3/4 rounded bg-[var(--color-muted)]" />
+                  <div className="h-3 w-1/2 rounded bg-[var(--color-muted)]" />
                 </div>
               </div>
             ))}

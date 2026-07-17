@@ -2,12 +2,12 @@
 
 export function CodeBlock({ children }: { children: string }) {
   return (
-    <div className="group relative my-3 overflow-hidden rounded-lg border border-white/5 bg-gray-950">
-      <div className="flex items-center justify-between border-b border-white/5 px-4 py-2">
+    <div className="group relative my-3 overflow-hidden rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)]">
+      <div className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-4 py-2">
         <span className="font-mono text-[10px] tracking-wider text-gray-500 uppercase">bash</span>
         <button
           onClick={() => navigator.clipboard.writeText(children)}
-          className="rounded px-2 py-0.5 text-[10px] text-gray-500 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
+          className="rounded px-2 py-0.5 text-[10px] text-gray-500 opacity-0 transition-opacity hover:text-[var(--color-fg)] group-hover:opacity-100"
         >
           Copy
         </button>

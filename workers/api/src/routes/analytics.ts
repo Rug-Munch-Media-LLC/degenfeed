@@ -172,27 +172,42 @@ async function fetchMastodonFollowers(
 
 async function fetchFarcasterProfile(
   fid: number,
+  neynarApiKey?: string,
 ): Promise<{ followers: number; displayName: string; username: string } | null> {
-  // Use the public API for follower counts (Neynar compatible)
-  try {
-    const res = await fetch(`https://api.farcaster.xyz/v2/user?fid=${fid}`, {
-      headers: { accept: 'application/json', 'user-agent': 'DegenFeed/0.1' },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (res.ok) {
-      const data = (await res.json()) as {
-        user?: { username?: string; displayName?: string; followerCount?: number };
-      };
-      if (data?.user) {
-        return {
-          followers: data.user.followerCount ?? 0,
-          displayName: data.user.displayName ?? data.user.username ?? '',
-          username: data.user.username ?? '',
+  // Primary: Neynar API v2 (requires API key)
+  if (neynarApiKey) {
+    try {
+      const res = await fetch(
+        `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
+        {
+          headers: {
+            accept: 'application/json',
+            'user-agent': 'DegenFeed/0.1',
+            'x-api-key': neynarApiKey,
+          },
+          signal: AbortSignal.timeout(5000),
+        },
+      );
+      if (res.ok) {
+        const data = (await res.json()) as {
+          users?: Array<{
+            username?: string;
+            display_name?: string;
+            follower_count?: number;
+          }>;
         };
+        const user = data?.users?.[0];
+        if (user) {
+          return {
+            followers: user.follower_count ?? 0,
+            displayName: user.display_name ?? user.username ?? '',
+            username: user.username ?? '',
+          };
+        }
       }
+    } catch {
+      // fallback to Hub
     }
-  } catch {
-    // fallback
   }
 
   // Fallback: Hub for user data, but Hub doesn't expose follower counts directly
@@ -270,8 +285,21 @@ async function fetchBlueskyProfile(
 }
 
 async function fetchNostrProfile(pubkey: string): Promise<{ followers: number } | null> {
+  // nostr.band expects hex pubkey — convert npub if needed
+  let hexKey = pubkey;
+  if (pubkey.startsWith('npub1')) {
+    try {
+      // Dynamic import for npub decode
+      const mod = await import('@degenfeed/nostr-sdk');
+      const decoded = mod.npubDecode(pubkey);
+      if (decoded && typeof decoded === 'string') hexKey = decoded;
+    } catch {
+      // If decode fails, try the npub directly (nostr.band may handle it)
+    }
+  }
+
   try {
-    const res = await fetch(`https://api.nostr.band/v0/profile/${pubkey}`, {
+    const res = await fetch(`https://api.nostr.band/v0/profile/${hexKey}`, {
       headers: { accept: 'application/json', 'user-agent': 'DegenFeed/0.1' },
       signal: AbortSignal.timeout(5000),
     });
@@ -279,7 +307,7 @@ async function fetchNostrProfile(pubkey: string): Promise<{ followers: number } 
       const data = (await res.json()) as {
         profiles?: Record<string, { content?: string; follower_count?: number }>;
       };
-      const profile = data?.profiles?.[pubkey];
+      const profile = data?.profiles?.[hexKey];
       if (profile?.follower_count !== undefined) {
         return { followers: profile.follower_count };
       }
@@ -292,7 +320,11 @@ async function fetchNostrProfile(pubkey: string): Promise<{ followers: number } 
 
 // ─── MeiliSearch queries ──────────────────────────────────────────
 
-async function searchMeiliPosts(authorQueries: string[], protocols: string[]): Promise<MeiliHit[]> {
+async function searchMeiliPosts(
+  authorQueries: string[],
+  protocols: string[],
+  apiKey?: string,
+): Promise<MeiliHit[]> {
   if (authorQueries.length === 0) return [];
 
   try {
@@ -301,6 +333,9 @@ async function searchMeiliPosts(authorQueries: string[], protocols: string[]): P
     if (queries.length === 0) return [];
 
     const primaryQuery = queries[0];
+    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    if (apiKey) headers['authorization'] = `Bearer ${apiKey}`;
+
     const body: Record<string, unknown> = {
       q: primaryQuery,
       limit: 100,
@@ -310,7 +345,7 @@ async function searchMeiliPosts(authorQueries: string[], protocols: string[]): P
 
     const res = await fetch(`${MEILISEARCH_URL}/indexes/posts/search`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers,
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(4000),
     });
@@ -394,8 +429,37 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
     });
   }
 
-  // Check cache for non-forced-refresh requests
   const cacheKey = `analytics:${wallet}`;
+  const refreshLockKey = `analytics:refresh:${wallet}`;
+
+  // ── 0. Refresh cooldown check ─────────────────────────────────
+  // If a refresh is already in progress (started <5min ago), return cached data
+  if (forceRefresh) {
+    try {
+      const inProgress = await env.CACHE?.get(refreshLockKey);
+      if (inProgress) {
+        // Refresh already in progress — return cached data if available
+        const cached = await env.CACHE?.get(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached) as AnalyticsResponse;
+          return noCacheJsonResponse(parsed);
+        }
+      }
+    } catch {
+      /* ignore lock errors */
+    }
+  }
+
+  // Set refresh lock (5-minute cooldown)
+  if (forceRefresh) {
+    try {
+      await env.CACHE?.put(refreshLockKey, '1', { expirationTtl: 300 });
+    } catch {
+      /* lock storage failure */
+    }
+  }
+
+  // Check cache for non-forced-refresh requests
   if (!forceRefresh) {
     try {
       const cached = await env.CACHE?.get(cacheKey);
@@ -439,7 +503,7 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
       case 'farcaster':
         if (p.fid) {
           protocolFetchPromises.push(
-            fetchFarcasterProfile(p.fid).then((r) => {
+            fetchFarcasterProfile(p.fid, env.NEYNAR_API_KEY).then((r) => {
               if (r) followersByProtocol.farcaster = r.followers;
             }),
           );
@@ -482,7 +546,9 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
   // ── 3. Query MeiliSearch for post engagement ─────────────────
   const searchQueries = extractSearchQueries(connectedProtocols);
   const meiliPosts =
-    connectedProtocols.length > 0 ? await searchMeiliPosts(searchQueries, connectedNames) : [];
+    connectedProtocols.length > 0
+      ? await searchMeiliPosts(searchQueries, connectedNames, env.MEILI_SEARCH_KEY)
+      : [];
 
   // Aggregate by day (last 30 days) and weekday
   const now = Date.now();
@@ -627,6 +693,9 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
   } catch {
     /* cache unavailable */
   }
+
+  // ── 9. Write daily growth snapshot ─────────────────────────
+  void writeDailyGrowthSnapshot(env, wallet, totalFollowers, tips.totalUsd, meiliPosts.length);
 
   return noCacheJsonResponse(response);
 }
@@ -839,4 +908,44 @@ async function loadGrowthHistory(
   const recentGrowth = history.slice(-30);
 
   return { growth: recentGrowth, labels: recentLabels };
+}
+
+// ─── Daily growth snapshot ────────────────────────────────────────
+
+/**
+ * Writes today's follower/tip/post snapshot to KV for historical tracking.
+ * Stored under `analytics:growth:{wallet}:{YYYY-MM-DD}` with 90-day TTL.
+ * Also maintains a list of snapshot dates under `analytics:growth:{wallet}:days`.
+ */
+async function writeDailyGrowthSnapshot(
+  env: Env,
+  wallet: string,
+  followers: number,
+  tipsUsd: number,
+  posts: number,
+): Promise<void> {
+  if (!env.CACHE) return;
+  const today = new Date().toISOString().slice(0, 10);
+
+  try {
+    // Write daily snapshot with 90-day retention
+    await env.CACHE.put(
+      `analytics:growth:${wallet}:${today}`,
+      JSON.stringify({ followers, tipsUsd, posts, date: today }),
+      { expirationTtl: 86400 * 90 },
+    );
+
+    // Append to the date index (list of snapshot dates)
+    const daysKey = `analytics:growth:${wallet}:days`;
+    const raw = await env.CACHE.get(daysKey);
+    const days: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+    if (!days.includes(today)) {
+      days.push(today);
+      // Keep only last 90 days
+      const trimmed = days.slice(-90);
+      await env.CACHE.put(daysKey, JSON.stringify(trimmed), { expirationTtl: 86400 * 90 });
+    }
+  } catch {
+    /* snapshot write failure is non-fatal */
+  }
 }

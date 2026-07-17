@@ -150,7 +150,7 @@ export default function NewsletterPage() {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500 to-emerald-600 text-2xl shadow-[0_0_24px_rgba(34,197,94,0.3)]">
           ◆
         </div>
-        <h1 className="mb-2 text-4xl font-bold tracking-tight text-white">DegenFeed Daily</h1>
+        <h1 className="mb-2 text-4xl font-bold tracking-tight text-[var(--color-fg)]">DegenFeed Daily</h1>
         <p className="mx-auto max-w-xl text-sm leading-relaxed text-gray-500">
           The best of web3, AI, and tech — aggregated from Nostr, Farcaster, Lens, Bluesky,
           Mastodon, and 200+ RSS sources. Ranked by quality, recency, and diversity. Delivered to
@@ -162,7 +162,7 @@ export default function NewsletterPage() {
         {/* Subscribe form */}
         <div className="lg:col-span-3">
           <div className="card border-degen-500/10 bg-gradient-to-br from-gray-900/90 to-gray-950/90 p-6">
-            <h2 className="mb-1 text-lg font-bold text-white">Subscribe</h2>
+            <h2 className="mb-1 text-lg font-bold text-[var(--color-fg)]">Subscribe</h2>
             <p className="mb-5 text-sm text-gray-500">
               Pick your topics and protocols, then enter your email.
             </p>
@@ -261,12 +261,12 @@ export default function NewsletterPage() {
           {/* Digest preview */}
           <div className="mt-6">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-white">Preview Digest</h2>
+              <h2 className="text-sm font-semibold text-[var(--color-fg)]">Preview Digest</h2>
               <button
                 type="button"
                 onClick={loadDigest}
                 disabled={digestLoading}
-                className="rounded-lg border border-gray-800 px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/30 hover:text-degen-400"
+                className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/30 hover:text-degen-400"
               >
                 {digestLoading ? 'Loading...' : 'Load Preview'}
               </button>
@@ -285,9 +285,9 @@ export default function NewsletterPage() {
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="card animate-pulse p-4">
-                    <div className="mb-2 h-3 w-32 rounded bg-gray-800" />
-                    <div className="mb-2 h-4 w-full rounded bg-gray-800" />
-                    <div className="h-3 w-3/4 rounded bg-gray-800" />
+                    <div className="mb-2 h-3 w-32 rounded bg-[var(--color-muted)]" />
+                    <div className="mb-2 h-4 w-full rounded bg-[var(--color-muted)]" />
+                    <div className="h-3 w-3/4 rounded bg-[var(--color-muted)]" />
                   </div>
                 ))}
               </div>
@@ -300,7 +300,7 @@ export default function NewsletterPage() {
                     {digestMeta.trending.slice(0, 6).map((t) => (
                       <span
                         key={t.topic}
-                        className="rounded-full bg-gray-800/80 px-2 py-0.5 text-[10px] text-gray-400"
+                        className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-400"
                       >
                         #{t.topic} <span className="text-gray-600">{t.count}</span>
                       </span>
@@ -435,17 +435,17 @@ export default function NewsletterPage() {
               </h3>
               <ul className="space-y-1.5 text-xs text-gray-400">
                 <li>
-                  <code className="rounded bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-500">
+                  <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-gray-500">
                     GET /api/newsletter/digest
                   </code>
                 </li>
                 <li>
-                  <code className="rounded bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-500">
+                  <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-gray-500">
                     GET /api/newsletter/digest?format=html
                   </code>
                 </li>
                 <li>
-                  <code className="rounded bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-500">
+                  <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-gray-500">
                     GET /api/newsletter/digest?format=text
                   </code>
                 </li>

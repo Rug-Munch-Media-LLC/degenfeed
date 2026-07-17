@@ -46,7 +46,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
         <div className="mb-6 text-5xl text-gray-500">?</div>
-        <h1 className="mb-4 text-2xl font-bold text-white">No Authorization Code</h1>
+        <h1 className="mb-4 text-2xl font-bold text-[var(--color-fg)]">No Authorization Code</h1>
         <p className="mb-8 text-gray-400">
           No authorization code was received. Please try signing in again.
         </p>
@@ -97,7 +97,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
         <body>
           <div className="mx-auto max-w-md px-4 py-20 text-center">
             <div className="mb-6 text-5xl text-degen-400">✓</div>
-            <h1 className="mb-4 text-2xl font-bold text-white">Signed in!</h1>
+            <h1 className="mb-4 text-2xl font-bold text-[var(--color-fg)]">Signed in!</h1>
             <p className="mb-8 text-gray-400">Redirecting to your feed...</p>
           </div>
           <script

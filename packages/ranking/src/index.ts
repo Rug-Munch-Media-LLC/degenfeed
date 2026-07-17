@@ -4,19 +4,22 @@
  * A transparent, configurable ranking engine for the unified web3 feed.
  * Each component is exposed for inspection in the UI.
  *
- * Score = recency × engagement × relevance × quality × diversity × source
+ * Score = (recency + engagement + relevance + quality + reputation +
+ *          velocity + diversity + source) * freshness * (1 - spam)
  *
  * - recency: 12h half-life (younger = better)
  * - engagement: log(1 + likes + 2×reposts + 3×replies + 4×quotes) with
  *   velocity boost (recently-trending posts get a boost)
  * - relevance: keyword + niche overlap with viewer's preferences
- * - quality: source tier (must-read) + author follow boost
+ * - quality: original content (+3), media (+1), length penalty (-2)
+ * - reputation: verified (+1), established (+0.5), source quality
+ * - velocity: KV-based delta tracking + engagement-rate blend
  * - diversity: penalize repeat authors (anti-feed-spam)
  * - source: protocol tier weight (Nostr > Threads, etc.)
+ * - spam: multiplicative penalty (1 - spamScore) — >0.7 demoted, >0.9 dropped
  */
 import {
   BOOST_TERMS,
-  contentQualityScore,
   keywordRelevance,
   PLATFORM_TIER_WEIGHTS,
 } from '@degenfeed/feed-core';
@@ -36,6 +39,10 @@ export type {
   ScorerContext,
 } from './scorer';
 export { DEFAULT_DIVERSITY } from './scorer';
+import {
+  computeAuthorReputation as computeReputation,
+  computeQualitySignals,
+} from './scorer';
 
 export const WEIGHTS = {
   w1: 1.0,
@@ -55,6 +62,7 @@ export const WEIGHTS_V2 = {
   engagement: 3.5,
   relevance: 1.8,
   quality: 1.4,
+  reputation: 1.0,
   diversity: 1.0,
   source: 0.8,
   velocity: 1.2,
@@ -112,6 +120,7 @@ export interface ScoreBreakdown {
   engagement: number;
   relevance: number;
   quality: number;
+  reputation: number;
   diversity: number;
   source: number;
   velocity: number;
@@ -216,46 +225,66 @@ export function scoreBreakdownV2(post: UnifiedPost, ctx: RankingContext): ScoreB
     platformRelevance(post, prefs);
   if (relevance > 1.5) reasons.push('on-topic');
 
-  const quality = qualityBoost(post, ctx.sourceQuality, ctx.followed);
-  if (quality > 1) reasons.push('followed-or-high-quality');
+  // ── Quality signals from scorer.ts ──────────────────────────────
+  const sigCtx = { followed: ctx.followed, now: ctx.now };
+  const sigs = computeQualitySignals(post, sigCtx);
+  const quality = sigs.originalContentBonus + sigs.contentLengthPenalty + sigs.mediaBonus;
+  if (sigs.originalContentBonus > 0) reasons.push('original-content');
+  if (sigs.mediaBonus > 0) reasons.push('media');
 
-  // Media boost: posts with images/video get a small multiplier
-  const hasMedia = post.embeds.some((e) => e.kind === 'image' || e.kind === 'video');
-  const mediaBoost = hasMedia ? 1.2 : 1.0;
-  if (hasMedia) reasons.push('media');
+  // ── Author reputation ───────────────────────────────────────────
+  const authorRep = computeReputation(post, sigCtx);
+  const reputation = authorRep.score;
+  if (reputation >= 1) reasons.push('verified-author');
+  else if (authorRep.isEstablished) reasons.push('established-author');
 
-  const contentQuality = contentQualityScore(post.text);
-  if (contentQuality < 1.0) reasons.push('low-effort');
+  // ── Source boost from follower counts (folded into reputation) ──
+  const sourceQualityBoost = ctx.sourceQuality.get(post.author.id) ?? 0;
+  const effectiveReputation = reputation + sourceQualityBoost * 0.5;
+  if (ctx.followed.has(post.author.id)) reasons.push('followed');
 
   const diversityHit = ctx.recentAuthors.get(post.author.id) ?? 0;
-  // Allow up to 3 posts from the same author before applying penalty.
-  // Beyond 3, penalize -0.2 per extra post, capped at -0.8.
   const extra = Math.max(0, diversityHit - 3);
   const diversity = prefs?.diversityBoost === false ? 0 : Math.max(-0.8, -extra * 0.2);
   if (diversity < 0) reasons.push('author-diversity');
 
   const source = sourceWeight(post.protocol);
   const prev = ctx.previousEngagement?.get(post.id);
-  const velocity = engagementVelocity(post, prev, ctx.now);
+  const baseVelocity = engagementVelocity(post, prev, ctx.now);
+  // Blend KV-based velocity with engagement-rate velocity from signals
+  const velocity = Math.max(baseVelocity, sigs.engagementVelocity * 0.4 + 0.6);
   if (velocity > 1.3) reasons.push('trending-now');
+
+  // ── Spam penalty ────────────────────────────────────────────────
+  const spam = (post as unknown as Record<string, unknown>).spamScore as number ?? 0;
+  if (spam >= 0.7) reasons.push('high-spam');
+  else if (spam >= 0.3) reasons.push('borderline-spam');
 
   const rw = prefs?.recencyWeight ?? 1;
   const ew = prefs?.engagementWeight ?? 1;
+  const v2 = WEIGHTS_V2 as Record<string, number>;
+  const baseScore =
+    recency * rw * (v2.recency ?? 2.4) +
+    engagement * ew * (v2.engagement ?? 3.5) +
+    relevance * (v2.relevance ?? 1.8) +
+    quality * (v2.quality ?? 1.4) +
+    effectiveReputation * (v2.reputation ?? 1.0) +
+    velocity * (v2.velocity ?? 1.2) +
+    diversity * (v2.diversity ?? 1.0) +
+    source * (v2.source ?? 0.8);
+
   const total =
-    (recency * rw * WEIGHTS_V2.recency +
-      engagement * ew * WEIGHTS_V2.engagement +
-      relevance * WEIGHTS_V2.relevance +
-      quality * WEIGHTS_V2.quality +
-      diversity * WEIGHTS_V2.diversity +
-      source * WEIGHTS_V2.source +
-      velocity * WEIGHTS_V2.velocity) *
+    baseScore *
     freshnessBoost(post.createdAt, ctx.now) *
-    mediaBoost *
-    contentQuality;
+    Math.max(0.05, 1 - spam);
 
   if (isMuted) reasons.unshift('muted-penalty');
 
-  return { recency, engagement, relevance, quality, diversity, source, velocity, total, reasons };
+  return {
+    recency, engagement, relevance, quality,
+    reputation: effectiveReputation,
+    diversity, source, velocity, total, reasons,
+  };
 }
 
 export function scoreV2(post: UnifiedPost, ctx: RankingContext): number {

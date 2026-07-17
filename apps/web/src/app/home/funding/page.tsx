@@ -48,11 +48,11 @@ export default function FundingPage() {
       <div className="mb-6">
         <a
           href="/home"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-white"
+          className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-[var(--color-fg)]"
         >
           &larr; All sections
         </a>
-        <h1 className="text-2xl font-bold text-white">Funding Tracker</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-fg)]">Funding Tracker</h1>
         <p className="text-sm text-gray-500">Crypto raises, rounds, and investments</p>
         {meta.totalRaised ? (
           <p className="mt-1 text-xs text-degen-500">
@@ -69,7 +69,7 @@ export default function FundingPage() {
             className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
               chainFilter === c
                 ? 'border-degen-500 bg-degen-500/20 text-degen-400'
-                : 'border-white/10 bg-gray-950/50 text-gray-400 hover:border-degen-500/30 hover:text-white'
+                : 'border-white/10 bg-[var(--color-card)] text-gray-400 hover:border-degen-500/30 hover:text-[var(--color-fg)]'
             }`}
             onClick={() => setChainFilter(c)}
           >

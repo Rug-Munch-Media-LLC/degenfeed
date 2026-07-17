@@ -18,7 +18,7 @@ export default function FeedError({
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-2xl text-red-400">
           !
         </div>
-        <h2 className="mb-2 text-xl font-bold text-white">Feed failed to load</h2>
+        <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Feed failed to load</h2>
         <p className="mb-4 text-sm text-gray-400">Something went wrong loading the timeline.</p>
         <button type="button" onClick={reset} className="btn-primary text-sm">
           Try again

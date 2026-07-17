@@ -198,7 +198,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
       {/* ── Custom feed context ── */}
       {customFeed && (
         <div
-          className="border-t border-white/5 px-4 py-2"
+          className="border-t border-[var(--color-glass-border)] px-4 py-2"
           style={{ backgroundColor: `${BSKY_BLUE}08` }}
         >
           <p className="text-[11px] text-gray-500">
@@ -219,7 +219,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
           href={viewUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center border-t border-white/5 px-4 py-2 text-xs text-blue-400 transition-colors hover:bg-white/[0.03] hover:text-blue-300"
+          className="flex items-center justify-center border-t border-[var(--color-glass-border)] px-4 py-2 text-xs text-blue-400 transition-colors hover:bg-white/[0.03] hover:text-blue-300"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
@@ -249,7 +249,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
           href={`https://bsky.app/profile/${did}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center border-t border-white/5 px-4 py-2 text-xs text-blue-400 transition-colors hover:bg-white/[0.03] hover:text-blue-300"
+          className="flex items-center justify-center border-t border-[var(--color-glass-border)] px-4 py-2 text-xs text-blue-400 transition-colors hover:bg-white/[0.03] hover:text-blue-300"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >

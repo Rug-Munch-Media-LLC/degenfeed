@@ -103,7 +103,7 @@ const CommentNode = memo(function CommentNode({ comment, depth }: CommentNodePro
             <button
               type="button"
               onClick={() => setCollapsed((v) => !v)}
-              className="absolute top-3 z-10 h-3 w-3 rounded-full border-2 bg-gray-950 transition-transform hover:scale-125"
+              className="absolute top-3 z-10 h-3 w-3 rounded-full border-2 bg-[var(--color-card)] transition-transform hover:scale-125"
               style={{ borderColor: color, backgroundColor: collapsed ? color : '#030712' }}
               aria-label={collapsed ? 'Expand thread' : 'Collapse thread'}
             />
@@ -238,13 +238,13 @@ export const LemmyThreadView = memo(function LemmyThreadView({
   const domainDisplay = instanceDomain.replace(/^https?:\/\//, '');
 
   return (
-    <div className="mt-3 overflow-hidden rounded-xl border border-gray-800 bg-gray-900/50">
+    <div className="mt-3 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]">
       {/* ── Community header ── */}
       <a
         href={`https://${domainDisplay}/${communityName.startsWith('c/') ? communityName : `c/${communityName}`}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-2 border-b border-gray-800 px-4 py-2.5 transition-colors hover:bg-gray-800/50"
+        className="flex items-center gap-2 border-b border-[var(--color-border)] px-4 py-2.5 transition-colors hover:bg-[var(--color-muted)]"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
@@ -320,7 +320,7 @@ export const LemmyThreadView = memo(function LemmyThreadView({
 
       {/* ── Comments section ── */}
       {comments.length > 0 && (
-        <div className="border-t border-gray-800 px-2 py-2">
+        <div className="border-t border-[var(--color-border)] px-2 py-2">
           <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-600">
             Comments ({comments.length})
           </div>
@@ -335,7 +335,7 @@ export const LemmyThreadView = memo(function LemmyThreadView({
         href={`https://${domainDisplay}/${communityName.startsWith('c/') ? communityName : `c/${communityName}`}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center border-t border-gray-800 px-4 py-2 text-xs text-degen-500 transition-colors hover:bg-gray-800/50 hover:text-degen-400"
+        className="flex items-center justify-center border-t border-[var(--color-border)] px-4 py-2 text-xs text-degen-500 transition-colors hover:bg-[var(--color-muted)] hover:text-degen-400"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >

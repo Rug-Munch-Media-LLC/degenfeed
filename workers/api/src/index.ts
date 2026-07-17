@@ -50,6 +50,10 @@ export interface Env {
   RMI_API_KEY?: string;
   /** Optional Sentry DSN for error reporting */
   SENTRY_DSN?: string;
+  /** Neynar API key for Farcaster follower counts */
+  NEYNAR_API_KEY?: string;
+  /** API key for MeiliSearch (production requires Authorization: Bearer <key>) */
+  MEILI_SEARCH_KEY?: string;
   /** Optional Postmark server token for transactional email delivery */
   POSTMARK_SERVER_TOKEN?: string;
   ALLOW_DEV_OAUTH?: string;

@@ -53,8 +53,16 @@ const PROTOCOL_META: Record<string, { label: string; color: string; emoji: strin
 };
 
 export default function FeedPage() {
-  const { signedInProtocols, engage, openSignIn, publish, ready, signOut, nostrPublicId } =
-    useAuth();
+  const {
+    signedInProtocols,
+    engage,
+    openSignIn,
+    openComposeReply,
+    publish,
+    ready,
+    signOut,
+    nostrPublicId,
+  } = useAuth();
 
   const [activeTab, setActiveTab] = useState<Tab>('for-you');
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
@@ -289,6 +297,25 @@ export default function FeedPage() {
     return engage(action, postId, post.protocol, { content });
   };
 
+  const handleCrossReplyOpen = useCallback(
+    (post: UnifiedPost) => {
+      if (!hasSignedIn) {
+        openSignIn();
+        return;
+      }
+      const nativeId = post.id.replace(
+        /^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/,
+        '',
+      );
+      openComposeReply({
+        parentPostUri: post.dfUri ?? `df://${post.protocol}:${nativeId}`,
+        parentProtocol: post.protocol,
+        parentPreview: post.text.slice(0, 120),
+      });
+    },
+    [hasSignedIn, openSignIn, openComposeReply],
+  );
+
   const handleTip = useCallback(
     (post: UnifiedPost) => {
       if (!hasSignedIn) {
@@ -388,7 +415,7 @@ export default function FeedPage() {
         {/* Left rail — desktop only quick nav */}
         <aside className="hidden xl:col-span-3 xl:block">
           <div className="sticky top-20 space-y-3">
-            <div className="rounded-2xl border border-white/10 bg-gray-950/60 p-4 backdrop-blur-xl">
+            <div className="rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
               <div className="mb-3 flex items-center gap-2">
                 <Image
                   src="/icon.svg"
@@ -398,7 +425,7 @@ export default function FeedPage() {
                   className="h-9 w-9 rounded-xl shadow-[0_0_18px_rgba(0,255,65,0.25)]"
                 />
                 <div>
-                  <p className="text-sm font-semibold text-white">DegenFeed</p>
+                  <p className="text-sm font-semibold text-[var(--color-fg)]">DegenFeed</p>
                   <p className="text-[10px] uppercase tracking-widest text-gray-500">
                     Open social graph
                   </p>
@@ -423,7 +450,7 @@ export default function FeedPage() {
 
             {!hasSignedIn && (
               <div className="rounded-2xl border border-degen-500/30 bg-degen-500/5 p-4 backdrop-blur-xl">
-                <p className="mb-1 text-sm font-semibold text-white">Sign in to post & engage</p>
+                <p className="mb-1 text-sm font-semibold text-[var(--color-fg)]">Sign in to post & engage</p>
                 <p className="mb-3 text-xs text-gray-400">
                   Browse without an account. Sign in with one click to like, reply, and cross-post.
                 </p>
@@ -440,7 +467,7 @@ export default function FeedPage() {
 
         {/* Main timeline */}
         <main className="lg:col-span-8 xl:col-span-6">
-          <div className="sticky top-16 z-30 border-b border-white/10 bg-black/85 backdrop-blur-xl">
+          <div className="sticky top-16 z-30 border-b border-[var(--color-glass-border)] glass">
             <div className="flex items-center justify-between gap-2 px-4 py-3">
               <div className="flex items-center gap-3">
                 <Image
@@ -451,7 +478,7 @@ export default function FeedPage() {
                   className="h-9 w-9 rounded-xl logo-glow shadow-[0_0_14px_rgba(0,255,65,0.3)]"
                 />
                 <div>
-                  <h1 className="text-lg font-bold text-white leading-none">DegenFeed</h1>
+                  <h1 className="text-lg font-bold text-[var(--color-fg)] leading-none">DegenFeed</h1>
                   <p className="text-[10px] text-gray-500">
                     {activeTab === 'for-you' ? 'Your unified timeline' : 'Posts you follow'}
                   </p>
@@ -468,7 +495,7 @@ export default function FeedPage() {
                   <button
                     type="button"
                     onClick={signOut}
-                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-[var(--color-fg)] lg:hidden"
                   >
                     Sign out
                   </button>
@@ -482,7 +509,7 @@ export default function FeedPage() {
                 type="button"
                 onClick={() => setActiveTab('for-you')}
                 className={`relative flex-1 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'for-you' ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+                  activeTab === 'for-you' ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
                 For You
@@ -494,7 +521,7 @@ export default function FeedPage() {
                 type="button"
                 onClick={() => setActiveTab('following')}
                 className={`relative flex-1 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'following' ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+                  activeTab === 'following' ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
                 Following
@@ -505,7 +532,7 @@ export default function FeedPage() {
             </div>
 
             {/* Protocol pills + filter */}
-            <div className="flex flex-wrap items-center gap-1.5 border-t border-white/5 px-4 py-2">
+            <div className="flex flex-wrap items-center gap-1.5 border-t border-[var(--color-glass-border)] px-4 py-2">
               <button
                 type="button"
                 onClick={() => setProtocolFilter(null)}
@@ -523,7 +550,7 @@ export default function FeedPage() {
                   type="button"
                   onClick={() => handleProtocolFilter(p.id)}
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                    protocolFilter === p.id ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+                    protocolFilter === p.id ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
                   }`}
                   style={
                     protocolFilter === p.id
@@ -542,7 +569,7 @@ export default function FeedPage() {
             </div>
 
             {/* Quality controls */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/5 px-4 py-2 text-[11px] text-gray-400">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--color-glass-border)] px-4 py-2 text-[11px] text-gray-400">
               <button
                 type="button"
                 onClick={toggleHideLowQuality}
@@ -595,7 +622,7 @@ export default function FeedPage() {
                     setShowOriginalContent(next);
                     persistPrefs({ showOriginalContent: next });
                   }}
-                  className="h-3 w-3 rounded border-white/20 bg-gray-900 text-degen-500 focus:ring-degen-500"
+                  className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
                 />
                 <span title="Hide reposts and link-only posts">Original</span>
               </label>
@@ -626,7 +653,7 @@ export default function FeedPage() {
                   type="checkbox"
                   checked={allowNonCrypto}
                   onChange={(e) => setAllowNonCryptoAndPersist(e.target.checked)}
-                  className="h-3 w-3 rounded border-white/20 bg-gray-900 text-degen-500 focus:ring-degen-500"
+                  className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
                 />
                 <span>Non-crypto</span>
               </label>
@@ -778,6 +805,7 @@ export default function FeedPage() {
                     onClick={handlePostClick}
                     onEngage={handleEngage}
                     onTip={handleTip}
+                    onCrossReplyOpen={handleCrossReplyOpen}
                   />
                 </div>
               );
@@ -796,10 +824,11 @@ export default function FeedPage() {
             hasMore={hasMore}
             onLoadMore={loadMore}
             onReport={handleReport}
+            onCrossReplyOpen={handleCrossReplyOpen}
           />
 
           {activeTab === 'following' && state === 'empty' && (
-            <div className="border-b border-white/5 px-4 py-10 text-center">
+            <div className="border-b border-[var(--color-glass-border)] px-4 py-10 text-center">
               <p className="text-gray-400">You are not following anyone yet.</p>
               <p className="mt-1 text-xs text-gray-600">
                 Tap the Follow button on any post to build your timeline.
@@ -810,7 +839,7 @@ export default function FeedPage() {
           {/* Bottom CTA — repeat sign-in pitch */}
           {!hasSignedIn && state === 'loaded' && (
             <div className="m-4 rounded-2xl border border-degen-500/30 bg-gradient-to-br from-degen-500/10 to-transparent p-5 text-center">
-              <p className="mb-1 text-sm font-semibold text-white">Liking what you see?</p>
+              <p className="mb-1 text-sm font-semibold text-[var(--color-fg)]">Liking what you see?</p>
               <p className="mb-4 text-xs text-gray-400">
                 Sign in once to post, like, and reply across all 8 networks.
               </p>

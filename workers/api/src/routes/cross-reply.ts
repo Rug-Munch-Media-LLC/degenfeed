@@ -53,6 +53,52 @@ function formatProtocolLabel(p: string): string {
   return labels[p] ?? p;
 }
 
+/**
+ * GET /api/cross-reply/status?parentPostUri=df://...
+ *
+ * Aggregates bridge reply records stored under `bridge:reply:{uri}:*`
+ * and returns per-protocol reply counts for the bridge status indicator.
+ */
+export async function handleCrossReplyStatus(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') {
+    return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
+  }
+  const url = new URL(request.url);
+  const parentPostUri = sanitizeString(url.searchParams.get('parentPostUri'), 1024);
+  if (!parentPostUri) {
+    return jsonResponse({ error: 'Missing parentPostUri query parameter' }, 400);
+  }
+  if (!env.CACHE) {
+    return noCacheJsonResponse({ parentPostUri, total: 0, byProtocol: {} });
+  }
+
+  const prefix = `bridge:reply:${parentPostUri}:`;
+  const byProtocol: Record<string, number> = {};
+  let total = 0;
+  try {
+    let cursor: string | undefined;
+    do {
+      const page = await env.CACHE.list({ prefix, cursor, limit: 1000 });
+      for (const key of page.keys) {
+        // Key formats:
+        //   legacy: bridge:reply:{uri}:{protocol}
+        //   current: bridge:reply:{uri}:{protocol}:{uniqueId}
+        const rest = key.name.slice(prefix.length);
+        const protocol = rest.split(':')[0];
+        if (!protocol || !ALLOWED_PROTOCOLS.has(protocol)) continue;
+        byProtocol[protocol] = (byProtocol[protocol] ?? 0) + 1;
+        total += 1;
+      }
+      cursor = page.list_complete ? undefined : page.cursor;
+    } while (cursor);
+  } catch (e) {
+    console.error('[cross-reply] KV list failed for bridge status:', e);
+    return jsonResponse({ error: 'Bridge status lookup failed' }, 500);
+  }
+
+  return noCacheJsonResponse({ parentPostUri, total, byProtocol });
+}
+
 export async function handleCrossReply(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
@@ -114,7 +160,7 @@ export async function handleCrossReply(request: Request, env: Env): Promise<Resp
   // 2. Get user's linked identity for the reply protocol
   let protocolIdentity: { id: string; auth?: Record<string, string> } | null = null;
   try {
-    const identityRaw = await env.CACHE?.get(`identity:${walletAddress}`, 'json') as
+    const identityRaw = (await env.CACHE?.get(`identity:${walletAddress}`, 'json')) as
       | Record<string, { id: string; auth?: Record<string, string> }>
       | null
       | undefined;
@@ -157,9 +203,14 @@ export async function handleCrossReply(request: Request, env: Env): Promise<Resp
     auth,
   );
 
-  // 5. Store the bridge link in KV for the reply-count aggregator
-  try {
-    const bridgeKey = `bridge:reply:${parentPostUri}:${replyProtocol}`;
+  // 5. Store the bridge link in KV for the reply-count aggregator.
+  //    Key includes a unique suffix so multiple replies from the same
+  //    protocol don't overwrite each other (legacy keys had no suffix).
+  if (result.ok) {
+    const uniqueId = result.nativeId
+      ? result.nativeId.replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 64) || crypto.randomUUID()
+      : crypto.randomUUID();
+    const bridgeKey = `bridge:reply:${parentPostUri}:${replyProtocol}:${uniqueId}`;
     const bridgeEntry = {
       parentPostUri,
       parentProtocol,
@@ -169,9 +220,13 @@ export async function handleCrossReply(request: Request, env: Env): Promise<Resp
       timestamp: Date.now(),
       walletAddress,
     };
-    await env.CACHE?.put(bridgeKey, JSON.stringify(bridgeEntry), { expirationTtl: 86400 * 30 });
-  } catch {
-    /* non-critical */
+    try {
+      await env.CACHE?.put(bridgeKey, JSON.stringify(bridgeEntry), { expirationTtl: 86400 * 30 });
+    } catch (e) {
+      // Non-critical for the reply itself, but do not fail silently —
+      // the bridge status indicator depends on these records.
+      console.error(`[cross-reply] Failed to store bridge record ${bridgeKey}:`, e);
+    }
   }
 
   // 6. Return success
@@ -211,8 +266,6 @@ async function publishCrossReply(
   auth: Record<string, string>,
 ): Promise<{ ok: boolean; nativeId?: string; error?: string }> {
   try {
-    const targetUrl = buildParentRefUrl(protocol, parentId, parentProtocol, text);
-
     switch (protocol) {
       case 'nostr': {
         const nostr = await import('@degenfeed/nostr-sdk');
@@ -228,14 +281,17 @@ async function publishCrossReply(
               content: string;
               sig: string;
             };
-            const pool = new nostr.RelayPool(
-              ['wss://relay.damus.io', 'wss://nos.lol'],
-              { eoseTimeout: 4000 },
-            );
+            if (!signedEvent.id || !signedEvent.sig || !signedEvent.pubkey) {
+              return { ok: false, error: 'Pre-signed Nostr event is missing id/sig/pubkey' };
+            }
+            const pool = new nostr.RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
+              eoseTimeout: 4000,
+            });
             await pool.publish(signedEvent);
             pool.disconnectAll();
             return { ok: true, nativeId: signedEvent.id };
-          } catch {
+          } catch (e) {
+            console.error('[cross-reply] Nostr pre-signed publish failed:', e);
             return { ok: false, error: 'Failed to publish pre-signed Nostr event' };
           }
         }
@@ -244,23 +300,26 @@ async function publishCrossReply(
         if (!nsec) {
           return {
             ok: false,
-            error: 'Nostr requires pre-signed event or nsec. Sign client-side with @degenfeed/nostr-sdk.',
+            error:
+              'Nostr requires pre-signed event or nsec. Sign client-side with @degenfeed/nostr-sdk.',
           };
         }
-        const pk = nostr.getPublicKey(nsec);
         const pool = new nostr.RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
           eoseTimeout: 4000,
         });
-        // Build a kind:1 note with e-tag referencing parent and cross-protocol root tag
-        const tags: string[][] = [['e', parentId, '', 'reply']];
-        // Add cross-protocol context tag
+        // Only e-tag the parent when it is a real Nostr event id (64-char hex);
+        // for cross-protocol parents, reference via bridge tags instead.
+        const tags: string[][] = [];
+        if (/^[0-9a-f]{64}$/i.test(parentId)) {
+          tags.push(['e', parentId, '', 'reply']);
+        }
+        // Add cross-protocol context tags
         tags.push(['t', `cross-protocol:${parentProtocol}`]);
         tags.push(['t', 'degenfeed-bridge']);
+        tags.push(['r', `df://${parentProtocol}:${parentId}`]);
 
+        // createTextNote returns a fully signed event (pubkey/id/sig included)
         const ev = nostr.createTextNote(text, nsec, tags);
-        ev.pubkey = pk;
-        ev.id = nostr.getEventHash(ev);
-        nostr.signEvent(ev, nsec);
         await pool.publish(ev);
         pool.disconnectAll();
         return { ok: true, nativeId: ev.id };
@@ -268,18 +327,20 @@ async function publishCrossReply(
 
       case 'mastodon': {
         const { GtSClient } = await import('@degenfeed/mastodon-sdk');
-        const instance = auth.mastodon_instance || env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+        const instance =
+          auth.mastodon_instance || env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
         const accessToken = auth.mastodon || auth.accessJwt || body.auth?.mastodon;
         if (!accessToken) {
           return { ok: false, error: 'Not signed into Mastodon' };
         }
         const client = new GtSClient(instance, accessToken);
-        // Mastodon: reply by setting in_reply_to_id on the status
-        const result = await client.publish(text, {
+        // Cross-protocol parents never exist on this Mastodon instance, so
+        // in_reply_to_id would be rejected. Post a standalone status that
+        // links back to the original via the df:// URI.
+        const statusText = `${text}\n\n🔗 df://${parentProtocol}:${parentId}`;
+        const result = await client.publish(statusText, {
           visibility: 'public',
-          inReplyToId: parentId,
         });
-        // Attach cross-protocol link as a source link in a follow-up edit note
         return {
           ok: true,
           nativeId: (result as { id?: string })?.id ?? '',
@@ -295,11 +356,21 @@ async function publishCrossReply(
             error: 'Farcaster requires pre-signed cast message. Sign client-side.',
           };
         }
-        // The client constructs a cast with parentCastId set to parentId
+        // Clients send the signed Message protobuf as a hex string;
+        // the Hub expects raw bytes.
+        let messageBody: BodyInit = signedMessage;
+        const hex = signedMessage.startsWith('0x') ? signedMessage.slice(2) : signedMessage;
+        if (/^[0-9a-fA-F]+$/.test(hex) && hex.length % 2 === 0) {
+          const bytes = new Uint8Array(hex.length / 2);
+          for (let i = 0; i < bytes.length; i++) {
+            bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+          }
+          messageBody = bytes;
+        }
         const submitRes = await fetch(`${hubUrl}/v1/submitMessage`, {
           method: 'PUT',
           headers: { 'content-type': 'application/octet-stream' },
-          body: signedMessage,
+          body: messageBody,
         });
         if (submitRes.ok) {
           const submitData = (await submitRes.json()) as Record<string, unknown>;
@@ -344,26 +415,24 @@ async function publishCrossReply(
       }
 
       case 'bluesky': {
-        const pdsUrl = env.BSKY_PUBLIC_URL || 'https://public.api.bsky.app';
+        // Writes go to the PDS (bsky.social), NOT the read-only public AppView.
+        const pdsUrl = env.BSKY_SOCIAL_URL || 'https://bsky.social';
         const accessJwt = auth.bluesky_jwt || auth.bluesky_accessJwt || auth.accessJwt;
         if (!accessJwt) {
           return { ok: false, error: 'Not signed into Bluesky' };
         }
         const repoDid = auth.bluesky_did || '';
-        // Bluesky reply: includes parent post reference in the record
+        if (!repoDid) {
+          return { ok: false, error: 'Bluesky DID missing — pass auth.bluesky_did' };
+        }
+        // Cross-protocol parents are never valid at:// refs, so the lexicon
+        // would reject a `reply` block. Post a standalone skeet that links
+        // back to the original via the df:// URI (the bridge footer carries
+        // the attribution).
         const record = {
-          text,
+          $type: 'app.bsky.feed.post',
+          text: `${text}\n\n🔗 df://${parentProtocol}:${parentId}`,
           createdAt: new Date().toISOString(),
-          reply: {
-            root: {
-              uri: targetUrl,
-              cid: parentId,
-            },
-            parent: {
-              uri: targetUrl,
-              cid: parentId,
-            },
-          },
         };
         const recordRes = await fetch(`${pdsUrl}/xrpc/com.atproto.repo.createRecord`, {
           method: 'POST',
@@ -390,23 +459,5 @@ async function publishCrossReply(
     }
   } catch (e) {
     return { ok: false, error: String(e) };
-  }
-}
-
-function buildParentRefUrl(
-  protocol: string,
-  parentId: string,
-  _parentProtocol: string,
-  _text: string,
-): string {
-  switch (protocol) {
-    case 'nostr':
-      return `nostr:${parentId}`;
-    case 'mastodon':
-      return `https://social.degenfeed.xyz/@${parentId}`;
-    case 'bluesky':
-      return parentId.startsWith('at://') ? parentId : `at://${parentId}`;
-    default:
-      return `df://${protocol}:${parentId}`;
   }
 }

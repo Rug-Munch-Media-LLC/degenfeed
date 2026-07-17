@@ -112,6 +112,39 @@ export async function publishNoteToNostr(opts: {
 }
 
 /**
+ * Sign a cross-protocol bridge reply note WITHOUT publishing it.
+ * Returns the signed event as JSON, suitable for POST /api/cross-reply's
+ * `signedMessage` field (the server publishes it to relays and records
+ * the bridge link in KV).
+ */
+export async function signBridgeReplyNote(opts: {
+  text: string;
+  publicId: string;
+  parentProtocol: string;
+  parentNativeId: string;
+}): Promise<{ ok: boolean; eventJson?: string; error?: string }> {
+  const record = await loadNostrIdentity(opts.publicId);
+  if (!record) return { ok: false, error: 'No Nostr identity linked' };
+  const nsec = await decryptNsec(record);
+  if (!nsec) return { ok: false, error: 'Could not unlock Nostr key' };
+
+  try {
+    const nostr = await import('@degenfeed/nostr-sdk');
+    const tags: string[][] = [];
+    if (/^[0-9a-f]{64}$/i.test(opts.parentNativeId)) {
+      tags.push(['e', opts.parentNativeId, '', 'reply']);
+    }
+    tags.push(['t', `cross-protocol:${opts.parentProtocol}`]);
+    tags.push(['t', 'degenfeed-bridge']);
+    tags.push(['r', `df://${opts.parentProtocol}:${opts.parentNativeId}`]);
+    const ev = nostr.createTextNote(opts.text, nsec, tags);
+    return { ok: true, eventJson: JSON.stringify(ev) };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
+/**
  * Client-side Nostr engage: like (kind 7 reaction), repost (kind 6),
  * or reply (kind 1 with e/p reply tags). Signs locally with the
  * decrypted nsec and publishes to relays. Returns success if any

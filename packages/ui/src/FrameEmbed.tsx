@@ -39,11 +39,21 @@ export function FrameEmbed({
   const [framePostUrl, setFramePostUrl] = useState(postUrl);
   const [loading, setLoading] = useState<number | null>(null);
 
+  const safeOpen = (targetUrl: string) => {
+    try {
+      const parsed = new URL(targetUrl);
+      if (!['http:', 'https:'].includes(parsed.protocol)) return;
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    } catch {
+      // Invalid URL — do nothing
+    }
+  };
+
   const handleButton = useCallback(
     async (btn: FrameButton, idx: number) => {
       // Non-POST actions: open link / mint in new tab
       if (btn.action === 'link' || btn.action === 'mint') {
-        window.open(btn.target || url, '_blank', 'noopener,noreferrer');
+        safeOpen(btn.target || url);
         return;
       }
 
@@ -81,7 +91,7 @@ export function FrameEmbed({
         if (btn.action === 'post_redirect') {
           const redirectTarget = btn.target || data.image;
           if (redirectTarget) {
-            window.open(redirectTarget, '_blank', 'noopener,noreferrer');
+            safeOpen(redirectTarget);
           }
         }
       } catch {
@@ -119,7 +129,7 @@ export function FrameEmbed({
 
       {/* Frame buttons */}
       {frameButtons.length > 0 && (
-        <div className="grid gap-1 border-t border-white/5 p-1.5 grid-cols-1">
+        <div className="grid gap-1 border-t border-[var(--color-glass-border)] p-1.5 grid-cols-1">
           {frameButtons.map((btn, idx) => (
             <button
               key={btn.index}

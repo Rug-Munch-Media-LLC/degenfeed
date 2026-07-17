@@ -98,7 +98,7 @@ export async function handleHomeFeed(
   const interleaveProtocols = params.get('interleaveProtocols') !== 'false' &&
     (userCtx.preferences?.interleaveProtocols ?? true);
 
-  const { ranked, topOfHour, nextCursor } = await scoreAndRank(env, relevant, {
+  const { ranked, topOfHour, nextCursor, debug } = await scoreAndRank(env, relevant, {
     prefs: mergedPrefs,
     followed: userCtx.followed,
     sort,
@@ -156,7 +156,12 @@ export async function handleHomeFeed(
     },
   };
   if (!cursor) await setCachedFeed(env, cacheKey, responseBody);
-  return cachedJsonResponse(responseBody);
+  const resp = cachedJsonResponse(responseBody);
+  resp.headers.set(
+    'X-DegenFeed-Debug',
+    `spam=${debug.avgSpam.toFixed(2)},quality=${debug.avgQuality.toFixed(0)},reputation=${debug.avgReputation.toFixed(0)},velocity=${debug.avgVelocity.toFixed(0)}`,
+  );
+  return resp;
 }
 
 export async function handleTrendingFeed(

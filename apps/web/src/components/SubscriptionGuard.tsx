@@ -92,7 +92,7 @@ export default function SubscriptionGuard({
       <div className="relative" aria-busy="true" aria-label="Checking subscription access">
         <div className="pointer-events-none select-none blur-sm">{children}</div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="h-12 w-48 animate-pulse rounded-xl bg-gray-800" />
+          <div className="h-12 w-48 animate-pulse rounded-xl bg-[var(--color-muted)]" />
         </div>
       </div>
     );
@@ -116,7 +116,7 @@ export default function SubscriptionGuard({
       <div className="relative">
         <div className="pointer-events-none select-none blur-sm">{children}</div>
         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)]/90 p-6 text-center backdrop-blur-sm">
+          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 text-center backdrop-blur-sm">
             <p className="mb-2 text-lg font-bold text-[var(--color-fg)]">
               Sign in to view
             </p>
@@ -137,7 +137,7 @@ export default function SubscriptionGuard({
     <div className="relative">
       <div className="pointer-events-none select-none blur-sm">{children}</div>
       <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-        <div className="rounded-2xl border border-degen-500/30 bg-[var(--color-card)]/90 p-6 text-center backdrop-blur-sm">
+        <div className="rounded-2xl border border-degen-500/30 bg-[var(--color-card)] p-6 text-center backdrop-blur-sm">
           <p className="mb-2 text-lg font-bold text-[var(--color-fg)]">
             Subscriber-only content
           </p>

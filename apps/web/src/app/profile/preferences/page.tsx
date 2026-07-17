@@ -92,7 +92,7 @@ export default function PreferencesPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Algorithm Preferences</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-fg)]">Algorithm Preferences</h1>
         <a href="/profile" className="text-sm text-degen-500 hover:underline">
           ← Back to profile
         </a>
@@ -109,7 +109,7 @@ export default function PreferencesPage() {
               className={`rounded-full px-3 py-1 text-xs font-medium ${
                 prefs.preferredPlatforms.includes(p)
                   ? 'bg-degen-500 text-black'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  : 'bg-[var(--color-muted)] text-gray-400 hover:bg-gray-700'
               }`}
             >
               {p}
@@ -129,7 +129,7 @@ export default function PreferencesPage() {
               className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${
                 prefs.preferredNiches.includes(n)
                   ? 'bg-degen-500 text-black'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  : 'bg-[var(--color-muted)] text-gray-400 hover:bg-gray-700'
               }`}
             >
               {n}

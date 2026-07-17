@@ -81,16 +81,6 @@ import { handlePostOg } from './routes/og';
 import { handleDiscoverPeople } from './routes/people';
 import { handlePostById } from './routes/post';
 import { handlePreferences } from './routes/preferences';
-import {
-  handleSubscriptionCancel,
-  handleSubscriptionContentCheck,
-  handleSubscriptionConfirm,
-  handleSubscriptionCreate,
-  handleSubscriptionMy,
-  handleSubscriptionStatus,
-  handleSubscriptionSubscribe,
-  handleSubscriptionTiers,
-} from './routes/subscription';
 import { handleFeedPresets } from './routes/presets';
 import { handlePrices } from './routes/prices';
 import { handleIdentityProfile } from './routes/profile';
@@ -112,6 +102,16 @@ import { handleRssXml } from './routes/rss-xml';
 import { handleSchedulePost } from './routes/scheduled';
 import { handleSearch, handleSearchIdentity, handleSearchIndex } from './routes/search';
 import { handleStreamFeed } from './routes/stream';
+import {
+  handleSubscriptionCancel,
+  handleSubscriptionConfirm,
+  handleSubscriptionContentCheck,
+  handleSubscriptionCreate,
+  handleSubscriptionMy,
+  handleSubscriptionStatus,
+  handleSubscriptionSubscribe,
+  handleSubscriptionTiers,
+} from './routes/subscription';
 import {
   handleLightningInvoice,
   handleTipCreate,
@@ -305,6 +305,11 @@ app.all('/api/bridge/rss-to-nostr', async (c) => {
   const { handleRssToNostrBridge } = await import('./routes/publish');
   return withSession(c, () => handleRssToNostrBridge(c.req.raw, c.env));
 });
+// Public read-only bridge status (per-protocol reply counts) — no session needed
+app.get('/api/cross-reply/status', async (c) => {
+  const { handleCrossReplyStatus } = await import('./routes/cross-reply');
+  return handleCrossReplyStatus(c.req.raw, c.env);
+});
 app.all('/api/cross-reply', async (c) => withSession(c, () => handleCrossReply(c.req.raw, c.env)));
 
 // ─── API: Auth ──────────────────────────────────────────────
@@ -446,6 +451,7 @@ app.all('/api/newsletter/digest/*', async (c) => handleNewsletterDigest(c.req.ra
 
 // ─── API: Deploy ──────────────────────────────────────────
 import { handleDeployRequest, handleDeployStatus } from './routes/deploy';
+
 app.all('/api/deploy/request', async (c) => handleDeployRequest(c.req.raw, c.env));
 app.all('/api/deploy/status', async (c) => handleDeployStatus(c.req.raw, c.env));
 

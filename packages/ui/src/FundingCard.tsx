@@ -40,7 +40,7 @@ export function FundingCard({ round }: { round: FundingRound }) {
 
   return (
     <div
-      className="card border-l-4 transition-all hover:bg-gray-800/30"
+      className="card border-l-4 transition-all hover:bg-[var(--color-muted)]"
       style={{ borderLeftColor: stageColor }}
     >
       <div className="mb-2 flex items-center gap-2">
@@ -54,17 +54,17 @@ export function FundingCard({ round }: { round: FundingRound }) {
         <span className="ml-auto text-xs font-mono font-bold text-degen-500">{round.amount}</span>
       </div>
 
-      <h3 className="mb-1 text-base font-bold text-white">{round.project}</h3>
+      <h3 className="mb-1 text-base font-bold text-[var(--color-fg)]">{round.project}</h3>
       <p className="mb-3 text-sm text-gray-400 line-clamp-2">{round.description}</p>
 
       <div className="mb-2 flex flex-wrap gap-1">
         {round.investors.slice(0, 4).map((inv) => (
-          <span key={inv} className="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-300">
+          <span key={inv} className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-gray-300">
             {inv}
           </span>
         ))}
         {round.investors.length > 4 && (
-          <span className="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-500">
+          <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-gray-500">
             +{round.investors.length - 4}
           </span>
         )}

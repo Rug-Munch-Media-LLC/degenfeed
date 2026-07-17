@@ -335,7 +335,7 @@ export function TipModal({
                       className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all ${
                         selectedMethod === m.method
                           ? 'border-degen-500 bg-degen-500/10'
-                          : 'border-[var(--color-border)] bg-[var(--color-card)]/50 hover:border-[var(--color-border)]'
+                          : 'border-[var(--color-border)] bg-[var(--color-card)] hover:border-[var(--color-border)]'
                       }`}
                     >
                       <span className="text-lg">{m.icon}</span>
@@ -373,7 +373,7 @@ export function TipModal({
                     type="text"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/50 px-4 py-3 text-lg font-mono text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-lg font-mono text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
                     placeholder={selectedMethod === 'lightning_zap' ? '1000' : '0.001'}
                     aria-label="Tip amount"
                   />

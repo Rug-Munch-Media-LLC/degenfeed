@@ -26,10 +26,10 @@ export function ComposePreview({ text, targets, author }: ComposePreviewProps) {
   const hasPreview = trimmed.length > 0;
 
   return (
-    <div className="mt-3 rounded-xl border border-gray-800 bg-gray-900/50 p-3">
+    <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] p-3">
       {hasPreview && (
         <div className="mb-3 flex gap-3">
-          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-gray-800">
+          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-[var(--color-muted)]">
             {author?.avatarUrl ? (
               <img
                 src={author.avatarUrl}
@@ -45,7 +45,7 @@ export function ComposePreview({ text, targets, author }: ComposePreviewProps) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="truncate font-semibold text-white">
+              <span className="truncate font-semibold text-[var(--color-fg)]">
                 {author?.displayName || 'You'}
               </span>
               {author?.handle && (

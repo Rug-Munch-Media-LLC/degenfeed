@@ -21,7 +21,7 @@ function Badge({ children, color = 'gray' }: { children: React.ReactNode; color?
     yellow: 'bg-yellow-900/30 text-yellow-400 border-yellow-500/20',
     purple: 'bg-purple-900/30 text-purple-400 border-purple-500/20',
     blue: 'bg-blue-900/30 text-blue-400 border-blue-500/20',
-    gray: 'bg-gray-900/50 text-gray-400 border-gray-700/30',
+    gray: 'bg-[var(--color-muted)] text-gray-400 border-[var(--color-border)]/30',
   };
   return (
     <span
@@ -60,7 +60,7 @@ function H2({ id, children }: { id: string; children: React.ReactNode }) {
   return (
     <h2
       id={id}
-      className="group mt-12 mb-4 flex items-center gap-3 text-2xl font-bold text-white scroll-mt-20"
+      className="group mt-12 mb-4 flex items-center gap-3 text-2xl font-bold text-[var(--color-fg)] scroll-mt-20"
     >
       {children}
       <a
@@ -77,7 +77,7 @@ function H3({ id, children }: { id: string; children: React.ReactNode }) {
   return (
     <h3
       id={id}
-      className="group mt-8 mb-3 flex items-center gap-2 text-lg font-semibold text-white scroll-mt-20"
+      className="group mt-8 mb-3 flex items-center gap-2 text-lg font-semibold text-[var(--color-fg)] scroll-mt-20"
     >
       {children}
       <a
@@ -453,7 +453,7 @@ export default function DocsPage() {
           <Badge>MIT Licensed</Badge>
           <Badge color="purple">10 Protocols</Badge>
         </div>
-        <h1 className="text-4xl font-bold tracking-tight text-white">DegenFeed Documentation</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">DegenFeed Documentation</h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-400">
           DegenFeed is an open-source multi-protocol social aggregator for web3. It pulls public
           posts from 10 decentralized and federated networks into one unified, ranked timeline.
@@ -465,9 +465,9 @@ export default function DocsPage() {
             <Link
               key={f.href}
               href={f.href}
-              className="group rounded-xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:border-degen-500/20 hover:bg-degen-500/[0.03]"
+              className="group rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4 transition-all hover:border-degen-500/20 hover:bg-degen-500/[0.03]"
             >
-              <div className="font-semibold text-white">{f.label}</div>
+              <div className="font-semibold text-[var(--color-fg)]">{f.label}</div>
               <div className="mt-1 text-xs text-gray-500">{f.desc}</div>
               <span className="mt-2 inline-block text-xs font-medium text-degen-400 opacity-0 transition-opacity group-hover:opacity-100">
                 View feed →
@@ -487,7 +487,7 @@ export default function DocsPage() {
       <div className="mt-3 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-white/5">
+            <tr className="border-b border-[var(--color-glass-border)]">
               <th className="py-2 pr-4 font-medium text-gray-400">Parameter</th>
               <th className="py-2 pr-4 font-medium text-gray-400">Default</th>
               <th className="py-2 font-medium text-gray-400">Description</th>
@@ -575,7 +575,7 @@ curl "https://degenfeed.xyz/api/embed/resolve?url=https://cointelegraph.com/news
           <div
             key={p.name}
             id={p.name.toLowerCase().replace(/[^a-z]/g, '')}
-            className="scroll-mt-20 rounded-2xl border border-white/5 bg-white/[0.02] p-5"
+            className="scroll-mt-20 rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
@@ -585,7 +585,7 @@ curl "https://degenfeed.xyz/api/embed/resolve?url=https://cointelegraph.com/news
                 />
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-white">{p.name}</h3>
+                    <h3 className="font-semibold text-[var(--color-fg)]">{p.name}</h3>
                     <Badge
                       color={
                         p.status === 'Production'
@@ -600,7 +600,7 @@ curl "https://degenfeed.xyz/api/embed/resolve?url=https://cointelegraph.com/news
                   </div>
                   <p className="mt-1.5 text-sm leading-relaxed text-gray-500">{p.desc}</p>
                   <div className="mt-2">
-                    <code className="inline-block rounded-md bg-gray-900/70 px-2 py-0.5 font-mono text-[11px] text-degen-400">
+                    <code className="inline-block rounded-md bg-[var(--color-muted)] px-2 py-0.5 font-mono text-[11px] text-degen-400">
                       {p.endpoint}
                     </code>
                   </div>
@@ -625,7 +625,7 @@ curl "https://degenfeed.xyz/api/embed/resolve?url=https://cointelegraph.com/news
       <H2 id="api">API Reference</H2>
       <p className="text-sm leading-relaxed text-gray-400">
         All endpoints are served from{' '}
-        <code className="rounded-md bg-gray-900/70 px-1.5 py-0.5 font-mono text-xs text-degen-400">
+        <code className="rounded-md bg-[var(--color-muted)] px-1.5 py-0.5 font-mono text-xs text-degen-400">
           degenfeed.xyz/api/*
         </code>
         . Rate limit: 60 requests per 5-second window per IP. No API key required for public read
@@ -763,7 +763,7 @@ curl "https://degenfeed.xyz/api/embed/resolve?url=https://cointelegraph.com/news
       <p className="text-sm leading-relaxed text-gray-400">
         Every post is scored by a transparent 7-factor model. Each component is exposed in the API
         response via{' '}
-        <code className="rounded-md bg-gray-900/70 px-1.5 py-0.5 font-mono text-xs text-degen-400">
+        <code className="rounded-md bg-[var(--color-muted)] px-1.5 py-0.5 font-mono text-xs text-degen-400">
           score.reasons[]
         </code>{' '}
         so users can see exactly why a post appears where it does.
@@ -816,8 +816,8 @@ curl "https://degenfeed.xyz/api/embed/resolve?url=https://cointelegraph.com/news
             desc: 'Penalty for low-effort posts: single-word (0.3x), emoji-spam (0.2x), all-caps (0.3x).',
           },
         ].map((r) => (
-          <div key={r.factor} className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
-            <div className="font-semibold text-white text-sm">{r.factor}</div>
+          <div key={r.factor} className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3">
+            <div className="font-semibold text-[var(--color-fg)] text-sm">{r.factor}</div>
             <p className="mt-1 text-xs text-gray-500">{r.desc}</p>
           </div>
         ))}
@@ -826,7 +826,7 @@ curl "https://degenfeed.xyz/api/embed/resolve?url=https://cointelegraph.com/news
       <Callout type="tip">
         Users can customize ranking weights with persistent preferences (saved in KV) or anonymous
         cookie preferences. Query params override stored preferences for one-off exploration. Set{' '}
-        <code className="rounded bg-gray-900/70 px-1 text-degen-400">?sort=new</code> to bypass
+        <code className="rounded bg-[var(--color-muted)] px-1 text-degen-400">?sort=new</code> to bypass
         ranking entirely and see chronological order.
       </Callout>
 
@@ -864,7 +864,7 @@ npx wrangler deploy workers/api/src/index.ts --name degenfeed-api`}</CodeBlock>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-white/5">
+            <tr className="border-b border-[var(--color-glass-border)]">
               <th className="py-2 pr-4 font-medium text-gray-400">Variable</th>
               <th className="py-2 pr-4 font-medium text-gray-400">Required</th>
               <th className="py-2 font-medium text-gray-400">Description</th>
@@ -913,11 +913,11 @@ npx wrangler deploy workers/api/src/index.ts --name degenfeed-api`}</CodeBlock>
       <p className="text-sm leading-relaxed text-gray-400">
         The recommended deployment is Cloudflare Pages (frontend) + Cloudflare Workers (API). Both
         are free-tier eligible. You'll also need two KV namespaces —{' '}
-        <code className="rounded-md bg-gray-900/70 px-1 py-0.5 font-mono text-xs text-degen-400">
+        <code className="rounded-md bg-[var(--color-muted)] px-1 py-0.5 font-mono text-xs text-degen-400">
           CACHE
         </code>{' '}
         for feed caching and rate limiting, and{' '}
-        <code className="rounded-md bg-gray-900/70 px-1 py-0.5 font-mono text-xs text-degen-400">
+        <code className="rounded-md bg-[var(--color-muted)] px-1 py-0.5 font-mono text-xs text-degen-400">
           SUBSCRIPTIONS
         </code>{' '}
         for newsletter and billing data.
@@ -933,8 +933,8 @@ npx wrangler deploy workers/api/src/index.ts --name degenfeed-api`}</CodeBlock>
       <H2 id="architecture">Architecture</H2>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-5">
-          <h3 className="mb-3 font-semibold text-white">Monorepo Structure</h3>
+        <div className="rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
+          <h3 className="mb-3 font-semibold text-[var(--color-fg)]">Monorepo Structure</h3>
           <div className="space-y-1.5 text-xs">
             {[
               ['apps/web', 'Next.js 15 App Router frontend'],
@@ -964,8 +964,8 @@ npx wrangler deploy workers/api/src/index.ts --name degenfeed-api`}</CodeBlock>
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-5">
-            <h3 className="mb-3 font-semibold text-white">Request Lifecycle</h3>
+          <div className="rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
+            <h3 className="mb-3 font-semibold text-[var(--color-fg)]">Request Lifecycle</h3>
             <ol className="space-y-1.5 text-xs text-gray-500">
               {[
                 'Worker receives GET /api/feed/home',
@@ -994,8 +994,8 @@ npx wrangler deploy workers/api/src/index.ts --name degenfeed-api`}</CodeBlock>
             </ol>
           </div>
 
-          <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-5">
-            <h3 className="mb-3 font-semibold text-white">Tech Stack</h3>
+          <div className="rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
+            <h3 className="mb-3 font-semibold text-[var(--color-fg)]">Tech Stack</h3>
             <div className="flex flex-wrap gap-1.5">
               {[
                 'TypeScript 5',
@@ -1020,7 +1020,7 @@ npx wrangler deploy workers/api/src/index.ts --name degenfeed-api`}</CodeBlock>
               ].map((t) => (
                 <span
                   key={t}
-                  className="rounded-md bg-gray-900/60 px-2 py-1 text-[11px] text-gray-500"
+                  className="rounded-md bg-[var(--color-muted)] px-2 py-1 text-[11px] text-gray-500"
                 >
                   {t}
                 </span>
@@ -1030,8 +1030,8 @@ npx wrangler deploy workers/api/src/index.ts --name degenfeed-api`}</CodeBlock>
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-white/5 bg-white/[0.02] p-5">
-        <h3 className="mb-1 font-semibold text-white">Deduplication Pipeline</h3>
+      <div className="mt-4 rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
+        <h3 className="mb-1 font-semibold text-[var(--color-fg)]">Deduplication Pipeline</h3>
         <p className="text-xs text-gray-500">
           11 layers prevent the same content from appearing multiple times in your feed, even when
           cross-posted across protocols.
@@ -1102,15 +1102,15 @@ npx wrangler deploy workers/api/src/index.ts --name degenfeed-api`}</CodeBlock>
             href={r.href}
             target={r.external ? '_blank' : undefined}
             rel={r.external ? 'noopener' : undefined}
-            className="rounded-xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:border-degen-500/20 hover:bg-degen-500/[0.03]"
+            className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4 transition-all hover:border-degen-500/20 hover:bg-degen-500/[0.03]"
           >
-            <h3 className="font-semibold text-white">{r.title}</h3>
+            <h3 className="font-semibold text-[var(--color-fg)]">{r.title}</h3>
             <p className="mt-1 text-xs text-gray-500">{r.desc}</p>
           </Link>
         ))}
       </div>
 
-      <div className="mt-12 border-t border-white/5 pt-6 text-center">
+      <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
         <p className="text-xs text-gray-600">
           DegenFeed is a product of <strong className="text-gray-500">Rug Munch Media LLC</strong>.
           MIT Licensed. Built on open protocols. 10 networks. One window.

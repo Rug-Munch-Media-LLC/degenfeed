@@ -41,16 +41,16 @@ export function PaywallModal({ open, onClose, requirement, onVerify }: PaywallMo
       role="dialog"
     >
       <div
-        className="mx-4 w-full max-w-sm rounded-2xl border border-gray-800 bg-gray-950 p-6 shadow-2xl"
+        className="mx-4 w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="dialog"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">Unlock content</h2>
+          <h2 className="text-lg font-bold text-[var(--color-fg)]">Unlock content</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
+            className="rounded-lg p-2 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close"
             type="button"
           >
@@ -75,13 +75,13 @@ export function PaywallModal({ open, onClose, requirement, onVerify }: PaywallMo
         <div className="mb-6 text-center">
           <div className="mb-2 text-4xl">🔒</div>
           <p className="text-sm text-gray-400">This post is locked.</p>
-          <p className="text-2xl font-bold text-white">Unlock for {requirement.amount} SOL</p>
+          <p className="text-2xl font-bold text-[var(--color-fg)]">Unlock for {requirement.amount} SOL</p>
         </div>
         <div className="space-y-3">
           <button
             type="button"
             onClick={handlePay}
-            className="w-full rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-white hover:bg-purple-500 transition-colors"
+            className="w-full rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-[var(--color-fg)] hover:bg-purple-500 transition-colors"
           >
             Pay with Solana
           </button>
@@ -89,7 +89,7 @@ export function PaywallModal({ open, onClose, requirement, onVerify }: PaywallMo
             type="button"
             onClick={handleVerify}
             disabled={verifying}
-            className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-sm font-semibold text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors disabled:opacity-50"
           >
             {verifying ? 'Verifying...' : 'I have paid — verify'}
           </button>

@@ -9,7 +9,7 @@
 
 import {
   checkDiversity,
-  computeQualitySignals,
+  computeTrendingTopics,
   interleaveByProtocol,
   type RankingContext,
   rankDiverse,
@@ -229,9 +229,11 @@ export interface PostScore {
   engagement: number;
   relevance: number;
   quality: number;
+  reputation: number;
   diversity: number;
   source: number;
   velocity: number;
+  spam: number;
   reasons: string[];
 }
 
@@ -274,6 +276,13 @@ export interface ScoreAndRankResult {
   ranked: RankedPost[];
   topOfHour: string | null;
   nextCursor: number | null;
+  /** Quality signals for X-DegenFeed-Debug header. */
+  debug: {
+    avgSpam: number;
+    avgQuality: number;
+    avgReputation: number;
+    avgVelocity: number;
+  };
 }
 
 /**
@@ -350,36 +359,57 @@ export async function scoreAndRank(
     ? qualityFiltered.filter((s) => s.breakdown.total >= opts.hideLowQualityThreshold)
     : qualityFiltered;
 
+  // ── Spam integration: filter > 0.9, demote > 0.7 ───────────────
+  const spamFiltered = filteredScored.filter((s) => {
+    const spam = (s.post as unknown as Record<string, unknown>).spamScore as number ?? 0;
+    return spam < 0.9;
+  });
+
   const rankedPosts = (() => {
     if (opts.sort === 'new') {
-      return [...filteredScored]
+      return [...spamFiltered]
         .sort((a, b) => b.post.createdAt - a.post.createdAt)
         .map((s) => s.post)
         .slice(0, Math.min(opts.limit, 100));
     }
     if (opts.sort === 'top') {
-      return [...filteredScored]
+      return [...spamFiltered]
         .sort((a, b) => b.breakdown.engagement - a.breakdown.engagement)
         .map((s) => s.post)
         .slice(0, Math.min(opts.limit, 100));
     }
     if (opts.sort === 'hot') {
-      return [...filteredScored]
-        .sort((a, b) => b.breakdown.total - a.breakdown.total)
+      return [...spamFiltered]
+        .sort((a, b) => {
+          const aSpam = (a.post as unknown as Record<string, unknown>).spamScore as number ?? 0;
+          const bSpam = (b.post as unknown as Record<string, unknown>).spamScore as number ?? 0;
+          // Demote high-spam to bottom, then sort by score
+          if ((aSpam > 0.7) !== (bSpam > 0.7)) return aSpam > 0.7 ? 1 : -1;
+          return b.breakdown.total - a.breakdown.total;
+        })
         .map((s) => s.post)
         .slice(0, Math.min(opts.limit, 100));
     }
     // Default 'scored': use diversity ranker
-    const diversePosts = opts.diverse
+    let diversePosts = opts.diverse
       ? rankDiverse(
-          filteredScored.map((s) => s.post),
+          spamFiltered.map((s) => s.post),
           ctx,
           {
             maxPerAuthor: opts.maxPerNiche > 0 ? 3 : 2,
             perProtocolMin: { farcaster: 2, lens: 2, bluesky: 2, nostr: 2, lemmy: 2 },
           },
         )
-      : filteredScored.map((s) => s.post);
+      : spamFiltered.map((s) => s.post);
+
+    // ── Demote high-spam posts to the bottom ─────────────────────
+    const highSpam = diversePosts.filter(
+      (p) => ((p as unknown as Record<string, unknown>).spamScore as number ?? 0) > 0.7,
+    );
+    const cleanPosts = diversePosts.filter(
+      (p) => ((p as unknown as Record<string, unknown>).spamScore as number ?? 0) <= 0.7,
+    );
+    diversePosts = [...cleanPosts, ...highSpam];
 
     // Apply niche diversity cap (checkDiversity) and protocol interleaving
     const withNicheDiversity: UnifiedPost[] = [];
@@ -406,12 +436,13 @@ export async function scoreAndRank(
   })();
 
   // Attach score breakdowns by id lookup
-  const scoreById = new Map(filteredScored.map((s) => [s.post.id, s.breakdown]));
+  const scoreById = new Map(spamFiltered.map((s) => [s.post.id, s.breakdown]));
   const ranked: RankedPost[] = rankedPosts.map((p) => {
     const breakdown = scoreById.get(p.id);
     if (!breakdown) return p;
     const now = Date.now();
     const ageMin = (now - p.createdAt) / 60000;
+    const spam = (p as unknown as Record<string, unknown>).spamScore as number ?? 0;
     return {
       ...p,
       score: {
@@ -420,9 +451,11 @@ export async function scoreAndRank(
         engagement: breakdown.engagement,
         relevance: breakdown.relevance,
         quality: breakdown.quality,
+        reputation: breakdown.reputation,
         diversity: breakdown.diversity,
         source: breakdown.source,
         velocity: breakdown.velocity,
+        spam,
         reasons: breakdown.reasons,
       },
       isNew: ageMin < 15,
@@ -433,7 +466,7 @@ export async function scoreAndRank(
 
   // Top-of-hour: highest-scoring post from the last 60 minutes.
   const now = Date.now();
-  const recentPosts = filteredScored.filter((s) => now - s.post.createdAt < 3600000);
+  const recentPosts = spamFiltered.filter((s) => now - s.post.createdAt < 3600000);
   const topOfHour =
     recentPosts.length > 0
       ? recentPosts.reduce((best, cur) => (cur.breakdown.total > best.breakdown.total ? cur : best))
@@ -442,7 +475,24 @@ export async function scoreAndRank(
 
   const nextCursor = ranked.length > 0 ? (ranked[ranked.length - 1]?.createdAt ?? null) : null;
 
-  return { ranked, topOfHour, nextCursor };
+  // ── Compute debug header averages ──────────────────────────────
+  const totalPosts = spamFiltered.length || 1;
+  const debug = {
+    avgSpam:
+      spamFiltered.reduce(
+        (sum, s) =>
+          sum + ((s.post as unknown as Record<string, unknown>).spamScore as number ?? 0),
+        0,
+      ) / totalPosts,
+    avgQuality:
+      spamFiltered.reduce((sum, s) => sum + s.breakdown.quality, 0) / totalPosts,
+    avgReputation:
+      spamFiltered.reduce((sum, s) => sum + s.breakdown.reputation, 0) / totalPosts,
+    avgVelocity:
+      spamFiltered.reduce((sum, s) => sum + s.breakdown.velocity, 0) / totalPosts,
+  };
+
+  return { ranked, topOfHour, nextCursor, debug };
 }
 
 // ─── Trending topics ───────────────────────────────────────────────

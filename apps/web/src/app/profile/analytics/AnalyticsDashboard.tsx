@@ -486,7 +486,7 @@ function ProtocolBreakdownTable({
             return (
               <tr
                 key={p}
-                className="border-b border-[var(--color-border)]/50 transition-colors hover:bg-[var(--color-overlay)]/50"
+                className="border-b border-[var(--color-border)]/50 transition-colors hover:bg-[var(--color-overlay)]"
               >
                 <td className="py-2.5 pr-4">
                   <span className="inline-flex items-center gap-2">

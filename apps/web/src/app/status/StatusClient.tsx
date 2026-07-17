@@ -106,9 +106,9 @@ export function StatusClient({ initialData }: { initialData: FeedHealthResponse 
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-gray-950/50 p-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-[var(--color-card)] p-4">
         <div>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-[var(--color-fg)]">
             {healthy}/{protocols.length} operational
           </div>
           <div className="text-sm text-gray-500">
@@ -124,7 +124,7 @@ export function StatusClient({ initialData }: { initialData: FeedHealthResponse 
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="h-3 w-3 rounded border-white/20 bg-gray-900 text-degen-500 focus:ring-degen-500"
+              className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
             />
             Auto-refresh
           </label>
@@ -132,7 +132,7 @@ export function StatusClient({ initialData }: { initialData: FeedHealthResponse 
             type="button"
             onClick={refresh}
             disabled={loading}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
+            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-[var(--color-fg)] disabled:opacity-50"
           >
             {loading ? 'Checking…' : 'Refresh now'}
           </button>
@@ -149,11 +149,11 @@ export function StatusClient({ initialData }: { initialData: FeedHealthResponse 
           return (
             <div
               key={id}
-              className="rounded-xl border border-white/10 bg-gray-950/50 p-4"
+              className="rounded-xl border border-white/10 bg-[var(--color-card)] p-4"
               style={{ borderLeftColor: meta.color, borderLeftWidth: 3 }}
             >
               <div className="mb-1 flex items-center justify-between">
-                <span className="text-sm font-semibold text-white">{meta.label}</span>
+                <span className="text-sm font-semibold text-[var(--color-fg)]">{meta.label}</span>
                 <span className={`text-xs font-medium ${status.className}`}>
                   {h ? '●' : '○'} {status.text}
                 </span>

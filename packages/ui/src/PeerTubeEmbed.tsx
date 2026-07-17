@@ -105,9 +105,9 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
     thumbnail ?? (uuid ? `https://${instanceDomain}/static/thumbnails/${uuid}.jpg` : undefined);
 
   return (
-    <div className="mt-3 overflow-hidden rounded-xl border border-gray-800 bg-gray-900/60">
+    <div className="mt-3 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]">
       {/* ── Video player area (16:9) ── */}
-      <div className="relative aspect-video w-full overflow-hidden bg-black">
+      <div className="relative aspect-video w-full overflow-hidden bg-[var(--color-card)]">
         {!playing ? (
           <>
             {/* Thumbnail */}
@@ -119,7 +119,7 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
                 onError={() => setLoadError(true)}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gray-900">
+              <div className="flex h-full w-full items-center justify-center bg-[var(--color-muted)]">
                 <svg
                   width="48"
                   height="48"
@@ -151,7 +151,7 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
                 type="button"
                 onClick={handlePlay}
                 onKeyDown={handleKeyDown}
-                className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-all hover:scale-110 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-[var(--color-fg)] backdrop-blur-sm transition-all hover:scale-110 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
                 aria-label={title ? `Play ${title}` : 'Play video'}
               >
                 <svg
@@ -169,7 +169,7 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
             {/* Title overlay at bottom */}
             {title && (
               <div className="absolute bottom-0 left-0 right-0 px-4 pb-3">
-                <p className="text-sm font-semibold text-white drop-shadow-lg line-clamp-2">
+                <p className="text-sm font-semibold text-[var(--color-fg)] drop-shadow-lg line-clamp-2">
                   {title}
                 </p>
               </div>
@@ -243,7 +243,7 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center border-t border-gray-800 px-4 py-2 text-xs text-degen-500 transition-colors hover:bg-gray-800/50 hover:text-degen-400"
+        className="flex items-center justify-center border-t border-[var(--color-border)] px-4 py-2 text-xs text-degen-500 transition-colors hover:bg-[var(--color-muted)] hover:text-degen-400"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >

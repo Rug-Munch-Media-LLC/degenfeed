@@ -61,7 +61,7 @@ function kindClasses(kind: ToastKind): string {
     case 'warning':
       return 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300';
     default:
-      return 'border-white/10 bg-gray-900/90 text-gray-200';
+      return 'border-white/10 bg-[var(--color-muted)] text-gray-200';
   }
 }
 
