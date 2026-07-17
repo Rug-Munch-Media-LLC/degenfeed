@@ -1,0 +1,452 @@
+'use client';
+
+import { getProtocolColor, getProtocolLabel } from '@degenfeed/ui';
+import Image from 'next/image';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '../../components/AuthProvider';
+import { useNotifications } from '../../hooks/useNotifications';
+
+/* ─── Type helpers ─────────────────────────────────────────── */
+
+const TYPE_ICON: Record<string, string> = {
+  like: '❤️',
+  repost: '🔄',
+  mirror: '🔄',
+  reply: '💬',
+  follow: '➕',
+  mention: '@',
+  collect: '⚡',
+  tip: '⚡',
+};
+
+const TYPE_LABEL: Record<string, string> = {
+  like: 'Liked your post',
+  repost: 'Reposted your post',
+  mirror: 'Mirrored your post',
+  reply: 'Replied to you',
+  follow: 'Followed you',
+  mention: 'Mentioned you',
+  collect: 'Collected your post',
+  tip: 'Tipped you',
+};
+
+const PROTOCOLS = [
+  { id: 'all', label: 'All' },
+  { id: 'nostr', label: 'Nostr' },
+  { id: 'farcaster', label: 'Farcaster' },
+  { id: 'lens', label: 'Lens' },
+  { id: 'bluesky', label: 'Bluesky' },
+  { id: 'mastodon', label: 'Mastodon' },
+] as const;
+
+/* ─── Helpers ──────────────────────────────────────────────── */
+
+function getTypeIcon(type: string): string {
+  return TYPE_ICON[type] || '💬';
+}
+
+function getTypeLabel(type: string): string {
+  return TYPE_LABEL[type] || 'Interacted with you';
+}
+
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  if (diff < 0) return 'just now';
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d ago`;
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function getActorInitials(name: string): string {
+  return (
+    name
+      .split(' ')
+      .map((s) => s[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || '?'
+  );
+}
+
+/* ─── Loading Skeleton ─────────────────────────────────────── */
+
+function NotificationSkeleton() {
+  return (
+    <div className="flex items-start gap-3 border-b border-white/5 px-4 py-3.5">
+      <div className="h-10 w-10 flex-shrink-0 animate-pulse rounded-full bg-gray-800" />
+      <div className="flex-1 space-y-2">
+        <div className="h-3 w-32 animate-pulse rounded bg-gray-800" />
+        <div className="h-2.5 w-48 animate-pulse rounded bg-gray-800/60" />
+        <div className="h-2 w-20 animate-pulse rounded bg-gray-800/40" />
+      </div>
+      <div className="h-5 w-14 animate-pulse rounded-full bg-gray-800" />
+    </div>
+  );
+}
+
+/* ─── Notification Row ────────────────────────────────────── */
+
+interface NotificationRowProps {
+  id: string;
+  type: string;
+  protocol: string;
+  actorName: string;
+  actorHandle?: string;
+  actorAvatar?: string;
+  postText?: string;
+  createdAt: number;
+  read: boolean;
+  onMarkRead: (id: string) => void;
+}
+
+function NotificationRow({
+  id,
+  type,
+  protocol,
+  actorName,
+  actorHandle,
+  actorAvatar,
+  postText,
+  createdAt,
+  read,
+  onMarkRead,
+}: NotificationRowProps) {
+  const protocolColor = getProtocolColor(protocol);
+  const icon = getTypeIcon(type);
+  const label = getTypeLabel(type);
+
+  return (
+    <button
+      type="button"
+      onClick={() => onMarkRead(id)}
+      className={`group flex w-full items-start gap-3 border-b border-white/5 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02] ${
+        read ? 'opacity-60' : ''
+      }`}
+    >
+      {/* Unread indicator dot */}
+      {!read && (
+        <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-degen-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]" />
+      )}
+
+      {/* Type icon */}
+      <span
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-base"
+        style={{ backgroundColor: `${protocolColor}18` }}
+        aria-hidden="true"
+      >
+        {icon}
+      </span>
+
+      {/* Content */}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="flex items-center gap-2">
+          <span className={`truncate text-sm font-medium ${read ? 'text-gray-400' : 'text-white'}`}>
+            {actorAvatar ? (
+              <Image
+                src={actorAvatar}
+                alt=""
+                width={20}
+                height={20}
+                className="-ml-1 mr-1 inline h-5 w-5 rounded-full object-cover align-middle"
+              />
+            ) : (
+              <span
+                className="-ml-1 mr-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold"
+                style={{ backgroundColor: `${protocolColor}22`, color: protocolColor }}
+              >
+                {getActorInitials(actorName)}
+              </span>
+            )}
+            <span>{actorName}</span>
+          </span>
+          {actorHandle && (
+            <span className="hidden truncate text-xs text-gray-600 sm:inline">@{actorHandle}</span>
+          )}
+        </div>
+        <span className={`text-xs ${read ? 'text-gray-600' : 'text-gray-500'}`}>{label}</span>
+        {postText && (
+          <span className="mt-0.5 line-clamp-1 text-xs text-gray-600 italic">
+            &ldquo;{postText}&rdquo;
+          </span>
+        )}
+        <span className="mt-0.5 text-[10px] text-gray-700">{timeAgo(createdAt)}</span>
+      </div>
+
+      {/* Protocol badge */}
+      <span
+        className="mt-1 flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium leading-normal"
+        style={{ backgroundColor: `${protocolColor}18`, color: protocolColor }}
+      >
+        {getProtocolLabel(protocol)}
+      </span>
+    </button>
+  );
+}
+
+/* ─── Empty State ──────────────────────────────────────────── */
+
+function EmptyState({ hasSignedIn }: { hasSignedIn: boolean }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20">
+      <span className="mb-4 text-4xl opacity-30" aria-hidden="true">
+        🔔
+      </span>
+      <p className="text-base font-medium text-gray-400">No notifications yet</p>
+      {hasSignedIn ? (
+        <p className="mt-1 text-sm text-gray-600">
+          When someone likes, reposts, or replies, it will show up here.
+        </p>
+      ) : (
+        <p className="mt-1 text-sm text-gray-600">
+          Sign in with a social account to see your notifications.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ─── Not Signed-in State ──────────────────────────────────── */
+
+function SignInPrompt({ onSignIn }: { onSignIn: () => void }) {
+  return (
+    <div className="mx-4 mt-6 rounded-2xl border border-degen-500/30 bg-gradient-to-br from-degen-500/5 to-transparent p-6 text-center">
+      <span className="mb-3 inline-block text-3xl" aria-hidden="true">
+        🔔
+      </span>
+      <h2 className="mb-1 text-lg font-semibold text-white">Stay in the loop</h2>
+      <p className="mb-4 text-sm text-gray-400">
+        Sign in to receive notifications when someone likes, reposts, or replies across all
+        networks.
+      </p>
+      <button type="button" onClick={onSignIn} className="btn-primary text-sm">
+        Connect Wallet to Get Started
+      </button>
+    </div>
+  );
+}
+
+/* ─── Page ─────────────────────────────────────────────────── */
+
+export default function NotificationsPage() {
+  const { ready, signedInProtocols, openSignIn } = useAuth();
+  const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
+  const { notifications, unreadCount, loading, fetchNotifications, markRead, markAllRead } =
+    useNotifications(hasSignedIn);
+
+  const [activeProtocol, setActiveProtocol] = useState<string>('all');
+  const [visibleCount, setVisibleCount] = useState(30);
+  const loaderRef = useRef<HTMLDivElement>(null);
+
+  /* ── Filter ─────────────────────────────────────────────── */
+  const filtered = useMemo(
+    () =>
+      activeProtocol === 'all'
+        ? notifications
+        : notifications.filter((n) => n.protocol === activeProtocol),
+    [notifications, activeProtocol],
+  );
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
+  /* ── Unread counts per protocol ─────────────────────────── */
+  const unreadByProtocol = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const p of PROTOCOLS) {
+      if (p.id === 'all') continue;
+      map[p.id] = notifications.filter((n) => !n.read && n.protocol === p.id).length;
+    }
+    return map;
+  }, [notifications]);
+
+  const filteredUnread = filtered.filter((n) => !n.read).length;
+
+  /* ── Infinite scroll ────────────────────────────────────── */
+  useEffect(() => {
+    const el = loaderRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !loading) {
+          setVisibleCount((prev) => prev + 20);
+        }
+      },
+      { rootMargin: '300px' },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loading]);
+
+  /* ── Handlers ───────────────────────────────────────────── */
+  const handleProtocolClick = useCallback((id: string) => {
+    setActiveProtocol((prev) => {
+      if (prev === id) return 'all';
+      setVisibleCount(30);
+      return id;
+    });
+  }, []);
+
+  const refresh = useCallback(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  return (
+    <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-4 px-3 py-3 sm:px-4 lg:grid-cols-12">
+      {/* Left rail — hidden, just spacing */}
+      <aside className="hidden lg:col-span-3 xl:col-span-3 lg:block" />
+
+      {/* Main column */}
+      <main className="lg:col-span-6 xl:col-span-6">
+        {/* Sticky header */}
+        <div className="sticky top-16 z-30 border-b border-white/10 bg-black/85 backdrop-blur-xl">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl" aria-hidden="true">
+                🔔
+              </span>
+              <div>
+                <h1 className="text-lg font-bold text-white leading-none">Notifications</h1>
+                <p className="text-[10px] text-gray-500">
+                  {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={refresh}
+                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Refresh notifications"
+                disabled={loading}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className={loading ? 'animate-spin' : ''}
+                  aria-hidden="true"
+                >
+                  <path d="M21 2v6h-6" />
+                  <path d="M3 12a9 9 0 0115.36-6.36L21 8" />
+                  <path d="M3 22v-6h6" />
+                  <path d="M21 12a9 9 0 01-15.36 6.36L3 16" />
+                </svg>
+              </button>
+
+              {filteredUnread > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllRead}
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:bg-degen-500/20 hover:text-degen-400"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Protocol filter pills */}
+          <div className="flex items-center gap-1.5 border-t border-white/5 px-4 py-2.5 overflow-x-auto scrollbar-none">
+            {PROTOCOLS.map((p) => {
+              const unread = p.id === 'all' ? unreadCount : (unreadByProtocol[p.id] ?? 0);
+              const active = activeProtocol === p.id;
+              const color = p.id === 'all' ? 'var(--color-fg)' : getProtocolColor(p.id);
+
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleProtocolClick(p.id)}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
+                    active ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                  style={active ? { backgroundColor: `${color}18`, color } : undefined}
+                >
+                  {p.label}
+                  {unread > 0 && (
+                    <span
+                      className="flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-white"
+                      style={{ backgroundColor: color }}
+                    >
+                      {unread > 99 ? '99+' : unread}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Notification list */}
+        {!hasSignedIn ? (
+          <SignInPrompt onSignIn={openSignIn} />
+        ) : loading && notifications.length === 0 ? (
+          <div className="divide-y divide-white/5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <NotificationSkeleton
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeletons
+                key={i}
+              />
+            ))}
+          </div>
+        ) : visible.length === 0 ? (
+          <EmptyState hasSignedIn={hasSignedIn} />
+        ) : (
+          <>
+            <div className="divide-y divide-white/5">
+              {visible.map((n) => (
+                <NotificationRow
+                  key={n.id}
+                  id={n.id}
+                  type={n.type}
+                  protocol={n.protocol}
+                  actorName={n.actorName}
+                  actorHandle={n.actorHandle}
+                  actorAvatar={n.actorAvatar}
+                  postText={n.postText}
+                  createdAt={n.createdAt}
+                  read={n.read}
+                  onMarkRead={markRead}
+                />
+              ))}
+            </div>
+
+            {/* Infinite scroll sentinel */}
+            <div ref={loaderRef} className="h-px" />
+
+            {loading && (
+              <div className="divide-y divide-white/5">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <NotificationSkeleton
+                    // biome-ignore lint/suspicious/noArrayIndexKey: static skeletons
+                    key={`loading-${i}`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {!hasMore && visible.length > 0 && (
+              <div className="py-8 text-center text-xs text-gray-700">All notifications loaded</div>
+            )}
+          </>
+        )}
+
+        {/* Bottom spacing for mobile nav */}
+        <div className="h-12 lg:hidden" />
+      </main>
+
+      {/* Right rail — hidden */}
+      <aside className="hidden lg:col-span-3 xl:col-span-3 lg:block" />
+    </div>
+  );
+}

@@ -74,6 +74,14 @@ export interface StoredCachedPost {
   cachedAt: number;
 }
 
+export interface StoredBlockedUser {
+  targetId: string;
+  targetHandle: string;
+  protocol: string;
+  blockedBy: string; // our identity id
+  blockedAt: number;
+}
+
 export interface StoredMutedIdentity {
   targetId: string;
   targetHandle: string;

@@ -2,6 +2,12 @@
 
 export type { StoredBookmark } from './bookmarks';
 export { addBookmark, getBookmarks, isBookmarked, removeBookmark } from './bookmarks';
+export {
+  addBlockedUser,
+  getBlockedUsers,
+  isBlocked,
+  removeBlockedUser,
+} from './blocked';
 export { cachePost, clearCache, getCachedPost } from './cache';
 export { closeDb, getDb } from './db';
 export { deleteDraft, getDrafts, saveDraft } from './drafts';
@@ -48,6 +54,7 @@ export {
 } from './subscription';
 export type {
   MonetizationPreferences,
+  StoredBlockedUser,
   StoredCachedPost,
   StoredDraft,
   StoredFollow,

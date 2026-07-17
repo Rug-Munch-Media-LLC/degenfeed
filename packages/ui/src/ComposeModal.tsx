@@ -10,7 +10,7 @@
  *   - Publish button with "Post to N networks" count
  *   - Per-protocol status indicators (pending / signed / failed)
  *   - Draft autosave to localStorage
- *   - Slash commands (/poll, /image, /link, /code, /thread)
+ *   - Slash commands (/poll, /image, /link, /code, /thread, /schedule)
  *   - Keyboard shortcut: Ctrl+Enter to publish
  *
  * Auth tiers:
@@ -42,6 +42,14 @@ const TARGETS: Omit<ComposeTarget, 'enabled' | 'connected' | 'charCount' | 'stat
   { id: 'mastodon', label: 'Mastodon', charLimit: 5000 },
 ];
 
+export interface ScheduledPostItem {
+  id: string;
+  text: string;
+  scheduledAt: string; // ISO string
+  targets: string[];
+  createdAt: string;
+}
+
 export interface ComposeModalProps {
   open: boolean;
   onClose: () => void;
@@ -65,6 +73,14 @@ export interface ComposeModalProps {
   nostrBridgePublicId?: string;
   /** Called when the bridge toggle fires. Receives the trimmed post text. */
   onNostrBridge?: (text: string) => void | Promise<void>;
+  /** Called when the user schedules a post. */
+  onSchedule?: (text: string, targets: string[], scheduledAt: Date) => void;
+  /** List of upcoming scheduled posts to display. */
+  scheduledPosts?: ScheduledPostItem[];
+  /** Called to cancel a scheduled post. */
+  onCancelSchedule?: (id: string) => void;
+  /** Called to publish a scheduled post immediately. */
+  onPublishScheduledNow?: (id: string) => void;
 }
 
 const DRAFT_KEY = 'degenfeed_compose_draft';
@@ -79,6 +95,10 @@ export function ComposeModal({
   primaryIdentity,
   nostrBridgePublicId,
   onNostrBridge,
+  onSchedule,
+  scheduledPosts,
+  onCancelSchedule,
+  onPublishScheduledNow,
 }: ComposeModalProps) {
   const [text, setText] = useState('');
   const [targets, setTargets] = useState<ComposeTarget[]>(() =>
@@ -94,9 +114,12 @@ export function ComposeModal({
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [bridgeToNostr, setBridgeToNostr] = useState(false);
   const [lensCollect, setLensCollect] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [showScheduledView, setShowScheduledView] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load draft from localStorage
+  // Load draft from localStorage and reset schedule state
   useEffect(() => {
     if (!open) return;
     try {
@@ -105,6 +128,9 @@ export function ComposeModal({
     } catch {
       /* noop */
     }
+    setScheduledAt(null);
+    setShowSchedulePicker(false);
+    setShowScheduledView(false);
     setTimeout(() => textareaRef.current?.focus(), 100);
   }, [open]);
 
@@ -139,16 +165,36 @@ export function ComposeModal({
     setShowSlashMenu(lastLine.startsWith('/') && lastLine.length > 1 && !lastLine.includes(' '));
   }, []);
 
+  /** Remove the current slash-command line from the textarea. */
+  const removeSlashLine = useCallback(() => {
+    const lines = text.split('\n');
+    const lastLineIdx = lines.length - 1;
+    return text.slice(0, text.length - (lines[lastLineIdx]?.length ?? 0));
+  }, [text]);
+
+  const handleSlashCommand = useCallback(
+    (cmd: string) => {
+      if (cmd === 'schedule') {
+        // Remove /schedule from text, show date picker
+        setText(removeSlashLine());
+        setShowSlashMenu(false);
+        setShowSchedulePicker(true);
+        textareaRef.current?.focus();
+        return;
+      }
+      insertSlashCommand(`/${cmd}`);
+    },
+    [removeSlashLine],
+  );
+
   const insertSlashCommand = useCallback(
     (cmd: string) => {
-      const lines = text.split('\n');
-      const lastLineIdx = lines.length - 1;
-      const beforeSlash = text.slice(0, text.length - (lines[lastLineIdx]?.length ?? 0));
-      setText(`${beforeSlash + cmd} `);
+      const cleaned = removeSlashLine();
+      setText(`${cleaned + cmd} `);
       setShowSlashMenu(false);
       textareaRef.current?.focus();
     },
-    [text],
+    [removeSlashLine],
   );
 
   const toggleTarget = useCallback(
@@ -166,6 +212,28 @@ export function ComposeModal({
     },
     [onRequestSignIn],
   );
+
+  const handleSchedule = useCallback(() => {
+    if (!text.trim() || !scheduledAt || publishingRef.current) return;
+    const selectedTargets = targets.filter((t) => t.enabled).map((t) => t.id);
+    if (selectedTargets.length === 0) return;
+
+    publishingRef.current = true;
+    setPublishing(true);
+
+    // Small delay to show UI feedback
+    setTimeout(() => {
+      try {
+        onSchedule?.(text.trim(), selectedTargets, scheduledAt);
+        localStorage.removeItem(DRAFT_KEY);
+      } catch {
+        /* noop */
+      }
+      publishingRef.current = false;
+      setPublishing(false);
+      onClose();
+    }, 400);
+  }, [text, targets, scheduledAt, onSchedule, onClose]);
 
   const handlePublish = useCallback(async () => {
     if (!text.trim() || publishingRef.current) return;
@@ -242,18 +310,46 @@ export function ComposeModal({
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        handlePublish();
+        if (scheduledAt) {
+          handleSchedule();
+        } else {
+          handlePublish();
+        }
       }
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open, handlePublish, onClose]);
+  }, [open, handlePublish, handleSchedule, scheduledAt, onClose]);
 
   if (!open) return null;
 
   const selectedCount = targets.filter((t) => t.enabled).length;
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
+  const scheduleAvailable = hasSignedIn && !!onSchedule;
+
+  /** Format a Date for display, e.g. "Jul 18, 2026 at 3:00 PM" */
+  const formatScheduleDate = (d: Date) => {
+    return d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }) + ' at ' + d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  /** Format an ISO string for the scheduled posts list, e.g. "Jul 18, 3:00 PM" */
+  const formatScheduledItem = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+      ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  };
+
+  // Min datetime for the picker: now + 5 minutes
+  const minPickerDate = new Date(Date.now() + 5 * 60 * 1000);
+  const minPickerStr = minPickerDate.toISOString().slice(0, 16); // datetime-local format
 
   return (
     <section
@@ -273,9 +369,29 @@ export function ComposeModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
-          <h2 className="text-sm font-semibold text-white">Compose</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold text-white">Compose</h2>
+            {scheduledPosts && scheduledPosts.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowScheduledView((v) => !v)}
+                className={`text-xs font-medium rounded-md px-2 py-1 transition-colors ${
+                  showScheduledView
+                    ? 'bg-cyan-900/40 text-cyan-300'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                Scheduled ({scheduledPosts.length})
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Ctrl+Enter to post</span>
+            {!scheduledAt && (
+              <span className="text-xs text-gray-500">Ctrl+Enter to post</span>
+            )}
+            {scheduledAt && (
+              <span className="text-xs text-cyan-500">Ctrl+Enter to schedule</span>
+            )}
             <button
               onClick={onClose}
               className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
@@ -332,16 +448,101 @@ export function ComposeModal({
               {/* Slash command menu */}
               {showSlashMenu && (
                 <div className="mb-2 rounded-lg border border-gray-800 bg-gray-900 p-1">
-                  {['poll', 'image', 'link', 'code', 'thread'].map((cmd) => (
+                  {[
+                    'poll',
+                    'image',
+                    'link',
+                    'code',
+                    'thread',
+                    ...(scheduleAvailable ? ['schedule'] : []),
+                  ].map((cmd) => (
                     <button
                       key={cmd}
                       type="button"
                       className="w-full rounded px-3 py-1.5 text-left text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                      onClick={() => insertSlashCommand(`/${cmd}`)}
+                      onClick={() => handleSlashCommand(cmd)}
                     >
                       /{cmd}
                     </button>
                   ))}
+                </div>
+              )}
+
+              {/* Schedule date/time picker */}
+              {showSchedulePicker && scheduleAvailable && (
+                <div className="mb-3 rounded-lg border border-cyan-900/50 bg-cyan-950/30 p-3">
+                  <label className="flex items-center gap-2 text-sm text-cyan-300">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <rect
+                        x="1.5"
+                        y="2.5"
+                        width="13"
+                        height="12"
+                        rx="2"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      />
+                      <path d="M1.5 6h13" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    Schedule for
+                  </label>
+                  <input
+                    type="datetime-local"
+                    min={minPickerStr}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) return;
+                      const picked = new Date(val);
+                      if (picked.getTime() <= Date.now() + 5 * 60 * 1000) return; // enforce 5min min
+                      setScheduledAt(picked);
+                      setShowSchedulePicker(false);
+                    }}
+                    className="mt-2 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+                  />
+                  <p className="mt-1.5 text-[11px] text-gray-500">
+                    Must be at least 5 minutes from now
+                  </p>
+                </div>
+              )}
+
+              {/* Schedule badge — shown when a time has been picked */}
+              {scheduledAt && (
+                <div className="mb-3 flex items-center gap-2 rounded-lg border border-cyan-900/50 bg-cyan-950/30 px-3 py-2">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    aria-hidden="true"
+                    className="flex-shrink-0 text-cyan-400"
+                  >
+                    <rect x="1.5" y="2.5" width="13" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M1.5 6h13" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  <span className="text-xs text-cyan-300">
+                    Scheduled for {formatScheduleDate(scheduledAt)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScheduledAt(null);
+                      setShowSchedulePicker(false);
+                    }}
+                    className="ml-auto rounded p-0.5 text-gray-500 hover:text-white transition-colors"
+                    aria-label="Clear schedule"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
                 </div>
               )}
             </>
@@ -453,7 +654,59 @@ export function ComposeModal({
               author={text.trim() ? primaryIdentity : undefined}
             />
 
-            {/* Publish button */}
+            {/* Scheduled posts viewer */}
+            {showScheduledView && scheduledPosts && scheduledPosts.length > 0 && (
+              <div className="mt-3 rounded-xl border border-gray-800 bg-gray-900/50 p-3">
+                <h3 className="mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Upcoming Scheduled Posts
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {scheduledPosts.map((sp) => (
+                    <div
+                      key={sp.id}
+                      className="flex items-start gap-2 rounded-lg border border-gray-800 bg-gray-950/50 p-2.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm text-gray-200">
+                          {sp.text || '(empty)'}
+                        </p>
+                        <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-500">
+                          <span>{formatScheduledItem(sp.scheduledAt)}</span>
+                          <span className="text-gray-700">·</span>
+                          <span>
+                            {sp.targets.length} network{sp.targets.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-shrink-0 gap-1">
+                        {onPublishScheduledNow && (
+                          <button
+                            type="button"
+                            onClick={() => onPublishScheduledNow(sp.id)}
+                            className="rounded px-2 py-1 text-[11px] font-medium text-green-400 hover:bg-green-950/40 transition-colors"
+                            title="Publish now"
+                          >
+                            Post now
+                          </button>
+                        )}
+                        {onCancelSchedule && (
+                          <button
+                            type="button"
+                            onClick={() => onCancelSchedule(sp.id)}
+                            className="rounded px-2 py-1 text-[11px] font-medium text-gray-500 hover:bg-gray-800 hover:text-red-400 transition-colors"
+                            title="Cancel"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Publish / Schedule button */}
             <div className="mt-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span
@@ -469,22 +722,41 @@ export function ComposeModal({
                   <span className="text-xs text-red-400">Some networks failed</span>
                 )}
               </div>
-              <button
-                type="button"
-                className="btn-primary text-sm disabled:opacity-50"
-                disabled={
-                  !text.trim() ||
-                  publishing ||
-                  selectedCount === 0 ||
-                  text.length > MAX_CHARS ||
-                  targets.some((t) => t.enabled && text.length > t.charLimit)
-                }
-                onClick={handlePublish}
-              >
-                {publishing
-                  ? '\u23F3 Posting...'
-                  : `Post${selectedCount > 0 ? ` (${selectedCount})` : ''}`}
-              </button>
+              {scheduledAt ? (
+                <button
+                  type="button"
+                  className="btn-primary text-sm disabled:opacity-50"
+                  disabled={
+                    !text.trim() ||
+                    publishing ||
+                    selectedCount === 0 ||
+                    text.length > MAX_CHARS ||
+                    targets.some((t) => t.enabled && text.length > t.charLimit)
+                  }
+                  onClick={handleSchedule}
+                >
+                  {publishing
+                    ? '\u23F3 Scheduling...'
+                    : `Schedule${selectedCount > 0 ? ` (${selectedCount})` : ''}`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-primary text-sm disabled:opacity-50"
+                  disabled={
+                    !text.trim() ||
+                    publishing ||
+                    selectedCount === 0 ||
+                    text.length > MAX_CHARS ||
+                    targets.some((t) => t.enabled && text.length > t.charLimit)
+                  }
+                  onClick={handlePublish}
+                >
+                  {publishing
+                    ? '\u23F3 Posting...'
+                    : `Post${selectedCount > 0 ? ` (${selectedCount})` : ''}`}
+                </button>
+              )}
             </div>
           </div>
         )}

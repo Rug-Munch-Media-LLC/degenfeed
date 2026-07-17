@@ -1,6 +1,8 @@
 export type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-export type { ComposeModalProps } from './ComposeModal';
+export type { ComposeModalProps, ScheduledPostItem } from './ComposeModal';
 export { ComposeModal } from './ComposeModal';
+export type { ReportModalProps } from './ReportModal';
+export { ReportModal } from './ReportModal';
 export type {
   ComposePreviewAuthor,
   ComposePreviewProps,

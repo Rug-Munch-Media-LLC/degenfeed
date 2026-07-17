@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { cookies } from 'next/headers';
 import Script from 'next/script';
 import './globals.css';
 import { AuthProvider } from '../components/AuthProvider';
@@ -53,10 +54,28 @@ export const viewport: Viewport = {
   colorScheme: 'light dark',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const theme = cookieStore.get('df_theme')?.value || 'dark';
+
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html lang="en" className={`${theme} ${inter.className}`} suppressHydrationWarning>
       <body>
+        {/* ⚡ SSR-safe theme: sync localStorage before paint to prevent flash */}
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: inline script reads localStorage to prevent theme flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: [
+              '(function(){',
+              'try{',
+              'var t=localStorage.getItem("df_theme");',
+              'if(t==="light")document.documentElement.classList.remove("dark");',
+              'if(t==="dark")document.documentElement.classList.add("dark");',
+              '}catch(e){}',
+              '})();',
+            ].join(''),
+          }}
+        />
         {/* ── PWA platform tags ── */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

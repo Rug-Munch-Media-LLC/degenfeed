@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { memo, useEffect, useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
+import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { OnboardingModal } from './OnboardingModal';
 import { SearchOverlay } from './SearchOverlay';
 import { InstallPrompt } from './InstallPrompt';
@@ -18,6 +19,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: '/feed', label: 'Feed' },
+  { href: '/trending', label: 'Trending' },
   { href: '/news', label: 'News' },
   { href: '/discover', label: 'Discover' },
   { href: '/docs', label: 'Docs' },
@@ -69,18 +71,38 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
   const { ready, signedInProtocols, openSignIn, openCompose } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
 
   useEffect(() => {
     const stored = localStorage.getItem('df_theme');
-    if (stored === 'light') {
-      setTheme('light');
-      document.documentElement.classList.remove('dark');
-    } else {
-      setTheme('dark');
-      document.documentElement.classList.add('dark');
-    }
+    const resolved = stored === 'light' ? 'light' : 'dark';
+    setTheme(resolved);
+    document.documentElement.classList.toggle('dark', resolved === 'dark');
+    // Sync cookie so subsequent SSR renders match
+    document.cookie = `df_theme=${resolved}; path=/; max-age=31536000; SameSite=Lax`;
+  }, []);
+
+  // Global ? key listener for keyboard shortcuts modal
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+        // Don't trigger if user is typing in an input
+        if (
+          document.activeElement?.tagName === 'INPUT' ||
+          document.activeElement?.tagName === 'TEXTAREA' ||
+          (document.activeElement as HTMLElement)?.isContentEditable
+        ) {
+          return;
+        }
+        e.preventDefault();
+        setShowShortcuts(true);
+      }
+      if (e.key === 'Escape') setShowShortcuts(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, []);
 
   const closeMobile = () => setMobileOpen(false);
@@ -118,11 +140,21 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             </button>
             <button
               type="button"
+              onClick={() => setShowShortcuts(true)}
+              className="rounded-lg px-2 py-2 text-sm font-bold text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+              aria-label="Keyboard shortcuts"
+              title="Keyboard shortcuts"
+            >
+              ?
+            </button>
+            <button
+              type="button"
               onClick={() =>
                 setTheme((t) => {
                   const next = t === 'dark' ? 'light' : 'dark';
                   document.documentElement.classList.toggle('dark', next === 'dark');
                   localStorage.setItem('df_theme', next);
+                  document.cookie = `df_theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
                   return next;
                 })
               }
@@ -317,6 +349,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       </footer>
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <KeyboardShortcuts open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <OnboardingModal />
       <InstallPrompt />
     </div>

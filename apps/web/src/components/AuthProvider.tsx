@@ -22,6 +22,7 @@ import {
   useState,
 } from 'react';
 import { useWeb3 } from '../components/Web3Provider';
+import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
 import { engageNostr, publishNoteToNostr } from '../lib/nostr';
@@ -77,6 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
+  const { scheduled: scheduledPosts, schedulePost, cancelSchedule, publishNow } =
+    useScheduledPosts();
 
   const { account: wagmiAddress, isConnected, availableWallets } = useWeb3();
   const { signInWithEthereum, signingIn: walletSigningIn } = useWalletSignIn();
@@ -602,6 +605,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         onNostrBridge={async (text) => {
           if (!nostrPublicId) return;
           await publishNoteToNostr({ text, publicId: nostrPublicId });
+        }}
+        onSchedule={(text, targets, scheduledAt) =>
+          schedulePost(text, targets, scheduledAt)
+        }
+        scheduledPosts={scheduledPosts}
+        onCancelSchedule={(id) => cancelSchedule(id)}
+        onPublishScheduledNow={(id) => {
+          const post = publishNow(id);
+          if (post) {
+            handlePublish(post.text, post.targets);
+          }
         }}
       />
     </AuthContext.Provider>

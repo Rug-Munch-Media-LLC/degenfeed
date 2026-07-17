@@ -1,7 +1,7 @@
 import { type IDBPDatabase, openDB } from 'idb';
 
 const DB_NAME = 'degenfeed';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 export let dbPromise: Promise<IDBPDatabase<unknown>> | null = null;
 
@@ -48,6 +48,10 @@ export async function getDb(): Promise<IDBPDatabase<unknown>> {
         }
         if (!db.objectStoreNames.contains('subscriptions')) {
           db.createObjectStore('subscriptions', { keyPath: 'identityId' });
+        }
+        if (!db.objectStoreNames.contains('blocked')) {
+          const store = db.createObjectStore('blocked', { keyPath: ['targetId', 'blockedBy'] });
+          store.createIndex('blockedBy', 'blockedBy');
         }
       },
     });
