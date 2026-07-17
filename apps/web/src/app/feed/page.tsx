@@ -189,7 +189,7 @@ export default function FeedPage() {
         }
 
         if (feed.length > 0) {
-          lastPostIdRef.current = feed[0].id;
+          lastPostIdRef.current = feed[0]?.id ?? '';
         }
         setPosts(feed);
         setFeedMeta(data.meta || {});

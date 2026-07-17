@@ -7,6 +7,7 @@ packages:
 
 allowBuilds:
   '@biomejs/biome': true
+  '@bundled-es-modules/glob': set this to true or false
   '@reown/appkit': true
   '@stellar/stellar-sdk': true
   blake-hash: true
@@ -14,6 +15,7 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   sharp: true
+  style-dictionary: set this to true or false
   tiny-secp256k1: true
   usb: true
   utf-8-validate: true

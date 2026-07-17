@@ -1,0 +1,26 @@
+# ── Next.js build artifacts ──────────────────────────────────────
+.next/
+out/
+.cache/
+
+# ── Cloudflare Pages ─────────────────────────────────────────────
+.wrangler/
+.turbo/
+
+# ── Testing ─────────────────────────────────────────────────────
+coverage/
+.vite/
+
+# ── TypeScript ──────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ── Environment ─────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+.env.development
+!.env.example
+
+# ── Misc ────────────────────────────────────────────────────────
+*.log
+node_modules/

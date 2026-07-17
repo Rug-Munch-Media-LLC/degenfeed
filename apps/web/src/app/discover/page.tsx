@@ -111,11 +111,12 @@ export default function DiscoverPage() {
                       rel="noopener"
                       className="card flex items-center gap-3 transition-colors hover:border-degen-500/30"
                     >
-                      <img
+                      <Image
                         src={a.avatar}
                         alt={a.display_name}
+                        width={48}
+                        height={48}
                         className="h-10 w-10 rounded-full bg-gray-800 object-cover"
-                        loading="lazy"
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">

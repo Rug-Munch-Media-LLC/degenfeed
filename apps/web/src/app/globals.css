@@ -292,3 +292,10 @@
   background: linear-gradient(135deg, rgba(234, 179, 8, 0.08), var(--color-glass-bg));
   border: 1px solid rgba(234, 179, 8, 0.2);
 }
+
+/* Ensure next/image plays nice with existing Tailwind classes */
+.next-image-fix img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}

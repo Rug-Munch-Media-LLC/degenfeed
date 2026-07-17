@@ -10,6 +10,7 @@ import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { formatTimeAgo } from '@degenfeed/utils';
 import { memo, useEffect, useState } from 'react';
 import { ProtocolBadge } from './ProtocolBadge';
+import Image from 'next/image';
 
 interface FrameData {
   image: string;
@@ -40,11 +41,12 @@ function FrameCard({ url }: { url: string }) {
 
   return (
     <div className="mt-2 overflow-hidden rounded-xl border border-purple-500/20">
-      <img
+      <Image
         src={frame.image}
         alt={frame.title || 'Frame'}
+        width={400}
+        height={300}
         className="w-full object-cover"
-        loading="lazy"
       />
       {frame.buttons.length > 0 && (
         <div className="flex gap-1 border-t border-white/5 p-1.5">
@@ -125,12 +127,12 @@ function LinkPreview({ embed }: { embed: Embed }) {
       onKeyDown={(e) => e.stopPropagation()}
     >
       {image && (
-        <div className="aspect-video w-full overflow-hidden">
-          <img
+        <div className="relative aspect-video w-full overflow-hidden">
+          <Image
             src={image}
             alt={title || ''}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         </div>
       )}
@@ -150,7 +152,7 @@ function ImageGrid({ images }: { images: string[] }) {
   if (images.length === 1) {
     return (
       <div className="mt-2 max-h-80 overflow-hidden rounded-xl">
-        <img src={images[0]} alt="" className="h-full w-full object-cover" loading="lazy" />
+        <Image src={images[0]} alt="" width={200} height={200} className="h-full w-full object-cover" />
       </div>
     );
   }
@@ -158,12 +160,13 @@ function ImageGrid({ images }: { images: string[] }) {
     return (
       <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
         {images.map((url) => (
-          <img
+          <Image
             key={url}
             src={url}
             alt=""
+            width={200}
+            height={200}
             className="aspect-square w-full object-cover"
-            loading="lazy"
           />
         ))}
       </div>
@@ -173,7 +176,7 @@ function ImageGrid({ images }: { images: string[] }) {
     <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
       {images.slice(0, 4).map((url, idx) => (
         <div key={url} className="relative aspect-square">
-          <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+          <Image src={url} alt="" width={200} height={200} className="h-full w-full object-cover" />
           {idx === 3 && images.length > 4 && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm font-bold text-white">
               +{images.length - 4}
@@ -347,14 +350,15 @@ export const PostCard = memo(function PostCard({
     >
       {/* Author row */}
       <div className="mb-2 flex items-center gap-3">
-        <img
+        <Image
           src={
             post.author.avatarUrl ||
             'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23333%22/%3E%3Ctext x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22%3E%40%3C/text%3E%3C/svg%3E'
           }
           alt={post.author.displayName}
+          width={32}
+          height={32}
           className="h-8 w-8 rounded-full bg-gray-800 object-cover"
-          loading="lazy"
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

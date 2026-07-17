@@ -16,8 +16,12 @@
   "dependencies": {
     "@degenfeed/storage": "workspace:*",
     "@degenfeed/types": "workspace:*",
+    "@degenfeed/utils": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
+  },
+  "peerDependencies": {
+    "next": "^16.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.2",

@@ -1,0 +1,21 @@
+# ── Cloudflare Workers build ─────────────────────────────────────
+dist/
+.wrangler/
+.turbo/
+
+# ── Testing ─────────────────────────────────────────────────────
+coverage/
+.vite/
+
+# ── TypeScript ──────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ── Environment ─────────────────────────────────────────────────
+.env
+.env.local
+.dev.vars
+!.dev.vars.example
+
+# ── Misc ────────────────────────────────────────────────────────
+*.log
+node_modules/
