@@ -87,20 +87,20 @@ export function sanitizePosts(posts: UnifiedPost[]): UnifiedPost[] {
     .filter((p) => {
       // Auto-reject: banned users
       if (p.author.id && isBannedUser(p.author.id)) {
-        (p as Record<string, unknown>).moderationAction = MODERATION_TAGS.BANNED_USER;
+        (p as unknown as Record<string, unknown>).moderationAction = MODERATION_TAGS.BANNED_USER;
         return false;
       }
 
       // Auto-reject: removed posts
       if (isRemovedPost(p.id)) {
-        (p as Record<string, unknown>).moderationAction = MODERATION_TAGS.REMOVED_POST;
+        (p as unknown as Record<string, unknown>).moderationAction = MODERATION_TAGS.REMOVED_POST;
         return false;
       }
 
       // Auto-reject: definite spam (score >= 0.9)
       const { score: spamScoreV } = spamScore(p);
       if (spamScoreV >= 0.9) {
-        (p as Record<string, unknown>).moderationAction = MODERATION_TAGS.AUTO_REJECTED;
+        (p as unknown as Record<string, unknown>).moderationAction = MODERATION_TAGS.AUTO_REJECTED;
         return false;
       }
 
@@ -108,31 +108,31 @@ export function sanitizePosts(posts: UnifiedPost[]): UnifiedPost[] {
     })
     .map((p) => {
       const enriched = enrichPostNiches(p);
-      enriched.dfUri = getPostContentUri(enriched);
+      enriched.dfUri = getPostContentUri(enriched as unknown as { protocol: string; id: string; instance?: string; raw?: Record<string, unknown> | null });
 
       // Attach spam score metadata for downstream ranking
       const { score, signals } = spamScore(p);
-      (enriched as Record<string, unknown>).spamScore = score;
-      (enriched as Record<string, unknown>).spamSignals = signals;
+      (enriched as unknown as Record<string, unknown>).spamScore = score;
+      (enriched as unknown as Record<string, unknown>).spamSignals = signals;
 
       // Auto-flag: borderline spam (0.8 <= score < 0.9)
       if (score >= 0.8 && score < 0.9) {
-        (enriched as Record<string, unknown>).moderationAction = MODERATION_TAGS.FLAGGED;
+        (enriched as unknown as Record<string, unknown>).moderationAction = MODERATION_TAGS.FLAGGED;
         addFlaggedPost(enriched.id);
       }
 
       // Auto-flag: known scam patterns from moderation config
       const modCheck = checkText(enriched.text);
       if (modCheck.flag && !modCheck.reject) {
-        (enriched as Record<string, unknown>).moderationAction = MODERATION_TAGS.FLAGGED;
-        (enriched as Record<string, unknown>).moderationReasons = modCheck.reasons;
+        (enriched as unknown as Record<string, unknown>).moderationAction = MODERATION_TAGS.FLAGGED;
+        (enriched as unknown as Record<string, unknown>).moderationReasons = modCheck.reasons;
         addFlaggedPost(enriched.id);
       }
 
       // Auto-reject: certain scam patterns
       if (modCheck.reject) {
-        (enriched as Record<string, unknown>).moderationAction = MODERATION_TAGS.AUTO_REJECTED;
-        (enriched as Record<string, unknown>).moderationReasons = modCheck.reasons;
+        (enriched as unknown as Record<string, unknown>).moderationAction = MODERATION_TAGS.AUTO_REJECTED;
+        (enriched as unknown as Record<string, unknown>).moderationReasons = modCheck.reasons;
         return null as unknown as UnifiedPost; // filtered below
       }
 

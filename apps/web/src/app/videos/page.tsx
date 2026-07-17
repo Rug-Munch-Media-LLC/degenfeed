@@ -1,8 +1,7 @@
 'use client';
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { ErrorBoundary, getProtocolColor } from '@degenfeed/ui';
-import { VideoPlayer } from '@degenfeed/ui';
+import { ErrorBoundary, getProtocolColor, PeerTubeTipOverlay, VideoPlayer } from '@degenfeed/ui';
 import { formatTimeAgo, parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -52,18 +51,16 @@ const VideoCard = memo(function VideoCard({
   // Detect YouTube ID from text as fallback
   const textYoutubeId = useMemo(() => {
     if (videoInfo) return null;
-    const match =
-      post.text.match(/(?:v=|\/|youtu\.be\/)([\w-]{11})/);
+    const match = post.text.match(/(?:v=|\/|youtu\.be\/)([\w-]{11})/);
     return match?.[1] ?? null;
   }, [post.text, videoInfo]);
 
   const isYouTube = videoInfo?.platform === 'youtube' || !!textYoutubeId;
   const youtubeId = videoInfo?.platform === 'youtube' ? videoInfo.id : (textYoutubeId ?? undefined);
-  const isShort =
-    videoInfo?.platform === 'youtube' && /shorts\//.test(videoInfo.url);
+  const isShort = videoInfo?.platform === 'youtube' && /shorts\//.test(videoInfo.url);
 
   useEffect(() => {
-    if (isShort || videoInfo?.platform === 'youtube' && /shorts\//.test(videoInfo.url)) {
+    if (isShort || (videoInfo?.platform === 'youtube' && /shorts\//.test(videoInfo.url))) {
       setIsVertical(true);
     }
   }, [videoInfo, isShort]);
@@ -73,8 +70,7 @@ const VideoCard = memo(function VideoCard({
     ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`
     : null;
 
-  const authorHandle =
-    post.author.handles[post.protocol] ?? post.author.id.slice(0, 16);
+  const authorHandle = post.author.handles[post.protocol] ?? post.author.id.slice(0, 16);
 
   // Only use grid/video layout distinction
   const isShortForm = isVertical || isShort;
@@ -104,28 +100,12 @@ const VideoCard = memo(function VideoCard({
           showMetadata={false}
         />
       ) : videoInfo?.platform === 'peertube' ? (
-        /* PeerTube handled by PeerTubeEmbed in the feed, here we show a link */
-        <a
-          href={videoInfo.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block aspect-video bg-[var(--color-muted)] flex items-center justify-center"
-        >
-          <div className="text-center">
-            <svg
-              width="40"
-              height="40"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="mx-auto mb-2 text-gray-600"
-              aria-hidden="true"
-            >
-              <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
-            </svg>
-            <p className="text-xs text-gray-500">PeerTube video</p>
-          </div>
-        </a>
+        /* PeerTube — show tip button and link */
+        <PeerTubeVideoCard
+          videoInfo={videoInfo}
+          title={post.text}
+          channelName={post.author.displayName}
+        />
       ) : (
         /* Fallback: maybe an image link that's not a video embed */
         youtubeThumb && (
@@ -140,7 +120,13 @@ const VideoCard = memo(function VideoCard({
             {/* Play icon overlay */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M8 5V19L19 12L8 5Z" />
                 </svg>
               </div>
@@ -190,6 +176,114 @@ const VideoCard = memo(function VideoCard({
           <span>{formatCount(post.metrics.reposts)} reposts</span>
           {post.metrics.quotes > 0 && <span>{formatCount(post.metrics.quotes)} zaps</span>}
         </div>
+      </div>
+    </div>
+  );
+});
+
+// ─── PeerTube Video Card ──────────────────────────────────────────────────
+
+interface PeerTubeVideoCardProps {
+  videoInfo: VideoInfo;
+  title: string;
+  channelName: string;
+}
+
+const PeerTubeVideoCard = memo(function PeerTubeVideoCard({
+  videoInfo,
+  title,
+  channelName,
+}: PeerTubeVideoCardProps) {
+  const [tipData, setTipData] = useState<{ count: number; total: number } | null>(null);
+  const [showTip, setShowTip] = useState(false);
+
+  const uuid = videoInfo.platform === 'youtube' ? videoInfo.id : (videoInfo.platform === 'peertube' ? videoInfo.uuid : undefined);
+  const instanceDomain = videoInfo.platform === 'peertube' ? videoInfo.instance : 'video.degenfeed.xyz';
+
+  useEffect(() => {
+    if (!uuid) return;
+    let cancelled = false;
+    fetch(`/api/peertube/tip/stats?videoId=${encodeURIComponent(uuid)}`)
+      .then((r) => (r.ok ? (r.json() as Promise<{ count: number; totalAmount: number }>) : null))
+      .then((data) => {
+        if (!cancelled && data) {
+          setTipData({ count: data.count, total: data.totalAmount });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [uuid]);
+
+  const channelSlug = channelName.toLowerCase().replace(/\s+/g, '-');
+
+  return (
+    <div className="relative aspect-video bg-[var(--color-muted)] flex items-center justify-center overflow-hidden">
+      <a
+        href={videoInfo.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute inset-0 flex items-center justify-center group z-10"
+      >
+        <div className="text-center">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="mx-auto mb-2 text-gray-600 group-hover:text-degen-400 transition-colors"
+            aria-hidden="true"
+          >
+            <rect
+              x="4"
+              y="4"
+              width="16"
+              height="16"
+              rx="3"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
+          </svg>
+          <p className="text-xs text-gray-500 group-hover:text-degen-400 transition-colors">
+            PeerTube video
+          </p>
+        </div>
+      </a>
+
+      {/* ⚡ Tip button in bottom-right */}
+      <div className="absolute bottom-2 right-2 z-20">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setShowTip((v) => !v);
+          }}
+          className="inline-flex items-center gap-1 rounded-full bg-degen-500/20 px-2 py-1 text-[10px] font-medium text-degen-400 hover:bg-degen-500/30 transition-colors"
+          aria-label="Tip creator"
+        >
+          <span>⚡</span>
+          <span>
+            {tipData && tipData.count > 0
+              ? `${tipData.count} tips ($${tipData.total.toFixed(2)})`
+              : 'Tip'}
+          </span>
+        </button>
+        {showTip && (
+          <div className="absolute bottom-full right-0 mb-2">
+            <PeerTubeTipOverlay
+              videoId={uuid ?? ''}
+              creatorName={channelName}
+              creatorChannel={channelSlug}
+              videoTitle={title}
+              instanceDomain={instanceDomain}
+              initialTipCount={tipData?.count ?? 0}
+              initialTipTotal={tipData?.total ?? 0}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -262,9 +356,7 @@ export default function VideosPage() {
         {/* ── Header ── */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">
-              Video Feed
-            </p>
+            <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">Video Feed</p>
             <h1 className="text-2xl font-bold text-[var(--color-fg)]">Video</h1>
             <p className="mt-1 text-sm text-gray-500">
               93 YouTube channels, PeerTube, and video content from all protocols
@@ -309,13 +401,22 @@ export default function VideosPage() {
                 aria-hidden="true"
                 className="text-gray-600"
               >
-                <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                <rect
+                  x="4"
+                  y="4"
+                  width="16"
+                  height="16"
+                  rx="3"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
                 <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
               </svg>
             </div>
             <p className="text-gray-500">No videos found.</p>
             <p className="mt-1 text-sm text-gray-600">
-              Video content appears here as it&apos;s discovered from RSS, YouTube, and PeerTube feeds.
+              Video content appears here as it&apos;s discovered from RSS, YouTube, and PeerTube
+              feeds.
             </p>
             <button type="button" onClick={load} className="btn-secondary mt-4 text-sm">
               Refresh

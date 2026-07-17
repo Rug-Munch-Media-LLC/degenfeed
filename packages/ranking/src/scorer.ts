@@ -183,7 +183,7 @@ export function checkDiversity(
  * in a row.  Takes a scored list and redistributes it so each protocol
  * gets a turn in round-robin fashion.
  */
-export function interleaveByProtocol<T extends { protocol: string; score?: number }>(
+export function interleaveByProtocol<T extends { protocol: string }>(
   posts: T[],
 ): T[] {
   if (posts.length <= 2) return posts;
@@ -204,7 +204,8 @@ export function interleaveByProtocol<T extends { protocol: string; score?: numbe
     for (const key of keys) {
       const group = groups.get(key);
       if (group && i < group.length) {
-        result.push(group[i]);
+        const item = group[i]!;
+        result.push(item);
       }
     }
   }

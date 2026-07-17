@@ -15,6 +15,7 @@
 
 import { fetchPeerTubeVideo, parsePeerTubeUrl } from '@degenfeed/utils';
 import { memo, useEffect, useState } from 'react';
+import { PeerTubeTipOverlay } from './PeerTubeTipOverlay';
 import { VideoPlayer } from './VideoPlayer';
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -34,6 +35,12 @@ export interface PeerTubeEmbedProps {
   instanceDomain?: string;
   /** UUID of the video on the instance */
   uuid?: string;
+  /** Tip count (from API) */
+  tipCount?: number;
+  /** Total tip amount in USD */
+  tipTotal?: number;
+  /** If true, renders in live-streaming mode */
+  isLive?: boolean;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -64,7 +71,14 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
   thumbnail: propThumbnail,
   instanceDomain: externalDomain,
   uuid: externalUuid,
+  tipCount: propTipCount,
+  tipTotal: propTipTotal,
+  isLive: propIsLive,
 }: PeerTubeEmbedProps) {
+  // ── Tip overlay state ──
+  const [showTipOverlay, setShowTipOverlay] = useState(false);
+  const [fetchedTipCount, setFetchedTipCount] = useState(propTipCount ?? 0);
+  const [fetchedTipTotal, setFetchedTipTotal] = useState(propTipTotal ?? 0);
   const instanceDomain = externalDomain ?? extractInstanceFromUrl(url);
   const uuid = externalUuid ?? parsePeerTubeUrl(url)?.uuid;
 
@@ -123,12 +137,34 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
     };
   }, [instanceDomain, uuid, url]);
 
+  // ── Fetch tip stats when video is known ──
+  useEffect(() => {
+    if (!uuid || !instanceDomain) return;
+    let cancelled = false;
+    fetch(`/api/peertube/tip/stats?videoId=${encodeURIComponent(uuid)}`)
+      .then((r) => (r.ok ? (r.json() as Promise<{ count: number; totalAmount: number }>) : null))
+      .then((data) => {
+        if (!cancelled && data) {
+          setFetchedTipCount(data.count);
+          setFetchedTipTotal(data.totalAmount);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [uuid, instanceDomain]);
+
   // ── Derived values ──
   const displayTitle = videoData?.name ?? propTitle ?? 'Video';
   const displayChannel = videoData?.channel ?? propChannelName;
   const displayViews = videoData?.views ?? propViews;
   const displayLikes = videoData?.likes ?? propLikes;
   const thumbnailUrl = videoData?.thumbnail ?? propThumbnail;
+
+  const tipCount = fetchedTipCount;
+  const tipTotal = fetchedTipTotal;
+  const isLive = propIsLive ?? false;
 
   // ── Build embed URL for iframe fallback ──
   const embedUrl = uuid ? `https://${instanceDomain}/videos/embed/${uuid}` : url;
@@ -137,17 +173,34 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
     <div className="mt-3 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]">
       {/* ── Video player area ── */}
       {!apiError && videoData?.directUrl ? (
-        <VideoPlayer
-          src={videoData.directUrl}
-          poster={thumbnailUrl}
-          title={displayTitle}
-          platform="direct"
-          aspectRatio="16:9"
-          showMetadata={false}
-          channelName={displayChannel}
-          views={displayViews}
-          likes={displayLikes}
-        />
+        <div className="relative">
+          <VideoPlayer
+            src={videoData.directUrl}
+            poster={thumbnailUrl}
+            title={displayTitle}
+            platform="direct"
+            aspectRatio="16:9"
+            showMetadata={false}
+            channelName={displayChannel}
+            views={displayViews}
+            likes={displayLikes}
+          />
+          {/* ⚡ Tip overlay during playback */}
+          {(showTipOverlay || isLive) && (
+            <div className="absolute bottom-16 right-3 z-30">
+              <PeerTubeTipOverlay
+                videoId={uuid ?? ''}
+                creatorName={displayChannel || displayTitle}
+                creatorChannel={(displayChannel || displayTitle).toLowerCase().replace(/\s+/g, '-')}
+                videoTitle={displayTitle}
+                instanceDomain={instanceDomain}
+                isLive={isLive}
+                initialTipCount={tipCount}
+                initialTipTotal={tipTotal}
+              />
+            </div>
+          )}
+        </div>
       ) : apiError && uuid ? (
         /* ── Fallback: Iframe embed ── */
         <div className="relative aspect-video w-full overflow-hidden bg-[var(--color-card)]">
@@ -160,6 +213,19 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
             title={displayTitle}
             loading="lazy"
           />
+          {/* ⚡ Tip button overlay on iframe fallback */}
+          <div className="absolute bottom-3 right-3 z-20">
+            <PeerTubeTipOverlay
+              videoId={uuid}
+              creatorName={displayChannel || displayTitle}
+              creatorChannel={(displayChannel || displayTitle).toLowerCase().replace(/\s+/g, '-')}
+              videoTitle={displayTitle}
+              instanceDomain={instanceDomain}
+              isLive={isLive}
+              initialTipCount={tipCount}
+              initialTipTotal={tipTotal}
+            />
+          </div>
         </div>
       ) : fetching ? (
         /* ── Loading skeleton ── */
@@ -242,6 +308,25 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
               {formatCount(displayLikes)}
             </span>
           )}
+
+          {/* ⚡ Tip count in metadata row */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setShowTipOverlay((v) => !v);
+            }}
+            className={`inline-flex items-center gap-1 tabular-nums transition-colors ${
+              tipCount > 0
+                ? 'text-degen-400 hover:text-degen-300'
+                : 'text-gray-500 hover:text-degen-400'
+            }`}
+            aria-label={`${tipCount} tips totaling $${tipTotal.toFixed(2)}`}
+          >
+            <span>⚡</span>
+            <span>{tipCount > 0 ? `${tipCount} tips ($${tipTotal.toFixed(2)})` : 'Tip'}</span>
+          </button>
 
           {/* Federated instance badge */}
           <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-purple-900/20 px-2 py-0.5 text-[10px] text-purple-400">

@@ -178,7 +178,7 @@ export default function FeedPage() {
 
   const [newAvailable, setNewAvailable] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const lastPostIdRef = useRef<string | null>(null);
   const [loadedLimit, setLoadedLimit] = useState(50);
   const hasMore = loadedLimit < 200;
@@ -297,7 +297,7 @@ export default function FeedPage() {
 
     if ((action === 'bookmark' || action === 'unbookmark') && post.protocol !== 'mastodon') {
       try {
-        if (action === 'bookmark') await addBookmark(postId);
+        if (action === 'bookmark') await addBookmark(postId, post.dfUri ?? '', post.protocol, post.text.slice(0, 60), post.author.displayName || '');
         else await removeBookmark(postId);
         return { ok: true };
       } catch (err) {

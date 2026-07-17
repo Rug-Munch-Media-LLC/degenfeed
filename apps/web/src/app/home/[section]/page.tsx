@@ -269,7 +269,7 @@ function SectionContent({ section }: { section: string }) {
 
     if ((action === 'bookmark' || action === 'unbookmark') && post.protocol !== 'mastodon') {
       try {
-        if (action === 'bookmark') await addBookmark(postId);
+        if (action === 'bookmark') await addBookmark(postId, post.dfUri ?? '', post.protocol, post.text.slice(0, 60), post.author.displayName || '');
         else await removeBookmark(postId);
         return { ok: true };
       } catch (err) {

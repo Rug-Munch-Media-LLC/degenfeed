@@ -5,7 +5,7 @@ import { ErrorBoundary } from '@degenfeed/ui';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../../../components/AuthProvider';
+import { useAuth } from '../../components/AuthProvider';
 
 const PROTOCOL_NAMES: Record<string, { label: string; color: string; emoji: string }> = {
   lemmy: { label: 'Lemmy', color: '#00b868', emoji: 'L' },

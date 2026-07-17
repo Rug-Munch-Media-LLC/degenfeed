@@ -79,6 +79,17 @@ export interface Env {
   ADMIN_WALLETS?: string;
   /** KV namespace for Audio Spaces data */
   SPACES?: KVNamespace;
+
+  // ─── Postiz cross-posting ───────────────────────────────────────────
+  /** Postiz API base URL (e.g. "http://postiz:3000" or "https://api.postiz.com") */
+  POSTIZ_BASE_URL?: string;
+  /** Postiz API key (from Settings > Developers > Public API) */
+  POSTIZ_API_KEY?: string;
+  /**
+   * JSON-encoded map of platform → Postiz integration ID.
+   * Example: '{"mastodon":"int-abc","bluesky":"int-def"}'
+   */
+  POSTIZ_INTEGRATIONS?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

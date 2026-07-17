@@ -439,12 +439,13 @@ export async function scoreAndRank(
   const scoreById = new Map(spamFiltered.map((s) => [s.post.id, s.breakdown]));
   const ranked: RankedPost[] = rankedPosts.map((p) => {
     const breakdown = scoreById.get(p.id);
-    if (!breakdown) return p;
+    if (!breakdown) return p as RankedPost;
     const now = Date.now();
     const ageMin = (now - p.createdAt) / 60000;
     const spam = (p as unknown as Record<string, unknown>).spamScore as number ?? 0;
+    const { score: _, ...rest } = p as unknown as Record<string, unknown>;
     return {
-      ...p,
+      ...(rest as unknown as UnifiedPost),
       score: {
         total: breakdown.total,
         recency: breakdown.recency,

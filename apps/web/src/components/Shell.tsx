@@ -23,6 +23,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/feed', label: 'Feed' },
   { href: '/trending', label: 'Trending' },
+  { href: '/leaderboard', label: '\u{1F3C6} Leaderboard' },
   { href: '/spaces', label: 'Spaces' },
   { href: '/c', label: 'Communities' },
   { href: '/news', label: 'News' },

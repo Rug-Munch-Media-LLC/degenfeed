@@ -13,6 +13,8 @@ import { AuthProvider, useAuth } from './AuthProvider';
 
 // ─── Mock external dependencies ──────────────────────────────────────
 
+import type { StoredIdentity } from '@degenfeed/storage';
+
 vi.mock('@degenfeed/storage', () => ({
   getAllIdentities: vi.fn(),
   getPrimaryIdentity: vi.fn(),
@@ -112,9 +114,9 @@ function makeIdentity(overrides: Partial<StubIdentity> & { id: string; protocol:
   };
 }
 
-function mockStorageIdentities(identities: StubIdentity[]) {
+function mockStorageIdentities(identities: StoredIdentity[]) {
   vi.mocked(storage.getAllIdentities).mockResolvedValue(identities);
-  vi.mocked(storage.getPrimaryIdentity).mockResolvedValue(identities[0] ?? null);
+  vi.mocked(storage.getPrimaryIdentity).mockResolvedValue(identities[0] ?? undefined);
 }
 
 // ─── Consumer helper ─────────────────────────────────────────────────

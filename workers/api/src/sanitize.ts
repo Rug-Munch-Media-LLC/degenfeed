@@ -9,6 +9,7 @@ export const ALLOWED_PROTOCOLS = new Set([
   'mastodon',
   'ethereum',
   'solana',
+  'lemmy',
 ]);
 
 export function hasSuspiciousPayload(value: string): boolean {

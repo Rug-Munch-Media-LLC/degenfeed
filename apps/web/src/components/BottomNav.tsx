@@ -13,6 +13,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '🏠' },
   { href: '/search', label: 'Search', icon: '🔍' },
+  { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
   { href: '/c', label: 'Communities', icon: '🌐' },
   { href: '/spaces', label: 'Spaces', icon: '🔊' },
   { href: '/trending', label: 'Trending', icon: '🔥' },

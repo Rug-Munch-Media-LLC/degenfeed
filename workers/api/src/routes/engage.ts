@@ -2,7 +2,6 @@ import { BskyClient } from '@degenfeed/bluesky-sdk';
 import { HubClient } from '@degenfeed/farcaster-sdk';
 import { LensClient } from '@degenfeed/lens-sdk';
 import { GtSClient } from '@degenfeed/mastodon-sdk';
-import { ThreadsClient } from '@degenfeed/threads-sdk';
 import type { EngagementAction } from '@degenfeed/types';
 import {
   BSKY_SOCIAL,
@@ -10,7 +9,6 @@ import {
   FARCASTER_HUBS,
   jsonResponse,
   LENS_APIS,
-  THREADS_PUBLIC,
 } from '../index';
 import { hasSuspiciousPayload, isAllowedProtocol, sanitizeString } from '../sanitize';
 
@@ -229,42 +227,16 @@ async function handleBluesky(
 
 async function handleThreads(
   action: EngagementAction,
-  uri: string,
-  target: { authorId: string; publicationId: string },
-  content: string,
+  _uri: string,
+  _target: { authorId: string; publicationId: string },
+  _content: string,
   _reaction: string,
-  auth: Record<string, string>,
+  _auth: Record<string, string>,
   _env: Env,
 ): Promise<Response> {
-  const jwt = auth.threads ?? auth.accessJwt ?? '';
-  const did = auth.threads_did ?? auth.did ?? target.authorId ?? '';
-  if (!jwt || !did) {
-    return jsonResponse(noAccountError('threads'), 401);
-  }
-
-  const cid = target.publicationId || '';
-  const client = new ThreadsClient(THREADS_PUBLIC);
-  client.setAuth(jwt);
-
-  try {
-    if (action === 'like') {
-      await client.like(uri, cid, did);
-    } else if (action === 'unlike') {
-      await client.unlike(uri, did);
-    } else if (action === 'repost') {
-      await client.repost(uri, cid, did);
-    } else if (action === 'unrepost') {
-      await client.unrepost(uri, did);
-    } else if (action === 'reply') {
-      await client.reply(uri, cid, did, content);
-    } else {
-      return jsonResponse({ ok: false, error: `${action} not supported on threads` }, 400);
-    }
-    return jsonResponse({ ok: true });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Threads engagement failed';
-    return jsonResponse({ ok: false, error: message }, 500);
-  }
+  // The official Meta Threads API does not support engagement actions
+  // (like, unlike, repost, reply). Users must engage via the Threads app.
+  return jsonResponse({ ok: false, error: `${action} not supported on threads` }, 400);
 }
 
 async function handleMastodon(

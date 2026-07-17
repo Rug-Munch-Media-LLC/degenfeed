@@ -903,7 +903,6 @@ export const VideoPlayer = memo(function VideoPlayer({
           onFullscreen={handleFullscreen}
           fullscreenSupported={fullscreenSupported}
           visible={controlsVisible}
-          playerId={playerId}
         />
       )}
 

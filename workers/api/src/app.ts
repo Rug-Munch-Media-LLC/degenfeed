@@ -67,7 +67,26 @@ import {
   handleUnlinkIdentity,
 } from './routes/identity';
 import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
+import {
+  handleLeaderboardCommunities,
+  handleLeaderboardCreators,
+  handleLeaderboardTippers,
+  handleLeaderboardTrending,
+  handleRefreshLeaderboards,
+} from './routes/leaderboard';
+import {
+  handleLemmyTipCreate,
+  handleLemmyTipLeaderboard,
+  handleLemmyTipStats,
+} from './routes/lemmy-tip';
 import { handleLinksPage } from './routes/links';
+import {
+  handleConversationMessages,
+  handleConversations,
+  handleDeleteMessage,
+  handleSendMessage,
+  handleUnreadCount,
+} from './routes/messages';
 import {
   handleBanUser,
   handleBlockSync,
@@ -84,16 +103,20 @@ import {
   handleNewsletterStatus,
   handleNewsletterSubscribe,
 } from './routes/newsletter';
-import {
-  handleConversationMessages,
-  handleConversations,
-  handleDeleteMessage,
-  handleSendMessage,
-  handleUnreadCount,
-} from './routes/messages';
 import { handleNotifications } from './routes/notifications';
 import { handleNotify } from './routes/notify';
 import { handlePostOg } from './routes/og';
+import {
+  handlePeerTubeTipCreate,
+  handlePeerTubeTipStats,
+  handlePeerTubeLeaderboard,
+} from './routes/peertube-tip';
+import {
+  handleUnifiedTipActivity,
+  handleUnifiedTipCreate,
+  handleUnifiedTipLeaderboard,
+  handleUnifiedTipStats,
+} from './routes/unified-tip';
 import { handleDiscoverPeople } from './routes/people';
 import { handlePostById } from './routes/post';
 import { handlePreferences } from './routes/preferences';
@@ -383,20 +406,36 @@ app.all('/api/tip/settings', async (c) => {
   return jsonResponse({ error: 'Method not allowed' }, 405);
 });
 
+// ─── API: Unified Tips (cross-platform ledger) ───────────────
+// Specific /api/tip/unified/* routes are registered before the generic
+// /api/tip/* handlers above never overlap — kept together for clarity.
+app.post('/api/tip/unified', async (c) =>
+  withSession(c, () => handleUnifiedTipCreate(c.req.raw, c.env)),
+);
+app.get('/api/tip/unified/stats', async (c) => handleUnifiedTipStats(c.req.raw, c.env));
+app.get('/api/tip/unified/leaderboard', async (c) => handleUnifiedTipLeaderboard(c.req.raw, c.env));
+app.get('/api/tip/unified/activity', async (c) => handleUnifiedTipActivity(c.req.raw, c.env));
+
+// ─── API: Lemmy Tips ─────────────────────────────────────────
+app.all('/api/lemmy/tip/leaderboard', async (c) => handleLemmyTipLeaderboard(c.req.raw, c.env));
+app.all('/api/lemmy/tip/stats', async (c) => handleLemmyTipStats(c.req.raw, c.env));
+app.all('/api/lemmy/tip', async (c) =>
+  withSession(c, () => handleLemmyTipCreate(c.req.raw, c.env)),
+);
+
+// ─── API: PeerTube Tips ──────────────────────────────────────
+app.post('/api/peertube/tip', async (c) => handlePeerTubeTipCreate(c.req.raw, c.env));
+app.get('/api/peertube/tip/stats', async (c) => handlePeerTubeTipStats(c.req.raw, c.env));
+app.get('/api/peertube/tip/leaderboard', async (c) => handlePeerTubeLeaderboard(c.req.raw, c.env));
+
 // ─── API: Notifications ──────────────────────────────────────
 app.all('/api/notifications', async (c) => handleNotifications(c.req.raw, c.env));
 app.all('/api/notify', async (c) => handleNotify(c.req.raw, c.env));
 
 // ─── API: Messages (DM) ─────────────────────────────────────
-app.get('/api/messages/unread', async (c) =>
-  handleUnreadCount(c.req.raw, c.env),
-);
-app.get('/api/messages/conversations', async (c) =>
-  handleConversations(c.req.raw, c.env),
-);
-app.post('/api/messages/send', async (c) =>
-  handleSendMessage(c.req.raw, c.env),
-);
+app.get('/api/messages/unread', async (c) => handleUnreadCount(c.req.raw, c.env));
+app.get('/api/messages/conversations', async (c) => handleConversations(c.req.raw, c.env));
+app.post('/api/messages/send', async (c) => handleSendMessage(c.req.raw, c.env));
 app.all('/api/messages/:id', async (c) => {
   if (c.req.method === 'GET') {
     return handleConversationMessages(c.req.raw, c.env, c.req.param('id'));
@@ -568,6 +607,15 @@ app.post('/api/translate', async (c) => handleTranslate(c.req.raw, c.env));
 
 // ─── API: Prices ────────────────────────────────────────────
 app.all('/api/prices', async (c) => handlePrices(c.req.raw, c.env));
+
+// ─── API: Leaderboard ────────────────────────────────────────
+app.get('/api/leaderboard/creators', async (c) => handleLeaderboardCreators(c.req.raw, c.env));
+app.get('/api/leaderboard/tippers', async (c) => handleLeaderboardTippers(c.req.raw, c.env));
+app.get('/api/leaderboard/trending', async (c) => handleLeaderboardTrending(c.req.raw, c.env));
+app.get('/api/leaderboard/communities', async (c) =>
+  handleLeaderboardCommunities(c.req.raw, c.env),
+);
+app.post('/api/leaderboard/refresh', async (c) => handleRefreshLeaderboards(c.env));
 
 // ─── Static redirects ──────────────────────────────────────
 for (const [from, to] of Object.entries(STATIC_REDIRECTS)) {

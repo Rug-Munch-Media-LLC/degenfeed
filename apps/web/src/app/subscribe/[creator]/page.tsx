@@ -15,7 +15,7 @@ function shortenAddress(addr: string): string {
 
 type SubscribeState =
   | { step: 'select' }
-  | { step: 'connect_wallet' }
+  | { step: 'connect_wallet'; tier: TierInfo }
   | { step: 'method_select'; tier: TierInfo }
   | { step: 'signing'; tier: TierInfo; method: string }
   | { step: 'confirming'; tier: TierInfo }
@@ -104,7 +104,7 @@ export default function SubscribePage() {
     } catch (err) {
       setSubscribeState({
         step: 'error',
-        tier: tiers[0] ?? DEFAULT_TIERS[0],
+        tier: tiers[0] ?? DEFAULT_TIERS[0] ?? { id: '', name: '', price: 0, benefits: [] },
         error: err instanceof Error ? err.message : 'Wallet connection failed',
       });
     }
