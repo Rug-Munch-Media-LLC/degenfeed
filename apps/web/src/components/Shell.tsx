@@ -20,6 +20,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/feed', label: 'Feed' },
   { href: '/trending', label: 'Trending' },
+  { href: '/c', label: 'Communities' },
   { href: '/news', label: 'News' },
   { href: '/notifications', label: 'Alerts' },
   { href: '/discover', label: 'Discover' },
@@ -293,6 +294,9 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--color-muted)' }}>
             <a href="/feed" className="transition-colors hover:text-[var(--color-fg)]">
               Feed
+            </a>
+            <a href="/c" className="transition-colors hover:text-[var(--color-fg)]">
+              Communities
             </a>
             <a href="/news" className="transition-colors hover:text-[var(--color-fg)]">
               News

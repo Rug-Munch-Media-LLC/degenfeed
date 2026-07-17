@@ -18,6 +18,12 @@ interface TopPost {
   createdAt: string;
 }
 
+interface ProtocolEngagement {
+  likes: number;
+  reposts: number;
+  replies: number;
+}
+
 interface AnalyticsData {
   followers: {
     total: number;
@@ -31,29 +37,43 @@ interface AnalyticsData {
     dayLabels: string[];
     byWeekday: number[];
     weekdayLabels: string[];
+    totalTopLevel: number;
+    totalReplies: number;
   };
   tips: {
     totalUsd: number;
     byCurrency: Record<string, number>;
+    byProtocol: Record<string, number>;
     history30d: number[];
     historyLabels: string[];
     totalDegen: number;
     totalEth: number;
     totalSol: number;
     totalBtc: number;
+    topTippers: { name: string; totalUsd: number }[];
+    last10: { amount: string; currency: string; protocol: string; createdAt: number }[];
   };
   engagement: {
     rate: number;
     totalLikes: number;
     totalReposts: number;
     totalReplies: number;
+    byProtocol: Record<string, ProtocolEngagement>;
   };
   topPosts: TopPost[];
   topTipPosts: TopPost[];
   audience: {
+    byProtocol: Record<string, number>;
     byInstance: Record<string, number>;
     locations: Record<string, number>;
+    byCommunity: { name: string; count: number }[];
   };
+  protocols: {
+    connected: string[];
+    missing: string[];
+  };
+  lastUpdated: number;
+  isMock: boolean;
 }
 
 /* ── Constants ── */
@@ -74,30 +94,48 @@ const PROTOCOL_LABELS: Record<string, string> = {
   mastodon: 'Mastodon',
 };
 
+const PROTOCOL_ORDER = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
+
 const CURRENCY_COLORS: Record<string, string> = {
   DEGEN: '#00ff41',
   ETH: '#627eea',
   SOL: '#9945ff',
   BTC: '#f7931a',
+  USDC: '#2775ca',
+  MATIC: '#8247e5',
 };
 
 const DEFAULT_ANALYTICS: AnalyticsData = {
   followers: { total: 0, byProtocol: {}, growth30d: [], growthLabels: [] },
-  posts: { total: 0, byDay: [], dayLabels: [], byWeekday: [], weekdayLabels: [] },
+  posts: {
+    total: 0,
+    byDay: [],
+    dayLabels: [],
+    byWeekday: [],
+    weekdayLabels: [],
+    totalTopLevel: 0,
+    totalReplies: 0,
+  },
   tips: {
     totalUsd: 0,
     byCurrency: {},
+    byProtocol: {},
     history30d: [],
     historyLabels: [],
     totalDegen: 0,
     totalEth: 0,
     totalSol: 0,
     totalBtc: 0,
+    topTippers: [],
+    last10: [],
   },
-  engagement: { rate: 0, totalLikes: 0, totalReposts: 0, totalReplies: 0 },
+  engagement: { rate: 0, totalLikes: 0, totalReposts: 0, totalReplies: 0, byProtocol: {} },
   topPosts: [],
   topTipPosts: [],
-  audience: { byInstance: {}, locations: {} },
+  audience: { byProtocol: {}, byInstance: {}, locations: {}, byCommunity: [] },
+  protocols: { connected: [], missing: ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'] },
+  lastUpdated: Date.now(),
+  isMock: true,
 };
 
 type TabId = 'overview' | 'content' | 'audience' | 'earnings';
@@ -140,6 +178,17 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function formatTimeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 function protocolBadge(protocol: string): { bg: string; fg: string; label: string } {
   const color = PROTOCOL_COLORS[protocol] || '#666';
   return { bg: `${color}18`, fg: color, label: PROTOCOL_LABELS[protocol] || protocol };
@@ -180,11 +229,13 @@ function MiniBar({
   max,
   color,
   label,
+  sub,
 }: {
   value: number;
   max: number;
   color: string;
   label?: string;
+  sub?: string;
 }) {
   const pct = max > 0 ? (value / max) * 100 : 0;
   return (
@@ -206,6 +257,7 @@ function MiniBar({
       <span className="w-12 text-right text-xs font-medium tabular-nums text-[var(--color-fg)]">
         {formatCompact(value)}
       </span>
+      {sub && <span className="w-16 text-right text-[10px] text-[var(--color-muted)]">{sub}</span>}
     </div>
   );
 }
@@ -279,7 +331,9 @@ function Heatmap({ data, labels, color }: { data: number[]; labels: string[]; co
               }}
               title={`${labels[i]}: ${v} posts`}
             />
-            <span className="text-[9px] font-medium text-[var(--color-muted)]">{labels[i]?.slice(0, 2)}</span>
+            <span className="text-[9px] font-medium text-[var(--color-muted)]">
+              {labels[i]?.slice(0, 2)}
+            </span>
             <span className="text-[9px] tabular-nums text-[var(--color-muted)]">{v}</span>
           </div>
         );
@@ -298,7 +352,9 @@ function PostRow({ post, rank }: { post: TopPost; rank: number }) {
         {rank}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm leading-snug text-[var(--color-muted)]">{shortenPost(post.content, 80)}</p>
+        <p className="text-sm leading-snug text-[var(--color-muted)]">
+          {shortenPost(post.content, 80)}
+        </p>
         <div className="mt-1.5 flex flex-wrap items-center gap-2">
           <span
             className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
@@ -320,7 +376,9 @@ function PostRow({ post, rank }: { post: TopPost; rank: number }) {
               ✦ {formatUsd(post.tipsUsd)}
             </span>
           )}
-          <span className="ml-auto text-[9px] text-[var(--color-muted)]">{formatDate(post.createdAt)}</span>
+          <span className="ml-auto text-[9px] text-[var(--color-muted)]">
+            {formatDate(post.createdAt)}
+          </span>
         </div>
       </div>
     </div>
@@ -390,30 +448,169 @@ function PieChart({
   );
 }
 
+/* ── Protocol breakdown table ── */
+
+function ProtocolBreakdownTable({
+  followers,
+  engagement,
+  tips,
+}: {
+  followers: Record<string, number>;
+  engagement: Record<string, ProtocolEngagement>;
+  tips: Record<string, number>;
+}) {
+  const protocols = PROTOCOL_ORDER.filter(
+    (p) => followers[p] !== undefined || engagement[p] !== undefined,
+  );
+
+  if (protocols.length === 0) return null;
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-[var(--color-border)] text-[11px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+            <th className="pb-2 pr-4 text-left">Protocol</th>
+            <th className="pb-2 pr-4 text-right">Followers</th>
+            <th className="pb-2 pr-4 text-right">Engagement</th>
+            <th className="pb-2 pr-4 text-right">Likes</th>
+            <th className="pb-2 pr-4 text-right">Reposts</th>
+            <th className="pb-2 text-right">Tips (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {protocols.map((p) => {
+            const color = PROTOCOL_COLORS[p] || '#666';
+            const eng = engagement[p];
+            const totalEng = eng ? eng.likes + eng.reposts + eng.replies : 0;
+            return (
+              <tr
+                key={p}
+                className="border-b border-[var(--color-border)]/50 transition-colors hover:bg-[var(--color-overlay)]/50"
+              >
+                <td className="py-2.5 pr-4">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                    <span className="font-medium text-[var(--color-fg)]">
+                      {PROTOCOL_LABELS[p] || p}
+                    </span>
+                  </span>
+                </td>
+                <td className="py-2.5 pr-4 text-right tabular-nums text-[var(--color-fg)]">
+                  {followers[p] !== undefined ? formatCompact(followers[p]) : '—'}
+                </td>
+                <td className="py-2.5 pr-4 text-right tabular-nums text-[var(--color-fg)]">
+                  {totalEng > 0 ? formatCompact(totalEng) : '—'}
+                </td>
+                <td className="py-2.5 pr-4 text-right tabular-nums text-[var(--color-muted)]">
+                  {eng?.likes ? formatCompact(eng.likes) : '—'}
+                </td>
+                <td className="py-2.5 pr-4 text-right tabular-nums text-[var(--color-muted)]">
+                  {eng?.reposts ? formatCompact(eng.reposts) : '—'}
+                </td>
+                <td className="py-2.5 text-right tabular-nums text-degen-400">
+                  {tips[p] !== undefined ? formatUsd(tips[p]) : '—'}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ── Connect Protocols Banner ── */
+
+function ConnectProtocolsBanner({ missing }: { missing: string[] }) {
+  if (missing.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 backdrop-blur-xl">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 text-lg">✦</span>
+        <div className="flex-1 min-w-0">
+          <h3 className="mb-1 text-sm font-semibold text-yellow-400">
+            Connect more protocols for richer analytics
+          </h3>
+          <p className="mb-3 text-xs text-[var(--color-muted)]">
+            Your dashboard currently shows data from{' '}
+            {missing.length > 0
+              ? `${PROTOCOL_ORDER.length - missing.length} of ${PROTOCOL_ORDER.length} supported protocols`
+              : 'no connected protocols'}
+            . Link your accounts to see the full picture.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {missing.map((p) => (
+              <a
+                key={p}
+                href="/profile"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-medium transition-colors hover:opacity-80"
+                style={{
+                  backgroundColor: `${PROTOCOL_COLORS[p] || '#666'}20`,
+                  color: PROTOCOL_COLORS[p] || '#666',
+                }}
+              >
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: PROTOCOL_COLORS[p] }}
+                />
+                Connect {PROTOCOL_LABELS[p] || p}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Tip Row (for last 10) ── */
+
+function TipRow({
+  tip,
+}: {
+  tip: { amount: string; currency: string; protocol: string; createdAt: number };
+}) {
+  const badge = protocolBadge(tip.protocol);
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-3 py-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-degen-400">✦</span>
+        <span className="text-xs font-medium text-[var(--color-fg)]">
+          {tip.amount} {tip.currency}
+        </span>
+        <span
+          className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px]"
+          style={{ backgroundColor: badge.bg, color: badge.fg }}
+        >
+          {badge.label}
+        </span>
+      </div>
+      <span className="text-[10px] text-[var(--color-muted)]">{formatTimeAgo(tip.createdAt)}</span>
+    </div>
+  );
+}
+
 /* ── Export CSV ── */
 
 function useCsvExport(data: AnalyticsData) {
   return useCallback(() => {
     const rows: string[][] = [];
 
-    // Overview
     rows.push(['Section', 'Metric', 'Value']);
     rows.push(['Overview', 'Total Followers', String(data.followers.total)]);
     rows.push(['Overview', 'Total Posts', String(data.posts.total)]);
     rows.push(['Overview', 'Total Tips (USD)', String(data.tips.totalUsd)]);
     rows.push(['Overview', 'Engagement Rate', String(data.engagement.rate)]);
 
-    // Followers by protocol
     for (const [protocol, count] of Object.entries(data.followers.byProtocol)) {
       rows.push(['Followers by Protocol', protocol, String(count)]);
     }
-
-    // Tips by currency
     for (const [currency, amount] of Object.entries(data.tips.byCurrency)) {
       rows.push(['Tips by Currency', currency, String(amount)]);
     }
 
-    // Top posts
     rows.push(['', '', '']);
     rows.push(['Top Posts', 'Content', 'Likes', 'Reposts', 'Replies', 'Tips (USD)']);
     for (const post of data.topPosts) {
@@ -442,22 +639,30 @@ function useCsvExport(data: AnalyticsData) {
 
 export default function AnalyticsDashboard() {
   const { ready, signedInProtocols } = useAuth();
-  const { isConnected } = useWeb3();
+  const { isConnected, account: walletAddress } = useWeb3();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [data, setData] = useState<AnalyticsData>(DEFAULT_ANALYTICS);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean) || isConnected;
 
-  useEffect(() => {
-    mountedRef.current = true;
-    const fetchData = async () => {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (forceRefresh = false) => {
+      if (forceRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
       try {
-        const res = await fetch('/api/analytics');
+        const params = new URLSearchParams();
+        if (walletAddress) params.set('wallet', walletAddress);
+        if (forceRefresh) params.set('refresh', 'true');
+        const qs = params.toString();
+        const res = await fetch(`/api/analytics${qs ? `?${qs}` : ''}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as AnalyticsData;
         if (mountedRef.current) setData(json);
@@ -465,14 +670,26 @@ export default function AnalyticsDashboard() {
         if (mountedRef.current)
           setError(e instanceof Error ? e.message : 'Failed to load analytics');
       } finally {
-        if (mountedRef.current) setLoading(false);
+        if (mountedRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
-    };
+    },
+    [walletAddress],
+  );
+
+  useEffect(() => {
+    mountedRef.current = true;
     fetchData();
     return () => {
       mountedRef.current = false;
     };
-  }, []);
+  }, [fetchData]);
+
+  const handleRefresh = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
 
   const handleExport = useCsvExport(data);
 
@@ -557,7 +774,9 @@ export default function AnalyticsDashboard() {
       <div className="mx-auto max-w-5xl px-4 py-20">
         <div className="card border-red-500/20 bg-red-500/5 py-12 text-center">
           <div className="mb-3 text-3xl text-red-400">!</div>
-          <h2 className="mb-1 text-lg font-bold text-[var(--color-fg)]">Failed to load analytics</h2>
+          <h2 className="mb-1 text-lg font-bold text-[var(--color-fg)]">
+            Failed to load analytics
+          </h2>
           <p className="mb-4 text-sm text-[var(--color-muted)]">{error}</p>
           <button
             type="button"
@@ -578,28 +797,73 @@ export default function AnalyticsDashboard() {
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-fg)]">Creator Analytics</h1>
-          <p className="mt-1 text-sm text-[var(--color-muted)]">
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-fg)]">
+            Creator Analytics
+          </h1>
+          <p className="mt-1 flex items-center gap-2 text-sm text-[var(--color-muted)]">
             Your cross-protocol reach, engagement, and earnings at a glance.
+            <span className="text-[10px] text-[var(--color-muted)]">
+              Updated {formatTimeAgo(data.lastUpdated)}
+            </span>
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleExport}
-          className="btn-secondary shrink-0 gap-2 text-xs"
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-            <path
-              d="M7 1v8M4 6l3 3 3-3M2 11h10"
-              stroke="currentColor"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Export CSV
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="btn-secondary flex items-center gap-2 text-xs"
+          >
+            <svg
+              className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`}
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M1 7a6 6 0 0111-3.464M13 1v4H9M13 7a6 6 0 01-11 3.464M1 13V9h4"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {refreshing ? 'Refreshing…' : 'Refresh'}
+          </button>
+          <button
+            type="button"
+            onClick={handleExport}
+            className="btn-secondary shrink-0 gap-2 text-xs"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path
+                d="M7 1v8M4 6l3 3 3-3M2 11h10"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Export CSV
+          </button>
+        </div>
       </div>
+
+      {/* Data freshness notice for mock data */}
+      {data.isMock && data.protocols.connected.length === 0 && (
+        <div className="mb-6 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3 text-center text-xs text-yellow-400">
+          Showing demo data. Connect accounts and add{' '}
+          <code className="rounded bg-yellow-500/10 px-1 py-0.5 font-mono">?wallet=0x...</code> to
+          see your real analytics.
+        </div>
+      )}
+
+      {/* Connect Protocols Banner */}
+      {data.protocols.missing.length > 0 && data.protocols.connected.length > 0 && (
+        <div className="mb-6">
+          <ConnectProtocolsBanner missing={data.protocols.missing} />
+        </div>
+      )}
 
       {/* Tabs */}
       <div
@@ -615,7 +879,9 @@ export default function AnalyticsDashboard() {
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`relative px-5 py-3 text-sm font-medium transition-colors ${
-              activeTab === tab.id ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
+              activeTab === tab.id
+                ? 'text-degen-400'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
             }`}
           >
             {tab.label}
@@ -633,121 +899,179 @@ export default function AnalyticsDashboard() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Total Followers"
-              value={formatCompact(data.followers.total)}
-              sub={`Across ${Object.keys(data.followers.byProtocol).length} protocols`}
+              value={data.followers.total > 0 ? formatCompact(data.followers.total) : '—'}
+              sub={
+                data.followers.total > 0
+                  ? `Across ${Object.keys(data.followers.byProtocol).length} protocols`
+                  : 'Connect a protocol'
+              }
               accent="#00ff41"
             />
             <StatCard
-              label="Total Posts"
+              label="Total Posts Found"
               value={formatCompact(data.posts.total)}
-              sub="All-time"
+              sub={data.posts.total > 0 ? 'Indexed in search' : 'No posts indexed yet'}
               accent="#8a63d2"
             />
             <StatCard
               label="Tips Received"
-              value={formatUsd(data.tips.totalUsd)}
-              sub="USD equivalent"
+              value={data.tips.totalUsd > 0 ? formatUsd(data.tips.totalUsd) : '—'}
+              sub={
+                data.tips.last10.length > 0
+                  ? `${data.tips.last10.length} recent tips`
+                  : 'No tips yet'
+              }
               accent="#f7931a"
             />
             <StatCard
               label="Engagement Rate"
-              value={formatPercent(data.engagement.rate)}
-              sub={`${formatCompact(data.engagement.totalLikes)} likes, ${formatCompact(data.engagement.totalReposts)} reposts`}
+              value={data.engagement.rate > 0 ? formatPercent(data.engagement.rate) : '—'}
+              sub={`${formatCompact(data.engagement.totalLikes)} likes · ${formatCompact(data.engagement.totalReposts)} reposts`}
               accent="#1185fe"
             />
           </div>
+
+          {/* Protocol breakdown table */}
+          {Object.keys(data.followers.byProtocol).length > 0 && (
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">By Protocol</h3>
+              <ProtocolBreakdownTable
+                followers={data.followers.byProtocol}
+                engagement={data.engagement.byProtocol}
+                tips={data.tips.byProtocol}
+              />
+            </div>
+          )}
 
           {/* Charts row */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Followers by protocol */}
             <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Followers by Protocol</h3>
-              <div className="space-y-2.5">
-                {Object.entries(data.followers.byProtocol).map(([protocol, count]) => (
-                  <MiniBar
-                    key={protocol}
-                    label={PROTOCOL_LABELS[protocol] || protocol}
-                    value={count}
-                    max={maxFollowers}
-                    color={PROTOCOL_COLORS[protocol] || '#666'}
-                  />
-                ))}
-              </div>
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                Followers by Protocol
+              </h3>
+              {Object.keys(data.followers.byProtocol).length > 0 ? (
+                <div className="space-y-2.5">
+                  {Object.entries(data.followers.byProtocol).map(([protocol, count]) => (
+                    <MiniBar
+                      key={protocol}
+                      label={PROTOCOL_LABELS[protocol] || protocol}
+                      value={count}
+                      max={maxFollowers}
+                      color={PROTOCOL_COLORS[protocol] || '#666'}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-sm text-[var(--color-muted)]">
+                  Link a protocol to see follower data
+                </div>
+              )}
             </div>
 
             {/* Follower growth (sparkline summary) */}
             <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">30-Day Follower Growth</h3>
-              <div className="overflow-x-auto pb-2">
-                <BarChart
-                  data={data.followers.growth30d}
-                  labels={data.followers.growthLabels}
-                  color="#00ff41"
-                  height={100}
-                  compact
-                />
-              </div>
-              <div className="mt-3 flex items-center justify-between text-[11px] text-[var(--color-muted)]">
-                <span>{data.followers.growthLabels[0] ?? ''}</span>
-                <span className="text-degen-400">
-                  {data.followers.growth30d[0] !== undefined
-                    ? `+${data.followers.total - data.followers.growth30d[0]}`
-                    : ''}
-                </span>
-                <span>
-                  {data.followers.growthLabels[data.followers.growthLabels.length - 1] ?? ''}
-                </span>
-              </div>
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                30-Day Follower Growth
+              </h3>
+              {data.followers.growth30d.some((v) => v > 0) ? (
+                <>
+                  <div className="overflow-x-auto pb-2">
+                    <BarChart
+                      data={data.followers.growth30d}
+                      labels={data.followers.growthLabels}
+                      color="#00ff41"
+                      height={100}
+                      compact
+                    />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-[var(--color-muted)]">
+                    <span>{data.followers.growthLabels[0] ?? ''}</span>
+                    <span className="text-degen-400">
+                      {data.followers.growth30d[0] !== undefined &&
+                      data.followers.total > data.followers.growth30d[0]
+                        ? `+${data.followers.total - data.followers.growth30d[0]}`
+                        : ''}
+                    </span>
+                    <span>
+                      {data.followers.growthLabels[data.followers.growthLabels.length - 1] ?? ''}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="py-8 text-center text-sm text-[var(--color-muted)]">
+                  Follower growth data will appear here over time
+                </div>
+              )}
             </div>
           </div>
 
           {/* Posts & Engagement mini */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Posts per Day (7 days)</h3>
-              <div className="overflow-x-auto pb-2">
-                <BarChart
-                  data={data.posts.byDay.slice(-7)}
-                  labels={data.posts.dayLabels.slice(-7)}
-                  color="#8a63d2"
-                  height={80}
-                />
-              </div>
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                Posts per Day (7 days)
+              </h3>
+              {data.posts.byDay.length > 0 ? (
+                <div className="overflow-x-auto pb-2">
+                  <BarChart
+                    data={data.posts.byDay.slice(-7)}
+                    labels={data.posts.dayLabels.slice(-7)}
+                    color="#8a63d2"
+                    height={80}
+                  />
+                </div>
+              ) : (
+                <div className="py-8 text-center text-sm text-[var(--color-muted)]">
+                  Post data will appear once content is indexed
+                </div>
+              )}
             </div>
             <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Engagement Breakdown</h3>
-              <div className="space-y-2.5">
-                <MiniBar
-                  label="Likes"
-                  value={data.engagement.totalLikes}
-                  max={
-                    data.engagement.totalLikes +
-                    data.engagement.totalReposts +
-                    data.engagement.totalReplies
-                  }
-                  color="#00ff41"
-                />
-                <MiniBar
-                  label="Reposts"
-                  value={data.engagement.totalReposts}
-                  max={
-                    data.engagement.totalLikes +
-                    data.engagement.totalReposts +
-                    data.engagement.totalReplies
-                  }
-                  color="#8a63d2"
-                />
-                <MiniBar
-                  label="Replies"
-                  value={data.engagement.totalReplies}
-                  max={
-                    data.engagement.totalLikes +
-                    data.engagement.totalReposts +
-                    data.engagement.totalReplies
-                  }
-                  color="#1185fe"
-                />
-              </div>
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                Engagement Breakdown
+              </h3>
+              {data.engagement.totalLikes +
+                data.engagement.totalReposts +
+                data.engagement.totalReplies >
+              0 ? (
+                <div className="space-y-2.5">
+                  <MiniBar
+                    label="Likes"
+                    value={data.engagement.totalLikes}
+                    max={
+                      data.engagement.totalLikes +
+                      data.engagement.totalReposts +
+                      data.engagement.totalReplies
+                    }
+                    color="#00ff41"
+                  />
+                  <MiniBar
+                    label="Reposts"
+                    value={data.engagement.totalReposts}
+                    max={
+                      data.engagement.totalLikes +
+                      data.engagement.totalReposts +
+                      data.engagement.totalReplies
+                    }
+                    color="#8a63d2"
+                  />
+                  <MiniBar
+                    label="Replies"
+                    value={data.engagement.totalReplies}
+                    max={
+                      data.engagement.totalLikes +
+                      data.engagement.totalReposts +
+                      data.engagement.totalReplies
+                    }
+                    color="#1185fe"
+                  />
+                </div>
+              ) : (
+                <div className="py-8 text-center text-sm text-[var(--color-muted)]">
+                  Engagement data will appear once posts are indexed
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -758,44 +1082,60 @@ export default function AnalyticsDashboard() {
         <div className="space-y-8 animate-fade-in">
           {/* Top by engagement */}
           <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Posts by Engagement</h3>
-            <div className="space-y-2">
-              {data.topPosts.map((post, i) => (
-                <PostRow key={post.id} post={post} rank={i + 1} />
-              ))}
-            </div>
+            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+              Top Posts by Engagement
+            </h3>
+            {data.topPosts.length > 0 ? (
+              <div className="space-y-2">
+                {data.topPosts.map((post, i) => (
+                  <PostRow key={post.id} post={post} rank={i + 1} />
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-sm text-[var(--color-muted)]">
+                No posts indexed yet. Start posting across your connected protocols.
+              </div>
+            )}
           </div>
 
           {/* Top by tips */}
           <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
             <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Posts by Tips</h3>
-            <div className="space-y-2">
-              {data.topTipPosts.map((post, i) => (
-                <PostRow key={`tip-${post.id}`} post={post} rank={i + 1} />
-              ))}
-            </div>
+            {data.topTipPosts.length > 0 ? (
+              <div className="space-y-2">
+                {data.topTipPosts.map((post, i) => (
+                  <PostRow key={`tip-${post.id}`} post={post} rank={i + 1} />
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-sm text-[var(--color-muted)]">
+                No tipped posts yet. Enable tipping on your posts to appear here.
+              </div>
+            )}
           </div>
 
           {/* Posting frequency heatmap */}
-          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
-              Posting Frequency by Day of Week
-            </h3>
-            <Heatmap
-              data={data.posts.byWeekday}
-              labels={data.posts.weekdayLabels}
-              color="#00ff41"
-            />
-            <p className="mt-3 text-center text-[10px] text-[var(--color-muted)]">
-              Most active on{' '}
-              {
-                data.posts.weekdayLabels[
-                  data.posts.byWeekday.indexOf(Math.max(...data.posts.byWeekday))
-                ]
-              }
-              s
-            </p>
-          </div>
+          {data.posts.byWeekday.some((v) => v > 0) && (
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                Posting Frequency by Day of Week
+              </h3>
+              <Heatmap
+                data={data.posts.byWeekday}
+                labels={data.posts.weekdayLabels}
+                color="#00ff41"
+              />
+              <p className="mt-3 text-center text-[10px] text-[var(--color-muted)]">
+                Most active on{' '}
+                {
+                  data.posts.weekdayLabels[
+                    data.posts.byWeekday.indexOf(Math.max(...data.posts.byWeekday))
+                  ]
+                }
+                s
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -803,59 +1143,110 @@ export default function AnalyticsDashboard() {
       {activeTab === 'audience' && (
         <div className="space-y-8 animate-fade-in">
           {/* Pie chart followers by protocol */}
-          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Followers by Protocol</h3>
-            <PieChart data={data.followers.byProtocol} colorMap={PROTOCOL_COLORS} size={160} />
-          </div>
+          {Object.keys(data.audience.byProtocol).length > 0 && (
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                Followers by Protocol
+              </h3>
+              <PieChart data={data.audience.byProtocol} colorMap={PROTOCOL_COLORS} size={160} />
+            </div>
+          )}
 
           {/* Follower growth 30-day chart */}
-          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Follower Growth (30 Days)</h3>
-            <div className="overflow-x-auto pb-2">
-              <BarChart
-                data={data.followers.growth30d}
-                labels={data.followers.growthLabels}
-                color="#00ff41"
-                height={140}
-              />
+          {data.followers.growth30d.some((v) => v > 0) && (
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                Follower Growth (30 Days)
+              </h3>
+              <div className="overflow-x-auto pb-2">
+                <BarChart
+                  data={data.followers.growth30d}
+                  labels={data.followers.growthLabels}
+                  color="#00ff41"
+                  height={140}
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Audience info or connect call to action */}
+          {Object.keys(data.audience.byProtocol).length === 0 && (
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-8 text-center backdrop-blur-xl">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-overlay)] text-lg">
+                <span className="text-degen-400">◆</span>
+              </div>
+              <h3 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
+                Audience data unavailable
+              </h3>
+              <p className="mb-4 text-xs text-[var(--color-muted)]">
+                Connect protocols to see where your audience lives.
+              </p>
+              <a
+                href="/profile"
+                className="inline-flex items-center gap-2 rounded-lg bg-degen-500/20 px-4 py-2 text-xs font-medium text-degen-400 transition-colors hover:bg-degen-500/30"
+              >
+                Connect accounts
+              </a>
+            </div>
+          )}
 
           {/* Top instances */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Instances / Domains</h3>
-              <div className="space-y-2.5">
-                {Object.entries(data.audience.byInstance)
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([instance, count]) => (
-                    <MiniBar
-                      key={instance}
-                      label={instance}
-                      value={count}
-                      max={maxInstance}
-                      color="#00ff41"
-                    />
-                  ))}
+          {Object.keys(data.audience.byInstance).length > 0 && (
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+                <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                  Top Instances / Domains
+                </h3>
+                <div className="space-y-2.5">
+                  {Object.entries(data.audience.byInstance)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([instance, count]) => (
+                      <MiniBar
+                        key={instance}
+                        label={instance}
+                        value={count}
+                        max={maxInstance}
+                        color="#00ff41"
+                      />
+                    ))}
+                </div>
+              </div>
+              <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+                <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Locations</h3>
+                <div className="space-y-2.5">
+                  {Object.entries(data.audience.locations)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([location, count]) => (
+                      <MiniBar
+                        key={location}
+                        label={location}
+                        value={count}
+                        max={maxLocation}
+                        color="#8a63d2"
+                      />
+                    ))}
+                </div>
               </div>
             </div>
+          )}
+
+          {/* Communities */}
+          {data.audience.byCommunity.length > 0 && (
             <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Locations</h3>
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Communities</h3>
               <div className="space-y-2.5">
-                {Object.entries(data.audience.locations)
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([location, count]) => (
-                    <MiniBar
-                      key={location}
-                      label={location}
-                      value={count}
-                      max={maxLocation}
-                      color="#8a63d2"
-                    />
-                  ))}
+                {data.audience.byCommunity.map((c) => (
+                  <MiniBar
+                    key={c.name}
+                    label={c.name}
+                    value={c.count}
+                    max={Math.max(...data.audience.byCommunity.map((x) => x.count), 1)}
+                    color="#abfe2c"
+                  />
+                ))}
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -866,95 +1257,142 @@ export default function AnalyticsDashboard() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Total Tips (USD)"
-              value={formatUsd(data.tips.totalUsd)}
+              value={data.tips.totalUsd > 0 ? formatUsd(data.tips.totalUsd) : '—'}
               sub="All time"
               accent="#00ff41"
             />
             <StatCard
               label="$DEGEN"
-              value={formatCompact(data.tips.totalDegen)}
+              value={data.tips.totalDegen > 0 ? formatCompact(data.tips.totalDegen) : '—'}
               sub="Degen tokens"
               accent="#00ff41"
             />
             <StatCard
               label="ETH"
-              value={`${data.tips.totalEth.toFixed(2)}`}
+              value={data.tips.totalEth > 0 ? `${data.tips.totalEth.toFixed(4)}` : '—'}
               sub="Ethereum"
               accent="#627eea"
             />
             <StatCard
               label="SOL"
-              value={`${data.tips.totalSol.toFixed(2)}`}
+              value={data.tips.totalSol > 0 ? `${data.tips.totalSol.toFixed(2)}` : '—'}
               sub="Solana"
               accent="#9945ff"
             />
           </div>
 
-          {/* Tips history */}
-          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Tips Received (30 Days) — USD</h3>
-            <div className="overflow-x-auto pb-2">
-              <BarChart
-                data={data.tips.history30d}
-                labels={data.tips.historyLabels}
-                color="#f7931a"
-                height={140}
-              />
+          {/* No tips state */}
+          {data.tips.totalUsd === 0 && data.tips.last10.length === 0 && (
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-8 text-center backdrop-blur-xl">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-overlay)] text-lg">
+                <span className="text-degen-400">✦</span>
+              </div>
+              <h3 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
+                No tips received yet
+              </h3>
+              <p className="text-xs text-[var(--color-muted)]">
+                Connect wallets and enable tipping to start receiving tips across protocols.
+              </p>
             </div>
-          </div>
+          )}
 
-          {/* Tips by currency */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Tips history */}
+          {data.tips.history30d.some((v) => v > 0) && (
             <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Tips by Currency</h3>
-              <PieChart
-                data={data.tips.byCurrency as Record<string, number>}
-                colorMap={CURRENCY_COLORS}
-                size={140}
-              />
-            </div>
-            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Tips by Protocol</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-4 py-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#8e30eb]" />
-                    <span className="text-sm text-[var(--color-muted)]">Nostr (Zaps)</span>
-                  </div>
-                  <span className="text-sm font-medium tabular-nums text-[var(--color-fg)]">
-                    {formatUsd(data.tips.totalUsd * 0.42)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-4 py-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#8a63d2]" />
-                    <span className="text-sm text-[var(--color-muted)]">Farcaster (Frames)</span>
-                  </div>
-                  <span className="text-sm font-medium tabular-nums text-[var(--color-fg)]">
-                    {formatUsd(data.tips.totalUsd * 0.31)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-4 py-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#abfe2c]" />
-                    <span className="text-sm text-[var(--color-muted)]">Lens (Collects)</span>
-                  </div>
-                  <span className="text-sm font-medium tabular-nums text-[var(--color-fg)]">
-                    {formatUsd(data.tips.totalUsd * 0.18)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-4 py-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#1185fe]" />
-                    <span className="text-sm text-[var(--color-muted)]">Direct Crypto</span>
-                  </div>
-                  <span className="text-sm font-medium tabular-nums text-[var(--color-fg)]">
-                    {formatUsd(data.tips.totalUsd * 0.09)}
-                  </span>
-                </div>
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                Tips Received (30 Days) — USD
+              </h3>
+              <div className="overflow-x-auto pb-2">
+                <BarChart
+                  data={data.tips.history30d}
+                  labels={data.tips.historyLabels}
+                  color="#f7931a"
+                  height={140}
+                />
               </div>
             </div>
+          )}
+
+          {/* Tips by currency & protocol */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {Object.keys(data.tips.byCurrency).length > 0 && (
+              <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+                <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                  Tips by Currency
+                </h3>
+                <PieChart
+                  data={data.tips.byCurrency as Record<string, number>}
+                  colorMap={CURRENCY_COLORS}
+                  size={140}
+                />
+              </div>
+            )}
+
+            {Object.keys(data.tips.byProtocol).length > 0 && (
+              <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+                <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+                  Tips by Protocol (USD)
+                </h3>
+                <div className="space-y-2.5">
+                  {Object.entries(data.tips.byProtocol)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([protocol, usd]) => {
+                      const color = PROTOCOL_COLORS[protocol] || '#666';
+                      const maxTip = Math.max(...Object.values(data.tips.byProtocol), 1);
+                      return (
+                        <MiniBar
+                          key={protocol}
+                          label={PROTOCOL_LABELS[protocol] || protocol}
+                          value={Math.round(usd)}
+                          max={Math.round(maxTip)}
+                          color={color}
+                          sub={formatUsd(usd)}
+                        />
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Top tippers */}
+          {data.tips.topTippers.length > 0 && (
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Tippers</h3>
+              <div className="space-y-2">
+                {data.tips.topTippers.map((tipper, i) => (
+                  <div
+                    key={tipper.name}
+                    className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-4 py-2.5 transition-colors hover:bg-[var(--color-overlay)]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-5 text-center text-xs font-bold text-[var(--color-muted)]">
+                        #{i + 1}
+                      </span>
+                      <span className="text-sm font-medium text-[var(--color-fg)]">
+                        {tipper.name}
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-degen-400">
+                      {formatUsd(tipper.totalUsd)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Last 10 tips */}
+          {data.tips.last10.length > 0 && (
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Recent Tips</h3>
+              <div className="space-y-2">
+                {data.tips.last10.map((tip, i) => (
+                  <TipRow key={`${tip.createdAt}-${i}`} tip={tip} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -969,6 +1407,12 @@ export default function AnalyticsDashboard() {
         .vertical-labels {
           writing-mode: vertical-lr;
           text-orientation: mixed;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
         }
       `}</style>
     </div>

@@ -34,6 +34,8 @@ export type { PeerTubeEmbedProps } from './PeerTubeEmbed';
 export { PeerTubeEmbed } from './PeerTubeEmbed';
 export type { EngageHandler, EngageResult, PostCardProps } from './PostCard';
 export { PostCard } from './PostCard';
+export type { TranslationPreviewProps } from './TranslationPreview';
+export { TranslationPreview } from './TranslationPreview';
 export { PricePill, usePricesForText } from './PricePill';
 export type { ProtocolBadgeProps } from './ProtocolBadge';
 export {

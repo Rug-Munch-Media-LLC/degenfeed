@@ -34,6 +34,15 @@ import {
 import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from './routes/billing';
 import { handleBlinkTip } from './routes/blink';
 import { handleCommunities } from './routes/communities';
+import {
+  handleCommunitiesList,
+  handleCommunityCreate,
+  handleCommunityFeed,
+  handleCommunityGet,
+  handleCommunityJoin,
+} from './routes/community';
+import { handleContentResolve } from './routes/content';
+import { handleCrossReply } from './routes/cross-reply';
 import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import { handleDiscover } from './routes/discover';
 import { handleEmbedResolve } from './routes/embed';
@@ -52,10 +61,10 @@ import { handleFrameAction, handleFrameResolve } from './routes/frame';
 import { handleFundingFeed } from './routes/funding';
 import { handleRelaysHealth } from './routes/health';
 import {
-  handleResolveIdentity,
-  handleLinkIdentity,
-  handleUnlinkIdentity,
   handleGetIdentityProfile,
+  handleLinkIdentity,
+  handleResolveIdentity,
+  handleUnlinkIdentity,
 } from './routes/identity';
 import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import { handleLinksPage } from './routes/links';
@@ -79,7 +88,6 @@ import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import { handlePublish } from './routes/publish';
 import { handlePushSend, handlePushSubscribe } from './routes/push';
 import { handleRelatedPosts } from './routes/related';
-import { handleCrossReply } from './routes/cross-reply';
 import { handlePostReplies } from './routes/replies';
 import {
   handleRmiHeadlines,
@@ -104,6 +112,7 @@ import {
   handleTipSettingsGet,
   handleTipSettingsPost,
 } from './routes/tip';
+import { handleTranslate } from './routes/translate';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleX402Paywall, handleX402Verify } from './routes/x402';
 
@@ -286,9 +295,7 @@ app.all('/api/bridge/rss-to-nostr', async (c) => {
   const { handleRssToNostrBridge } = await import('./routes/publish');
   return withSession(c, () => handleRssToNostrBridge(c.req.raw, c.env));
 });
-app.all('/api/cross-reply', async (c) =>
-  withSession(c, () => handleCrossReply(c.req.raw, c.env)),
-);
+app.all('/api/cross-reply', async (c) => withSession(c, () => handleCrossReply(c.req.raw, c.env)));
 
 // ─── API: Auth ──────────────────────────────────────────────
 app.all('/api/auth/signout', async (c) => {
@@ -309,6 +316,19 @@ app.all('/api/auth/session', async (c) => {
 });
 app.all('/api/auth/wallet/nonce', async (c) => handleWalletNonce(c.req.raw, c.env));
 app.all('/api/auth/wallet/verify', async (c) => handleWalletVerify(c.req.raw, c.env));
+
+// ─── API: Bookmarks (session-gated) ─────────────────────────
+import {
+  handleBookmarkAdd,
+  handleBookmarkCheck,
+  handleBookmarkList,
+  handleBookmarkRemove,
+} from './routes/bookmarks';
+
+app.get('/api/bookmarks', async (c) => handleBookmarkList(c.req.raw, c.env));
+app.post('/api/bookmarks', async (c) => handleBookmarkAdd(c.req.raw, c.env));
+app.delete('/api/bookmarks', async (c) => handleBookmarkRemove(c.req.raw, c.env));
+app.get('/api/bookmarks/check', async (c) => handleBookmarkCheck(c.req.raw, c.env));
 
 // ─── API: Account ────────────────────────────────────────────
 app.all('/api/account/export', async (c) => handleAccountExport(c.req.raw, c.env));
@@ -390,6 +410,9 @@ app.all('/api/search/identity', async (c) => handleSearchIdentity(c.req.raw, c.e
 app.all('/api/search/index', async (c) => handleSearchIndex(c.req.raw, c.env));
 app.all('/api/search', async (c) => handleSearch(c.req.raw, c.env));
 
+// ─── API: Content Resolution (df:// URIs) ───────────────────
+app.all('/api/content/*', async (c) => handleContentResolve(c.req.raw, c.env));
+
 // ─── API: Embed ──────────────────────────────────────────────
 app.all('/api/embed/resolve', async (c) => handleEmbedResolve(c.req.raw, c.env));
 
@@ -400,11 +423,29 @@ app.all('/api/frame/action', async (c) => handleFrameAction(c.req.raw, c.env));
 // ─── API: Features ─────────────────────────────────────────
 app.all('/api/features', async (c) => handleFeatures(c.req.raw, c.env));
 
+// ─── API: Communities (cross-protocol) ──────────────────────
+app.post('/api/community', async (c) =>
+  withSession(c, () => handleCommunityCreate(c.req.raw, c.env)),
+);
+app.get('/api/community/:name', async (c) =>
+  handleCommunityGet(c.req.raw, c.env, c.req.param('name')),
+);
+app.get('/api/community/:name/feed', async (c) =>
+  handleCommunityFeed(c.req.raw, c.env, c.req.param('name')),
+);
+app.post('/api/community/:name/join', async (c) =>
+  withSession(c, () => handleCommunityJoin(c.req.raw, c.env, c.req.param('name'))),
+);
+app.get('/api/communities', async (c) => handleCommunitiesList(c.req.raw, c.env));
+
 // ─── API: Moderation ───────────────────────────────────────
 app.all('/api/moderation/sync', (c) => handleBlockSync(c.req.raw, c.env));
 
 // ─── API: Schedule ─────────────────────────────────────────
 app.all('/api/schedule', (c) => handleSchedulePost(c.req.raw, c.env));
+
+// ─── API: Translate ─────────────────────────────────────────
+app.post('/api/translate', async (c) => handleTranslate(c.req.raw, c.env));
 
 // ─── API: Prices ────────────────────────────────────────────
 app.all('/api/prices', async (c) => handlePrices(c.req.raw, c.env));

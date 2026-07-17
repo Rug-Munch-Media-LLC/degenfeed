@@ -16,10 +16,17 @@ import {
   isSpamPost,
 } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
+import { getPostContentUri } from '@degenfeed/utils';
 
-/** Drops spam posts and enriches the survivors with niche tags. */
+/** Drops spam posts, enriches with niche tags, and attaches a df:// URI. */
 export function sanitizePosts(posts: UnifiedPost[]): UnifiedPost[] {
-  return posts.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
+  return posts
+    .filter((p) => !isSpamPost(p))
+    .map((p) => {
+      const enriched = enrichPostNiches(p);
+      enriched.dfUri = getPostContentUri(enriched);
+      return enriched;
+    });
 }
 
 export function filterByCategory(posts: UnifiedPost[], category: string): UnifiedPost[] {

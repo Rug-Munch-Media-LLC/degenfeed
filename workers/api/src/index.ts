@@ -15,6 +15,7 @@ export interface Env {
   AUTH_SECRET?: string;
   CACHE?: KVNamespace;
   SUBSCRIPTIONS?: KVNamespace;
+  BOOKMARKS?: KVNamespace;
   IDENTITIES?: KVNamespace;
   GTS_CLIENT_ID?: string;
   GTS_CLIENT_SECRET?: string;
@@ -52,6 +53,8 @@ export interface Env {
   /** Optional Postmark server token for transactional email delivery */
   POSTMARK_SERVER_TOKEN?: string;
   ALLOW_DEV_OAUTH?: string;
+  /** KV namespace for cross-protocol community records */
+  COMMUNITIES?: KVNamespace;
   /** @deprecated Use PUSH_API_KEY or NEWSLETTER_API_KEY instead. Retained for backward compatibility. */
   ADMIN_API_KEY?: string;
   /** Scoped API key for push notification sending (Bearer token). */

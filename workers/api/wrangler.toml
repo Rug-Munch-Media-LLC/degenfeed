@@ -22,6 +22,11 @@ binding = "SUBSCRIPTIONS"
 id = "f7051e909e5b46cfbbea872741955828"
 preview_id = "6c8cec9665dd44fda8c869ce1e675ae8"
 
+[[kv_namespaces]]
+binding = "BOOKMARKS"
+id = "" # TODO: create with: wrangler kv:namespace create BOOKMARKS
+preview_id = "" # TODO: create with: wrangler kv:namespace create BOOKMARKS --preview
+
 # Routes — main app + api on degenfeed.xyz domain
 routes = [
   { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
