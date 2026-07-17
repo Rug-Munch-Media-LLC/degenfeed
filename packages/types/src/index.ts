@@ -124,6 +124,8 @@ export interface UnifiedPost {
   score?: PostScore;
   /** Optional paywall requirement for paid content */
   paywall?: { amount: string; recipient: string };
+  /** Number of tips received on this post */
+  tipCount?: number;
   /** Content type: article, video, image, thread, link */
   contentType?: 'article' | 'video' | 'image' | 'thread' | 'link' | 'text';
   /** Freshness flags set server-side */

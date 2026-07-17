@@ -13,7 +13,7 @@ interface ErrorBoundaryState {
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  declare state: ErrorBoundaryState;
+  state: ErrorBoundaryState = { hasError: false, error: null };
 
   // @ts-expect-error React.Component types may not include this in all versions
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {

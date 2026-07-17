@@ -7,22 +7,26 @@ import {
   unmuteIdentity,
 } from '@degenfeed/storage';
 import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { formatTimeAgo } from '@degenfeed/utils';
-import { memo, useEffect, useState } from 'react';
-import { ProtocolBadge } from './ProtocolBadge';
+import { detectTokens, formatTimeAgo } from '@degenfeed/utils';
 import Image from 'next/image';
+import { memo, useEffect, useState } from 'react';
+import { FrameEmbed } from './FrameEmbed';
+import { ProtocolBadge } from './ProtocolBadge';
+import { QuickTipButton } from './QuickTipButton';
+import { TokenChart } from './TokenChart';
 
 interface FrameData {
+  url: string;
   image: string;
   title?: string;
-  buttons: Array<{ index: number; label: string; action?: string }>;
+  buttons: Array<{ index: number; label: string; action?: string; target?: string }>;
   postUrl?: string;
   version: string;
 }
 
 function FrameCard({ url }: { url: string }) {
   const [frame, setFrame] = useState<FrameData | null>(null);
-  const [_loading, _setLoading] = useState(false);
+  const [_loading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,27 +44,13 @@ function FrameCard({ url }: { url: string }) {
   if (!frame) return null;
 
   return (
-    <div className="mt-2 overflow-hidden rounded-xl border border-purple-500/20">
-      <Image
-        src={frame.image}
-        alt={frame.title || 'Frame'}
-        width={400}
-        height={300}
-        className="w-full object-cover"
-      />
-      {frame.buttons.length > 0 && (
-        <div className="flex gap-1 border-t border-white/5 p-1.5">
-          {frame.buttons.map((b) => (
-            <span
-              key={b.index}
-              className="flex-1 rounded bg-purple-900/20 px-2 py-1 text-center text-[10px] text-purple-400"
-            >
-              {b.label}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
+    <FrameEmbed
+      url={frame.url}
+      image={frame.image}
+      title={frame.title}
+      buttons={frame.buttons}
+      postUrl={frame.postUrl}
+    />
   );
 }
 
@@ -152,7 +142,13 @@ function ImageGrid({ images }: { images: string[] }) {
   if (images.length === 1) {
     return (
       <div className="mt-2 max-h-80 overflow-hidden rounded-xl">
-        <Image src={images[0]} alt="" width={200} height={200} className="h-full w-full object-cover" />
+        <Image
+          src={images[0]}
+          alt=""
+          width={200}
+          height={200}
+          className="h-full w-full object-cover"
+        />
       </div>
     );
   }
@@ -457,6 +453,12 @@ export const PostCard = memo(function PostCard({
         )}
       </div>
 
+      {/* Inline token charts */}
+      {post.text &&
+        detectTokens(post.text).map((token, i) => (
+          <TokenChart key={`${token.symbol ?? token.address}-${i}`} {...token} compact />
+        ))}
+
       {/* Embeds */}
       {post.embeds.length > 0 && (
         <div className="mb-3">
@@ -464,15 +466,21 @@ export const PostCard = memo(function PostCard({
             const images = post.embeds.filter((e) => e.kind === 'image').map((e) => e.url);
             const links = post.embeds.filter((e) => e.kind === 'link');
             const videos = post.embeds.filter((e) => e.kind === 'video');
+            const frames = post.embeds.filter((e) => e.kind === 'frame');
             return (
               <>
                 {images.length > 0 && <ImageGrid images={images} />}
+                {/* Explicit frame embeds (server-side tagged) */}
+                {frames.map((embed) => (
+                  <FrameCard key={`frame-${embed.url}`} url={embed.url} />
+                ))}
+                {/* Fallback: farcaster links may contain frames — probe the first link */}
+                {frames.length === 0 && post.protocol === 'farcaster' && links.length > 0 && (
+                  <FrameCard url={links[0]?.url} />
+                )}
                 {links.map((embed) => (
                   <LinkPreview key={`link-${embed.url}`} embed={embed} />
                 ))}
-                {post.protocol === 'farcaster' && links.length > 0 && (
-                  <FrameCard url={links[0]?.url} />
-                )}
                 {videos.map((embed) => (
                   <a
                     key={`video-${embed.url}`}
@@ -565,18 +573,12 @@ export const PostCard = memo(function PostCard({
           ↗ Share
         </button>
         {onTip && (
-          <button
-            type="button"
-            className="ml-auto flex items-center gap-1 transition-colors hover:text-yellow-400"
-            onClick={(e) => {
-              e.stopPropagation();
-              onTip(post);
-            }}
-            aria-label="Tip this author"
-            title={`Tip ${post.author.displayName}`}
-          >
-            ⚡ Tip
-          </button>
+          <QuickTipButton
+            postId={post.id}
+            authorAddress={post.author.keys.evmAddress || post.author.keys.solanaAddress}
+            tipCount={post.tipCount}
+            onOpenModal={() => onTip(post)}
+          />
         )}
         {post.protocol === 'nostr' && post.metrics.quotes > 0 && onTip && (
           <button

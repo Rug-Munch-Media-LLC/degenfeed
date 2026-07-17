@@ -10,6 +10,8 @@ export { ComposePreview } from './ComposePreview';
 export { ErrorBoundary } from './ErrorBoundary';
 export type { FeedListProps, FeedState } from './FeedList';
 export { FeedList } from './FeedList';
+export type { FrameEmbedProps } from './FrameEmbed';
+export { FrameEmbed } from './FrameEmbed';
 export type { FundingRound } from './FundingCard';
 export { FundingCard } from './FundingCard';
 export type { Notification, NotificationBellProps } from './NotificationBell';
@@ -29,5 +31,8 @@ export {
   PROTOCOL_LABELS,
   ProtocolBadge,
 } from './ProtocolBadge';
-export type { ProtocolOption, SignInModalProps } from './SignInModal';
+export { QuickTipButton } from './QuickTipButton';
+export type { ProtocolOption, SignInModalProps, WalletOption } from './SignInModal';
 export { SignInModal } from './SignInModal';
+export type { TokenChartProps } from './TokenChart';
+export { TokenChart } from './TokenChart';

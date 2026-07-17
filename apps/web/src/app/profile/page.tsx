@@ -376,6 +376,12 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <a
+                    href="/profile/analytics"
+                    className="rounded-lg bg-degen-500/20 px-3 py-1.5 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-colors"
+                  >
+                    Analytics
+                  </a>
+                  <a
                     href="/profile/monetization"
                     className="rounded-lg bg-degen-500/20 px-3 py-1.5 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-colors"
                   >
