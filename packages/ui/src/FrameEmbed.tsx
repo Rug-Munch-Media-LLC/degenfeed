@@ -119,6 +119,8 @@ export function FrameEmbed({
           fill
           className="object-cover"
           sizes="(max-width: 600px) 100vw, 600px"
+          loading="lazy"
+          decoding="async"
         />
         {loading !== null && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">

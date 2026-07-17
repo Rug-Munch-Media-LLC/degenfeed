@@ -23,6 +23,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: '/feed', label: 'Feed' },
+  { href: '/shorts', label: '\u{1F4F1} Shorts' },
   { href: '/trending', label: 'Trending' },
   { href: '/leaderboard', label: '\u{1F3C6} Leaderboard' },
   { href: '/spaces', label: 'Spaces' },
@@ -369,7 +370,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         )}
       </header>
 
-      <main id="main" className="relative z-10 flex-1 pt-16 pb-20 lg:pb-0">
+      <main id="main" className="relative z-10 flex-1 pt-16 pb-20 lg:pb-0 animate-page-enter">
         <OnboardingProvider>
           {children}
           <OnboardingModal />
@@ -392,6 +393,9 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--color-muted)' }}>
             <a href="/feed" className="transition-colors hover:text-[var(--color-fg)]">
               Feed
+            </a>
+            <a href="/shorts" className="transition-colors hover:text-[var(--color-fg)]">
+              Shorts
             </a>
             <a href="/c" className="transition-colors hover:text-[var(--color-fg)]">
               Communities

@@ -22,6 +22,15 @@ import {
 import type { ContentProof } from '@degenfeed/types';
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+/**
+ * Schedule low-priority work during idle periods.
+ * Falls back to setTimeout if requestIdleCallback is unavailable (SSR, older browsers).
+ */
+const scheduleIdle =
+  typeof window !== 'undefined' && 'requestIdleCallback' in window
+    ? (fn: () => void) => window.requestIdleCallback(fn, { timeout: 2000 })
+    : (fn: () => void) => setTimeout(fn, 1);
 import { BlueskyPostContext } from './BlueskyPostContext';
 import { EmbedModal } from './EmbedModal';
 import { FrameEmbed } from './FrameEmbed';
@@ -195,7 +204,10 @@ function LinkPreview({ embed }: { embed: Embed }) {
             src={image}
             alt={title || ''}
             fill
+            sizes="(max-width: 640px) 100vw, 600px"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            decoding="async"
           />
         </div>
       )}
@@ -256,6 +268,8 @@ function ImageGrid({ images }: { images: string[] }) {
           width={200}
           height={200}
           className="h-full w-full object-cover"
+          loading="lazy"
+          decoding="async"
         />
       </div>
     );
@@ -271,6 +285,8 @@ function ImageGrid({ images }: { images: string[] }) {
             width={200}
             height={200}
             className="aspect-square w-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
         ))}
       </div>
@@ -280,7 +296,15 @@ function ImageGrid({ images }: { images: string[] }) {
     <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
       {images.slice(0, 4).map((url, idx) => (
         <div key={url} className="relative aspect-square">
-          <Image src={url} alt="" width={200} height={200} className="h-full w-full object-cover" />
+          <Image
+            src={url}
+            alt=""
+            width={200}
+            height={200}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
           {idx === 3 && images.length > 4 && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm font-bold text-[var(--color-fg)]">
               +{images.length - 4}
@@ -440,6 +464,7 @@ export const PostCard = memo(function PostCard({
   const [showEmbedModal, setShowEmbedModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showTranslateMenu, setShowTranslateMenu] = useState(false);
+  const [animatingLike, setAnimatingLike] = useState(false);
   const [translateTarget, setTranslateTarget] = useState<string | null>(null);
   const [translationResult, setTranslationResult] = useState<{
     translated: string;
@@ -508,14 +533,17 @@ export const PostCard = memo(function PostCard({
   useEffect(() => {
     if (!post.dfUri || !(expanded || showReply)) return;
     let cancelled = false;
-    fetch(`/api/cross-reply/status?parentPostUri=${encodeURIComponent(post.dfUri)}`)
-      .then((r) =>
-        r.ok ? (r.json() as Promise<{ total: number; byProtocol: Record<string, number> }>) : null,
-      )
-      .then((data) => {
-        if (!cancelled && data && data.total > 0) setBridgeReplies(data.byProtocol);
-      })
-      .catch(() => {});
+    scheduleIdle(() => {
+      if (cancelled) return;
+      fetch(`/api/cross-reply/status?parentPostUri=${encodeURIComponent(post.dfUri)}`)
+        .then((r) =>
+          r.ok ? (r.json() as Promise<{ total: number; byProtocol: Record<string, number> }>) : null,
+        )
+        .then((data) => {
+          if (!cancelled && data && data.total > 0) setBridgeReplies(data.byProtocol);
+        })
+        .catch(() => {});
+    });
     return () => {
       cancelled = true;
     };
@@ -529,6 +557,10 @@ export const PostCard = memo(function PostCard({
     if (!onEngage) return;
     const previous = localState;
     setLocalState((s) => applyOptimistic(s, action));
+    if (action === 'like' || action === 'unlike') {
+      setAnimatingLike(true);
+      setTimeout(() => setAnimatingLike(false), 400);
+    }
     const result = await onEngage(action, post.id, content);
     if (!result.ok) {
       setLocalState(previous);
@@ -759,7 +791,7 @@ export const PostCard = memo(function PostCard({
   return (
     <>
       <article
-        className="cursor-pointer border-b border-[var(--color-glass-border)] px-4 py-3 transition-colors hover:bg-white/[0.03]"
+        className="cursor-pointer border-b border-[var(--color-glass-border)] px-4 py-3 transition-colors hover:bg-white/[0.03] hover-lift press-effect"
         onClick={() => onClick?.(post.id)}
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && onClick) {
@@ -768,6 +800,7 @@ export const PostCard = memo(function PostCard({
           }
         }}
         aria-label={`Post by ${post.author.displayName}`}
+        style={{ transitionDuration: 'var(--duration-fast)' }}
       >
         {/* Author row */}
         <div className="mb-2 flex items-center gap-3">
@@ -780,6 +813,8 @@ export const PostCard = memo(function PostCard({
             width={32}
             height={32}
             className="h-8 w-8 rounded-full bg-[var(--color-muted)] object-cover"
+            loading="lazy"
+            decoding="async"
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -1267,14 +1302,25 @@ export const PostCard = memo(function PostCard({
         <div className="flex items-center gap-4 text-xs text-gray-500">
           <button
             type="button"
-            className={`flex items-center gap-1 transition-colors hover:text-red-400 ${localState.engagement.viewerLiked ? 'text-red-400' : ''}`}
+            className={`flex items-center gap-1 transition-colors hover:text-red-400 press-effect ${
+              localState.engagement.viewerLiked ? 'text-red-400' : ''
+            }`}
             onClick={(e) => {
               e.stopPropagation();
               void perform(localState.engagement.viewerLiked ? 'unlike' : 'like');
             }}
             aria-label={`${localState.metrics.likes} likes`}
           >
-            {localState.engagement.viewerLiked ? '❤' : '♡'} {formatCount(localState.metrics.likes)}
+            <span
+              className={`inline-block ${animatingLike ? 'animate-heart-pop' : ''}`}
+              style={{
+                transformOrigin: 'center',
+                transition: 'transform var(--duration-fast) ease-out',
+              }}
+            >
+              {localState.engagement.viewerLiked ? '❤' : '♡'}
+            </span>{' '}
+            {formatCount(localState.metrics.likes)}
           </button>
           <button
             type="button"

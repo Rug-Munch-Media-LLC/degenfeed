@@ -12,6 +12,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '🏠' },
+  { href: '/shorts', label: 'Shorts', icon: '📱' },
   { href: '/search', label: 'Search', icon: '🔍' },
   { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
   { href: '/c', label: 'Communities', icon: '🌐' },
@@ -20,7 +21,6 @@ const NAV: NavItem[] = [
   { href: '/news', label: 'News', icon: '📰' },
   { href: '/messages', label: 'Messages', icon: '💬' },
   { href: '/notifications', label: 'Alerts', icon: '🔔' },
-  { href: '/profile/bookmarks', label: 'Saved', icon: '🔖' },
 ];
 
 export function BottomNav() {

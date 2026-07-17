@@ -539,9 +539,15 @@ importers:
 
   packages/ui:
     dependencies:
+      '@degenfeed/realtime':
+        specifier: workspace:*
+        version: link:../realtime
       '@degenfeed/storage':
         specifier: workspace:*
         version: link:../storage
+      '@degenfeed/token-gate':
+        specifier: workspace:*
+        version: link:../token-gate
       '@degenfeed/types':
         specifier: workspace:*
         version: link:../types
@@ -635,6 +641,9 @@ importers:
       '@degenfeed/threads-sdk':
         specifier: workspace:*
         version: link:../../packages/threads-sdk
+      '@degenfeed/token-gate':
+        specifier: workspace:*
+        version: link:../../packages/token-gate
       '@degenfeed/types':
         specifier: workspace:*
         version: link:../../packages/types

@@ -1,6 +1,6 @@
 'use client';
 
-import { getProtocolColor, getProtocolLabel } from '@degenfeed/ui';
+import { getProtocolColor, getProtocolLabel, ListSkeleton } from '@degenfeed/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 
@@ -69,33 +69,6 @@ function shortId(id: string): string {
 
 function getOtherParticipant(participants: string[]): string {
   return participants[1] ?? participants[0] ?? '';
-}
-
-/* ─── Skeleton ──────────────────────────────────────────────── */
-
-function ConvSkeleton() {
-  return (
-    <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-4 py-3.5">
-      <div className="h-10 w-10 flex-shrink-0 animate-pulse rounded-full bg-[var(--color-card)]" />
-      <div className="flex-1 space-y-2">
-        <div className="h-3 w-24 animate-pulse rounded bg-[var(--color-card)]" />
-        <div className="h-2.5 w-36 animate-pulse rounded bg-[var(--color-card)]" />
-      </div>
-      <div className="h-3 w-10 animate-pulse rounded bg-[var(--color-card)]" />
-    </div>
-  );
-}
-
-function MessageSkeleton() {
-  return (
-    <div className="flex items-start gap-3 px-4 py-3">
-      <div className="h-8 w-8 flex-shrink-0 animate-pulse rounded-full bg-[var(--color-card)]" />
-      <div className="flex-1 space-y-2">
-        <div className="h-4 w-40 animate-pulse rounded bg-[var(--color-card)]" />
-        <div className="h-3 w-52 animate-pulse rounded bg-[var(--color-card)]" />
-      </div>
-    </div>
-  );
 }
 
 /* ─── Messages Page ─────────────────────────────────────────── */
@@ -342,9 +315,7 @@ export default function MessagesPage() {
             }`}
           >
             {loading && conversations.length === 0 ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <ConvSkeleton key={`skel-${i}`} />
-              ))
+              <ListSkeleton count={5} leading trailing />
             ) : conversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-8">
                 <span className="mb-3 text-3xl opacity-30">💬</span>
@@ -484,9 +455,7 @@ export default function MessagesPage() {
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
                   {msgLoading ? (
-                    Array.from({ length: 4 }).map((_, i) => (
-                      <MessageSkeleton key={`ms-${i}`} />
-                    ))
+                    <ListSkeleton count={4} leading={false} />
                   ) : messages.length === 0 ? (
                     <div className="flex flex-1 items-center justify-center py-16">
                       <p className="text-sm text-[var(--color-muted)]">No messages yet</p>
