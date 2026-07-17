@@ -92,6 +92,9 @@ importers:
       '@degenfeed/web3':
         specifier: workspace:*
         version: link:../../packages/web3
+      '@degenfeed/youtube-provider':
+        specifier: workspace:*
+        version: link:../../packages/youtube-provider
       '@solana/web3.js':
         specifier: ^1.98.4
         version: 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -605,6 +608,22 @@ importers:
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
+
+  packages/youtube-provider:
+    dependencies:
+      '@degenfeed/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.5.2
+        version: 2.5.2
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@26.1.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(terser@5.48.0)
 
   workers/api:
     dependencies:

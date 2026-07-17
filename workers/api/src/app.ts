@@ -52,6 +52,12 @@ import { handleContentResolve } from './routes/content';
 import { handleCrossReply } from './routes/cross-reply';
 import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import {
+  handleCuratedFeed,
+  handleEngagementFeedback,
+  handleMarkSeen,
+  handleScrollDepth,
+} from './routes/curated-feed';
+import {
   handleDiscover,
   handleDiscoverCommunities,
   handleDiscoverFeatured,
@@ -78,6 +84,7 @@ import {
   handleRedditFeed,
   handleTrendingFeed,
 } from './routes/feed';
+import { handleUnifiedFeed } from './routes/feed-unified';
 import { handleFrameAction, handleFrameResolve } from './routes/frame';
 import { handleFundingFeed } from './routes/funding';
 import { handleProtocolsHealth, handleRelaysHealth } from './routes/health';
@@ -381,9 +388,15 @@ app.all('/api/feed/newsletters', async (c) => handleNewsletterFeed(c.req.raw, c.
 app.all('/api/feed/related', async (c) => handleRelatedPosts(c.req.raw, c.env));
 app.all('/api/feed/presets', async (c) => handleFeedPresets(c.req.raw, c.env));
 app.all('/api/feed/stream', async (c) => handleStreamFeed(c.req.raw, c.env));
+app.all('/api/feed/curated', async (c) => handleCuratedFeed(c.req.raw, c.env, c.executionCtx));
+app.all('/api/feed/scroll-depth', async (c) => handleScrollDepth(c.req.raw, c.env));
+app.all('/api/feed/seen', async (c) => handleMarkSeen(c.req.raw, c.env));
+app.all('/api/feed/engagement-feedback', async (c) => handleEngagementFeedback(c.req.raw, c.env));
 app.all('/api/feed/category/:category', async (c) =>
   handleCategoryFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx),
 );
+// Unified blended feed — interleaves all sources
+app.all('/api/feed/unified', async (c) => handleUnifiedFeed(c.req.raw, c.env));
 // Feed provider catch-all — must be last /api/feed/* route
 app.all('/api/feed/:provider', async (c) =>
   handleProviderFeed(c.req.raw, c.env, c.req.param('provider')),
@@ -607,6 +620,11 @@ import { handleDeployRequest, handleDeployStatus } from './routes/deploy';
 app.all('/api/deploy/request', async (c) => handleDeployRequest(c.req.raw, c.env));
 app.all('/api/deploy/status', async (c) => handleDeployStatus(c.req.raw, c.env));
 
+// ─── API: Trending Sidebar ──────────────────────────────────
+import { handleTrendingSidebar } from './routes/trending-sidebar';
+
+app.get('/api/trending/sidebar', async (c) => handleTrendingSidebar(c.req.raw, c.env));
+
 // ─── API: Search ────────────────────────────────────────────
 app.all('/api/search/identity', async (c) => handleSearchIdentity(c.req.raw, c.env));
 app.all('/api/search/index', async (c) => handleSearchIndex(c.req.raw, c.env));
@@ -755,9 +773,15 @@ app.all('/v1/feed/newsletters', async (c) => handleNewsletterFeed(c.req.raw, c.e
 app.all('/v1/feed/related', async (c) => handleRelatedPosts(c.req.raw, c.env));
 app.all('/v1/feed/presets', async (c) => handleFeedPresets(c.req.raw, c.env));
 app.all('/v1/feed/stream', async (c) => handleStreamFeed(c.req.raw, c.env));
+app.all('/v1/feed/curated', async (c) => handleCuratedFeed(c.req.raw, c.env, c.executionCtx));
+app.all('/v1/feed/scroll-depth', async (c) => handleScrollDepth(c.req.raw, c.env));
+app.all('/v1/feed/seen', async (c) => handleMarkSeen(c.req.raw, c.env));
+app.all('/v1/feed/engagement-feedback', async (c) => handleEngagementFeedback(c.req.raw, c.env));
 app.all('/v1/feed/category/:category', async (c) =>
   handleCategoryFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx),
 );
+// V1 unified blended feed
+app.all('/v1/feed/unified', async (c) => handleUnifiedFeed(c.req.raw, c.env));
 app.all('/v1/feed/:provider', async (c) =>
   handleProviderFeed(c.req.raw, c.env, c.req.param('provider')),
 );

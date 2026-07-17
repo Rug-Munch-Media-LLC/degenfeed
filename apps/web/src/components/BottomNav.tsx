@@ -62,7 +62,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Mobile"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-card)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-card)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <div className="grid grid-cols-8">
         {NAV.map((item) => {

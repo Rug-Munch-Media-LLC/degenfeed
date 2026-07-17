@@ -65,6 +65,7 @@ export {
   saveSubscription,
 } from './subscription';
 export type {
+  LayoutDensity,
   MonetizationPreferences,
   StoredBlockedUser,
   StoredCachedPost,

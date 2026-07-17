@@ -16,7 +16,9 @@ export type Protocol =
   | 'reddit'
   | 'ethereum'
   | 'ponder'
-  | 'solana';
+  | 'solana'
+  | 'peertube'
+  | 'youtube';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */
@@ -145,6 +147,14 @@ export interface UnifiedPost {
   isNew?: boolean;
   isHot?: boolean;
   isTrending?: boolean;
+  /** Community context (lemmy, reddit, etc.) */
+  community?: {
+    name: string;
+    title?: string;
+    actorId?: string;
+    icon?: string;
+    instance?: string;
+  };
   /** Universal df:// URI for cross-protocol addressing, sharing, and bookmarking */
   dfUri?: string;
   /** On-chain content permanence proof (Arweave/IPFS) */

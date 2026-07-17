@@ -286,6 +286,72 @@ export default function PreferencesPage() {
         )}
       </div>
 
+      {/* ── Layout Density ── */}
+      <div className="card mb-4">
+        <h2 className="mb-3 text-sm font-semibold text-degen-400">Layout density</h2>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Comfortable */}
+          <button
+            type="button"
+            onClick={() => update({ layoutDensity: 'comfortable' })}
+            className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+              prefs.layoutDensity === 'comfortable'
+                ? 'border-degen-500 bg-degen-500/10 shadow-[0_0_12px_rgba(34,197,94,0.15)]'
+                : 'border-[var(--color-border)] bg-[var(--color-muted)] hover:border-degen-500/30'
+            }`}
+            aria-pressed={prefs.layoutDensity === 'comfortable'}
+          >
+            {prefs.layoutDensity === 'comfortable' && (
+              <span className="absolute right-2 top-2 text-degen-400 text-xs font-bold">✓</span>
+            )}
+            <div className="mb-2 text-[11px] font-semibold text-[var(--color-fg)]">Comfortable</div>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <div className="h-6 w-6 shrink-0 rounded-full bg-degen-500/30" />
+                <div className="h-2 flex-1 rounded-full bg-[var(--color-fg)]/20" />
+              </div>
+              <div className="h-3 rounded bg-[var(--color-fg)]/10" />
+              <div className="flex gap-3">
+                <div className="h-2 w-6 rounded bg-red-400/30" />
+                <div className="h-2 w-6 rounded bg-green-400/30" />
+                <div className="h-2 w-6 rounded bg-blue-400/30" />
+              </div>
+            </div>
+            <div className="mt-2 text-[10px] text-gray-500">Relaxed spacing. More breathing room.</div>
+          </button>
+
+          {/* Compact */}
+          <button
+            type="button"
+            onClick={() => update({ layoutDensity: 'compact' })}
+            className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+              prefs.layoutDensity === 'compact'
+                ? 'border-degen-500 bg-degen-500/10 shadow-[0_0_12px_rgba(34,197,94,0.15)]'
+                : 'border-[var(--color-border)] bg-[var(--color-muted)] hover:border-degen-500/30'
+            }`}
+            aria-pressed={prefs.layoutDensity === 'compact'}
+          >
+            {prefs.layoutDensity === 'compact' && (
+              <span className="absolute right-2 top-2 text-degen-400 text-xs font-bold">✓</span>
+            )}
+            <div className="mb-2 text-[11px] font-semibold text-[var(--color-fg)]">Compact</div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <div className="h-5 w-5 shrink-0 rounded-full bg-degen-500/30" />
+                <div className="h-1.5 flex-1 rounded-full bg-[var(--color-fg)]/20" />
+              </div>
+              <div className="h-2 rounded bg-[var(--color-fg)]/10" />
+              <div className="flex gap-2">
+                <div className="h-1.5 w-5 rounded bg-red-400/30" />
+                <div className="h-1.5 w-5 rounded bg-green-400/30" />
+                <div className="h-1.5 w-5 rounded bg-blue-400/30" />
+              </div>
+            </div>
+            <div className="mt-2 text-[10px] text-gray-500">Twitter-like density. More content per screen.</div>
+          </button>
+        </div>
+      </div>
+
       <div className="card mb-4">
         <h2 className="mb-3 text-sm font-semibold text-degen-400">Ranking weights</h2>
         <div className="mb-4">

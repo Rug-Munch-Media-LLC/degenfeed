@@ -95,6 +95,8 @@ export interface StoredMutedWord {
   mutedAt: number;
 }
 
+export type LayoutDensity = 'comfortable' | 'compact';
+
 export interface UserPreferences {
   identityId: string;
   theme: 'dark' | 'light' | 'auto';
@@ -109,6 +111,7 @@ export interface UserPreferences {
   recencyWeight: number;
   engagementWeight: number;
   diversityBoost: boolean;
+  layoutDensity: LayoutDensity;
 }
 
 export type SubscriptionTier = 'free' | 'pro' | 'creator';
