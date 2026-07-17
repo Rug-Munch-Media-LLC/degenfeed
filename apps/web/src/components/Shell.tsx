@@ -34,7 +34,9 @@ function Logo() {
         height={32}
         className="h-8 w-8 rounded-lg logo-glow transition-shadow group-hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
       />
-      <span className="text-lg font-bold tracking-tight text-white">DegenFeed</span>
+      <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+        DegenFeed
+      </span>
     </a>
   );
 }
@@ -48,7 +50,9 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
       href={item.href}
       onClick={onClick}
       className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-        active ? 'text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+        active
+          ? 'text-[var(--color-fg)]'
+          : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
       }`}
     >
       {item.label}
@@ -68,18 +72,22 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
 
   useEffect(() => {
     const stored = localStorage.getItem('df_theme');
-    if (stored === 'light' || stored === 'dark') setTheme(stored as 'dark' | 'light');
+    if (stored === 'light') {
+      setTheme('light');
+      document.documentElement.classList.remove('dark');
+    } else {
+      setTheme('dark');
+      document.documentElement.classList.add('dark');
+    }
   }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('df_theme', theme);
-  }, [theme]);
 
   const closeMobile = () => setMobileOpen(false);
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-black text-gray-200">
+    <div
+      className="relative flex min-h-screen flex-col"
+      style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-fg)' }}
+    >
       <div className="aurora-bg" />
       <div className="noise-overlay" />
 
@@ -87,7 +95,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         Skip to content
       </a>
 
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 glass">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b glass">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Logo />
 
@@ -101,21 +109,28 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+              className="rounded-lg px-3 py-2 text-sm text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
               aria-label="Search"
             >
               ⌕
             </button>
             <button
               type="button"
-              onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-              className="rounded-lg px-2 py-2 text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+              onClick={() =>
+                setTheme((t) => {
+                  const next = t === 'dark' ? 'light' : 'dark';
+                  document.documentElement.classList.toggle('dark', next === 'dark');
+                  localStorage.setItem('df_theme', next);
+                  return next;
+                })
+              }
+              className="rounded-lg px-2 py-2 text-sm text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? '☀' : '☾'}
             </button>
             {!ready ? (
-              <div className="h-9 w-24 animate-pulse rounded-lg bg-gray-800" />
+              <div className="skeleton h-9 w-24" />
             ) : hasSignedIn ? (
               <button type="button" onClick={openCompose} className="btn-primary">
                 Compose
@@ -138,7 +153,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           <button
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-white/5 hover:text-white md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] md:hidden"
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileOpen}
           >
@@ -172,15 +187,18 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         </div>
 
         {mobileOpen && (
-          <div className="border-t border-white/10 bg-gray-950/95 backdrop-blur-xl md:hidden">
+          <div
+            className="border-t"
+            style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-glass-bg)' }}
+          >
             <nav className="flex flex-col gap-1 p-4" aria-label="Mobile primary">
               {NAV.map((item) => (
                 <NavLink key={item.href} item={item} onClick={closeMobile} />
               ))}
             </nav>
-            <div className="border-t border-white/10 p-4">
+            <div className="border-t p-4" style={{ borderColor: 'var(--color-border)' }}>
               {!ready ? (
-                <div className="h-10 w-full animate-pulse rounded-lg bg-gray-800" />
+                <div className="skeleton h-10 w-full" />
               ) : hasSignedIn ? (
                 <button
                   type="button"
@@ -215,53 +233,59 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
 
       <BottomNav />
 
-      <footer className="relative z-10 hidden border-t border-white/10 bg-gray-950/50 py-8 lg:block">
+      <footer
+        className="relative z-10 hidden border-t py-8 lg:block"
+        style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-glass-bg)' }}
+      >
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row">
           <div className="flex items-center gap-2">
             <span className="text-degen-500">◆</span>
-            <span className="text-sm font-semibold text-white">DegenFeed</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
+              DegenFeed
+            </span>
           </div>
-          <div className="flex items-center gap-6 text-sm text-gray-500">
-            <a href="/feed" className="transition-colors hover:text-white">
+          <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--color-muted)' }}>
+            <a href="/feed" className="transition-colors hover:text-[var(--color-fg)]">
               Feed
             </a>
-            <a href="/news" className="transition-colors hover:text-white">
+            <a href="/news" className="transition-colors hover:text-[var(--color-fg)]">
               News
             </a>
-            <a href="/docs" className="transition-colors hover:text-white">
+            <a href="/docs" className="transition-colors hover:text-[var(--color-fg)]">
               Docs
             </a>
-            <a href="/premium" className="transition-colors hover:text-white">
+            <a href="/premium" className="transition-colors hover:text-[var(--color-fg)]">
               Premium
             </a>
-            <a href="/profile" className="transition-colors hover:text-white">
+            <a href="/profile" className="transition-colors hover:text-[var(--color-fg)]">
               Profile
             </a>
           </div>
-          <div className="flex items-center gap-4 text-xs text-gray-600">
-            <a href="/privacy" className="transition-colors hover:text-gray-400">
+          <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-muted)' }}>
+            <a href="/privacy" className="transition-colors hover:text-[var(--color-fg)]">
               Privacy
             </a>
-            <a href="/terms" className="transition-colors hover:text-gray-400">
+            <a href="/terms" className="transition-colors hover:text-[var(--color-fg)]">
               Terms
             </a>
             <a
               href="/status"
-              className="inline-flex items-center gap-1.5 transition-colors hover:text-gray-400"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-[var(--color-fg)]"
               title="Protocol health"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-degen-500 shadow-[0_0_4px_rgba(34,197,94,0.5)]" />
               <span>Status</span>
             </a>
           </div>
-          <p className="text-xs text-gray-600">
+          <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
             v{APP_VERSION} — © {new Date().getFullYear()} DegenFeed — a Rug Munch Media LLC product.
             No account required. Open source on{' '}
             <a
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-500 underline transition-colors hover:text-gray-400"
+              className="underline transition-all hover:brightness-150"
+              style={{ color: 'var(--color-muted)' }}
             >
               Forgejo
             </a>
@@ -270,7 +294,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
               href="https://gitlab.com/cryptorugmuncher/degenfeed-web"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-500 underline transition-colors hover:text-gray-400"
+              className="underline transition-all hover:brightness-150"
+              style={{ color: 'var(--color-muted)' }}
             >
               GitLab
             </a>
@@ -279,7 +304,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
               href="https://codeberg.org/cryptorugmunch/degenfeed-web"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-500 underline transition-colors hover:text-gray-400"
+              className="underline transition-all hover:brightness-150"
+              style={{ color: 'var(--color-muted)' }}
             >
               Codeberg
             </a>

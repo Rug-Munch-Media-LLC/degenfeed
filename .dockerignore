@@ -1,0 +1,57 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+.gitmodules
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules
+.npm
+.pnpm-store
+
+# Build output (rebuilt in Docker)
+.next
+dist
+build
+
+# Test & coverage
+coverage
+htmlcov
+.pytest_cache
+__pycache__
+*.pyc
+
+# Docs & design (not needed at runtime)
+docs
+design
+*.md
+!README.md
+
+# CI / config
+.github
+.husky
+lefthook.yml
+release-please-config.json
+
+# infra (deployed separately)
+infra
+
+# DegenFeed-specific
+workers
+scripts
