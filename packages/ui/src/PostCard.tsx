@@ -11,9 +11,16 @@ import {
   unmuteIdentity,
 } from '@degenfeed/storage';
 import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { detectTokens, formatTimeAgo } from '@degenfeed/utils';
+import {
+  detectTokens,
+  detectVideoFromEmbeds,
+  formatTimeAgo,
+  isShortFormVideo,
+  parseVideoUrl,
+  type VideoInfo,
+} from '@degenfeed/utils';
 import Image from 'next/image';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BlueskyPostContext } from './BlueskyPostContext';
 import { FrameEmbed } from './FrameEmbed';
 import { IdentityBadge } from './IdentityBadge';
@@ -31,6 +38,7 @@ import { QuickTipButton } from './QuickTipButton';
 import { ReportModal } from './ReportModal';
 import { TokenChart } from './TokenChart';
 import { TranslationPreview } from './TranslationPreview';
+import { VideoPlayer } from './VideoPlayer';
 
 interface FrameData {
   url: string;
@@ -112,6 +120,21 @@ export interface PostCardProps {
    * Opens ComposeModal in cross-protocol reply mode.
    */
   onCrossReplyOpen?: (post: UnifiedPost) => void;
+  /**
+   * If true, the viewer is an admin and sees moderation actions
+   * (Remove post, Ban user) in the three-dot menu.
+   */
+  isAdmin?: boolean;
+  /**
+   * Called when an admin removes this post. The API call removes it
+   * from the feed for all users.
+   */
+  onAdminRemove?: (postId: string) => void;
+  /**
+   * Called when an admin bans the post author. Passes the userId
+   * and protocol for cross-protocol enforcement.
+   */
+  onAdminBan?: (userId: string, protocol: string, handle?: string) => void;
 }
 
 const MAX_TEXT_LENGTH = 500;
@@ -175,6 +198,39 @@ function LinkPreview({ embed }: { embed: Embed }) {
         )}
       </div>
     </a>
+  );
+}
+
+/**
+ * Renders a video embed based on the detected video type.
+ * YouTube → VideoPlayer with YouTube embed
+ * Direct (.mp4/.webm) → VideoPlayer with native video
+ * PeerTube handled separately via PeerTubeEmbed component
+ */
+function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
+  const isShort = isShortFormVideo(videoInfo);
+
+  if (videoInfo.platform === 'youtube') {
+    return (
+      <div className={isShort ? 'max-w-[360px] mx-auto' : ''}>
+        <VideoPlayer
+          youtubeId={videoInfo.id}
+          platform="youtube"
+          aspectRatio={isShort ? '9:16' : '16:9'}
+          className="mt-2"
+        />
+      </div>
+    );
+  }
+
+  // Direct .mp4 / .webm video
+  return (
+    <VideoPlayer
+      src={videoInfo.url}
+      platform="direct"
+      aspectRatio={isShort ? '9:16' : '16:9'}
+      className="mt-2"
+    />
   );
 }
 
@@ -285,6 +341,9 @@ export const PostCard = memo(function PostCard({
   crossProtocolBadges,
   onTranslatePublish,
   onCrossReplyOpen,
+  isAdmin,
+  onAdminRemove,
+  onAdminBan,
 }: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
@@ -494,6 +553,38 @@ export const PostCard = memo(function PostCard({
     setShowReportModal(true);
   }, []);
 
+  const handleFlagAsSpam = useCallback(async () => {
+    setShowMenu(false);
+    try {
+      await fetch('/api/moderation/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId: post.id, reason: 'spam', protocol: post.protocol }),
+      });
+      window.dispatchEvent(
+        new CustomEvent('df-toast', {
+          detail: { kind: 'success', message: 'Post flagged as spam' },
+        }),
+      );
+    } catch {
+      window.dispatchEvent(
+        new CustomEvent('df-toast', {
+          detail: { kind: 'error', message: 'Failed to flag post' },
+        }),
+      );
+    }
+  }, [post.id, post.protocol]);
+
+  const handleAdminRemove = useCallback(() => {
+    setShowMenu(false);
+    onAdminRemove?.(post.id);
+  }, [onAdminRemove, post.id]);
+
+  const handleAdminBan = useCallback(() => {
+    setShowMenu(false);
+    onAdminBan?.(post.author.id, post.protocol, post.author.displayName);
+  }, [onAdminBan, post.author.id, post.author.displayName, post.protocol]);
+
   const handleTranslate = useCallback(
     async (targetProtocol: string) => {
       setShowTranslateMenu(false);
@@ -666,6 +757,25 @@ export const PostCard = memo(function PostCard({
                       <button
                         type="button"
                         role="menuitem"
+                        onClick={handleFlagAsSpam}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-orange-400"
+                        >
+                          <path d="M4 2v12M4 2l8 3-8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Flag as spam
+                      </button>
+
+                      <button
+                        type="button"
+                        role="menuitem"
                         onClick={handleReport}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
@@ -681,6 +791,36 @@ export const PostCard = memo(function PostCard({
                         </svg>
                         Report post
                       </button>
+
+                      {/* ── Admin actions ── */}
+                      {isAdmin && onAdminRemove && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={handleAdminRemove}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
+                            <path d="M2 4h12M5 4V2h6v2M3 4l1 10h8l1-10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Remove post
+                        </button>
+                      )}
+                      {isAdmin && onAdminBan && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={handleAdminBan}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-orange-400 hover:bg-orange-500/10 transition-colors"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
+                            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+                            <line x1="3.5" y1="8" x2="12.5" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                            <path d="M8 3v3M8 10v3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+                          </svg>
+                          Ban user
+                        </button>
+                      )}
 
                       {/* ── Translate ── */}
                       <button
@@ -919,22 +1059,35 @@ export const PostCard = memo(function PostCard({
                     post.protocol === 'farcaster' &&
                     links.length > 0 &&
                     links[0]?.url && <FrameCard url={links[0].url} />}
-                  {links.map((embed) => (
-                    <LinkPreview key={`link-${embed.url}`} embed={embed} />
-                  ))}
-                  {videos.map((embed) => (
-                    <a
-                      key={`video-${embed.url}`}
-                      href={embed.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] p-3 text-xs text-degen-500 hover:text-degen-400 transition-colors truncate"
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => e.stopPropagation()}
-                    >
-                      ▶ {embed.url.replace(/^https?:\/\//, '').slice(0, 60)}
-                    </a>
-                  ))}
+                  {links.map((embed) => {
+                    const linkVideoInfo = parseVideoUrl(embed.url);
+                    // If a link is actually a video URL, render the native player
+                    if (linkVideoInfo) {
+                      return (
+                        <VideoEmbedCard key={`link-video-${embed.url}`} videoInfo={linkVideoInfo} />
+                      );
+                    }
+                    return <LinkPreview key={`link-${embed.url}`} embed={embed} />;
+                  })}
+                  {videos.map((embed) => {
+                    const videoInfo = parseVideoUrl(embed.url);
+                    if (!videoInfo) {
+                      return (
+                        <a
+                          key={`video-${embed.url}`}
+                          href={embed.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] p-3 text-xs text-degen-500 hover:text-degen-400 transition-colors truncate"
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        >
+                          ▶ {embed.url.replace(/^https?:\/\//, '').slice(0, 60)}
+                        </a>
+                      );
+                    }
+                    return <VideoEmbedCard key={`video-${embed.url}`} videoInfo={videoInfo} />;
+                  })}
                 </>
               );
             })()}

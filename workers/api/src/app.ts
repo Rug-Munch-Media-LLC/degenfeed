@@ -59,7 +59,7 @@ import {
 } from './routes/feed';
 import { handleFrameAction, handleFrameResolve } from './routes/frame';
 import { handleFundingFeed } from './routes/funding';
-import { handleRelaysHealth } from './routes/health';
+import { handleProtocolsHealth, handleRelaysHealth } from './routes/health';
 import {
   handleGetIdentityProfile,
   handleLinkIdentity,
@@ -68,13 +68,29 @@ import {
 } from './routes/identity';
 import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import { handleLinksPage } from './routes/links';
-import { handleBlockSync } from './routes/moderation';
+import {
+  handleBanUser,
+  handleBlockSync,
+  handleCheckBanned,
+  handleListReports,
+  handleModerationStats,
+  handleRemovePost,
+  handleResolveReport,
+  handleSubmitReport,
+} from './routes/moderation';
 import { handleNewsFeed } from './routes/news';
 import {
   handleNewsletterDigest,
   handleNewsletterStatus,
   handleNewsletterSubscribe,
 } from './routes/newsletter';
+import {
+  handleConversationMessages,
+  handleConversations,
+  handleDeleteMessage,
+  handleSendMessage,
+  handleUnreadCount,
+} from './routes/messages';
 import { handleNotifications } from './routes/notifications';
 import { handleNotify } from './routes/notify';
 import { handlePostOg } from './routes/og';
@@ -260,6 +276,7 @@ app.all('/index.html', (c) => handleLandingHtml(c.req.raw, c.env));
 
 // ─── API: Health ────────────────────────────────────────────
 app.all('/api/health', async (c) => handleRelaysHealth(c.env));
+app.get('/api/health/protocols', async (c) => handleProtocolsHealth(c.env));
 
 // ─── API: Analytics ─────────────────────────────────────────
 app.get('/api/analytics', (c) => handleAnalytics(c.req.raw, c.env));
@@ -369,6 +386,28 @@ app.all('/api/tip/settings', async (c) => {
 // ─── API: Notifications ──────────────────────────────────────
 app.all('/api/notifications', async (c) => handleNotifications(c.req.raw, c.env));
 app.all('/api/notify', async (c) => handleNotify(c.req.raw, c.env));
+
+// ─── API: Messages (DM) ─────────────────────────────────────
+app.get('/api/messages/unread', async (c) =>
+  handleUnreadCount(c.req.raw, c.env),
+);
+app.get('/api/messages/conversations', async (c) =>
+  handleConversations(c.req.raw, c.env),
+);
+app.post('/api/messages/send', async (c) =>
+  handleSendMessage(c.req.raw, c.env),
+);
+app.all('/api/messages/:id', async (c) => {
+  if (c.req.method === 'GET') {
+    return handleConversationMessages(c.req.raw, c.env, c.req.param('id'));
+  }
+  if (c.req.method === 'DELETE') {
+    return handleDeleteMessage(c.req.raw, c.env, c.req.param('id'));
+  }
+  return jsonResponse({ error: 'Method not allowed' }, 405);
+});
+
+// ─── API: Identity ───────────────────────────────────────────
 
 // ─── API: Identity ───────────────────────────────────────────
 app.all('/api/identity/resolve', async (c) => handleResolveIdentity(c.req.raw, c.env));
@@ -489,10 +528,40 @@ app.post('/api/community/:name/join', async (c) =>
 app.get('/api/communities', async (c) => handleCommunitiesList(c.req.raw, c.env));
 
 // ─── API: Moderation ───────────────────────────────────────
+app.get('/api/moderation/reports', (c) => handleListReports(c.req.raw, c.env));
+app.post('/api/moderation/report', (c) => handleSubmitReport(c.req.raw, c.env));
+app.post('/api/moderation/reports/:id/resolve', (c) => handleResolveReport(c.req.raw, c.env));
+app.post('/api/moderation/reports/:id/remove', (c) => handleRemovePost(c.req.raw, c.env));
+app.post('/api/moderation/ban', (c) => handleBanUser(c.req.raw, c.env));
+app.get('/api/moderation/stats', (c) => handleModerationStats(c.req.raw, c.env));
+app.get('/api/moderation/banned', (c) => handleCheckBanned(c.req.raw, c.env));
 app.all('/api/moderation/sync', (c) => handleBlockSync(c.req.raw, c.env));
 
 // ─── API: Schedule ─────────────────────────────────────────
 app.all('/api/schedule', (c) => handleSchedulePost(c.req.raw, c.env));
+
+// ─── API: Audio Spaces ───────────────────────────────────────────
+import {
+  handleSpaceCreate,
+  handleSpaceEnd,
+  handleSpaceJoin,
+  handleSpaceReact,
+  handleSpaceRequestSpeak,
+  handleSpacesLive,
+  handleSpacesUpcoming,
+} from './routes/spaces';
+
+app.post('/api/spaces/create', async (c) => handleSpaceCreate(c.req.raw, c.env));
+app.get('/api/spaces/live', async (c) => handleSpacesLive(c.req.raw, c.env));
+app.get('/api/spaces/upcoming', async (c) => handleSpacesUpcoming(c.req.raw, c.env));
+app.post('/api/spaces/:id/join', async (c) => handleSpaceJoin(c.req.raw, c.env, c.req.param('id')));
+app.post('/api/spaces/:id/request-speak', async (c) =>
+  handleSpaceRequestSpeak(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/api/spaces/:id/react', async (c) =>
+  handleSpaceReact(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/api/spaces/:id/end', async (c) => handleSpaceEnd(c.req.raw, c.env, c.req.param('id')));
 
 // ─── API: Translate ─────────────────────────────────────────
 app.post('/api/translate', async (c) => handleTranslate(c.req.raw, c.env));

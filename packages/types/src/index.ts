@@ -173,3 +173,48 @@ export interface IdentityLink {
   /** Confidence score 0-1 */
   confidence: number;
 }
+
+// ─── Audio Spaces ────────────────────────────────────────────────
+
+export type SpaceStatus = 'live' | 'scheduled' | 'ended';
+
+export interface SpaceSpeaker {
+  id: string;
+  displayName: string;
+  avatarUrl?: string;
+  handle?: string;
+  isHost: boolean;
+  isCoHost: boolean;
+  /** Whether the speaker's mic is currently live */
+  speaking: boolean;
+}
+
+export interface SpaceReaction {
+  userId: string;
+  emoji: string;
+  createdAt: number;
+}
+
+export interface Space {
+  id: string;
+  title: string;
+  description?: string;
+  hostId: string;
+  hostName: string;
+  hostAvatarUrl?: string;
+  coHosts: string[];
+  /** Protocol badge IDs: 'nostr', 'farcaster', 'lens', 'mastodon' */
+  protocols: string[];
+  status: SpaceStatus;
+  /** Unix timestamp (ms) */
+  createdAt: number;
+  /** For scheduled spaces — ISO string */
+  scheduledAt?: string;
+  listeners: number;
+  speakers: SpaceSpeaker[];
+  reactions: SpaceReaction[];
+  /** Token address for tipping (optional) */
+  tipTokenAddress?: string;
+  /** Whether the space supports tipping */
+  tippingEnabled: boolean;
+}

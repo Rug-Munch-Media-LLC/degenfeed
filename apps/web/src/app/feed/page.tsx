@@ -52,6 +52,14 @@ const PROTOCOL_META: Record<string, { label: string; color: string; emoji: strin
   rss: { label: 'News', color: '#ffa500', emoji: '📰' },
 };
 
+// ─── Admin wallets ──────────────────────────────────────────────────
+const ADMIN_WALLETS_RAW = typeof process !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_ADMIN_WALLETS || '')
+  : '';
+const ADMIN_WALLETS = new Set(
+  ADMIN_WALLETS_RAW.split(',').map((a) => a.trim().toLowerCase()).filter(Boolean),
+);
+
 export default function FeedPage() {
   const {
     signedInProtocols,
@@ -62,7 +70,10 @@ export default function FeedPage() {
     ready,
     signOut,
     nostrPublicId,
+    walletAddress,
   } = useAuth();
+
+  const isAdmin = walletAddress ? ADMIN_WALLETS.has(walletAddress.toLowerCase()) : false;
 
   const [activeTab, setActiveTab] = useState<Tab>('for-you');
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
@@ -339,6 +350,54 @@ export default function FeedPage() {
   const handleReport = useCallback(
     (_postId: string) => {
       showToast('success', 'Report submitted. Thank you for helping keep DegenFeed safe.');
+    },
+    [showToast],
+  );
+
+  const handleAdminRemove = useCallback(
+    async (postId: string) => {
+      try {
+        // Create a report for the removal and resolve it immediately
+        const reportRes = await fetch('/api/moderation/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ postId, reason: 'spam', protocol: 'moderator' }),
+        });
+        if (!reportRes.ok) throw new Error('Failed to report');
+        const reportData = (await reportRes.json()) as { reportId?: string };
+        if (reportData.reportId) {
+          await fetch(`/api/moderation/reports/${reportData.reportId}/remove`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+        }
+        showToast('success', 'Post removed from feed');
+        // Remove from local state immediately
+        setPosts((prev) => prev.filter((p) => p.id !== postId));
+      } catch (e) {
+        showToast('error', e instanceof Error ? e.message : 'Failed to remove post');
+      }
+    },
+    [showToast],
+  );
+
+  const handleAdminBan = useCallback(
+    async (userId: string, protocol: string, handle?: string) => {
+      try {
+        const res = await fetch('/api/moderation/ban', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ userId, protocol, reason: 'Moderator action' }),
+        });
+        if (!res.ok) throw new Error('Failed to ban user');
+        showToast('success', `Banned ${handle || userId}`);
+        // Remove all posts from this user from local state
+        setPosts((prev) => prev.filter((p) => p.author.id !== userId));
+      } catch (e) {
+        showToast('error', e instanceof Error ? e.message : 'Failed to ban user');
+      }
     },
     [showToast],
   );
@@ -825,6 +884,9 @@ export default function FeedPage() {
             onLoadMore={loadMore}
             onReport={handleReport}
             onCrossReplyOpen={handleCrossReplyOpen}
+            isAdmin={isAdmin}
+            onAdminRemove={handleAdminRemove}
+            onAdminBan={handleAdminBan}
           />
 
           {activeTab === 'following' && state === 'empty' && (

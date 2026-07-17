@@ -13,9 +13,21 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:visual": "playwright test --project=visual"
+    "test:visual": "playwright test --project=visual",
+    "cap:sync": "npx cap sync",
+    "cap:sync:ios": "npx cap sync ios",
+    "cap:sync:android": "npx cap sync android",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android",
+    "cap:build:ios": "pnpm build && npx cap sync ios && npx cap open ios",
+    "cap:build:android": "pnpm build && npx cap sync android && npx cap open android"
   },
   "dependencies": {
+    "@capacitor/core": "^8.4.2",
+    "@capacitor/push-notifications": "^8.1.2",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3",
     "@degenfeed/auth": "workspace:*",
     "@degenfeed/bluesky-sdk": "workspace:*",
     "@degenfeed/farcaster-sdk": "workspace:*",
@@ -36,6 +48,9 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/cli": "^8.4.2",
+    "@capacitor/ios": "^8.4.2",
     "@axe-core/playwright": "^4.12.1",
     "@biomejs/biome": "^2.5.2",
     "@cloudflare/next-on-pages": "^1.13.16",

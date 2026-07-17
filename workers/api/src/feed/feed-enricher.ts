@@ -1,13 +1,14 @@
 /**
- * feed-enricher — Post enrichment, dedup, and content filtering.
+ * feed-enricher — Post enrichment, dedup, content filtering, and auto-moderation.
  *
  * Owns spam filtering + niche enrichment at ingestion, cross-provider
  * deduplication, category/content-type filters, per-user mute filters,
- * the crypto relevance gate, English-language filtering, and Nostr
- * engagement enrichment via nostr.band.
+ * the crypto relevance gate, English-language filtering, Nostr
+ * engagement enrichment via nostr.band, and auto-moderation hooks.
  */
 
 import {
+  checkText,
   deduplicatePosts,
   detectContentType,
   enrichPostNiches,
@@ -19,14 +20,92 @@ import type { SpamResult } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
 import { getPostContentUri } from '@degenfeed/utils';
 
+// ─── Auto-moderation state ────────────────────────────────────────────
+
 /**
- * Drops definite spam (score >= 0.9) and marks borderline posts with a
- * spamScore so the ranking engine can demote them instead of
- * hard-filtering. Enriches with niche tags and attaches a df:// URI.
+ * Set of banned user IDs (protocol-scoped, e.g. "nostr:abc...").
+ * In production this is populated from KV by the feed fetcher.
+ */
+let _bannedUsers = new Set<string>();
+
+/**
+ * Set of removed post IDs.
+ */
+let _removedPosts = new Set<string>();
+
+/**
+ * Set of flagged post IDs that have already been reported.
+ * Avoids repeated flagging.
+ */
+let _flaggedPosts = new Set<string>();
+
+export function setBannedUsers(users: Set<string>): void {
+  _bannedUsers = users;
+}
+
+export function setRemovedPosts(posts: Set<string>): void {
+  _removedPosts = posts;
+}
+
+export function addFlaggedPost(postId: string): void {
+  _flaggedPosts.add(postId);
+}
+
+export function isBannedUser(userId: string): boolean {
+  return (
+    _bannedUsers.has(userId) ||
+    _bannedUsers.has(userId.toLowerCase())
+  );
+}
+
+export function isRemovedPost(postId: string): boolean {
+  return _removedPosts.has(postId) || _removedPosts.has(postId.toLowerCase());
+}
+
+// ─── Auto-moderation tags ─────────────────────────────────────────────
+
+// Tag names we attach to post metadata for downstream use
+export const MODERATION_TAGS = {
+  FLAGGED: 'mod:flagged',
+  AUTO_REJECTED: 'mod:auto-rejected',
+  AUTO_HIDDEN: 'mod:auto-hidden',
+  BANNED_USER: 'mod:banned-user',
+  REMOVED_POST: 'mod:removed',
+} as const;
+
+// ─── Original enrichment code ─────────────────────────────────────────
+
+/**
+ * Drops definite spam (score >= 0.9), auto-rejects banned users and
+ * removed posts, auto-flags posts with high spamScore or scam patterns,
+ * and marks borderline posts with a spamScore so the ranking engine
+ * can demote them instead of hard-filtering. Enriches with niche tags
+ * and attaches a df:// URI.
  */
 export function sanitizePosts(posts: UnifiedPost[]): UnifiedPost[] {
   return posts
-    .filter((p) => spamScore(p).score < 0.9)
+    .filter((p) => {
+      // Auto-reject: banned users
+      if (p.author.id && isBannedUser(p.author.id)) {
+        (p as Record<string, unknown>).moderationAction = MODERATION_TAGS.BANNED_USER;
+        return false;
+      }
+
+      // Auto-reject: removed posts
+      if (isRemovedPost(p.id)) {
+        (p as Record<string, unknown>).moderationAction = MODERATION_TAGS.REMOVED_POST;
+        return false;
+      }
+
+      // Auto-reject: definite spam (score >= 0.9)
+      const { score: spamScoreV } = spamScore(p);
+      if (spamScoreV >= 0.9) {
+        (p as Record<string, unknown>).moderationAction = MODERATION_TAGS.AUTO_REJECTED;
+        return false;
+      }
+
+      return true;
+    })
     .map((p) => {
       const enriched = enrichPostNiches(p);
       enriched.dfUri = getPostContentUri(enriched);
@@ -36,9 +115,33 @@ export function sanitizePosts(posts: UnifiedPost[]): UnifiedPost[] {
       (enriched as Record<string, unknown>).spamScore = score;
       (enriched as Record<string, unknown>).spamSignals = signals;
 
+      // Auto-flag: borderline spam (0.8 <= score < 0.9)
+      if (score >= 0.8 && score < 0.9) {
+        (enriched as Record<string, unknown>).moderationAction = MODERATION_TAGS.FLAGGED;
+        addFlaggedPost(enriched.id);
+      }
+
+      // Auto-flag: known scam patterns from moderation config
+      const modCheck = checkText(enriched.text);
+      if (modCheck.flag && !modCheck.reject) {
+        (enriched as Record<string, unknown>).moderationAction = MODERATION_TAGS.FLAGGED;
+        (enriched as Record<string, unknown>).moderationReasons = modCheck.reasons;
+        addFlaggedPost(enriched.id);
+      }
+
+      // Auto-reject: certain scam patterns
+      if (modCheck.reject) {
+        (enriched as Record<string, unknown>).moderationAction = MODERATION_TAGS.AUTO_REJECTED;
+        (enriched as Record<string, unknown>).moderationReasons = modCheck.reasons;
+        return null as unknown as UnifiedPost; // filtered below
+      }
+
       return enriched;
-    });
+    })
+    .filter((p): p is UnifiedPost => p !== null);
 }
+
+// ─── Everything below is unchanged from the original ──────────────────
 
 export function filterByCategory(posts: UnifiedPost[], category: string): UnifiedPost[] {
   const target = category.toLowerCase();

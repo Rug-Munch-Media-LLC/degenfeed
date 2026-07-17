@@ -2,13 +2,14 @@
 
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { AddToHomeScreenToast } from './AddToHomeScreenToast';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
 import { InstallPrompt } from './InstallPrompt';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { OnboardingModal } from './OnboardingModal';
+import { OnboardingProvider } from '../hooks/useOnboarding';
 import { SearchOverlay } from './SearchOverlay';
 import { useToast } from './Toast';
 
@@ -22,8 +23,10 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/feed', label: 'Feed' },
   { href: '/trending', label: 'Trending' },
+  { href: '/spaces', label: 'Spaces' },
   { href: '/c', label: 'Communities' },
   { href: '/news', label: 'News' },
+  { href: '/messages', label: '\u{1F4AC} Messages' },
   { href: '/notifications', label: 'Alerts' },
   { href: '/discover', label: 'Discover' },
   { href: '/deploy', label: 'Launch' },
@@ -31,6 +34,70 @@ const NAV: NavItem[] = [
   { href: '/premium', label: 'Premium' },
   { href: '/profile', label: 'Profile' },
 ];
+
+/**
+ * Small status indicator dot in the Shell header.
+ *
+ * Polls /api/health/protocols every 60s and shows:
+ *   🟢 All protocols up
+ *   🟡 Some degraded
+ *   🔴 One or more down
+ *
+ * Clicking navigates to /status.
+ */
+function StatusHealthDot() {
+  const [dot, setDot] = useState<'🟢' | '🟡' | '🔴'>('🟢');
+  const [title, setTitle] = useState('All protocols operational');
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/health/protocols', {
+        cache: 'no-store',
+        headers: { 'cache-control': 'no-store' },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        summary: { up: number; degraded: number; down: number; total: number };
+      };
+      const { up, degraded, down, total } = data.summary;
+      if (down > 0) {
+        setDot('🔴');
+        setTitle(`${down} protocol${down === 1 ? '' : 's'} down · ${up}/${total} operational`);
+      } else if (degraded > 0) {
+        setDot('🟡');
+        setTitle(`${degraded} protocol${degraded === 1 ? '' : 's'} degraded · ${up}/${total} operational`);
+      } else {
+        setDot('🟢');
+        setTitle(`All ${total} protocols operational`);
+      }
+    } catch {
+      // Worker may be cold-starting — keep last known state.
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchStatus();
+    intervalRef.current = setInterval(fetchStatus, 60_000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [fetchStatus]);
+
+  return (
+    <a
+      href="/status"
+      className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+      title={title}
+      aria-label={`Protocol health: ${title}`}
+    >
+      <span className="text-[10px]" aria-hidden="true">
+        {dot}
+      </span>
+      <span className="hidden sm:inline">Status</span>
+    </a>
+  );
+}
 
 function Logo() {
   return (
@@ -162,7 +229,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             ))}
           </nav>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-1 md:flex">
+            <StatusHealthDot />
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
@@ -262,6 +330,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
               {NAV.map((item) => (
                 <NavLink key={item.href} item={item} onClick={closeMobile} />
               ))}
+              <StatusHealthDot />
             </nav>
             <div className="border-t p-4" style={{ borderColor: 'var(--color-border)' }}>
               {!ready ? (
@@ -295,7 +364,10 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       </header>
 
       <main id="main" className="relative z-10 flex-1 pt-16 pb-20 lg:pb-0">
-        {children}
+        <OnboardingProvider>
+          {children}
+          <OnboardingModal />
+        </OnboardingProvider>
       </main>
 
       <BottomNav />
@@ -317,6 +389,9 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             </a>
             <a href="/c" className="transition-colors hover:text-[var(--color-fg)]">
               Communities
+            </a>
+            <a href="/messages" className="transition-colors hover:text-[var(--color-fg)]">
+              Messages
             </a>
             <a href="/news" className="transition-colors hover:text-[var(--color-fg)]">
               News
@@ -386,7 +461,6 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <KeyboardShortcuts open={showShortcuts} onClose={() => setShowShortcuts(false)} />
-      <OnboardingModal />
       <InstallPrompt />
       <AddToHomeScreenToast />
     </div>

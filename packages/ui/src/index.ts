@@ -16,6 +16,8 @@ export type { FrameEmbedProps } from './FrameEmbed';
 export { FrameEmbed } from './FrameEmbed';
 export type { FundingRound } from './FundingCard';
 export { FundingCard } from './FundingCard';
+export type { CoHostOption, HostSpaceModalProps } from './HostSpaceModal';
+export { HostSpaceModal } from './HostSpaceModal';
 export type { IdentityBadgeProps } from './IdentityBadge';
 export { CROSS_PROTOCOL_ICONS, IdentityBadge } from './IdentityBadge';
 export type { LemmyComment, LemmyThreadViewProps } from './LemmyThreadView';
@@ -34,8 +36,6 @@ export type { PeerTubeEmbedProps } from './PeerTubeEmbed';
 export { PeerTubeEmbed } from './PeerTubeEmbed';
 export type { EngageHandler, EngageResult, PostCardProps } from './PostCard';
 export { PostCard } from './PostCard';
-export type { TranslationPreviewProps } from './TranslationPreview';
-export { TranslationPreview } from './TranslationPreview';
 export { PricePill, usePricesForText } from './PricePill';
 export type { ProtocolBadgeProps } from './ProtocolBadge';
 export {
@@ -48,11 +48,17 @@ export {
   ProtocolBadge,
 } from './ProtocolBadge';
 export { QuickTipButton } from './QuickTipButton';
-export type { SubscriberBadgeProps } from './SubscriberBadge';
-export { SubscriberBadge } from './SubscriberBadge';
 export type { ReportModalProps } from './ReportModal';
 export { ReportModal } from './ReportModal';
 export type { ProtocolOption, SignInModalProps, WalletOption } from './SignInModal';
 export { SignInModal } from './SignInModal';
+export type { SpaceData, SpaceRoomProps } from './SpaceRoom';
+export { SpaceRoom } from './SpaceRoom';
+export type { SubscriberBadgeProps } from './SubscriberBadge';
+export { SubscriberBadge } from './SubscriberBadge';
 export type { TokenChartProps } from './TokenChart';
 export { TokenChart } from './TokenChart';
+export type { TranslationPreviewProps } from './TranslationPreview';
+export { TranslationPreview } from './TranslationPreview';
+export type { AspectRatio, VideoPlatform, VideoPlayerProps } from './VideoPlayer';
+export { VideoPlayer } from './VideoPlayer';
