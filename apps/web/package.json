@@ -36,6 +36,7 @@
     "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/nostr-sdk": "workspace:*",
     "@degenfeed/ranking": "workspace:*",
+    "@degenfeed/realtime": "workspace:*",
     "@degenfeed/storage": "workspace:*",
     "@degenfeed/types": "workspace:*",
     "@degenfeed/ui": "workspace:*",

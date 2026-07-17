@@ -22,6 +22,7 @@ import {
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BlueskyPostContext } from './BlueskyPostContext';
+import { EmbedModal } from './EmbedModal';
 import { FrameEmbed } from './FrameEmbed';
 import { IdentityBadge } from './IdentityBadge';
 import { LemmyThreadView } from './LemmyThreadView';
@@ -357,6 +358,7 @@ export const PostCard = memo(function PostCard({
   const [muted, setMuted] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showEmbedModal, setShowEmbedModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showTranslateMenu, setShowTranslateMenu] = useState(false);
   const [translateTarget, setTranslateTarget] = useState<string | null>(null);
@@ -551,6 +553,11 @@ export const PostCard = memo(function PostCard({
   const handleReport = useCallback(() => {
     setShowMenu(false);
     setShowReportModal(true);
+  }, []);
+
+  const handleEmbed = useCallback(() => {
+    setShowMenu(false);
+    setShowEmbedModal(true);
   }, []);
 
   const handleFlagAsSpam = useCallback(async () => {
@@ -754,6 +761,25 @@ export const PostCard = memo(function PostCard({
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => e.stopPropagation()}
                     >
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleEmbed}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-blue-400"
+                        >
+                          <path d="M4 2v12M12 2v12M2 4h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        Embed post
+                      </button>
+
                       <button
                         type="button"
                         role="menuitem"
@@ -1289,6 +1315,15 @@ export const PostCard = memo(function PostCard({
           </form>
         )}
       </article>
+      <EmbedModal
+        open={showEmbedModal}
+        onClose={() => setShowEmbedModal(false)}
+        postId={post.id}
+        postUri={post.dfUri}
+        authorName={post.author.displayName || post.author.handles[post.protocol] || 'Unknown'}
+        protocol={post.protocol}
+        text={post.text}
+      />
       <ReportModal
         open={showReportModal}
         onClose={() => setShowReportModal(false)}

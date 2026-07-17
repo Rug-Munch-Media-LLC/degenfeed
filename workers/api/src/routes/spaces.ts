@@ -27,6 +27,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { broadcastToAll } from '../ws-broadcast';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ function generateId(): string {
   const arr = new Uint8Array(16);
   crypto.getRandomValues(arr);
   for (let i = 0; i < 16; i++) {
-    result += chars[arr[i] % chars.length]!;
+    result += chars[(arr[i] ?? 0) % chars.length]!;
   }
   return result;
 }
@@ -210,6 +211,15 @@ export async function handleSpaceCreate(request: Request, env: Env): Promise<Res
       await setUpcomingIds(env, upcomingIds);
     }
 
+    broadcastToAll('space:update', {
+      spaceId: id,
+      status: 'created',
+      title: space.title,
+      hostId: body.hostId,
+      hostName: body.hostName || 'Anonymous',
+      createdAt: Date.now(),
+    });
+
     return jsonResponse({ space, ok: true });
   } catch (e) {
     return jsonResponse({ error: String(e) }, 500);
@@ -314,6 +324,12 @@ export async function handleSpaceJoin(
 
     await env.SPACES?.put(spaceKey(spaceId), JSON.stringify(space), {
       expirationTtl: 86400,
+    });
+
+    broadcastToAll('space:update', {
+      spaceId,
+      status: 'join',
+      listeners: space.listeners,
     });
 
     return jsonResponse({ space, ok: true });
@@ -421,6 +437,13 @@ export async function handleSpaceReact(
       expirationTtl: 86400,
     });
 
+    broadcastToAll('space:update', {
+      spaceId,
+      status: 'react',
+      userId: body.userId,
+      emoji: body.emoji,
+    });
+
     return jsonResponse({ space, ok: true });
   } catch (e) {
     return jsonResponse({ error: String(e) }, 500);
@@ -463,6 +486,13 @@ export async function handleSpaceEnd(
     const liveIds = await getLiveIds(env);
     const filtered = liveIds.filter((id) => id !== spaceId);
     await setLiveIds(env, filtered);
+
+    broadcastToAll('space:update', {
+      spaceId,
+      status: 'ended',
+      hostId: space.hostId,
+      title: space.title,
+    });
 
     return jsonResponse({ space, ok: true });
   } catch (e) {

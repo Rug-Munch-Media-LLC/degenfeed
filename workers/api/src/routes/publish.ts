@@ -64,6 +64,7 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
     if (env.POSTIZ_BASE_URL && env.POSTIZ_API_KEY) {
       const postizResults = await tryPostizPublish(text, targets, env);
       if (postizResults) {
+        await recordCrosspostSiblings(env, postizResults);
         return jsonResponse({ results: postizResults, via: 'postiz' });
       }
       // Postiz returned null → fall through to per-protocol logic
@@ -71,6 +72,7 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
 
     // ── Per-protocol fallback ──────────────────────────────────────
     const results = await perProtocolPublish(text, targets, auth, body, env);
+    await recordCrosspostSiblings(env, results);
     return jsonResponse({ results });
   } catch (e) {
     return jsonResponse({ error: String(e) }, 500);
@@ -78,6 +80,23 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
 }
 
 // ─── Postiz publish attempt ───────────────────────────────────────────
+
+/**
+ * Best-effort: persist the sibling map for multi-target publishes so the
+ * unified thread view (/api/thread/:dfUri) can gather replies from every
+ * protocol the post was cross-posted to. Never blocks the publish result.
+ */
+async function recordCrosspostSiblings(
+  env: Env,
+  results: Record<string, { ok: boolean; error?: string; hash?: string }>,
+): Promise<void> {
+  try {
+    const { storeCrosspostSiblings } = await import('./thread');
+    await storeCrosspostSiblings(env, results);
+  } catch (e) {
+    console.error('[publish] Failed to record crosspost siblings:', e);
+  }
+}
 
 /**
  * Try to publish via Postiz. Returns results map if Postiz handled

@@ -80,6 +80,9 @@ export interface Env {
   /** KV namespace for Audio Spaces data */
   SPACES?: KVNamespace;
 
+  /** KV namespace for API key storage (v1 public API) */
+  API_KEYS?: KVNamespace;
+
   // ─── Postiz cross-posting ───────────────────────────────────────────
   /** Postiz API base URL (e.g. "http://postiz:3000" or "https://api.postiz.com") */
   POSTIZ_BASE_URL?: string;

@@ -227,6 +227,17 @@ export async function handleCrossReply(request: Request, env: Env): Promise<Resp
       // the bridge status indicator depends on these records.
       console.error(`[cross-reply] Failed to store bridge record ${bridgeKey}:`, e);
     }
+    // Maintain the cross-protocol thread index so nested replies
+    // (replies to bridge replies) stay attached to the root thread.
+    if (result.nativeId) {
+      const { recordThreadRelationship } = await import('./thread');
+      await recordThreadRelationship(
+        env,
+        parentPostUri,
+        `df://${replyProtocol}:${result.nativeId}`,
+        replyProtocol,
+      );
+    }
   }
 
   // 6. Return success

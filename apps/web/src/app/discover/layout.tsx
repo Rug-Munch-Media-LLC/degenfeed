@@ -3,9 +3,9 @@ import type { Metadata } from 'next';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Discover',
+  title: 'Discover - DegenFeed',
   description:
-    'Discover trending accounts and communities across the Fediverse. Browse popular Mastodon, Lemmy, and ActivityPub profiles.',
+    'Trending posts, communities, and people across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more.',
 };
 
 export default function DiscoverLayout({ children }: { children: React.ReactNode }) {

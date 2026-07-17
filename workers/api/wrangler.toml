@@ -33,6 +33,11 @@ binding = "BOOKMARKS"
 id = "" # TODO: create with: wrangler kv:namespace create BOOKMARKS
 preview_id = "" # TODO: create with: wrangler kv:namespace create BOOKMARKS --preview
 
+[[kv_namespaces]]
+binding = "API_KEYS"
+id = "" # TODO: create with: wrangler kv:namespace create API_KEYS
+preview_id = "" # TODO: create with: wrangler kv:namespace create API_KEYS --preview
+
 # Routes — main app + api on degenfeed.xyz domain
 routes = [
   { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
