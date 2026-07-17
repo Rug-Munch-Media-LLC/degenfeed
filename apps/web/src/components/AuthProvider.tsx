@@ -89,6 +89,13 @@ export interface AuthContextValue {
       target?: { authorId?: string; publicationId?: string };
     },
   ) => Promise<{ ok: boolean; error?: string }>;
+  /** Reply to a post on another protocol via the cross-protocol bridge. */
+  crossReply: (
+    parentPostUri: string,
+    parentProtocol: string,
+    replyProtocol: string,
+    content: string,
+  ) => Promise<{ ok: boolean; nativeId?: string; error?: string }>;
   ready: boolean;
   setPrimaryIdentity: (id: string) => Promise<void>;
   unlinkIdentity: (id: string) => Promise<void>;
@@ -706,6 +713,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       nostrPublicId,
       publish: handlePublish,
       engage: handleEngage,
+      crossReply: handleCrossReply,
       ready,
       setPrimaryIdentity: handleSetPrimary,
       unlinkIdentity: handleUnlink,
@@ -725,6 +733,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       nostrPublicId,
       handlePublish,
       handleEngage,
+      handleCrossReply,
       ready,
       handleSetPrimary,
       handleUnlink,

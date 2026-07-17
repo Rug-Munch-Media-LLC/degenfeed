@@ -6,6 +6,19 @@ import type {
   UnifiedPost,
 } from '@degenfeed/types';
 
+// ─── AI-powered preference learning + personalization ─────────────
+export {
+  adjustTopicWeight,
+  clearTopic,
+  emptyBehaviorProfile,
+  getLearnedTopics,
+  isOnboardingMode,
+  learnFromInteraction,
+  personalizeScore,
+} from './preferences';
+export type { TopicPreference, UserBehaviorProfile } from './preferences';
+export { INTERACTION_WEIGHTS } from './preferences';
+
 // ─── Advanced spam detection (continuous scoring) ──────────────────
 export {
   contentQualityScore,

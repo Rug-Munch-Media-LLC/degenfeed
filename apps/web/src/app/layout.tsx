@@ -5,6 +5,7 @@ import Script from 'next/script';
 import './globals.css';
 import { AuthProvider } from '../components/AuthProvider';
 import { ErrorTracker } from '../components/ErrorTracker';
+import { RealtimeClientProvider } from '../components/RealtimeClientProvider';
 import { Shell } from '../components/Shell';
 import { SolanaProvider } from '../components/SolanaProvider';
 import { ToastProvider } from '../components/Toast';
@@ -127,7 +128,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Web3Provider>
             <ToastProvider>
               <AuthProvider>
-                <Shell>{children}</Shell>
+                <RealtimeClientProvider>
+                  <Shell>{children}</Shell>
+                </RealtimeClientProvider>
               </AuthProvider>
             </ToastProvider>
           </Web3Provider>

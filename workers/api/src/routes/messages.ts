@@ -13,6 +13,7 @@
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
 import { type SessionPayload, requireSession } from '../session';
+import { broadcastToUser } from '../ws-broadcast';
 
 const DM_KEY_PREFIX = 'dm:';
 const DM_CONV_PREFIX = 'dm:conv:';
@@ -524,6 +525,15 @@ export async function handleSendMessage(
       message: dm,
     });
   }
+
+  broadcastToUser(toId, 'dm:new', {
+    conversationId,
+    messageId: dm.id,
+    fromId,
+    content: rawContent.slice(0, 120),
+    protocol,
+    createdAt: dm.createdAt,
+  });
 
   return noCacheJsonResponse({
     ok: true,

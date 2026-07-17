@@ -8,6 +8,7 @@ import {
   sanitizeString,
   validateBodySize,
 } from '../sanitize';
+import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
 import { buildLensCollectIntent } from './lens';
 import { fetchZapInvoice, resolveLnurlFromPubkey } from './lightning';
 import { recordUnifiedTip, type TipEntityType } from './unified-tip';
@@ -467,6 +468,15 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
         console.warn('[tip] failed to store notification:', msg);
       }
     }
+
+    broadcastToAll('tip:received', {
+      method,
+      amount,
+      chain: chain || method,
+      recipient,
+      sender: sender || undefined,
+      timestamp: Date.now(),
+    });
 
     return intentResponse;
   } catch (err) {

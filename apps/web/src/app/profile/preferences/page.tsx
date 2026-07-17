@@ -8,7 +8,7 @@ import {
   savePreferences,
 } from '@degenfeed/storage';
 import type { Protocol } from '@degenfeed/types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const PROTOCOLS: Protocol[] = [
   'nostr',
@@ -59,6 +59,70 @@ export default function PreferencesPage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // ── AI-learned topic preferences ───────────────────────────────
+  interface LearnedTopic {
+    topic: string;
+    weight: number;
+    direction: 'up' | 'down' | 'neutral';
+  }
+  const [learnedTopics, setLearnedTopics] = useState<LearnedTopic[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(true);
+
+  const fetchLearnedTopics = useCallback(async () => {
+    setTopicsLoading(true);
+    try {
+      const res = await fetch('/api/preferences/topics', { credentials: 'include' });
+      if (res.ok) {
+        const data = (await res.json()) as { topics: LearnedTopic[] };
+        setLearnedTopics(data.topics ?? []);
+      }
+    } catch {
+      /* no session yet */
+    } finally {
+      setTopicsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchLearnedTopics();
+  }, [fetchLearnedTopics]);
+
+  const adjustTopic = useCallback(
+    async (topic: string, delta: number) => {
+      try {
+        const res = await fetch('/api/preferences/topics', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ topic, delta }),
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { topics: LearnedTopic[] };
+          setLearnedTopics(data.topics ?? []);
+        }
+      } catch {
+        /* ignore */
+      }
+    },
+    [],
+  );
+
+  const clearTopic = useCallback(async (topic: string) => {
+    try {
+      const res = await fetch('/api/preferences/topics/clear', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ topic }),
+      });
+      if (res.ok) {
+        setLearnedTopics((prev) => prev.filter((t) => t.topic !== topic));
+      }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   if (!prefs) {
@@ -136,6 +200,90 @@ export default function PreferencesPage() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* ── AI-learned topics ── */}
+      <div className="card mb-4" id="topics">
+        <h2 className="mb-3 text-sm font-semibold text-degen-400">
+          AI-learned topics
+          {!topicsLoading && learnedTopics.length > 0 && (
+            <span className="ml-2 text-[10px] font-normal text-gray-500">
+              Based on your likes, reposts, and bookmarks
+            </span>
+          )}
+        </h2>
+        {topicsLoading ? (
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-degen-500" />
+            Loading your learned topics...
+          </div>
+        ) : learnedTopics.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-[var(--color-border)] p-4 text-center text-xs text-gray-500">
+            Start liking, reposting, and bookmarking posts to build your AI profile.
+            <br />
+            The feed learns what topics you care about automatically.
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {learnedTopics.map((t) => (
+              <div
+                key={t.topic}
+                className="flex items-center justify-between rounded-lg bg-[var(--color-muted)] px-3 py-2"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm capitalize text-[var(--color-fg)]">{t.topic}</span>
+                  <span
+                    className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                      t.direction === 'up'
+                        ? 'bg-degen-500/15 text-degen-400'
+                        : t.direction === 'down'
+                          ? 'bg-red-500/10 text-red-400'
+                          : 'bg-gray-500/10 text-gray-400'
+                    }`}
+                  >
+                    {t.direction === 'up' ? '↑' : t.direction === 'down' ? '↓' : '—'}
+                    {Math.abs(t.weight).toFixed(1)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => adjustTopic(t.topic, 0.2)}
+                    className="rounded-md p-1 text-degen-500 hover:bg-degen-500/10 transition-colors"
+                    aria-label={`Increase ${t.topic} preference`}
+                    title="I want more of this topic"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M8 3l5 10H3L8 3z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => adjustTopic(t.topic, -0.2)}
+                    className="rounded-md p-1 text-red-400 hover:bg-red-500/10 transition-colors"
+                    aria-label={`Decrease ${t.topic} preference`}
+                    title="Show me less of this topic"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M3 5h10L8 15 3 5z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => clearTopic(t.topic)}
+                    className="rounded-md p-1 text-gray-500 hover:bg-gray-500/10 hover:text-gray-400 transition-colors"
+                    aria-label={`Remove ${t.topic}`}
+                    title="Forget this topic"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                      <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="card mb-4">

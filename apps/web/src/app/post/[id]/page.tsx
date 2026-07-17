@@ -308,23 +308,174 @@ function PostCard({
   );
 }
 
-function ReplyCard({ reply }: { reply: UnifiedPost }) {
+/** UnifiedPost extended with cross-protocol thread metadata from /api/thread. */
+interface ThreadReply extends UnifiedPost {
+  bridged?: boolean;
+  bridgeFrom?: string;
+  viaCrossPost?: boolean;
+  depth?: number;
+  parentUri?: string;
+}
+
+interface ThreadData {
+  post: UnifiedPost | null;
+  replies: ThreadReply[];
+  protocols: string[];
+  bridgeCount: number;
+  byProtocol: Record<string, number>;
+}
+
+type ThreadSort = 'chrono' | 'top' | 'protocol';
+
+const PROTOCOL_LABELS: Record<string, string> = {
+  nostr: 'Nostr',
+  farcaster: 'Farcaster',
+  lens: 'Lens',
+  bluesky: 'Bluesky',
+  threads: 'Threads',
+  mastodon: 'Mastodon',
+  lemmy: 'Lemmy',
+  rss: 'RSS',
+  reddit: 'Reddit',
+};
+
+function protocolLabel(p: string): string {
+  return PROTOCOL_LABELS[p] ?? p;
+}
+
+interface ThreadNode {
+  reply: ThreadReply;
+  children: ThreadNode[];
+}
+
+function sortReplies(replies: ThreadReply[], mode: ThreadSort): ThreadReply[] {
+  const score = (r: ThreadReply) => r.metrics.likes + r.metrics.reposts * 2 + r.metrics.replies;
+  const out = [...replies];
+  if (mode === 'top') {
+    out.sort((a, b) => score(b) - score(a) || a.createdAt - b.createdAt);
+  } else if (mode === 'protocol') {
+    out.sort((a, b) => a.protocol.localeCompare(b.protocol) || a.createdAt - b.createdAt);
+  } else {
+    out.sort((a, b) => a.createdAt - b.createdAt);
+  }
+  return out;
+}
+
+/** Nest replies-to-replies under their parent; unmatched parents float to root. */
+function buildThreadTree(
+  replies: ThreadReply[],
+  rootUri: string,
+  mode: ThreadSort,
+): ThreadNode[] {
+  const sorted = sortReplies(replies, mode);
+  const nodes = new Map<string, ThreadNode>();
+  for (const r of sorted) {
+    nodes.set(r.dfUri ?? `df://${r.id}`, { reply: r, children: [] });
+  }
+  const roots: ThreadNode[] = [];
+  for (const node of nodes.values()) {
+    const parentUri = node.reply.parentUri;
+    const parent = parentUri && parentUri !== rootUri ? nodes.get(parentUri) : undefined;
+    if (parent && parent !== node) parent.children.push(node);
+    else roots.push(node);
+  }
+  return roots;
+}
+
+function ThreadReplyCard({
+  node,
+  opAuthorId,
+  depth = 0,
+}: {
+  node: ThreadNode;
+  opAuthorId?: string;
+  depth?: number;
+}) {
+  const { reply, children } = node;
+  const color = getProtocolColor(reply.protocol);
+  const isOp = !!opAuthorId && reply.author.id === opAuthorId;
+  const bridgeSource = reply.bridgeFrom ?? reply.protocol;
   return (
-    <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.01] p-4">
-      <div className="mb-2 flex items-center gap-2">
-        <span className="font-medium text-xs text-[var(--color-fg)] truncate">{reply.author.displayName}</span>
-        <span className="text-[10px] text-gray-600">{formatTimeAgo(reply.createdAt)} ago</span>
+    <div className={depth > 0 ? 'mt-2' : ''}>
+      <div
+        className={`rounded-xl border p-4 ${
+          isOp
+            ? 'border-degen-500/40 bg-degen-500/[0.04]'
+            : 'border-[var(--color-glass-border)] bg-white/[0.01]'
+        }`}
+        style={{ borderLeftWidth: 3, borderLeftColor: color }}
+      >
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <span className="font-medium text-xs text-[var(--color-fg)] truncate">
+            {reply.author.displayName}
+          </span>
+          {isOp && (
+            <span className="rounded-full bg-degen-500/20 px-1.5 py-0.5 text-[9px] font-bold text-degen-400">
+              OP
+            </span>
+          )}
+          <span
+            className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+            style={{ backgroundColor: `${color}22`, color }}
+          >
+            {protocolLabel(reply.protocol)}
+          </span>
+          {reply.bridged && (
+            <span
+              className="text-[9px] text-degen-400"
+              title={`Replied from ${protocolLabel(bridgeSource)} via DegenFeed bridge`}
+            >
+              ↔ bridged
+            </span>
+          )}
+          {!reply.bridged && reply.viaCrossPost && (
+            <span
+              className="text-[9px] text-gray-500"
+              title={`Reply on the ${protocolLabel(reply.protocol)} cross-post of this thread`}
+            >
+              ↔ cross-post
+            </span>
+          )}
+          <span className="text-[10px] text-gray-600">{formatTimeAgo(reply.createdAt)} ago</span>
+        </div>
+        {reply.bridged && (
+          <p className="mb-1.5 text-[10px] italic text-gray-500">
+            ↔ Replied from {protocolLabel(bridgeSource)} via DegenFeed bridge
+          </p>
+        )}
+        <p className="text-xs leading-relaxed text-gray-400 whitespace-pre-wrap break-words line-clamp-6">
+          {reply.text}
+        </p>
+        <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-600">
+          <span>{reply.metrics.likes} likes</span>
+          <span>{reply.metrics.reposts} reposts</span>
+          <span>{reply.metrics.replies} replies</span>
+        </div>
       </div>
-      <p className="text-xs leading-relaxed text-gray-400 whitespace-pre-wrap break-words line-clamp-6">
-        {reply.text}
-      </p>
-      <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-600">
-        <span>{reply.metrics.likes} likes</span>
-        <span>{reply.metrics.reposts} reposts</span>
-        <span>{reply.metrics.replies} replies</span>
-      </div>
+      {children.length > 0 && (
+        <div
+          className="ml-4 border-l-2 pl-3"
+          style={{ borderColor: `${color}44` }}
+        >
+          {children.map((child) => (
+            <ThreadReplyCard
+              key={child.reply.id}
+              node={child}
+              opAuthorId={opAuthorId}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
+}
+
+function formatReplyBreakdown(byProtocol: Record<string, number>): string {
+  return Object.entries(byProtocol)
+    .sort((a, b) => b[1] - a[1])
+    .map(([p, n]) => `${n} ${n === 1 ? 'reply' : 'replies'} on ${protocolLabel(p)}`)
+    .join(', ');
 }
 
 interface Props {
@@ -334,16 +485,21 @@ interface Props {
 export default function PostPage({ params }: Props) {
   const [id, setId] = useState<string | null>(null);
   const [post, setPost] = useState<UnifiedPost | null>(null);
-  const [replies, setReplies] = useState<UnifiedPost[]>([]);
+  const [replies, setReplies] = useState<ThreadReply[]>([]);
+  const [thread, setThread] = useState<ThreadData | null>(null);
   const [_repliesState, setRepliesState] = useState<'idle' | 'loading' | 'loaded'>('idle');
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [error, setError] = useState<string>();
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
-  const { engage, signedInProtocols, openSignIn } = useAuth();
+  const { engage, crossReply, signedInProtocols, openSignIn } = useAuth();
   const [replyText, setReplyText] = useState('');
   const [replying, setReplying] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
+  const [replyProtocol, setReplyProtocol] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<ThreadSort>('chrono');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const dfUri = post?.dfUri ?? (id ? `df://${id}` : null);
 
   useEffect(() => {
     params.then((p) => setId(decodeURIComponent(p.id)));
@@ -377,17 +533,53 @@ export default function PostPage({ params }: Props) {
     };
   }, [id]);
 
+  const loadThread = useCallback(async () => {
+    if (!id) return;
+    const uri = `df://${id}`;
+    setRepliesState('loading');
+    try {
+      const res = await fetch(`/api/thread/${encodeURIComponent(uri)}?limit=50`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = (await res.json()) as ThreadData;
+        setThread(data);
+        setReplies(data.replies ?? []);
+        setRepliesState('loaded');
+        return;
+      }
+      throw new Error(`Thread fetch failed (${res.status})`);
+    } catch {
+      // Fallback: native-only replies endpoint
+      try {
+        const res = await fetch(`/api/feed/post/${encodeURIComponent(id)}/replies?limit=20`, {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const d = (await res.json()) as { data?: ThreadReply[] };
+          if (d?.data) setReplies(d.data);
+        }
+        setRepliesState('loaded');
+      } catch {
+        setRepliesState('idle');
+      }
+    }
+  }, [id]);
+
   useEffect(() => {
     if (!id || !post) return;
-    setRepliesState('loading');
-    fetch(`/api/feed/post/${encodeURIComponent(id)}/replies?limit=20`, { credentials: 'include' })
-      .then((r) => (r.ok ? (r.json() as Promise<{ data?: UnifiedPost[] }>) : null))
-      .then((d) => {
-        if (d?.data) setReplies(d.data);
-        setRepliesState('loaded');
-      })
-      .catch(() => setRepliesState('idle'));
-  }, [id, post]);
+    loadThread();
+  }, [id, post, loadThread]);
+
+  // Default the reply protocol: post's own protocol if signed in, else first signed-in
+  useEffect(() => {
+    if (replyProtocol || !post) return;
+    const signedIn = Object.entries(signedInProtocols)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    if (signedIn.length === 0) return;
+    setReplyProtocol(signedIn.includes(post.protocol) ? post.protocol : (signedIn[0] ?? null));
+  }, [post, signedInProtocols, replyProtocol]);
 
   const handleEngage = useCallback(
     async (action: EngagementAction, postId: string) => {
@@ -410,19 +602,21 @@ export default function PostPage({ params }: Props) {
     setReplying(true);
     setReplyError(null);
     try {
-      const result = await engage('reply', post.id, post.protocol, { content: replyText.trim() });
+      const targetProtocol = replyProtocol ?? post.protocol;
+      const content = replyText.trim();
+      let result: { ok: boolean; error?: string };
+      if (targetProtocol !== post.protocol) {
+        // Cross-protocol reply through the bridge
+        result = await crossReply(dfUri ?? `df://${id}`, post.protocol, targetProtocol, content);
+      } else {
+        result = await engage('reply', post.id, post.protocol, { content });
+      }
       if (result.ok) {
         setReplyText('');
         if (textareaRef.current) {
           textareaRef.current.style.height = 'auto';
         }
-        const res = await fetch(`/api/feed/post/${encodeURIComponent(id)}/replies?limit=20`, {
-          credentials: 'include',
-        });
-        if (res.ok) {
-          const d = (await res.json()) as { data?: UnifiedPost[] };
-          if (d?.data) setReplies(d.data);
-        }
+        await loadThread();
       } else {
         setReplyError(result.error || 'Reply failed');
       }
@@ -432,6 +626,17 @@ export default function PostPage({ params }: Props) {
       setReplying(false);
     }
   };
+
+  const signedIn = Object.entries(signedInProtocols)
+    .filter(([, v]) => v)
+    .map(([k]) => k);
+  const threadTree = dfUri ? buildThreadTree(replies, dfUri, sortMode) : [];
+  const byProtocol =
+    thread?.byProtocol ??
+    replies.reduce<Record<string, number>>((acc, r) => {
+      acc[r.protocol] = (acc[r.protocol] ?? 0) + 1;
+      return acc;
+    }, {});
 
   return (
     <ErrorBoundary>
@@ -471,8 +676,41 @@ export default function PostPage({ params }: Props) {
           <>
             <PostCard post={post} onEngage={handleEngage} onTip={setTipPost} />
 
-            {Object.keys(signedInProtocols).length > 0 ? (
+            {signedIn.length > 0 ? (
               <div className="card mt-4 border border-[var(--color-glass-border)] bg-white/[0.02]">
+                <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--color-glass-border)] px-4 py-2.5">
+                  <span className="mr-1 text-[11px] text-gray-500">Reply as:</span>
+                  {signedIn.map((p) => {
+                    const active = (replyProtocol ?? post.protocol) === p;
+                    const color = getProtocolColor(p);
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setReplyProtocol(p)}
+                        className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                          active
+                            ? ''
+                            : 'border-[var(--color-glass-border)] text-gray-500 hover:text-[var(--color-fg)]'
+                        }`}
+                        style={
+                          active
+                            ? { backgroundColor: `${color}22`, color, borderColor: `${color}66` }
+                            : undefined
+                        }
+                      >
+                        {protocolLabel(p)}
+                        {p !== post.protocol && ' ↔'}
+                      </button>
+                    );
+                  })}
+                </div>
+                {replyProtocol && replyProtocol !== post.protocol && (
+                  <p className="px-4 pt-2 text-[11px] text-degen-400">
+                    ↔ Bridging your reply from {protocolLabel(replyProtocol)} to this{' '}
+                    {protocolLabel(post.protocol)} post
+                  </p>
+                )}
                 <textarea
                   ref={textareaRef}
                   value={replyText}
@@ -525,12 +763,55 @@ export default function PostPage({ params }: Props) {
 
             {replies.length > 0 && (
               <section className="mt-6">
-                <h2 className="mb-3 font-semibold text-[var(--color-fg)] text-sm">
-                  {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
-                </h2>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h2 className="font-semibold text-[var(--color-fg)] text-sm">
+                      {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+                      {(thread?.protocols.length ?? 0) > 1 && (
+                        <span className="ml-1.5 text-degen-400">
+                          across {thread?.protocols.length} protocols
+                        </span>
+                      )}
+                    </h2>
+                    <p className="mt-0.5 text-[11px] text-gray-500">
+                      {formatReplyBreakdown(byProtocol)}
+                      {(thread?.bridgeCount ?? 0) > 0 && (
+                        <span className="ml-1.5 text-degen-400">
+                          · ↔ {thread?.bridgeCount} bridged
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex gap-1">
+                    {(
+                      [
+                        ['chrono', 'Chronological'],
+                        ['top', 'Top'],
+                        ['protocol', 'By Protocol'],
+                      ] as [ThreadSort, string][]
+                    ).map(([mode, label]) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setSortMode(mode)}
+                        className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                          sortMode === mode
+                            ? 'bg-degen-500/20 text-degen-400'
+                            : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="space-y-2">
-                  {replies.map((r) => (
-                    <ReplyCard key={r.id} reply={r} />
+                  {threadTree.map((node) => (
+                    <ThreadReplyCard
+                      key={node.reply.id}
+                      node={node}
+                      opAuthorId={post.author.id}
+                    />
                   ))}
                 </div>
               </section>

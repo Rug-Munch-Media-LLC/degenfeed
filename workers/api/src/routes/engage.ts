@@ -1,8 +1,9 @@
+import { learnFromInteraction, emptyBehaviorProfile, type UserBehaviorProfile } from '@degenfeed/feed-core';
 import { BskyClient } from '@degenfeed/bluesky-sdk';
 import { HubClient } from '@degenfeed/farcaster-sdk';
 import { LensClient } from '@degenfeed/lens-sdk';
 import { GtSClient } from '@degenfeed/mastodon-sdk';
-import type { EngagementAction } from '@degenfeed/types';
+import type { EngagementAction, Protocol } from '@degenfeed/types';
 import {
   BSKY_SOCIAL,
   type Env,
@@ -44,6 +45,69 @@ function nativeIdFromPostId(postId: string, protocol: string): string {
   return postId;
 }
 
+// ─── Behavior tracking ──────────────────────────────────────────────
+
+const ACTION_MAP: Record<string, 'view' | 'like' | 'repost' | 'reply' | 'tip' | 'bookmark' | 'dismiss'> = {
+  like: 'like',
+  unlike: 'dismiss',
+  repost: 'repost',
+  unrepost: 'dismiss',
+  bookmark: 'bookmark',
+  unbookmark: 'dismiss',
+  reply: 'reply',
+  react: 'like',
+};
+
+async function trackBehavior(
+  env: Env,
+  address: string,
+  action: EngagementAction,
+  protocol: string,
+  postId: string,
+  target: { authorId?: string; publicationId?: string },
+  content?: string,
+): Promise<void> {
+  const mapped = ACTION_MAP[action];
+  if (!mapped) return;
+
+  try {
+    const raw = await env.CACHE?.get(`user:behavior:${address.toLowerCase()}`);
+    const profile: UserBehaviorProfile = raw ? JSON.parse(raw) : emptyBehaviorProfile();
+
+    // Fetch the full post from KV if available
+    let post = null;
+    try {
+      const postRaw = await env.CACHE?.get(`post:${postId}`);
+      if (postRaw) post = JSON.parse(postRaw);
+    } catch {
+      /* ignore */
+    }
+
+    const minimalPost = post ?? {
+      id: postId,
+      protocol: protocol as Protocol,
+      author: { id: target.authorId || '' },
+      text: content || '',
+      embeds: [],
+      niches: [],
+      createdAt: Date.now(),
+      contentType: 'text' as const,
+      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false, raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 } },
+      raw: {},
+    };
+
+    const updated = learnFromInteraction(profile, minimalPost, mapped);
+    await env.CACHE?.put(`user:behavior:${address.toLowerCase()}`, JSON.stringify(updated), {
+      expirationTtl: 60 * 60 * 24 * 30,
+    });
+  } catch {
+    // Fire-and-forget — non-critical
+  }
+}
+
+// ─── Main handler ──────────────────────────────────────────────────
+
 export async function handleEngage(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ ok: false, error: 'Method not allowed' }, 405);
@@ -75,22 +139,41 @@ export async function handleEngage(request: Request, env: Env): Promise<Response
     const auth = body.auth ?? {};
     const nativeId = nativeIdFromPostId(postId, protocol);
 
+    let response: Response;
+
     switch (protocol) {
       case 'nostr':
-        return handleNostr(action, nativeId, target, content, reaction, auth, env);
+        response = await Promise.resolve(handleNostr(action, nativeId, target, content, reaction, auth, env));
+        break;
       case 'farcaster':
-        return handleFarcaster(action, nativeId, target, content, reaction, auth, env);
+        response = await handleFarcaster(action, nativeId, target, content, reaction, auth, env);
+        break;
       case 'lens':
-        return handleLens(action, nativeId, target, content, reaction, auth, env);
+        response = await handleLens(action, nativeId, target, content, reaction, auth, env);
+        break;
       case 'bluesky':
-        return handleBluesky(action, nativeId, target, content, reaction, auth, env);
+        response = await handleBluesky(action, nativeId, target, content, reaction, auth, env);
+        break;
       case 'threads':
-        return handleThreads(action, nativeId, target, content, reaction, auth, env);
+        response = await handleThreads(action, nativeId, target, content, reaction, auth, env);
+        break;
       case 'mastodon':
-        return handleMastodon(action, nativeId, target, content, reaction, auth, env);
+        response = await handleMastodon(action, nativeId, target, content, reaction, auth, env);
+        break;
       default:
         return jsonResponse({ ok: false, error: `${protocol} not supported` }, 400);
     }
+
+    // Fire-and-forget behavior tracking on successful engagement
+    if (response.status === 200) {
+      const { requireSession } = await import('../session');
+      const session = await requireSession(request, env);
+      if (!(session instanceof Response)) {
+        void trackBehavior(env, session.address, action, protocol, postId, target, content);
+      }
+    }
+
+    return response;
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal error';
     return jsonResponse({ ok: false, error: message }, 500);

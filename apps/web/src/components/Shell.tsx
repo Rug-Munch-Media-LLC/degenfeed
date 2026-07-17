@@ -1,15 +1,16 @@
 'use client';
 
+import { RealtimeStatusDot } from '@degenfeed/realtime';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { OnboardingProvider } from '../hooks/useOnboarding';
 import { AddToHomeScreenToast } from './AddToHomeScreenToast';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
 import { InstallPrompt } from './InstallPrompt';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { OnboardingModal } from './OnboardingModal';
-import { OnboardingProvider } from '../hooks/useOnboarding';
 import { SearchOverlay } from './SearchOverlay';
 import { useToast } from './Toast';
 
@@ -33,6 +34,7 @@ const NAV: NavItem[] = [
   { href: '/deploy', label: 'Launch' },
   { href: '/docs', label: 'Docs' },
   { href: '/premium', label: 'Premium' },
+  { href: '/creator', label: 'Creator Studio' },
   { href: '/profile', label: 'Profile' },
 ];
 
@@ -67,7 +69,9 @@ function StatusHealthDot() {
         setTitle(`${down} protocol${down === 1 ? '' : 's'} down · ${up}/${total} operational`);
       } else if (degraded > 0) {
         setDot('🟡');
-        setTitle(`${degraded} protocol${degraded === 1 ? '' : 's'} degraded · ${up}/${total} operational`);
+        setTitle(
+          `${degraded} protocol${degraded === 1 ? '' : 's'} degraded · ${up}/${total} operational`,
+        );
       } else {
         setDot('🟢');
         setTitle(`All ${total} protocols operational`);
@@ -232,6 +236,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
 
           <div className="hidden items-center gap-1 md:flex">
             <StatusHealthDot />
+            <RealtimeStatusDot />
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
@@ -400,8 +405,14 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             <a href="/docs" className="transition-colors hover:text-[var(--color-fg)]">
               Docs
             </a>
+            <a href="/developers" className="transition-colors hover:text-[var(--color-fg)]">
+              Developers
+            </a>
             <a href="/premium" className="transition-colors hover:text-[var(--color-fg)]">
               Premium
+            </a>
+            <a href="/creator" className="transition-colors hover:text-[var(--color-fg)]">
+              Creator Studio
             </a>
             <a href="/profile" className="transition-colors hover:text-[var(--color-fg)]">
               Profile

@@ -16,6 +16,7 @@ import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from 
 import type { Env } from './index';
 import { jsonResponse, rateLimit } from './index';
 import { validateBodySize } from './sanitize';
+import { apiKeyMiddleware, generateApiKey, storeApiKey, deleteApiKey, VALID_SCOPES } from './api-key';
 
 // ─── Route handlers ──────────────────────────────────────────
 
@@ -44,11 +45,25 @@ import {
 import { handleContentResolve } from './routes/content';
 import { handleCrossReply } from './routes/cross-reply';
 import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
-import { handleDiscover } from './routes/discover';
-import { handleEmbedResolve } from './routes/embed';
+import {
+  handleDiscover,
+  handleDiscoverCommunities,
+  handleDiscoverFeatured,
+  handleDiscoverNew,
+  handleDiscoverPeople,
+  handleDiscoverTopics,
+  handleDiscoverTrending,
+} from './routes/discover';
+import { handleEmbedPost, handleEmbedResolve } from './routes/embed';
 import { handleEngage } from './routes/engage';
 import { handleFarcasterFeed } from './routes/farcaster-feed';
 import { handleFeatures } from './routes/features';
+import {
+  handleAdjustTopic,
+  handleClearTopic,
+  handleForYouFeed,
+  handleGetTopics,
+} from './routes/for-you';
 import {
   handleCategoryFeed,
   handleFeedHealth,
@@ -117,7 +132,6 @@ import {
   handleUnifiedTipLeaderboard,
   handleUnifiedTipStats,
 } from './routes/unified-tip';
-import { handleDiscoverPeople } from './routes/people';
 import { handlePostById } from './routes/post';
 import { handlePreferences } from './routes/preferences';
 import { handleFeedPresets } from './routes/presets';
@@ -259,6 +273,9 @@ app.use('*', async (c, next) => {
   await next();
 });
 
+// ─── Middleware: API key authentication (v1 routes) ──────────
+app.use('/v1/*', apiKeyMiddleware);
+
 // ─── Middleware: rate limiting ───────────────────────────────
 app.use('*', async (c, next) => {
   if (c.req.method === 'OPTIONS') return next();
@@ -276,6 +293,25 @@ app.use('*', async (c, next) => {
     });
   }
   await next();
+});
+
+// ─── Middleware: Deprecation headers for legacy /api/ routes ──
+// Legacy /api/* routes get deprecation headers encouraging migration to /v1/
+app.use('/api/*', async (c, next) => {
+  await next();
+  if (c.res) {
+    const headers = new Headers(c.res.headers);
+    if (!headers.has('Deprecation')) {
+      headers.set('Deprecation', 'true');
+      headers.set('Sunset', 'Sat, 01 Nov 2026 00:00:00 GMT');
+      headers.set('Link', '</v1/>; rel="successor-version"');
+      c.res = new Response(c.res.body, {
+        status: c.res.status,
+        statusText: c.res.statusText,
+        headers,
+      });
+    }
+  }
 });
 
 // ─── Landing pages / static assets ─────────────────────────
@@ -306,6 +342,7 @@ app.get('/api/analytics', (c) => handleAnalytics(c.req.raw, c.env));
 
 // ─── API: Feed (specific routes before parameterized) ──────
 app.all('/api/feed/home', async (c) => handleHomeFeed(c.req.raw, c.env, c.executionCtx));
+app.all('/api/feed/for-you', async (c) => handleForYouFeed(c.req.raw, c.env, c.executionCtx));
 app.all('/api/feed/trending', async (c) => handleTrendingFeed(c.req.raw, c.env, c.executionCtx));
 app.all('/api/feed/health', async (c) => handleFeedHealth(c.req.raw, c.env));
 app.all('/api/feed/rss.xml', async (c) => handleRssXml(c.req.raw, c.env));
@@ -351,6 +388,12 @@ app.get('/api/cross-reply/status', async (c) => {
   return handleCrossReplyStatus(c.req.raw, c.env);
 });
 app.all('/api/cross-reply', async (c) => withSession(c, () => handleCrossReply(c.req.raw, c.env)));
+
+// Unified cross-protocol thread view — public read-only
+app.get('/api/thread/:dfUri', async (c) => {
+  const { handleUnifiedThread } = await import('./routes/thread');
+  return handleUnifiedThread(c.req.raw, c.env, c.req.param('dfUri'));
+});
 
 // ─── API: Auth ──────────────────────────────────────────────
 app.all('/api/auth/signout', async (c) => {
@@ -499,6 +542,9 @@ app.all('/api/subscription/:creator', async (c) =>
 
 // ─── API: Preferences ───────────────────────────────────────
 app.all('/api/preferences', async (c) => handlePreferences(c.req.raw, c.env));
+app.get('/api/preferences/topics', async (c) => handleGetTopics(c.req.raw, c.env));
+app.post('/api/preferences/topics', async (c) => handleAdjustTopic(c.req.raw, c.env));
+app.post('/api/preferences/topics/clear', async (c) => handleClearTopic(c.req.raw, c.env));
 
 // ─── API: x402 ─────────────────────────────────────────────
 app.all('/api/x402/paywall', async (c) => handleX402Paywall(c.req.raw, c.env));
@@ -515,7 +561,12 @@ app.all('/api/rmi/news/*', async (c) => handleRmiNews(c.req.raw, c.env));
 
 // ─── API: Discover ─────────────────────────────────────────
 app.all('/api/discover', async (c) => handleDiscover(c.req.raw, c.env));
-app.all('/api/discover/people', async (c) => handleDiscoverPeople(c.req.raw, c.env));
+app.get('/api/discover/trending', async (c) => handleDiscoverTrending(c.req.raw, c.env));
+app.get('/api/discover/communities', async (c) => handleDiscoverCommunities(c.req.raw, c.env));
+app.get('/api/discover/people', async (c) => handleDiscoverPeople(c.req.raw, c.env));
+app.get('/api/discover/topics', async (c) => handleDiscoverTopics(c.req.raw, c.env));
+app.get('/api/discover/featured', async (c) => handleDiscoverFeatured(c.req.raw, c.env));
+app.get('/api/discover/new', async (c) => handleDiscoverNew(c.req.raw, c.env));
 
 // ─── API: Push ─────────────────────────────────────────────
 app.all('/api/push/subscribe', async (c) => handlePushSubscribe(c.req.raw, c.env));
@@ -543,6 +594,7 @@ app.all('/api/content/*', async (c) => handleContentResolve(c.req.raw, c.env));
 
 // ─── API: Embed ──────────────────────────────────────────────
 app.all('/api/embed/resolve', async (c) => handleEmbedResolve(c.req.raw, c.env));
+app.all('/api/embed/*', async (c) => handleEmbedPost(c.req.raw, c.env));
 
 // ─── API: Frame ─────────────────────────────────────────────
 app.all('/api/frame/resolve', async (c) => handleFrameResolve(c.req.raw, c.env));
@@ -608,6 +660,203 @@ app.post('/api/translate', async (c) => handleTranslate(c.req.raw, c.env));
 // ─── API: Prices ────────────────────────────────────────────
 app.all('/api/prices', async (c) => handlePrices(c.req.raw, c.env));
 
+// ═══════════════════════════════════════════════════════════
+// V1 ROUTES — Stable, versioned public API
+// ═══════════════════════════════════════════════════════════
+
+// ─── V1: Feed ───────────────────────────────────────────
+app.all('/v1/feed/home', async (c) => handleHomeFeed(c.req.raw, c.env, c.executionCtx));
+app.all('/v1/feed/trending', async (c) => handleTrendingFeed(c.req.raw, c.env, c.executionCtx));
+app.all('/v1/feed/health', async (c) => handleFeedHealth(c.req.raw, c.env));
+app.all('/v1/feed/news', async (c) => handleNewsFeed(c.req.raw, c.env));
+app.all('/v1/feed/reddit', async (c) => handleRedditFeed(c.req.raw, c.env));
+app.all('/v1/feed/activitypub', async (c) => handleActivityPubFeed(c.req.raw, c.env));
+app.all('/v1/feed/threads', async (c) => handleThreadsFeed(c.req.raw, c.env));
+app.all('/v1/feed/farcaster', async (c) => handleFarcasterFeed(c.req.raw, c.env));
+app.all('/v1/feed/rss', async (c) => handleRssFeed(c.req.raw, c.env));
+app.all('/v1/feed/post/:postId/replies', async (c) =>
+  handlePostReplies(c.req.raw, c.env, c.req.param('postId')),
+);
+app.all('/v1/feed/post/:postId', async (c) => {
+  const postId = c.req.param('postId');
+  if (c.req.query('format') === 'og') return handlePostOg(c.req.raw, c.env, postId);
+  return handlePostById(c.req.raw, c.env, postId);
+});
+app.all('/v1/feed/funding', async (c) => handleFundingFeed(c.req.raw, c.env));
+app.all('/v1/feed/top', async (c) => handleTopFeed(c.req.raw, c.env));
+app.all('/v1/feed/alt', async (c) => handleAltFeed(c.req.raw, c.env));
+app.all('/v1/feed/communities', async (c) => handleCommunities(c.req.raw, c.env));
+app.all('/v1/feed/newsletters', async (c) => handleNewsletterFeed(c.req.raw, c.env));
+app.all('/v1/feed/related', async (c) => handleRelatedPosts(c.req.raw, c.env));
+app.all('/v1/feed/presets', async (c) => handleFeedPresets(c.req.raw, c.env));
+app.all('/v1/feed/stream', async (c) => handleStreamFeed(c.req.raw, c.env));
+app.all('/v1/feed/category/:category', async (c) =>
+  handleCategoryFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx),
+);
+app.all('/v1/feed/:provider', async (c) =>
+  handleProviderFeed(c.req.raw, c.env, c.req.param('provider')),
+);
+
+// ─── V1: Search ─────────────────────────────────────────
+app.all('/v1/search/identity', async (c) => handleSearchIdentity(c.req.raw, c.env));
+app.all('/v1/search', async (c) => handleSearch(c.req.raw, c.env));
+
+// ─── V1: Identity ───────────────────────────────────────
+app.all('/v1/identity/resolve', async (c) => handleResolveIdentity(c.req.raw, c.env));
+app.get('/v1/identity/profile', async (c) => {
+  const wallet = c.req.query('wallet');
+  if (wallet) return handleGetIdentityProfile(c.req.raw, c.env);
+  return handleIdentityProfile(c.req.raw, c.env);
+});
+app.post('/v1/identity/link', async (c) => handleLinkIdentity(c.req.raw, c.env));
+app.delete('/v1/identity/link', async (c) => handleUnlinkIdentity(c.req.raw, c.env));
+
+// ─── V1: Tips ───────────────────────────────────────────
+app.all('/v1/tip/lightning/invoice', async (c) => handleLightningInvoice(c.req.raw, c.env));
+app.all('/v1/tip/frame/tx/:id', async (c) => handleTipFrameTx(c.req.raw, c.env));
+app.all('/v1/tip/frame/callback/:id', async (c) => handleTipFrameCallback(c.req.raw, c.env));
+app.all('/v1/tip/frame/:id', async (c) => handleTipFrame(c.req.raw, c.env));
+app.all('/v1/tip/resolve', async (c) => handleTipResolve(c.req.raw, c.env));
+app.all('/v1/tip/create', async (c) => withSession(c, () => handleTipCreate(c.req.raw, c.env)));
+app.all('/v1/tip/settings', async (c) => {
+  if (c.req.method === 'GET') return handleTipSettingsGet(c.req.raw, c.env);
+  if (c.req.method === 'POST') return withSession(c, () => handleTipSettingsPost(c.req.raw, c.env));
+  return jsonResponse({ error: 'Method not allowed' }, 405);
+});
+
+// ─── V1: Unified Tips ───────────────────────────────────
+app.post('/v1/tip/unified', async (c) =>
+  withSession(c, () => handleUnifiedTipCreate(c.req.raw, c.env)),
+);
+app.get('/v1/tip/unified/stats', async (c) => handleUnifiedTipStats(c.req.raw, c.env));
+app.get('/v1/tip/unified/leaderboard', async (c) => handleUnifiedTipLeaderboard(c.req.raw, c.env));
+app.get('/v1/tip/unified/activity', async (c) => handleUnifiedTipActivity(c.req.raw, c.env));
+
+// ─── V1: Health ─────────────────────────────────────────
+app.all('/v1/health', async (c) => handleRelaysHealth(c.env));
+app.get('/v1/health/protocols', async (c) => handleProtocolsHealth(c.env));
+
+// ─── V1: Communities ────────────────────────────────────
+app.post('/v1/community', async (c) =>
+  withSession(c, () => handleCommunityCreate(c.req.raw, c.env)),
+);
+app.get('/v1/community/:name', async (c) =>
+  handleCommunityGet(c.req.raw, c.env, c.req.param('name')),
+);
+app.get('/v1/community/:name/feed', async (c) =>
+  handleCommunityFeed(c.req.raw, c.env, c.req.param('name')),
+);
+app.post('/v1/community/:name/join', async (c) =>
+  withSession(c, () => handleCommunityJoin(c.req.raw, c.env, c.req.param('name'))),
+);
+app.get('/v1/communities', async (c) => handleCommunitiesList(c.req.raw, c.env));
+
+// ─── V1: Content Resolution (df:// URIs) ───────────────
+app.all('/v1/content/*', async (c) => handleContentResolve(c.req.raw, c.env));
+
+// ─── V1: Leaderboard ────────────────────────────────────
+app.get('/v1/leaderboard/creators', async (c) => handleLeaderboardCreators(c.req.raw, c.env));
+app.get('/v1/leaderboard/tippers', async (c) => handleLeaderboardTippers(c.req.raw, c.env));
+app.get('/v1/leaderboard/trending', async (c) => handleLeaderboardTrending(c.req.raw, c.env));
+app.get('/v1/leaderboard/communities', async (c) =>
+  handleLeaderboardCommunities(c.req.raw, c.env),
+);
+
+// ─── V1: Status — protocol health ───────────────────────
+app.all('/v1/status', async (_c) =>
+  jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '1.0.0' }),
+);
+
+// ─── V1: Publish & Engage (session-gated) ──────────────
+app.all('/v1/publish', async (c) => withSession(c, () => handlePublish(c.req.raw, c.env)));
+app.all('/v1/engage', async (c) => withSession(c, () => handleEngage(c.req.raw, c.env)));
+
+// ─── V1: Other public endpoints ─────────────────────────
+app.all('/v1/analytics', (c) => handleAnalytics(c.req.raw, c.env));
+app.all('/v1/notifications', async (c) => handleNotifications(c.req.raw, c.env));
+app.all('/v1/discover', async (c) => handleDiscover(c.req.raw, c.env));
+app.all('/v1/discover/people', async (c) => handleDiscoverPeople(c.req.raw, c.env));
+app.all('/v1/prices', async (c) => handlePrices(c.req.raw, c.env));
+app.all('/v1/embed/resolve', async (c) => handleEmbedResolve(c.req.raw, c.env));
+app.all('/v1/frame/resolve', async (c) => handleFrameResolve(c.req.raw, c.env));
+app.all('/v1/frame/action', async (c) => handleFrameAction(c.req.raw, c.env));
+app.all('/v1/features', async (c) => handleFeatures(c.req.raw, c.env));
+app.all('/v1/notify', async (c) => handleNotify(c.req.raw, c.env));
+app.all('/v1/push/subscribe', async (c) => handlePushSubscribe(c.req.raw, c.env));
+
+// ─── V1: Newsletter ─────────────────────────────────────
+app.all('/v1/newsletter/subscribe', async (c) => handleNewsletterSubscribe(c.req.raw, c.env));
+app.all('/v1/newsletter/status', async (c) => handleNewsletterStatus(c.req.raw, c.env));
+app.all('/v1/newsletter/digest', async (c) => handleNewsletterDigest(c.req.raw, c.env));
+
+// ─── V1: API Key Management ────────────────────────────────
+
+app.post('/v1/api-keys', async (c) => {
+  const { requireSession, applySessionRefresh } = await import('./session');
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  let body: { scopes?: string[]; label?: string };
+  try {
+    const text = await c.req.raw.text();
+    body = JSON.parse(text);
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const scopes = body.scopes || ['read:feed'];
+  const invalidScopes = scopes.filter((s: string) => !VALID_SCOPES.includes(s as never));
+  if (invalidScopes.length > 0) {
+    return jsonResponse({ error: `Invalid scopes: ${invalidScopes.join(', ')}` }, 400);
+  }
+
+  const userId = session.address || 'anon';
+  const apiKey = generateApiKey();
+  const record = await storeApiKey(c.env, apiKey, {
+    userId,
+    scopes,
+    tier: 'free',
+    label: body.label,
+  });
+
+  return jsonResponse({
+    key: apiKey,
+    keyId: record.keyId,
+    scopes: record.scopes,
+    tier: record.tier,
+    createdAt: record.createdAt,
+    label: record.label,
+  }, 201);
+});
+
+app.get('/v1/api-keys', async (c) => {
+  const { requireSession } = await import('./session');
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+  return jsonResponse({ keys: [] });
+});
+
+app.delete('/v1/api-keys/:keyId', async (c) => {
+  const { requireSession } = await import('./session');
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  let body: { key?: string };
+  try {
+    const text = await c.req.raw.text();
+    body = JSON.parse(text);
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if (!body.key) {
+    return jsonResponse({ error: 'API key required in body' }, 400);
+  }
+
+  await deleteApiKey(c.env, body.key);
+  return jsonResponse({ success: true });
+});
+
 // ─── API: Leaderboard ────────────────────────────────────────
 app.get('/api/leaderboard/creators', async (c) => handleLeaderboardCreators(c.req.raw, c.env));
 app.get('/api/leaderboard/tippers', async (c) => handleLeaderboardTippers(c.req.raw, c.env));
@@ -623,7 +872,12 @@ for (const [from, to] of Object.entries(STATIC_REDIRECTS)) {
 }
 
 // ─── Catch-all: return API info ─────────────────────────────
-app.all('*', (_c) => jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.2.0' }));
+app.all('*', (c) => {
+  if (c.req.path.startsWith('/v1/')) {
+    return jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '1.0.0' });
+  }
+  return jsonResponse({ status: 'ok', service: 'degenfeed-api', version: '0.2.0' });
+});
 
 // ─── Exports ─────────────────────────────────────────────────
 

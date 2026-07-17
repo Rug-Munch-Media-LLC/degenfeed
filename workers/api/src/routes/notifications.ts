@@ -1,5 +1,6 @@
 import { type Env, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
+import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
 
 interface Notification {
   id: string;
@@ -633,6 +634,15 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
     const ids = new Set(unified.slice(0, 50).map((n) => n.id));
     await saveReadState(env, userId, ids);
   })();
+
+  if (unified.length > 0) {
+    broadcastToAll('notifications:new', {
+      count: unified.length,
+      latestId: unified[0]?.id,
+      latestType: unified[0]?.type,
+      timestamp: Date.now(),
+    });
+  }
 
   return noCacheJsonResponse({ notifications: unified.slice(0, 100), meta: { total: unified.length } });
 }

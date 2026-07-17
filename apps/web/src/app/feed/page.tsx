@@ -32,6 +32,12 @@ interface FeedMeta {
   trending?: { topic: string; count: number; score: number }[];
   topOfHour?: string | null;
   fetchedAt?: number;
+  personalization?: {
+    hasProfile: boolean;
+    boostApplied: boolean;
+    isOnboarding: boolean;
+    reasons?: string[];
+  };
 }
 
 interface ProtocolSummary {
@@ -176,6 +182,22 @@ export default function FeedPage() {
     });
   }, [persistPrefs]);
 
+  // ── "Why this post?" panel state ──────────────────────────────
+  const [explainPost, setExplainPost] = useState<UnifiedPost | null>(null);
+  const explainRef = useRef<HTMLDivElement>(null);
+
+  // Close explain panel on outside click
+  useEffect(() => {
+    if (!explainPost) return;
+    const handler = (e: MouseEvent) => {
+      if (explainRef.current && !explainRef.current.contains(e.target as Node)) {
+        setExplainPost(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [explainPost]);
+
   const [newAvailable, setNewAvailable] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -191,7 +213,8 @@ export default function FeedPage() {
     async (checkOnly = false) => {
       if (!checkOnly) setState('loading');
       try {
-        const url = new URL('/api/feed/home', window.location.origin);
+        const endpoint = activeTab === 'for-you' ? '/api/feed/for-you' : '/api/feed/home';
+        const url = new URL(endpoint, window.location.origin);
         url.searchParams.set('limit', String(loadedLimit));
         const protocolsToFetch = protocolFilter
           ? [protocolFilter]
@@ -342,9 +365,17 @@ export default function FeedPage() {
   const router = useRouter();
   const handlePostClick = useCallback(
     (id: string) => {
+      // In for-you mode, if user clicks anywhere, open explain panel for this post
+      if (activeTab === 'for-you') {
+        const post = posts.find((p) => p.id === id);
+        if (post && post.score) {
+          setExplainPost(post);
+          return;
+        }
+      }
       router.push(`/post/${encodeURIComponent(id)}`);
     },
-    [router],
+    [activeTab, posts, router],
   );
 
   const handleReport = useCallback(
@@ -627,7 +658,32 @@ export default function FeedPage() {
               ))}
             </div>
 
-            {/* Quality controls */}
+            {/* Personalization bar for For You tab */}
+          {activeTab === 'for-you' && feedMeta.personalization && (
+            <div className="border-t border-degen-500/20 bg-degen-500/5 px-4 py-2 text-[11px] text-gray-400">
+              <span className="font-semibold text-degen-400">For You</span>
+              {' — '}
+              {feedMeta.personalization.isOnboarding
+                ? 'New user mode: showing trending content to learn what you like. Like, repost, or bookmark posts to personalize your feed.'
+                : feedMeta.personalization.reasons && feedMeta.personalization.reasons.length > 0
+                  ? `Personalized: ${feedMeta.personalization.reasons.slice(0, 3).join(' · ')}`
+                  : 'Personalized based on your activity'}
+              {feedMeta.personalization.hasProfile && (
+                <a
+                  href="/profile/preferences#topics"
+                  className="ml-2 text-degen-500 hover:text-degen-400 underline decoration-dotted"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = '/profile/preferences#topics';
+                  }}
+                >
+                  Manage topics
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Quality controls */}
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--color-glass-border)] px-4 py-2 text-[11px] text-gray-400">
               <button
                 type="button"
@@ -895,6 +951,94 @@ export default function FeedPage() {
               <p className="mt-1 text-xs text-gray-600">
                 Tap the Follow button on any post to build your timeline.
               </p>
+            </div>
+          )}
+
+          {/* ── "Why this post?" explain panel ── */}
+          {explainPost && activeTab === 'for-you' && (
+            <div
+              ref={explainRef}
+              className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-[1280px] px-3 sm:px-4"
+            >
+              <div className="rounded-t-2xl border border-degen-500/30 border-b-0 bg-[var(--color-card)] p-4 shadow-2xl backdrop-blur-xl sm:mx-auto sm:max-w-lg sm:rounded-2xl sm:border-b sm:mb-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-degen-400">Why this post?</h3>
+                  <button
+                    type="button"
+                    onClick={() => setExplainPost(null)}
+                    className="rounded-lg p-1 text-gray-500 hover:bg-[var(--color-muted)] hover:text-gray-300 transition-colors"
+                    aria-label="Close"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+
+                {explainPost.score?.reasons && explainPost.score.reasons.length > 0 ? (
+                  <ul className="space-y-2">
+                    {explainPost.score.reasons.map((reason, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
+                        <span className="mt-0.5 shrink-0 text-degen-400">◆</span>
+                        <span>
+                          {reason === 'fresh' && 'This post is recent — fresh content gets priority'}
+                          {reason === 'viral' && 'High engagement — lots of likes and reposts'}
+                          {reason === 'on-topic' && 'Matches topics you care about'}
+                          {reason === 'original-content' && 'Original content — not a repost or link drop'}
+                          {reason === 'media' && 'Contains images or video'}
+                          {reason === 'verified-author' && 'Published by a verified author'}
+                          {reason === 'established-author' && 'From an established account'}
+                          {reason === 'trending-now' && 'Gaining traction right now'}
+                          {reason === 'followed' && 'You follow this author'}
+                          {reason.startsWith('you like') && (
+                            <span className="text-degen-400">{reason}</span>
+                          )}
+                          {reason.startsWith('you follow') && (
+                            <span className="text-degen-400">{reason}</span>
+                          )}
+                          {reason.startsWith('you engage on') && (
+                            <span className="text-degen-400">{reason}</span>
+                          )}
+                          {reason === 'recently active in this topic' && (
+                            <span className="text-degen-400">{reason}</span>
+                          )}
+                          {reason === 'trending content' && (
+                            <span className="text-degen-400">Trending across the network</span>
+                          )}
+                          {!['fresh', 'viral', 'on-topic', 'original-content', 'media', 'verified-author', 'established-author', 'trending-now', 'followed'].includes(reason) &&
+                           !reason.startsWith('you like') &&
+                           !reason.startsWith('you follow') &&
+                           !reason.startsWith('you engage on') &&
+                           reason !== 'recently active in this topic' &&
+                           reason !== 'trending content' && reason}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-gray-500">Scored by the DegenFeed ranking algorithm based on recency, engagement, quality, and relevance signals.</p>
+                )}
+
+                {explainPost.score && (
+                  <div className="mt-3 border-t border-[var(--color-glass-border)] pt-2">
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>Algorithm score: <strong className="text-degen-400">{Math.round(explainPost.score.total * 10) / 10}</strong></span>
+                      <span className="text-[10px] text-gray-600">★ Score breakdown</span>
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap gap-2 text-[10px] text-gray-500">
+                      <span>Recency: {explainPost.score.recency.toFixed(2)}</span>
+                      <span>Engagement: {explainPost.score.engagement.toFixed(2)}</span>
+                      <span>Relevance: {explainPost.score.relevance.toFixed(2)}</span>
+                      <span>Quality: {explainPost.score.quality.toFixed(2)}</span>
+                      <span>Velocity: {explainPost.score.velocity.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+
+                <p className="mt-3 text-[10px] text-gray-600">
+                  Tip: The more you like, repost, and bookmark, the better your For You feed becomes.
+                </p>
+              </div>
             </div>
           )}
 
