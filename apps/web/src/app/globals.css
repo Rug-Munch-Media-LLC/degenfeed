@@ -3,7 +3,61 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Light theme (default) ── */
   :root {
+    /* shadcn-style tokens */
+    --background: #ffffff;
+    --foreground: #171717;
+    --muted: #f5f5f5;
+    --muted-foreground: #737373;
+    --card: #ffffff;
+    --card-foreground: #171717;
+    --border: #e5e5e5;
+    --primary: #16a34a;
+    --primary-foreground: #ffffff;
+    --secondary: #f5f5f5;
+    --secondary-foreground: #171717;
+    --accent: #f5f5f5;
+    --accent-foreground: #171717;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --ring: #16a34a;
+    --radius: 0.5rem;
+
+    /* DegenFeed custom tokens */
+    --color-bg: #ffffff;
+    --color-fg: #171717;
+    --color-accent: #16a34a;
+    --color-accent-glow: rgba(22, 163, 74, 0.12);
+    --color-muted: #737373;
+    --color-border: #e5e5e5;
+    --color-card: #ffffff;
+    --color-card-hover: #f9fafb;
+    --color-danger: #dc2626;
+    --color-glass-bg: rgba(255, 255, 255, 0.7);
+    --color-glass-border: rgba(0, 0, 0, 0.08);
+    --color-overlay: rgba(0, 0, 0, 0.05);
+  }
+
+  /* ── Dark theme ── */
+  .dark {
+    --background: #000000;
+    --foreground: #e7e9ea;
+    --muted: #1a1a2e;
+    --muted-foreground: #71767b;
+    --card: #0a0a0a;
+    --card-foreground: #e7e9ea;
+    --border: #2f3336;
+    --primary: #16a34a;
+    --primary-foreground: #ffffff;
+    --secondary: #1a1a2e;
+    --secondary-foreground: #e7e9ea;
+    --accent: #1a1a2e;
+    --accent-foreground: #e7e9ea;
+    --destructive: #f4212e;
+    --destructive-foreground: #ffffff;
+    --ring: #00ff41;
+
     --color-bg: #000000;
     --color-fg: #e7e9ea;
     --color-accent: #00ff41;
@@ -13,10 +67,13 @@
     --color-card: #0a0a0a;
     --color-card-hover: #111111;
     --color-danger: #f4212e;
+    --color-glass-bg: rgba(17, 17, 27, 0.7);
+    --color-glass-border: rgba(255, 255, 255, 0.06);
+    --color-overlay: rgba(255, 255, 255, 0.05);
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: light dark;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -46,34 +103,96 @@
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-degen-500 focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-degen-500 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary {
     @apply btn bg-degen-500 text-black hover:bg-degen-400 hover:shadow-[0_0_20px_rgba(34,197,94,0.35)] active:bg-degen-600;
   }
   .btn-secondary {
-    @apply btn border border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-degen-500/30;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-overlay);
+    color: var(--color-fg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    border-color: rgba(34, 197, 94, 0.3);
+    background-color: var(--color-accent-glow);
   }
   .btn-ghost {
-    @apply btn text-gray-300 hover:bg-gray-800 hover:text-white;
+    color: var(--color-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover {
+    background-color: var(--color-overlay);
+    color: var(--color-fg);
   }
   .card {
-    @apply rounded-2xl border border-white/10 bg-gray-950/50 p-4 backdrop-blur-md shadow-xl;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  }
+  .dark .card {
+    background-color: color-mix(in srgb, var(--color-card) 50%, transparent);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   }
   .card-hover {
-    @apply card transition-all duration-300 hover:border-degen-500/30 hover:bg-gray-900/60 hover:shadow-[0_0_30px_rgba(34,197,94,0.12)];
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    padding: 1rem;
+    transition: all 0.3s;
+  }
+  .card-hover:hover {
+    border-color: rgba(34, 197, 94, 0.3);
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.12);
   }
   .input {
-    @apply w-full rounded-xl border border-white/10 bg-gray-950/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-degen-500 focus:outline-none focus:ring-1 focus:ring-degen-500;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    color: var(--color-fg);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .input::placeholder {
+    color: var(--color-muted);
+  }
+  .input:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 1px #16a34a;
   }
   .glass {
-    @apply border border-white/10 bg-gray-950/50 backdrop-blur-xl;
+    background: var(--color-glass-bg);
+    border: 1px solid var(--color-glass-border);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
   }
   .gradient-text {
     @apply bg-gradient-to-r from-degen-400 via-degen-500 to-fuchsia-500 bg-clip-text text-transparent;
   }
   .skeleton {
-    @apply animate-pulse rounded-xl bg-gray-800/80;
+    @apply animate-pulse rounded-xl;
+    background-color: var(--color-muted);
+    opacity: 0.3;
   }
 }
 
@@ -164,12 +283,12 @@
   animation: fade-in 0.3s ease-out;
 }
 .card-glass {
-  background: rgba(17, 17, 27, 0.7);
+  background: var(--color-glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-glass-border);
 }
 .top-of-hour-card {
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.08), rgba(17, 17, 27, 0.8));
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.08), var(--color-glass-bg));
   border: 1px solid rgba(234, 179, 8, 0.2);
 }
