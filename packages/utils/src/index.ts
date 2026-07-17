@@ -210,6 +210,14 @@ export function isValidEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
 }
 
+// ─── Protocol → currency mapping for tipping ──────────────────────────
+
+export {
+  PROTOCOL_DEFAULT_CURRENCY,
+  CURRENCY_META,
+  getDefaultCurrency,
+} from './protocolCurrency';
+
 // ─── Error reporting (lightweight Sentry) ─────────────────────────────
 
 export { reportError } from './sentry';

@@ -1,6 +1,22 @@
 'use client';
 
+import { CURRENCY_META } from '@degenfeed/utils';
 import { useState } from 'react';
+
+/**
+ * Map of connected protocol → default currency key.
+ * Used when `connectedProtocol` is provided as a prop.
+ */
+const PROTOCOL_CURRENCY: Record<string, string> = {
+  farcaster: 'base',
+  lens: 'matic',
+  solana: 'sol',
+  ethereum: 'eth',
+  nostr: 'btc',
+  bluesky: 'eth',
+  mastodon: 'eth',
+  threads: 'eth',
+};
 
 interface QuickTipButtonProps {
   postId: string;
@@ -8,7 +24,8 @@ interface QuickTipButtonProps {
   tipAmounts?: number[]; // predefined amounts in USD
   tipCount?: number;
   onOpenModal?: () => void; // opens the full TipModal with all methods
-  defaultCurrency?: 'eth' | 'sol' | 'usdc';
+  defaultCurrency?: 'eth' | 'sol' | 'usdc' | 'base' | 'matic' | 'btc';
+  connectedProtocol?: string; // e.g. 'farcaster', 'lens', 'nostr', 'solana', 'ethereum'
 }
 
 export function QuickTipButton({
@@ -17,8 +34,17 @@ export function QuickTipButton({
   tipAmounts = [1, 5, 10],
   tipCount = 0,
   onOpenModal,
-  defaultCurrency = 'eth',
+  defaultCurrency: defaultCurrencyProp,
+  connectedProtocol,
 }: QuickTipButtonProps) {
+  // Derive the effective currency: prop > protocol mapping > eth
+  const effectiveCurrency =
+    defaultCurrencyProp ??
+    (connectedProtocol ? PROTOCOL_CURRENCY[connectedProtocol] : undefined) ??
+    'eth';
+
+  const currencyMeta = CURRENCY_META[effectiveCurrency] ?? CURRENCY_META.eth;
+
   const [showAmounts, setShowAmounts] = useState(false);
   const [tipping, setTipping] = useState(false);
   const [tipped, setTipped] = useState(false);
@@ -30,7 +56,7 @@ export function QuickTipButton({
       const res = await fetch('/api/tip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId, amount, currency: 'usd', method: defaultCurrency }),
+        body: JSON.stringify({ postId, amount, currency: 'usd', method: effectiveCurrency }),
       });
       if (res.ok) {
         setTipped(true);
@@ -81,6 +107,19 @@ export function QuickTipButton({
 
       {showAmounts && (
         <div className="absolute bottom-full left-0 mb-1 flex flex-col gap-0.5 rounded-lg border border-gray-700 bg-gray-950 p-1 shadow-lg z-50 min-w-[120px]">
+          {/* Currency label */}
+          <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 border-b border-gray-800 mb-1">
+            <span
+              className="inline-flex items-center justify-center w-4 h-4 text-[10px] rounded-full"
+              style={{ backgroundColor: currencyMeta.color + '20', color: currencyMeta.color }}
+            >
+              {currencyMeta.icon}
+            </span>
+            <span>
+              {currencyMeta.label} ({currencyMeta.symbol})
+            </span>
+          </div>
+
           <div className="flex gap-1">
             {tipAmounts.map((amount) => (
               <button
@@ -93,6 +132,7 @@ export function QuickTipButton({
               </button>
             ))}
           </div>
+
           {onOpenModal && (
             <button
               type="button"

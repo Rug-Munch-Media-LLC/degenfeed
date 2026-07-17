@@ -7,7 +7,7 @@ import {
   unmuteIdentity,
 } from '@degenfeed/storage';
 import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { detectTokens, formatTimeAgo } from '@degenfeed/utils';
+import { detectTokens, formatTimeAgo, getDefaultCurrency } from '@degenfeed/utils';
 import Image from 'next/image';
 import { memo, useEffect, useState } from 'react';
 import { FrameEmbed } from './FrameEmbed';
@@ -74,6 +74,8 @@ export interface PostCardProps {
   expanded?: boolean;
   onTip?: (post: UnifiedPost) => void;
   onPaywall?: (post: UnifiedPost) => void;
+  /** Connected protocols for the current viewer — used to derive default tip currency */
+  viewerProtocols?: string[];
 }
 
 const MAX_TEXT_LENGTH = 500;
