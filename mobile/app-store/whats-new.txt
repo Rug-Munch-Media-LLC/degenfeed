@@ -1,0 +1,12 @@
+v1.0.0 — Initial Release
+
+Welcome to DegenFeed! This is the first release of the ultimate decentralized social feed aggregator.
+
+• Aggregate your feed across Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, and RSS
+• Unified composer — write once, publish everywhere
+• Real-time push notifications for mentions, replies, and likes
+• Discover trending content and creators across the decentralized web
+• Custom feed builder with protocol, topic, and creator filters
+• Wallet connect integration for on-chain identity verification
+• Dark mode optimized for late-night degen sessions
+• Lightning-fast infinite scroll with virtualized lists

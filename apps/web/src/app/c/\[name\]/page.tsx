@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../../components/AuthProvider';
 import { useToast } from '../../../../components/Toast';
 
-type Tab = 'posts' | 'about' | 'members';
+type Tab = 'posts' | 'about' | 'members' | 'proposals';
 
 const PROTOCOL_META: Record<
   string,
@@ -270,6 +270,12 @@ export default function CommunityPage() {
               )}
             </button>
           ))}
+          <Link
+            href={`/c/${name}/proposals`}
+            className="relative px-4 py-3 text-sm font-medium capitalize text-gray-500 transition-colors hover:text-gray-300"
+          >
+            Proposals
+          </Link>
         </div>
 
         {/* Tab content */}

@@ -1,5 +1,13 @@
 # DegenFeed Web
 
+[![CI](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/ci.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/ci.yml)
+[![Deploy](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/deploy.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/deploy.yml)
+[![Playwright E2E](https://img.shields.io/badge/E2E-Playwright-45ba4b?logo=playwright)](https://playwright.dev)
+[![Biome](https://img.shields.io/badge/linted%20with-Biome-60a5fa?logo=biome)](https://biomejs.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript)](https://www.typescriptlang.org)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org)
+[![Cloudflare](https://img.shields.io/badge/deployed%20on-Cloudflare-F38020?logo=cloudflare)](https://cloudflare.com)
+
 **Repo:** git.rugmunch.io/RugMunchMedia/degenfeed-web
 **Status:** Active development
 **Note:** This repo is the Next.js social-aggregator client for Nostr, Farcaster, Lens, and Bluesky. It is NOT the deployed Mastodon instance at degenfeed.xyz.
@@ -30,7 +38,6 @@ docker compose ps
 - No PRODUCT/ARCHITECTURE/ROADMAP/TODO docs now added
 - No pre-commit config
 - No Makefile
-- No CI
 - Repo README conflated this client with the Mastodon deployment
 
 ## Standards

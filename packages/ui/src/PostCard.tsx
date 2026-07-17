@@ -19,6 +19,7 @@ import {
   parseVideoUrl,
   type VideoInfo,
 } from '@degenfeed/utils';
+import type { ContentProof } from '@degenfeed/types';
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BlueskyPostContext } from './BlueskyPostContext';
@@ -36,6 +37,7 @@ import {
   ProtocolBadge,
 } from './ProtocolBadge';
 import { QuickTipButton } from './QuickTipButton';
+import { ReputationBadge, type ReputationBadgeScore, type ReputationBadgeProgress } from './ReputationBadge';
 import { ReportModal } from './ReportModal';
 import { TokenChart } from './TokenChart';
 import { TranslationPreview } from './TranslationPreview';
@@ -136,6 +138,15 @@ export interface PostCardProps {
    * and protocol for cross-protocol enforcement.
    */
   onAdminBan?: (userId: string, protocol: string, handle?: string) => void;
+  /**
+   * Optional reputation score for the post author.
+   * When provided, shows a reputation badge next to the display name.
+   */
+  reputation?: ReputationBadgeScore | null;
+  /**
+   * Optional progress data for the reputation level progress bar (shown in tooltip).
+   */
+  reputationProgress?: ReputationBadgeProgress | null;
 }
 
 const MAX_TEXT_LENGTH = 500;
@@ -331,6 +342,72 @@ function applyOptimistic(state: LocalState, action: EngagementAction): LocalStat
   }
 }
 
+// ─── Permanence Badge Component ─────────────────────────────────
+
+function PermanenceBadge({ proof }: { proof: ContentProof }) {
+  const tooltipParts: string[] = [];
+  if (proof.arweaveTxId) {
+    tooltipParts.push(`Arweave: ${proof.arweaveTxId.slice(0, 8)}...${proof.arweaveTxId.slice(-4)}`);
+  }
+  if (proof.ipfsCid) {
+    tooltipParts.push(`IPFS: ${proof.ipfsCid.slice(0, 8)}...`);
+  }
+  if (proof.onChainTxHash) {
+    const chainName = proof.onChainChainId === 8453 ? 'Base' : `Chain ${proof.onChainChainId}`;
+    tooltipParts.push(
+      `${chainName}: ${proof.onChainTxHash.slice(0, 8)}...${proof.onChainTxHash.slice(-4)}`,
+    );
+  }
+
+  const tooltip = tooltipParts.length > 0
+    ? `Stored permanently\n${tooltipParts.join('\n')}`
+    : 'Stored permanently';
+
+  return (
+    <div className="mb-3 flex flex-wrap gap-2 items-center">
+      {/* Arweave / IPFS permanent badge */}
+      <a
+        href={
+          proof.arweaveTxId
+            ? `https://arweave.net/${proof.arweaveTxId}`
+            : proof.ipfsCid
+              ? `https://ipfs.io/ipfs/${proof.ipfsCid}`
+              : undefined
+        }
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 rounded-full bg-cyan-950/40 px-2 py-0.5 text-[10px] font-medium text-cyan-400 hover:bg-cyan-900/50 transition-colors"
+        title={tooltip}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <span>🔗</span> Permanent
+      </a>
+
+      {/* On-chain anchor badge */}
+      {proof.onChainTxHash && (
+        <a
+          href={
+            proof.onChainChainId === 8453
+              ? `https://basescan.org/tx/${proof.onChainTxHash}`
+              : proof.onChainChainId === 1
+                ? `https://etherscan.io/tx/${proof.onChainTxHash}`
+                : undefined
+          }
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-full bg-amber-950/40 px-2 py-0.5 text-[10px] font-medium text-amber-400 hover:bg-amber-900/50 transition-colors"
+          title={`On-chain anchor on ${proof.onChainChainId === 8453 ? 'Base' : `Chain ${proof.onChainChainId}`}: ${proof.onChainTxHash.slice(0, 8)}...${proof.onChainTxHash.slice(-4)}`}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <span>🔒</span> On-chain
+        </a>
+      )}
+    </div>
+  );
+}
+
 export const PostCard = memo(function PostCard({
   post,
   onEngage,
@@ -345,6 +422,8 @@ export const PostCard = memo(function PostCard({
   isAdmin,
   onAdminRemove,
   onAdminBan,
+  reputation,
+  reputationProgress,
 }: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
@@ -711,6 +790,18 @@ export const PostCard = memo(function PostCard({
                 <span className="flex-shrink-0 text-blue-400 text-xs" title="NIP-05 verified">
                   ✓
                 </span>
+              )}
+              {/* ── Reputation badge ── */}
+              {reputation && (
+                <ReputationBadge
+                  score={reputation}
+                  progress={reputationProgress ?? null}
+                  size="xs"
+                  showIcon={true}
+                  showLabel={true}
+                  showTooltip={true}
+                  showProgress={false}
+                />
               )}
               <ProtocolBadge protocol={post.protocol} />
 
@@ -1132,6 +1223,9 @@ export const PostCard = memo(function PostCard({
             ))}
           </div>
         )}
+
+        {/* ── Permanence badge ── */}
+        {post.contentProof && <PermanenceBadge proof={post.contentProof} />}
 
         {/* ── Protocol context ── */}
         {post.protocol === 'lemmy' && <LemmyThreadView post={post} />}

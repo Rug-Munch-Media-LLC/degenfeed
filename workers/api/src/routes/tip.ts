@@ -53,17 +53,20 @@ export interface TipPostContext {
 const METHOD_RANK = {
   native: 0,
   lightning_zap: 1,
-  ethereum: 2,
-  base: 2,
-  solana: 3,
-  farcaster_frame: 4,
-  lens_collect: 5,
+  onchain_tip: 2,
+  ethereum: 3,
+  base: 3,
+  solana: 4,
+  farcaster_frame: 5,
+  lens_collect: 6,
 } as const;
 
 function methodBaseRank(method: string): number {
   switch (method) {
     case 'lightning_zap':
       return METHOD_RANK.lightning_zap;
+    case 'onchain_tip':
+      return METHOD_RANK.onchain_tip;
     case 'ethereum':
       return METHOD_RANK.ethereum;
     case 'base':
@@ -139,6 +142,13 @@ export function rankMethods(
   // Apply availability from author context
   const contextualized = methods.map((m) => {
     switch (m.method) {
+      case 'onchain_tip':
+        return {
+          ...m,
+          available: m.available || !!author?.evmAddress,
+          address: author?.evmAddress,
+          chain: 'base',
+        };
       case 'ethereum':
         return {
           ...m,
@@ -196,6 +206,17 @@ export function rankMethods(
 
 function buildBaseMethods(protocol: string, env: Env): ResolvedTipMethod[] {
   const methods: ResolvedTipMethod[] = [];
+
+  methods.push({
+    method: 'onchain_tip',
+    label: 'Direct on-chain (0% fee)',
+    description: 'ETH via DegenFeed contract on Base, Optimism, or Arbitrum — 0% fee, no intermediary',
+    icon: '⛓️',
+    available: false,
+    chain: 'base',
+    minAmount: 0.0001,
+    fee: '0% (L2 gas only)',
+  });
 
   methods.push({
     method: 'ethereum',
@@ -338,12 +359,25 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
     if (recipientProtocol && !isAllowedProtocol(recipientProtocol)) {
       return jsonResponse({ error: 'Invalid recipientProtocol' }, 400);
     }
-    if (chain && chain !== 'ethereum' && chain !== 'solana' && chain !== 'base') {
+    if (chain && chain !== 'ethereum' && chain !== 'solana' && chain !== 'base' && chain !== 'optimism' && chain !== 'arbitrum') {
       return jsonResponse({ error: 'Invalid chain' }, 400);
     }
 
     let intentResponse: Response;
     switch (method) {
+      case 'onchain_tip':
+        intentResponse = jsonResponse({
+          method: 'onchain_tip',
+          intent: {
+            to: recipient,
+            value: amount,
+            chain: chain || 'base',
+          },
+          instructions:
+            'Sign with your Ethereum wallet to send a direct on-chain tip via the DegenFeed contract (0% fee)',
+        });
+        break;
+
       case 'ethereum':
       case 'base':
         intentResponse = jsonResponse({

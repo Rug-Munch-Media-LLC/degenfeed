@@ -42,6 +42,12 @@ import {
   handleCommunityGet,
   handleCommunityJoin,
 } from './routes/community';
+import {
+  handleProposalCreate,
+  handleProposalVote,
+  handleProposalsList,
+  handleProposalResults,
+} from './routes/governance';
 import { handleContentResolve } from './routes/content';
 import { handleCrossReply } from './routes/cross-reply';
 import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
@@ -178,6 +184,12 @@ import {
 import { handleTranslate } from './routes/translate';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleX402Paywall, handleX402Verify } from './routes/x402';
+import { handleTokenGateVerify, handleTokenGateResolve } from './routes/token-gate';
+import {
+  handlePermanenceAnchor,
+  handlePermanenceStore,
+  handlePermanenceVerify,
+} from './routes/permanence';
 
 // ─── App ────────────────────────────────────────────────────
 
@@ -550,6 +562,17 @@ app.post('/api/preferences/topics/clear', async (c) => handleClearTopic(c.req.ra
 app.all('/api/x402/paywall', async (c) => handleX402Paywall(c.req.raw, c.env));
 app.all('/api/x402/verify', async (c) => handleX402Verify(c.req.raw, c.env));
 
+// ─── API: Token Gate ─────────────────────────────────────────
+app.post('/api/token-gate/verify', async (c) => handleTokenGateVerify(c.req.raw, c.env));
+app.post('/api/token-gate/resolve', async (c) => handleTokenGateResolve(c.req.raw, c.env));
+
+// ─── API: Permanence (Arweave/IPFS) ───────────────────────
+app.post('/api/permanence/store', async (c) => handlePermanenceStore(c.req.raw, c.env));
+app.get('/api/permanence/verify/:hash', async (c) =>
+  handlePermanenceVerify(c.req.raw, c.env, c.req.param('hash')),
+);
+app.post('/api/permanence/anchor', async (c) => handlePermanenceAnchor(c.req.raw, c.env));
+
 // ─── API: RMI ──────────────────────────────────────────────
 app.all('/api/rmi/news/headlines', async (c) => handleRmiHeadlines(c.req.raw, c.env));
 app.all('/api/rmi/news/sources', async (c) => handleRmiSources(c.req.raw, c.env));
@@ -618,6 +641,20 @@ app.post('/api/community/:name/join', async (c) =>
 );
 app.get('/api/communities', async (c) => handleCommunitiesList(c.req.raw, c.env));
 
+// ─── API: Governance (DAOs) ───────────────────────────────
+app.post('/api/community/:name/proposals', async (c) =>
+  withSession(c, () => handleProposalCreate(c.req.raw, c.env, c.req.param('name'))),
+);
+app.get('/api/community/:name/proposals', async (c) =>
+  handleProposalsList(c.req.raw, c.env, c.req.param('name')),
+);
+app.post('/api/community/:name/proposals/:id/vote', async (c) =>
+  withSession(c, () => handleProposalVote(c.req.raw, c.env, c.req.param('name'), c.req.param('id'))),
+);
+app.get('/api/community/:name/proposals/:id/results', async (c) =>
+  handleProposalResults(c.req.raw, c.env, c.req.param('name'), c.req.param('id')),
+);
+
 // ─── API: Moderation ───────────────────────────────────────
 app.get('/api/moderation/reports', (c) => handleListReports(c.req.raw, c.env));
 app.post('/api/moderation/report', (c) => handleSubmitReport(c.req.raw, c.env));
@@ -659,6 +696,34 @@ app.post('/api/translate', async (c) => handleTranslate(c.req.raw, c.env));
 
 // ─── API: Prices ────────────────────────────────────────────
 app.all('/api/prices', async (c) => handlePrices(c.req.raw, c.env));
+
+// ─── API: Reputation ───────────────────────────────────────
+import {
+  handleReputationEarn,
+  handleReputationGet,
+  handleReputationHistory,
+  handleReputationLeaderboard,
+  handleReputationSlash,
+  handleReputationStake,
+  handleReputationStakeResolve,
+  handleReputationStakes,
+} from './routes/reputation';
+
+app.get('/api/reputation/leaderboard', async (c) => handleReputationLeaderboard(c.req.raw, c.env));
+app.post('/api/reputation/earn', async (c) => handleReputationEarn(c.req.raw, c.env));
+app.post('/api/reputation/slash', async (c) => handleReputationSlash(c.req.raw, c.env));
+app.post('/api/reputation/stake', async (c) => handleReputationStake(c.req.raw, c.env));
+app.post('/api/reputation/stake/resolve', async (c) => handleReputationStakeResolve(c.req.raw, c.env));
+// Parameterized routes (must be after static routes)
+app.get('/api/reputation/:userId/history', async (c) =>
+  handleReputationHistory(c.req.raw, c.env, c.req.param('userId')),
+);
+app.get('/api/reputation/:userId/stakes', async (c) =>
+  handleReputationStakes(c.req.raw, c.env, c.req.param('userId')),
+);
+app.get('/api/reputation/:userId', async (c) =>
+  handleReputationGet(c.req.raw, c.env, c.req.param('userId')),
+);
 
 // ═══════════════════════════════════════════════════════════
 // V1 ROUTES — Stable, versioned public API
@@ -750,6 +815,20 @@ app.post('/v1/community/:name/join', async (c) =>
   withSession(c, () => handleCommunityJoin(c.req.raw, c.env, c.req.param('name'))),
 );
 app.get('/v1/communities', async (c) => handleCommunitiesList(c.req.raw, c.env));
+
+// ─── V1: Governance ──────────────────────────────────────
+app.post('/v1/community/:name/proposals', async (c) =>
+  withSession(c, () => handleProposalCreate(c.req.raw, c.env, c.req.param('name'))),
+);
+app.get('/v1/community/:name/proposals', async (c) =>
+  handleProposalsList(c.req.raw, c.env, c.req.param('name')),
+);
+app.post('/v1/community/:name/proposals/:id/vote', async (c) =>
+  withSession(c, () => handleProposalVote(c.req.raw, c.env, c.req.param('name'), c.req.param('id'))),
+);
+app.get('/v1/community/:name/proposals/:id/results', async (c) =>
+  handleProposalResults(c.req.raw, c.env, c.req.param('name'), c.req.param('id')),
+);
 
 // ─── V1: Content Resolution (df:// URIs) ───────────────
 app.all('/v1/content/*', async (c) => handleContentResolve(c.req.raw, c.env));

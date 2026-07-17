@@ -38,6 +38,16 @@ binding = "API_KEYS"
 id = "" # TODO: create with: wrangler kv:namespace create API_KEYS
 preview_id = "" # TODO: create with: wrangler kv:namespace create API_KEYS --preview
 
+[[kv_namespaces]]
+binding = "PERMANENCE"
+id = "" # TODO: create with: wrangler kv:namespace create PERMANENCE
+preview_id = "" # TODO: create with: wrangler kv:namespace create PERMANENCE --preview
+
+[[kv_namespaces]]
+binding = "GOVERNANCE"
+id = "" # TODO: create with: wrangler kv:namespace create GOVERNANCE
+preview_id = "" # TODO: create with: wrangler kv:namespace create GOVERNANCE --preview
+
 # Routes — main app + api on degenfeed.xyz domain
 routes = [
   { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },

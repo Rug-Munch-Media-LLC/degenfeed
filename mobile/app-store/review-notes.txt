@@ -1,0 +1,51 @@
+APP STORE REVIEW NOTES
+=======================
+Version: 1.0.0
+Build: 1
+Bundle ID: xyz.degenfeed.app
+
+LOGIN CREDENTIALS
+-----------------
+The app launches in read-only mode without login. To access the full social experience:
+1. Tap "Connect" on the profile tab
+2. Create a new Nostr keypair (no email required — keys are generated locally)
+3. Or connect with an existing nsec/npub key
+
+No email/password login is needed. The app is designed to be pseudonymous — users generate keys locally in-browser.
+
+CRYPTO CONTENT NOTICE
+---------------------
+DegenFeed aggregates public posts from decentralized social protocols (Nostr, Farcaster, Lens, Bluesky). 
+Content is user-generated and may include discussion of cryptocurrencies, NFTs, and blockchain projects. 
+The app does not facilitate financial transactions, gambling, or trading.
+
+AGE RATING: 17+
+-----------------
+We have self-rated this app as 17+ for the following reasons:
+- Unrestricted web access (users can browse decentralized content)
+- Frequent/intense mature/suggestive themes (user-generated content may reference crypto trading)
+- Gambling: simulated/gambling references may appear in user posts (no real-money gambling in-app)
+
+TEST ENVIRONMENT
+-----------------
+The production app connects to live decentralized network relays. For testing, the app can use:
+- Internal test relays (ws://localhost:7777 for Nostr)
+- Sandbox Farcaster hubs (configured in Settings > Developer)
+
+KNOWN ISSUES
+-------------
+- First load may take 2-3 seconds as the app syncs relay connections
+- Push notifications require granting permission on first launch
+- Cross-posting delays: posts may take 5-10 seconds to propagate across all protocols
+
+ADDITIONAL NOTES
+-----------------
+- This app does not use encryption exports (no EAR/OFAC concerns)
+- All cryptographic operations use standard Web Crypto API
+- No tracking or analytics SDKs are included
+- The app is fully functional offline (shows cached feed)
+
+CONTACT
+-------
+Review Team Contact: support@degenfeed.xyz
+Phone: Available on request

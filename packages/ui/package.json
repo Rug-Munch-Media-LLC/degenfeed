@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@degenfeed/storage": "workspace:*",
+    "@degenfeed/token-gate": "workspace:*",
     "@degenfeed/types": "workspace:*",
     "@degenfeed/utils": "workspace:*",
     "react": "^19.0.0",
