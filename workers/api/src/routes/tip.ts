@@ -52,6 +52,7 @@ const METHOD_RANK = {
   native: 0,
   lightning_zap: 1,
   ethereum: 2,
+  base: 2,
   solana: 3,
   farcaster_frame: 4,
   lens_collect: 5,
@@ -63,6 +64,8 @@ function methodBaseRank(method: string): number {
       return METHOD_RANK.lightning_zap;
     case 'ethereum':
       return METHOD_RANK.ethereum;
+    case 'base':
+      return METHOD_RANK.base;
     case 'solana':
       return METHOD_RANK.solana;
     case 'farcaster_frame':
@@ -122,7 +125,9 @@ export function rankMethods(
       break;
     case 'farcaster':
       if (author?.farcasterCustodyAddress) {
-        nativeMethod = 'farcaster_frame';
+        nativeMethod = 'base';  // Base chain for Farcaster
+      } else if (author?.evmAddress) {
+        nativeMethod = 'ethereum';
       }
       break;
     default:
@@ -193,12 +198,23 @@ function buildBaseMethods(protocol: string, env: Env): ResolvedTipMethod[] {
   methods.push({
     method: 'ethereum',
     label: 'Ethereum / EVM',
-    description: 'Send ETH, USDC, or any ERC-20 on Ethereum, Base, Optimism, Arbitrum, Polygon',
+    description: 'Send ETH, USDC, or any ERC-20 on Ethereum, Optimism, Arbitrum, Polygon',
     icon: '◆',
     available: false,
     chain: 'ethereum',
     minAmount: 0.0001,
     fee: '~$0.05-5 (varies by chain)',
+  });
+
+  methods.push({
+    method: 'base',
+    label: 'Base',
+    description: 'Send ETH or USDC on Base — fast, cheap, Farcaster-native',
+    icon: '🔵',
+    available: false,
+    chain: 'base',
+    minAmount: 0.0001,
+    fee: '< $0.01',
   });
 
   methods.push({
@@ -315,18 +331,19 @@ export async function handleTipCreate(request: Request, _env: Env): Promise<Resp
     if (recipientProtocol && !isAllowedProtocol(recipientProtocol)) {
       return jsonResponse({ error: 'Invalid recipientProtocol' }, 400);
     }
-    if (chain && chain !== 'ethereum' && chain !== 'solana') {
+    if (chain && chain !== 'ethereum' && chain !== 'solana' && chain !== 'base') {
       return jsonResponse({ error: 'Invalid chain' }, 400);
     }
 
     switch (method) {
       case 'ethereum':
+      case 'base':
         return jsonResponse({
-          method: 'ethereum',
+          method,
           intent: {
             to: recipient,
             value: amount,
-            chain: chain || 'ethereum',
+            chain: method === 'base' ? 'base' : (chain || 'ethereum'),
           },
           instructions:
             'Sign with your Ethereum wallet (MetaMask, Rabby, Rainbow, etc.) to send the tip',

@@ -55,7 +55,7 @@ export function TipModal({
     if (!selectedMethod || !amount) return;
 
     try {
-      if (selectedMethod === 'ethereum') {
+      if (selectedMethod === 'ethereum' || selectedMethod === 'base') {
         let ethAccount = account;
         if (!ethAccount) ethAccount = await connectWallet();
         if (!ethAccount) throw new Error('No Ethereum wallet connected');
@@ -68,6 +68,23 @@ export function TipModal({
           publicationId,
         );
         if (!intent) return;
+
+        // For Base chain, switch to chainId 8453
+        if (selectedMethod === 'base' && window.ethereum) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: '0x2105' }], // 8453 = Base
+            });
+          } catch (e: any) {
+            if (e.code === 4902) {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{ chainId: '0x2105', chainName: 'Base', nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 }, rpcUrls: ['https://mainnet.base.org'], blockExplorerUrls: ['https://basescan.org'] }],
+              });
+            }
+          }
+        }
 
         setTipStatus('signing');
         const valueHex = `0x${BigInt(Math.floor(Number.parseFloat(amount) * 1e18)).toString(16)}`;
@@ -326,6 +343,8 @@ export function TipModal({
                       ? 'sats'
                       : selected?.method === 'ethereum'
                         ? 'ETH'
+                        : selected?.method === 'base'
+                        ? 'ETH (Base)'
                         : selected?.method === 'solana'
                           ? 'SOL'
                           : ''}
@@ -447,6 +466,8 @@ export function TipModal({
                         href={
                           selectedMethod === 'ethereum'
                             ? `https://etherscan.io/tx/${state.txHash}`
+                            : selectedMethod === 'base'
+                            ? `https://basescan.org/tx/${state.txHash}`
                             : selectedMethod === 'solana'
                               ? `https://solscan.io/tx/${state.txHash}`
                               : selectedMethod === 'lens_collect'
