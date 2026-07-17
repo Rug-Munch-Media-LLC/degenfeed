@@ -46,9 +46,7 @@ export function TokenChart({
 
     let cancelled = false;
 
-    fetch(
-      `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(id)}`,
-    )
+    fetch(`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(id)}`)
       .then((r) => (r.ok ? (r.json() as Promise<{ pairs?: DexScreenerPair[] }>) : null))
       .then((data) => {
         if (cancelled) return;
@@ -77,8 +75,7 @@ export function TokenChart({
 
   if (error || price === null) return null;
 
-  const changeColor =
-    change24h !== null && change24h >= 0 ? 'text-green-500' : 'text-red-500';
+  const changeColor = change24h !== null && change24h >= 0 ? 'text-green-500' : 'text-red-500';
   const displaySymbol = (pair?.baseToken?.symbol ?? symbol ?? '?').toUpperCase();
 
   if (compact) {

@@ -111,7 +111,14 @@ export function ReportModal({ open, onClose, postId, onSubmitted }: ReportModalP
             aria-label="Close"
             type="button"
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" role="img" aria-label="Close icon">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              role="img"
+              aria-label="Close icon"
+            >
               <title>Close</title>
               <path
                 d="M15 5L5 15M5 5l10 10"
@@ -164,9 +171,7 @@ export function ReportModal({ open, onClose, postId, onSubmitted }: ReportModalP
           />
         </div>
 
-        {error && (
-          <p className="mb-3 text-xs text-red-400">{error}</p>
-        )}
+        {error && <p className="mb-3 text-xs text-red-400">{error}</p>}
 
         <button
           type="button"

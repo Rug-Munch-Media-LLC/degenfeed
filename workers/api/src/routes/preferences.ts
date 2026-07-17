@@ -20,6 +20,16 @@ import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
 
+interface NotificationTypePref {
+  likes: boolean;
+  reposts: boolean;
+  replies: boolean;
+  follows: boolean;
+  mentions: boolean;
+}
+
+type NotificationProtocolPrefs = Partial<Record<Protocol | 'tip', boolean | NotificationTypePref>>;
+
 interface PreferencesBody {
   hideLowQuality?: boolean;
   hideLowQualityThreshold?: number;
@@ -30,6 +40,8 @@ interface PreferencesBody {
   engagementWeight?: number;
   diversityBoost?: boolean;
   allowNonCrypto?: boolean;
+  /** Notification preferences — per-protocol type toggles */
+  notifications?: NotificationProtocolPrefs;
 }
 
 interface StoredPreferences {
@@ -42,8 +54,19 @@ interface StoredPreferences {
   engagementWeight: number;
   diversityBoost: boolean;
   allowNonCrypto: boolean;
+  /** Notification preferences — users can toggle like/repost/reply/follow per protocol */
+  notifications: NotificationProtocolPrefs;
   updatedAt: number;
 }
+
+const DEFAULT_NOTIF_PREFS: NotificationProtocolPrefs = {
+  nostr: { likes: true, reposts: true, replies: true, follows: true, mentions: true },
+  farcaster: { likes: true, reposts: true, replies: true, follows: true, mentions: true },
+  lens: { likes: true, reposts: true, replies: true, follows: true, mentions: true },
+  bluesky: { likes: true, reposts: true, replies: true, follows: true, mentions: true },
+  mastodon: { likes: true, reposts: true, replies: true, follows: true, mentions: true },
+  tip: true,
+};
 
 const DEFAULT_PREFS: StoredPreferences = {
   hideLowQuality: false,
@@ -55,6 +78,7 @@ const DEFAULT_PREFS: StoredPreferences = {
   engagementWeight: 1,
   diversityBoost: true,
   allowNonCrypto: false,
+  notifications: DEFAULT_NOTIF_PREFS,
   updatedAt: 0,
 };
 
@@ -80,8 +104,36 @@ export function sanitizePrefs(body: PreferencesBody): StoredPreferences {
     diversityBoost: typeof body.diversityBoost === 'boolean' ? body.diversityBoost : true,
     allowNonCrypto: typeof body.allowNonCrypto === 'boolean' ? body.allowNonCrypto : false,
     hideLowQualityThreshold: clamp(body.hideLowQualityThreshold, 0, 10, 1),
+    notifications: sanitizeNotifPrefs(body.notifications),
     updatedAt: Date.now(),
   };
+}
+
+function sanitizeNotifPrefs(input: unknown): NotificationProtocolPrefs {
+  if (typeof input !== 'object' || input === null) return { ...DEFAULT_NOTIF_PREFS };
+  const raw = input as Record<string, unknown>;
+  const result: NotificationProtocolPrefs = {};
+  // Copy over known protocol keys, validating their shape
+  for (const key of ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'tip'] as const) {
+    const val = raw[key];
+    if (key === 'tip') {
+      result[key] = typeof val === 'boolean' ? val : DEFAULT_NOTIF_PREFS.tip;
+    } else if (typeof val === 'object' && val !== null) {
+      const tv = val as Record<string, unknown>;
+      result[key] = {
+        likes: typeof tv.likes === 'boolean' ? tv.likes : true,
+        reposts: typeof tv.reposts === 'boolean' ? tv.reposts : true,
+        replies: typeof tv.replies === 'boolean' ? tv.replies : true,
+        follows: typeof tv.follows === 'boolean' ? tv.follows : true,
+        mentions: typeof tv.mentions === 'boolean' ? tv.mentions : true,
+      };
+    } else {
+      // If entire key is missing, use default
+      const def = DEFAULT_NOTIF_PREFS[key as keyof typeof DEFAULT_NOTIF_PREFS];
+      if (def !== undefined) result[key] = def;
+    }
+  }
+  return result;
 }
 
 function prefsKey(address: string): string {

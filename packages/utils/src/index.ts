@@ -218,6 +218,11 @@ export {
   getDefaultCurrency,
 } from './protocolCurrency';
 
+// ─── Cross-protocol identity resolution ────────────────────────────────
+
+export { identityKey, IDENTITY_KV_PREFIX, PROTOCOL_ID_REGISTRY } from './crossProtocolIdentity';
+export type { CrossProtocolIdentity, ProtocolId } from './crossProtocolIdentity';
+
 // ─── Error reporting (lightweight Sentry) ─────────────────────────────
 
 export { reportError } from './sentry';

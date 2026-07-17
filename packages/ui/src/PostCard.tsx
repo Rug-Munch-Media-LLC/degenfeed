@@ -9,10 +9,17 @@ import {
   unmuteIdentity,
 } from '@degenfeed/storage';
 import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { detectTokens, formatTimeAgo, getDefaultCurrency } from '@degenfeed/utils';
+import { detectTokens, formatTimeAgo } from '@degenfeed/utils';
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { BlueskyPostContext } from './BlueskyPostContext';
 import { FrameEmbed } from './FrameEmbed';
+import { IdentityBadge } from './IdentityBadge';
+import { LemmyThreadView } from './LemmyThreadView';
+import { LensPublicationBadge } from './LensPublicationBadge';
+import { MastodonInstanceContext } from './MastodonInstanceContext';
+import { NostrRelayBadge } from './NostrRelayBadge';
+import { PeerTubeEmbed } from './PeerTubeEmbed';
 import { ProtocolBadge } from './ProtocolBadge';
 import { QuickTipButton } from './QuickTipButton';
 import { ReportModal } from './ReportModal';
@@ -57,9 +64,8 @@ function FrameCard({ url }: { url: string }) {
   );
 }
 
-export type { UnifiedPost };
-
 export type { ReportModalProps } from './ReportModal';
+export type { UnifiedPost };
 
 export interface EngageResult {
   ok: boolean;
@@ -83,6 +89,12 @@ export interface PostCardProps {
   viewerProtocols?: string[];
   /** Called when a report is successfully submitted */
   onReport?: (postId: string) => void;
+  /**
+   * Cross-protocol identity badges to show for the post author.
+   * Each entry is a protocol key (nostr, farcaster, lens, bluesky, mastodon, reddit).
+   * These are the OTHER protocols the author has linked to their wallet.
+   */
+  crossProtocolBadges?: string[];
 }
 
 const MAX_TEXT_LENGTH = 500;
@@ -251,6 +263,7 @@ export const PostCard = memo(function PostCard({
   onTip,
   onPaywall,
   onReport,
+  crossProtocolBadges,
 }: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
@@ -416,360 +429,458 @@ export const PostCard = memo(function PostCard({
 
   return (
     <>
-    <article
-      className="cursor-pointer border-b border-white/5 px-4 py-3 transition-colors hover:bg-white/[0.03]"
-      onClick={() => onClick?.(post.id)}
-      onKeyDown={(e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && onClick) {
-          e.preventDefault();
-          onClick(post.id);
-        }
-      }}
-      aria-label={`Post by ${post.author.displayName}`}
-    >
-      {/* Author row */}
-      <div className="mb-2 flex items-center gap-3">
-        <Image
-          src={
-            post.author.avatarUrl ||
-            'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23333%22/%3E%3Ctext x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22%3E%40%3C/text%3E%3C/svg%3E'
-          }
-          alt={post.author.displayName}
-          width={32}
-          height={32}
-          className="h-8 w-8 rounded-full bg-gray-800 object-cover"
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold text-white">
-              {post.author.displayName}
-            </span>
-            {post.protocol === 'nostr' && post.author.handles.nostr?.includes('@') && (
-              <span className="flex-shrink-0 text-blue-400 text-xs" title="NIP-05 verified">
-                ✓
-              </span>
-            )}
-            <ProtocolBadge protocol={post.protocol} />
-
-            {/* ── Three-dot menu ── */}
-            {!isSelf && (
-              <div ref={menuRef} className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMenu((v) => !v);
-                  }}
-                  className="rounded-lg p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
-                  aria-label="More actions"
-                  aria-haspopup="true"
-                  aria-expanded={showMenu}
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <circle cx="8" cy="3" r="1.5" />
-                    <circle cx="8" cy="8" r="1.5" />
-                    <circle cx="8" cy="13" r="1.5" />
-                  </svg>
-                </button>
-                {showMenu && (
-                  <div
-                    className="absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-gray-800 bg-gray-950 py-1 shadow-2xl"
-                    role="menu"
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={handleReport}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-yellow-500">
-                        <path d="M8 1L16 15H0L8 1Z" fill="currentColor" opacity="0.8" />
-                      </svg>
-                      Report post
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={handleBlock}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-red-400">
-                        <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-                        <line x1="3.5" y1="8" x2="12.5" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                      {blocked ? 'Unblock user' : 'Block user'}
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={handleMuteFromMenu}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-gray-400">
-                        <path d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        <line x1="2" y1="14" x2="14" y2="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                      {muted ? 'Unmute user' : 'Mute user'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={toggleFollow}
-              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
-                following
-                  ? 'bg-degen-500/20 text-degen-400'
-                  : 'border border-gray-700 text-gray-500 hover:border-degen-500/30 hover:text-degen-400'
-              }`}
-              aria-label={following ? 'Unfollow' : 'Follow'}
-              title={following ? 'Unfollow' : 'Follow'}
-            >
-              {following ? '✓ Following' : '+ Follow'}
-            </button>
-            <button
-              type="button"
-              onClick={toggleMute}
-              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
-                muted
-                  ? 'bg-red-500/20 text-red-400'
-                  : 'border border-gray-700 text-gray-600 hover:border-red-500/30 hover:text-red-400'
-              }`}
-              aria-label={muted ? 'Unmute' : 'Mute'}
-              title={muted ? 'Unmute author' : 'Mute author'}
-            >
-              {muted ? '🔇 Muted' : '🔇'}
-            </button>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span className="truncate">
-              {post.author.handles[post.protocol] ?? post.author.id.slice(0, 16)}
-            </span>
-            <span>·</span>
-            <time
-              dateTime={new Date(post.createdAt).toISOString()}
-              title={new Date(post.createdAt).toLocaleString()}
-            >
-              {formatTimeAgo(post.createdAt)}
-            </time>
-            {post.score && (
-              <>
-                <span>·</span>
-                <span
-                  className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-1.5 py-0.5 text-[10px] font-medium text-degen-400"
-                  title={buildScoreTooltip(post.score)}
-                >
-                  ★ {Math.round(post.score.total * 10) / 10}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      {post.paywall && (
-        <div className="mb-3 rounded-xl border border-purple-900/30 bg-purple-900/10 p-4 text-center">
-          <div className="mb-2 text-2xl">🔒</div>
-          <p className="mb-3 text-sm text-gray-400">This post is locked.</p>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPaywall?.(post);
-            }}
-            className="rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-500 transition-colors"
-          >
-            Unlock for {post.paywall.amount} SOL
-          </button>
-        </div>
-      )}
-      <div className="mb-3 text-sm text-gray-300 whitespace-pre-wrap break-words">
-        {displayText}
-        {needsTruncation && !showFullText && (
-          <button
-            type="button"
-            className="ml-1 text-degen-500 hover:text-degen-400 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowFullText(true);
-            }}
-          >
-            Show more
-          </button>
-        )}
-      </div>
-
-      {/* Inline token charts */}
-      {post.text &&
-        detectTokens(post.text).map((token, i) => (
-          <TokenChart key={`${token.symbol ?? token.address}-${i}`} {...token} compact />
-        ))}
-
-      {/* Embeds */}
-      {post.embeds.length > 0 && (
-        <div className="mb-3">
-          {(() => {
-            const images = post.embeds.filter((e) => e.kind === 'image').map((e) => e.url);
-            const links = post.embeds.filter((e) => e.kind === 'link');
-            const videos = post.embeds.filter((e) => e.kind === 'video');
-            const frames = post.embeds.filter((e) => e.kind === 'frame');
-            return (
-              <>
-                {images.length > 0 && <ImageGrid images={images} />}
-                {/* Explicit frame embeds (server-side tagged) */}
-                {frames.map((embed) => (
-                  <FrameCard key={`frame-${embed.url}`} url={embed.url} />
-                ))}
-                {/* Fallback: farcaster links may contain frames — probe the first link */}
-                {frames.length === 0 && post.protocol === 'farcaster' && links.length > 0 && (
-                  <FrameCard url={links[0]?.url} />
-                )}
-                {links.map((embed) => (
-                  <LinkPreview key={`link-${embed.url}`} embed={embed} />
-                ))}
-                {videos.map((embed) => (
-                  <a
-                    key={`video-${embed.url}`}
-                    href={embed.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 block w-full rounded-lg border border-gray-700 bg-gray-800/50 p-3 text-xs text-degen-500 hover:text-degen-400 transition-colors truncate"
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                  >
-                    ▶ {embed.url.replace(/^https?:\/\//, '').slice(0, 60)}
-                  </a>
-                ))}
-              </>
-            );
-          })()}
-        </div>
-      )}
-
-      {post.niches.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-1">
-          {post.niches.slice(0, 5).map((n) => (
-            <span
-              key={n}
-              className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] font-medium text-gray-400"
-            >
-              {n}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Engagement metrics + Tip */}
-      <div className="flex items-center gap-4 text-xs text-gray-500">
-        <button
-          type="button"
-          className={`flex items-center gap-1 transition-colors hover:text-red-400 ${localState.engagement.viewerLiked ? 'text-red-400' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            void perform(localState.engagement.viewerLiked ? 'unlike' : 'like');
-          }}
-          aria-label={`${localState.metrics.likes} likes`}
-        >
-          {localState.engagement.viewerLiked ? '❤' : '♡'} {formatCount(localState.metrics.likes)}
-        </button>
-        <button
-          type="button"
-          className={`flex items-center gap-1 transition-colors hover:text-green-400 ${localState.engagement.viewerReposted ? 'text-green-400' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            void perform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
-          }}
-          aria-label={`${localState.metrics.reposts} reposts`}
-        >
-          ↻ {formatCount(localState.metrics.reposts)}
-        </button>
-        <button
-          type="button"
-          className="flex items-center gap-1 transition-colors hover:text-blue-400"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowReply((v) => !v);
-          }}
-          aria-label={`${localState.metrics.replies} replies`}
-        >
-          ↩ {formatCount(localState.metrics.replies)}
-        </button>
-        <button
-          type="button"
-          className={`flex items-center gap-1 transition-colors hover:text-purple-400 ${localState.engagement.viewerBookmarked ? 'text-purple-400' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            void perform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
-          }}
-          aria-label={localState.engagement.viewerBookmarked ? 'Bookmarked' : 'Bookmark'}
-        >
-          {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
-        </button>
-        <button
-          type="button"
-          className="flex items-center gap-1 transition-colors hover:text-purple-400"
-          onClick={(e) => {
-            e.stopPropagation();
-            void navigator.clipboard.writeText(
-              `${window.location.origin}/post/${encodeURIComponent(post.id)}`,
-            );
-          }}
-          aria-label="Share"
-        >
-          ↗ Share
-        </button>
-        {onTip && (
-          <QuickTipButton
-            postId={post.id}
-            authorAddress={post.author.keys.evmAddress || post.author.keys.solanaAddress}
-            tipCount={post.tipCount}
-            onOpenModal={() => onTip(post)}
-          />
-        )}
-        {post.protocol === 'nostr' && post.metrics.quotes > 0 && onTip && (
-          <button
-            type="button"
-            className="flex items-center gap-1 text-yellow-400 text-xs"
-            onClick={(e) => {
-              e.stopPropagation();
-              onTip(post);
-            }}
-            title={`${post.metrics.quotes} zaps`}
-          >
-            ⚡{post.metrics.quotes}
-          </button>
-        )}
-      </div>
-
-      {showReply && (
-        <form
-          className="mt-3 flex gap-2"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          onSubmit={(e) => {
+      <article
+        className="cursor-pointer border-b border-white/5 px-4 py-3 transition-colors hover:bg-white/[0.03]"
+        onClick={() => onClick?.(post.id)}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && onClick) {
             e.preventDefault();
-            if (!replyText.trim()) return;
-            void perform('reply', replyText.trim());
-          }}
-        >
-          <input
-            type="text"
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            placeholder="Write a reply..."
-            className="flex-1 rounded border border-gray-700 bg-gray-900 px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:border-degen-500 focus:outline-none"
-            maxLength={1000}
+            onClick(post.id);
+          }
+        }}
+        aria-label={`Post by ${post.author.displayName}`}
+      >
+        {/* Author row */}
+        <div className="mb-2 flex items-center gap-3">
+          <Image
+            src={
+              post.author.avatarUrl ||
+              'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23333%22/%3E%3Ctext x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22%3E%40%3C/text%3E%3C/svg%3E'
+            }
+            alt={post.author.displayName}
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-full bg-gray-800 object-cover"
           />
-          <button type="submit" className="btn-primary text-xs">
-            Reply
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-sm font-semibold text-white">
+                {post.author.displayName}
+              </span>
+              {post.protocol === 'nostr' && post.author.handles.nostr?.includes('@') && (
+                <span className="flex-shrink-0 text-blue-400 text-xs" title="NIP-05 verified">
+                  ✓
+                </span>
+              )}
+              <ProtocolBadge protocol={post.protocol} />
+
+              {/* ── Cross-protocol identity badges ── */}
+              {crossProtocolBadges && crossProtocolBadges.length > 0 && (
+                <div className="flex shrink-0 flex-wrap gap-1">
+                  {crossProtocolBadges.slice(0, 3).map((p) => (
+                    <IdentityBadge key={p} protocol={p} size="xs" />
+                  ))}
+                  {crossProtocolBadges.length > 3 && (
+                    <span className="flex items-center px-1 text-[10px] text-gray-500">
+                      +{crossProtocolBadges.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* ── Three-dot menu ── */}
+              {!isSelf && (
+                <div ref={menuRef} className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu((v) => !v);
+                    }}
+                    className="rounded-lg p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
+                    aria-label="More actions"
+                    aria-haspopup="true"
+                    aria-expanded={showMenu}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <circle cx="8" cy="3" r="1.5" />
+                      <circle cx="8" cy="8" r="1.5" />
+                      <circle cx="8" cy="13" r="1.5" />
+                    </svg>
+                  </button>
+                  {showMenu && (
+                    <div
+                      className="absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-gray-800 bg-gray-950 py-1 shadow-2xl"
+                      role="menu"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleReport}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-yellow-500"
+                        >
+                          <path d="M8 1L16 15H0L8 1Z" fill="currentColor" opacity="0.8" />
+                        </svg>
+                        Report post
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleBlock}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-red-400"
+                        >
+                          <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+                          <line
+                            x1="3.5"
+                            y1="8"
+                            x2="12.5"
+                            y2="8"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        {blocked ? 'Unblock user' : 'Block user'}
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleMuteFromMenu}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-gray-400"
+                        >
+                          <path
+                            d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                          <line
+                            x1="2"
+                            y1="14"
+                            x2="14"
+                            y2="2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        {muted ? 'Unmute user' : 'Mute user'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={toggleFollow}
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                  following
+                    ? 'bg-degen-500/20 text-degen-400'
+                    : 'border border-gray-700 text-gray-500 hover:border-degen-500/30 hover:text-degen-400'
+                }`}
+                aria-label={following ? 'Unfollow' : 'Follow'}
+                title={following ? 'Unfollow' : 'Follow'}
+              >
+                {following ? '✓ Following' : '+ Follow'}
+              </button>
+              <button
+                type="button"
+                onClick={toggleMute}
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                  muted
+                    ? 'bg-red-500/20 text-red-400'
+                    : 'border border-gray-700 text-gray-600 hover:border-red-500/30 hover:text-red-400'
+                }`}
+                aria-label={muted ? 'Unmute' : 'Mute'}
+                title={muted ? 'Unmute author' : 'Mute author'}
+              >
+                {muted ? '🔇 Muted' : '🔇'}
+              </button>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span className="truncate">
+                {post.author.handles[post.protocol] ?? post.author.id.slice(0, 16)}
+              </span>
+              <span>·</span>
+              <time
+                dateTime={new Date(post.createdAt).toISOString()}
+                title={new Date(post.createdAt).toLocaleString()}
+              >
+                {formatTimeAgo(post.createdAt)}
+              </time>
+              {post.score && (
+                <>
+                  <span>·</span>
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-1.5 py-0.5 text-[10px] font-medium text-degen-400"
+                    title={buildScoreTooltip(post.score)}
+                  >
+                    ★ {Math.round(post.score.total * 10) / 10}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        {post.paywall && (
+          <div className="mb-3 rounded-xl border border-purple-900/30 bg-purple-900/10 p-4 text-center">
+            <div className="mb-2 text-2xl">🔒</div>
+            <p className="mb-3 text-sm text-gray-400">This post is locked.</p>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPaywall?.(post);
+              }}
+              className="rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-500 transition-colors"
+            >
+              Unlock for {post.paywall.amount} SOL
+            </button>
+          </div>
+        )}
+        <div className="mb-3 text-sm text-gray-300 whitespace-pre-wrap break-words">
+          {displayText}
+          {needsTruncation && !showFullText && (
+            <button
+              type="button"
+              className="ml-1 text-degen-500 hover:text-degen-400 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowFullText(true);
+              }}
+            >
+              Show more
+            </button>
+          )}
+        </div>
+
+        {/* Inline token charts */}
+        {post.text &&
+          detectTokens(post.text).map((token, i) => (
+            <TokenChart key={`${token.symbol ?? token.address}-${i}`} {...token} compact />
+          ))}
+
+        {/* Embeds */}
+        {post.embeds.length > 0 && (
+          <div className="mb-3">
+            {(() => {
+              const images = post.embeds.filter((e) => e.kind === 'image').map((e) => e.url);
+              const links = post.embeds.filter((e) => e.kind === 'link');
+              const videos = post.embeds.filter((e) => e.kind === 'video');
+              const frames = post.embeds.filter((e) => e.kind === 'frame');
+              return (
+                <>
+                  {images.length > 0 && <ImageGrid images={images} />}
+                  {/* Explicit frame embeds (server-side tagged) */}
+                  {frames.map((embed) => (
+                    <FrameCard key={`frame-${embed.url}`} url={embed.url} />
+                  ))}
+                  {/* Fallback: farcaster links may contain frames — probe the first link */}
+                  {frames.length === 0 && post.protocol === 'farcaster' && links.length > 0 && (
+                    <FrameCard url={links[0]?.url} />
+                  )}
+                  {links.map((embed) => (
+                    <LinkPreview key={`link-${embed.url}`} embed={embed} />
+                  ))}
+                  {videos.map((embed) => (
+                    <a
+                      key={`video-${embed.url}`}
+                      href={embed.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 block w-full rounded-lg border border-gray-700 bg-gray-800/50 p-3 text-xs text-degen-500 hover:text-degen-400 transition-colors truncate"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      ▶ {embed.url.replace(/^https?:\/\//, '').slice(0, 60)}
+                    </a>
+                  ))}
+                </>
+              );
+            })()}
+          </div>
+        )}
+
+        {post.niches.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-1">
+            {post.niches.slice(0, 5).map((n) => (
+              <span
+                key={n}
+                className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] font-medium text-gray-400"
+              >
+                {n}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* ── Protocol context ── */}
+        {post.protocol === 'lemmy' && <LemmyThreadView post={post} />}
+        {(post.protocol as string) === 'peertube' && (
+          <PeerTubeEmbed
+            url={
+              post.embeds.find((e) => e.kind === 'video')?.url ??
+              post.embeds.find((e) => e.kind === 'link')?.url ??
+              ''
+            }
+            title={
+              (post.raw as Record<string, unknown> | undefined)?.videoTitle as string | undefined
+            }
+            channelName={
+              (post.raw as Record<string, unknown> | undefined)?.channelName as string | undefined
+            }
+          />
+        )}
+        {post.protocol === 'nostr' && (
+          <NostrRelayBadge
+            relays={((post.raw as Record<string, unknown> | undefined)?.relays as string[]) ?? []}
+          />
+        )}
+        {post.protocol === 'mastodon' && (
+          <MastodonInstanceContext
+            instance={
+              ((post.raw as Record<string, unknown> | undefined)?.instance as string) ??
+              'mastodon.social'
+            }
+            federatedFrom={
+              (post.raw as Record<string, unknown> | undefined)?.federatedFrom as string | undefined
+            }
+          />
+        )}
+        {post.protocol === 'lens' && <LensPublicationBadge post={post} />}
+        {post.protocol === 'bluesky' && <BlueskyPostContext post={post} />}
+
+        {/* Engagement metrics + Tip */}
+        <div className="flex items-center gap-4 text-xs text-gray-500">
+          <button
+            type="button"
+            className={`flex items-center gap-1 transition-colors hover:text-red-400 ${localState.engagement.viewerLiked ? 'text-red-400' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              void perform(localState.engagement.viewerLiked ? 'unlike' : 'like');
+            }}
+            aria-label={`${localState.metrics.likes} likes`}
+          >
+            {localState.engagement.viewerLiked ? '❤' : '♡'} {formatCount(localState.metrics.likes)}
           </button>
-        </form>
-      )}
+          <button
+            type="button"
+            className={`flex items-center gap-1 transition-colors hover:text-green-400 ${localState.engagement.viewerReposted ? 'text-green-400' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              void perform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
+            }}
+            aria-label={`${localState.metrics.reposts} reposts`}
+          >
+            ↻ {formatCount(localState.metrics.reposts)}
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-1 transition-colors hover:text-blue-400"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowReply((v) => !v);
+            }}
+            aria-label={`${localState.metrics.replies} replies`}
+          >
+            ↩ {formatCount(localState.metrics.replies)}
+          </button>
+          <button
+            type="button"
+            className={`flex items-center gap-1 transition-colors hover:text-purple-400 ${localState.engagement.viewerBookmarked ? 'text-purple-400' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              void perform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
+            }}
+            aria-label={localState.engagement.viewerBookmarked ? 'Bookmarked' : 'Bookmark'}
+          >
+            {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-1 transition-colors hover:text-purple-400"
+            onClick={(e) => {
+              e.stopPropagation();
+              void navigator.clipboard.writeText(
+                `${window.location.origin}/post/${encodeURIComponent(post.id)}`,
+              );
+            }}
+            aria-label="Share"
+          >
+            ↗ Share
+          </button>
+          {onTip && (
+            <QuickTipButton
+              postId={post.id}
+              authorAddress={post.author.keys.evmAddress || post.author.keys.solanaAddress}
+              tipCount={post.tipCount}
+              onOpenModal={() => onTip(post)}
+            />
+          )}
+          {post.protocol === 'nostr' && post.metrics.quotes > 0 && onTip && (
+            <button
+              type="button"
+              className="flex items-center gap-1 text-yellow-400 text-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTip(post);
+              }}
+              title={`${post.metrics.quotes} zaps`}
+            >
+              ⚡{post.metrics.quotes}
+            </button>
+          )}
+        </div>
+
+        {showReply && (
+          <form
+            className="mt-3 flex gap-2"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!replyText.trim()) return;
+              void perform('reply', replyText.trim());
+            }}
+          >
+            <input
+              type="text"
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder="Write a reply..."
+              className="flex-1 rounded border border-gray-700 bg-gray-900 px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:border-degen-500 focus:outline-none"
+              maxLength={1000}
+            />
+            <button type="submit" className="btn-primary text-xs">
+              Reply
+            </button>
+          </form>
+        )}
       </article>
       <ReportModal
         open={showReportModal}

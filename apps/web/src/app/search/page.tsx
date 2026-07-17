@@ -29,7 +29,36 @@ interface IdentityResult {
   postCount: number;
 }
 
-type SearchTab = 'all' | 'posts' | 'people' | 'topics';
+interface CommunityResult {
+  id: string;
+  name: string;
+  protocol: string;
+  description: string;
+  memberCount: number;
+  url: string;
+  icon: string | null;
+}
+
+interface VideoResult {
+  id: string;
+  title: string;
+  source: string;
+  channelName: string;
+  thumbnailUrl: string | null;
+  url: string;
+  views: number;
+  durationSeconds: number;
+  publishedAt: number;
+}
+
+interface FederatedSearchResponse {
+  data?: SearchResult[];
+  identities?: IdentityResult[];
+  communities?: CommunityResult[];
+  videos?: VideoResult[];
+}
+
+type SearchTab = 'all' | 'posts' | 'people' | 'communities' | 'videos' | 'topics';
 
 // ─── Niches / Topics ──────────────────────────────────────────
 
@@ -58,6 +87,8 @@ const PROTOCOL_FILTERS = [
   { id: 'lens', label: 'Lens', color: '#abfe2c' },
   { id: 'bluesky', label: 'Bluesky', color: '#1185fe' },
   { id: 'mastodon', label: 'Mastodon', color: '#6364ff' },
+  { id: 'lemmy', label: 'Lemmy', color: '#00bc8c' },
+  { id: 'peertube', label: 'PeerTube', color: '#f1680d' },
   { id: 'rss', label: 'News', color: '#ffa500' },
 ];
 
@@ -76,6 +107,16 @@ function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
+}
+
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins >= 60) {
+    const hours = Math.floor(mins / 60);
+    return `${hours}:${String(mins % 60).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+  return `${mins}:${String(secs).padStart(2, '0')}`;
 }
 
 function getProfileUrl(identity: IdentityResult): string {
@@ -124,6 +165,8 @@ export default function SearchPage() {
   const [tab, setTab] = useState<SearchTab>('all');
   const [posts, setPosts] = useState<SearchResult[]>([]);
   const [identities, setIdentities] = useState<IdentityResult[]>([]);
+  const [communities, setCommunities] = useState<CommunityResult[]>([]);
+  const [videos, setVideos] = useState<VideoResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(!!initialQ);
   const [error, setError] = useState<string | null>(null);
@@ -152,6 +195,8 @@ export default function SearchPage() {
       if (q.length < 2) {
         setPosts([]);
         setIdentities([]);
+        setCommunities([]);
+        setVideos([]);
         setSearched(false);
         return;
       }
@@ -162,27 +207,26 @@ export default function SearchPage() {
       try {
         const protocolsParam = protocolFilter ? `&protocols=${protocolFilter}` : '';
 
-        const [postsRes, identityRes] = await Promise.all([
-          fetch(`/api/search?q=${encodeURIComponent(q)}&limit=50${protocolsParam}`, {
+        const res = await fetch(
+          `/api/search?q=${encodeURIComponent(q)}&limit=50${protocolsParam}`,
+          {
             credentials: 'include',
-          }),
-          fetch(`/api/search/identity?q=${encodeURIComponent(q)}&limit=12`, {
-            credentials: 'include',
-          }),
-        ]);
+          },
+        );
 
-        const postsData = postsRes.ok
-          ? ((await postsRes.json()) as { data?: SearchResult[] })
-          : { data: [] };
-        const identityData = identityRes.ok
-          ? ((await identityRes.json()) as { data?: IdentityResult[] })
-          : { data: [] };
+        const data: FederatedSearchResponse = res.ok
+          ? ((await res.json()) as FederatedSearchResponse)
+          : {};
 
-        setPosts(postsData.data ?? []);
-        setIdentities(identityData.data ?? []);
+        setPosts(data.data ?? []);
+        setIdentities(data.identities ?? []);
+        setCommunities(data.communities ?? []);
+        setVideos(data.videos ?? []);
       } catch (err) {
         setPosts([]);
         setIdentities([]);
+        setCommunities([]);
+        setVideos([]);
         setError(err instanceof Error ? err.message : 'Search failed');
       }
       setLoading(false);
@@ -234,12 +278,12 @@ export default function SearchPage() {
   ).slice(0, 8);
 
   const filteredPosts =
-    protocolFilter && tab !== 'people'
-      ? posts.filter((p) => p.protocol === protocolFilter)
-      : posts;
+    protocolFilter && tab !== 'people' ? posts.filter((p) => p.protocol === protocolFilter) : posts;
 
   const visiblePosts = tab === 'all' || tab === 'posts' ? filteredPosts : [];
   const visibleIdentities = tab === 'all' || tab === 'people' ? identities : [];
+  const visibleCommunities = tab === 'all' || tab === 'communities' ? communities : [];
+  const visibleVideos = tab === 'all' || tab === 'videos' ? videos : [];
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
@@ -247,7 +291,9 @@ export default function SearchPage() {
       <div className="mb-6">
         <h1 className="text-xl font-bold text-[var(--color-fg)] mb-4">Search</h1>
         <div className="relative">
-          <label htmlFor="search-input" className="sr-only">Search</label>
+          <label htmlFor="search-input" className="sr-only">
+            Search
+          </label>
           <input
             ref={inputRef}
             id="search-input"
@@ -285,8 +331,7 @@ export default function SearchPage() {
               onClick={() => setProtocolFilter(protocolFilter === pf.id ? null : pf.id)}
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors`}
               style={{
-                backgroundColor:
-                  protocolFilter === pf.id ? `${pf.color}22` : 'var(--color-card)',
+                backgroundColor: protocolFilter === pf.id ? `${pf.color}22` : 'var(--color-card)',
                 color: protocolFilter === pf.id ? pf.color : 'rgb(156,163,175)',
               }}
             >
@@ -304,6 +349,8 @@ export default function SearchPage() {
               { id: 'all' as const, label: 'All' },
               { id: 'posts' as const, label: 'Posts' },
               { id: 'people' as const, label: 'People' },
+              { id: 'communities' as const, label: 'Communities' },
+              { id: 'videos' as const, label: 'Videos' },
               { id: 'topics' as const, label: 'Topics' },
             ] as const
           ).map((t) => (
@@ -320,6 +367,8 @@ export default function SearchPage() {
               {t.label}
               {t.id === 'posts' && posts.length > 0 && ` (${posts.length})`}
               {t.id === 'people' && identities.length > 0 && ` (${identities.length})`}
+              {t.id === 'communities' && communities.length > 0 && ` (${communities.length})`}
+              {t.id === 'videos' && videos.length > 0 && ` (${videos.length})`}
             </button>
           ))}
         </div>
@@ -346,19 +395,26 @@ export default function SearchPage() {
       )}
 
       {/* Empty */}
-      {searched && !loading && !error && visiblePosts.length === 0 && visibleIdentities.length === 0 && tab !== 'topics' && (
-        <div className="card py-12 text-center">
-          <div className="mb-3 text-3xl text-gray-700">⌕</div>
-          <p className="text-sm text-[var(--color-muted)]">
-            No results for &ldquo;{query}&rdquo;
-          </p>
-          {protocolFilter && (
-            <p className="mt-1 text-xs text-[var(--color-muted)]">
-              Try removing the protocol filter
+      {searched &&
+        !loading &&
+        !error &&
+        visiblePosts.length === 0 &&
+        visibleIdentities.length === 0 &&
+        visibleCommunities.length === 0 &&
+        visibleVideos.length === 0 &&
+        tab !== 'topics' && (
+          <div className="card py-12 text-center">
+            <div className="mb-3 text-3xl text-gray-700">⌕</div>
+            <p className="text-sm text-[var(--color-muted)]">
+              No results for &ldquo;{query}&rdquo;
             </p>
-          )}
-        </div>
-      )}
+            {protocolFilter && (
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                Try removing the protocol filter
+              </p>
+            )}
+          </div>
+        )}
 
       {/* ═══ Topics Tab ═══ */}
       {tab === 'topics' && (
@@ -499,6 +555,137 @@ export default function SearchPage() {
         </div>
       )}
 
+      {/* ═══ Community Results ═══ */}
+      {visibleCommunities.length > 0 && (
+        <div className="mb-8">
+          {tab === 'all' && (
+            <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+              Communities
+            </h2>
+          )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {visibleCommunities.map((community) => (
+              <a
+                key={community.id}
+                href={community.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="card-hover flex items-start gap-4 p-4 transition-colors"
+              >
+                <div
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-bold overflow-hidden"
+                  style={{
+                    backgroundColor: `${getProtocolColor(community.protocol)}22`,
+                    color: getProtocolColor(community.protocol),
+                  }}
+                >
+                  {community.icon ? (
+                    <Image
+                      src={community.icon}
+                      alt={community.name}
+                      width={48}
+                      height={48}
+                      className="h-12 w-12 rounded-xl object-cover"
+                    />
+                  ) : (
+                    community.name[0]?.toUpperCase() || getProtocolIcon(community.protocol)
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-semibold text-[var(--color-fg)]">
+                      {community.name}
+                    </span>
+                    <span
+                      className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                      style={{
+                        backgroundColor: `${getProtocolColor(community.protocol)}22`,
+                        color: getProtocolColor(community.protocol),
+                      }}
+                    >
+                      {community.protocol}
+                    </span>
+                  </div>
+                  {community.description && (
+                    <div className="mt-1 text-xs text-[var(--color-muted)] line-clamp-2">
+                      {community.description}
+                    </div>
+                  )}
+                  {community.memberCount > 0 && (
+                    <div className="mt-1 text-[10px] text-[var(--color-muted)]">
+                      {formatCount(community.memberCount)} members
+                    </div>
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Video Results ═══ */}
+      {visibleVideos.length > 0 && (
+        <div className="mb-8">
+          {tab === 'all' && (
+            <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+              Videos
+            </h2>
+          )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {visibleVideos.map((video) => (
+              <a
+                key={video.id}
+                href={video.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="card-hover flex items-start gap-3 p-3 transition-colors"
+              >
+                <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-lg bg-[var(--color-card)]">
+                  {video.thumbnailUrl ? (
+                    <Image
+                      src={video.thumbnailUrl}
+                      alt={video.title}
+                      width={112}
+                      height={64}
+                      className="h-16 w-28 object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-lg text-[var(--color-muted)]">
+                      ▶
+                    </div>
+                  )}
+                  {video.durationSeconds > 0 && (
+                    <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 text-[9px] text-white">
+                      {formatDuration(video.durationSeconds)}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium text-[var(--color-fg)]">
+                      {video.title}
+                    </span>
+                    <span className="shrink-0 rounded-full bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-medium text-orange-400">
+                      {video.source}
+                    </span>
+                  </div>
+                  {video.channelName && (
+                    <div className="mt-0.5 text-xs text-[var(--color-muted)] truncate">
+                      {video.channelName}
+                    </div>
+                  )}
+                  <div className="mt-1 flex gap-3 text-[10px] text-[var(--color-muted)]">
+                    {video.views > 0 && <span>{formatCount(video.views)} views</span>}
+                    {video.publishedAt > 0 && <span>{formatTime(video.publishedAt)}</span>}
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ═══ Post Results ═══ */}
       {visiblePosts.length > 0 && (
         <div>
@@ -539,10 +726,15 @@ export default function SearchPage() {
                     <span className="font-medium text-[var(--color-fg)] truncate">
                       {r.author.displayName}
                     </span>
-                    <span className="text-[var(--color-muted)]" style={{ color: getProtocolColor(r.protocol) }}>
+                    <span
+                      className="text-[var(--color-muted)]"
+                      style={{ color: getProtocolColor(r.protocol) }}
+                    >
                       {r.protocol}
                     </span>
-                    <span className="ml-auto text-[var(--color-muted)]">{formatTime(r.createdAt)}</span>
+                    <span className="ml-auto text-[var(--color-muted)]">
+                      {formatTime(r.createdAt)}
+                    </span>
                   </div>
                   <p className="mt-0.5 text-sm text-[var(--color-muted)] line-clamp-2">{r.text}</p>
                   <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--color-muted)]">

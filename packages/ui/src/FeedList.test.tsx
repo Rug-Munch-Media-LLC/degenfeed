@@ -5,11 +5,11 @@
  * scroll-position restore, hasMore sentinel, and keyboard navigation.
  */
 
+import type { UnifiedPost } from '@degenfeed/types';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FeedList } from './FeedList';
 import type { FeedListProps } from './FeedList';
-import type { UnifiedPost } from '@degenfeed/types';
+import { FeedList } from './FeedList';
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
@@ -181,10 +181,7 @@ describe('loaded state', () => {
     const scrollIntoViewMock = vi.fn();
     Element.prototype.scrollIntoView = scrollIntoViewMock;
 
-    sessionStorage.setItem(
-      'df_scroll',
-      JSON.stringify({ y: 500, id: 'p2' }),
-    );
+    sessionStorage.setItem('df_scroll', JSON.stringify({ y: 500, id: 'p2' }));
 
     const posts = [makePost('p1'), makePost('p2'), makePost('p3')];
     renderFeedList({ state: 'loaded', posts });

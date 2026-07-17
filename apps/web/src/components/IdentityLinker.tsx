@@ -1,130 +1,312 @@
 'use client';
 
-import { getProtocolColor } from '@degenfeed/ui';
-import { useCallback, useRef, useState } from 'react';
+/**
+ * IdentityLinker — Cross-protocol identity linking UI.
+ *
+ * Shows the authenticated wallet + 6 social protocols with link status.
+ * Guides the user through linking each protocol to their wallet.
+ */
 
-interface IdentityResult {
-  id: string;
-  protocol: string;
-  displayName?: string;
+import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
+import type { ProtocolId } from '@degenfeed/utils';
+import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from './AuthProvider';
+
+interface LinkedIdentity {
+  protocol: ProtocolId;
   handle?: string;
-  avatarUrl?: string;
+  verified: boolean;
 }
 
-export function IdentityLinker({ onSignIn }: { onSignIn?: () => void }) {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<IdentityResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+interface LinkFormState {
+  open: ProtocolId | null;
+  values: Partial<Record<ProtocolId, Record<string, string>>>;
+  submitting: boolean;
+}
 
-  const doSearch = useCallback(async (q: string) => {
-    if (q.length < 2) {
-      setResults([]);
+const LINK_FIELDS: Record<ProtocolId, Array<{ key: string; label: string; placeholder: string }>> = {
+  nostr: [
+    { key: 'npub', label: 'Nostr npub', placeholder: 'npub1...' },
+    { key: 'relays', label: 'Relays (comma-separated)', placeholder: 'wss://relay.damus.io' },
+  ],
+  farcaster: [
+    { key: 'fid', label: 'Farcaster FID', placeholder: 'e.g. 12345' },
+    { key: 'username', label: 'Username', placeholder: 'vitalik' },
+    { key: 'custodyAddress', label: 'Custody Address', placeholder: '0x...' },
+  ],
+  lens: [
+    { key: 'handle', label: 'Lens Handle', placeholder: 'stani.lens' },
+    { key: 'profileId', label: 'Profile ID', placeholder: '0x...' },
+  ],
+  bluesky: [
+    { key: 'did', label: 'Bluesky DID', placeholder: 'did:plc:...' },
+    { key: 'handle', label: 'Handle', placeholder: 'alice.bsky.social' },
+  ],
+  mastodon: [
+    { key: 'handle', label: 'Handle', placeholder: '@alice' },
+    { key: 'instance', label: 'Instance', placeholder: 'social.degenfeed.xyz' },
+  ],
+  reddit: [
+    { key: 'username', label: 'Reddit Username', placeholder: 'u/alice' },
+  ],
+};
+
+export function IdentityLinker() {
+  const { walletAddress } = useAuth();
+  const [linked, setLinked] = useState<LinkedIdentity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState<LinkFormState>({ open: null, values: {}, submitting: false });
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const fetchLinked = useCallback(async () => {
+    if (!walletAddress) {
+      setLinked([]);
+      setLoading(false);
       return;
     }
-    setLoading(true);
     try {
-      const res = await fetch(`/api/search/identity?q=${encodeURIComponent(q)}&limit=5`, {
+      const res = await fetch(`/api/identity/profile?wallet=${encodeURIComponent(walletAddress)}`, {
         credentials: 'include',
       });
-      const data = (await res.json()) as { data?: IdentityResult[] };
-      setResults(data.data ?? []);
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        data: {
+          nostr?: { npub: string; verified: boolean };
+          farcaster?: { fid: number; username: string; verified: boolean };
+          lens?: { profileId: string; handle: string; verified: boolean };
+          bluesky?: { did: string; handle: string; verified: boolean };
+          mastodon?: { handle: string; instance: string; verified: boolean };
+          reddit?: { username: string; verified: boolean };
+        } | null;
+      };
+      if (!data.data) {
+        setLinked([]);
+        return;
+      }
+      const ids: LinkedIdentity[] = [];
+      if (data.data.nostr) ids.push({ protocol: 'nostr', handle: data.data.nostr.npub, verified: data.data.nostr.verified });
+      if (data.data.farcaster) ids.push({ protocol: 'farcaster', handle: data.data.farcaster.username || String(data.data.farcaster.fid), verified: data.data.farcaster.verified });
+      if (data.data.lens) ids.push({ protocol: 'lens', handle: data.data.lens.handle, verified: data.data.lens.verified });
+      if (data.data.bluesky) ids.push({ protocol: 'bluesky', handle: data.data.bluesky.handle, verified: data.data.bluesky.verified });
+      if (data.data.mastodon) ids.push({ protocol: 'mastodon', handle: `${data.data.mastodon.handle}@${data.data.mastodon.instance}`, verified: data.data.mastodon.verified });
+      if (data.data.reddit) ids.push({ protocol: 'reddit', handle: data.data.reddit.username, verified: data.data.reddit.verified });
+      setLinked(ids);
     } catch {
-      setResults([]);
+      // ignore
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  }, [walletAddress]);
 
-  const handleChange = useCallback(
-    (val: string) => {
-      setQuery(val);
-      setOpen(true);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => doSearch(val), 300);
+  useEffect(() => {
+    fetchLinked();
+  }, [fetchLinked]);
+
+  const isLinked = (protocol: ProtocolId) => linked.some((l) => l.protocol === protocol);
+  const getLinkedHandle = (protocol: ProtocolId) => linked.find((l) => l.protocol === protocol)?.handle;
+
+  const handleLink = useCallback(
+    async (protocol: ProtocolId) => {
+      const values = form.values[protocol];
+      if (!values) return;
+
+      setForm((f) => ({ ...f, submitting: true }));
+      setMessage(null);
+
+      try {
+        const payload: Record<string, unknown> = { ...values };
+        // Parse numeric fields
+        if (protocol === 'farcaster' && payload.fid) payload.fid = Number(payload.fid);
+        // Split relays string into array
+        if (protocol === 'nostr' && payload.relays) {
+          payload.relays = String(payload.relays).split(',').map((s) => s.trim()).filter(Boolean);
+        }
+
+        const res = await fetch('/api/identity/link', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ protocol, identity: payload }),
+        });
+
+        const data = (await res.json()) as { success?: boolean; error?: string };
+        if (!res.ok || !data.success) {
+          setMessage({ type: 'error', text: data.error || 'Failed to link identity' });
+          return;
+        }
+
+        setMessage({ type: 'success', text: `${PROTOCOL_ID_REGISTRY[protocol].displayName} linked!` });
+        setForm((f) => ({ ...f, open: null, values: { ...f.values, [protocol]: {} } }));
+        await fetchLinked();
+      } catch (err) {
+        setMessage({ type: 'error', text: String(err) });
+      } finally {
+        setForm((f) => ({ ...f, submitting: false }));
+      }
     },
-    [doSearch],
+    [form.values, fetchLinked],
   );
 
-  const handleSelect = useCallback(
-    (_result: IdentityResult) => {
-      setQuery('');
-      setResults([]);
-      setOpen(false);
-      onSignIn?.();
+  const handleUnlink = useCallback(
+    async (protocol: ProtocolId) => {
+      setMessage(null);
+      try {
+        const res = await fetch(`/api/identity/link?protocol=${protocol}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        const data = (await res.json()) as { success?: boolean; error?: string };
+        if (!res.ok || !data.success) {
+          setMessage({ type: 'error', text: data.error || 'Failed to unlink' });
+          return;
+        }
+        setMessage({ type: 'success', text: `${PROTOCOL_ID_REGISTRY[protocol].displayName} unlinked.` });
+        await fetchLinked();
+      } catch (err) {
+        setMessage({ type: 'error', text: String(err) });
+      }
     },
-    [onSignIn],
+    [fetchLinked],
   );
+
+  if (!walletAddress) {
+    return (
+      <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-4 text-center text-sm text-gray-500">
+        Connect your wallet to link social identities.
+      </div>
+    );
+  }
 
   return (
-    <div className="relative">
-      <label
-        htmlFor="identity-link-input"
-        className="mb-2 block text-xs font-semibold uppercase tracking-widest text-gray-500"
-      >
-        Link Another Identity
-      </label>
-      <div className="relative">
-        <input
-          id="identity-link-input"
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(e) => handleChange(e.target.value)}
-          onFocus={() => {
-            if (results.length > 0) setOpen(true);
-          }}
-          onBlur={() => setTimeout(() => setOpen(false), 200)}
-          placeholder="Search by handle, address, or name..."
-          className="input pr-10"
-        />
-        {loading && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">⟳</span>
+    <div className="space-y-3">
+      {/* Wallet display */}
+      <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-gray-950/70 px-4 py-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-sm font-mono text-degen-400">
+          {walletAddress.slice(0, 2).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-xs font-medium text-white">Connected Wallet</div>
+          <code className="text-xs font-mono text-gray-500 truncate block">
+            {walletAddress.slice(0, 8)}...{walletAddress.slice(-6)}
+          </code>
+        </div>
+      </div>
+
+      {/* Protocol list */}
+      <div className="space-y-2">
+        {(Object.entries(PROTOCOL_ID_REGISTRY) as [ProtocolId, typeof PROTOCOL_ID_REGISTRY[ProtocolId]][]).map(
+          ([protocol, meta]) => {
+            const linkedHandle = getLinkedHandle(protocol);
+            const linked = isLinked(protocol);
+            const formOpen = form.open === protocol;
+
+            return (
+              <div key={protocol} className="rounded-xl border border-white/5 bg-gray-950/70 overflow-hidden">
+                <div
+                  className={`flex items-center gap-3 px-4 py-3 transition-colors ${!formOpen ? 'hover:bg-white/[0.03]' : ''}`}
+                >
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base"
+                    style={{ backgroundColor: `${meta.color}22` }}
+                  >
+                    <span style={{ color: meta.color }}>{meta.icon}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-white">{meta.displayName}</span>
+                      {linked && (
+                        <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
+                          ✓ Linked
+                        </span>
+                      )}
+                    </div>
+                    {linkedHandle ? (
+                      <div className="text-xs text-gray-500 truncate">{linkedHandle}</div>
+                    ) : (
+                      <div className="text-xs text-gray-600">Not linked</div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (linked) {
+                        handleUnlink(protocol);
+                      } else {
+                        setForm((f) => ({
+                          ...f,
+                          open: f.open === protocol ? null : protocol,
+                          values: { ...f.values, [protocol]: f.values[protocol] || {} },
+                        }));
+                      }
+                    }}
+                    className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                      linked
+                        ? 'border border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                        : 'border border-degen-500/30 bg-degen-500/10 text-degen-400 hover:bg-degen-500/20'
+                    }`}
+                  >
+                    {linked ? 'Unlink' : 'Link'}
+                  </button>
+                </div>
+
+                {/* Link form */}
+                {formOpen && !linked && (
+                  <div className="border-t border-white/5 px-4 py-3 space-y-3">
+                    {LINK_FIELDS[protocol].map((field) => (
+                      <div key={field.key}>
+                        <label className="mb-1 block text-xs text-gray-500">{field.label}</label>
+                        <input
+                          type="text"
+                          value={form.values[protocol]?.[field.key] || ''}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              values: {
+                                ...f.values,
+                                [protocol]: { ...f.values[protocol], [field.key]: e.target.value },
+                              },
+                            }))
+                          }
+                          placeholder={field.placeholder}
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-degen-500 focus:outline-none"
+                        />
+                      </div>
+                    ))}
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleLink(protocol)}
+                        disabled={form.submitting}
+                        className="btn-primary flex-1 text-xs"
+                      >
+                        {form.submitting ? 'Linking...' : `Link ${meta.displayName}`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, open: null }))}
+                        className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          },
         )}
       </div>
 
-      {open && results.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-xl border border-gray-800 bg-gray-950 shadow-2xl">
-          {results.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              onMouseDown={() => handleSelect(r)}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-800/50 transition-colors first:rounded-t-xl last:rounded-b-xl"
-            >
-              <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                style={{
-                  backgroundColor: `${getProtocolColor(r.protocol)}22`,
-                  color: getProtocolColor(r.protocol),
-                }}
-              >
-                {r.displayName?.[0]?.toUpperCase() || '?'}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-white truncate">
-                  {r.displayName || r.handle || r.id}
-                </div>
-                <div className="text-xs text-gray-500">{r.handle || r.protocol}</div>
-              </div>
-              <span
-                className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
-                style={{
-                  backgroundColor: `${getProtocolColor(r.protocol)}22`,
-                  color: getProtocolColor(r.protocol),
-                }}
-              >
-                {r.protocol}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {open && query.length >= 2 && results.length === 0 && !loading && (
-        <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-xl border border-gray-800 bg-gray-950 p-4 text-center text-xs text-gray-500">
-          No identities found for &ldquo;{query}&rdquo;
+      {/* Status message */}
+      {message && (
+        <div
+          className={`rounded-lg px-4 py-2 text-xs font-medium ${
+            message.type === 'success'
+              ? 'bg-degen-500/15 text-degen-400 border border-degen-500/20'
+              : 'bg-red-500/15 text-red-400 border border-red-500/20'
+          }`}
+        >
+          {message.text}
         </div>
       )}
     </div>

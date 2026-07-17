@@ -37,6 +37,7 @@ const PROTOCOLS = [
   { id: 'lens', label: 'Lens' },
   { id: 'bluesky', label: 'Bluesky' },
   { id: 'mastodon', label: 'Mastodon' },
+  { id: 'tip', label: 'Tips' },
 ] as const;
 
 /* ─── Helpers ──────────────────────────────────────────────── */
@@ -97,12 +98,15 @@ interface NotificationRowProps {
   id: string;
   type: string;
   protocol: string;
+  sourceProtocol?: string;
   actorName: string;
   actorHandle?: string;
   actorAvatar?: string;
   postText?: string;
   createdAt: number;
   read: boolean;
+  amount?: string;
+  currency?: string;
   onMarkRead: (id: string) => void;
 }
 
@@ -110,15 +114,20 @@ function NotificationRow({
   id,
   type,
   protocol,
+  sourceProtocol,
   actorName,
   actorHandle,
   actorAvatar,
   postText,
   createdAt,
   read,
+  amount,
+  currency,
   onMarkRead,
 }: NotificationRowProps) {
-  const protocolColor = getProtocolColor(protocol);
+  // Use sourceProtocol for display badge when present (tips from specific chain), else protocol
+  const displayProtocol = sourceProtocol || protocol;
+  const protocolColor = getProtocolColor(displayProtocol);
   const icon = getTypeIcon(type);
   const label = getTypeLabel(type);
 
@@ -169,6 +178,11 @@ function NotificationRow({
               </span>
             )}
             <span>{actorName}</span>
+            {amount && (
+              <span className="rounded bg-degen-500/20 px-1.5 py-0.5 text-[10px] font-bold text-degen-400">
+                {amount} {currency?.toUpperCase() === 'BASE' ? 'ETH' : currency?.toUpperCase() === 'SOLANA' ? 'SOL' : currency?.toUpperCase()}
+              </span>
+            )}
           </span>
           {actorHandle && (
             <span className="hidden truncate text-xs text-[var(--color-muted)] sm:inline">@{actorHandle}</span>
@@ -183,12 +197,12 @@ function NotificationRow({
         <span className="mt-0.5 text-[10px] text-[var(--color-muted)]">{timeAgo(createdAt)}</span>
       </div>
 
-      {/* Protocol badge */}
+      {/* Protocol badge — shows sourceProtocol if available */}
       <span
         className="mt-1 flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium leading-normal"
         style={{ backgroundColor: `${protocolColor}18`, color: protocolColor }}
       >
-        {getProtocolLabel(protocol)}
+        {getProtocolLabel(displayProtocol)}
       </span>
     </button>
   );
@@ -236,16 +250,144 @@ function SignInPrompt({ onSignIn }: { onSignIn: () => void }) {
   );
 }
 
+/* ─── Notification Preferences Panel ───────────────────────── */
+
+interface NotificationPrefsPanelProps {
+  prefs: Record<string, unknown> | null;
+  onSave: (prefs: Record<string, unknown>) => void;
+  onClose: () => void;
+}
+
+function NotificationPrefsPanel({ prefs, onSave, onClose }: NotificationPrefsPanelProps) {
+  const [local, setLocal] = useState<Record<string, unknown>>(prefs || {});
+  const [saving, setSaving] = useState(false);
+
+  // Sync when prefs load
+  useEffect(() => {
+    if (prefs) setLocal(prefs);
+  }, [prefs]);
+
+  const setProtocolType = (protocol: string, type: string, value: boolean) => {
+    setLocal((prev) => {
+      const current = (prev[protocol] as Record<string, boolean>) || {};
+      return { ...prev, [protocol]: { ...current, [type]: value } };
+    });
+  };
+
+  const setTipEnabled = (value: boolean) => {
+    setLocal((prev) => ({ ...prev, tip: value }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    await onSave(local);
+    setSaving(false);
+  };
+
+  const protocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'] as const;
+  const types = ['likes', 'reposts', 'replies', 'follows', 'mentions'] as const;
+  const typeLabels: Record<string, string> = {
+    likes: 'Likes', reposts: 'Reposts', replies: 'Replies', follows: 'Follows', mentions: 'Mentions',
+  };
+
+  return (
+    <div className="border-b border-[var(--color-border)] bg-[var(--color-overlay)]/30 px-4 py-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-[var(--color-fg)]">Notification Preferences</h3>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded p-1 text-[var(--color-muted)] hover:text-[var(--color-fg)]"
+          aria-label="Close preferences"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {protocols.map((protocol) => {
+          const protoPrefs = (local[protocol] as Record<string, boolean>) || {};
+          const color = getProtocolColor(protocol);
+          return (
+            <div key={protocol} className="rounded-lg border border-[var(--color-border)] p-3">
+              <div className="mb-2 text-xs font-semibold" style={{ color }}>
+                {getProtocolLabel(protocol)}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {types.map((type) => (
+                  <label
+                    key={type}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors"
+                    style={{
+                      backgroundColor: protoPrefs[type] !== false ? `${color}18` : 'var(--color-card)',
+                      color: protoPrefs[type] !== false ? color : 'var(--color-muted)',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={protoPrefs[type] !== false}
+                      onChange={(e) => setProtocolType(protocol, type, e.target.checked)}
+                      className="sr-only"
+                    />
+                    {protoPrefs[type] !== false ? '✓ ' : '✗ '}
+                    {typeLabels[type]}
+                  </label>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Tips toggle */}
+        <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] p-3">
+          <span className="text-xs font-medium text-[var(--color-fg)]">
+            ⚡ Tips
+          </span>
+          <label className="relative inline-flex cursor-pointer items-center">
+            <input
+              type="checkbox"
+              checked={local.tip !== false}
+              onChange={(e) => setTipEnabled(e.target.checked)}
+              className="peer sr-only"
+            />
+            <div className="h-5 w-9 rounded-full bg-[var(--color-card)] after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-[var(--color-muted)] after:transition-all peer-checked:bg-degen-500/30 peer-checked:after:translate-x-full peer-checked:after:bg-degen-400" />
+          </label>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving}
+        className="mt-3 w-full rounded-lg bg-degen-500/20 px-3 py-2 text-xs font-semibold text-degen-400 transition-colors hover:bg-degen-500/30 disabled:opacity-50"
+      >
+        {saving ? 'Saving...' : 'Save Preferences'}
+      </button>
+    </div>
+  );
+}
+
 /* ─── Page ─────────────────────────────────────────────────── */
 
 export default function NotificationsPage() {
   const { ready, signedInProtocols, openSignIn } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
-  const { notifications, unreadCount, loading, fetchNotifications, markRead, markAllRead } =
-    useNotifications(hasSignedIn);
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    fetchNotifications,
+    markRead,
+    markAllRead,
+    notificationPrefs,
+    saveNotificationPrefs,
+  } = useNotifications(hasSignedIn);
 
   const [activeProtocol, setActiveProtocol] = useState<string>('all');
   const [visibleCount, setVisibleCount] = useState(30);
+  const [showPrefs, setShowPrefs] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
 
   /* ── Filter ─────────────────────────────────────────────── */
@@ -324,6 +466,19 @@ export default function NotificationsPage() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Notification preferences toggle */}
+              <button
+                type="button"
+                onClick={() => setShowPrefs(!showPrefs)}
+                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
+                aria-label="Notification preferences"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                </svg>
+              </button>
+
               <button
                 type="button"
                 onClick={refresh}
@@ -392,6 +547,15 @@ export default function NotificationsPage() {
           </div>
         </div>
 
+        {/* Notification preferences panel */}
+        {showPrefs && (
+          <NotificationPrefsPanel
+            prefs={notificationPrefs}
+            onSave={saveNotificationPrefs}
+            onClose={() => setShowPrefs(false)}
+          />
+        )}
+
         {/* Notification list */}
         {!hasSignedIn ? (
           <SignInPrompt onSignIn={openSignIn} />
@@ -415,12 +579,15 @@ export default function NotificationsPage() {
                   id={n.id}
                   type={n.type}
                   protocol={n.protocol}
+                  sourceProtocol={n.sourceProtocol}
                   actorName={n.actorName}
                   actorHandle={n.actorHandle}
                   actorAvatar={n.actorAvatar}
                   postText={n.postText}
                   createdAt={n.createdAt}
                   read={n.read}
+                  amount={(n as { amount?: string }).amount}
+                  currency={(n as { currency?: string }).currency}
                   onMarkRead={markRead}
                 />
               ))}

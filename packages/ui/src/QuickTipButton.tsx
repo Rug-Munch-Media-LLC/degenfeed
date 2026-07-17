@@ -111,7 +111,7 @@ export function QuickTipButton({
           <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 border-b border-gray-800 mb-1">
             <span
               className="inline-flex items-center justify-center w-4 h-4 text-[10px] rounded-full"
-              style={{ backgroundColor: currencyMeta.color + '20', color: currencyMeta.color }}
+              style={{ backgroundColor: `${currencyMeta.color}20`, color: currencyMeta.color }}
             >
               {currencyMeta.icon}
             </span>

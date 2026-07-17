@@ -12,6 +12,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '🏠' },
+  { href: '/search', label: 'Search', icon: '🔍' },
   { href: '/trending', label: 'Trending', icon: '🔥' },
   { href: '/news', label: 'News', icon: '📰' },
   { href: '/notifications', label: 'Alerts', icon: '🔔' },
@@ -43,7 +44,7 @@ export function BottomNav() {
       aria-label="Mobile"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-card)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-6">
         {NAV.map((item) => {
           const active =
             pathname === item.href ||
