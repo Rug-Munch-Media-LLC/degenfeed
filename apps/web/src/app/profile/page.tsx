@@ -352,6 +352,32 @@ export default function ProfilePage() {
 
             <div className="mb-6">
               <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+                Moderation
+              </h2>
+              <div className="card-hover flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">Blocked &amp; Muted</div>
+                    <div className="text-xs text-gray-500">Manage your blocked and muted users</div>
+                  </div>
+                </div>
+                <a
+                  href="/profile/blocked"
+                  className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                >
+                  Manage
+                </a>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
                 Creator Tools
               </h2>
               <div className="card border-degen-500/20 bg-degen-500/5 p-4">

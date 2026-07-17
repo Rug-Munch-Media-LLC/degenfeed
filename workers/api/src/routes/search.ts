@@ -322,18 +322,72 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
   return jsonResponse(response);
 }
 
-export async function handleSearchIdentity(request: Request, _env: Env): Promise<Response> {
+export async function handleSearchIdentity(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const q = url.searchParams.get('q')?.toLowerCase().trim() ?? '';
   if (!q || q.length < 2) return jsonResponse({ error: 'Query too short' }, 400);
+  const limit = Math.min(Number(url.searchParams.get('limit')) || 10, 50);
 
-  // Resolve via the identity package
+  // Try MeiliSearch first — search posts index aggregated by author
+  try {
+    const meiliBody = {
+      q,
+      limit: 100,
+      attributesToSearchOn: ['authorDisplayName', 'authorBio'],
+    };
+    const meiliRes = await fetch(`${MEILISEARCH_URL}/indexes/posts/search`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(meiliBody),
+    });
+    if (meiliRes.ok) {
+      const meiliData = (await meiliRes.json()) as {
+        hits: MeiliSearchHit[];
+        total: number;
+        estimatedTotalHits: number;
+      };
+      // Deduplicate by author id
+      const seen = new Map<string, IdentitySearchResult>();
+      for (const h of meiliData.hits) {
+        const key = `${h.protocol}:${h.authorDisplayName}`;
+        if (seen.has(key)) continue;
+        seen.set(key, {
+          id: `${h.protocol}:${h.authorDisplayName.toLowerCase().replace(/\s+/g, '_')}`,
+          protocol: h.protocol,
+          displayName: h.authorDisplayName,
+          handle: null,
+          avatarUrl: h.authorAvatarUrl,
+          bio: h.authorBio?.slice(0, 200) ?? '',
+          postCount: 1,
+        });
+        if (seen.size >= limit) break;
+      }
+      const data = Array.from(seen.values());
+      if (data.length > 0) {
+        return jsonResponse({ data, meta: { query: q, total: data.length } });
+      }
+    }
+  } catch {
+    /* MeiliSearch identity search unavailable */
+  }
+
+  // Fallback: exact handle resolution via identity package
   try {
     const { resolveHandle } = await import('@degenfeed/identity');
     const result = await resolveHandle(q);
     if (result) {
       return jsonResponse({
-        data: [result],
+        data: [
+          {
+            id: `${result.protocol}:${result.id}`,
+            protocol: result.protocol,
+            displayName: result.handle,
+            handle: result.handle,
+            avatarUrl: null,
+            bio: '',
+            postCount: 0,
+          },
+        ],
         meta: { query: q, total: 1 },
       });
     }
@@ -345,4 +399,14 @@ export async function handleSearchIdentity(request: Request, _env: Env): Promise
     data: [],
     meta: { query: q, total: 0 },
   });
+}
+
+interface IdentitySearchResult {
+  id: string;
+  protocol: string;
+  displayName: string;
+  handle: string | null;
+  avatarUrl: string | null;
+  bio: string;
+  postCount: number;
 }

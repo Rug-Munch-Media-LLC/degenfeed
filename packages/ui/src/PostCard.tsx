@@ -1,18 +1,21 @@
 import {
+  addBlockedUser,
   deleteFollow,
   getMutedIdentities,
   isFollowing,
   muteIdentity,
+  removeBlockedUser,
   saveFollow,
   unmuteIdentity,
 } from '@degenfeed/storage';
 import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { detectTokens, formatTimeAgo, getDefaultCurrency } from '@degenfeed/utils';
 import Image from 'next/image';
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { FrameEmbed } from './FrameEmbed';
 import { ProtocolBadge } from './ProtocolBadge';
 import { QuickTipButton } from './QuickTipButton';
+import { ReportModal } from './ReportModal';
 import { TokenChart } from './TokenChart';
 
 interface FrameData {
@@ -56,6 +59,8 @@ function FrameCard({ url }: { url: string }) {
 
 export type { UnifiedPost };
 
+export type { ReportModalProps } from './ReportModal';
+
 export interface EngageResult {
   ok: boolean;
   error?: string;
@@ -76,6 +81,8 @@ export interface PostCardProps {
   onPaywall?: (post: UnifiedPost) => void;
   /** Connected protocols for the current viewer — used to derive default tip currency */
   viewerProtocols?: string[];
+  /** Called when a report is successfully submitted */
+  onReport?: (postId: string) => void;
 }
 
 const MAX_TEXT_LENGTH = 500;
@@ -243,6 +250,7 @@ export const PostCard = memo(function PostCard({
   expanded,
   onTip,
   onPaywall,
+  onReport,
 }: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
@@ -253,6 +261,12 @@ export const PostCard = memo(function PostCard({
   const [replyText, setReplyText] = useState('');
   const [following, setFollowing] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const isSelf = post.author.id === 'self' || post.author.id.startsWith('self:');
 
   useEffect(() => {
     if (typeof window === 'undefined' || !post.author.id) return;
@@ -260,11 +274,13 @@ export const PostCard = memo(function PostCard({
     Promise.all([
       isFollowing('self', post.author.id),
       getMutedIdentities('self').then((m) => m.some((x) => x.targetId === post.author.id)),
+      import('@degenfeed/storage').then(({ isBlocked }) => isBlocked(post.author.id, 'self')),
     ])
-      .then(([f, m]) => {
+      .then(([f, m, b]) => {
         if (!cancelled) {
           setFollowing(f);
           setMuted(m);
+          setBlocked(b);
         }
       })
       .catch(() => {});
@@ -272,6 +288,28 @@ export const PostCard = memo(function PostCard({
       cancelled = true;
     };
   }, [post.author.id]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showMenu]);
+
+  // Close dropdown on Escape
+  useEffect(() => {
+    if (!showMenu) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowMenu(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showMenu]);
 
   useEffect(() => {
     setLocalState({ engagement: post.engagement, metrics: post.metrics });
@@ -334,6 +372,48 @@ export const PostCard = memo(function PostCard({
     }
   };
 
+  const handleBlock = useCallback(async () => {
+    if (!post.author.id) return;
+    setShowMenu(false);
+    const next = !blocked;
+    setBlocked(next);
+    try {
+      if (next) {
+        await addBlockedUser(post.author.id, post.author.displayName, post.protocol, 'self');
+      } else {
+        await removeBlockedUser(post.author.id, 'self');
+      }
+    } catch {
+      setBlocked(!next);
+    }
+  }, [blocked, post.author.id, post.author.displayName, post.protocol]);
+
+  const handleMuteFromMenu = useCallback(async () => {
+    setShowMenu(false);
+    if (!post.author.id) return;
+    const next = !muted;
+    setMuted(next);
+    try {
+      if (next) {
+        await muteIdentity(post.author.id, post.author.displayName, 'self');
+      } else {
+        await unmuteIdentity(post.author.id, 'self');
+      }
+    } catch {
+      setMuted(!next);
+    }
+  }, [muted, post.author.id, post.author.displayName]);
+
+  const handleReport = useCallback(() => {
+    setShowMenu(false);
+    setShowReportModal(true);
+  }, []);
+
+  const handleReportSubmitted = useCallback(() => {
+    onReport?.(post.id);
+    setShowReportModal(false);
+  }, [onReport, post.id]);
+
   return (
     <article
       className="cursor-pointer border-b border-white/5 px-4 py-3 transition-colors hover:bg-white/[0.03]"
@@ -369,6 +449,74 @@ export const PostCard = memo(function PostCard({
               </span>
             )}
             <ProtocolBadge protocol={post.protocol} />
+
+            {/* ── Three-dot menu ── */}
+            {!isSelf && (
+              <div ref={menuRef} className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu((v) => !v);
+                  }}
+                  className="rounded-lg p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
+                  aria-label="More actions"
+                  aria-haspopup="true"
+                  aria-expanded={showMenu}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <circle cx="8" cy="3" r="1.5" />
+                    <circle cx="8" cy="8" r="1.5" />
+                    <circle cx="8" cy="13" r="1.5" />
+                  </svg>
+                </button>
+                {showMenu && (
+                  <div
+                    className="absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-gray-800 bg-gray-950 py-1 shadow-2xl"
+                    role="menu"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleReport}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-yellow-500">
+                        <path d="M8 1L16 15H0L8 1Z" fill="currentColor" opacity="0.8" />
+                      </svg>
+                      Report post
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleBlock}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-red-400">
+                        <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+                        <line x1="3.5" y1="8" x2="12.5" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      {blocked ? 'Unblock user' : 'Block user'}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleMuteFromMenu}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-gray-400">
+                        <path d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <line x1="2" y1="14" x2="14" y2="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      {muted ? 'Unmute user' : 'Mute user'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               type="button"
               onClick={toggleFollow}
@@ -621,6 +769,12 @@ export const PostCard = memo(function PostCard({
           </button>
         </form>
       )}
-    </article>
+      </article>
+      <ReportModal
+        open={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        postId={post.id}
+        onSubmitted={handleReportSubmitted}
+      />
   );
 });

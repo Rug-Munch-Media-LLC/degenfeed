@@ -12,7 +12,7 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { type EngageHandler, PostCard } from './PostCard';
 
 export type { UnifiedPost };
@@ -31,6 +31,8 @@ export interface FeedListProps {
   onEngage?: EngageHandler;
   hasMore?: boolean;
   onLoadMore?: () => void;
+  /** Called when a report is successfully submitted */
+  onReport?: (postId: string) => void;
 }
 
 function SkeletonCard() {
@@ -119,14 +121,40 @@ export const FeedList = memo(function FeedList({
   hasMore,
   onLoadMore,
   onSignIn,
+  onReport,
 }: FeedListProps & { onSignIn?: () => void }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const SCROLL_KEY = 'df_scroll';
 
+  // Filter out blocked/muted users from the feed
+  const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
+  const [mutedIds, setMutedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let cancelled = false;
+    Promise.all([
+      import('@degenfeed/storage').then((m) => m.getBlockedUsers('self')),
+      import('@degenfeed/storage').then((m) => m.getMutedIdentities('self')),
+    ])
+      .then(([blocked, muted]) => {
+        if (!cancelled) {
+          setBlockedIds(new Set(blocked.map((b) => b.targetId)));
+          setMutedIds(new Set(muted.map((m) => m.targetId)));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredPosts = posts.filter((p) => !blockedIds.has(p.author.id) && !mutedIds.has(p.author.id));
+
   // Scroll position restore
   useEffect(() => {
-    if (state !== 'loaded' || posts.length === 0) return;
+    if (state !== 'loaded' || filteredPosts.length === 0) return;
     const saved = sessionStorage.getItem(SCROLL_KEY);
     if (saved) {
       const { y, id } = JSON.parse(saved) as { y: number; id: string };
@@ -215,7 +243,7 @@ export const FeedList = memo(function FeedList({
     return <ErrorState message={error} onRetry={onRetry} />;
   }
 
-  if (state === 'empty' || posts.length === 0) {
+  if (state === 'empty' || filteredPosts.length === 0) {
     return <EmptyState protocolLabel={protocolLabel} onSignIn={onSignIn} />;
   }
 
@@ -225,13 +253,14 @@ export const FeedList = memo(function FeedList({
       role="feed"
       aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
     >
-      {posts.map((post) => (
+      {filteredPosts.map((post) => (
         <PostCard
           key={post.id}
           post={post}
           onClick={() => handlePostClick(post.id)}
           onTip={onTip}
           onEngage={onEngage}
+          onReport={onReport}
         />
       ))}
       {hasMore && (

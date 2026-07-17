@@ -12,6 +12,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '✦' },
+  { href: '/trending', label: 'Trending', icon: '🔥' },
   { href: '/news', label: 'News', icon: '◉' },
   { href: '/videos', label: 'Videos', icon: '▶' },
   { href: '/discover', label: 'Explore', icon: '⊕' },
@@ -43,7 +44,7 @@ export function BottomNav() {
       aria-label="Mobile"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-gray-950/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-6">
         {NAV.map((item) => {
           const active =
             pathname === item.href ||
@@ -56,12 +57,12 @@ export function BottomNav() {
               aria-current={active ? 'page' : undefined}
             >
               <span
-                className={`flex h-7 w-12 items-center justify-center rounded-full ${active ? 'bg-degen-500/15' : ''}`}
+                className={`relative flex h-7 w-12 items-center justify-center rounded-full ${active ? 'bg-degen-500/15' : ''}`}
               >
                 <span className="text-lg leading-none">{item.icon}</span>
-                {item.href === '/home/all' && notifCount > 0 && (
+                {item.href === '/notifications' && notifCount > 0 && (
                   <span
-                    className="absolute ml-5 mt-[-14px] flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white"
+                    className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white"
                     role="status"
                     aria-label={`${notifCount} unread notifications`}
                   >

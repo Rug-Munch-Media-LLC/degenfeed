@@ -10,6 +10,7 @@ import { useAuth } from '../../components/AuthProvider';
 import { FeedComposer } from '../../components/FeedComposer';
 import { FeedSidebar } from '../../components/FeedSidebar';
 import { TipModal } from '../../components/TipModal';
+import { useToast } from '../../components/Toast';
 import { useNotifications } from '../../hooks/useNotifications';
 
 type Tab = 'for-you' | 'following';
@@ -261,12 +262,20 @@ export default function FeedPage() {
     [hasSignedIn, openSignIn],
   );
 
+  const { showToast } = useToast();
   const router = useRouter();
   const handlePostClick = useCallback(
     (id: string) => {
       router.push(`/post/${encodeURIComponent(id)}`);
     },
     [router],
+  );
+
+  const handleReport = useCallback(
+    (_postId: string) => {
+      showToast('success', 'Report submitted. Thank you for helping keep DegenFeed safe.');
+    },
+    [showToast],
   );
 
   const protocolSummaries: ProtocolSummary[] = useMemo(() => {
@@ -635,6 +644,7 @@ export default function FeedPage() {
             onSignIn={openSignIn}
             hasMore={hasMore}
             onLoadMore={loadMore}
+            onReport={handleReport}
           />
 
           {activeTab === 'following' && state === 'empty' && (
