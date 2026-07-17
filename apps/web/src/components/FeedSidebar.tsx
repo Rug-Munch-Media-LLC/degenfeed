@@ -1,21 +1,21 @@
 'use client';
 
-import { MiniLeaderboard, type LeaderboardCardEntry } from '@degenfeed/ui';
+import { TrendingSidebar, type TrendingSidebarData } from '@degenfeed/ui';
 import { useAuth } from './AuthProvider';
-import { useEffect, useState } from 'react';
-
-interface ProtocolSummary {
-  id: string;
-  label: string;
-  color: string;
-  count: number;
-}
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 interface FeedSidebarProps {
   trending?: { topic: string; count: number; score: number }[];
   protocolSummaries?: ProtocolSummary[];
   activeProtocolFilter?: string | null;
   onProtocolClick?: (id: string) => void;
+}
+
+interface ProtocolSummary {
+  id: string;
+  label: string;
+  color: string;
+  count: number;
 }
 
 const NETWORK_HINTS: Record<string, string> = {
@@ -30,44 +30,46 @@ const NETWORK_HINTS: Record<string, string> = {
 };
 
 export function FeedSidebar({
-  trending,
+  trending: _trending,
   protocolSummaries,
   activeProtocolFilter,
   onProtocolClick,
 }: FeedSidebarProps) {
   const { walletAddress, signOut, openSignIn } = useAuth();
-  const items = trending ?? [];
   const protocols = protocolSummaries ?? [];
   const totalPosts = protocols.reduce((sum, p) => sum + p.count, 0);
 
-  // Mini leaderboard state
-  const [topCreators, setTopCreators] = useState<LeaderboardCardEntry[]>([]);
+  // Sidebar data fetched from unified API
+  const [sidebarData, setSidebarData] = useState<TrendingSidebarData | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchSidebar = useCallback(async () => {
+    try {
+      const res = await fetch('/api/trending/sidebar', {
+        cache: 'no-store',
+        headers: { 'cache-control': 'no-store' },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as TrendingSidebarData;
+      setSidebarData(data);
+    } catch {
+      // Silently fail — widget is optional
+    }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    const fetchTop = async () => {
-      try {
-        const res = await fetch('/api/leaderboard/creators?period=weekly&limit=3');
-        if (!res.ok) return;
-        const data = (await res.json()) as { entries: LeaderboardCardEntry[] };
-        if (!cancelled) setTopCreators(data.entries ?? []);
-      } catch {
-        // Silently fail — widget is optional
-      }
-    };
-    void fetchTop();
-    const interval = setInterval(fetchTop, 120_000); // refresh every 2 min
+    void fetchSidebar();
+    intervalRef.current = setInterval(fetchSidebar, 60_000); // refresh every 60s
     return () => {
-      cancelled = true;
-      clearInterval(interval);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [fetchSidebar]);
 
   return (
     <div className="space-y-4">
       {/* Search */}
       <a
-        href="/home/all"
+        href="/search"
         className="flex items-center gap-2 rounded-full border border-white/10 bg-[var(--color-card)] px-4 py-2.5 text-sm text-gray-400 backdrop-blur-xl transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)]"
       >
         <span className="text-lg text-degen-400">⌕</span>
@@ -97,7 +99,7 @@ export function FeedSidebar({
           </button>
         </div>
       ) : (
-        <div className="rounded-2xl border border-degen-500/30 bg-gradient-to-br from-degen-500/15 to-degen-500/5 p-4 backdrop-blur-xl">
+        <div className="sidebar-card rounded-2xl border border-degen-500/30 bg-gradient-to-br from-degen-500/15 to-degen-500/5 p-4 backdrop-blur-xl">
           <div className="mb-2 flex items-center gap-2">
             <span className="text-degen-400">◆</span>
             <p className="text-sm font-semibold text-[var(--color-fg)]">Read free, post with one click</p>
@@ -112,9 +114,9 @@ export function FeedSidebar({
       )}
 
       {/* Live protocol status */}
-      <div className="rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-sm font-bold text-[var(--color-fg)]">Live networks</h2>
+        <div className="sidebar-card rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="text-sm font-bold text-[var(--color-fg)]">Live networks</h2>
           <span className="text-[10px] text-gray-500">{totalPosts} posts</span>
         </div>
         {protocols.length === 0 ? (
@@ -163,30 +165,22 @@ export function FeedSidebar({
         )}
       </div>
 
-      {/* Trending */}
-      <div className="rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
-        <h2 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Trending now</h2>
-        {items.length === 0 ? (
-          <p className="text-xs text-gray-500">Trending topics appear as you browse.</p>
-        ) : (
-          <div className="space-y-2">
-            {items.slice(0, 8).map((t) => (
-              <a
-                key={t.topic}
-                href={`/home/${encodeURIComponent(t.topic.toLowerCase().replace(/\s+/g, '-'))}`}
-                className="block rounded-lg px-2 py-1 transition-colors hover:bg-white/5"
-              >
-                <div className="text-[10px] uppercase tracking-wide text-gray-500">Trending</div>
-                <div className="text-sm font-medium text-[var(--color-fg)]">{t.topic}</div>
-                <div className="text-xs text-gray-500">{t.count} posts</div>
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* What's Happening — SUPER Trending Sidebar */}
+      <TrendingSidebar data={sidebarData} />
 
-      {/* Mini Leaderboard */}
-      <MiniLeaderboard entries={topCreators} title="🏆 Top Creators" />
+      {/* Who to follow */}
+      <div className="rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
+        <h2 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Who to follow</h2>
+        <p className="text-xs text-gray-500">
+          Follow creators across 8 protocols to build your timeline.
+        </p>
+        <a
+          href="/discover/people"
+          className="mt-2 inline-block text-[11px] font-medium text-degen-400 hover:text-degen-300 transition-colors"
+        >
+          Discover people →
+        </a>
+      </div>
 
       {/* Premium CTA */}
       <div className="rounded-2xl border border-degen-500/20 bg-degen-500/5 p-4 backdrop-blur-xl">

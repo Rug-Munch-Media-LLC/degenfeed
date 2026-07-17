@@ -36,7 +36,7 @@ export const PROTOCOL_ICONS: Record<string, string> = {
   bluesky: '☁',
   threads: '+',
   mastodon: 'M',
-  lemmy: 'L',
+  lemmy: '🍋',
   activitypub: 'M',
   rss: 'A',
 };

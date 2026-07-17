@@ -63,7 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className={`${theme} ${inter.className}`} suppressHydrationWarning>
       <body>
         {/* ⚡ SSR-safe theme: sync localStorage before paint to prevent flash */}
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: inline script reads localStorage to prevent theme flash */}
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: inline script reads localStorage to prevent theme + density flash */}
         <script
           dangerouslySetInnerHTML={{
             __html: [
@@ -72,6 +72,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               'var t=localStorage.getItem("df_theme");',
               'if(t==="light")document.documentElement.classList.remove("dark");',
               'if(t==="dark")document.documentElement.classList.add("dark");',
+              'var d=localStorage.getItem("df_density");',
+              'if(d==="compact")document.documentElement.classList.add("layout-compact");',
               '}catch(e){}',
               '})();',
             ].join(''),

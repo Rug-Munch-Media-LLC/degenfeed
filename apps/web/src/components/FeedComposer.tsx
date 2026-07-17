@@ -121,9 +121,9 @@ export function FeedComposer({
   }));
 
   return (
-    <div className="border-b border-white/10 px-4 py-3">
+    <div className="composer border-b border-white/10 px-4 py-3">
       <div className="flex gap-3">
-        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-[var(--color-muted)]">
+        <div className="composer-avatar h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-[var(--color-muted)]">
           {avatar ? (
             <Image
               src={avatar}

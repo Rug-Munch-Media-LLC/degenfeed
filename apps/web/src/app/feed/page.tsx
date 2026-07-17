@@ -11,6 +11,7 @@ import { useAuth } from '../../components/AuthProvider';
 import { FeedComposer } from '../../components/FeedComposer';
 import { FeedSidebar } from '../../components/FeedSidebar';
 import { useToast } from '../../components/Toast';
+import { useLayoutDensity } from '../../hooks/useLayoutDensity';
 import { useNotifications } from '../../hooks/useNotifications';
 
 const TipModal = dynamic(
@@ -99,6 +100,7 @@ export default function FeedPage() {
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const { notifications, unreadCount, fetchNotifications, markRead } =
     useNotifications(hasSignedIn);
+  const { density, toggleDensity, isCompact } = useLayoutDensity();
 
   useEffect(() => {
     let cancelled = false;
@@ -556,8 +558,8 @@ export default function FeedPage() {
         </aside>
 
         {/* Main timeline */}
-        <main className="lg:col-span-8 xl:col-span-6">
-          <div className="sticky top-16 z-30 border-b border-[var(--color-glass-border)] glass">
+        <main className="main-feed lg:col-span-8 xl:col-span-6">
+          <div className="feed-header sticky top-16 z-30 border-b border-[var(--color-glass-border)] glass">
             <div className="flex items-center justify-between gap-2 px-4 py-3">
               <div className="flex items-center gap-3">
                 <Image
@@ -584,6 +586,15 @@ export default function FeedPage() {
                   />
                   <button
                     type="button"
+                    onClick={toggleDensity}
+                    className="rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+                    aria-label={`Switch to ${isCompact ? 'comfortable' : 'compact'} layout`}
+                    title={`${isCompact ? 'Comfortable' : 'Compact'} layout — ${isCompact ? 'more spacing' : 'more content per screen'}`}
+                  >
+                    {isCompact ? '⊞' : '⊟'}
+                  </button>
+                  <button
+                    type="button"
                     onClick={signOut}
                     className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-[var(--color-fg)] lg:hidden"
                   >
@@ -594,7 +605,7 @@ export default function FeedPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex">
+            <div className="feed-header-tabs flex">
               <button
                 type="button"
                 onClick={() => setActiveTab('for-you')}
@@ -622,7 +633,7 @@ export default function FeedPage() {
             </div>
 
             {/* Protocol pills + filter */}
-            <div className="flex flex-wrap items-center gap-1.5 border-t border-[var(--color-glass-border)] px-4 py-2">
+            <div className="protocol-pills flex flex-wrap items-center gap-1.5 border-t border-[var(--color-glass-border)] px-4 py-2">
               <button
                 type="button"
                 onClick={() => setProtocolFilter(null)}
@@ -684,7 +695,7 @@ export default function FeedPage() {
           )}
 
           {/* Quality controls */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--color-glass-border)] px-4 py-2 text-[11px] text-gray-400">
+            <div className="quality-controls flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--color-glass-border)] px-4 py-2 text-[11px] text-gray-400">
               <button
                 type="button"
                 onClick={toggleHideLowQuality}
@@ -1057,8 +1068,8 @@ export default function FeedPage() {
         </main>
 
         {/* Right sidebar */}
-        <aside className="hidden lg:col-span-4 lg:block xl:col-span-3">
-          <div className="sticky top-20">
+        <aside className="sidebar hidden lg:col-span-4 lg:block xl:col-span-3">
+          <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
             <FeedSidebar
               trending={feedMeta.trending ?? []}
               protocolSummaries={protocolSummaries}

@@ -1,6 +1,18 @@
 export type { ContentProof, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 export type { BlueskyPostContextProps } from './BlueskyPostContext';
 export { BlueskyPostContext } from './BlueskyPostContext';
+export type {
+  ActiveCommunity,
+  LiveSpace,
+  PopularVideo,
+  TopTipper,
+  TrendingFarcasterCast,
+  TrendingNostrNote,
+  TrendingSidebarData,
+  TrendingSidebarProps,
+  TrendingTopic,
+} from './TrendingSidebar';
+export { TrendingSidebar } from './TrendingSidebar';
 export type { ComposeModalProps, ScheduledPostItem } from './ComposeModal';
 export { ComposeModal } from './ComposeModal';
 export type {
@@ -121,6 +133,10 @@ export type {
   UnifiedTipStats,
 } from './UnifiedTipDashboard';
 export { PlatformBadge, TIP_PLATFORM_META, UnifiedTipDashboard } from './UnifiedTipDashboard';
+export type { MixedVideoGridProps, VideoCategory, VideoFilterBarProps, VideoSort, VideoTab } from './MixedVideoGrid';
+export { MixedVideoGrid, VideoFilterBar } from './MixedVideoGrid';
+export type { YouTubeVideoCardItem, YouTubeVideoCardProps } from './YouTubeVideoCard';
+export { YouTubeVideoCard } from './YouTubeVideoCard';
 export type { AspectRatio, VideoPlatform, VideoPlayerProps } from './VideoPlayer';
 export { VideoPlayer } from './VideoPlayer';
 export type {

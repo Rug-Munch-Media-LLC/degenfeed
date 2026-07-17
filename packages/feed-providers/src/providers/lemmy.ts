@@ -12,7 +12,7 @@
  *   3. Return sorted by engagement with real metrics
  */
 
-import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
+import { enrichPostNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
@@ -64,7 +64,9 @@ const CURATED_COMMUNITIES: Array<{ community: string; niche: string }> = [
   { community: 'energy@lemmy.ml', niche: 'ai' },
 ];
 
-interface LemmyPost {
+// ─── Raw API types ──────────────────────────────────────────────────
+
+interface LemmyPostRaw {
   post: {
     id: number;
     name: string;
@@ -80,23 +82,130 @@ interface LemmyPost {
       name: string;
       display_name?: string;
       avatar?: string;
+      actor_id?: string;
     };
-    community: {
+    community?: {
       id: number;
       name: string;
       title: string;
+      actor_id?: string;
+      icon?: string;
     };
+  };
+  counts?: {
+    upvotes: number;
+    downvotes: number;
+    comments: number;
+    score: number;
+  };
+  creator?: {
+    id: number;
+    name: string;
+    display_name?: string;
+    avatar?: string;
+    actor_id?: string;
+  };
+  community?: {
+    id: number;
+    name: string;
+    title: string;
+    actor_id?: string;
+    icon?: string;
   };
 }
 
 interface LemmyPostListResponse {
-  posts: LemmyPost[];
+  posts: LemmyPostRaw[];
 }
 
 export interface LemmyProviderOptions {
   instances?: string[];
   communities?: Array<{ community: string; niche: string }>;
 }
+
+// ─── Adapter ────────────────────────────────────────────────────────
+
+/**
+ * Converts a raw Lemmy API post into a UnifiedPost with proper
+ * community context, dfUri, and all engagement metrics.
+ */
+export function adaptLemmyPost(
+  raw: LemmyPostRaw,
+  instanceDomain: string,
+): UnifiedPost {
+  const p = raw.post;
+  const community = raw.community ?? p.community;
+  const creator = raw.creator ?? p.creator;
+  const counts = raw.counts ?? p;
+
+  const communityName = community?.name ?? 'unknown';
+  const communityActorId = community?.actor_id ?? '';
+  const instance = instanceDomain.replace(/^https?:\/\//, '');
+  const nativeId = `lemmy:${communityName}:${p.id}`;
+
+  // Determine content type
+  const contentType = p.url
+    ? 'link'
+    : p.body
+      ? 'article'
+      : 'text';
+
+  // Build embeds
+  const embeds: Array<{ kind: 'image' | 'video' | 'link'; url: string }> = [];
+  if (p.url) {
+    // Check if URL is an image
+    const isImage = /\.(jpg|jpeg|png|gif|webp|avif|svg)$/i.test(p.url);
+    embeds.push({ kind: isImage ? 'image' : 'link', url: p.url });
+  }
+
+  return {
+    id: `lemmy:${nativeId}`,
+    protocol: 'lemmy',
+    type: contentType,
+    text: p.body || p.name || '',
+    html: p.body || '',
+    authorId: creator?.actor_id ?? `lemmy:${creator?.id ?? 0}`,
+    authorName: creator?.display_name || creator?.name || 'anon',
+    authorAvatar: creator?.avatar ?? '',
+    createdAt: new Date(p.published).getTime(),
+    community: {
+      name: communityName,
+      title: community?.title ?? communityName,
+      actorId: communityActorId,
+      icon: community?.icon,
+      instance,
+    },
+    metrics: {
+      likes: counts?.upvotes ?? p.upvotes ?? 0,
+      reposts: 0,
+      replies: counts?.comments ?? p.comments ?? 0,
+      quotes: 0,
+    },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: {
+        likes: counts?.upvotes ?? p.upvotes ?? 0,
+        reposts: 0,
+        replies: counts?.comments ?? p.comments ?? 0,
+        quotes: 0,
+      },
+    },
+    embeds,
+    url: p.url
+      ? `https://community.degenfeed.xyz/post/${p.id}`
+      : `https://community.degenfeed.xyz/c/${communityName}`,
+    dfUri: `df://lemmy/${instance}/c/${communityName}/${p.id}`,
+    contentType,
+    niches: [],
+    crossPostedTo: [],
+    // Carry full raw data for LemmyThreadView
+    raw,
+  } as unknown as UnifiedPost;
+}
+
+// ─── Provider ───────────────────────────────────────────────────────
 
 export class LemmyProvider implements FeedProvider {
   readonly protocol: Protocol = 'lemmy';
@@ -137,53 +246,12 @@ export class LemmyProvider implements FeedProvider {
               Math.min(timeoutMs, 5000),
               `lemmy:${community}`,
             );
-            return (data.posts ?? []).map((p) => {
-              const post = p.post;
-              const communityTitle = post.community?.title || post.community?.name || '';
-              const titleWithCommunity = post.name
-                ? `${post.name} [${communityTitle}]`
-                : `[${communityTitle}] ${post.body?.slice(0, 100) ?? ''}`;
-              return buildUnifiedPost({
-                protocol: 'lemmy',
-                nativeId: `lemmy:${post.community?.name ?? '?'}:${post.id}`,
-                author: {
-                  id: `lemmy:${post.creator?.id ?? 0}`,
-                  primary: {
-                    protocol: 'lemmy',
-                    id: `${post.creator?.name ?? 'anon'}@${instance.replace('https://', '')}`,
-                  },
-                  handles: {
-                    nostr: null,
-                    farcaster: null,
-                    lens: null,
-                    bluesky: null,
-                    threads: null,
-                    rss: null,
-                    mastodon: post.creator?.name ?? null,
-                  },
-                  displayName: post.creator?.display_name || post.creator?.name || 'anon',
-                  bio: '',
-                  avatarUrl: post.creator?.avatar ?? '',
-                  verified: [],
-                  followerCount: 0,
-                  followingCount: 0,
-                  links: post.url ? [{ label: 'link', url: post.url }] : [],
-                  keys: {},
-                },
-                text: titleWithCommunity,
-                html: post.body,
-                embeds: post.url ? [{ kind: 'link', url: post.url }] : [],
-                createdAt: new Date(post.published).getTime(),
-                metrics: {
-                  likes: post.upvotes ?? post.score ?? 0,
-                  reposts: 0,
-                  replies: post.comments ?? 0,
-                  quotes: 0,
-                },
-                raw: post,
-              }) as unknown as UnifiedPost;
-            });
-          } catch {}
+            return (data.posts ?? []).map((raw) =>
+              adaptLemmyPost(raw, instance),
+            );
+          } catch {
+            /* try next instance */
+          }
         }
         return [];
       }),
@@ -209,7 +277,9 @@ export class LemmyProvider implements FeedProvider {
           `lemmy:health:${instance}`,
         );
         return { healthy: true, latencyMs: Math.round(performance.now() - start) };
-      } catch {}
+      } catch {
+        /* try next */
+      }
     }
     return {
       healthy: false,

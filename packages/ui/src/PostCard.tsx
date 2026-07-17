@@ -194,7 +194,7 @@ function LinkPreview({ embed }: { embed: Embed }) {
       href={embed.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group mt-2 block overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:bg-[var(--color-muted)]"
+      className="link-preview group mt-2 block overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:bg-[var(--color-muted)]"
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
     >
@@ -214,9 +214,9 @@ function LinkPreview({ embed }: { embed: Embed }) {
       <div className="p-3">
         {host && <p className="mb-1 text-[11px] text-gray-500 uppercase tracking-wide">{host}</p>}
         {title && (
-          <p className="mb-1 text-sm font-semibold text-[var(--color-fg)] line-clamp-1">{title}</p>
+          <p className="link-title mb-1 text-sm font-semibold text-[var(--color-fg)] line-clamp-1">{title}</p>
         )}
-        {description && <p className="text-xs text-gray-400 line-clamp-2">{description}</p>}
+        {description && <p className="link-desc text-xs text-gray-400 line-clamp-2">{description}</p>}
         {!title && !description && (
           <p className="truncate text-xs text-degen-500">{embed.url.replace(/^https?:\/\//, '')}</p>
         )}
@@ -261,7 +261,7 @@ function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
 function ImageGrid({ images }: { images: string[] }) {
   if (images.length === 1) {
     return (
-      <div className="mt-2 max-h-80 overflow-hidden rounded-xl">
+              <div className="image-grid mt-2 max-h-80 overflow-hidden rounded-xl">
         <Image
           src={images[0]!}
           alt=""
@@ -791,7 +791,7 @@ export const PostCard = memo(function PostCard({
   return (
     <>
       <article
-        className="cursor-pointer border-b border-[var(--color-glass-border)] px-4 py-3 transition-colors hover:bg-white/[0.03] hover-lift press-effect"
+        className="post-card cursor-pointer border-b border-[var(--color-glass-border)] px-4 py-3 transition-colors hover:bg-white/[0.03] hover-lift press-effect"
         onClick={() => onClick?.(post.id)}
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && onClick) {
@@ -803,7 +803,7 @@ export const PostCard = memo(function PostCard({
         style={{ transitionDuration: 'var(--duration-fast)' }}
       >
         {/* Author row */}
-        <div className="mb-2 flex items-center gap-3">
+        <div className="author-row mb-2 flex items-center gap-3">
           <Image
             src={
               post.author.avatarUrl ||
@@ -812,13 +812,13 @@ export const PostCard = memo(function PostCard({
             alt={post.author.displayName}
             width={32}
             height={32}
-            className="h-8 w-8 rounded-full bg-[var(--color-muted)] object-cover"
+            className="avatar h-8 w-8 rounded-full bg-[var(--color-muted)] object-cover"
             loading="lazy"
             decoding="async"
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="truncate text-sm font-semibold text-[var(--color-fg)]">
+              <span className="author-name truncate text-sm font-semibold text-[var(--color-fg)]">
                 {post.author.displayName}
               </span>
               {post.protocol === 'nostr' && post.author.handles.nostr?.includes('@') && (
@@ -882,7 +882,7 @@ export const PostCard = memo(function PostCard({
                   </button>
                   {showMenu && (
                     <div
-                      className="absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-1 shadow-2xl"
+                      className="three-dot-menu absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-1 shadow-2xl"
                       role="menu"
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => e.stopPropagation()}
@@ -1126,7 +1126,7 @@ export const PostCard = memo(function PostCard({
                 {muted ? '🔇 Muted' : '🔇'}
               </button>
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="author-handle flex items-center gap-2 text-xs text-gray-500">
               <span className="truncate">
                 {post.author.handles[post.protocol] ?? post.author.id.slice(0, 16)}
               </span>
@@ -1169,7 +1169,7 @@ export const PostCard = memo(function PostCard({
             </button>
           </div>
         )}
-        <div className="mb-3 text-sm text-gray-300 whitespace-pre-wrap break-words">
+        <div className="content-text mb-3 text-sm text-gray-300 whitespace-pre-wrap break-words">
           {displayText}
           {needsTruncation && !showFullText && (
             <button
@@ -1247,7 +1247,7 @@ export const PostCard = memo(function PostCard({
         )}
 
         {post.niches.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-1">
+          <div className="niche-tags mb-3 flex flex-wrap gap-1">
             {post.niches.slice(0, 5).map((n) => (
               <span
                 key={n}
@@ -1299,7 +1299,7 @@ export const PostCard = memo(function PostCard({
         {post.protocol === 'bluesky' && <BlueskyPostContext post={post} />}
 
         {/* Engagement metrics + Tip */}
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="actions flex items-center gap-4 text-xs text-gray-500">
           <button
             type="button"
             className={`flex items-center gap-1 transition-colors hover:text-red-400 press-effect ${

@@ -43,6 +43,7 @@
     "@degenfeed/web3": "workspace:*",
     "@degenfeed/ui": "workspace:*",
     "@degenfeed/utils": "workspace:*",
+    "@degenfeed/youtube-provider": "workspace:*",
     "@solana/web3.js": "^1.98.4",
     "dompurify": "^3.2.3",
     "next": "^16.2.10",

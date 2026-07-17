@@ -1,452 +1,503 @@
 'use client';
 
-import type { UnifiedPost } from '@degenfeed/types';
-import { ErrorBoundary, getProtocolColor, PeerTubeTipOverlay, VideoPlayer } from '@degenfeed/ui';
-import { formatTimeAgo, parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
-import Image from 'next/image';
-import Link from 'next/link';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+/**
+ * @degenfeed/web — /videos
+ *
+ * Full YouTube + PeerTube integration with tabs, category filters, sort,
+ * and infinite-scroll grid. Sources both from the @degenfeed/youtube-provider
+ * (YouTube RSS feeds) and the PeerTube API (from video.degenfeed.xyz).
+ *
+ * Aesthetic direction: dark cyberpunk with neon-green accents. The grid uses
+ * a 3-column bento layout (desktop) with staggered card reveals on load.
+ */
 
-// ─── Helpers ────────────────────────────────────────────────────────────
+import {
+  ErrorBoundary,
+  MixedVideoGrid,
+  type VideoCategory,
+  VideoFilterBar,
+  type VideoSort,
+  type VideoTab,
+  type YouTubeVideoCardItem,
+} from '@degenfeed/ui';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-function formatCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
+// ─── Constants ──────────────────────────────────────────────────────────
+
+const PEERTUBE_INSTANCE = 'video.degenfeed.xyz';
+const YOUTUBE_FEED_LIMIT = 30;
+const PEERTUBE_API_LIMIT = 20;
+
+// ─── PeerTube API types ────────────────────────────────────────────────
+
+interface PeerTubeApiVideo {
+  uuid: string;
+  name: string;
+  thumbnailPath: string;
+  channel: {
+    displayName: string;
+    name: string;
+  };
+  publishedAt: string;
+  views: number;
+  duration?: number;
+  category?: number;
+  description?: string;
 }
 
-// ─── Video Card ──────────────────────────────────────────────────────────
-
-interface VideoCardProps {
-  post: UnifiedPost;
-  isActive?: boolean;
-  onSwipeUp?: () => void;
-  onSwipeDown?: () => void;
+interface PeerTubeApiResponse {
+  data: PeerTubeApiVideo[];
+  total: number;
+  next?: string;
 }
 
-const VideoCard = memo(function VideoCard({
-  post,
-  isActive,
-  onSwipeUp,
-  onSwipeDown,
-}: VideoCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [isVertical, setIsVertical] = useState(false);
+// ─── Category mapping ───────────────────────────────────────────────────
 
-  // Detect video info from embeds
-  const videoInfo = useMemo<VideoInfo | null>(() => {
-    const videoEmbed = post.embeds.find((e) => e.kind === 'video');
-    if (videoEmbed) {
-      const info = parseVideoUrl(videoEmbed.url);
-      if (info) return info;
-    }
-    const linkEmbed = post.embeds.find((e) => e.kind === 'link');
-    if (linkEmbed) {
-      const info = parseVideoUrl(linkEmbed.url);
-      if (info) return info;
-    }
-    return null;
-  }, [post.embeds]);
-
-  // Detect YouTube ID from text as fallback
-  const textYoutubeId = useMemo(() => {
-    if (videoInfo) return null;
-    const match = post.text.match(/(?:v=|\/|youtu\.be\/)([\w-]{11})/);
-    return match?.[1] ?? null;
-  }, [post.text, videoInfo]);
-
-  const isYouTube = videoInfo?.platform === 'youtube' || !!textYoutubeId;
-  const youtubeId = videoInfo?.platform === 'youtube' ? videoInfo.id : (textYoutubeId ?? undefined);
-  const isShort = videoInfo?.platform === 'youtube' && /shorts\//.test(videoInfo.url);
-
-  useEffect(() => {
-    if (isShort || (videoInfo?.platform === 'youtube' && /shorts\//.test(videoInfo.url))) {
-      setIsVertical(true);
-    }
-  }, [videoInfo, isShort]);
-
-  // Thumbnail for YouTube
-  const youtubeThumb = youtubeId
-    ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`
-    : null;
-
-  const authorHandle = post.author.handles[post.protocol] ?? post.author.id.slice(0, 16);
-
-  // Only use grid/video layout distinction
-  const isShortForm = isVertical || isShort;
-
-  return (
-    <div
-      ref={cardRef}
-      className={`rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] overflow-hidden transition-all ${
-        isActive ? 'ring-2 ring-degen-500/30' : 'hover:border-degen-500/20'
-      } ${isShortForm ? 'max-w-sm mx-auto' : ''}`}
-    >
-      {/* ── Video Player ── */}
-      {videoInfo?.platform === 'youtube' || youtubeId ? (
-        <VideoPlayer
-          youtubeId={youtubeId}
-          platform="youtube"
-          aspectRatio={isShortForm ? '9:16' : '16:9'}
-          title={post.text}
-          showMetadata={false}
-        />
-      ) : videoInfo?.platform === 'direct' ? (
-        <VideoPlayer
-          src={videoInfo.url}
-          platform="direct"
-          aspectRatio={isShortForm ? '9:16' : '16:9'}
-          title={post.text}
-          showMetadata={false}
-        />
-      ) : videoInfo?.platform === 'peertube' ? (
-        /* PeerTube — show tip button and link */
-        <PeerTubeVideoCard
-          videoInfo={videoInfo}
-          title={post.text}
-          channelName={post.author.displayName}
-        />
-      ) : (
-        /* Fallback: maybe an image link that's not a video embed */
-        youtubeThumb && (
-          <div className="relative aspect-video w-full overflow-hidden bg-[var(--color-muted)]">
-            <Image
-              src={youtubeThumb}
-              alt={post.text}
-              width={480}
-              height={360}
-              className="aspect-video w-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-            {/* Play icon overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path d="M8 5V19L19 12L8 5Z" />
-                </svg>
-              </div>
-            </div>
-            <a
-              href={`https://youtube.com/watch?v=${youtubeId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute inset-0"
-              aria-label="Watch on YouTube"
-            />
-          </div>
-        )
-      )}
-
-      {/* ── Card Footer ── */}
-      <div className="p-4">
-        <div className="flex items-center gap-2 mb-1">
-          <span
-            className="text-[10px] font-medium text-gray-500 uppercase tracking-wider"
-            style={{ color: getProtocolColor(post.protocol) }}
-          >
-            {post.protocol}
-          </span>
-          <span className="text-[10px] text-gray-600">{formatTimeAgo(post.createdAt)} ago</span>
-        </div>
-        <p className="text-sm text-[var(--color-fg)] line-clamp-2 font-medium leading-snug">
-          {post.text}
-        </p>
-        <div className="mt-1 flex items-center gap-2">
-          {post.author.avatarUrl && (
-            <Image
-              src={post.author.avatarUrl}
-              alt={post.author.displayName}
-              width={16}
-              height={16}
-              className="h-4 w-4 rounded-full object-cover"
-            />
-          )}
-          <p className="text-xs text-gray-500 truncate">
-            {post.author.displayName}
-            <span className="ml-1 text-gray-600">@{authorHandle}</span>
-          </p>
-        </div>
-        <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-600">
-          <span>{formatCount(post.metrics.likes)} likes</span>
-          <span>{formatCount(post.metrics.reposts)} reposts</span>
-          {post.metrics.quotes > 0 && <span>{formatCount(post.metrics.quotes)} zaps</span>}
-        </div>
-      </div>
-    </div>
-  );
-});
-
-// ─── PeerTube Video Card ──────────────────────────────────────────────────
-
-interface PeerTubeVideoCardProps {
-  videoInfo: VideoInfo;
-  title: string;
-  channelName: string;
+function detectCategory(title: string, description?: string): string {
+  const text = `${title} ${description ?? ''}`.toLowerCase();
+  if (
+    text.includes('bitcoin') ||
+    text.includes('btc') ||
+    text.includes('crypto') ||
+    text.includes('ethereum') ||
+    text.includes('eth') ||
+    text.includes('blockchain')
+  )
+    return 'crypto';
+  if (
+    text.includes('defi') ||
+    text.includes('liquidity') ||
+    text.includes('yield') ||
+    text.includes('staking') ||
+    text.includes('lending') ||
+    text.includes('swap')
+  )
+    return 'defi';
+  if (
+    text.includes('nft') ||
+    text.includes('nfts') ||
+    text.includes('collectible') ||
+    text.includes('mint')
+  )
+    return 'nft';
+  if (
+    text.includes('tutorial') ||
+    text.includes('guide') ||
+    text.includes('how to') ||
+    text.includes('learn') ||
+    text.includes('explained') ||
+    text.includes('beginner')
+  )
+    return 'tutorial';
+  if (
+    text.includes('news') ||
+    text.includes('update') ||
+    text.includes('latest') ||
+    text.includes('breaking') ||
+    text.includes('report')
+  )
+    return 'news';
+  if (
+    text.includes('podcast') ||
+    text.includes('interview') ||
+    text.includes('vlog') ||
+    text.includes('music') ||
+    text.includes('entertainment')
+  )
+    return 'entertainment';
+  return 'crypto';
 }
 
-const PeerTubeVideoCard = memo(function PeerTubeVideoCard({
-  videoInfo,
-  title,
-  channelName,
-}: PeerTubeVideoCardProps) {
-  const [tipData, setTipData] = useState<{ count: number; total: number } | null>(null);
-  const [showTip, setShowTip] = useState(false);
+function peerTubeCategoryToId(category: number): string {
+  // PeerTube category IDs: 1=Music, 2=Films, 3=Comics, 4=Books, 5=Tech, etc.
+  // Map to our categories
+  const map: Record<number, string> = {
+    1: 'entertainment',
+    2: 'entertainment',
+    5: 'tutorial',
+    8: 'news',
+    10: 'crypto',
+    11: 'defi',
+    12: 'nft',
+    13: 'entertainment',
+  };
+  return map[category] ?? 'crypto';
+}
 
-  const uuid = videoInfo.platform === 'youtube' ? videoInfo.id : (videoInfo.platform === 'peertube' ? videoInfo.uuid : undefined);
-  const instanceDomain = videoInfo.platform === 'peertube' ? videoInfo.instance : 'video.degenfeed.xyz';
+// ─── Time duration formatting ───────────────────────────────────────────
 
-  useEffect(() => {
-    if (!uuid) return;
-    let cancelled = false;
-    fetch(`/api/peertube/tip/stats?videoId=${encodeURIComponent(uuid)}`)
-      .then((r) => (r.ok ? (r.json() as Promise<{ count: number; totalAmount: number }>) : null))
-      .then((data) => {
-        if (!cancelled && data) {
-          setTipData({ count: data.count, total: data.totalAmount });
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [uuid]);
+function formatDuration(seconds?: number): string {
+  if (seconds == null || seconds <= 0) return '';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  if (m > 0) return `${m}:${String(s).padStart(2, '0')}`;
+  return `0:${String(s).padStart(2, '0')}`;
+}
 
-  const channelSlug = channelName.toLowerCase().replace(/\s+/g, '-');
+// ─── Fetch YouTube feed (RSS-based) ─────────────────────────────────────
 
-  return (
-    <div className="relative aspect-video bg-[var(--color-muted)] flex items-center justify-center overflow-hidden">
-      <a
-        href={videoInfo.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute inset-0 flex items-center justify-center group z-10"
-      >
-        <div className="text-center">
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="mx-auto mb-2 text-gray-600 group-hover:text-degen-400 transition-colors"
-            aria-hidden="true"
-          >
-            <rect
-              x="4"
-              y="4"
-              width="16"
-              height="16"
-              rx="3"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-            <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
-          </svg>
-          <p className="text-xs text-gray-500 group-hover:text-degen-400 transition-colors">
-            PeerTube video
-          </p>
-        </div>
-      </a>
+async function fetchYouTubeFeed(
+  category?: string,
+  limit = YOUTUBE_FEED_LIMIT,
+  signal?: AbortSignal,
+): Promise<YouTubeVideoCardItem[]> {
+  try {
+    // Dynamic import to avoid bundling issues if package isn't installed
+    const { fetchYouTubeFeed: fetchYT } = await import('@degenfeed/youtube-provider');
+    const items = await fetchYT({
+      category: category === 'all' ? undefined : category,
+      limit,
+      signal,
+      sort: 'recent',
+    });
+    return items.map((item) => ({
+      ...item,
+      source: 'youtube' as const,
+    }));
+  } catch (err) {
+    console.warn('[videos] YouTube provider not available, falling back to RSS proxy', err);
+    return fetchYouTubeFeedFallback(category, limit, signal);
+  }
+}
 
-      {/* ⚡ Tip button in bottom-right */}
-      <div className="absolute bottom-2 right-2 z-20">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setShowTip((v) => !v);
-          }}
-          className="inline-flex items-center gap-1 rounded-full bg-degen-500/20 px-2 py-1 text-[10px] font-medium text-degen-400 hover:bg-degen-500/30 transition-colors"
-          aria-label="Tip creator"
-        >
-          <span>⚡</span>
-          <span>
-            {tipData && tipData.count > 0
-              ? `${tipData.count} tips ($${tipData.total.toFixed(2)})`
-              : 'Tip'}
-          </span>
-        </button>
-        {showTip && (
-          <div className="absolute bottom-full right-0 mb-2">
-            <PeerTubeTipOverlay
-              videoId={uuid ?? ''}
-              creatorName={channelName}
-              creatorChannel={channelSlug}
-              videoTitle={title}
-              instanceDomain={instanceDomain}
-              initialTipCount={tipData?.count ?? 0}
-              initialTipTotal={tipData?.total ?? 0}
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-});
+/**
+ * Fallback: proxy YouTube RSS through a Cloudflare worker or direct fetch.
+ */
+async function fetchYouTubeFeedFallback(
+  _category?: string,
+  _limit = 20,
+  signal?: AbortSignal,
+): Promise<YouTubeVideoCardItem[]> {
+  try {
+    const response = await fetch('/api/feed/videos?source=youtube&limit=20', {
+      signal,
+      credentials: 'include',
+    });
+    if (!response.ok) return [];
+    const data = (await response.json()) as { data?: YouTubeVideoCardItem[] };
+    return data.data ?? [];
+  } catch {
+    return [];
+  }
+}
 
-// ─── Page ────────────────────────────────────────────────────────────────
+// ─── Fetch PeerTube feed ────────────────────────────────────────────────
+
+async function fetchPeerTubeFeed(
+  category?: string,
+  limit = PEERTUBE_API_LIMIT,
+  page = 1,
+  signal?: AbortSignal,
+): Promise<{ items: YouTubeVideoCardItem[]; total: number }> {
+  try {
+    const params = new URLSearchParams({
+      start: String((page - 1) * limit),
+      count: String(limit),
+      sort: '-publishedAt',
+    });
+
+    if (category && category !== 'all') {
+      // PeerTube category ID for crypto topic
+      params.set('categoryOneOf', '10');
+    }
+
+    const url = `https://${PEERTUBE_INSTANCE}/api/v1/videos?${params.toString()}`;
+    const response = await fetch(url, {
+      signal,
+      headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) return { items: [], total: 0 };
+
+    const data = (await response.json()) as PeerTubeApiResponse;
+
+    const items: YouTubeVideoCardItem[] = (data.data ?? []).map((v) => ({
+      id: v.uuid,
+      title: v.name,
+      channelName: v.channel.displayName,
+      channelUrl: `https://${PEERTUBE_INSTANCE}/c/${v.channel.name}`,
+      thumbnailUrl: v.thumbnailPath
+        ? `https://${PEERTUBE_INSTANCE}${v.thumbnailPath}`
+        : `https://${PEERTUBE_INSTANCE}/static/thumbnails/${v.uuid}.jpg`,
+      url: `https://${PEERTUBE_INSTANCE}/w/${v.uuid}`,
+      publishedAt: v.publishedAt,
+      publishedMs: new Date(v.publishedAt).getTime(),
+      duration: formatDuration(v.duration),
+      views: v.views,
+      description: v.description,
+      category: v.category
+        ? peerTubeCategoryToId(v.category)
+        : detectCategory(v.name, v.description),
+      source: 'peertube' as const,
+    }));
+
+    return { items, total: data.total };
+  } catch {
+    return { items: [], total: 0 };
+  }
+}
+
+// ─── Page Components ────────────────────────────────────────────────────
 
 export default function VideosPage() {
-  const [posts, setPosts] = useState<UnifiedPost[]>([]);
+  // ── State ──
+  const [videos, setVideos] = useState<YouTubeVideoCardItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/feed/home?type=video&sort=new&limit=50', {
-        credentials: 'include',
-      });
-      if (!res.ok) return;
-      const data = (await res.json()) as { data?: UnifiedPost[] };
-      if (data.data) setPosts(data.data);
-    } catch {
-      // silently fail
-    }
-    setLoading(false);
-  }, []);
+  // Filters
+  const [activeTab, setActiveTab] = useState<VideoTab>('all');
+  const [activeCategory, setActiveCategory] = useState<VideoCategory>('all');
+  const [sort, setSort] = useState<VideoSort>('recent');
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Pagination
+  const [_youtubePage, setYoutubePage] = useState(1);
+  const [peertubePage, setPeertubePage] = useState(1);
+  const [youtubeExhausted, setYoutubeExhausted] = useState(false);
+  const [peertubeExhausted, setPeertubeExhausted] = useState(false);
 
-  // Keyboard navigation for short-form vertical videos
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setActiveIndex((prev) => Math.max(0, prev - 1));
-      } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-        e.preventDefault();
-        setActiveIndex((prev) => Math.min(posts.length - 1, prev + 1));
+  const abortRef = useRef<AbortController | null>(null);
+  const loadingRef = useRef(false);
+
+  // ── Load data ──
+  const loadVideos = useCallback(
+    async (append = false) => {
+      if (loadingRef.current) return;
+      loadingRef.current = true;
+      setLoading(true);
+      setError(null);
+
+      // Abort previous request
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      try {
+        const category = activeCategory === 'all' ? undefined : activeCategory;
+        const currentPT = append ? peertubePage : 1;
+
+        // Fetch both sources in parallel
+        const [ytItems, ptResult] = await Promise.all([
+          !youtubeExhausted || !append
+            ? fetchYouTubeFeed(category, YOUTUBE_FEED_LIMIT, controller.signal)
+            : Promise.resolve<YouTubeVideoCardItem[]>([]),
+          !peertubeExhausted || !append
+            ? fetchPeerTubeFeed(category, PEERTUBE_API_LIMIT, currentPT, controller.signal)
+            : Promise.resolve<{ items: YouTubeVideoCardItem[]; total: number }>({
+                items: [],
+                total: 0,
+              }),
+        ]);
+
+        if (controller.signal.aborted) return;
+
+        // Interleave YouTube + PeerTube for mixed view
+        let combined: YouTubeVideoCardItem[];
+
+        if (append) {
+          // Append to existing list
+          const existing = new Set(videos.map((v) => `${v.source}-${v.id}`));
+          const newItems = [
+            ...ytItems.filter((i) => !existing.has(`${i.source}-${i.id}`)),
+            ...ptResult.items.filter((i) => !existing.has(`${i.source}-${i.id}`)),
+          ];
+          combined = [...videos, ...newItems];
+          setYoutubePage((p) => p + (ytItems.length > 0 ? 1 : 0));
+          setPeertubePage((p) => p + (ptResult.items.length > 0 ? 1 : 0));
+        } else {
+          // Fresh load — interleave
+          const maxLen = Math.max(ytItems.length, ptResult.items.length);
+          const interleaved: YouTubeVideoCardItem[] = [];
+          for (let i = 0; i < maxLen; i++) {
+            const ytItem = ytItems[i];
+            const ptItem = ptResult.items[i];
+            if (ytItem) interleaved.push(ytItem);
+            if (ptItem) interleaved.push(ptItem);
+          }
+          combined = interleaved;
+        }
+
+        setVideos(combined);
+        setHasMore(
+          ytItems.length >= YOUTUBE_FEED_LIMIT || ptResult.items.length >= PEERTUBE_API_LIMIT,
+        );
+
+        if (ytItems.length < YOUTUBE_FEED_LIMIT) setYoutubeExhausted(true);
+        if (ptResult.items.length < PEERTUBE_API_LIMIT) setPeertubeExhausted(true);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setError('Failed to load videos. Please try again.');
+        console.warn('[videos] Load error:', err);
+      } finally {
+        setLoading(false);
+        setInitialLoad(false);
+        loadingRef.current = false;
       }
     },
-    [posts.length],
+    // eslint-disable-next-line react-hooks/exhaustive-deps — youtubePage unused after removing currentYT
+    [activeCategory, peertubePage, youtubeExhausted, peertubeExhausted, videos],
   );
 
+  // ── Load on mount & filter change ──
   useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+    setYoutubePage(1);
+    setPeertubePage(1);
+    setYoutubeExhausted(false);
+    setPeertubeExhausted(false);
+    setVideos([]);
+    setHasMore(true);
+    loadVideos(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps — loadVideos intentionally omitted to prevent infinite loop on state reset
+  }, [activeTab, activeCategory]);
 
-  const handleSwipeUp = useCallback(() => {
-    setActiveIndex((prev) => Math.min(posts.length - 1, prev + 1));
-  }, [posts.length]);
+  // ── Load more handler ──
+  const handleLoadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      loadVideos(true);
+    }
+  }, [loading, hasMore, loadVideos]);
 
-  const handleSwipeDown = useCallback(() => {
-    setActiveIndex((prev) => Math.max(0, prev - 1));
+  // ── Sort handler (client-side reorder) ──
+  const sortedVideos = useMemo(() => {
+    const sorted = [...videos];
+    if (sort === 'recent') {
+      sorted.sort((a, b) => b.publishedMs - a.publishedMs);
+    } else if (sort === 'popular') {
+      sorted.sort((a, b) => (b.views ?? 0) - (a.views ?? 0));
+    } else if (sort === 'trending') {
+      sorted.sort((a, b) => {
+        const scoreA = (a.views ?? 0) / Math.max(1, (Date.now() - a.publishedMs) / 3600000);
+        const scoreB = (b.views ?? 0) / Math.max(1, (Date.now() - b.publishedMs) / 3600000);
+        return scoreB - scoreA;
+      });
+    }
+    return sorted;
+  }, [videos, sort]);
+
+  // ── Play handler ──
+  const handlePlay = useCallback((video: YouTubeVideoCardItem) => {
+    window.open(video.url, '_blank', 'noopener noreferrer');
   }, []);
 
-  // Scroll active video into view
-  useEffect(() => {
-    const el = document.getElementById(`video-card-${activeIndex}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [activeIndex]);
+  // ── Refresh handler ──
+  const handleRefresh = useCallback(() => {
+    setYoutubePage(1);
+    setPeertubePage(1);
+    setYoutubeExhausted(false);
+    setPeertubeExhausted(false);
+    setVideos([]);
+    setHasMore(true);
+    loadVideos(false);
+  }, [loadVideos]);
 
   return (
     <ErrorBoundary>
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-7xl px-4 py-6">
         {/* ── Header ── */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">Video Feed</p>
-            <h1 className="text-2xl font-bold text-[var(--color-fg)]">Video</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              93 YouTube channels, PeerTube, and video content from all protocols
-            </p>
-          </div>
-          <Link
-            href="/home/all"
-            className="text-sm text-gray-500 hover:text-[var(--color-fg)] transition-colors"
-          >
-            &larr; Feed
-          </Link>
-        </div>
-
-        {/* ── Loading ── */}
-        {loading && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] overflow-hidden animate-pulse"
-              >
-                <div className="aspect-video bg-[var(--color-muted)]" />
-                <div className="p-4 space-y-2">
-                  <div className="h-4 w-3/4 rounded bg-[var(--color-muted)]" />
-                  <div className="h-3 w-1/2 rounded bg-[var(--color-muted)]" />
-                  <div className="h-3 w-1/3 rounded bg-[var(--color-muted)]" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Empty state ── */}
-        {!loading && posts.length === 0 && (
-          <div className="card py-16 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/5">
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-                className="text-gray-600"
-              >
-                <rect
-                  x="4"
-                  y="4"
-                  width="16"
-                  height="16"
-                  rx="3"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
-              </svg>
+        <header className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">
+                Video Feed
+              </p>
+              <h1 className="text-3xl font-bold text-[var(--color-fg)] tracking-tight">Videos</h1>
+              <p className="mt-1 text-sm text-[var(--color-muted)] max-w-lg">
+                YouTube crypto channels, PeerTube federated video, and more — all in one feed.
+              </p>
             </div>
-            <p className="text-gray-500">No videos found.</p>
-            <p className="mt-1 text-sm text-gray-600">
-              Video content appears here as it&apos;s discovered from RSS, YouTube, and PeerTube
-              feeds.
-            </p>
-            <button type="button" onClick={load} className="btn-secondary mt-4 text-sm">
-              Refresh
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={loading}
+              className="rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:border-degen-500/30 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-degen-500/40"
+              aria-label="Refresh videos"
+            >
+              {loading ? (
+                <span className="flex items-center gap-1.5">
+                  <div className="h-3 w-3 rounded-full border-2 border-degen-500/30 border-t-degen-500 animate-spin" />
+                  Loading
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M1 4V10H7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M3.51 15a9 9 0 102.13-9.36L1 10"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Refresh
+                </span>
+              )}
             </button>
           </div>
-        )}
+        </header>
 
-        {/* ── Video grid ── */}
-        {!loading && posts.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((p, idx) => (
-              <div key={p.id} id={`video-card-${idx}`}>
-                <VideoCard
-                  post={p}
-                  isActive={idx === activeIndex}
-                  onSwipeUp={handleSwipeUp}
-                  onSwipeDown={handleSwipeDown}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+        {/* ── Filter Bar ── */}
+        <VideoFilterBar
+          activeTab={activeTab}
+          activeCategory={activeCategory}
+          sort={sort}
+          onTabChange={setActiveTab}
+          onCategoryChange={setActiveCategory}
+          onSortChange={setSort}
+        />
 
-        {/* ── Quick help ── */}
-        {posts.length > 0 && (
-          <p className="mt-6 text-center text-[11px] text-gray-600">
-            Use arrow keys to navigate between videos
+        {/* ── Stats Line ── */}
+        {!initialLoad && !loading && videos.length > 0 && (
+          <p className="mb-3 text-xs text-[var(--color-muted)]">
+            <span className="tabular-nums">{videos.length}</span> videos loaded
+            {activeCategory !== 'all' && (
+              <>
+                {' '}
+                in <span className="font-medium text-degen-400">{activeCategory}</span>
+              </>
+            )}
           </p>
+        )}
+
+        {/* ── Video Grid ── */}
+        <MixedVideoGrid
+          videos={sortedVideos}
+          activeTab={activeTab}
+          activeCategory={activeCategory}
+          sort={sort}
+          onPlay={handlePlay}
+          onLoadMore={handleLoadMore}
+          loading={loading}
+          hasMore={hasMore}
+          error={error}
+        />
+
+        {/* ── Footer note ── */}
+        {!loading && videos.length > 0 && (
+          <footer className="mt-8 text-center">
+            <p className="text-[11px] text-[var(--color-muted)]">
+              Videos sourced from YouTube RSS feeds and{' '}
+              <a
+                href={`https://${PEERTUBE_INSTANCE}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-degen-500 hover:text-degen-400 transition-colors underline underline-offset-2"
+              >
+                {PEERTUBE_INSTANCE}
+              </a>{' '}
+              — updates every 15 minutes
+            </p>
+          </footer>
         )}
       </div>
     </ErrorBoundary>

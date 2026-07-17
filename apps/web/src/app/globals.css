@@ -442,7 +442,14 @@
   }
 }
 
-/* ── Reduced Motion ─────────────────────────────────────────────── */
+/* ── Ensure next/image plays nice with existing Tailwind classes ── */
+.next-image-fix img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+/* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -487,36 +494,9 @@
   }
 }
 
-/* Ensure next/image plays nice with existing Tailwind classes */
-.next-image-fix img {
-  max-width: 100%;
-  height: auto;
-  vertical-align: middle;
-}
-
-/* ── Skeleton shimmer (GPU-accelerated) ── */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.skeleton-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--color-muted) 25%,
-    color-mix(in srgb, var(--color-muted) 60%, var(--color-fg)) 50%,
-    var(--color-muted) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-  will-change: background-position;
-}
-
-/* ── Image placeholder to prevent CLS ── */
+/* ── Image placeholder to prevent CLS ── (now after reduced motion)
+ * This section deliberately placed after reduced-motion block
+ * to avoid conflict with @layer rules. Do not move. */
 .image-placeholder {
   background: var(--color-muted);
   position: relative;
@@ -535,4 +515,368 @@
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * LAYOUT DENSITY — Compact (Twitter-like) mode
+ * Applied when <html> has class 'layout-compact'
+ * ═══════════════════════════════════════════════════════════════ */
+
+.layout-compact {
+  /* ── Shell / header ── */
+  & .shell-header {
+    height: 48px;
+  }
+
+  & .shell-header-inner {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  & .shell-logo {
+    transform: scale(0.85);
+  }
+
+  & .shell-logo-text {
+    display: none;
+  }
+
+  /* ── Main feed area ── */
+  & .main-feed {
+    max-width: 598px;
+  }
+
+  & .main-layout {
+    max-width: 1100px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* ── Sidebar ── */
+  & .sidebar {
+    width: 300px;
+  }
+
+  & .sidebar-card {
+    padding: 12px;
+  }
+
+  /* ── Feed header tabs area ── */
+  & .feed-header {
+    padding-top: 0;
+  }
+
+  & .feed-header-tabs button {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    font-size: 13px;
+  }
+
+  & .feed-header-brand {
+    padding: 8px 12px;
+  }
+
+  & .feed-header-brand h1 {
+    font-size: 18px;
+  }
+
+  /* ── Post cards ── */
+  & .post-card {
+    padding: 12px 16px;
+    font-size: 15px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  & .post-card .avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  & .post-card .content-text {
+    line-height: 1.3;
+    -webkit-line-clamp: 4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  & .post-card .author-row {
+    margin-bottom: 2px;
+  }
+
+  & .post-card .author-name {
+    font-size: 14px;
+  }
+
+  & .post-card .author-handle {
+    font-size: 13px;
+  }
+
+  & .post-card .actions {
+    justify-content: space-between;
+    margin-top: 4px;
+    padding: 0;
+    border-top: none;
+  }
+
+  & .post-card .action-btn {
+    font-size: 13px;
+    padding: 4px 8px;
+  }
+
+  & .post-card .action-btn svg,
+  & .post-card .action-btn span:first-child {
+    width: 16px;
+    height: 16px;
+  }
+
+  & .post-card .engagement-stats {
+    display: none;
+  }
+
+  & .post-card .three-dot-menu {
+    transform: scale(0.9);
+  }
+
+  /* ── Post card images ── */
+  & .post-card .image-grid {
+    border-radius: 12px;
+  }
+
+  & .post-card .image-grid > * {
+    max-height: 200px;
+  }
+
+  & .post-card .link-preview {
+    margin-top: 6px;
+  }
+
+  & .post-card .link-preview img {
+    max-height: 120px;
+  }
+
+  & .post-card .link-preview .link-title {
+    font-size: 13px;
+  }
+
+  & .post-card .link-preview .link-desc {
+    font-size: 12px;
+  }
+
+  /* ── Niche tags ── */
+  & .post-card .niche-tags {
+    margin-bottom: 2px;
+  }
+
+  & .post-card .niche-tags > * {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+
+  /* ── Feed gap removal ── */
+  & .feed-gap {
+    height: 0;
+  }
+
+  /* ── Feed composer ── */
+  & .composer {
+    padding: 8px 16px;
+  }
+
+  & .composer .composer-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  & .composer textarea {
+    font-size: 15px;
+    min-height: 60px;
+  }
+
+  /* ── Compose button ── */
+  & .btn-primary,
+  & .btn-secondary,
+  & .btn-ghost {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    font-size: 13px;
+  }
+
+  /* ── Lemmy threads ── */
+  & .lemmy-thread .lemmy-comment {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  & .lemmy-thread .lemmy-comment .avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  & .lemmy-thread .lemmy-vote-btn {
+    font-size: 12px;
+    padding: 2px 6px;
+  }
+
+  & .lemmy-thread .lemmy-nest {
+    margin-left: 20px;
+    border-left-width: 1px;
+  }
+
+  /* ── Video cards (Shorts) ── */
+  & .video-card {
+    padding: 8px;
+  }
+
+  & .video-card .video-thumb {
+    max-height: 160px;
+  }
+
+  & .video-card .video-title {
+    font-size: 13px;
+    line-height: 1.2;
+    -webkit-line-clamp: 2;
+  }
+
+  & .video-card .video-meta {
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  & .video-card .video-actions {
+    margin-top: 2px;
+    gap: 6px;
+  }
+
+  /* ── Notifications ── */
+  & .notification-item {
+    padding: 6px 12px;
+    font-size: 13px;
+    min-height: 0;
+  }
+
+  & .notification-item .avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  & .notification-item .notif-content {
+    gap: 1px;
+  }
+
+  & .notification-item .notif-text {
+    line-height: 1.2;
+    -webkit-line-clamp: 1;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  & .notification-item .notif-time {
+    font-size: 11px;
+  }
+
+  & .notification-item .notif-icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* ── Messages ── */
+  & .message-bubble {
+    padding: 6px 10px;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  & .message-list .message-row {
+    padding: 2px 12px;
+  }
+
+  & .message-composer {
+    padding: 6px 12px;
+  }
+
+  & .message-composer input {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  /* ── Protocol pills / filter bar ── */
+  & .protocol-pills {
+    padding: 6px 12px;
+  }
+
+  & .protocol-pills > * {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+
+  /* ── Quality controls bar ── */
+  & .quality-controls {
+    padding: 4px 12px;
+    font-size: 10px;
+  }
+
+  /* ── Trending sidebar ── */
+  & .trending-item {
+    padding: 8px 12px;
+  }
+
+  & .trending-item .trending-topic {
+    font-size: 13px;
+  }
+
+  & .trending-item .trending-count {
+    font-size: 11px;
+  }
+
+  /* ── Footer ── */
+  & .shell-footer {
+    padding: 12px 0;
+  }
+
+  & .shell-footer .footer-links {
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  /* ── Bottom nav ── */
+  & .bottom-nav {
+    height: 48px;
+  }
+
+  & .bottom-nav a,
+  & .bottom-nav button {
+    font-size: 11px;
+    padding: 4px;
+  }
+
+  & .bottom-nav a svg,
+  & .bottom-nav button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* ── Settings / preferences page ── */
+  & .prefs-page {
+    max-width: 640px;
+  }
+
+  & .prefs-page .card {
+    padding: 12px;
+  }
+
+  & .prefs-page h1 {
+    font-size: 20px;
+  }
+
+  & .prefs-page h2 {
+    font-size: 13px;
+  }
+
+  /* ── General spacing reductions ── */
+  & .px-4 {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }

@@ -83,6 +83,8 @@ export const PLATFORM_TIER: Record<Protocol, number> = {
   ponder: 0.8,
   ethereum: 0.6,
   solana: 0.6,
+  peertube: 0.9,
+  youtube: 0.9,
 };
 
 export interface UserAlgorithmPreferences {

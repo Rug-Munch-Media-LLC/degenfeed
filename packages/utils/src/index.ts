@@ -69,6 +69,9 @@ const VALID_PROTOCOLS: Protocol[] = [
   'reddit',
   'ethereum',
   'solana',
+  'lemmy',
+  'peertube',
+  'youtube',
 ];
 
 export function parseProtocols(
@@ -164,6 +167,8 @@ export const PROTOCOL_COLORS: Record<string, string> = {
   reddit: '#ff4500',
   ethereum: '#627eea',
   solana: '#9945ff',
+  peertube: '#f1680d',
+  youtube: '#ff0000',
 };
 
 export const PROTOCOL_EMOJI: Record<string, string> = {
@@ -173,10 +178,13 @@ export const PROTOCOL_EMOJI: Record<string, string> = {
   bluesky: '🦋',
   threads: '🧵',
   mastodon: '🐘',
+  lemmy: '🍋',
   rss: '📡',
   reddit: '🔴',
   ethereum: '◆',
   solana: '◎',
+  peertube: '📹',
+  youtube: '▶️',
 };
 
 export function getProtocolColor(p: string): string {

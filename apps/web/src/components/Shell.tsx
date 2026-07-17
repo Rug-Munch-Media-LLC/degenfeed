@@ -4,6 +4,7 @@ import { RealtimeStatusDot } from '@degenfeed/realtime';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useLayoutDensity } from '../hooks/useLayoutDensity';
 import { OnboardingProvider } from '../hooks/useOnboarding';
 import { AddToHomeScreenToast } from './AddToHomeScreenToast';
 import { useAuth } from './AuthProvider';
@@ -107,7 +108,7 @@ function StatusHealthDot() {
 
 function Logo() {
   return (
-    <a href="/" className="flex items-center gap-2 group">
+    <a href="/" className="shell-logo flex items-center gap-2 group">
       <Image
         src="/icon.svg"
         alt="DegenFeed"
@@ -115,7 +116,7 @@ function Logo() {
         height={32}
         className="h-8 w-8 rounded-lg logo-glow transition-shadow group-hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
       />
-      <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+      <span className="shell-logo-text text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
         DegenFeed
       </span>
     </a>
@@ -150,6 +151,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
   const [searchOpen, setSearchOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const { density, toggleDensity, isCompact } = useLayoutDensity();
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
   const { showToast } = useToast();
 
@@ -225,8 +227,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         Skip to content
       </a>
 
-      <header className="fixed top-0 left-0 right-0 z-50 border-b glass">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+      <header className="shell-header fixed top-0 left-0 right-0 z-50 border-b glass">
+        <div className="shell-header-inner mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Logo />
 
           <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
@@ -270,6 +272,15 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? '☀' : '☾'}
+            </button>
+            <button
+              type="button"
+              onClick={toggleDensity}
+              className="rounded-lg px-2 py-2 text-sm text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+              aria-label={`Switch to ${isCompact ? 'comfortable' : 'compact'} layout`}
+              title={`${isCompact ? 'Comfortable' : 'Compact'} layout — more content per screen`}
+            >
+              {isCompact ? '⊞' : '⊟'}
             </button>
             {!ready ? (
               <div className="skeleton h-9 w-24" />
@@ -370,7 +381,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         )}
       </header>
 
-      <main id="main" className="relative z-10 flex-1 pt-16 pb-20 lg:pb-0 animate-page-enter">
+      <main id="main" className="main-content relative z-10 flex-1 pt-16 pb-20 lg:pb-0 animate-page-enter">
         <OnboardingProvider>
           {children}
           <OnboardingModal />
@@ -380,7 +391,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       <BottomNav />
 
       <footer
-        className="relative z-10 hidden border-t py-8 lg:block"
+        className="shell-footer relative z-10 hidden border-t py-8 lg:block"
         style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-glass-bg)' }}
       >
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row">
