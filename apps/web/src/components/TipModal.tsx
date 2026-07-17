@@ -1,7 +1,7 @@
 'use client';
 
 import { QRCodeSVG } from 'qrcode.react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TipPostContext } from '../hooks/useTip';
 import { useTip } from '../hooks/useTip';
 import { useSolana } from './SolanaProvider';
@@ -50,6 +50,44 @@ export function TipModal({
     setInvoice(null);
     onClose();
   }, [onClose]);
+
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // Focus trap
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const firstFocusable = dialog.querySelector<HTMLElement>(
+      'input, button, [tabindex]:not([tabindex="-1"])',
+    );
+    firstFocusable?.focus();
+
+    const handleTabTrap = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'input, button, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      if (e.shiftKey && document.activeElement === first) {
+        last.focus();
+        e.preventDefault();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        first.focus();
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleTabTrap);
+    return () => window.removeEventListener('keydown', handleTabTrap);
+  }, [open, handleClose]);
 
   const handleSend = useCallback(async () => {
     if (!selectedMethod || !amount) return;
@@ -217,8 +255,9 @@ export function TipModal({
 
   return (
     <dialog
+      ref={dialogRef}
       open
-      className="fixed inset-0 z-50 m-0 flex items-center justify-center bg-black/70 p-0 backdrop-blur-sm open:m-0 open:p-0"
+      className="fixed inset-0 z-50 m-0 flex items-center justify-center bg-[var(--color-glass-bg)] p-0 backdrop-blur-sm open:m-0 open:p-0"
       onClick={handleClose}
       onKeyDown={(e) => {
         if (e.key === 'Escape') handleClose();
@@ -227,17 +266,17 @@ export function TipModal({
       aria-label={`Tip ${recipientDisplayName}`}
     >
       <section
-        className="w-full max-w-sm rounded-2xl border border-gray-800 bg-gray-950 shadow-2xl"
+        className="w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="document"
         tabIndex={-1}
       >
-        <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
-          <h2 className="text-sm font-semibold text-white">Tip {recipientDisplayName}</h2>
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
+          <h2 className="text-sm font-semibold text-[var(--color-fg)]">Tip {recipientDisplayName}</h2>
           <button
             onClick={handleClose}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
+            className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-card)] hover:text-[var(--color-fg)] transition-colors"
             type="button"
             aria-label="Close"
           >
@@ -263,12 +302,12 @@ export function TipModal({
           {state.status === 'resolving' ? (
             <div className="py-8 text-center">
               <div className="mb-3 inline-block animate-spin text-2xl">⚡</div>
-              <p className="text-sm text-gray-500">Loading tipping options...</p>
+              <p className="text-sm text-[var(--color-muted)]">Loading tipping options...</p>
             </div>
           ) : state.methods.length === 0 || availableMethods.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="mb-2 text-gray-500">No tipping methods available for this creator</p>
-              <p className="mb-4 text-xs text-gray-600">
+              <p className="mb-2 text-[var(--color-muted)]">No tipping methods available for this creator</p>
+              <p className="mb-4 text-xs text-[var(--color-muted)]">
                 They may not have linked any wallets or payment accounts yet.
               </p>
               <a
@@ -283,7 +322,7 @@ export function TipModal({
               <div className="mb-4">
                 <label
                   htmlFor="tip-method"
-                  className="mb-2 block text-xs font-medium uppercase tracking-widest text-gray-500"
+                  className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]"
                 >
                   Method
                 </label>
@@ -296,23 +335,23 @@ export function TipModal({
                       className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all ${
                         selectedMethod === m.method
                           ? 'border-degen-500 bg-degen-500/10'
-                          : 'border-gray-800 bg-gray-900/50 hover:border-gray-700'
+                          : 'border-[var(--color-border)] bg-[var(--color-card)]/50 hover:border-[var(--color-border)]'
                       }`}
                     >
                       <span className="text-lg">{m.icon}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <div className="text-sm font-medium text-white">{m.label}</div>
+                          <div className="text-sm font-medium text-[var(--color-fg)]">{m.label}</div>
                           {m.recommended && (
                             <span className="shrink-0 rounded-full bg-degen-500/20 px-2 py-0.5 text-[10px] font-medium text-degen-400">
                               Recommended
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-gray-500 truncate">{m.description}</div>
+                        <div className="text-xs text-[var(--color-muted)] truncate">{m.description}</div>
                       </div>
                       {m.fee && (
-                        <span className="shrink-0 rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-400">
+                        <span className="shrink-0 rounded-full bg-[var(--color-card)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]">
                           Fee: {m.fee}
                         </span>
                       )}
@@ -324,7 +363,7 @@ export function TipModal({
               <div className="mb-4">
                 <label
                   htmlFor="tip-amount"
-                  className="mb-2 block text-xs font-medium uppercase tracking-widest text-gray-500"
+                  className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]"
                 >
                   Amount
                 </label>
@@ -334,11 +373,11 @@ export function TipModal({
                     type="text"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-lg font-mono text-white outline-none focus:border-degen-500 transition-colors"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/50 px-4 py-3 text-lg font-mono text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
                     placeholder={selectedMethod === 'lightning_zap' ? '1000' : '0.001'}
                     aria-label="Tip amount"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]">
                     {selected?.method === 'lightning_zap'
                       ? 'sats'
                       : selected?.method === 'ethereum'
@@ -359,7 +398,7 @@ export function TipModal({
                       className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors border ${
                         amount === a
                           ? 'border-degen-500 bg-degen-500/20 text-degen-400'
-                          : 'border-gray-800 text-gray-500 hover:border-gray-700'
+                          : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-border)]'
                       }`}
                     >
                       {a}
@@ -437,16 +476,16 @@ export function TipModal({
                           </div>
                         )}
                       </div>
-                      <p className="mb-2 text-center text-[10px] text-gray-500">
+                      <p className="mb-2 text-center text-[10px] text-[var(--color-muted)]">
                         Scan with any Lightning wallet
                       </p>
                       <div className="flex gap-2">
-                        <code className="flex-1 rounded bg-gray-900 px-2 py-1 text-[10px] text-gray-400 font-mono truncate">
+                        <code className="flex-1 rounded bg-[var(--color-card)] px-2 py-1 text-[10px] text-[var(--color-muted)] font-mono truncate">
                           {state.txHash.slice(0, 40)}...
                         </code>
                         <button
                           onClick={() => navigator.clipboard.writeText(state.txHash || '')}
-                          className="shrink-0 rounded-lg bg-gray-800 px-2 py-1 text-[10px] text-gray-400 hover:text-white transition-colors"
+                          className="shrink-0 rounded-lg bg-[var(--color-card)] px-2 py-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                           type="button"
                         >
                           Copy Invoice
@@ -488,8 +527,8 @@ export function TipModal({
           )}
         </div>
 
-        <div className="border-t border-gray-800 px-4 py-3">
-          <p className="text-center text-[10px] text-gray-600">
+        <div className="border-t border-[var(--color-border)] px-4 py-3">
+          <p className="text-center text-[10px] text-[var(--color-muted)]">
             Powered by DegenFeed • Cross-platform tipping • No platform fees
           </p>
         </div>

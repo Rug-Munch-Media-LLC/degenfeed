@@ -415,6 +415,7 @@ export const PostCard = memo(function PostCard({
   }, [onReport, post.id]);
 
   return (
+    <>
     <article
       className="cursor-pointer border-b border-white/5 px-4 py-3 transition-colors hover:bg-white/[0.03]"
       onClick={() => onClick?.(post.id)}
@@ -776,5 +777,6 @@ export const PostCard = memo(function PostCard({
         postId={post.id}
         onSubmitted={handleReportSubmitted}
       />
+    </>
   );
 });

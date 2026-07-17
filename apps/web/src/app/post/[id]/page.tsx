@@ -178,7 +178,6 @@ function PostCard({
               height={400}
               className="w-full object-cover"
               loading="lazy"
-              unoptimized
             />
           )}
           <div className="p-3">
@@ -206,7 +205,6 @@ function PostCard({
             height={418}
             className="w-full object-cover"
             loading="lazy"
-            unoptimized
           />
           {frameData.buttons.length > 0 && (
             <div className="flex gap-1.5 border-t border-white/5 p-2">
@@ -243,7 +241,6 @@ function PostCard({
                 height={imageExpanded ? 1200 : 400}
                 className={`w-full object-cover transition-all ${imageExpanded ? '' : 'max-h-96'}`}
                 loading="lazy"
-                unoptimized
               />
             </button>
           </div>

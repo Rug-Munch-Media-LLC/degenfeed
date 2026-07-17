@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 declare global {
   interface BeforeInstallPromptEvent extends Event {
@@ -13,6 +13,7 @@ export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Already running as installed PWA — no prompt needed
@@ -25,8 +26,7 @@ export function InstallPrompt() {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       // Show prompt after 30 seconds of browsing
-      const timer = setTimeout(() => setShowPrompt(true), 30_000);
-      return () => clearTimeout(timer);
+      timerRef.current = setTimeout(() => setShowPrompt(true), 30_000);
     };
 
     const onAppInstalled = () => {
@@ -41,6 +41,7 @@ export function InstallPrompt() {
     return () => {
       window.removeEventListener('beforeinstallprompt', onBeforeInstall);
       window.removeEventListener('appinstalled', onAppInstalled);
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
 

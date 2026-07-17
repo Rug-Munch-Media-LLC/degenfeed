@@ -50,7 +50,8 @@ function getTypeLabel(type: string): string {
 }
 
 function timeAgo(ts: number): string {
-  const diff = Date.now() - ts;
+  const tsMs = ts > 1e12 ? ts : ts * 1000;
+  const diff = Date.now() - tsMs;
   if (diff < 0) return 'just now';
   const m = Math.floor(diff / 60000);
   if (m < 1) return 'just now';
@@ -78,14 +79,14 @@ function getActorInitials(name: string): string {
 
 function NotificationSkeleton() {
   return (
-    <div className="flex items-start gap-3 border-b border-white/5 px-4 py-3.5">
-      <div className="h-10 w-10 flex-shrink-0 animate-pulse rounded-full bg-gray-800" />
+    <div className="flex items-start gap-3 border-b border-[var(--color-border)] px-4 py-3.5">
+      <div className="h-10 w-10 flex-shrink-0 animate-pulse rounded-full bg-[var(--color-card)]" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-32 animate-pulse rounded bg-gray-800" />
-        <div className="h-2.5 w-48 animate-pulse rounded bg-gray-800/60" />
-        <div className="h-2 w-20 animate-pulse rounded bg-gray-800/40" />
+        <div className="h-3 w-32 animate-pulse rounded bg-[var(--color-card)]" />
+        <div className="h-2.5 w-48 animate-pulse rounded bg-[var(--color-card)]/60" />
+        <div className="h-2 w-20 animate-pulse rounded bg-[var(--color-card)]/40" />
       </div>
-      <div className="h-5 w-14 animate-pulse rounded-full bg-gray-800" />
+      <div className="h-5 w-14 animate-pulse rounded-full bg-[var(--color-card)]" />
     </div>
   );
 }
@@ -125,13 +126,17 @@ function NotificationRow({
     <button
       type="button"
       onClick={() => onMarkRead(id)}
-      className={`group flex w-full items-start gap-3 border-b border-white/5 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02] ${
+      aria-label={`${label} from ${actorName}${postText ? `: ${postText}` : ''}`}
+      className={`group flex w-full items-start gap-3 border-b border-[var(--color-border)] px-4 py-3.5 text-left transition-colors hover:bg-[var(--color-overlay)] ${
         read ? 'opacity-60' : ''
       }`}
     >
       {/* Unread indicator dot */}
       {!read && (
-        <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-degen-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]" />
+        <span
+          className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-degen-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]"
+          aria-label="Unread"
+        />
       )}
 
       {/* Type icon */}
@@ -146,7 +151,7 @@ function NotificationRow({
       {/* Content */}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-2">
-          <span className={`truncate text-sm font-medium ${read ? 'text-gray-400' : 'text-white'}`}>
+          <span className={`truncate text-sm font-medium ${read ? 'text-[var(--color-muted)]' : 'text-[var(--color-fg)]'}`}>
             {actorAvatar ? (
               <Image
                 src={actorAvatar}
@@ -166,16 +171,16 @@ function NotificationRow({
             <span>{actorName}</span>
           </span>
           {actorHandle && (
-            <span className="hidden truncate text-xs text-gray-600 sm:inline">@{actorHandle}</span>
+            <span className="hidden truncate text-xs text-[var(--color-muted)] sm:inline">@{actorHandle}</span>
           )}
         </div>
-        <span className={`text-xs ${read ? 'text-gray-600' : 'text-gray-500'}`}>{label}</span>
+        <span className={`text-xs ${read ? 'text-[var(--color-muted)]' : 'text-[var(--color-muted)]'}`}>{label}</span>
         {postText && (
-          <span className="mt-0.5 line-clamp-1 text-xs text-gray-600 italic">
+          <span className="mt-0.5 line-clamp-1 text-xs text-[var(--color-muted)] italic">
             &ldquo;{postText}&rdquo;
           </span>
         )}
-        <span className="mt-0.5 text-[10px] text-gray-700">{timeAgo(createdAt)}</span>
+        <span className="mt-0.5 text-[10px] text-[var(--color-muted)]">{timeAgo(createdAt)}</span>
       </div>
 
       {/* Protocol badge */}
@@ -197,13 +202,13 @@ function EmptyState({ hasSignedIn }: { hasSignedIn: boolean }) {
       <span className="mb-4 text-4xl opacity-30" aria-hidden="true">
         🔔
       </span>
-      <p className="text-base font-medium text-gray-400">No notifications yet</p>
+      <p className="text-base font-medium text-[var(--color-muted)]">No notifications yet</p>
       {hasSignedIn ? (
-        <p className="mt-1 text-sm text-gray-600">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           When someone likes, reposts, or replies, it will show up here.
         </p>
       ) : (
-        <p className="mt-1 text-sm text-gray-600">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Sign in with a social account to see your notifications.
         </p>
       )}
@@ -219,8 +224,8 @@ function SignInPrompt({ onSignIn }: { onSignIn: () => void }) {
       <span className="mb-3 inline-block text-3xl" aria-hidden="true">
         🔔
       </span>
-      <h2 className="mb-1 text-lg font-semibold text-white">Stay in the loop</h2>
-      <p className="mb-4 text-sm text-gray-400">
+      <h2 className="mb-1 text-lg font-semibold text-[var(--color-fg)]">Stay in the loop</h2>
+      <p className="mb-4 text-sm text-[var(--color-muted)]">
         Sign in to receive notifications when someone likes, reposts, or replies across all
         networks.
       </p>
@@ -304,15 +309,15 @@ export default function NotificationsPage() {
       {/* Main column */}
       <main className="lg:col-span-6 xl:col-span-6">
         {/* Sticky header */}
-        <div className="sticky top-16 z-30 border-b border-white/10 bg-black/85 backdrop-blur-xl">
+        <div className="sticky top-16 z-30 border-b border-[var(--color-border)] bg-[var(--color-glass-bg)] backdrop-blur-xl">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
               <span className="text-2xl" aria-hidden="true">
                 🔔
               </span>
               <div>
-                <h1 className="text-lg font-bold text-white leading-none">Notifications</h1>
-                <p className="text-[10px] text-gray-500">
+                <h1 className="text-lg font-bold text-[var(--color-fg)] leading-none">Notifications</h1>
+                <p className="text-[10px] text-[var(--color-muted)]">
                   {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
                 </p>
               </div>
@@ -322,7 +327,7 @@ export default function NotificationsPage() {
               <button
                 type="button"
                 onClick={refresh}
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
                 aria-label="Refresh notifications"
                 disabled={loading}
               >
@@ -347,7 +352,7 @@ export default function NotificationsPage() {
                 <button
                   type="button"
                   onClick={markAllRead}
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:bg-degen-500/20 hover:text-degen-400"
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] transition-colors hover:bg-degen-500/20 hover:text-degen-400"
                 >
                   Mark all read
                 </button>
@@ -356,7 +361,7 @@ export default function NotificationsPage() {
           </div>
 
           {/* Protocol filter pills */}
-          <div className="flex items-center gap-1.5 border-t border-white/5 px-4 py-2.5 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 border-t border-[var(--color-border)] px-4 py-2.5 overflow-x-auto scrollbar-none">
             {PROTOCOLS.map((p) => {
               const unread = p.id === 'all' ? unreadCount : (unreadByProtocol[p.id] ?? 0);
               const active = activeProtocol === p.id;
@@ -368,14 +373,14 @@ export default function NotificationsPage() {
                   type="button"
                   onClick={() => handleProtocolClick(p.id)}
                   className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
-                    active ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+                    active ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
                   }`}
                   style={active ? { backgroundColor: `${color}18`, color } : undefined}
                 >
                   {p.label}
                   {unread > 0 && (
                     <span
-                      className="flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-white"
+                      className="flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-[var(--color-fg)]"
                       style={{ backgroundColor: color }}
                     >
                       {unread > 99 ? '99+' : unread}
@@ -391,7 +396,7 @@ export default function NotificationsPage() {
         {!hasSignedIn ? (
           <SignInPrompt onSignIn={openSignIn} />
         ) : loading && notifications.length === 0 ? (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-[var(--color-border)]">
             {Array.from({ length: 5 }).map((_, i) => (
               <NotificationSkeleton
                 // biome-ignore lint/suspicious/noArrayIndexKey: static skeletons
@@ -403,7 +408,7 @@ export default function NotificationsPage() {
           <EmptyState hasSignedIn={hasSignedIn} />
         ) : (
           <>
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-[var(--color-border)]">
               {visible.map((n) => (
                 <NotificationRow
                   key={n.id}
@@ -425,7 +430,7 @@ export default function NotificationsPage() {
             <div ref={loaderRef} className="h-px" />
 
             {loading && (
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-[var(--color-border)]">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <NotificationSkeleton
                     // biome-ignore lint/suspicious/noArrayIndexKey: static skeletons
@@ -436,7 +441,7 @@ export default function NotificationsPage() {
             )}
 
             {!hasMore && visible.length > 0 && (
-              <div className="py-8 text-center text-xs text-gray-700">All notifications loaded</div>
+              <div className="py-8 text-center text-xs text-[var(--color-muted)]">All notifications loaded</div>
             )}
           </>
         )}

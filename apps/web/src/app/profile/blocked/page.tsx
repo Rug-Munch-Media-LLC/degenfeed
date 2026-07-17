@@ -24,14 +24,12 @@ export default function BlockedUsersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [blockMod, muteMod] = await Promise.all([
-        import('@degenfeed/storage'),
-        import('@degenfeed/storage'),
-      ]);
+      const storage = await import('@degenfeed/storage');
       const [blockedUsers, mutedIdentities] = await Promise.all([
-        blockMod.getBlockedUsers('self'),
-        muteMod.getMutedIdentities('self'),
+        storage.getBlockedUsers('self'),
+        storage.getMutedIdentities('self'),
       ]);
+
       setBlocked(
         blockedUsers.map((b) => ({
           targetId: b.targetId,

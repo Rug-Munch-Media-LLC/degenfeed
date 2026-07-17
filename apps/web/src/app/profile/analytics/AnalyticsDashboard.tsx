@@ -159,18 +159,18 @@ function StatCard({
   accent?: string;
 }) {
   return (
-    <div className="card relative overflow-hidden border-white/[0.06] bg-white/[0.03] p-5 backdrop-blur-xl transition-all duration-300 hover:border-degen-500/20 hover:shadow-[0_0_30px_rgba(0,255,65,0.06)]">
+    <div className="card relative overflow-hidden border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl transition-all duration-300 hover:border-degen-500/20 hover:shadow-[0_0_30px_rgba(0,255,65,0.06)]">
       {accent && (
         <div
           className="absolute right-0 top-0 h-1 w-full opacity-60"
           style={{ background: `linear-gradient(90deg, transparent, ${accent})` }}
         />
       )}
-      <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-gray-500">
+      <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--color-muted)]">
         {label}
       </div>
-      <div className="mt-1.5 text-2xl font-bold tracking-tight text-white">{value}</div>
-      {sub && <div className="mt-0.5 text-[11px] text-gray-600">{sub}</div>}
+      <div className="mt-1.5 text-2xl font-bold tracking-tight text-[var(--color-fg)]">{value}</div>
+      {sub && <div className="mt-0.5 text-[11px] text-[var(--color-muted)]">{sub}</div>}
     </div>
   );
 }
@@ -189,9 +189,9 @@ function MiniBar({
   const pct = max > 0 ? (value / max) * 100 : 0;
   return (
     <div className="flex items-center gap-2.5">
-      {label && <span className="w-20 shrink-0 text-xs text-gray-400">{label}</span>}
+      {label && <span className="w-20 shrink-0 text-xs text-[var(--color-muted)]">{label}</span>}
       <div
-        className="flex-1 overflow-hidden rounded-full bg-white/[0.06]"
+        className="flex-1 overflow-hidden rounded-full bg-[var(--color-overlay)]"
         role="progressbar"
         aria-valuenow={value}
         aria-valuemin={0}
@@ -203,7 +203,7 @@ function MiniBar({
           style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}88)` }}
         />
       </div>
-      <span className="w-12 text-right text-xs font-medium tabular-nums text-white">
+      <span className="w-12 text-right text-xs font-medium tabular-nums text-[var(--color-fg)]">
         {formatCompact(value)}
       </span>
     </div>
@@ -243,11 +243,11 @@ function BarChart({
               }}
             />
             {!compact && (
-              <span className="mt-1 vertical-labels text-[9px] text-gray-600">
+              <span className="mt-1 vertical-labels text-[9px] text-[var(--color-muted)]">
                 {labels[i]?.slice(0, 3)}
               </span>
             )}
-            <div className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[10px] text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+            <div className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[var(--color-card)] px-2 py-1 text-[10px] text-[var(--color-fg)] opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
               {labels[i]}: {v}
             </div>
           </div>
@@ -279,8 +279,8 @@ function Heatmap({ data, labels, color }: { data: number[]; labels: string[]; co
               }}
               title={`${labels[i]}: ${v} posts`}
             />
-            <span className="text-[9px] font-medium text-gray-500">{labels[i]?.slice(0, 2)}</span>
-            <span className="text-[9px] tabular-nums text-gray-600">{v}</span>
+            <span className="text-[9px] font-medium text-[var(--color-muted)]">{labels[i]?.slice(0, 2)}</span>
+            <span className="text-[9px] tabular-nums text-[var(--color-muted)]">{v}</span>
           </div>
         );
       })}
@@ -293,12 +293,12 @@ function Heatmap({ data, labels, color }: { data: number[]; labels: string[]; co
 function PostRow({ post, rank }: { post: TopPost; rank: number }) {
   const badge = protocolBadge(post.protocol);
   return (
-    <div className="group flex items-start gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-3 transition-all duration-200 hover:border-white/[0.08] hover:bg-white/[0.04]">
-      <span className="mt-0.5 w-5 shrink-0 text-center text-[11px] font-bold text-gray-600">
+    <div className="group flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-overlay)] p-3 transition-all duration-200 hover:border-[var(--color-border)] hover:bg-[var(--color-overlay)]">
+      <span className="mt-0.5 w-5 shrink-0 text-center text-[11px] font-bold text-[var(--color-muted)]">
         {rank}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm leading-snug text-gray-300">{shortenPost(post.content, 80)}</p>
+        <p className="text-sm leading-snug text-[var(--color-muted)]">{shortenPost(post.content, 80)}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-2">
           <span
             className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
@@ -306,13 +306,13 @@ function PostRow({ post, rank }: { post: TopPost; rank: number }) {
           >
             {badge.label}
           </span>
-          <span className="inline-flex items-center gap-1 text-[10px] tabular-nums text-gray-600">
+          <span className="inline-flex items-center gap-1 text-[10px] tabular-nums text-[var(--color-muted)]">
             ♥ {post.likes}
           </span>
-          <span className="inline-flex items-center gap-1 text-[10px] tabular-nums text-gray-600">
+          <span className="inline-flex items-center gap-1 text-[10px] tabular-nums text-[var(--color-muted)]">
             ↻ {post.reposts}
           </span>
-          <span className="inline-flex items-center gap-1 text-[10px] tabular-nums text-gray-600">
+          <span className="inline-flex items-center gap-1 text-[10px] tabular-nums text-[var(--color-muted)]">
             ⌨ {post.replies}
           </span>
           {post.tipsUsd > 0 && (
@@ -320,7 +320,7 @@ function PostRow({ post, rank }: { post: TopPost; rank: number }) {
               ✦ {formatUsd(post.tipsUsd)}
             </span>
           )}
-          <span className="ml-auto text-[9px] text-gray-700">{formatDate(post.createdAt)}</span>
+          <span className="ml-auto text-[9px] text-[var(--color-muted)]">{formatDate(post.createdAt)}</span>
         </div>
       </div>
     </div>
@@ -342,7 +342,7 @@ function PieChart({
   if (total === 0)
     return (
       <div
-        className="flex items-center justify-center text-xs text-gray-600"
+        className="flex items-center justify-center text-xs text-[var(--color-muted)]"
         style={{ width: size, height: size }}
       >
         No data
@@ -379,8 +379,8 @@ function PieChart({
               className="h-2.5 w-2.5 shrink-0 rounded-sm"
               style={{ backgroundColor: colorMap[key] || '#666' }}
             />
-            <span className="text-xs text-gray-400 capitalize">{key}</span>
-            <span className="ml-auto text-xs font-medium tabular-nums text-white">
+            <span className="text-xs text-[var(--color-muted)] capitalize">{key}</span>
+            <span className="ml-auto text-xs font-medium tabular-nums text-[var(--color-fg)]">
               {formatCompact(val)}
             </span>
           </div>
@@ -513,15 +513,15 @@ export default function AnalyticsDashboard() {
     return (
       <div className="mx-auto max-w-5xl px-4 py-20 text-center">
         <div className="mx-auto max-w-md">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.03] text-2xl">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-overlay)] text-2xl">
             <span className="text-degen-400">◆</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Creator Analytics</h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-[var(--color-fg)]">Creator Analytics</h1>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">
             Connect a wallet or sign in to see your cross-protocol analytics — followers, tips,
             engagement, and top content.
           </p>
-          <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.02] px-5 py-2.5 text-sm text-gray-400">
+          <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-overlay)] px-5 py-2.5 text-sm text-[var(--color-muted)]">
             <span className="text-degen-400">✦</span>
             Connect wallet to see your analytics
           </div>
@@ -557,8 +557,8 @@ export default function AnalyticsDashboard() {
       <div className="mx-auto max-w-5xl px-4 py-20">
         <div className="card border-red-500/20 bg-red-500/5 py-12 text-center">
           <div className="mb-3 text-3xl text-red-400">!</div>
-          <h2 className="mb-1 text-lg font-bold text-white">Failed to load analytics</h2>
-          <p className="mb-4 text-sm text-gray-500">{error}</p>
+          <h2 className="mb-1 text-lg font-bold text-[var(--color-fg)]">Failed to load analytics</h2>
+          <p className="mb-4 text-sm text-[var(--color-muted)]">{error}</p>
           <button
             type="button"
             onClick={() => window.location.reload()}
@@ -578,8 +578,8 @@ export default function AnalyticsDashboard() {
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Creator Analytics</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-fg)]">Creator Analytics</h1>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
             Your cross-protocol reach, engagement, and earnings at a glance.
           </p>
         </div>
@@ -603,7 +603,7 @@ export default function AnalyticsDashboard() {
 
       {/* Tabs */}
       <div
-        className="mb-8 flex border-b border-white/[0.06]"
+        className="mb-8 flex border-b border-[var(--color-border)]"
         role="tablist"
         aria-label="Analytics tabs"
       >
@@ -615,7 +615,7 @@ export default function AnalyticsDashboard() {
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`relative px-5 py-3 text-sm font-medium transition-colors ${
-              activeTab === tab.id ? 'text-degen-400' : 'text-gray-500 hover:text-gray-300'
+              activeTab === tab.id ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
             }`}
           >
             {tab.label}
@@ -660,8 +660,8 @@ export default function AnalyticsDashboard() {
           {/* Charts row */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Followers by protocol */}
-            <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-white">Followers by Protocol</h3>
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Followers by Protocol</h3>
               <div className="space-y-2.5">
                 {Object.entries(data.followers.byProtocol).map(([protocol, count]) => (
                   <MiniBar
@@ -676,8 +676,8 @@ export default function AnalyticsDashboard() {
             </div>
 
             {/* Follower growth (sparkline summary) */}
-            <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-white">30-Day Follower Growth</h3>
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">30-Day Follower Growth</h3>
               <div className="overflow-x-auto pb-2">
                 <BarChart
                   data={data.followers.growth30d}
@@ -687,7 +687,7 @@ export default function AnalyticsDashboard() {
                   compact
                 />
               </div>
-              <div className="mt-3 flex items-center justify-between text-[11px] text-gray-600">
+              <div className="mt-3 flex items-center justify-between text-[11px] text-[var(--color-muted)]">
                 <span>{data.followers.growthLabels[0] ?? ''}</span>
                 <span className="text-degen-400">
                   {data.followers.growth30d[0] !== undefined
@@ -703,8 +703,8 @@ export default function AnalyticsDashboard() {
 
           {/* Posts & Engagement mini */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-white">Posts per Day (7 days)</h3>
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Posts per Day (7 days)</h3>
               <div className="overflow-x-auto pb-2">
                 <BarChart
                   data={data.posts.byDay.slice(-7)}
@@ -714,8 +714,8 @@ export default function AnalyticsDashboard() {
                 />
               </div>
             </div>
-            <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-white">Engagement Breakdown</h3>
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Engagement Breakdown</h3>
               <div className="space-y-2.5">
                 <MiniBar
                   label="Likes"
@@ -757,8 +757,8 @@ export default function AnalyticsDashboard() {
       {activeTab === 'content' && (
         <div className="space-y-8 animate-fade-in">
           {/* Top by engagement */}
-          <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-white">Top Posts by Engagement</h3>
+          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Posts by Engagement</h3>
             <div className="space-y-2">
               {data.topPosts.map((post, i) => (
                 <PostRow key={post.id} post={post} rank={i + 1} />
@@ -767,8 +767,8 @@ export default function AnalyticsDashboard() {
           </div>
 
           {/* Top by tips */}
-          <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-white">Top Posts by Tips</h3>
+          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Posts by Tips</h3>
             <div className="space-y-2">
               {data.topTipPosts.map((post, i) => (
                 <PostRow key={`tip-${post.id}`} post={post} rank={i + 1} />
@@ -777,8 +777,8 @@ export default function AnalyticsDashboard() {
           </div>
 
           {/* Posting frequency heatmap */}
-          <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-white">
+          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
               Posting Frequency by Day of Week
             </h3>
             <Heatmap
@@ -786,7 +786,7 @@ export default function AnalyticsDashboard() {
               labels={data.posts.weekdayLabels}
               color="#00ff41"
             />
-            <p className="mt-3 text-center text-[10px] text-gray-600">
+            <p className="mt-3 text-center text-[10px] text-[var(--color-muted)]">
               Most active on{' '}
               {
                 data.posts.weekdayLabels[
@@ -803,14 +803,14 @@ export default function AnalyticsDashboard() {
       {activeTab === 'audience' && (
         <div className="space-y-8 animate-fade-in">
           {/* Pie chart followers by protocol */}
-          <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-white">Followers by Protocol</h3>
+          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Followers by Protocol</h3>
             <PieChart data={data.followers.byProtocol} colorMap={PROTOCOL_COLORS} size={160} />
           </div>
 
           {/* Follower growth 30-day chart */}
-          <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-white">Follower Growth (30 Days)</h3>
+          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Follower Growth (30 Days)</h3>
             <div className="overflow-x-auto pb-2">
               <BarChart
                 data={data.followers.growth30d}
@@ -823,8 +823,8 @@ export default function AnalyticsDashboard() {
 
           {/* Top instances */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-white">Top Instances / Domains</h3>
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Instances / Domains</h3>
               <div className="space-y-2.5">
                 {Object.entries(data.audience.byInstance)
                   .sort(([, a], [, b]) => b - a)
@@ -839,8 +839,8 @@ export default function AnalyticsDashboard() {
                   ))}
               </div>
             </div>
-            <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-white">Top Locations</h3>
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Top Locations</h3>
               <div className="space-y-2.5">
                 {Object.entries(data.audience.locations)
                   .sort(([, a], [, b]) => b - a)
@@ -891,8 +891,8 @@ export default function AnalyticsDashboard() {
           </div>
 
           {/* Tips history */}
-          <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-            <h3 className="mb-4 text-sm font-semibold text-white">Tips Received (30 Days) — USD</h3>
+          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Tips Received (30 Days) — USD</h3>
             <div className="overflow-x-auto pb-2">
               <BarChart
                 data={data.tips.history30d}
@@ -905,50 +905,50 @@ export default function AnalyticsDashboard() {
 
           {/* Tips by currency */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-white">Tips by Currency</h3>
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Tips by Currency</h3>
               <PieChart
                 data={data.tips.byCurrency as Record<string, number>}
                 colorMap={CURRENCY_COLORS}
                 size={140}
               />
             </div>
-            <div className="card border-white/[0.06] bg-white/[0.02] p-5 backdrop-blur-xl">
-              <h3 className="mb-4 text-sm font-semibold text-white">Tips by Protocol</h3>
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+              <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Tips by Protocol</h3>
               <div className="space-y-3">
-                <div className="flex items-center justify-between rounded-lg border border-white/[0.04] px-4 py-2.5">
+                <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-4 py-2.5">
                   <div className="flex items-center gap-2.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-[#8e30eb]" />
-                    <span className="text-sm text-gray-300">Nostr (Zaps)</span>
+                    <span className="text-sm text-[var(--color-muted)]">Nostr (Zaps)</span>
                   </div>
-                  <span className="text-sm font-medium tabular-nums text-white">
+                  <span className="text-sm font-medium tabular-nums text-[var(--color-fg)]">
                     {formatUsd(data.tips.totalUsd * 0.42)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-white/[0.04] px-4 py-2.5">
+                <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-4 py-2.5">
                   <div className="flex items-center gap-2.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-[#8a63d2]" />
-                    <span className="text-sm text-gray-300">Farcaster (Frames)</span>
+                    <span className="text-sm text-[var(--color-muted)]">Farcaster (Frames)</span>
                   </div>
-                  <span className="text-sm font-medium tabular-nums text-white">
+                  <span className="text-sm font-medium tabular-nums text-[var(--color-fg)]">
                     {formatUsd(data.tips.totalUsd * 0.31)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-white/[0.04] px-4 py-2.5">
+                <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-4 py-2.5">
                   <div className="flex items-center gap-2.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-[#abfe2c]" />
-                    <span className="text-sm text-gray-300">Lens (Collects)</span>
+                    <span className="text-sm text-[var(--color-muted)]">Lens (Collects)</span>
                   </div>
-                  <span className="text-sm font-medium tabular-nums text-white">
+                  <span className="text-sm font-medium tabular-nums text-[var(--color-fg)]">
                     {formatUsd(data.tips.totalUsd * 0.18)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-white/[0.04] px-4 py-2.5">
+                <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] px-4 py-2.5">
                   <div className="flex items-center gap-2.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-[#1185fe]" />
-                    <span className="text-sm text-gray-300">Direct Crypto</span>
+                    <span className="text-sm text-[var(--color-muted)]">Direct Crypto</span>
                   </div>
-                  <span className="text-sm font-medium tabular-nums text-white">
+                  <span className="text-sm font-medium tabular-nums text-[var(--color-fg)]">
                     {formatUsd(data.tips.totalUsd * 0.09)}
                   </span>
                 </div>

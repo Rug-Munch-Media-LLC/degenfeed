@@ -215,24 +215,22 @@ export function ComposeModal({
 
   const handleSchedule = useCallback(() => {
     if (!text.trim() || !scheduledAt || publishingRef.current) return;
+    if (scheduledAt <= new Date()) return; // must be future
     const selectedTargets = targets.filter((t) => t.enabled).map((t) => t.id);
     if (selectedTargets.length === 0) return;
 
     publishingRef.current = true;
     setPublishing(true);
 
-    // Small delay to show UI feedback
-    setTimeout(() => {
-      try {
-        onSchedule?.(text.trim(), selectedTargets, scheduledAt);
-        localStorage.removeItem(DRAFT_KEY);
-      } catch {
-        /* noop */
-      }
-      publishingRef.current = false;
-      setPublishing(false);
-      onClose();
-    }, 400);
+    try {
+      onSchedule?.(text.trim(), selectedTargets, scheduledAt);
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* noop */
+    }
+    publishingRef.current = false;
+    setPublishing(false);
+    onClose();
   }, [text, targets, scheduledAt, onSchedule, onClose]);
 
   const handlePublish = useCallback(async () => {
