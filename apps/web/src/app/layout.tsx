@@ -57,6 +57,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <body>
+        {/* ── PWA platform tags ── */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="DegenFeed" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="application-name" content="DegenFeed" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+        {/* Windows PWA */}
+        <meta name="msapplication-TileColor" content="#000000" />
+        <meta name="msapplication-tap-highlight" content="no" />
         <ErrorTracker />
         <Script
           defer

@@ -12,12 +12,22 @@ export interface ProtocolOption {
   authUrl?: string;
 }
 
+export interface WalletOption {
+  id: string;
+  label: string;
+  icon: string;
+  color: string;
+  detected: boolean;
+}
+
 export interface SignInModalProps {
   open: boolean;
   onClose: () => void;
   onSignIn: (protocol: string, credentials?: Record<string, string>) => void;
   walletAddress?: string;
   walletSigningIn?: boolean;
+  /** List of detected browser wallets. When omitted, falls back to basic Ethereum/Solana buttons. */
+  availableWallets?: WalletOption[];
 }
 
 const PROTOCOLS: ProtocolOption[] = [
@@ -553,42 +563,110 @@ function WalletSection({
   onSignIn,
   walletAddress,
   walletSigningIn,
+  availableWallets,
 }: {
   onSignIn: (p: string) => void;
   walletAddress?: string;
   walletSigningIn?: boolean;
+  availableWallets?: WalletOption[];
 }) {
+  const hasDetection = availableWallets && availableWallets.length > 0;
+  const detectedWallets = hasDetection
+    ? availableWallets.filter((w) => w.detected && w.id !== 'walletconnect')
+    : [];
+
   return (
     <div className="space-y-3">
       <h3 className="text-xs font-medium uppercase tracking-widest text-gray-500">Web3 Wallets</h3>
+
+      {/* Connected wallet display */}
       {walletAddress ? (
         <div className="rounded-xl border border-degen-500/30 bg-degen-500/10 px-4 py-3">
           <div className="text-xs text-gray-500 mb-1">Connected Wallet</div>
           <div className="text-sm font-mono text-degen-400 break-all">{walletAddress}</div>
         </div>
       ) : null}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => onSignIn('ethereum')}
-          disabled={walletSigningIn}
-          className="flex items-center justify-center gap-2 rounded-xl border border-[#627eea]/30 bg-[#627eea]/10 px-4 py-3 text-sm font-semibold text-[#627eea] transition-all hover:bg-[#627eea]/20 disabled:opacity-50"
-          type="button"
-        >
-          <span className="text-lg">◆</span>
-          {walletSigningIn ? 'Signing...' : 'Ethereum'}
-        </button>
-        <button
-          onClick={() => onSignIn('solana')}
-          disabled={walletSigningIn}
-          className="flex items-center justify-center gap-2 rounded-xl border border-[#9945ff]/30 bg-[#9945ff]/10 px-4 py-3 text-sm font-semibold text-[#9945ff] transition-all hover:bg-[#9945ff]/20 disabled:opacity-50"
-          type="button"
-        >
-          <span className="text-lg">◎</span>
-          {walletSigningIn ? 'Signing...' : 'Solana'}
-        </button>
-      </div>
+
+      {/* Detected wallet list */}
+      {hasDetection && detectedWallets.length > 0 ? (
+        <div className="space-y-1.5">
+          {availableWallets.map((w) => {
+            if (w.id === 'walletconnect') return null; // rendered separately below
+            return (
+              <button
+                key={w.id}
+                type="button"
+                onClick={() => onSignIn('ethereum')}
+                disabled={walletSigningIn}
+                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-2.5 text-left transition-all ${
+                  w.detected
+                    ? 'border-gray-700 bg-gray-900/70 hover:border-gray-500'
+                    : 'border-gray-800/50 bg-gray-900/30 opacity-50'
+                }`}
+              >
+                <span className="text-lg">{w.icon}</span>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-white">{w.label}</div>
+                  {w.detected ? (
+                    <div className="text-[10px] text-green-500">● Detected</div>
+                  ) : (
+                    <div className="text-[10px] text-gray-600">Not detected</div>
+                  )}
+                </div>
+                {w.detected && (
+                  <span className="text-xs text-gray-500 group-hover:text-gray-300">Connect →</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        /* Fallback: simple Ethereum / Solana buttons (backward compatible) */
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => onSignIn('ethereum')}
+            disabled={walletSigningIn}
+            className="flex items-center justify-center gap-2 rounded-xl border border-[#627eea]/30 bg-[#627eea]/10 px-4 py-3 text-sm font-semibold text-[#627eea] transition-all hover:bg-[#627eea]/20 disabled:opacity-50"
+            type="button"
+          >
+            <span className="text-lg">◆</span>
+            {walletSigningIn ? 'Signing...' : 'Ethereum'}
+          </button>
+          <button
+            onClick={() => onSignIn('solana')}
+            disabled={walletSigningIn}
+            className="flex items-center justify-center gap-2 rounded-xl border border-[#9945ff]/30 bg-[#9945ff]/10 px-4 py-3 text-sm font-semibold text-[#9945ff] transition-all hover:bg-[#9945ff]/20 disabled:opacity-50"
+            type="button"
+          >
+            <span className="text-lg">◎</span>
+            {walletSigningIn ? 'Signing...' : 'Solana'}
+          </button>
+        </div>
+      )}
+
+      {/* WalletConnect QR placeholder */}
+      <button
+        type="button"
+        onClick={() => onSignIn('ethereum')}
+        disabled={walletSigningIn}
+        className="flex w-full items-center gap-3 rounded-xl border border-dashed border-[#3b99fc]/40 bg-[#3b99fc]/5 px-4 py-2.5 text-left transition-all hover:border-[#3b99fc]/60 hover:bg-[#3b99fc]/10"
+      >
+        <span className="text-lg">🔗</span>
+        <div className="flex-1">
+          <div className="text-sm font-medium text-[#3b99fc]">WalletConnect</div>
+          <div className="text-xs text-gray-500">
+            Scan QR with your mobile wallet
+            <span className="ml-1.5 rounded bg-[#3b99fc]/20 px-1.5 py-0.5 text-[10px] text-[#3b99fc]">
+              Coming soon
+            </span>
+          </div>
+        </div>
+      </button>
+
       <p className="text-center text-xs text-gray-600">
-        No emails, no passwords. Sign in with your wallet.
+        {walletAddress
+          ? 'Signed in. You can also link social protocols below.'
+          : 'No emails, no passwords. Sign in with your wallet.'}
       </p>
     </div>
   );
@@ -600,6 +678,7 @@ export const SignInModal = memo(function SignInModal({
   onSignIn,
   walletAddress,
   walletSigningIn,
+  availableWallets,
 }: SignInModalProps) {
   const [selectedProtocol, setSelectedProtocol] = useState<ProtocolOption | null>(null);
 
@@ -690,6 +769,7 @@ export const SignInModal = memo(function SignInModal({
                 onSignIn={(p) => onSignIn(p)}
                 walletAddress={walletAddress}
                 walletSigningIn={walletSigningIn}
+                availableWallets={availableWallets}
               />
             </div>
 

@@ -1,0 +1,40 @@
+# DegenFeed Web — Docker Compose
+# Build: docker compose build
+# Start: docker compose up -d
+# Stop:  docker compose down
+
+services:
+  web:
+    image: degenfeed-web:latest
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: degenfeed-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3100:3000"
+    env_file: /srv/degenfeed/.env
+    networks:
+      - rmi_network
+      - degenfeed_default
+    mem_limit: 1g
+    user: "1001:1001"
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=100M
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+networks:
+  rmi_network:
+    external: true
+  degenfeed_default:
+    external: true

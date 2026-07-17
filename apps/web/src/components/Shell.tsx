@@ -7,6 +7,7 @@ import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
 import { OnboardingModal } from './OnboardingModal';
 import { SearchOverlay } from './SearchOverlay';
+import { InstallPrompt } from './InstallPrompt';
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
 
@@ -62,6 +63,7 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
     </a>
   );
 }
+
 
 export const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   const { ready, signedInProtocols, openSignIn, openCompose } = useAuth();
@@ -316,6 +318,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
 
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <OnboardingModal />
+      <InstallPrompt />
     </div>
   );
 });

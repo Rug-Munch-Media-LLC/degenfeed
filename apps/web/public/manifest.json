@@ -1,16 +1,22 @@
 {
-  "name": "DegenFeed",
+  "name": "DegenFeed — The social feed of web3",
   "short_name": "DegenFeed",
-  "description": "The social feed of web3",
+  "description": "See every network. Zero sign-ups. DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one window.",
   "start_url": "/home",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#00ff41",
   "orientation": "portrait",
-  "categories": ["social", "news", "cryptocurrency"],
+  "categories": ["social", "news", "cryptocurrency", "productivity"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "scope": "/",
+  "display_override": ["standalone", "minimal-ui"],
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" },
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
 }

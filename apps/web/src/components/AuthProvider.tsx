@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [showSignIn, setShowSignIn] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
 
-  const { account: wagmiAddress, isConnected } = useWeb3();
+  const { account: wagmiAddress, isConnected, availableWallets } = useWeb3();
   const { signInWithEthereum, signingIn: walletSigningIn } = useWalletSignIn();
   const { signInWithSolana, signingIn: solanaSigningIn } = useSolanaSignIn();
   const { showToast } = useToast();
@@ -577,6 +577,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         onSignIn={handleSignIn}
         walletAddress={walletAddress}
         walletSigningIn={walletSigningIn || solanaSigningIn}
+        availableWallets={availableWallets}
       />
 
       <ComposeModal

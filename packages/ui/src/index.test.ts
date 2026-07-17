@@ -100,4 +100,8 @@ describe('Component exports', () => {
   it('should export ProtocolBadge', () => {
     expect(mod.ProtocolBadge).toBeDefined();
   });
+
+  it('should export TokenChart', () => {
+    expect(mod.TokenChart).toBeDefined();
+  });
 });
