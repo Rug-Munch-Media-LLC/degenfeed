@@ -134,7 +134,7 @@ export const MastodonInstanceContext = memo(function MastodonInstanceContext({
 
       {/* ── Fediverse context note ── */}
       {federatedFrom && federatedFrom !== cleanInstance && (
-        <div className="border-t border-white/5 px-4 py-2">
+        <div className="border-t border-[var(--color-glass-border)] px-4 py-2">
           <p className="text-[11px] leading-relaxed text-gray-600">
             <span className="font-medium text-gray-500">Fediverse:</span> This post originated on{' '}
             <span className="text-gray-400">{federatedFrom.replace(/^https?:\/\//, '')}</span> and
@@ -148,7 +148,7 @@ export const MastodonInstanceContext = memo(function MastodonInstanceContext({
         href={originalUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center border-t border-white/5 px-4 py-2 text-xs transition-colors"
+        className="flex items-center justify-center border-t border-[var(--color-glass-border)] px-4 py-2 text-xs transition-colors"
         style={{ color: MASTODON_PURPLE }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}

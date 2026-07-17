@@ -147,7 +147,7 @@ export default function ProfilePage() {
   if (!ready) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20 text-center text-gray-500">
-        <div className="mx-auto mb-4 h-2 w-32 animate-pulse rounded-full bg-gray-800" />
+        <div className="mx-auto mb-4 h-2 w-32 animate-pulse rounded-full bg-[var(--color-muted)]" />
         <p>Loading...</p>
       </div>
     );
@@ -157,12 +157,12 @@ export default function ProfilePage() {
     <ErrorBoundary>
       <div className="mx-auto max-w-2xl px-4 py-6">
         <div className="card mb-8 py-8 text-center">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 via-purple-500/30 to-fuchsia-500/30 text-3xl font-bold text-white shadow-[0_0_30px_rgba(34,197,94,0.2)]">
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 via-purple-500/30 to-fuchsia-500/30 text-3xl font-bold text-[var(--color-fg)] shadow-[0_0_30px_rgba(34,197,94,0.2)]">
             {primaryIdentity?.displayName
               ? primaryIdentity.displayName.charAt(0).toUpperCase()
               : '?'}
           </div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-[var(--color-fg)]">
             {primaryIdentity?.displayName ?? 'DegenFeed User'}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
@@ -207,7 +207,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-white truncate">
+                        <span className="text-sm font-semibold text-[var(--color-fg)] truncate">
                           {id.displayName || id.protocol}
                         </span>
                         <span
@@ -247,7 +247,7 @@ export default function ProfilePage() {
                           <>
                             <button
                               onClick={() => setPrimary(id.id)}
-                              className="rounded-lg bg-gray-800 px-2 py-1 text-xs text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                              className="rounded-lg bg-[var(--color-muted)] px-2 py-1 text-xs text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
                               type="button"
                             >
                               Set primary
@@ -313,14 +313,14 @@ export default function ProfilePage() {
                         />
                         <div className="flex-1">
                           <span
-                            className={`text-sm ${linked ? 'font-medium text-white' : 'text-gray-500'}`}
+                            className={`text-sm ${linked ? 'font-medium text-[var(--color-fg)]' : 'text-gray-500'}`}
                           >
                             {n.label}
                           </span>
                           <span className="ml-2 text-[10px] text-gray-600">{n.desc}</span>
                         </div>
                         <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${linked ? 'bg-degen-500/15 text-degen-400' : 'bg-gray-800 text-gray-600'}`}
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${linked ? 'bg-degen-500/15 text-degen-400' : 'bg-[var(--color-muted)] text-gray-600'}`}
                         >
                           {linked ? 'Active' : 'Not linked'}
                         </span>
@@ -354,7 +354,7 @@ export default function ProfilePage() {
                           className="h-14 w-14 rounded-xl object-cover"
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-base font-bold text-white">
+                          <div className="text-base font-bold text-[var(--color-fg)]">
                             {mastoId.displayName || mastoId.handle}
                           </div>
                           {mastoId.handle && (
@@ -369,14 +369,14 @@ export default function ProfilePage() {
                           href={`https://social.degenfeed.xyz/@${mastoId.handle}`}
                           target="_blank"
                           rel="noopener"
-                          className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:border-degen-500/30 hover:text-white"
+                          className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)]"
                         >
                           View Profile →
                         </a>
                         <button
                           onClick={() => navigator.clipboard.writeText(mastoId.handle || '')}
                           type="button"
-                          className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:border-degen-500/30 hover:text-white"
+                          className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)]"
                         >
                           Copy Handle
                         </button>
@@ -405,13 +405,13 @@ export default function ProfilePage() {
                     <span className="text-lg">📑</span>
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-white">Bookmarks</div>
+                    <div className="text-sm font-semibold text-[var(--color-fg)]">Bookmarks</div>
                     <div className="text-xs text-gray-500">Posts saved across all protocols</div>
                   </div>
                 </div>
                 <a
                   href="/profile/bookmarks"
-                  className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                  className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
                 >
                   View all
                 </a>
@@ -436,13 +436,13 @@ export default function ProfilePage() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-white">Blocked &amp; Muted</div>
+                    <div className="text-sm font-semibold text-[var(--color-fg)]">Blocked &amp; Muted</div>
                     <div className="text-xs text-gray-500">Manage your blocked and muted users</div>
                   </div>
                 </div>
                 <a
                   href="/profile/blocked"
-                  className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                  className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
                 >
                   Manage
                 </a>
@@ -458,7 +458,7 @@ export default function ProfilePage() {
                   </h2>
                   <a
                     href="/profile/subscriptions"
-                    className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                    className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
                   >
                     View all
                   </a>
@@ -466,17 +466,17 @@ export default function ProfilePage() {
                 <div className="card border-degen-500/20 bg-degen-500/5 p-4 space-y-3">
                   {subsLoading ? (
                     <div className="flex items-center gap-3 py-2">
-                      <div className="h-3 w-24 animate-pulse rounded bg-gray-800" />
+                      <div className="h-3 w-24 animate-pulse rounded bg-[var(--color-muted)]" />
                     </div>
                   ) : (
                     subscriptions.map((sub) => (
                       <div
                         key={sub.creator}
-                        className="card-hover flex items-center justify-between !bg-gray-900/40 px-3 py-3"
+                        className="card-hover flex items-center justify-between !bg-[var(--color-muted)] px-3 py-3"
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="truncate text-sm font-semibold text-white">
+                            <span className="truncate text-sm font-semibold text-[var(--color-fg)]">
                               {shortenAddress(sub.creator)}
                             </span>
                             <span className="shrink-0 rounded-full bg-degen-500/20 px-2 py-0.5 text-[10px] font-medium text-degen-400">
@@ -537,7 +537,7 @@ export default function ProfilePage() {
                   </a>
                   <a
                     href={`/subscribe/${primaryIdentity?.publicId ?? walletAddress ?? 'setup'}`}
-                    className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                    className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
                   >
                     Preview page
                   </a>
@@ -553,7 +553,7 @@ export default function ProfilePage() {
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <div className="text-xs font-semibold text-degen-400">Tips Dashboard</div>
-                    <div className="text-2xl font-bold text-white">$0.00</div>
+                    <div className="text-2xl font-bold text-[var(--color-fg)]">$0.00</div>
                     <div className="text-[10px] text-gray-500">Estimated total tips received</div>
                   </div>
                   {(() => {
@@ -584,7 +584,7 @@ export default function ProfilePage() {
                   </a>
                   <a
                     href="/profile/monetization"
-                    className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                    className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
                   >
                     Set up tipping
                   </a>
@@ -627,7 +627,7 @@ export default function ProfilePage() {
                       .map((id) => (
                         <div
                           key={`${id.protocol}-${id.address}`}
-                          className="card-hover mb-2 flex items-center justify-between !bg-gray-900/40 px-3 py-2"
+                          className="card-hover mb-2 flex items-center justify-between !bg-[var(--color-muted)] px-3 py-2"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="hidden sm:block rounded-lg bg-white p-1 shadow-sm">
@@ -644,7 +644,7 @@ export default function ProfilePage() {
                             </div>
                             <span style={{ color: id.color }}>{PROTOCOL_ICONS[id.protocol]}</span>
                             <div className="min-w-0">
-                              <div className="text-xs font-medium text-white">
+                              <div className="text-xs font-medium text-[var(--color-fg)]">
                                 {id.protocol === 'ethereum' ? 'EVM Chain' : 'Solana'}
                               </div>
                               <code className="text-xs font-mono text-gray-400 truncate block">
@@ -654,7 +654,7 @@ export default function ProfilePage() {
                           </div>
                           <button
                             onClick={() => navigator.clipboard.writeText(id.address ?? '')}
-                            className="shrink-0 rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                            className="shrink-0 rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
                             type="button"
                           >
                             Copy
@@ -662,22 +662,22 @@ export default function ProfilePage() {
                         </div>
                       ))}
                     <div className="mt-2 flex flex-wrap gap-1">
-                      <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">
+                      <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-500">
                         Ethereum
                       </span>
-                      <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">
+                      <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-500">
                         Base
                       </span>
-                      <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">
+                      <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-500">
                         Optimism
                       </span>
-                      <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">
+                      <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-500">
                         Arbitrum
                       </span>
-                      <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">
+                      <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-500">
                         Polygon
                       </span>
-                      <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-500">
+                      <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-500">
                         Solana
                       </span>
                       <button
@@ -701,11 +701,11 @@ export default function ProfilePage() {
                   </div>
                   <div className="space-y-2">
                     {identities.map((id) => (
-                      <div key={`tip-${id.id}`} className="card !bg-gray-900/40 px-3 py-2">
+                      <div key={`tip-${id.id}`} className="card !bg-[var(--color-muted)] px-3 py-2">
                         <div className="flex items-center gap-2">
                           <span style={{ color: id.color }}>{PROTOCOL_ICONS[id.protocol]}</span>
                           <div>
-                            <div className="text-xs text-white">
+                            <div className="text-xs text-[var(--color-fg)]">
                               {id.protocol === 'ethereum'
                                 ? 'Ethereum Wallet'
                                 : id.protocol.charAt(0).toUpperCase() + id.protocol.slice(1)}
@@ -731,7 +731,7 @@ export default function ProfilePage() {
                         {(id.protocol === 'ethereum' || id.protocol === 'solana') && id.address && (
                           <button
                             onClick={() => navigator.clipboard.writeText(id.address ?? '')}
-                            className="rounded-lg bg-gray-800 px-2 py-1 text-[10px] text-gray-500 hover:text-white transition-colors"
+                            className="rounded-lg bg-[var(--color-muted)] px-2 py-1 text-[10px] text-gray-500 hover:text-[var(--color-fg)] transition-colors"
                             type="button"
                           >
                             Copy
@@ -742,7 +742,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="card !bg-gray-900/30 p-3">
+                <div className="card !bg-[var(--color-muted)] p-3">
                   <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-600">
                     How it works
                   </h4>

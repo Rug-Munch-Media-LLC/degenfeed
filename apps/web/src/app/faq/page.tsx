@@ -74,18 +74,18 @@ const faqs = [
 export default function FAQPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 text-sm leading-relaxed text-gray-300">
-      <h1 className="mb-6 text-2xl font-bold text-white">Frequently Asked Questions</h1>
+      <h1 className="mb-6 text-2xl font-bold text-[var(--color-fg)]">Frequently Asked Questions</h1>
 
       <div className="space-y-6">
         {faqs.map((faq) => (
           <div key={faq.q}>
-            <h2 className="mb-1 text-base font-semibold text-white">{faq.q}</h2>
+            <h2 className="mb-1 text-base font-semibold text-[var(--color-fg)]">{faq.q}</h2>
             <p>{faq.a}</p>
           </div>
         ))}
       </div>
 
-      <p className="mt-8 border-t border-gray-800 pt-6 text-gray-500">
+      <p className="mt-8 border-t border-[var(--color-border)] pt-6 text-gray-500">
         Don&apos;t see your question? Reach out to{' '}
         <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
           admin@rugmunch.io

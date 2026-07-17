@@ -169,16 +169,6 @@ export function detectNiches(text: string): string[] {
   return Array.from(found);
 }
 
-const SPAM_PATTERNS: RegExp[] = [
-  /\b(make money|earn \$\d+|work from home|double your|guaranteed profit|100x guarantee)\b/gi,
-  /\b(click here|link in bio|dm me|message me|join my vip|pump group|signals group)\b/gi,
-  /\b(casino|lottery|gift card|free crypto|free bitcoin|airdrop scam|claim now)\b/gi,
-  /\b(viagra|cialis|escort|onlyfans)\b/gi,
-  /🚀{4,}|💰{4,}|🔥{4,}|🌙{4,}/g,
-];
-
-const REPEATED_CHAR_RE = /(.)\1{8,}/;
-
 const CRYPTO_RELEVANCE_TERMS = new Set([
   ...BOOST_TERMS,
   'web3',
@@ -408,50 +398,6 @@ export function isEnglishPost(text: string): boolean {
     if (hits >= 3) return true;
   }
   return hits >= 3;
-}
-
-export function isSpamPost(post: UnifiedPost): boolean {
-  const text = post.text.trim();
-  if (text.length < 12) return true;
-  if (/^[0-9a-f]{64}$/i.test(text)) return true;
-  if (/^\s*(test|testing|hello world|asdf|qwerty|lorem ipsum)\s*$/i.test(text)) return true;
-  if (/^[\s\p{Emoji}\p{Extended_Pictographic}]+$/u.test(text)) return true;
-  const lower = text.toLowerCase();
-  let spamHits = 0;
-  for (const re of SPAM_PATTERNS) {
-    re.lastIndex = 0;
-    if (re.test(lower)) spamHits++;
-  }
-  if (spamHits >= 2) return true;
-  if (REPEATED_CHAR_RE.test(text)) return true;
-  const urlCount = (text.match(/https?:\/\//g) ?? []).length;
-  if (urlCount >= 4) return true;
-  const upperRatio = (text.match(/[A-Z]/g) ?? []).length / Math.max(text.length, 1);
-  if (text.length >= 20 && upperRatio > 0.7) return true;
-  return false;
-}
-
-export function contentQualityScore(text: string): number {
-  if (!text) return 0.5;
-  const trimmed = text.trim();
-  const words = trimmed.split(/\s+/).filter((w) => w.length > 0);
-
-  if (words.length === 1 && (words[0]?.length ?? 0) < 20) return 0.3;
-
-  const emojiCount = (trimmed.match(/[\p{Emoji}\p{Extended_Pictographic}]/gu) ?? []).length;
-  const emojiRatio = emojiCount / Math.max(trimmed.length, 1);
-  if (emojiRatio > 0.3) return 0.2;
-
-  const capsRatio = (trimmed.match(/[A-Z]/g) ?? []).length / Math.max(trimmed.length, 1);
-  if (capsRatio > 0.8 && trimmed.length > 15) return 0.3;
-
-  const hashtagRatio = (trimmed.match(/#[a-zA-Z0-9_]+/g) ?? []).length / Math.max(words.length, 1);
-  if (hashtagRatio > 0.5 && words.length > 3) return 0.4;
-
-  const urlFree = trimmed.replace(/https?:\/\/\S+/g, '').trim();
-  if (urlFree.length < 10 && trimmed.length > 20) return 0.4;
-
-  return 1.0;
 }
 
 function gatherRelevanceText(post: UnifiedPost): string {

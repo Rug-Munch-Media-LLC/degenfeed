@@ -43,6 +43,9 @@ const TARGETS: Omit<ComposeTarget, 'enabled' | 'connected' | 'charCount' | 'stat
   { id: 'mastodon', label: 'Mastodon', charLimit: 5000 },
 ];
 
+/** Protocols the /api/cross-reply bridge can actually post to. */
+const BRIDGE_REPLY_PROTOCOLS = new Set(['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon']);
+
 export interface ScheduledPostItem {
   id: string;
   text: string;
@@ -224,6 +227,16 @@ export function ComposeModal({
     return text.slice(0, text.length - (lines[lastLineIdx]?.length ?? 0));
   }, [text]);
 
+  const insertSlashCommand = useCallback(
+    (cmd: string) => {
+      const cleaned = removeSlashLine();
+      setText(`${cleaned + cmd} `);
+      setShowSlashMenu(false);
+      textareaRef.current?.focus();
+    },
+    [removeSlashLine],
+  );
+
   const handleSlashCommand = useCallback(
     (cmd: string) => {
       if (cmd === 'schedule') {
@@ -237,16 +250,6 @@ export function ComposeModal({
       insertSlashCommand(`/${cmd}`);
     },
     [removeSlashLine, insertSlashCommand],
-  );
-
-  const insertSlashCommand = useCallback(
-    (cmd: string) => {
-      const cleaned = removeSlashLine();
-      setText(`${cleaned + cmd} `);
-      setShowSlashMenu(false);
-      textareaRef.current?.focus();
-    },
-    [removeSlashLine],
   );
 
   const toggleTarget = useCallback(
@@ -429,7 +432,11 @@ export function ComposeModal({
   const /** List of user's available protocols for reply switching */
     availableReplyProtocols = useMemo(() => {
       if (!replyContext) return [];
-      return TARGETS.map((t) => t.id).filter((id) => signedInProtocols[id]);
+      return TARGETS.map((t) => t.id).filter(
+        (id) =>
+          signedInProtocols[id] &&
+          (id === replyContext.parentProtocol || BRIDGE_REPLY_PROTOCOLS.has(id)),
+      );
     }, [replyContext, signedInProtocols]);
 
   // Default reply protocol when entering reply mode
@@ -485,16 +492,16 @@ export function ComposeModal({
       role="dialog"
     >
       <div
-        className="flex w-full max-w-lg flex-col rounded-t-2xl border border-gray-800 bg-gray-950 shadow-2xl sm:rounded-2xl"
+        className="flex w-full max-w-lg flex-col rounded-t-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="dialog"
         style={{ maxHeight: '90vh' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-white">
+            <h2 className="text-sm font-semibold text-[var(--color-fg)]">
               {isReplyMode ? 'Reply' : 'Compose'}
             </h2>
             {isReplyMode && replyContext && (
@@ -529,7 +536,7 @@ export function ComposeModal({
             {scheduledAt && <span className="text-xs text-cyan-500">Ctrl+Enter to schedule</span>}
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
+              className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
               type="button"
               aria-label="Close"
             >
@@ -574,7 +581,7 @@ export function ComposeModal({
                   el.style.height = `${el.scrollHeight}px`;
                 }}
                 placeholder="What's happening across the open social graph?"
-                className="w-full resize-none bg-transparent text-base text-white placeholder-gray-600 outline-none"
+                className="w-full resize-none bg-transparent text-base text-[var(--color-fg)] placeholder-gray-600 outline-none"
                 rows={4}
                 maxLength={MAX_CHARS}
                 aria-label="Post content"
@@ -582,7 +589,7 @@ export function ComposeModal({
 
               {/* Slash command menu */}
               {showSlashMenu && (
-                <div className="mb-2 rounded-lg border border-gray-800 bg-gray-900 p-1">
+                <div className="mb-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] p-1">
                   {[
                     'poll',
                     'image',
@@ -594,7 +601,7 @@ export function ComposeModal({
                     <button
                       key={cmd}
                       type="button"
-                      className="w-full rounded px-3 py-1.5 text-left text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                      className="w-full rounded px-3 py-1.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                       onClick={() => handleSlashCommand(cmd)}
                     >
                       /{cmd}
@@ -638,7 +645,7 @@ export function ComposeModal({
                       setScheduledAt(picked);
                       setShowSchedulePicker(false);
                     }}
-                    className="mt-2 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+                    className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-2 text-sm text-[var(--color-fg)] outline-none focus:border-cyan-500"
                   />
                   <p className="mt-1.5 text-[11px] text-gray-500">
                     Must be at least 5 minutes from now
@@ -650,9 +657,7 @@ export function ComposeModal({
               {prefillLabel && (
                 <div className="mb-3 flex items-center gap-2 rounded-lg border border-blue-900/40 bg-blue-950/20 px-3 py-2">
                   <span className="flex-shrink-0 text-blue-400 text-xs font-bold">&#x2194;</span>
-                  <span className="text-[11px] text-blue-300">
-                    {prefillLabel}
-                  </span>
+                  <span className="text-[11px] text-blue-300">{prefillLabel}</span>
                   <span className="ml-auto text-[10px] text-gray-500">
                     You can edit before posting
                   </span>
@@ -670,12 +675,14 @@ export function ComposeModal({
                 if (!target) return null;
                 return (
                   <div className="mb-3 flex items-center gap-2 rounded-lg border border-purple-900/40 bg-purple-950/20 px-3 py-2">
-                    <span className="flex-shrink-0 text-purple-400 text-xs font-bold">&#x2194;</span>
+                    <span className="flex-shrink-0 text-purple-400 text-xs font-bold">
+                      &#x2194;
+                    </span>
                     <span className="flex-1 text-[11px] text-purple-300">
                       This text is {text.length} chars but {target.label} allows {target.charLimit}.{' '}
                       <button
                         type="button"
-                        className="underline hover:text-white transition-colors"
+                        className="underline hover:text-[var(--color-fg)] transition-colors"
                         onClick={async () => {
                           try {
                             const res = await fetch('/api/translate', {
@@ -701,7 +708,7 @@ export function ComposeModal({
                     </span>
                     <button
                       type="button"
-                      className="text-[10px] text-gray-500 hover:text-white transition-colors"
+                      className="text-[10px] text-gray-500 hover:text-[var(--color-fg)] transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         // Dismiss this offer
@@ -709,8 +716,19 @@ export function ComposeModal({
                       }}
                       aria-label="Dismiss"
                     >
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M12 4L4 12M4 4l8 8"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -754,7 +772,7 @@ export function ComposeModal({
                       setScheduledAt(null);
                       setShowSchedulePicker(false);
                     }}
-                    className="ml-auto rounded p-0.5 text-gray-500 hover:text-white transition-colors"
+                    className="ml-auto rounded p-0.5 text-gray-500 hover:text-[var(--color-fg)] transition-colors"
                     aria-label="Clear schedule"
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -774,7 +792,7 @@ export function ComposeModal({
 
         {/* Cross-protocol reply switcher */}
         {isReplyMode && replyContext && availableReplyProtocols.length > 1 && (
-          <div className="border-b border-gray-800 px-4 py-3">
+          <div className="border-b border-[var(--color-border)] px-4 py-3">
             <p className="mb-2 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
               Reply as
             </p>
@@ -790,7 +808,7 @@ export function ComposeModal({
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
                       isSelected
                         ? 'border-current opacity-100'
-                        : 'border-gray-800 opacity-40 hover:opacity-70'
+                        : 'border-[var(--color-border)] opacity-40 hover:opacity-70'
                     }`}
                     style={{
                       color: isSelected ? getProtocolColor(protocol) : '#666',
@@ -815,9 +833,9 @@ export function ComposeModal({
             <span className="mt-px flex-shrink-0 text-purple-400 text-xs font-bold">&#x2194;</span>
             <span className="text-[11px] text-purple-300 leading-relaxed">
               This reply will be posted on{' '}
-              <strong className="text-white">{getProtocolLabel(replyProtocol)}</strong> and linked
-              to the original{' '}
-              <strong className="text-white">
+              <strong className="text-[var(--color-fg)]">{getProtocolLabel(replyProtocol)}</strong>{' '}
+              and linked to the original{' '}
+              <strong className="text-[var(--color-fg)]">
                 {getProtocolLabel(replyContext.parentProtocol)}
               </strong>{' '}
               post via the DegenFeed cross-protocol bridge.
@@ -827,7 +845,7 @@ export function ComposeModal({
 
         {/* Protocol toggles + publish */}
         {hasSignedIn && !isReplyMode && (
-          <div className="border-t border-gray-800 px-4 py-3">
+          <div className="border-t border-[var(--color-border)] px-4 py-3">
             <div className="mb-3 flex flex-wrap gap-2">
               {targets.map((target) => {
                 const overLimit = target.enabled && text.length > target.charLimit;
@@ -839,7 +857,7 @@ export function ComposeModal({
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
                       target.enabled
                         ? 'border-current opacity-100'
-                        : 'border-gray-800 opacity-40 hover:opacity-70'
+                        : 'border-[var(--color-border)] opacity-40 hover:opacity-70'
                     }`}
                     style={{
                       color: target.connected
@@ -891,10 +909,11 @@ export function ComposeModal({
                   type="checkbox"
                   checked={bridgeToNostr}
                   onChange={(e) => setBridgeToNostr(e.target.checked)}
-                  className="h-3 w-3 rounded border-white/20 bg-gray-900 text-degen-500 focus:ring-degen-500"
+                  className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
                 />
                 <span>
-                  Also cross-post to <span className="font-medium text-white">Nostr</span>
+                  Also cross-post to{' '}
+                  <span className="font-medium text-[var(--color-fg)]">Nostr</span>
                 </span>
                 <span className="text-[10px] text-gray-600">
                   (signed locally with your Nostr key)
@@ -908,7 +927,7 @@ export function ComposeModal({
                   type="checkbox"
                   checked={lensCollect}
                   onChange={(e) => setLensCollect(e.target.checked)}
-                  className="h-3 w-3 rounded border-white/20 bg-gray-900 text-degen-500 focus:ring-degen-500"
+                  className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
                 />
                 <span>
                   Enable <span className="font-medium text-green-400">Free Collect</span> on Lens
@@ -932,7 +951,7 @@ export function ComposeModal({
 
             {/* Scheduled posts viewer */}
             {showScheduledView && scheduledPosts && scheduledPosts.length > 0 && (
-              <div className="mt-3 rounded-xl border border-gray-800 bg-gray-900/50 p-3">
+              <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] p-3">
                 <h3 className="mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                   Upcoming Scheduled Posts
                 </h3>
@@ -940,7 +959,7 @@ export function ComposeModal({
                   {scheduledPosts.map((sp) => (
                     <div
                       key={sp.id}
-                      className="flex items-start gap-2 rounded-lg border border-gray-800 bg-gray-950/50 p-2.5"
+                      className="flex items-start gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-2.5"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm text-gray-200">{sp.text || '(empty)'}</p>
@@ -967,7 +986,7 @@ export function ComposeModal({
                           <button
                             type="button"
                             onClick={() => onCancelSchedule(sp.id)}
-                            className="rounded px-2 py-1 text-[11px] font-medium text-gray-500 hover:bg-gray-800 hover:text-red-400 transition-colors"
+                            className="rounded px-2 py-1 text-[11px] font-medium text-gray-500 hover:bg-[var(--color-muted)] hover:text-red-400 transition-colors"
                             title="Cancel"
                           >
                             Cancel
@@ -977,8 +996,8 @@ export function ComposeModal({
                     </div>
                   ))}
                 </div>
-          </div>
-        )}
+              </div>
+            )}
 
             {/* Publish / Schedule button */}
             <div className="mt-3 flex items-center justify-between">
@@ -1037,7 +1056,7 @@ export function ComposeModal({
 
         {/* Reply mode publish */}
         {hasSignedIn && isReplyMode && (
-          <div className="border-t border-gray-800 px-4 py-3">
+          <div className="border-t border-[var(--color-border)] px-4 py-3">
             <ComposePreview
               text={text}
               targets={[

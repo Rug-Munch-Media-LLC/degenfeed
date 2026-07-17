@@ -84,8 +84,8 @@ function NotificationSkeleton() {
       <div className="h-10 w-10 flex-shrink-0 animate-pulse rounded-full bg-[var(--color-card)]" />
       <div className="flex-1 space-y-2">
         <div className="h-3 w-32 animate-pulse rounded bg-[var(--color-card)]" />
-        <div className="h-2.5 w-48 animate-pulse rounded bg-[var(--color-card)]/60" />
-        <div className="h-2 w-20 animate-pulse rounded bg-[var(--color-card)]/40" />
+        <div className="h-2.5 w-48 animate-pulse rounded bg-[var(--color-card)]" />
+        <div className="h-2 w-20 animate-pulse rounded bg-[var(--color-card)]" />
       </div>
       <div className="h-5 w-14 animate-pulse rounded-full bg-[var(--color-card)]" />
     </div>
@@ -400,7 +400,7 @@ function NotificationPrefsPanel({ prefs, onSave, onClose }: NotificationPrefsPan
   };
 
   return (
-    <div className="border-b border-[var(--color-border)] bg-[var(--color-overlay)]/30 px-4 py-4">
+    <div className="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-4 py-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-[var(--color-fg)]">Notification Preferences</h3>
         <button

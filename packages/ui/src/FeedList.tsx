@@ -33,27 +33,31 @@ export interface FeedListProps {
   onLoadMore?: () => void;
   /** Called when a report is successfully submitted */
   onReport?: (postId: string) => void;
+  /** Called when user clicks sign-in */
+  onSignIn?: () => void;
+  /** Called when the user wants to reply to a post from another protocol */
+  onCrossReplyOpen?: (post: UnifiedPost) => void;
 }
 
 function SkeletonCard() {
   return (
-    <div className="border-b border-white/5 px-4 py-3">
+    <div className="border-b border-[var(--color-glass-border)] px-4 py-3">
       <div className="mb-3 flex items-center gap-3">
-        <div className="h-10 w-10 animate-pulse rounded-full bg-gray-800" />
+        <div className="h-10 w-10 animate-pulse rounded-full bg-[var(--color-muted)]" />
         <div className="flex-1">
-          <div className="mb-1.5 h-3 w-32 animate-pulse rounded bg-gray-800" />
-          <div className="h-2.5 w-20 animate-pulse rounded bg-gray-800" />
+          <div className="mb-1.5 h-3 w-32 animate-pulse rounded bg-[var(--color-muted)]" />
+          <div className="h-2.5 w-20 animate-pulse rounded bg-[var(--color-muted)]" />
         </div>
       </div>
       <div className="mb-2 space-y-2">
-        <div className="h-3 w-full animate-pulse rounded bg-gray-800" />
-        <div className="h-3 w-11/12 animate-pulse rounded bg-gray-800" />
-        <div className="h-3 w-3/4 animate-pulse rounded bg-gray-800" />
+        <div className="h-3 w-full animate-pulse rounded bg-[var(--color-muted)]" />
+        <div className="h-3 w-11/12 animate-pulse rounded bg-[var(--color-muted)]" />
+        <div className="h-3 w-3/4 animate-pulse rounded bg-[var(--color-muted)]" />
       </div>
       <div className="flex gap-4">
-        <div className="h-3 w-12 animate-pulse rounded bg-gray-800" />
-        <div className="h-3 w-12 animate-pulse rounded bg-gray-800" />
-        <div className="h-3 w-12 animate-pulse rounded bg-gray-800" />
+        <div className="h-3 w-12 animate-pulse rounded bg-[var(--color-muted)]" />
+        <div className="h-3 w-12 animate-pulse rounded bg-[var(--color-muted)]" />
+        <div className="h-3 w-12 animate-pulse rounded bg-[var(--color-muted)]" />
       </div>
     </div>
   );
@@ -67,11 +71,11 @@ function EmptyState({
   onSignIn?: () => void;
 }) {
   return (
-    <div className="border-b border-white/5 px-4 py-16 text-center">
+    <div className="border-b border-[var(--color-glass-border)] px-4 py-16 text-center">
       <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-degen-500/10">
         <span className="text-3xl text-degen-400">{protocolLabel ? '○' : '◆'}</span>
       </div>
-      <h3 className="mb-2 text-lg font-semibold text-white">
+      <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
         {protocolLabel ? `No ${protocolLabel} posts yet` : 'The feed is warming up'}
       </h3>
       <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">
@@ -90,7 +94,7 @@ function EmptyState({
 
 function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   return (
-    <div className="border-b border-white/5 px-4 py-12 text-center">
+    <div className="border-b border-[var(--color-glass-border)] px-4 py-12 text-center">
       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10">
         <span className="text-2xl text-red-400">!</span>
       </div>
@@ -122,7 +126,8 @@ export const FeedList = memo(function FeedList({
   onLoadMore,
   onSignIn,
   onReport,
-}: FeedListProps & { onSignIn?: () => void }) {
+  onCrossReplyOpen,
+}: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const SCROLL_KEY = 'df_scroll';
@@ -182,7 +187,7 @@ export const FeedList = memo(function FeedList({
       const articles = containerRef.current?.querySelectorAll('article');
       if (!articles?.length) return;
       const focused = document.activeElement;
-      const idx = Array.from(articles).indexOf(focused as Element);
+      const idx = Array.from(articles).indexOf(focused as HTMLElement);
 
       if (e.key === 'j' && idx < articles.length - 1) {
         e.preventDefault();
@@ -263,13 +268,14 @@ export const FeedList = memo(function FeedList({
             onTip={onTip}
             onEngage={onEngage}
             onReport={onReport}
+            onCrossReplyOpen={onCrossReplyOpen}
           />
         </div>
       ))}
       {hasMore && (
         <div
           ref={sentinelRef}
-          className="border-b border-white/5 px-4 py-6 text-center text-sm text-gray-500"
+          className="border-b border-[var(--color-glass-border)] px-4 py-6 text-center text-sm text-gray-500"
         >
           <span className="inline-flex items-center gap-2">
             <span className="h-2 w-2 animate-pulse rounded-full bg-degen-500" />

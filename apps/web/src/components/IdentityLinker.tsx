@@ -171,7 +171,7 @@ export function IdentityLinker() {
 
   if (!walletAddress) {
     return (
-      <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-4 text-center text-sm text-gray-500">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-center text-sm text-gray-500">
         Connect your wallet to link social identities.
       </div>
     );
@@ -180,12 +180,12 @@ export function IdentityLinker() {
   return (
     <div className="space-y-3">
       {/* Wallet display */}
-      <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-gray-950/70 px-4 py-3">
+      <div className="flex items-center gap-3 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-sm font-mono text-degen-400">
           {walletAddress.slice(0, 2).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-medium text-white">Connected Wallet</div>
+          <div className="text-xs font-medium text-[var(--color-fg)]">Connected Wallet</div>
           <code className="text-xs font-mono text-gray-500 truncate block">
             {walletAddress.slice(0, 8)}...{walletAddress.slice(-6)}
           </code>
@@ -201,7 +201,7 @@ export function IdentityLinker() {
             const formOpen = form.open === protocol;
 
             return (
-              <div key={protocol} className="rounded-xl border border-white/5 bg-gray-950/70 overflow-hidden">
+              <div key={protocol} className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden">
                 <div
                   className={`flex items-center gap-3 px-4 py-3 transition-colors ${!formOpen ? 'hover:bg-white/[0.03]' : ''}`}
                 >
@@ -213,7 +213,7 @@ export function IdentityLinker() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-white">{meta.displayName}</span>
+                      <span className="text-sm font-medium text-[var(--color-fg)]">{meta.displayName}</span>
                       {linked && (
                         <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
                           ✓ Linked
@@ -251,7 +251,7 @@ export function IdentityLinker() {
 
                 {/* Link form */}
                 {formOpen && !linked && (
-                  <div className="border-t border-white/5 px-4 py-3 space-y-3">
+                  <div className="border-t border-[var(--color-glass-border)] px-4 py-3 space-y-3">
                     {LINK_FIELDS[protocol].map((field) => (
                       <div key={field.key}>
                         <label className="mb-1 block text-xs text-gray-500">{field.label}</label>
@@ -268,7 +268,7 @@ export function IdentityLinker() {
                             }))
                           }
                           placeholder={field.placeholder}
-                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-degen-500 focus:outline-none"
+                          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500 focus:outline-none"
                         />
                       </div>
                     ))}
@@ -284,7 +284,7 @@ export function IdentityLinker() {
                       <button
                         type="button"
                         onClick={() => setForm((f) => ({ ...f, open: null }))}
-                        className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white transition-colors"
+                        className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)] transition-colors"
                       >
                         Cancel
                       </button>

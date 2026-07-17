@@ -149,7 +149,7 @@ export default function CommunityPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center">
         <div className="mb-4 text-4xl">🔍</div>
-        <h1 className="text-xl font-bold text-white">Community Not Found</h1>
+        <h1 className="text-xl font-bold text-[var(--color-fg)]">Community Not Found</h1>
         <p className="mt-2 text-sm text-gray-500">
           {error || 'The community you are looking for does not exist.'}
         </p>
@@ -180,7 +180,7 @@ export default function CommunityPage() {
         <div className="card mb-6">
           <div className="flex items-start gap-4">
             {/* Icon */}
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-800 text-2xl font-bold text-white">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[var(--color-muted)] text-2xl font-bold text-[var(--color-fg)]">
               {community.icon ? (
                 <Image
                   src={community.icon}
@@ -195,7 +195,7 @@ export default function CommunityPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl font-bold text-white">{community.displayName}</h1>
+              <h1 className="text-xl font-bold text-[var(--color-fg)]">{community.displayName}</h1>
               <p className="mt-1 text-sm text-gray-400 line-clamp-2">{community.description}</p>
 
               {/* Protocol badges */}
@@ -217,11 +217,11 @@ export default function CommunityPage() {
               {/* Stats */}
               <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
                 <span>
-                  <strong className="text-white">{community.memberCount.toLocaleString()}</strong>{' '}
+                  <strong className="text-[var(--color-fg)]">{community.memberCount.toLocaleString()}</strong>{' '}
                   members
                 </span>
                 <span>
-                  <strong className="text-white">{community.postCount.toLocaleString()}</strong>{' '}
+                  <strong className="text-[var(--color-fg)]">{community.postCount.toLocaleString()}</strong>{' '}
                   posts
                 </span>
                 <span className="text-xs text-gray-600">
@@ -261,7 +261,7 @@ export default function CommunityPage() {
               type="button"
               onClick={() => setActiveTab(tab)}
               className={`relative px-4 py-3 text-sm font-medium capitalize transition-colors ${
-                activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+                activeTab === tab ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               {tab}
@@ -289,7 +289,7 @@ export default function CommunityPage() {
                   className="card flex items-start gap-3 transition-colors hover:border-white/20"
                 >
                   {/* Avatar */}
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-800 text-xs text-white">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--color-muted)] text-xs text-[var(--color-fg)]">
                     {item.author.avatar ? (
                       <Image
                         src={item.author.avatar}
@@ -305,7 +305,7 @@ export default function CommunityPage() {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white">
+                      <span className="text-sm font-semibold text-[var(--color-fg)]">
                         {item.author.displayName}
                       </span>
                       <span className="text-xs text-gray-500">@{item.author.handle}</span>
@@ -337,7 +337,7 @@ export default function CommunityPage() {
         {activeTab === 'about' && (
           <div className="card space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-white">Description</h3>
+              <h3 className="text-sm font-semibold text-[var(--color-fg)]">Description</h3>
               <p className="mt-1 text-sm text-gray-400 whitespace-pre-wrap">
                 {community.description || 'No description provided.'}
               </p>
@@ -345,12 +345,12 @@ export default function CommunityPage() {
 
             {community.tags && community.tags.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-white">Tags</h3>
+                <h3 className="text-sm font-semibold text-[var(--color-fg)]">Tags</h3>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {community.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-400"
+                      className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-gray-400"
                     >
                       #{tag}
                     </span>
@@ -360,14 +360,14 @@ export default function CommunityPage() {
             )}
 
             <div>
-              <h3 className="text-sm font-semibold text-white">Protocols</h3>
+              <h3 className="text-sm font-semibold text-[var(--color-fg)]">Protocols</h3>
               <div className="mt-2 space-y-2">
                 {protocolList.map((p) => {
                   const pd = p.data as Record<string, unknown> | undefined;
                   return (
                     <div
                       key={p.key}
-                      className="rounded-lg border border-white/5 bg-white/[0.02] p-3"
+                      className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3"
                     >
                       <div className="flex items-center gap-2">
                         <span
@@ -395,7 +395,7 @@ export default function CommunityPage() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-white">Creator</h3>
+              <h3 className="text-sm font-semibold text-[var(--color-fg)]">Creator</h3>
               <p className="mt-1 font-mono text-xs text-gray-500">
                 {community.creator.walletAddress.slice(0, 6)}...
                 {community.creator.walletAddress.slice(-4)}
@@ -407,7 +407,7 @@ export default function CommunityPage() {
         {activeTab === 'members' && (
           <div className="card">
             <p className="text-sm text-gray-400">
-              <strong className="text-white">{community.memberCount.toLocaleString()}</strong>{' '}
+              <strong className="text-[var(--color-fg)]">{community.memberCount.toLocaleString()}</strong>{' '}
               members
             </p>
             <p className="mt-2 text-xs text-gray-600">

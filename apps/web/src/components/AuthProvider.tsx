@@ -50,8 +50,15 @@ import { useWeb3 } from '../components/Web3Provider';
 import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
-import { engageNostr, publishNoteToNostr } from '../lib/nostr';
+import { engageNostr, publishNoteToNostr, signBridgeReplyNote } from '../lib/nostr';
 import { useToast } from './Toast';
+
+/** Cross-protocol reply context passed to ComposeModal. */
+export interface ComposeReplyContext {
+  parentPostUri: string;
+  parentProtocol: string;
+  parentPreview?: string;
+}
 
 export interface AuthContextValue {
   signedInProtocols: Record<string, boolean>;
@@ -64,6 +71,8 @@ export interface AuthContextValue {
   nostrPublicId?: string;
   openSignIn: () => void;
   openCompose: () => void;
+  /** Open the composer in cross-protocol reply mode for the given parent post. */
+  openComposeReply: (ctx: ComposeReplyContext) => void;
   signOut: () => Promise<void>;
   publish: (
     text: string,
@@ -103,8 +112,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
-  const { scheduled: scheduledPosts, schedulePost, cancelSchedule, publishNow } =
-    useScheduledPosts();
+  const [composeReplyContext, setComposeReplyContext] = useState<ComposeReplyContext | undefined>(
+    undefined,
+  );
+  const {
+    scheduled: scheduledPosts,
+    schedulePost,
+    cancelSchedule,
+    publishNow,
+  } = useScheduledPosts();
 
   const { account: wagmiAddress, isConnected, availableWallets } = useWeb3();
   const { signInWithEthereum, signingIn: walletSigningIn } = useWalletSignIn();
@@ -331,6 +347,112 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [tokens],
   );
 
+  const handleCrossReply = useCallback(
+    async (
+      parentPostUri: string,
+      parentProtocol: string,
+      replyProtocol: string,
+      content: string,
+    ): Promise<{ ok: boolean; nativeId?: string; error?: string }> => {
+      // Must match BRIDGE_FOOTER in workers/api/src/routes/cross-reply.ts —
+      // pre-signed payloads (Nostr, Farcaster) carry the footer client-side.
+      const bridgeFooter = `\n\n_↻ Replied via DegenFeed cross-protocol bridge (${parentProtocol} → ${replyProtocol})_`;
+      const parentNativeId = parentPostUri.startsWith('df://')
+        ? parentPostUri.slice(5).split(':').slice(1).join(':') || parentPostUri.slice(5)
+        : parentPostUri;
+
+      const auth: Record<string, string> = {};
+      let signedMessage: string | undefined;
+
+      const identity = identities.find((i) => i.protocol === replyProtocol);
+
+      if (replyProtocol === 'nostr') {
+        const nostrIdent = identities.find((i) => i.protocol === 'nostr');
+        if (!nostrIdent) return { ok: false, error: 'No Nostr identity linked' };
+        const signed = await signBridgeReplyNote({
+          text: `${content}${bridgeFooter}`,
+          publicId: nostrIdent.publicId,
+          parentProtocol,
+          parentNativeId,
+        });
+        if (!signed.ok || !signed.eventJson) {
+          return { ok: false, error: signed.error ?? 'Could not sign Nostr event' };
+        }
+        signedMessage = signed.eventJson;
+      } else if (replyProtocol === 'farcaster') {
+        const fcIdent = identities.find((i) => i.protocol === 'farcaster');
+        if (!fcIdent) return { ok: false, error: 'No Farcaster identity linked' };
+        let signerKeyHex: string | undefined;
+        if (fcIdent.encryptedSecret && fcIdent.salt && fcIdent.iv) {
+          try {
+            const { decryptSecret } = await import('@degenfeed/auth');
+            signerKeyHex = await decryptSecret(
+              { ciphertext: fcIdent.encryptedSecret, salt: fcIdent.salt, iv: fcIdent.iv },
+              fcIdent.publicId,
+            );
+          } catch {
+            /* fall through to plaintext key */
+          }
+        }
+        if (!signerKeyHex) signerKeyHex = fcIdent.keys?._secret as string | undefined;
+        if (!signerKeyHex) {
+          return { ok: false, error: 'Farcaster signer key not found — re-link in Settings' };
+        }
+        const fid = parseInt(fcIdent.publicId, 10);
+        if (Number.isNaN(fid)) return { ok: false, error: 'Invalid Farcaster FID' };
+        const { buildFarcasterCastMessage } = await import('@degenfeed/farcaster-sdk');
+        const cast = buildFarcasterCastMessage({
+          signerKeyHex,
+          fid,
+          text: `${content}${bridgeFooter}`,
+        });
+        if (!cast.ok || !cast.messageHex) {
+          return { ok: false, error: cast.error ?? 'Could not sign Farcaster cast' };
+        }
+        signedMessage = cast.messageHex;
+      } else if (replyProtocol === 'mastodon') {
+        const token = identity?.keys?.accessToken ?? identity?.keys?.mastodon_token ?? '';
+        if (!token) return { ok: false, error: 'Not signed into Mastodon' };
+        auth.mastodon = token;
+        auth.mastodon_instance = identity?.keys?.instanceUrl || 'https://social.degenfeed.xyz';
+      } else if (replyProtocol === 'bluesky') {
+        const jwt = identity?.keys?.accessJwt ?? '';
+        const did = identity?.publicId ?? '';
+        if (!jwt || !did) return { ok: false, error: 'Not signed into Bluesky' };
+        auth.bluesky_jwt = jwt;
+        auth.bluesky_did = did;
+      } else if (replyProtocol === 'lens') {
+        const token = identity?.keys?.accessToken ?? '';
+        if (!token) return { ok: false, error: 'Not signed into Lens' };
+        auth.lens = token;
+        auth.accessToken = token;
+      }
+
+      try {
+        const res = await fetch('/api/cross-reply', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            parentPostUri,
+            parentProtocol,
+            replyProtocol,
+            content,
+            walletAddress: walletAddress || primaryIdentity?.publicId || 'unlinked',
+            auth,
+            signedMessage,
+          }),
+        });
+        const data = (await res.json()) as { ok?: boolean; nativeId?: string; error?: string };
+        if (!res.ok) return { ok: false, error: data.error ?? `Bridge error (${res.status})` };
+        return { ok: data.ok ?? false, nativeId: data.nativeId, error: data.error };
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : 'Network error' };
+      }
+    },
+    [identities, walletAddress, primaryIdentity],
+  );
+
   const handleEngage = useCallback(
     async (
       action: EngagementAction,
@@ -554,7 +676,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [primaryIdentity, linkedIdentities]);
 
   const openSignIn = useCallback(() => setShowSignIn(true), []);
-  const openCompose = useCallback(() => setShowCompose(true), []);
+  const openCompose = useCallback(() => {
+    setComposeReplyContext(undefined);
+    setShowCompose(true);
+  }, []);
+  const openComposeReply = useCallback((ctx: ComposeReplyContext) => {
+    setComposeReplyContext(ctx);
+    setShowCompose(true);
+  }, []);
 
   const contextValue = useMemo(
     () => ({
@@ -567,6 +696,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       linkGtsUrl,
       openSignIn,
       openCompose,
+      openComposeReply,
       signOut: handleSignOut,
       nostrPublicId,
       publish: handlePublish,
@@ -585,6 +715,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       linkGtsUrl,
       openSignIn,
       openCompose,
+      openComposeReply,
       handleSignOut,
       nostrPublicId,
       handlePublish,
@@ -610,9 +741,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       <ComposeModal
         open={showCompose}
-        onClose={() => setShowCompose(false)}
+        onClose={() => {
+          setShowCompose(false);
+          setComposeReplyContext(undefined);
+        }}
         signedInProtocols={signedInProtocols}
         onPublish={handlePublish}
+        replyContext={composeReplyContext}
+        onCrossReply={handleCrossReply}
         onRequestSignIn={() => {
           setShowCompose(false);
           setShowSignIn(true);
@@ -631,9 +767,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!nostrPublicId) return;
           await publishNoteToNostr({ text, publicId: nostrPublicId });
         }}
-        onSchedule={(text, targets, scheduledAt) =>
-          schedulePost(text, targets, scheduledAt)
-        }
+        onSchedule={(text, targets, scheduledAt) => schedulePost(text, targets, scheduledAt)}
         scheduledPosts={scheduledPosts}
         onCancelSchedule={(id) => cancelSchedule(id)}
         onPublishScheduledNow={(id) => {

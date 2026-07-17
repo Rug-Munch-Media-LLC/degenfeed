@@ -107,11 +107,11 @@ function NostrForm({
         <button
           type="button"
           onClick={() => setMode('nsec')}
-          className="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left hover:border-gray-600"
+          className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-left hover:border-gray-600"
         >
           <span className="text-lg">🔑</span>
           <div>
-            <div className="text-sm font-semibold text-white">Paste nsec / NIP-07</div>
+            <div className="text-sm font-semibold text-[var(--color-fg)]">Paste nsec / NIP-07</div>
             <div className="text-xs text-gray-500">
               Enter your secret key or use a browser extension
             </div>
@@ -120,11 +120,11 @@ function NostrForm({
         <button
           type="button"
           onClick={() => setMode('extension')}
-          className="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left hover:border-gray-600"
+          className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-left hover:border-gray-600"
         >
           <span className="text-lg">🧩</span>
           <div>
-            <div className="text-sm font-semibold text-white">Use browser extension</div>
+            <div className="text-sm font-semibold text-[var(--color-fg)]">Use browser extension</div>
             <div className="text-xs text-gray-500">Alby, nos2x, or any NIP-07 signer</div>
           </div>
         </button>
@@ -203,7 +203,7 @@ function NostrForm({
         <button
           type="button"
           onClick={() => setMode('choice')}
-          className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)]"
         >
           Back
         </button>
@@ -248,22 +248,22 @@ function FarcasterForm({
         <button
           type="button"
           onClick={() => setMode('form')}
-          className="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left hover:border-gray-600"
+          className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-left hover:border-gray-600"
         >
           <span className="text-lg">🔐</span>
           <div>
-            <div className="text-sm font-semibold text-white">Enter FID + signer key</div>
+            <div className="text-sm font-semibold text-[var(--color-fg)]">Enter FID + signer key</div>
             <div className="text-xs text-gray-500">For self-custody Farcaster signers</div>
           </div>
         </button>
         <button
           type="button"
           onClick={() => onSignIn({ method: 'warpcast' })}
-          className="flex w-full items-center gap-3 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left hover:border-gray-600"
+          className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-left hover:border-gray-600"
         >
           <span className="text-lg">🔗</span>
           <div>
-            <div className="text-sm font-semibold text-white">Sign in with Warpcast</div>
+            <div className="text-sm font-semibold text-[var(--color-fg)]">Sign in with Warpcast</div>
             <div className="text-xs text-gray-500">Use your Warpcast account via OAuth</div>
           </div>
         </button>
@@ -321,7 +321,7 @@ function FarcasterForm({
         <button
           type="button"
           onClick={() => setMode('choice')}
-          className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)]"
         >
           Back
         </button>
@@ -399,7 +399,7 @@ function BlueskyForm({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)]"
         >
           Back
         </button>
@@ -515,7 +515,7 @@ function MastodonForm({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg bg-gray-800 px-3 py-2 text-xs text-gray-400 hover:text-white"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)]"
         >
           Back
         </button>
@@ -600,13 +600,13 @@ function WalletSection({
                 disabled={walletSigningIn}
                 className={`flex w-full items-center gap-3 rounded-xl border px-4 py-2.5 text-left transition-all ${
                   w.detected
-                    ? 'border-gray-700 bg-gray-900/70 hover:border-gray-500'
-                    : 'border-gray-800/50 bg-gray-900/30 opacity-50'
+                    ? 'border-[var(--color-border)] bg-[var(--color-muted)] hover:border-gray-500'
+                    : 'border-[var(--color-border)]/50 bg-[var(--color-muted)] opacity-50'
                 }`}
               >
                 <span className="text-lg">{w.icon}</span>
                 <div className="flex-1">
-                  <div className="text-sm font-medium text-white">{w.label}</div>
+                  <div className="text-sm font-medium text-[var(--color-fg)]">{w.label}</div>
                   {w.detected ? (
                     <div className="text-[10px] text-green-500">● Detected</div>
                   ) : (
@@ -712,14 +712,14 @@ export const SignInModal = memo(function SignInModal({
       role="dialog"
     >
       <div
-        className="mx-4 w-full max-w-lg rounded-2xl border border-gray-800 bg-gray-950 p-6 shadow-2xl"
+        className="mx-4 w-full max-w-lg rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="dialog"
       >
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white">
+            <h2 className="text-lg font-bold text-[var(--color-fg)]">
               {selectedProtocol ? `Sign in with ${selectedProtocol.label}` : 'Sign In'}
             </h2>
             <p className="text-sm text-gray-500">
@@ -733,7 +733,7 @@ export const SignInModal = memo(function SignInModal({
               setSelectedProtocol(null);
               onClose();
             }}
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
+            className="rounded-lg p-2 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close"
             type="button"
           >
@@ -775,10 +775,10 @@ export const SignInModal = memo(function SignInModal({
 
             <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-800" />
+                <div className="w-full border-t border-[var(--color-border)]" />
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-gray-950 px-3 text-xs text-gray-600">
+                <span className="bg-[var(--color-card)] px-3 text-xs text-gray-600">
                   or link a social protocol
                 </span>
               </div>
@@ -789,14 +789,14 @@ export const SignInModal = memo(function SignInModal({
                 <button
                   key={proto.id}
                   onClick={() => handleProtocolClick(proto)}
-                  className="flex w-full items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-3 text-left transition-all hover:border-gray-600 hover:bg-gray-800/50 group"
+                  className="flex w-full items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-left transition-all hover:border-gray-600 hover:bg-[var(--color-muted)] group"
                   type="button"
                 >
                   <span className="text-2xl" style={{ color: proto.color }}>
                     {proto.icon}
                   </span>
                   <div className="flex-1">
-                    <div className="text-sm font-semibold text-white group-hover:text-degen-400 transition-colors">
+                    <div className="text-sm font-semibold text-[var(--color-fg)] group-hover:text-degen-400 transition-colors">
                       {proto.label}
                     </div>
                     <div className="text-xs text-gray-500">{proto.description}</div>

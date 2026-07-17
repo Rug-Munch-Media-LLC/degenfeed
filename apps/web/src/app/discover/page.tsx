@@ -78,7 +78,7 @@ export default function DiscoverPage() {
             height={60}
             className="mx-auto mb-3 h-14 w-14 rounded-xl shadow-[0_0_20px_rgba(0,255,65,0.3)]"
           />
-          <h1 className="text-2xl font-bold text-white">Fediverse Discovery</h1>
+          <h1 className="text-2xl font-bold text-[var(--color-fg)]">Fediverse Discovery</h1>
           <p className="mt-2 text-sm text-gray-400">
             Popular accounts from crypto, tech, and infosec Mastodon instances.
           </p>
@@ -100,7 +100,7 @@ export default function DiscoverPage() {
                   <span className="rounded-full bg-degen-500/10 px-2.5 py-0.5 text-xs font-medium text-degen-400">
                     {inst.topic}
                   </span>
-                  <h2 className="text-sm font-semibold text-white">{inst.label}</h2>
+                  <h2 className="text-sm font-semibold text-[var(--color-fg)]">{inst.label}</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {items.slice(0, 8).map((a) => (
@@ -116,11 +116,11 @@ export default function DiscoverPage() {
                         alt={a.display_name}
                         width={48}
                         height={48}
-                        className="h-10 w-10 rounded-full bg-gray-800 object-cover"
+                        className="h-10 w-10 rounded-full bg-[var(--color-muted)] object-cover"
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="truncate text-sm font-semibold text-white">
+                          <span className="truncate text-sm font-semibold text-[var(--color-fg)]">
                             {a.display_name}
                           </span>
                         </div>

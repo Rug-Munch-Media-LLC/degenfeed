@@ -81,7 +81,7 @@ export function NotificationBell({
     <div ref={ref} className="relative">
       <button
         type="button"
-        className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
+        className="relative rounded-lg p-2 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
         onClick={handleToggle}
         aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
       >
@@ -100,16 +100,16 @@ export function NotificationBell({
           <path d="M13.73 21a2 2 0 01-3.46 0" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-[var(--color-fg)]">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-gray-800 bg-gray-950 shadow-2xl">
-          <div className="border-b border-gray-800 px-4 py-3">
-            <h3 className="text-sm font-semibold text-white">Notifications</h3>
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl">
+          <div className="border-b border-[var(--color-border)] px-4 py-3">
+            <h3 className="text-sm font-semibold text-[var(--color-fg)]">Notifications</h3>
           </div>
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
@@ -119,17 +119,17 @@ export function NotificationBell({
                 <button
                   key={n.id}
                   type="button"
-                  className={`flex w-full items-start gap-3 border-b border-gray-800/50 px-4 py-3 text-left transition-colors hover:bg-gray-800/30 ${n.read ? 'opacity-50' : ''}`}
+                  className={`flex w-full items-start gap-3 border-b border-[var(--color-border)]/50 px-4 py-3 text-left transition-colors hover:bg-[var(--color-muted)] ${n.read ? 'opacity-50' : ''}`}
                   onClick={() => onMarkRead(n.id)}
                 >
                   <div
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-800 text-xs font-bold"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-muted)] text-xs font-bold"
                     style={{ color: getProtocolColor(n.protocol) }}
                   >
                     {(n.protocol[0] || '').toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-white truncate">{n.actorName}</div>
+                    <div className="text-sm text-[var(--color-fg)] truncate">{n.actorName}</div>
                     <div className="text-xs text-gray-500">{getTypeLabel(n.type)}</div>
                     {n.postText && (
                       <div className="mt-1 text-xs text-gray-600 truncate">{n.postText}</div>

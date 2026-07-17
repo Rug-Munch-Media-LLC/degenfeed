@@ -37,7 +37,7 @@ export default function HomePage() {
             className="h-20 w-20 drop-shadow-[0_0_24px_rgba(34,197,94,0.4)]"
           />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-[var(--color-fg)] sm:text-4xl">
           The social feed of <span className="gradient-text">web3</span>
         </h1>
         <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
@@ -55,7 +55,7 @@ export default function HomePage() {
             style={{ borderColor: `${p.color}33` }}
           >
             <span className="text-3xl transition-transform group-hover:scale-110">{p.emoji}</span>
-            <span className="text-sm font-semibold text-white" style={{ color: p.color }}>
+            <span className="text-sm font-semibold text-[var(--color-fg)]" style={{ color: p.color }}>
               {p.label}
             </span>
             <span className="text-[10px] text-gray-600">{p.desc}</span>
@@ -103,7 +103,7 @@ export default function HomePage() {
             <a
               key={n.id}
               href={`/home/${n.id}`}
-              className="rounded-full border border-gray-800 bg-gray-900/50 px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/50 hover:text-white"
+              className="rounded-full border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/50 hover:text-[var(--color-fg)]"
             >
               #{n.label}
             </a>

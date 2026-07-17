@@ -257,7 +257,7 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
 
       {/* ── Expanded details ── */}
       {expanded && collects > 0 && (
-        <div className="border-t border-white/5 px-4 py-2">
+        <div className="border-t border-[var(--color-glass-border)] px-4 py-2">
           <div className="flex flex-wrap gap-2 text-xs text-gray-600">
             {publicationId && (
               <span className="truncate max-w-full">
@@ -284,7 +284,7 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
       )}
 
       {/* ── Action links ── */}
-      <div className="flex divide-x divide-white/5 border-t border-white/5">
+      <div className="flex divide-x divide-white/5 border-t border-[var(--color-glass-border)]">
         {postUrl && (
           <a
             href={postUrl}

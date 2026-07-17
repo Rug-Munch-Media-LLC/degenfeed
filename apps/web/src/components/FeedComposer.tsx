@@ -123,7 +123,7 @@ export function FeedComposer({
   return (
     <div className="border-b border-white/10 px-4 py-3">
       <div className="flex gap-3">
-        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-gray-800">
+        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-[var(--color-muted)]">
           {avatar ? (
             <Image
               src={avatar}
@@ -145,7 +145,7 @@ export function FeedComposer({
             onChange={handleTextChange}
             placeholder="What is happening?!"
             rows={1}
-            className="w-full resize-none bg-transparent py-2 text-lg text-white placeholder-gray-600 outline-none"
+            className="w-full resize-none bg-transparent py-2 text-lg text-[var(--color-fg)] placeholder-gray-600 outline-none"
           />
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -158,7 +158,7 @@ export function FeedComposer({
                   type="button"
                   onClick={() => toggleTarget(t.id)}
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all border ${
-                    active ? 'border-current' : 'border-gray-800 hover:border-gray-600'
+                    active ? 'border-current' : 'border-[var(--color-border)] hover:border-gray-600'
                   } ${connected ? '' : 'opacity-40 hover:opacity-70'}`}
                   style={{
                     color: active ? getProtocolColor(t.id) : connected ? '#9ca3af' : '#666',
@@ -199,10 +199,10 @@ export function FeedComposer({
                 type="checkbox"
                 checked={bridgeToNostr}
                 onChange={(e) => setBridgeToNostr(e.target.checked)}
-                className="h-3 w-3 rounded border-white/20 bg-gray-900 text-degen-500 focus:ring-degen-500"
+                className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
               />
               <span>
-                Also cross-post to <span className="font-medium text-white">Nostr</span>
+                Also cross-post to <span className="font-medium text-[var(--color-fg)]">Nostr</span>
               </span>
               <span className="text-[10px] text-gray-600">
                 (signed locally with your Nostr key)
@@ -218,7 +218,7 @@ export function FeedComposer({
             }
           />
 
-          <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
+          <div className="mt-3 flex items-center justify-between border-t border-[var(--color-glass-border)] pt-3">
             <div className="flex items-center gap-3 text-xs">
               <span
                 className={

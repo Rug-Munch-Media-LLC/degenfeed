@@ -69,7 +69,7 @@ function Kbd({ keys }: { keys: string[] }) {
             {k}
           </kbd>
           {i < keys.length - 1 && (
-            <span className="mx-1 text-[10px] text-white/20">+</span>
+            <span className="mx-1 text-[10px] text-[var(--color-muted)]">+</span>
           )}
         </span>
       ))}

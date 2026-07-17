@@ -18,7 +18,7 @@ export default function NewsError({ error, reset }: NewsErrorProps) {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-2xl text-red-400">
           !
         </div>
-        <h2 className="mb-2 text-xl font-bold text-white">News feed failed to load</h2>
+        <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">News feed failed to load</h2>
         <p className="mb-4 text-sm text-gray-400">
           Something went wrong while fetching the latest stories.
         </p>

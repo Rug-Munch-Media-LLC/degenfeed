@@ -190,7 +190,7 @@ export default function BookmarksPage() {
           <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">
             Saved Across All Protocols
           </p>
-          <h1 className="text-2xl font-bold text-white">Bookmarks</h1>
+          <h1 className="text-2xl font-bold text-[var(--color-fg)]">Bookmarks</h1>
           {!loading && (
             <p className="mt-0.5 text-xs text-gray-500">
               {bookmarks.length} bookmark{bookmarks.length !== 1 ? 's' : ''}
@@ -202,11 +202,11 @@ export default function BookmarksPage() {
             type="button"
             onClick={handleSync}
             disabled={syncing}
-            className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-50"
+            className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors disabled:opacity-50"
           >
             {syncing ? 'Syncing...' : 'Sync'}
           </button>
-          <Link href="/home" className="text-sm text-gray-500 hover:text-white transition-colors">
+          <Link href="/home" className="text-sm text-gray-500 hover:text-[var(--color-fg)] transition-colors">
             &larr; Feed
           </Link>
         </div>
@@ -220,7 +220,7 @@ export default function BookmarksPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search bookmarks..."
-            className="w-full rounded-lg bg-gray-900/60 border border-white/10 px-3 py-2 pl-8 text-sm text-white placeholder-gray-600 focus:border-degen-500/50 focus:outline-none"
+            className="w-full rounded-lg bg-[var(--color-muted)] border border-white/10 px-3 py-2 pl-8 text-sm text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500/50 focus:outline-none"
           />
           <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-600">
             🔍
@@ -229,7 +229,7 @@ export default function BookmarksPage() {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortMode)}
-          className="rounded-lg bg-gray-900/60 border border-white/10 px-3 py-2 text-sm text-gray-300 focus:border-degen-500/50 focus:outline-none"
+          className="rounded-lg bg-[var(--color-muted)] border border-white/10 px-3 py-2 text-sm text-gray-300 focus:border-degen-500/50 focus:outline-none"
         >
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
@@ -246,7 +246,7 @@ export default function BookmarksPage() {
             className={`rounded-full px-3 py-1 text-xs transition-colors ${
               tagFilter === null
                 ? 'bg-degen-500/20 text-degen-400'
-                : 'bg-gray-800 text-gray-500 hover:bg-gray-700 hover:text-gray-300'
+                : 'bg-[var(--color-muted)] text-gray-500 hover:bg-gray-700 hover:text-gray-300'
             }`}
           >
             All
@@ -259,7 +259,7 @@ export default function BookmarksPage() {
               className={`rounded-full px-3 py-1 text-xs transition-colors ${
                 tagFilter === tag
                   ? 'bg-degen-500/20 text-degen-400'
-                  : 'bg-gray-800 text-gray-500 hover:bg-gray-700 hover:text-gray-300'
+                  : 'bg-[var(--color-muted)] text-gray-500 hover:bg-gray-700 hover:text-gray-300'
               }`}
             >
               {tag}
@@ -273,9 +273,9 @@ export default function BookmarksPage() {
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="card animate-pulse p-4">
-              <div className="mb-2 h-4 w-48 rounded bg-gray-800" />
-              <div className="mb-2 h-3 w-32 rounded bg-gray-800" />
-              <div className="h-3 w-24 rounded bg-gray-800" />
+              <div className="mb-2 h-4 w-48 rounded bg-[var(--color-muted)]" />
+              <div className="mb-2 h-3 w-32 rounded bg-[var(--color-muted)]" />
+              <div className="h-3 w-24 rounded bg-[var(--color-muted)]" />
             </div>
           ))}
         </div>
@@ -323,7 +323,7 @@ export default function BookmarksPage() {
                           key={tag}
                           type="button"
                           onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
-                          className="rounded-full bg-gray-800 px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 transition-colors"
+                          className="rounded-full bg-[var(--color-muted)] px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 transition-colors"
                         >
                           {tag}
                         </button>
@@ -335,7 +335,7 @@ export default function BookmarksPage() {
                 {/* Title */}
                 <Link
                   href={`/post/${encodeURIComponent(b.postId)}`}
-                  className="font-medium text-sm text-white hover:text-degen-400 transition-colors truncate block"
+                  className="font-medium text-sm text-[var(--color-fg)] hover:text-degen-400 transition-colors truncate block"
                 >
                   {b.title || b.postId}
                 </Link>
@@ -361,7 +361,7 @@ export default function BookmarksPage() {
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       placeholder="tag1, tag2, tag3"
-                      className="flex-1 rounded bg-gray-800/60 border border-white/10 px-2 py-1 text-xs text-white placeholder-gray-600 focus:border-degen-500/50 focus:outline-none"
+                      className="flex-1 rounded bg-[var(--color-muted)] border border-white/10 px-2 py-1 text-xs text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500/50 focus:outline-none"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') saveTagEdit(b.postId);
                         if (e.key === 'Escape') cancelTagEdit();
@@ -377,7 +377,7 @@ export default function BookmarksPage() {
                     <button
                       type="button"
                       onClick={cancelTagEdit}
-                      className="rounded bg-gray-800 px-2 py-1 text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+                      className="rounded bg-[var(--color-muted)] px-2 py-1 text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
                     >
                       Cancel
                     </button>
@@ -386,7 +386,7 @@ export default function BookmarksPage() {
                   <button
                     type="button"
                     onClick={() => startTagEdit(b.postId, b.tags)}
-                    className="mt-1 rounded bg-gray-800/50 px-2 py-0.5 text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+                    className="mt-1 rounded bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
                   >
                     {b.tags?.length ? 'Edit tags' : '+ Add tags'}
                   </button>

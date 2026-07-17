@@ -193,7 +193,7 @@ export default function SubscribePage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20 text-center text-gray-500">
-        <div className="mx-auto mb-4 h-2 w-32 animate-pulse rounded-full bg-gray-800" />
+        <div className="mx-auto mb-4 h-2 w-32 animate-pulse rounded-full bg-[var(--color-muted)]" />
         <p>Loading tiers...</p>
       </div>
     );
@@ -204,17 +204,17 @@ export default function SubscribePage() {
       <div className="mb-6">
         <Link
           href="/profile"
-          className="inline-flex items-center gap-1 rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1 rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
         >
           ← Back to profile
         </Link>
       </div>
 
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 via-purple-500/30 to-fuchsia-500/30 text-2xl font-bold text-white shadow-[0_0_30px_rgba(34,197,94,0.2)]">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 via-purple-500/30 to-fuchsia-500/30 text-2xl font-bold text-[var(--color-fg)] shadow-[0_0_30px_rgba(34,197,94,0.2)]">
           {creator.slice(0, 2).toUpperCase()}
         </div>
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-[var(--color-fg)]">
           Subscribe to {shortenAddress(creator)}
         </h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -253,8 +253,8 @@ export default function SubscribePage() {
                 key={tier.id}
                 className="flex flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6"
               >
-                <h3 className="text-lg font-bold text-white">{tier.name}</h3>
-                <p className="mt-2 text-3xl font-bold text-white">
+                <h3 className="text-lg font-bold text-[var(--color-fg)]">{tier.name}</h3>
+                <p className="mt-2 text-3xl font-bold text-[var(--color-fg)]">
                   ${tier.price}
                   <span className="text-sm text-gray-500">/mo</span>
                 </p>
@@ -293,7 +293,7 @@ export default function SubscribePage() {
                 <button
                   key={m.value}
                   onClick={() => handleSign(subscribeState.tier, m.value)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/50 px-4 py-3 text-left transition-all hover:border-degen-500/50"
+                  className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-left transition-all hover:border-degen-500/50"
                   type="button"
                 >
                   <span className="text-lg">{m.icon}</span>
@@ -338,7 +338,7 @@ export default function SubscribePage() {
       {subscribeState.step === 'success' && (
         <div className="rounded-2xl border border-degen-500/20 bg-degen-500/5 py-8 text-center">
           <div className="mb-3 text-4xl">🎉</div>
-          <h2 className="text-xl font-bold text-white">Subscription Active!</h2>
+          <h2 className="text-xl font-bold text-[var(--color-fg)]">Subscription Active!</h2>
           <p className="mt-2 text-sm text-degen-400">
             You are now subscribed to the <strong>{subscribeState.tier.name}</strong> tier
           </p>

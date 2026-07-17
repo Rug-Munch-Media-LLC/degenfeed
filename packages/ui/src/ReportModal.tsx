@@ -99,15 +99,15 @@ export function ReportModal({ open, onClose, postId, onSubmitted }: ReportModalP
       role="dialog"
     >
       <div
-        className="mx-4 w-full max-w-sm rounded-2xl border border-gray-800 bg-gray-950 p-6 shadow-2xl"
+        className="mx-4 w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">Report post</h2>
+          <h2 className="text-lg font-bold text-[var(--color-fg)]">Report post</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
+            className="rounded-lg p-2 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close"
             type="button"
           >
@@ -135,12 +135,12 @@ export function ReportModal({ open, onClose, postId, onSubmitted }: ReportModalP
         </p>
 
         <fieldset className="mb-4">
-          <legend className="mb-2 text-sm font-medium text-white">Reason</legend>
+          <legend className="mb-2 text-sm font-medium text-[var(--color-fg)]">Reason</legend>
           <div className="space-y-2">
             {REPORT_REASONS.map((r) => (
               <label
                 key={r.value}
-                className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-800 px-4 py-3 transition-colors hover:border-gray-700 has-[:checked]:border-degen-500/50 has-[:checked]:bg-degen-500/5"
+                className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--color-border)] px-4 py-3 transition-colors hover:border-[var(--color-border)] has-[:checked]:border-degen-500/50 has-[:checked]:bg-degen-500/5"
               >
                 <input
                   type="radio"
@@ -167,7 +167,7 @@ export function ReportModal({ open, onClose, postId, onSubmitted }: ReportModalP
             placeholder="Provide any additional context…"
             rows={3}
             maxLength={1000}
-            className="w-full resize-none rounded-xl border border-gray-800 bg-gray-900 px-4 py-3 text-sm text-white placeholder-gray-600 focus:border-degen-500 focus:outline-none"
+            className="w-full resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-sm text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500 focus:outline-none"
           />
         </div>
 

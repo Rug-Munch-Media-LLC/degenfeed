@@ -41,7 +41,7 @@ export default function HealthPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold tracking-tight text-white">System Health</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight text-[var(--color-fg)]">System Health</h1>
 
       {loading && (
         <div className="space-y-4">
@@ -55,7 +55,7 @@ export default function HealthPage() {
         <div className="space-y-6">
           {/* API Worker */}
           <div className="card">
-            <h2 className="mb-3 text-sm font-semibold text-white">API Worker</h2>
+            <h2 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">API Worker</h2>
             {api?.relays ? (
               <div className="space-y-2">
                 {Object.entries(api.relays).map(([relay, status]) => (
@@ -69,7 +69,7 @@ export default function HealthPage() {
                     </div>
                   </div>
                 ))}
-                <div className="mt-2 flex items-center justify-between border-t border-white/5 pt-2 text-xs">
+                <div className="mt-2 flex items-center justify-between border-t border-[var(--color-glass-border)] pt-2 text-xs">
                   <span className="text-gray-500">Healthy relays</span>
                   <span className="text-degen-400">{api.healthy ?? 0}/5</span>
                 </div>
@@ -82,7 +82,7 @@ export default function HealthPage() {
           {/* Feed Providers */}
           {feed?.health && (
             <div className="card">
-              <h2 className="mb-3 text-sm font-semibold text-white">Feed Providers</h2>
+              <h2 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">Feed Providers</h2>
               <div className="space-y-2">
                 {Object.entries(feed.health).map(([protocol, h]) => (
                   <div key={protocol} className="flex items-center justify-between text-xs">
@@ -106,7 +106,7 @@ export default function HealthPage() {
 
           {/* App Status */}
           <div className="card">
-            <h2 className="mb-3 text-sm font-semibold text-white">App</h2>
+            <h2 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">App</h2>
             <div className="space-y-1.5 text-xs text-gray-400">
               <div className="flex justify-between">
                 <span>Client</span>

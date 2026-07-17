@@ -75,7 +75,7 @@ export async function syncBlockedFromServer(): Promise<void> {
     // Merge server mute list into local IndexedDB
     const { muteIdentity } = await import('./muting');
     for (const entry of data.muted || []) {
-      await muteIdentity(entry.targetId, entry.targetHandle || '');
+      await muteIdentity(entry.targetId, entry.targetHandle || '', entry.mutedBy ?? 'self');
     }
   } catch {
     /* offline — use local only */

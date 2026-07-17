@@ -43,7 +43,7 @@ export function QuickTipButton({
     (connectedProtocol ? PROTOCOL_CURRENCY[connectedProtocol] : undefined) ??
     'eth';
 
-  const currencyMeta = CURRENCY_META[effectiveCurrency] ?? CURRENCY_META.eth;
+  const currencyMeta = (CURRENCY_META[effectiveCurrency] ?? CURRENCY_META.eth)!;
 
   const [showAmounts, setShowAmounts] = useState(false);
   const [tipping, setTipping] = useState(false);
@@ -106,9 +106,9 @@ export function QuickTipButton({
       </button>
 
       {showAmounts && (
-        <div className="absolute bottom-full left-0 mb-1 flex flex-col gap-0.5 rounded-lg border border-gray-700 bg-gray-950 p-1 shadow-lg z-50 min-w-[120px]">
+        <div className="absolute bottom-full left-0 mb-1 flex flex-col gap-0.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 shadow-lg z-50 min-w-[120px]">
           {/* Currency label */}
-          <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 border-b border-gray-800 mb-1">
+          <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 border-b border-[var(--color-border)] mb-1">
             <span
               className="inline-flex items-center justify-center w-4 h-4 text-[10px] rounded-full"
               style={{ backgroundColor: `${currencyMeta.color}20`, color: currencyMeta.color }}
@@ -137,7 +137,7 @@ export function QuickTipButton({
             <button
               type="button"
               onClick={handleOpenModal}
-              className="flex items-center gap-1 rounded-md px-3 py-1 text-xs text-gray-500 hover:text-gray-300 transition-colors border-t border-gray-800 mt-0.5 pt-1"
+              className="flex items-center gap-1 rounded-md px-3 py-1 text-xs text-gray-500 hover:text-gray-300 transition-colors border-t border-[var(--color-border)] mt-0.5 pt-1"
             >
               <span>⚡</span>
               <span>More methods</span>

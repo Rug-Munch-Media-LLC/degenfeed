@@ -72,13 +72,13 @@ export default function BlockedUsersPage() {
       <div className="mx-auto max-w-2xl px-4 py-8">
         <div className="mb-6">
           <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">Moderation</p>
-          <h1 className="text-2xl font-bold text-white">Blocked &amp; Muted</h1>
+          <h1 className="text-2xl font-bold text-[var(--color-fg)]">Blocked &amp; Muted</h1>
         </div>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="card animate-pulse p-4">
-              <div className="mb-2 h-4 w-48 rounded bg-gray-800" />
-              <div className="h-3 w-32 rounded bg-gray-800" />
+              <div className="mb-2 h-4 w-48 rounded bg-[var(--color-muted)]" />
+              <div className="h-3 w-32 rounded bg-[var(--color-muted)]" />
             </div>
           ))}
         </div>
@@ -91,16 +91,16 @@ export default function BlockedUsersPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">Moderation</p>
-          <h1 className="text-2xl font-bold text-white">Blocked &amp; Muted</h1>
+          <h1 className="text-2xl font-bold text-[var(--color-fg)]">Blocked &amp; Muted</h1>
         </div>
-        <Link href="/home" className="text-sm text-gray-500 hover:text-white transition-colors">
+        <Link href="/home" className="text-sm text-gray-500 hover:text-[var(--color-fg)] transition-colors">
           &larr; Feed
         </Link>
       </div>
 
       {!hasContent && (
         <div className="card py-16 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-800">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-muted)]">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-gray-500">
               <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
               <path d="M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -129,11 +129,11 @@ export default function BlockedUsersPage() {
                 {blocked.map((b) => (
                   <div key={b.targetId} className="card flex items-center justify-between p-4">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-white">
+                      <p className="truncate text-sm font-medium text-[var(--color-fg)]">
                         {b.targetHandle}
                       </p>
                       <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-600">
-                        <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] text-gray-400">
+                        <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-400">
                           {b.protocol}
                         </span>
                         <span>Blocked {new Date(b.blockedAt).toLocaleDateString()}</span>
@@ -163,7 +163,7 @@ export default function BlockedUsersPage() {
                 {muted.map((m) => (
                   <div key={m.targetId} className="card flex items-center justify-between p-4">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-white">
+                      <p className="truncate text-sm font-medium text-[var(--color-fg)]">
                         {m.targetHandle}
                       </p>
                       <div className="mt-0.5 text-[11px] text-gray-600">
@@ -173,7 +173,7 @@ export default function BlockedUsersPage() {
                     <button
                       type="button"
                       onClick={() => handleUnmute(m.targetId)}
-                      className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-800 transition-colors"
+                      className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-[var(--color-muted)] transition-colors"
                     >
                       Unmute
                     </button>

@@ -72,9 +72,9 @@ export function TranslationPreview({
   const isSideBySide = layout === 'side-by-side' || (layout === 'auto' && !compact);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-800 bg-gray-950">
+    <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-800 px-4 py-2.5">
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-2.5">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
           Translation Preview
         </h3>
@@ -89,7 +89,7 @@ export function TranslationPreview({
 
       <div className={`${isSideBySide ? 'grid grid-cols-1 md:grid-cols-2' : 'flex flex-col'}`}>
         {/* ── Original panel ── */}
-        <div className="border-r-0 md:border-r border-gray-800 p-4">
+        <div className="border-r-0 md:border-r border-[var(--color-border)] p-4">
           <div className="mb-2 flex items-center gap-2">
             <span
               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
@@ -198,11 +198,11 @@ export function TranslationPreview({
 
       {/* ── Footer / action bar ── */}
       {onPost && (
-        <div className="flex items-center justify-end gap-2 border-t border-gray-800 px-4 py-2.5">
+        <div className="flex items-center justify-end gap-2 border-t border-[var(--color-border)] px-4 py-2.5">
           <button
             type="button"
             onClick={() => onPost(translated.translated, toProtocol)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--color-fg)] transition-colors"
             style={{ backgroundColor: toColor }}
           >
             <span className="text-[0.7em]">{toIcon}</span>

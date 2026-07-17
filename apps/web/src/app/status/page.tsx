@@ -56,7 +56,7 @@ export default async function StatusPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Protocol Status</h1>
+        <h1 className="text-2xl font-bold text-[var(--color-fg)]">Protocol Status</h1>
         <p className="mt-1 text-sm text-gray-500">
           Live health checks for every protocol DegenFeed aggregates from.
         </p>

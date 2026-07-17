@@ -102,16 +102,16 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r border-white/5 bg-black transition-transform duration-200 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:bg-transparent ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r border-[var(--color-glass-border)] bg-black transition-transform duration-200 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:bg-transparent ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex h-full flex-col overflow-y-auto px-4 py-6">
           <div className="mb-6 flex items-center justify-between lg:hidden">
-            <span className="font-semibold text-white text-sm">Documentation</span>
+            <span className="font-semibold text-[var(--color-fg)] text-sm">Documentation</span>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="rounded p-1 text-gray-400 hover:text-white"
+              className="rounded p-1 text-gray-400 hover:text-[var(--color-fg)]"
               aria-label="Close sidebar"
             >
               ✕
@@ -127,14 +127,14 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
                   className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors ${
                     activeId === s.id
                       ? 'bg-degen-500/10 text-degen-400 font-medium'
-                      : 'text-gray-400 hover:text-white hover:bg-white/[0.03]'
+                      : 'text-gray-400 hover:text-[var(--color-fg)] hover:bg-white/[0.03]'
                   }`}
                 >
                   {s.icon && <span className="text-xs opacity-60">{s.icon}</span>}
                   {s.label}
                 </a>
                 {s.subsections && (
-                  <div className="ml-6 mt-0.5 space-y-0.5 border-l border-white/5 pl-2">
+                  <div className="ml-6 mt-0.5 space-y-0.5 border-l border-[var(--color-glass-border)] pl-2">
                     {s.subsections.map((ss) => (
                       <a
                         key={ss.id}
@@ -155,10 +155,10 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             ))}
           </nav>
 
-          <div className="mt-auto border-t border-white/5 pt-4">
+          <div className="mt-auto border-t border-[var(--color-glass-border)] pt-4">
             <Link
               href="/status"
-              className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-gray-500 transition-colors hover:text-white"
+              className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-gray-500 transition-colors hover:text-[var(--color-fg)]"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
               All systems operational
@@ -170,7 +170,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
       {/* Mobile toggle */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="fixed bottom-4 left-4 z-20 rounded-full border border-white/10 bg-black p-3 text-white shadow-lg lg:hidden"
+        className="fixed bottom-4 left-4 z-20 rounded-full border border-white/10 bg-black p-3 text-[var(--color-fg)] shadow-lg lg:hidden"
         aria-label="Open sidebar"
       >
         ☰

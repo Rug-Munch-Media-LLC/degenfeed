@@ -48,7 +48,7 @@ export function OnboardingModal() {
       onClick={dismiss}
     >
       <div
-        className="mx-4 w-full max-w-md rounded-2xl border border-degen-500/20 bg-gray-950 p-6 shadow-2xl shadow-degen-500/10"
+        className="mx-4 w-full max-w-md rounded-2xl border border-degen-500/20 bg-[var(--color-card)] p-6 shadow-2xl shadow-degen-500/10"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -60,11 +60,11 @@ export function OnboardingModal() {
               height={28}
               className="h-7 w-7 rounded-lg shadow-[0_0_12px_rgba(0,255,65,0.3)]"
             />
-            <span className="text-sm font-semibold text-white">DegenFeed</span>
+            <span className="text-sm font-semibold text-[var(--color-fg)]">DegenFeed</span>
           </div>
           <button
             onClick={dismiss}
-            className="rounded-lg p-1 text-gray-500 hover:text-white transition-colors text-sm"
+            className="rounded-lg p-1 text-gray-500 hover:text-[var(--color-fg)] transition-colors text-sm"
           >
             Skip
           </button>
@@ -73,7 +73,7 @@ export function OnboardingModal() {
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-degen-500/10 text-3xl">
           {s.icon}
         </div>
-        <h2 className="mb-2 text-lg font-bold text-white">{s.title}</h2>
+        <h2 className="mb-2 text-lg font-bold text-[var(--color-fg)]">{s.title}</h2>
         <p className="mb-5 text-sm leading-relaxed text-gray-400">{s.body}</p>
 
         <div className="flex items-center justify-between">
@@ -89,7 +89,7 @@ export function OnboardingModal() {
             {step > 0 && (
               <button
                 onClick={() => setStep(step - 1)}
-                className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-[var(--color-fg)] transition-colors"
               >
                 Back
               </button>

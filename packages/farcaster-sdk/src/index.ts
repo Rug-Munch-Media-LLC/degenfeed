@@ -1,6 +1,7 @@
 import type { Protocol, UnifiedIdentity } from '@degenfeed/types';
 
-export { engageFarcaster } from './engage';
+export type { BuildCastMessageOpts } from './engage';
+export { buildFarcasterCastMessage, engageFarcaster } from './engage';
 export type { Protocol, UnifiedIdentity };
 
 export const DEFAULT_HUB_URL = 'https://hub.farcaster.standardcrypto.vc:2281';

@@ -69,7 +69,7 @@ export default function CommunitiesPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Communities</h1>
+              <h1 className="text-2xl font-bold text-[var(--color-fg)]">Communities</h1>
               <p className="mt-1 text-sm text-gray-500">
                 Cross-protocol communities spanning Lemmy, Nostr, Farcaster, Mastodon, Bluesky, and
                 Lens.
@@ -97,7 +97,7 @@ export default function CommunitiesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search communities…"
-              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-degen-500/50"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-[var(--color-fg)] placeholder-gray-500 outline-none transition-colors focus:border-degen-500/50"
             />
           </div>
         </div>
@@ -141,7 +141,7 @@ export default function CommunitiesPage() {
               >
                 <div className="flex items-start gap-3">
                   {/* Icon */}
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-800 text-lg font-bold text-white">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--color-muted)] text-lg font-bold text-[var(--color-fg)]">
                     {community.icon ? (
                       <Image
                         src={community.icon}
@@ -156,7 +156,7 @@ export default function CommunitiesPage() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-white truncate">{community.displayName}</h3>
+                    <h3 className="font-semibold text-[var(--color-fg)] truncate">{community.displayName}</h3>
                     <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{community.description}</p>
                   </div>
                 </div>
@@ -249,7 +249,7 @@ function CreateCommunityModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="card mx-4 w-full max-w-md p-6">
-        <h2 className="mb-4 text-lg font-bold text-white">Create Community</h2>
+        <h2 className="mb-4 text-lg font-bold text-[var(--color-fg)]">Create Community</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-400">Name *</label>
@@ -258,7 +258,7 @@ function CreateCommunityModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="crypto"
-              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-degen-500/50"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none focus:border-degen-500/50"
               required
               maxLength={48}
             />
@@ -271,7 +271,7 @@ function CreateCommunityModal({
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Crypto & Blockchain"
-              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-degen-500/50"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none focus:border-degen-500/50"
             />
           </div>
           <div>
@@ -281,7 +281,7 @@ function CreateCommunityModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this community about?"
               rows={3}
-              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder-gray-600 outline-none resize-none focus:border-degen-500/50"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none resize-none focus:border-degen-500/50"
             />
           </div>
           {error && <p className="text-xs text-red-400">{error}</p>}
@@ -289,7 +289,7 @@ function CreateCommunityModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm text-gray-400 transition-colors hover:text-white"
+              className="rounded-lg px-4 py-2 text-sm text-gray-400 transition-colors hover:text-[var(--color-fg)]"
             >
               Cancel
             </button>

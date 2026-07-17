@@ -42,7 +42,7 @@ function SectionNav({ current }: { current: string }) {
           key={s.id}
           href={`/home/${s.id}`}
           className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-            s.id === current ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+            s.id === current ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
           }`}
           style={s.id === current ? { backgroundColor: `${s.color}22`, color: s.color } : {}}
         >
@@ -174,7 +174,7 @@ interface FeedMeta {
 }
 
 function SectionContent({ section }: { section: string }) {
-  const { signedInProtocols, engage, openSignIn, openCompose } = useAuth();
+  const { signedInProtocols, engage, openSignIn, openCompose, openComposeReply } = useAuth();
   const router = useRouter();
   const meta = SECTIONS.find((s) => s.id === section);
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
@@ -297,7 +297,7 @@ function SectionContent({ section }: { section: string }) {
               {icon}
             </span>
             <div>
-              <h1 className="text-lg font-bold text-white">{displayName}</h1>
+              <h1 className="text-lg font-bold text-[var(--color-fg)]">{displayName}</h1>
             </div>
             <span
               className="rounded-full px-2 py-0.5 text-xs font-medium"
@@ -383,6 +383,17 @@ function SectionContent({ section }: { section: string }) {
           onEngage={handleEngage}
           onTip={(post) => setTipPost(post)}
           onRetry={handleRetry}
+          onCrossReplyOpen={(post) => {
+            const nativeId = post.id.replace(
+              /^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/,
+              '',
+            );
+            openComposeReply({
+              parentPostUri: post.dfUri ?? `df://${post.protocol}:${nativeId}`,
+              parentProtocol: post.protocol,
+              parentPreview: post.text.slice(0, 120),
+            });
+          }}
         />
 
         <SectionEmptyState

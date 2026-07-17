@@ -148,11 +148,11 @@ export default function MonetizationPage() {
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/profile"
-          className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
         >
           ← Back
         </Link>
-        <h1 className="text-xl font-bold text-white">Creator Monetization</h1>
+        <h1 className="text-xl font-bold text-[var(--color-fg)]">Creator Monetization</h1>
       </div>
 
       <div className="card mb-6 border-degen-500/20 bg-degen-500/5 p-4">
@@ -176,7 +176,7 @@ export default function MonetizationPage() {
               value={form.evmAddress}
               onChange={(e) => handleChange('evmAddress', e.target.value)}
               placeholder="0x..."
-              className="w-full rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-degen-500 transition-colors"
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
             />
             {errors.evmAddress && <p className="mt-1 text-xs text-red-400">{errors.evmAddress}</p>}
           </label>
@@ -188,7 +188,7 @@ export default function MonetizationPage() {
               value={form.solanaAddress}
               onChange={(e) => handleChange('solanaAddress', e.target.value)}
               placeholder="7x..."
-              className="w-full rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-degen-500 transition-colors"
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
             />
             {errors.solanaAddress && (
               <p className="mt-1 text-xs text-red-400">{errors.solanaAddress}</p>
@@ -208,7 +208,7 @@ export default function MonetizationPage() {
               value={form.lightningAddress}
               onChange={(e) => handleChange('lightningAddress', e.target.value)}
               placeholder="you@walletofsatoshi.com"
-              className="w-full rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-degen-500 transition-colors"
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
             />
             {errors.lightningAddress && (
               <p className="mt-1 text-xs text-red-400">{errors.lightningAddress}</p>
@@ -222,7 +222,7 @@ export default function MonetizationPage() {
               value={form.farcasterCustodyAddress}
               onChange={(e) => handleChange('farcasterCustodyAddress', e.target.value)}
               placeholder="0x..."
-              className="w-full rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-degen-500 transition-colors"
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
             />
             {errors.farcasterCustodyAddress && (
               <p className="mt-1 text-xs text-red-400">{errors.farcasterCustodyAddress}</p>
@@ -236,7 +236,7 @@ export default function MonetizationPage() {
               value={form.lensProfile}
               onChange={(e) => handleChange('lensProfile', e.target.value)}
               placeholder="0x01 or @handle"
-              className="w-full rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-degen-500 transition-colors"
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
             />
           </label>
 
@@ -247,7 +247,7 @@ export default function MonetizationPage() {
               value={form.nostrPubkey}
               onChange={(e) => handleChange('nostrPubkey', e.target.value)}
               placeholder="npub1... or hex"
-              className="w-full rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-degen-500 transition-colors"
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
             />
           </label>
         </div>
@@ -258,7 +258,7 @@ export default function MonetizationPage() {
             <select
               value={form.preferredMethod}
               onChange={(e) => handleChange('preferredMethod', e.target.value)}
-              className="w-full rounded-xl border border-gray-800 bg-gray-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-degen-500 transition-colors"
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none focus:border-degen-500 transition-colors"
             >
               {METHOD_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>

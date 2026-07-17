@@ -656,7 +656,7 @@ export default function SearchPage() {
                     </div>
                   )}
                   {video.durationSeconds > 0 && (
-                    <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 text-[9px] text-white">
+                    <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 text-[9px] text-[var(--color-fg)]">
                       {formatDuration(video.durationSeconds)}
                     </span>
                   )}

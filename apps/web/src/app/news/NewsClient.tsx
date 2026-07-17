@@ -119,7 +119,7 @@ function NewsCard({ post }: { post: UnifiedPost }) {
   const desc = stripTags(post.html || post.text).slice(0, 200);
 
   return (
-    <article className="card-hover group relative flex flex-col overflow-hidden border border-white/5 bg-gradient-to-b from-gray-900/80 to-gray-950/80 transition-all duration-300 hover:border-degen-500/20 hover:shadow-[0_0_24px_rgba(34,197,94,0.08)]">
+    <article className="card-hover group relative flex flex-col overflow-hidden border border-[var(--color-glass-border)] bg-gradient-to-b from-gray-900/80 to-gray-950/80 transition-all duration-300 hover:border-degen-500/20 hover:shadow-[0_0_24px_rgba(34,197,94,0.08)]">
       {imageEmbed && (
         <a
           href={url}
@@ -139,7 +139,7 @@ function NewsCard({ post }: { post: UnifiedPost }) {
       )}
       <div className="flex flex-1 flex-col p-4">
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          <span className="rounded-md bg-gray-800/80 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gray-400">
+          <span className="rounded-md bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gray-400">
             {sourceIcon(kind)} {post.author.displayName}
           </span>
           {mustRead && (
@@ -166,7 +166,7 @@ function NewsCard({ post }: { post: UnifiedPost }) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mb-2 block text-sm font-semibold leading-snug text-white transition-colors group-hover:text-degen-400 line-clamp-2"
+          className="mb-2 block text-sm font-semibold leading-snug text-[var(--color-fg)] transition-colors group-hover:text-degen-400 line-clamp-2"
         >
           {title}
         </a>
@@ -177,7 +177,7 @@ function NewsCard({ post }: { post: UnifiedPost }) {
           {post.niches.slice(0, 4).map((niche) => (
             <span
               key={niche}
-              className="rounded-full bg-gray-800/60 px-2 py-0.5 text-[10px] text-gray-500"
+              className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-500"
             >
               #{niche}
             </span>
@@ -203,7 +203,7 @@ function SentimentBar({ sentiment }: { sentiment: Record<string, number> | undef
         <span className="text-gray-400">⚪ {Math.round(neutral)}%</span>
         <span className="text-red-400">🔴 {Math.round(bearish)}%</span>
       </div>
-      <div className="flex h-1.5 overflow-hidden rounded-full bg-gray-800">
+      <div className="flex h-1.5 overflow-hidden rounded-full bg-[var(--color-muted)]">
         <div className="bg-green-500 transition-all" style={{ width: `${bullish}%` }} />
         <div className="bg-gray-600 transition-all" style={{ width: `${neutral}%` }} />
         <div className="bg-red-500 transition-all" style={{ width: `${bearish}%` }} />
@@ -316,7 +316,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
         <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex-1">
             <div className="mb-1 flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-white">DegenFeed News</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-[var(--color-fg)]">DegenFeed News</h1>
               <span className="rounded-full bg-degen-500/10 px-2.5 py-0.5 text-[11px] font-medium text-degen-400 ring-1 ring-degen-500/20">
                 LIVE
               </span>
@@ -337,7 +337,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               href="/api/feed/rss.xml?category=news"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg border border-gray-800 px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/30 hover:text-degen-400"
+              className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/30 hover:text-degen-400"
             >
               RSS
             </a>
@@ -408,7 +408,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
         </div>
 
         {/* Source tabs */}
-        <div className="flex gap-1 border-b border-white/5 pb-2">
+        <div className="flex gap-1 border-b border-[var(--color-glass-border)] pb-2">
           {SOURCE_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -416,7 +416,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               onClick={() => setSourceTab(tab.id)}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                 sourceTab === tab.id
-                  ? 'bg-gray-800 text-white'
+                  ? 'bg-[var(--color-muted)] text-[var(--color-fg)]'
                   : 'text-gray-500 hover:text-gray-300'
               }`}
             >
@@ -470,7 +470,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
                       setQuery(t.topic);
                       setSearchInput(t.topic);
                     }}
-                    className="rounded-full bg-gray-800/80 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
+                    className="rounded-full bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-300 transition-colors hover:bg-gray-700 hover:text-[var(--color-fg)]"
                   >
                     #{t.topic}
                     <span className="ml-1.5 text-[10px] text-gray-500">{t.count}</span>
@@ -493,7 +493,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
                   .map(([name, count]) => (
                     <div key={name} className="flex items-center justify-between text-xs">
                       <span className="text-gray-400">{name}</span>
-                      <span className="rounded-full bg-gray-800/80 px-2 py-0.5 text-gray-500">
+                      <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-gray-500">
                         {count}
                       </span>
                     </div>

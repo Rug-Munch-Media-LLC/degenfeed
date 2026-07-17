@@ -140,7 +140,7 @@ export const NostrRelayBadge = memo(function NostrRelayBadge({
           role="listbox"
           aria-label="Relay list"
         >
-          <div className="border-b border-gray-800 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+          <div className="border-b border-[var(--color-border)] px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
             Relays
           </div>
           <div className="max-h-48 overflow-y-auto py-1">
@@ -203,7 +203,7 @@ export const NostrRelayBadge = memo(function NostrRelayBadge({
           </div>
 
           {/* Footer note */}
-          <div className="border-t border-gray-800 px-3 py-1.5 text-[10px] text-gray-700">
+          <div className="border-t border-[var(--color-border)] px-3 py-1.5 text-[10px] text-gray-700">
             Relays that relayed this event
           </div>
         </div>

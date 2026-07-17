@@ -146,7 +146,7 @@ function DeployOptionCard({ option }: { option: DeployOption }) {
         {/* CTA */}
         <Link
           href={`/deploy/request?type=${option.id}`}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-[var(--color-fg)] transition-all duration-200 hover:brightness-110"
           style={{
             backgroundColor: option.color,
             boxShadow: `0 4px 16px ${option.color}40`,

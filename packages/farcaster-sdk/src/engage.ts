@@ -143,6 +143,64 @@ export interface FarcasterEngageResult {
   error?: string;
 }
 
+export interface BuildCastMessageOpts {
+  signerKeyHex: string;
+  fid: number;
+  text: string;
+  /** Optional parent cast (only when replying to a real Farcaster cast) */
+  parentFid?: number;
+  parentHashHex?: string;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  let out = '';
+  for (const b of bytes) out += b.toString(16).padStart(2, '0');
+  return out;
+}
+
+/**
+ * Build and sign a CastAdd Message protobuf WITHOUT submitting it.
+ * Returns the signed message as a hex string, suitable for passing to
+ * server endpoints (e.g. /api/cross-reply) that submit to a Hub.
+ */
+export function buildFarcasterCastMessage(opts: BuildCastMessageOpts): {
+  ok: boolean;
+  messageHex?: string;
+  error?: string;
+} {
+  try {
+    const signerBytes = hexToBytes(opts.signerKeyHex);
+    if (signerBytes.length !== 32) {
+      return { ok: false, error: 'Invalid signer key (must be 32 bytes / 64 hex chars)' };
+    }
+    const pubKey = ed25519.getPublicKey(signerBytes);
+
+    const body = encodeCastAddBody({
+      text: opts.text,
+      parentFid: opts.parentFid,
+      parentHashHex: opts.parentHashHex,
+    });
+    const messageData = encodeMessageData({
+      type: MESSAGE_TYPE_CAST_ADD,
+      fid: opts.fid,
+      body,
+      bodyField: 5,
+    });
+    const hash = blake3(messageData, { dkLen: 20 });
+    const signature = ed25519.sign(hash, signerBytes);
+    const message = concatBytes(
+      encodeLengthDelimited(1, messageData),
+      encodeLengthDelimited(2, hash),
+      encodeVarintField(3, HASH_SCHEME_BLAKE3),
+      encodeLengthDelimited(4, signature),
+      encodeLengthDelimited(5, pubKey),
+    );
+    return { ok: true, messageHex: bytesToHex(message) };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Cast build failed' };
+  }
+}
+
 export interface FarcasterEngageOpts {
   action: 'like' | 'unlike' | 'repost' | 'reply';
   signerKeyHex: string;
