@@ -3,8 +3,9 @@ import { requireSession } from '../session';
 
 interface Notification {
   id: string;
-  type: 'like' | 'repost' | 'reply' | 'follow' | 'mention' | 'mirror' | 'collect';
+  type: 'like' | 'repost' | 'reply' | 'follow' | 'mention' | 'mirror' | 'collect' | 'tip';
   protocol: string;
+  sourceProtocol?: string;
   actorName: string;
   actorHandle: string;
   actorAvatar?: string;
@@ -12,13 +13,35 @@ interface Notification {
   postText?: string;
   createdAt: number;
   read: boolean;
+  /** Tip-specific fields */
+  amount?: string;
+  currency?: string;
 }
 
 export type { Notification };
 
-// TODO: Emit tip notifications when tips are created (see routes/tip.ts handleTipCreate)
-// Implementation: store tip in KV with recipient as key, query here to surface
-// tip receipts in the notification stream alongside social protocol notifications.
+function detectProtocol(n: Notification): string {
+  if (n.protocol && n.protocol !== 'tip') return n.protocol;
+  if (n.type === 'tip') return n.currency === 'base' ? 'farcaster' : n.currency === 'solana' ? 'solana' : 'ethereum';
+  return n.protocol || 'unknown';
+}
+
+/**
+ * Fetch KV-backed notifications (tips, app-internal follows, etc.)
+ * stored under `notifications:{recipient}` by other handlers.
+ */
+async function fetchKvNotifications(env: Env, recipient: string): Promise<Notification[]> {
+  if (!env.CACHE || !recipient) return [];
+  try {
+    const raw = await env.CACHE.get(`notifications:${recipient}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Notification[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.warn('[notifications] fetchKvNotifications failed:', err instanceof Error ? err.message : err);
+    return [];
+  }
+}
 
 interface NotificationAuth {
   nostr_pubkey?: string;
@@ -578,24 +601,38 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
 
   await Promise.allSettled(fetchers);
 
-  // Check for recent tips sent to this user
-  // This is a placeholder — real implementation needs tip tracking in KV
-  // const tipNotifs: NotificationItem[] = []; // TODO: query tip KV store
-  // if (tipNotifs.length > 0) all.push(...tipNotifs);
+  // Fetch KV-backed notifications (tips, app-internal follows, etc.)
+  const kvNotifs = await fetchKvNotifications(env, userId);
+  all.push(...kvNotifs);
+
+  // Deduplicate by notification ID (keep first occurrence = protocol-native)
+  const seen = new Set<string>();
+  const deduped: Notification[] = [];
+  for (const n of all) {
+    if (seen.has(n.id)) continue;
+    seen.add(n.id);
+    deduped.push(n);
+  }
 
   // Merge read state from KV
   const readIds = await loadReadState(env, userId);
-  for (const n of all) {
+  for (const n of deduped) {
     if (readIds.has(n.id)) n.read = true;
   }
 
-  all.sort((a, b) => b.createdAt - a.createdAt);
+  // Add sourceProtocol to every notification for unified inbox display
+  const unified = deduped.map((n) => ({
+    ...n,
+    sourceProtocol: n.sourceProtocol || detectProtocol(n),
+  }));
+
+  unified.sort((a, b) => b.createdAt - a.createdAt);
 
   // Auto-save read state for seen notifications
   void (async () => {
-    const ids = new Set(all.slice(0, 50).map((n) => n.id));
+    const ids = new Set(unified.slice(0, 50).map((n) => n.id));
     await saveReadState(env, userId, ids);
   })();
 
-  return noCacheJsonResponse({ notifications: all.slice(0, 50), meta: { total: all.length } });
+  return noCacheJsonResponse({ notifications: unified.slice(0, 100), meta: { total: unified.length } });
 }

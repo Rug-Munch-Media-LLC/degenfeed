@@ -5,8 +5,9 @@ import { getProtocolColor } from './ProtocolBadge';
 
 export interface Notification {
   id: string;
-  type: 'like' | 'repost' | 'reply' | 'follow' | 'mention';
+  type: 'like' | 'repost' | 'reply' | 'follow' | 'mention' | 'mirror' | 'collect' | 'tip';
   protocol: string;
+  sourceProtocol?: string;
   actorName: string;
   actorHandle: string;
   actorAvatar?: string;
@@ -14,6 +15,9 @@ export interface Notification {
   postText?: string;
   createdAt: number;
   read: boolean;
+  /** Tip-specific fields */
+  amount?: string;
+  currency?: string;
 }
 
 function timeAgo(ts: number): string {
@@ -34,6 +38,9 @@ function getTypeLabel(type: string): string {
     reply: 'replied to you',
     follow: 'followed you',
     mention: 'mentioned you',
+    mirror: 'mirrored your post',
+    collect: 'collected your post',
+    tip: 'tipped you',
   };
   return labels[type] || 'interacted with you';
 }

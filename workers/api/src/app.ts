@@ -51,7 +51,12 @@ import {
 import { handleFrameAction, handleFrameResolve } from './routes/frame';
 import { handleFundingFeed } from './routes/funding';
 import { handleRelaysHealth } from './routes/health';
-import { handleResolveIdentity } from './routes/identity';
+import {
+  handleResolveIdentity,
+  handleLinkIdentity,
+  handleUnlinkIdentity,
+  handleGetIdentityProfile,
+} from './routes/identity';
 import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import { handleLinksPage } from './routes/links';
 import { handleBlockSync } from './routes/moderation';
@@ -74,6 +79,7 @@ import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import { handlePublish } from './routes/publish';
 import { handlePushSend, handlePushSubscribe } from './routes/push';
 import { handleRelatedPosts } from './routes/related';
+import { handleCrossReply } from './routes/cross-reply';
 import { handlePostReplies } from './routes/replies';
 import {
   handleRmiHeadlines,
@@ -280,6 +286,9 @@ app.all('/api/bridge/rss-to-nostr', async (c) => {
   const { handleRssToNostrBridge } = await import('./routes/publish');
   return withSession(c, () => handleRssToNostrBridge(c.req.raw, c.env));
 });
+app.all('/api/cross-reply', async (c) =>
+  withSession(c, () => handleCrossReply(c.req.raw, c.env)),
+);
 
 // ─── API: Auth ──────────────────────────────────────────────
 app.all('/api/auth/signout', async (c) => {
@@ -328,7 +337,15 @@ app.all('/api/notify', async (c) => handleNotify(c.req.raw, c.env));
 
 // ─── API: Identity ───────────────────────────────────────────
 app.all('/api/identity/resolve', async (c) => handleResolveIdentity(c.req.raw, c.env));
-app.all('/api/identity/profile', async (c) => handleIdentityProfile(c.req.raw, c.env));
+app.get('/api/identity/profile', async (c) => {
+  // /api/identity/profile?wallet=0x... returns cross-protocol linked identities
+  // /api/identity/profile?handle=... returns resolved identity profile (legacy)
+  const wallet = c.req.query('wallet');
+  if (wallet) return handleGetIdentityProfile(c.req.raw, c.env);
+  return handleIdentityProfile(c.req.raw, c.env);
+});
+app.post('/api/identity/link', async (c) => handleLinkIdentity(c.req.raw, c.env));
+app.delete('/api/identity/link', async (c) => handleUnlinkIdentity(c.req.raw, c.env));
 
 // ─── API: Blink ─────────────────────────────────────────────
 app.all('/api/blink/tip', async (c) => handleBlinkTip(c.req.raw, c.env));

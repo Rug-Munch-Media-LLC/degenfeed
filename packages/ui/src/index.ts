@@ -1,8 +1,8 @@
 export type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+export type { BlueskyPostContextProps } from './BlueskyPostContext';
+export { BlueskyPostContext } from './BlueskyPostContext';
 export type { ComposeModalProps, ScheduledPostItem } from './ComposeModal';
 export { ComposeModal } from './ComposeModal';
-export type { ReportModalProps } from './ReportModal';
-export { ReportModal } from './ReportModal';
 export type {
   ComposePreviewAuthor,
   ComposePreviewProps,
@@ -16,10 +16,22 @@ export type { FrameEmbedProps } from './FrameEmbed';
 export { FrameEmbed } from './FrameEmbed';
 export type { FundingRound } from './FundingCard';
 export { FundingCard } from './FundingCard';
+export type { IdentityBadgeProps } from './IdentityBadge';
+export { CROSS_PROTOCOL_ICONS, IdentityBadge } from './IdentityBadge';
+export type { LemmyComment, LemmyThreadViewProps } from './LemmyThreadView';
+export { LemmyThreadView } from './LemmyThreadView';
+export type { LensPublicationBadgeProps } from './LensPublicationBadge';
+export { LensPublicationBadge } from './LensPublicationBadge';
+export type { MastodonInstanceContextProps } from './MastodonInstanceContext';
+export { MastodonInstanceContext } from './MastodonInstanceContext';
+export type { NostrRelayBadgeProps } from './NostrRelayBadge';
+export { NostrRelayBadge } from './NostrRelayBadge';
 export type { Notification, NotificationBellProps } from './NotificationBell';
 export { NotificationBell } from './NotificationBell';
 export type { PaywallModalProps, PaywallRequirement } from './PaywallModal';
 export { PaywallModal } from './PaywallModal';
+export type { PeerTubeEmbedProps } from './PeerTubeEmbed';
+export { PeerTubeEmbed } from './PeerTubeEmbed';
 export type { EngageHandler, EngageResult, PostCardProps } from './PostCard';
 export { PostCard } from './PostCard';
 export { PricePill, usePricesForText } from './PricePill';
@@ -34,6 +46,8 @@ export {
   ProtocolBadge,
 } from './ProtocolBadge';
 export { QuickTipButton } from './QuickTipButton';
+export type { ReportModalProps } from './ReportModal';
+export { ReportModal } from './ReportModal';
 export type { ProtocolOption, SignInModalProps, WalletOption } from './SignInModal';
 export { SignInModal } from './SignInModal';
 export type { TokenChartProps } from './TokenChart';

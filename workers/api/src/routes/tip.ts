@@ -294,7 +294,7 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
   return jsonResponse({ methods: rankedMethods, resolved: true });
 }
 
-export async function handleTipCreate(request: Request, _env: Env): Promise<Response> {
+export async function handleTipCreate(request: Request, env: Env): Promise<Response> {
   const bodySizeCheck = validateBodySize(request, 10 * 1024);
   if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
   try {
@@ -403,10 +403,34 @@ export async function handleTipCreate(request: Request, _env: Env): Promise<Resp
       default:
         return jsonResponse({ error: `Unknown tipping method: ${method}` }, 400);
     }
-    // TODO: Emit notification for tip recipient once tip is confirmed
-    // Implementation: store tip in KV with recipient as key, queue notification,
-    // then fetch in notifications.ts handleNotifications and include in response.
-    // See routes/notifications.ts for the notification aggregation pipeline.
+    // Emit notification for tip recipient — store in KV for the unified notification pipeline
+    if (recipient && recipient !== sender) {
+      try {
+        const notifKey = `notifications:${recipient}`;
+        const tipNotif = {
+          id: `tip:${method}:${recipient}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
+          type: 'tip' as const,
+          protocol: 'tip',
+          sourceProtocol: method === 'base' ? 'farcaster' : method === 'solana' ? 'solana' : method,
+          actorName: sender ? `${sender.slice(0, 6)}...` : 'Anonymous',
+          actorHandle: sender || '',
+          amount: amount,
+          currency: method,
+          createdAt: Date.now(),
+          read: false,
+        };
+        const existingRaw = await env.CACHE?.get(notifKey);
+        const existing: unknown[] = existingRaw ? JSON.parse(existingRaw) : [];
+        await env.CACHE?.put(
+          notifKey,
+          JSON.stringify([tipNotif, ...existing].slice(0, 100)),
+          { expirationTtl: 60 * 60 * 24 * 30 },
+        );
+      } catch (kvErr) {
+        const msg = kvErr instanceof Error ? kvErr.message : String(kvErr);
+        console.warn('[tip] failed to store notification:', msg);
+      }
+    }
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
   }

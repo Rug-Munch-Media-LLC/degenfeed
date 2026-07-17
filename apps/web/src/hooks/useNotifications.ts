@@ -21,7 +21,19 @@ interface NotificationAuth {
     fid?: string;
     signerKey?: string;
   };
+  lens?: string;
+  lens_profileId?: string;
 }
+
+interface NotificationPrefs {
+  likes: boolean;
+  reposts: boolean;
+  replies: boolean;
+  follows: boolean;
+  mentions: boolean;
+}
+
+type NotificationProtocolPrefs = Partial<Record<string, boolean | NotificationPrefs>>;
 
 function buildAuth(identities: StoredIdentity[]): NotificationAuth {
   const auth: NotificationAuth = {};
@@ -42,6 +54,9 @@ function buildAuth(identities: StoredIdentity[]): NotificationAuth {
         fid: identity.publicId,
         signerKey: identity.keys?.signerKey ?? undefined,
       };
+    } else if (identity.protocol === 'lens') {
+      auth.lens = identity.keys?.accessToken ?? undefined;
+      auth.lens_profileId = identity.publicId;
     }
   }
   return auth;
@@ -78,6 +93,7 @@ export function useNotifications(enabled: boolean) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationProtocolPrefs | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -91,7 +107,7 @@ export function useNotifications(enabled: boolean) {
       const identities = await getAllIdentities();
       const auth = buildAuth(identities);
       const hasAny =
-        auth.nostr_pubkey || auth.mastodon || auth.bluesky?.accessJwt || auth.farcaster?.fid;
+        auth.nostr_pubkey || auth.mastodon || auth.bluesky?.accessJwt || auth.farcaster?.fid || auth.lens;
       if (!hasAny) {
         setNotifications([]);
         return;
@@ -119,6 +135,35 @@ export function useNotifications(enabled: boolean) {
     }
   }, [enabled]);
 
+  const fetchNotificationPrefs = useCallback(async () => {
+    try {
+      const res = await fetch('/api/preferences', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { notifications?: NotificationProtocolPrefs };
+      if (data.notifications) setNotificationPrefs(data.notifications);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const saveNotificationPrefs = useCallback(async (prefs: NotificationProtocolPrefs) => {
+    setNotificationPrefs(prefs);
+    try {
+      await fetch('/api/preferences', {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ notifications: prefs }),
+      });
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const markRead = useCallback((id: string) => {
     setReadIds((prev) => {
       const next = new Set(prev);
@@ -141,11 +186,12 @@ export function useNotifications(enabled: boolean) {
 
   useEffect(() => {
     fetchNotifications();
+    fetchNotificationPrefs();
     intervalRef.current = setInterval(fetchNotifications, POLL_MS);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [fetchNotifications]);
+  }, [fetchNotifications, fetchNotificationPrefs]);
 
   const decorated = notifications.map((n) => ({
     ...n,
@@ -160,5 +206,7 @@ export function useNotifications(enabled: boolean) {
     fetchNotifications,
     markRead,
     markAllRead,
+    notificationPrefs,
+    saveNotificationPrefs,
   };
 }

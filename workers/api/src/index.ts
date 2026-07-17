@@ -15,6 +15,7 @@ export interface Env {
   AUTH_SECRET?: string;
   CACHE?: KVNamespace;
   SUBSCRIPTIONS?: KVNamespace;
+  IDENTITIES?: KVNamespace;
   GTS_CLIENT_ID?: string;
   GTS_CLIENT_SECRET?: string;
   GTS_INSTANCE_URL?: string;

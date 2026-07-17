@@ -248,7 +248,7 @@ export default function ProfilePage() {
               )}
 
               <div className="mt-4">
-                <IdentityLinker onSignIn={openSignIn} />
+                <IdentityLinker />
               </div>
 
               {/* Cross-network posting status */}

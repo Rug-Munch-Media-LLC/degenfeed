@@ -12,15 +12,16 @@
  *   - Draft autosave to localStorage
  *   - Slash commands (/poll, /image, /link, /code, /thread, /schedule)
  *   - Keyboard shortcut: Ctrl+Enter to publish
+ *   - Cross-protocol reply mode: reply to any protocol post from any other protocol
  *
  * Auth tiers:
  *   Not signed in → shows "Sign in to compose" CTA
  *   Signed in (1+ protocols) → toggles show available protocols
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ComposePreview } from './ComposePreview';
-import { getProtocolColor, getProtocolIcon } from './ProtocolBadge';
+import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolBadge';
 
 interface ComposeTarget {
   id: string;
@@ -48,6 +49,16 @@ export interface ScheduledPostItem {
   scheduledAt: string; // ISO string
   targets: string[];
   createdAt: string;
+}
+
+/** Context for cross-protocol reply mode. */
+export interface ReplyContext {
+  /** The df:// URI of the post being replied to */
+  parentPostUri: string;
+  /** The protocol the parent post is on */
+  parentProtocol: string;
+  /** Optional short preview of the parent post text */
+  parentPreview?: string;
 }
 
 export interface ComposeModalProps {
@@ -81,6 +92,15 @@ export interface ComposeModalProps {
   onCancelSchedule?: (id: string) => void;
   /** Called to publish a scheduled post immediately. */
   onPublishScheduledNow?: (id: string) => void;
+  /** Cross-protocol reply context — when set, compose enters reply mode. */
+  replyContext?: ReplyContext;
+  /** Called for cross-protocol replies instead of normal publish. */
+  onCrossReply?: (
+    parentPostUri: string,
+    parentProtocol: string,
+    replyProtocol: string,
+    content: string,
+  ) => Promise<{ ok: boolean; nativeId?: string; error?: string }>;
 }
 
 const DRAFT_KEY = 'degenfeed_compose_draft';
@@ -99,6 +119,8 @@ export function ComposeModal({
   scheduledPosts,
   onCancelSchedule,
   onPublishScheduledNow,
+  replyContext,
+  onCrossReply,
 }: ComposeModalProps) {
   const [text, setText] = useState('');
   const [targets, setTargets] = useState<ComposeTarget[]>(() =>
@@ -118,6 +140,11 @@ export function ComposeModal({
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [showScheduledView, setShowScheduledView] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Cross-protocol reply state
+  const [replyProtocol, setReplyProtocol] = useState<string>(replyContext?.parentProtocol ?? '');
+  const isCrossProtocolReply = !!replyContext && replyContext.parentProtocol !== replyProtocol;
+  const isReplyMode = !!replyContext;
 
   // Load draft from localStorage and reset schedule state
   useEffect(() => {
@@ -184,7 +211,7 @@ export function ComposeModal({
       }
       insertSlashCommand(`/${cmd}`);
     },
-    [removeSlashLine],
+    [removeSlashLine, insertSlashCommand],
   );
 
   const insertSlashCommand = useCallback(
@@ -237,6 +264,57 @@ export function ComposeModal({
     if (!text.trim() || publishingRef.current) return;
     publishingRef.current = true;
     setPublishing(true);
+
+    // Cross-protocol reply flow
+    if (replyContext && onCrossReply) {
+      setTargets((prev) =>
+        prev.map((t) =>
+          t.id === replyProtocol ? { ...t, enabled: true, status: 'sending' as const } : t,
+        ),
+      );
+
+      try {
+        const result = await onCrossReply(
+          replyContext.parentPostUri,
+          replyContext.parentProtocol,
+          replyProtocol,
+          text.trim(),
+        );
+
+        setTargets((prev) =>
+          prev.map((t) =>
+            t.id === replyProtocol
+              ? {
+                  ...t,
+                  status: result.ok ? ('sent' as const) : ('failed' as const),
+                  error: result.error,
+                }
+              : t,
+          ),
+        );
+
+        if (result.ok) {
+          try {
+            localStorage.removeItem(DRAFT_KEY);
+          } catch {
+            /* noop */
+          }
+          setTimeout(() => onClose(), 1500);
+        }
+      } catch {
+        setTargets((prev) =>
+          prev.map((t) =>
+            t.id === replyProtocol
+              ? { ...t, status: 'failed' as const, error: 'Network error' }
+              : t,
+          ),
+        );
+      } finally {
+        publishingRef.current = false;
+        setPublishing(false);
+      }
+      return;
+    }
 
     const selectedTargets = targets.filter((t) => t.enabled).map((t) => t.id);
 
@@ -300,6 +378,9 @@ export function ComposeModal({
     nostrBridgePublicId,
     onNostrBridge,
     lensCollect,
+    replyProtocol,
+    replyContext,
+    onCrossReply,
   ]);
 
   // Keyboard shortcut
@@ -320,6 +401,19 @@ export function ComposeModal({
     return () => window.removeEventListener('keydown', handler);
   }, [open, handlePublish, handleSchedule, scheduledAt, onClose]);
 
+  const /** List of user's available protocols for reply switching */
+    availableReplyProtocols = useMemo(() => {
+      if (!replyContext) return [];
+      return TARGETS.map((t) => t.id).filter((id) => signedInProtocols[id]);
+    }, [replyContext, signedInProtocols]);
+
+  // Default reply protocol when entering reply mode
+  useEffect(() => {
+    if (open && replyContext) {
+      setReplyProtocol(replyContext.parentProtocol);
+    }
+  }, [open, replyContext]);
+
   if (!open) return null;
 
   const selectedCount = targets.filter((t) => t.enabled).length;
@@ -328,21 +422,28 @@ export function ComposeModal({
 
   /** Format a Date for display, e.g. "Jul 18, 2026 at 3:00 PM" */
   const formatScheduleDate = (d: Date) => {
-    return d.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }) + ' at ' + d.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
+    return (
+      d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }) +
+      ' at ' +
+      d.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    );
   };
 
   /** Format an ISO string for the scheduled posts list, e.g. "Jul 18, 3:00 PM" */
   const formatScheduledItem = (iso: string) => {
     const d = new Date(iso);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-      ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    return (
+      d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+      ' at ' +
+      d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    );
   };
 
   // Min datetime for the picker: now + 5 minutes
@@ -368,7 +469,22 @@ export function ComposeModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-white">Compose</h2>
+            <h2 className="text-sm font-semibold text-white">
+              {isReplyMode ? 'Reply' : 'Compose'}
+            </h2>
+            {isReplyMode && replyContext && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                style={{
+                  backgroundColor: `${getProtocolColor(replyContext.parentProtocol)}22`,
+                  color: getProtocolColor(replyContext.parentProtocol),
+                }}
+                title={`Parent post is on ${getProtocolLabel(replyContext.parentProtocol)}`}
+              >
+                <span className="text-[0.7em]">{getProtocolIcon(replyContext.parentProtocol)}</span>
+                {getProtocolLabel(replyContext.parentProtocol)}
+              </span>
+            )}
             {scheduledPosts && scheduledPosts.length > 0 && (
               <button
                 type="button"
@@ -384,12 +500,8 @@ export function ComposeModal({
             )}
           </div>
           <div className="flex items-center gap-2">
-            {!scheduledAt && (
-              <span className="text-xs text-gray-500">Ctrl+Enter to post</span>
-            )}
-            {scheduledAt && (
-              <span className="text-xs text-cyan-500">Ctrl+Enter to schedule</span>
-            )}
+            {!scheduledAt && <span className="text-xs text-gray-500">Ctrl+Enter to post</span>}
+            {scheduledAt && <span className="text-xs text-cyan-500">Ctrl+Enter to schedule</span>}
             <button
               onClick={onClose}
               className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
@@ -470,13 +582,7 @@ export function ComposeModal({
               {showSchedulePicker && scheduleAvailable && (
                 <div className="mb-3 rounded-lg border border-cyan-900/50 bg-cyan-950/30 p-3">
                   <label className="flex items-center gap-2 text-sm text-cyan-300">
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      aria-hidden="true"
-                    >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                       <rect
                         x="1.5"
                         y="2.5"
@@ -487,7 +593,12 @@ export function ComposeModal({
                         strokeWidth="1.5"
                       />
                       <path d="M1.5 6h13" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path
+                        d="M5 1v3M11 1v3"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
                     </svg>
                     Schedule for
                   </label>
@@ -521,9 +632,22 @@ export function ComposeModal({
                     aria-hidden="true"
                     className="flex-shrink-0 text-cyan-400"
                   >
-                    <rect x="1.5" y="2.5" width="13" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                    <rect
+                      x="1.5"
+                      y="2.5"
+                      width="13"
+                      height="12"
+                      rx="2"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    />
                     <path d="M1.5 6h13" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <path
+                      d="M5 1v3M11 1v3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
                   </svg>
                   <span className="text-xs text-cyan-300">
                     Scheduled for {formatScheduleDate(scheduledAt)}
@@ -538,7 +662,12 @@ export function ComposeModal({
                     aria-label="Clear schedule"
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path
+                        d="M12 4L4 12M4 4l8 8"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -547,8 +676,61 @@ export function ComposeModal({
           )}
         </div>
 
+        {/* Cross-protocol reply switcher */}
+        {isReplyMode && replyContext && availableReplyProtocols.length > 1 && (
+          <div className="border-b border-gray-800 px-4 py-3">
+            <p className="mb-2 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+              Reply as
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {availableReplyProtocols.map((protocol) => {
+                const isSelected = protocol === replyProtocol;
+                const isParent = protocol === replyContext.parentProtocol;
+                return (
+                  <button
+                    key={protocol}
+                    type="button"
+                    onClick={() => setReplyProtocol(protocol)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
+                      isSelected
+                        ? 'border-current opacity-100'
+                        : 'border-gray-800 opacity-40 hover:opacity-70'
+                    }`}
+                    style={{
+                      color: isSelected ? getProtocolColor(protocol) : '#666',
+                      backgroundColor: isSelected
+                        ? `${getProtocolColor(protocol)}15`
+                        : 'transparent',
+                    }}
+                  >
+                    <span className="text-[0.7em]">{getProtocolIcon(protocol)}</span>
+                    {getProtocolLabel(protocol)}
+                    {isParent && <span className="text-[10px] opacity-60">(same)</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Cross-protocol bridge note */}
+        {isReplyMode && replyContext && isCrossProtocolReply && (
+          <p className="mx-4 mt-2.5 flex items-start gap-2 rounded-lg border border-purple-900/40 bg-purple-950/20 px-3 py-2">
+            <span className="mt-px flex-shrink-0 text-purple-400 text-xs font-bold">&#x2194;</span>
+            <span className="text-[11px] text-purple-300 leading-relaxed">
+              This reply will be posted on{' '}
+              <strong className="text-white">{getProtocolLabel(replyProtocol)}</strong> and linked
+              to the original{' '}
+              <strong className="text-white">
+                {getProtocolLabel(replyContext.parentProtocol)}
+              </strong>{' '}
+              post via the DegenFeed cross-protocol bridge.
+            </span>
+          </p>
+        )}
+
         {/* Protocol toggles + publish */}
-        {hasSignedIn && (
+        {hasSignedIn && !isReplyMode && (
           <div className="border-t border-gray-800 px-4 py-3">
             <div className="mb-3 flex flex-wrap gap-2">
               {targets.map((target) => {
@@ -665,9 +847,7 @@ export function ComposeModal({
                       className="flex items-start gap-2 rounded-lg border border-gray-800 bg-gray-950/50 p-2.5"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm text-gray-200">
-                          {sp.text || '(empty)'}
-                        </p>
+                        <p className="truncate text-sm text-gray-200">{sp.text || '(empty)'}</p>
                         <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-500">
                           <span>{formatScheduledItem(sp.scheduledAt)}</span>
                           <span className="text-gray-700">·</span>
@@ -701,8 +881,8 @@ export function ComposeModal({
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+          </div>
+        )}
 
             {/* Publish / Schedule button */}
             <div className="mt-3 flex items-center justify-between">
@@ -755,6 +935,51 @@ export function ComposeModal({
                     : `Post${selectedCount > 0 ? ` (${selectedCount})` : ''}`}
                 </button>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Reply mode publish */}
+        {hasSignedIn && isReplyMode && (
+          <div className="border-t border-gray-800 px-4 py-3">
+            <ComposePreview
+              text={text}
+              targets={[
+                {
+                  id: replyProtocol,
+                  enabled: true,
+                  charLimit: TARGETS.find((t) => t.id === replyProtocol)?.charLimit ?? 5000,
+                },
+              ]}
+              author={text.trim() ? primaryIdentity : undefined}
+            />
+            <div className="mt-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-xs ${text.length > (TARGETS.find((t) => t.id === replyProtocol)?.charLimit ?? 5000) ? 'text-red-400' : 'text-gray-500'}`}
+                >
+                  {text.length}/{TARGETS.find((t) => t.id === replyProtocol)?.charLimit ?? 5000}
+                </span>
+                {targets.find((t) => t.id === replyProtocol)?.status === 'failed' && (
+                  <span className="text-xs text-red-400">
+                    {targets.find((t) => t.id === replyProtocol)?.error ?? 'Failed'}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="btn-primary text-sm disabled:opacity-50"
+                disabled={
+                  !text.trim() ||
+                  publishing ||
+                  text.length > (TARGETS.find((t) => t.id === replyProtocol)?.charLimit ?? 5000)
+                }
+                onClick={handlePublish}
+              >
+                {publishing
+                  ? '\u23F3 Replying...'
+                  : `Reply as ${getProtocolLabel(replyProtocol)}${isCrossProtocolReply ? ' \u2194' : ''}`}
+              </button>
             </div>
           </div>
         )}

@@ -150,7 +150,9 @@ export const FeedList = memo(function FeedList({
     };
   }, []);
 
-  const filteredPosts = posts.filter((p) => !blockedIds.has(p.author.id) && !mutedIds.has(p.author.id));
+  const filteredPosts = posts.filter(
+    (p) => !blockedIds.has(p.author.id) && !mutedIds.has(p.author.id),
+  );
 
   // Scroll position restore
   useEffect(() => {
@@ -165,7 +167,7 @@ export const FeedList = memo(function FeedList({
       }
       window.scrollTo(0, y);
     }
-  }, [state, posts.length]);
+  }, [state, filteredPosts.length]);
 
   // Save scroll position on post click
   const handlePostClick = (postId: string) => {
@@ -254,10 +256,7 @@ export const FeedList = memo(function FeedList({
       aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
     >
       {filteredPosts.map((post) => (
-        <div
-          key={post.id}
-          style={{ contentVisibility: 'auto', containIntrinsicSize: '0 200px' }}
-        >
+        <div key={post.id} style={{ contentVisibility: 'auto', containIntrinsicSize: '0 200px' }}>
           <PostCard
             post={post}
             onClick={() => handlePostClick(post.id)}
