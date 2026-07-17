@@ -1,8 +1,12 @@
-export type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+export type { ContentProof, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 export type { BlueskyPostContextProps } from './BlueskyPostContext';
 export { BlueskyPostContext } from './BlueskyPostContext';
 export type { ComposeModalProps, ScheduledPostItem } from './ComposeModal';
 export { ComposeModal } from './ComposeModal';
+export type { TokenGateConfiguratorProps } from './TokenGateConfigurator';
+export { TokenGateConfigurator } from './TokenGateConfigurator';
+export type { PostGateBadgeProps, CommunityGateBadgeProps } from './TokenGateBadge';
+export { PostGateBadge, CommunityGateBadge } from './TokenGateBadge';
 export type {
   ComposePreviewAuthor,
   ComposePreviewProps,
@@ -47,8 +51,16 @@ export { PeerTubeTipOverlay } from './PeerTubeTipOverlay';
 export type { EmbedModalProps } from './EmbedModal';
 export { EmbedModal } from './EmbedModal';
 export type { EngageHandler, EngageResult, PostCardProps } from './PostCard';
+export type { ReputationBadgeScore, ReputationBadgeProgress } from './ReputationBadge';
 export { PostCard } from './PostCard';
 export { PricePill, usePricesForText } from './PricePill';
+export type {
+  ReputationBadgeProps,
+  ReputationBadgeScore,
+  ReputationBadgeProgress,
+  ReputationLevel,
+} from './ReputationBadge';
+export { ReputationBadge } from './ReputationBadge';
 export type { ProtocolBadgeProps } from './ProtocolBadge';
 export {
   getProtocolColor,
@@ -74,5 +86,14 @@ export type { TranslationPreviewProps } from './TranslationPreview';
 export { TranslationPreview } from './TranslationPreview';
 export type { AspectRatio, VideoPlatform, VideoPlayerProps } from './VideoPlayer';
 export { VideoPlayer } from './VideoPlayer';
+export type { ProposalModalProps, ProposalType as UIModalProposalType } from './ProposalModal';
+export { ProposalModal } from './ProposalModal';
+export type {
+  VoteChoice,
+  ProposalData,
+  VoteResults,
+  VotingPanelProps,
+} from './VotingPanel';
+export { VotingPanel } from './VotingPanel';
 export type { CalendarPost, ContentCalendarProps } from './ContentCalendar';
 export { default as ContentCalendar } from './ContentCalendar';

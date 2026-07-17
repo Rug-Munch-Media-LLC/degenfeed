@@ -25,6 +25,7 @@
     "@degenfeed/ranking": "workspace:*",
     "@degenfeed/rss-sdk": "workspace:*",
     "@degenfeed/threads-sdk": "workspace:*",
+    "@degenfeed/token-gate": "workspace:*",
     "@degenfeed/types": "workspace:*",
     "@degenfeed/utils": "workspace:*",
     "@noble/curves": "^1.9.7",

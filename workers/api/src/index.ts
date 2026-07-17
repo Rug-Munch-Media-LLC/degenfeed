@@ -83,6 +83,15 @@ export interface Env {
   /** KV namespace for API key storage (v1 public API) */
   API_KEYS?: KVNamespace;
 
+  /** KV namespace for DAO governance data (proposals, votes) */
+  GOVERNANCE?: KVNamespace;
+
+  /** KV namespace for reputation scores, history, and leaderboard */
+  REPUTATION?: KVNamespace;
+
+  /** KV namespace for content permanence proofs */
+  PERMANENCE?: KVNamespace;
+
   // ─── Postiz cross-posting ───────────────────────────────────────────
   /** Postiz API base URL (e.g. "http://postiz:3000" or "https://api.postiz.com") */
   POSTIZ_BASE_URL?: string;

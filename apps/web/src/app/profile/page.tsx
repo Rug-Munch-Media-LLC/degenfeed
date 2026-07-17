@@ -1,7 +1,8 @@
 'use client';
 
 import type { StoredIdentity } from '@degenfeed/storage';
-import { ErrorBoundary, UnifiedTipDashboard } from '@degenfeed/ui';
+import { ErrorBoundary, ReputationBadge, UnifiedTipDashboard } from '@degenfeed/ui';
+import type { ReputationBadgeScore, ReputationBadgeProgress } from '@degenfeed/ui';
 import Image from 'next/image';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -86,6 +87,9 @@ export default function ProfilePage() {
     linkGtsUrl,
     isWalletOnly,
   } = useAuth();
+  const [repScore, setRepScore] = useState<ReputationBadgeScore | null>(null);
+  const [repProgress, setRepProgress] = useState<ReputationBadgeProgress | null>(null);
+  const [repLoading, setRepLoading] = useState(false);
   const { isConnected } = useWeb3();
   const { getSubscriptionStatus, cancelSubscription } = useSubscription();
   const { reset: resetOnboarding, open: openOnboarding } = useOnboarding();
@@ -139,6 +143,31 @@ export default function ProfilePage() {
     loadSubscriptions();
     return () => { cancelled = true; };
   }, []);
+
+  // Load reputation
+  useEffect(() => {
+    const userId = primaryIdentity?.publicId ?? walletAddress;
+    if (!userId) return;
+    let cancelled = false;
+    async function loadReputation() {
+      try {
+        setRepLoading(true);
+        const res = await fetch(`/api/reputation/${encodeURIComponent(userId)}`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json() as ReputationBadgeScore & { progress: ReputationBadgeProgress };
+          if (!cancelled) {
+            setRepScore({ total: data.total, earned: data.earned, staked: data.staked, slashed: data.slashed, level: data.level });
+            if (data.progress) setRepProgress(data.progress);
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) setRepLoading(false);
+    }
+    loadReputation();
+    return () => { cancelled = true; };
+  }, [primaryIdentity, walletAddress]);
 
   const handleCancelSubscription = useCallback(async (creator: string) => {
     const result = await cancelSubscription(creator);
@@ -396,6 +425,76 @@ export default function ProfilePage() {
                   </div>
                 );
               })()}
+            </div>
+
+            {/* ── Reputation section ── */}
+            <div className="mb-6">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+                Reputation
+              </h2>
+              <div className="card border-degen-500/20 bg-gradient-to-br from-degen-500/5 to-transparent p-4">
+                {repLoading ? (
+                  <div className="flex items-center gap-3 py-2">
+                    <div className="h-3 w-24 animate-pulse rounded bg-[var(--color-muted)]" />
+                  </div>
+                ) : repScore ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <ReputationBadge
+                        score={repScore}
+                        progress={repProgress}
+                        size="md"
+                        showIcon={true}
+                        showLabel={true}
+                        showTooltip={true}
+                        showProgress={true}
+                      />
+                    </div>
+                    {repProgress && (
+                      <div className="pt-1">
+                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                          <span>{repScore.total.toLocaleString()} pts</span>
+                          <span className="text-degen-400">
+                            {repProgress.currentMin.toLocaleString()} →{' '}
+                            {repProgress.next
+                              ? `${repProgress.nextMin.toLocaleString()} to ${repProgress.next}`
+                              : 'Max level'}
+                          </span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-700">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.round((repProgress.progress || 0) * 100)}%`,
+                              background: 'linear-gradient(90deg, #00ff41, #22c55e, #4ade80)',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-4 text-xs text-gray-400">
+                      <span>Earned: <strong className="text-green-400">+{repScore.earned.toLocaleString()}</strong></span>
+                      <span>Staked: <strong className="text-blue-400">{repScore.staked.toLocaleString()}</strong></span>
+                      <span>Slashed: <strong className="text-red-400">-{repScore.slashed.toLocaleString()}</strong></span>
+                    </div>
+                    <a
+                      href="/reputation"
+                      className="inline-block rounded-lg bg-degen-500/20 px-3 py-1.5 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-colors"
+                    >
+                      View history →
+                    </a>
+                  </div>
+                ) : (
+                  <div className="py-2 text-center">
+                    <p className="text-xs text-gray-500">
+                      Start posting to earn reputation points and unlock higher tiers.
+                    </p>
+                    <p className="mt-1 text-[10px] text-gray-600">
+                      Earn rep through posts, likes, tips, and follows.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="mb-6">

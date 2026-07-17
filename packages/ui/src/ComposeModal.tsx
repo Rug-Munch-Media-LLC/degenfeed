@@ -19,9 +19,12 @@
  *   Signed in (1+ protocols) → toggles show available protocols
  */
 
+import { type ContentProof } from '@degenfeed/types';
+import { type TokenGate, resolveTokenGateSymbol } from '@degenfeed/token-gate';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ComposePreview } from './ComposePreview';
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolBadge';
+import { TokenGateConfigurator } from './TokenGateConfigurator';
 
 interface ComposeTarget {
   id: string;
@@ -73,7 +76,7 @@ export interface ComposeModalProps {
   onPublish: (
     text: string,
     targets: string[],
-    opts?: { lensCollect?: boolean },
+    opts?: { lensCollect?: boolean; tokenGate?: TokenGate },
   ) => Promise<Record<string, { ok: boolean; error?: string }>>;
   /** Called when a disconnected protocol is clicked. */
   onRequestSignIn?: (protocol: string) => void;
@@ -151,7 +154,44 @@ export function ComposeModal({
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [showScheduledView, setShowScheduledView] = useState(false);
+  const [makePermanent, setMakePermanent] = useState(false);
+  const [permanenceProof, setPermanenceProof] = useState<ContentProof | null>(null);
+  const [storingPermanent, setStoringPermanent] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Token gate state
+  const [tokenGate, setTokenGate] = useState<TokenGate | null>(null);
+  const [gateSymbol, setGateSymbol] = useState<string>('');
+  const [gateResolving, setGateResolving] = useState(false);
+  const [gateError, setGateError] = useState<string | null>(null);
+  const gateResolveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Resolve symbol when gate config changes
+  useEffect(() => {
+    if (gateResolveTimeout.current) {
+      clearTimeout(gateResolveTimeout.current);
+    }
+    if (!tokenGate) {
+      setGateSymbol('');
+      setGateError(null);
+      return;
+    }
+    setGateResolving(true);
+    setGateError(null);
+    gateResolveTimeout.current = setTimeout(async () => {
+      try {
+        const sym = await resolveTokenGateSymbol(tokenGate);
+        setGateSymbol(sym);
+      } catch {
+        setGateError('Could not resolve token symbol');
+      } finally {
+        setGateResolving(false);
+      }
+    }, 800);
+    return () => {
+      if (gateResolveTimeout.current) clearTimeout(gateResolveTimeout.current);
+    };
+  }, [tokenGate]);
 
   // Cross-protocol reply state
   const [replyProtocol, setReplyProtocol] = useState<string>(replyContext?.parentProtocol ?? '');
@@ -349,8 +389,9 @@ export function ComposeModal({
     setTargets((prev) => prev.map((t) => (t.enabled ? { ...t, status: 'sending' as const } : t)));
 
     try {
-      const opts =
-        selectedTargets.includes('lens') && lensCollect ? { lensCollect: true } : undefined;
+      const opts: { lensCollect?: boolean; tokenGate?: TokenGate } = {};
+      if (selectedTargets.includes('lens') && lensCollect) opts.lensCollect = true;
+      if (tokenGate) opts.tokenGate = tokenGate;
       const results = await onPublish(text, selectedTargets, opts);
       setTargets((prev) =>
         prev.map((t) => {
@@ -385,7 +426,35 @@ export function ComposeModal({
         } catch {
           /* noop */
         }
-        setTimeout(() => onClose(), 1500);
+        // If "Make Permanent" is checked, store content on Arweave + IPFS
+        if (makePermanent) {
+          setStoringPermanent(true);
+          fetch('/api/permanence/store', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: text,
+              tags: [
+                { name: 'Protocol', value: selectedTargets.join(',') },
+                { name: 'App-Version', value: '0.1.0' },
+              ],
+            }),
+          })
+            .then((r) => (r.ok ? (r.json() as Promise<{ proof: ContentProof }>) : null))
+            .then((data) => {
+              if (data?.proof) {
+                setPermanenceProof(data.proof);
+              }
+            })
+            .catch(() => {
+              /* non-critical — post already published */
+            })
+            .finally(() => setStoringPermanent(false));
+        }
+        // Only close automatically if not waiting for permanence storage
+        if (!makePermanent) {
+          setTimeout(() => onClose(), 1500);
+        }
       }
     } catch {
       setTargets((prev) =>
@@ -409,6 +478,8 @@ export function ComposeModal({
     replyProtocol,
     replyContext,
     onCrossReply,
+    makePermanent,
+    tokenGate,
   ]);
 
   // Keyboard shortcut
@@ -938,6 +1009,53 @@ export function ComposeModal({
               </label>
             )}
 
+            {/* ── Make Permanent (Arweave + IPFS) ── */}
+            <label className="mb-3 flex items-center gap-2 text-xs text-gray-400">
+              <input
+                type="checkbox"
+                checked={makePermanent}
+                onChange={(e) => setMakePermanent(e.target.checked)}
+                className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
+                disabled={storingPermanent}
+              />
+              {storingPermanent ? (
+                <span className="text-cyan-400">
+                  <span className="animate-pulse">⏳</span> Storing on Arweave + IPFS...
+                </span>
+              ) : permanenceProof ? (
+                <span className="text-cyan-400">
+                  ✓ Stored permanently{' '}
+                  <span className="text-[10px] text-gray-500">
+                    (Arweave{permanenceProof.arweaveTxId ? ' ✓' : ''}
+                    {permanenceProof.ipfsCid ? ' + IPFS ✓' : ''})
+                  </span>
+                </span>
+              ) : (
+                <span>
+                  Store on{' '}
+                  <span className="font-medium text-cyan-400">Arweave</span>
+                  {' + '}
+                  <span className="font-medium text-purple-400">IPFS</span>
+                  {' '}
+                  <span className="font-medium text-[var(--color-fg)]">(permanent)</span>
+                  <span className="text-[10px] text-gray-600 ml-1">
+                    — censorship-resistant
+                  </span>
+                </span>
+              )}
+            </label>
+
+            {/* ── Token Gate ── */}
+            <div className="mb-3">
+              <TokenGateConfigurator
+                gate={tokenGate}
+                onChange={(g) => setTokenGate(g)}
+                displaySymbol={gateSymbol}
+                resolving={gateResolving}
+                error={gateError}
+              />
+            </div>
+
             <ComposePreview
               text={text}
               targets={targets.map((t) => ({
@@ -996,6 +1114,43 @@ export function ComposeModal({
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Permanence proof badge */}
+            {permanenceProof && (
+              <div className="mb-3 flex items-center gap-2 rounded-lg border border-cyan-900/40 bg-cyan-950/20 px-3 py-2">
+                <span className="text-cyan-400 text-xs font-bold">🔗</span>
+                <span className="text-[11px] text-cyan-300">
+                  Stored permanently
+                  {permanenceProof.arweaveTxId && (
+                    <a
+                      href={`https://arweave.net/${permanenceProof.arweaveTxId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-1 underline hover:text-[var(--color-fg)]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Arweave
+                    </a>
+                  )}
+                  {permanenceProof.ipfsCid && (
+                    <a
+                      href={`https://ipfs.io/ipfs/${permanenceProof.ipfsCid}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-1 underline hover:text-[var(--color-fg)]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      IPFS
+                    </a>
+                  )}
+                </span>
+                {permanenceProof.arweaveTxId && (
+                  <span className="ml-auto text-[10px] font-mono text-gray-500 truncate max-w-[120px]" title={permanenceProof.arweaveTxId}>
+                    {permanenceProof.arweaveTxId.slice(0, 8)}...{permanenceProof.arweaveTxId.slice(-4)}
+                  </span>
+                )}
               </div>
             )}
 

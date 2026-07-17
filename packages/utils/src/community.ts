@@ -64,6 +64,16 @@ export interface CrossProtocolCommunity {
   postCount: number;
   /** Tags for discovery */
   tags?: string[];
+  /** Token gate — only holders can join this community */
+  tokenGate?: {
+    type: 'erc20' | 'erc721' | 'erc1155';
+    chain: 'ethereum' | 'base' | 'polygon' | 'solana' | 'arbitrum' | 'optimism';
+    contractAddress: string;
+    tokenId?: string;
+    minBalance?: number;
+    minBalanceDecimals?: number;
+    displaySymbol?: string;
+  };
 }
 
 /** KV key prefix for community records */

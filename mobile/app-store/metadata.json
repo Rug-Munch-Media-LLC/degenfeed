@@ -1,0 +1,55 @@
+{
+  "appName": "DegenFeed",
+  "version": "1.0.0",
+  "bundleId": "xyz.degenfeed.app",
+  "sku": "degenfeed-ios",
+  "primaryLanguage": "en-US",
+  "languages": ["en-US"],
+  "subtitle": {
+    "en-US": "Crypto Social Feed"
+  },
+  "description": {
+    "en-US": "DegenFeed brings together all your decentralized social networks in one place. Follow what matters across Nostr, Farcaster, Lens, Bluesky, and more — all from a single unified feed.\n\n• UNIFIED FEED — Aggregate posts from Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, and RSS into one scrollable timeline.\n• CROSS-PROTOCOL COMPOSER — Write once, publish everywhere. Compose a post and syndicate it across all your connected protocols.\n• REAL-TIME NOTIFICATIONS — Get push notifications for mentions, replies, and likes across every network.\n• DISCOVER — Find trending content and creators across the decentralized web.\n• CRYPTO-NATIVE — Connect with your wallet, verify your on-chain identity, and engage with the degen community.\n• PRIVACY FIRST — No central server stores your data. Your keys, your content, your rules.\n• CUSTOM FEEDS — Build custom feeds from any combination of protocols, topics, and creators.\n\nDegenFeed is the essential client for the decentralized social web. Whether you're a degen trader, a crypto native, or just tired of walled gardens, DegenFeed puts you back in control."
+  },
+  "keywords": [
+    "crypto",
+    "decentralized",
+    "social",
+    "nostr",
+    "farcaster",
+    "lens",
+    "bluesky",
+    "web3",
+    "bitcoin",
+    "ethereum",
+    "solana",
+    "defi",
+    "feed",
+    "degen",
+    "blockchain"
+  ],
+  "supportURL": "https://degenfeed.xyz/support",
+  "marketingURL": "https://degenfeed.xyz",
+  "privacyURL": "https://degenfeed.xyz/privacy",
+  "copyright": "2026 Rug Munch Media LLC",
+  "primaryCategory": "SOCIAL_NETWORKING",
+  "secondaryCategory": "NEWS",
+  "ageRating": "seventeenPlus",
+  "ageRatingOverride": {
+    "gamblingSimulated": true,
+    "unrestrictedWebAccess": true,
+    "gamblingAndContests": false,
+    "profanityOrCrudeHumor": "none"
+  },
+  "pricing": {
+    "tier": "FREE",
+    "territories": "ALL",
+    "availability": "CURRENT"
+  },
+  "appStoreIcon": {
+    "url": "https://degenfeed.xyz/icon-1024.png"
+  },
+  "appClip": {
+    "enabled": false
+  }
+}

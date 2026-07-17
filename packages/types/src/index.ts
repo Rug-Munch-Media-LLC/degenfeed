@@ -124,6 +124,19 @@ export interface UnifiedPost {
   score?: PostScore;
   /** Optional paywall requirement for paid content */
   paywall?: { amount: string; recipient: string };
+  /** Token gate for restricted content — only holders can view */
+  tokenGate?: {
+    type: 'erc20' | 'erc721' | 'erc1155';
+    chain: 'ethereum' | 'base' | 'polygon' | 'solana' | 'arbitrum' | 'optimism';
+    contractAddress: string;
+    tokenId?: string;
+    minBalance?: number;
+    minBalanceDecimals?: number;
+    /** Resolved symbol (set server-side when creating the post) */
+    displaySymbol?: string;
+    /** Resolved NFT name (set server-side when creating) */
+    displayName?: string;
+  };
   /** Number of tips received on this post */
   tipCount?: number;
   /** Content type: article, video, image, thread, link */
@@ -134,6 +147,25 @@ export interface UnifiedPost {
   isTrending?: boolean;
   /** Universal df:// URI for cross-protocol addressing, sharing, and bookmarking */
   dfUri?: string;
+  /** On-chain content permanence proof (Arweave/IPFS) */
+  contentProof?: ContentProof;
+}
+
+export interface ContentProof {
+  /** Arweave transaction ID (from Bundlr/Irys upload) */
+  arweaveTxId?: string;
+  /** IPFS content hash (CID) */
+  ipfsCid?: string;
+  /** SHA-256 hash of the content */
+  contentHash: string;
+  /** Unix timestamp of when the content was stored */
+  timestamp: number;
+  /** Whether the content is stored permanently */
+  permanent: boolean;
+  /** EVM transaction hash if anchored on-chain via contract */
+  onChainTxHash?: string;
+  /** Chain ID where the anchor tx was submitted (e.g. 8453 for Base) */
+  onChainChainId?: number;
 }
 
 export interface NewPost {
