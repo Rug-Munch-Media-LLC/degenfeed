@@ -41,7 +41,7 @@ export type TokenHandler = (token: PushToken) => void;
 function isNative(): boolean {
   if (typeof window === 'undefined') return false;
   // Capacitor injects the `Capacitor` global at runtime on native devices
-  const cap = (window as Record<string, unknown>)['Capacitor'] as
+  const cap = (window as unknown as Record<string, unknown>)['Capacitor'] as
     | { isNative?: boolean }
     | undefined;
   return !!cap?.isNative;

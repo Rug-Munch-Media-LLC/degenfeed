@@ -33,7 +33,8 @@ export type ShareResult =
 
 function isNative(): boolean {
   if (typeof window === 'undefined') return false;
-  return !!(window as unknown as Record<string, unknown>).Capacitor?.isNative;
+  const global = window as unknown as Record<string, unknown>;
+  return !!(global.Capacitor as Record<string, unknown> | undefined)?.isNative;
 }
 
 function isWebShareSupported(): boolean {

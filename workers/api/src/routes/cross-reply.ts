@@ -78,13 +78,13 @@ export async function handleCrossReplyStatus(request: Request, env: Env): Promis
   try {
     let cursor: string | undefined;
     do {
-      const page = await env.CACHE.list({ prefix, cursor, limit: 1000 });
+      const page: { keys: { name: string }[]; list_complete: boolean; cursor?: string } = await env.CACHE.list({ prefix, cursor, limit: 1000 });
       for (const key of page.keys) {
         // Key formats:
         //   legacy: bridge:reply:{uri}:{protocol}
         //   current: bridge:reply:{uri}:{protocol}:{uniqueId}
-        const rest = key.name.slice(prefix.length);
-        const protocol = rest.split(':')[0];
+        const rest: string = key.name.slice(prefix.length);
+        const protocol: string = rest.split(':')[0]!;
         if (!protocol || !ALLOWED_PROTOCOLS.has(protocol)) continue;
         byProtocol[protocol] = (byProtocol[protocol] ?? 0) + 1;
         total += 1;

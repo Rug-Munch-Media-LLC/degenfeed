@@ -89,7 +89,7 @@ function generateId(): string {
   const arr = new Uint8Array(16);
   crypto.getRandomValues(arr);
   for (let i = 0; i < 16; i++) {
-    result += chars[arr[i] % chars.length];
+    result += chars[arr[i] % chars.length]!;
   }
   return result;
 }

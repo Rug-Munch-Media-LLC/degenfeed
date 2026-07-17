@@ -126,7 +126,7 @@ function generateEnvs(data: DeployRequestBody): Record<string, string> {
   return {
     DOMAIN: data.domain,
     ADMIN_EMAIL: data.adminEmail,
-    POSTGRES_PASSWORD: DB_PASSWORDS[data.communityType],
+    POSTGRES_PASSWORD: DB_PASSWORDS[data.communityType] ?? '',
     MASTODON_SECRET_KEY: `sk_${crypto.randomUUID().replace(/-/g, '')}`,
     MASTODON_OTP_SECRET: `otp_${crypto.randomUUID().replace(/-/g, '')}`,
     MASTODON_VAPID_PRIVATE: `vp_${crypto.randomUUID().replace(/-/g, '')}`,

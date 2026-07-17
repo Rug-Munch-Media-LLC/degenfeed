@@ -129,7 +129,7 @@ export async function handleFeatures(request: Request, env: Env): Promise<Respon
     if (idx === -1) {
       return jsonResponse({ error: `Unknown flag: ${body.key}` }, 400);
     }
-    flags[idx] = { ...flags[idx], enabled: body.enabled };
+    flags[idx] = { ...flags[idx], enabled: body.enabled, key: flags[idx]?.key ?? '', description: flags[idx]?.description ?? '', rolloutPercent: flags[idx]?.rolloutPercent ?? 0 };
     await env.CACHE?.put(KV_KEY, JSON.stringify(flags), {
       expirationTtl: 60 * 60 * 24 * 365,
     });

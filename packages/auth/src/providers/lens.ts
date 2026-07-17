@@ -116,7 +116,7 @@ export async function signInWithLens(opts: { wallet: Eip1193Provider }): Promise
     keys: {
       accessToken: authData.authenticate.accessToken,
       refreshToken: authData.authenticate.refreshToken,
-      address,
+      address: address ?? null,
     },
   });
   await saveIdentity(record);

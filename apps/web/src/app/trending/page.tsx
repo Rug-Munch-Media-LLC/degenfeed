@@ -178,7 +178,7 @@ function TopicCard({ topic, count, score, isHighest }: {
 // ── Main Page ─────────────────────────────────────────────────────────────
 
 export default function TrendingPage() {
-  const [activeFilter, setActiveFilter] = useState<TimeFilter>(TIME_FILTERS[1]); // default Today
+  const [activeFilter, setActiveFilter] = useState<TimeFilter>(TIME_FILTERS[1]!); // default Today
   const [topics, setTopics] = useState<TrendingTopic[]>([]);
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
   const [error, setError] = useState<string>();

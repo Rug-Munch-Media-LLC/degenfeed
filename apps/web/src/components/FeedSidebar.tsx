@@ -1,6 +1,8 @@
 'use client';
 
+import { MiniLeaderboard, type LeaderboardCardEntry } from '@degenfeed/ui';
 import { useAuth } from './AuthProvider';
+import { useEffect, useState } from 'react';
 
 interface ProtocolSummary {
   id: string;
@@ -37,6 +39,29 @@ export function FeedSidebar({
   const items = trending ?? [];
   const protocols = protocolSummaries ?? [];
   const totalPosts = protocols.reduce((sum, p) => sum + p.count, 0);
+
+  // Mini leaderboard state
+  const [topCreators, setTopCreators] = useState<LeaderboardCardEntry[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchTop = async () => {
+      try {
+        const res = await fetch('/api/leaderboard/creators?period=weekly&limit=3');
+        if (!res.ok) return;
+        const data = (await res.json()) as { entries: LeaderboardCardEntry[] };
+        if (!cancelled) setTopCreators(data.entries ?? []);
+      } catch {
+        // Silently fail — widget is optional
+      }
+    };
+    void fetchTop();
+    const interval = setInterval(fetchTop, 120_000); // refresh every 2 min
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -159,6 +184,9 @@ export function FeedSidebar({
           </div>
         )}
       </div>
+
+      {/* Mini Leaderboard */}
+      <MiniLeaderboard entries={topCreators} title="🏆 Top Creators" />
 
       {/* Premium CTA */}
       <div className="rounded-2xl border border-degen-500/20 bg-degen-500/5 p-4 backdrop-blur-xl">

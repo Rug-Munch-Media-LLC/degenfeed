@@ -393,7 +393,7 @@ export default function PostPage({ params }: Props) {
     async (action: EngagementAction, postId: string) => {
       if (action === 'bookmark' || action === 'unbookmark') {
         try {
-          if (action === 'bookmark') await addBookmark(postId);
+          if (action === 'bookmark') await addBookmark(postId, post?.dfUri ?? '', post?.protocol ?? '', post?.text.slice(0, 60) ?? '', post?.author.displayName || '');
           else await removeBookmark(postId);
           return { ok: true };
         } catch (err) {
@@ -539,7 +539,7 @@ export default function PostPage({ params }: Props) {
         )}
 
         {tipPost && (
-          <TipModal open={!!tipPost} onClose={() => setTipPost(null)} initialPost={tipPost} />
+          <TipModal open={!!tipPost} onClose={() => setTipPost(null)} recipientProtocol={tipPost.protocol} recipientAuthorId={tipPost.author.id} recipientDisplayName={tipPost.author.displayName || tipPost.author.handles[tipPost.protocol] || ''} postContext={{ protocol: tipPost.protocol, authorId: tipPost.author.id }} />
         )}
       </div>
     </ErrorBoundary>

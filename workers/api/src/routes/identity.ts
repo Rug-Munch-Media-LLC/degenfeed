@@ -119,7 +119,7 @@ export async function handleUnlinkIdentity(request: Request, env: Env): Promise<
 
     // Remove the protocol field from the record
     const updated: CrossProtocolIdentity = { ...existing };
-    delete (updated as Record<string, unknown>)[protocol];
+    delete (updated as unknown as Record<string, unknown>)[protocol];
     updated.lastVerified = Date.now();
 
     await env.IDENTITIES?.put(key, JSON.stringify(updated));

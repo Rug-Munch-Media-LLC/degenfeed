@@ -288,7 +288,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const username = creds.username as string;
             const signerKey = creds.signerKey as string;
             if (!fid || !username || !signerKey) throw new Error('Farcaster credentials required');
-            await signInWithFarcasterSigner(signerKey, Number(fid), username, 'auto');
+            await signInWithFarcasterSigner(signerKey, Number(fid), username);
             break;
           }
           case 'lens': {
@@ -531,9 +531,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // Derive passphrase from the user's Farcaster FID (unique, stable per identity).
             // Falls back to a session-stored random value if FID is unavailable.
-            let passphrase = farcasterIdent.publicId;
+            let passphrase: string | undefined = farcasterIdent.publicId;
             if (!passphrase) {
-              passphrase = sessionStorage.getItem('degenfeed_farcaster_passphrase');
+              passphrase = sessionStorage.getItem('degenfeed_farcaster_passphrase') ?? undefined;
               if (!passphrase) {
                 passphrase = crypto.randomUUID();
                 sessionStorage.setItem('degenfeed_farcaster_passphrase', passphrase);
@@ -546,7 +546,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 salt: farcasterIdent.salt,
                 iv: farcasterIdent.iv,
               },
-              passphrase,
+              passphrase!,
             );
           } catch {
             return {
@@ -776,10 +776,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         scheduledPosts={scheduledPosts}
         onCancelSchedule={(id) => cancelSchedule(id)}
         onPublishScheduledNow={(id) => {
-          const post = publishNow(id);
-          if (post) {
-            handlePublish(post.text, post.targets);
-          }
+          publishNow(id);
         }}
       />
     </AuthContext.Provider>

@@ -1,7 +1,7 @@
 'use client';
 
 import type { StoredIdentity } from '@degenfeed/storage';
-import { ErrorBoundary } from '@degenfeed/ui';
+import { ErrorBoundary, UnifiedTipDashboard } from '@degenfeed/ui';
 import Image from 'next/image';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -76,6 +76,7 @@ function toResolved(identity: StoredIdentity): ResolvedIdentity {
 
 export default function ProfilePage() {
   const {
+    walletAddress,
     primaryIdentity,
     linkedIdentities,
     ready,
@@ -555,8 +556,9 @@ export default function ProfilePage() {
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <div className="text-xs font-semibold text-degen-400">Tips Dashboard</div>
-                    <div className="text-2xl font-bold text-[var(--color-fg)]">$0.00</div>
-                    <div className="text-[10px] text-gray-500">Estimated total tips received</div>
+                    <div className="text-[10px] text-gray-500">
+                      Tips sent &amp; received across DegenFeed, Lemmy, and PeerTube
+                    </div>
                   </div>
                   {(() => {
                     const tipAddr = identities.find((i) => i.address)?.address;
@@ -571,7 +573,15 @@ export default function ProfilePage() {
                     );
                   })()}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                {(() => {
+                  const tipUserId =
+                    identities.find((i) => i.address)?.address ??
+                    walletAddress ??
+                    primaryIdentity?.publicId ??
+                    '';
+                  return <UnifiedTipDashboard userId={tipUserId} historyLimit={8} />;
+                })()}
+                <div className="mt-3 flex flex-wrap gap-2">
                   <a
                     href="/profile/analytics"
                     className="rounded-lg bg-degen-500/20 px-3 py-1.5 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-colors"
@@ -589,6 +599,12 @@ export default function ProfilePage() {
                     className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
                   >
                     Set up tipping
+                  </a>
+                  <a
+                    href="/activity/tips"
+                    className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
+                  >
+                    Tip activity feed
                   </a>
                 </div>
               </div>

@@ -13,7 +13,8 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
+import { LemmyTipButton } from './LemmyTipButton';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -81,12 +82,38 @@ function timeAgo(ts: number): string {
 interface CommentNodeProps {
   comment: LemmyComment;
   depth: number;
+  /** Wallet addresses from the author profile for tipping */
+  postAuthorEvmAddress?: string;
+  postAuthorSolanaAddress?: string;
 }
 
-const CommentNode = memo(function CommentNode({ comment, depth }: CommentNodeProps) {
+const CommentNode = memo(function CommentNode({
+  comment,
+  depth,
+  postAuthorEvmAddress,
+  postAuthorSolanaAddress,
+}: CommentNodeProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [commentTipCount, setCommentTipCount] = useState(0);
   const color = getThreadColor(depth);
   const hasReplies = comment.replies.length > 0;
+
+  // Fetch tip stats for this comment (only if we have author addresses)
+  useEffect(() => {
+    if (!postAuthorEvmAddress && !postAuthorSolanaAddress) return;
+    let cancelled = false;
+    fetch(`/api/lemmy/tip/stats?contentId=${encodeURIComponent(comment.id)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { totalCount?: number } | null) => {
+        if (!cancelled && data?.totalCount) {
+          setCommentTipCount(data.totalCount);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [comment.id, postAuthorEvmAddress, postAuthorSolanaAddress]);
 
   return (
     <div className="group">
@@ -143,7 +170,7 @@ const CommentNode = memo(function CommentNode({ comment, depth }: CommentNodePro
                   {comment.content}
                 </div>
 
-                {/* Score row */}
+                {/* Score row + Tip button */}
                 <div className="flex items-center gap-3 text-xs text-gray-600">
                   <button
                     type="button"
@@ -183,6 +210,17 @@ const CommentNode = memo(function CommentNode({ comment, depth }: CommentNodePro
                   >
                     Reply
                   </button>
+                  {/* Tip button for comment */}
+                  {(postAuthorEvmAddress || postAuthorSolanaAddress) && (
+                    <LemmyTipButton
+                      contentId={comment.id}
+                      contentType="comment"
+                      authorEvmAddress={postAuthorEvmAddress}
+                      authorSolanaAddress={postAuthorSolanaAddress}
+                      tipCount={commentTipCount}
+                      compact
+                    />
+                  )}
                 </div>
               </>
             )}
@@ -191,7 +229,13 @@ const CommentNode = memo(function CommentNode({ comment, depth }: CommentNodePro
             {!collapsed && hasReplies && (
               <div className="mt-1">
                 {comment.replies.map((reply) => (
-                  <CommentNode key={reply.id} comment={reply} depth={depth + 1} />
+                  <CommentNode
+                    key={reply.id}
+                    comment={reply}
+                    depth={depth + 1}
+                    postAuthorEvmAddress={postAuthorEvmAddress}
+                    postAuthorSolanaAddress={postAuthorSolanaAddress}
+                  />
                 ))}
               </div>
             )}
@@ -236,6 +280,30 @@ export const LemmyThreadView = memo(function LemmyThreadView({
   const comments = externalComments ?? extractComments(post);
 
   const domainDisplay = instanceDomain.replace(/^https?:\/\//, '');
+
+  // ── Tip state for the post ──
+  const [postTipCount, setPostTipCount] = useState(0);
+  const [postTipTotal, setPostTipTotal] = useState(0);
+  const authorEvmAddress = post.author.keys.evmAddress;
+  const authorSolanaAddress = post.author.keys.solanaAddress;
+  const hasAuthorWallet = !!(authorEvmAddress || authorSolanaAddress);
+
+  useEffect(() => {
+    if (!hasAuthorWallet) return;
+    let cancelled = false;
+    fetch(`/api/lemmy/tip/stats?contentId=${encodeURIComponent(post.id)}`)
+      .then((r) => (r.ok ? (r.json() as Promise<{ totalCount: number; totalUsd: number }>) : null))
+      .then((data) => {
+        if (!cancelled && data) {
+          setPostTipCount(data.totalCount);
+          setPostTipTotal(data.totalUsd);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [post.id, hasAuthorWallet]);
 
   return (
     <div className="mt-3 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]">
@@ -305,7 +373,7 @@ export const LemmyThreadView = memo(function LemmyThreadView({
             {post.text.split('\n')[0] || post.text.slice(0, 120)}
           </h3>
 
-          {/* Metadata row */}
+          {/* Metadata row + Tip button */}
           <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
             <span>
               Posted by <span className="font-medium text-gray-500">{post.author.displayName}</span>
@@ -314,6 +382,17 @@ export const LemmyThreadView = memo(function LemmyThreadView({
             <span>{post.metrics.replies} comments</span>
             <span>·</span>
             <span>{post.metrics.reposts} shares</span>
+            {/* Tip button for the post */}
+            {hasAuthorWallet && (
+              <LemmyTipButton
+                contentId={post.id}
+                contentType="post"
+                authorEvmAddress={authorEvmAddress}
+                authorSolanaAddress={authorSolanaAddress}
+                tipCount={postTipCount}
+                tipTotalUsd={postTipTotal}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -325,7 +404,13 @@ export const LemmyThreadView = memo(function LemmyThreadView({
             Comments ({comments.length})
           </div>
           {comments.map((comment) => (
-            <CommentNode key={comment.id} comment={comment} depth={0} />
+            <CommentNode
+              key={comment.id}
+              comment={comment}
+              depth={0}
+              postAuthorEvmAddress={authorEvmAddress}
+              postAuthorSolanaAddress={authorSolanaAddress}
+            />
           ))}
         </div>
       )}

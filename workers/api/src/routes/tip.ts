@@ -10,6 +10,7 @@ import {
 } from '../sanitize';
 import { buildLensCollectIntent } from './lens';
 import { fetchZapInvoice, resolveLnurlFromPubkey } from './lightning';
+import { recordUnifiedTip, type TipEntityType } from './unified-tip';
 
 export interface ResolvedTipMethod {
   method: string;
@@ -306,6 +307,11 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
       chain?: string;
       sender?: string;
       publicationId?: string;
+      /** USD value of the tip — enables unified cross-platform accounting */
+      amountUsd?: string | number;
+      /** Entity being tipped (post id, space id, …) for the unified ledger */
+      entityId?: string;
+      entityType?: string;
     };
 
     const recipient = sanitizeString(body.recipient, 128);
@@ -335,10 +341,11 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
       return jsonResponse({ error: 'Invalid chain' }, 400);
     }
 
+    let intentResponse: Response;
     switch (method) {
       case 'ethereum':
       case 'base':
-        return jsonResponse({
+        intentResponse = jsonResponse({
           method,
           intent: {
             to: recipient,
@@ -348,9 +355,10 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
           instructions:
             'Sign with your Ethereum wallet (MetaMask, Rabby, Rainbow, etc.) to send the tip',
         });
+        break;
 
       case 'solana':
-        return jsonResponse({
+        intentResponse = jsonResponse({
           method: 'solana',
           intent: {
             to: recipient,
@@ -360,9 +368,10 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
           instructions:
             'Sign with your Solana wallet (Phantom, Solflare, Backpack, etc.) to send the tip',
         });
+        break;
 
       case 'lightning_zap':
-        return jsonResponse({
+        intentResponse = jsonResponse({
           method: 'lightning_zap',
           intent: {
             to: recipient,
@@ -373,9 +382,10 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
           instructions:
             'Pay the Lightning invoice with your Nostr-compatible wallet (Alby, Wallet of Satoshi, etc.)',
         });
+        break;
 
       case 'farcaster_frame':
-        return jsonResponse({
+        intentResponse = jsonResponse({
           method: 'farcaster_frame',
           intent: {
             recipient: recipient,
@@ -384,6 +394,7 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
           },
           instructions: 'Complete the tip via the Farcaster Frame',
         });
+        break;
 
       case 'lens_collect': {
         if (!publicationId) {
@@ -393,16 +404,41 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
         if (!lensIntent) {
           return jsonResponse({ error: 'Invalid Lens publicationId format' }, 400);
         }
-        return jsonResponse({
+        intentResponse = jsonResponse({
           method: 'lens_collect',
           intent: lensIntent,
           instructions: 'Sign the Polygon transaction to collect this Lens post',
         });
+        break;
       }
 
       default:
         return jsonResponse({ error: `Unknown tipping method: ${method}` }, 400);
     }
+
+    // ─── Record in the unified cross-platform ledger (see unified-tip.ts)
+    //     when the client supplies the tip's USD value ───
+    const amountUsd =
+      typeof body.amountUsd === 'number'
+        ? body.amountUsd
+        : Number.parseFloat(sanitizeString(body.amountUsd, 64) || 'NaN');
+    if (Number.isFinite(amountUsd) && amountUsd > 0) {
+      const entityTypeRaw = sanitizeString(body.entityType, 16);
+      const entityType: TipEntityType =
+        entityTypeRaw === 'comment' || entityTypeRaw === 'video' || entityTypeRaw === 'space'
+          ? entityTypeRaw
+          : 'post';
+      await recordUnifiedTip(env, {
+        platform: 'degenfeed',
+        entityId: sanitizeString(body.entityId, 256) || publicationId || recipient,
+        entityType,
+        amountUsd,
+        fromUserId: sender || undefined,
+        toUserId: recipient,
+        method,
+      });
+    }
+
     // Emit notification for tip recipient — store in KV for the unified notification pipeline
     if (recipient && recipient !== sender) {
       try {
@@ -419,7 +455,7 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
           createdAt: Date.now(),
           read: false,
         };
-        const existingRaw = await env.CACHE?.get(notifKey);
+        const existingRaw = env.CACHE ? await env.CACHE.get(notifKey) : null;
         const existing: unknown[] = existingRaw ? JSON.parse(existingRaw) : [];
         await env.CACHE?.put(
           notifKey,
@@ -431,6 +467,8 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
         console.warn('[tip] failed to store notification:', msg);
       }
     }
+
+    return intentResponse;
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
   }
