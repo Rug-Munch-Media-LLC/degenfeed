@@ -11,12 +11,11 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { href: '/home/all', label: 'Feed', icon: '✦' },
+  { href: '/home/all', label: 'Feed', icon: '🏠' },
   { href: '/trending', label: 'Trending', icon: '🔥' },
-  { href: '/news', label: 'News', icon: '◉' },
-  { href: '/videos', label: 'Videos', icon: '▶' },
-  { href: '/discover', label: 'Explore', icon: '⊕' },
-  { href: '/profile/bookmarks', label: 'Saved', icon: '★' },
+  { href: '/news', label: 'News', icon: '📰' },
+  { href: '/notifications', label: 'Alerts', icon: '🔔' },
+  { href: '/profile/bookmarks', label: 'Saved', icon: '🔖' },
 ];
 
 export function BottomNav() {
@@ -42,9 +41,9 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Mobile"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-gray-950/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-card)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <div className="grid grid-cols-6">
+      <div className="grid grid-cols-5">
         {NAV.map((item) => {
           const active =
             pathname === item.href ||
@@ -53,20 +52,16 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors ${active ? 'text-degen-400' : 'text-gray-500 hover:text-white'}`}
+              className={`flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors ${active ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
               aria-current={active ? 'page' : undefined}
             >
               <span
                 className={`relative flex h-7 w-12 items-center justify-center rounded-full ${active ? 'bg-degen-500/15' : ''}`}
               >
                 <span className="text-lg leading-none">{item.icon}</span>
-                {item.href === '/notifications' && notifCount > 0 && (
-                  <span
-                    className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white"
-                    role="status"
-                    aria-label={`${notifCount} unread notifications`}
-                  >
-                    {notifCount > 99 ? '99+' : notifCount}
+                {notifCount > 0 && item.href === '/notifications' && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-[var(--color-fg)] text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                    {notifCount > 9 ? '9+' : notifCount}
                   </span>
                 )}
               </span>

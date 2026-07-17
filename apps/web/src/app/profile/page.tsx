@@ -153,7 +153,6 @@ export default function ProfilePage() {
                           width={40}
                           height={40}
                           className="h-10 w-10 rounded-full object-cover"
-                          unoptimized
                         />
                       ) : (
                         PROTOCOL_ICONS[id.protocol] || '?'
@@ -306,7 +305,6 @@ export default function ProfilePage() {
                           width={56}
                           height={56}
                           className="h-14 w-14 rounded-xl object-cover"
-                          unoptimized
                         />
                         <div className="min-w-0 flex-1">
                           <div className="text-base font-bold text-white">

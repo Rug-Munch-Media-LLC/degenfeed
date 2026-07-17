@@ -4,6 +4,23 @@ import type { IDBPDatabase } from 'idb';
 
 import { getDb } from './db';
 import type { StoredMutedIdentity, StoredMutedWord } from './types';
+
+async function syncMuteAction(
+  targetId: string,
+  targetHandle: string,
+  action: 'mute' | 'unmute',
+): Promise<void> {
+  try {
+    await fetch('/api/moderation/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetId, targetHandle, protocol: '', action }),
+    });
+  } catch {
+    /* non-critical — offline or server unavailable */
+  }
+}
+
 export async function muteIdentity(
   targetIdentityId: string,
   targetHandle: string,
@@ -16,6 +33,8 @@ export async function muteIdentity(
     mutedBy: mutedByIdentityId,
     mutedAt: Date.now(),
   } satisfies StoredMutedIdentity);
+  // Sync to server KV
+  void syncMuteAction(targetIdentityId, targetHandle, 'mute');
 }
 
 export async function unmuteIdentity(
@@ -24,6 +43,8 @@ export async function unmuteIdentity(
 ): Promise<void> {
   const db = await getDb();
   await db.delete('muted', [targetIdentityId, mutedByIdentityId]);
+  // Sync to server KV
+  void syncMuteAction(targetIdentityId, '', 'unmute');
 }
 
 export async function getMutedIdentities(

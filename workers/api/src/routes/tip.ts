@@ -403,6 +403,10 @@ export async function handleTipCreate(request: Request, _env: Env): Promise<Resp
       default:
         return jsonResponse({ error: `Unknown tipping method: ${method}` }, 400);
     }
+    // TODO: Emit notification for tip recipient once tip is confirmed
+    // Implementation: store tip in KV with recipient as key, queue notification,
+    // then fetch in notifications.ts handleNotifications and include in response.
+    // See routes/notifications.ts for the notification aggregation pipeline.
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
   }

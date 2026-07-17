@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 
 interface ShortcutGroup {
   title: string;
@@ -110,11 +110,28 @@ export const KeyboardShortcuts = memo(function KeyboardShortcuts({
   onClose: () => void;
   isFirstVisit?: boolean;
 }) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
+      } else if (e.key === 'Tab') {
+        const focusable = overlayRef.current?.querySelectorAll<HTMLElement>(
+          'input, button, [tabindex]:not([tabindex="-1"])',
+        );
+        if (!focusable?.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!first || !last) return;
+        if (e.shiftKey && document.activeElement === first) {
+          last.focus();
+          e.preventDefault();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first.focus();
+          e.preventDefault();
+        }
       }
     },
     [onClose],
@@ -123,6 +140,11 @@ export const KeyboardShortcuts = memo(function KeyboardShortcuts({
   useEffect(() => {
     if (!open) return;
     window.addEventListener('keydown', handleKeyDown);
+    // Focus the close button on open
+    const closeBtn = overlayRef.current?.querySelector<HTMLButtonElement>(
+      'button[aria-label="Close shortcuts"]',
+    );
+    closeBtn?.focus();
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, handleKeyDown]);
 
@@ -130,6 +152,7 @@ export const KeyboardShortcuts = memo(function KeyboardShortcuts({
 
   return (
     <div
+      ref={overlayRef}
       className="fixed inset-0 z-[70] flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center"
       onClick={onClose}
       aria-modal="true"

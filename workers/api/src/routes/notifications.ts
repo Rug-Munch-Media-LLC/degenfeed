@@ -16,6 +16,10 @@ interface Notification {
 
 export type { Notification };
 
+// TODO: Emit tip notifications when tips are created (see routes/tip.ts handleTipCreate)
+// Implementation: store tip in KV with recipient as key, query here to surface
+// tip receipts in the notification stream alongside social protocol notifications.
+
 interface NotificationAuth {
   nostr_pubkey?: string;
   mastodon?: string;
@@ -573,6 +577,11 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
   }
 
   await Promise.allSettled(fetchers);
+
+  // Check for recent tips sent to this user
+  // This is a placeholder — real implementation needs tip tracking in KV
+  // const tipNotifs: NotificationItem[] = []; // TODO: query tip KV store
+  // if (tipNotifs.length > 0) all.push(...tipNotifs);
 
   // Merge read state from KV
   const readIds = await loadReadState(env, userId);

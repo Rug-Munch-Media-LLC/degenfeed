@@ -131,7 +131,6 @@ export function FeedComposer({
               width={40}
               height={40}
               className="h-full w-full object-cover"
-              unoptimized
             />
           ) : (
             <span className="flex h-full w-full items-center justify-center text-sm text-gray-500">

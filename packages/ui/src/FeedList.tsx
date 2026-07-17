@@ -254,14 +254,18 @@ export const FeedList = memo(function FeedList({
       aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
     >
       {filteredPosts.map((post) => (
-        <PostCard
+        <div
           key={post.id}
-          post={post}
-          onClick={() => handlePostClick(post.id)}
-          onTip={onTip}
-          onEngage={onEngage}
-          onReport={onReport}
-        />
+          style={{ contentVisibility: 'auto', containIntrinsicSize: '0 200px' }}
+        >
+          <PostCard
+            post={post}
+            onClick={() => handlePostClick(post.id)}
+            onTip={onTip}
+            onEngage={onEngage}
+            onReport={onReport}
+          />
+        </div>
       ))}
       {hasMore && (
         <div

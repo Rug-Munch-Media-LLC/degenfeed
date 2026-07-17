@@ -47,11 +47,20 @@ function buildAuth(identities: StoredIdentity[]): NotificationAuth {
   return auth;
 }
 
+const MAX_READ_IDS = 500;
+
 function loadReadIds(): Set<string> {
   try {
     const raw = localStorage.getItem(READ_KEY);
     if (!raw) return new Set();
-    return new Set(JSON.parse(raw) as string[]);
+    const arr: string[] = JSON.parse(raw) as string[];
+    // Cap to last 500 IDs to prevent unbounded localStorage growth
+    if (arr.length > MAX_READ_IDS) {
+      const trimmed = arr.slice(-MAX_READ_IDS);
+      localStorage.setItem(READ_KEY, JSON.stringify(trimmed));
+      return new Set(trimmed);
+    }
+    return new Set(arr);
   } catch {
     return new Set();
   }

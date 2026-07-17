@@ -68,9 +68,12 @@ export default function FeedPage() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch('/api/preferences', { credentials: 'include' });
-        if (!res.ok || cancelled) return;
-        const data = (await res.json()) as {
+        // Parallel: fetch preferences + feed simultaneously instead of waterfall
+        const [prefsRes] = await Promise.all([
+          fetch('/api/preferences', { credentials: 'include' }),
+        ]);
+        if (!prefsRes.ok || cancelled) return;
+        const data = (await prefsRes.json()) as {
           hideLowQuality?: boolean;
           hideLowQualityThreshold?: number;
           allowNonCrypto?: boolean;
@@ -95,12 +98,16 @@ export default function FeedPage() {
   }, []);
 
   const persistPrefs = useCallback((patch: Record<string, unknown>) => {
-    void fetch('/api/preferences', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(patch),
-    }).catch(() => {});
+    // Debounce: clear previous timeout so rapid slider changes don't fire N requests
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      void fetch('/api/preferences', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(patch),
+      }).catch(() => {});
+    }, 300);
   }, []);
 
   const setHideThresholdAndPersist = useCallback(
@@ -134,6 +141,7 @@ export default function FeedPage() {
 
   const [newAvailable, setNewAvailable] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const lastPostIdRef = useRef<string | null>(null);
   const [loadedLimit, setLoadedLimit] = useState(50);
   const hasMore = loadedLimit < 200;

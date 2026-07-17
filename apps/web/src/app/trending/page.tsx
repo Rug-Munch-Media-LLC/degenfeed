@@ -67,13 +67,13 @@ function formatScore(score: number): string {
 function TrendingSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-8 w-48 animate-pulse rounded-lg bg-white/5" />
+      <div className="h-8 w-48 animate-pulse rounded-lg bg-[var(--color-overlay)]" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="card h-32 animate-pulse p-5">
-            <div className="mb-3 h-4 w-3/4 rounded bg-white/10" />
-            <div className="mb-2 h-3 w-1/2 rounded bg-white/5" />
-            <div className="h-2 w-full rounded bg-white/5" />
+            <div className="mb-3 h-4 w-3/4 rounded bg-[var(--color-overlay)]" />
+            <div className="mb-2 h-3 w-1/2 rounded bg-[var(--color-overlay)]" />
+            <div className="h-2 w-full rounded bg-[var(--color-overlay)]" />
           </div>
         ))}
       </div>
@@ -95,7 +95,7 @@ function TopicCard({ topic, count, score, isHighest }: {
   return (
     <Link
       href={`/home/${encodeURIComponent(topicSlug)}`}
-      className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-gray-950/80 to-gray-950/40 p-5 backdrop-blur-xl transition-all duration-300 hover:border-white/20 hover:shadow-[0_0_30px_-6px]"
+      className="group relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-card)] to-[var(--color-card)] p-5 backdrop-blur-xl transition-all duration-300 hover:border-[var(--color-border)] hover:shadow-[0_0_30px_-6px]"
       style={{
         borderColor: isHighest ? `${meta.color}30` : undefined,
         '--tw-shadow-color': `${meta.color}15`,
@@ -122,7 +122,7 @@ function TopicCard({ topic, count, score, isHighest }: {
         <div className="min-w-0 flex-1">
           {/* Topic name + badge */}
           <div className="mb-1 flex items-center gap-2">
-            <h3 className="truncate text-base font-bold text-white">
+            <h3 className="truncate text-base font-bold text-[var(--color-fg)]">
               {topic.topic}
             </h3>
             <span
@@ -134,12 +134,12 @@ function TopicCard({ topic, count, score, isHighest }: {
           </div>
 
           {/* Stats row */}
-          <div className="mb-2 flex items-center gap-4 text-xs text-gray-400">
+          <div className="mb-2 flex items-center gap-4 text-xs text-[var(--color-muted)]">
             <span className="tabular-nums">
-              <span className="font-semibold text-gray-200">{count.toLocaleString()}</span> posts
+              <span className="font-semibold text-[var(--color-muted)]">{count.toLocaleString()}</span> posts
             </span>
             <span className="tabular-nums">
-              <span className="font-semibold text-gray-200">{formatScore(score)}</span> score
+              <span className="font-semibold text-[var(--color-muted)]">{formatScore(score)}</span> score
             </span>
             {isHighest && (
               <span className="flex items-center gap-1 font-semibold text-degen-400">
@@ -150,7 +150,7 @@ function TopicCard({ topic, count, score, isHighest }: {
           </div>
 
           {/* Score bar */}
-          <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-white/5">
+          <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-[var(--color-overlay)]">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -227,8 +227,8 @@ export default function TrendingPage() {
               🔥
             </span>
             <div>
-              <h1 className="text-2xl font-bold text-white">Trending</h1>
-              <p className="text-sm text-gray-400">
+              <h1 className="text-2xl font-bold text-[var(--color-fg)]">Trending</h1>
+              <p className="text-sm text-[var(--color-muted)]">
                 What the web3 social graph is talking about
               </p>
             </div>
@@ -246,7 +246,7 @@ export default function TrendingPage() {
                   className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
                     active
                       ? 'bg-degen-500/15 text-degen-400 shadow-[0_0_12px_rgba(34,197,94,0.15)]'
-                      : 'border border-white/10 bg-white/[0.03] text-gray-400 hover:border-white/20 hover:text-white'
+                      : 'border border-[var(--color-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-fg)]'
                   }`}
                 >
                   {f.label}
@@ -262,7 +262,7 @@ export default function TrendingPage() {
         {state === 'error' && (
           <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-8 text-center">
             <p className="mb-2 text-lg text-red-400">Failed to load trending topics</p>
-            <p className="mb-4 text-sm text-gray-400">{error}</p>
+            <p className="mb-4 text-sm text-[var(--color-muted)]">{error}</p>
             <button
               type="button"
               onClick={() => fetchTrending(activeFilter)}
@@ -274,9 +274,9 @@ export default function TrendingPage() {
         )}
 
         {state === 'empty' && (
-          <div className="rounded-2xl border border-white/10 bg-gray-950/60 p-8 text-center backdrop-blur-xl">
-            <p className="mb-1 text-lg text-gray-300">No trending topics yet</p>
-            <p className="text-sm text-gray-500">
+          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-8 text-center backdrop-blur-xl">
+            <p className="mb-1 text-lg text-[var(--color-muted)]">No trending topics yet</p>
+            <p className="text-sm text-[var(--color-muted)]">
               Trending topics appear as the community posts. Try a different time window.
             </p>
           </div>
@@ -298,7 +298,7 @@ export default function TrendingPage() {
 
         {/* Footer note */}
         {state === 'loaded' && topics.length > 0 && (
-          <p className="mt-6 text-center text-xs text-gray-600">
+          <p className="mt-6 text-center text-xs text-[var(--color-muted)]">
             Trending computed from {TIME_FILTERS.find((f) => f.id === activeFilter.id)?.label.toLowerCase()} activity across Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS.
           </p>
         )}

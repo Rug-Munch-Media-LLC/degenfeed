@@ -20,6 +20,7 @@ import { validateBodySize } from './sanitize';
 // ─── Route handlers ──────────────────────────────────────────
 
 import { handleAccountDelete, handleAccountExport } from './routes/account';
+import { handleAnalytics } from './routes/analytics';
 import {
   handleGtSAuthorize,
   handleGtSCallback,
@@ -53,6 +54,7 @@ import { handleRelaysHealth } from './routes/health';
 import { handleResolveIdentity } from './routes/identity';
 import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import { handleLinksPage } from './routes/links';
+import { handleBlockSync } from './routes/moderation';
 import { handleNewsFeed } from './routes/news';
 import {
   handleNewsletterDigest,
@@ -83,6 +85,7 @@ import {
 } from './routes/rmi';
 import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
+import { handleSchedulePost } from './routes/scheduled';
 import { handleSearch, handleSearchIdentity, handleSearchIndex } from './routes/search';
 import { handleStreamFeed } from './routes/stream';
 import {
@@ -233,6 +236,9 @@ app.all('/index.html', (c) => handleLandingHtml(c.req.raw, c.env));
 // ─── API: Health ────────────────────────────────────────────
 app.all('/api/health', async (c) => handleRelaysHealth(c.env));
 
+// ─── API: Analytics ─────────────────────────────────────────
+app.get('/api/analytics', (c) => handleAnalytics(c.req.raw, c.env));
+
 // ─── API: Feed (specific routes before parameterized) ──────
 app.all('/api/feed/home', async (c) => handleHomeFeed(c.req.raw, c.env, c.executionCtx));
 app.all('/api/feed/trending', async (c) => handleTrendingFeed(c.req.raw, c.env, c.executionCtx));
@@ -376,6 +382,12 @@ app.all('/api/frame/action', async (c) => handleFrameAction(c.req.raw, c.env));
 
 // ─── API: Features ─────────────────────────────────────────
 app.all('/api/features', async (c) => handleFeatures(c.req.raw, c.env));
+
+// ─── API: Moderation ───────────────────────────────────────
+app.all('/api/moderation/sync', (c) => handleBlockSync(c.req.raw, c.env));
+
+// ─── API: Schedule ─────────────────────────────────────────
+app.all('/api/schedule', (c) => handleSchedulePost(c.req.raw, c.env));
 
 // ─── API: Prices ────────────────────────────────────────────
 app.all('/api/prices', async (c) => handlePrices(c.req.raw, c.env));

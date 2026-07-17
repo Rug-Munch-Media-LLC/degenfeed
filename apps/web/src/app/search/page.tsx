@@ -102,10 +102,10 @@ function Skeleton({ count = 3 }: { count?: number }) {
     <div className="space-y-3">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="card animate-pulse flex items-center gap-3 p-4">
-          <div className="h-10 w-10 rounded-full bg-gray-800" />
+          <div className="h-10 w-10 rounded-full bg-[var(--color-card)]" />
           <div className="flex-1 space-y-2">
-            <div className="h-3 w-32 rounded bg-gray-800" />
-            <div className="h-3 w-full rounded bg-gray-800" />
+            <div className="h-3 w-32 rounded bg-[var(--color-card)]" />
+            <div className="h-3 w-full rounded bg-[var(--color-card)]" />
           </div>
         </div>
       ))}
@@ -245,10 +245,12 @@ export default function SearchPage() {
     <div className="mx-auto max-w-4xl px-4 py-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-white mb-4">Search</h1>
+        <h1 className="text-xl font-bold text-[var(--color-fg)] mb-4">Search</h1>
         <div className="relative">
+          <label htmlFor="search-input" className="sr-only">Search</label>
           <input
             ref={inputRef}
+            id="search-input"
             type="text"
             value={query}
             onChange={(e) => handleChange(e.target.value)}
@@ -256,7 +258,7 @@ export default function SearchPage() {
             placeholder="Search posts, people, topics..."
             className="input h-12 pl-12 pr-4 text-base"
           />
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-muted)]">
             {loading ? '⟳' : '⌕'}
           </span>
         </div>
@@ -271,7 +273,7 @@ export default function SearchPage() {
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               protocolFilter === null
                 ? 'bg-degen-500/20 text-degen-400'
-                : 'bg-gray-800 text-gray-400 hover:text-white'
+                : 'bg-[var(--color-card)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
             }`}
           >
             All
@@ -284,7 +286,7 @@ export default function SearchPage() {
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors`}
               style={{
                 backgroundColor:
-                  protocolFilter === pf.id ? `${pf.color}22` : 'rgb(31,41,55)',
+                  protocolFilter === pf.id ? `${pf.color}22` : 'var(--color-card)',
                 color: protocolFilter === pf.id ? pf.color : 'rgb(156,163,175)',
               }}
             >
@@ -296,7 +298,7 @@ export default function SearchPage() {
 
       {/* Tabs */}
       {searched && !loading && (
-        <div className="mb-6 flex gap-1 rounded-xl bg-gray-900/60 p-1">
+        <div className="mb-6 flex gap-1 rounded-xl bg-[var(--color-card)] p-1">
           {(
             [
               { id: 'all' as const, label: 'All' },
@@ -312,7 +314,7 @@ export default function SearchPage() {
               className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                 tab === t.id
                   ? 'bg-degen-500/20 text-degen-400'
-                  : 'text-gray-500 hover:text-white'
+                  : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
               }`}
             >
               {t.label}
@@ -347,11 +349,11 @@ export default function SearchPage() {
       {searched && !loading && !error && visiblePosts.length === 0 && visibleIdentities.length === 0 && tab !== 'topics' && (
         <div className="card py-12 text-center">
           <div className="mb-3 text-3xl text-gray-700">⌕</div>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[var(--color-muted)]">
             No results for &ldquo;{query}&rdquo;
           </p>
           {protocolFilter && (
-            <p className="mt-1 text-xs text-gray-600">
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
               Try removing the protocol filter
             </p>
           )}
@@ -361,7 +363,7 @@ export default function SearchPage() {
       {/* ═══ Topics Tab ═══ */}
       {tab === 'topics' && (
         <div>
-          <p className="mb-4 text-xs text-gray-500">
+          <p className="mb-4 text-xs text-[var(--color-muted)]">
             Browse or search by topic to find relevant posts across all protocols.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -373,9 +375,9 @@ export default function SearchPage() {
               >
                 <span className="text-lg">{topic.emoji}</span>
                 <div>
-                  <div className="text-sm font-medium text-white">{topic.label}</div>
+                  <div className="text-sm font-medium text-[var(--color-fg)]">{topic.label}</div>
                   {query && (
-                    <div className="text-[10px] text-gray-500">
+                    <div className="text-[10px] text-[var(--color-muted)]">
                       Filter by &ldquo;{query}&rdquo;
                     </div>
                   )}
@@ -386,7 +388,7 @@ export default function SearchPage() {
 
           {mentionedTopics.length > 0 && (
             <div className="mt-8">
-              <h3 className="mb-3 text-xs font-medium uppercase tracking-widest text-gray-600">
+              <h3 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
                 Topics found in results
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -394,7 +396,7 @@ export default function SearchPage() {
                   <a
                     key={topic.id}
                     href={`/feed?niche=${topic.id}`}
-                    className="rounded-full bg-gray-800 px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                    className="rounded-full bg-[var(--color-card)] px-3 py-1.5 text-xs text-[var(--color-muted)] hover:bg-[var(--color-card)] hover:text-[var(--color-fg)] transition-colors"
                   >
                     {topic.emoji} {topic.label}
                   </a>
@@ -409,7 +411,7 @@ export default function SearchPage() {
       {visibleIdentities.length > 0 && (
         <div className="mb-8">
           {tab === 'all' && (
-            <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-gray-600">
+            <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
               People
             </h2>
           )}
@@ -422,7 +424,7 @@ export default function SearchPage() {
                 <a
                   href={getProfileUrl(identity)}
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
                   className="shrink-0"
                 >
                   <div
@@ -439,7 +441,6 @@ export default function SearchPage() {
                         width={48}
                         height={48}
                         className="h-12 w-12 rounded-full object-cover"
-                        unoptimized
                       />
                     ) : (
                       identity.displayName[0]?.toUpperCase() || getProtocolIcon(identity.protocol)
@@ -451,8 +452,8 @@ export default function SearchPage() {
                     <a
                       href={getProfileUrl(identity)}
                       target="_blank"
-                      rel="noopener"
-                      className="truncate text-sm font-semibold text-white hover:underline"
+                      rel="noopener noreferrer"
+                      className="truncate text-sm font-semibold text-[var(--color-fg)] hover:underline"
                     >
                       {identity.displayName}
                     </a>
@@ -467,26 +468,26 @@ export default function SearchPage() {
                     </span>
                   </div>
                   {identity.handle && (
-                    <div className="text-xs text-gray-500 truncate mt-0.5">
+                    <div className="text-xs text-[var(--color-muted)] truncate mt-0.5">
                       {identity.handle}
                     </div>
                   )}
                   {identity.bio && (
-                    <div className="mt-1 text-xs text-gray-400 line-clamp-2">
+                    <div className="mt-1 text-xs text-[var(--color-muted)] line-clamp-2">
                       {identity.bio}
                     </div>
                   )}
                   <div className="mt-2 flex items-center gap-3">
                     {identity.postCount > 0 && (
-                      <span className="text-[10px] text-gray-600">
+                      <span className="text-[10px] text-[var(--color-muted)]">
                         {formatCount(identity.postCount)} posts
                       </span>
                     )}
                     <a
                       href={getProfileUrl(identity)}
                       target="_blank"
-                      rel="noopener"
-                      className="ml-auto rounded-lg border border-white/10 px-2.5 py-1 text-xs text-gray-400 hover:border-degen-500/30 hover:text-degen-400 transition-colors"
+                      rel="noopener noreferrer"
+                      className="ml-auto rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 transition-colors"
                     >
                       View Profile →
                     </a>
@@ -502,7 +503,7 @@ export default function SearchPage() {
       {visiblePosts.length > 0 && (
         <div>
           {tab === 'all' && visibleIdentities.length > 0 && (
-            <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-gray-600">
+            <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
               Posts
             </h2>
           )}
@@ -528,7 +529,6 @@ export default function SearchPage() {
                       width={40}
                       height={40}
                       className="h-10 w-10 rounded-full object-cover"
-                      unoptimized
                     />
                   ) : (
                     r.author.displayName[0]?.toUpperCase() || '?'
@@ -536,16 +536,16 @@ export default function SearchPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="font-medium text-white truncate">
+                    <span className="font-medium text-[var(--color-fg)] truncate">
                       {r.author.displayName}
                     </span>
-                    <span className="text-gray-500" style={{ color: getProtocolColor(r.protocol) }}>
+                    <span className="text-[var(--color-muted)]" style={{ color: getProtocolColor(r.protocol) }}>
                       {r.protocol}
                     </span>
-                    <span className="ml-auto text-gray-600">{formatTime(r.createdAt)}</span>
+                    <span className="ml-auto text-[var(--color-muted)]">{formatTime(r.createdAt)}</span>
                   </div>
-                  <p className="mt-0.5 text-sm text-gray-400 line-clamp-2">{r.text}</p>
-                  <div className="mt-2 flex items-center gap-3 text-[10px] text-gray-600">
+                  <p className="mt-0.5 text-sm text-[var(--color-muted)] line-clamp-2">{r.text}</p>
+                  <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--color-muted)]">
                     <span>♥ {r.metrics.likes}</span>
                     <span>↻ {r.metrics.reposts}</span>
                     <span>✎ {r.metrics.replies}</span>
@@ -554,7 +554,7 @@ export default function SearchPage() {
                         {r.niches.slice(0, 2).map((n) => (
                           <span
                             key={n}
-                            className="rounded-full bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-500"
+                            className="rounded-full bg-[var(--color-card)] px-1.5 py-0.5 text-[10px] text-[var(--color-muted)]"
                           >
                             {n}
                           </span>
@@ -571,7 +571,6 @@ export default function SearchPage() {
                     height={64}
                     className="h-16 w-16 shrink-0 rounded-lg object-cover"
                     loading="lazy"
-                    unoptimized
                   />
                 )}
               </button>

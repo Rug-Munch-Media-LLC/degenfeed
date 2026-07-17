@@ -5,10 +5,10 @@ import { usePathname } from 'next/navigation';
 import { memo, useEffect, useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
+import { InstallPrompt } from './InstallPrompt';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { OnboardingModal } from './OnboardingModal';
 import { SearchOverlay } from './SearchOverlay';
-import { InstallPrompt } from './InstallPrompt';
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
 
@@ -21,6 +21,7 @@ const NAV: NavItem[] = [
   { href: '/feed', label: 'Feed' },
   { href: '/trending', label: 'Trending' },
   { href: '/news', label: 'News' },
+  { href: '/notifications', label: 'Alerts' },
   { href: '/discover', label: 'Discover' },
   { href: '/docs', label: 'Docs' },
   { href: '/premium', label: 'Premium' },
@@ -66,7 +67,6 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   );
 }
 
-
 export const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   const { ready, signedInProtocols, openSignIn, openCompose } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -81,12 +81,24 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     setTheme(resolved);
     document.documentElement.classList.toggle('dark', resolved === 'dark');
     // Sync cookie so subsequent SSR renders match
-    document.cookie = `df_theme=${resolved}; path=/; max-age=31536000; SameSite=Lax`;
+    document.cookie = `df_theme=${resolved}; path=/; max-age=31536000; SameSite=Lax; Secure`;
   }, []);
 
-  // Global ? key listener for keyboard shortcuts modal
+  // Global keyboard shortcuts handler
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // Ctrl+Shift+D: Toggle dark mode
+      if (e.key === 'D' && e.ctrlKey && e.shiftKey) {
+        e.preventDefault();
+        setTheme((prev) => {
+          const newTheme = prev === 'dark' ? 'light' : 'dark';
+          document.documentElement.classList.toggle('dark', newTheme === 'dark');
+          localStorage.setItem('df_theme', newTheme);
+          document.cookie = `df_theme=${newTheme}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+          return newTheme;
+        });
+        return;
+      }
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
         // Don't trigger if user is typing in an input
         if (
@@ -154,7 +166,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
                   const next = t === 'dark' ? 'light' : 'dark';
                   document.documentElement.classList.toggle('dark', next === 'dark');
                   localStorage.setItem('df_theme', next);
-                  document.cookie = `df_theme=${next}; path=/; max-age=31536000; SameSite=Lax`;
+                  document.cookie = `df_theme=${next}; path=/; max-age=31536000; SameSite=Lax; Secure`;
                   return next;
                 })
               }
