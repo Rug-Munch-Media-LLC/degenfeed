@@ -55,6 +55,15 @@ export async function handleAccountExport(request: Request, env: Env): Promise<R
     }
   }
 
+  if (env.BOOKMARKS) {
+    try {
+      const raw = await env.BOOKMARKS.get(`bookmarks:${session.address}`);
+      if (raw) data.bookmarks = JSON.parse(raw);
+    } catch {
+      /* ignore */
+    }
+  }
+
   return noCacheJsonResponse({ data });
 }
 

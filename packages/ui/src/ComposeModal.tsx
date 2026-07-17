@@ -92,6 +92,12 @@ export interface ComposeModalProps {
   onCancelSchedule?: (id: string) => void;
   /** Called to publish a scheduled post immediately. */
   onPublishScheduledNow?: (id: string) => void;
+  /** Pre-fill text content (e.g. from translation result) */
+  prefillText?: string;
+  /** Pre-select these protocols when opening (e.g. translation target) */
+  preselectProtocols?: string[];
+  /** Label shown in the prefill banner (e.g. "Translated from Farcaster") */
+  prefillLabel?: string;
   /** Cross-protocol reply context — when set, compose enters reply mode. */
   replyContext?: ReplyContext;
   /** Called for cross-protocol replies instead of normal publish. */
@@ -119,6 +125,9 @@ export function ComposeModal({
   scheduledPosts,
   onCancelSchedule,
   onPublishScheduledNow,
+  prefillText,
+  preselectProtocols,
+  prefillLabel,
   replyContext,
   onCrossReply,
 }: ComposeModalProps) {
@@ -146,20 +155,24 @@ export function ComposeModal({
   const isCrossProtocolReply = !!replyContext && replyContext.parentProtocol !== replyProtocol;
   const isReplyMode = !!replyContext;
 
-  // Load draft from localStorage and reset schedule state
+  // Load draft from localStorage (or prefill from translation) and reset schedule state
   useEffect(() => {
     if (!open) return;
-    try {
-      const saved = localStorage.getItem(DRAFT_KEY);
-      if (saved) setText(saved);
-    } catch {
-      /* noop */
+    if (prefillText) {
+      setText(prefillText);
+    } else {
+      try {
+        const saved = localStorage.getItem(DRAFT_KEY);
+        if (saved) setText(saved);
+      } catch {
+        /* noop */
+      }
     }
     setScheduledAt(null);
     setShowSchedulePicker(false);
     setShowScheduledView(false);
     setTimeout(() => textareaRef.current?.focus(), 100);
-  }, [open]);
+  }, [open, prefillText]);
 
   // Auto-save draft
   useEffect(() => {
@@ -183,6 +196,18 @@ export function ComposeModal({
       })),
     );
   }, [signedInProtocols]);
+
+  // Pre-select target protocols when provided (e.g. from translation)
+  useEffect(() => {
+    if (!open || !preselectProtocols || preselectProtocols.length === 0) return;
+    setTargets((prev) =>
+      prev.map((t) => ({
+        ...t,
+        enabled: preselectProtocols.includes(t.id) ? true : t.enabled,
+        connected: preselectProtocols.includes(t.id) ? true : t.connected,
+      })),
+    );
+  }, [open, preselectProtocols]);
 
   const handleTextChange = useCallback((value: string) => {
     if (value.length > MAX_CHARS) return;
@@ -620,6 +645,77 @@ export function ComposeModal({
                   </p>
                 </div>
               )}
+
+              {/* Translation prefill banner */}
+              {prefillLabel && (
+                <div className="mb-3 flex items-center gap-2 rounded-lg border border-blue-900/40 bg-blue-950/20 px-3 py-2">
+                  <span className="flex-shrink-0 text-blue-400 text-xs font-bold">&#x2194;</span>
+                  <span className="text-[11px] text-blue-300">
+                    {prefillLabel}
+                  </span>
+                  <span className="ml-auto text-[10px] text-gray-500">
+                    You can edit before posting
+                  </span>
+                </div>
+              )}
+
+              {/* Cross-protocol translation offer */}
+              {(() => {
+                const shortTargets = targets.filter(
+                  (t) => t.enabled && t.charLimit < text.length && text.length > 500,
+                );
+                if (shortTargets.length === 0 || prefillLabel) return null;
+                // Only show for the first short-limit target
+                const target = shortTargets[0];
+                if (!target) return null;
+                return (
+                  <div className="mb-3 flex items-center gap-2 rounded-lg border border-purple-900/40 bg-purple-950/20 px-3 py-2">
+                    <span className="flex-shrink-0 text-purple-400 text-xs font-bold">&#x2194;</span>
+                    <span className="flex-1 text-[11px] text-purple-300">
+                      This text is {text.length} chars but {target.label} allows {target.charLimit}.{' '}
+                      <button
+                        type="button"
+                        className="underline hover:text-white transition-colors"
+                        onClick={async () => {
+                          try {
+                            const res = await fetch('/api/translate', {
+                              method: 'POST',
+                              headers: { 'content-type': 'application/json' },
+                              body: JSON.stringify({
+                                content: text,
+                                fromProtocol: 'lens', // assume long-form source
+                                toProtocol: target.id,
+                              }),
+                            });
+                            if (res.ok) {
+                              const data = (await res.json()) as { translated: string };
+                              setText(data.translated);
+                            }
+                          } catch {
+                            /* non-critical */
+                          }
+                        }}
+                      >
+                        Translate for {target.label}
+                      </button>
+                    </span>
+                    <button
+                      type="button"
+                      className="text-[10px] text-gray-500 hover:text-white transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Dismiss this offer
+                        // We modify the target's charLimit to avoid re-showing
+                      }}
+                      aria-label="Dismiss"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })()}
 
               {/* Schedule badge — shown when a time has been picked */}
               {scheduledAt && (

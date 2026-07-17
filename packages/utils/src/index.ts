@@ -223,6 +223,32 @@ export {
 export { identityKey, IDENTITY_KV_PREFIX, PROTOCOL_ID_REGISTRY } from './crossProtocolIdentity';
 export type { CrossProtocolIdentity, ProtocolId } from './crossProtocolIdentity';
 
+// ─── Universal Content Addressing (df:// URIs) ─────────────────────────
+
+export {
+  encodeContentUri,
+  decodeContentUri,
+  getPostContentUri,
+} from './contentUri';
+export type { ProtocolSource } from './contentUri';
+
 // ─── Error reporting (lightweight Sentry) ─────────────────────────────
 
 export { reportError } from './sentry';
+
+// ─── Protocol content translation ─────────────────────────────────────
+
+export { PROTOCOL_FORMATS, translateContent, estimateTranslationLoss } from './protocolTranslator';
+export type { TranslationResult } from './protocolTranslator';
+
+// ─── Cross-protocol communities ────────────────────────────────────────
+
+export {
+  communityKey,
+  COMMUNITY_KV_PREFIX,
+  COMMUNITY_INDEX_KEY,
+  communityFeedKey,
+  communityMembersKey,
+  slugifyCommunity,
+} from './community';
+export type { CrossProtocolCommunity } from './community';

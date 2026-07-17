@@ -132,6 +132,8 @@ export interface UnifiedPost {
   isNew?: boolean;
   isHot?: boolean;
   isTrending?: boolean;
+  /** Universal df:// URI for cross-protocol addressing, sharing, and bookmarking */
+  dfUri?: string;
 }
 
 export interface NewPost {

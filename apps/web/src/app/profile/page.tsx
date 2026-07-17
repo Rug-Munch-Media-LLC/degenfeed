@@ -350,6 +350,29 @@ export default function ProfilePage() {
 
             <div className="mb-6">
               <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+                Reading
+              </h2>
+              <div className="card-hover flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/10 text-purple-400">
+                    <span className="text-lg">📑</span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">Bookmarks</div>
+                    <div className="text-xs text-gray-500">Posts saved across all protocols</div>
+                  </div>
+                </div>
+                <a
+                  href="/profile/bookmarks"
+                  className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                >
+                  View all
+                </a>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
                 Moderation
               </h2>
               <div className="card-hover flex items-center justify-between">
@@ -357,7 +380,12 @@ export default function ProfilePage() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 text-red-400">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
-                      <path d="M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path
+                        d="M8 12h8"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
                     </svg>
                   </div>
                   <div>

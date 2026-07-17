@@ -1,10 +1,12 @@
 import {
   addBlockedUser,
+  addBookmark,
   deleteFollow,
   getMutedIdentities,
   isFollowing,
   muteIdentity,
   removeBlockedUser,
+  removeBookmark,
   saveFollow,
   unmuteIdentity,
 } from '@degenfeed/storage';
@@ -20,10 +22,15 @@ import { LensPublicationBadge } from './LensPublicationBadge';
 import { MastodonInstanceContext } from './MastodonInstanceContext';
 import { NostrRelayBadge } from './NostrRelayBadge';
 import { PeerTubeEmbed } from './PeerTubeEmbed';
-import { ProtocolBadge } from './ProtocolBadge';
+import {
+  getProtocolIcon as _getProtocolIcon,
+  getProtocolLabel as _getProtocolLabel,
+  ProtocolBadge,
+} from './ProtocolBadge';
 import { QuickTipButton } from './QuickTipButton';
 import { ReportModal } from './ReportModal';
 import { TokenChart } from './TokenChart';
+import { TranslationPreview } from './TranslationPreview';
 
 interface FrameData {
   url: string;
@@ -95,6 +102,11 @@ export interface PostCardProps {
    * These are the OTHER protocols the author has linked to their wallet.
    */
   crossProtocolBadges?: string[];
+  /**
+   * Called when the user wants to publish translated content to another protocol.
+   * Opens ComposeModal with the translated content pre-filled for the target protocol.
+   */
+  onTranslatePublish?: (content: string, targetProtocol: string) => void;
 }
 
 const MAX_TEXT_LENGTH = 500;
@@ -264,6 +276,7 @@ export const PostCard = memo(function PostCard({
   onPaywall,
   onReport,
   crossProtocolBadges,
+  onTranslatePublish,
 }: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
@@ -277,6 +290,18 @@ export const PostCard = memo(function PostCard({
   const [blocked, setBlocked] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showTranslateMenu, setShowTranslateMenu] = useState(false);
+  const [translateTarget, setTranslateTarget] = useState<string | null>(null);
+  const [translationResult, setTranslationResult] = useState<{
+    translated: string;
+    truncated: boolean;
+    originalLength: number;
+    translatedLength: number;
+    maxLength: number;
+    strippedMarkdown: boolean;
+    removedProtocolElements: string[];
+  } | null>(null);
+  const [translating, setTranslating] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isSelf = post.author.id === 'self' || post.author.id.startsWith('self:');
@@ -342,6 +367,25 @@ export const PostCard = memo(function PostCard({
     } else if (action === 'reply') {
       setReplyText('');
       setShowReply(false);
+    } else if (action === 'bookmark') {
+      // Sync to local storage + server KV
+      try {
+        await addBookmark(
+          post.id,
+          `df://${post.protocol}:${post.id.replace(/^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/, '')}`,
+          post.protocol,
+          post.text.slice(0, 120) || post.id,
+          post.author.displayName || post.author.handles[post.protocol] || 'Unknown',
+        );
+      } catch {
+        // offline — local state already updated
+      }
+    } else if (action === 'unbookmark') {
+      try {
+        await removeBookmark(post.id);
+      } catch {
+        // offline
+      }
     }
   }
 
@@ -421,6 +465,60 @@ export const PostCard = memo(function PostCard({
     setShowMenu(false);
     setShowReportModal(true);
   }, []);
+
+  const handleTranslate = useCallback(
+    async (targetProtocol: string) => {
+      setShowTranslateMenu(false);
+      setShowMenu(false);
+      setTranslating(true);
+      setTranslateTarget(targetProtocol);
+      try {
+        const res = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            content: post.text,
+            fromProtocol: post.protocol,
+            toProtocol: targetProtocol,
+          }),
+        });
+        if (!res.ok) {
+          const err = (await res.json()) as { error?: string };
+          throw new Error(err.error ?? 'Translation failed');
+        }
+        const data = (await res.json()) as {
+          translated: string;
+          truncated: boolean;
+          originalLength: number;
+          translatedLength: number;
+          maxLength: number;
+          strippedMarkdown: boolean;
+          removedProtocolElements: string[];
+        };
+        setTranslationResult(data);
+      } catch (e) {
+        console.error('Translation error:', e);
+        setTranslateTarget(null);
+      } finally {
+        setTranslating(false);
+      }
+    },
+    [post.text, post.protocol],
+  );
+
+  const handlePostTranslated = useCallback(
+    (content: string, targetProtocol: string) => {
+      setTranslationResult(null);
+      setTranslateTarget(null);
+      if (onTranslatePublish) {
+        onTranslatePublish(content, targetProtocol);
+      } else {
+        // Fallback: copy to clipboard
+        void navigator.clipboard.writeText(content);
+      }
+    },
+    [onTranslatePublish],
+  );
 
   const handleReportSubmitted = useCallback(() => {
     onReport?.(post.id);
@@ -529,6 +627,68 @@ export const PostCard = memo(function PostCard({
                         </svg>
                         Report post
                       </button>
+
+                      {/* ── Translate ── */}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowTranslateMenu((v) => !v);
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-blue-400"
+                        >
+                          <path
+                            d="M2 2h6l1 2H3L2 2zm2 4h4l1 2H5l-1-2zm3 4h2l3 6H8l-1-2-1 2H4l3-6z"
+                            fill="currentColor"
+                          />
+                          <path
+                            d="M12 2l2 4-2 4"
+                            stroke="currentColor"
+                            strokeWidth="1.2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        Translate to...
+                      </button>
+
+                      {showTranslateMenu && (
+                        <div className="border-t border-gray-800">
+                          {(['nostr', 'farcaster', 'lens', 'mastodon', 'bluesky', 'lemmy'] as const)
+                            .filter((p) => p !== post.protocol)
+                            .map((protocol) => (
+                              <button
+                                key={protocol}
+                                type="button"
+                                role="menuitem"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleTranslate(protocol);
+                                }}
+                                disabled={translating}
+                                className="flex w-full items-center gap-3 px-4 py-2 pl-8 text-left text-sm text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors disabled:opacity-50"
+                              >
+                                {translating && translateTarget === protocol ? (
+                                  <span className="text-[10px] animate-pulse">...</span>
+                                ) : (
+                                  <span className="text-[0.7em] opacity-60">
+                                    {_getProtocolIcon(protocol)}
+                                  </span>
+                                )}
+                                {_getProtocolLabel(protocol)}
+                              </button>
+                            ))}
+                        </div>
+                      )}
+
                       <button
                         type="button"
                         role="menuitem"
@@ -834,6 +994,20 @@ export const PostCard = memo(function PostCard({
           >
             ↗ Share
           </button>
+          {post.dfUri && (
+            <button
+              type="button"
+              className="flex items-center gap-1 font-mono text-[10px] transition-colors hover:text-degen-400"
+              onClick={(e) => {
+                e.stopPropagation();
+                void navigator.clipboard.writeText(post.dfUri as string);
+              }}
+              aria-label="Copy df:// URI"
+              title={post.dfUri as string}
+            >
+              ⛓ df://
+            </button>
+          )}
           {onTip && (
             <QuickTipButton
               postId={post.id}
@@ -888,6 +1062,73 @@ export const PostCard = memo(function PostCard({
         postId={post.id}
         onSubmitted={handleReportSubmitted}
       />
+
+      {/* ── Translation preview overlay ── */}
+      {translationResult && (
+        <section
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+          onClick={() => {
+            setTranslationResult(null);
+            setTranslateTarget(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setTranslationResult(null);
+              setTranslateTarget(null);
+            }
+          }}
+          aria-modal="true"
+          aria-label="Translation preview"
+          role="dialog"
+        >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: dialog panel needs stopPropagation to prevent backdrop close on inner clicks */}
+          <div
+            className="flex w-full max-w-xl flex-col rounded-t-2xl border border-gray-800 bg-gray-950 shadow-2xl sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxHeight: '90vh' }}
+            role="none"
+          >
+            <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+              <h2 className="text-sm font-semibold text-white">Translate Post</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setTranslationResult(null);
+                  setTranslateTarget(null);
+                }}
+                className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-800 hover:text-white transition-colors"
+                aria-label="Close"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  role="img"
+                  aria-label="Close icon"
+                >
+                  <title>Close</title>
+                  <path
+                    d="M12 4L4 12M4 4l8 8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <TranslationPreview
+                originalContent={post.text}
+                fromProtocol={post.protocol}
+                translated={translationResult}
+                toProtocol={translateTarget ?? ''}
+                onPost={handlePostTranslated}
+              />
+            </div>
+          </div>
+        </section>
+      )}
     </>
   );
 });
