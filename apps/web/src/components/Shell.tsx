@@ -3,12 +3,14 @@
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { memo, useEffect, useState } from 'react';
+import { AddToHomeScreenToast } from './AddToHomeScreenToast';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
 import { InstallPrompt } from './InstallPrompt';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { OnboardingModal } from './OnboardingModal';
 import { SearchOverlay } from './SearchOverlay';
+import { useToast } from './Toast';
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
 
@@ -24,6 +26,7 @@ const NAV: NavItem[] = [
   { href: '/news', label: 'News' },
   { href: '/notifications', label: 'Alerts' },
   { href: '/discover', label: 'Discover' },
+  { href: '/deploy', label: 'Launch' },
   { href: '/docs', label: 'Docs' },
   { href: '/premium', label: 'Premium' },
   { href: '/profile', label: 'Profile' },
@@ -75,6 +78,23 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
+  const { showToast } = useToast();
+
+  // Listen for custom df-toast events (e.g., from PostCard share)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as {
+        kind?: 'info' | 'success' | 'error' | 'warning';
+        message: string;
+        duration?: number;
+      };
+      if (detail?.message) {
+        showToast(detail.kind || 'success', detail.message, detail.duration);
+      }
+    };
+    window.addEventListener('df-toast', handler);
+    return () => window.removeEventListener('df-toast', handler);
+  }, [showToast]);
 
   useEffect(() => {
     const stored = localStorage.getItem('df_theme');
@@ -368,6 +388,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       <KeyboardShortcuts open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <OnboardingModal />
       <InstallPrompt />
+      <AddToHomeScreenToast />
     </div>
   );
 });

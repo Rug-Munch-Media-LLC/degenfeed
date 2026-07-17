@@ -67,6 +67,8 @@ export interface Env {
   VAPID_PRIVATE_KEY?: string;
   /** Comma-separated list of feature flag keys that default to enabled */
   FEATURE_FLAGS_DEFAULT?: string;
+  /** KV namespace for deployment requests */
+  DEPLOYMENTS?: KVNamespace;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

@@ -520,6 +520,32 @@ export const PostCard = memo(function PostCard({
     [onTranslatePublish],
   );
 
+  const handleShare = useCallback(async () => {
+    const shareUrl = `${window.location.origin}/post/${encodeURIComponent(post.dfUri || post.id)}`;
+    const shareData: ShareData = {
+      title: `Post by ${post.author.displayName}`,
+      text: (post.text || '').substring(0, 100),
+      url: shareUrl,
+    };
+    try {
+      if (navigator.share && window.matchMedia('(max-width: 768px)').matches) {
+        // Mobile: use native share sheet
+        await navigator.share(shareData);
+      } else {
+        // Desktop: copy link to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        // Dispatch a custom event so the app's Toast listener can pick it up
+        window.dispatchEvent(
+          new CustomEvent('df-toast', {
+            detail: { kind: 'success', message: 'Link copied to clipboard' },
+          }),
+        );
+      }
+    } catch {
+      // User cancelled the share dialog — no action needed
+    }
+  }, [post.id, post.dfUri, post.author.displayName, post.text]);
+
   const handleReportSubmitted = useCallback(() => {
     onReport?.(post.id);
     setShowReportModal(false);
@@ -986,9 +1012,7 @@ export const PostCard = memo(function PostCard({
             className="flex items-center gap-1 transition-colors hover:text-purple-400"
             onClick={(e) => {
               e.stopPropagation();
-              void navigator.clipboard.writeText(
-                `${window.location.origin}/post/${encodeURIComponent(post.id)}`,
-              );
+              void handleShare();
             }}
             aria-label="Share"
           >

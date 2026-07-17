@@ -49,4 +49,32 @@ describe('sanitizePrefs', () => {
     });
     expect(out.preferredPlatforms).toEqual(['nostr', 'bluesky']);
   });
+
+  // ── New quality filter tests ─────────────────────────────────────
+
+  it('preserves showOriginalContent boolean', () => {
+    expect(sanitizePrefs({ showOriginalContent: true }).showOriginalContent).toBe(true);
+    expect(sanitizePrefs({ showOriginalContent: false }).showOriginalContent).toBe(false);
+    expect(sanitizePrefs({}).showOriginalContent).toBe(false);
+  });
+
+  it('clamps minEngagement to valid range', () => {
+    expect(sanitizePrefs({ minEngagement: 5 }).minEngagement).toBe(5);
+    expect(sanitizePrefs({ minEngagement: -1 }).minEngagement).toBe(0);
+    expect(sanitizePrefs({ minEngagement: 9999 }).minEngagement).toBe(1000);
+    expect(sanitizePrefs({}).minEngagement).toBe(0);
+  });
+
+  it('clamps maxPerNiche to valid range', () => {
+    expect(sanitizePrefs({ maxPerNiche: 3 }).maxPerNiche).toBe(3);
+    expect(sanitizePrefs({ maxPerNiche: 0 }).maxPerNiche).toBe(1);
+    expect(sanitizePrefs({ maxPerNiche: 99 }).maxPerNiche).toBe(20);
+    expect(sanitizePrefs({}).maxPerNiche).toBe(5);
+  });
+
+  it('preserves interleaveProtocols boolean', () => {
+    expect(sanitizePrefs({ interleaveProtocols: false }).interleaveProtocols).toBe(false);
+    expect(sanitizePrefs({ interleaveProtocols: true }).interleaveProtocols).toBe(true);
+    expect(sanitizePrefs({}).interleaveProtocols).toBe(true);
+  });
 });

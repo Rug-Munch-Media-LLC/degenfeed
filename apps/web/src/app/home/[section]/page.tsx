@@ -5,9 +5,14 @@ import type { EngagementAction } from '@degenfeed/types';
 import { ErrorBoundary, FeedList, NotificationBell, type UnifiedPost } from '@degenfeed/ui';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useAuth } from '../../../components/AuthProvider';
 import { FeedPollerBanner } from '../../../components/FeedPollerBanner';
-import { TipModal } from '../../../components/TipModal';
+
+const TipModal = dynamic(
+  () => import('../../../components/TipModal').then((m) => ({ default: m.TipModal })),
+  { ssr: false, loading: () => null },
+);
 import { useFeedPoller } from '../../../hooks/useFeedPoller';
 import { useNotifications } from '../../../hooks/useNotifications';
 import { SECTIONS } from '../sections';

@@ -8,7 +8,9 @@
  */
 
 import {
-  computeTrendingTopics,
+  checkDiversity,
+  computeQualitySignals,
+  interleaveByProtocol,
   type RankingContext,
   rankDiverse,
   type ScoreBreakdown,
@@ -257,6 +259,15 @@ export interface ScoreAndRankOptions {
   direction: 'asc' | 'desc';
   hideLowQuality: boolean;
   hideLowQualityThreshold: number;
+  // ── New quality filter options ─────────────────────────────────
+  /** Show only original content (filter out reposts and link-only). */
+  showOriginalContent: boolean;
+  /** Minimum total engagement (likes+reposts+replies+quotes) to show. */
+  minEngagement: number;
+  /** Max posts per niche per page. */
+  maxPerNiche: number;
+  /** Whether to interleave protocols. */
+  interleaveProtocols: boolean;
 }
 
 export interface ScoreAndRankResult {
@@ -308,9 +319,36 @@ export async function scoreAndRank(
         : scoredRelevant.filter((s) => s.post.createdAt < opts.cursor);
   }
 
+  // ── New quality filters ────────────────────────────────────────
+  let qualityFiltered = cursorScored;
+
+  // Show only original content (no reposts, no link-only)
+  if (opts.showOriginalContent) {
+    qualityFiltered = qualityFiltered.filter((s) => {
+      const text = s.post.text.trim();
+      const isRepost = /^RT\b/i.test(text) || /^[@＠]\w+/i.test(text);
+      const isLinkOnly =
+        s.post.embeds.some((e) => e.kind === 'link') &&
+        text.replace(/https?:\/\/\S+/g, '').trim().length < 20;
+      return !isRepost && !isLinkOnly;
+    });
+  }
+
+  // Minimum engagement filter
+  if (opts.minEngagement > 0) {
+    qualityFiltered = qualityFiltered.filter((s) => {
+      const total =
+        s.post.metrics.likes +
+        s.post.metrics.reposts +
+        s.post.metrics.replies +
+        (s.post.metrics.quotes ?? 0);
+      return total >= opts.minEngagement;
+    });
+  }
+
   const filteredScored = opts.hideLowQuality
-    ? cursorScored.filter((s) => s.breakdown.total >= opts.hideLowQualityThreshold)
-    : cursorScored;
+    ? qualityFiltered.filter((s) => s.breakdown.total >= opts.hideLowQualityThreshold)
+    : qualityFiltered;
 
   const rankedPosts = (() => {
     if (opts.sort === 'new') {
@@ -332,18 +370,39 @@ export async function scoreAndRank(
         .slice(0, Math.min(opts.limit, 100));
     }
     // Default 'scored': use diversity ranker
-    return (
-      opts.diverse
-        ? rankDiverse(
-            filteredScored.map((s) => s.post),
-            ctx,
-            {
-              maxPerAuthor: 2,
-              perProtocolMin: { farcaster: 2, lens: 2, bluesky: 2, nostr: 2, lemmy: 2 },
-            },
-          )
-        : filteredScored.map((s) => s.post)
-    ).slice(0, Math.min(opts.limit, 100));
+    const diversePosts = opts.diverse
+      ? rankDiverse(
+          filteredScored.map((s) => s.post),
+          ctx,
+          {
+            maxPerAuthor: opts.maxPerNiche > 0 ? 3 : 2,
+            perProtocolMin: { farcaster: 2, lens: 2, bluesky: 2, nostr: 2, lemmy: 2 },
+          },
+        )
+      : filteredScored.map((s) => s.post);
+
+    // Apply niche diversity cap (checkDiversity) and protocol interleaving
+    const withNicheDiversity: UnifiedPost[] = [];
+    const authorCounts = new Map<string, number>();
+    const nicheCounts = new Map<string, number>();
+    for (const p of diversePosts) {
+      const { allowed } = checkDiversity(p, authorCounts, nicheCounts, {
+        maxPerAuthor: 3,
+        maxPerNiche: opts.maxPerNiche,
+        interleaveProtocols: false,
+      });
+      if (allowed) {
+        checkDiversity(p, authorCounts, nicheCounts, undefined, true);
+        withNicheDiversity.push(p);
+      }
+    }
+
+    // Interleave by protocol to avoid 10 Nostr posts in a row
+    const interleaved = opts.interleaveProtocols
+      ? interleaveByProtocol(withNicheDiversity)
+      : withNicheDiversity;
+
+    return interleaved.slice(0, Math.min(opts.limit, 100));
   })();
 
   // Attach score breakdowns by id lookup

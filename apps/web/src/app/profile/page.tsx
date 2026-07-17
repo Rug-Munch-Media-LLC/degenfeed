@@ -4,10 +4,11 @@ import type { StoredIdentity } from '@degenfeed/storage';
 import { ErrorBoundary } from '@degenfeed/ui';
 import Image from 'next/image';
 import { QRCodeSVG } from 'qrcode.react';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { IdentityLinker } from '../../components/IdentityLinker';
 import { useWeb3 } from '../../components/Web3Provider';
+import { useSubscription, type SubscriptionStatus } from '../../hooks/useSubscription';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,6 +85,10 @@ export default function ProfilePage() {
     isWalletOnly,
   } = useAuth();
   const { isConnected } = useWeb3();
+  const { getSubscriptionStatus, cancelSubscription } = useSubscription();
+
+  const [subscriptions, setSubscriptions] = useState<SubscriptionStatus[]>([]);
+  const [subsLoading, setSubsLoading] = useState(true);
 
   const identities = useMemo(() => {
     const list: ResolvedIdentity[] = [];
@@ -96,6 +101,48 @@ export default function ProfilePage() {
 
   const primaryIsWallet =
     primaryIdentity?.protocol === 'ethereum' || primaryIdentity?.protocol === 'solana';
+
+  // Load subscriptions from /api/subscription/my
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSubscriptions() {
+      try {
+        setSubsLoading(true);
+        const res = await fetch('/api/subscription/my', { credentials: 'include' });
+        if (res.ok) {
+          const data = (await res.json()) as { subscriptions: Array<{ creator: string; tier: string; amount: string; startDate: number; expiryDate: number; daysRemaining: number }> };
+          if (!cancelled) {
+            setSubscriptions(
+              data.subscriptions.map((s) => ({
+                active: true,
+                creator: s.creator,
+                daysRemaining: s.daysRemaining,
+                subscription: {
+                  tier: s.tier,
+                  amount: s.amount,
+                  method: 'ethereum',
+                  startDate: s.startDate,
+                  expiryDate: s.expiryDate,
+                },
+              })),
+            );
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) setSubsLoading(false);
+    }
+    loadSubscriptions();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleCancelSubscription = useCallback(async (creator: string) => {
+    const result = await cancelSubscription(creator);
+    if (result.success) {
+      setSubscriptions((prev) => prev.filter((s) => s.creator !== creator));
+    }
+  }, [cancelSubscription]);
 
   if (!ready) {
     return (
@@ -399,6 +446,102 @@ export default function ProfilePage() {
                 >
                   Manage
                 </a>
+              </div>
+            </div>
+
+            {/* Subscription management — as subscriber */}
+            {subscriptions.length > 0 && (
+              <div className="mb-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="text-sm font-medium uppercase tracking-widest text-gray-500">
+                    Your Subscriptions
+                  </h2>
+                  <a
+                    href="/profile/subscriptions"
+                    className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                  >
+                    View all
+                  </a>
+                </div>
+                <div className="card border-degen-500/20 bg-degen-500/5 p-4 space-y-3">
+                  {subsLoading ? (
+                    <div className="flex items-center gap-3 py-2">
+                      <div className="h-3 w-24 animate-pulse rounded bg-gray-800" />
+                    </div>
+                  ) : (
+                    subscriptions.map((sub) => (
+                      <div
+                        key={sub.creator}
+                        className="card-hover flex items-center justify-between !bg-gray-900/40 px-3 py-3"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-sm font-semibold text-white">
+                              {shortenAddress(sub.creator)}
+                            </span>
+                            <span className="shrink-0 rounded-full bg-degen-500/20 px-2 py-0.5 text-[10px] font-medium text-degen-400">
+                              {sub.subscription?.tier ?? 'Active'}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-xs text-gray-500">
+                            <span>
+                              Expires:{' '}
+                              {sub.subscription?.expiryDate
+                                ? new Date(sub.subscription.expiryDate).toLocaleDateString()
+                                : 'N/A'}
+                            </span>
+                            <span className="ml-3">
+                              Status:{' '}
+                              <span className={sub.active ? 'text-green-400' : 'text-red-400'}>
+                                {sub.active ? 'Active' : 'Expired'}
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                        {sub.active && (
+                          <button
+                            onClick={() => handleCancelSubscription(sub.creator)}
+                            className="shrink-0 rounded-lg bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors"
+                            type="button"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                  {!subsLoading && subscriptions.length === 0 && (
+                    <p className="py-2 text-center text-xs text-gray-500">
+                      No active subscriptions yet.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Subscription tiers — as creator */}
+            <div className="mb-6">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+                Your Subscription Tiers
+              </h2>
+              <div className="card border-degen-500/20 bg-degen-500/5 p-4">
+                <p className="mb-3 text-sm text-degen-400">
+                  Offer exclusive subscriber-only content to your audience
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href="/profile/monetization"
+                    className="rounded-lg bg-degen-500/20 px-3 py-1.5 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-colors"
+                  >
+                    Manage tiers
+                  </a>
+                  <a
+                    href={`/subscribe/${primaryIdentity?.publicId ?? walletAddress ?? 'setup'}`}
+                    className="rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-white transition-colors"
+                  >
+                    Preview page
+                  </a>
+                </div>
               </div>
             </div>
 

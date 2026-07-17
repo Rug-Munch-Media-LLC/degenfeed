@@ -81,6 +81,16 @@ import { handlePostOg } from './routes/og';
 import { handleDiscoverPeople } from './routes/people';
 import { handlePostById } from './routes/post';
 import { handlePreferences } from './routes/preferences';
+import {
+  handleSubscriptionCancel,
+  handleSubscriptionContentCheck,
+  handleSubscriptionConfirm,
+  handleSubscriptionCreate,
+  handleSubscriptionMy,
+  handleSubscriptionStatus,
+  handleSubscriptionSubscribe,
+  handleSubscriptionTiers,
+} from './routes/subscription';
 import { handleFeedPresets } from './routes/presets';
 import { handlePrices } from './routes/prices';
 import { handleIdentityProfile } from './routes/profile';
@@ -375,6 +385,35 @@ app.all('/api/billing/checkout', async (c) => handleBillingCheckout(c.req.raw, c
 app.all('/api/billing/verify', async (c) => handleBillingVerify(c.req.raw, c.env));
 app.all('/api/billing/status', async (c) => handleBillingStatus(c.req.raw, c.env));
 
+// ─── API: Subscription ──────────────────────────────────────
+// Static routes before parameterized
+app.all('/api/subscription/create', async (c) =>
+  withSession(c, () => handleSubscriptionCreate(c.req.raw, c.env)),
+);
+app.all('/api/subscription/subscribe', async (c) =>
+  withSession(c, () => handleSubscriptionSubscribe(c.req.raw, c.env)),
+);
+app.all('/api/subscription/confirm', async (c) =>
+  withSession(c, () => handleSubscriptionConfirm(c.req.raw, c.env)),
+);
+app.all('/api/subscription/status', async (c) =>
+  withSession(c, () => handleSubscriptionStatus(c.req.raw, c.env)),
+);
+app.all('/api/subscription/cancel', async (c) =>
+  withSession(c, () => handleSubscriptionCancel(c.req.raw, c.env)),
+);
+app.all('/api/subscription/check-content', async (c) =>
+  withSession(c, () => handleSubscriptionContentCheck(c.req.raw, c.env)),
+);
+// My subscriptions (must be before parameterized route)
+app.all('/api/subscription/my', async (c) =>
+  withSession(c, () => handleSubscriptionMy(c.req.raw, c.env)),
+);
+// Parameterized route last
+app.all('/api/subscription/:creator', async (c) =>
+  handleSubscriptionTiers(c.req.raw, c.env, c.req.param('creator')),
+);
+
 // ─── API: Preferences ───────────────────────────────────────
 app.all('/api/preferences', async (c) => handlePreferences(c.req.raw, c.env));
 
@@ -404,6 +443,11 @@ app.all('/api/newsletter/subscribe', async (c) => handleNewsletterSubscribe(c.re
 app.all('/api/newsletter/status', async (c) => handleNewsletterStatus(c.req.raw, c.env));
 app.all('/api/newsletter/digest', async (c) => handleNewsletterDigest(c.req.raw, c.env));
 app.all('/api/newsletter/digest/*', async (c) => handleNewsletterDigest(c.req.raw, c.env));
+
+// ─── API: Deploy ──────────────────────────────────────────
+import { handleDeployRequest, handleDeployStatus } from './routes/deploy';
+app.all('/api/deploy/request', async (c) => handleDeployRequest(c.req.raw, c.env));
+app.all('/api/deploy/status', async (c) => handleDeployStatus(c.req.raw, c.env));
 
 // ─── API: Search ────────────────────────────────────────────
 app.all('/api/search/identity', async (c) => handleSearchIdentity(c.req.raw, c.env));

@@ -11,7 +11,7 @@ import {
   setPrimaryIdentity as setPrimaryIdentityInDb,
 } from '@degenfeed/storage';
 import type { EngagementAction } from '@degenfeed/types';
-import { ComposeModal, SignInModal } from '@degenfeed/ui';
+import dynamic from 'next/dynamic';
 import {
   createContext,
   type ReactNode,
@@ -21,6 +21,31 @@ import {
   useMemo,
   useState,
 } from 'react';
+
+const SignInModal = dynamic(
+  () => import('@degenfeed/ui').then((m) => ({ default: m.SignInModal })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="animate-spin h-8 w-8 rounded-full border-2 border-degen-500 border-t-transparent" />
+      </div>
+    ),
+  },
+);
+
+const ComposeModal = dynamic(
+  () => import('@degenfeed/ui').then((m) => ({ default: m.ComposeModal })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="animate-spin h-8 w-8 rounded-full border-2 border-degen-500 border-t-transparent" />
+      </div>
+    ),
+  },
+);
+
 import { useWeb3 } from '../components/Web3Provider';
 import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import { useSolanaSignIn } from '../hooks/useSolanaSignIn';

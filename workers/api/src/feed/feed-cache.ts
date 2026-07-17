@@ -183,6 +183,15 @@ export interface StoredUserPreferences {
   hideLowQuality?: boolean;
   hideLowQualityThreshold?: number;
   allowNonCrypto?: boolean;
+  // ── New quality filters ────────────────────────────────────────
+  /** Show only original content (filter reposts & link-only). */
+  showOriginalContent?: boolean;
+  /** Minimum total engagement to show a post. */
+  minEngagement?: number;
+  /** Max posts per niche per page. */
+  maxPerNiche?: number;
+  /** Whether to interleave protocols. */
+  interleaveProtocols?: boolean;
 }
 
 export interface UserRankingContext {
@@ -236,6 +245,19 @@ export async function loadUserRankingContext(
     }
     if (preferences && typeof preferences.hideLowQualityThreshold !== 'number') {
       preferences.hideLowQualityThreshold = 1.0;
+    }
+    // Ensure new quality filters have defaults
+    if (preferences && typeof preferences.showOriginalContent !== 'boolean') {
+      preferences.showOriginalContent = false;
+    }
+    if (preferences && typeof preferences.minEngagement !== 'number') {
+      preferences.minEngagement = 0;
+    }
+    if (preferences && typeof preferences.maxPerNiche !== 'number') {
+      preferences.maxPerNiche = 5;
+    }
+    if (preferences && typeof preferences.interleaveProtocols !== 'boolean') {
+      preferences.interleaveProtocols = true;
     }
     return { followed, mutedAuthors, mutedWords, preferences };
   } catch (err) {

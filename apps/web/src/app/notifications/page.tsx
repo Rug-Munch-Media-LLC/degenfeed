@@ -160,7 +160,9 @@ function NotificationRow({
       {/* Content */}
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-2">
-          <span className={`truncate text-sm font-medium ${read ? 'text-[var(--color-muted)]' : 'text-[var(--color-fg)]'}`}>
+          <span
+            className={`truncate text-sm font-medium ${read ? 'text-[var(--color-muted)]' : 'text-[var(--color-fg)]'}`}
+          >
             {actorAvatar ? (
               <Image
                 src={actorAvatar}
@@ -180,15 +182,26 @@ function NotificationRow({
             <span>{actorName}</span>
             {amount && (
               <span className="rounded bg-degen-500/20 px-1.5 py-0.5 text-[10px] font-bold text-degen-400">
-                {amount} {currency?.toUpperCase() === 'BASE' ? 'ETH' : currency?.toUpperCase() === 'SOLANA' ? 'SOL' : currency?.toUpperCase()}
+                {amount}{' '}
+                {currency?.toUpperCase() === 'BASE'
+                  ? 'ETH'
+                  : currency?.toUpperCase() === 'SOLANA'
+                    ? 'SOL'
+                    : currency?.toUpperCase()}
               </span>
             )}
           </span>
           {actorHandle && (
-            <span className="hidden truncate text-xs text-[var(--color-muted)] sm:inline">@{actorHandle}</span>
+            <span className="hidden truncate text-xs text-[var(--color-muted)] sm:inline">
+              @{actorHandle}
+            </span>
           )}
         </div>
-        <span className={`text-xs ${read ? 'text-[var(--color-muted)]' : 'text-[var(--color-muted)]'}`}>{label}</span>
+        <span
+          className={`text-xs ${read ? 'text-[var(--color-muted)]' : 'text-[var(--color-muted)]'}`}
+        >
+          {label}
+        </span>
         {postText && (
           <span className="mt-0.5 line-clamp-1 text-xs text-[var(--color-muted)] italic">
             &ldquo;{postText}&rdquo;
@@ -252,15 +265,31 @@ function SignInPrompt({ onSignIn }: { onSignIn: () => void }) {
 
 /* ─── Notification Preferences Panel ───────────────────────── */
 
+// biome-ignore lint/suspicious/noExplicitAny: notification prefs are a dynamic key/value map
+type PrefsRecord = Record<string, any>;
+
 interface NotificationPrefsPanelProps {
-  prefs: Record<string, unknown> | null;
-  onSave: (prefs: Record<string, unknown>) => void;
+  prefs: PrefsRecord | null;
+  onSave: (prefs: PrefsRecord) => void | Promise<void>;
   onClose: () => void;
 }
 
 function NotificationPrefsPanel({ prefs, onSave, onClose }: NotificationPrefsPanelProps) {
-  const [local, setLocal] = useState<Record<string, unknown>>(prefs || {});
+  const [local, setLocal] = useState<PrefsRecord>(prefs || {});
   const [saving, setSaving] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
+
+  // Check existing push subscription on mount
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.ready
+        .then((reg) => reg.pushManager.getSubscription())
+        .then((sub) => setPushEnabled(!!sub))
+        .catch(() => {});
+    }
+  }, []);
 
   // Sync when prefs load
   useEffect(() => {
@@ -280,14 +309,94 @@ function NotificationPrefsPanel({ prefs, onSave, onClose }: NotificationPrefsPan
 
   const handleSave = async () => {
     setSaving(true);
-    await onSave(local);
-    setSaving(false);
+    try {
+      await onSave(local);
+    } catch {
+      /* ignore */
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handlePushToggle = async (enabled: boolean) => {
+    setPushLoading(true);
+    setPushError(null);
+    try {
+      if (enabled) {
+        // Request permission
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          setPushError('Permission denied. Enable notifications in your browser settings.');
+          setPushEnabled(false);
+          return;
+        }
+
+        // Subscribe
+        const reg = await navigator.serviceWorker.ready;
+        const vapidKey =
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+          'BAd4N4H0oOxUeARX0mSTKScYh_bJlBIas4OQPV7sWjyzRGR-6_w17whjR-DMpfrd7rF8YR8GnTFu5TOHUQNM3Cc';
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey) as unknown as string,
+        });
+
+        // Send subscription to server
+        const subJson = sub.toJSON();
+        const res = await fetch('/api/notifications/push', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            subscription: {
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: subJson.keys?.p256dh ?? '',
+                auth: subJson.keys?.auth ?? '',
+              },
+            },
+          }),
+        });
+
+        if (!res.ok) throw new Error('Failed to register push subscription');
+
+        setPushEnabled(true);
+      } else {
+        // Unsubscribe
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        await sub?.unsubscribe();
+
+        // Tell server to remove
+        await fetch('/api/notifications/push', { method: 'DELETE' });
+
+        setPushEnabled(false);
+      }
+    } catch (err) {
+      setPushError(err instanceof Error ? err.message : 'Push subscription failed');
+      setPushEnabled(!enabled);
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  /** Convert a base64url-encoded string to Uint8Array for the applicationServerKey. */
+  function urlBase64ToUint8Array(base64: string): Uint8Array {
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(b64);
+    const arr = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
 
   const protocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'] as const;
   const types = ['likes', 'reposts', 'replies', 'follows', 'mentions'] as const;
   const typeLabels: Record<string, string> = {
-    likes: 'Likes', reposts: 'Reposts', replies: 'Replies', follows: 'Follows', mentions: 'Mentions',
+    likes: 'Likes',
+    reposts: 'Reposts',
+    replies: 'Replies',
+    follows: 'Follows',
+    mentions: 'Mentions',
   };
 
   return (
@@ -300,7 +409,15 @@ function NotificationPrefsPanel({ prefs, onSave, onClose }: NotificationPrefsPan
           className="rounded p-1 text-[var(--color-muted)] hover:text-[var(--color-fg)]"
           aria-label="Close preferences"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
@@ -321,7 +438,8 @@ function NotificationPrefsPanel({ prefs, onSave, onClose }: NotificationPrefsPan
                     key={type}
                     className="flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors"
                     style={{
-                      backgroundColor: protoPrefs[type] !== false ? `${color}18` : 'var(--color-card)',
+                      backgroundColor:
+                        protoPrefs[type] !== false ? `${color}18` : 'var(--color-card)',
                       color: protoPrefs[type] !== false ? color : 'var(--color-muted)',
                     }}
                   >
@@ -342,9 +460,7 @@ function NotificationPrefsPanel({ prefs, onSave, onClose }: NotificationPrefsPan
 
         {/* Tips toggle */}
         <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] p-3">
-          <span className="text-xs font-medium text-[var(--color-fg)]">
-            ⚡ Tips
-          </span>
+          <span className="text-xs font-medium text-[var(--color-fg)]">⚡ Tips</span>
           <label className="relative inline-flex cursor-pointer items-center">
             <input
               type="checkbox"
@@ -355,6 +471,37 @@ function NotificationPrefsPanel({ prefs, onSave, onClose }: NotificationPrefsPan
             <div className="h-5 w-9 rounded-full bg-[var(--color-card)] after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-[var(--color-muted)] after:transition-all peer-checked:bg-degen-500/30 peer-checked:after:translate-x-full peer-checked:after:bg-degen-400" />
           </label>
         </div>
+
+        {/* Push notifications toggle */}
+        {'PushManager' in window && (
+          <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] p-3">
+            <div className="flex-1">
+              <span className="text-xs font-medium text-[var(--color-fg)]">
+                📲 Push Notifications
+              </span>
+              <p className="mt-0.5 text-[10px] text-[var(--color-muted)]">
+                Receive alerts even when DegenFeed is closed
+              </p>
+              {pushError && <p className="mt-1 text-[10px] text-red-400">{pushError}</p>}
+            </div>
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={pushEnabled}
+                disabled={pushLoading}
+                onChange={(e) => void handlePushToggle(e.target.checked)}
+                className="peer sr-only"
+              />
+              <div
+                className={`h-5 w-9 rounded-full after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:transition-all peer-checked:after:translate-x-full ${
+                  pushEnabled
+                    ? 'bg-degen-500/30 after:bg-degen-400'
+                    : 'bg-[var(--color-card)] after:bg-[var(--color-muted)]'
+                } ${pushLoading ? 'animate-pulse opacity-60' : ''}`}
+              />
+            </label>
+          </div>
+        )}
       </div>
 
       <button
@@ -458,7 +605,9 @@ export default function NotificationsPage() {
                 🔔
               </span>
               <div>
-                <h1 className="text-lg font-bold text-[var(--color-fg)] leading-none">Notifications</h1>
+                <h1 className="text-lg font-bold text-[var(--color-fg)] leading-none">
+                  Notifications
+                </h1>
                 <p className="text-[10px] text-[var(--color-muted)]">
                   {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
                 </p>
@@ -473,7 +622,15 @@ export default function NotificationsPage() {
                 className="rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
                 aria-label="Notification preferences"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <circle cx="12" cy="12" r="3" />
                   <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
                 </svg>
@@ -528,7 +685,9 @@ export default function NotificationsPage() {
                   type="button"
                   onClick={() => handleProtocolClick(p.id)}
                   className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
-                    active ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
+                    active
+                      ? 'text-[var(--color-fg)]'
+                      : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
                   }`}
                   style={active ? { backgroundColor: `${color}18`, color } : undefined}
                 >
@@ -608,7 +767,9 @@ export default function NotificationsPage() {
             )}
 
             {!hasMore && visible.length > 0 && (
-              <div className="py-8 text-center text-xs text-[var(--color-muted)]">All notifications loaded</div>
+              <div className="py-8 text-center text-xs text-[var(--color-muted)]">
+                All notifications loaded
+              </div>
             )}
           </>
         )}

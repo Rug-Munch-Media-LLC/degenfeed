@@ -22,6 +22,21 @@ import {
 } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
+// ─── Enhanced quality signals and diversity helpers ────────────────
+export {
+  checkDiversity,
+  computeAuthorReputation,
+  computeQualitySignals,
+  interleaveByProtocol,
+} from './scorer';
+export type {
+  AuthorReputation,
+  DiversityConstraints,
+  QualitySignals,
+  ScorerContext,
+} from './scorer';
+export { DEFAULT_DIVERSITY } from './scorer';
+
 export const WEIGHTS = {
   w1: 1.0,
   w2: 1.5,
