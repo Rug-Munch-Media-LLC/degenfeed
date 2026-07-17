@@ -13,18 +13,30 @@ import {
   enrichPostNiches,
   isEnglishPost,
   isRelevantPost,
-  isSpamPost,
+  spamScore,
+  spamTier,
 } from '@degenfeed/feed-core';
+import type { SpamResult } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
 import { getPostContentUri } from '@degenfeed/utils';
 
-/** Drops spam posts, enriches with niche tags, and attaches a df:// URI. */
+/**
+ * Drops definite spam and marks borderline posts with a spamScore so
+ * the ranking engine can reduce their rank instead of hard-filtering.
+ * Enriches with niche tags and attaches a df:// URI.
+ */
 export function sanitizePosts(posts: UnifiedPost[]): UnifiedPost[] {
   return posts
-    .filter((p) => !isSpamPost(p))
+    .filter((p) => spamTier(p) !== 'definite')
     .map((p) => {
       const enriched = enrichPostNiches(p);
       enriched.dfUri = getPostContentUri(enriched);
+
+      // Attach spam score metadata for downstream ranking
+      const { score, signals } = spamScore(p);
+      (enriched as Record<string, unknown>).spamScore = score;
+      (enriched as Record<string, unknown>).spamSignals = signals;
+
       return enriched;
     });
 }

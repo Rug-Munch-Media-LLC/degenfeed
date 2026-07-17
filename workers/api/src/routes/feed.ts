@@ -88,6 +88,16 @@ export async function handleHomeFeed(
     parseCookiePrefs(cookieHeader),
   );
   const queryThreshold = Number(params.get('hideLowQualityThreshold'));
+  const showOriginalContent =
+    params.get('showOriginalContent') === 'true' ||
+    userCtx.preferences?.showOriginalContent === true;
+  const minEngagement = Number(params.get('minEngagement')) ||
+    (userCtx.preferences?.minEngagement ?? 0);
+  const maxPerNiche = Number(params.get('maxPerNiche')) ||
+    (userCtx.preferences?.maxPerNiche ?? 5);
+  const interleaveProtocols = params.get('interleaveProtocols') !== 'false' &&
+    (userCtx.preferences?.interleaveProtocols ?? true);
+
   const { ranked, topOfHour, nextCursor } = await scoreAndRank(env, relevant, {
     prefs: mergedPrefs,
     followed: userCtx.followed,
@@ -102,6 +112,10 @@ export async function handleHomeFeed(
       Number.isFinite(queryThreshold) && queryThreshold > 0
         ? queryThreshold
         : (userCtx.preferences?.hideLowQualityThreshold ?? 1.0),
+    showOriginalContent,
+    minEngagement,
+    maxPerNiche,
+    interleaveProtocols,
   });
   const trending = await computeTrending(relevant, Number(params.get('trending')) || 24);
 

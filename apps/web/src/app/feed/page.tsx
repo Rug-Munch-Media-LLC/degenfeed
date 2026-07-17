@@ -3,15 +3,23 @@
 import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, FeedList, NotificationBell, PostCard } from '@degenfeed/ui';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { FeedComposer } from '../../components/FeedComposer';
 import { FeedSidebar } from '../../components/FeedSidebar';
-import { TipModal } from '../../components/TipModal';
 import { useToast } from '../../components/Toast';
 import { useNotifications } from '../../hooks/useNotifications';
+
+const TipModal = dynamic(
+  () => import('../../components/TipModal').then((m) => ({ default: m.TipModal })),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+);
 
 type Tab = 'for-you' | 'following';
 
@@ -59,6 +67,9 @@ export default function FeedPage() {
   const [allowNonCrypto, setAllowNonCrypto] = useState(false);
   const [recencyWeight, setRecencyWeight] = useState(1.0);
   const [engagementWeight, setEngagementWeight] = useState(1.0);
+  const [showOriginalContent, setShowOriginalContent] = useState(false);
+  const [minEngagement, setMinEngagement] = useState(0);
+  const [maxPerNiche, setMaxPerNiche] = useState(5);
   const [protocolFilter, setProtocolFilter] = useState<string | null>(null);
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const { notifications, unreadCount, fetchNotifications, markRead } =
@@ -79,6 +90,9 @@ export default function FeedPage() {
           allowNonCrypto?: boolean;
           recencyWeight?: number;
           engagementWeight?: number;
+          showOriginalContent?: boolean;
+          minEngagement?: number;
+          maxPerNiche?: number;
         };
         if (typeof data.hideLowQuality === 'boolean') setHideLowQuality(data.hideLowQuality);
         if (typeof data.hideLowQualityThreshold === 'number') {
@@ -87,6 +101,10 @@ export default function FeedPage() {
         if (typeof data.allowNonCrypto === 'boolean') setAllowNonCrypto(data.allowNonCrypto);
         if (typeof data.recencyWeight === 'number') setRecencyWeight(data.recencyWeight);
         if (typeof data.engagementWeight === 'number') setEngagementWeight(data.engagementWeight);
+        if (typeof data.showOriginalContent === 'boolean')
+          setShowOriginalContent(data.showOriginalContent);
+        if (typeof data.minEngagement === 'number') setMinEngagement(data.minEngagement);
+        if (typeof data.maxPerNiche === 'number') setMaxPerNiche(data.maxPerNiche);
       } catch {
         /* ignore — user has no session yet */
       }
@@ -170,6 +188,15 @@ export default function FeedPage() {
         if (allowNonCrypto) {
           url.searchParams.set('allowNonCrypto', 'true');
         }
+        if (showOriginalContent) {
+          url.searchParams.set('showOriginalContent', 'true');
+        }
+        if (minEngagement > 0) {
+          url.searchParams.set('minEngagement', String(minEngagement));
+        }
+        if (maxPerNiche < 5) {
+          url.searchParams.set('maxPerNiche', String(maxPerNiche));
+        }
         if (recencyWeight !== 1) url.searchParams.set('recencyWeight', String(recencyWeight));
         if (engagementWeight !== 1)
           url.searchParams.set('engagementWeight', String(engagementWeight));
@@ -216,6 +243,9 @@ export default function FeedPage() {
       hideLowQuality,
       hideThreshold,
       allowNonCrypto,
+      showOriginalContent,
+      minEngagement,
+      maxPerNiche,
       recencyWeight,
       engagementWeight,
       protocolFilter,
@@ -302,9 +332,59 @@ export default function FeedPage() {
     setProtocolFilter((current) => (current === id ? null : id));
   }, []);
 
+  /* ── Pull-to-refresh ─────────────────────────────────────── */
+  const PULL_THRESHOLD = 80;
+  const pullStartY = useRef(0);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    // Only activate pull-to-refresh when at the top of the page
+    if (window.scrollY <= 0) {
+      pullStartY.current = e.touches[0]?.clientY ?? 0;
+      setIsPulling(true);
+    }
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isPulling) return;
+      const currentY = e.touches[0]?.clientY ?? 0;
+      const diff = currentY - pullStartY.current;
+      if (diff <= 0) {
+        setPullDistance(0);
+        return;
+      }
+      // Apply resistance: reduce the distance for a more natural feel
+      const resisted = Math.min(diff * 0.4, 120);
+      setPullDistance(resisted);
+    },
+    [isPulling],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (pullDistance >= PULL_THRESHOLD) {
+      // Trigger refresh
+      setNewAvailable(false);
+      fetchFeed(false);
+      window.dispatchEvent(
+        new CustomEvent('df-toast', {
+          detail: { kind: 'info', message: 'Feed refreshed' },
+        }),
+      );
+    }
+    setPullDistance(0);
+    setIsPulling(false);
+  }, [pullDistance, fetchFeed]);
+
   return (
     <ErrorBoundary>
-      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-4 px-3 py-3 sm:px-4 lg:grid-cols-12">
+      <div
+        className="mx-auto grid max-w-[1280px] grid-cols-1 gap-4 px-3 py-3 sm:px-4 lg:grid-cols-12"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Left rail — desktop only quick nav */}
         <aside className="hidden xl:col-span-3 xl:block">
           <div className="sticky top-20 space-y-3">
@@ -505,6 +585,42 @@ export default function FeedPage() {
                   </span>
                 </label>
               )}
+              {/* New: Show only original content toggle */}
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={showOriginalContent}
+                  onChange={(e) => {
+                    const next = e.target.checked;
+                    setShowOriginalContent(next);
+                    persistPrefs({ showOriginalContent: next });
+                  }}
+                  className="h-3 w-3 rounded border-white/20 bg-gray-900 text-degen-500 focus:ring-degen-500"
+                />
+                <span title="Hide reposts and link-only posts">Original</span>
+              </label>
+              {/* New: Minimum engagement slider */}
+              <label
+                className="flex items-center gap-1.5"
+                title="Only show posts with at least N total interactions"
+              >
+                <span>Engage ≥</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="50"
+                  step="5"
+                  value={minEngagement}
+                  onChange={(e) => {
+                    const next = Number(e.target.value);
+                    setMinEngagement(next);
+                    persistPrefs({ minEngagement: next });
+                  }}
+                  className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                  aria-label="Minimum engagement"
+                />
+                <span className="font-mono text-[10px] text-gray-500">{minEngagement}</span>
+              </label>
               <label className="flex items-center gap-1">
                 <input
                   type="checkbox"
@@ -557,6 +673,33 @@ export default function FeedPage() {
               </span>
             </div>
           </div>
+
+          {/* ── Pull-to-refresh indicator ── */}
+          {isPulling && pullDistance > 0 && (
+            <div
+              className="flex items-center justify-center gap-2 py-3 text-sm text-degen-400 transition-all"
+              style={{
+                opacity: Math.min(pullDistance / PULL_THRESHOLD, 1),
+                transform: `translateY(${Math.min(pullDistance - 20, 0)}px)`,
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                className={pullDistance >= PULL_THRESHOLD ? '' : 'animate-bounce'}
+                aria-hidden="true"
+              >
+                <path d="M12 5v14M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="text-xs font-medium">
+                {pullDistance >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}
+              </span>
+            </div>
+          )}
 
           {/* Composer / sign-in CTA */}
           {hasSignedIn ? (

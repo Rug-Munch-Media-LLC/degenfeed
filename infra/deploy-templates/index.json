@@ -1,0 +1,35 @@
+{
+  "lemmy": {
+    "name": "Community (Lemmy)",
+    "description": "A Reddit-like community platform with threaded discussions, voting, and moderation. Federation via ActivityPub.",
+    "composeFile": "lemmy-template.yml",
+    "setupTime": "~15 minutes",
+    "requirements": {
+      "ram": "2 GB minimum, 4 GB recommended",
+      "storage": "10 GB+",
+      "docker": true
+    }
+  },
+  "peertube": {
+    "name": "Video (PeerTube)",
+    "description": "A decentralized video hosting platform. Upload, share, and livestream. Federation via ActivityPub.",
+    "composeFile": "peertube-template.yml",
+    "setupTime": "~30 minutes",
+    "requirements": {
+      "ram": "4 GB minimum, 8 GB recommended",
+      "storage": "100 GB+ (SSD recommended)",
+      "docker": true
+    }
+  },
+  "mastodon": {
+    "name": "Social (Mastodon)",
+    "description": "A microblogging platform similar to Twitter/X. Full ActivityPub federation with the fediverse.",
+    "composeFile": "mastodon-template.yml",
+    "setupTime": "~20 minutes",
+    "requirements": {
+      "ram": "4 GB minimum, 8 GB recommended",
+      "storage": "20 GB+",
+      "docker": true
+    }
+  }
+}

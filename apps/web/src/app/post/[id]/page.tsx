@@ -6,8 +6,13 @@ import { ErrorBoundary, getProtocolColor } from '@degenfeed/ui';
 import { formatTimeAgo } from '@degenfeed/utils';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useAuth } from '../../../components/AuthProvider';
-import { TipModal } from '../../../components/TipModal';
+
+const TipModal = dynamic(
+  () => import('../../../components/TipModal').then((m) => ({ default: m.TipModal })),
+  { ssr: false, loading: () => null },
+);
 import { sanitizeHtml } from '../../../lib/sanitize';
 
 export const revalidate = 3600;

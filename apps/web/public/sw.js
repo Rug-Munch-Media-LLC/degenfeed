@@ -159,13 +159,33 @@ async function navStrategy(request) {
 /* ── Push notifications ────────────────────────────────────── */
 self.addEventListener('push', (e) => {
   const data = e.data?.json() || {};
+  const options = {
+    body: data.body || 'New activity on DegenFeed',
+    icon: '/icon-192.png',
+    badge: '/icon-72.png',
+    tag: data.tag || 'degenfeed',
+    data: { url: data.url || '/' },
+    vibrate: [200, 100, 200],
+    requireInteraction: data.requireInteraction || false,
+  };
+  e.waitUntil(self.registration.showNotification(data.title || 'DegenFeed', options));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = e.notification.data?.url || '/';
   e.waitUntil(
-    self.registration.showNotification(data.title || 'DegenFeed', {
-      body: data.body || 'New activity on your feed',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      tag: 'degenfeed',
-      vibrate: [200, 100, 200],
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Focus an existing tab if one is open
+      for (const client of clientList) {
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          client.focus();
+          client.navigate(url);
+          return;
+        }
+      }
+      // Otherwise open a new window
+      return clients.openWindow(url);
     }),
   );
 });

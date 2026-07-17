@@ -48,6 +48,8 @@ export {
   ProtocolBadge,
 } from './ProtocolBadge';
 export { QuickTipButton } from './QuickTipButton';
+export type { SubscriberBadgeProps } from './SubscriberBadge';
+export { SubscriberBadge } from './SubscriberBadge';
 export type { ReportModalProps } from './ReportModal';
 export { ReportModal } from './ReportModal';
 export type { ProtocolOption, SignInModalProps, WalletOption } from './SignInModal';

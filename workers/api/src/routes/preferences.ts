@@ -40,6 +40,11 @@ interface PreferencesBody {
   engagementWeight?: number;
   diversityBoost?: boolean;
   allowNonCrypto?: boolean;
+  // ── New quality filters ────────────────────────────────────────
+  showOriginalContent?: boolean;
+  minEngagement?: number;
+  maxPerNiche?: number;
+  interleaveProtocols?: boolean;
   /** Notification preferences — per-protocol type toggles */
   notifications?: NotificationProtocolPrefs;
 }
@@ -54,6 +59,11 @@ interface StoredPreferences {
   engagementWeight: number;
   diversityBoost: boolean;
   allowNonCrypto: boolean;
+  // ── New quality filters ────────────────────────────────────────
+  showOriginalContent: boolean;
+  minEngagement: number;
+  maxPerNiche: number;
+  interleaveProtocols: boolean;
   /** Notification preferences — users can toggle like/repost/reply/follow per protocol */
   notifications: NotificationProtocolPrefs;
   updatedAt: number;
@@ -78,6 +88,10 @@ const DEFAULT_PREFS: StoredPreferences = {
   engagementWeight: 1,
   diversityBoost: true,
   allowNonCrypto: false,
+  showOriginalContent: false,
+  minEngagement: 0,
+  maxPerNiche: 5,
+  interleaveProtocols: true,
   notifications: DEFAULT_NOTIF_PREFS,
   updatedAt: 0,
 };
@@ -104,6 +118,13 @@ export function sanitizePrefs(body: PreferencesBody): StoredPreferences {
     diversityBoost: typeof body.diversityBoost === 'boolean' ? body.diversityBoost : true,
     allowNonCrypto: typeof body.allowNonCrypto === 'boolean' ? body.allowNonCrypto : false,
     hideLowQualityThreshold: clamp(body.hideLowQualityThreshold, 0, 10, 1),
+    // New quality filters
+    showOriginalContent:
+      typeof body.showOriginalContent === 'boolean' ? body.showOriginalContent : false,
+    minEngagement: clamp(body.minEngagement, 0, 1000, 0),
+    maxPerNiche: clamp(body.maxPerNiche, 1, 20, 5),
+    interleaveProtocols:
+      typeof body.interleaveProtocols === 'boolean' ? body.interleaveProtocols : true,
     notifications: sanitizeNotifPrefs(body.notifications),
     updatedAt: Date.now(),
   };

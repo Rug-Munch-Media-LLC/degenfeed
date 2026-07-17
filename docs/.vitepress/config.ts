@@ -32,6 +32,7 @@ export default defineConfig({
         { text: 'Composer', link: '/guide/composer' },
         { text: 'Tipping', link: '/guide/tipping' },
         { text: 'Notifications', link: '/guide/notifications' },
+        { text: 'Self-Hosted Community', link: '/guide/self-host' },
       ],
       '/architecture/': [
         { text: 'Overview', link: '/architecture/' },

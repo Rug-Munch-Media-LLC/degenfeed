@@ -6,6 +6,15 @@ import type {
   UnifiedPost,
 } from '@degenfeed/types';
 
+// ─── Advanced spam detection (continuous scoring) ──────────────────
+export {
+  contentQualityScore,
+  isSpamPost,
+  spamScore,
+  spamTier,
+} from './spam';
+export type { SpamContext, SpamResult, SpamTier } from './spam';
+
 export const NICHE_KEYWORDS: Record<string, string[]> = {
   crypto: ['bitcoin', 'btc', 'crypto', 'cryptocurrency', 'blockchain', 'web3', 'token', 'altcoin'],
   bitcoin: ['bitcoin', 'btc', 'satoshi', 'halving', 'ordinal', 'inscription'],
