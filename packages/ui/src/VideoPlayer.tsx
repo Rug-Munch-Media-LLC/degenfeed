@@ -756,6 +756,8 @@ export const VideoPlayer = memo(function VideoPlayer({
             alt={title ? `Thumbnail for ${title}` : 'Video thumbnail'}
             className="h-full w-full object-cover"
             loading="lazy"
+            decoding="async"
+            fetchpriority={userInitiated ? undefined : 'high'}
           />
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />

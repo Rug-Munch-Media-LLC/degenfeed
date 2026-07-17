@@ -2,7 +2,7 @@
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
-export type ToastKind = 'info' | 'success' | 'error' | 'warning';
+export type ToastKind = 'info' | 'success' | 'error' | 'warning' | 'tip';
 
 export interface Toast {
   id: string;
@@ -60,8 +60,25 @@ function kindClasses(kind: ToastKind): string {
       return 'border-red-500/40 bg-red-500/10 text-red-300';
     case 'warning':
       return 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300';
+    case 'tip':
+      return 'border-amber-400/40 bg-amber-500/10 text-amber-300';
     default:
       return 'border-white/10 bg-[var(--color-muted)] text-gray-200';
+  }
+}
+
+function kindIcon(kind: ToastKind): string {
+  switch (kind) {
+    case 'success':
+      return '✓';
+    case 'error':
+      return '✗';
+    case 'warning':
+      return '⚠';
+    case 'tip':
+      return '⚡';
+    default:
+      return 'ℹ';
   }
 }
 
@@ -90,15 +107,23 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
   return (
     <div
       role={toast.kind === 'error' ? 'alert' : 'status'}
-      className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border px-4 py-3 shadow-2xl backdrop-blur-xl transition-all animate-in fade-in slide-in-from-bottom-2 ${kindClasses(
+      aria-live="polite"
+      className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border px-4 py-3 shadow-2xl backdrop-blur-xl animate-toast-in ${kindClasses(
         toast.kind,
       )}`}
     >
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+        aria-hidden="true"
+        style={{ backgroundColor: 'currentColor', color: 'var(--color-card)' }}
+      >
+        {kindIcon(toast.kind)}
+      </span>
       <span className="text-sm font-medium leading-snug break-words flex-1">{toast.message}</span>
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
-        className="shrink-0 rounded-md p-1 text-current/60 hover:bg-white/5 hover:text-current"
+        className="shrink-0 rounded-md p-1 text-current/60 hover:bg-white/5 hover:text-current transition-colors duration-[var(--duration-fast)]"
         aria-label="Dismiss"
       >
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">

@@ -15,6 +15,7 @@
 
 import { fetchPeerTubeVideo, parsePeerTubeUrl } from '@degenfeed/utils';
 import { memo, useEffect, useState } from 'react';
+import { LiveReactionOverlay } from './LiveReactionOverlay';
 import { PeerTubeTipOverlay } from './PeerTubeTipOverlay';
 import { VideoPlayer } from './VideoPlayer';
 
@@ -185,9 +186,20 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
             views={displayViews}
             likes={displayLikes}
           />
+          {/* 🎥 Live reactions overlay */}
+          {isLive && uuid && (
+            <LiveReactionOverlay
+              roomId={uuid}
+              title={displayTitle}
+              creatorName={displayChannel}
+              viewerCount={displayViews}
+              currentUserName={'Viewer'}
+              isActive={isLive}
+            />
+          )}
           {/* ⚡ Tip overlay during playback */}
           {(showTipOverlay || isLive) && (
-            <div className="absolute bottom-16 right-3 z-30">
+            <div className={`absolute bottom-16 right-3 z-30 ${isLive ? 'bottom-4 right-2' : ''}`}>
               <PeerTubeTipOverlay
                 videoId={uuid ?? ''}
                 creatorName={displayChannel || displayTitle}
@@ -228,8 +240,8 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
           </div>
         </div>
       ) : fetching ? (
-        /* ── Loading skeleton ── */
-        <div className="aspect-video w-full bg-[var(--color-card)] flex items-center justify-center">
+        /* ── Loading skeleton — same dimensions as video player to prevent CLS ── */
+        <div className="aspect-video w-full bg-[var(--color-card)] flex items-center justify-center" style={{ minHeight: '200px' }}>
           <div
             className="h-8 w-8 rounded-full border-2 border-white/10 border-t-degen-400 animate-spin"
             role="status"

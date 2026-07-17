@@ -48,6 +48,7 @@ export function QuickTipButton({
   const [showAmounts, setShowAmounts] = useState(false);
   const [tipping, setTipping] = useState(false);
   const [tipped, setTipped] = useState(false);
+  const [pulsing, setPulsing] = useState(false);
 
   const handleTip = async (amount: number) => {
     setTipping(true);
@@ -60,7 +61,11 @@ export function QuickTipButton({
       });
       if (res.ok) {
         setTipped(true);
-        setTimeout(() => setTipped(false), 2000);
+        setPulsing(true);
+        setTimeout(() => {
+          setTipped(false);
+          setPulsing(false);
+        }, 2000);
       }
     } catch {
       // fail silently
@@ -82,9 +87,9 @@ export function QuickTipButton({
         type="button"
         onClick={() => setShowAmounts((v) => !v)}
         disabled={tipping}
-        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm transition-colors ${
+        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm transition-all duration-[var(--duration-fast)] glow-hover ${
           tipped
-            ? 'bg-green-500/20 text-green-400'
+            ? 'bg-green-500/20 text-green-400 animate-tip-pulse'
             : 'hover:bg-primary/10 text-muted-foreground hover:text-primary'
         }`}
         aria-label={`Tip ${authorAddress || 'author'}`}
@@ -93,7 +98,7 @@ export function QuickTipButton({
           <span className="animate-spin">⚡</span>
         ) : tipped ? (
           <>
-            <span>✓</span>
+            <span className={pulsing ? 'animate-heart-pop inline-block' : ''}>✓</span>
             <span className="text-green-400">Tipped</span>
           </>
         ) : (
@@ -106,7 +111,7 @@ export function QuickTipButton({
       </button>
 
       {showAmounts && (
-        <div className="absolute bottom-full left-0 mb-1 flex flex-col gap-0.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 shadow-lg z-50 min-w-[120px]">
+        <div className="absolute bottom-full left-0 mb-1 flex flex-col gap-0.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 shadow-lg z-50 min-w-[120px] animate-slide-up">
           {/* Currency label */}
           <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 border-b border-[var(--color-border)] mb-1">
             <span
@@ -126,7 +131,7 @@ export function QuickTipButton({
                 key={amount}
                 type="button"
                 onClick={() => handleTip(amount)}
-                className="rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors hover:bg-primary/10 hover:text-primary text-muted-foreground"
+                className="rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-all duration-[var(--duration-fast)] hover:bg-primary/10 hover:text-primary text-muted-foreground press-effect"
               >
                 ${amount}
               </button>
@@ -137,7 +142,7 @@ export function QuickTipButton({
             <button
               type="button"
               onClick={handleOpenModal}
-              className="flex items-center gap-1 rounded-md px-3 py-1 text-xs text-gray-500 hover:text-gray-300 transition-colors border-t border-[var(--color-border)] mt-0.5 pt-1"
+              className="flex items-center gap-1 rounded-md px-3 py-1 text-xs text-gray-500 hover:text-gray-300 transition-colors duration-[var(--duration-fast)] border-t border-[var(--color-border)] mt-0.5 pt-1"
             >
               <span>⚡</span>
               <span>More methods</span>

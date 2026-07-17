@@ -12,12 +12,29 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { type EngageHandler, PostCard } from './PostCard';
+import { CardSkeleton } from './LoadingSkeleton';
 
 export type { UnifiedPost };
 
 export type FeedState = 'loading' | 'loaded' | 'empty' | 'error';
+
+/**
+ * Debounce a function — coalesces rapid-fire calls into a single trailing
+ * invocation. Prevents layout thrashing from scroll/resize handlers.
+ */
+function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const debounced = (...args: unknown[]) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn(...args);
+      timer = null;
+    }, ms);
+  };
+  return debounced as T;
+}
 
 export interface FeedListProps {
   state: FeedState;
@@ -45,29 +62,7 @@ export interface FeedListProps {
   onAdminBan?: (userId: string, protocol: string, handle?: string) => void;
 }
 
-function SkeletonCard() {
-  return (
-    <div className="border-b border-[var(--color-glass-border)] px-4 py-3">
-      <div className="mb-3 flex items-center gap-3">
-        <div className="h-10 w-10 animate-pulse rounded-full bg-[var(--color-muted)]" />
-        <div className="flex-1">
-          <div className="mb-1.5 h-3 w-32 animate-pulse rounded bg-[var(--color-muted)]" />
-          <div className="h-2.5 w-20 animate-pulse rounded bg-[var(--color-muted)]" />
-        </div>
-      </div>
-      <div className="mb-2 space-y-2">
-        <div className="h-3 w-full animate-pulse rounded bg-[var(--color-muted)]" />
-        <div className="h-3 w-11/12 animate-pulse rounded bg-[var(--color-muted)]" />
-        <div className="h-3 w-3/4 animate-pulse rounded bg-[var(--color-muted)]" />
-      </div>
-      <div className="flex gap-4">
-        <div className="h-3 w-12 animate-pulse rounded bg-[var(--color-muted)]" />
-        <div className="h-3 w-12 animate-pulse rounded bg-[var(--color-muted)]" />
-        <div className="h-3 w-12 animate-pulse rounded bg-[var(--color-muted)]" />
-      </div>
-    </div>
-  );
-}
+/* Replaced inline SkeletonCard with shared CardSkeleton from LoadingSkeleton */
 
 function EmptyState({
   protocolLabel,
@@ -164,8 +159,9 @@ export const FeedList = memo(function FeedList({
     };
   }, []);
 
-  const filteredPosts = posts.filter(
-    (p) => !blockedIds.has(p.author.id) && !mutedIds.has(p.author.id),
+  const filteredPosts = useMemo(
+    () => posts.filter((p) => !blockedIds.has(p.author.id) && !mutedIds.has(p.author.id)),
+    [posts, blockedIds, mutedIds],
   );
 
   // Scroll position restore
@@ -176,16 +172,22 @@ export const FeedList = memo(function FeedList({
       const { y, id } = JSON.parse(saved) as { y: number; id: string };
       const el = document.getElementById(`post-${id}`);
       if (el) {
-        el.scrollIntoView();
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
-      window.scrollTo(0, y);
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
   }, [state, filteredPosts.length]);
 
-  // Save scroll position on post click
+  // Save scroll position on post click (debounced to avoid layout thrash)
+  const saveScrollPos = useRef(
+    debounce((y: number, id: string) => {
+      sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ y, id }));
+    }, 150),
+  ).current;
+
   const handlePostClick = (postId: string) => {
-    sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ y: window.scrollY, id: postId }));
+    saveScrollPos(window.scrollY, postId);
     onPostClick?.(postId);
   };
 
@@ -246,13 +248,7 @@ export const FeedList = memo(function FeedList({
   }, [hasMore, onLoadMore]);
 
   if (state === 'loading') {
-    return (
-      <output className="block" aria-label="Loading feed">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <SkeletonCard key={i} />
-        ))}
-      </output>
-    );
+    return <CardSkeleton count={5} avatar lines={3} />;
   }
 
   if (state === 'error') {
@@ -269,21 +265,32 @@ export const FeedList = memo(function FeedList({
       role="feed"
       aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
     >
-      {filteredPosts.map((post) => (
-        <div key={post.id} style={{ contentVisibility: 'auto', containIntrinsicSize: '0 200px' }}>
-          <PostCard
-            post={post}
-            onClick={() => handlePostClick(post.id)}
-            onTip={onTip}
-            onEngage={onEngage}
-            onReport={onReport}
-            onCrossReplyOpen={onCrossReplyOpen}
-            isAdmin={isAdmin}
-            onAdminRemove={onAdminRemove}
-            onAdminBan={onAdminBan}
-          />
-        </div>
-      ))}
+      <div className="stagger-enter" style={{ '--stagger-delay': '50ms' } as React.CSSProperties}>
+        {filteredPosts.map((post, i) => (
+          <div
+            key={post.id}
+            style={
+              {
+                contentVisibility: 'auto',
+                containIntrinsicSize: '0 200px',
+                '--stagger-i': i,
+              } as React.CSSProperties
+            }
+          >
+            <PostCard
+              post={post}
+              onClick={() => handlePostClick(post.id)}
+              onTip={onTip}
+              onEngage={onEngage}
+              onReport={onReport}
+              onCrossReplyOpen={onCrossReplyOpen}
+              isAdmin={isAdmin}
+              onAdminRemove={onAdminRemove}
+              onAdminBan={onAdminBan}
+            />
+          </div>
+        ))}
+      </div>
       {hasMore && (
         <div
           ref={sentinelRef}

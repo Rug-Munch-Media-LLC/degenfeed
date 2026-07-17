@@ -116,6 +116,8 @@ const VideoCard = memo(function VideoCard({
               width={480}
               height={360}
               className="aspect-video w-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
             {/* Play icon overlay */}
             <div className="absolute inset-0 flex items-center justify-center">
