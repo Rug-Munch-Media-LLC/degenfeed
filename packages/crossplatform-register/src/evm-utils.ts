@@ -91,7 +91,7 @@ export function signTransaction(tx: TransactionRequest, privateKeyHex: string): 
     toRlp(tx.to),
     toRlp(tx.value),
     toRlp(tx.data),
-    toRlp(chainId),
+    toRlp(_finalV),
     toRlp(toBigIntSig(finalSig.r)),
     toRlp(toBigIntSig(finalSig.s)),
   ];
