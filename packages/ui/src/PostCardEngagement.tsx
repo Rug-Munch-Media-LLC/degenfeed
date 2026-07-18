@@ -1,3 +1,5 @@
+'use client';
+
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { formatCount } from '@degenfeed/utils';
 import { memo, useCallback, useState } from 'react';

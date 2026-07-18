@@ -1,3 +1,5 @@
+'use client';
+
 // @ts-nocheck — React.Component method overrides conflict with strict noImplicitOverride
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
