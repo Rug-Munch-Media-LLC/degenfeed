@@ -462,6 +462,46 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://importai.substack.com/feed',                     { tier: 2, weight: 0.9, category: 'newsletter', tags: ['ai', 'research', 'ml'], authority: 2, isPaid: false, schedule: 'weekly' }),
 
   // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — Crypto Research (weight: 0.8, tier: 2)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://theblockresearch.substack.com/feed',             { tier: 2, weight: 0.8, category: 'newsletter', tags: ['crypto', 'research', 'onchain'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://reflexivityresearch.substack.com/feed',          { tier: 2, weight: 0.8, category: 'newsletter', tags: ['crypto', 'research', 'macro'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://caneisland.substack.com/feed',                   { tier: 2, weight: 0.8, category: 'newsletter', tags: ['crypto', 'research', 'bitcoin'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://ecoinometrics.substack.com/feed',                { tier: 2, weight: 0.8, category: 'newsletter', tags: ['bitcoin', 'research', 'macro', 'onchain'], authority: 2, isPaid: false, schedule: 'weekly' }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — DeFi Alpha (weight: 0.8, tier: 2)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://ournetwork.substack.com/feed',                   { tier: 2, weight: 0.8, category: 'newsletter', tags: ['defi', 'onchain', 'research'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://blockcrunch.substack.com/feed',                  { tier: 2, weight: 0.8, category: 'newsletter', tags: ['defi', 'crypto', 'research'], authority: 2, isPaid: false, schedule: 'weekly' }),
+  cfg('https://defidad.substack.com/feed',                      { tier: 2, weight: 0.8, category: 'newsletter', tags: ['defi', 'yield', 'crypto'], authority: 2, isPaid: false, schedule: 'weekly' }),
+  cfg('https://route2fi.substack.com/feed',                     { tier: 2, weight: 0.8, category: 'newsletter', tags: ['defi', 'finance', 'crypto'], authority: 2, isPaid: false, schedule: 'weekly' }),
+  cfg('https://ignasdefi.substack.com/feed',                    { tier: 2, weight: 0.8, category: 'newsletter', tags: ['defi', 'research', 'crypto'], authority: 2, isPaid: true, schedule: 'weekly' }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — Bitcoin Focus (weight: 0.7, tier: 3)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://bitcoinmagazinepro.substack.com/feed',           { tier: 3, weight: 0.7, category: 'newsletter', tags: ['bitcoin', 'research', 'mining'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://satoshisjournal.substack.com/feed',              { tier: 3, weight: 0.7, category: 'newsletter', tags: ['bitcoin', 'crypto', 'culture'], authority: 2, isPaid: false, schedule: 'weekly' }),
+  cfg('https://thebitcoinlayer.substack.com/feed',              { tier: 3, weight: 0.7, category: 'newsletter', tags: ['bitcoin', 'macro', 'economy'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://nikbhatia.substack.com/feed',                    { tier: 3, weight: 0.7, category: 'newsletter', tags: ['bitcoin', 'macro', 'finance'], authority: 2, isPaid: true, schedule: 'weekly' }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — Trading / Markets (weight: 0.7, tier: 3)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://macroscope.substack.com/feed',                   { tier: 3, weight: 0.7, category: 'newsletter', tags: ['macro', 'markets', 'trading'], authority: 2, isPaid: true, schedule: 'daily' }),
+  cfg('https://thetranscript.substack.com/feed',                { tier: 3, weight: 0.7, category: 'newsletter', tags: ['markets', 'trading', 'crypto'], authority: 2, isPaid: true, schedule: 'daily' }),
+  cfg('https://execsum.substack.com/feed',                      { tier: 3, weight: 0.7, category: 'newsletter', tags: ['markets', 'crypto', 'derivatives'], authority: 2, isPaid: true, schedule: 'daily' }),
+  cfg('https://themarketear.substack.com/feed',                 { tier: 3, weight: 0.7, category: 'newsletter', tags: ['markets', 'trading', 'macro', 'sentiment'], authority: 2, isPaid: false, schedule: 'daily' }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — Web3 / Builders (weight: 0.7, tier: 3)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://developerdao.substack.com/feed',                 { tier: 3, weight: 0.7, category: 'newsletter', tags: ['web3', 'dev', 'dao'], authority: 2, isPaid: false, schedule: 'weekly' }),
+  cfg('https://a16zcrypto.substack.com/feed',                   { tier: 3, weight: 0.7, category: 'newsletter', tags: ['web3', 'crypto', 'research', 'vc'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://lijin.substack.com/feed',                        { tier: 3, weight: 0.7, category: 'newsletter', tags: ['web3', 'creator', 'crypto'], authority: 2, isPaid: true, schedule: 'weekly' }),
+
+  // ═══════════════════════════════════════════════════════════════════
   // NEWSLETTERS — Web3 Publishing (Paragraph + Mirror) (weight: 0.8, tier: 3)
   // ═══════════════════════════════════════════════════════════════════
   cfg('https://dev.mirror.xyz/feed',                            { tier: 3, weight: 0.8, category: 'newsletter', tags: ['web3', 'dev', 'mirror'], authority: 2, isPaid: false, schedule: 'irregular' }),
@@ -497,6 +537,65 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://www.sciencedaily.com/rss/all.xml',               { tier: 3, weight: 0.7, category: 'science', tags: ['science', 'research', 'discovery'], authority: 2 }),
   cfg('https://www.newscientist.com/feed',                      { tier: 3, weight: 0.7, category: 'science', tags: ['science', 'tech', 'innovation'], authority: 2 }),
   cfg('https://phys.org/rss-feed',                              { tier: 3, weight: 0.7, category: 'science', tags: ['science', 'physics', 'space'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Crypto News — Tier 2
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://nulltx.com/feed',                                { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'news'], authority: 1 }),
+  cfg('https://cryptonews.com/news/feed',                       { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'news'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DeFi News
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://defirate.com/feed/',                             { tier: 3, weight: 0.8, category: 'markets', tags: ['defi', 'prediction-markets', 'regulation'], authority: 2 }),
+  cfg('https://governance.aave.com/posts.rss',                  { tier: 4, weight: 0.6, category: 'development', tags: ['defi', 'aave', 'governance'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Regulation / Policy
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://defieducationfund.org/feed/',                    { tier: 3, weight: 0.8, category: 'policy', tags: ['defi', 'regulation', 'policy'], authority: 2 }),
+  cfg('https://www.cryptoforinnovation.org/feed/',             { tier: 4, weight: 0.7, category: 'policy', tags: ['crypto', 'policy', 'innovation'], authority: 1 }),
+  cfg('https://www.theblockchainassociation.org/feed/',         { tier: 4, weight: 0.7, category: 'policy', tags: ['blockchain', 'policy', 'regulation'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Mining / Energy
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://hashrateindex.com/blog/feed/',                   { tier: 4, weight: 0.7, category: 'markets', tags: ['bitcoin', 'mining', 'hashrate'], authority: 1 }),
+  cfg('https://compassmining.io/education/rss/',                { tier: 5, weight: 0.6, category: 'tech', tags: ['bitcoin', 'mining', 'energy'], authority: 1 }),
+  cfg('https://braiins.com/blog/feed',                          { tier: 5, weight: 0.6, category: 'tech', tags: ['bitcoin', 'mining', 'protocol'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Data / Analytics
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://blog.intotheblock.com/feed/',                    { tier: 3, weight: 0.8, category: 'analysis', tags: ['onchain', 'analytics', 'crypto'], authority: 2 }),
+  cfg('https://cryptoquant.com/feed',                           { tier: 3, weight: 0.8, category: 'analysis', tags: ['onchain', 'bitcoin', 'analytics'], authority: 2 }),
+  cfg('https://santiment.net/feed/',                            { tier: 4, weight: 0.7, category: 'analysis', tags: ['onchain', 'sentiment', 'analytics'], authority: 1 }),
+  cfg('https://lookintobitcoin.com/feed/',                      { tier: 4, weight: 0.7, category: 'analysis', tags: ['bitcoin', 'onchain', 'metrics'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Privacy / Security
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://blog.openzeppelin.com/feed',                     { tier: 3, weight: 0.8, category: 'security', tags: ['security', 'audit', 'smart-contracts'], authority: 2 }),
+  cfg('https://www.certik.com/blog/feed',                       { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit', 'blockchain'], authority: 1 }),
+  cfg('https://www.slowmist.com/feed/',                         { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit', 'blockchain'], authority: 1 }),
+  cfg('https://peckshield.medium.com/feed',                     { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit', 'exploits'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // VC / Investment
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://1confirmation.com/feed',                         { tier: 3, weight: 0.8, category: 'research', tags: ['crypto', 'vc', 'investment'], authority: 2 }),
+  cfg('https://placeholder.vc/feed',                            { tier: 4, weight: 0.7, category: 'research', tags: ['crypto', 'vc', 'investment'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // On-Chain Data
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://flipsidecrypto.xyz/blog/feed',                   { tier: 4, weight: 0.7, category: 'analysis', tags: ['onchain', 'analytics', 'data'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Layer 1 & 2 News
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://aptosfoundation.org/rss',                        { tier: 4, weight: 0.7, category: 'development', tags: ['aptos', 'layer1', 'move'], authority: 1 }),
+  cfg('https://blog.sui.io/feed',                               { tier: 4, weight: 0.7, category: 'development', tags: ['sui', 'layer1', 'move'], authority: 1 }),
 ];
 
 export interface RssProviderOptions {
@@ -683,8 +782,13 @@ export function getFeedCategories(): Record<string, number> {
 /** Returns all newsletter feeds grouped by type */
 export function getNewsletterFeeds(): {
   topCrypto: RssFeedConfig[];
+  cryptoResearch: RssFeedConfig[];
   defiProtocol: RssFeedConfig[];
+  defiAlpha: RssFeedConfig[];
+  bitcoin: RssFeedConfig[];
+  tradingMarkets: RssFeedConfig[];
   aiCrypto: RssFeedConfig[];
+  web3Builders: RssFeedConfig[];
   web3Publishing: RssFeedConfig[];
   medium: RssFeedConfig[];
   techStartup: RssFeedConfig[];
@@ -692,9 +796,14 @@ export function getNewsletterFeeds(): {
   const all = DEFAULT_CRYPTO_FEEDS.filter((f) => f.category === 'newsletter');
   return {
     topCrypto: all.filter((f) => f.tier === 1),
-    defiProtocol: all.filter((f) => f.tags.includes('defi') && f.tier <= 2),
+    cryptoResearch: all.filter((f) => f.tags.includes('research') && f.tier === 2 && !f.tags.includes('ai')),
+    defiProtocol: all.filter((f) => f.tags.includes('defi') && f.tier <= 2 && !f.url.includes('substack')),
+    defiAlpha: all.filter((f) => (f.tags.includes('defi') || f.tags.includes('yield')) && f.tier === 2 && f.url.includes('substack')),
+    bitcoin: all.filter((f) => f.tags.includes('bitcoin') && f.tier === 3),
+    tradingMarkets: all.filter((f) => f.tags.includes('markets') || f.tags.includes('trading')),
     aiCrypto: all.filter((f) => f.tags.includes('ai')),
-    web3Publishing: all.filter((f) => f.tags.includes('web3') || f.tags.includes('mirror') || f.tags.includes('paragraph')),
+    web3Builders: all.filter((f) => f.tags.includes('web3') && f.tier === 3),
+    web3Publishing: all.filter((f) => f.tags.includes('mirror') || f.tags.includes('paragraph')),
     medium: all.filter((f) => f.url.includes('medium.com')),
     techStartup: all.filter((f) => f.tier >= 5),
   };

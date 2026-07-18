@@ -2,7 +2,8 @@
  * @degenfeed/ui — EmptyState
  *
  * Reusable empty-state view with icon, title, description, and optional CTA.
- * Wraps content with `role="status"` for a11y.
+ * Premium visual design with glass-morphism card, gradient icon container,
+ * and refined typography. Wraps content with `role="status"` for a11y.
  */
 
 import { type FC, memo, type ReactNode } from 'react';
@@ -36,7 +37,7 @@ export const EmptyState: FC<EmptyStateProps> = memo(function EmptyState({
   return (
     <div
       className={`flex flex-col items-center justify-center text-center ${
-        compact ? 'px-4 py-8' : 'px-4 py-16 sm:py-20'
+        compact ? 'px-4 py-8' : 'px-6 py-16 sm:py-20'
       } ${compact ? '' : 'frosted-card mx-4 my-6'}`}
       role="status"
     >
@@ -45,18 +46,32 @@ export const EmptyState: FC<EmptyStateProps> = memo(function EmptyState({
           {iconElement}
         </div>
       ) : icon ? (
-        <div className="empty-state-icon" aria-hidden="true">
+        <div
+          className="empty-state-icon"
+          aria-hidden="true"
+          style={{
+            background: 'linear-gradient(135deg, var(--color-accent-glow), rgba(139, 92, 246, 0.12))',
+            boxShadow: '0 0 30px color-mix(in srgb, var(--color-accent) 10%, transparent)',
+          }}
+        >
           <span className="text-2xl">{icon}</span>
         </div>
       ) : null}
-      <h3 className="mb-1.5 text-base font-semibold text-[var(--color-fg)]">{title}</h3>
+      <h3
+        className="mb-2 text-base font-bold"
+        style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.02em' }}
+      >
+        {title}
+      </h3>
       {description && (
-        <p className="mx-auto mb-6 max-w-xs text-sm text-[var(--color-muted)] leading-relaxed">{description}</p>
+        <p className="mx-auto mb-6 max-w-xs text-sm text-[var(--color-muted)] leading-relaxed">
+          {description}
+        </p>
       )}
-      {action && <div className="flex flex-wrap items-center justify-center gap-3">{action}</div>}
-      {secondaryAction && (
-        <div className="mt-3">{secondaryAction}</div>
+      {action && (
+        <div className="flex flex-wrap items-center justify-center gap-3">{action}</div>
       )}
+      {secondaryAction && <div className="mt-3">{secondaryAction}</div>}
     </div>
   );
 });

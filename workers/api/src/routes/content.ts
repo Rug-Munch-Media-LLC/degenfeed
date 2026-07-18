@@ -125,8 +125,13 @@ export async function handleContentResolve(
   env: Env,
 ): Promise<Response> {
   const url = new URL(request.url);
-  const rawUri = url.pathname.replace(/^\/api\/content\//, '');
+  const rawUri = url.pathname.replace(/^\/(api|v1)\/content\//, '');
   const uri = decodeURIComponent(rawUri);
+
+  // ── df://profile/ resolution ──
+  if (uri.startsWith('df://profile/')) {
+    return handleProfileResolve(uri, env);
+  }
 
   // Validate and decode the df:// URI
   const decoded = decodeContentUri(uri);
@@ -156,4 +161,65 @@ export async function handleContentResolve(
   }
 
   return jsonResponse(response);
+}
+
+// ─── df://profile/ resolution ─────────────────────────────────────
+
+import { identityKey, type CrossProtocolIdentity } from '@degenfeed/utils';
+
+async function handleProfileResolve(uri: string, env: Env): Promise<Response> {
+  const address = uri.replace('df://profile/', '').trim().toLowerCase();
+  if (!address || !/^(0x[a-f0-9]{40}|[1-9a-hj-z]{32,44})$/.test(address)) {
+    return jsonResponse({ error: `Invalid profile address: ${address}` }, 400);
+  }
+
+  const key = identityKey(address);
+  try {
+    const raw = await env.IDENTITIES?.get(key);
+    if (!raw) {
+      return jsonResponse({ data: null, uri, message: 'Profile not found. Link your wallet in Settings to create one.' }, 200);
+    }
+    const identity = JSON.parse(raw) as CrossProtocolIdentity;
+
+    // Build the unified profile for display
+    const { PROTOCOL_ID_REGISTRY } = await import('@degenfeed/utils');
+    const handles: Array<{
+      protocol: string;
+      handle: string;
+      icon: string;
+      color: string;
+      verified: boolean;
+    }> = [];
+
+    for (const [protocol, info] of Object.entries(PROTOCOL_ID_REGISTRY)) {
+      const ident = (identity as unknown as Record<string, unknown>)[protocol];
+      if (!ident || typeof ident !== 'object') continue;
+      const p = ident as Record<string, unknown>;
+      const handle = (p.handle || p.username || p.npub || p.did || p.id || '') as string;
+      if (!handle) continue;
+      handles.push({
+        protocol,
+        handle,
+        icon: info.icon,
+        color: info.color,
+        verified: (p.verified as boolean) || false,
+      });
+    }
+
+    return jsonResponse({
+      data: {
+        walletAddress: identity.walletAddress,
+        displayName: handles.map((h) => h.handle).join(' / '),
+        handles,
+        totalFollowerCount: 0,
+        networkCount: handles.length,
+        linkedAt: identity.linkedAt,
+        lastVerified: identity.lastVerified,
+        dfUri: uri,
+      },
+      uri,
+    });
+  } catch (err) {
+    return jsonResponse({ error: `Failed to resolve profile: ${String(err)}` }, 500);
+  }
 }

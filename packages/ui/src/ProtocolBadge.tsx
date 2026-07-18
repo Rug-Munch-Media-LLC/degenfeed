@@ -3,15 +3,17 @@
  *
  * Colored badge showing which protocol a post comes from.
  * Design: rounded-pill, brand color fill, protocol icon + name.
+ * Uses CSS custom properties for protocol colors so they're theme-aware.
  */
 
 export const PROTOCOL_COLORS: Record<string, string> = {
-  nostr: '#8e30eb',
+  nostr: '#8b5cf6',
   farcaster: '#8a63d2',
   lens: '#abfe2c',
   bluesky: '#1185fe',
   threads: '#888888',
   mastodon: '#6364ff',
+  reddit: '#ff4500',
   lemmy: '#00b868',
   activitypub: '#6364ff',
   rss: '#ffa500',
@@ -24,6 +26,7 @@ export const PROTOCOL_LABELS: Record<string, string> = {
   bluesky: 'Bluesky',
   threads: 'Threads',
   mastodon: 'Mastodon',
+  reddit: 'Reddit',
   lemmy: 'Lemmy',
   activitypub: 'Mastodon',
   rss: 'RSS',
@@ -36,6 +39,7 @@ export const PROTOCOL_ICONS: Record<string, string> = {
   bluesky: '☁',
   threads: '+',
   mastodon: 'M',
+  reddit: 'R',
   lemmy: '🍋',
   activitypub: 'M',
   rss: 'A',
@@ -63,12 +67,12 @@ export function ProtocolBadge({ protocol, size = 'sm', showLabel = true }: Proto
   const color = PROTOCOL_COLORS[protocol] ?? '#666';
   const label = PROTOCOL_LABELS[protocol] ?? protocol;
   const icon = PROTOCOL_ICONS[protocol] ?? '?';
-  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
+  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-3 py-1 text-sm';
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full font-medium ${sizeClass}`}
-      style={{ backgroundColor: `${color}22`, color }}
+      className={`inline-flex items-center gap-1 rounded-full font-semibold tracking-wide ${sizeClass}`}
+      style={{ backgroundColor: `${color}1a`, color }}
       title={label}
     >
       <span className="text-[0.7em]">{icon}</span>

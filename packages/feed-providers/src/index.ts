@@ -3,7 +3,7 @@ export { CURATED_FARCASTER_FIDS, DEFAULT_HUB_URL, FarcasterProvider } from './pr
 export {
   type DiscoverCommunitiesOptions,
   discoverCommunities,
-  FederatedCommunity,
+  type FederatedCommunity,
   LEMMY_INSTANCES,
   LEMMY_NICHE_LABELS,
   LemmyProvider,

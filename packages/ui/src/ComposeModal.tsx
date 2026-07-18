@@ -194,7 +194,15 @@ export function ComposeModal({
   }, [tokenGate]);
 
   // Cross-protocol reply state
-  const [replyProtocol, setReplyProtocol] = useState<string>(replyContext?.parentProtocol ?? '');
+  // Cross-protocol reply: remember last used reply protocol per parent protocol
+  const [replyProtocol, setReplyProtocol] = useState<string>(() => {
+    if (!replyContext) return '';
+    try {
+      const stored = localStorage.getItem(`cross-reply-pref:${replyContext.parentProtocol}`);
+      if (stored && BRIDGE_REPLY_PROTOCOLS.has(stored)) return stored;
+    } catch { /* ignore */ }
+    return replyContext.parentProtocol;
+  });
   const isCrossProtocolReply = !!replyContext && replyContext.parentProtocol !== replyProtocol;
   const isReplyMode = !!replyContext;
 
@@ -875,7 +883,14 @@ export function ComposeModal({
                   <button
                     key={protocol}
                     type="button"
-                    onClick={() => setReplyProtocol(protocol)}
+                    onClick={() => {
+                      setReplyProtocol(protocol);
+                      try {
+                        if (replyContext) {
+                          localStorage.setItem(`cross-reply-pref:${replyContext.parentProtocol}`, protocol);
+                        }
+                      } catch { /* ignore */ }
+                    }}
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
                       isSelected
                         ? 'border-current opacity-100'

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Sora, JetBrains_Mono } from 'next/font/google';
 import { cookies } from 'next/headers';
 import Script from 'next/script';
 import './globals.css';
@@ -12,7 +12,9 @@ import { SolanaProvider } from '../components/SolanaProvider';
 import { ToastProvider } from '../components/Toast';
 import { Web3Provider } from '../components/Web3Provider';
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' });
+const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-body' });
+const sora = Sora({ subsets: ['latin'], display: 'swap', variable: '--font-heading' });
+const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], display: 'swap', variable: '--font-mono' });
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
@@ -73,7 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const theme = cookieStore.get('df_theme')?.value || 'dark';
 
   return (
-    <html lang="en" className={`${theme} ${inter.className}`} suppressHydrationWarning>
+    <html lang="en" className={`${theme} ${inter.variable} ${sora.variable} ${jetbrainsMono.variable}`} style={{ fontFamily: 'var(--font-body)' }} suppressHydrationWarning>
       <body className="page-transition-enter">
         {/* ⚡ SSR-safe theme: sync localStorage before paint to prevent flash */}
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: inline script reads localStorage to prevent theme + density flash */}

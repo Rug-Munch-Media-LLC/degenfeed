@@ -56,6 +56,17 @@ export const CRYPTO_SUBREDDIT_CONFIGS: SubredditConfig[] = [
   { name: 'CryptoTechnology', weight: 0.7, category: 'crypto' },
   { name: 'cryptocurrencymemes', weight: 0.5, category: 'crypto' },
   { name: 'cryptomoonshots', weight: 0.3, category: 'crypto' },
+  // ── Crypto General – sub-categories ──────────────────────────────
+  { name: 'CryptoMemes', weight: 0.4, category: 'crypto' },
+  { name: 'CryptoShitposting', weight: 0.3, category: 'crypto' },
+  { name: 'BitcoinBeginners', weight: 0.5, category: 'crypto' },
+  // Regional crypto communities
+  { name: 'CryptoIndia', weight: 0.4, category: 'crypto' },
+  { name: 'CryptoUK', weight: 0.4, category: 'crypto' },
+  { name: 'CryptoAus', weight: 0.4, category: 'crypto' },
+  { name: 'BitcoinCA', weight: 0.4, category: 'crypto' },
+  { name: 'CryptoEurope', weight: 0.4, category: 'crypto' },
+  { name: 'latinocrypto', weight: 0.4, category: 'crypto' },
   // Legacy subs folded in
   { name: 'btc', weight: 0.7, category: 'crypto' },
   { name: 'Crypto_General', weight: 0.6, category: 'crypto' },
@@ -72,6 +83,13 @@ export const CRYPTO_SUBREDDIT_CONFIGS: SubredditConfig[] = [
   { name: 'curve', weight: 0.4, category: 'defi' },
   { name: 'defi_bluechips', weight: 0.5, category: 'defi' },
   { name: 'defi_yield', weight: 0.5, category: 'defi' },
+  // ── DeFi Deep – sub-categories ──────────────────────────────────
+  { name: 'liquiditymining', weight: 0.4, category: 'defi' },
+  { name: 'defi_hacks', weight: 0.6, category: 'defi' },
+  { name: 'defi_trading', weight: 0.5, category: 'defi' },
+  { name: 'defi_education', weight: 0.5, category: 'defi' },
+  { name: 'defi_news', weight: 0.5, category: 'defi' },
+  { name: 'layer2', weight: 0.6, category: 'defi' },
 
   // ── Chain-specific ───────────────────────────────────────────────
   { name: 'solana', weight: 0.8, category: 'chain' },
@@ -82,6 +100,15 @@ export const CRYPTO_SUBREDDIT_CONFIGS: SubredditConfig[] = [
   { name: 'ethtrader', weight: 0.5, category: 'chain' },
   { name: 'polygon', weight: 0.5, category: 'chain' },
   { name: 'optimism', weight: 0.5, category: 'chain' },
+  // ── Chain-specific – emerging L1s/L2s ───────────────────────────
+  { name: 'Hedera', weight: 0.5, category: 'chain' },
+  { name: 'Algorand', weight: 0.5, category: 'chain' },
+  { name: 'Tezos', weight: 0.5, category: 'chain' },
+  { name: 'NearProtocol', weight: 0.5, category: 'chain' },
+  { name: 'Aptos', weight: 0.4, category: 'chain' },
+  { name: 'Sui', weight: 0.4, category: 'chain' },
+  { name: 'Arbitrum', weight: 0.6, category: 'chain' },
+  { name: 'zkSync', weight: 0.5, category: 'chain' },
 
   // ── NFT / Gaming ─────────────────────────────────────────────────
   { name: 'NFT', weight: 0.6, category: 'nft' },
@@ -90,6 +117,15 @@ export const CRYPTO_SUBREDDIT_CONFIGS: SubredditConfig[] = [
   { name: 'NFTMarketplace', weight: 0.5, category: 'nft' },
   { name: 'ethgaming', weight: 0.5, category: 'nft' },
   { name: 'playtoearn', weight: 0.4, category: 'nft' },
+  // ── NFT / Gaming – sub-categories ───────────────────────────────
+  { name: 'NFTsMarketplace', weight: 0.5, category: 'nft' },
+  { name: 'NFTCollect', weight: 0.4, category: 'nft' },
+  { name: 'NFTArt', weight: 0.5, category: 'nft' },
+  { name: 'NFTGaming', weight: 0.5, category: 'nft' },
+  { name: 'NFTTickets', weight: 0.3, category: 'nft' },
+  { name: 'NFTMusic', weight: 0.4, category: 'nft' },
+  { name: 'NFTPhotography', weight: 0.3, category: 'nft' },
+  { name: 'CollectibleAvatars', weight: 0.4, category: 'nft' },
 
   // ── Trading / Analysis ───────────────────────────────────────────
   { name: 'CryptoCurrencyTrading', weight: 0.6, category: 'trading' },
@@ -97,12 +133,28 @@ export const CRYPTO_SUBREDDIT_CONFIGS: SubredditConfig[] = [
   { name: 'CryptoCurrencies', weight: 0.7, category: 'trading' },
   { name: 'cryptotrader', weight: 0.4, category: 'trading' },
   { name: 'solanatrader', weight: 0.4, category: 'trading' },
+  // ── Trading / TA – sub-categories ───────────────────────────────
+  { name: 'Daytrading', weight: 0.6, category: 'trading' },
+  { name: 'swingtrading', weight: 0.5, category: 'trading' },
+  { name: 'algotrading', weight: 0.6, category: 'trading' },
+  { name: 'forex', weight: 0.4, category: 'trading' },
+  { name: 'OptionsTrading', weight: 0.5, category: 'trading' },
+  { name: 'WallStreetBetsCrypto', weight: 0.4, category: 'trading' },
+  { name: 'Trading', weight: 0.6, category: 'trading' },
 
   // ── Web3 ─────────────────────────────────────────────────────────
   { name: 'web3', weight: 0.7, category: 'web3' },
   { name: 'web3dev', weight: 0.5, category: 'web3' },
   { name: 'Metamask', weight: 0.5, category: 'web3' },
   { name: 'ledgerwallet', weight: 0.4, category: 'web3' },
+  // ── Web3 / Tech – sub-categories ────────────────────────────────
+  { name: 'solidity', weight: 0.6, category: 'web3' },
+  { name: 'ethdevjobs', weight: 0.5, category: 'web3' },
+  { name: 'dapps', weight: 0.5, category: 'web3' },
+  { name: 'smartcontracts', weight: 0.6, category: 'web3' },
+  { name: 'cryptodevs', weight: 0.6, category: 'web3' },
+  { name: 'BlockchainStartups', weight: 0.5, category: 'web3' },
+  { name: 'TokenEngineering', weight: 0.4, category: 'web3' },
 ];
 
 /**
