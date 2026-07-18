@@ -34,7 +34,7 @@ function mockResponse(
 describe('feed providers', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    global.fetch = vi.fn() as unknown as typeof fetch;
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
   });
 
   describe('BlueskyProvider', () => {
@@ -60,7 +60,7 @@ describe('feed providers', () => {
           }),
         }),
       );
-      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
         // searchPosts hits primary URL — fail it
         if (url.includes('searchPosts')) return primary();
         // fetchAuthorFeed also hits primary URL — fail it too
@@ -84,7 +84,7 @@ describe('feed providers', () => {
 
   describe('FarcasterProvider', () => {
     it('returns empty when all hubs fail', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockResponse({ ok: false, status: 503, statusText: 'Unavailable' }),
       );
       const provider = new FarcasterProvider({
@@ -99,7 +99,7 @@ describe('feed providers', () => {
 
   describe('LensProvider', () => {
     it('returns empty notice when all endpoints fail', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockResponse({ ok: false, status: 500, statusText: 'Error' }),
       );
       const provider = new LensProvider();
@@ -111,7 +111,7 @@ describe('feed providers', () => {
 
   describe('MastodonProvider', () => {
     it('falls back to public instance when primary fails', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
         if (url.includes('social.degenfeed.xyz')) {
           return Promise.resolve(
             mockResponse({ ok: false, status: 503, statusText: 'Unavailable' }),
@@ -164,7 +164,7 @@ describe('feed providers', () => {
 
   describe('NostrProvider', () => {
     it('falls back to HTTP when WebSocket fails', async () => {
-      global.WebSocket = vi.fn().mockImplementation(() => ({
+      globalThis.WebSocket = vi.fn().mockImplementation(() => ({
         close: vi.fn(),
         send: vi.fn(),
         set onopen(_: (() => void) | null) {},
@@ -173,7 +173,7 @@ describe('feed providers', () => {
         set onclose(_: (() => void) | null) {},
       })) as unknown as typeof WebSocket;
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockResponse({
           json: async () => ({
             events: [
@@ -200,7 +200,7 @@ describe('feed providers', () => {
 
   describe('RedditProvider', () => {
     it('parses RSS from www.reddit.com', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockResponse({
           text: async () =>
             `<?xml version="1.0"?><rss><channel><title>Bitcoin</title><item><title>Bitcoin hits new ATH</title><link>https://www.reddit.com/r/Bitcoin/comments/1/x</link><description>Bitcoin crypto news</description><pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate></item></channel></rss>`,
@@ -214,7 +214,7 @@ describe('feed providers', () => {
     });
 
     it('returns empty when all strategies fail', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockResponse({ ok: false, status: 403, statusText: 'Forbidden' }),
       );
       const provider = new RedditProvider({ subreddits: ['Bitcoin'] });
@@ -226,7 +226,7 @@ describe('feed providers', () => {
 
   describe('RssProvider', () => {
     it('parses an RSS feed', async () => {
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockResponse({
           text: async () =>
             `<?xml version="1.0"?><rss><channel><title>Blog</title><link>https://example.com</link><item><title>Post</title><link>https://example.com/1</link><description>Hello crypto</description><pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate></item></channel></rss>`,
@@ -243,7 +243,7 @@ describe('feed providers', () => {
     it('scrapes JSON-LD from public Threads profile pages', async () => {
       const html =
         '<html><head><script type="application/ld+json">{"@type":"ItemList","mainEntity":{"itemListElement":[{"name":"Threads post about crypto","url":"https://www.threads.net/@mosseri/post/abc123","datePublished":"2024-01-01T00:00:00Z","author":{"name":"Adam Mosseri","identifier":"mosseri","image":""},"interactionStatistic":[{"@type":"InteractionCounter","name":"Like","userInteractionCount":42}]}]}}</script></head></html>';
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
         mockResponse({ text: async () => html }),
       );
       const provider = new ThreadsProvider({ curatedHandles: ['mosseri'] });

@@ -253,7 +253,6 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
         <a
           href={url}
           target="_blank" rel="noopener noreferrer"
-          rel="noopener noreferrer"
           className="flex aspect-video w-full items-center justify-center bg-[var(--color-muted)] text-gray-500 hover:text-degen-400 transition-colors"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
@@ -354,7 +353,6 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
       <a
         href={url}
         target="_blank" rel="noopener noreferrer"
-        rel="noopener noreferrer"
         className="flex items-center justify-center border-t border-[var(--color-border)] px-4 py-2 text-xs text-degen-500 transition-colors hover:bg-[var(--color-muted)] hover:text-degen-400"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}

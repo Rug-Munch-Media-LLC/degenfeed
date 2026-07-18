@@ -252,12 +252,14 @@ export function aggregateStats(
 
   const perPlatform: Record<string, { discovered: number; approved: number; pending: number }> = {};
   for (const s of allSources) {
-    if (!perPlatform[s.platform]) {
-      perPlatform[s.platform] = { discovered: 0, approved: 0, pending: 0 };
+    let entry = perPlatform[s.platform];
+    if (!entry) {
+      entry = { discovered: 0, approved: 0, pending: 0 };
+      perPlatform[s.platform] = entry;
     }
-    perPlatform[s.platform].discovered++;
-    if (s.status === 'approved') perPlatform[s.platform].approved++;
-    if (s.status === 'pending') perPlatform[s.platform].pending++;
+    entry.discovered++;
+    if (s.status === 'approved') entry.approved++;
+    if (s.status === 'pending') entry.pending++;
   }
 
   return {

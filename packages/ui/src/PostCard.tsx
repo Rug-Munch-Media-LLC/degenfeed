@@ -178,6 +178,7 @@ export const PostCard = memo(function PostCard({
   crossProtocolBadges,
   onTranslatePublish,
   onCrossReplyOpen,
+  onOpenShareSheet,
   isAdmin,
   onAdminRemove,
   onAdminBan,
@@ -1110,12 +1111,12 @@ export const PostCard = memo(function PostCard({
                 <>
                   {images.length > 0 && <ImageGrid images={images} authorName={post.author.displayName} />}
                   {frames.map((embed) => (
-                    <FrameCard key={`frame-${embed.url}`} url={embed.url} authorName={post.author.displayName} />
+                    <FrameCard key={`frame-${embed.url}`} url={embed.url} />
                   ))}
                   {frames.length === 0 &&
                     post.protocol === 'farcaster' &&
                     links.length > 0 &&
-                    links[0]?.url && <FrameCard url={links[0].url} authorName={post.author.displayName} />}
+                    links[0]?.url && <FrameCard key={`link-frame-${links[0].url}`} url={links[0].url} />}
                   {links.map((embed) => {
                     const linkVideoInfo = parseVideoUrl(embed.url);
                     if (linkVideoInfo) {

@@ -122,21 +122,16 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://cointelegraph.com/rss',                          { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'defi'], authority: 3 }),
   cfg('https://decrypt.co/feed',                                { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'defi'], authority: 3 }),
   cfg('https://www.coindesk.com/arc/outboundfeeds/rss/',        { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'policy'], authority: 3 }),
-  cfg('https://www.theblock.co/rss',                            { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'defi'], authority: 3 }),
   cfg('https://blockworks.co/feed',                             { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'defi'], authority: 3 }),
-  cfg('https://thedefiant.io/feed',                             { tier: 1, weight: 1.0, category: 'news', tags: ['defi', 'crypto', 'ethereum'], authority: 3 }),
-  cfg('https://newsletter.banklesshq.com/feed',                 { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'ethereum', 'defi'], authority: 3, isPaid: true, schedule: 'daily' }),
-  cfg('https://banklesshq.substack.com/feed',                   { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'ethereum', 'defi'], authority: 3, isPaid: true, schedule: 'daily' }),
-  cfg('https://messari.io/feed',                                { tier: 1, weight: 1.0, category: 'research', tags: ['crypto', 'bitcoin', 'ethereum', 'onchain'], authority: 3 }),
+  cfg('https://thedefiant.io/api/feed',                         { tier: 1, weight: 1.0, category: 'news', tags: ['defi', 'crypto', 'ethereum'], authority: 3 }),
+  cfg('https://unchainedcrypto.substack.com/feed',              { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'bitcoin', 'interviews'], authority: 3, isPaid: false, schedule: 'weekly' }),
+  cfg('https://pomp.substack.com/feed',                         { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'bitcoin', 'macro'], authority: 3, isPaid: true, schedule: 'daily' }),
   cfg('https://blog.chainalysis.com/feed/',                     { tier: 1, weight: 1.0, category: 'research', tags: ['onchain', 'security', 'crypto'], authority: 3 }),
 
   // ═══════════════════════════════════════════════════════════════════
   // TIER 2 — High Quality Research / VC (weight: 0.9, authority: 2)
   // ═══════════════════════════════════════════════════════════════════
-  cfg('https://www.paradigm.xyz/feed/atom',                     { tier: 2, weight: 0.9, category: 'research', tags: ['ethereum', 'crypto', 'defi', 'layer2'], authority: 2 }),
-  cfg('https://a16zcrypto.com/feed/',                           { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'web3', 'defi', 'policy'], authority: 2 }),
   cfg('https://blog.electriccapital.com/rss',                   { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'onchain', 'analytics'], authority: 2 }),
-  cfg('https://multicoin.capital/feed',                         { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'solana', 'defi'], authority: 2 }),
   cfg('https://panteracapital.com/feed',                        { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'bitcoin', 'blockchain'], authority: 2 }),
   cfg('https://framework.ventures/rss',                         { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'defi', 'gaming'], authority: 2 }),
   cfg('https://members.delphidigital.io/feed',                  { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'macro', 'defi'], authority: 2 }),
@@ -144,8 +139,8 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://coinmetrics.io/feed',                            { tier: 2, weight: 0.9, category: 'markets', tags: ['bitcoin', 'ethereum', 'onchain', 'metrics'], authority: 2 }),
   cfg('https://delphidigital.substack.com/feed',                { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'macro', 'defi', 'research'], authority: 3, isPaid: true, schedule: 'weekly' }),
   cfg('https://variant.fund/feed',                              { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'defi', 'web3'], authority: 2 }),
-  cfg('https://dune.com/blog/rss.xml',                          { tier: 2, weight: 0.9, category: 'analysis', tags: ['onchain', 'analytics', 'defi'], authority: 2 }),
   cfg('https://nansen.substack.com/feed',                       { tier: 2, weight: 0.9, category: 'analysis', tags: ['onchain', 'ethereum', 'defi'], authority: 2 }),
+  cfg('https://defillama.com/feed',                              { tier: 3, weight: 0.8, category: 'analysis', tags: ['defi', 'tvl', 'crypto'], authority: 2 }),
   cfg('https://tokenterminal.com/feed',                         { tier: 2, weight: 0.9, category: 'analysis', tags: ['crypto', 'defi', 'metrics'], authority: 2 }),
 
   // ═══════════════════════════════════════════════════════════════════
@@ -159,7 +154,6 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://defillama.com/feed',                              { tier: 3, weight: 0.8, category: 'analysis', tags: ['defi', 'tvl', 'crypto'], authority: 2 }),
   cfg('https://tokenterminal.com/blog/rss',                     { tier: 3, weight: 0.8, category: 'analysis', tags: ['crypto', 'defi', 'metrics'], authority: 2 }),
   cfg('https://messari.substack.com/feed',                      { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'research', 'onchain'], authority: 3, isPaid: true, schedule: 'weekly' }),
-  cfg('https://dune.com/blog/rss',                              { tier: 3, weight: 0.8, category: 'analysis', tags: ['onchain', 'analytics', 'defi'], authority: 2 }),
 
   // ═══════════════════════════════════════════════════════════════════
   // TIER 4 — News Aggregators (weight: 0.7, authority: 1)
@@ -178,7 +172,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://bitcoinist.com/feed/',                           { tier: 4, weight: 0.7, category: 'news', tags: ['bitcoin', 'crypto'], authority: 1 }),
   cfg('https://cryptonews.com/feed/',                           { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin'], authority: 1 }),
   cfg('https://unchainedcrypto.com/feed/',                      { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin', 'defi'], authority: 1 }),
-  cfg('https://www.dlnews.com/feed/',                           { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'defi'], authority: 1 }),
+
   cfg('https://protos.com/feed/',                               { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin'], authority: 1 }),
   cfg('https://www.ledgerinsights.com/feed/',                   { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'blockchain', 'enterprise'], authority: 1 }),
   cfg('https://news.bitcoin.com/feed/',                         { tier: 4, weight: 0.7, category: 'news', tags: ['bitcoin', 'crypto'], authority: 1 }),
@@ -187,10 +181,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   // TIER 5 — Developer / Protocol Blogs (weight: 0.6, authority: 1)
   // ═══════════════════════════════════════════════════════════════════
   cfg('https://blog.ethereum.org/feed.xml',                     { tier: 5, weight: 0.6, category: 'development', tags: ['ethereum', 'layer2', 'dev'], authority: 1 }),
-  cfg('https://solana.com/feed',                                { tier: 5, weight: 0.6, category: 'development', tags: ['solana', 'dev'], authority: 1 }),
   cfg('https://blog.polygon.technology/feed',                   { tier: 5, weight: 0.6, category: 'development', tags: ['polygon', 'layer2', 'dev'], authority: 1 }),
-  cfg('https://blog.arbitrum.io/feed.xml',                      { tier: 5, weight: 0.6, category: 'development', tags: ['arbitrum', 'layer2', 'dev'], authority: 1 }),
-  cfg('https://optimism.mirror.xyz/feed/atom',                  { tier: 5, weight: 0.6, category: 'development', tags: ['optimism', 'layer2', 'dev'], authority: 1 }),
   cfg('https://starkware.co/feed',                              { tier: 5, weight: 0.6, category: 'development', tags: ['starkware', 'layer2', 'zk', 'dev'], authority: 1 }),
   cfg('https://www.zk.com/blog/rss',                            { tier: 5, weight: 0.6, category: 'development', tags: ['zk', 'zero-knowledge', 'dev'], authority: 1 }),
   cfg('https://blog.eigenlayer.xyz/rss',                        { tier: 2, weight: 0.9, category: 'newsletter', tags: ['eigenlayer', 'restaking', 'ethereum'], authority: 2, isPaid: false, schedule: 'weekly' }),
@@ -201,10 +192,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://zksync.io/feed.xml',                             { tier: 5, weight: 0.6, category: 'development', tags: ['zksync', 'layer2', 'dev'], authority: 1 }),
   cfg('https://eips.ethereum.org/feed.xml',                     { tier: 5, weight: 0.6, category: 'development', tags: ['ethereum', 'eips', 'standards'], authority: 1 }),
   cfg('https://weekinethereumnews.com/feed',                    { tier: 5, weight: 0.6, category: 'development', tags: ['ethereum', 'newsletter'], authority: 1 }),
-  cfg('https://l2beat.com/feed/',                               { tier: 5, weight: 0.6, category: 'analysis', tags: ['layer2', 'ethereum', 'scaling'], authority: 1 }),
   cfg('https://base.mirror.xyz/feed/atom',                      { tier: 5, weight: 0.6, category: 'development', tags: ['base', 'layer2', 'dev'], authority: 1 }),
-  cfg('https://bitcoinops.org/en/feed.xml',                     { tier: 5, weight: 0.6, category: 'development', tags: ['bitcoin', 'dev', 'protocol'], authority: 1 }),
-  cfg('https://lightning.engineering/rss/',                     { tier: 5, weight: 0.6, category: 'development', tags: ['bitcoin', 'lightning', 'dev'], authority: 1 }),
 
   // ═══════════════════════════════════════════════════════════════════
   // Exchange / Institutional Blogs
@@ -213,7 +201,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://www.coinbase.com/blog/rss.xml',                  { tier: 3, weight: 0.8, category: 'news', tags: ['coinbase', 'crypto'], authority: 2 }),
   cfg('https://blog.kraken.com/feed/',                          { tier: 3, weight: 0.8, category: 'news', tags: ['kraken', 'crypto', 'regulation'], authority: 2 }),
   cfg('https://blog.binance.com/feed/',                         { tier: 3, weight: 0.8, category: 'news', tags: ['binance', 'crypto'], authority: 2 }),
-  cfg('https://www.gemini.com/feed.xml',                        { tier: 3, weight: 0.8, category: 'news', tags: ['gemini', 'crypto'], authority: 2 }),
+
   cfg('https://www.galaxy.com/feed/',                           { tier: 3, weight: 0.8, category: 'research', tags: ['galaxy', 'crypto', 'research'], authority: 2 }),
   cfg('https://blog.bitmex.com/feed/',                          { tier: 4, weight: 0.7, category: 'markets', tags: ['bitmex', 'trading', 'derivatives'], authority: 1 }),
   cfg('https://blog.bitfinex.com/feed/',                        { tier: 4, weight: 0.7, category: 'markets', tags: ['bitfinex', 'trading'], authority: 1 }),
@@ -223,25 +211,23 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   // ═══════════════════════════════════════════════════════════════════
   // Data & Research Platforms
   // ═══════════════════════════════════════════════════════════════════
-  cfg('https://www.coingecko.com/en/blog/rss',                  { tier: 3, weight: 0.8, category: 'markets', tags: ['crypto', 'prices', 'data'], authority: 2 }),
   cfg('https://coinmarketcap.com/feed/',                        { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'prices'], authority: 1 }),
   cfg('https://www.vanryun.com/feed/',                          { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'etf', 'macro'], authority: 1 }),
   cfg('https://www.21shares.com/feed/',                         { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'etf', 'institutional'], authority: 1 }),
   cfg('https://grayscale.com/feed/',                            { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'etf', 'bitcoin'], authority: 1 }),
   cfg('https://bitwiseinvestments.com/feed/',                   { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'etf', 'bitcoin'], authority: 1 }),
   cfg('https://www.coinshares.com/feed/',                       { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'etf', 'institutional'], authority: 1 }),
-  cfg('https://nansen.ai/feed/',                                { tier: 3, weight: 0.8, category: 'analysis', tags: ['onchain', 'ethereum', 'analytics'], authority: 2 }),
+  cfg('https://coingecko.com/en/blog/rss',                      { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'prices', 'data'], authority: 1 }),
+
 
   // ═══════════════════════════════════════════════════════════════════
   // Security & Policy
   // ═══════════════════════════════════════════════════════════════════
-  cfg('https://rekt.news/feed.xml',                             { tier: 3, weight: 0.8, category: 'security', tags: ['security', 'hacks', 'exploits'], authority: 2 }),
   cfg('https://blog.trailofbits.com/feed/',                     { tier: 3, weight: 0.8, category: 'security', tags: ['security', 'audit', 'research'], authority: 2 }),
   cfg('https://www.coincenter.org/feed/',                       { tier: 3, weight: 0.8, category: 'policy', tags: ['policy', 'regulation', 'bitcoin'], authority: 2 }),
-  cfg('https://cointelegraph.com/tags/regulation/feed',         { tier: 3, weight: 0.8, category: 'policy', tags: ['regulation', 'policy'], authority: 2 }),
   cfg('https://www.sec.gov/news/pressreleases.rss',             { tier: 4, weight: 0.7, category: 'policy', tags: ['sec', 'regulation', 'policy'], authority: 1 }),
-  cfg('https://www.federalreserve.gov/feeds/press.xml',         { tier: 4, weight: 0.7, category: 'policy', tags: ['fed', 'macro', 'policy'], authority: 1 }),
   cfg('https://www.imf.org/en/News/RSS',                        { tier: 4, weight: 0.7, category: 'policy', tags: ['imf', 'macro', 'policy'], authority: 1 }),
+  cfg('https://blog.coinbase.com/category/regulation/feed',      { tier: 3, weight: 0.8, category: 'policy', tags: ['regulation', 'coinbase', 'policy'], authority: 2 }),
   cfg('https://slowmist.medium.com/feed',                       { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit'], authority: 1 }),
   cfg('https://immunefi.medium.com/feed',                       { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'bounty', 'audit'], authority: 1 }),
   cfg('https://certik.medium.com/feed',                         { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit'], authority: 1 }),
@@ -250,10 +236,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   // ═══════════════════════════════════════════════════════════════════
   // Web3 / NFT / Gaming
   // ═══════════════════════════════════════════════════════════════════
-  cfg('https://opensea.io/blog/feed.xml',                       { tier: 4, weight: 0.7, category: 'news', tags: ['nft', 'opensea', 'collectibles'], authority: 1 }),
   cfg('https://blog.decentraland.org/feed/',                    { tier: 5, weight: 0.6, category: 'development', tags: ['metaverse', 'gaming', 'decentraland'], authority: 1 }),
-  cfg('https://www.nftnow.com/feed/',                           { tier: 4, weight: 0.7, category: 'news', tags: ['nft', 'art', 'collectibles'], authority: 1 }),
-  cfg('https://axieinfinity.com/feed/',                         { tier: 5, weight: 0.6, category: 'development', tags: ['gaming', 'axie', 'nft'], authority: 1 }),
 
   // ═══════════════════════════════════════════════════════════════════
   // VC / Investment Research
@@ -272,7 +255,6 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://vitalik.eth.limo/feed.xml',                      { tier: 2, weight: 0.9, category: 'research', tags: ['ethereum', 'crypto', 'research'], authority: 2 }),
   cfg('https://paragraph.xyz/@bitcoin/feed',                    { tier: 4, weight: 0.7, category: 'news', tags: ['bitcoin'], authority: 1 }),
   cfg('https://paragraph.xyz/@crypto/feed',                     { tier: 4, weight: 0.7, category: 'news', tags: ['crypto'], authority: 1 }),
-  cfg('https://mirror.xyz/dashboard/feed',                      { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
   cfg('https://paragraph.xyz/@andrew/feed',                     { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'opinion'], authority: 1 }),
   cfg('https://paragraph.xyz/@divine/feed',                     { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'opinion'], authority: 1 }),
   cfg('https://mirror.xyz/0x25B0/feed',                         { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
@@ -294,11 +276,8 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://www.crypto-news-flash.com/feed/',                { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
   cfg('https://coinpedia.org/feed/',                            { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
   cfg('https://www.trustnodes.com/feed',                        { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'ethereum'], authority: 1 }),
-  cfg('https://coincodex.com/blog/feed/',                       { tier: 5, weight: 0.6, category: 'markets', tags: ['crypto', 'data'], authority: 1 }),
   cfg('https://www.livebitcoinnews.com/feed/',                  { tier: 5, weight: 0.6, category: 'news', tags: ['bitcoin'], authority: 1 }),
-  cfg('https://www.crypto-reporter.com/feed/',                  { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
   cfg('https://cryptoadventure.org/feed/',                     { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
-  cfg('https://thecryptotimes.com/feed/',                       { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
   cfg('https://memeburn.com/feed/',                             { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'tech'], authority: 1 }),
 
   // ═══════════════════════════════════════════════════════════════════
@@ -316,7 +295,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://www.wired.com/feed/rss',                         { tier: 3, weight: 0.8, category: 'tech', tags: ['tech', 'science', 'culture', 'ai'], authority: 2 }),
   cfg('https://www.theinformation.com/feed',                    { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'business', 'analysis'], authority: 1 }),
   cfg('https://restofworld.org/feed/',                          { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'global'], authority: 1 }),
-  cfg('https://www.protocol.com/feed',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'policy'], authority: 1 }),
+  // protocol.com/feed removed — site defunct
   cfg('https://www.platformer.news/feed',                       { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'policy', 'social'], authority: 1 }),
   cfg('https://venturebeat.com/feed/',                          { tier: 3, weight: 0.8, category: 'tech', tags: ['tech', 'ai', 'gaming', 'startup'], authority: 2 }),
   cfg('https://www.technologyreview.com/feed/',                 { tier: 2, weight: 1.0, category: 'tech', tags: ['tech', 'ai', 'science', 'innovation'], authority: 3 }),
@@ -339,10 +318,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://blog.google/technology/ai/rss/',                 { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'google', 'research'], authority: 1 }),
   cfg('https://huggingface.co/blog/feed.xml',                   { tier: 2, weight: 0.9, category: 'ai', tags: ['ai', 'ml', 'opensource', 'research'], authority: 3 }),
   cfg('https://stability.ai/blog/feed',                         { tier: 2, weight: 0.9, category: 'ai', tags: ['ai', 'image', 'generative', 'research'], authority: 3 }),
-  cfg('https://www.perplexity.ai/blog/rss.xml',                 { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'search'], authority: 1 }),
   cfg('https://cohere.com/blog/rss',                            { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'llm', 'nlp'], authority: 1 }),
-  cfg('https://replicate.com/blog/feed',                        { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'ml', 'deployment'], authority: 1 }),
-  cfg('https://www.pinecone.io/feed.xml',                       { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'vectors', 'database'], authority: 1 }),
   cfg('https://www.semianalysis.com/feed/',                     { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'semiconductor', 'analysis'], authority: 1 }),
   cfg('https://www.ben-evans.com/feed',                         { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'strategy', 'analysis'], authority: 1 }),
   cfg('https://blog.samaltman.com/feed/',                       { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'ai', 'opinion'], authority: 1 }),

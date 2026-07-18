@@ -183,8 +183,8 @@ export const MixedVideoGrid = memo(function MixedVideoGrid({
   const tabFiltered = videos.filter((v) => {
     if (activeTab === 'all') return true;
     if (activeTab === 'youtube') return v.source === 'youtube' && !/#shorts/.test(v.url);
-    if (activeTab === 'peertube') return v.source === 'peertube' || v.source === 'federated';
-    if (activeTab === 'federated') return v.source === 'federated';
+    if (activeTab === 'peertube') return v.source === 'peertube';
+    if (activeTab === 'federated') return v.source === 'peertube';
     if (activeTab === 'shorts') return v.source === 'youtube' && /#shorts/.test(v.url);
     if (activeTab === 'live') return false; // Live detection would need API data
     return true;

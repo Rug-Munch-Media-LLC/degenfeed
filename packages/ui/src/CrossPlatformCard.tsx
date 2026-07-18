@@ -155,7 +155,7 @@ export function CrossPlatformCard({
                 }`}
                 style={{
                   backgroundColor: registered ? `${colors[p]}22` : 'var(--color-glass-border)',
-                  ringColor: registered ? colors[p] : undefined,
+                  ...(registered ? { '--tw-ring-color': colors[p] } as React.CSSProperties : {}),
                 }}
                 title={registered && username ? `${p}: @${username}` : p}
               >

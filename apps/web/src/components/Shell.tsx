@@ -452,7 +452,12 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           aria-label="Main content"
           tabIndex={-1}
           className={`
-            relative z-10 min-h-screen animate-page-enter pb-16 lg:pb-0
+            relative z-10 min-h-screen animate-page-enter
+            ${
+              pathname !== '/' && !isSelfLayoutPage
+                ? 'pb-16 lg:pb-0'
+                : ''
+            }
             w-full min-w-0 border-r border-[var(--color-glass-border)]
             ${
               pathname === '/'

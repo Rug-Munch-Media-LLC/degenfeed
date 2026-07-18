@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { LandingCTAButtons } from '../components/LandingCTAButtons';
 import './landing.css';
 
 export const revalidate = 3600;
@@ -195,14 +196,7 @@ export default function HomePage() {
               all in one place. No account needed. Free forever.
             </p>
 
-            <div className="hero-ctas">
-              <Link href="/feed" className="cta-primary">
-                Sign in with wallet
-              </Link>
-              <Link href="/feed" className="cta-secondary">
-                Browse without signing in
-              </Link>
-            </div>
+            <LandingCTAButtons />
 
             <p className="hero-stats">
               10 protocols &middot; 353 RSS sources &middot; 137 Reddit communities &middot; 68
@@ -360,14 +354,7 @@ export default function HomePage() {
               Ready to join?
             </h2>
             <p className="cta-sub">No account needed. No surveillance. No platform fees.</p>
-            <div className="hero-ctas">
-              <Link href="/feed" className="cta-primary cta-primary-lg">
-                Sign in with wallet
-              </Link>
-              <Link href="/feed" className="cta-secondary">
-                Browse without signing in
-              </Link>
-            </div>
+            <LandingCTAButtons />
 
             <nav className="cta-footer-nav" aria-label="Footer">
               <Link href="/about" className="footer-link">
