@@ -296,6 +296,28 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     };
   }, [mobileDrawerOpen, pathname]);
 
+  // ── Protocol transition flash on route change between protocols ──
+  const prevPathRef = useRef(pathname);
+  useEffect(() => {
+    const prev = prevPathRef.current;
+    prevPathRef.current = pathname;
+    const PROTOCOL_ROUTES = ['/farcaster', '/lens', '/bluesky', '/nostr', '/mastodon'];
+    const wasProtocol = PROTOCOL_ROUTES.find((r) => prev === r || prev.startsWith(`${r}/`));
+    const nowProtocol = PROTOCOL_ROUTES.find((r) => pathname === r || pathname.startsWith(`${r}/`));
+    if (wasProtocol && nowProtocol && wasProtocol !== nowProtocol) {
+      // Use the protocol accent color from CSS variable (set by ProtocolFeedPage)
+      const color = getComputedStyle(document.documentElement)
+        .getPropertyValue('--protocol-accent')
+        .trim() || '#00ff41';
+      const overlay = document.createElement('div');
+      overlay.className = 'protocol-transition-overlay';
+      overlay.style.backgroundColor = color;
+      overlay.style.opacity = '0.25';
+      document.body.appendChild(overlay);
+      setTimeout(() => { overlay.remove(); }, 700);
+    }
+  }, [pathname]);
+
   // Track visited pages
   useEffect(() => {
     if (!pathname || pathname === '/') return;

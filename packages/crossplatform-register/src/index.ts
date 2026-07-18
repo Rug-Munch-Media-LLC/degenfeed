@@ -835,3 +835,7 @@ export async function registerOnPlatform(
       };
   }
 }
+
+// ─── Re-exports ─────────────────────────────────────────────────────
+export { privateKeyToAddress, signTransaction } from './evm-utils';
+export type { TransactionRequest } from './evm-utils';

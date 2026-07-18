@@ -1,11 +1,14 @@
 /**
- * feed-freshness — Feed freshness tracking and WebSocket notifications.
+ * feed-freshness — Feed freshness tracking, stale content deprioritization,
+ * and WebSocket notifications.
  *
  * Tracks when feeds were last updated, sends WS events on new content,
  * and provides "Updated Xs ago" and "X new posts" indicators.
+ * Posts older than 7 days are deprioritized unless they have high engagement.
  */
 
 import type { Env } from '../index';
+import type { UnifiedPost } from '@degenfeed/types';
 import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
 import type { FeedType } from './feed-cache-layer';
@@ -13,6 +16,17 @@ import type { FeedType } from './feed-cache-layer';
 const FRESHNESS_KEY_PREFIX = 'feed:freshness:';
 const FEED_UPDATE_KEY_PREFIX = 'feed:updates:';
 const FRESHNESS_TTL = 300; // 5 min
+
+// Stale content thresholds
+export const STALE_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+export const HIGH_ENGAGEMENT_THRESHOLD = 25; // likes + reposts*2 + replies*3
+
+export interface StalePostResult {
+  post: UnifiedPost;
+  isStale: boolean;
+  isHighEngagement: boolean;
+  deprioritized: boolean;
+}
 
 export interface FeedFreshnessEntry {
   lastUpdated: number;
@@ -122,4 +136,70 @@ export async function broadcastFreshContent(
     broadcastToUser(userId, CHANNELS.FEED_NEW, payload);
   }
   broadcastToAll(CHANNELS.FEED_NEW, payload);
+}
+
+// ─── Stale content deprioritization ──────────────────────────────
+
+/**
+ * Flags posts older than 7 days as stale, unless they have high engagement.
+ * High engagement posts are preserved regardless of age.
+ * Stale posts are moved to the end of the list.
+ */
+export function deprioritizeStaleContent(
+  posts: UnifiedPost[],
+  now: number = Date.now(),
+  maxAgeMs: number = STALE_AGE_MS,
+  engagementThreshold: number = HIGH_ENGAGEMENT_THRESHOLD,
+): UnifiedPost[] {
+  const fresh: UnifiedPost[] = [];
+  const staleHighEngagement: UnifiedPost[] = [];
+  const staleLowEngagement: UnifiedPost[] = [];
+
+  for (const post of posts) {
+    const ageMs = now - post.createdAt;
+    const isStale = ageMs > maxAgeMs;
+
+    if (!isStale) {
+      fresh.push(post);
+      continue;
+    }
+
+    const engTotal =
+      post.metrics.likes +
+      post.metrics.reposts * 2 +
+      post.metrics.replies * 3 +
+      (post.metrics.quotes ?? 0);
+
+    if (engTotal >= engagementThreshold) {
+      staleHighEngagement.push(post);
+    } else {
+      staleLowEngagement.push(post);
+    }
+  }
+
+  // Fresh first, then high-engagement stale, then low-engagement stale
+  return [...fresh, ...staleHighEngagement, ...staleLowEngagement];
+}
+
+export function classifyStalePosts(
+  posts: UnifiedPost[],
+  now: number = Date.now(),
+): StalePostResult[] {
+  return posts.map((post) => {
+    const ageMs = now - post.createdAt;
+    const isStale = ageMs > STALE_AGE_MS;
+    const engTotal =
+      post.metrics.likes +
+      post.metrics.reposts * 2 +
+      post.metrics.replies * 3 +
+      (post.metrics.quotes ?? 0);
+    const isHighEngagement = engTotal >= HIGH_ENGAGEMENT_THRESHOLD;
+
+    return {
+      post,
+      isStale,
+      isHighEngagement,
+      deprioritized: isStale && !isHighEngagement,
+    };
+  });
 }

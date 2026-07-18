@@ -17,37 +17,13 @@
  * the pre-encrypted blobs and decryptable fields.
  */
 
-import type { Protocol } from '@degenfeed/types';
+import type { Protocol, StoredIdentity } from '@degenfeed/types';
 
 // ─── Schema Types ──────────────────────────────────────────────────────
 
-export interface StoredIdentity {
-  /** Canonical id: `${protocol}:${publicId}` */
-  id: string;
-  protocol: Protocol;
-  publicId: string;
-  handle: string;
-  displayName?: string;
-  avatarUrl?: string;
-  /** Timestamp of when this identity was first linked */
-  linkedAt: number;
-  /** Whether the identity has been verified (NIP-05, Farcaster verified) */
-  verified: boolean;
-  /** Encrypted secret key (AES-GCM ciphertext, base64) */
-  encryptedSecret: string | null;
-  /** Argon2id salt for key derivation (base64) */
-  salt: string;
-  /** AES-GCM initialization vector (base64) */
-  iv: string;
-  /** Whether this is the user's primary identity */
-  isPrimary: boolean;
-  /** Protocol-specific key material (encrypted) */
-  keys?: Record<string, string | null>;
-  /** Social links */
-  links?: Array<{ label: string; url: string }>;
-  /** Creation timestamp */
-  createdAt?: number;
-}
+// StoredIdentity is defined in @degenfeed/types to prevent a circular
+// dependency between @degenfeed/auth and @degenfeed/storage.
+// Both packages import it from @degenfeed/types instead.
 
 export interface StoredFollow {
   identityId: string; // our identity that follows

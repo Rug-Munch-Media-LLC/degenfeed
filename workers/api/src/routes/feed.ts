@@ -17,6 +17,7 @@ import {
   type PresetName,
 } from '@degenfeed/feed-core';
 import {
+  ALL_CATEGORIES,
   applyUserFilters,
   broadcastFeedUpdate,
   buildCatchUpSummary,
@@ -29,6 +30,7 @@ import {
   countNewSinceLastVisit,
   deduplicateCrossProtocol,
   DEFAULT_PROTOCOLS,
+  deprioritizeStaleContent,
   enrichNostrEngagement,
   FEED_GENERATION_TIMEOUT_MS,
   feedCacheKey,
@@ -54,6 +56,9 @@ import {
   updateLastSync,
   writePostsToKV,
   applyCurationPipeline,
+  getCategoryCounts,
+  auditCategoryCoverage,
+  verifyDiversity,
   type FeedType,
 } from '../feed';
 import { type Env, jsonResponse } from '../index';
@@ -282,18 +287,21 @@ async function generateAndCacheFeed(
   };
   const curated = applyCurationPipeline(ranked, curationOpts);
 
+  // 8c. Deprioritize stale content (>7 days old, low engagement)
+  const freshnessSorted = deprioritizeStaleContent(curated, now);
+
   // 9. Smart refresh — catch up returning users
   let catchUp = null;
   if (userId) {
     const lastSync = await getLastSync(env, userId);
     if (shouldTriggerSmartRefresh(lastSync, now)) {
-      catchUp = buildCatchUpSummary(curated, userCtx.followed, lastSync, now);
+      catchUp = buildCatchUpSummary(freshnessSorted, userCtx.followed, lastSync, now);
     }
     void updateLastSync(env, userId);
   }
 
   // 10. Feed freshness tracking
-  const freshnessEntry = await updateFeedFreshness(env, feedType, curated);
+  const freshnessEntry = await updateFeedFreshness(env, feedType, freshnessSorted);
   const freshnessMeta = computeFreshnessMeta(freshnessEntry, now);
 
   // 11. Trending Now (best-effort)
@@ -315,7 +323,7 @@ async function generateAndCacheFeed(
     // non-critical
   }
 
-  if (curated.length === 0 && errors.length > 0) {
+  if (freshnessSorted.length === 0 && errors.length > 0) {
     return jsonResponse({
       data: [],
       meta: {
@@ -332,12 +340,14 @@ async function generateAndCacheFeed(
     });
   }
 
-  // 12. Build response
+  // 12. Build response with coverage audit
   const feedElapsed = Date.now() - feedStartTime;
+  const categoryCounts = getCategoryCounts(freshnessSorted);
+  const diversityCheck = verifyDiversity(freshnessSorted);
   const responseBody = {
-    data: curated,
+    data: freshnessSorted,
     meta: {
-      total: curated.length,
+      total: freshnessSorted.length,
       limit,
       perProtocol,
       errors: errors.length > 0 ? errors : undefined,
@@ -349,7 +359,7 @@ async function generateAndCacheFeed(
       sort,
       presetName,
       presetLabel: resolvedPreset.profile.label,
-      newSinceLastVisit: countNewSinceLastVisit(cookieHeader, curated),
+      newSinceLastVisit: countNewSinceLastVisit(cookieHeader, freshnessSorted),
       fetchedAt: now,
       freshness: {
         updatedLabel: freshnessMeta.updatedLabel,
@@ -359,6 +369,13 @@ async function generateAndCacheFeed(
         crossProtocol: dedupResult.crossProtocol,
         urlDedup: dedupResult.urlDedup,
         totalRemoved: dedupResult.deduped,
+      },
+      categoryCoverage: {
+        counts: categoryCounts,
+        uniqueCategories: diversityCheck.uniqueCategories,
+        dominantCategory: diversityCheck.dominantCategory,
+        dominantPct: diversityCheck.dominantPct,
+        sufficientlyDiverse: diversityCheck.diverse,
       },
       catchUp: catchUp && catchUp.triggered
         ? {
@@ -415,12 +432,13 @@ async function generateAndCacheFeed(
   debugParts.push(
     `spam=${debug.avgSpam.toFixed(2)},quality=${debug.avgQuality.toFixed(0)},reputation=${debug.avgReputation.toFixed(0)},velocity=${debug.avgVelocity.toFixed(0)}`,
   );
+  debugParts.push(`categories=${diversityCheck.uniqueCategories}/${ALL_CATEGORIES.length},dominant=${diversityCheck.dominantCategory ?? 'none'}=${diversityCheck.dominantPct}%`);
 
   resp.headers.set('X-DegenFeed-Debug', debugParts.filter(Boolean).join(' | '));
 
   // Broadcast feed update via WebSocket
   void broadcastFeedUpdate(feedType, {
-    newPostCount: curated.length,
+    newPostCount: freshnessSorted.length,
     timestamp: now,
   });
 

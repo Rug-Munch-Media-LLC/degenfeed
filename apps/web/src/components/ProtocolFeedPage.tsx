@@ -5,8 +5,8 @@ import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, FeedList } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useTransition, useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { ContentFilterBar, type ContentType } from './ContentFilterBar';
 import { ContentMosaic } from './ContentMosaic';
@@ -147,6 +147,13 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
 /** Tabs whose id maps 1:1 onto the worker's ?sort= parameter. */
 const SORT_TAB_IDS = new Set(['hot', 'quality', 'new', 'trending']);
 
+/** Convert hex color to comma-separated RGB for CSS rgba() usage */
+function hexToRgb(hex: string): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return '0,0,0';
+  return `${Number.parseInt(result[1], 16)},${Number.parseInt(result[2], 16)},${Number.parseInt(result[3], 16)}`;
+}
+
 // ─── Shared component ──────────────────────────────────────────────────────
 
 interface FeedMeta {
@@ -164,9 +171,12 @@ interface Props {
 export function ProtocolFeedPage({ protocol }: Props) {
   const config: ProtocolFeedConfig = PROTOCOL_CONFIGS[protocol] as ProtocolFeedConfig;
   const router = useRouter();
+  const pathname = usePathname();
   const { engage, openComposeReply } = useAuth();
+  const [, startTransition] = useTransition();
 
   const [activeTab, setActiveTab] = useState(config?.tabs[0]?.id ?? 'hot');
+  const [tabDirection, setTabDirection] = useState<'left' | 'right'>('right');
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
   const [featuredPosts, setFeaturedPosts] = useState<UnifiedPost[]>([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
@@ -177,7 +187,52 @@ export function ProtocolFeedPage({ protocol }: Props) {
   const [newPostCount, setNewPostCount] = useState(0);
   const [contentType, setContentType] = useState<ContentType>('all');
   const [density, setDensity] = useState<DensityMode>('comfortable');
+  const [tabTransitioning, setTabTransitioning] = useState(false);
   const lastPostIdRef = useRef<string | null>(null);
+  const feedContainerRef = useRef<HTMLDivElement>(null);
+  const prevProtocolRef = useRef<string>(protocol);
+
+  // ── Set protocol accent color on document for transition overlay ──
+  useEffect(() => {
+    if (config) {
+      document.documentElement.style.setProperty('--protocol-accent', config.color);
+      document.documentElement.style.setProperty('--protocol-accent-rgb', hexToRgb(config.color));
+      document.documentElement.setAttribute('data-protocol', protocol);
+    }
+  }, [protocol, config]);
+
+  // ── Protocol transition flash effect (only on protocol change) ──
+  useEffect(() => {
+    if (prevProtocolRef.current !== protocol) {
+      const prev = prevProtocolRef.current;
+      prevProtocolRef.current = protocol;
+      const prevConfig = PROTOCOL_CONFIGS[prev];
+      const flashColor = prevConfig?.color ?? config?.color ?? '#00ff41';
+      const overlay = document.createElement('div');
+      overlay.className = 'protocol-transition-overlay';
+      overlay.style.backgroundColor = flashColor;
+      overlay.style.opacity = '0.3';
+      document.body.appendChild(overlay);
+      setTimeout(() => {
+        overlay.remove();
+      }, 700);
+    }
+  }, [protocol, config]);
+
+  // ── Handle tab change with smooth transition ──
+  const handleTabChange = useCallback((tabId: string) => {
+    if (tabId === activeTab) return;
+    const tabIds = config?.tabs.map((t) => t.id) ?? [];
+    const oldIdx = tabIds.indexOf(activeTab);
+    const newIdx = tabIds.indexOf(tabId);
+    setTabDirection(newIdx > oldIdx ? 'right' : 'left');
+    setTabTransitioning(true);
+    startTransition(() => {
+      setActiveTab(tabId);
+    });
+    // Brief delay to allow exit animation to play, then re-enable
+    setTimeout(() => setTabTransitioning(false), 350);
+  }, [activeTab, config, startTransition]);
 
   const fetchFeed = useCallback(async () => {
     setState('loading');
@@ -358,29 +413,32 @@ export function ProtocolFeedPage({ protocol }: Props) {
             {/* Tab bar + density toggle */}
             <div className="mb-4 flex items-center justify-between gap-3 overflow-x-auto border-b border-[var(--color-glass-border)] pb-0">
               <div className="flex gap-1 overflow-x-auto scrollbar-none">
-                {config.tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`relative whitespace-nowrap px-4 py-2.5 text-sm font-medium transition-colors ${
-                      activeTab === tab.id
-                        ? 'text-[var(--color-fg)]'
-                        : 'text-gray-500 hover:text-gray-300'
-                    }`}
-                  >
-                    {tab.label}
-                    {activeTab === tab.id && (
-                      <span
-                        className="absolute bottom-0 left-1/2 h-0.5 w-10 -translate-x-1/2 rounded-full"
-                        style={{
-                          backgroundColor: config.color,
-                          boxShadow: `0 0 8px ${config.color}66`,
-                        }}
-                      />
-                    )}
-                  </button>
-                ))}
+                {config.tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`relative whitespace-nowrap px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+                        isActive
+                          ? 'text-[var(--color-fg)]'
+                          : 'text-gray-500 hover:text-gray-300'
+                      }`}
+                    >
+                      {tab.label}
+                      {isActive && (
+                        <span
+                          className="absolute bottom-0 left-1/2 h-0.5 w-10 -translate-x-1/2 rounded-full transition-all duration-200"
+                          style={{
+                            backgroundColor: config.color,
+                            boxShadow: `0 0 8px ${config.color}66`,
+                          }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
                 {/* ── Dedicated Trending page link ── */}
                 <Link
                   href={`/${config.id}/trending`}
@@ -432,19 +490,22 @@ export function ProtocolFeedPage({ protocol }: Props) {
 
             {/* Density class applied to feed container */}
             <div
-              className={
+              ref={feedContainerRef}
+              className={`${
                 density === 'dense'
                   ? 'feed-density-dense'
                   : density === 'visual'
                     ? 'feed-density-visual'
                     : ''
-              }
+              } ${tabTransitioning ? (tabDirection === 'right' ? 'tab-content-exit' : 'tab-content-exit') : 'tab-content-enter'}`}
+              key={`${activeTab}-${contentType}`}
             >
               <FeedList
                 state={state}
                 posts={posts}
                 error={error}
                 protocolLabel={config.name}
+                protocolColor={config.color}
                 onPostClick={(id) => router.push(`/post/${encodeURIComponent(id)}`)}
                 onEngage={handleEngage}
                 onTip={(post) => setTipPost(post)}

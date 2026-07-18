@@ -373,7 +373,7 @@ export default function AdminSourcesPage() {
                   type="checkbox"
                   checked={selectedIds.has(source.id)}
                   onChange={() => toggleSelect(source.id)}
-                  className="mt-1 h-4 w-4 rounded border-gray-600 bg-gray-800 text-degen-500 focus:ring-degen-500"
+                  className="mt-1 h-4 w-4 rounded border-[var(--color-border)] bg-[var(--color-card)] text-degen-500 focus:ring-degen-500"
                 />
 
                 {/* Icon */}

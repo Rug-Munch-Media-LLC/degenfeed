@@ -1133,7 +1133,7 @@ export default function FeedPage() {
                     step="0.5"
                     value={hideThreshold}
                     onChange={(e) => setHideThresholdAndPersist(Number(e.target.value))}
-                    className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                    className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-[var(--color-muted)] accent-degen-500"
                     aria-label="Hide threshold"
                   />
                   <span className="font-mono text-[10px] text-[var(--color-muted)]">
@@ -1172,7 +1172,7 @@ export default function FeedPage() {
                     setMinEngagement(next);
                     persistPrefs({ minEngagement: next });
                   }}
-                  className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                  className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-[var(--color-muted)] accent-degen-500"
                   aria-label="Minimum engagement"
                 />
                 <span className="font-mono text-[10px] text-[var(--color-muted)]">{minEngagement}</span>
@@ -1198,7 +1198,7 @@ export default function FeedPage() {
                     setRecencyWeight(Number(e.target.value));
                     persistPrefs({ recencyWeight: Number(e.target.value) });
                   }}
-                  className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                  className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-[var(--color-muted)] accent-degen-500"
                   aria-label="Recency weight"
                 />
                 <span className="font-mono text-[10px] text-[var(--color-muted)]">
@@ -1217,7 +1217,7 @@ export default function FeedPage() {
                     setEngagementWeight(Number(e.target.value));
                     persistPrefs({ engagementWeight: Number(e.target.value) });
                   }}
-                  className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                  className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-[var(--color-muted)] accent-degen-500"
                   aria-label="Engagement weight"
                 />
                 <span className="font-mono text-[10px] text-[var(--color-muted)]">

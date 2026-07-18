@@ -73,15 +73,21 @@ export interface FeedListProps {
 
 function EmptyState({
   protocolLabel,
+  protocolColor,
   onSignIn,
 }: {
   protocolLabel?: string;
+  protocolColor?: string;
   onSignIn?: () => void;
 }) {
+  const color = protocolColor || '#00ff41';
   return (
     <div className="border-b border-[var(--color-glass-border)] px-4 py-16 text-center">
-      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-degen-500/10">
-        <span className="text-3xl text-degen-400">{protocolLabel ? '○' : '◆'}</span>
+      <div
+        className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full"
+        style={{ backgroundColor: `${color}18` }}
+      >
+        <span className="text-3xl" style={{ color }}>{protocolLabel ? '○' : '◆'}</span>
       </div>
       <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
         {protocolLabel ? `No ${protocolLabel} posts yet` : 'The feed is warming up'}
@@ -126,6 +132,7 @@ export const FeedList = memo(function FeedList({
   posts,
   error,
   protocolLabel,
+  protocolColor,
   onTip,
   onRetry,
   onPostClick,
@@ -292,7 +299,7 @@ export const FeedList = memo(function FeedList({
 
   if (state === 'empty' || filteredPosts.length === 0) {
     if (emptySlot) return <>{emptySlot}</>;
-    return <EmptyState protocolLabel={protocolLabel} onSignIn={onSignIn} />;
+    return <EmptyState protocolLabel={protocolLabel} protocolColor={protocolColor} onSignIn={onSignIn} />;
   }
 
   return (

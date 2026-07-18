@@ -1,12 +1,10 @@
 // ─── Active Session (in-memory only) ───────────────────────────────────
 
-import type { StoredIdentity } from './types';
-export interface ActiveSession {
-  identity: StoredIdentity;
-  /** Decrypted key material. NEVER written to disk. */
-  decryptedSecret: string | null;
-  unlockedAt: number;
-}
+import type { ActiveSession } from '@degenfeed/types';
+// ActiveSession is defined in @degenfeed/types (via StoredIdentity) to prevent
+// a conceptual circular dependency between @degenfeed/auth and @degenfeed/storage.
+// We import and re-export it here for package-level accessibility.
+export type { ActiveSession };
 
 const activeSessions = new Map<string, ActiveSession>();
 

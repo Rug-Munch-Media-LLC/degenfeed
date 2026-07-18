@@ -192,22 +192,25 @@ export function enforceContentTypeVariety(
 
 /**
  * Ensure at least `minCategories` distinct categories appear in the page.
+ * Also enforces that no single category exceeds `maxSinglePct`% of posts.
  * Promotes underrepresented category posts toward the top.
  */
 export function enforceCategoryRotation(
   posts: UnifiedPost[],
-  minCategories: number = 3,
+  minCategories: number = 4,
+  maxSinglePct: number = 40,
 ): UnifiedPost[] {
   if (posts.length < minCategories) return posts;
 
   const result: UnifiedPost[] = [];
   const pool = [...posts];
   const seenCategories = new Set<CategorySlug>();
+  const categoryCounts = new Map<CategorySlug, number>();
+  const maxPerCategory = Math.max(3, Math.ceil(posts.length * maxSinglePct / 100));
 
   // Phase 1: Ensure at least one of each required category
   const prioritySlots = Math.min(minCategories, pool.length);
   for (let i = 0; i < prioritySlots; i++) {
-    // Find the best post from an unseen category
     let bestIdx = -1;
     for (let j = 0; j < pool.length; j++) {
       const cat = ensureCategory(pool[j]!);
@@ -215,15 +218,17 @@ export function enforceCategoryRotation(
       bestIdx = j;
       break;
     }
-    if (bestIdx === -1) bestIdx = 0; // fallback
+    if (bestIdx === -1) bestIdx = 0;
 
     const chosen = pool[bestIdx]!;
-    seenCategories.add(ensureCategory(chosen));
+    const chosenCat = ensureCategory(chosen);
+    seenCategories.add(chosenCat);
+    categoryCounts.set(chosenCat, (categoryCounts.get(chosenCat) ?? 0) + 1);
     result.push(chosen);
     pool.splice(bestIdx, 1);
   }
 
-  // Phase 2: Fill remaining with category-aware interleaving
+  // Phase 2: Fill remaining with category-aware interleaving + max cap
   const categoryBuckets = new Map<CategorySlug, UnifiedPost[]>();
   for (const p of pool) {
     const cat = ensureCategory(p);
@@ -239,14 +244,30 @@ export function enforceCategoryRotation(
     for (let i = 0; i < catOrder.length; i++) {
       const cat = catOrder[(catIdx + i) % catOrder.length]!;
       const bucket = categoryBuckets.get(cat);
-      if (bucket && bucket.length > 0) {
-        result.push(bucket.shift()!);
+      const currentCount = categoryCounts.get(cat) ?? 0;
+      if (bucket && bucket.length > 0 && currentCount < maxPerCategory) {
+        const post = bucket.shift()!;
+        result.push(post);
+        categoryCounts.set(cat, currentCount + 1);
         catIdx = (catIdx + i + 1) % catOrder.length;
         added = true;
         break;
       }
     }
-    if (!added) break; // all buckets empty
+    if (!added) {
+      // All categories at cap — take any remaining
+      let found = false;
+      for (const cat of catOrder) {
+        const bucket = categoryBuckets.get(cat);
+        if (bucket && bucket.length > 0) {
+          const post = bucket.shift()!;
+          result.push(post);
+          found = true;
+          break;
+        }
+      }
+      if (!found) break;
+    }
   }
 
   return result;
@@ -267,8 +288,10 @@ export interface CurationPipelineOptions {
   maxConsecutiveContentType?: number;
   /** Enable category rotation (default true). */
   categoryRotation?: boolean;
-  /** Minimum distinct categories per page (default 3). */
+  /** Minimum distinct categories per page (default 4). */
   minCategories?: number;
+  /** Maximum percentage of posts from a single category (default 40). */
+  maxSingleCategoryPct?: number;
   /** Current time for freshness calculation. */
   now?: number;
 }
@@ -299,9 +322,13 @@ export function applyCurationPipeline(
     result = enforceContentTypeVariety(result, opts.maxConsecutiveContentType ?? 3);
   }
 
-  // 4. Category rotation
+  // 4. Category rotation (min 4 categories, max 40% from any one)
   if (opts.categoryRotation !== false) {
-    result = enforceCategoryRotation(result, opts.minCategories ?? 3);
+    result = enforceCategoryRotation(
+      result,
+      opts.minCategories ?? 4,
+      opts.maxSingleCategoryPct ?? 40,
+    );
   }
 
   return result;

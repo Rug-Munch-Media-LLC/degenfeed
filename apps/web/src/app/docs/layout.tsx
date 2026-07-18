@@ -44,9 +44,9 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     <div className="flex min-h-screen">
       {/* Mobile overlay */}
       {sidebarOpen && (
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: overlay with explicit close action */}
+        // biome-ignore lint/a11y/noStaticElementInteractions: overlay with explicit close action
         <div
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-[var(--color-bg)]/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
           role="presentation"
         />
@@ -131,7 +131,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
       <button
         type="button"
         onClick={() => setSidebarOpen(true)}
-        className="fixed bottom-4 left-4 z-20 rounded-full border border-white/10 bg-black p-3 text-[var(--color-fg)] shadow-lg lg:hidden"
+        className="fixed bottom-4 left-4 z-20 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] p-3 text-[var(--color-fg)] shadow-lg lg:hidden"
         aria-label="Open sidebar"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" role="img" aria-labelledby="open-docs-title"><title id="open-docs-title">Open documentation sidebar</title><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
