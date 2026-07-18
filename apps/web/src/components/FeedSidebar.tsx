@@ -27,7 +27,7 @@ const NETWORK_HINTS: Record<string, string> = {
   lens: 'User-owned graph',
   bluesky: 'AT Protocol',
   mastodon: 'Fediverse (GotoSocial)',
-  threads: 'Meta AT Protocol',
+  threads: 'Experimental — Meta AT Protocol',
   reddit: 'Crypto subreddits',
   rss: '353+ news sources',
 };

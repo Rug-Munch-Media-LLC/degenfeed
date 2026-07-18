@@ -62,7 +62,7 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   lemmy: 5000,
   peertube: 5000,
   rss: 3000,    // RSS is slow — aggressive timeout
-  threads: 3000, // Threads is scraping — aggressive timeout
+  threads: 2000, // Threads is scraping — aggressive timeout (experimental)
   youtube: 5000,
   ponder: 3000,  // Ponder is slow — aggressive timeout
   ethereum: 8000, // On-chain data fetch
@@ -406,7 +406,7 @@ export async function resetCircuit(env: Env, protocol: string): Promise<void> {
 // skipped entirely until a successful fetch clears it.
 // This prevents repeated slow provider calls from delaying the feed.
 
-const CB_TIMEOUT_TTL = 300; // 5 minutes
+const CB_TIMEOUT_TTL = 1800; // 30 minutes (threads timeout circuit stops hammering Meta)
 const CB_TIMEOUT_THRESHOLD = 3;
 
 async function cbTimeoutKey(protocol: string): Promise<string> {

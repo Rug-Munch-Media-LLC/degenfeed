@@ -41,7 +41,7 @@ const PROTOCOL_ICONS: Record<string, string> = {
   lens: '🌿',
   bluesky: '🦋',
   mastodon: '🐘',
-  threads: '🧵',
+  threads: '🧵 (experimental)',
   reddit: '🔴',
 };
 

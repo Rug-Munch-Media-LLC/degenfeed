@@ -412,7 +412,7 @@ const PROTOCOL_LABELS: Record<string, string> = {
   farcaster: 'Farcaster',
   lens: 'Lens',
   bluesky: 'Bluesky',
-  threads: 'Threads',
+  threads: 'Threads (Experimental)',
   mastodon: 'Mastodon',
   lemmy: 'Lemmy',
   rss: 'RSS',

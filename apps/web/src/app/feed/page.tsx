@@ -92,7 +92,7 @@ const PROTOCOL_META: Record<string, { label: string; color: string; emoji: strin
   lens: { label: 'Lens', color: '#abfe2c', emoji: '🌿' },
   bluesky: { label: 'Bluesky', color: '#1185fe', emoji: '🦋' },
   mastodon: { label: 'Mastodon', color: '#6364ff', emoji: '🐘' },
-  threads: { label: 'Threads', color: '#888888', emoji: '🧵' },
+  threads: { label: 'Threads (Experimental)', color: '#888888', emoji: '🧵' },
   reddit: { label: 'Reddit', color: '#ff4500', emoji: '🔴' },
   rss: { label: 'News', color: '#ffa500', emoji: '📰' },
 };
@@ -682,7 +682,7 @@ export default function FeedPage() {
         url.searchParams.set('limit', String(loadedLimit));
         const protocolsToFetch = protocolFilter
           ? [protocolFilter]
-          : ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'threads', 'reddit', 'rss'];
+          : ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'];
         url.searchParams.set('protocols', protocolsToFetch.join(','));
         if (activeTab === 'following') {
           url.searchParams.set('filter', 'following');
@@ -1982,7 +1982,7 @@ function FeedHealthSection({
       lens: 'Lens',
       bluesky: 'Bluesky',
       mastodon: 'Mastodon',
-      threads: 'Threads',
+      threads: 'Threads (Experimental)',
       reddit: 'Reddit',
       rss: 'RSS',
       lemmy: 'Lemmy',

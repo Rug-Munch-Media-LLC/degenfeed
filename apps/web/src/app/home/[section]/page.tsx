@@ -116,7 +116,7 @@ function SectionEmptyState({
     },
     threads: {
       title: 'No Threads posts found',
-      body: 'Threads public pages returned no posts. Scraping is fragile; this may improve.',
+      body: 'Threads (Experimental) — public pages returned no posts. Scraping is fragile; this may improve.',
     },
     reddit: {
       title: 'No Reddit posts found',

@@ -151,7 +151,7 @@ const protocols: ProtocolInfo[] = [
   },
   {
     id: 'threads',
-    name: 'Threads',
+    name: 'Threads (Experimental)',
     color: '#888888',
     endpoint: 'threads.net (HTML scraping)',
     status: 'Read-only',

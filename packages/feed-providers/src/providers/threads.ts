@@ -1,4 +1,8 @@
 /**
+ * ⚠️ EXPERIMENTAL — Threads has no public read API. This provider uses
+ * HTML scraping and will break. Use at your own risk. Consider this a
+ * best-effort integration only.
+ *
  * ⚠️ ThreadsProvider — Dual-path Threads content fetcher
  *
  * ⚠️ ⚠️ ⚠️  CRITICAL WARNING  ⚠️ ⚠️ ⚠️

@@ -242,13 +242,19 @@ export function getGtsConfig(env: Env) {
 
 // ─── Response helper ─────────────────────────────────────────────────
 
-export function jsonResponse(data: unknown, status = 200): Response {
+export function jsonResponse(
+  data: unknown,
+  status = 200,
+  extraHeaders?: Record<string, string>,
+): Response {
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    'cache-control': 'public, max-age=30',
+    ...extraHeaders,
+  };
   return new Response(JSON.stringify(data), {
     status,
-    headers: {
-      'content-type': 'application/json',
-      'cache-control': 'public, max-age=30',
-    },
+    headers,
   });
 }
 

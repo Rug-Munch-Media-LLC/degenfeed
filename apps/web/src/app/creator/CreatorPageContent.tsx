@@ -59,7 +59,7 @@ const PROTOCOL_LABELS: Record<string, string> = {
   lens: 'Lens',
   bluesky: 'Bluesky',
   mastodon: 'Mastodon',
-  threads: 'Threads',
+  threads: 'Threads (Experimental)',
   ethereum: 'Ethereum',
   solana: 'Solana',
   reddit: 'Reddit',

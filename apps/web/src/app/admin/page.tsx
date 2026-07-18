@@ -77,7 +77,7 @@ const DEFAULT_STATS: DashboardStats = {
     { name: 'Lens', status: 'online', posts24h: 98 },
     { name: 'Bluesky', status: 'online', posts24h: 156 },
     { name: 'Mastodon', status: 'degraded', posts24h: 72 },
-    { name: 'Threads', status: 'online', posts24h: 44 },
+    { name: 'Threads (Experimental)', status: 'degraded', posts24h: 44 },
   ],
   moderationQueue: 12,
   pendingSources: 8,

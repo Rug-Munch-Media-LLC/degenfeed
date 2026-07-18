@@ -5,6 +5,8 @@ import {
   sanitizeString,
   sanitizeStringArray,
 } from '../sanitize';
+import { requireSession } from '../session';
+import { requirePremiumTier } from '../premium';
 
 // ─── RSS-to-Nostr bridge ─────────────────────────────────────────────
 // (unchanged — see bottom of file)
@@ -61,8 +63,15 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
       return jsonResponse({ error: 'Invalid targets' }, 400);
     }
 
-    // ── Try Postiz first if configured ─────────────────────────────
+    // ── Premium gate: Postiz publishing requires Pro+ ──────────────
     if (env.POSTIZ_BASE_URL && env.POSTIZ_API_KEY) {
+      // Extract session to check premium
+      const session = await requireSession(request, env);
+      if (session instanceof Response) return session;
+
+      const gate = await requirePremiumTier(session.address, env, 'pro');
+      if (gate) return gate;
+
       const postizResults = await tryPostizPublish(text, targets, env);
       if (postizResults) {
         await recordCrosspostSiblings(env, postizResults);

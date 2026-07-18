@@ -12,6 +12,7 @@ import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
 import { type Env, jsonResponse, log, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
+import { checkPremiumStatus } from '../premium';
 
 // ─── POST /api/register-platform ──────────────────────────────────────
 
@@ -142,7 +143,8 @@ export async function handleRegisterPlatformStatus(request: Request, env: Env): 
   const walletAddress = session.address;
   const accounts = await getPlatformAccounts(walletAddress, env.PLATFORM_ACCOUNTS);
 
-  const tier = await checkPremiumStatus(walletAddress, env);
+  const premium = await checkPremiumStatus(walletAddress, env);
+  const tierName = premium?.tier ?? null;
   const platformStatus = {
     farcaster: { registered: false, username: null as string | null },
     lens: { registered: false, username: null as string | null },
@@ -168,8 +170,8 @@ export async function handleRegisterPlatformStatus(request: Request, env: Env): 
       platformStatus,
       connectedCount,
       totalPlatforms: 5,
-      isPremium: !!tier,
-      tier,
+      isPremium: !!premium,
+      tier: tierName,
     },
   });
 }
@@ -221,34 +223,5 @@ function buildIdentityLinkPayload(
   }
 }
 
-// ─── Premium check helper ──────────────────────────────────────────────
-
-async function checkPremiumStatus(walletAddress: string, env: Env): Promise<string | null> {
-  // Check SUBSCRIPTIONS KV first
-  if (env.SUBSCRIPTIONS) {
-    try {
-      const identityId = `solana:${walletAddress}`;
-      const raw = await env.SUBSCRIPTIONS.get(identityId);
-      if (raw) {
-        const record = JSON.parse(raw) as { tier: string; expiresAt: number };
-        if (record.expiresAt > Date.now()) {
-          return record.tier;
-        }
-      }
-
-      // Also check ethereum-prefixed identity
-      const ethIdentityId = `ethereum:${walletAddress}`;
-      const ethRaw = await env.SUBSCRIPTIONS.get(ethIdentityId);
-      if (ethRaw) {
-        const record = JSON.parse(ethRaw) as { tier: string; expiresAt: number };
-        if (record.expiresAt > Date.now()) {
-          return record.tier;
-        }
-      }
-    } catch {
-      // Fall through
-    }
-  }
-
-  return null;
-}
+// Premium check helper imported from ../premium
+// (checkPremiumStatus, requirePremiumTier)

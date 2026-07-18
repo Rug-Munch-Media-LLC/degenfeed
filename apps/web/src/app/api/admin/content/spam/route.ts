@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+// TODO: Wire to worker backend
 const MOCK_SPAM = [
   {
     id: 'spam-1',

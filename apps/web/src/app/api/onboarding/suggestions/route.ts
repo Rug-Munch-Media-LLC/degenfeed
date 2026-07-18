@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+// TODO: Wire to worker backend
 /**
  * Curated follow suggestions per protocol.
  * Hardcoded for now — later this can query a trending/people endpoint.

@@ -42,10 +42,10 @@ const PROTOCOL_META: Record<string, ProtocolMeta> = {
     description: 'Fediverse public timeline',
   },
   threads: {
-    label: 'Threads',
+    label: 'Threads (Experimental)',
     icon: '⊛',
     color: '#888',
-    description: 'Meta Threads web scraper',
+    description: 'Meta Threads web scraper (Experimental)',
   },
   reddit: {
     label: 'Reddit',

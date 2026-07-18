@@ -104,7 +104,7 @@ const endpoints: Record<string, Endpoint[]> = {
         {
           name: 'protocols',
           type: 'string',
-          desc: 'Comma-separated: nostr,farcaster,lens,bluesky,mastodon,lemmy,reddit,rss,threads',
+          desc: 'Comma-separated: nostr,farcaster,lens,bluesky,mastodon,lemmy,reddit,rss (threads requires explicit opt-in; experimental)',
         },
         { name: 'sort', type: 'string', desc: 'scored | hot | new | top' },
         { name: 'limit', type: 'number', desc: '1-200 posts per page (default 50)' },
