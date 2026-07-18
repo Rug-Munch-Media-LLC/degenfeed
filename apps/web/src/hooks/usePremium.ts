@@ -75,7 +75,7 @@ export const TIERS: TierConfig[] = [
     ],
     cta: 'Subscribe',
     popular: true,
-    badge: 'Most popular',
+    badge: 'RECOMMENDED',
   },
   {
     id: 'creator',
@@ -98,7 +98,7 @@ export const TIERS: TierConfig[] = [
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 'Custom',
+    price: '$50/mo',
     priceCents: 5000,
     description: 'White-label, API access, and custom infrastructure.',
     features: [

@@ -10,10 +10,10 @@
  * Step 5: Confirmation / success
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { type PremiumTier, TIERS, type TierConfig } from '../hooks/usePremium';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
-import { TIERS, type TierConfig, type PremiumTier } from '../hooks/usePremium';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -36,7 +36,15 @@ function CloseIcon({ onClick }: { onClick: () => void }) {
       className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
       aria-label="Close"
     >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      >
         <path d="M18 6L6 18M6 6l12 12" />
       </svg>
     </button>
@@ -98,10 +106,14 @@ function StepSelectTier({ onSelect }: { onSelect: (tier: PremiumTier) => void })
               <div className="mt-1 flex items-baseline gap-2">
                 {tier.firstMonthPrice ? (
                   <>
-                    <span className="text-2xl font-bold text-degen-400">{tier.firstMonthPrice}</span>
+                    <span className="text-2xl font-bold text-degen-400">
+                      {tier.firstMonthPrice}
+                    </span>
                     <span className="text-xs text-[var(--color-muted)]">first month</span>
                     <span className="text-xs text-[var(--color-muted)]">then</span>
-                    <span className="text-sm font-semibold text-[var(--color-fg)]">{tier.price}</span>
+                    <span className="text-sm font-semibold text-[var(--color-fg)]">
+                      {tier.price}
+                    </span>
                   </>
                 ) : (
                   <span className="text-2xl font-bold text-degen-400">{tier.price}</span>
@@ -111,8 +123,8 @@ function StepSelectTier({ onSelect }: { onSelect: (tier: PremiumTier) => void })
               {tier.firstMonthPrice && (
                 <div className="mt-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5">
                   <p className="text-[11px] text-amber-400 leading-relaxed">
-                    💡 <strong>$10 first month</strong> covers the Farcaster ($5) registration fee + 30% platform fee.
-                    After that it&apos;s {tier.price}/month.
+                    💡 <strong>$10 first month</strong> covers the Farcaster ($5) registration fee +
+                    30% platform fee. After that it&apos;s {tier.price}/month.
                   </p>
                 </div>
               )}
@@ -181,7 +193,15 @@ function StepPaymentMethod({
               <div className="text-sm font-semibold text-[var(--color-fg)]">{m.label}</div>
               <div className="text-xs text-[var(--color-muted)]">{m.desc}</div>
             </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[var(--color-muted)]">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-[var(--color-muted)]"
+            >
               <path d="M9 18l6-6-6-6" />
             </svg>
           </button>
@@ -255,7 +275,8 @@ function StepConfirm({
       </div>
 
       <p className="text-center text-xs text-[var(--color-muted)]">
-        Cancel anytime. Your subscription will auto-renew at the standard rate after the first month.
+        Cancel anytime. Your subscription will auto-renew at the standard rate after the first
+        month.
       </p>
 
       <button
@@ -313,13 +334,7 @@ function StepProcessing({
 
 // ─── Step 5: Success ─────────────────────────────────────────────────────
 
-function StepSuccess({
-  tier,
-  onClose,
-}: {
-  tier: TierConfig;
-  onClose: () => void;
-}) {
+function StepSuccess({ tier, onClose }: { tier: TierConfig; onClose: () => void }) {
   return (
     <div className="flex flex-col items-center py-4 space-y-4">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-degen-500/20 text-3xl">
@@ -332,8 +347,8 @@ function StepSuccess({
         <p className="mt-1 text-sm text-[var(--color-muted)]">
           {tier.firstMonthPrice
             ? `Your first month is ${tier.firstMonthPrice}. After that ${tier.price}.`
-            : `Billing at ${tier.price}.`}
-          {' '}Cancel anytime from Settings.
+            : `Billing at ${tier.price}.`}{' '}
+          Cancel anytime from Settings.
         </p>
       </div>
 
@@ -374,17 +389,13 @@ interface PremiumPaymentModalProps {
   initialTier?: PremiumTier;
 }
 
-export function PremiumPaymentModal({
-  open,
-  onClose,
-  initialTier,
-}: PremiumPaymentModalProps) {
+export function PremiumPaymentModal({ open, onClose, initialTier }: PremiumPaymentModalProps) {
   const { walletAddress } = useAuth();
   const { showToast } = useToast();
 
   const [step, setStep] = useState<PaymentStep>('select-tier');
   const [selectedTier, setSelectedTier] = useState<TierConfig | null>(
-    initialTier ? TIERS.find((t) => t.id === initialTier) ?? null : null,
+    initialTier ? (TIERS.find((t) => t.id === initialTier) ?? null) : null,
   );
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -392,16 +403,20 @@ export function PremiumPaymentModal({
 
   const totalSteps = 5;
   const currentStepIdx =
-    step === 'select-tier' ? 0
-    : step === 'payment-method' ? 1
-    : step === 'confirm' ? 2
-    : step === 'processing' ? 3
-    : 4;
+    step === 'select-tier'
+      ? 0
+      : step === 'payment-method'
+        ? 1
+        : step === 'confirm'
+          ? 2
+          : step === 'processing'
+            ? 3
+            : 4;
 
   // Reset state when modal opens
   const reset = useCallback(() => {
     setStep('select-tier');
-    setSelectedTier(initialTier ? TIERS.find((t) => t.id === initialTier) ?? null : null);
+    setSelectedTier(initialTier ? (TIERS.find((t) => t.id === initialTier) ?? null) : null);
     setPaymentMethod(null);
     setTxHash(null);
     setTxStatus('sending');
@@ -497,11 +512,7 @@ export function PremiumPaymentModal({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
       <div
         className={`relative w-full ${
-          step === 'processing'
-            ? 'max-w-sm'
-            : step === 'success'
-              ? 'max-w-sm'
-              : 'max-w-md'
+          step === 'processing' ? 'max-w-sm' : step === 'success' ? 'max-w-sm' : 'max-w-md'
         } rounded-t-2xl sm:rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-5 shadow-2xl max-h-[90vh] overflow-y-auto animate-slide-up`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -514,9 +525,7 @@ export function PremiumPaymentModal({
         <StepDots current={currentStepIdx} total={totalSteps} />
 
         {/* Step content */}
-        {step === 'select-tier' && (
-          <StepSelectTier onSelect={handleTierSelect} />
-        )}
+        {step === 'select-tier' && <StepSelectTier onSelect={handleTierSelect} />}
 
         {step === 'payment-method' && selectedTier && (
           <StepPaymentMethod
@@ -535,9 +544,7 @@ export function PremiumPaymentModal({
           />
         )}
 
-        {step === 'processing' && (
-          <StepProcessing txHash={txHash} status={txStatus} />
-        )}
+        {step === 'processing' && <StepProcessing txHash={txHash} status={txStatus} />}
 
         {step === 'success' && selectedTier && (
           <StepSuccess tier={selectedTier} onClose={handleClose} />

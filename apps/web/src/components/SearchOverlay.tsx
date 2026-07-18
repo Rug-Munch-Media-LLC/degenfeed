@@ -4,6 +4,7 @@ import { getProtocolColor, getProtocolIcon } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { rerankResults } from '@/lib/fuzzySearch';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -243,6 +244,24 @@ function ResultAvatar({
   );
 }
 
+/** Map a trending title to a consistent emoji icon based on keywords. */
+function getTrendingIcon(title: string): string {
+  const t = title.toLowerCase();
+  if (t.includes('bitcoin') || t.includes('btc')) return '₿';
+  if (t.includes('ethereum') || t.includes('eth')) return '◆';
+  if (t.includes('solana') || t.includes('sol')) return '◎';
+  if (t.includes('defi') || t.includes('yield') || t.includes('liquidity')) return '🏦';
+  if (t.includes('nft') || t.includes('collect')) return '🖼';
+  if (t.includes('ai') || t.includes('agent') || t.includes('llm')) return '🤖';
+  if (t.includes('mem') || t.includes('doge') || t.includes('pepe')) return '😂';
+  if (t.includes('gam') || t.includes('play') || t.includes('metaverse')) return '🎮';
+  if (t.includes('sec') || t.includes('regul') || t.includes('law')) return '⚖️';
+  if (t.includes('layer') || t.includes('l2') || t.includes('scal')) return '⚡';
+  if (t.includes('dao') || t.includes('govern')) return '🗳️';
+  if (t.includes('privacy') || t.includes('zk') || t.includes('zero')) return '🔒';
+  return '🔥';
+}
+
 // ─── Main Component ────────────────────────────────────────────
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -257,6 +276,12 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [protocolFilter, setProtocolFilter] = useState<string | null>(null);
+  const [trendingTopics, setTrendingTopics] = useState<Array<{
+    label: string;
+    query: string;
+    icon: string;
+  }> | null>(null);
+  const [trendingLoading, setTrendingLoading] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -279,6 +304,43 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       setRecentSearches(getRecentSearches());
     }
   }, [open]);
+
+  // Fetch real trending topics from API (with SSR-safe fallback)
+  useEffect(() => {
+    if (!open || query) return;
+    let cancelled = false;
+    setTrendingLoading(true);
+
+    fetch('/api/trending/aggregated?limit=12&minScore=5', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { data?: Array<{ title: string }>; meta?: { total: number } } | null) => {
+        if (cancelled) return;
+        if (data?.data && data.data.length > 0) {
+          setTrendingTopics(
+            data.data.map((item) => ({
+              label: item.title,
+              query: item.title
+                .toLowerCase()
+                .replace(/[^a-z0-9 ]/g, '')
+                .slice(0, 50),
+              icon: getTrendingIcon(item.title),
+            })),
+          );
+        } else {
+          setTrendingTopics(null); // use hardcoded fallback
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setTrendingTopics(null);
+      })
+      .finally(() => {
+        if (!cancelled) setTrendingLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, query]);
 
   // Reset state when opened
   useEffect(() => {
@@ -326,8 +388,26 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           credentials: 'include',
         });
         const data: SearchResponse = res.ok ? ((await res.json()) as SearchResponse) : {};
-        setResults(data.data ?? []);
-        setIdentities(data.identities ?? []);
+        const rawPosts = data.data ?? [];
+        const rawIdentities = data.identities ?? [];
+
+        // Client-side fuzzy re-rank: exact matches first, then prefix, then fuzzy
+        if (rawPosts.length > 0) {
+          const reranked = rerankResults(
+            rawPosts.map((p, i) => ({
+              ...p,
+              searchText: p.text,
+              searchAuthor: p.author.displayName,
+              originalIndex: i,
+            })),
+            q,
+          );
+          setResults(reranked);
+        } else {
+          setResults([]);
+        }
+
+        setIdentities(rawIdentities);
         setCommunities(data.communities ?? []);
         setVideos(data.videos ?? []);
       } catch (err) {
@@ -347,7 +427,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     (val: string) => {
       setQuery(val);
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => doSearch(val), 300);
+      debounceRef.current = setTimeout(() => doSearch(val), 200);
     },
     [doSearch],
   );
@@ -455,8 +535,10 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
   if (!open) return null;
 
+  // Use real trending from API if available, else hardcoded fallback
+  const effectiveTrending = trendingTopics ?? TRENDING_TOPICS;
   const showRecent = !query && recentSearches.length > 0;
-  const showTrending = !query && recentSearches.length === 0;
+  const showTrending = !query && recentSearches.length === 0 && !trendingLoading;
 
   return (
     <div
@@ -468,7 +550,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 pt-[15vh] backdrop-blur-sm"
+      className="fixed inset-0 z-[65] flex items-start justify-center bg-black/60 pt-[15vh] backdrop-blur-sm"
     >
       <div className="w-full max-w-xl px-4">
         {/* ── Search Input ── */}
@@ -553,8 +635,23 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         {/* ── Recent Searches ── */}
         {showRecent && (
           <div className="rounded-2xl bg-[var(--color-card)] shadow-lg shadow-black/10 overflow-hidden">
-            <div className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)] border-b border-[var(--color-border)]">
-              Recent Searches
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)]">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+                Recent Searches
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(RECENT_SEARCHES_KEY);
+                  } catch {}
+                  setRecentSearches([]);
+                }}
+                className="text-[10px] text-[var(--color-muted)] hover:text-red-400 transition-colors"
+                aria-label="Clear recent searches"
+              >
+                Clear
+              </button>
             </div>
             <div className="py-1">
               {recentSearches.map((q) => (
@@ -563,7 +660,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                   type="button"
                   onClick={() => triggerSearch(q)}
                   onMouseDown={(e) => e.preventDefault()}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-fg)] hover:bg-[var(--color-overlay)] transition-colors text-left"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-fg)] hover:bg-[var(--color-overlay)] transition-colors text-left group"
                 >
                   <svg
                     width="14"
@@ -578,7 +675,19 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
-                  <span className="truncate">{q}</span>
+                  <span className="truncate flex-1">{q}</span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    className="shrink-0 text-[var(--color-muted)] opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 </button>
               ))}
             </div>
@@ -592,7 +701,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               Trending on DegenFeed
             </div>
             <div className="p-3 flex flex-wrap gap-1.5">
-              {TRENDING_TOPICS.map((t) => (
+              {effectiveTrending.map((t) => (
                 <button
                   key={t.query}
                   type="button"
@@ -666,6 +775,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               <div className="py-10 text-center">
                 <p className="text-sm text-[var(--color-muted)]">
                   No results for &ldquo;{query}&rdquo;
+                </p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">
+                  Try different keywords or check your spelling
                 </p>
                 {protocolFilter && (
                   <p className="mt-1 text-xs text-[var(--color-muted)]">

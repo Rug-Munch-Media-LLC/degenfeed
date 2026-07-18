@@ -635,7 +635,7 @@ export function FeedTuner({
 
   // ─── Immediate mix persist ─────────────────────────────────
 
-  const persistMixImmediately = useCallback(
+  const _persistMixImmediately = useCallback(
     (config: FeedMixConfig) => {
       saveFeedMixConfig(config);
       onFeedMixChange?.(config);

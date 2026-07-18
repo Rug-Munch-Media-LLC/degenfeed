@@ -46,11 +46,9 @@ export const metadata: Metadata = {
 export default function ShortsLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script
-        id="breadcrumb-shorts"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(shortsBreadcrumb) }}
-      />
+      <Script id="breadcrumb-shorts" type="application/ld+json">{
+        JSON.stringify(shortsBreadcrumb)
+      }</Script>
       {children}
     </>
   );

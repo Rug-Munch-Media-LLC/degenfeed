@@ -143,8 +143,7 @@ export function ProtocolSections({ protocol, color }: Props) {
                     <a
                       href={item.url}
                       target="_blank"
-                      rel="noopener noreferrer"
-                      rel="noopener noreferrer"
+                      
                       className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-[var(--color-muted)]/50"
                     >
                       {inner}

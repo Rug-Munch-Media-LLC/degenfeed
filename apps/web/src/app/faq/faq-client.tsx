@@ -175,8 +175,7 @@ export function FAQClient() {
           <a
             href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
             target="_blank"
-            rel="noopener noreferrer"
-            rel="noopener noreferrer"
+            
             className="text-degen-400 underline"
           >
             Forgejo

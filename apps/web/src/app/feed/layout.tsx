@@ -52,11 +52,9 @@ export const metadata: Metadata = {
 export default function FeedLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script
-        id="breadcrumb-feed"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbStructuredData) }}
-      />
+      <Script id="breadcrumb-feed" type="application/ld+json">{
+        JSON.stringify(breadcrumbStructuredData)
+      }</Script>
       {children}
     </>
   );

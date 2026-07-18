@@ -28,20 +28,22 @@ interface YouTubeSearchResponse {
   items?: YouTubeSearchItem[];
 }
 
+interface YouTubeChannelStatsItem {
+  statistics: {
+    subscriberCount?: string;
+    videoCount?: string;
+    viewCount?: string;
+  };
+  snippet: {
+    title: string;
+    description: string;
+    publishedAt: string;
+    thumbnails?: { default?: { url: string } };
+  };
+}
+
 interface YouTubeChannelStats {
-  items?: Array<{
-    statistics: {
-      subscriberCount?: string;
-      videoCount?: string;
-      viewCount?: string;
-    };
-    snippet: {
-      title: string;
-      description: string;
-      publishedAt: string;
-      thumbnails?: { default?: { url: string } };
-    };
-  }>;
+  items?: YouTubeChannelStatsItem[];
 }
 
 /**
@@ -135,7 +137,7 @@ async function searchYouTubeAPI(
 async function fetchChannelStats(
   channelId: string,
   apiKey: string,
-): Promise<YouTubeChannelStats['items'] extends (infer U)[] ? U : null> {
+): Promise<YouTubeChannelStatsItem | null> {
   try {
     const url = `https://www.googleapis.com/youtube/v3/channels?part=statistics,snippet&id=${channelId}&key=${apiKey}`;
     const controller = new AbortController();

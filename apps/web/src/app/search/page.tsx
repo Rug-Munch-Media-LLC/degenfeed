@@ -4,6 +4,7 @@ import { getProtocolColor, getProtocolIcon } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { rerankResults } from '@/lib/fuzzySearch';
 import { retryFetch } from '../../lib/retryFetch';
 
 // ─── Types ────────────────────────────────────────────────────
@@ -257,11 +258,26 @@ export default function SearchPage() {
         const newCommunities = data.communities ?? [];
         const newVideos = data.videos ?? [];
 
+        // Client-side fuzzy re-rank on initial search (not append)
+        const rerankedPosts = append
+          ? newPosts
+          : newPosts.length > 0
+            ? rerankResults(
+                newPosts.map((p, i) => ({
+                  ...p,
+                  searchText: p.text,
+                  searchAuthor: p.author.displayName,
+                  originalIndex: i,
+                })),
+                q,
+              )
+            : [];
+
         if (append) {
           // Deduplicate by ID when appending using functional updaters
           setPosts((prev) => {
             const existing = new Set(prev.map((p) => p.id));
-            return [...prev, ...newPosts.filter((p) => !existing.has(p.id))];
+            return [...prev, ...rerankedPosts.filter((p) => !existing.has(p.id))];
           });
           setIdentities((prev) => {
             const existing = new Set(prev.map((i) => i.id));
@@ -286,7 +302,7 @@ export default function SearchPage() {
           setHasMore(false);
           loadCountRef.current += 1;
         } else {
-          setPosts(newPosts);
+          setPosts(rerankedPosts);
           setIdentities(newIdentities);
           setCommunities(newCommunities);
           setVideos(newVideos);
@@ -344,7 +360,7 @@ export default function SearchPage() {
       debounceRef.current = setTimeout(() => {
         updateUrl(val);
         doSearch(val);
-      }, 300);
+      }, 200);
     },
     [doSearch, updateUrl],
   );
@@ -673,7 +689,7 @@ export default function SearchPage() {
                 href={video.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="card-hover flex items-start gap-3 p-3 transition-colors"
+                className="card-hover flex items-start gap-4 p-4 transition-colors"
               >
                 <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-lg bg-[var(--color-card)]">
                   {video.thumbnailUrl ? (
@@ -735,7 +751,7 @@ export default function SearchPage() {
                 key={r.id}
                 type="button"
                 onClick={() => router.push(`/post/${encodeURIComponent(r.id)}`)}
-                className="card-hover flex w-full items-start gap-3 p-4 text-left"
+                className="card-hover flex w-full items-start gap-4 p-4 text-left"
               >
                 <div
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold overflow-hidden"

@@ -32,11 +32,9 @@ export const metadata: Metadata = {
 export default function NostrTrendingPage() {
   return (
     <>
-      <Script
-        id="breadcrumb-nostr-trending"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
-      />
+      <Script id="breadcrumb-nostr-trending" type="application/ld+json">{
+        JSON.stringify(breadcrumb)
+      }</Script>
       <PerPlatformTrending protocol="nostr" />
     </>
   );

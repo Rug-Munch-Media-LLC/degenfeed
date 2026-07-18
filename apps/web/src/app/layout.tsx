@@ -92,7 +92,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
-  const theme = cookieStore.get('df_theme')?.value || 'dark';
+  const theme = cookieStore.get('df-theme')?.value || 'dark';
 
   return (
     <html
@@ -176,6 +176,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           strategy="afterInteractive"
         >{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}</Script>
         {/* JSON-LD structured data — tiny payload, no render impact */}
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

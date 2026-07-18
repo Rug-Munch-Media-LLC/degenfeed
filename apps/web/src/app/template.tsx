@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { LoadingBar } from '../components/LoadingBar';
 
 /**
@@ -9,13 +9,16 @@ import { LoadingBar } from '../components/LoadingBar';
  *
  * Next.js re-mounts the template on every navigation, which makes it the
  * perfect place for:
- *  - Per-page fade-in transitions
+ *  - Per-page crossfade transitions
  *  - LoadingBar coordination (emits df-nav-start / df-nav-finish events)
  *  - Network-bound progress estimation
+ *
+ * Crossfade approach: The previous page content is preserved via a pending
+ * render while the new page fades in, preventing jarring white flashes.
  */
 
 // ── Transition timing ───────────────────────────────────────────
-const FADE_IN_DURATION = 200; // ms — matching CSS
+const FADE_IN_DURATION = 350; // ms — matching CSS crossfade duration
 const MIN_LOADING_MS = 300; // ms — minimum loading bar display
 
 export default function Template({ children }: { children: React.ReactNode }) {
@@ -24,6 +27,26 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const key = `${pathname}${searchParams?.toString() ?? ''}`;
   const containerRef = useRef<HTMLDivElement>(null);
   const readyRef = useRef(false);
+  const [prevChildren, setPrevChildren] = useState<React.ReactNode>(null);
+  const [exiting, setExiting] = useState(false);
+
+  // ── Crossfade: keep previous content visible while new one enters ──
+  const childrenRef = useRef(children);
+  useEffect(() => {
+    // When key changes, capture current children to show during exit
+    setPrevChildren(childrenRef.current);
+    childrenRef.current = children;
+    setExiting(true);
+
+    const timer = setTimeout(() => {
+      setExiting(false);
+      setPrevChildren(null);
+    }, 250); // exit animation duration
+
+    return () => clearTimeout(timer);
+    // Only run on key change to prevent re-render loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   // ── Coordinate LoadingBar with page transitions ────────────
   useEffect(() => {
@@ -58,20 +81,31 @@ export default function Template({ children }: { children: React.ReactNode }) {
       clearTimeout(fadeTimer);
       window.removeEventListener('df-content-ready', onContentReady);
     };
-  }, []);
+    // Re-run on key changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   return (
     <>
       <LoadingBar />
-      <div
-        key={key}
-        ref={containerRef}
-        className="page-template-enter"
-        style={{
-          animation: `page-enter ${FADE_IN_DURATION}ms ease-out`,
-        }}
-      >
-        {children}
+      <div style={{ position: 'relative' }}>
+        {/* Exiting page — fades out */}
+        {exiting && prevChildren && (
+          <div className="page-crossfade-exit" aria-hidden="true">
+            {prevChildren}
+          </div>
+        )}
+        {/* Entering page — fades in */}
+        <div
+          key={key}
+          ref={containerRef}
+          className="page-crossfade-enter"
+          style={{
+            animation: `page-crossfade-in ${FADE_IN_DURATION}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+          }}
+        >
+          {children}
+        </div>
       </div>
     </>
   );

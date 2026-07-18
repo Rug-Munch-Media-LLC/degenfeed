@@ -41,11 +41,9 @@ export const metadata: Metadata = {
 export default function NostrPage() {
   return (
     <>
-      <Script
-        id="breadcrumb-nostr"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(nostrBreadcrumb) }}
-      />
+      <Script id="breadcrumb-nostr" type="application/ld+json">{
+        JSON.stringify(nostrBreadcrumb)
+      }</Script>
       <ProtocolFeedPage protocol="nostr" />
     </>
   );

@@ -39,11 +39,9 @@ export const metadata: Metadata = {
 export default function BlueskyPage() {
   return (
     <>
-      <Script
-        id="breadcrumb-bluesky"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blueskyBreadcrumb) }}
-      />
+      <Script id="breadcrumb-bluesky" type="application/ld+json">{
+        JSON.stringify(blueskyBreadcrumb)
+      }</Script>
       <ProtocolFeedPage protocol="bluesky" />
     </>
   );

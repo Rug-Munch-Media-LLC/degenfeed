@@ -154,260 +154,264 @@ export default function HomePage() {
   return (
     <div className="landing-page">
       <div className="mx-auto max-w-[1200px]">
-      {/* ── Skip to app ── */}
-      <a href="/feed" className="skip-to-app">
-        <span className="skip-dot" />
-        Browse Feed
-        <span className="skip-arrow" aria-hidden="true">
-          →
-        </span>
-      </a>
+        {/* ── Skip to app ── */}
+        <a href="/feed" className="skip-to-app">
+          <span className="skip-dot" />
+          Browse Feed
+          <span className="skip-arrow" aria-hidden="true">
+            →
+          </span>
+        </a>
 
-      {/* ══════════════ HERO ══════════════ */}
-      <section className="hero-section" aria-label="Hero">
-        <div className="hero-content">
-          {/* Logo */}
-          <div className="hero-logo">
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-              <rect width="40" height="40" rx="10" fill="#00ff41" />
-              <text
-                x="20"
-                y="27"
-                textAnchor="middle"
-                fill="#000000"
-                fontSize="22"
-                fontWeight="800"
-                fontFamily="system-ui"
-              >
-                D
-              </text>
-            </svg>
-          </div>
-
-          <h1 className="hero-headline">
-            See what&apos;s happening
-            <br />
-            in web3 right now.
-          </h1>
-
-          <p className="hero-sub">
-            DegenFeed brings every network together. Nostr, Farcaster, Lens, Bluesky, Mastodon — all
-            in one place. No account needed. Free forever.
-          </p>
-
-          <div className="hero-ctas">
-            <Link href="/feed" className="cta-primary">
-              Sign in with wallet
-            </Link>
-            <Link href="/feed" className="cta-secondary">
-              Browse without signing in
-            </Link>
-          </div>
-
-          <p className="hero-stats">
-            10 protocols &middot; 319 RSS sources &middot; 137 Reddit communities &middot; 68
-            YouTube channels &middot; 55K PeerTube videos
-          </p>
-        </div>
-      </section>
-
-      {/* ══════════════ FEATURES ══════════════ */}
-      <section className="features-section" id="features" aria-labelledby="features-heading">
-        <h2 id="features-heading" className="section-heading">
-          Everything in one place.
-        </h2>
-
-        <div className="features-grid">
-          {features.map((f) => (
-            <article key={f.title} className="feature-card">
-              <h3 className="feature-title">{f.title}</h3>
-              <p className="feature-desc">{f.desc}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ══════════════ PREVIEW ══════════════ */}
-      <section className="preview-section" id="preview" aria-labelledby="preview-heading">
-        <h2 id="preview-heading" className="section-heading">
-          What you&apos;ll see.
-        </h2>
-        <p className="preview-sub">
-          Posts from Nostr, Farcaster, Lens, Bluesky, Mastodon in one timeline.
-        </p>
-
-        <div className="preview-feed">
-          {mockPosts.map((post) => (
-            <article key={post.handle + post.time} className="preview-post">
-              <div className="preview-post-header">
-                <div
-                  className="preview-post-avatar"
-                  style={{ backgroundColor: `${post.protocolColor}22`, color: post.protocolColor }}
+        {/* ══════════════ HERO ══════════════ */}
+        <section className="hero-section" aria-label="Hero">
+          <div className="hero-content">
+            {/* Logo */}
+            <div className="hero-logo">
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <rect width="40" height="40" rx="10" fill="#00ff41" />
+                <text
+                  x="20"
+                  y="27"
+                  textAnchor="middle"
+                  fill="#000000"
+                  fontSize="22"
+                  fontWeight="800"
+                  fontFamily="system-ui"
                 >
-                  {post.author.charAt(0).toUpperCase()}
-                </div>
-                <div className="preview-post-meta">
-                  <span className="preview-post-author">{post.author}</span>
-                  <span className="preview-post-handle">
-                    {post.handle} &middot; {post.time}
+                  D
+                </text>
+              </svg>
+            </div>
+
+            <h1 className="hero-headline">
+              See what&apos;s happening
+              <br />
+              in web3 right now.
+            </h1>
+
+            <p className="hero-sub">
+              DegenFeed brings every network together. Nostr, Farcaster, Lens, Bluesky, Mastodon —
+              all in one place. No account needed. Free forever.
+            </p>
+
+            <div className="hero-ctas">
+              <Link href="/feed" className="cta-primary">
+                Sign in with wallet
+              </Link>
+              <Link href="/feed" className="cta-secondary">
+                Browse without signing in
+              </Link>
+            </div>
+
+            <p className="hero-stats">
+              10 protocols &middot; 319 RSS sources &middot; 137 Reddit communities &middot; 68
+              YouTube channels &middot; 55K PeerTube videos
+            </p>
+          </div>
+        </section>
+
+        {/* ══════════════ FEATURES ══════════════ */}
+        <section className="features-section" id="features" aria-labelledby="features-heading">
+          <h2 id="features-heading" className="section-heading">
+            Everything in one place.
+          </h2>
+
+          <div className="features-grid">
+            {features.map((f) => (
+              <article key={f.title} className="feature-card">
+                <h3 className="feature-title">{f.title}</h3>
+                <p className="feature-desc">{f.desc}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        {/* ══════════════ PREVIEW ══════════════ */}
+        <section className="preview-section" id="preview" aria-labelledby="preview-heading">
+          <h2 id="preview-heading" className="section-heading">
+            What you&apos;ll see.
+          </h2>
+          <p className="preview-sub">
+            Posts from Nostr, Farcaster, Lens, Bluesky, Mastodon in one timeline.
+          </p>
+
+          <div className="preview-feed">
+            {mockPosts.map((post) => (
+              <article key={post.handle + post.time} className="preview-post">
+                <div className="preview-post-header">
+                  <div
+                    className="preview-post-avatar"
+                    style={{
+                      backgroundColor: `${post.protocolColor}22`,
+                      color: post.protocolColor,
+                    }}
+                  >
+                    {post.author.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="preview-post-meta">
+                    <span className="preview-post-author">{post.author}</span>
+                    <span className="preview-post-handle">
+                      {post.handle} &middot; {post.time}
+                    </span>
+                  </div>
+                  <span
+                    className="preview-post-badge"
+                    style={{
+                      backgroundColor: `${post.protocolColor}18`,
+                      color: post.protocolColor,
+                      borderColor: `${post.protocolColor}30`,
+                    }}
+                  >
+                    {post.icon} {post.protocol}
                   </span>
                 </div>
-                <span
-                  className="preview-post-badge"
-                  style={{
-                    backgroundColor: `${post.protocolColor}18`,
-                    color: post.protocolColor,
-                    borderColor: `${post.protocolColor}30`,
-                  }}
-                >
-                  {post.icon} {post.protocol}
-                </span>
-              </div>
-              <p className="preview-post-content">{post.content}</p>
-              <div className="preview-post-actions">
-                <span className="preview-post-action">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                  {post.replies}
-                </span>
-                <span className="preview-post-action">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                  </svg>
-                  {post.likes}
-                </span>
-                <span className="preview-post-action">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </span>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ══════════════ COMPARISON ══════════════ */}
-      <section className="comparison-section" id="compare" aria-labelledby="compare-heading">
-        <h2 id="compare-heading" className="section-heading">
-          What makes DegenFeed different.
-        </h2>
-
-        <div className="comparison-table-wrap">
-          <table className="comparison-table">
-            <thead>
-              <tr>
-                <th>Feature</th>
-                <th className="col-degen">DegenFeed</th>
-                <th>Twitter/X</th>
-                <th>Farcaster</th>
-                <th>Lens</th>
-              </tr>
-            </thead>
-            <tbody>
-              {comparisons.map((row) => (
-                <tr key={row.feature}>
-                  <td className="comp-feature">{row.feature}</td>
-                  <td className="comp-value col-degen">{row.degenfeed}</td>
-                  <td className="comp-value">{row.twitter}</td>
-                  <td className="comp-value">{row.farcaster}</td>
-                  <td className="comp-value">{row.lens}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* ══════════════ FINAL CTA ══════════════ */}
-      <section className="cta-section" aria-labelledby="cta-heading">
-        <div className="cta-inner">
-          <h2 id="cta-heading" className="cta-heading">
-            Ready to join?
-          </h2>
-          <p className="cta-sub">No account needed. No surveillance. No platform fees.</p>
-          <div className="hero-ctas">
-            <Link href="/feed" className="cta-primary cta-primary-lg">
-              Sign in with wallet
-            </Link>
-            <Link href="/feed" className="cta-secondary">
-              Browse without signing in
-            </Link>
+                <p className="preview-post-content">{post.content}</p>
+                <div className="preview-post-actions">
+                  <span className="preview-post-action">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    {post.replies}
+                  </span>
+                  <span className="preview-post-action">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                    </svg>
+                    {post.likes}
+                  </span>
+                  <span className="preview-post-action">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </div>
+              </article>
+            ))}
           </div>
+        </section>
 
-          <nav className="cta-footer-nav" aria-label="Footer">
-            <Link href="/about" className="footer-link">
-              About
-            </Link>
-            <Link href="/faq" className="footer-link">
-              FAQ
-            </Link>
-            <Link href="/docs" className="footer-link">
-              Docs
-            </Link>
-            <Link href="/api-docs" className="footer-link">
-              API
-            </Link>
-            <Link href="/status" className="footer-link">
-              Status
-            </Link>
-            <Link href="/privacy" className="footer-link">
-              Privacy
-            </Link>
-            <Link href="/terms" className="footer-link">
-              Terms
-            </Link>
-            <Link href="/developers" className="footer-link">
-              Developers
-            </Link>
-            <a
-              href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="footer-link"
-            >
-              Source
-            </a>
-          </nav>
+        {/* ══════════════ COMPARISON ══════════════ */}
+        <section className="comparison-section" id="compare" aria-labelledby="compare-heading">
+          <h2 id="compare-heading" className="section-heading">
+            What makes DegenFeed different.
+          </h2>
 
-          <p className="cta-copyright">
-            &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product. No
-            account required. Open source. Free forever.
-          </p>
-        </div>
-      </section>
-      </div>{/* end max-w-[1200px] */}
+          <div className="comparison-table-wrap">
+            <table className="comparison-table">
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th className="col-degen">DegenFeed</th>
+                  <th>Twitter/X</th>
+                  <th>Farcaster</th>
+                  <th>Lens</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparisons.map((row) => (
+                  <tr key={row.feature}>
+                    <td className="comp-feature">{row.feature}</td>
+                    <td className="comp-value col-degen">{row.degenfeed}</td>
+                    <td className="comp-value">{row.twitter}</td>
+                    <td className="comp-value">{row.farcaster}</td>
+                    <td className="comp-value">{row.lens}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* ══════════════ FINAL CTA ══════════════ */}
+        <section className="cta-section" aria-labelledby="cta-heading">
+          <div className="cta-inner">
+            <h2 id="cta-heading" className="cta-heading">
+              Ready to join?
+            </h2>
+            <p className="cta-sub">No account needed. No surveillance. No platform fees.</p>
+            <div className="hero-ctas">
+              <Link href="/feed" className="cta-primary cta-primary-lg">
+                Sign in with wallet
+              </Link>
+              <Link href="/feed" className="cta-secondary">
+                Browse without signing in
+              </Link>
+            </div>
+
+            <nav className="cta-footer-nav" aria-label="Footer">
+              <Link href="/about" className="footer-link">
+                About
+              </Link>
+              <Link href="/faq" className="footer-link">
+                FAQ
+              </Link>
+              <Link href="/docs" className="footer-link">
+                Docs
+              </Link>
+              <Link href="/api-docs" className="footer-link">
+                API
+              </Link>
+              <Link href="/status" className="footer-link">
+                Status
+              </Link>
+              <Link href="/privacy" className="footer-link">
+                Privacy
+              </Link>
+              <Link href="/terms" className="footer-link">
+                Terms
+              </Link>
+              <Link href="/developers" className="footer-link">
+                Developers
+              </Link>
+              <a
+                href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer-link"
+              >
+                Source
+              </a>
+            </nav>
+
+            <p className="cta-copyright">
+              &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product. No
+              account required. Open source. Free forever.
+            </p>
+          </div>
+        </section>
+      </div>
+      {/* end max-w-[1200px] */}
     </div>
   );
 }

@@ -55,7 +55,10 @@ function shortToPostShape(video: ShortVideoItem, idx: number): UnifiedPost {
     protocol: video.source === 'youtube' ? 'youtube' : 'peertube',
     author: {
       id: `${video.source}:${video.authorName.replace(/[^a-zA-Z0-9]/g, '_')}`,
-      primary: { protocol: video.source === 'youtube' ? 'youtube' : 'peertube', id: video.authorName },
+      primary: {
+        protocol: video.source === 'youtube' ? 'youtube' : 'peertube',
+        id: video.authorName,
+      },
       handles: {} as Record<string, string | null>,
       displayName: video.authorName,
       bio: '',
@@ -69,7 +72,11 @@ function shortToPostShape(video: ShortVideoItem, idx: number): UnifiedPost {
     text: video.title,
     html: undefined,
     embeds: [
-      { kind: 'video', url: video.videoUrl, meta: { thumbnail: video.thumbnailUrl, duration: video.duration } },
+      {
+        kind: 'video',
+        url: video.videoUrl,
+        meta: { thumbnail: video.thumbnailUrl, duration: video.duration },
+      },
       { kind: 'link', url: video.sourceUrl },
     ],
     createdAt: video.publishedAt,
@@ -122,60 +129,63 @@ function useShortFeed(): FetchState & { loadMore: () => void; refresh: () => voi
   const cursorRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   // Read topic filter from URL params or use defaults
-  const [topicFilter, setTopicFilter] = useState<string[]>(() => {
+  const [topicFilter, _setTopicFilter] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     const params = new URLSearchParams(window.location.search);
     const topics = params.get('topics');
     return topics ? topics.split(',').filter(Boolean) : [];
   });
 
-  const fetchVideos = useCallback(async (append = false) => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+  const fetchVideos = useCallback(
+    async (append = false) => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    setState((s) => ({
-      ...s,
-      ...(append ? { loadingMore: true } : { loading: true, error: null }),
-    }));
-
-    try {
-      const params = new URLSearchParams({
-        limit: String(append ? LOAD_MORE_LIMIT : INITIAL_LIMIT),
-      });
-      if (append && cursorRef.current) params.set('cursor', cursorRef.current);
-      if (topicFilter.length > 0) params.set('topics', topicFilter.join(','));
-
-      const res = await fetch(`/api/shorts?${params.toString()}`, {
-        credentials: 'include',
-        signal: controller.signal,
-        cache: 'no-store',
-        headers: { 'cache-control': 'no-store' },
-      });
-
-      if (!res.ok) throw new Error(`Shorts feed returned ${res.status}`);
-      const data = (await res.json()) as ShortsResponse;
-      const fetched = data.videos ?? [];
-      cursorRef.current = data.cursor;
-
-      setState((prev) => ({
-        posts: append ? [...prev.posts, ...fetched] : fetched,
-        loading: false,
-        loadingMore: false,
-        error: null,
-        hasMore: data.hasMore,
-        sourceCounts: data.sources,
+      setState((s) => ({
+        ...s,
+        ...(append ? { loadingMore: true } : { loading: true, error: null }),
       }));
-    } catch (err) {
-      if ((err as Error).name === 'AbortError') return;
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        loadingMore: false,
-        error: err instanceof Error ? err.message : 'Failed to load shorts',
-      }));
-    }
-  }, [topicFilter]);
+
+      try {
+        const params = new URLSearchParams({
+          limit: String(append ? LOAD_MORE_LIMIT : INITIAL_LIMIT),
+        });
+        if (append && cursorRef.current) params.set('cursor', cursorRef.current);
+        if (topicFilter.length > 0) params.set('topics', topicFilter.join(','));
+
+        const res = await fetch(`/api/shorts?${params.toString()}`, {
+          credentials: 'include',
+          signal: controller.signal,
+          cache: 'no-store',
+          headers: { 'cache-control': 'no-store' },
+        });
+
+        if (!res.ok) throw new Error(`Shorts feed returned ${res.status}`);
+        const data = (await res.json()) as ShortsResponse;
+        const fetched = data.videos ?? [];
+        cursorRef.current = data.cursor;
+
+        setState((prev) => ({
+          posts: append ? [...prev.posts, ...fetched] : fetched,
+          loading: false,
+          loadingMore: false,
+          error: null,
+          hasMore: data.hasMore,
+          sourceCounts: data.sources,
+        }));
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          loadingMore: false,
+          error: err instanceof Error ? err.message : 'Failed to load shorts',
+        }));
+      }
+    },
+    [topicFilter],
+  );
 
   const loadMore = useCallback(() => {
     if (state.loadingMore || !state.hasMore) return;
@@ -198,7 +208,8 @@ function useShortFeed(): FetchState & { loadMore: () => void; refresh: () => voi
 // ─── Page Component ───────────────────────────────────────────────────────
 
 export default function ShortsPage() {
-  const { posts, loading, loadingMore, error, hasMore, loadMore, refresh, sourceCounts } = useShortFeed();
+  const { posts, loading, loadingMore, error, hasMore, loadMore, refresh, sourceCounts } =
+    useShortFeed();
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const isTransitioning = useRef(false);

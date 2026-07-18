@@ -553,6 +553,33 @@
   }
 }
 
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -615,6 +642,28 @@
   }
 }
 
+@keyframes page-crossfade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes page-crossfade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
 @keyframes compose-pulse {
   0%,
   100% {
@@ -653,6 +702,21 @@
   --duration-fast: 150ms;
   --duration-normal: 250ms;
   --duration-slow: 400ms;
+
+  /* ── Z-Index Scale ── */
+  --z-base: 1;
+  --z-sticky: 10;
+  --z-feed-header: 30;
+  --z-dropdown: 40;
+  --z-bottom-nav: 45;
+  --z-scroll-top: 48;
+  --z-mini-player: 48;
+  --z-drawer-backdrop: 50;
+  --z-drawer: 60;
+  --z-modal-backdrop: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+  --z-loading-bar: 100;
 }
 
 /* ── Animation Utility Classes ──────────────────────────────────── */
@@ -670,6 +734,15 @@
   .animate-slide-up {
     animation: slide-up 0.25s ease-out;
   }
+  .animate-slide-in-left {
+    animation: slide-in-left 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-slide-out-left {
+    animation: slide-out-left 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .animate-backdrop-in {
+    animation: backdrop-in 0.2s ease-out forwards;
+  }
   .animate-toast-in {
     animation: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -677,10 +750,20 @@
     animation: page-enter 0.4s ease-out;
   }
   .page-template-enter {
-    animation: page-enter 0.2s ease-out;
+    animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .page-template-exit {
-    animation: page-exit 0.15s ease-in forwards;
+    animation: page-exit 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  /* Crossfade variant — new page fades in while old is still visible */
+  .page-crossfade-enter {
+    animation: page-crossfade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .page-crossfade-exit {
+    animation: page-crossfade-out 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
   }
   .animate-shimmer {
     background: linear-gradient(
@@ -783,6 +866,14 @@
     transform: none !important;
   }
 
+  .animate-slide-in-left,
+  .animate-slide-out-left,
+  .animate-backdrop-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
   .press-effect:active {
     transform: none !important;
   }
@@ -853,6 +944,17 @@
 
   .loading-retry,
   .loading-timeout {
+    animation: none !important;
+  }
+
+  /* Pull-to-refresh reduced motion */
+  .ptr-indicator.ptr-refreshing,
+  .ptr-indicator.ptr-ready,
+  .ptr-spring-container {
+    animation: none !important;
+  }
+
+  .ptr-indicator.ptr-refreshing .ptr-arrow {
     animation: none !important;
   }
 }
@@ -1630,6 +1732,29 @@
  * UI POLISH — Pull-to-refresh spring indicator
  * ═══════════════════════════════════════════════════════════════ */
 
+@keyframes ptr-spring-bounce {
+  0% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-6px) scale(1.08); }
+  50% { transform: translateY(0) scale(0.96); }
+  70% { transform: translateY(-2px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes ptr-arrow-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(-4px); opacity: 1; }
+}
+
+@keyframes ptr-spin-refresh {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes ptr-glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(0, 255, 65, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(0, 255, 65, 0.5); }
+}
+
 .ptr-indicator {
   display: flex;
   align-items: center;
@@ -1642,14 +1767,43 @@
   transition:
     opacity 0.2s ease-out,
     transform 0.2s ease-out;
+  will-change: transform, opacity;
 }
+
 .ptr-indicator .ptr-arrow {
   width: 1rem;
   height: 1rem;
-  transition: transform 0.2s ease-out;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
 .ptr-indicator.ptr-ready .ptr-arrow {
   transform: rotate(180deg);
+}
+
+.ptr-indicator.ptr-refreshing {
+  animation: ptr-spring-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ptr-indicator.ptr-refreshing .ptr-arrow {
+  animation: ptr-spin-refresh 0.8s linear infinite;
+}
+
+.ptr-indicator.ptr-ready {
+  animation: ptr-glow-pulse 1.2s ease-in-out infinite;
+}
+
+.ptr-icon-spring {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ptr-icon-active {
+  transform: rotate(180deg);
+}
+
+/* Spring overlay for pull-to-refresh container */
+.ptr-spring-container {
+  overflow: hidden;
+  transition: height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ═══════════════════════════════════════════════════════════════

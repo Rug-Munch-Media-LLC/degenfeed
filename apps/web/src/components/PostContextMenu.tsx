@@ -110,7 +110,7 @@ export function PostContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-[60] min-w-[180px] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-1 shadow-2xl backdrop-blur-xl"
+      className="fixed z-[55] min-w-[180px] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-1 shadow-2xl backdrop-blur-xl"
       style={{ left: adjustedPos.x, top: adjustedPos.y }}
       role="menu"
       aria-label="Post actions"
