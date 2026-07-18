@@ -1,3 +1,5 @@
+'use client';
+
 import type { ContentProof, Embed } from '@degenfeed/types';
 import { isShortFormVideo, type VideoInfo } from '@degenfeed/utils';
 import Image from 'next/image';

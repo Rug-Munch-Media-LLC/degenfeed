@@ -117,7 +117,7 @@ export function CategoryBreakCard({ niches, index }: CategoryBreakProps) {
         </div>
         <Link
           href={meta.href}
-          className="group inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-glass-border)] px-3 py-1 text-[11px] font-medium text-[var(--color-muted)] transition-all hover:border-transparent hover:text-white"
+          className="group inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-glass-border)] px-3 py-1 text-[11px] font-medium text-[var(--color-muted)] transition-all hover:border-transparent hover:text-[var(--color-fg)]"
           style={
             {
               '--hover-bg': `${meta.color}22`,
