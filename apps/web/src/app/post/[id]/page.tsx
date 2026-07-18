@@ -4,15 +4,16 @@ import { addBookmark, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, getProtocolColor } from '@degenfeed/ui';
 import { formatTimeAgo } from '@degenfeed/utils';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { useAuth } from '../../../components/AuthProvider';
 
 const TipModal = dynamic(
   () => import('../../../components/TipModal').then((m) => ({ default: m.TipModal })),
   { ssr: false, loading: () => null },
 );
+
 import { sanitizeHtml } from '../../../lib/sanitize';
 
 export const revalidate = 3600;
@@ -190,7 +191,9 @@ function PostCard({
               {embedData.siteName ||
                 new URL(post.embeds.find((e) => e.kind === 'link')?.url || '').hostname}
             </div>
-            <div className="mt-0.5 font-medium text-sm text-[var(--color-fg)]">{embedData.title}</div>
+            <div className="mt-0.5 font-medium text-sm text-[var(--color-fg)]">
+              {embedData.title}
+            </div>
             {embedData.description && (
               <div className="mt-0.5 text-xs text-gray-500 line-clamp-2">
                 {embedData.description}
@@ -362,11 +365,7 @@ function sortReplies(replies: ThreadReply[], mode: ThreadSort): ThreadReply[] {
 }
 
 /** Nest replies-to-replies under their parent; unmatched parents float to root. */
-function buildThreadTree(
-  replies: ThreadReply[],
-  rootUri: string,
-  mode: ThreadSort,
-): ThreadNode[] {
+function buildThreadTree(replies: ThreadReply[], rootUri: string, mode: ThreadSort): ThreadNode[] {
   const sorted = sortReplies(replies, mode);
   const nodes = new Map<string, ThreadNode>();
   for (const r of sorted) {
@@ -453,10 +452,7 @@ function ThreadReplyCard({
         </div>
       </div>
       {children.length > 0 && (
-        <div
-          className="ml-4 border-l-2 pl-3"
-          style={{ borderColor: `${color}44` }}
-        >
+        <div className="ml-4 border-l-2 pl-3" style={{ borderColor: `${color}44` }}>
           {children.map((child) => (
             <ThreadReplyCard
               key={child.reply.id}
@@ -585,7 +581,14 @@ export default function PostPage({ params }: Props) {
     async (action: EngagementAction, postId: string) => {
       if (action === 'bookmark' || action === 'unbookmark') {
         try {
-          if (action === 'bookmark') await addBookmark(postId, post?.dfUri ?? '', post?.protocol ?? '', post?.text.slice(0, 60) ?? '', post?.author.displayName || '');
+          if (action === 'bookmark')
+            await addBookmark(
+              postId,
+              post?.dfUri ?? '',
+              post?.protocol ?? '',
+              post?.text.slice(0, 60) ?? '',
+              post?.author.displayName || '',
+            );
           else await removeBookmark(postId);
           return { ok: true };
         } catch (err) {
@@ -642,7 +645,7 @@ export default function PostPage({ params }: Props) {
     <ErrorBoundary>
       <div className="mx-auto max-w-2xl px-4 py-6">
         <a
-          href="/home"
+          href="/feed"
           className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-[var(--color-fg)]"
         >
           &larr; Back to feed
@@ -807,11 +810,7 @@ export default function PostPage({ params }: Props) {
                 </div>
                 <div className="space-y-2">
                   {threadTree.map((node) => (
-                    <ThreadReplyCard
-                      key={node.reply.id}
-                      node={node}
-                      opAuthorId={post.author.id}
-                    />
+                    <ThreadReplyCard key={node.reply.id} node={node} opAuthorId={post.author.id} />
                   ))}
                 </div>
               </section>
@@ -820,7 +819,16 @@ export default function PostPage({ params }: Props) {
         )}
 
         {tipPost && (
-          <TipModal open={!!tipPost} onClose={() => setTipPost(null)} recipientProtocol={tipPost.protocol} recipientAuthorId={tipPost.author.id} recipientDisplayName={tipPost.author.displayName || tipPost.author.handles[tipPost.protocol] || ''} postContext={{ protocol: tipPost.protocol, authorId: tipPost.author.id }} />
+          <TipModal
+            open={!!tipPost}
+            onClose={() => setTipPost(null)}
+            recipientProtocol={tipPost.protocol}
+            recipientAuthorId={tipPost.author.id}
+            recipientDisplayName={
+              tipPost.author.displayName || tipPost.author.handles[tipPost.protocol] || ''
+            }
+            postContext={{ protocol: tipPost.protocol, authorId: tipPost.author.id }}
+          />
         )}
       </div>
     </ErrorBoundary>

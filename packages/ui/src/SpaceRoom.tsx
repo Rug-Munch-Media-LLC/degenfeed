@@ -67,6 +67,7 @@
 
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolBadge';
 
@@ -585,7 +586,7 @@ export function SpaceRoom({
                   className="flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5"
                 >
                   {speaker.avatarUrl ? (
-                    <img src={speaker.avatarUrl} alt="" className="h-5 w-5 rounded-full" />
+                    <Image src={speaker.avatarUrl} alt="" width={20} height={20} className="h-5 w-5 rounded-full" unoptimized />
                   ) : (
                     <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-muted)] text-[8px] font-bold">
                       {speaker.displayName[0]?.toUpperCase() || '?'}

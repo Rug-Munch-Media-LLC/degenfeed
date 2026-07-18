@@ -106,9 +106,7 @@ export type { ReportModalProps } from './ReportModal';
 export { ReportModal } from './ReportModal';
 export type {
   ReputationBadgeProgress,
-  ReputationBadgeProgress,
   ReputationBadgeProps,
-  ReputationBadgeScore,
   ReputationBadgeScore,
   ReputationLevel,
 } from './ReputationBadge';

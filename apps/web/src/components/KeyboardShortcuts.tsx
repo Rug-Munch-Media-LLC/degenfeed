@@ -13,8 +13,6 @@ const GROUPS: ShortcutGroup[] = [
     title: 'Navigation',
     icon: '⌂',
     shortcuts: [
-      { keys: ['j', '↓'], desc: 'Next post' },
-      { keys: ['k', '↑'], desc: 'Previous post' },
       { keys: ['Enter'], desc: 'Open post' },
       { keys: ['Esc'], desc: 'Close modal / overlay' },
       { keys: ['?'], desc: 'Show / hide shortcuts' },
@@ -47,16 +45,17 @@ const GROUPS: ShortcutGroup[] = [
   {
     title: 'Search',
     icon: '⌕',
-    shortcuts: [
-      { keys: ['Ctrl', 'K'], desc: 'Open search (Cmd+K on Mac)' },
-    ],
+    shortcuts: [{ keys: ['Ctrl', 'K'], desc: 'Open search (Cmd+K on Mac)' }],
   },
   {
     title: 'Theme & Layout',
     icon: '☀',
     shortcuts: [
       { keys: ['Ctrl', 'Shift', 'D'], desc: 'Toggle dark mode' },
-      { keys: ['Ctrl', 'Shift', 'L'], desc: 'Cycle feed layout (compact → comfortable → media-grid → reader)' },
+      {
+        keys: ['Ctrl', 'Shift', 'L'],
+        desc: 'Cycle feed layout (compact → comfortable → media-grid → reader)',
+      },
     ],
   },
 ];
@@ -179,13 +178,7 @@ export const KeyboardShortcuts = memo(function KeyboardShortcuts({
             className="rounded-lg p-1.5 text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
             aria-label="Close shortcuts"
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              aria-hidden="true"
-            >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
                 d="M12 4L4 12M4 4l8 8"
                 stroke="currentColor"
@@ -207,7 +200,10 @@ export const KeyboardShortcuts = memo(function KeyboardShortcuts({
           {isFirstVisit && (
             <div className="mt-6 rounded-xl border border-white/[0.04] bg-white/[0.02] px-4 py-3">
               <p className="text-center text-xs text-[var(--color-muted)]">
-                Press <kbd className="inline-flex min-w-[1.5rem] items-center justify-center rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[11px] font-medium leading-none text-[var(--color-muted)]">?</kbd>{' '}
+                Press{' '}
+                <kbd className="inline-flex min-w-[1.5rem] items-center justify-center rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[11px] font-medium leading-none text-[var(--color-muted)]">
+                  ?
+                </kbd>{' '}
                 at any time to view shortcuts
               </p>
             </div>

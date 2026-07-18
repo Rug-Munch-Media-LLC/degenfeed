@@ -5,14 +5,12 @@ describe('@degenfeed/feed-core', () => {
     const mod = await import('./index');
     expect(typeof mod.extractEmbeds).toBe('function');
     expect(typeof mod.detectNiches).toBe('function');
-    expect(typeof mod.dedupeKey).toBe('function');
     expect(typeof mod.buildUnifiedPost).toBe('function');
     expect(typeof mod.emptyIdentity).toBe('function');
     expect(typeof mod.emptyMetrics).toBe('function');
     expect(typeof mod.isSpamPost).toBe('function');
     expect(typeof mod.isRelevantPost).toBe('function');
     expect(typeof mod.deduplicatePosts).toBe('function');
-    expect(typeof mod.contentFingerprint).toBe('function');
   });
 
   it('should detect crypto niche from text', async () => {
@@ -33,9 +31,17 @@ describe('@degenfeed/feed-core', () => {
     expect(niches).toContain('bitcoin');
   });
 
-  it('should build dedupe key', async () => {
-    const { dedupeKey } = await import('./index');
-    expect(dedupeKey('nostr', 'abc123')).toBe('nostr:abc123');
+  it('should build unified post with dedupe key', async () => {
+    const { buildUnifiedPost, emptyIdentity } = await import('./index');
+    const post = buildUnifiedPost({
+      protocol: 'nostr',
+      nativeId: 'abc123',
+      author: emptyIdentity(),
+      text: 'Hello world',
+      createdAt: Date.now(),
+      raw: {},
+    });
+    expect(post.id).toBe('nostr:abc123');
   });
 
   it('should build unified post', async () => {

@@ -1,0 +1,150 @@
+/* ═══════════════════════════════════════════════════════════════
+ * LAYOUT — Reader
+ * Full article view. Clean reading layout.
+ * Applied when <html> has class 'layout-reader'
+ * Extracted from globals.css for dynamic loading
+ * ═══════════════════════════════════════════════════════════════ */
+
+:global(.layout-reader) {
+  /* ── Post cards: clean reading cards ── */
+  & .post-card {
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 24px;
+    margin-bottom: 24px;
+    padding: 32px;
+    font-size: 18px;
+    line-height: 1.7;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  & .post-card:hover {
+    background: transparent;
+  }
+
+  /* ── Full content, no truncation ── */
+  & .post-card .content-text {
+    -webkit-line-clamp: unset;
+    display: block;
+    overflow: visible;
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--color-fg);
+    max-width: 100%;
+  }
+
+  /* ── Larger avatar ── */
+  & .post-card .avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  /* ── Author info ── */
+  & .post-card .author-row {
+    margin-bottom: 16px;
+  }
+
+  & .post-card .author-name {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  & .post-card .author-handle {
+    font-size: 14px;
+    color: var(--color-muted);
+    display: block;
+  }
+
+  & .post-card .author-handle time {
+    font-size: 13px;
+  }
+
+  /* ── Image grid ── */
+  & .post-card .image-grid {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  & .post-card .image-grid > * {
+    max-height: 480px;
+    object-fit: contain;
+    background: #000;
+  }
+
+  /* ── Link previews ── */
+  & .post-card .link-preview {
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+
+  & .post-card .link-preview .link-title {
+    font-size: 15px;
+  }
+
+  /* ── Actions centered, spacious ── */
+  & .post-card .actions {
+    justify-content: center;
+    gap: 32px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  & .post-card .action-btn {
+    font-size: 15px;
+    padding: 8px 16px;
+  }
+
+  & .post-card .action-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* ── Engagement stats ── */
+  & .post-card .engagement-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+
+  /* ── Niche tags ── */
+  & .post-card .niche-tags {
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  /* ── Feed header ── */
+  & .feed-header {
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  & .quality-controls,
+  & .protocol-pills {
+    display: none;
+  }
+
+  /* ── Composer ── */
+  & .composer {
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ── Main feed ── */
+  & .main-feed {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

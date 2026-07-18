@@ -39,7 +39,7 @@
     "@hono/node-server": "^1",
     "tsx": "^4",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0",
+    "vitest": "^4.1.10",
     "wrangler": "^4.107.0"
   }
 }

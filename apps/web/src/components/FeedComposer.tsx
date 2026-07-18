@@ -5,6 +5,7 @@ import { ComposePreview, getProtocolColor, getProtocolIcon } from '@degenfeed/ui
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { publishNoteToNostr } from '../lib/nostr';
+import { useToast } from './Toast';
 
 const TARGETS = [
   { id: 'nostr', label: 'Nostr', charLimit: 50000 },
@@ -35,6 +36,7 @@ export function FeedComposer({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bridgeToNostr, setBridgeToNostr] = useState(false);
   const [posting, setPosting] = useState(false);
+  const { showToast } = useToast();
   const [avatar, setAvatar] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>();
   const [handle, setHandle] = useState<string>();
@@ -84,6 +86,13 @@ export function FeedComposer({
       const el = textareaRef.current;
       if (el) {
         el.style.height = 'auto';
+      }
+      const succeeded = Object.values(results).filter((r) => r.ok).length;
+      const targetLabels = targets
+        .filter((t) => results[t]?.ok)
+        .map((t) => TARGETS.find((x) => x.id === t)?.label || t);
+      if (succeeded > 0) {
+        showToast('success', `Posted to ${targetLabels.join(', ')}`);
       }
     } finally {
       setPosting(false);

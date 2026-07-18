@@ -1,8 +1,8 @@
 'use client';
 
 import { TrendingSidebar, type TrendingSidebarData } from '@degenfeed/ui';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
-import { useEffect, useState, useCallback, useRef } from 'react';
 
 interface FeedSidebarProps {
   trending?: { topic: string; count: number; score: number }[];
@@ -102,7 +102,9 @@ export function FeedSidebar({
         <div className="sidebar-card rounded-2xl border border-degen-500/30 bg-gradient-to-br from-degen-500/15 to-degen-500/5 p-4 backdrop-blur-xl">
           <div className="mb-2 flex items-center gap-2">
             <span className="text-degen-400">◆</span>
-            <p className="text-sm font-semibold text-[var(--color-fg)]">Read free, post with one click</p>
+            <p className="text-sm font-semibold text-[var(--color-fg)]">
+              Read free, post with one click
+            </p>
           </div>
           <p className="mb-3 text-xs text-gray-400">
             No account needed to browse. Sign in with a wallet to post across all networks.
@@ -114,9 +116,9 @@ export function FeedSidebar({
       )}
 
       {/* Live protocol status */}
-        <div className="sidebar-card rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-sm font-bold text-[var(--color-fg)]">Live networks</h2>
+      <div className="sidebar-card rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="text-sm font-bold text-[var(--color-fg)]">Live networks</h2>
           <span className="text-[10px] text-gray-500">{totalPosts} posts</span>
         </div>
         {protocols.length === 0 ? (
@@ -175,7 +177,7 @@ export function FeedSidebar({
           Follow creators across 8 protocols to build your timeline.
         </p>
         <a
-          href="/discover/people"
+          href="/discover"
           className="mt-2 inline-block text-[11px] font-medium text-degen-400 hover:text-degen-300 transition-colors"
         >
           Discover people →

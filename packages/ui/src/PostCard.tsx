@@ -11,33 +11,14 @@ import {
   unmuteIdentity,
 } from '@degenfeed/storage';
 import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
-import {
-  detectTokens,
-  detectVideoFromEmbeds,
-  formatTimeAgo,
-  isShortFormVideo,
-  parseVideoUrl,
-  type VideoInfo,
-} from '@degenfeed/utils';
-import type { ContentProof } from '@degenfeed/types';
+import { detectTokens, formatTimeAgo, parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-/**
- * Schedule low-priority work during idle periods.
- * Falls back to setTimeout if requestIdleCallback is unavailable (SSR, older browsers).
- */
-const scheduleIdle =
-  typeof window !== 'undefined' && 'requestIdleCallback' in window
-    ? (fn: () => void) => window.requestIdleCallback(fn, { timeout: 2000 })
-    : (fn: () => void) => setTimeout(fn, 1);
 import { BlueskyPostContext } from './BlueskyPostContext';
 import { CommunityBadge } from './CommunityBadge';
 import { EmbedModal } from './EmbedModal';
-import { FrameEmbed } from './FrameEmbed';
 import { IdentityBadge } from './IdentityBadge';
 import { LemmyThreadView } from './LemmyThreadView';
-import { LemmyVoting } from './LemmyVoting';
 import { LensPublicationBadge } from './LensPublicationBadge';
 import { MastodonInstanceContext } from './MastodonInstanceContext';
 import { NostrRelayBadge } from './NostrRelayBadge';
@@ -47,51 +28,21 @@ import {
   getProtocolLabel as _getProtocolLabel,
   ProtocolBadge,
 } from './ProtocolBadge';
-import { QuickTipButton } from './QuickTipButton';
+import { PostCardEngagement, type PostCardEngagementProps, applyOptimistic } from './PostCardEngagement';
+import { FrameCard, ImageGrid, LinkPreview, PermanenceBadge, VideoEmbedCard } from './PostCardMedia';
 import { ReputationBadge, type ReputationBadgeScore, type ReputationBadgeProgress } from './ReputationBadge';
 import { ReportModal } from './ReportModal';
 import { TokenChart } from './TokenChart';
 import { TranslationPreview } from './TranslationPreview';
-import { VideoPlayer } from './VideoPlayer';
 
-interface FrameData {
-  url: string;
-  image: string;
-  title?: string;
-  buttons: Array<{ index: number; label: string; action?: string; target?: string }>;
-  postUrl?: string;
-  version: string;
-}
-
-function FrameCard({ url }: { url: string }) {
-  const [frame, setFrame] = useState<FrameData | null>(null);
-  const [_loading] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/frame/resolve?url=${encodeURIComponent(url)}`)
-      .then((r) => (r.ok ? (r.json() as Promise<FrameData>) : null))
-      .then((d) => {
-        if (!cancelled && d?.image) setFrame(d);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [url]);
-
-  if (!frame) return null;
-
-  return (
-    <FrameEmbed
-      url={frame.url}
-      image={frame.image}
-      title={frame.title}
-      buttons={frame.buttons}
-      postUrl={frame.postUrl}
-    />
-  );
-}
+/**
+ * Schedule low-priority work during idle periods.
+ * Falls back to setTimeout if requestIdleCallback is unavailable (SSR, older browsers).
+ */
+const scheduleIdle =
+  typeof window !== 'undefined' && 'requestIdleCallback' in window
+    ? (fn: () => void) => window.requestIdleCallback(fn, { timeout: 2000 })
+    : (fn: () => void) => setTimeout(fn, 1);
 
 export type { ReportModalProps } from './ReportModal';
 export type { UnifiedPost };
@@ -172,12 +123,6 @@ export interface PostCardProps {
 
 const MAX_TEXT_LENGTH = 500;
 
-function formatCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
-
 function buildScoreTooltip(score: NonNullable<UnifiedPost['score']>): string {
   const lines = [
     `Score: ${score.total.toFixed(2)}`,
@@ -194,255 +139,14 @@ function buildScoreTooltip(score: NonNullable<UnifiedPost['score']>): string {
   return lines.join('\n');
 }
 
-function LinkPreview({ embed }: { embed: Embed }) {
-  const meta = embed.meta as { title?: string; description?: string; image?: string } | undefined;
-  const title = meta?.title;
-  const description = meta?.description;
-  const image = meta?.image;
-  const host = embed.url ? embed.url.replace(/^https?:\/\//, '').split('/')[0] : '';
-
-  return (
-    <a
-      href={embed.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="link-preview group mt-2 block overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:bg-[var(--color-muted)]"
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
-    >
-      {image && (
-        <div className="relative aspect-video w-full overflow-hidden">
-          <Image
-            src={image}
-            alt={title || ''}
-            fill
-            sizes="(max-width: 640px) 100vw, 600px"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
-      )}
-      <div className="p-3">
-        {host && <p className="mb-1 text-[11px] text-gray-500 uppercase tracking-wide">{host}</p>}
-        {title && (
-          <p className="link-title mb-1 text-sm font-semibold text-[var(--color-fg)] line-clamp-1">{title}</p>
-        )}
-        {description && <p className="link-desc text-xs text-gray-400 line-clamp-2">{description}</p>}
-        {!title && !description && (
-          <p className="truncate text-xs text-degen-500">{embed.url.replace(/^https?:\/\//, '')}</p>
-        )}
-      </div>
-    </a>
-  );
-}
-
-/**
- * Renders a video embed based on the detected video type.
- * YouTube → VideoPlayer with YouTube embed
- * Direct (.mp4/.webm) → VideoPlayer with native video
- * PeerTube handled separately via PeerTubeEmbed component
- */
-function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
-  const isShort = isShortFormVideo(videoInfo);
-
-  if (videoInfo.platform === 'youtube') {
-    return (
-      <div className={isShort ? 'max-w-[360px] mx-auto' : ''}>
-        <VideoPlayer
-          youtubeId={videoInfo.id}
-          platform="youtube"
-          aspectRatio={isShort ? '9:16' : '16:9'}
-          className="mt-2"
-        />
-      </div>
-    );
-  }
-
-  // Direct .mp4 / .webm video
-  return (
-    <VideoPlayer
-      src={videoInfo.url}
-      platform="direct"
-      aspectRatio={isShort ? '9:16' : '16:9'}
-      className="mt-2"
-    />
-  );
-}
-
-function ImageGrid({ images }: { images: string[] }) {
-  if (images.length === 1) {
-    return (
-              <div className="image-grid mt-2 max-h-80 overflow-hidden rounded-xl">
-        <Image
-          src={images[0]!}
-          alt=""
-          width={200}
-          height={200}
-          className="h-full w-full object-cover"
-          loading="lazy"
-          decoding="async"
-        />
-      </div>
-    );
-  }
-  if (images.length === 2) {
-    return (
-      <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
-        {images.map((url) => (
-          <Image
-            key={url}
-            src={url}
-            alt=""
-            width={200}
-            height={200}
-            className="aspect-square w-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-        ))}
-      </div>
-    );
-  }
-  return (
-    <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
-      {images.slice(0, 4).map((url, idx) => (
-        <div key={url} className="relative aspect-square">
-          <Image
-            src={url}
-            alt=""
-            width={200}
-            height={200}
-            className="h-full w-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-          {idx === 3 && images.length > 4 && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm font-bold text-[var(--color-fg)]">
-              +{images.length - 4}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
+// ─── Local state type (shared with PostCardEngagement) ────────────
 
 interface LocalState {
   engagement: UnifiedPost['engagement'];
   metrics: UnifiedPost['metrics'];
 }
 
-function applyOptimistic(state: LocalState, action: EngagementAction): LocalState {
-  const { engagement, metrics } = state;
-  switch (action) {
-    case 'like':
-      return {
-        engagement: { ...engagement, viewerLiked: true },
-        metrics: { ...metrics, likes: metrics.likes + 1 },
-      };
-    case 'unlike':
-      return {
-        engagement: { ...engagement, viewerLiked: false },
-        metrics: { ...metrics, likes: Math.max(0, metrics.likes - 1) },
-      };
-    case 'repost':
-      return {
-        engagement: { ...engagement, viewerReposted: true },
-        metrics: { ...metrics, reposts: metrics.reposts + 1 },
-      };
-    case 'unrepost':
-      return {
-        engagement: { ...engagement, viewerReposted: false },
-        metrics: { ...metrics, reposts: Math.max(0, metrics.reposts - 1) },
-      };
-    case 'bookmark':
-      return {
-        engagement: { ...engagement, viewerBookmarked: true },
-        metrics,
-      };
-    case 'unbookmark':
-      return {
-        engagement: { ...engagement, viewerBookmarked: false },
-        metrics,
-      };
-    case 'reply':
-      return {
-        engagement,
-        metrics: { ...metrics, replies: metrics.replies + 1 },
-      };
-    case 'react':
-      return { engagement, metrics };
-    default:
-      return state;
-  }
-}
-
-// ─── Permanence Badge Component ─────────────────────────────────
-
-function PermanenceBadge({ proof }: { proof: ContentProof }) {
-  const tooltipParts: string[] = [];
-  if (proof.arweaveTxId) {
-    tooltipParts.push(`Arweave: ${proof.arweaveTxId.slice(0, 8)}...${proof.arweaveTxId.slice(-4)}`);
-  }
-  if (proof.ipfsCid) {
-    tooltipParts.push(`IPFS: ${proof.ipfsCid.slice(0, 8)}...`);
-  }
-  if (proof.onChainTxHash) {
-    const chainName = proof.onChainChainId === 8453 ? 'Base' : `Chain ${proof.onChainChainId}`;
-    tooltipParts.push(
-      `${chainName}: ${proof.onChainTxHash.slice(0, 8)}...${proof.onChainTxHash.slice(-4)}`,
-    );
-  }
-
-  const tooltip = tooltipParts.length > 0
-    ? `Stored permanently\n${tooltipParts.join('\n')}`
-    : 'Stored permanently';
-
-  return (
-    <div className="mb-3 flex flex-wrap gap-2 items-center">
-      {/* Arweave / IPFS permanent badge */}
-      <a
-        href={
-          proof.arweaveTxId
-            ? `https://arweave.net/${proof.arweaveTxId}`
-            : proof.ipfsCid
-              ? `https://ipfs.io/ipfs/${proof.ipfsCid}`
-              : undefined
-        }
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 rounded-full bg-cyan-950/40 px-2 py-0.5 text-[10px] font-medium text-cyan-400 hover:bg-cyan-900/50 transition-colors"
-        title={tooltip}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
-        <span>🔗</span> Permanent
-      </a>
-
-      {/* On-chain anchor badge */}
-      {proof.onChainTxHash && (
-        <a
-          href={
-            proof.onChainChainId === 8453
-              ? `https://basescan.org/tx/${proof.onChainTxHash}`
-              : proof.onChainChainId === 1
-                ? `https://etherscan.io/tx/${proof.onChainTxHash}`
-                : undefined
-          }
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-full bg-amber-950/40 px-2 py-0.5 text-[10px] font-medium text-amber-400 hover:bg-amber-900/50 transition-colors"
-          title={`On-chain anchor on ${proof.onChainChainId === 8453 ? 'Base' : `Chain ${proof.onChainChainId}`}: ${proof.onChainTxHash.slice(0, 8)}...${proof.onChainTxHash.slice(-4)}`}
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          <span>🔒</span> On-chain
-        </a>
-      )}
-    </div>
-  );
-}
+// ─── Main component ───────────────────────────────────────────────
 
 export const PostCard = memo(function PostCard({
   post,
@@ -460,6 +164,8 @@ export const PostCard = memo(function PostCard({
   onAdminBan,
   reputation,
   reputationProgress,
+  onShowMoreLikeThis,
+  onShowLessLikeThis,
 }: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
@@ -555,7 +261,7 @@ export const PostCard = memo(function PostCard({
     let cancelled = false;
     scheduleIdle(() => {
       if (cancelled) return;
-      fetch(`/api/cross-reply/status?parentPostUri=${encodeURIComponent(post.dfUri)}`)
+      fetch(`/api/cross-reply/status?parentPostUri=${encodeURIComponent(post.dfUri!)}`)
         .then((r) =>
           r.ok ? (r.json() as Promise<{ total: number; byProtocol: Record<string, number> }>) : null,
         )
@@ -588,7 +294,6 @@ export const PostCard = memo(function PostCard({
       setReplyText('');
       setShowReply(false);
     } else if (action === 'bookmark') {
-      // Sync to local storage + server KV
       try {
         await addBookmark(
           post.id,
@@ -802,7 +507,6 @@ export const PostCard = memo(function PostCard({
       if (onTranslatePublish) {
         onTranslatePublish(content, targetProtocol);
       } else {
-        // Fallback: copy to clipboard
         void navigator.clipboard.writeText(content);
       }
     },
@@ -818,12 +522,9 @@ export const PostCard = memo(function PostCard({
     };
     try {
       if (navigator.share && window.matchMedia('(max-width: 768px)').matches) {
-        // Mobile: use native share sheet
         await navigator.share(shareData);
       } else {
-        // Desktop: copy link to clipboard
         await navigator.clipboard.writeText(shareUrl);
-        // Dispatch a custom event so the app's Toast listener can pick it up
         window.dispatchEvent(
           new CustomEvent('df-toast', {
             detail: { kind: 'success', message: 'Link copied to clipboard' },
@@ -839,6 +540,33 @@ export const PostCard = memo(function PostCard({
     onReport?.(post.id);
     setShowReportModal(false);
   }, [onReport, post.id]);
+
+  const engagementProps: PostCardEngagementProps = useMemo(
+    () => ({
+      post,
+      localState,
+      bridgeReplies,
+      showReply,
+      replyText,
+      animatingLike,
+      onPerform: perform,
+      onSetShowReply: setShowReply,
+      onSetReplyText: setReplyText,
+      onShare: handleShare,
+      onTip,
+      onCrossReplyOpen,
+    }),
+    [
+      post,
+      localState,
+      bridgeReplies,
+      showReply,
+      replyText,
+      animatingLike,
+      onTip,
+      onCrossReplyOpen,
+    ],
+  );
 
   return (
     <>
@@ -869,7 +597,6 @@ export const PostCard = memo(function PostCard({
             decoding="async"
           />
           <div className="flex-1 min-w-0">
-            {/* ── Community row for Lemmy posts ── */}
             {post.protocol === 'lemmy' && post.community && (
               <div className="lemmy-community-row mb-0.5">
                 <CommunityBadge
@@ -897,7 +624,6 @@ export const PostCard = memo(function PostCard({
                   ✓
                 </span>
               )}
-              {/* ── Reputation badge ── */}
               {reputation && (
                 <ReputationBadge
                   score={reputation}
@@ -911,7 +637,6 @@ export const PostCard = memo(function PostCard({
               )}
               <ProtocolBadge protocol={post.protocol} />
 
-              {/* ── Cross-protocol identity badges ── */}
               {crossProtocolBadges && crossProtocolBadges.length > 0 && (
                 <div className="flex shrink-0 flex-wrap gap-1">
                   {crossProtocolBadges.slice(0, 3).map((p) => (
@@ -925,7 +650,7 @@ export const PostCard = memo(function PostCard({
                 </div>
               )}
 
-              {/* ── Three-dot menu ── */}
+              {/* Three-dot menu */}
               {!isSelf && (
                 <div ref={menuRef} className="relative shrink-0">
                   <button
@@ -964,14 +689,7 @@ export const PostCard = memo(function PostCard({
                         onClick={handleEmbed}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-blue-400"
-                        >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-blue-400">
                           <path d="M4 2v12M12 2v12M2 4h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
                         Embed post
@@ -983,20 +701,12 @@ export const PostCard = memo(function PostCard({
                         onClick={handleFlagAsSpam}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-orange-400"
-                        >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-orange-400">
                           <path d="M4 2v12M4 2l8 3-8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         Flag as spam
                       </button>
 
-                      {/* ── Quick-tune: Show more/less like this ── */}
                       {post.niches.length > 0 && onShowMoreLikeThis && (
                         <button
                           type="button"
@@ -1038,20 +748,12 @@ export const PostCard = memo(function PostCard({
                         onClick={handleReport}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-yellow-500"
-                        >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-yellow-500">
                           <path d="M8 1L16 15H0L8 1Z" fill="currentColor" opacity="0.8" />
                         </svg>
                         Report post
                       </button>
 
-                      {/* ── Admin actions ── */}
                       {isAdmin && onAdminRemove && (
                         <button
                           type="button"
@@ -1081,7 +783,6 @@ export const PostCard = memo(function PostCard({
                         </button>
                       )}
 
-                      {/* ── Translate ── */}
                       <button
                         type="button"
                         role="menuitem"
@@ -1091,24 +792,9 @@ export const PostCard = memo(function PostCard({
                         }}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-blue-400"
-                        >
-                          <path
-                            d="M2 2h6l1 2H3L2 2zm2 4h4l1 2H5l-1-2zm3 4h2l3 6H8l-1-2-1 2H4l3-6z"
-                            fill="currentColor"
-                          />
-                          <path
-                            d="M12 2l2 4-2 4"
-                            stroke="currentColor"
-                            strokeWidth="1.2"
-                            strokeLinecap="round"
-                          />
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-blue-400">
+                          <path d="M2 2h6l1 2H3L2 2zm2 4h4l1 2H5l-1-2zm3 4h2l3 6H8l-1-2-1 2H4l3-6z" fill="currentColor" />
+                          <path d="M12 2l2 4-2 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                         </svg>
                         Translate to...
                       </button>
@@ -1142,7 +828,6 @@ export const PostCard = memo(function PostCard({
                         </div>
                       )}
 
-                      {/* ── Mute this community ── */}
                       {post.community && (
                         <button
                           type="button"
@@ -1150,14 +835,7 @@ export const PostCard = memo(function PostCard({
                           onClick={handleMuteCommunity}
                           className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                         >
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            aria-hidden="true"
-                            className="shrink-0 text-purple-400"
-                          >
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-purple-400">
                             <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
                             <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
                             <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
@@ -1167,7 +845,6 @@ export const PostCard = memo(function PostCard({
                         </button>
                       )}
 
-                      {/* ── Mute word ── */}
                       <button
                         type="button"
                         role="menuitem"
@@ -1177,14 +854,7 @@ export const PostCard = memo(function PostCard({
                         }}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-orange-400"
-                        >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-orange-400">
                           <path d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                           <line x1="2" y1="14" x2="14" y2="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
@@ -1192,7 +862,6 @@ export const PostCard = memo(function PostCard({
                       </button>
 
                       {showMuteWordMenu && (() => {
-                        // Extract candidate words from the post text (unique, non-trivial words)
                         const candidates = [
                           ...new Set(
                             (post.text || '')
@@ -1231,24 +900,9 @@ export const PostCard = memo(function PostCard({
                         onClick={handleBlock}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-red-400"
-                        >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-red-400">
                           <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-                          <line
-                            x1="3.5"
-                            y1="8"
-                            x2="12.5"
-                            y2="8"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
+                          <line x1="3.5" y1="8" x2="12.5" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
                         {blocked ? 'Unblock user' : 'Block user'}
                       </button>
@@ -1258,29 +912,9 @@ export const PostCard = memo(function PostCard({
                         onClick={handleMuteFromMenu}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                          className="shrink-0 text-gray-400"
-                        >
-                          <path
-                            d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
-                          <line
-                            x1="2"
-                            y1="14"
-                            x2="14"
-                            y2="2"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                          />
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-gray-400">
+                          <path d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          <line x1="2" y1="14" x2="14" y2="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
                         {muted ? 'Unmute user' : 'Mute user'}
                       </button>
@@ -1381,10 +1015,10 @@ export const PostCard = memo(function PostCard({
             <TokenChart key={`${token.symbol ?? token.address}-${i}`} {...token} compact />
           ))}
 
-        {/* Embeds */}
+        {/* Embeds (media, links, frames, videos) */}
         {post.embeds.length > 0 && (
           <div className="mb-3">
-            {(() => {
+                {(() => {
               const images = post.embeds.filter((e) => e.kind === 'image').map((e) => e.url);
               const links = post.embeds.filter((e) => e.kind === 'link');
               const videos = post.embeds.filter((e) => e.kind === 'video');
@@ -1392,22 +1026,17 @@ export const PostCard = memo(function PostCard({
               return (
                 <>
                   {images.length > 0 && <ImageGrid images={images} />}
-                  {/* Explicit frame embeds (server-side tagged) */}
                   {frames.map((embed) => (
                     <FrameCard key={`frame-${embed.url}`} url={embed.url} />
                   ))}
-                  {/* Fallback: farcaster links may contain frames — probe the first link */}
                   {frames.length === 0 &&
                     post.protocol === 'farcaster' &&
                     links.length > 0 &&
                     links[0]?.url && <FrameCard url={links[0].url} />}
                   {links.map((embed) => {
                     const linkVideoInfo = parseVideoUrl(embed.url);
-                    // If a link is actually a video URL, render the native player
                     if (linkVideoInfo) {
-                      return (
-                        <VideoEmbedCard key={`link-video-${embed.url}`} videoInfo={linkVideoInfo} />
-                      );
+                      return <VideoEmbedCard key={`link-video-${embed.url}`} videoInfo={linkVideoInfo} />;
                     }
                     return <LinkPreview key={`link-${embed.url}`} embed={embed} />;
                   })}
@@ -1449,10 +1078,8 @@ export const PostCard = memo(function PostCard({
           </div>
         )}
 
-        {/* ── Permanence badge ── */}
         {post.contentProof && <PermanenceBadge proof={post.contentProof} />}
 
-        {/* ── Protocol context ── */}
         {post.protocol === 'lemmy' && <LemmyThreadView post={post} />}
         {(post.protocol as string) === 'peertube' && (
           <PeerTubeEmbed
@@ -1489,173 +1116,7 @@ export const PostCard = memo(function PostCard({
         {post.protocol === 'bluesky' && <BlueskyPostContext post={post} />}
 
         {/* Engagement metrics + Tip */}
-        <div className="actions flex items-center gap-4 text-xs text-gray-500">
-          {post.protocol === 'lemmy' ? (
-            <LemmyVoting
-              score={post.metrics.likes - ((post.raw as { counts?: { downvotes?: number } } | undefined)?.counts?.downvotes ?? 0)}
-              upvotes={post.metrics.likes}
-              downvotes={(post.raw as { counts?: { downvotes?: number } } | undefined)?.counts?.downvotes ?? 0}
-              comments={post.metrics.replies}
-              compact
-            />
-          ) : (
-            <>
-              <button
-                type="button"
-                className={`flex items-center gap-1 transition-colors hover:text-red-400 press-effect ${
-                  localState.engagement.viewerLiked ? 'text-red-400' : ''
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void perform(localState.engagement.viewerLiked ? 'unlike' : 'like');
-                }}
-                aria-label={`${localState.metrics.likes} likes`}
-              >
-                <span
-                  className={`inline-block ${animatingLike ? 'animate-heart-pop' : ''}`}
-                  style={{
-                    transformOrigin: 'center',
-                    transition: 'transform var(--duration-fast) ease-out',
-                  }}
-                >
-                  {localState.engagement.viewerLiked ? '❤' : '♡'}
-                </span>{' '}
-                {formatCount(localState.metrics.likes)}
-              </button>
-              <button
-                type="button"
-                className={`flex items-center gap-1 transition-colors hover:text-green-400 ${localState.engagement.viewerReposted ? 'text-green-400' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void perform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
-                }}
-                aria-label={`${localState.metrics.reposts} reposts`}
-              >
-                ↻ {formatCount(localState.metrics.reposts)}
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-1 transition-colors hover:text-blue-400"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowReply((v) => !v);
-                }}
-                aria-label={`${localState.metrics.replies} replies`}
-              >
-                ↩ {formatCount(localState.metrics.replies)}
-              </button>
-              {onCrossReplyOpen && (
-                <button
-                  type="button"
-                  className="flex items-center gap-1 transition-colors hover:text-purple-400"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCrossReplyOpen(post);
-                  }}
-                  aria-label="Reply from another protocol"
-                  title="Reply from another protocol via the DegenFeed bridge"
-                >
-                  ⇄
-                </button>
-              )}
-              <button
-                type="button"
-                className={`flex items-center gap-1 transition-colors hover:text-purple-400 ${localState.engagement.viewerBookmarked ? 'text-purple-400' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void perform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
-                }}
-                aria-label={localState.engagement.viewerBookmarked ? 'Bookmarked' : 'Bookmark'}
-              >
-                {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
-              </button>
-            </>
-          )}
-          <button
-            type="button"
-            className="flex items-center gap-1 transition-colors hover:text-purple-400"
-            onClick={(e) => {
-              e.stopPropagation();
-              void handleShare();
-            }}
-            aria-label="Share"
-          >
-            ↗ Share
-          </button>
-          {post.dfUri && (
-            <button
-              type="button"
-              className="flex items-center gap-1 font-mono text-[10px] transition-colors hover:text-degen-400"
-              onClick={(e) => {
-                e.stopPropagation();
-                void navigator.clipboard.writeText(post.dfUri as string);
-              }}
-              aria-label="Copy df:// URI"
-              title={post.dfUri as string}
-            >
-              ⛓ df://
-            </button>
-          )}
-          {onTip && (
-            <QuickTipButton
-              postId={post.id}
-              authorAddress={post.author.keys.evmAddress || post.author.keys.solanaAddress}
-              tipCount={post.tipCount}
-              onOpenModal={() => onTip(post)}
-            />
-          )}
-          {post.protocol === 'nostr' && post.metrics.quotes > 0 && onTip && (
-            <button
-              type="button"
-              className="flex items-center gap-1 text-yellow-400 text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                onTip(post);
-              }}
-              title={`${post.metrics.quotes} zaps`}
-            >
-              ⚡{post.metrics.quotes}
-            </button>
-          )}
-        </div>
-
-        {bridgeReplies && Object.keys(bridgeReplies).length > 0 && (
-          <p
-            className="mt-2 flex items-center gap-1.5 text-[11px] text-purple-300"
-            title="Cross-protocol replies bridged via DegenFeed"
-          >
-            <span className="font-bold text-purple-400">⇄</span>
-            Replies from:{' '}
-            {Object.entries(bridgeReplies)
-              .map(([protocol, count]) => `${_getProtocolLabel(protocol)} (${count})`)
-              .join(', ')}
-          </p>
-        )}
-
-        {showReply && (
-          <form
-            className="mt-3 flex gap-2"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!replyText.trim()) return;
-              void perform('reply', replyText.trim());
-            }}
-          >
-            <input
-              type="text"
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Write a reply..."
-              className="flex-1 rounded border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-1.5 text-sm text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500 focus:outline-none"
-              maxLength={1000}
-            />
-            <button type="submit" className="btn-primary text-xs">
-              Reply
-            </button>
-          </form>
-        )}
+        <PostCardEngagement {...engagementProps} />
       </article>
       <EmbedModal
         open={showEmbedModal}
@@ -1673,7 +1134,7 @@ export const PostCard = memo(function PostCard({
         onSubmitted={handleReportSubmitted}
       />
 
-      {/* ── Translation preview overlay ── */}
+      {/* Translation preview overlay */}
       {translationResult && (
         <section
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
@@ -1691,7 +1152,6 @@ export const PostCard = memo(function PostCard({
           aria-label="Translation preview"
           role="dialog"
         >
-          {/* biome-ignore lint/a11y/noStaticElementInteractions: dialog panel needs stopPropagation to prevent backdrop close on inner clicks */}
           <div
             className="flex w-full max-w-xl flex-col rounded-t-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl sm:rounded-2xl"
             onClick={(e) => e.stopPropagation()}
@@ -1709,21 +1169,9 @@ export const PostCard = memo(function PostCard({
                 className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 aria-label="Close"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  role="img"
-                  aria-label="Close icon"
-                >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" role="img" aria-label="Close icon">
                   <title>Close</title>
-                  <path
-                    d="M12 4L4 12M4 4l8 8"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
+                  <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </button>
             </div>

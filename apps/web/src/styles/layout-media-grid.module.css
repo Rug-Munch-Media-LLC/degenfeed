@@ -1,0 +1,93 @@
+/* ═══════════════════════════════════════════════════════════════
+ * LAYOUT — Media Grid
+ * Show images/videos only. Text hidden. Click to expand.
+ * Applied when <html> has class 'layout-media-grid'
+ * Extracted from globals.css for dynamic loading
+ * ═══════════════════════════════════════════════════════════════ */
+
+:global(.layout-media-grid) {
+  /* ── Post cards: hide text, show media only ── */
+  & .post-card {
+    padding: 8px;
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+  }
+
+  & .post-card .content-text,
+  & .post-card .author-handle,
+  & .post-card .actions-row,
+  & .post-card .action-btn,
+  & .post-card .engagement-stats,
+  & .post-card .three-dot-menu,
+  & .post-card .link-preview,
+  & .post-card .niche-tags,
+  & .post-card .author-row .flex-1 > *:not(.author-name),
+  & .post-card .repost-indicator,
+  & .post-card .token-chart,
+  & .post-card .paywall-badge {
+    display: none;
+  }
+
+  /* Keep author row minimal — just avatar + name */
+  & .post-card .author-row {
+    margin-bottom: 6px;
+  }
+
+  & .post-card .author-row .avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  & .post-card .author-name {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  & .post-card .author-handle {
+    display: none;
+  }
+
+  /* ── Image grid: masonry-style ── */
+  & .post-card .image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 4px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  & .post-card .image-grid > * {
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  & .post-card .image-grid > *:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ── Single image ── */
+  & .post-card .image-grid img,
+  & .post-card .image-grid video {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  /* ── Feed header should be compact ── */
+  & .feed-header {
+    padding-top: 0;
+  }
+
+  & .quality-controls,
+  & .protocol-pills {
+    display: none;
+  }
+
+  /* ── Increase main feed width for grid ── */
+  & .main-feed {
+    max-width: 100%;
+  }
+}

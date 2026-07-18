@@ -1,26 +1,88 @@
 /**
- * ThreadsProvider — Dual-path Threads content fetcher.
+ * ⚠️ ThreadsProvider — Dual-path Threads content fetcher
  *
+ * ⚠️ ⚠️ ⚠️  CRITICAL WARNING  ⚠️ ⚠️ ⚠️
  * Threads has NO public read API for arbitrary profiles. Meta's official
  * Threads API (graph.threads.net) is a PUBLISHING API only — it lets
  * authenticated users read their OWN threads, not arbitrary public feeds.
  *
+ * This provider uses HTML SCRAPING of public profile pages. When Meta
+ * changes their page structure (which they do regularly), this will break.
+ * This is a BEST-EFFORT integration — DO NOT rely on it for critical paths.
+ *
+ * If you need reliable Threads data, petition Meta to open a public API:
+ *   https://developers.facebook.com/support/
+ *
  * Strategy:
  *   1. READ curated handles: HTML scraper (public profile pages).
- *      Brittle but there is no alternative. Meta does not offer a public
- *      read API and has no RSS feeds for Threads.
+ *      Brittle but there is no alternative.
  *   2. READ authenticated user's feed: official graph.threads.net API.
  *      Used via @degenfeed/threads-sdk when the user has signed in.
  *   3. WRITE (publish): official graph.threads.net API (see publish.ts).
  *   4. ENGAGE: NOT supported. The Threads API does not support liking,
  *      reposting, or replying to other people's threads. Users must use
  *      the Threads app for engagement.
+ *
+ * Circuit breaker:
+ *   If the scraper fails more than 5 times in a rolling 1-hour window,
+ *   the circuit opens and Threads is SKIPPED for 30 minutes to avoid
+ *   wasted compute and error noise. The breaker resets automatically.
  */
 
 import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import { DEFAULT_TIMEOUT_MS, fetchText, withTimeout } from '../utils';
+
+// ─── Circuit breaker ─────────────────────────────────────────────────────
+// If scrapeProfile fails >5× in a rolling hour, skip for 30 min.
+
+interface CircuitBreakerState {
+  failureTimestamps: number[];
+  openUntil: number;
+}
+
+let circuitBreaker: CircuitBreakerState = {
+  failureTimestamps: [],
+  openUntil: 0,
+};
+
+const CB_THRESHOLD = 5;        // failures before opening
+const CB_WINDOW_MS = 60 * 60 * 1000; // 1 hour rolling window
+const CB_COOLDOWN_MS = 30 * 60 * 1000; // 30 minute cooldown
+
+function isCircuitOpen(): boolean {
+  const now = Date.now();
+  if (circuitBreaker.openUntil > now) return true;
+  // Prune timestamps outside the rolling window
+  circuitBreaker.failureTimestamps = circuitBreaker.failureTimestamps.filter(
+    (t) => now - t < CB_WINDOW_MS,
+  );
+  return false;
+}
+
+function recordFailure(): void {
+  const now = Date.now();
+  circuitBreaker.failureTimestamps.push(now);
+  // Prune old timestamps
+  circuitBreaker.failureTimestamps = circuitBreaker.failureTimestamps.filter(
+    (t) => now - t < CB_WINDOW_MS,
+  );
+  if (circuitBreaker.failureTimestamps.length > CB_THRESHOLD) {
+    circuitBreaker.openUntil = now + CB_COOLDOWN_MS;
+    console.warn(
+      `[threads] Circuit opened for ${CB_COOLDOWN_MS / 60000} min after ${circuitBreaker.failureTimestamps.length} failures`,
+    );
+  }
+}
+
+function recordSuccess(): void {
+  // On success, prune old timestamps but keep the array (resets on cooldown)
+  const now = Date.now();
+  circuitBreaker.failureTimestamps = circuitBreaker.failureTimestamps.filter(
+    (t) => now - t < CB_WINDOW_MS,
+  );
+}
 
 export const THREADS_WEB_URL = 'https://www.threads.net';
 export const FLARESOLVERR_URL =
@@ -85,6 +147,9 @@ async function fetchViaFlareSolverr(url: string, timeoutMs: number): Promise<str
 }
 
 async function scrapeProfile(handle: string, timeoutMs: number): Promise<ThreadsPost[]> {
+  if (isCircuitOpen()) {
+    return [];
+  }
   const normalized = handle.replace(/^@/, '');
   const url = `${THREADS_WEB_URL}/@${normalized}`;
   try {
@@ -107,6 +172,7 @@ async function scrapeProfile(handle: string, timeoutMs: number): Promise<Threads
       try {
         const data = JSON.parse(m[1] || '{}');
         if (data.mainEntity?.itemListElement) {
+          recordSuccess();
           return data.mainEntity.itemListElement
             .filter((e: Record<string, unknown>) => e.url && e.name)
             .map((e: Record<string, unknown>) => ({
@@ -138,6 +204,7 @@ async function scrapeProfile(handle: string, timeoutMs: number): Promise<Threads
             user?: { username?: string; full_name?: string; profile_pic_url?: string };
           };
         }>;
+        recordSuccess();
         return items
           .filter((p) => p?.post)
           .map((p) => ({
@@ -159,8 +226,11 @@ async function scrapeProfile(handle: string, timeoutMs: number): Promise<Threads
       }
     }
 
+    // Got HTML but no posts found — not necessarily a failure, just empty
+    recordSuccess();
     return [];
   } catch {
+    recordFailure();
     return [];
   }
 }
@@ -178,6 +248,15 @@ export class ThreadsProvider implements FeedProvider {
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
+    // ⚠️ Circuit breaker: if scraper has failed >5× in the last hour, skip for 30 min
+    if (isCircuitOpen()) {
+      const until = new Date(circuitBreaker.openUntil).toISOString();
+      return {
+        posts: [],
+        notice: `Threads circuit breaker open until ${until} — scraper exceeded failure threshold`,
+      };
+    }
+
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const allPosts: UnifiedPost[] = [];
 
@@ -228,6 +307,13 @@ export class ThreadsProvider implements FeedProvider {
 
   async healthCheck(): Promise<HealthResult> {
     const start = performance.now();
+    if (isCircuitOpen()) {
+      return {
+        healthy: false,
+        latencyMs: Math.round(performance.now() - start),
+        error: `Threads circuit breaker open until ${new Date(circuitBreaker.openUntil).toISOString()}`,
+      };
+    }
     try {
       await withTimeout(scrapeProfile('zuck', 3000), 4000, 'threads:health');
       return { healthy: true, latencyMs: Math.round(performance.now() - start) };

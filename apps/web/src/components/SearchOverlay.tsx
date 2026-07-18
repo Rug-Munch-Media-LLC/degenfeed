@@ -96,7 +96,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     try {
       const [postsRes, identityRes] = await Promise.all([
         fetch(`/api/search?q=${encodeURIComponent(q)}&limit=20`, { credentials: 'include' }),
-        fetch(`/api/search/identity?q=${encodeURIComponent(q)}&limit=5`, { credentials: 'include' }),
+        fetch(`/api/search/identity?q=${encodeURIComponent(q)}&limit=5`, {
+          credentials: 'include',
+        }),
       ]);
       const postsData = postsRes.ok
         ? ((await postsRes.json()) as { data?: SearchResult[] })
@@ -193,7 +195,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               type="button"
               onClick={() => setActiveTab('all')}
               className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                activeTab === 'all' ? 'bg-degen-500/20 text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                activeTab === 'all'
+                  ? 'bg-degen-500/20 text-degen-400'
+                  : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
               }`}
             >
               All
@@ -202,7 +206,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               type="button"
               onClick={() => setActiveTab('people')}
               className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                activeTab === 'people' ? 'bg-degen-500/20 text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                activeTab === 'people'
+                  ? 'bg-degen-500/20 text-degen-400'
+                  : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
               }`}
             >
               People {identities.length > 0 && `(${identities.length})`}
@@ -237,28 +243,41 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </div>
         )}
 
-        {searched && !loading && !error && visibleIdentities.length === 0 && visibleResults.length === 0 && (
-          <div className="card py-8 text-center">
-            <p className="text-sm text-[var(--color-muted)]">No results for &ldquo;{query}&rdquo;</p>
-          </div>
-        )}
+        {searched &&
+          !loading &&
+          !error &&
+          visibleIdentities.length === 0 &&
+          visibleResults.length === 0 && (
+            <div className="card py-8 text-center">
+              <p className="text-sm text-[var(--color-muted)]">
+                No results for &ldquo;{query}&rdquo;
+              </p>
+            </div>
+          )}
 
         <div className="max-h-[60vh] space-y-2 overflow-y-auto">
           {/* People results */}
           {visibleIdentities.length > 0 && (
             <div>
-              {(activeTab === 'people' || (activeTab === 'all' && visibleIdentities.length > 0)) && (
+              {(activeTab === 'people' ||
+                (activeTab === 'all' && visibleIdentities.length > 0)) && (
                 <div className="mb-1 px-1 text-[10px] font-medium uppercase tracking-widest text-[var(--color-muted)]">
                   People
                 </div>
               )}
-              <div className={activeTab === 'people' ? 'grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4' : 'space-y-1 mb-3'}>
+              <div
+                className={
+                  activeTab === 'people'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4'
+                    : 'space-y-1 mb-3'
+                }
+              >
                 {visibleIdentities.map((identity) => (
                   <a
                     key={identity.id}
                     href={getProfileUrl(identity)}
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     className={`card-hover flex items-center gap-3 transition-colors ${
                       activeTab === 'people' ? 'p-4' : 'p-3'
                     }`}
@@ -298,10 +317,14 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                         </span>
                       </div>
                       {identity.handle && (
-                        <div className="text-xs text-[var(--color-muted)] truncate">{identity.handle}</div>
+                        <div className="text-xs text-[var(--color-muted)] truncate">
+                          {identity.handle}
+                        </div>
                       )}
                       {identity.bio && activeTab === 'people' && (
-                        <div className="mt-1 text-xs text-[var(--color-muted)] line-clamp-2">{identity.bio}</div>
+                        <div className="mt-1 text-xs text-[var(--color-muted)] line-clamp-2">
+                          {identity.bio}
+                        </div>
                       )}
                       {activeTab === 'people' && identity.postCount > 0 && (
                         <div className="mt-1 text-[10px] text-[var(--color-muted)]">
@@ -350,13 +373,22 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 text-xs">
-                        <span className="font-medium text-[var(--color-fg)] truncate">{r.author.displayName}</span>
-                        <span className="text-[var(--color-muted)]" style={{ color: getProtocolColor(r.protocol) }}>
+                        <span className="font-medium text-[var(--color-fg)] truncate">
+                          {r.author.displayName}
+                        </span>
+                        <span
+                          className="text-[var(--color-muted)]"
+                          style={{ color: getProtocolColor(r.protocol) }}
+                        >
                           {r.protocol}
                         </span>
-                        <span className="ml-auto text-[var(--color-muted)]">{formatTime(r.createdAt)}</span>
+                        <span className="ml-auto text-[var(--color-muted)]">
+                          {formatTime(r.createdAt)}
+                        </span>
                       </div>
-                      <p className="mt-0.5 text-sm text-[var(--color-muted)] line-clamp-2">{r.text}</p>
+                      <p className="mt-0.5 text-sm text-[var(--color-muted)] line-clamp-2">
+                        {r.text}
+                      </p>
                       <div className="mt-1 flex gap-3 text-[10px] text-[var(--color-muted)]">
                         <span>♥ {r.metrics.likes}</span>
                         <span>↻ {r.metrics.reposts}</span>

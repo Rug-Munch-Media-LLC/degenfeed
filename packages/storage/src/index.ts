@@ -20,14 +20,11 @@ export {
   syncBookmarkToServer,
   updateBookmarkTags,
 } from './bookmarks';
-export { cachePost, clearCache, getCachedPost } from './cache';
-export { closeDb, getDb } from './db';
-export { deleteDraft, getDrafts, saveDraft } from './drafts';
+export { getDb } from './db';
 export { deleteFollow, getFollows, isFollowing, saveFollow } from './follows';
 export {
   deleteIdentity,
   getAllIdentities,
-  getIdentitiesByProtocol,
   getIdentity,
   getPrimaryIdentity,
   saveIdentity,
@@ -43,9 +40,7 @@ export {
   getMutedIdentities,
   getMutedWords,
   muteIdentity,
-  muteWord,
   unmuteIdentity,
-  unmuteWord,
 } from './muting';
 export {
   addMutedWord,
@@ -71,13 +66,8 @@ export {
   setActiveSession,
 } from './session';
 export {
-  buildSubscriptionRecord,
   getSubscription,
-  getTier,
   isCreator,
-  isPremium,
-  isSubscriptionActive,
-  saveSubscription,
 } from './subscription';
 export type {
   FeedLayout,

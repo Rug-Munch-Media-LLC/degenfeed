@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
+import { useToast } from '../../../components/Toast';
 
 interface Message {
   id: string;
@@ -38,6 +39,7 @@ function shortId(id: string): string {
 export default function ConversationPage() {
   const { id } = useParams<{ id: string }>();
   const { tokens } = useAuth();
+  const { showToast } = useToast();
   const conversationId = decodeURIComponent(id ?? '');
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -82,9 +84,7 @@ export default function ConversationPage() {
               protocol: string;
             }>;
           };
-          const conv = (data.conversations ?? []).find(
-            (c) => c.conversationId === conversationId,
-          );
+          const conv = (data.conversations ?? []).find((c) => c.conversationId === conversationId);
           if (conv) {
             setConvMeta({ participants: conv.participants, protocol: conv.protocol });
           }
@@ -108,7 +108,7 @@ export default function ConversationPage() {
 
     setSending(true);
     try {
-      const other = (convMeta.participants[1] ?? convMeta.participants[0] ?? '');
+      const other = convMeta.participants[1] ?? convMeta.participants[0] ?? '';
       const res = await fetch('/api/messages/send', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -126,10 +126,14 @@ export default function ConversationPage() {
         if (data.ok && data.message) {
           setComposeText('');
           setMessages((prev) => [...prev, data.message]);
+        } else {
+          showToast('error', data.error || 'Failed to send message');
         }
+      } else {
+        showToast('error', 'Failed to send message');
       }
     } catch {
-      /* ignore */
+      showToast('error', 'Failed to send message');
     } finally {
       setSending(false);
     }
@@ -199,7 +203,15 @@ export default function ConversationPage() {
           </div>
         ) : (
           messages.map((msg) => {
-            const isMe = msg.fromId === (tokens.nostr_pubkey || '');
+            const myIds = [
+              tokens.nostr_pubkey,
+              tokens.fid,
+              tokens.lensProfileId,
+              tokens.did,
+              tokens.evmAddress,
+              tokens.solanaAddress,
+            ].filter(Boolean);
+            const isMe = myIds.some((id) => id && msg.fromId === id);
             const protocolColor = getProtocolColor(msg.protocol);
             return (
               <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>

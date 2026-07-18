@@ -186,14 +186,6 @@ export function keywordRelevance(text: string): number {
   return Math.min(1 + hits * 0.15, 2.0);
 }
 
-export function tickerCount(text: string): number {
-  return Array.from(text.matchAll(/\$[A-Z]{2,5}\b/g)).length;
-}
-
-export function hashtagCount(text: string): number {
-  return Array.from(text.matchAll(/#[a-zA-Z0-9_]+/g)).length;
-}
-
 export function extractEmbeds(text: string, native: unknown[] = []): Embed[] {
   const urlRe = /https?:\/\/[^\s<>"']+/gi;
   const urls = text.match(urlRe) ?? [];
@@ -611,7 +603,7 @@ function extractQuotedId(post: UnifiedPost): string | null {
   return null;
 }
 
-export function contentFingerprint(post: UnifiedPost): string {
+function contentFingerprint(post: UnifiedPost): string {
   const words = normalizeStripped(post.text)
     .split(/\s+/)
     .filter((w) => w.length > 2)
@@ -741,7 +733,7 @@ export function detectContentType(
   return 'text';
 }
 
-export function dedupeKey(protocol: Protocol, nativeId: string): string {
+function dedupeKey(protocol: Protocol, nativeId: string): string {
   return `${protocol}:${nativeId}`;
 }
 

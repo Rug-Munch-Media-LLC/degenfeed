@@ -401,7 +401,7 @@ const apiEndpoints = [
   },
   {
     method: 'GET',
-    path: '/api/prices',
+    path: '/v1/prices',
     desc: 'Crypto prices via CoinGecko. Query: ?ids=bitcoin,ethereum,solana. 60s cache.',
     section: 'other',
     tryIt: null,

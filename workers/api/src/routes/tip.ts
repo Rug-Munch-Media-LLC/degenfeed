@@ -344,6 +344,18 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
     const sender = sanitizeString(body.sender, 128);
     const publicationId = sanitizeString(body.publicationId, 128);
 
+    // Validate currency/method
+    const validMethods = ['onchain_tip', 'ethereum', 'base', 'solana', 'lightning_zap', 'farcaster_frame', 'lens_collect'];
+    if (!validMethods.includes(method)) {
+      return jsonResponse({ error: `Invalid tipping method: ${method}. Valid: ${validMethods.join(', ')}` }, 400);
+    }
+
+    // Validate amount is a positive number
+    const amountNum = Number.parseFloat(amount);
+    if (Number.isNaN(amountNum) || amountNum <= 0) {
+      return jsonResponse({ error: 'Amount must be a positive number' }, 400);
+    }
+
     if (
       !recipient ||
       !method ||

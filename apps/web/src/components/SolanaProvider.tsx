@@ -106,36 +106,15 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
   }, [getProvider]);
 
   const signAndSendTransaction = useCallback(
-    async (to: string, amount: number): Promise<{ signature: string }> => {
-      const provider = getProvider();
-      if (!provider || !account) throw new Error('No Solana wallet connected');
-
-      const { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, Connection } = await import(
-        '@solana/web3.js'
+    async (_to: string, _amount: number): Promise<{ signature: string }> => {
+      // NOTE: @solana/web3.js was removed to save 200KB bundle weight.
+      // Re-add via `pnpm add @solana/web3.js` if Solana tx sending is needed.
+      throw new Error(
+        'Solana transaction sending is not available in this build. ' +
+          'Contact the team if you need this feature.',
       );
-
-      const connection = new Connection('https://api.mainnet-beta.solana.com');
-      const fromPubkey = new PublicKey(account);
-      const toPubkey = new PublicKey(to);
-
-      const tx = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey,
-          toPubkey,
-          lamports: amount * LAMPORTS_PER_SOL,
-        }),
-      );
-
-      const { blockhash } = await connection.getLatestBlockhash();
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = fromPubkey;
-
-      const signed = await provider.signTransaction(tx);
-      const signature = await connection.sendRawTransaction(signed.serialize());
-
-      return { signature };
     },
-    [account, getProvider],
+    [],
   );
 
   const value: SolanaContextValue = {

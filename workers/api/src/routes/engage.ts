@@ -35,8 +35,8 @@ interface EngageRequest {
   authToken?: string;
 }
 
-function noAccountError(protocol: string): { ok: false; error: string } {
-  return { ok: false, error: `No social account linked for ${protocol}` };
+function noAccountError(protocol: string): { error: string } {
+  return { error: `No social account linked for ${protocol}` };
 }
 
 function nativeIdFromPostId(postId: string, protocol: string): string {
@@ -110,7 +110,7 @@ async function trackBehavior(
 
 export async function handleEngage(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
-    return jsonResponse({ ok: false, error: 'Method not allowed' }, 405);
+    return jsonResponse({ error: 'Method not allowed' }, 405);
   }
 
   try {
@@ -127,7 +127,7 @@ export async function handleEngage(request: Request, env: Env): Promise<Response
       !ALLOWED_ACTIONS.has(action) ||
       hasSuspiciousPayload(`${action}${postId}${protocol}`)
     ) {
-      return jsonResponse({ ok: false, error: 'action, postId, protocol required' }, 400);
+      return jsonResponse({ error: 'action, postId, protocol required' }, 400);
     }
 
     const content = sanitizeString(body.content, 10000);
@@ -161,7 +161,7 @@ export async function handleEngage(request: Request, env: Env): Promise<Response
         response = await handleMastodon(action, nativeId, target, content, reaction, auth, env);
         break;
       default:
-        return jsonResponse({ ok: false, error: `${protocol} not supported` }, 400);
+        return jsonResponse({ error: `${protocol} not supported` }, 400);
     }
 
     // Fire-and-forget behavior tracking on successful engagement
@@ -176,7 +176,7 @@ export async function handleEngage(request: Request, env: Env): Promise<Response
     return response;
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal error';
-    return jsonResponse({ ok: false, error: message }, 500);
+    return jsonResponse({ error: message }, 500);
   }
 }
 
@@ -194,7 +194,6 @@ function handleNostr(
   // and submit pre-signed events. Raw nsec in request body is rejected.
   return jsonResponse(
     {
-      ok: false,
       error: 'Server-side Nostr signing is deprecated.',
       detail: 'Sign engagement events client-side using @degenfeed/nostr-sdk.',
       migration: 'Use the client-side engageNostr() in apps/web/src/lib/nostr.ts',
@@ -223,10 +222,10 @@ async function handleFarcaster(
 
   try {
     await client.submitMessage(signedMessage);
-    return jsonResponse({ ok: true });
+    return jsonResponse({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Farcaster engagement failed';
-    return jsonResponse({ ok: false, error: message }, 500);
+    return jsonResponse({ error: message }, 500);
   }
 }
 
@@ -259,12 +258,12 @@ async function handleLens(
     } else if (action === 'reply') {
       await client.comment(publicationId, content);
     } else {
-      return jsonResponse({ ok: false, error: `${action} not supported on lens` }, 400);
+      return jsonResponse({ error: `${action} not supported on lens` }, 400);
     }
-    return jsonResponse({ ok: true });
+    return jsonResponse({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Lens engagement failed';
-    return jsonResponse({ ok: false, error: message }, 500);
+    return jsonResponse({ error: message }, 500);
   }
 }
 
@@ -299,12 +298,12 @@ async function handleBluesky(
     } else if (action === 'reply') {
       await client.reply(uri, cid, did, content);
     } else {
-      return jsonResponse({ ok: false, error: `${action} not supported on bluesky` }, 400);
+      return jsonResponse({ error: `${action} not supported on bluesky` }, 400);
     }
-    return jsonResponse({ ok: true });
+    return jsonResponse({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Bluesky engagement failed';
-    return jsonResponse({ ok: false, error: message }, 500);
+    return jsonResponse({ error: message }, 500);
   }
 }
 
@@ -319,7 +318,7 @@ async function handleThreads(
 ): Promise<Response> {
   // The official Meta Threads API does not support engagement actions
   // (like, unlike, repost, reply). Users must engage via the Threads app.
-  return jsonResponse({ ok: false, error: `${action} not supported on threads` }, 400);
+  return jsonResponse({ error: `${action} not supported on threads` }, 400);
 }
 
 async function handleMastodon(
@@ -355,11 +354,11 @@ async function handleMastodon(
     } else if (action === 'reply') {
       await client.publish(content, { inReplyToId: statusId });
     } else {
-      return jsonResponse({ ok: false, error: `${action} not supported on mastodon` }, 400);
+      return jsonResponse({ error: `${action} not supported on mastodon` }, 400);
     }
-    return jsonResponse({ ok: true });
+    return jsonResponse({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Mastodon engagement failed';
-    return jsonResponse({ ok: false, error: message }, 500);
+    return jsonResponse({ error: message }, 500);
   }
 }

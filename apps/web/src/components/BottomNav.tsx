@@ -21,7 +21,7 @@ const NAV: NavItem[] = [
   { href: '/trending', label: 'Trending', icon: '🔥' },
   { href: '/news', label: 'News', icon: '📰' },
   { href: '/messages', label: 'Messages', icon: '💬' },
-  { href: '/notifications', label: 'Alerts', icon: '🔔' },
+  { href: '/notifications', label: 'Notifications', icon: '🔔' },
 ];
 
 export function BottomNav() {
@@ -47,16 +47,16 @@ export function BottomNav() {
         const data = (await res.json()) as {
           conversations?: Array<{ unreadCount?: number }>;
         };
-        const total = (data.conversations ?? []).reduce(
-          (s, c) => s + (c.unreadCount ?? 0),
-          0,
-        );
+        const total = (data.conversations ?? []).reduce((s, c) => s + (c.unreadCount ?? 0), 0);
         setDmCount(total);
       } catch {}
     };
     poll();
     pollDm();
-    interval = setInterval(() => { poll(); pollDm(); }, 60000);
+    interval = setInterval(() => {
+      poll();
+      pollDm();
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -65,7 +65,7 @@ export function BottomNav() {
       aria-label="Mobile"
       className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-card)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <div className="grid grid-cols-8">
+      <div className="grid grid-cols-11">
         {NAV.map((item) => {
           const active =
             pathname === item.href ||

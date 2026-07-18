@@ -100,10 +100,31 @@ export const TIP_CONTRACT_ABI = [
 // ─── Deployed address book (populated after deploy) ────────────────────────
 // UPDATE AFTER DEPLOYMENT: run `pnpm deploy:tip-contract` to fill these.
 
+/**
+ * TIP CONTRACT DEPLOYMENT STATUS
+ * ──────────────────────────────────────────────
+ * Contract compiled and ready. NOT YET DEPLOYED.
+ * Foundry (forge 1.7.1) is available on the deploy server.
+ *
+ * To deploy:
+ *   1. Export deployer key:   export PRIVATE_KEY=0x...
+ *   2. Export RPC URL:        export BASE_RPC=https://mainnet.base.org
+ *   3. Fund deployer wallet with ~0.01 ETH on target L2
+ *   4. Run:                  forge create --rpc-url $BASE_RPC --private-key $PRIVATE_KEY \
+ *                              packages/tip-contract/src/DegenFeedTips.sol:DegenFeedTips
+ *   5. Copy the returned address below
+ *   6. Verify: forge verify-contract <address> packages/tip-contract/src/DegenFeedTips.sol:DegenFeedTips \
+ *                --chain-id 8453 --etherscan-api-key $EXPLORER_API_KEY
+ *
+ * For automated multi-chain deploy, use: pnpm deploy:tip-contract --all
+ * That script requires: PRIVATE_KEY, EXPLORER_API_KEY env vars set.
+ *
+ * Recommended deploy order: Base → Optimism → Arbitrum
+ */
 export const TIP_CONTRACT_ADDRESSES: Record<string, `0x${string}`> = {
-  base: '0x0000000000000000000000000000000000000000', // TODO: deploy
-  optimism: '0x0000000000000000000000000000000000000000', // TODO: deploy
-  arbitrum: '0x0000000000000000000000000000000000000000', // TODO: deploy
+  base: '0x0000000000000000000000000000000000000000', // ⚠️ NOT DEPLOYED — run: forge create --rpc-url $BASE_RPC ...
+  optimism: '0x0000000000000000000000000000000000000000', // ⚠️ NOT DEPLOYED
+  arbitrum: '0x0000000000000000000000000000000000000000', // ⚠️ NOT DEPLOYED
 };
 
 // ─── Chain metadata for wallet switching ───────────────────────────────────
