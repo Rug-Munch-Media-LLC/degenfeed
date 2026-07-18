@@ -69,7 +69,7 @@ function cosineSimilarityVec(a: Set<string>, b: Set<string>): number {
   return intersection / Math.sqrt(a.size * b.size);
 }
 
-function decayWeight(value: number, ageMs: number, halfLifeMs: number): number {
+function _decayWeight(value: number, ageMs: number, halfLifeMs: number): number {
   return value * Math.exp(-ageMs / halfLifeMs);
 }
 
@@ -77,10 +77,10 @@ function decayWeight(value: number, ageMs: number, halfLifeMs: number): number {
 
 const WEIGHTS = {
   contentSimilarity: 0.25,
-  creatorAffinity: 0.20,
+  creatorAffinity: 0.2,
   topicMatch: 0.18,
   timing: 0.08,
-  postType: 0.10,
+  postType: 0.1,
   socialProof: 0.12,
   diversityBonus: 0.07,
 };
@@ -111,7 +111,12 @@ export function predictEngagementV2(
 
   if (contentSimilarityScore > 0.6) {
     algorithmReasons.push('Because you viewed similar content');
-    factors.push({ name: 'content-similarity', score: contentSimilarityScore, weight: WEIGHTS.contentSimilarity, description: 'Matches previously engaged topics' });
+    factors.push({
+      name: 'content-similarity',
+      score: contentSimilarityScore,
+      weight: WEIGHTS.contentSimilarity,
+      description: 'Matches previously engaged topics',
+    });
   }
 
   // ─── 2. Creator affinity ───────────────────────────────────────
@@ -121,11 +126,17 @@ export function predictEngagementV2(
     const dwellWeight = input.dwellWeightedCreators.get(post.author.id) ?? 0;
     if (dwellWeight > 2.0) creatorAffinityScore = 1.0;
     algorithmReasons.push('New from a creator you follow');
-    factors.push({ name: 'creator-affinity', score: creatorAffinityScore, weight: WEIGHTS.creatorAffinity, description: 'Creator the user follows or engages deeply with' });
+    factors.push({
+      name: 'creator-affinity',
+      score: creatorAffinityScore,
+      weight: WEIGHTS.creatorAffinity,
+      description: 'Creator the user follows or engages deeply with',
+    });
   }
 
   // Creator feedback adjustment
-  const feedbackCreatorWeight = input.feedbackProfile?.creatorWeights?.[post.author.id.toLowerCase()] ?? 0;
+  const feedbackCreatorWeight =
+    input.feedbackProfile?.creatorWeights?.[post.author.id.toLowerCase()] ?? 0;
   if (feedbackCreatorWeight < -0.5) {
     creatorAffinityScore = -1.0;
   } else if (feedbackCreatorWeight > 0.5) {
@@ -159,7 +170,12 @@ export function predictEngagementV2(
 
   if (topicHits >= 2) {
     algorithmReasons.push(`Trending in ${post.niches[0] ?? 'crypto'}`);
-    factors.push({ name: 'topic-match', score: topicMatchScore, weight: WEIGHTS.topicMatch, description: 'Matches preferred topics' });
+    factors.push({
+      name: 'topic-match',
+      score: topicMatchScore,
+      weight: WEIGHTS.topicMatch,
+      description: 'Matches preferred topics',
+    });
   }
 
   // ─── 4. Time of day / day of week ──────────────────────────────
@@ -168,9 +184,12 @@ export function predictEngagementV2(
   let timingScore = 0.5; // neutral baseline
 
   // Prime engagement hours (when most users are active)
-  if (hour >= 7 && hour < 10) timingScore = 0.7; // morning scroll
-  else if (hour >= 12 && hour < 14) timingScore = 0.65; // lunch break
-  else if (hour >= 18 && hour < 22) timingScore = 0.8; // evening prime
+  if (hour >= 7 && hour < 10)
+    timingScore = 0.7; // morning scroll
+  else if (hour >= 12 && hour < 14)
+    timingScore = 0.65; // lunch break
+  else if (hour >= 18 && hour < 22)
+    timingScore = 0.8; // evening prime
   else if (hour >= 22 || hour < 2) timingScore = 0.75; // late night deep scroll
 
   // Weekend boost
@@ -179,9 +198,19 @@ export function predictEngagementV2(
   // Behavior-based timing: if user has a flow state, timing score is higher
   if (input.behaviorProfile?.flowState) {
     timingScore = Math.min(1.0, timingScore + 0.15);
-    factors.push({ name: 'timing-flow', score: timingScore, weight: WEIGHTS.timing, description: 'User is in flow state' });
+    factors.push({
+      name: 'timing-flow',
+      score: timingScore,
+      weight: WEIGHTS.timing,
+      description: 'User is in flow state',
+    });
   } else {
-    factors.push({ name: 'timing', score: timingScore, weight: WEIGHTS.timing, description: 'Optimal time of day' });
+    factors.push({
+      name: 'timing',
+      score: timingScore,
+      weight: WEIGHTS.timing,
+      description: 'Optimal time of day',
+    });
   }
 
   // ─── 5. Post type preference ───────────────────────────────────
@@ -191,7 +220,12 @@ export function predictEngagementV2(
     const feedbackWeight = input.feedbackProfile?.contentTypeWeights?.[contentTypes] ?? 0;
     if (feedbackWeight > 0.5) postTypeScore = 1.0;
     else if (feedbackWeight < -0.3) postTypeScore = 0.3;
-    factors.push({ name: 'post-type', score: postTypeScore, weight: WEIGHTS.postType, description: `Preferred content type: ${contentTypes}` });
+    factors.push({
+      name: 'post-type',
+      score: postTypeScore,
+      weight: WEIGHTS.postType,
+      description: `Preferred content type: ${contentTypes}`,
+    });
   }
 
   // ─── 6. Scroll velocity context ─────────────────────────────────
@@ -201,32 +235,35 @@ export function predictEngagementV2(
   // Late session → slightly higher diversity/novelty preference
   // Early session → exploit known preferences
   const scrollContext =
-    sessionDurationMs < 5 * 60_000 ? 'early'
-    : sessionDurationMs < 15 * 60_000 ? 'mid'
-    : 'late';
+    sessionDurationMs < 5 * 60_000 ? 'early' : sessionDurationMs < 15 * 60_000 ? 'mid' : 'late';
 
   // ─── 7. Popularity — global engagement signal ───────────────
   // NOTE: uses aggregate metrics, not per-follower engagement.
   // Renamed from "social proof" to reflect what it actually measures.
   const totalEngagement =
-    post.metrics.likes + post.metrics.reposts * 2 + post.metrics.replies * 3 + (post.metrics.quotes ?? 0);
+    post.metrics.likes +
+    post.metrics.reposts * 2 +
+    post.metrics.replies * 3 +
+    (post.metrics.quotes ?? 0);
   const popularityScore = Math.min(1.0, totalEngagement / 100);
 
   if (popularityScore > 0.4) {
     if (input.followedCreators.size > 0) {
       algorithmReasons.push('Popular with people you follow');
     } else {
-      algorithmReasons.push('Popular on ' + (post.protocol ?? 'social'));
+      algorithmReasons.push(`Popular on ${post.protocol ?? 'social'}`);
     }
-    factors.push({ name: 'popularity', score: popularityScore, weight: WEIGHTS.socialProof, description: 'High global engagement signal' });
+    factors.push({
+      name: 'popularity',
+      score: popularityScore,
+      weight: WEIGHTS.socialProof,
+      description: 'High global engagement signal',
+    });
   }
 
   // ─── 8. Diversity bonus ────────────────────────────────────────
   // Later in session → more diversity
-  const diversityBonus =
-    scrollContext === 'late' ? 0.3
-    : scrollContext === 'mid' ? 0.2
-    : 0.05;
+  const diversityBonus = scrollContext === 'late' ? 0.3 : scrollContext === 'mid' ? 0.2 : 0.05;
 
   // ─── Combine ───────────────────────────────────────────────────
   const weightedScore =
@@ -240,7 +277,7 @@ export function predictEngagementV2(
 
   // Respect "not interested" feedback — if all topics are demoted, score should be near 0
   const hasDemotedTopics = input.feedbackProfile
-    ? post.niches.some((n) => (input.feedbackProfile!.topicWeights?.[n.toLowerCase()] ?? 0) <= -1.5)
+    ? post.niches.some((n) => (input.feedbackProfile?.topicWeights?.[n.toLowerCase()] ?? 0) <= -1.5)
     : false;
   const hasDemotedCreator = input.feedbackProfile
     ? (input.feedbackProfile.creatorWeights?.[post.author.id.toLowerCase()] ?? 0) <= -1.5
@@ -287,7 +324,10 @@ export function predictEngagementV2(
 export function coldStartReasons(post: UnifiedPost): string[] {
   const reasons: string[] = [];
   const engTotal =
-    post.metrics.likes + post.metrics.reposts * 2 + post.metrics.replies * 3 + (post.metrics.quotes ?? 0);
+    post.metrics.likes +
+    post.metrics.reposts * 2 +
+    post.metrics.replies * 3 +
+    (post.metrics.quotes ?? 0);
 
   if (engTotal > 50) reasons.push('Going viral across the network');
   else if (engTotal > 15) reasons.push('Trending in crypto');

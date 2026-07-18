@@ -239,7 +239,8 @@ export function getLearnedTopics(profile: UserBehaviorProfile): TopicPreference[
     .map(([topic, weight]) => ({
       topic,
       weight,
-      direction: weight > 0.05 ? 'up' as const : weight < -0.05 ? 'down' as const : 'neutral' as const,
+      direction:
+        weight > 0.05 ? ('up' as const) : weight < -0.05 ? ('down' as const) : ('neutral' as const),
     }))
     .sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight));
 }

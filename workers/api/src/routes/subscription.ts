@@ -39,14 +39,7 @@ export const SUBSCRIPTION_TIERS = {
   patron: {
     name: 'Patron',
     price: 50,
-    benefits: [
-      'badge',
-      'early_access',
-      'exclusive_content',
-      'discord',
-      '1on1',
-      'voting',
-    ] as const,
+    benefits: ['badge', 'early_access', 'exclusive_content', 'discord', '1on1', 'voting'] as const,
   },
 };
 
@@ -205,10 +198,7 @@ export async function handleSubscriptionTiers(
 
 // ─── B. POST /api/subscription/create — Creator setup ─────────
 
-export async function handleSubscriptionCreate(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSubscriptionCreate(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -270,10 +260,7 @@ export async function handleSubscriptionCreate(
 
 // ─── C. POST /api/subscription/subscribe — Create pending sub ─
 
-export async function handleSubscriptionSubscribe(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSubscriptionSubscribe(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -300,10 +287,7 @@ export async function handleSubscriptionSubscribe(
   const method = sanitizeString(body.method, 32);
 
   if (!creator || !tier || !amount || !creatorChain) {
-    return jsonResponse(
-      { error: 'creator, creatorChain, tier, and amount required' },
-      400,
-    );
+    return jsonResponse({ error: 'creator, creatorChain, tier, and amount required' }, 400);
   }
 
   if (creatorChain !== 'ethereum' && creatorChain !== 'solana') {
@@ -316,10 +300,7 @@ export async function handleSubscriptionSubscribe(
   }
 
   if (!isValidTier(tier)) {
-    return jsonResponse(
-      { error: `Invalid tier. Use: ${[...VALID_TIER_IDS].join(', ')}` },
-      400,
-    );
+    return jsonResponse({ error: `Invalid tier. Use: ${[...VALID_TIER_IDS].join(', ')}` }, 400);
   }
 
   const expectedPrice = tierPrice(tier);
@@ -403,10 +384,7 @@ export async function handleSubscriptionSubscribe(
 
 // ─── D. POST /api/subscription/confirm — Verify payment ────
 
-export async function handleSubscriptionConfirm(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSubscriptionConfirm(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -437,10 +415,7 @@ export async function handleSubscriptionConfirm(
   try {
     const existingTx = await env.SUBSCRIPTIONS?.get(txKey);
     if (existingTx) {
-      return jsonResponse(
-        { error: 'Transaction already used for a subscription' },
-        409,
-      );
+      return jsonResponse({ error: 'Transaction already used for a subscription' }, 409);
     }
   } catch {
     /* continue */
@@ -492,11 +467,9 @@ export async function handleSubscriptionConfirm(
     await env.SUBSCRIPTIONS?.put(subKey, JSON.stringify(record), {
       expirationTtl: ACTIVE_SUB_TTL_SEC,
     });
-    await env.SUBSCRIPTIONS?.put(
-      txKey,
-      JSON.stringify({ usedAt: now, creator, subscriber }),
-      { expirationTtl: TX_DEDUP_TTL_SEC },
-    );
+    await env.SUBSCRIPTIONS?.put(txKey, JSON.stringify({ usedAt: now, creator, subscriber }), {
+      expirationTtl: TX_DEDUP_TTL_SEC,
+    });
     await env.CACHE?.delete(nonceKey);
   } catch {
     return jsonResponse({ error: 'Storage unavailable' }, 500);
@@ -533,10 +506,7 @@ export async function handleSubscriptionConfirm(
 
 // ─── E. GET /api/subscription/status — Check sub status ────
 
-export async function handleSubscriptionStatus(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSubscriptionStatus(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -553,21 +523,16 @@ export async function handleSubscriptionStatus(
 
   // Stricter rate limit: 10 req/60s
   const ip =
-    request.headers.get('cf-connecting-ip') ||
-    request.headers.get('x-forwarded-for') ||
-    'unknown';
+    request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
   const rl = await rateLimit(env, ip, '/api/subscription/status', 10, 60_000);
   if (!rl.allowed) {
-    return new Response(
-      JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }),
-      {
-        status: 429,
-        headers: {
-          'content-type': 'application/json',
-          'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
-        },
+    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
+      status: 429,
+      headers: {
+        'content-type': 'application/json',
+        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
       },
-    );
+    });
   }
 
   const subscriber = session.address.toLowerCase();
@@ -591,9 +556,7 @@ export async function handleSubscriptionStatus(
 
   const nowMs = Date.now();
   const active = record.expiryDate > nowMs;
-  const daysRemaining = active
-    ? Math.ceil((record.expiryDate - nowMs) / (1000 * 60 * 60 * 24))
-    : 0;
+  const daysRemaining = active ? Math.ceil((record.expiryDate - nowMs) / (1000 * 60 * 60 * 24)) : 0;
 
   if (!active) {
     return jsonResponse({ error: 'Not found' }, 404);
@@ -615,10 +578,7 @@ export async function handleSubscriptionStatus(
 
 // ─── F. POST /api/subscription/cancel — Cancel sub ────────
 
-export async function handleSubscriptionCancel(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSubscriptionCancel(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -709,7 +669,7 @@ export async function handleSubscriptionContentCheck(
     /* ignore */
   }
 
-  if (!record || record.status !== 'active' || !record.expiryDate) {
+  if (record?.status !== 'active' || !record.expiryDate) {
     return jsonResponse({ hasAccess: false });
   }
 
@@ -722,10 +682,7 @@ export async function handleSubscriptionContentCheck(
 
 // ─── H. GET /api/subscription/my — List user's subscriptions ──
 
-export async function handleSubscriptionMy(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSubscriptionMy(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 

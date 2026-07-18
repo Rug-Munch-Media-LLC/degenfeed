@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 // TODO: Wire to worker backend
 interface PushSubscriptionData {
   endpoint: string;

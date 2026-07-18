@@ -71,12 +71,7 @@ export function CommunityBadge({
     <>
       {icon ? (
         // biome-ignore lint/performance/noImgElement: community icon
-        <img
-          src={icon}
-          alt=""
-          className="h-3 w-3 rounded-sm object-cover"
-          loading="lazy"
-        />
+        <img src={icon} alt="" className="h-3 w-3 rounded-sm object-cover" loading="lazy" />
       ) : (
         <svg
           width="10"

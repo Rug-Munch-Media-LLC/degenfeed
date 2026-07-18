@@ -4,7 +4,7 @@
  * Tests the end-to-end tip flow: input validation → method ranking → response.
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { ResolvedTipMethod, TipPostContext } from '../routes/tip';
 import { handleTipResolve, rankMethods } from '../routes/tip';
 
@@ -22,6 +22,7 @@ describe('Tip flow: validation → ranking → response', () => {
   // ─── Input validation ─────────────────────────────────────────────
   it('should return 400 for missing protocol parameter', async () => {
     const req = new Request('http://localhost/api/tip/resolve');
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const env = {} as any;
     const res = await handleTipResolve(req, env);
     expect(res.status).toBe(400);
@@ -29,6 +30,7 @@ describe('Tip flow: validation → ranking → response', () => {
 
   it('should return 400 for missing authorId parameter', async () => {
     const req = new Request('http://localhost/api/tip/resolve?protocol=nostr');
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const env = {} as any;
     const res = await handleTipResolve(req, env);
     expect(res.status).toBe(400);
@@ -36,21 +38,18 @@ describe('Tip flow: validation → ranking → response', () => {
 
   it('should resolve tip methods when valid params are provided', async () => {
     const req = new Request('http://localhost/api/tip/resolve?protocol=nostr&authorId=abc123');
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const env = {} as any;
     const res = await handleTipResolve(req, env);
     expect(res.status).toBe(200);
-    const body = await res.json() as { methods?: unknown[]; resolved?: boolean };
+    const body = (await res.json()) as { methods?: unknown[]; resolved?: boolean };
     expect(body.methods).toBeDefined();
     expect(body.resolved).toBe(true);
   });
 
   // ─── Method ranking ───────────────────────────────────────────────
   it('should rank Lightning Zap first for Nostr with lightning address', () => {
-    const methods = [
-      method('ethereum'),
-      method('solana'),
-      method('lightning_zap', false),
-    ];
+    const methods = [method('ethereum'), method('solana'), method('lightning_zap', false)];
     const context: TipPostContext = {
       protocol: 'nostr',
       authorId: 'abc',
@@ -63,11 +62,7 @@ describe('Tip flow: validation → ranking → response', () => {
   });
 
   it('should rank Lens Collect first for Lens with collect module', () => {
-    const methods = [
-      method('ethereum'),
-      method('solana'),
-      method('lens_collect', false),
-    ];
+    const methods = [method('ethereum'), method('solana'), method('lens_collect', false)];
     const context: TipPostContext = {
       protocol: 'lens',
       authorId: '0x01',
@@ -79,10 +74,7 @@ describe('Tip flow: validation → ranking → response', () => {
   });
 
   it('should rank the default method for unsupported protocols', () => {
-    const methods = [
-      method('ethereum'),
-      method('solana'),
-    ];
+    const methods = [method('ethereum'), method('solana')];
     const context: TipPostContext = {
       protocol: 'rss',
       authorId: 'feed1',
@@ -92,11 +84,7 @@ describe('Tip flow: validation → ranking → response', () => {
   });
 
   it('should move unavailable methods to the end', () => {
-    const methods = [
-      method('solana'),
-      method('lightning_zap', false),
-      method('ethereum'),
-    ];
+    const methods = [method('solana'), method('lightning_zap', false), method('ethereum')];
     const context: TipPostContext = {
       protocol: 'nostr',
       authorId: 'abc',

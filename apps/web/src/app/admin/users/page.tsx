@@ -278,7 +278,9 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--color-fg)]">Users</h1>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">Manage platform users, bans, and warnings</p>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          Manage platform users, bans, and warnings
+        </p>
       </div>
 
       {/* Stats chips */}
@@ -402,7 +404,10 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-[var(--color-border)]">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-[var(--color-muted)]">
+                  <td
+                    colSpan={8}
+                    className="px-4 py-12 text-center text-sm text-[var(--color-muted)]"
+                  >
                     No users found.
                   </td>
                 </tr>
@@ -719,7 +724,9 @@ export default function AdminUsersPage() {
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">{label}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+        {label}
+      </p>
       <p className="text-sm font-medium text-[var(--color-fg)] capitalize">{value}</p>
     </div>
   );

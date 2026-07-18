@@ -701,6 +701,7 @@ export const MOCK_COMPOSE_PREVIEW = {
 export async function mockFeedApi(
   page: Page,
   posts = MOCK_FEED_POSTS,
+  // biome-ignore lint/suspicious/noExplicitAny: generic mock preferences record
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   prefs: Record<string, any> = MOCK_PREFERENCES,
 ) {

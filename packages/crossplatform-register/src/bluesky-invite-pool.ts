@@ -98,10 +98,7 @@ export async function getInvitePoolStats(pool?: KVNamespace): Promise<{
  * Add invite codes to the pool (deduplicates).
  * Returns the total number of codes now available.
  */
-export async function addInviteCodes(
-  codes: string[],
-  pool?: KVNamespace,
-): Promise<number> {
+export async function addInviteCodes(codes: string[], pool?: KVNamespace): Promise<number> {
   if (!pool || codes.length === 0) return 0;
 
   try {

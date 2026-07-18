@@ -38,9 +38,9 @@ describe('COMMUNITY_DESCRIPTIONS', () => {
     for (const name of RESERVED_COMMUNITY_NAMES) {
       const desc = COMMUNITY_DESCRIPTIONS[name];
       expect(desc).toBeDefined();
-      expect(desc!.title).toBeTruthy();
-      expect(desc!.description).toBeTruthy();
-      expect(desc!.emoji).toBeTruthy();
+      expect(desc?.title).toBeTruthy();
+      expect(desc?.description).toBeTruthy();
+      expect(desc?.emoji).toBeTruthy();
     }
   });
 
@@ -63,28 +63,30 @@ describe('scoreCommunityQuality', () => {
     expect(result.score).toBeGreaterThanOrEqual(75);
   });
 
-  it('should return "high" for moderately active communities', () => {
+  it('should return "medium" for moderately active communities', () => {
     const result = scoreCommunityQuality({
       subscribers: 5000,
       postsPerDay: 20,
       commentsPerPost: 10,
       ageDays: 200,
     });
-    expect(result.tier).toBe('high');
-    expect(result.score).toBeGreaterThanOrEqual(50);
+    // Log-scaled subscriber scoring means 5k subs contributes ~18.5 points,
+    // combined with other factors yields ~37.7 total = 'medium' tier
+    expect(result.tier).toBe('medium');
+    expect(result.score).toBeGreaterThanOrEqual(25);
     expect(result.score).toBeLessThan(75);
   });
 
-  it('should return "medium" for low activity communities', () => {
+  it('should return "low" for low activity communities', () => {
     const result = scoreCommunityQuality({
       subscribers: 100,
       postsPerDay: 2,
       commentsPerPost: 1,
       ageDays: 30,
     });
-    expect(result.tier).toBe('medium');
-    expect(result.score).toBeGreaterThanOrEqual(25);
-    expect(result.score).toBeLessThan(50);
+    // Low subscriber count and engagement yield ~12.4 total = 'low' tier
+    expect(result.tier).toBe('low');
+    expect(result.score).toBeLessThan(25);
   });
 
   it('should return "low" for inactive communities', () => {

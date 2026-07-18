@@ -39,12 +39,19 @@ interface TildesGroupResponse {
 }
 
 export const TILDES_GROUPS = [
-  'comp', 'tech', 'linux', 'programming', 'security', 'science', 'crypto', 'privacy',
+  'comp',
+  'tech',
+  'linux',
+  'programming',
+  'security',
+  'science',
+  'crypto',
+  'privacy',
 ];
 
 function adaptTildesTopic(topic: TildesTopic, groupName: string): UnifiedPost {
   const nativeId = `tildes:${groupName}:${topic.id}`;
-  const text = topic.title + (topic.body ? '\n\n' + topic.body : '');
+  const text = topic.title + (topic.body ? `\n\n${topic.body}` : '');
 
   const author: UnifiedIdentity = {
     id: `tildes:${topic.author}`,

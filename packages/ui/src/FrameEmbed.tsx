@@ -100,7 +100,7 @@ export function FrameEmbed({
         setLoading(null);
       }
     },
-    [url, postUrl, framePostUrl],
+    [url, postUrl, framePostUrl, safeOpen],
   );
 
   return (

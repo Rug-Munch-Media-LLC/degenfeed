@@ -22,11 +22,7 @@ import {
   isRelevantPost,
   isSpamPost,
 } from '@degenfeed/feed-core';
-import {
-  getNewsletterFeeds,
-  RmiDataBusProvider,
-  RssProvider,
-} from '@degenfeed/feed-providers';
+import { getNewsletterFeeds, RmiDataBusProvider, RssProvider } from '@degenfeed/feed-providers';
 import { computeTrendingTopics, rankDiverse } from '@degenfeed/ranking';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, rmiUrl } from '@degenfeed/utils';

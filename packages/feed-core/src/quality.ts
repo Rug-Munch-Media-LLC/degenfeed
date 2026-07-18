@@ -78,9 +78,7 @@ export function estimateViews(post: UnifiedPost): number {
  */
 export function computeEngagementDensity(post: UnifiedPost): number {
   const engagement =
-    (post.metrics?.likes ?? 0) +
-    (post.metrics?.reposts ?? 0) +
-    (post.metrics?.replies ?? 0);
+    (post.metrics?.likes ?? 0) + (post.metrics?.reposts ?? 0) + (post.metrics?.replies ?? 0);
 
   const estimatedViews = estimateViews(post);
   if (estimatedViews === 0) return 0;
@@ -88,12 +86,12 @@ export function computeEngagementDensity(post: UnifiedPost): number {
   const density = (engagement / estimatedViews) * 1000;
 
   // Score: 0-10 based on engagement per 1000 views
-  if (density > 50) return 10;  // Viral
-  if (density > 20) return 8;   // Highly resonant
-  if (density > 10) return 6;   // Strong engagement
-  if (density > 5) return 4;    // Above average
-  if (density > 1) return 2;    // Moderate
-  return 1;                       // Low density
+  if (density > 50) return 10; // Viral
+  if (density > 20) return 8; // Highly resonant
+  if (density > 10) return 6; // Strong engagement
+  if (density > 5) return 4; // Above average
+  if (density > 1) return 2; // Moderate
+  return 1; // Low density
 }
 
 // ─── Author quality (0-12) ─────────────────────────────────────────────
@@ -108,16 +106,20 @@ export function computeAuthorQuality(author: AuthorProfile): number {
   let score = 0;
 
   // Account age (older = more established, less likely to be a disposable account)
-  if (author.accountAge > 365) score += 3;      // >1 year
-  else if (author.accountAge > 90) score += 2;   // >3 months
-  else if (author.accountAge > 30) score += 1;   // >1 month
+  if (author.accountAge > 365)
+    score += 3; // >1 year
+  else if (author.accountAge > 90)
+    score += 2; // >3 months
+  else if (author.accountAge > 30) score += 1; // >1 month
 
   // Follower ratio (followers / following)
   // High ratio suggests the author produces content others value
   // Low ratio suggests the author follows many but isn't widely followed
   const ratio = author.followers / Math.max(author.following, 1);
-  if (ratio > 10) score += 3;    // Influencer tier
-  else if (ratio > 3) score += 2; // Growing authority
+  if (ratio > 10)
+    score += 3; // Influencer tier
+  else if (ratio > 3)
+    score += 2; // Growing authority
   else if (ratio > 1) score += 1; // Balanced
 
   // Verified status (platform verification reduces impersonation risk)
@@ -171,7 +173,8 @@ export function computeUniqueness(post: UnifiedPost, recentPosts: UnifiedPost[])
     const union = words1.size + words2.size - intersection;
     const similarity = union > 0 ? intersection / union : 0;
 
-    if (similarity > 0.7) uniqueness -= 3;  // Near duplicate
+    if (similarity > 0.7)
+      uniqueness -= 3; // Near duplicate
     else if (similarity > 0.5) uniqueness -= 1; // Similar
   }
 
@@ -187,13 +190,13 @@ export function computeUniqueness(post: UnifiedPost, recentPosts: UnifiedPost[])
 function computeContentLengthScore(post: UnifiedPost): number {
   const length = (post.text ?? '').length;
 
-  if (length > 1000) return 10;  // Deep analysis / long-form
-  if (length > 500) return 8;    // Substantial post
-  if (length > 200) return 6;    // Good length
-  if (length > 100) return 4;    // Average
-  if (length > 50) return 3;     // Short
-  if (length > 20) return 2;     // Very short
-  return 1;                       // One-liner
+  if (length > 1000) return 10; // Deep analysis / long-form
+  if (length > 500) return 8; // Substantial post
+  if (length > 200) return 6; // Good length
+  if (length > 100) return 4; // Average
+  if (length > 50) return 3; // Short
+  if (length > 20) return 2; // Very short
+  return 1; // One-liner
 }
 
 // ─── Media detection ──────────────────────────────────────────────────
@@ -221,23 +224,22 @@ export function hasMedia(post: UnifiedPost): boolean {
  * Returns 0-100 where 100 = highest quality.
  */
 export function computeQualityScore(post: UnifiedPost, context: QualityContext): number {
-  const spam = (post as unknown as Record<string, unknown>).spamScore as number ?? 0;
+  const spam = ((post as unknown as Record<string, unknown>).spamScore as number) ?? 0;
   const density = computeEngagementDensity(post);
   const author = computeAuthorQuality(context.author);
-  const uniqueness = context.uniqueness ?? (
-    context.recentPosts ? computeUniqueness(post, context.recentPosts) : 10
-  );
+  const uniqueness =
+    context.uniqueness ?? (context.recentPosts ? computeUniqueness(post, context.recentPosts) : 10);
   const length = computeContentLengthScore(post);
   const media = hasMedia(post) ? 2 : 0;
 
   // Weighted composite (each sub-score normalized to 0-1 range)
   const score =
-    (1 - spam) * 30 +          // Spam penalty (30%)
-    (density / 10) * 20 +      // Engagement quality (20%)
-    (author / 12) * 20 +       // Author quality (20%)
-    (uniqueness / 10) * 15 +   // Uniqueness (15%)
-    (length / 10) * 10 +       // Content depth (10%)
-    (media / 2) * 5;           // Media bonus (5%)
+    (1 - spam) * 30 + // Spam penalty (30%)
+    (density / 10) * 20 + // Engagement quality (20%)
+    (author / 12) * 20 + // Author quality (20%)
+    (uniqueness / 10) * 15 + // Uniqueness (15%)
+    (length / 10) * 10 + // Content depth (10%)
+    (media / 2) * 5; // Media bonus (5%)
 
   return Math.round(Math.max(0, Math.min(100, score)));
 }

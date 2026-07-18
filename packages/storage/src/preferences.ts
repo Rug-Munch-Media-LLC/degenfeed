@@ -3,12 +3,7 @@
 import type { StoredIdentity } from '@degenfeed/types';
 import { getDb } from './db';
 import { clearAllSessions } from './session';
-import type {
-  StoredFollow,
-  StoredMutedIdentity,
-  StoredMutedWord,
-  UserPreferences,
-} from './types';
+import type { StoredFollow, StoredMutedIdentity, StoredMutedWord, UserPreferences } from './types';
 export async function savePreferences(prefs: UserPreferences): Promise<void> {
   const db = await getDb();
   await db.put('prefs', prefs);

@@ -384,7 +384,9 @@ export default function AdminSystemPage() {
                             {flag.key}
                           </code>
                         </div>
-                        <p className="mt-0.5 text-xs text-[var(--color-muted)]">{flag.description}</p>
+                        <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+                          {flag.description}
+                        </p>
                       </div>
                       <button
                         type="button"
@@ -409,7 +411,9 @@ export default function AdminSystemPage() {
       {activeTab === 'limits' && (
         <div>
           <div className="mb-4 flex items-center gap-3">
-            <p className="text-sm text-[var(--color-muted)]">API rate limits and current utilization</p>
+            <p className="text-sm text-[var(--color-muted)]">
+              API rate limits and current utilization
+            </p>
             <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]">
               {rateLimits.filter((r) => r.status === 'near_limit').length} near limit
             </span>
@@ -463,7 +467,9 @@ export default function AdminSystemPage() {
                               style={{ width: `${Math.min(usagePct, 100)}%` }}
                             />
                           </div>
-                          <span className="text-[10px] text-[var(--color-muted)]">{usagePct.toFixed(0)}%</span>
+                          <span className="text-[10px] text-[var(--color-muted)]">
+                            {usagePct.toFixed(0)}%
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3">

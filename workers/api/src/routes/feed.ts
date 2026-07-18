@@ -8,16 +8,11 @@
  * single provider, health) live in ./feed-misc.
  */
 
-import { TRENDING_CACHE_KEY } from './trending-scraper';
+import { PRESET_NAMES, type PresetName, resolvePreset } from '@degenfeed/feed-core';
 import { parseProtocols } from '@degenfeed/utils';
 import {
-  PRESET_NAMES,
-  presetKvKey,
-  resolvePreset,
-  type PresetName,
-} from '@degenfeed/feed-core';
-import {
   ALL_CATEGORIES,
+  applyCurationPipeline,
   applyUserFilters,
   broadcastFeedUpdate,
   buildCatchUpSummary,
@@ -25,45 +20,41 @@ import {
   collectProviderResults,
   computeAllAuthorStats,
   computeFreshnessMeta,
-  computeNewPostsSince,
   computeTrending,
   countNewSinceLastVisit,
-  deduplicateCrossProtocol,
   DEFAULT_PROTOCOLS,
+  deduplicateCrossProtocol,
   deprioritizeStaleContent,
   enrichNostrEngagement,
   FEED_GENERATION_TIMEOUT_MS,
+  type FeedType,
   feedCacheKey,
   fetchFromProviders,
-  getCachedFeed,
+  getCategoryCounts,
   getCircuitStatus,
   getFeedCache,
   getLastSync,
   invalidateFeedCache,
   loadUserRankingContext,
   mergePreferences,
+  ProviderTimer,
   parseCookiePrefs,
   parsePrefsFromQuery,
   predictEngagementBoost,
   prefersEnglish,
   prepareBasePosts,
-  ProviderTimer,
   scoreAndRank,
   setCachedFeed,
   setFeedCache,
   shouldTriggerSmartRefresh,
   updateFeedFreshness,
   updateLastSync,
-  writePostsToKV,
-  applyCurationPipeline,
-  getCategoryCounts,
-  auditCategoryCoverage,
   verifyDiversity,
-  type FeedType,
+  writePostsToKV,
 } from '../feed';
 import { type Env, jsonResponse } from '../index';
 import { verifySessionCookie } from '../session';
-import type { StoredPresetEntry } from './presets';
+import { TRENDING_CACHE_KEY } from './trending-scraper';
 
 // Backward-compatible re-exports for stream.ts, newsletter.ts, app.ts, and tests.
 export { DEFAULT_PROTOCOLS, getProvider } from '../feed';
@@ -99,17 +90,13 @@ async function handleCachedFeed(
   const userId = await resolveUserId(request, env);
 
   const isTrending = feedType === 'trending';
-  const isEverything = feedType === 'everything';
+  const _isEverything = feedType === 'everything';
 
   // 1. Check per-user cache (SWR pattern)
   if (!params.get('cursor')) {
     const cacheResult = await getFeedCache(env, userId, feedType);
     if (cacheResult.type === 'hit' && cacheResult.entry) {
-      const resp = cachedJsonResponse(
-        cacheResult.entry,
-        200,
-        isTrending ? 15 : 30,
-      );
+      const resp = cachedJsonResponse(cacheResult.entry, 200, isTrending ? 15 : 30);
       resp.headers.set(
         'X-DegenFeed-Debug',
         `cache=hit,cachedAt=${new Date(cacheResult.entry.cachedAt).toISOString()},feed-generation=${((now - feedStartTime) / 1000).toFixed(3)}s`,
@@ -125,11 +112,7 @@ async function handleCachedFeed(
       } else {
         void generateAndCacheFeed(request, env, execCtx, feedType, userId);
       }
-      const resp = cachedJsonResponse(
-        cacheResult.entry,
-        200,
-        isTrending ? 15 : 30,
-      );
+      const resp = cachedJsonResponse(cacheResult.entry, 200, isTrending ? 15 : 30);
       resp.headers.set(
         'X-DegenFeed-Debug',
         `cache=stale(swr),cachedAt=${new Date(cacheResult.entry.cachedAt).toISOString()},background=refresh,feed-generation=${((now - feedStartTime) / 1000).toFixed(3)}s`,
@@ -334,8 +317,7 @@ async function generateAndCacheFeed(
         notices,
         fetchedAt: now,
         freshness: freshnessMeta,
-        note:
-          relevant.length === 0 ? 'No relevant posts found' : 'All sources failed or filtered',
+        note: relevant.length === 0 ? 'No relevant posts found' : 'All sources failed or filtered',
       },
     });
   }
@@ -377,7 +359,7 @@ async function generateAndCacheFeed(
         dominantPct: diversityCheck.dominantPct,
         sufficientlyDiverse: diversityCheck.diverse,
       },
-      catchUp: catchUp && catchUp.triggered
+      catchUp: catchUp?.triggered
         ? {
             triggered: true,
             awayMinutes: catchUp.awayMinutes,
@@ -399,18 +381,12 @@ async function generateAndCacheFeed(
     await setCachedFeed(env, legacyKey, responseBody);
   }
 
-  const resp = cachedJsonResponse(
-    responseBody,
-    200,
-    feedType === 'trending' ? 15 : 30,
-  );
+  const resp = cachedJsonResponse(responseBody, 200, feedType === 'trending' ? 15 : 30);
 
   // Debug header
   const circuitStatus = await getCircuitStatus(env, requestedProtocols);
   const circuitParts = Object.entries(circuitStatus).map(([p, s]) => `${p}=${s}`);
-  const slowProviderParts = timer.getSlowProviders().map(
-    (t) => `${t.protocol}=${t.durationMs}ms`,
-  );
+  const slowProviderParts = timer.getSlowProviders().map((t) => `${t.protocol}=${t.durationMs}ms`);
   const debugParts = [
     `feed-generation=${(feedElapsed / 1000).toFixed(1)}s`,
     `timeout=${(FEED_GENERATION_TIMEOUT_MS / 1000).toFixed(0)}s`,
@@ -432,7 +408,9 @@ async function generateAndCacheFeed(
   debugParts.push(
     `spam=${debug.avgSpam.toFixed(2)},quality=${debug.avgQuality.toFixed(0)},reputation=${debug.avgReputation.toFixed(0)},velocity=${debug.avgVelocity.toFixed(0)}`,
   );
-  debugParts.push(`categories=${diversityCheck.uniqueCategories}/${ALL_CATEGORIES.length},dominant=${diversityCheck.dominantCategory ?? 'none'}=${diversityCheck.dominantPct}%`);
+  debugParts.push(
+    `categories=${diversityCheck.uniqueCategories}/${ALL_CATEGORIES.length},dominant=${diversityCheck.dominantCategory ?? 'none'}=${diversityCheck.dominantPct}%`,
+  );
 
   resp.headers.set('X-DegenFeed-Debug', debugParts.filter(Boolean).join(' | '));
 
@@ -476,10 +454,7 @@ export async function handleCategoryFeed(
 
 // ─── Cache management endpoints ────────────────────────────────────
 
-export async function handleFeedCacheInvalidate(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleFeedCacheInvalidate(request: Request, env: Env): Promise<Response> {
   const userId = await resolveUserId(request, env);
   const params = new URL(request.url).searchParams;
   const feedType = (params.get('type') ?? undefined) as FeedType | undefined;

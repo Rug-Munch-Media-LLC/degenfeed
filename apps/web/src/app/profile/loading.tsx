@@ -53,7 +53,8 @@ export default function ProfileLoading() {
 
       {/* Metrics */}
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => (
+        {Array.from({ length: 4 }, (_, _i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static list
           <MetricCardSkeleton key={i} />
         ))}
       </div>

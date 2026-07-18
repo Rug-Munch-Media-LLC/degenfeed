@@ -28,10 +28,7 @@ export const PROTOCOL_DEFAULT_CURRENCY: Record<string, string> = {
  *  2. Otherwise use the first connected protocol that has a mapping.
  *  3. Fall back to 'eth'.
  */
-export function getDefaultCurrency(
-  connectedProtocols: string[],
-  postProtocol?: string,
-): string {
+export function getDefaultCurrency(connectedProtocols: string[], postProtocol?: string): string {
   // Prefer the post's protocol currency (author protocol)
   if (postProtocol && PROTOCOL_DEFAULT_CURRENCY[postProtocol]) {
     return PROTOCOL_DEFAULT_CURRENCY[postProtocol];

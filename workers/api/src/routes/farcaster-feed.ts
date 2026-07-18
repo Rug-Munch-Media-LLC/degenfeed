@@ -37,10 +37,9 @@ export async function handleFarcasterFeed(_request: Request, env: Env): Promise<
 
           try {
             // 1. Resolve custody address from hub
-            const custodyRes = await fetch(
-              `${hubUrl}/v1/custodyAddressByFid?fid=${fid}`,
-              { headers: { 'user-agent': 'DegenFeed/0.1' } },
-            );
+            const custodyRes = await fetch(`${hubUrl}/v1/custodyAddressByFid?fid=${fid}`, {
+              headers: { 'user-agent': 'DegenFeed/0.1' },
+            });
             if (!custodyRes.ok) return post;
 
             const custodyData = (await custodyRes.json()) as { custodyAddress?: string };

@@ -719,8 +719,8 @@ export function TipModal({
                         <a
                           href={explorerUrlForMethod(selectedMethod ?? '', state.txHash)}
                           target="_blank"
-                          
                           className="flex-1 text-xs text-degen-500 hover:text-degen-400 break-all"
+                          rel="noopener"
                         >
                           {isOnchain
                             ? `View on ${chainCfg?.explorer?.replace('https://', '') ?? 'block explorer'}`

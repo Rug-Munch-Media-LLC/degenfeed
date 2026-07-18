@@ -11,7 +11,6 @@
 
 import type { UnifiedPost } from '@degenfeed/types';
 import type { Env } from '../index';
-import type { BehaviorProfile } from './feed-curator';
 
 export type FeedbackAction = 'show-more' | 'show-less';
 
@@ -56,10 +55,7 @@ export function emptyFeedbackProfile(): FeedbackProfile {
   };
 }
 
-export async function loadFeedbackProfile(
-  env: Env,
-  userId: string,
-): Promise<FeedbackProfile> {
+export async function loadFeedbackProfile(env: Env, userId: string): Promise<FeedbackProfile> {
   if (!env.CACHE || !userId) return emptyFeedbackProfile();
   try {
     const raw = await env.CACHE.get(feedbackKey(userId));
@@ -72,7 +68,7 @@ export async function loadFeedbackProfile(
 
 function applyDecay(profile: FeedbackProfile): FeedbackProfile {
   const now = Date.now();
-  const decayFactor = Math.pow(0.5, (now - profile.lastUpdated) / DECAY_HALF_LIFE_MS);
+  const decayFactor = 0.5 ** ((now - profile.lastUpdated) / DECAY_HALF_LIFE_MS);
   if (decayFactor > 0.95) return profile;
 
   for (const key of Object.keys(profile.topicWeights)) {
@@ -103,18 +99,31 @@ export async function recordFeedback(
   const delta =
     action === 'show-more'
       ? { topic: TOPIC_BOOST_DELTA, creator: CREATOR_BOOST_DELTA, ctype: CONTENT_TYPE_BOOST_DELTA }
-      : { topic: TOPIC_DEMOTE_DELTA, creator: CREATOR_DEMOTE_DELTA, ctype: CONTENT_TYPE_DEMOTE_DELTA };
+      : {
+          topic: TOPIC_DEMOTE_DELTA,
+          creator: CREATOR_DEMOTE_DELTA,
+          ctype: CONTENT_TYPE_DEMOTE_DELTA,
+        };
 
   for (const niche of post.niches) {
     const lower = niche.toLowerCase();
-    profile.topicWeights[lower] = Math.max(-3, Math.min(3, (profile.topicWeights[lower] ?? 0) + delta.topic));
+    profile.topicWeights[lower] = Math.max(
+      -3,
+      Math.min(3, (profile.topicWeights[lower] ?? 0) + delta.topic),
+    );
   }
 
   const creatorId = post.author.id.toLowerCase();
-  profile.creatorWeights[creatorId] = Math.max(-3, Math.min(3, (profile.creatorWeights[creatorId] ?? 0) + delta.creator));
+  profile.creatorWeights[creatorId] = Math.max(
+    -3,
+    Math.min(3, (profile.creatorWeights[creatorId] ?? 0) + delta.creator),
+  );
 
   const ctype = post.contentType ?? 'text';
-  profile.contentTypeWeights[ctype] = Math.max(-3, Math.min(3, (profile.contentTypeWeights[ctype] ?? 0) + delta.ctype));
+  profile.contentTypeWeights[ctype] = Math.max(
+    -3,
+    Math.min(3, (profile.contentTypeWeights[ctype] ?? 0) + delta.ctype),
+  );
 
   profile.entries.push({
     postId: post.id,
@@ -200,7 +209,10 @@ export function computeFeedbackBoost(
 
   const ctypeWeight = profile.contentTypeWeights[post.contentType ?? 'text'] ?? 0;
   if (ctypeWeight < -0.5) ctypeBoost = 0.5;
-  else if (ctypeWeight > 0.5) { ctypeBoost = 1.3; factors.push('preferred-content-type'); }
+  else if (ctypeWeight > 0.5) {
+    ctypeBoost = 1.3;
+    factors.push('preferred-content-type');
+  }
 
   const multiplier = topicBoost * creatorBoost * ctypeBoost;
 

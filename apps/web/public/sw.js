@@ -49,11 +49,7 @@ self.addEventListener('activate', (e) => {
       // Prune old cache versions
       const keys = await caches.keys();
       const valid = new Set(Object.values(CACHE));
-      await Promise.all(
-        keys
-          .filter((k) => !valid.has(k))
-          .map((k) => caches.delete(k)),
-      );
+      await Promise.all(keys.filter((k) => !valid.has(k)).map((k) => caches.delete(k)));
 
       await self.clients.claim();
     })(),
@@ -66,11 +62,7 @@ self.addEventListener('install', (e) => {
     (async () => {
       const cache = await caches.open(CACHE.page);
       // Best-effort pre-cache — don't fail install if one URL is down
-      await Promise.allSettled(
-        PRECACHE_URLS.map((url) =>
-          cache.add(url).catch(() => {}),
-        ),
-      );
+      await Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url).catch(() => {})));
     })(),
   );
   self.skipWaiting();
@@ -225,18 +217,16 @@ self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   const url = e.notification.data?.url || '/';
   e.waitUntil(
-    clients
-      .matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        for (const client of clientList) {
-          if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-            client.focus();
-            client.navigate(url);
-            return;
-          }
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          client.focus();
+          client.navigate(url);
+          return;
         }
-        return clients.openWindow(url);
-      }),
+      }
+      return clients.openWindow(url);
+    }),
   );
 });
 

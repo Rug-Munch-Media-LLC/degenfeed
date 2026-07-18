@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { EmptyState } from '../../../components/EmptyState';
 import { useAuth } from '../../../components/AuthProvider';
+import { EmptyState } from '../../../components/EmptyState';
 
 interface SuggestedFollow {
   id: string;

@@ -134,7 +134,7 @@ export function PeerTubeTipOverlay({
         // If new tips arrived since last poll, animate the latest
         if (data.tips && data.tips.length > 0) {
           const latest = data.tips[0];
-          if (latest && latest.sender) {
+          if (latest?.sender) {
             // Avoid re-animating the same tip
             setAnimations((prev) => {
               if (prev.length > 0 && prev[0]?.amount === latest.amount) return prev;

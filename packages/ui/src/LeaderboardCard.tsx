@@ -7,7 +7,7 @@
 
 'use client';
 
-import { ProtocolBadge, getProtocolLabel } from './ProtocolBadge';
+import { ProtocolBadge } from './ProtocolBadge';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -104,7 +104,8 @@ function AvatarFallback({ name, size = 'md' }: { name: string; size?: 'sm' | 'md
     .join('')
     .slice(0, 2)
     .toUpperCase();
-  const sizeClass = size === 'sm' ? 'h-8 w-8 text-xs' : size === 'lg' ? 'h-12 w-12 text-sm' : 'h-10 w-10 text-xs';
+  const sizeClass =
+    size === 'sm' ? 'h-8 w-8 text-xs' : size === 'lg' ? 'h-12 w-12 text-sm' : 'h-10 w-10 text-xs';
   return (
     <div
       className={`flex shrink-0 items-center justify-center rounded-full bg-degen-500/20 font-bold text-degen-400 ${sizeClass}`}
@@ -117,7 +118,11 @@ function AvatarFallback({ name, size = 'md' }: { name: string; size?: 'sm' | 'md
 
 // ─── Component ───────────────────────────────────────────────────────────
 
-export function LeaderboardCard({ entry, variant = 'creators', showStats = true }: LeaderboardCardProps) {
+export function LeaderboardCard({
+  entry,
+  variant = 'creators',
+  showStats = true,
+}: LeaderboardCardProps) {
   const rankStyle = getRankStyle(entry.rank);
   const isPodium = entry.rank <= 3;
   const statValue = variant === 'creators' ? entry.tipsReceived : entry.tipsSent;
@@ -125,7 +130,9 @@ export function LeaderboardCard({ entry, variant = 'creators', showStats = true 
   return (
     <div
       className={`group relative flex items-center gap-3 rounded-2xl border p-3 sm:p-4 transition-all duration-200 hover:shadow-[0_0_20px_-8px] ${
-        isPodium ? rankStyle.className : 'border-[var(--color-border)] bg-[var(--color-card)] hover:border-white/20'
+        isPodium
+          ? rankStyle.className
+          : 'border-[var(--color-border)] bg-[var(--color-card)] hover:border-white/20'
       }`}
     >
       {/* Rank badge */}
@@ -173,9 +180,7 @@ export function LeaderboardCard({ entry, variant = 'creators', showStats = true 
 
       {/* Stats */}
       <div className="shrink-0 text-right">
-        <div className="text-sm font-bold text-degen-400">
-          {formatNumber(statValue)}
-        </div>
+        <div className="text-sm font-bold text-degen-400">{formatNumber(statValue)}</div>
         <div className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
           {variant === 'creators' ? 'Received' : 'Sent'}
         </div>
@@ -198,7 +203,10 @@ export function LeaderboardCard({ entry, variant = 'creators', showStats = true 
 // ─── Mini Leaderboard Widget ──────────────────────────────────────────────
 
 // Small widget showing top 3 creators — suitable for sidebars
-export function MiniLeaderboard({ entries, title = '🏆 Top Creators' }: {
+export function MiniLeaderboard({
+  entries,
+  title = '🏆 Top Creators',
+}: {
   entries: LeaderboardCardEntry[];
   title?: string;
 }) {

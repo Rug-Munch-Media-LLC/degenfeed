@@ -446,7 +446,9 @@ export default function AdminPlatformsPage() {
         <div>
           <div className="mb-6">
             <h2 className="text-sm font-semibold text-[var(--color-fg)]">Global Configuration</h2>
-            <p className="mt-0.5 text-xs text-[var(--color-muted)]">Platform-wide settings and feature flags</p>
+            <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+              Platform-wide settings and feature flags
+            </p>
           </div>
           <div className="space-y-3">
             {(configs.general || []).map((setting) => (

@@ -46,10 +46,7 @@ export interface ScorerContext {
  * - Established accounts (>100 followers): +0.5
  * - Followed by viewer: +0.5
  */
-export function computeAuthorReputation(
-  post: UnifiedPost,
-  ctx: ScorerContext,
-): AuthorReputation {
+export function computeAuthorReputation(post: UnifiedPost, ctx: ScorerContext): AuthorReputation {
   const isVerified = post.author.verified.length > 0;
   const followerCount = post.author.followerCount ?? 0;
   const isEstablished = followerCount >= 100;
@@ -72,10 +69,7 @@ export function computeAuthorReputation(
  * Compute a rich set of quality signals for a post.
  * These feed into the overall ranking score as additive bonuses / penalties.
  */
-export function computeQualitySignals(
-  post: UnifiedPost,
-  ctx: ScorerContext,
-): QualitySignals {
+export function computeQualitySignals(post: UnifiedPost, ctx: ScorerContext): QualitySignals {
   // 1. Original content bonus (+3 for original, non-link, non-repost)
   const isRepost =
     /^RT\b/i.test(post.text) ||
@@ -120,7 +114,12 @@ export function computeQualitySignals(
     authorReputation,
     contentLengthPenalty,
     mediaBonus,
-    total: originalContentBonus + engagementVelocity + authorReputation + contentLengthPenalty + mediaBonus,
+    total:
+      originalContentBonus +
+      engagementVelocity +
+      authorReputation +
+      contentLengthPenalty +
+      mediaBonus,
   };
 }
 
@@ -183,9 +182,7 @@ export function checkDiversity(
  * in a row.  Takes a scored list and redistributes it so each protocol
  * gets a turn in round-robin fashion.
  */
-export function interleaveByProtocol<T extends { protocol: string }>(
-  posts: T[],
-): T[] {
+export function interleaveByProtocol<T extends { protocol: string }>(posts: T[]): T[] {
   if (posts.length <= 2) return posts;
 
   // Group by protocol, preserving original score order within each group

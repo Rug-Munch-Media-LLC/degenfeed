@@ -90,7 +90,9 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
         <div className="max-w-md text-center">
           <div className="mb-4 text-4xl">📭</div>
           <h1 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">Post not found</h1>
-          <p className="mb-6 text-sm text-[var(--color-muted)]">{error || 'This post could not be loaded.'}</p>
+          <p className="mb-6 text-sm text-[var(--color-muted)]">
+            {error || 'This post could not be loaded.'}
+          </p>
           <a
             href="/"
             className="inline-flex items-center gap-2 rounded-lg bg-degen-500 px-4 py-2 text-sm font-semibold text-black hover:bg-degen-400 transition-colors"
@@ -242,7 +244,10 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
 
       {/* Minimal footer */}
       <footer className="border-t border-[var(--color-glass-border)] py-4 text-center">
-        <a href="/" className="text-xs text-gray-600 hover:text-[var(--color-muted)] transition-colors">
+        <a
+          href="/"
+          className="text-xs text-gray-600 hover:text-[var(--color-muted)] transition-colors"
+        >
           Powered by DegenFeed — The social feed of web3
         </a>
       </footer>

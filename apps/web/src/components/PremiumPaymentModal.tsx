@@ -391,7 +391,12 @@ interface PremiumPaymentModalProps {
   onSuccess?: () => void;
 }
 
-export function PremiumPaymentModal({ open, onClose, initialTier, onSuccess }: PremiumPaymentModalProps) {
+export function PremiumPaymentModal({
+  open,
+  onClose,
+  initialTier,
+  onSuccess,
+}: PremiumPaymentModalProps) {
   const { walletAddress } = useAuth();
   const { showToast } = useToast();
 

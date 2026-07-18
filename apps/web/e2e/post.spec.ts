@@ -5,16 +5,12 @@
 import { expect, test } from '@playwright/test';
 import {
   MOCK_FEED_POSTS,
-  MOCK_SINGLE_POST,
-  MOCK_POST_REPLIES,
-  MOCK_THREAD_DATA,
-  MOCK_LIKE_RESPONSE,
-  MOCK_CROSS_REPLY_RESPONSE,
   MOCK_PREFERENCES,
   MOCK_SIGNED_IN_STATE,
+  MOCK_THREAD_DATA,
+  mockAuthApi,
   mockFeedApi,
   mockPostApi,
-  mockAuthApi,
 } from './fixtures';
 
 test.describe('Post detail view', () => {
@@ -46,7 +42,9 @@ test.describe('Post detail view', () => {
 
   test('post detail shows protocol badges on replies', async ({ page }) => {
     await page.goto('/post/post-1');
-    await expect(page.getByText('nostr').or(page.getByText('Nostr'))).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText('nostr').or(page.getByText('Nostr'))).toBeVisible({
+      timeout: 30000,
+    });
   });
 
   test('post detail displays embed link preview fallback', async ({ page }) => {
@@ -83,7 +81,9 @@ test.describe('Post interactions — Like', () => {
     // Click like
     await likeBtn.click();
     // Wait for optimistic update — text should change
-    await expect(page.locator('button', { hasText: /♥/ }).first().or(page.getByText('43'))).toBeVisible({
+    await expect(
+      page.locator('button', { hasText: /♥/ }).first().or(page.getByText('43')),
+    ).toBeVisible({
       timeout: 10000,
     });
   });

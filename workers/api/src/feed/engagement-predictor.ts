@@ -55,7 +55,7 @@ function getContentTypeMultiplier(post: UnifiedPost): number {
   }
 }
 
-function getTimeOfDayMultiplier(post: UnifiedPost, now: number): number {
+function getTimeOfDayMultiplier(post: UnifiedPost, _now: number): number {
   const postHour = new Date(post.createdAt).getHours();
   const postDay = new Date(post.createdAt).getDay(); // 0=Sun
 
@@ -112,7 +112,9 @@ function getTrendingBoost(post: UnifiedPost, trendingTopics: Set<string>): numbe
   return 1.0;
 }
 
-export function predictEngagementBoost(input: EngagementPredictionInput): EngagementPredictionOutput {
+export function predictEngagementBoost(
+  input: EngagementPredictionInput,
+): EngagementPredictionOutput {
   const { post, authorStats, trendingTopics, now } = input;
   const factors: string[] = [];
 
@@ -154,21 +156,14 @@ export function predictEngagementBoost(input: EngagementPredictionInput): Engage
   if (recencyBoost !== 1.0) factors.push(`recency=${recencyBoost}x`);
 
   const totalMultiplier =
-    contentTypeBoost *
-    timeBoost *
-    authorBoost *
-    trendingBoost *
-    followerBoost *
-    recencyBoost;
+    contentTypeBoost * timeBoost * authorBoost * trendingBoost * followerBoost * recencyBoost;
 
   const baseEngagement =
-    (post.metrics.likes ?? 0) +
-    (post.metrics.reposts ?? 0) * 2 +
-    (post.metrics.replies ?? 0) * 3;
+    (post.metrics.likes ?? 0) + (post.metrics.reposts ?? 0) * 2 + (post.metrics.replies ?? 0) * 3;
 
   const predictedEngagement = baseEngagement * totalMultiplier;
 
-  const confidence = Math.min(1.0, 0.3 + (factors.length * 0.15));
+  const confidence = Math.min(1.0, 0.3 + factors.length * 0.15);
 
   return {
     predictedEngagement,
@@ -194,12 +189,9 @@ export function computeAuthorStats(
   }
 
   const total = authorPosts.length;
-  const avgLikes =
-    authorPosts.reduce((sum, p) => sum + (p.metrics.likes ?? 0), 0) / total;
-  const avgReposts =
-    authorPosts.reduce((sum, p) => sum + (p.metrics.reposts ?? 0), 0) / total;
-  const avgReplies =
-    authorPosts.reduce((sum, p) => sum + (p.metrics.replies ?? 0), 0) / total;
+  const avgLikes = authorPosts.reduce((sum, p) => sum + (p.metrics.likes ?? 0), 0) / total;
+  const avgReposts = authorPosts.reduce((sum, p) => sum + (p.metrics.reposts ?? 0), 0) / total;
+  const avgReplies = authorPosts.reduce((sum, p) => sum + (p.metrics.replies ?? 0), 0) / total;
   const avgEngagement = avgLikes + avgReposts * 2 + avgReplies * 3;
 
   return {
@@ -211,9 +203,7 @@ export function computeAuthorStats(
   };
 }
 
-export function computeAllAuthorStats(
-  posts: UnifiedPost[],
-): Map<string, AuthorEngagementStats> {
+export function computeAllAuthorStats(posts: UnifiedPost[]): Map<string, AuthorEngagementStats> {
   const byAuthor = new Map<string, UnifiedPost[]>();
   for (const p of posts) {
     const key = p.author.id;
@@ -226,12 +216,9 @@ export function computeAllAuthorStats(
   for (const [authorId, authorPosts] of byAuthor) {
     const total = authorPosts.length;
     if (total === 0) continue;
-    const avgLikes =
-      authorPosts.reduce((sum, p) => sum + (p.metrics.likes ?? 0), 0) / total;
-    const avgReposts =
-      authorPosts.reduce((sum, p) => sum + (p.metrics.reposts ?? 0), 0) / total;
-    const avgReplies =
-      authorPosts.reduce((sum, p) => sum + (p.metrics.replies ?? 0), 0) / total;
+    const avgLikes = authorPosts.reduce((sum, p) => sum + (p.metrics.likes ?? 0), 0) / total;
+    const avgReposts = authorPosts.reduce((sum, p) => sum + (p.metrics.reposts ?? 0), 0) / total;
+    const avgReplies = authorPosts.reduce((sum, p) => sum + (p.metrics.replies ?? 0), 0) / total;
     const avgEngagement = avgLikes + avgReposts * 2 + avgReplies * 3;
 
     stats.set(authorId, {

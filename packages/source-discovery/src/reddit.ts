@@ -5,9 +5,9 @@
  * scores them by subscriber count and activity, and returns candidates.
  */
 
-import type { DiscoveredSource } from './types';
-import { SEARCH_KEYWORDS, DEFAULT_DISCOVERY_CONFIG } from './types';
 import { computeQualityScore, estimateRelevance } from './quality';
+import type { DiscoveredSource } from './types';
+import { DEFAULT_DISCOVERY_CONFIG, SEARCH_KEYWORDS } from './types';
 
 const USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
 const SEARCH_LIMIT = 25;

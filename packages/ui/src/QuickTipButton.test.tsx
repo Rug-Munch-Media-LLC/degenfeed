@@ -188,9 +188,9 @@ describe('QuickTipButton', () => {
   });
 
   it('should send correct POST body on tip', async () => {
-    const mockFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(null, { status: 200 }),
-    );
+    const mockFetch = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 200 }));
 
     render(<QuickTipButton postId="test-1" defaultCurrency="sol" />);
     fireEvent.click(screen.getByText('Tip'));

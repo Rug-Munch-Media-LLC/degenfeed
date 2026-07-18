@@ -13,8 +13,6 @@ import { AuthProvider, useAuth } from './AuthProvider';
 
 // ─── Mock external dependencies ──────────────────────────────────────
 
-import type { StoredIdentity } from '@degenfeed/storage';
-
 vi.mock('@degenfeed/storage', () => ({
   getAllIdentities: vi.fn(),
   getPrimaryIdentity: vi.fn(),
@@ -115,9 +113,26 @@ function makeIdentity(
   };
 }
 
-function mockStorageIdentities(identities: StoredIdentity[]) {
-  vi.mocked(storage.getAllIdentities).mockResolvedValue(identities);
+function mockStorageIdentities(identities: StubIdentity[]) {
+  vi.mocked(storage.getAllIdentities).mockResolvedValue(identities as any);
   vi.mocked(storage.getPrimaryIdentity).mockResolvedValue(identities[0] ?? undefined);
+}
+
+/** Pre-populate wallet storage in localStorage so walletAddress is non-empty */
+function mockWalletAddress(address: string, chain = 'ethereum') {
+  localStorage.setItem(
+    'df_connected_wallets',
+    JSON.stringify([
+      {
+        address,
+        chain,
+        walletName: null,
+        chainId: null,
+        addedAt: Date.now(),
+      },
+    ]),
+  );
+  localStorage.setItem('df_active_wallet_idx', '0');
 }
 
 // ─── Consumer helper ─────────────────────────────────────────────────
@@ -171,8 +186,12 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    // Before the async init completes, ready should be false
-    expect(screen.getByTestId('ready').textContent).toBe('false');
+    // Component starts ready immediately with empty default state
+    expect(screen.getByTestId('ready').textContent).toBe('true');
+    expect(screen.getByTestId('wallet').textContent).toBe('none');
+    expect(screen.getByTestId('protocols').textContent).toBe('{}');
+    expect(screen.getByTestId('linked-count').textContent).toBe('0');
+    expect(screen.getByTestId('is-wallet-only').textContent).toBe('false');
   });
 
   it('should load identities and mark ready after mount', async () => {
@@ -183,25 +202,24 @@ describe('AuthProvider', () => {
     });
     mockStorageIdentities([nostrIdent]);
 
-    let captured: ReturnType<typeof useAuth> | undefined;
     render(
       <AuthProvider>
-        <TestConsumer
-          onReady={(v) => {
-            captured = v;
-          }}
-        />
+        <TestConsumer />
       </AuthProvider>,
     );
 
-    // Wait for the init effect to fire and state to settle
-    const readyEl = await screen.findByTestId('ready');
-    expect(readyEl.textContent).toBe('true');
+    // Wait for the init effect to fire (100ms timeout in component)
+    await screen.findByTestId('ready');
 
-    expect(captured).toBeDefined();
-    expect(captured?.walletAddress).toBe('npub1abc');
-    expect(captured?.signedInProtocols).toEqual({ nostr: true });
-    expect(captured?.primaryIdentity?.handle).toBe('@npub1abc');
+    // Use waitFor to allow the async init to complete
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('protocols').textContent ?? '{}')).toEqual({
+        nostr: true,
+      });
+    });
+
+    // Wallet address is derived from localStorage wallets, not identities
+    expect(screen.getByTestId('wallet').textContent).toBe('none');
   });
 
   it('should map multiple identities to signedInProtocols', async () => {
@@ -217,14 +235,18 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    const protocolsEl = await screen.findByTestId('protocols');
-    const protocols = JSON.parse(protocolsEl.textContent ?? '{}');
-    expect(protocols).toEqual({ nostr: true, ethereum: true });
+    await waitFor(() => {
+      const protocolsEl = screen.getByTestId('protocols');
+      const protocols = JSON.parse(protocolsEl.textContent ?? '{}');
+      expect(protocols).toEqual({ nostr: true, ethereum: true });
+    });
   });
 
   it('should set walletAddress from ethereum/solana identity', async () => {
     const ethIdent = makeIdentity({ id: '0xabc123', protocol: 'ethereum' });
     mockStorageIdentities([ethIdent]);
+    // walletAddress comes from localStorage via walletStorage
+    mockWalletAddress('0xabc123');
 
     render(
       <AuthProvider>
@@ -232,8 +254,9 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    const walletEl = await screen.findByTestId('wallet');
-    expect(walletEl.textContent).toBe('0xabc123');
+    await waitFor(() => {
+      expect(screen.getByTestId('wallet').textContent).toBe('0xabc123');
+    });
   });
 
   it('should detect wallet-only state (ETH primary, no linked identities)', async () => {
@@ -246,8 +269,12 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    const walletOnlyEl = await screen.findByTestId('is-wallet-only');
-    expect(walletOnlyEl.textContent).toBe('true');
+    // Wallet-only requires a wallet identity as primary AND no linked identities
+    // isWalletOnly = primaryIdentity.protocol in ['ethereum','solana'] && linkedIdentities.length === 0
+    await waitFor(() => {
+      expect(screen.getByTestId('primary').textContent).not.toBe('none');
+    });
+    expect(screen.getByTestId('is-wallet-only').textContent).toBe('true');
   });
 
   it('should detect non-wallet-only state when linked identities exist', async () => {
@@ -263,8 +290,10 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    const walletOnlyEl = await screen.findByTestId('is-wallet-only');
-    expect(walletOnlyEl.textContent).toBe('false');
+    await waitFor(() => {
+      expect(screen.getByTestId('primary').textContent).not.toBe('none');
+    });
+    expect(screen.getByTestId('is-wallet-only').textContent).toBe('false');
   });
 
   it('should set nostrPublicId from nostr identity', async () => {
@@ -277,8 +306,9 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    const nostrEl = await screen.findByTestId('nostr-pubid');
-    expect(nostrEl.textContent).toBe('npub1xyz');
+    await waitFor(() => {
+      expect(screen.getByTestId('nostr-pubid').textContent).toBe('npub1xyz');
+    });
   });
 
   it('should clear all state on sign-out', async () => {
@@ -294,21 +324,22 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    // Wait for ready
-    await screen.findByTestId('ready');
+    // Wait for async init to load identities
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('protocols').textContent ?? '{}')).toEqual({
+        nostr: true,
+        ethereum: true,
+      });
+    });
 
     // Click sign out
     const signOutBtn = screen.getByTestId('sign-out-btn');
     signOutBtn.click();
 
     // After sign-out: wallet should be undefined, protocols empty
-    const walletEl = screen.getByTestId('wallet');
-    const protocolsEl = screen.getByTestId('protocols');
-
-    // Wait for state to propagate
     await waitFor(() => {
-      expect(walletEl.textContent).toBe('none');
-      expect(JSON.parse(protocolsEl.textContent ?? '{}')).toEqual({});
+      expect(screen.getByTestId('wallet').textContent).toBe('none');
+      expect(JSON.parse(screen.getByTestId('protocols').textContent ?? '{}')).toEqual({});
     });
 
     // Storage deleteIdentity should have been called for each identity
@@ -384,11 +415,12 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
 
-    const primaryEl = await screen.findByTestId('primary');
-    const linkedCountEl = screen.getByTestId('linked-count');
+    await waitFor(() => {
+      expect(screen.getByTestId('primary').textContent).not.toBe('none');
+    });
 
-    expect(primaryEl.textContent).toBe('@primary1');
-    expect(linkedCountEl.textContent).toBe('2');
+    expect(screen.getByTestId('primary').textContent).toBe('@primary1');
+    expect(screen.getByTestId('linked-count').textContent).toBe('2');
   });
 });
 

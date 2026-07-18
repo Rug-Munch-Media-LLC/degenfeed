@@ -109,7 +109,7 @@ const MINI_PLAYER_WIDTH = 280;
 const MINI_PLAYER_HEIGHT = 160;
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
-const QUALITY_LABELS = ['Auto', '1080p', '720p', '480p', '360p'];
+const _QUALITY_LABELS = ['Auto', '1080p', '720p', '480p', '360p'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -155,7 +155,9 @@ interface MiniPlayerProps {
 
 function MiniPlayer({ title, channelName, onClose, onClick }: MiniPlayerProps) {
   const playerRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ startX: number; startY: number; left: number; top: number } | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; left: number; top: number } | null>(
+    null,
+  );
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const rect = playerRef.current?.getBoundingClientRect();
@@ -224,14 +226,29 @@ function MiniPlayer({ title, channelName, onClose, onClick }: MiniPlayerProps) {
         className="absolute top-1 right-1 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white/80 hover:bg-black/80 hover:text-white transition-colors"
         aria-label="Close mini player"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        >
           <path d="M18 6L6 18M6 6l12 12" />
         </svg>
       </button>
 
       {/* Placeholder icon */}
       <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-white/40" aria-hidden="true">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          className="text-white/40"
+          aria-hidden="true"
+        >
           <path d="M8 5V19L19 12L8 5Z" />
         </svg>
       </div>
@@ -243,7 +260,14 @@ function MiniPlayer({ title, channelName, onClose, onClick }: MiniPlayerProps) {
 
 function SpeedIcon({ className = '' }: { className?: string }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
       <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       <circle cx="12" cy="12" r="1.5" fill="currentColor" />
@@ -429,12 +453,24 @@ const Controls = memo(function Controls({
             aria-label={playing ? 'Pause' : 'Play'}
           >
             {playing ? (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <rect x="3" y="2" width="4" height="12" rx="1" />
                 <rect x="9" y="2" width="4" height="12" rx="1" />
               </svg>
             ) : (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <path d="M4 2L14 8L4 14V2Z" />
               </svg>
             )}
@@ -499,20 +535,68 @@ const Controls = memo(function Controls({
             >
               {muted || volume === 0 ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                  <line x1="16" y1="9" x2="22" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <line x1="22" y1="9" x2="16" y2="15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path
+                    d="M11 5L6 9H2v6h4l5 4V5z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                  />
+                  <line
+                    x1="16"
+                    y1="9"
+                    x2="22"
+                    y2="15"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1="22"
+                    y1="9"
+                    x2="16"
+                    y2="15"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                 </svg>
               ) : volume < 0.5 ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                  <path d="M15.54 8.46a5 5 0 010 7.07" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path
+                    d="M15.54 8.46a5 5 0 010 7.07"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                 </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                  <path d="M15.54 8.46a5 5 0 010 7.07" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M19.07 4.93a10 10 0 010 14.14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path
+                    d="M15.54 8.46a5 5 0 010 7.07"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M19.07 4.93a10 10 0 010 14.14"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                 </svg>
               )}
             </button>
@@ -540,10 +624,18 @@ const Controls = memo(function Controls({
                 onClick={() => setShowQualityMenu((v) => !v)}
                 className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-degen-400/60"
                 aria-label="Video quality"
-                title={`Quality: ${currentQuality === 0 ? 'Auto' : qualities[currentQuality]?.label ?? 'Auto'}`}
+                title={`Quality: ${currentQuality === 0 ? 'Auto' : (qualities[currentQuality]?.label ?? 'Auto')}`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                  <rect
+                    x="2"
+                    y="4"
+                    width="20"
+                    height="16"
+                    rx="2"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
                   <path d="M2 8h20" stroke="currentColor" strokeWidth="1.5" />
                   <circle cx="9" cy="16" r="2" fill="currentColor" opacity="0.6" />
                 </svg>
@@ -575,16 +667,30 @@ const Controls = memo(function Controls({
             type="button"
             onClick={pipSupported ? onPictureInPicture : undefined}
             className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-degen-400/60 ${
-              pipSupported
-                ? 'hover:bg-white/10 text-white/80'
-                : 'text-white/30 cursor-not-allowed'
+              pipSupported ? 'hover:bg-white/10 text-white/80' : 'text-white/30 cursor-not-allowed'
             }`}
             aria-label={inPip ? 'Exit Picture-in-Picture' : 'Picture-in-Picture'}
             title={pipSupported ? 'Picture-in-Picture' : 'PiP not supported on this browser'}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-              <rect x="11" y="11" width="10" height="8" rx="1" fill="currentColor" opacity="inPip ? 0.8 : 0.5" />
+              <rect
+                x="2"
+                y="3"
+                width="20"
+                height="18"
+                rx="2"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <rect
+                x="11"
+                y="11"
+                width="10"
+                height="8"
+                rx="1"
+                fill="currentColor"
+                opacity="inPip ? 0.8 : 0.5"
+              />
             </svg>
           </button>
 
@@ -598,11 +704,23 @@ const Controls = memo(function Controls({
             >
               {isFullscreen ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               ) : (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               )}
             </button>
@@ -612,7 +730,9 @@ const Controls = memo(function Controls({
         {/* Keyboard shortcuts hint */}
         {visible && (
           <div className="mt-1 text-center text-[10px] text-white/30 select-none pointer-events-none">
-            <span className="hidden sm:inline">Space: play/pause · ←/→: seek · ↑/↓: volume · M: mute · F: fullscreen</span>
+            <span className="hidden sm:inline">
+              Space: play/pause · ←/→: seek · ↑/↓: volume · M: mute · F: fullscreen
+            </span>
             <span className="sm:hidden">Tap: show/hide · Dbl-tap L/R: ±10s</span>
           </div>
         )}
@@ -688,7 +808,9 @@ export const VideoPlayer = memo(function VideoPlayer({
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     reducedMotionRef.current = mq.matches;
-    const handler = (e: MediaQueryListEvent) => { reducedMotionRef.current = e.matches; };
+    const handler = (e: MediaQueryListEvent) => {
+      reducedMotionRef.current = e.matches;
+    };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
@@ -953,8 +1075,15 @@ export const VideoPlayer = memo(function VideoPlayer({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [
-    isYouTube, handlePlayPauseToggle, handleFullscreen, handleMuteToggle,
-    handleSeek, currentTime, duration, handleVolumeChange, volume,
+    isYouTube,
+    handlePlayPauseToggle,
+    handleFullscreen,
+    handleMuteToggle,
+    handleSeek,
+    currentTime,
+    duration,
+    handleVolumeChange,
+    volume,
   ]);
 
   const handleContainerKeyDown = useCallback(
@@ -992,8 +1121,17 @@ export const VideoPlayer = memo(function VideoPlayer({
           break;
       }
     },
-    [isYouTube, handlePlayPauseToggle, handleFullscreen, handleMuteToggle,
-     handleSeek, currentTime, duration, handleVolumeChange, volume],
+    [
+      isYouTube,
+      handlePlayPauseToggle,
+      handleFullscreen,
+      handleMuteToggle,
+      handleSeek,
+      currentTime,
+      duration,
+      handleVolumeChange,
+      volume,
+    ],
   );
 
   // ── Picture-in-Picture ──
@@ -1021,27 +1159,30 @@ export const VideoPlayer = memo(function VideoPlayer({
   }, []);
 
   // ── Quality change ──
-  const handleQualityChange = useCallback((index: number) => {
-    setCurrentQuality(index);
-    setShowQualityMenu(false);
-    if (index === 0) {
-      // Auto — use the default src
-      if (videoRef.current && src) {
-        videoRef.current.src = src;
-        videoRef.current.load();
-      }
-    } else if (qualities?.[index]?.src) {
-      if (videoRef.current) {
-        const wasPlaying = playing;
-        videoRef.current.src = qualities[index].src;
-        videoRef.current.load();
-        if (wasPlaying) {
-          videoRef.current.play().catch(() => {});
+  const handleQualityChange = useCallback(
+    (index: number) => {
+      setCurrentQuality(index);
+      setShowQualityMenu(false);
+      if (index === 0) {
+        // Auto — use the default src
+        if (videoRef.current && src) {
+          videoRef.current.src = src;
+          videoRef.current.load();
+        }
+      } else if (qualities?.[index]?.src) {
+        if (videoRef.current) {
+          const wasPlaying = playing;
+          videoRef.current.src = qualities[index].src;
+          videoRef.current.load();
+          if (wasPlaying) {
+            videoRef.current.play().catch(() => {});
+          }
         }
       }
-    }
-    showToast(`Quality: ${index === 0 ? 'Auto' : qualities?.[index]?.label ?? 'Auto'}`);
-  }, [src, qualities, playing]);
+      showToast(`Quality: ${index === 0 ? 'Auto' : (qualities?.[index]?.label ?? 'Auto')}`);
+    },
+    [src, qualities, playing],
+  );
 
   // ── Mobile double-tap for seek ──
   const handleTouchEnd = useCallback(
@@ -1089,7 +1230,8 @@ export const VideoPlayer = memo(function VideoPlayer({
       const dx = touch.clientX - touchStartRef.current.x;
       touchStartRef.current = null;
 
-      if (!isVertical || Math.abs(dy) < SWIPE_THRESHOLD || Math.abs(dy) < Math.abs(dx) * 1.5) return;
+      if (!isVertical || Math.abs(dy) < SWIPE_THRESHOLD || Math.abs(dy) < Math.abs(dx) * 1.5)
+        return;
 
       if (dy < 0) {
         onSwipeUp?.();
@@ -1097,8 +1239,17 @@ export const VideoPlayer = memo(function VideoPlayer({
         onSwipeDown?.();
       }
     },
-    [isVertical, onSwipeUp, onSwipeDown, playing, controlsVisible,
-     resetControlsTimer, handleSeek, currentTime, duration],
+    [
+      isVertical,
+      onSwipeUp,
+      onSwipeDown,
+      playing,
+      controlsVisible,
+      resetControlsTimer,
+      handleSeek,
+      currentTime,
+      duration,
+    ],
   );
 
   const handleTouchStartForSwipe = useCallback((e: React.TouchEvent) => {
@@ -1151,13 +1302,11 @@ export const VideoPlayer = memo(function VideoPlayer({
 
   const thumbnailUrl = getThumbnailUrl(youtubeId, poster);
 
-  const aspectRatioClass =
-    aspectRatio === '9:16'
-      ? 'aspect-[9/16]'
-      : 'aspect-video';
+  const aspectRatioClass = aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video';
 
   // ── Quality label for current source ──
-  const currentQualityLabel = currentQuality === 0 ? 'Auto' : qualities?.[currentQuality]?.label ?? 'Auto';
+  const currentQualityLabel =
+    currentQuality === 0 ? 'Auto' : (qualities?.[currentQuality]?.label ?? 'Auto');
 
   // ─── Render ──────────────────────────────────────────────────────────
 
@@ -1165,27 +1314,29 @@ export const VideoPlayer = memo(function VideoPlayer({
   if (isYouTube && shouldLoad && userInitiated) {
     const youTubeUrl = `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`;
     return (
-      <>
-        <div
-          ref={containerRef}
-          className={`relative overflow-hidden rounded-xl bg-black ${aspectRatioClass} ${className}`}
-        >
-          <iframe
-            src={youTubeUrl}
-            className="h-full w-full"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-            title={title ?? 'YouTube video'}
-            loading="lazy"
-          />
-          {showMetadata && (channelName || title) && (
-            <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-8 pointer-events-none">
-              {title && <p className="text-sm font-semibold text-white drop-shadow-lg line-clamp-1">{title}</p>}
-              {channelName && <p className="mt-0.5 text-[11px] text-white/70">{channelName}</p>}
-            </div>
-          )}
-        </div>
-      </>
+      <div
+        ref={containerRef}
+        className={`relative overflow-hidden rounded-xl bg-black ${aspectRatioClass} ${className}`}
+      >
+        <iframe
+          src={youTubeUrl}
+          className="h-full w-full"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+          title={title ?? 'YouTube video'}
+          loading="lazy"
+        />
+        {showMetadata && (channelName || title) && (
+          <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-8 pointer-events-none">
+            {title && (
+              <p className="text-sm font-semibold text-white drop-shadow-lg line-clamp-1">
+                {title}
+              </p>
+            )}
+            {channelName && <p className="mt-0.5 text-[11px] text-white/70">{channelName}</p>}
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -1234,7 +1385,13 @@ export const VideoPlayer = memo(function VideoPlayer({
                 className="flex h-14 w-14 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-all hover:scale-110 hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-degen-400/60"
                 aria-label={title ? `Play ${title}` : 'Play video'}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M8 5V19L19 12L8 5Z" />
                 </svg>
               </button>
@@ -1288,7 +1445,13 @@ export const VideoPlayer = memo(function VideoPlayer({
             {!playing && !loading && !error && !showPlayOverlay && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
                     <path d="M8 5V19L19 12L8 5Z" />
                   </svg>
                 </div>
@@ -1298,9 +1461,24 @@ export const VideoPlayer = memo(function VideoPlayer({
             {/* Error state */}
             {error && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 gap-3 px-4">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-red-400">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  className="text-red-400"
+                >
                   <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
-                  <line x1="12" y1="8" x2="12" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <line
+                    x1="12"
+                    y1="8"
+                    x2="12"
+                    y2="13"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                   <circle cx="12" cy="16" r="1" fill="currentColor" />
                 </svg>
                 <p className="text-xs text-center text-white/70">Video unavailable</p>
@@ -1321,7 +1499,10 @@ export const VideoPlayer = memo(function VideoPlayer({
           <div className="absolute bottom-16 left-1/2 z-20 -translate-x-1/2 flex items-center gap-3 autoplay-countdown">
             <span className="text-xs">Next in {autoPlayCountdown}s</span>
             <div className="countdown-bar w-16">
-              <div className="fill" style={{ width: `${(autoPlayCountdown / AUTOPLAY_COUNTDOWN_SECONDS) * 100}%` }} />
+              <div
+                className="fill"
+                style={{ width: `${(autoPlayCountdown / AUTOPLAY_COUNTDOWN_SECONDS) * 100}%` }}
+              />
             </div>
             <button type="button" className="cancel-btn text-xs" onClick={clearAutoPlayTimer}>
               Cancel
@@ -1376,7 +1557,13 @@ export const VideoPlayer = memo(function VideoPlayer({
           <div className="absolute left-1/2 top-3 z-10 -translate-x-1/2">
             <div className="flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-[10px] text-white/60 backdrop-blur-sm">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 5v14M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M12 5v14M5 12l7-7 7 7"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               Swipe
             </div>
@@ -1386,10 +1573,16 @@ export const VideoPlayer = memo(function VideoPlayer({
         {/* ── Metadata footer ── */}
         {showMetadata && !userInitiated && !isYouTube && (channelName || title) && (
           <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-8 pointer-events-none">
-            {title && <p className="text-sm font-semibold text-white drop-shadow-lg line-clamp-1">{title}</p>}
+            {title && (
+              <p className="text-sm font-semibold text-white drop-shadow-lg line-clamp-1">
+                {title}
+              </p>
+            )}
             <div className="mt-0.5 flex items-center gap-2">
               {channelName && <span className="text-[11px] text-white/70">{channelName}</span>}
-              {views != null && <span className="text-[11px] text-white/50">{formatCount(views)} views</span>}
+              {views != null && (
+                <span className="text-[11px] text-white/50">{formatCount(views)} views</span>
+              )}
             </div>
           </div>
         )}
@@ -1397,7 +1590,9 @@ export const VideoPlayer = memo(function VideoPlayer({
         {/* ── Mobile double-tap seek indicators ── */}
         {playing && controlsVisible && (
           <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
-            <span className="text-white/20 text-[40px] font-bold select-none" aria-hidden="true">⏪</span>
+            <span className="text-white/20 text-[40px] font-bold select-none" aria-hidden="true">
+              ⏪
+            </span>
           </div>
         )}
       </div>

@@ -44,8 +44,8 @@ export default function RootError({
         <a
           href="https://discord.gg/degenfeed"
           target="_blank"
-          
           className="underline transition-colors hover:text-[var(--color-fg)]"
+          rel="noopener"
         >
           Get Help
         </a>

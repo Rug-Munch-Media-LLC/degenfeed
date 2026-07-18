@@ -36,7 +36,9 @@ describe('syncBookmarkToServer', () => {
 
   it('should send correct request on sync', async () => {
     const { syncBookmarkToServer } = await import('./bookmarks');
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 200 }));
     const bookmark = {
       postId: 'nostr:test',
       dfUri: 'df://nostr:test',
@@ -69,7 +71,9 @@ describe('removeBookmarkFromServer', () => {
 
   it('should send DELETE request', async () => {
     const { removeBookmarkFromServer } = await import('./bookmarks');
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 200 }));
     await removeBookmarkFromServer('nostr:test');
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/bookmarks?id='),

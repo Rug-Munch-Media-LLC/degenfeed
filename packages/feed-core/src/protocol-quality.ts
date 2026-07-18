@@ -169,7 +169,7 @@ function scoreLens(post: UnifiedPost): { score: number; max: number; reasons: st
   }
 
   // Known creator (has a profile handle or followers): +1
-  if (post.author.followerCount > 0 || Boolean(post.author.handles.lens)) {
+  if (post.author.followerCount > 0 || post.author.handles.lens) {
     score += 1;
     reasons.push('known-creator');
   }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import type { UnifiedPost } from '@degenfeed/types';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export interface ShareTarget {
   id: string;
@@ -211,7 +211,9 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center"
       onClick={handleClose}
-      onKeyDown={(e) => { if (e.key === 'Escape') handleClose(); }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') handleClose();
+      }}
       role="dialog"
       aria-modal="true"
       aria-label="Share post"
@@ -219,15 +221,16 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
       <div
         ref={sheetRef}
         className={`w-full max-w-sm rounded-t-2xl bg-[var(--color-card)] p-5 shadow-2xl sm:rounded-2xl ${
-          closing
-            ? 'animate-slide-down'
-            : 'animate-slide-up'
+          closing ? 'animate-slide-down' : 'animate-slide-up'
         }`}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
         {/* Drag handle (mobile) */}
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--color-muted)]/30 sm:hidden" aria-hidden="true" />
+        <div
+          className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--color-muted)]/30 sm:hidden"
+          aria-hidden="true"
+        />
 
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
@@ -238,7 +241,16 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
             className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -252,11 +264,7 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
               type="button"
               onClick={() => void handleShare(target)}
               className="group flex flex-col items-center gap-1.5 rounded-xl p-3 transition-all hover:scale-105 active:scale-95"
-              style={
-                copiedId === target.id
-                  ? { backgroundColor: `${target.color}18` }
-                  : undefined
-              }
+              style={copiedId === target.id ? { backgroundColor: `${target.color}18` } : undefined}
               aria-label={`Share to ${target.label}`}
             >
               <span
@@ -267,7 +275,17 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
                 }}
               >
                 {copiedId === target.id ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 ) : (

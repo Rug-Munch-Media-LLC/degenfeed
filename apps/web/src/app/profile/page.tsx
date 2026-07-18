@@ -6,22 +6,22 @@ import {
   CrossPlatformCard,
   CrossPlatformSetup,
   ErrorBoundary,
-  ReputationBadge,
   type PlatformAccount,
   type RegisterPlatformStatusData,
+  ReputationBadge,
 } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { useAuth } from '../../components/AuthProvider';
-import { EditProfileModal } from '../../components/EditProfileModal';
-import { IdentityLinker } from '../../components/IdentityLinker';
 import {
   CredentialCard,
   CredentialSecurityNote,
   CredentialsProgressBanner,
   registrationToCredential,
 } from '../../components/CredentialsDisplay';
+import { EditProfileModal } from '../../components/EditProfileModal';
+import { IdentityLinker } from '../../components/IdentityLinker';
+import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { useToast } from '../../components/Toast';
 import { useWeb3 } from '../../components/Web3Provider';
 import { useOnboarding } from '../../hooks/useOnboarding';
@@ -1191,10 +1191,7 @@ function ProfileCredentialsSection({ walletAddress }: { walletAddress?: string }
       <p className="mb-3 text-xs text-[var(--color-muted)]">
         Use these credentials to login on any Mastodon/Lemmy/PeerTube app. You own this account.
       </p>
-      <CredentialsProgressBanner
-        connectedCount={createdAccounts.length}
-        totalPlatforms={5}
-      />
+      <CredentialsProgressBanner connectedCount={createdAccounts.length} totalPlatforms={5} />
       <div className="mt-3 space-y-3">
         {credentialCards.map((card) => (
           <CredentialCard key={card.platform} credential={card} />

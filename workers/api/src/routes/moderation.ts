@@ -48,10 +48,7 @@ function isAdmin(env: Env, address: string): boolean {
   return admins.includes(address.toLowerCase());
 }
 
-async function requireAdmin(
-  request: Request,
-  env: Env,
-): Promise<{ address: string } | Response> {
+async function requireAdmin(request: Request, env: Env): Promise<{ address: string } | Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   if (!isAdmin(env, session.address)) {
@@ -324,11 +321,15 @@ export async function handleRemovePost(request: Request, env: Env): Promise<Resp
 
     // Store the removed post ID for the feed pipeline to check
     const removedPostKey = `mod:removed:${report.postId}`;
-    await env.REPORTS?.put(removedPostKey, JSON.stringify({
-      removedBy: admin.address,
-      removedAt: Date.now(),
-      reportId,
-    }), { expirationTtl: 60 * 60 * 24 * 90 }); // 90 days
+    await env.REPORTS?.put(
+      removedPostKey,
+      JSON.stringify({
+        removedBy: admin.address,
+        removedAt: Date.now(),
+        reportId,
+      }),
+      { expirationTtl: 60 * 60 * 24 * 90 },
+    ); // 90 days
 
     return jsonResponse({ ok: true, reportId, postId: report.postId, action: 'removed' });
   } catch {
@@ -382,11 +383,15 @@ export async function handleBanUser(request: Request, env: Env): Promise<Respons
     // Also ban by wallet address if provided (cross-protocol)
     if (body.walletAddress) {
       const walletBanId = `ban:wallet:${body.walletAddress.toLowerCase()}`;
-      await env.REPORTS?.put(banKey(walletBanId), JSON.stringify({
-        ...banEntry,
-        userId: body.walletAddress,
-        protocol: 'all',
-      }), { expirationTtl: 60 * 60 * 24 * 400 });
+      await env.REPORTS?.put(
+        banKey(walletBanId),
+        JSON.stringify({
+          ...banEntry,
+          userId: body.walletAddress,
+          protocol: 'all',
+        }),
+        { expirationTtl: 60 * 60 * 24 * 400 },
+      );
       if (!idx.ids.includes(walletBanId)) {
         idx.ids.push(walletBanId);
       }
@@ -432,7 +437,8 @@ export async function handleModerationStats(request: Request, env: Env): Promise
 
       reporterCounts[report.reporterAddress] = (reporterCounts[report.reporterAddress] ?? 0) + 1;
       if (report.postAuthorId) {
-        reportedUserCounts[report.postAuthorId] = (reportedUserCounts[report.postAuthorId] ?? 0) + 1;
+        reportedUserCounts[report.postAuthorId] =
+          (reportedUserCounts[report.postAuthorId] ?? 0) + 1;
       }
     } catch {
       // skip
@@ -440,7 +446,7 @@ export async function handleModerationStats(request: Request, env: Env): Promise
   }
 
   const total = ids.length;
-  const resolutionRate = total > 0 ? ((totalResolved + totalDismissed) / total) : 0;
+  const resolutionRate = total > 0 ? (totalResolved + totalDismissed) / total : 0;
 
   // Top reporters
   const topReporters = Object.entries(reporterCounts)
@@ -522,7 +528,7 @@ interface SyncBody {
   instance?: string;
 }
 
-function modStoreKey(address: string): string {
+function _modStoreKey(address: string): string {
   return `user:moderation:${address.toLowerCase()}`;
 }
 
@@ -551,12 +557,28 @@ export async function handleBlockSync(request: Request, env: Env): Promise<Respo
       .map((e) => ({ word: e.word, mutedAt: e.timestamp }));
     const mutedCommunities = store.entries
       .filter((e) => e.action === 'mute_community')
-      .map((e) => ({ communityId: e.communityId, communityName: e.communityName, instance: e.instance, mutedAt: e.timestamp }));
+      .map((e) => ({
+        communityId: e.communityId,
+        communityName: e.communityName,
+        instance: e.instance,
+        mutedAt: e.timestamp,
+      }));
     const blockedCommunities = store.entries
       .filter((e) => e.action === 'block_community')
-      .map((e) => ({ communityId: e.communityId, communityName: e.communityName, instance: e.instance, blockedAt: e.timestamp }));
+      .map((e) => ({
+        communityId: e.communityId,
+        communityName: e.communityName,
+        instance: e.instance,
+        blockedAt: e.timestamp,
+      }));
 
-    return noCacheJsonResponse({ blocked, muted, mutedWords, mutedCommunities, blockedCommunities });
+    return noCacheJsonResponse({
+      blocked,
+      muted,
+      mutedWords,
+      mutedCommunities,
+      blockedCommunities,
+    });
   }
 
   // ── POST: sync a moderation action from the client ──
@@ -574,17 +596,24 @@ export async function handleBlockSync(request: Request, env: Env): Promise<Respo
     return jsonResponse({ error: 'Invalid JSON' }, 400);
   }
 
-  const { targetId, targetHandle, protocol, action, word, communityId, communityName, instance } = body;
+  const { targetId, targetHandle, protocol, action, word, communityId, communityName, instance } =
+    body;
 
   if (!action) {
     return jsonResponse({ error: 'action required' }, 400);
   }
 
   const validActions = [
-    'block', 'unblock', 'mute', 'unmute',
-    'mute_word', 'unmute_word',
-    'mute_community', 'unmute_community',
-    'block_community', 'unblock_community',
+    'block',
+    'unblock',
+    'mute',
+    'unmute',
+    'mute_word',
+    'unmute_word',
+    'mute_community',
+    'unmute_community',
+    'block_community',
+    'unblock_community',
   ];
 
   if (!validActions.includes(action)) {
@@ -601,7 +630,9 @@ export async function handleBlockSync(request: Request, env: Env): Promise<Respo
     // ── User block/unblock ──
     if (action === 'block' || action === 'mute') {
       if (!targetId) return jsonResponse({ error: 'targetId required' }, 400);
-      store.entries = store.entries.filter((e) => !(e.targetId === targetId && (e.action === 'block' || e.action === 'mute')));
+      store.entries = store.entries.filter(
+        (e) => !(e.targetId === targetId && (e.action === 'block' || e.action === 'mute')),
+      );
       store.entries.push({
         targetId,
         targetHandle: targetHandle || '',
@@ -610,15 +641,20 @@ export async function handleBlockSync(request: Request, env: Env): Promise<Respo
         timestamp: Date.now(),
       });
       // Also write to dedicated KV for feed pipeline
-      const setKey = action === 'block' ? `user:muted_authors:${addr}` : `user:muted_authors:${addr}`;
+      const setKey =
+        action === 'block' ? `user:muted_authors:${addr}` : `user:muted_authors:${addr}`;
       await syncUserSet(env, setKey, targetId, action === 'block' ? 'add' : 'add');
     } else if (action === 'unblock') {
       if (!targetId) return jsonResponse({ error: 'targetId required' }, 400);
-      store.entries = store.entries.filter((e) => !(e.targetId === targetId && e.action === 'block'));
+      store.entries = store.entries.filter(
+        (e) => !(e.targetId === targetId && e.action === 'block'),
+      );
       await syncUserSet(env, `user:muted_authors:${addr}`, targetId, 'remove');
     } else if (action === 'unmute') {
       if (!targetId) return jsonResponse({ error: 'targetId required' }, 400);
-      store.entries = store.entries.filter((e) => !(e.targetId === targetId && e.action === 'mute'));
+      store.entries = store.entries.filter(
+        (e) => !(e.targetId === targetId && e.action === 'mute'),
+      );
       await syncUserSet(env, `user:muted_authors:${addr}`, targetId, 'remove');
     }
 
@@ -626,7 +662,14 @@ export async function handleBlockSync(request: Request, env: Env): Promise<Respo
     if (action === 'mute_word') {
       if (!word) return jsonResponse({ error: 'word required' }, 400);
       store.entries = store.entries.filter((e) => !(e.word === word && e.action === 'mute_word'));
-      store.entries.push({ targetId: '', targetHandle: '', protocol: '', action, word, timestamp: Date.now() });
+      store.entries.push({
+        targetId: '',
+        targetHandle: '',
+        protocol: '',
+        action,
+        word,
+        timestamp: Date.now(),
+      });
       await syncUserSet(env, `user:muted_words:${addr}`, word, 'add');
     } else if (action === 'unmute_word') {
       if (!word) return jsonResponse({ error: 'word required' }, 400);
@@ -638,21 +681,40 @@ export async function handleBlockSync(request: Request, env: Env): Promise<Respo
     if (action === 'mute_community' || action === 'block_community') {
       if (!communityId) return jsonResponse({ error: 'communityId required' }, 400);
       store.entries = store.entries.filter(
-        (e) => !(e.communityId === communityId && (e.action === 'mute_community' || e.action === 'block_community')),
+        (e) =>
+          !(
+            e.communityId === communityId &&
+            (e.action === 'mute_community' || e.action === 'block_community')
+          ),
       );
       store.entries.push({
-        targetId: '', targetHandle: '', protocol: '',
-        action, communityId, communityName: communityName || '', instance,
+        targetId: '',
+        targetHandle: '',
+        protocol: '',
+        action,
+        communityId,
+        communityName: communityName || '',
+        instance,
         timestamp: Date.now(),
       });
-      const setKey = action === 'mute_community' ? `user:muted_communities:${addr}` : `user:blocked_communities:${addr}`;
+      const setKey =
+        action === 'mute_community'
+          ? `user:muted_communities:${addr}`
+          : `user:blocked_communities:${addr}`;
       await syncUserSet(env, setKey, communityId, 'add');
     } else if (action === 'unmute_community' || action === 'unblock_community') {
       if (!communityId) return jsonResponse({ error: 'communityId required' }, 400);
       store.entries = store.entries.filter(
-        (e) => !(e.communityId === communityId && (e.action === 'mute_community' || e.action === 'block_community')),
+        (e) =>
+          !(
+            e.communityId === communityId &&
+            (e.action === 'mute_community' || e.action === 'block_community')
+          ),
       );
-      const setKey = action === 'unmute_community' ? `user:muted_communities:${addr}` : `user:blocked_communities:${addr}`;
+      const setKey =
+        action === 'unmute_community'
+          ? `user:muted_communities:${addr}`
+          : `user:blocked_communities:${addr}`;
       await syncUserSet(env, setKey, communityId, 'remove');
     }
 

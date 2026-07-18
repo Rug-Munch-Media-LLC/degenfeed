@@ -362,20 +362,20 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
       <div className="mt-4 rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
         <ul className="space-y-2 text-sm text-[var(--color-muted)]">
           <li>
-            <strong className="text-[var(--color-muted)]">Be respectful.</strong> Disagreement is fine, personal
-            attacks are not.
+            <strong className="text-[var(--color-muted)]">Be respectful.</strong> Disagreement is
+            fine, personal attacks are not.
           </li>
           <li>
-            <strong className="text-[var(--color-muted)]">Be constructive.</strong> Critique code, not people.
-            Suggest improvements.
+            <strong className="text-[var(--color-muted)]">Be constructive.</strong> Critique code,
+            not people. Suggest improvements.
           </li>
           <li>
-            <strong className="text-[var(--color-muted)]">Be welcoming.</strong> We welcome contributors of all
-            experience levels.
+            <strong className="text-[var(--color-muted)]">Be welcoming.</strong> We welcome
+            contributors of all experience levels.
           </li>
           <li>
-            <strong className="text-[var(--color-muted)]">Be patient.</strong> Maintainers review PRs in their
-            free time. We&rsquo;ll get to yours.
+            <strong className="text-[var(--color-muted)]">Be patient.</strong> Maintainers review
+            PRs in their free time. We&rsquo;ll get to yours.
           </li>
         </ul>
       </div>

@@ -24,8 +24,8 @@ import {
   computeCategoryTrending,
   computeFreshnessMeta,
   computeTrending,
-  deduplicateCrossProtocol,
   DEFAULT_PROTOCOLS,
+  deduplicateCrossProtocol,
   deprioritizeStaleContent,
   enrichNostrEngagement,
   FEED_GENERATION_TIMEOUT_MS,
@@ -33,10 +33,10 @@ import {
   getCategoryCounts,
   getFeedCache,
   loadUserRankingContext,
+  ProviderTimer,
   predictEngagementBoost,
   prefersEnglish,
   prepareBasePosts,
-  ProviderTimer,
   setFeedCache,
   updateFeedFreshness,
   verifyDiversity,
@@ -69,7 +69,7 @@ export async function handleCategorySlugFeed(
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
   const minScore = Number(params.get('minScore')) || 0.15;
-  const cookieHeader = request.headers.get('cookie') ?? '';
+  const _cookieHeader = request.headers.get('cookie') ?? '';
 
   const feedStartTime = Date.now();
 
@@ -179,12 +179,18 @@ export async function handleCategoryMixFeed(
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
   const minScore = Number(params.get('minScore')) || 0.15;
-  const cookieHeader = request.headers.get('cookie') ?? '';
+  const _cookieHeader = request.headers.get('cookie') ?? '';
 
   // Parse categories and ratios
-  const catList = rawCategories.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const catList = rawCategories
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
   const ratioList = rawRatios
-    ? rawRatios.split(',').map(Number).filter((n) => Number.isFinite(n) && n > 0)
+    ? rawRatios
+        .split(',')
+        .map(Number)
+        .filter((n) => Number.isFinite(n) && n > 0)
     : [];
 
   // Validate categories
@@ -313,7 +319,7 @@ export async function handlePerProtocolCategoryFeed(
 
   const params = new URL(request.url).searchParams;
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
-  const cookieHeader = request.headers.get('cookie') ?? '';
+  const _cookieHeader = request.headers.get('cookie') ?? '';
 
   const feedStartTime = Date.now();
 
@@ -388,14 +394,17 @@ export async function handleEverythingFeed(
   execCtx?: ExecCtx,
 ): Promise<Response> {
   const params = new URL(request.url).searchParams;
-  const now = Date.now();
+  const _now = Date.now();
 
   // SWR cache: serve stale immediately
   if (!params.get('cursor')) {
     const cacheResult = await getFeedCache(env, null, 'everything');
     if (cacheResult.type === 'hit' && cacheResult.entry) {
       const resp = new Response(JSON.stringify(cacheResult.entry), {
-        headers: { 'content-type': 'application/json', 'cache-control': 'public, s-maxage=45, stale-while-revalidate=90' },
+        headers: {
+          'content-type': 'application/json',
+          'cache-control': 'public, s-maxage=45, stale-while-revalidate=90',
+        },
       });
       resp.headers.set('X-DegenFeed-Debug', `cache=hit,feed-generation=0.001s`);
       return resp;
@@ -407,9 +416,15 @@ export async function handleEverythingFeed(
         void generateEverythingFeed(request, env, execCtx);
       }
       const resp = new Response(JSON.stringify(cacheResult.entry), {
-        headers: { 'content-type': 'application/json', 'cache-control': 'public, s-maxage=45, stale-while-revalidate=90' },
+        headers: {
+          'content-type': 'application/json',
+          'cache-control': 'public, s-maxage=45, stale-while-revalidate=90',
+        },
       });
-      resp.headers.set('X-DegenFeed-Debug', `cache=stale(swr),background=refresh,feed-generation=0.002s`);
+      resp.headers.set(
+        'X-DegenFeed-Debug',
+        `cache=stale(swr),background=refresh,feed-generation=0.002s`,
+      );
       return resp;
     }
   }
@@ -425,7 +440,7 @@ async function generateEverythingFeed(
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
-  const cookieHeader = request.headers.get('cookie') ?? '';
+  const _cookieHeader = request.headers.get('cookie') ?? '';
   const now = Date.now();
 
   const feedStartTime = Date.now();

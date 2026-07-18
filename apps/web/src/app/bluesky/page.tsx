@@ -39,9 +39,9 @@ export const metadata: Metadata = {
 export default function BlueskyPage() {
   return (
     <>
-      <Script id="breadcrumb-bluesky" type="application/ld+json">{
-        JSON.stringify(blueskyBreadcrumb)
-      }</Script>
+      <Script id="breadcrumb-bluesky" type="application/ld+json">
+        {JSON.stringify(blueskyBreadcrumb)}
+      </Script>
       <ProtocolFeedPage protocol="bluesky" />
     </>
   );

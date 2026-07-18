@@ -106,9 +106,7 @@ export function CrossPlatformCard({
         </div>
         <span
           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium ${
-            isPremium
-              ? 'bg-degen-500/15 text-degen-400'
-              : 'bg-amber-500/15 text-amber-400'
+            isPremium ? 'bg-degen-500/15 text-degen-400' : 'bg-amber-500/15 text-amber-400'
           }`}
         >
           {isPremium ? 'Pro' : 'Upgrade'}
@@ -149,13 +147,11 @@ export function CrossPlatformCard({
             <div key={p} className="flex flex-col items-center gap-1">
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm transition-all ${
-                  registered
-                    ? 'ring-2 ring-offset-1 ring-offset-[var(--color-card)]'
-                    : 'opacity-30'
+                  registered ? 'ring-2 ring-offset-1 ring-offset-[var(--color-card)]' : 'opacity-30'
                 }`}
                 style={{
                   backgroundColor: registered ? `${colors[p]}22` : 'var(--color-glass-border)',
-                  ...(registered ? { '--tw-ring-color': colors[p] } as React.CSSProperties : {}),
+                  ...(registered ? ({ '--tw-ring-color': colors[p] } as React.CSSProperties) : {}),
                 }}
                 title={registered && username ? `${p}: @${username}` : p}
               >

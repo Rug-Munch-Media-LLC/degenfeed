@@ -19,7 +19,9 @@ export default function SectionError({
           !
         </div>
         <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Section failed to load</h2>
-        <p className="mb-4 text-sm text-[var(--color-muted)]">Could not load content for this section.</p>
+        <p className="mb-4 text-sm text-[var(--color-muted)]">
+          Could not load content for this section.
+        </p>
         <button type="button" onClick={reset} className="btn-primary text-sm">
           Try again
         </button>

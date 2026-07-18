@@ -16,10 +16,9 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { type EngageHandler, PostCard } from './PostCard';
+import { memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CardSkeleton } from './LoadingSkeleton';
-import type { DiscoverSuggestion as DiscoverSuggestionType } from './FeedList';
+import { type EngageHandler, PostCard } from './PostCard';
 
 export type { UnifiedPost };
 
@@ -29,7 +28,8 @@ export type FeedState = 'loading' | 'loaded' | 'empty' | 'error';
  * Debounce a function — coalesces rapid-fire calls into a single trailing
  * invocation. Prevents layout thrashing from scroll/resize handlers.
  */
-function debounce<T extends (...args: any[]) => void>(fn: T, ms: number): T {
+// biome-ignore lint/suspicious/noExplicitAny: intentional
+function _debounce<T extends (...args: any[]) => void>(fn: T, ms: number): T {
   let timer: ReturnType<typeof setTimeout> | null = null;
   const debounced = (...args: unknown[]) => {
     if (timer) clearTimeout(timer);
@@ -345,7 +345,7 @@ export const FeedList = memo(function FeedList({
 
   // Track previously seen post IDs so new loads animate in, existing ones don't re-animate
   const seenIdsRef = useRef(new Set<string>());
-  const [renderTick, setRenderTick] = useState(0);
+  const [_renderTick, setRenderTick] = useState(0);
 
   // Filter out blocked/muted users from the feed
   const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
@@ -412,10 +412,7 @@ export const FeedList = memo(function FeedList({
         break;
       }
     }
-    sessionStorage.setItem(
-      SCROLL_KEY,
-      JSON.stringify({ y: scrollY, id: anchorId }),
-    );
+    sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ y: scrollY, id: anchorId }));
   }, []);
 
   // Save on page unload so refresh/back works
@@ -527,7 +524,7 @@ export const FeedList = memo(function FeedList({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [onEngage, onTip, onCrossReplyOpen, filteredPosts]);
+  }, [onEngage, onTip, onCrossReplyOpen, filteredPosts, handlePostClick]);
 
   // Infinite scroll via IntersectionObserver
   useEffect(() => {
@@ -567,7 +564,7 @@ export const FeedList = memo(function FeedList({
 
     for (const el of postEls) observer.observe(el);
     return () => observer.disconnect();
-  }, [state, filteredPosts.length, onPostVisibility, renderTick]);
+  }, [state, onPostVisibility]);
 
   if (state === 'loading') {
     return <CardSkeleton count={5} avatar lines={3} />;

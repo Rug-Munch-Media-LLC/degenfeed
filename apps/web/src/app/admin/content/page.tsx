@@ -393,7 +393,11 @@ export default function AdminContentPage() {
                       <span>💸 {formatCount(item.engagement.tips)}</span>
                       <span className="ml-auto">
                         Score:{' '}
-                        <span className={item.score > 0.7 ? 'text-degen-400' : 'text-[var(--color-muted)]'}>
+                        <span
+                          className={
+                            item.score > 0.7 ? 'text-degen-400' : 'text-[var(--color-muted)]'
+                          }
+                        >
                           {(item.score * 100).toFixed(0)}%
                         </span>
                       </span>
@@ -455,7 +459,9 @@ export default function AdminContentPage() {
                       <span className="text-xs">
                         {PROTOCOL_ICONS[item.protocol]} {item.protocol}
                       </span>
-                      <span className="text-xs text-[var(--color-muted)]">@{item.authorHandle}</span>
+                      <span className="text-xs text-[var(--color-muted)]">
+                        @{item.authorHandle}
+                      </span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                           item.status === 'pending'

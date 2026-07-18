@@ -73,11 +73,7 @@ function formatTimestamp(ts?: string): string {
  * Shows why content was flagged and who flagged it.
  * Follows the "Community Notes" transparency model popularized by X/Twitter.
  */
-export function ModerationNote({
-  flags,
-  expanded = false,
-  onFeedback,
-}: ModerationNoteProps) {
+export function ModerationNote({ flags, expanded = false, onFeedback }: ModerationNoteProps) {
   const [isExpanded, setIsExpanded] = useState(expanded);
   const [feedbackGiven, setFeedbackGiven] = useState<'helpful' | 'not-helpful' | null>(null);
 
@@ -116,9 +112,7 @@ export function ModerationNote({
         <span className={`text-xs font-medium ${cfg.text}`}>
           {flags.length === 1 ? topFlag.label : `${topFlag.label} +${flags.length - 1} more`}
         </span>
-        <span className="ml-auto text-[10px] text-[var(--color-muted)]">
-          {topFlag.source}
-        </span>
+        <span className="ml-auto text-[10px] text-[var(--color-muted)]">{topFlag.source}</span>
         <svg
           width="12"
           height="12"
@@ -155,12 +149,8 @@ export function ModerationNote({
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`text-[11px] font-medium ${fCfg.text}`}>
-                      {flag.label}
-                    </span>
-                    <span className="text-[9px] text-[var(--color-muted)]">
-                      {flag.source}
-                    </span>
+                    <span className={`text-[11px] font-medium ${fCfg.text}`}>{flag.label}</span>
+                    <span className="text-[9px] text-[var(--color-muted)]">{flag.source}</span>
                     {flag.timestamp && (
                       <span className="text-[9px] text-[var(--color-muted)]">
                         · {formatTimestamp(flag.timestamp)}
@@ -204,7 +194,7 @@ export function ModerationNote({
             <p className="text-[10px] text-[var(--color-muted)]">
               {feedbackGiven === 'helpful'
                 ? 'Thanks for your feedback!'
-                : 'Thanks — we\'ll review this flag.'}
+                : "Thanks — we'll review this flag."}
             </p>
           )}
         </div>

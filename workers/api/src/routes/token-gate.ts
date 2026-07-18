@@ -12,7 +12,7 @@
  * package which handles EVM eth_call and Solana getTokenAccountsByOwner.
  */
 
-import { type TokenGate, checkTokenGate, resolveTokenGateSymbol } from '@degenfeed/token-gate';
+import { checkTokenGate, resolveTokenGateSymbol, type TokenGate } from '@degenfeed/token-gate';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { sanitizeString } from '../sanitize';
@@ -38,8 +38,11 @@ export async function handleTokenGateVerify(request: Request, env: Env): Promise
   }
 
   const gate = body.gate;
-  if (!gate || !gate.chain || !gate.type || !gate.contractAddress) {
-    return jsonResponse({ error: 'Token gate config required (chain, type, contractAddress)' }, 400);
+  if (!gate?.chain || !gate.type || !gate.contractAddress) {
+    return jsonResponse(
+      { error: 'Token gate config required (chain, type, contractAddress)' },
+      400,
+    );
   }
 
   // Validate chain
@@ -128,7 +131,7 @@ export async function handleTokenGateResolve(request: Request, _env: Env): Promi
   }
 
   const gate = body.gate;
-  if (!gate || !gate.chain || !gate.type || !gate.contractAddress) {
+  if (!gate?.chain || !gate.type || !gate.contractAddress) {
     return jsonResponse({ error: 'Token gate config required' }, 400);
   }
 

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
     const comment = searchParams.get('comment') || 'Tip from DegenFeed';
 
     if (!pubkey || !amountStr) {
-      return NextResponse.json({ error: 'Missing required params: pubkey, amount' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required params: pubkey, amount' },
+        { status: 400 },
+      );
     }
 
     const amount = Math.floor(Number.parseFloat(amountStr) * 100_000_000); // BTC to sats
@@ -32,7 +35,7 @@ export async function GET(request: NextRequest) {
       description: comment,
       pubkey,
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to generate invoice' }, { status: 500 });
   }
 }

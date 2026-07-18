@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { proxyPost } from '../_proxy';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     return await proxyPost('/api/cross-reply', request);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }

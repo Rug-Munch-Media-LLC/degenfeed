@@ -8,15 +8,20 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
-import { CrossPlatformSetup, ErrorBoundary, type PlatformAccount, type RegisterPlatformStatusData } from '@degenfeed/ui';
+import {
+  CrossPlatformSetup,
+  ErrorBoundary,
+  type PlatformAccount,
+  type RegisterPlatformStatusData,
+} from '@degenfeed/ui';
+import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../../components/AuthProvider';
 import {
   CredentialCard,
   CredentialSecurityNote,
   CredentialsProgressBanner,
   registrationToCredential,
 } from '../../components/CredentialsDisplay';
-import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../components/AuthProvider';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { useToast } from '../../components/Toast';
 import type { FontSize, NotificationType, Theme } from '../../hooks/usePreferences';
@@ -25,7 +30,14 @@ import { usePremium } from '../../hooks/usePremium';
 
 /* ─── Types ──────────────────────────────────────────────────── */
 
-type Section = 'account' | 'appearance' | 'notifications' | 'privacy' | 'content' | 'subscription' | 'api';
+type Section =
+  | 'account'
+  | 'appearance'
+  | 'notifications'
+  | 'privacy'
+  | 'content'
+  | 'subscription'
+  | 'api';
 
 const SECTION_LABELS: Record<Section, { label: string; icon: string; desc: string }> = {
   account: {
@@ -346,7 +358,13 @@ export default function SettingsPage() {
     removeBlockedUser,
   } = usePreferences();
 
-  const { tier: currentTier, isPremium, expiresAt, loading: premiumLoading, refresh: refreshPremium } = usePremium();
+  const {
+    tier: currentTier,
+    isPremium,
+    expiresAt,
+    loading: premiumLoading,
+    refresh: refreshPremium,
+  } = usePremium();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -886,8 +904,8 @@ export default function SettingsPage() {
                       Your Portable Credentials
                     </h4>
                     <p className="mb-3 text-xs text-[var(--color-muted)]">
-                      Use these credentials to login on any Mastodon/Lemmy/PeerTube app.
-                      You own this account.
+                      Use these credentials to login on any Mastodon/Lemmy/PeerTube app. You own
+                      this account.
                     </p>
                     <AccountsCredentialsDisplay walletAddress={walletAddress} />
                   </div>
@@ -933,8 +951,8 @@ export default function SettingsPage() {
                         Your Portable Credentials
                       </h4>
                       <p className="mb-3 text-xs text-[var(--color-muted)]">
-                        Use these credentials to login on any Mastodon/Lemmy/PeerTube app.
-                        You own this account.
+                        Use these credentials to login on any Mastodon/Lemmy/PeerTube app. You own
+                        this account.
                       </p>
                       <AccountsCredentialsDisplay walletAddress={walletAddress} />
                     </div>
@@ -1087,10 +1105,7 @@ function AccountsCredentialsDisplay({ walletAddress }: { walletAddress?: string 
 
   return (
     <div className="space-y-4">
-      <CredentialsProgressBanner
-        connectedCount={createdAccounts.length}
-        totalPlatforms={5}
-      />
+      <CredentialsProgressBanner connectedCount={createdAccounts.length} totalPlatforms={5} />
       <div className="space-y-3">
         {credentialCards.map((card) => (
           <CredentialCard key={card.platform} credential={card} />

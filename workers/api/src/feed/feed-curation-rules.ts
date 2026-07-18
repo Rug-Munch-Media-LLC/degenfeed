@@ -22,7 +22,7 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { ALL_CATEGORIES, ensureCategory, type CategorySlug } from './feed-categories';
+import { type CategorySlug, ensureCategory } from './feed-categories';
 
 // ─── Score extractor ───────────────────────────────────────────────
 

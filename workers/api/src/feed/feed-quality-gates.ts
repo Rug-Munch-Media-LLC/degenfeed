@@ -8,7 +8,7 @@
  */
 
 import { isEnglishPost } from '@degenfeed/feed-core';
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import type { UnifiedPost } from '@degenfeed/types';
 import { deduplicateCrossProtocol } from './content-dedup';
 
 type SourceCategory = 'social' | 'lemmy' | 'peertube' | 'youtube' | 'mastodon' | 'rss' | 'reddit';
@@ -123,7 +123,7 @@ export interface LanguageFilterResult {
   preferEnglish: boolean;
 }
 
-const LATIN_SCRIPT_RE = /^[\x00-\x7F\u00C0-\u024F\s\p{P}\p{S}\p{N}\p{Emoji}]+$/u;
+const _LATIN_SCRIPT_RE = /^[\x00-\x7F\u00C0-\u024F\s\p{P}\p{S}\p{N}\p{Emoji}]+$/u;
 
 function fastNonLatinScriptCheck(text: string): boolean {
   let nonLatin = 0;
@@ -133,14 +133,14 @@ function fastNonLatinScriptCheck(text: string): boolean {
     if (c > 127) {
       // Check if this is a CJK, Cyrillic, Arabic, or other non-Latin block
       if (
-        (c >= 0x0400 && c <= 0x04FF) || // Cyrillic
-        (c >= 0x0600 && c <= 0x06FF) || // Arabic
-        (c >= 0x0900 && c <= 0x097F) || // Devanagari
-        (c >= 0x1100 && c <= 0x11FF) || // Hangul
-        (c >= 0x3000 && c <= 0x9FFF) || // CJK
-        (c >= 0xAC00 && c <= 0xD7AF) || // Hangul syllables
-        (c >= 0x3040 && c <= 0x309F) || // Hiragana
-        (c >= 0x30A0 && c <= 0x30FF) // Katakana
+        (c >= 0x0400 && c <= 0x04ff) || // Cyrillic
+        (c >= 0x0600 && c <= 0x06ff) || // Arabic
+        (c >= 0x0900 && c <= 0x097f) || // Devanagari
+        (c >= 0x1100 && c <= 0x11ff) || // Hangul
+        (c >= 0x3000 && c <= 0x9fff) || // CJK
+        (c >= 0xac00 && c <= 0xd7af) || // Hangul syllables
+        (c >= 0x3040 && c <= 0x309f) || // Hiragana
+        (c >= 0x30a0 && c <= 0x30ff) // Katakana
       ) {
         nonLatin++;
       }
@@ -190,9 +190,10 @@ export interface CrossProtocolDedupResult {
  * appears only once, keeping the version with higher engagement.
  * Wraps the existing deduplicateCrossProtocol from content-dedup.ts.
  */
-export function applyCrossProtocolDedup(
-  posts: UnifiedPost[],
-): { posts: UnifiedPost[]; meta: CrossProtocolDedupResult } {
+export function applyCrossProtocolDedup(posts: UnifiedPost[]): {
+  posts: UnifiedPost[];
+  meta: CrossProtocolDedupResult;
+} {
   const result = deduplicateCrossProtocol(posts);
   return {
     posts: result.posts,
@@ -299,15 +300,26 @@ export function applyFreshnessScoring(
   now: number = Date.now(),
   config: FreshnessScoringConfig = DEFAULT_FRESHNESS_CONFIG,
 ): { posts: UnifiedPost[]; meta: FreshnessScoringResult } {
-  let high = 0, medium = 0, low = 0, baseline = 0;
+  let high = 0,
+    medium = 0,
+    low = 0,
+    baseline = 0;
 
   const scored = posts.map((post) => {
     const fs = computeFreshnessScore(post, now, config);
     switch (fs.tier) {
-      case 'high': high++; break;
-      case 'medium': medium++; break;
-      case 'low': low++; break;
-      default: baseline++; break;
+      case 'high':
+        high++;
+        break;
+      case 'medium':
+        medium++;
+        break;
+      case 'low':
+        low++;
+        break;
+      default:
+        baseline++;
+        break;
     }
     const existingScore = (post as unknown as { score?: { total?: number } }).score?.total ?? 0;
     const boostedScore = existingScore * fs.score;
@@ -337,7 +349,13 @@ export interface SourceDiversityResult {
 }
 
 const SOURCE_CATEGORY_ORDER: SourceCategory[] = [
-  'social', 'lemmy', 'rss', 'reddit', 'peertube', 'youtube', 'mastodon',
+  'social',
+  'lemmy',
+  'rss',
+  'reddit',
+  'peertube',
+  'youtube',
+  'mastodon',
 ];
 
 function resolveSourceCategory(post: UnifiedPost): SourceCategory {
@@ -372,7 +390,7 @@ export function applySourceDiversity(
     };
   }
 
-  const maxPerSource = Math.max(1, Math.ceil(posts.length * maxPctPerSource / 100));
+  const maxPerSource = Math.max(1, Math.ceil((posts.length * maxPctPerSource) / 100));
 
   // Count by source
   const sourceCounts = new Map<SourceCategory, number>();
@@ -488,16 +506,17 @@ export function applyQualityPipeline(
   let output = [...posts];
 
   // 1. Quality gate
-  const quality = applyQualityGate(
-    output,
-    opts.minQualityScore ?? 0.3,
-  );
+  const quality = applyQualityGate(output, opts.minQualityScore ?? 0.3);
   output = quality.posts;
 
   // 2. Engagement floor
-  const engagement = opts.enforceEngagementFloor !== false
-    ? applyEngagementFloor(output, now, opts.engagementFloorAgeHours ?? 24)
-    : { posts: output, meta: { promoted: output.length, deprioritized: 0, zeroEngagementOlder24h: 0 } };
+  const engagement =
+    opts.enforceEngagementFloor !== false
+      ? applyEngagementFloor(output, now, opts.engagementFloorAgeHours ?? 24)
+      : {
+          posts: output,
+          meta: { promoted: output.length, deprioritized: 0, zeroEngagementOlder24h: 0 },
+        };
   output = engagement.posts;
 
   // 3. Language filter
@@ -505,9 +524,13 @@ export function applyQualityPipeline(
   output = language.posts;
 
   // 4. Cross-protocol dedup
-  const dedup = opts.crossProtocolDedup !== false
-    ? applyCrossProtocolDedup(output)
-    : { posts: output, meta: { remaining: output.length, deduped: 0, crossProtocol: 0, urlDedup: 0 } };
+  const dedup =
+    opts.crossProtocolDedup !== false
+      ? applyCrossProtocolDedup(output)
+      : {
+          posts: output,
+          meta: { remaining: output.length, deduped: 0, crossProtocol: 0, urlDedup: 0 },
+        };
   output = dedup.posts;
 
   // 5. Freshness scoring
@@ -521,9 +544,13 @@ export function applyQualityPipeline(
 
   // 6. Source diversity
   const maxPct = opts.maxPctPerSource ?? 30;
-  const diversity = maxPct > 0
-    ? applySourceDiversity(output, maxPct)
-    : { posts: output, meta: { diverse: true, sourceBreakdown: {}, rearranged: false, maxPctPerSource: 0 } };
+  const diversity =
+    maxPct > 0
+      ? applySourceDiversity(output, maxPct)
+      : {
+          posts: output,
+          meta: { diverse: true, sourceBreakdown: {}, rearranged: false, maxPctPerSource: 0 },
+        };
   output = diversity.posts;
 
   const totalFiltered = inputCount - output.length;

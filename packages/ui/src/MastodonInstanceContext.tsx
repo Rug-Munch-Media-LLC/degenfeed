@@ -68,7 +68,15 @@ export const MastodonInstanceContext = memo(function MastodonInstanceContext({
           style={{ backgroundColor: `${MASTODON_PURPLE}18`, color: MASTODON_PURPLE }}
         >
           {iconUrl ? (
-            <Image src={iconUrl} alt="" width={36} height={36} className="h-9 w-9 rounded-lg object-cover" loading="lazy" decoding="async" />
+            <Image
+              src={iconUrl}
+              alt=""
+              width={36}
+              height={36}
+              className="h-9 w-9 rounded-lg object-cover"
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M21.5 12.5C21.5 18 17.5 21 12 21C6.5 21 2.5 18 2.5 12.5V5.5L12 3L21.5 5.5V12.5Z" />
@@ -137,9 +145,12 @@ export const MastodonInstanceContext = memo(function MastodonInstanceContext({
       {federatedFrom && federatedFrom !== cleanInstance && (
         <div className="border-t border-[var(--color-glass-border)] px-4 py-2">
           <p className="text-[11px] leading-relaxed text-gray-600">
-            <span className="font-medium text-[var(--color-muted)]">Fediverse:</span> This post originated on{' '}
-            <span className="text-[var(--color-muted)]">{federatedFrom.replace(/^https?:\/\//, '')}</span> and
-            was federated to {displayName}.
+            <span className="font-medium text-[var(--color-muted)]">Fediverse:</span> This post
+            originated on{' '}
+            <span className="text-[var(--color-muted)]">
+              {federatedFrom.replace(/^https?:\/\//, '')}
+            </span>{' '}
+            and was federated to {displayName}.
           </p>
         </div>
       )}

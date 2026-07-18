@@ -2,7 +2,15 @@
  * @degenfeed/source-discovery — Shared types for discovered content sources.
  */
 
-export type Platform = 'reddit' | 'youtube' | 'rss' | 'lemmy' | 'peertube' | 'newsletter' | 'kbin' | 'tildes';
+export type Platform =
+  | 'reddit'
+  | 'youtube'
+  | 'rss'
+  | 'lemmy'
+  | 'peertube'
+  | 'newsletter'
+  | 'kbin'
+  | 'tildes';
 
 export type DiscoveryStatus = 'pending' | 'approved' | 'rejected';
 export type SourceLifecycle = 'active' | 'stale' | 'dormant' | 'culled';
@@ -125,11 +133,14 @@ export interface DiscoveryStats {
   newThisWeek: number;
   lastRunAt: number | null;
   lastRunDuration: number | null;
-  perPlatform: Record<string, {
-    discovered: number;
-    approved: number;
-    pending: number;
-  }>;
+  perPlatform: Record<
+    string,
+    {
+      discovered: number;
+      approved: number;
+      pending: number;
+    }
+  >;
 }
 
 export interface DiscoveryConfig {

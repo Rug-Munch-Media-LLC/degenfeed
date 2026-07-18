@@ -150,7 +150,8 @@ export const COMMUNITY_DESCRIPTIONS: Record<
   },
   programming: {
     title: 'Programming',
-    description: 'Software development, coding languages, algorithms, and engineering best practices',
+    description:
+      'Software development, coding languages, algorithms, and engineering best practices',
     emoji: '💻',
   },
   linux: {
@@ -171,7 +172,7 @@ export const COMMUNITY_DESCRIPTIONS: Record<
   space: {
     title: 'Space',
     description: 'Space exploration, astronomy, astrophysics, and space technology',
-    emoji: '🚀',
+    emoji: '🌌',
   },
   energy: {
     title: 'Energy',

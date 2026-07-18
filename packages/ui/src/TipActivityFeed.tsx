@@ -96,11 +96,9 @@ export function TipActivityFeed({
   if (loading && items.length === 0) {
     return (
       <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-10 animate-pulse rounded-lg bg-[var(--color-muted)]"
-          />
+        {Array.from({ length: 5 }).map((_, _i) => (
+          {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
+          <div key={i} className="h-10 animate-pulse rounded-lg bg-[var(--color-muted)]" />
         ))}
       </div>
     );
@@ -147,9 +145,7 @@ export function TipActivityFeed({
             <span className="min-w-0 flex-1 truncate text-[var(--color-muted)]">
               <span className="font-medium text-[var(--color-fg)]">{item.fromLabel}</span>
               {' tipped '}
-              <span className="font-semibold text-green-400">
-                {formatUsd(item.amountUsd)}
-              </span>
+              <span className="font-semibold text-green-400">{formatUsd(item.amountUsd)}</span>
               {' to '}
               <span className="font-medium text-[var(--color-fg)]">{item.toLabel}</span>
               {' on '}

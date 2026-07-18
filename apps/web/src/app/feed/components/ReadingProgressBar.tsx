@@ -17,10 +17,7 @@ export function ReadingProgressBar({
   /** Enable tracking — set to false when post is in feed (not expanded) */
   enabled?: boolean;
 }) {
-  const progress = useReadingProgress(
-    enabled ? `post-${postId}` : null,
-    enabled,
-  );
+  const progress = useReadingProgress(enabled ? `post-${postId}` : null, enabled);
 
   if (!enabled || progress <= 0) return null;
 
@@ -37,8 +34,7 @@ export function ReadingProgressBar({
         className="h-full transition-all duration-150 ease-out"
         style={{
           width: `${progress * 100}%`,
-          background:
-            'linear-gradient(90deg, var(--color-accent), #8b5cf6, var(--color-accent))',
+          background: 'linear-gradient(90deg, var(--color-accent), #8b5cf6, var(--color-accent))',
           backgroundSize: '200% 100%',
           animation: 'progress-glow 2s ease-in-out infinite',
           boxShadow: '0 0 8px var(--color-accent-glow)',

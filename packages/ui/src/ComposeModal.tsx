@@ -19,8 +19,8 @@
  *   Signed in (1+ protocols) → toggles show available protocols
  */
 
-import { type ContentProof } from '@degenfeed/types';
-import { type TokenGate, resolveTokenGateSymbol } from '@degenfeed/token-gate';
+import { resolveTokenGateSymbol, type TokenGate } from '@degenfeed/token-gate';
+import type { ContentProof } from '@degenfeed/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ComposePreview } from './ComposePreview';
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolBadge';
@@ -42,7 +42,7 @@ const TARGETS: Omit<ComposeTarget, 'enabled' | 'connected' | 'charCount' | 'stat
   { id: 'farcaster', label: 'Farcaster', charLimit: 320 },
   { id: 'lens', label: 'Lens', charLimit: 5000 },
   { id: 'bluesky', label: 'Bluesky', charLimit: 300 },
-  { id: 'threads', label: 'Threads (Experimental)', charLimit: 500 },
+  { id: 'threads', label: 'Threads', charLimit: 500 },
   { id: 'mastodon', label: 'Mastodon', charLimit: 5000 },
 ];
 
@@ -203,7 +203,9 @@ export function ComposeModal({
     try {
       const stored = localStorage.getItem(`cross-reply-pref:${replyContext.parentProtocol}`);
       if (stored && BRIDGE_REPLY_PROTOCOLS.has(stored)) return stored;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return replyContext.parentProtocol;
   });
   const isCrossProtocolReply = !!replyContext && replyContext.parentProtocol !== replyProtocol;
@@ -542,28 +544,25 @@ export function ComposeModal({
   const scheduleAvailable = hasSignedIn && !!onSchedule;
 
   /** Handle image file selection */
-  const handleImageFile = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      if (!file.type.startsWith('image/')) return;
-      if (file.size > 10 * 1024 * 1024) return; // 10MB max
-      setUploadingImage(true);
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        const markdown = `![${file.name}](${dataUrl})`;
-        setText((prev) => `${prev}\n${markdown}\n`);
-        setAttachedImages((prev) => [...prev, dataUrl]);
-        setUploadingImage(false);
-      };
-      reader.onerror = () => setUploadingImage(false);
-      reader.readAsDataURL(file);
-      // Reset input so the same file can be picked again
-      e.target.value = '';
-    },
-    [],
-  );
+  const handleImageFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 10 * 1024 * 1024) return; // 10MB max
+    setUploadingImage(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const markdown = `![${file.name}](${dataUrl})`;
+      setText((prev) => `${prev}\n${markdown}\n`);
+      setAttachedImages((prev) => [...prev, dataUrl]);
+      setUploadingImage(false);
+    };
+    reader.onerror = () => setUploadingImage(false);
+    reader.readAsDataURL(file);
+    // Reset input so the same file can be picked again
+    e.target.value = '';
+  }, []);
 
   /** Format a Date for display, e.g. "Jul 18, 2026 at 3:00 PM" */
   const formatScheduleDate = (d: Date) => {
@@ -645,7 +644,9 @@ export function ComposeModal({
             )}
           </div>
           <div className="flex items-center gap-2">
-            {!scheduledAt && <span className="text-xs text-[var(--color-muted)]">Ctrl+Enter to post</span>}
+            {!scheduledAt && (
+              <span className="text-xs text-[var(--color-muted)]">Ctrl+Enter to post</span>
+            )}
             {scheduledAt && <span className="text-xs text-cyan-500">Ctrl+Enter to schedule</span>}
             <button
               onClick={onClose}
@@ -707,13 +708,13 @@ export function ComposeModal({
                 accept="image/*"
                 onChange={handleImageFile}
                 className="hidden"
-                aria-hidden="true"
               />
 
               {/* Image attachment previews */}
               {attachedImages.length > 0 && (
                 <div className="mb-2 flex flex-wrap gap-2">
                   {attachedImages.map((img, i) => (
+                    {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
                     <div key={i} className="relative group">
                       <img
                         src={img}
@@ -726,7 +727,12 @@ export function ComposeModal({
                           setAttachedImages((prev) => prev.filter((_, idx) => idx !== i));
                           // Also remove the markdown from text
                           setText((prev) =>
-                            prev.replace(new RegExp(`!\\[.*?\\]\\(${img.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)\\n?`), ''),
+                            prev.replace(
+                              new RegExp(
+                                `!\\[.*?\\]\\(${img.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)\\n?`,
+                              ),
+                              '',
+                            ),
                           );
                         }}
                         className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500/80 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
@@ -769,6 +775,7 @@ export function ComposeModal({
 
               {/* Schedule date/time picker */}
               {showSchedulePicker && scheduleAvailable && (
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <div className="mb-3 rounded-lg border border-cyan-900/50 bg-cyan-950/30 p-3">
                   <label className="flex items-center gap-2 text-sm text-cyan-300">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -965,9 +972,14 @@ export function ComposeModal({
                       setReplyProtocol(protocol);
                       try {
                         if (replyContext) {
-                          localStorage.setItem(`cross-reply-pref:${replyContext.parentProtocol}`, protocol);
+                          localStorage.setItem(
+                            `cross-reply-pref:${replyContext.parentProtocol}`,
+                            protocol,
+                          );
                         }
-                      } catch { /* ignore */ }
+                      } catch {
+                        /* ignore */
+                      }
                     }}
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
                       isSelected
@@ -1125,15 +1137,11 @@ export function ComposeModal({
                 </span>
               ) : (
                 <span>
-                  Store on{' '}
-                  <span className="font-medium text-cyan-400">Arweave</span>
+                  Store on <span className="font-medium text-cyan-400">Arweave</span>
                   {' + '}
-                  <span className="font-medium text-purple-400">IPFS</span>
-                  {' '}
+                  <span className="font-medium text-purple-400">IPFS</span>{' '}
                   <span className="font-medium text-[var(--color-fg)]">(permanent)</span>
-                  <span className="text-[10px] text-gray-600 ml-1">
-                    — censorship-resistant
-                  </span>
+                  <span className="text-[10px] text-gray-600 ml-1">— censorship-resistant</span>
                 </span>
               )}
             </label>
@@ -1240,8 +1248,12 @@ export function ComposeModal({
                   )}
                 </span>
                 {permanenceProof.arweaveTxId && (
-                  <span className="ml-auto text-[10px] font-mono text-[var(--color-muted)] truncate max-w-[120px]" title={permanenceProof.arweaveTxId}>
-                    {permanenceProof.arweaveTxId.slice(0, 8)}...{permanenceProof.arweaveTxId.slice(-4)}
+                  <span
+                    className="ml-auto text-[10px] font-mono text-[var(--color-muted)] truncate max-w-[120px]"
+                    title={permanenceProof.arweaveTxId}
+                  >
+                    {permanenceProof.arweaveTxId.slice(0, 8)}...
+                    {permanenceProof.arweaveTxId.slice(-4)}
                   </span>
                 )}
               </div>

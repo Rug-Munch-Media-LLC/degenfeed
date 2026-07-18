@@ -55,9 +55,9 @@ export const metadata: Metadata = {
 export default function TrendingLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-trending" type="application/ld+json">{
-        JSON.stringify(trendingBreadcrumb)
-      }</Script>
+      <Script id="breadcrumb-trending" type="application/ld+json">
+        {JSON.stringify(trendingBreadcrumb)}
+      </Script>
       {children}
     </>
   );

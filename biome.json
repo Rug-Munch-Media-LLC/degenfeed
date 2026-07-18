@@ -88,6 +88,16 @@
     {
       "includes": ["apps/web/src/app/globals.css"],
       "linter": { "enabled": false }
+    },
+    {
+      "includes": ["apps/web/src/app/layout.tsx"],
+      "linter": {
+        "rules": {
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          }
+        }
+      }
     }
   ]
 }

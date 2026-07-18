@@ -119,13 +119,55 @@ export const TIER_POST_LIMITS: Record<string, number> = {
 };
 
 export const TIER_BENEFITS: Record<string, TierBenefits> = {
-  newcomer: { enhancedDiscovery: false, customFeed: false, badgeDisplay: false, prioritySupport: false, analyticsAccess: false },
-  contributor: { enhancedDiscovery: true, customFeed: false, badgeDisplay: true, prioritySupport: false, analyticsAccess: false },
-  active: { enhancedDiscovery: true, customFeed: true, badgeDisplay: true, prioritySupport: false, analyticsAccess: false },
-  trusted: { enhancedDiscovery: true, customFeed: true, badgeDisplay: true, prioritySupport: true, analyticsAccess: false },
-  veteran: { enhancedDiscovery: true, customFeed: true, badgeDisplay: true, prioritySupport: true, analyticsAccess: true },
-  elite: { enhancedDiscovery: true, customFeed: true, badgeDisplay: true, prioritySupport: true, analyticsAccess: true },
-  legend: { enhancedDiscovery: true, customFeed: true, badgeDisplay: true, prioritySupport: true, analyticsAccess: true },
+  newcomer: {
+    enhancedDiscovery: false,
+    customFeed: false,
+    badgeDisplay: false,
+    prioritySupport: false,
+    analyticsAccess: false,
+  },
+  contributor: {
+    enhancedDiscovery: true,
+    customFeed: false,
+    badgeDisplay: true,
+    prioritySupport: false,
+    analyticsAccess: false,
+  },
+  active: {
+    enhancedDiscovery: true,
+    customFeed: true,
+    badgeDisplay: true,
+    prioritySupport: false,
+    analyticsAccess: false,
+  },
+  trusted: {
+    enhancedDiscovery: true,
+    customFeed: true,
+    badgeDisplay: true,
+    prioritySupport: true,
+    analyticsAccess: false,
+  },
+  veteran: {
+    enhancedDiscovery: true,
+    customFeed: true,
+    badgeDisplay: true,
+    prioritySupport: true,
+    analyticsAccess: true,
+  },
+  elite: {
+    enhancedDiscovery: true,
+    customFeed: true,
+    badgeDisplay: true,
+    prioritySupport: true,
+    analyticsAccess: true,
+  },
+  legend: {
+    enhancedDiscovery: true,
+    customFeed: true,
+    badgeDisplay: true,
+    prioritySupport: true,
+    analyticsAccess: true,
+  },
 };
 
 export const defaultMultipliers: Record<string, number> = {
@@ -161,15 +203,15 @@ export function nextLevelThreshold(
   currentLevel: string,
   total: number,
 ): { current: string; next: string; currentMin: number; nextMin: number; progress: number } {
-  const tiers = Object.entries(TIER_THRESHOLDS)
-    .sort((a, b) => b[1] - a[1]);
+  const tiers = Object.entries(TIER_THRESHOLDS).sort((a, b) => b[1] - a[1]);
   const currentIdx = tiers.findIndex(([name]) => name === currentLevel);
-  const prevLevel = tiers[Math.max(0, currentIdx + 1)];
+  const _prevLevel = tiers[Math.max(0, currentIdx + 1)];
   const nextLevel = tiers[Math.max(0, currentIdx - 1)];
   const currentMin = TIER_THRESHOLDS[currentLevel] ?? 0;
   const nextMin = nextLevel ? nextLevel[1] : currentMin;
   const range = nextMin - currentMin;
-  const progress = range > 0 ? Math.min(100, Math.max(0, ((total - currentMin) / range) * 100)) : 100;
+  const progress =
+    range > 0 ? Math.min(100, Math.max(0, ((total - currentMin) / range) * 100)) : 100;
   return {
     current: currentLevel,
     next: nextLevel?.[0] ?? currentLevel,
@@ -221,9 +263,7 @@ export function applyEvent(
   return { score: updated, event };
 }
 
-export function computeDailyTotals(
-  history: ReputationEvent[],
-): Map<string, number> {
+export function computeDailyTotals(history: ReputationEvent[]): Map<string, number> {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayMs = today.getTime();
@@ -284,7 +324,9 @@ export function resolveStake(
   if (outcome === 'return') {
     delta = stake.amount; // return stake
   } else if (outcome === 'return-bonus') {
-    const bonus = engagementCount ? Math.min(stake.amount, Math.floor(engagementCount * 2)) : Math.floor(stake.amount * 0.1);
+    const bonus = engagementCount
+      ? Math.min(stake.amount, Math.floor(engagementCount * 2))
+      : Math.floor(stake.amount * 0.1);
     resolved.bonus = bonus;
     delta = stake.amount + bonus; // return stake + bonus
   }

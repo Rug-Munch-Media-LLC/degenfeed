@@ -11,22 +11,22 @@
  * renders from the app running in a simulator/device.
  */
 
-import { createCanvas, registerFont, loadImage } from 'canvas';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createCanvas } from 'canvas';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Brand Colors ───────────────────────────────────────────────
 const COLORS = {
-  bg: '#030712',          // gray-950
-  surface: '#1f2937',     // gray-800
+  bg: '#030712', // gray-950
+  surface: '#1f2937', // gray-800
   surfaceLight: '#374151', // gray-700
-  border: '#4b5563',      // gray-600
-  text: '#f9fafb',        // gray-50
-  textMuted: '#9ca3af',   // gray-400
-  degen: '#00ff41',       // brand green
+  border: '#4b5563', // gray-600
+  text: '#f9fafb', // gray-50
+  textMuted: '#9ca3af', // gray-400
+  degen: '#00ff41', // brand green
   degenDark: '#00cc34',
   nostr: '#8e30eb',
   farcaster: '#8a63d2',
@@ -41,8 +41,8 @@ const DEVICES = [
   { id: 'iphone6.5', width: 1242, height: 2688, label: 'iPhone 6.5"' },
   { id: 'iphone5.5', width: 1242, height: 2208, label: 'iPhone 5.5"' },
   { id: 'ipad12.9', width: 2048, height: 2732, label: 'iPad Pro 12.9"' },
-  { id: 'phone',    width: 1080, height: 2340, label: 'Android Phone' },
-  { id: 'tablet7',  width: 1200, height: 1920, label: 'Android Tablet 7"' },
+  { id: 'phone', width: 1080, height: 2340, label: 'Android Phone' },
+  { id: 'tablet7', width: 1200, height: 1920, label: 'Android Tablet 7"' },
   { id: 'tablet10', width: 1600, height: 2560, label: 'Android Tablet 10"' },
 ];
 
@@ -226,10 +226,46 @@ function renderFeed(ctx, w, h) {
   ctx.fillText('Your Feed', 24, 110);
 
   // Posts
-  drawMockPost(ctx, 0, 140, w, 'nostr', 'alex', 'gm degenfrens ☕ just aggregated my Nostr and Farcaster feeds — this is the future of social', '2m');
-  drawMockPost(ctx, 0, 320, w, 'farcaster', 'crypto.eth', 'Bullish on decentralized social. The protocol composability here is insane 🔥', '15m');
-  drawMockPost(ctx, 0, 500, w, 'lens', 'degendad.lens', 'Just posted across 4 protocols with one click. DegenFeed is goated 🐐', '42m');
-  drawMockPost(ctx, 0, 680, w, 'bluesky', 'satoshi fan', 'Cross-posting from Bluesky to Nostr works flawlessly. This aggregator is exactly what we needed.', '1h');
+  drawMockPost(
+    ctx,
+    0,
+    140,
+    w,
+    'nostr',
+    'alex',
+    'gm degenfrens ☕ just aggregated my Nostr and Farcaster feeds — this is the future of social',
+    '2m',
+  );
+  drawMockPost(
+    ctx,
+    0,
+    320,
+    w,
+    'farcaster',
+    'crypto.eth',
+    'Bullish on decentralized social. The protocol composability here is insane 🔥',
+    '15m',
+  );
+  drawMockPost(
+    ctx,
+    0,
+    500,
+    w,
+    'lens',
+    'degendad.lens',
+    'Just posted across 4 protocols with one click. DegenFeed is goated 🐐',
+    '42m',
+  );
+  drawMockPost(
+    ctx,
+    0,
+    680,
+    w,
+    'bluesky',
+    'satoshi fan',
+    'Cross-posting from Bluesky to Nostr works flawlessly. This aggregator is exactly what we needed.',
+    '1h',
+  );
 
   ctx.fillStyle = COLORS.textMuted;
   ctx.font = '22px sans-serif';
@@ -262,7 +298,7 @@ function renderPost(ctx, w, h) {
   ctx.fillStyle = COLORS.textMuted;
   ctx.font = '20px sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('What\'s happening in the degen world?', 36, 260);
+  ctx.fillText("What's happening in the degen world?", 36, 260);
 
   // Protocol toggles
   const protocols = [
@@ -398,8 +434,26 @@ function renderProfile(ctx, w, h) {
   ctx.fillText('Recent Posts', 24, 550);
 
   // Post cards
-  drawMockPost(ctx, 0, 570, w, 'nostr', 'degendad.eth', 'Testing cross-protocol posting from DegenFeed! This goes to Nostr, Farcaster, Lens, and Bluesky simultaneously.', '3h');
-  drawMockPost(ctx, 0, 750, w, 'farcaster', 'degendad.eth', 'DegenFeed v1 is live on TestFlight! DM me for access 🚀', '5h');
+  drawMockPost(
+    ctx,
+    0,
+    570,
+    w,
+    'nostr',
+    'degendad.eth',
+    'Testing cross-protocol posting from DegenFeed! This goes to Nostr, Farcaster, Lens, and Bluesky simultaneously.',
+    '3h',
+  );
+  drawMockPost(
+    ctx,
+    0,
+    750,
+    w,
+    'farcaster',
+    'degendad.eth',
+    'DegenFeed v1 is live on TestFlight! DM me for access 🚀',
+    '5h',
+  );
 
   drawNavBar(ctx, w, h);
 }

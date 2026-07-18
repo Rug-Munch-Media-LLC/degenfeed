@@ -225,7 +225,11 @@ export async function recordPeerTubeTip(
   // If recipientUserId looks like a wallet address, resolve linked
   // identities to surface the recipient's wallet for notifications.
   let resolvedUserId = input.recipientUserId || creatorChannel;
-  if (!/^0x[a-f0-9]{40}$/i.test(resolvedUserId) && !/^[1-9a-hj-z]{32,44}$/.test(resolvedUserId) && env.IDENTITIES) {
+  if (
+    !/^0x[a-f0-9]{40}$/i.test(resolvedUserId) &&
+    !/^[1-9a-hj-z]{32,44}$/.test(resolvedUserId) &&
+    env.IDENTITIES
+  ) {
     try {
       const key = identityKey(resolvedUserId);
       const raw = await env.IDENTITIES?.get(key);
@@ -280,7 +284,11 @@ export async function recordPeerTubeTip(
     console.warn('[peertube-tip] failed to store notification:', msg);
   }
 
-  return { tipId: tipEntry.id, totalAmount: updatedStats.totalAmount, totalTips: updatedStats.count };
+  return {
+    tipId: tipEntry.id,
+    totalAmount: updatedStats.totalAmount,
+    totalTips: updatedStats.count,
+  };
 }
 
 // ─── POST /api/peertube/tip ──────────────────────────────────────────────

@@ -44,7 +44,10 @@ export interface ReputationBadgeProgress {
 
 // ─── Tier config ─────────────────────────────────────────────────────────
 
-const TIER_STYLES: Record<ReputationLevel, { icon: string; label: string; color: string; bg: string }> = {
+const TIER_STYLES: Record<
+  ReputationLevel,
+  { icon: string; label: string; color: string; bg: string }
+> = {
   newcomer: {
     icon: '🌱',
     label: 'Newcomer',
@@ -121,7 +124,7 @@ export function ReputationBadge({
   const displayLabel = tier?.label || style.label;
 
   // Tooltip content
-  const tooltipContent = useMemo(() => {
+  const _tooltipContent = useMemo(() => {
     if (!score) return '';
     const lines = [
       `${displayIcon} ${displayLabel}`,
@@ -130,7 +133,7 @@ export function ReputationBadge({
       `Staked: ${score.staked.toLocaleString()}`,
       `Slashed: ${score.slashed.toLocaleString()}`,
     ];
-    if (progress && progress.next) {
+    if (progress?.next) {
       const pct = Math.round(progress.progress * 100);
       lines.push(`Next: ${progress.next} (${pct}%)`);
     }
@@ -139,17 +142,13 @@ export function ReputationBadge({
 
   // Progress bar
   const progressBar = useMemo(() => {
-    if (!showProgress || !progress || !progress.next) return null;
+    if (!showProgress || !progress?.next) return null;
     const pct = Math.round(progress.progress * 100);
     return (
       <div className="mt-1 w-full">
         <div className="flex justify-between text-[10px] text-[var(--color-muted)]">
-          <span>
-            {progress.currentMin.toLocaleString()}
-          </span>
-          <span className="font-medium text-[var(--color-fg)]">
-            {pct}%
-          </span>
+          <span>{progress.currentMin.toLocaleString()}</span>
+          <span className="font-medium text-[var(--color-fg)]">{pct}%</span>
           <span>
             {progress.nextMin.toLocaleString()} to {progress.next}
           </span>
@@ -208,7 +207,9 @@ export function ReputationBadge({
             </div>
             <div className="flex justify-between text-[var(--color-muted)]">
               <span>Total</span>
-              <span className="font-medium text-[var(--color-fg)]">{score.total.toLocaleString()}</span>
+              <span className="font-medium text-[var(--color-fg)]">
+                {score.total.toLocaleString()}
+              </span>
             </div>
             <div className="flex justify-between text-[var(--color-muted)]">
               <span>Earned</span>
@@ -222,7 +223,7 @@ export function ReputationBadge({
               <span>Slashed</span>
               <span className="font-medium text-red-400">-{score.slashed.toLocaleString()}</span>
             </div>
-            {progress && progress.next && (
+            {progress?.next && (
               <>
                 <hr className="my-1 border-[var(--color-border)]" />
                 <div className="text-[var(--color-muted)]">

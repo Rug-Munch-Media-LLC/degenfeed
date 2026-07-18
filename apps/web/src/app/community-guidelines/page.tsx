@@ -31,7 +31,9 @@ export default function CommunityGuidelinesPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 text-sm leading-relaxed text-[var(--color-muted)]">
       <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">Community Guidelines</h1>
-      <p className="mb-6 text-[var(--color-muted)]">Federated instance rules for social.degenfeed.xyz</p>
+      <p className="mb-6 text-[var(--color-muted)]">
+        Federated instance rules for social.degenfeed.xyz
+      </p>
 
       <ol className="mb-4 list-inside space-y-4">
         <li>

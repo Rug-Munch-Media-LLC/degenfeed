@@ -339,6 +339,9 @@ function MonthView({
       ))}
       {cells.map((day, idx) => {
         if (day === null) {
+          {
+            /* biome-ignore lint/suspicious/noArrayIndexKey: static list */
+          }
           return <div key={`empty-${idx}`} className="bg-[var(--color-card)] min-h-[80px]" />;
         }
         const date = new Date(year, month, day);

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 // TODO: Wire to worker backend
-import { runHealthCheck, cullLowQualitySources, getStats } from '../../../../../lib/source-engine';
+import { cullLowQualitySources, getStats, runHealthCheck } from '../../../../../lib/source-engine';
 
 export const runtime = 'nodejs';
 
@@ -24,9 +24,6 @@ export async function POST() {
       pendingCount: stats.pendingCount,
     });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: String(error) },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }

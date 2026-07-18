@@ -2,10 +2,16 @@
 
 import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { ErrorBoundary, FeedList, FeedWhyCard, NotificationBell, PostCard, ScrollToTop } from '@degenfeed/ui';
+import {
+  ErrorBoundary,
+  FeedList,
+  FeedWhyCard,
+  NotificationBell,
+  PostCard,
+  ScrollToTop,
+} from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
@@ -39,18 +45,15 @@ import { useFeedPosition } from '../../hooks/useFeedPosition';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { useHoverPrefetch } from '../../hooks/useHoverPrefetch';
 import { useNotifications } from '../../hooks/useNotifications';
-import { useReadingProgress } from '../../hooks/useReadingProgress';
 import { useReturningUser } from '../../hooks/useReturningUser';
 import { useScrollVelocity } from '../../hooks/useScrollVelocity';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
 import { useViewportPrefetch } from '../../hooks/useViewportPrefetch';
-import { CategoryBreakCard, aggregateNiches, shouldInsertCategoryBreak } from './components/CategoryBreak';
-import { ModerationNote, type ModerationFlag } from './components/ModerationNote';
+import { fetchWithSwr, getCached } from '../../lib/fetchWithCache';
+import { aggregateNiches, CategoryBreakCard } from './components/CategoryBreak';
 import { OnboardingSuggestions } from './components/OnboardingSuggestions';
 import { ReadingProgressBar } from './components/ReadingProgressBar';
 import { ShareSheet } from './components/ShareSheet';
-import { fetchWithSwr, getCached, setCache } from '../../lib/fetchWithCache';
-import { retryFetch } from '../../lib/retryFetch';
 
 const TipModal = dynamic(
   () => import('../../components/TipModal').then((m) => ({ default: m.TipModal })),
@@ -128,28 +131,58 @@ export const FEED_PRESETS: FeedPreset[] = [
     name: 'TikTok Mode',
     description: 'Video-forward, rapid-fire content. Max freshness, low creator diversity.',
     icon: '🎵',
-    config: { freshnessPreference: 90, creatorDiversity: 2, exploreRatio: 60, algorithmTransparent: false, recencyWeight: 2.5, engagementWeight: 3.0, contentTypes: { posts: 20, images: 30, videos: 100, links: 10, threads: 10 } },
+    config: {
+      freshnessPreference: 90,
+      creatorDiversity: 2,
+      exploreRatio: 60,
+      algorithmTransparent: false,
+      recencyWeight: 2.5,
+      engagementWeight: 3.0,
+      contentTypes: { posts: 20, images: 30, videos: 100, links: 10, threads: 10 },
+    },
   },
   {
     id: 'twitter-mode',
     name: 'Twitter Mode',
     description: 'Text-forward, chronological-leaning. Balanced discovery.',
     icon: '🐦',
-    config: { freshnessPreference: 70, creatorDiversity: 5, exploreRatio: 30, algorithmTransparent: true, recencyWeight: 2.0, engagementWeight: 1.5, contentTypes: { posts: 100, images: 40, videos: 20, links: 30, threads: 40 } },
+    config: {
+      freshnessPreference: 70,
+      creatorDiversity: 5,
+      exploreRatio: 30,
+      algorithmTransparent: true,
+      recencyWeight: 2.0,
+      engagementWeight: 1.5,
+      contentTypes: { posts: 100, images: 40, videos: 20, links: 30, threads: 40 },
+    },
   },
   {
     id: 'discover-mode',
     name: 'Discover Mode',
     description: 'Explore-heavy. Maximize new creators, topics, and content types.',
     icon: '✨',
-    config: { freshnessPreference: 40, creatorDiversity: 10, exploreRatio: 90, algorithmTransparent: true, recencyWeight: 1.0, engagementWeight: 2.0 },
+    config: {
+      freshnessPreference: 40,
+      creatorDiversity: 10,
+      exploreRatio: 90,
+      algorithmTransparent: true,
+      recencyWeight: 1.0,
+      engagementWeight: 2.0,
+    },
   },
   {
     id: 'focus-mode',
     name: 'Focus Mode',
     description: 'Followed creators only. Minimum noise, maximum signal.',
     icon: '🎯',
-    config: { freshnessPreference: 30, creatorDiversity: 3, exploreRatio: 5, algorithmTransparent: false, recencyWeight: 1.5, engagementWeight: 2.5 },
+    config: {
+      freshnessPreference: 30,
+      creatorDiversity: 3,
+      exploreRatio: 5,
+      algorithmTransparent: false,
+      recencyWeight: 1.5,
+      engagementWeight: 2.5,
+    },
   },
 ];
 
@@ -225,7 +258,7 @@ export default function FeedPage() {
   // ── 2026 Social UX: Category break state ──
   const [categoryNiches, setCategoryNiches] = useState<string[]>([]);
   // Track which break index we've computed niches for
-  const lastBreakIdxRef = useRef<number>(-1);
+  const _lastBreakIdxRef = useRef<number>(-1);
 
   // ── 2026 Social UX: First-visit detection for onboarding suggestions ──
   const [isFirstVisit, setIsFirstVisit] = useState(false);
@@ -243,16 +276,13 @@ export default function FeedPage() {
   }, []);
 
   // ── 2026 Social UX: Toast for share sheet ──
-  const handleShareToast = useCallback(
-    (message: string) => {
-      window.dispatchEvent(
-        new CustomEvent('df-toast', {
-          detail: { kind: 'success', message },
-        }),
-      );
-    },
-    [],
-  );
+  const handleShareToast = useCallback((message: string) => {
+    window.dispatchEvent(
+      new CustomEvent('df-toast', {
+        detail: { kind: 'success', message },
+      }),
+    );
+  }, []);
 
   // ── Feed preloading: prefetch post routes when cards enter viewport ──
   useViewportPrefetch([
@@ -528,8 +558,10 @@ export default function FeedPage() {
         if (typeof data.minEngagement === 'number') setMinEngagement(data.minEngagement);
         if (typeof data.maxPerNiche === 'number') setMaxPerNiche(data.maxPerNiche);
         // Load algorithm controls
-        if (typeof data.algorithmTransparent === 'boolean') setAlgorithmTransparent(data.algorithmTransparent);
-        if (typeof data.freshnessPreference === 'number') setFreshnessPreference(data.freshnessPreference);
+        if (typeof data.algorithmTransparent === 'boolean')
+          setAlgorithmTransparent(data.algorithmTransparent);
+        if (typeof data.freshnessPreference === 'number')
+          setFreshnessPreference(data.freshnessPreference);
         if (typeof data.creatorDiversity === 'number') setCreatorDiversity(data.creatorDiversity);
         if (typeof data.exploreRatio === 'number') setExploreRatio(data.exploreRatio);
         if (typeof data.activePreset === 'string') setActivePreset(data.activePreset);
@@ -633,7 +665,7 @@ export default function FeedPage() {
   // Reset injected explore when feed changes tab or refreshes
   useEffect(() => {
     setInjectedExplore(0);
-  }, [activeTab]);
+  }, []);
 
   // ── End-of-feed discovery suggestions ────────────────────────
   const endOfFeedSuggestions = useMemo(
@@ -732,7 +764,7 @@ export default function FeedPage() {
           cacheKey,
           { credentials: 'include' },
         );
-        let data = swrResult.data;
+        const data = swrResult.data;
 
         let feed = data.data ?? [];
 
@@ -763,7 +795,10 @@ export default function FeedPage() {
           setError(undefined);
         }
         if (!checkOnly && feed.length > 0) {
-          announce(`${feed.length} posts loaded${swrResult.fromCache ? ' (cached)' : ''}`, 'polite');
+          announce(
+            `${feed.length} posts loaded${swrResult.fromCache ? ' (cached)' : ''}`,
+            'polite',
+          );
         }
       } catch (err) {
         if (!checkOnly) {
@@ -1019,10 +1054,7 @@ export default function FeedPage() {
       }
       // Spring-like resistance: easy at first, harder as you pull
       // Using diminishing returns curve for natural feel
-      const resisted = Math.min(
-        diff * 0.5 - Math.pow(Math.max(0, diff - 60), 2) * 0.003,
-        PULL_MAX,
-      );
+      const resisted = Math.min(diff * 0.5 - Math.max(0, diff - 60) ** 2 * 0.003, PULL_MAX);
       const newVal = Math.max(0, resisted);
       setPullDistance(newVal);
       pullDistanceRef.current = newVal;
@@ -1446,7 +1478,9 @@ export default function FeedPage() {
                   className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-[var(--color-muted)] accent-degen-500"
                   aria-label="Minimum engagement"
                 />
-                <span className="font-mono text-[10px] text-[var(--color-muted)]">{minEngagement}</span>
+                <span className="font-mono text-[10px] text-[var(--color-muted)]">
+                  {minEngagement}
+                </span>
               </label>
               <label className="flex items-center gap-1">
                 <input
@@ -1535,10 +1569,14 @@ export default function FeedPage() {
           {(pullDistance > 0 || isRefreshing) && (
             <div
               className={`flex items-center justify-center gap-2 py-2.5 text-sm transition-all ${
-                isRefreshing ? 'ptr-indicator ptr-refreshing' : pullReady ? 'ptr-indicator ptr-ready' : 'ptr-indicator'
+                isRefreshing
+                  ? 'ptr-indicator ptr-refreshing'
+                  : pullReady
+                    ? 'ptr-indicator ptr-ready'
+                    : 'ptr-indicator'
               }`}
               style={{
-                opacity: isRefreshing ? 1 : Math.min(pullDistance / PULL_THRESHOLD * 1.2, 1),
+                opacity: isRefreshing ? 1 : Math.min((pullDistance / PULL_THRESHOLD) * 1.2, 1),
                 transform: isRefreshing
                   ? 'translateY(0)'
                   : `translateY(${Math.min(pullDistance * 0.3 - 10, 20)}px)`,
@@ -1556,7 +1594,11 @@ export default function FeedPage() {
                   aria-hidden="true"
                   style={{ animation: 'ptr-spin-refresh 0.8s linear infinite' }}
                 >
-                  <path d="M21 2v6h-6M3 12a9 9 0 0115-8.5L21 8M3 22v-6h6M21 12a9 9 0 01-15 8.5L3 16" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M21 2v6h-6M3 12a9 9 0 0115-8.5L21 8M3 22v-6h6M21 12a9 9 0 01-15 8.5L3 16"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               ) : (
                 <svg
@@ -1670,20 +1712,17 @@ export default function FeedPage() {
             <PostCardPrefetcher />
 
             {/* ── "While you were away" card ── */}
-            {returning.showCard &&
-              showReturnCard &&
-              state === 'loaded' &&
-              posts.length > 0 && (
-                <WhileYouWereAwayCard
-                  awayMinutes={Math.round(returning.awayDurationMs / 60000)}
-                  postCount={posts.length}
-                  onDismiss={() => {
-                    setShowReturnCard(false);
-                    returning.dismiss();
-                  }}
-                  onScrollToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                />
-              )}
+            {returning.showCard && showReturnCard && state === 'loaded' && posts.length > 0 && (
+              <WhileYouWereAwayCard
+                awayMinutes={Math.round(returning.awayDurationMs / 60000)}
+                postCount={posts.length}
+                onDismiss={() => {
+                  setShowReturnCard(false);
+                  returning.dismiss();
+                }}
+                onScrollToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              />
+            )}
 
             {/* ── Boredom-breaker explore cards injected when fast-scrolling ── */}
             {injectedExplore > 0 && state === 'loaded' && posts.length > 0 && (
@@ -1692,7 +1731,15 @@ export default function FeedPage() {
                   <div key={`boredom-${idx}`} className="feed-item-enter">
                     <div className="border-b border-[var(--color-glass-border)] px-4 py-4">
                       <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          aria-hidden="true"
+                        >
                           <circle cx="12" cy="12" r="10" />
                           <path d="M12 16v-4M12 8h.01" />
                         </svg>
@@ -1711,7 +1758,9 @@ export default function FeedPage() {
                             }}
                             className="flex flex-col items-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 text-center transition-all hover:border-degen-500/30 hover:bg-[var(--color-card-hover)]"
                           >
-                            <span className="text-2xl" aria-hidden="true">{s.icon}</span>
+                            <span className="text-2xl" aria-hidden="true">
+                              {s.icon}
+                            </span>
                             <span className="text-xs font-semibold text-[var(--color-fg)]">
                               {s.label}
                             </span>
@@ -1725,9 +1774,7 @@ export default function FeedPage() {
             )}
 
             {/* 2026 Social UX: Reading progress bar when a post is expanded */}
-            {readingPostId && (
-              <ReadingProgressBar postId={readingPostId} enabled={true} />
-            )}
+            {readingPostId && <ReadingProgressBar postId={readingPostId} enabled={true} />}
 
             {/* 2026 Social UX: Onboarding suggestions for first-time visitors */}
             {state === 'empty' && isFirstVisit && activeTab === 'for-you' && (
@@ -1778,9 +1825,7 @@ export default function FeedPage() {
                 }}
                 showCategoryBreaks={true}
                 categoryNiches={categoryNiches}
-                categoryBreakSlot={
-                  <CategoryBreakCard niches={categoryNiches} index={-1} />
-                }
+                categoryBreakSlot={<CategoryBreakCard niches={categoryNiches} index={-1} />}
                 emptySlot={
                   state === 'empty' && activeTab === 'for-you' ? (
                     <div className="border-b border-[var(--color-glass-border)] px-4 py-16 text-center">
@@ -1791,7 +1836,8 @@ export default function FeedPage() {
                         Your feed is quiet
                       </h3>
                       <p className="mx-auto mb-6 max-w-sm text-sm text-[var(--color-muted)]">
-                        Follow topics you care about to personalize your feed. Like, repost, or bookmark posts to help us learn your interests.
+                        Follow topics you care about to personalize your feed. Like, repost, or
+                        bookmark posts to help us learn your interests.
                       </p>
                       {!hasSignedIn && (
                         <button type="button" onClick={openSignIn} className="btn-primary text-sm">
@@ -1808,7 +1854,8 @@ export default function FeedPage() {
                         No posts in this mix yet
                       </h3>
                       <p className="mx-auto mb-6 max-w-sm text-sm text-[var(--color-muted)]">
-                        Create a custom mix to combine your favorite topics. Use the Tuner above to select topics and adjust their weights.
+                        Create a custom mix to combine your favorite topics. Use the Tuner above to
+                        select topics and adjust their weights.
                       </p>
                       <button
                         type="button"
@@ -2152,9 +2199,7 @@ function WhileYouWereAwayCard({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold text-[var(--color-fg)]">
-                While you were away
-              </p>
+              <p className="text-sm font-bold text-[var(--color-fg)]">While you were away</p>
               <p className="text-[11px] text-[var(--color-muted)]">
                 {timeStr} · {postCount} new posts
               </p>
@@ -2166,7 +2211,16 @@ function WhileYouWereAwayCard({
             className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Dismiss"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -2189,7 +2243,16 @@ function WhileYouWereAwayCard({
             onClick={onScrollToTop}
             className="inline-flex items-center gap-1.5 rounded-full bg-degen-500 px-3.5 py-1.5 text-[11px] font-semibold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_16px_rgba(0,255,65,0.3)]"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <path d="M12 19V5M5 12l7-7 7 7" />
             </svg>
             See newest

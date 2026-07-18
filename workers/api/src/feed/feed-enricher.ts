@@ -16,7 +16,6 @@ import {
   isRelevantPost,
   spamScore,
 } from '@degenfeed/feed-core';
-import type { SpamResult } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
 import { getPostContentUri } from '@degenfeed/utils';
 
@@ -37,7 +36,7 @@ let _removedPosts = new Set<string>();
  * Set of flagged post IDs that have already been reported.
  * Avoids repeated flagging.
  */
-let _flaggedPosts = new Set<string>();
+const _flaggedPosts = new Set<string>();
 
 export function setBannedUsers(users: Set<string>): void {
   _bannedUsers = users;
@@ -52,10 +51,7 @@ export function addFlaggedPost(postId: string): void {
 }
 
 export function isBannedUser(userId: string): boolean {
-  return (
-    _bannedUsers.has(userId) ||
-    _bannedUsers.has(userId.toLowerCase())
-  );
+  return _bannedUsers.has(userId) || _bannedUsers.has(userId.toLowerCase());
 }
 
 export function isRemovedPost(postId: string): boolean {
@@ -108,7 +104,14 @@ export function sanitizePosts(posts: UnifiedPost[]): UnifiedPost[] {
     })
     .map((p) => {
       const enriched = enrichPostNiches(p);
-      enriched.dfUri = getPostContentUri(enriched as unknown as { protocol: string; id: string; instance?: string; raw?: Record<string, unknown> | null });
+      enriched.dfUri = getPostContentUri(
+        enriched as unknown as {
+          protocol: string;
+          id: string;
+          instance?: string;
+          raw?: Record<string, unknown> | null;
+        },
+      );
 
       // Attach spam score metadata for downstream ranking
       const { score, signals } = spamScore(p);
@@ -131,7 +134,8 @@ export function sanitizePosts(posts: UnifiedPost[]): UnifiedPost[] {
 
       // Auto-reject: certain scam patterns
       if (modCheck.reject) {
-        (enriched as unknown as Record<string, unknown>).moderationAction = MODERATION_TAGS.AUTO_REJECTED;
+        (enriched as unknown as Record<string, unknown>).moderationAction =
+          MODERATION_TAGS.AUTO_REJECTED;
         (enriched as unknown as Record<string, unknown>).moderationReasons = modCheck.reasons;
         return null as unknown as UnifiedPost; // filtered below
       }

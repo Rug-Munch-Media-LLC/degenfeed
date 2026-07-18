@@ -40,7 +40,7 @@ export interface LemmyComment {
   /** Wallet addresses from the comment author's linked identity — enables tipping */
   authorEvmAddress?: string;
   authorSolanaAddress?: string;
-  /** 
+  /**
    * The comment author's primary protocol (nostr, farcaster, lens, bluesky, etc.)
    * Used by tip method auto-detection to recommend the best currency.
    */
@@ -350,7 +350,9 @@ const ImagePreview = memo(function ImagePreview({ src }: ImagePreviewProps) {
             className="group relative block overflow-hidden rounded-lg border border-white/10 transition-all hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-degen-400/60"
             aria-label={expanded ? 'Collapse image' : 'Expand image'}
           >
-            <div className={`relative ${expanded ? 'max-h-[600px]' : 'max-h-[200px]'} overflow-hidden transition-all duration-300`}>
+            <div
+              className={`relative ${expanded ? 'max-h-[600px]' : 'max-h-[200px]'} overflow-hidden transition-all duration-300`}
+            >
               {/* biome-ignore lint/performance/noImgElement: external image */}
               <img
                 src={src}
@@ -396,8 +398,19 @@ const ImagePreview = memo(function ImagePreview({ src }: ImagePreviewProps) {
                 aria-label="Close"
                 onClick={() => setExpanded(false)}
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 4l8 8M12 4l-8 8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </button>
             </button>
@@ -470,7 +483,13 @@ const VideoPreview = memo(function VideoPreview({ url }: VideoPreviewProps) {
           <div className="aspect-video flex items-center justify-center bg-[var(--color-card)]">
             {/* Play button icon */}
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-all group-hover:scale-110 group-hover:bg-white/25">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <path d="M8 5V19L19 12L8 5Z" />
               </svg>
             </div>
@@ -504,12 +523,7 @@ const LinkPreview = memo(function LinkPreview({ url }: LinkPreviewProps) {
     >
       {favicon && (
         // biome-ignore lint/performance/noImgElement: favicon
-        <img
-          src={favicon}
-          alt=""
-          className="h-4 w-4 flex-shrink-0 rounded"
-          loading="lazy"
-        />
+        <img src={favicon} alt="" className="h-4 w-4 flex-shrink-0 rounded" loading="lazy" />
       )}
       <span className="flex-1 truncate text-[var(--color-muted)] transition-colors group-hover:text-[var(--color-muted)]">
         {domain}
@@ -582,7 +596,11 @@ interface ReplyFormProps {
   onClose: () => void;
 }
 
-const ReplyForm = memo(function ReplyForm({ parentId: _parentId, authorName, onClose }: ReplyFormProps) {
+const ReplyForm = memo(function ReplyForm({
+  parentId: _parentId,
+  authorName,
+  onClose,
+}: ReplyFormProps) {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -643,7 +661,8 @@ const ReplyForm = memo(function ReplyForm({ parentId: _parentId, authorName, onC
       />
       <div className="mt-1.5 flex items-center justify-between">
         <span className="text-[10px] text-gray-600">
-          <kbd className="rounded bg-white/5 px-1 py-0.5 font-mono text-[9px]">Ctrl+Enter</kbd> to send
+          <kbd className="rounded bg-white/5 px-1 py-0.5 font-mono text-[9px]">Ctrl+Enter</kbd> to
+          send
         </span>
         <div className="flex items-center gap-1.5">
           <button
@@ -672,7 +691,7 @@ const ReplyForm = memo(function ReplyForm({ parentId: _parentId, authorName, onC
 interface CommentNodeProps {
   comment: LemmyComment;
   depth: number;
-  /** 
+  /**
    * Fallback wallet addresses from the post author profile.
    * The comment author's own wallets (from comment.authorEvmAddress / .authorSolanaAddress)
    * are preferred; these are used only when the comment author hasn't linked wallets.
@@ -920,13 +939,8 @@ const CommentNode = memo(function CommentNode({
                   comment.author.charAt(0)
                 )}
               </button>
-              <span className="font-medium text-[var(--color-muted)]">
-                {comment.author}
-              </span>
-              <span
-                className="text-gray-600"
-                title={getExactTime(comment.createdAt)}
-              >
+              <span className="font-medium text-[var(--color-muted)]">{comment.author}</span>
+              <span className="text-gray-600" title={getExactTime(comment.createdAt)}>
                 {timeAgo(comment.createdAt)}
               </span>
               {comment.editedAt && (
@@ -1006,7 +1020,9 @@ const CommentNode = memo(function CommentNode({
                     </svg>
                   </button>
 
-                  <span className="text-gray-700" aria-hidden="true">·</span>
+                  <span className="text-gray-700" aria-hidden="true">
+                    ·
+                  </span>
 
                   {/* Reply button */}
                   <button
@@ -1018,13 +1034,7 @@ const CommentNode = memo(function CommentNode({
                     aria-label="Reply"
                     aria-expanded={showReplyForm}
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 14 14"
-                      fill="none"
-                      aria-hidden="true"
-                    >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                       <path
                         d="M3 7.5L7 11.5M3 7.5L7 3.5M3 7.5H11.5"
                         stroke="currentColor"
@@ -1044,13 +1054,7 @@ const CommentNode = memo(function CommentNode({
                     className="flex items-center gap-1 rounded-md px-1.5 py-1 transition-all duration-150 hover:bg-gray-500/10 hover:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-offset-1 min-h-[28px] text-gray-600"
                     aria-label="Share comment"
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 14 14"
-                      fill="none"
-                      aria-hidden="true"
-                    >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                       <path
                         d="M10 4.5C10.8284 4.5 11.5 3.82843 11.5 3C11.5 2.17157 10.8284 1.5 10 1.5C9.17157 1.5 8.5 2.17157 8.5 3C8.5 3.17157 8.52859 3.33631 8.58124 3.49021L5.41876 5.25979C5.17157 5.09333 4.87266 5 4.55 5C3.6125 5 2.8625 5.75 2.8625 6.6875C2.8625 7.625 3.6125 8.375 4.55 8.375C4.87266 8.375 5.17157 8.28167 5.41876 8.11521L8.58124 9.88479C8.52859 10.0387 8.5 10.2034 8.5 10.375C8.5 11.2125 9.1625 11.875 10 11.875C10.8375 11.875 11.5 11.2125 11.5 10.375C11.5 9.5375 10.8375 8.875 10 8.875C9.67734 8.875 9.37843 8.96833 9.13124 9.13479L5.96876 7.36521C6.02141 7.21131 6.05 7.04657 6.05 6.875C6.05 6.70343 6.02141 6.53869 5.96876 6.38479L9.13124 4.61521C9.37843 4.78167 9.67734 4.875 10 4.875V4.5Z"
                         stroke="currentColor"
@@ -1063,7 +1067,9 @@ const CommentNode = memo(function CommentNode({
                   {/* Tip button for comment */}
                   {(effectiveEvmAddress || effectiveSolanaAddress) && (
                     <>
-                      <span className="text-gray-700" aria-hidden="true">·</span>
+                      <span className="text-gray-700" aria-hidden="true">
+                        ·
+                      </span>
                       <LemmyTipButton
                         contentId={comment.id}
                         contentType="comment"
@@ -1089,7 +1095,7 @@ const CommentNode = memo(function CommentNode({
             )}
 
             {/* ── Nested replies (animated collapse) ── */}
-            {hasReplies && (comment.replies.length > 0) && (
+            {hasReplies && comment.replies.length > 0 && (
               <div
                 ref={contentRef}
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
@@ -1150,7 +1156,10 @@ const VirtualizedCommentList = memo(function VirtualizedCommentList({
   fallbackSolanaAddress,
   onVote,
 }: VirtualizedCommentListProps) {
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: Math.min(15, comments.length) });
+  const [visibleRange, setVisibleRange] = useState({
+    start: 0,
+    end: Math.min(15, comments.length),
+  });
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Progressive loading: when sentinel enters viewport, load more
@@ -1211,7 +1220,9 @@ function extractLemmyData(post: UnifiedPost): {
   const raw = post.raw as Record<string, unknown> | undefined;
   return {
     communityName:
-      (raw?.community_name as string) ?? ((raw?.community as Record<string, string> | undefined)?.name) ?? 'c/crypto',
+      (raw?.community_name as string) ??
+      (raw?.community as Record<string, string> | undefined)?.name ??
+      'c/crypto',
     communityIcon: raw?.community_icon as string | undefined,
     instanceDomain:
       (raw?.instance_domain as string) ?? (raw?.instance as string) ?? 'lemmy.degenfeed.xyz',
@@ -1239,7 +1250,9 @@ export const LemmyThreadView = memo(function LemmyThreadView({
   // ── Tip state for the post ──
   const [postTipCount, setPostTipCount] = useState(0);
   const [postTipTotal, setPostTipTotal] = useState(0);
-  const [viewOnCommunityLabel, setViewOnCommunityLabel] = useState('View on community.degenfeed.xyz');
+  const [viewOnCommunityLabel, setViewOnCommunityLabel] = useState(
+    'View on community.degenfeed.xyz',
+  );
   const authorEvmAddress = post.author.keys.evmAddress;
   const authorSolanaAddress = post.author.keys.solanaAddress;
   const hasAuthorWallet = !!(authorEvmAddress || authorSolanaAddress);
@@ -1282,7 +1295,14 @@ export const LemmyThreadView = memo(function LemmyThreadView({
           style={{ backgroundColor: '#00b86822', color: '#00b868' }}
         >
           {communityIcon ? (
-            <Image src={communityIcon} alt="" width={24} height={24} className="h-6 w-6 rounded-full object-cover" unoptimized />
+            <Image
+              src={communityIcon}
+              alt=""
+              width={24}
+              height={24}
+              className="h-6 w-6 rounded-full object-cover"
+              unoptimized
+            />
           ) : (
             communityName.charAt(0).toUpperCase()
           )}
@@ -1337,7 +1357,10 @@ export const LemmyThreadView = memo(function LemmyThreadView({
           {/* Metadata row + Tip button */}
           <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
             <span>
-              Posted by <span className="font-medium text-[var(--color-muted)]">{post.author.displayName}</span>
+              Posted by{' '}
+              <span className="font-medium text-[var(--color-muted)]">
+                {post.author.displayName}
+              </span>
             </span>
             <span aria-hidden="true">·</span>
             <span>{post.metrics.replies} comments</span>
@@ -1473,7 +1496,7 @@ function buildCommentTree(flat: RawComment[], userVotes?: (number | null)[]): Le
       upvotes: rc.upvotes ?? 0,
       downvotes: rc.downvotes ?? 0,
       createdAt: Number(rc.created_at) || Date.now(),
-      editedAt: rc.edited || rc.updated_at ? (Number(rc.updated_at) || undefined) : undefined,
+      editedAt: rc.edited || rc.updated_at ? Number(rc.updated_at) || undefined : undefined,
       depth: rc.path ? rc.path.split('.').length - 2 : 0,
       replies: [],
       parentId: rc.parent_id,

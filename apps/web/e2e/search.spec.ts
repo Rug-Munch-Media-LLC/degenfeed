@@ -4,11 +4,11 @@
 
 import { expect, test } from '@playwright/test';
 import {
-  MOCK_SEARCH_RESULTS,
   MOCK_EMPTY_SEARCH,
   MOCK_PREFERENCES,
-  mockSearchApi,
+  MOCK_SEARCH_RESULTS,
   mockFeedApi,
+  mockSearchApi,
 } from './fixtures';
 
 test.describe('Search page', () => {

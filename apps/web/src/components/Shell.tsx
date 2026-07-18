@@ -378,6 +378,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     const resolved = stored === 'light' ? 'light' : 'dark';
     setTheme(resolved);
     document.documentElement.classList.toggle('dark', resolved === 'dark');
+    // biome-ignore lint/suspicious/noDocumentCookie: intentional theme persistence via cookie for SSR parity
     document.cookie = `df_theme=${resolved}; path=/; max-age=31536000; SameSite=Lax; Secure`;
   }, []);
 
@@ -395,6 +396,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           const next = prev === 'dark' ? 'light' : 'dark';
           document.documentElement.classList.toggle('dark', next === 'dark');
           localStorage.setItem('df_theme', next);
+          // biome-ignore lint/suspicious/noDocumentCookie: intentional theme persistence via cookie for SSR parity
           document.cookie = `df_theme=${next}; path=/; max-age=31536000; SameSite=Lax; Secure`;
           return next;
         });
@@ -453,11 +455,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           tabIndex={-1}
           className={`
             relative z-10 min-h-screen animate-page-enter
-            ${
-              pathname !== '/' && !isSelfLayoutPage
-                ? 'pb-16 lg:pb-0'
-                : ''
-            }
+            ${pathname !== '/' && !isSelfLayoutPage ? 'pb-16 lg:pb-0' : ''}
             w-full min-w-0 border-r border-[var(--color-glass-border)]
             ${
               pathname === '/'
@@ -474,10 +472,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           <MobileTopBar onMenuToggle={() => setMobileDrawerOpen(true)} />
 
           {/* Mobile slide-out drawer */}
-          <MobileDrawer
-            open={mobileDrawerOpen}
-            onClose={() => setMobileDrawerOpen(false)}
-          />
+          <MobileDrawer open={mobileDrawerOpen} onClose={() => setMobileDrawerOpen(false)} />
 
           {/* Content */}
           <OnboardingProvider>

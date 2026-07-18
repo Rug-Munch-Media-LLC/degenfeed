@@ -6,9 +6,9 @@
  * approach if no API key is available.
  */
 
-import type { DiscoveredSource } from './types';
-import { SEARCH_KEYWORDS, DEFAULT_DISCOVERY_CONFIG } from './types';
 import { computeQualityScore, estimateRelevance } from './quality';
+import type { DiscoveredSource } from './types';
+import { DEFAULT_DISCOVERY_CONFIG, SEARCH_KEYWORDS } from './types';
 
 const REQUEST_TIMEOUT_MS = 5000;
 const USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
@@ -74,10 +74,7 @@ export async function discoverYouTubeChannels(
         const stats = await fetchChannelStats(channelId, apiKey);
         const subscriberCount = Number(stats?.statistics.subscriberCount ?? 0);
         const videoCount = Number(stats?.statistics.videoCount ?? 0);
-        const relevanceScore = estimateRelevance(
-          item.snippet.title,
-          item.snippet.description,
-        );
+        const relevanceScore = estimateRelevance(item.snippet.title, item.snippet.description);
 
         const weeklyActivity = Math.max(1, Math.round(videoCount / 52));
 
@@ -114,10 +111,7 @@ export async function discoverYouTubeChannels(
   return sources.sort((a, b) => b.score - a.score);
 }
 
-async function searchYouTubeAPI(
-  keyword: string,
-  apiKey: string,
-): Promise<YouTubeSearchItem[]> {
+async function searchYouTubeAPI(keyword: string, apiKey: string): Promise<YouTubeSearchItem[]> {
   try {
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(keyword)}&maxResults=10&key=${apiKey}`;
     const controller = new AbortController();

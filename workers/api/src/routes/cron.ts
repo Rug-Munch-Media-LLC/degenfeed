@@ -24,9 +24,7 @@ import { scrapeTrendingContent } from './trending-scraper';
 
 export async function handleCron(env: Env): Promise<Response> {
   // Fire-and-forget trending scraper refresh on every cron tick
-  scrapeTrendingContent(env).catch((err) =>
-    console.warn('[cron] trending scrape failed:', err),
-  );
+  scrapeTrendingContent(env).catch((err) => console.warn('[cron] trending scrape failed:', err));
 
   const start = Date.now();
   const digestNiche = 'crypto,bitcoin,ethereum,defi,nft';

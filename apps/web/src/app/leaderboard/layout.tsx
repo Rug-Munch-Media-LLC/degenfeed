@@ -52,9 +52,9 @@ export const metadata: Metadata = {
 export default function LeaderboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-leaderboard" type="application/ld+json">{
-        JSON.stringify(leaderboardBreadcrumb)
-      }</Script>
+      <Script id="breadcrumb-leaderboard" type="application/ld+json">
+        {JSON.stringify(leaderboardBreadcrumb)}
+      </Script>
       {children}
     </>
   );

@@ -22,6 +22,7 @@ describe('Search flow: query → federate → respond', () => {
     const env = {
       SEARCH_CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn() },
       RSS_CACHE_KV: { get: vi.fn().mockResolvedValue(null) },
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     } as any;
     const res = await handleSearch(req, env);
     expect(res.status).toBe(200);
@@ -33,9 +34,10 @@ describe('Search flow: query → federate → respond', () => {
     const env = {
       SEARCH_CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn() },
       RSS_CACHE_KV: { get: vi.fn().mockResolvedValue(null) },
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     } as any;
     const res = await handleSearch(req, env);
-    const body = await res.json() as { meta?: { query?: string; limit?: number } };
+    const body = (await res.json()) as { meta?: { query?: string; limit?: number } };
     expect(body.meta?.query).toBe('solana');
     expect(body.meta?.limit).toBe(5);
   });

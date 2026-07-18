@@ -198,7 +198,9 @@ export default function CommunityPage() {
 
             <div className="min-w-0 flex-1">
               <h1 className="text-xl font-bold text-[var(--color-fg)]">{community.displayName}</h1>
-              <p className="mt-1 text-sm text-[var(--color-muted)] line-clamp-2">{community.description}</p>
+              <p className="mt-1 text-sm text-[var(--color-muted)] line-clamp-2">
+                {community.description}
+              </p>
 
               {/* Protocol badges */}
               <div className="mt-3 flex flex-wrap gap-1.5">
@@ -267,7 +269,9 @@ export default function CommunityPage() {
               type="button"
               onClick={() => setActiveTab(tab)}
               className={`relative px-4 py-3 text-sm font-medium capitalize transition-colors ${
-                activeTab === tab ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
+                activeTab === tab
+                  ? 'text-[var(--color-fg)]'
+                  : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
               }`}
             >
               {tab}
@@ -320,7 +324,9 @@ export default function CommunityPage() {
                       <span className="text-sm font-semibold text-[var(--color-fg)]">
                         {item.author.displayName}
                       </span>
-                      <span className="text-xs text-[var(--color-muted)]">@{item.author.handle}</span>
+                      <span className="text-xs text-[var(--color-muted)]">
+                        @{item.author.handle}
+                      </span>
                       {/* Protocol badge */}
                       <span
                         className="ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-medium"
@@ -333,7 +339,9 @@ export default function CommunityPage() {
                         {PROTOCOL_META[item.protocol]?.label || item.protocol}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-[var(--color-muted)] line-clamp-3">{item.text}</p>
+                    <p className="mt-1 text-sm text-[var(--color-muted)] line-clamp-3">
+                      {item.text}
+                    </p>
                     <div className="mt-2 flex items-center gap-3 text-xs text-[var(--color-muted)]">
                       <span>{formatDate(item.createdAt)}</span>
                       <span>♥ {item.likes}</span>

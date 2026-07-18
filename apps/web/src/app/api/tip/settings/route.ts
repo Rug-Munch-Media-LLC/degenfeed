@@ -8,13 +8,23 @@ export async function POST(request: Request) {
 
     // Validate fields if present
     const validFields = [
-      'identityId', 'updatedAt', 'evmAddress', 'solanaAddress', 'lightningAddress',
-      'farcasterCustodyAddress', 'lensProfile', 'nostrPubkey', 'preferredMethod',
+      'identityId',
+      'updatedAt',
+      'evmAddress',
+      'solanaAddress',
+      'lightningAddress',
+      'farcasterCustodyAddress',
+      'lensProfile',
+      'nostrPubkey',
+      'preferredMethod',
     ];
 
     const unknownFields = Object.keys(body).filter((k) => !validFields.includes(k));
     if (unknownFields.length > 0) {
-      return NextResponse.json({ error: `Unknown fields: ${unknownFields.join(', ')}` }, { status: 400 });
+      return NextResponse.json(
+        { error: `Unknown fields: ${unknownFields.join(', ')}` },
+        { status: 400 },
+      );
     }
 
     // Validate address formats if provided
@@ -28,11 +38,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid Solana address format' }, { status: 400 });
     }
     if (body.farcasterCustodyAddress && !evmRe.test(body.farcasterCustodyAddress)) {
-      return NextResponse.json({ error: 'Invalid Farcaster custody address format' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid Farcaster custody address format' },
+        { status: 400 },
+      );
     }
 
     return NextResponse.json({ ok: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }

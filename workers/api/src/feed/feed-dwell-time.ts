@@ -64,11 +64,16 @@ export function classifyDwell(dwellMs: number): DwellBucket {
 
 export function dwellBoostMultiplier(bucket: DwellBucket, completionRate: number): number {
   switch (bucket) {
-    case 'skipped': return 0.3;
-    case 'glanced': return 0.6;
-    case 'read': return 1.0 + completionRate * 0.5;
-    case 'engaged': return 1.5 + completionRate;
-    case 'deep': return 2.0 + completionRate * 1.5;
+    case 'skipped':
+      return 0.3;
+    case 'glanced':
+      return 0.6;
+    case 'read':
+      return 1.0 + completionRate * 0.5;
+    case 'engaged':
+      return 1.5 + completionRate;
+    case 'deep':
+      return 2.0 + completionRate * 1.5;
   }
 }
 
@@ -143,10 +148,7 @@ export async function recordDwellEvent(
  * Normalization: dwell scores are normalized per-user so a power user who
  * spends 30s on every post doesn't get 10x the dwell signal of a casual user.
  */
-export function computeDwellBoost(
-  post: UnifiedPost,
-  dwellProfile: DwellProfile,
-): DwellBoostResult {
+export function computeDwellBoost(post: UnifiedPost, dwellProfile: DwellProfile): DwellBoostResult {
   if (dwellProfile.entries.length === 0) {
     return { multiplier: 1.0, bucket: 'glanced' as DwellBucket, factors: [] };
   }
@@ -175,8 +177,7 @@ export function computeDwellBoost(
     // Scale boost by normalized dwell: a 60s dwell for a 5s-avg user > 60s for a 60s-avg user
     const normalizedBoost = baseBoost * Math.min(dwellRatio, 3.0);
 
-    const nicheMatch =
-      entry.niches.filter((n) => nicheSet.has(n.toLowerCase())).length > 0;
+    const nicheMatch = entry.niches.filter((n) => nicheSet.has(n.toLowerCase())).length > 0;
     const creatorMatch = entry.creatorId === post.author.id;
     const typeMatch = entry.contentType === contentType;
 
@@ -211,9 +212,7 @@ export function computeDwellBoost(
  * weighted by dwell time and recency. Used to boost posts from creators
  * the user spends real time on (not just quick-like scrollers).
  */
-export function getDwellWeightedCreators(
-  dwellProfile: DwellProfile,
-): Map<string, number> {
+export function getDwellWeightedCreators(dwellProfile: DwellProfile): Map<string, number> {
   const creators = new Map<string, number>();
   for (const entry of dwellProfile.entries) {
     if (entry.dwellMs < 2000) continue; // skip quick scrolls
@@ -230,9 +229,7 @@ export function getDwellWeightedCreators(
  * Returns niches sorted by aggregate dwell engagement (not just view count).
  * High dwell + high completion = user genuinely interested in this topic.
  */
-export function getDwellWeightedNiches(
-  dwellProfile: DwellProfile,
-): Map<string, number> {
+export function getDwellWeightedNiches(dwellProfile: DwellProfile): Map<string, number> {
   const niches = new Map<string, number>();
   for (const entry of dwellProfile.entries) {
     const ageDays = (Date.now() - entry.timestamp) / 86400000;

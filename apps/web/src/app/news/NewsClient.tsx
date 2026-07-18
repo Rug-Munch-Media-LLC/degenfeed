@@ -128,8 +128,8 @@ function NewsCard({ post }: { post: UnifiedPost }) {
         <a
           href={url}
           target="_blank"
-          
           className="block aspect-video w-full overflow-hidden"
+          rel="noopener"
         >
           <Image
             src={imageEmbed.url}
@@ -169,13 +169,15 @@ function NewsCard({ post }: { post: UnifiedPost }) {
         <a
           href={url}
           target="_blank"
-          
           className="mb-2 block text-sm font-semibold leading-snug text-[var(--color-fg)] transition-colors group-hover:text-degen-400 line-clamp-2"
+          rel="noopener"
         >
           {title}
         </a>
 
-        <p className="mb-3 text-xs leading-relaxed text-[var(--color-muted)] line-clamp-2">{desc}</p>
+        <p className="mb-3 text-xs leading-relaxed text-[var(--color-muted)] line-clamp-2">
+          {desc}
+        </p>
 
         <div className="mt-auto flex flex-wrap gap-1">
           {post.niches.slice(0, 4).map((niche) => (
@@ -342,8 +344,8 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
             <a
               href="/api/feed/rss.xml?category=news"
               target="_blank"
-              
               className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
+              rel="noopener"
             >
               RSS
             </a>

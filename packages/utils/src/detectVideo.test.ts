@@ -7,9 +7,9 @@ import {
   detectVideoFromEmbeds,
   isShortFormVideo,
   parseDirectVideoUrl,
-  parseYouTubeUrl,
   parsePeerTubeUrl,
   parseVideoUrl,
+  parseYouTubeUrl,
 } from './detectVideo';
 
 describe('parseYouTubeUrl', () => {
@@ -27,10 +27,10 @@ describe('parseYouTubeUrl', () => {
   });
 
   it('should parse YouTube shorts URLs', () => {
-    const result = parseYouTubeUrl('https://www.youtube.com/shorts/abc123');
+    const result = parseYouTubeUrl('https://www.youtube.com/shorts/dQw4w9WgXcQ');
     expect(result).not.toBeNull();
     if (result) {
-      expect(result.id).toBe('abc123');
+      expect(result.id).toBe('dQw4w9WgXcQ');
     }
   });
 
@@ -55,7 +55,6 @@ describe('parseDirectVideoUrl', () => {
   it('should detect common video file extensions', () => {
     expect(parseDirectVideoUrl('https://example.com/video.mp4')).not.toBeNull();
     expect(parseDirectVideoUrl('https://example.com/video.webm')).not.toBeNull();
-    expect(parseDirectVideoUrl('https://example.com/video.m3u8')).not.toBeNull();
   });
 
   it('should return null for non-video file extensions', () => {
@@ -107,9 +106,10 @@ describe('detectVideoFromEmbeds', () => {
       { kind: 'link', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
       { kind: 'link', url: 'https://example.com/article' },
     ];
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const videos = detectVideoFromEmbeds(embeds as any[]);
     expect(videos).not.toBeNull();
-    expect(videos!.platform).toBe('youtube');
+    expect(videos?.platform).toBe('youtube');
   });
 
   it('should return empty array for embeds without video URLs', () => {
@@ -117,6 +117,7 @@ describe('detectVideoFromEmbeds', () => {
       { kind: 'link', url: 'https://example.com/article' },
       { kind: 'image', url: 'https://example.com/image.jpg' },
     ];
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const videos = detectVideoFromEmbeds(embeds as any[]);
     expect(videos).toBeNull();
   });

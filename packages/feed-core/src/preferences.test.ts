@@ -4,11 +4,7 @@
 
 import type { UnifiedPost } from '@degenfeed/types';
 import { describe, expect, it } from 'vitest';
-import {
-  emptyBehaviorProfile,
-  INTERACTION_WEIGHTS,
-  learnFromInteraction,
-} from './preferences';
+import { emptyBehaviorProfile, INTERACTION_WEIGHTS, learnFromInteraction } from './preferences';
 
 function makePost(niches: string[], text = 'A test post about crypto'): UnifiedPost {
   return {

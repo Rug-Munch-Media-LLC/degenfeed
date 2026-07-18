@@ -12,8 +12,13 @@
  *   GET   /api/digest/yesterday             → Yesterday's digest archive
  */
 
-import { deduplicatePosts, enrichPostNiches, isRelevantPost, isSpamPost } from '@degenfeed/feed-core';
-import { computeTrendingTopics, rankDiverse } from '@degenfeed/ranking';
+import {
+  deduplicatePosts,
+  enrichPostNiches,
+  isRelevantPost,
+  isSpamPost,
+} from '@degenfeed/feed-core';
+import { computeTrendingTopics } from '@degenfeed/ranking';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, rmiUrl } from '@degenfeed/utils';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
@@ -41,7 +46,7 @@ function safeKey(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9@._-]/g, '_');
 }
 
-function formatTime(ts: number): string {
+function _formatTime(ts: number): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m`;
@@ -77,8 +82,8 @@ function protocolEmoji(p: Protocol): string {
   return map[p] ?? '●';
 }
 
-function excerpt(text: string, max = 160): string {
-  return text.length > max ? text.slice(0, max).replace(/\s+\S*$/, '') + '…' : text;
+function _excerpt(text: string, max = 160): string {
+  return text.length > max ? `${text.slice(0, max).replace(/\s+\S*$/, '')}…` : text;
 }
 
 function readTime(text: string): number {
@@ -107,7 +112,9 @@ async function fetchMarketPrices(env: Env): Promise<Record<string, MarketPrice>>
     if (!res.ok) throw new Error(`CoinGecko returned ${res.status}`);
     const data = (await res.json()) as Record<string, MarketPrice>;
     if (env.CACHE) {
-      await env.CACHE.put(MARKET_CACHE_KEY, JSON.stringify(data), { expirationTtl: MARKET_CACHE_TTL });
+      await env.CACHE.put(MARKET_CACHE_KEY, JSON.stringify(data), {
+        expirationTtl: MARKET_CACHE_TTL,
+      });
     }
     return data;
   } catch {
@@ -158,7 +165,7 @@ async function gatherDigestPosts(
   env: Env,
   protocols: Protocol[],
   niches: string[],
-  limit = 100,
+  _limit = 100,
 ): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
   const timeoutMs = 5000;
@@ -174,7 +181,9 @@ async function gatherDigestPosts(
       const r = await rmi.fetchFeed({ timeoutMs });
       if (r.posts.length > 0) all.push(...r.posts);
     }
-  } catch { /* RMI unavailable from edge */ }
+  } catch {
+    /* RMI unavailable from edge */
+  }
 
   // Protocol providers
   const providerResults = await Promise.allSettled(
@@ -185,7 +194,9 @@ async function gatherDigestPosts(
           const provider = getProvider(protocol, env);
           const result = await provider.fetchFeed({ timeoutMs, concurrency: 4 });
           return result.posts;
-        } catch { return [] as UnifiedPost[]; }
+        } catch {
+          return [] as UnifiedPost[];
+        }
       }),
   );
   for (const r of providerResults) {
@@ -209,7 +220,9 @@ async function gatherDigestPosts(
           const rss = new RssProvider({ feeds: [url] });
           const r = await rss.fetchFeed({ timeoutMs: 3000 });
           return r.posts;
-        } catch { return [] as UnifiedPost[]; }
+        } catch {
+          return [] as UnifiedPost[];
+        }
       }),
     );
     for (const r of results) {
@@ -222,13 +235,17 @@ async function gatherDigestPosts(
     const { fetchYouTubeVideos } = await import('../feed/unified-fetchers');
     const { posts: ytPosts } = await fetchYouTubeVideos(10);
     all.push(...ytPosts.map((p) => ({ ...p, protocol: 'youtube' as Protocol })));
-  } catch { /* YouTube unavailable */ }
+  } catch {
+    /* YouTube unavailable */
+  }
 
   try {
     const { fetchPeerTubeVideos } = await import('../feed/unified-fetchers');
     const ptPosts = await fetchPeerTubeVideos(10);
     all.push(...ptPosts.map((p) => ({ ...p, protocol: 'peertube' as Protocol })));
-  } catch { /* PeerTube unavailable */ }
+  } catch {
+    /* PeerTube unavailable */
+  }
 
   let filtered = all.filter((p) => !isSpamPost(p)).map(enrichPostNiches);
   if (niches.length > 0) {
@@ -240,9 +257,9 @@ async function gatherDigestPosts(
 
 function buildDigestSections(
   posts: UnifiedPost[],
-  niches: string[],
+  _niches: string[],
   followed: Set<string>,
-  engagedCreators: Set<string>,
+  _engagedCreators: Set<string>,
   preferredNiches: Set<string>,
   marketPrices: Record<string, MarketPrice>,
 ): DigestSection[] {
@@ -364,7 +381,9 @@ function toDigestItem(s: { post: UnifiedPost; score: number }): DigestItem {
   const link =
     p.embeds?.find((e) => e.kind === 'link')?.url ||
     `https://degenfeed.xyz/post/${encodeURIComponent(p.id)}`;
-  const title = p.text.slice(0, 140).replace(/\s+/g, ' ').trim() || `Post by ${p.author?.displayName ?? 'unknown'}`;
+  const title =
+    p.text.slice(0, 140).replace(/\s+/g, ' ').trim() ||
+    `Post by ${p.author?.displayName ?? 'unknown'}`;
   const desc = stripTags(p.html || p.text).slice(0, 200);
   const img = p.embeds?.find((e) => e.kind === 'image')?.url;
   return {
@@ -394,13 +413,19 @@ function toDigestItem(s: { post: UnifiedPost; score: number }): DigestItem {
 
 // ─── KV caching ─────────────────────────────────────────────────────---
 
-export async function getCachedDigest(env: Env, date: string, wallet: string): Promise<DigestResponse | null> {
+export async function getCachedDigest(
+  env: Env,
+  date: string,
+  wallet: string,
+): Promise<DigestResponse | null> {
   if (!env.CACHE || !wallet) return null;
   try {
     const raw = await env.CACHE.get(`${DIGEST_CACHE_PREFIX}${date}:${wallet.toLowerCase()}`);
     if (!raw) return null;
     return JSON.parse(raw) as DigestResponse;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 export async function setCachedDigest(
@@ -416,7 +441,9 @@ export async function setCachedDigest(
     // Also store archive copy
     const archiveKey = `${DIGEST_CACHE_PREFIX}archive:${date}:${wallet.toLowerCase()}`;
     await env.CACHE.put(archiveKey, JSON.stringify(digest), { expirationTtl: DIGEST_ARCHIVE_TTL });
-  } catch { /* non-critical */ }
+  } catch {
+    /* non-critical */
+  }
 }
 
 // ─── Route handlers ─────────────────────────────────────────────────────
@@ -433,7 +460,10 @@ export async function handleDigestToday(request: Request, env: Env): Promise<Res
   // Resolve wallet from session if not in query
   let resolvedWallet = wallet;
   if (!resolvedWallet) {
-    const cookieMatch = cookies.split(';').map((s) => s.trim()).find((s) => s.startsWith('__Host-dfid='));
+    const cookieMatch = cookies
+      .split(';')
+      .map((s) => s.trim())
+      .find((s) => s.startsWith('__Host-dfid='));
     if (cookieMatch) {
       try {
         const { verifySessionCookie } = await import('../session');
@@ -442,7 +472,9 @@ export async function handleDigestToday(request: Request, env: Env): Promise<Res
           env.AUTH_SECRET ?? '',
         );
         resolvedWallet = payload?.address ?? null;
-      } catch { /* session verify failed */ }
+      } catch {
+        /* session verify failed */
+      }
     }
   }
 
@@ -462,15 +494,23 @@ export async function handleDigestToday(request: Request, env: Env): Promise<Res
   // Build the digest
   const nichesParam = url.searchParams.get('niches') ?? '';
   const protocolsParam = url.searchParams.get('protocols') ?? '';
-  const niches = nichesParam ? nichesParam.split(',').map((n) => n.trim().toLowerCase()).filter(Boolean) : [];
+  const niches = nichesParam
+    ? nichesParam
+        .split(',')
+        .map((n) => n.trim().toLowerCase())
+        .filter(Boolean)
+    : [];
   const protocols: Protocol[] = protocolsParam
-    ? protocolsParam.split(',').map((p) => p.trim()).filter((p): p is Protocol => DEFAULT_PROTOCOLS.includes(p as Protocol))
+    ? protocolsParam
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p): p is Protocol => DEFAULT_PROTOCOLS.includes(p as Protocol))
     : DEFAULT_PROTOCOLS;
 
   // Load user context if authenticated
   let followed = new Set<string>();
   let engagedCreators = new Set<string>();
-  let preferredNiches = new Set(niches);
+  const preferredNiches = new Set(niches);
   const userCtxKey = `user:follows:${resolvedWallet?.toLowerCase() ?? ''}`;
   if (resolvedWallet && env.CACHE) {
     try {
@@ -487,7 +527,9 @@ export async function handleDigestToday(request: Request, env: Env): Promise<Res
           for (const n of prefs.preferredNiches) preferredNiches.add(n.toLowerCase());
         }
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
   }
 
   // Fetch posts
@@ -495,7 +537,14 @@ export async function handleDigestToday(request: Request, env: Env): Promise<Res
   const marketPrices = await fetchMarketPrices(env);
 
   // Build sections
-  const sections = buildDigestSections(posts, niches, followed, engagedCreators, preferredNiches, marketPrices);
+  const sections = buildDigestSections(
+    posts,
+    niches,
+    followed,
+    engagedCreators,
+    preferredNiches,
+    marketPrices,
+  );
 
   const digest: DigestResponse = {
     date: today,
@@ -603,7 +652,9 @@ export async function handleDigestUnsubscribeEmail(request: Request, env: Env): 
     const idx = (await env.CACHE?.get('digest:subscribers')) ?? '';
     const set = new Set(idx.split('\n').filter(Boolean));
     set.delete(safeKey(email));
-    await env.CACHE?.put('digest:subscribers', [...set].join('\n'), { expirationTtl: 60 * 60 * 24 * 400 });
+    await env.CACHE?.put('digest:subscribers', [...set].join('\n'), {
+      expirationTtl: 60 * 60 * 24 * 400,
+    });
   } catch {
     /* ignore */
   }
@@ -615,7 +666,7 @@ export async function handleDigestUnsubscribeEmail(request: Request, env: Env): 
  * GET /api/digest/status?email=x
  * Returns subscriber status (requires admin API key).
  */
-export async function handleDigestStatus(request: Request, env: Env): Promise<Response> {
+export async function handleDigestStatus(_request: Request, env: Env): Promise<Response> {
   try {
     const idx = (await env.CACHE?.get('digest:subscribers')) ?? '';
     const emails = idx.split('\n').filter(Boolean);

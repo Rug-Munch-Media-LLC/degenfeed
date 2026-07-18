@@ -114,9 +114,9 @@ const faqStructuredData = {
 export default function FAQPage() {
   return (
     <>
-      <Script id="faq-structured-data" type="application/ld+json">{
-        JSON.stringify(faqStructuredData)
-      }</Script>
+      <Script id="faq-structured-data" type="application/ld+json">
+        {JSON.stringify(faqStructuredData)}
+      </Script>
       <FAQClient />
     </>
   );

@@ -74,7 +74,9 @@ test.describe('Feed — Following tab', () => {
     await mockFeedApi(page, MOCK_FEED_POSTS, MOCK_PREFERENCES_SIGNED_OUT);
   });
 
-  test('switching to Following tab shows empty state when not following anyone', async ({ page }) => {
+  test('switching to Following tab shows empty state when not following anyone', async ({
+    page,
+  }) => {
     // Mock the following feed to be empty
     await page.route('**/api/feed/home**', async (route) => {
       const url = route.request().url();
@@ -87,7 +89,9 @@ test.describe('Feed — Following tab', () => {
 
     await page.goto('/feed');
     await page.locator('button', { hasText: 'Following' }).click();
-    await expect(page.getByText('You are not following anyone yet.')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('You are not following anyone yet.')).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('Following tab shows posts from followed authors', async ({ page }) => {
@@ -102,7 +106,9 @@ test.describe('Feed — Following tab', () => {
 
     await page.goto('/feed');
     await page.locator('button', { hasText: 'Following' }).click();
-    await expect(page.getByText('Just deployed my first smart contract')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Just deployed my first smart contract')).toBeVisible({
+      timeout: 10000,
+    });
   });
 });
 
@@ -149,7 +155,10 @@ test.describe('Feed — Quality controls interaction', () => {
 
   test('original content checkbox can be toggled', async ({ page }) => {
     await page.goto('/feed');
-    const originalCheckbox = page.getByText('Original').locator('..').locator('input[type="checkbox"]');
+    const originalCheckbox = page
+      .getByText('Original')
+      .locator('..')
+      .locator('input[type="checkbox"]');
     await originalCheckbox.check();
     await expect(originalCheckbox).toBeChecked();
     await originalCheckbox.uncheck();

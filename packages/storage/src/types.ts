@@ -17,8 +17,7 @@
  * the pre-encrypted blobs and decryptable fields.
  */
 
-import type { Protocol } from '@degenfeed/types';
-import type { StoredIdentity } from '@degenfeed/types';
+import type { Protocol, StoredIdentity } from '@degenfeed/types';
 
 // ─── Schema Types ──────────────────────────────────────────────────────
 
@@ -75,7 +74,7 @@ export interface StoredMutedWord {
 }
 
 export interface StoredMutedCommunity {
-  communityId: string;  // e.g. "lemmy:memes@lemmy.world" or community actorId
+  communityId: string; // e.g. "lemmy:memes@lemmy.world" or community actorId
   communityName: string;
   instance?: string;
   mutedBy: string;

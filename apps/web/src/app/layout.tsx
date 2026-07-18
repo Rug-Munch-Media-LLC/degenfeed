@@ -103,7 +103,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <body className="page-transition-enter">
         {/* ⚡ SSR-safe theme: sync localStorage before paint to prevent flash */}
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: inline script reads localStorage to prevent theme + density flash */}
         <script
           dangerouslySetInnerHTML={{
             __html: [
@@ -180,7 +179,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           strategy="afterInteractive"
         >{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}</Script>
         {/* JSON-LD structured data — tiny payload, no render impact */}
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

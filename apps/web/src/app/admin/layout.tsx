@@ -69,7 +69,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="text-center">
           <div className="mb-6 text-6xl">🔒</div>
           <h1 className="mb-4 text-3xl font-bold text-[var(--color-fg)]">Admin Access Required</h1>
-          <p className="mb-2 text-[var(--color-muted)]">You need an admin wallet to access this area.</p>
+          <p className="mb-2 text-[var(--color-muted)]">
+            You need an admin wallet to access this area.
+          </p>
           {walletAddress && (
             <p className="mb-6 text-sm text-[var(--color-muted)]">
               Connected: <code className="text-degen-400">{shortAddr(walletAddress)}</code>
@@ -77,7 +79,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </p>
           )}
           {!walletAddress && (
-            <p className="mb-6 text-sm text-[var(--color-muted)]">Please connect your wallet first.</p>
+            <p className="mb-6 text-sm text-[var(--color-muted)]">
+              Please connect your wallet first.
+            </p>
           )}
           <Link
             href="/feed"

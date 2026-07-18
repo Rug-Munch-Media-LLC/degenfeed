@@ -171,7 +171,9 @@ export const NostrRelayBadge = memo(function NostrRelayBadge({
                   )}
 
                   {/* Relay URL */}
-                  <code className="flex-1 truncate font-mono text-[var(--color-muted)]">{relay}</code>
+                  <code className="flex-1 truncate font-mono text-[var(--color-muted)]">
+                    {relay}
+                  </code>
 
                   {/* Status label */}
                   {showStatus && (

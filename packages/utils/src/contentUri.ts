@@ -47,11 +47,7 @@ export type ProtocolSource =
  * @param id - The native post identifier
  * @param instance - Optional instance/host for federated protocols
  */
-export function encodeContentUri(
-  protocol: ProtocolSource,
-  id: string,
-  instance?: string,
-): string {
+export function encodeContentUri(protocol: ProtocolSource, id: string, instance?: string): string {
   if (instance) return `df://${protocol}/${instance}/${id}`;
   return `df://${protocol}:${id}`;
 }

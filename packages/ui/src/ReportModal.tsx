@@ -157,7 +157,10 @@ export function ReportModal({ open, onClose, postId, onSubmitted }: ReportModalP
         </fieldset>
 
         <div className="mb-4">
-          <label htmlFor="report-desc" className="mb-1 block text-sm font-medium text-[var(--color-muted)]">
+          <label
+            htmlFor="report-desc"
+            className="mb-1 block text-sm font-medium text-[var(--color-muted)]"
+          >
             Additional details <span className="text-gray-600">(optional)</span>
           </label>
           <textarea

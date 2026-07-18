@@ -5,9 +5,9 @@
  * for crypto/tech channels, scores by video count and view metrics.
  */
 
+import { computeQualityScore, estimateRelevance } from './quality';
 import type { DiscoveredSource } from './types';
 import { CRYPTO_KEYWORDS, DEFAULT_DISCOVERY_CONFIG, SEARCH_KEYWORDS } from './types';
-import { computeQualityScore, estimateRelevance } from './quality';
 
 const REQUEST_TIMEOUT_MS = 5000;
 
@@ -167,7 +167,8 @@ export async function discoverPeerTubeChannels(
     seen.add(nameLower);
 
     const hasCryptoRelevance = CRYPTO_KEYWORDS.some(
-      (kw) => channel.displayName.toLowerCase().includes(kw) ||
+      (kw) =>
+        channel.displayName.toLowerCase().includes(kw) ||
         channel.description.toLowerCase().includes(kw),
     );
     if (!hasCryptoRelevance) continue;

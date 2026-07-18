@@ -258,8 +258,9 @@ export default function DocsLandingPage() {
       {/* Footer */}
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
         <p className="text-xs text-gray-600">
-          DegenFeed is a product of <strong className="text-[var(--color-muted)]">Rug Munch Media LLC</strong>.
-          MIT Licensed. Built on open protocols. 10 networks. One window.
+          DegenFeed is a product of{' '}
+          <strong className="text-[var(--color-muted)]">Rug Munch Media LLC</strong>. MIT Licensed.
+          Built on open protocols. 10 networks. One window.
         </p>
       </div>
     </div>

@@ -1,8 +1,7 @@
-import type { Embed } from '@degenfeed/types';
-import type { ContentProof } from '@degenfeed/types';
-import { isShortFormVideo, parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
+import type { ContentProof, Embed } from '@degenfeed/types';
+import { isShortFormVideo, type VideoInfo } from '@degenfeed/utils';
 import Image from 'next/image';
-import { memo, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FrameEmbed } from './FrameEmbed';
 import { VideoPlayer } from './VideoPlayer';
 
@@ -69,7 +68,11 @@ function LinkPreview({ embed, authorName }: { embed: Embed; authorName?: string 
         <div className="relative aspect-video w-full overflow-hidden">
           <Image
             src={image}
-            alt={authorName && title ? `Preview image for ${title}` : title || (authorName ? `Link preview in post by ${authorName}` : 'Link preview')}
+            alt={
+              authorName && title
+                ? `Preview image for ${title}`
+                : title || (authorName ? `Link preview in post by ${authorName}` : 'Link preview')
+            }
             fill
             sizes="(max-width: 640px) 100vw, 600px"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -79,11 +82,19 @@ function LinkPreview({ embed, authorName }: { embed: Embed; authorName?: string 
         </div>
       )}
       <div className="p-3">
-        {host && <p className="mb-1 text-[11px] text-[var(--color-muted)] uppercase tracking-wide">{host}</p>}
-        {title && (
-          <p className="link-title mb-1 text-sm font-semibold text-[var(--color-fg)] line-clamp-1">{title}</p>
+        {host && (
+          <p className="mb-1 text-[11px] text-[var(--color-muted)] uppercase tracking-wide">
+            {host}
+          </p>
         )}
-        {description && <p className="link-desc text-xs text-[var(--color-muted)] line-clamp-2">{description}</p>}
+        {title && (
+          <p className="link-title mb-1 text-sm font-semibold text-[var(--color-fg)] line-clamp-1">
+            {title}
+          </p>
+        )}
+        {description && (
+          <p className="link-desc text-xs text-[var(--color-muted)] line-clamp-2">{description}</p>
+        )}
         {!title && !description && (
           <p className="truncate text-xs text-degen-500">{embed.url.replace(/^https?:\/\//, '')}</p>
         )}
@@ -127,7 +138,11 @@ function ImageGrid({ images, authorName }: { images: string[]; authorName?: stri
 
   if (images.length === 1) {
     return (
-      <div className="image-grid mt-2 max-h-80 overflow-hidden rounded-[12px] border border-[var(--color-border)]" role="group" aria-label="Post images">
+      <div
+        className="image-grid mt-2 max-h-80 overflow-hidden rounded-[12px] border border-[var(--color-border)]"
+        role="group"
+        aria-label="Post images"
+      >
         <Image
           src={images[0]!}
           alt={altText}
@@ -142,7 +157,11 @@ function ImageGrid({ images, authorName }: { images: string[]; authorName?: stri
   }
   if (images.length === 2) {
     return (
-      <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl" role="group" aria-label="Post images">
+      <div
+        className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl"
+        role="group"
+        aria-label="Post images"
+      >
         {images.map((url) => (
           <Image
             key={url}
@@ -159,7 +178,11 @@ function ImageGrid({ images, authorName }: { images: string[]; authorName?: stri
     );
   }
   return (
-    <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl" role="group" aria-label="Post images">
+    <div
+      className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl"
+      role="group"
+      aria-label="Post images"
+    >
       {images.slice(0, 4).map((url, idx) => (
         <div key={url} className="relative aspect-square">
           <Image
@@ -199,9 +222,10 @@ function PermanenceBadge({ proof }: { proof: ContentProof }) {
     );
   }
 
-  const tooltip = tooltipParts.length > 0
-    ? `Stored permanently\n${tooltipParts.join('\n')}`
-    : 'Stored permanently';
+  const tooltip =
+    tooltipParts.length > 0
+      ? `Stored permanently\n${tooltipParts.join('\n')}`
+      : 'Stored permanently';
 
   return (
     <div className="mb-3 flex flex-wrap gap-2 items-center">
@@ -232,9 +256,9 @@ function PermanenceBadge({ proof }: { proof: ContentProof }) {
                 ? `https://etherscan.io/tx/${proof.onChainTxHash}`
                 : undefined
           }
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 rounded-full bg-amber-950/40 px-2 py-0.5 text-[10px] font-medium text-amber-400 hover:bg-amber-900/50 transition-colors"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-full bg-amber-950/40 px-2 py-0.5 text-[10px] font-medium text-amber-400 hover:bg-amber-900/50 transition-colors"
           title={`On-chain anchor on ${proof.onChainChainId === 8453 ? 'Base' : `Chain ${proof.onChainChainId}`}: ${proof.onChainTxHash.slice(0, 8)}...${proof.onChainTxHash.slice(-4)}`}
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
@@ -252,4 +276,4 @@ export interface MediaSectionProps {
   embed: Embed;
 }
 
-export { FrameCard, LinkPreview, VideoEmbedCard, ImageGrid, PermanenceBadge };
+export { FrameCard, ImageGrid, LinkPreview, PermanenceBadge, VideoEmbedCard };

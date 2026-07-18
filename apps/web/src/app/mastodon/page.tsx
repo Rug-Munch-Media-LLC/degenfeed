@@ -39,9 +39,9 @@ export const metadata: Metadata = {
 export default function MastodonPage() {
   return (
     <>
-      <Script id="breadcrumb-mastodon" type="application/ld+json">{
-        JSON.stringify(mastodonBreadcrumb)
-      }</Script>
+      <Script id="breadcrumb-mastodon" type="application/ld+json">
+        {JSON.stringify(mastodonBreadcrumb)}
+      </Script>
       <ProtocolFeedPage protocol="mastodon" />
     </>
   );

@@ -11,12 +11,12 @@
  */
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
-import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
-import { type SessionPayload, requireSession } from '../session';
+import { hasSuspiciousPayload, sanitizeString } from '../sanitize';
+import { requireSession } from '../session';
 import { broadcastToUser } from '../ws-broadcast';
 
 const DM_KEY_PREFIX = 'dm:';
-const DM_CONV_PREFIX = 'dm:conv:';
+const _DM_CONV_PREFIX = 'dm:conv:';
 const DM_LIST_PREFIX = 'dm:list:';
 
 interface DirectMessage {
@@ -59,7 +59,7 @@ function buildConversationId(fromId: string, toId: string, protocol: string): st
   return `${protocol}:${sorted[0]}:${sorted[1]}`;
 }
 
-function formatProtocolLabel(p: string): string {
+function _formatProtocolLabel(p: string): string {
   const labels: Record<string, string> = {
     nostr: 'Nostr',
     farcaster: 'Farcaster',
@@ -104,11 +104,9 @@ async function saveMessages(
 ): Promise<void> {
   if (!env.CACHE) return;
   try {
-    await env.CACHE.put(
-      `${DM_KEY_PREFIX}${conversationId}`,
-      JSON.stringify(messages.slice(-200)),
-      { expirationTtl: 86400 * 90 },
-    );
+    await env.CACHE.put(`${DM_KEY_PREFIX}${conversationId}`, JSON.stringify(messages.slice(-200)), {
+      expirationTtl: 86400 * 90,
+    });
   } catch (e) {
     console.error('[messages] KV save failed:', e);
   }
@@ -141,11 +139,7 @@ async function saveConversationList(
   }
 }
 
-async function upsertConversation(
-  env: Env,
-  userId: string,
-  newConv: Conversation,
-): Promise<void> {
+async function upsertConversation(env: Env, userId: string, newConv: Conversation): Promise<void> {
   const list = await getConversationList(env, userId);
   const idx = list.findIndex((c) => c.id === newConv.id);
   if (idx >= 0) {
@@ -161,7 +155,7 @@ async function upsertConversation(
 
 async function sendNostrDM(
   text: string,
-  senderPubkey: string,
+  _senderPubkey: string,
   recipientPubkey: string,
   nsec?: string,
   signedEvent?: string,
@@ -224,8 +218,8 @@ async function sendNostrDM(
 }
 
 async function sendFarcasterDM(
-  text: string,
-  recipientId: string,
+  _text: string,
+  _recipientId: string,
   body: SendRequest,
   env: Env,
 ): Promise<{ ok: boolean; nativeId?: string; error?: string }> {
@@ -234,7 +228,10 @@ async function sendFarcasterDM(
     const signedMessage = body.signedMessage || body.auth?.farcaster_message;
 
     if (!signedMessage) {
-      return { ok: false, error: 'Farcaster DM requires pre-signed cast message. Sign client-side.' };
+      return {
+        ok: false,
+        error: 'Farcaster DM requires pre-signed cast message. Sign client-side.',
+      };
     }
 
     // Decode hex-encoded signed message
@@ -265,8 +262,8 @@ async function sendFarcasterDM(
 }
 
 async function sendLensDM(
-  text: string,
-  recipientProfileId: string,
+  _text: string,
+  _recipientProfileId: string,
   body: SendRequest,
 ): Promise<{ ok: boolean; nativeId?: string; error?: string }> {
   try {
@@ -307,7 +304,7 @@ async function sendLensDM(
 
 async function sendMastodonDM(
   text: string,
-  recipientId: string,
+  _recipientId: string,
   body: SendRequest,
   env: Env,
 ): Promise<{ ok: boolean; nativeId?: string; error?: string }> {
@@ -333,10 +330,7 @@ async function sendMastodonDM(
 
 // ─── Route: List conversations ───────────────────────────────────────
 
-export async function handleConversations(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleConversations(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   const userId = session.address.toLowerCase();
@@ -410,10 +404,7 @@ export async function handleConversationMessages(
 
 // ─── Route: Send a message ────────────────────────────────────────────
 
-export async function handleSendMessage(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleSendMessage(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   let body: SendRequest;
@@ -436,7 +427,10 @@ export async function handleSendMessage(
 
   if (!isSupportedProtocol(protocol)) {
     return jsonResponse(
-      { error: `Unsupported DM protocol: ${protocol}`, supported: ['nostr', 'farcaster', 'lens', 'mastodon'] },
+      {
+        error: `Unsupported DM protocol: ${protocol}`,
+        supported: ['nostr', 'farcaster', 'lens', 'mastodon'],
+      },
       400,
     );
   }
@@ -594,10 +588,9 @@ export async function handleDeleteMessage(
           if (nsec) {
             const nostr = await import('@degenfeed/nostr-sdk');
             const ev = nostr.createDeletion([deletedMsg.nativeId], 'Deleted by sender', nsec);
-            const pool = new nostr.RelayPool(
-              ['wss://relay.damus.io', 'wss://nos.lol'],
-              { eoseTimeout: 4000 },
-            );
+            const pool = new nostr.RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
+              eoseTimeout: 4000,
+            });
             await pool.publish(ev);
             pool.disconnectAll();
           }
@@ -631,10 +624,7 @@ export async function handleDeleteMessage(
 
 // ─── Unread count helper ──────────────────────────────────────────────
 
-export async function handleUnreadCount(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleUnreadCount(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   const userId = session.address.toLowerCase();

@@ -169,9 +169,7 @@ export async function fetchPeerTubeVideos(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `PeerTube API error: ${response.status} ${response.statusText} — ${url}`,
-    );
+    throw new Error(`PeerTube API error: ${response.status} ${response.statusText} — ${url}`);
   }
 
   return response.json() as Promise<PeerTubeVideoResponse>;

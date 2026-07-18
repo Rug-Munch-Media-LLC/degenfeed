@@ -171,7 +171,8 @@ export default function UserGuidePage() {
           <strong className="text-[var(--color-muted)]">Solana:</strong> Phantom, Backpack, Solflare
         </li>
         <li>
-          <strong className="text-[var(--color-muted)]">EVM:</strong> MetaMask, Rainbow, WalletConnect
+          <strong className="text-[var(--color-muted)]">EVM:</strong> MetaMask, Rainbow,
+          WalletConnect
         </li>
       </ul>
       <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
@@ -219,7 +220,9 @@ export default function UserGuidePage() {
       </div>
 
       <H3 id="first-post">First Post</H3>
-      <p className="text-sm leading-relaxed text-[var(--color-muted)]">Ready to post? Here&apos;s how:</p>
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+        Ready to post? Here&apos;s how:
+      </p>
       <ol className="mt-3 list-inside list-decimal space-y-2 text-sm text-[var(--color-muted)]">
         <li>
           Click the <strong>Compose</strong> button in the header
@@ -250,15 +253,16 @@ export default function UserGuidePage() {
       </p>
       <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-[var(--color-muted)]">
         <li>
-          <strong className="text-[var(--color-muted)]">Scored (default):</strong> Balanced ranking across all 7
-          factors
+          <strong className="text-[var(--color-muted)]">Scored (default):</strong> Balanced ranking
+          across all 7 factors
         </li>
         <li>
-          <strong className="text-[var(--color-muted)]">Hot:</strong> Trending posts with recent engagement
-          velocity
+          <strong className="text-[var(--color-muted)]">Hot:</strong> Trending posts with recent
+          engagement velocity
         </li>
         <li>
-          <strong className="text-[var(--color-muted)]">New:</strong> Chronological, most recent first
+          <strong className="text-[var(--color-muted)]">New:</strong> Chronological, most recent
+          first
         </li>
         <li>
           <strong className="text-[var(--color-muted)]">Top:</strong> Highest raw engagement

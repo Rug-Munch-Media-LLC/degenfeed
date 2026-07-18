@@ -12,7 +12,13 @@
  * source health scoring for the auto-discovery v2 system.
  */
 
-import type { DiscoveredSource, DiscoveryConfig, SourceHealth, TrendingSource, SourceLifecycle } from './types';
+import type {
+  DiscoveredSource,
+  DiscoveryConfig,
+  SourceHealth,
+  SourceLifecycle,
+  TrendingSource,
+} from './types';
 
 /**
  * Compute a composite quality score for a discovered source.
@@ -36,7 +42,7 @@ export function computeQualityScore(
   let ageScore = 0;
   if (source.sourceCreatedAt) {
     const ageDays = (Date.now() - source.sourceCreatedAt) / 86_400_000;
-    ageScore = Math.min(0.2, ageDays / 365 * 0.2); // ramps to 0.2 after ~1 year
+    ageScore = Math.min(0.2, (ageDays / 365) * 0.2); // ramps to 0.2 after ~1 year
   } else {
     ageScore = 0.05; // small default if unknown
   }
@@ -55,7 +61,10 @@ export function computeQualityScore(
   }
   signals.penalty = penalty;
 
-  const totalScore = Math.max(0, Math.min(1, subscriberScore + activityScore + ageScore + relevanceScore + penalty));
+  const totalScore = Math.max(
+    0,
+    Math.min(1, subscriberScore + activityScore + ageScore + relevanceScore + penalty),
+  );
 
   const passed =
     source.subscriberCount >= config.minSubscribers &&
@@ -95,8 +104,8 @@ export function estimateRelevance(name: string, description?: string): number {
   const nameLower = name.toLowerCase();
   const nameMatches = CRYPTO_KEYWORDS.filter((kw) => nameLower.includes(kw)).length;
 
-  const totalKeywords = CRYPTO_KEYWORDS.length;
-  return Math.min(1, (matches * 0.05 + nameMatches * 0.15));
+  const _totalKeywords = CRYPTO_KEYWORDS.length;
+  return Math.min(1, matches * 0.05 + nameMatches * 0.15);
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -111,7 +120,9 @@ export function estimateRelevance(name: string, description?: string): number {
  *   - Engagement (high engagement = up to 0.25)
  *   - Relevance (up to 0.15)
  */
-export function computeSourceHealthScore(health: Partial<SourceHealth> & { compositeScore?: number }): {
+export function computeSourceHealthScore(
+  health: Partial<SourceHealth> & { compositeScore?: number },
+): {
   score: number;
   signals: Record<string, number>;
   lifecycle: SourceLifecycle;
@@ -158,10 +169,7 @@ export function computeSourceHealthScore(health: Partial<SourceHealth> & { compo
 /**
  * Detect sources that haven't posted in the given threshold.
  */
-export function detectStaleSources(
-  sources: SourceHealth[],
-  thresholdDays = 14,
-): SourceHealth[] {
+export function detectStaleSources(sources: SourceHealth[], thresholdDays = 14): SourceHealth[] {
   const now = Date.now();
   const threshold = now - thresholdDays * 86_400_000;
   return sources.filter((s) => s.lastPostAt < threshold);
@@ -171,10 +179,7 @@ export function detectStaleSources(
  * Compute trending score based on engagement velocity vs baseline.
  * Returns 0.0–1.0 where 1.0 = 10x above baseline.
  */
-export function computeTrendingScore(
-  currentVelocity: number,
-  baselineRate: number,
-): number {
+export function computeTrendingScore(currentVelocity: number, baselineRate: number): number {
   if (baselineRate <= 0) return Math.min(1, currentVelocity * 0.1);
   const ratio = currentVelocity / baselineRate;
   return Math.min(1, Math.log10(ratio + 1) / 1.5);

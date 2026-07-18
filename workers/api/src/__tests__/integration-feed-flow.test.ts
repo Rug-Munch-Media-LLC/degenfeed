@@ -74,10 +74,11 @@ describe('Feed pipeline: fetch → respond', () => {
   it('should return posts from the feed handler', async () => {
     const { handleHomeFeed } = await import('../routes/feed');
     const req = new Request('http://localhost/api/feed/home?protocols=nostr,farcaster&limit=10');
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const env = {} as any;
     const res = await handleHomeFeed(req, env);
     expect(res.status).toBe(200);
-    const body = await res.json() as { data?: unknown[]; meta?: Record<string, unknown> };
+    const body = (await res.json()) as { data?: unknown[]; meta?: Record<string, unknown> };
     expect(body.data).toBeDefined();
     expect(body.meta).toBeDefined();
     expect(body.meta?.limit).toBe(10);
@@ -86,15 +87,19 @@ describe('Feed pipeline: fetch → respond', () => {
   it('should include protocol metadata in the response', async () => {
     const { handleHomeFeed } = await import('../routes/feed');
     const req = new Request('http://localhost/api/feed/home?protocols=nostr');
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const env = {} as any;
     const res = await handleHomeFeed(req, env);
-    const body = await res.json() as { meta?: { perProtocol?: Record<string, unknown> } };
+    const body = (await res.json()) as { meta?: { perProtocol?: Record<string, unknown> } };
     expect(body.meta?.perProtocol).toBeDefined();
   });
 
   it('should handle multiple protocol feeds concurrently', async () => {
     const { handleHomeFeed } = await import('../routes/feed');
-    const req = new Request('http://localhost/api/feed/home?protocols=nostr,farcaster,lens,bluesky');
+    const req = new Request(
+      'http://localhost/api/feed/home?protocols=nostr,farcaster,lens,bluesky',
+    );
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const env = {} as any;
     const res = await handleHomeFeed(req, env);
     expect(res.status).toBe(200);

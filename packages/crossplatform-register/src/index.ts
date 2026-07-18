@@ -23,10 +23,6 @@
  * Nostr:     Free (local key generation). No blockchain tx.
  */
 
-import { BskyClient } from '@degenfeed/bluesky-sdk';
-import type { FarcasterProfile } from '@degenfeed/farcaster-sdk';
-import type { LensProfile } from '@degenfeed/lens-sdk';
-import type { GtSAccount } from '@degenfeed/mastodon-sdk';
 import type { UnifiedIdentity } from '@degenfeed/types';
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -89,7 +85,7 @@ async function registerFarcaster(
       { headers: { accept: 'application/json', 'user-agent': 'DegenFeed/0.1' } },
     );
     if (checkRes.ok) {
-      const existing = await checkRes.json() as { fid?: number; name?: string };
+      const existing = (await checkRes.json()) as { fid?: number; name?: string };
       if (existing.fid) {
         return {
           platform: 'farcaster',
@@ -102,7 +98,7 @@ async function registerFarcaster(
     // 2. Submit registration via Farcaster IdRegistry contract on Base
     //    We use the premium wallet to pay the registration fee.
     const idRegistryAddress = '0x00000000fc6c5f01fc30151999387bb99a9f489b'; // Farcaster IdRegistry
-    const storageAddress = '0x00000000fcCe7f938e78c4e3A793F72B8B87f8D'; // Farcaster Storage
+    const _storageAddress = '0x00000000fcCe7f938e78c4e3A793F72B8B87f8D'; // Farcaster Storage
 
     // Encode the IdRegistry.register() call
     // register(address recovery, bytes calldata signedRegister)
@@ -185,7 +181,7 @@ async function sendBaseTransaction(
       params: [fromAddress, 'pending'],
     }),
   });
-  const nonceData = await nonceRes.json() as { result: string };
+  const nonceData = (await nonceRes.json()) as { result: string };
   const nonce = nonceData.result;
 
   // Get gas prices
@@ -199,7 +195,7 @@ async function sendBaseTransaction(
       params: [],
     }),
   });
-  const gasPriceData = await gasPriceRes.json() as { result: string };
+  const gasPriceData = (await gasPriceRes.json()) as { result: string };
   const gasPrice = gasPriceData.result;
 
   // Estimate gas
@@ -213,7 +209,7 @@ async function sendBaseTransaction(
       params: [{ from: fromAddress, to, data, value }],
     }),
   });
-  const gasEstimateData = await gasEstimateRes.json() as { result: string };
+  const gasEstimateData = (await gasEstimateRes.json()) as { result: string };
   const gas = gasEstimateData.result;
 
   // Build and sign transaction
@@ -240,7 +236,7 @@ async function sendBaseTransaction(
       params: [signedTx],
     }),
   });
-  const sendData = await sendRes.json() as { result?: string; error?: { message: string } };
+  const sendData = (await sendRes.json()) as { result?: string; error?: { message: string } };
   if (sendData.error) {
     throw new Error(`Base transaction failed: ${sendData.error.message}`);
   }
@@ -265,13 +261,13 @@ async function waitForFarcasterRegistration(
         params: [txHash],
       }),
     });
-    const data = await res.json() as { result?: { status: string; logs: Array<{ data: string }> } };
+    const data = (await res.json()) as {
+      result?: { status: string; logs: Array<{ data: string }> };
+    };
     if (data.result) {
       if (data.result.status === '0x1') {
         // Extract FID from contract event logs (IdRegistry event: Register(address to, uint256 id, address recovery))
-        const log = data.result.logs.find((l) =>
-          l.data && l.data.length >= 66
-        );
+        const log = data.result.logs.find((l) => l.data && l.data.length >= 66);
         if (log) {
           // FID is the second topic in the Register event
           return Number.parseInt(log.data.slice(0, 66), 16);
@@ -305,7 +301,7 @@ async function registerLens(
         variables: { request: { handle: desiredUsername } },
       }),
     });
-    const checkData = await checkRes.json() as {
+    const checkData = (await checkRes.json()) as {
       data?: { checkHandleAvailability?: { available: boolean } };
     };
     if (!checkData.data?.checkHandleAvailability?.available) {
@@ -332,7 +328,7 @@ async function registerLens(
         },
       }),
     });
-    const profileData = await profileRes.json() as {
+    const profileData = (await profileRes.json()) as {
       data?: { createProfile?: { txHash?: string; reason?: string } };
     };
     const result = profileData.data?.createProfile;
@@ -370,10 +366,7 @@ async function registerLens(
   }
 }
 
-async function waitForLensProfile(
-  txHash: string,
-  desiredHandle: string,
-): Promise<string> {
+async function waitForLensProfile(_txHash: string, desiredHandle: string): Promise<string> {
   // Poll the Lens API until the profile is indexed
   const apiUrl = 'https://api-v2.lens.dev/graphql';
   const maxAttempts = 30;
@@ -388,7 +381,7 @@ async function waitForLensProfile(
         variables: { request: { forHandle: `${desiredHandle}.lens` } },
       }),
     });
-    const data = await res.json() as { data?: { profile?: { id: string } | null } };
+    const data = (await res.json()) as { data?: { profile?: { id: string } | null } };
     if (data.data?.profile?.id) {
       return data.data.profile.id;
     }
@@ -431,7 +424,7 @@ async function registerBluesky(
       }),
     });
 
-    const createData = await createRes.json() as {
+    const createData = (await createRes.json()) as {
       did?: string;
       handle?: string;
       error?: string;
@@ -513,7 +506,7 @@ async function registerMastodon(
         website: 'https://degenfeed.xyz',
       }),
     });
-    const appData = await appRes.json() as {
+    const appData = (await appRes.json()) as {
       client_id?: string;
       client_secret?: string;
       id?: string;
@@ -541,7 +534,7 @@ async function registerMastodon(
         locale: 'en',
       }),
     });
-    const createData = await createRes.json() as {
+    const createData = (await createRes.json()) as {
       id?: string;
       username?: string;
       error?: string;
@@ -568,7 +561,7 @@ async function registerMastodon(
         scope: 'read write follow',
       }),
     });
-    const tokenData = await tokenRes.json() as {
+    const tokenData = (await tokenRes.json()) as {
       access_token?: string;
       error?: string;
     };
@@ -710,10 +703,7 @@ export async function getBlueskyInvitePoolStats(pool?: KVNamespace): Promise<{
   }
 }
 
-export async function addInviteCodesToPool(
-  codes: string[],
-  pool?: KVNamespace,
-): Promise<number> {
+export async function addInviteCodesToPool(codes: string[], pool?: KVNamespace): Promise<number> {
   if (!pool || codes.length === 0) return 0;
 
   try {
@@ -793,7 +783,10 @@ export async function getPlatformAccounts(
         results.push({
           platform: record.platform as RegistrationPlatform,
           status: 'created',
-          username: record.accountInfo?.username || record.accountInfo?.handle || record.accountInfo?.npub?.slice(0, 12),
+          username:
+            record.accountInfo?.username ||
+            record.accountInfo?.handle ||
+            record.accountInfo?.npub?.slice(0, 12),
           accountInfo: record.accountInfo,
         });
       }
@@ -836,6 +829,6 @@ export async function registerOnPlatform(
   }
 }
 
+export type { TransactionRequest } from './evm-utils';
 // ─── Re-exports ─────────────────────────────────────────────────────
 export { privateKeyToAddress, signTransaction } from './evm-utils';
-export type { TransactionRequest } from './evm-utils';

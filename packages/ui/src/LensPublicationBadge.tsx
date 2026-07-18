@@ -129,7 +129,9 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
         <div className="flex-1 min-w-0">
           <span className="text-sm font-semibold text-gray-200">Lens Protocol</span>
           {handle && (
-            <span className="ml-1.5 text-xs text-[var(--color-muted)]">@{handle.replace(/\.lens$/, '')}</span>
+            <span className="ml-1.5 text-xs text-[var(--color-muted)]">
+              @{handle.replace(/\.lens$/, '')}
+            </span>
           )}
         </div>
 
@@ -185,7 +187,8 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
             />
           </svg>
           <span className="text-xs tabular-nums text-[var(--color-muted)]">
-            <span className="font-semibold text-[var(--color-muted)]">{formatCount(mirrors)}</span> mirrors
+            <span className="font-semibold text-[var(--color-muted)]">{formatCount(mirrors)}</span>{' '}
+            mirrors
           </span>
         </div>
 
@@ -217,7 +220,10 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
               />
             </svg>
             <span className="text-xs tabular-nums text-[var(--color-muted)]">
-              <span className="font-semibold text-[var(--color-muted)]">{formatCount(collects)}</span> collects
+              <span className="font-semibold text-[var(--color-muted)]">
+                {formatCount(collects)}
+              </span>{' '}
+              collects
             </span>
           </div>
         )}

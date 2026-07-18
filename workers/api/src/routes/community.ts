@@ -16,8 +16,8 @@ import type { CrossProtocolCommunity } from '@degenfeed/utils';
 import {
   COMMUNITY_INDEX_KEY,
   COMMUNITY_KV_PREFIX,
-  communityKey,
   communityFeedKey,
+  communityKey,
   communityMembersKey,
   slugifyCommunity,
 } from '@degenfeed/utils';
@@ -112,9 +112,7 @@ export async function handleCommunityCreate(request: Request, env: Env): Promise
     protocols.farcaster = {
       channelId: typeof f.channelId === 'string' ? f.channelId : slug,
       channelUrl:
-        typeof f.channelUrl === 'string'
-          ? f.channelUrl
-          : `https://warpcast.com/~/channel/${slug}`,
+        typeof f.channelUrl === 'string' ? f.channelUrl : `https://warpcast.com/~/channel/${slug}`,
     };
   }
 
@@ -151,12 +149,15 @@ export async function handleCommunityCreate(request: Request, env: Env): Promise
     createdAt: Date.now(),
     creator: {
       walletAddress: session.address.toLowerCase(),
-      identities: typeof body.identities === 'object' ? (body.identities as Record<string, string>) : {},
+      identities:
+        typeof body.identities === 'object' ? (body.identities as Record<string, string>) : {},
     },
     protocols,
     memberCount: 1, // The creator
     postCount: 0,
-    tags: Array.isArray(body.tags) ? (body.tags as string[]).filter((t): t is string => typeof t === 'string') : undefined,
+    tags: Array.isArray(body.tags)
+      ? (body.tags as string[]).filter((t): t is string => typeof t === 'string')
+      : undefined,
   };
 
   // Persist to KV

@@ -5,7 +5,17 @@
   "shortDescription": "Unified feed for Nostr, Farcaster, Lens, Bluesky & more — decentralized social, one scroll.",
   "fullDescription": "DegenFeed brings together all your decentralized social networks in one place. Follow what matters across Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, and RSS — all from a single unified feed.\n\nUNIFIED FEED\nAggregate posts from every major decentralized social protocol into one scrollable timeline. No more switching between apps.\n\nCROSS-PROTOCOL COMPOSER\nWrite once, publish everywhere. Compose a post and syndicate it across all your connected networks simultaneously.\n\nREAL-TIME NOTIFICATIONS\nGet push notifications for mentions, replies, and likes across every network you use.\n\nDISCOVER\nFind trending content and creators across the decentralized web. See what's gaining traction on Nostr, Farcaster, Lens, and more.\n\nCRYPTO-NATIVE WALLET INTEGRATION\nConnect your Solana or EVM wallet to verify your on-chain identity. Show your NFTs, tokens, and degen cred right on your profile.\n\nPRIVACY FIRST\nNo central server stores your data. Your keys remain on your device. End-to-end, you control your identity and content.\n\nCUSTOM FEEDS\nBuild custom feeds from any combination of protocols, topics, and creators. Save and switch between feeds instantly.\n\nDegenFeed is the essential client for the decentralized social web. Whether you're a degen trader, a crypto native, or just tired of walled gardens, DegenFeed puts you back in control.\n\nPermissions:\n- Push Notifications: To alert you of new mentions, replies, and likes\n- Internet: Required to connect to decentralized relays and hubs",
   "appCategory": "SOCIAL",
-  "tags": ["crypto", "web3", "decentralized", "social", "blockchain", "nostr", "farcaster", "lens", "bluesky"],
+  "tags": [
+    "crypto",
+    "web3",
+    "decentralized",
+    "social",
+    "blockchain",
+    "nostr",
+    "farcaster",
+    "lens",
+    "bluesky"
+  ],
   "targetAudience": "18+",
   "containsAds": false,
   "contentRating": {

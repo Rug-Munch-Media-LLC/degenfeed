@@ -783,6 +783,7 @@ export const MOCK_MY_FEEDS: CustomFeed[] = [
     creator: '0xuser',
     isPublic: true,
     config: {
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
       sources: ['nostr', 'farcaster', 'lens'] as any,
       topics: { crypto: 100 },
       contentTypes: ['text'],
@@ -801,6 +802,7 @@ export const MOCK_MY_FEEDS: CustomFeed[] = [
     creator: '0xuser',
     isPublic: true,
     config: {
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
       sources: ['nostr', 'farcaster', 'lemmy'] as any,
       topics: { defi: 100 },
       contentTypes: ['text', 'link'],
@@ -819,6 +821,7 @@ export const MOCK_MY_FEEDS: CustomFeed[] = [
     creator: '0xuser',
     isPublic: false,
     config: {
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
       sources: ['nostr'] as any,
       topics: { research: 100 },
       contentTypes: ['text'],
@@ -837,6 +840,7 @@ export const MOCK_MY_FEEDS: CustomFeed[] = [
     creator: '0xuser',
     isPublic: true,
     config: {
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
       sources: ['peertube', 'youtube'] as any,
       topics: { crypto: 80, defi: 60 },
       contentTypes: ['video'],
@@ -858,6 +862,7 @@ export const MOCK_PUBLIC_FEEDS: CustomFeed[] = [
     creator: '0xdegen',
     isPublic: true,
     config: {
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
       sources: ['nostr', 'farcaster', 'lens', 'bluesky', 'reddit'] as any,
       topics: { crypto: 100 },
       contentTypes: ['text', 'link', 'image'],
@@ -876,6 +881,7 @@ export const MOCK_PUBLIC_FEEDS: CustomFeed[] = [
     creator: '0xsolana',
     isPublic: true,
     config: {
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
       sources: ['nostr', 'farcaster', 'reddit'] as any,
       topics: { solana: 100, defi: 80 },
       contentTypes: ['text', 'link', 'video'],
@@ -894,6 +900,7 @@ export const MOCK_PUBLIC_FEEDS: CustomFeed[] = [
     creator: '0xnft',
     isPublic: true,
     config: {
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
       sources: ['farcaster', 'bluesky', 'lens'] as any,
       topics: { nft: 100, art: 80 },
       contentTypes: ['text', 'image'],
@@ -912,6 +919,7 @@ export const MOCK_PUBLIC_FEEDS: CustomFeed[] = [
     creator: '0xai',
     isPublic: true,
     config: {
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
       sources: ['nostr', 'farcaster', 'reddit', 'rss'] as any,
       topics: { ai: 100, crypto: 80 },
       contentTypes: ['text', 'link', 'video'],
@@ -930,6 +938,7 @@ export const MOCK_PUBLIC_FEEDS: CustomFeed[] = [
     creator: '0xdefi',
     isPublic: true,
     config: {
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
       sources: ['nostr', 'farcaster', 'lemmy'] as any,
       topics: { defi: 100, yield: 100 },
       contentTypes: ['text', 'link'],

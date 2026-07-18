@@ -102,7 +102,7 @@ export function WelcomeBackModal() {
           className="absolute top-4 right-4 text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           aria-label="Close"
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path
               d="M15 5L5 15M5 5l10 10"
               stroke="currentColor"

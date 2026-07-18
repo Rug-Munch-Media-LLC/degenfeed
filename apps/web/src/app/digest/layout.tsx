@@ -54,9 +54,9 @@ export const metadata: Metadata = {
 export default function DigestLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-digest" type="application/ld+json">{
-        JSON.stringify(digestBreadcrumb)
-      }</Script>
+      <Script id="breadcrumb-digest" type="application/ld+json">
+        {JSON.stringify(digestBreadcrumb)}
+      </Script>
       {children}
     </>
   );

@@ -372,7 +372,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
-    await idbAddMutedWord(word).catch(() => {});
+    await _idbAddMutedWord(word).catch(() => {});
     try {
       await fetch('/api/preferences/muted-words', {
         method: 'POST',
@@ -391,7 +391,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
-    await idbRemoveMutedWord(word).catch(() => {});
+    await _idbRemoveMutedWord(word).catch(() => {});
     try {
       await fetch(`/api/preferences/muted-words?word=${encodeURIComponent(word)}`, {
         method: 'DELETE',
@@ -408,7 +408,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
-    await idbAddMutedUser(userId).catch(() => {});
+    await _idbAddMutedUser(userId).catch(() => {});
     try {
       await fetch('/api/preferences/muted-users', {
         method: 'POST',
@@ -430,7 +430,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
-    await idbRemoveMutedUser(userId).catch(() => {});
+    await _idbRemoveMutedUser(userId).catch(() => {});
     try {
       await fetch(`/api/preferences/muted-users?userId=${encodeURIComponent(userId)}`, {
         method: 'DELETE',
@@ -447,7 +447,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
-    await idbAddBlockedUser(userId).catch(() => {});
+    await _idbAddBlockedUser(userId).catch(() => {});
     try {
       await fetch('/api/preferences/blocked-users', {
         method: 'POST',
@@ -469,7 +469,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
-    await idbRemoveBlockedUser(userId).catch(() => {});
+    await _idbRemoveBlockedUser(userId).catch(() => {});
     try {
       await fetch(`/api/preferences/blocked-users?userId=${encodeURIComponent(userId)}`, {
         method: 'DELETE',

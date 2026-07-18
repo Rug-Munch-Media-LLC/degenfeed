@@ -237,6 +237,14 @@ export interface CustomFeed {
   createdAt: number;
   updatedAt: number;
   subscribers: number;
+  /** Human-readable title for UI display (aliased from name) */
+  title?: string;
+  /** Source protocol identifiers (e.g. 'nostr', 'farcaster') */
+  sources?: string[];
+  /** Whether this feed is pinned by the user */
+  isPinned?: boolean;
+  /** Creator's wallet/profile ID */
+  authorId?: string;
 }
 
 export interface ContentProof {

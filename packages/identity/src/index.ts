@@ -19,8 +19,7 @@ import type { Protocol, UnifiedIdentity } from '@degenfeed/types';
 import type { CrossProtocolIdentity, ProtocolId } from '@degenfeed/utils';
 import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
 
-export type { Protocol, UnifiedIdentity };
-export type { CrossProtocolIdentity, ProtocolId };
+export type { CrossProtocolIdentity, Protocol, ProtocolId, UnifiedIdentity };
 
 // ─── Identity mapping types ────────────────────────────────────────────
 
@@ -330,11 +329,12 @@ export function buildUnifiedProfile(
 
 export function formatCrossProtocolFollowers(count: number, networks: number): string {
   if (count === 0) return 'No followers yet';
-  const formatted = count >= 1_000_000
-    ? `${(count / 1_000_000).toFixed(1)}M`
-    : count >= 1_000
-      ? `${(count / 1_000).toFixed(1)}K`
-      : String(count);
+  const formatted =
+    count >= 1_000_000
+      ? `${(count / 1_000_000).toFixed(1)}M`
+      : count >= 1_000
+        ? `${(count / 1_000).toFixed(1)}K`
+        : String(count);
   return `${formatted} followers${networks > 1 ? ` across ${networks} networks` : ''}`;
 }
 

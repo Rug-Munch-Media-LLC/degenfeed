@@ -10,7 +10,7 @@
  */
 
 import { memo, useCallback, useEffect, useState } from 'react';
-import { PROTOCOL_COLORS, getProtocolLabel } from './ProtocolBadge';
+import { getProtocolLabel, PROTOCOL_COLORS } from './ProtocolBadge';
 
 export interface CrossProtocolReplyCount {
   total: number;
@@ -33,9 +33,14 @@ export const CrossProtocolThreadIndicator = memo(function CrossProtocolThreadInd
 
   const fetchCounts = useCallback(async () => {
     try {
-      const res = await fetch(`/v1/cross-reply/status?parentPostUri=${encodeURIComponent(parentPostUri)}`);
+      const res = await fetch(
+        `/v1/cross-reply/status?parentPostUri=${encodeURIComponent(parentPostUri)}`,
+      );
       if (!res.ok) return;
-      const data = (await res.json()) as CrossProtocolReplyCount & { total: number; byProtocol: Record<string, number> };
+      const data = (await res.json()) as CrossProtocolReplyCount & {
+        total: number;
+        byProtocol: Record<string, number>;
+      };
       if (data && typeof data.total === 'number') {
         setCounts(data);
       }

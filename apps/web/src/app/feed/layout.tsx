@@ -52,9 +52,9 @@ export const metadata: Metadata = {
 export default function FeedLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-feed" type="application/ld+json">{
-        JSON.stringify(breadcrumbStructuredData)
-      }</Script>
+      <Script id="breadcrumb-feed" type="application/ld+json">
+        {JSON.stringify(breadcrumbStructuredData)}
+      </Script>
       {children}
     </>
   );

@@ -11,8 +11,8 @@ import { getInvitePoolStats } from '@degenfeed/crossplatform-register/bluesky-in
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
 import { type Env, jsonResponse, log, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import { checkPremiumStatus } from '../premium';
+import { requireSession } from '../session';
 
 // ─── POST /api/register-platform ──────────────────────────────────────
 

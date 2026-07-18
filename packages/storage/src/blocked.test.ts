@@ -7,6 +7,15 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Mock IndexedDB-backed db module to avoid ReferenceError in test env
+vi.mock('./db', () => ({
+  getDb: vi.fn().mockResolvedValue({
+    put: vi.fn().mockResolvedValue(undefined),
+    get: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 describe('isBlocked / addBlockedUser / removeBlockedUser', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -23,16 +32,9 @@ describe('isBlocked / addBlockedUser / removeBlockedUser', () => {
 
   it('should call sync API when adding a blocked user', async () => {
     const { addBlockedUser } = await import('./blocked');
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
-    // Mock getDb to return a minimal mock
-    const mockDb = {
-      put: vi.fn().mockResolvedValue(undefined),
-      get: vi.fn().mockResolvedValue(undefined),
-      delete: vi.fn().mockResolvedValue(undefined),
-    };
-    vi.doMock('./db', () => ({
-      getDb: vi.fn().mockResolvedValue(mockDb),
-    }));
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 200 }));
 
     await addBlockedUser('target123', 'Spammer', 'nostr', 'self');
     // The sync POST should be called

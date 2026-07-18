@@ -70,9 +70,7 @@ const SIGNAL_PRIORITY: Record<string, number> = {
 
 function getMainReason(reasons: string[], debug?: FeedDebug): { icon: string; text: string } {
   // Priority-ordered: pick the highest-priority signal
-  const sorted = [...reasons].sort(
-    (a, b) => (SIGNAL_PRIORITY[a] ?? 0) - (SIGNAL_PRIORITY[b] ?? 0),
-  );
+  const sorted = [...reasons].sort((a, b) => (SIGNAL_PRIORITY[a] ?? 0) - (SIGNAL_PRIORITY[b] ?? 0));
   const best = sorted[sorted.length - 1];
   if (best && SIGNAL_LABELS[best]) {
     return { icon: SIGNAL_ICONS[best] ?? '◆', text: SIGNAL_LABELS[best] };
@@ -81,14 +79,17 @@ function getMainReason(reasons: string[], debug?: FeedDebug): { icon: string; te
   // Fallback: build a main reason from debug data
   if (debug) {
     const signals: { score: number; label: string }[] = [];
-    if (debug.topicMatch > 0.7) signals.push({ score: debug.topicMatch, label: 'Matches your interests' });
+    if (debug.topicMatch > 0.7)
+      signals.push({ score: debug.topicMatch, label: 'Matches your interests' });
     if (debug.velocity > 1.5) signals.push({ score: debug.velocity, label: 'Gaining traction' });
-    if (debug.authorReputation > 1) signals.push({ score: debug.authorReputation, label: 'From a reputable creator' });
+    if (debug.authorReputation > 1)
+      signals.push({ score: debug.authorReputation, label: 'From a reputable creator' });
     if (debug.freshness > 1.2) signals.push({ score: debug.freshness, label: 'Recently posted' });
-    if (debug.qualityScore > 0.8) signals.push({ score: debug.qualityScore, label: 'High-quality content' });
+    if (debug.qualityScore > 0.8)
+      signals.push({ score: debug.qualityScore, label: 'High-quality content' });
     signals.sort((a, b) => b.score - a.score);
     if (signals.length > 0) {
-      return { icon: '◆', text: signals[0]!.label };
+      return { icon: '◆', text: signals[0]?.label ?? '' };
     }
   }
 
@@ -103,7 +104,7 @@ const PROTOCOL_LABELS: Record<string, string> = {
   lens: 'Lens',
   bluesky: 'Bluesky',
   mastodon: 'Mastodon',
-  threads: 'Threads (Experimental)',
+  threads: 'Threads',
   reddit: 'Reddit',
   rss: 'RSS',
   lemmy: 'Lemmy',
@@ -120,10 +121,7 @@ function protocolLabel(protocol: string): string {
 
 // ─── Component ────────────────────────────────────────────────────
 
-export const FeedWhyCard = memo(function FeedWhyCard({
-  post,
-  onClose,
-}: FeedWhyCardProps) {
+export const FeedWhyCard = memo(function FeedWhyCard({ post, onClose }: FeedWhyCardProps) {
   const { score, feedDebug } = post;
 
   const mainReason = useMemo(
@@ -149,7 +147,10 @@ export const FeedWhyCard = memo(function FeedWhyCard({
     }
     // Add supplementary signals from debug data if not already covered
     if (feedDebug && !seen.has('high-quality') && feedDebug.qualityScore > 0.8) {
-      results.push({ icon: '💎', text: `High quality score (${feedDebug.qualityScore.toFixed(2)})` });
+      results.push({
+        icon: '💎',
+        text: `High quality score (${feedDebug.qualityScore.toFixed(2)})`,
+      });
     }
     if (feedDebug && !seen.has('verified-author') && feedDebug.authorReputation >= 1) {
       results.push({ icon: '✅', text: 'From a verified creator' });
@@ -161,7 +162,8 @@ export const FeedWhyCard = memo(function FeedWhyCard({
   }, [score?.reasons, feedDebug, post, mainReason.text]);
 
   // Quality score for display
-  const qualityScore = feedDebug?.qualityScore ?? (score?.quality ? Math.min(score.quality / 10, 1) : null);
+  const _qualityScore =
+    feedDebug?.qualityScore ?? (score?.quality ? Math.min(score.quality / 10, 1) : null);
 
   return (
     <div className="rounded-2xl border border-degen-500/30 bg-[var(--color-card)] p-4 shadow-2xl backdrop-blur-xl">
@@ -171,9 +173,7 @@ export const FeedWhyCard = memo(function FeedWhyCard({
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-degen-500/15 text-xs text-degen-400">
             ?
           </span>
-          <h3 className="text-sm font-semibold text-[var(--color-fg)]">
-            Why this post?
-          </h3>
+          <h3 className="text-sm font-semibold text-[var(--color-fg)]">Why this post?</h3>
         </div>
         <button
           type="button"
@@ -182,7 +182,12 @@ export const FeedWhyCard = memo(function FeedWhyCard({
           aria-label="Close"
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M12 4L4 12M4 4l8 8"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
       </div>
@@ -193,7 +198,9 @@ export const FeedWhyCard = memo(function FeedWhyCard({
           <span className="mt-0.5 shrink-0 text-base">{mainReason.icon}</span>
           <div>
             <p className="text-xs font-medium text-[var(--color-fg)]">{mainReason.text}</p>
-            <p className="mt-0.5 text-[10px] text-[var(--color-muted)]">Main reason this post appeared</p>
+            <p className="mt-0.5 text-[10px] text-[var(--color-muted)]">
+              Main reason this post appeared
+            </p>
           </div>
         </div>
       </div>
@@ -204,7 +211,8 @@ export const FeedWhyCard = memo(function FeedWhyCard({
           <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
             Also contributing
           </p>
-          {secondarySignals.slice(0, 5).map((s, i) => (
+          {secondarySignals.slice(0, 5).map((_s, _i) => (
+            {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
             <div key={i} className="flex items-start gap-2">
               <span className="mt-0.5 shrink-0 text-xs text-[var(--color-muted)]">{s.icon}</span>
               <span className="text-xs text-[var(--color-muted)]">{s.text}</span>
@@ -228,75 +236,87 @@ export const FeedWhyCard = memo(function FeedWhyCard({
             </>
           )}
         </div>
-      </div>
+</div>
 
-      {/* Source + quality */}
-      <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-lg bg-[var(--color-muted)] p-2">
-          <span className="block text-[10px] text-[var(--color-muted)]">Source</span>
-          <span className="font-medium text-[var(--color-muted)]">
-            {feedDebug
-              ? `${protocolLabel(feedDebug.sourceProtocol)} via DegenFeed bridge`
-              : protocolLabel(post.protocol)}
-          </span>
+{
+  /* Source + quality */
+}
+<div className="mb-3 grid grid-cols-2 gap-2 text-xs">
+  <div className="rounded-lg bg-[var(--color-muted)] p-2">
+    <span className="block text-[10px] text-[var(--color-muted)]">Source</span>
+    <span className="font-medium text-[var(--color-muted)]">
+      {feedDebug
+        ? `${protocolLabel(feedDebug.sourceProtocol)} via DegenFeed bridge`
+        : protocolLabel(post.protocol)}
+    </span>
+  </div>
+  <div className="rounded-lg bg-[var(--color-muted)] p-2">
+    <span className="block text-[10px] text-[var(--color-muted)]">Quality</span>
+    <span className="font-medium text-[var(--color-muted)]">
+      {qualityScore !== null ? `${(qualityScore * 100).toFixed(0)}/100` : 'N/A'}
+    </span>
+  </div>
+</div>;
+
+{
+  /* Score breakdown (if available) */
+}
+{
+  score && (
+    <details className="group mb-3">
+      <summary className="cursor-pointer text-[10px] font-medium text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors">
+        <span className="inline-flex items-center gap-1">
+          <svg
+            width="8"
+            height="8"
+            viewBox="0 0 16 16"
+            fill="none"
+            className="transition-transform group-open:rotate-90"
+            aria-hidden="true"
+          >
+            <path
+              d="M6 4l4 4-4 4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Algorithm score breakdown
+        </span>
+      </summary>
+      <div className="mt-2 space-y-1">
+        <ScoreBar label="Recency" value={score.recency} max={2} color="bg-blue-500" />
+        <ScoreBar label="Engagement" value={score.engagement} max={5} color="bg-orange-500" />
+        <ScoreBar label="Relevance" value={score.relevance} max={3} color="bg-green-500" />
+        <ScoreBar label="Quality" value={score.quality} max={3} color="bg-purple-500" />
+        <ScoreBar label="Velocity" value={score.velocity} max={3} color="bg-yellow-500" />
+        <ScoreBar label="Source" value={score.source} max={2} color="bg-gray-500" />
+        <div className="flex items-center justify-between pt-1 text-[10px] font-semibold text-degen-400">
+          <span>Total score</span>
+          <span>{score.total.toFixed(1)}</span>
         </div>
-        <div className="rounded-lg bg-[var(--color-muted)] p-2">
-          <span className="block text-[10px] text-[var(--color-muted)]">Quality</span>
-          <span className="font-medium text-[var(--color-muted)]">
-            {qualityScore !== null
-              ? `${(qualityScore * 100).toFixed(0)}/100`
-              : 'N/A'}
-          </span>
-        </div>
       </div>
-
-      {/* Score breakdown (if available) */}
-      {score && (
-        <details className="group mb-3">
-          <summary className="cursor-pointer text-[10px] font-medium text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors">
-            <span className="inline-flex items-center gap-1">
-              <svg
-                width="8"
-                height="8"
-                viewBox="0 0 16 16"
-                fill="none"
-                className="transition-transform group-open:rotate-90"
-                aria-hidden="true"
-              >
-                <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Algorithm score breakdown
-            </span>
-          </summary>
-          <div className="mt-2 space-y-1">
-            <ScoreBar label="Recency" value={score.recency} max={2} color="bg-blue-500" />
-            <ScoreBar label="Engagement" value={score.engagement} max={5} color="bg-orange-500" />
-            <ScoreBar label="Relevance" value={score.relevance} max={3} color="bg-green-500" />
-            <ScoreBar label="Quality" value={score.quality} max={3} color="bg-purple-500" />
-            <ScoreBar label="Velocity" value={score.velocity} max={3} color="bg-yellow-500" />
-            <ScoreBar label="Source" value={score.source} max={2} color="bg-gray-500" />
-            <div className="flex items-center justify-between pt-1 text-[10px] font-semibold text-degen-400">
-              <span>Total score</span>
-              <span>{score.total.toFixed(1)}</span>
-            </div>
-          </div>
-        </details>
-      )}
-
-      {/* Manage feed link */}
-      <a
-        href="/settings"
-        onClick={(e) => {
-          e.preventDefault();
-          window.location.href = '/settings';
-        }}
-        className="mt-2 block text-center text-xs text-degen-500 hover:text-degen-400 underline decoration-dotted transition-colors"
-      >
-        Manage your feed preferences →
-      </a>
-    </div>
+    </details>
   );
-});
+}
+
+{
+  /* Manage feed link */
+}
+<a
+  href="/settings"
+  onClick={(e) => {
+    e.preventDefault();
+    window.location.href = '/settings';
+  }}
+  className="mt-2 block text-center text-xs text-degen-500 hover:text-degen-400 underline decoration-dotted transition-colors"
+>
+  Manage your feed preferences →
+</a>;
+</div>
+  )
+})
 
 // ─── Tiny score bar sub-component ─────────────────────────────────
 

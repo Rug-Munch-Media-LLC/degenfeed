@@ -32,14 +32,27 @@ interface NewsletterEntry {
 
 const ALL_NEWSLETTERS: NewsletterEntry[] = [
   // ═══ CRYPTO ═══
-  { name: 'CoinTelegraph Newsletter', schedule: 'daily', description: 'Top crypto news and analysis' },
+  {
+    name: 'CoinTelegraph Newsletter',
+    schedule: 'daily',
+    description: 'Top crypto news and analysis',
+  },
   { name: 'CoinDesk Newsletter', schedule: 'daily', description: 'Leading crypto news source' },
-  { name: 'The Block Newsletter', schedule: 'daily', description: 'Research-driven crypto coverage' },
+  {
+    name: 'The Block Newsletter',
+    schedule: 'daily',
+    description: 'Research-driven crypto coverage',
+  },
   { name: 'Blockworks Daily', schedule: 'daily', description: 'Markets-focused crypto news' },
   { name: 'Bankless', schedule: 'daily', isPaid: true, description: 'Guide to crypto and DeFi' },
   { name: 'Milk Road', schedule: 'daily', description: 'Fun daily crypto digest' },
   { name: 'Token Dispatch', schedule: 'daily', description: 'Curated crypto token news' },
-  { name: 'Messari Daily', schedule: 'daily', isPaid: true, description: 'Institutional crypto research' },
+  {
+    name: 'Messari Daily',
+    schedule: 'daily',
+    isPaid: true,
+    description: 'Institutional crypto research',
+  },
   { name: 'Delphi Daily', schedule: 'weekly', isPaid: true, description: 'Deep crypto research' },
   { name: 'The Scoop', schedule: 'daily', description: 'Crypto news and interviews' },
   { name: 'Empire', schedule: 'daily', description: 'Crypto market intelligence' },
@@ -52,19 +65,52 @@ const ALL_NEWSLETTERS: NewsletterEntry[] = [
   // ═══ TECH ═══
   { name: 'TLDR Tech', schedule: 'daily', description: 'Tech news in 5 minutes' },
   { name: 'The Hustle', schedule: 'daily', description: 'Business and tech news' },
-  { name: 'Benedict Evans', schedule: 'weekly', premium: true, description: 'Tech strategy and analysis' },
+  {
+    name: 'Benedict Evans',
+    schedule: 'weekly',
+    premium: true,
+    description: 'Tech strategy and analysis',
+  },
   { name: 'Stratechery', schedule: 'daily', isPaid: true, description: 'Tech strategy deep dives' },
-  { name: 'Platformer', schedule: 'weekly', premium: true, description: 'Social media and platform news' },
+  {
+    name: 'Platformer',
+    schedule: 'weekly',
+    premium: true,
+    description: 'Social media and platform news',
+  },
   { name: 'The Verge Newsletter', schedule: 'daily', description: 'Consumer tech and culture' },
-  { name: 'Ars Technica Newsletter', schedule: 'daily', description: 'Deep tech and science coverage' },
-  { name: 'Wired Newsletter', schedule: 'daily', isPaid: true, description: 'Tech, science, and culture' },
+  {
+    name: 'Ars Technica Newsletter',
+    schedule: 'daily',
+    description: 'Deep tech and science coverage',
+  },
+  {
+    name: 'Wired Newsletter',
+    schedule: 'daily',
+    isPaid: true,
+    description: 'Tech, science, and culture',
+  },
   { name: 'TechCrunch Daily', schedule: 'daily', description: 'Startup and tech news' },
   { name: 'Hacker Newsletter', schedule: 'weekly', description: 'Best of Hacker News curated' },
-  { name: 'Not Boring', schedule: 'weekly', isPaid: true, description: 'Tech and business deep dives' },
-  { name: 'Exponential View', schedule: 'weekly', isPaid: true, description: 'Tech and future trends' },
+  {
+    name: 'Not Boring',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Tech and business deep dives',
+  },
+  {
+    name: 'Exponential View',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Tech and future trends',
+  },
 
   // ═══ AI ═══
-  { name: 'The Batch (Andrew Ng)', schedule: 'weekly', description: 'Weekly AI news from DeepLearning.AI' },
+  {
+    name: 'The Batch (Andrew Ng)',
+    schedule: 'weekly',
+    description: 'Weekly AI news from DeepLearning.AI',
+  },
   { name: 'TLDR AI', schedule: 'weekly', description: 'Daily AI news in 5 minutes' },
   { name: 'Import AI', schedule: 'weekly', description: 'AI research and policy news' },
   { name: 'Supervised', schedule: 'weekly', isPaid: true, description: 'AI x Crypto research' },
@@ -73,7 +119,12 @@ const ALL_NEWSLETTERS: NewsletterEntry[] = [
   { name: 'Last Week in AI', schedule: 'weekly', description: 'Comprehensive AI weekly roundup' },
   { name: 'The Neuron', schedule: 'daily', description: 'Daily AI tools and trends' },
   { name: "Ben's Bites", schedule: 'daily', description: 'Daily AI digest' },
-  { name: 'AI Tool Report', schedule: 'daily', premium: true, description: 'AI tools and productivity' },
+  {
+    name: 'AI Tool Report',
+    schedule: 'daily',
+    premium: true,
+    description: 'AI tools and productivity',
+  },
   { name: 'TheSequence', schedule: 'weekly', description: 'ML and AI research explained' },
 
   // ═══ DEFI ═══
@@ -85,8 +136,18 @@ const ALL_NEWSLETTERS: NewsletterEntry[] = [
   { name: 'Blockcrunch', schedule: 'weekly', description: 'DeFi research and analysis' },
   { name: 'DeFi Dad', schedule: 'weekly', description: 'DeFi yield and strategies' },
   { name: 'Route 2 FI', schedule: 'weekly', description: 'DeFi and financial independence' },
-  { name: 'Ignas DeFi Research', schedule: 'weekly', isPaid: true, description: 'Deep DeFi research' },
-  { name: 'Token Terminal', schedule: 'weekly', isPaid: true, description: 'Crypto fundamentals data' },
+  {
+    name: 'Ignas DeFi Research',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Deep DeFi research',
+  },
+  {
+    name: 'Token Terminal',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Crypto fundamentals data',
+  },
   { name: 'Dune Digest', schedule: 'weekly', description: 'On-chain analytics highlights' },
   { name: 'The Defiant', schedule: 'daily', description: 'DeFi news and alpha' },
   { name: 'The Drop', schedule: 'weekly', description: 'DeFi airdrops and opportunities' },
@@ -95,39 +156,99 @@ const ALL_NEWSLETTERS: NewsletterEntry[] = [
   { name: 'The Rollup', schedule: 'weekly', description: 'Ethereum L2 ecosystem news' },
 
   // ═══ BITCOIN ═══
-  { name: 'Bitcoin Magazine Pro', schedule: 'weekly', isPaid: true, description: 'Bitcoin market analysis' },
+  {
+    name: 'Bitcoin Magazine Pro',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Bitcoin market analysis',
+  },
   { name: "Satoshi's Journal", schedule: 'weekly', description: 'Bitcoin culture and tech' },
-  { name: 'The Bitcoin Layer', schedule: 'weekly', isPaid: true, description: 'Bitcoin macro analysis' },
-  { name: 'Nik Bhatia', schedule: 'weekly', isPaid: true, description: 'Bitcoin and monetary policy' },
+  {
+    name: 'The Bitcoin Layer',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Bitcoin macro analysis',
+  },
+  {
+    name: 'Nik Bhatia',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Bitcoin and monetary policy',
+  },
   { name: 'Pomp Letter', schedule: 'daily', description: 'Bitcoin and macro commentary' },
   { name: 'Pantera Blockchain', schedule: 'weekly', description: 'Blockchain investment insights' },
   { name: 'Ecoinometrics', schedule: 'weekly', description: 'Bitcoin on-chain metrics' },
 
   // ═══ TRADING / MARKETS ═══
   { name: 'MacroScope', schedule: 'daily', isPaid: true, description: 'Macro and crypto markets' },
-  { name: 'The Transcript', schedule: 'daily', isPaid: true, description: 'Crypto market transcripts' },
-  { name: 'Exec Sum', schedule: 'daily', isPaid: true, description: 'Daily market executive summary' },
+  {
+    name: 'The Transcript',
+    schedule: 'daily',
+    isPaid: true,
+    description: 'Crypto market transcripts',
+  },
+  {
+    name: 'Exec Sum',
+    schedule: 'daily',
+    isPaid: true,
+    description: 'Daily market executive summary',
+  },
   { name: 'The Market Ear', schedule: 'daily', description: 'Market sentiment and flows' },
-  { name: 'Cane Island Digital', schedule: 'weekly', isPaid: true, description: 'Digital asset research' },
+  {
+    name: 'Cane Island Digital',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Digital asset research',
+  },
   { name: 'CoinMarketCap Blog', schedule: 'daily', description: 'Market data and insights' },
   { name: 'Kaito Research', schedule: 'daily', description: 'AI-powered crypto research' },
 
   // ═══ WEB3 BUILDERS ═══
   { name: 'Developer DAO', schedule: 'weekly', description: 'Web3 developer community' },
-  { name: 'Web3 with a16z', schedule: 'weekly', isPaid: true, description: 'Web3 from a16z crypto' },
-  { name: 'Li Jin (Variant)', schedule: 'weekly', isPaid: true, description: 'Web3 creator economy' },
+  {
+    name: 'Web3 with a16z',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Web3 from a16z crypto',
+  },
+  {
+    name: 'Li Jin (Variant)',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Web3 creator economy',
+  },
   { name: 'Mirror Development', schedule: 'irregular', description: 'Web3 publishing on Mirror' },
   { name: 'Paragraph Blog', schedule: 'irregular', description: 'Web3 newsletter platform' },
   { name: 'Unchained', schedule: 'weekly', description: 'Crypto interviews and news' },
   { name: 'Chainlink Today', schedule: 'daily', description: 'Chainlink and oracle news' },
   { name: 'Solana Beach', schedule: 'weekly', description: 'Solana ecosystem updates' },
   { name: '0xResearch', schedule: 'daily', description: 'Crypto research newsletter' },
-  { name: 'The Block Research', schedule: 'weekly', isPaid: true, description: 'Institutional crypto research' },
-  { name: 'Reflexivity Research', schedule: 'weekly', isPaid: true, description: 'Macro crypto research' },
-  { name: 'Messari Unqualified', schedule: 'weekly', isPaid: true, description: 'Crypto data analysis' },
+  {
+    name: 'The Block Research',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Institutional crypto research',
+  },
+  {
+    name: 'Reflexivity Research',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Macro crypto research',
+  },
+  {
+    name: 'Messari Unqualified',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'Crypto data analysis',
+  },
 
   // ═══ AI x CRYPTO ═══
-  { name: 'Supervised', schedule: 'weekly', isPaid: true, description: 'AI x Crypto at the frontier' },
+  {
+    name: 'Supervised',
+    schedule: 'weekly',
+    isPaid: true,
+    description: 'AI x Crypto at the frontier',
+  },
   { name: 'The AI Report', schedule: 'weekly', description: 'AI and crypto intersection' },
   { name: 'TLDR AI', schedule: 'weekly', description: 'AI news for busy people' },
   { name: 'Import AI', schedule: 'weekly', description: 'AI research and policy' },
@@ -264,10 +385,41 @@ const NEWSLETTERS_BY_TOPIC: Record<string, NewsletterEntry[]> = {
 function computeNewTodayStats(): { categoryCounts: Record<string, number>; totalDaily: number } {
   const daily = ALL_NEWSLETTERS.filter((n) => n.schedule === 'daily');
   const categoryCounts: Record<string, number> = {
-    crypto: daily.filter((n) => ['CoinTelegraph Newsletter', 'CoinDesk Newsletter', 'The Block Newsletter', 'Blockworks Daily', 'Bankless', 'Milk Road', 'Token Dispatch', 'Messari Daily', 'The Scoop', 'Empire', 'The Tie', 'Crypto Briefing', 'BeInCrypto', '24/7 Crypto', 'Pomp Letter'].includes(n.name)).length,
-    tech: daily.filter((n) => ['TLDR Tech', 'The Hustle', 'Stratechery', 'The Verge Newsletter', 'Ars Technica Newsletter', 'Wired Newsletter', 'TechCrunch Daily'].includes(n.name)).length,
-    ai: daily.filter((n) => ['The Neuron', "Ben's Bites", 'AI Tool Report'].includes(n.name)).length,
-    defi: daily.filter((n) => ['The Daily Gwei', 'DeFi Times', 'The Defiant', 'Proof of Work', 'The Drop'].includes(n.name)).length,
+    crypto: daily.filter((n) =>
+      [
+        'CoinTelegraph Newsletter',
+        'CoinDesk Newsletter',
+        'The Block Newsletter',
+        'Blockworks Daily',
+        'Bankless',
+        'Milk Road',
+        'Token Dispatch',
+        'Messari Daily',
+        'The Scoop',
+        'Empire',
+        'The Tie',
+        'Crypto Briefing',
+        'BeInCrypto',
+        '24/7 Crypto',
+        'Pomp Letter',
+      ].includes(n.name),
+    ).length,
+    tech: daily.filter((n) =>
+      [
+        'TLDR Tech',
+        'The Hustle',
+        'Stratechery',
+        'The Verge Newsletter',
+        'Ars Technica Newsletter',
+        'Wired Newsletter',
+        'TechCrunch Daily',
+      ].includes(n.name),
+    ).length,
+    ai: daily.filter((n) => ['The Neuron', "Ben's Bites", 'AI Tool Report'].includes(n.name))
+      .length,
+    defi: daily.filter((n) =>
+      ['The Daily Gwei', 'DeFi Times', 'The Defiant', 'Proof of Work', 'The Drop'].includes(n.name),
+    ).length,
   };
   return {
     categoryCounts,
@@ -502,9 +654,8 @@ export default function NewsletterPage() {
         </h1>
         <p className="mx-auto max-w-xl text-sm leading-relaxed text-[var(--color-muted)]">
           The best of web3, AI, and tech — aggregated from Nostr, Farcaster, Lens, Bluesky,
-          Mastodon, 353 RSS sources, and 85+ curated newsletters across crypto, tech, AI,
-          DeFi, and more. Ranked by quality, recency, and diversity. Delivered to your inbox
-          every morning.
+          Mastodon, 353 RSS sources, and 85+ curated newsletters across crypto, tech, AI, DeFi, and
+          more. Ranked by quality, recency, and diversity. Delivered to your inbox every morning.
         </p>
 
         {/* Stats bar */}
@@ -562,10 +713,7 @@ export default function NewsletterPage() {
             {TOP_NEWSLETTERS_THIS_WEEK.slice(0, 6).map((nl) => {
               const cat = NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category);
               return (
-                <div
-                  key={nl.name}
-                  className="card flex items-start gap-2.5 p-2.5"
-                >
+                <div key={nl.name} className="card flex items-start gap-2.5 p-2.5">
                   <span
                     className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px]"
                     style={{ backgroundColor: `${cat?.color}20` ?? '#1f2937' }}
@@ -573,9 +721,7 @@ export default function NewsletterPage() {
                     {cat?.icon ?? '📰'}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-medium text-[var(--color-fg)]">
-                      {nl.name}
-                    </p>
+                    <p className="truncate text-xs font-medium text-[var(--color-fg)]">{nl.name}</p>
                     <p className="truncate text-[10px] text-[var(--color-muted)]">{nl.reason}</p>
                   </div>
                 </div>
@@ -773,13 +919,15 @@ export default function NewsletterPage() {
                         {formatTime(item.createdAt)}
                       </span>
                     </div>
-                    <p className="text-sm leading-snug text-[var(--color-muted)] line-clamp-2">{item.text}</p>
+                    <p className="text-sm leading-snug text-[var(--color-muted)] line-clamp-2">
+                      {item.text}
+                    </p>
                     {item.url && (
                       <a
                         href={item.url}
                         target="_blank"
-                        
                         className="mt-1 inline-block text-[11px] text-degen-500 hover:underline"
+                        rel="noopener"
                       >
                         Read more →
                       </a>
@@ -942,8 +1090,12 @@ export default function NewsletterPage() {
                     <span
                       className="rounded px-1.5 py-0.5 text-[8px] font-medium uppercase"
                       style={{
-                        backgroundColor: `${NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color}15` ?? '#1f2937',
-                        color: NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color ?? '#9ca3af',
+                        backgroundColor:
+                          `${NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color}15` ??
+                          '#1f2937',
+                        color:
+                          NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color ??
+                          '#9ca3af',
                       }}
                     >
                       {nl.category}
@@ -987,8 +1139,8 @@ export default function NewsletterPage() {
                   <a
                     href="/api/feed/rss.xml"
                     target="_blank"
-                    
                     className="text-degen-500 hover:underline"
+                    rel="noopener"
                   >
                     Full Feed (RSS 2.0)
                   </a>
@@ -997,8 +1149,8 @@ export default function NewsletterPage() {
                   <a
                     href="/api/feed/rss.xml?format=atom"
                     target="_blank"
-                    
                     className="text-degen-500 hover:underline"
+                    rel="noopener"
                   >
                     Full Feed (Atom 1.0)
                   </a>
@@ -1007,8 +1159,8 @@ export default function NewsletterPage() {
                   <a
                     href="/api/feed/rss.xml?category=bitcoin"
                     target="_blank"
-                    
                     className="text-degen-500 hover:underline"
+                    rel="noopener"
                   >
                     Bitcoin Feed
                   </a>
@@ -1017,8 +1169,8 @@ export default function NewsletterPage() {
                   <a
                     href="/api/feed/rss.xml?category=defi"
                     target="_blank"
-                    
                     className="text-degen-500 hover:underline"
+                    rel="noopener"
                   >
                     DeFi Feed
                   </a>
@@ -1027,8 +1179,8 @@ export default function NewsletterPage() {
                   <a
                     href="/api/feed/rss.xml?category=ai"
                     target="_blank"
-                    
                     className="text-degen-500 hover:underline"
+                    rel="noopener"
                   >
                     AI Feed
                   </a>
@@ -1037,8 +1189,8 @@ export default function NewsletterPage() {
                   <a
                     href="/api/feed/rss.xml?category=tech"
                     target="_blank"
-                    
                     className="text-degen-500 hover:underline"
+                    rel="noopener"
                   >
                     Tech Feed
                   </a>

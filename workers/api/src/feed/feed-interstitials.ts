@@ -11,13 +11,7 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import {
-  ALL_CATEGORIES,
-  CATEGORIES,
-  ensureCategory,
-  primaryCategory,
-  type CategorySlug,
-} from './feed-categories';
+import { ALL_CATEGORIES, CATEGORIES, type CategorySlug, ensureCategory } from './feed-categories';
 
 export const EXPLORE_MORE_INTERVAL = 15;
 export const YOU_MIGHT_ALSO_LIKE_INTERVAL = 10;
@@ -48,9 +42,7 @@ export function isExploreMore(item: FeedInterstitial): item is ExploreMoreCard {
   return item.type === 'explore-more';
 }
 
-export function isYouMightAlsoLike(
-  item: FeedInterstitial,
-): item is YouMightAlsoLikeGroup {
+export function isYouMightAlsoLike(item: FeedInterstitial): item is YouMightAlsoLikeGroup {
   return item.type === 'you-might-also-like';
 }
 
@@ -106,9 +98,7 @@ export function insertExploreMoreCards(
       const targetCat: CategorySlug =
         unseen.length > 0
           ? (unseen[Math.floor(Math.random() * unseen.length)] as CategorySlug)
-          : (ALL_CATEGORIES[
-              Math.floor(Math.random() * ALL_CATEGORIES.length)
-            ] as CategorySlug);
+          : (ALL_CATEGORIES[Math.floor(Math.random() * ALL_CATEGORIES.length)] as CategorySlug);
 
       const def = CATEGORIES[targetCat];
       result.push({
@@ -198,7 +188,7 @@ export function applyInterstitials(
     opts.ymalInterval ?? YOU_MIGHT_ALSO_LIKE_INTERVAL,
   );
   const withExplore = insertExploreMoreCards(
-    (withYmal.filter((item) => !isYouMightAlsoLike(item as FeedInterstitial)) as UnifiedPost[]),
+    withYmal.filter((item) => !isYouMightAlsoLike(item as FeedInterstitial)) as UnifiedPost[],
     opts.exploreInterval ?? EXPLORE_MORE_INTERVAL,
   );
 
@@ -215,13 +205,15 @@ export function applyInterstitials(
     // Re-insert YMAL at original positions
     while (
       ymalIdx < ymalItems.length &&
-      ymalItems[ymalIdx]!.id.includes(`:${Math.floor(i / (opts.ymalInterval ?? YOU_MIGHT_ALSO_LIKE_INTERVAL)) * (opts.ymalInterval ?? YOU_MIGHT_ALSO_LIKE_INTERVAL)}`)
+      ymalItems[ymalIdx]?.id.includes(
+        `:${Math.floor(i / (opts.ymalInterval ?? YOU_MIGHT_ALSO_LIKE_INTERVAL)) * (opts.ymalInterval ?? YOU_MIGHT_ALSO_LIKE_INTERVAL)}`,
+      )
     ) {
       if (
         !final.some(
           (f) =>
             isYouMightAlsoLike(f as FeedInterstitial) &&
-            (f as YouMightAlsoLikeGroup).id === ymalItems[ymalIdx]!.id,
+            (f as YouMightAlsoLikeGroup).id === ymalItems[ymalIdx]?.id,
         )
       ) {
         final.push(ymalItems[ymalIdx]!);

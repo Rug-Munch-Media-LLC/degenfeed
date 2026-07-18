@@ -128,6 +128,7 @@ function useShortFeed(): FetchState & { loadMore: () => void; refresh: () => voi
   });
   const cursorRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const loadedRef = useRef(0);
   // Read topic filter from URL params or use defaults
   const [topicFilter, _setTopicFilter] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -601,7 +602,9 @@ export default function ShortsPage() {
                 <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-[var(--color-muted)]">You&apos;re all caught up</p>
+            <p className="text-sm font-medium text-[var(--color-muted)]">
+              You&apos;re all caught up
+            </p>
             <p className="text-xs text-gray-600">More shorts coming soon</p>
             <button
               type="button"
@@ -637,9 +640,9 @@ export default function ShortsPage() {
                     type="button"
                     onClick={() => {
                       const next = active
-                        ? topicFilter.filter((t) => t !== topic)
+                        ? topicFilter.filter((t: string) => t !== topic)
                         : [...topicFilter, topic];
-                      setTopicFilter(next);
+                      _setTopicFilter(next);
                       // Update URL without navigation
                       const u = new URL(window.location.href);
                       if (next.length > 0) u.searchParams.set('topics', next.join(','));

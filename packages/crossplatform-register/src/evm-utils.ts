@@ -63,7 +63,7 @@ export function signTransaction(tx: TransactionRequest, privateKeyHex: string): 
 
   // Compute recovery ID with EIP-155 chain ID
   const chainId = BigInt(tx.chainId);
-  const v = chainId * 2n + BigInt(35) + BigInt(sig.recovery);
+  const _v = chainId * 2n + BigInt(35) + BigInt(sig.recovery);
 
   // Re-encode with signature
   const signedFields = [
@@ -83,7 +83,7 @@ export function signTransaction(tx: TransactionRequest, privateKeyHex: string): 
 
   const finalSig = secp256k1.sign(unsignedHash, privKeyBytes);
 
-  const finalV = chainId * 2n + BigInt(35) + BigInt(finalSig.recovery);
+  const _finalV = chainId * 2n + BigInt(35) + BigInt(finalSig.recovery);
   const finalFields = [
     toRlp(tx.nonce),
     toRlp(tx.gasPrice),

@@ -6,28 +6,7 @@ import type {
   UnifiedPost,
 } from '@degenfeed/types';
 
-// ─── AI-powered preference learning + personalization ─────────────
-export {
-  adjustTopicWeight,
-  clearTopic,
-  emptyBehaviorProfile,
-  getLearnedTopics,
-  isOnboardingMode,
-  learnFromInteraction,
-  personalizeScore,
-} from './preferences';
-export type { TopicPreference, UserBehaviorProfile } from './preferences';
-export { INTERACTION_WEIGHTS } from './preferences';
-
-// ─── Advanced spam detection (continuous scoring) ──────────────────
-export {
-  contentQualityScore,
-  isSpamPost,
-  spamScore,
-  spamTier,
-} from './spam';
-export type { SpamContext, SpamResult, SpamTier } from './spam';
-
+export type { ModerationCheckResult, ModerationThresholds } from './moderation';
 // ─── Auto-moderation configuration ────────────────────────────────
 export {
   checkText,
@@ -36,35 +15,38 @@ export {
   SCAM_KEYWORDS,
   SPAM_PATTERN_REGEXES,
 } from './moderation';
-export type { ModerationCheckResult, ModerationThresholds } from './moderation';
-
-// ─── Protocol quality presets ─────────────────────────────────────
+export type { CommunityQualityInput, CommunityQualityScore } from './niches';
+// ─── Community niche mapping and quality scoring ──────────────────
 export {
-  PRESET_LABELS,
-  PRESET_NAMES,
-  PRESET_PROFILES,
-  PROTOCOL_PRESETS,
-  applyQualityFilters,
-  presetKvKey,
-  resolvePreset,
-} from './quality-presets';
-export type {
-  PresetName,
-  PresetProfile,
-  ProtocolQualityPreset,
-  QualityFilterResult,
-  ResolvedPreset,
-} from './quality-presets';
-export { PRESET_DESCRIPTIONS } from './quality-presets';
-
+  COMMUNITY_DESCRIPTIONS,
+  LEMMY_COMMUNITY_NICHES,
+  RESERVED_COMMUNITY_NAMES,
+  scoreCommunityQuality,
+  subscriberTier,
+} from './niches';
+export type { TopicPreference, UserBehaviorProfile } from './preferences';
+// ─── AI-powered preference learning + personalization ─────────────
+export {
+  adjustTopicWeight,
+  clearTopic,
+  emptyBehaviorProfile,
+  getLearnedTopics,
+  INTERACTION_WEIGHTS,
+  isOnboardingMode,
+  learnFromInteraction,
+  personalizeScore,
+} from './preferences';
+export type { ProtocolQualityContext, ProtocolQualityResult } from './protocol-quality';
 // ─── Per-protocol quality scoring (protocol pages) ────────────────
 export {
   computeProtocolQuality,
   KNOWN_MASTODON_INSTANCES,
   QUALITY_BADGE_THRESHOLD,
 } from './protocol-quality';
-export type { ProtocolQualityContext, ProtocolQualityResult } from './protocol-quality';
-
+export type {
+  AuthorProfile,
+  QualityContext,
+} from './quality';
 // ─── Content quality scoring v2 ──────────────────────────────────
 export {
   buildQualityAuthorProfile,
@@ -76,19 +58,31 @@ export {
   hasMedia,
 } from './quality';
 export type {
-  AuthorProfile,
-  QualityContext,
-} from './quality';
-
-// ─── Community niche mapping and quality scoring ──────────────────
+  PresetName,
+  PresetProfile,
+  ProtocolQualityPreset,
+  QualityFilterResult,
+  ResolvedPreset,
+} from './quality-presets';
+// ─── Protocol quality presets ─────────────────────────────────────
 export {
-  COMMUNITY_DESCRIPTIONS,
-  LEMMY_COMMUNITY_NICHES,
-  RESERVED_COMMUNITY_NAMES,
-  scoreCommunityQuality,
-  subscriberTier,
-} from './niches';
-export type { CommunityQualityInput, CommunityQualityScore } from './niches';
+  applyQualityFilters,
+  PRESET_DESCRIPTIONS,
+  PRESET_LABELS,
+  PRESET_NAMES,
+  PRESET_PROFILES,
+  PROTOCOL_PRESETS,
+  presetKvKey,
+  resolvePreset,
+} from './quality-presets';
+export type { SpamContext, SpamResult, SpamTier } from './spam';
+// ─── Advanced spam detection (continuous scoring) ──────────────────
+export {
+  contentQualityScore,
+  isSpamPost,
+  spamScore,
+  spamTier,
+} from './spam';
 
 export const NICHE_KEYWORDS: Record<string, string[]> = {
   crypto: ['bitcoin', 'btc', 'crypto', 'cryptocurrency', 'blockchain', 'web3', 'token', 'altcoin'],

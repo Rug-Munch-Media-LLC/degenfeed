@@ -39,11 +39,14 @@ describe('billing', () => {
   it('should record subscription on verify', async () => {
     // Mock Solana RPC to return confirmed transaction status
     vi.mocked(globalThis.fetch).mockResolvedValueOnce(
-      new Response(JSON.stringify({
-        jsonrpc: '2.0',
-        result: { value: [{ confirmationStatus: 'finalized' }] },
-        id: 1,
-      }), { status: 200, headers: { 'content-type': 'application/json' } }),
+      new Response(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          result: { value: [{ confirmationStatus: 'finalized' }] },
+          id: 1,
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
     );
     const req = new Request('http://localhost/api/billing/verify?tier=pro', {
       method: 'POST',
@@ -52,7 +55,10 @@ describe('billing', () => {
         signature: 'sig',
       }),
     });
-    const res = await handleBillingVerify(req, { ...mockEnv, SOLANA_RPC_URL: 'https://api.mainnet-beta.solana.com' });
+    const res = await handleBillingVerify(req, {
+      ...mockEnv,
+      SOLANA_RPC_URL: 'https://api.mainnet-beta.solana.com',
+    });
     const body = (await res.json()) as { ok: boolean; tier: string };
     expect(res.status).toBe(200);
     expect(body.ok).toBe(true);

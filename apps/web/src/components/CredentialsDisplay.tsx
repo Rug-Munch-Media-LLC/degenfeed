@@ -8,7 +8,6 @@
  * Exposes a standalone component and a per-platform static card.
  */
 
-import type React from 'react';
 import { useCallback, useState } from 'react';
 import { useToast } from './Toast';
 
@@ -54,13 +53,7 @@ export const PLATFORM_CREDENTIAL_META: Record<
 
 // ─── Single credential field row ──────────────────────────────────────────
 
-function CredentialFieldRow({
-  field,
-  onCopied,
-}: {
-  field: CredentialField;
-  onCopied: () => void;
-}) {
+function CredentialFieldRow({ field, onCopied }: { field: CredentialField; onCopied: () => void }) {
   const [revealed, setRevealed] = useState(false);
   const canReveal = field.sensitive;
 
@@ -80,9 +73,7 @@ function CredentialFieldRow({
     }
   }, [field.value, onCopied]);
 
-  const displayValue = field.sensitive && !revealed
-    ? '••••••••••••••••'
-    : field.value;
+  const displayValue = field.sensitive && !revealed ? '••••••••••••••••' : field.value;
 
   return (
     <div className="flex items-center gap-2 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-2.5">
@@ -390,14 +381,22 @@ export function getRecommendedApps(platform: string): RecommendedApp[] {
         { name: 'Ice Cubes', url: 'https://icecubes.app', description: 'Open-source iOS client' },
         { name: 'Tusky', url: 'https://tusky.app', description: 'Android Mastodon client' },
         { name: 'Elk', url: 'https://elk.zone', description: 'Web-based Mastodon client' },
-        { name: 'Metatext', url: 'https://github.com/metabolist/metatext', description: 'iOS client' },
+        {
+          name: 'Metatext',
+          url: 'https://github.com/metabolist/metatext',
+          description: 'iOS client',
+        },
       ];
     case 'bluesky':
       return [
         { name: 'Graysky', url: 'https://graysky.app', description: 'Mobile Bluesky client' },
         { name: 'Skeets', url: 'https://skeets.app', description: 'iOS Bluesky client' },
         { name: 'Deck.blue', url: 'https://deck.blue', description: 'TweetDeck-style web client' },
-        { name: 'Bluesky (Official)', url: 'https://bsky.app', description: 'Official Bluesky web app' },
+        {
+          name: 'Bluesky (Official)',
+          url: 'https://bsky.app',
+          description: 'Official Bluesky web app',
+        },
       ];
     case 'nostr':
       return [
@@ -439,9 +438,7 @@ export interface RegistrationResultData {
   accountInfo?: Record<string, string>;
 }
 
-export function registrationToCredential(
-  reg: RegistrationResultData,
-): PlatformCredential | null {
+export function registrationToCredential(reg: RegistrationResultData): PlatformCredential | null {
   if (reg.status !== 'created' || !reg.accountInfo) return null;
 
   const meta = PLATFORM_CREDENTIAL_META[reg.platform];
@@ -465,9 +462,25 @@ export function registrationToCredential(
         instanceUrl: instance,
         fields: [
           { key: 'instance', label: 'Instance URL', value: instance, monospace: true },
-          { key: 'username', label: 'Username', value: reg.accountInfo.username ?? reg.username ?? '', monospace: true },
-          { key: 'password', label: 'Password', value: reg.accountInfo.password ?? '(generated at signup, reset if forgotten)', sensitive: true },
-          { key: 'accessToken', label: 'Access Token', value: reg.accountInfo.accessToken ?? '(available via OAuth)', sensitive: true, monospace: true },
+          {
+            key: 'username',
+            label: 'Username',
+            value: reg.accountInfo.username ?? reg.username ?? '',
+            monospace: true,
+          },
+          {
+            key: 'password',
+            label: 'Password',
+            value: reg.accountInfo.password ?? '(generated at signup, reset if forgotten)',
+            sensitive: true,
+          },
+          {
+            key: 'accessToken',
+            label: 'Access Token',
+            value: reg.accountInfo.accessToken ?? '(available via OAuth)',
+            sensitive: true,
+            monospace: true,
+          },
         ],
       };
     }
@@ -476,9 +489,20 @@ export function registrationToCredential(
         ...base,
         instanceUrl: 'bsky.social',
         fields: [
-          { key: 'handle', label: 'Handle', value: reg.accountInfo.handle ?? reg.username ?? '', monospace: true },
+          {
+            key: 'handle',
+            label: 'Handle',
+            value: reg.accountInfo.handle ?? reg.username ?? '',
+            monospace: true,
+          },
           { key: 'did', label: 'DID', value: reg.accountInfo.did ?? '', monospace: true },
-          { key: 'appPassword', label: 'App Password', value: reg.accountInfo.appPassword ?? '(generated at signup)', sensitive: true, monospace: true },
+          {
+            key: 'appPassword',
+            label: 'App Password',
+            value: reg.accountInfo.appPassword ?? '(generated at signup)',
+            sensitive: true,
+            monospace: true,
+          },
         ],
       };
     }
@@ -487,9 +511,25 @@ export function registrationToCredential(
         ...base,
         instanceUrl: 'Decentralized (relay-based)',
         fields: [
-          { key: 'npub', label: 'Public Key (npub)', value: reg.accountInfo.npub ?? '', monospace: true },
-          { key: 'nsec', label: 'Private Key (nsec)', value: reg.accountInfo._encryptedNsec ?? '(encrypted)', sensitive: true, monospace: true },
-          { key: 'pubkey', label: 'Hex Public Key', value: reg.accountInfo.pubkey ?? '', monospace: true },
+          {
+            key: 'npub',
+            label: 'Public Key (npub)',
+            value: reg.accountInfo.npub ?? '',
+            monospace: true,
+          },
+          {
+            key: 'nsec',
+            label: 'Private Key (nsec)',
+            value: reg.accountInfo._encryptedNsec ?? '(encrypted)',
+            sensitive: true,
+            monospace: true,
+          },
+          {
+            key: 'pubkey',
+            label: 'Hex Public Key',
+            value: reg.accountInfo.pubkey ?? '',
+            monospace: true,
+          },
         ],
       };
     }
@@ -499,8 +539,18 @@ export function registrationToCredential(
         instanceUrl: 'Farcaster Hub (on-chain)',
         fields: [
           { key: 'fid', label: 'FID', value: reg.accountInfo.fid ?? '', monospace: true },
-          { key: 'username', label: 'Username', value: reg.accountInfo.username ?? reg.username ?? '', monospace: true },
-          { key: 'recoveryAddress', label: 'Recovery Address', value: reg.accountInfo.recoveryAddress ?? '', monospace: true },
+          {
+            key: 'username',
+            label: 'Username',
+            value: reg.accountInfo.username ?? reg.username ?? '',
+            monospace: true,
+          },
+          {
+            key: 'recoveryAddress',
+            label: 'Recovery Address',
+            value: reg.accountInfo.recoveryAddress ?? '',
+            monospace: true,
+          },
         ],
       };
     }
@@ -509,8 +559,18 @@ export function registrationToCredential(
         ...base,
         instanceUrl: 'Lens Protocol (Polygon)',
         fields: [
-          { key: 'handle', label: 'Handle', value: reg.accountInfo.handle ?? reg.username ?? '', monospace: true },
-          { key: 'profileId', label: 'Profile ID', value: reg.accountInfo.profileId ?? '', monospace: true },
+          {
+            key: 'handle',
+            label: 'Handle',
+            value: reg.accountInfo.handle ?? reg.username ?? '',
+            monospace: true,
+          },
+          {
+            key: 'profileId',
+            label: 'Profile ID',
+            value: reg.accountInfo.profileId ?? '',
+            monospace: true,
+          },
         ],
       };
     }

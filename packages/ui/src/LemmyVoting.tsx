@@ -36,7 +36,6 @@ function formatCount(n: number): string {
 export const LemmyVoting = memo(function LemmyVoting({
   score,
   upvotes,
-  downvotes,
   comments,
   userVote: externalVote,
   onVote,
@@ -60,7 +59,8 @@ export const LemmyVoting = memo(function LemmyVoting({
     return s;
   })();
 
-  const btnBase = 'flex items-center gap-0.5 rounded-md px-1.5 py-1 transition-all duration-150 focus:outline-none min-h-[28px]';
+  const btnBase =
+    'flex items-center gap-0.5 rounded-md px-1.5 py-1 transition-all duration-150 focus:outline-none min-h-[28px]';
 
   if (compact) {
     // Compact inline row for feed cards
@@ -141,13 +141,7 @@ export const LemmyVoting = memo(function LemmyVoting({
           className="flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors hover:text-blue-400"
           aria-label="Comments"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            aria-hidden="true"
-          >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <path
               d="M3 1.5H11C11.8284 1.5 12.5 2.17157 12.5 3V8.5C12.5 9.32843 11.8284 10 11 10H8L5 12.5V10H3C2.17157 10 1.5 9.32843 1.5 8.5V3C1.5 2.17157 2.17157 1.5 3 1.5Z"
               stroke="currentColor"

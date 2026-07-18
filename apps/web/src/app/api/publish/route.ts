@@ -2,7 +2,16 @@ import { NextResponse } from 'next/server';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
-const VALID_TARGETS = ['nostr', 'farcaster', 'lens', 'bluesky', 'threads', 'mastodon', 'lemmy', 'peertube'];
+const VALID_TARGETS = [
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'threads',
+  'mastodon',
+  'lemmy',
+  'peertube',
+];
 
 /**
  * POST /api/publish
@@ -15,14 +24,19 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const text = typeof body.text === 'string' ? body.text.trim() : '';
-    const targets = Array.isArray(body.targets) ? body.targets.filter((t: string) => VALID_TARGETS.includes(t)) : [];
+    const targets = Array.isArray(body.targets)
+      ? body.targets.filter((t: string) => VALID_TARGETS.includes(t))
+      : [];
     const auth = (body.auth || {}) as Record<string, string>;
 
     if (!text) {
       return NextResponse.json({ error: 'Invalid text' }, { status: 400 });
     }
     if (targets.length === 0) {
-      return NextResponse.json({ error: 'No valid targets. Supported: ' + VALID_TARGETS.join(', ') }, { status: 400 });
+      return NextResponse.json(
+        { error: `No valid targets. Supported: ${VALID_TARGETS.join(', ')}` },
+        { status: 400 },
+      );
     }
 
     const results: Record<string, { ok: boolean; error?: string; hash?: string }> = {};
@@ -55,7 +69,9 @@ async function publishToProtocol(
       if (signedEvent) {
         try {
           const nostr = await import('@degenfeed/nostr-sdk');
-          const pool = new nostr.RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], { eoseTimeout: 4000 });
+          const pool = new nostr.RelayPool(['wss://relay.damus.io', 'wss://nos.lol'], {
+            eoseTimeout: 4000,
+          });
           const event = typeof signedEvent === 'string' ? JSON.parse(signedEvent) : signedEvent;
           await pool.publish(event);
           pool.disconnectAll();
@@ -91,7 +107,7 @@ async function publishToProtocol(
             body: messageBody,
           });
           if (res.ok) {
-            const data = await res.json() as { hash?: string };
+            const data = (await res.json()) as { hash?: string };
             return { ok: true, hash: data.hash || `fc:${Date.now()}` };
           }
           return { ok: false, error: `Farcaster Hub rejected: ${await res.text()}` };
@@ -111,12 +127,13 @@ async function publishToProtocol(
             method: 'POST',
             headers: { 'content-type': 'application/json', authorization: `Bearer ${accessToken}` },
             body: JSON.stringify({
-              query: 'mutation CreatePost($request: CreatePostRequest!) { createPost(request: $request) { ... on RelayerResult { txHash } ... on RelayError { reason } } }',
+              query:
+                'mutation CreatePost($request: CreatePostRequest!) { createPost(request: $request) { ... on RelayerResult { txHash } ... on RelayError { reason } } }',
               variables: { request: { contentURI: text } },
             }),
           });
           if (res.ok) {
-            const data = await res.json() as { data?: { createPost?: { txHash?: string } } };
+            const data = (await res.json()) as { data?: { createPost?: { txHash?: string } } };
             return { ok: true, hash: data.data?.createPost?.txHash || `lens:${Date.now()}` };
           }
         } catch {
@@ -141,7 +158,7 @@ async function publishToProtocol(
             }),
           });
           if (res.ok) {
-            const data = await res.json() as { uri?: string };
+            const data = (await res.json()) as { uri?: string };
             return { ok: true, hash: data.uri || `bsky:${Date.now()}` };
           }
         } catch {
@@ -162,7 +179,7 @@ async function publishToProtocol(
             body: JSON.stringify({ status: text, visibility: 'public' }),
           });
           if (res.ok) {
-            const data = await res.json() as { id?: string };
+            const data = (await res.json()) as { id?: string };
             return { ok: true, hash: data.id || `masto:${Date.now()}` };
           }
         } catch {

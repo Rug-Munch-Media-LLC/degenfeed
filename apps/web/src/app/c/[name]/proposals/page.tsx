@@ -190,7 +190,9 @@ export default function ProposalsPage() {
               type="button"
               onClick={() => setActiveTab(tab)}
               className={`relative px-4 py-3 text-sm font-medium capitalize transition-colors ${
-                activeTab === tab ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
+                activeTab === tab
+                  ? 'text-[var(--color-fg)]'
+                  : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
               }`}
             >
               {tab}
@@ -307,7 +309,9 @@ function ProposalCard({
               {statusMeta.label}
             </span>
             {proposal.quorumPct !== undefined && (
-              <span className="text-[11px] text-[var(--color-muted)]">{proposal.quorumPct}% quorum</span>
+              <span className="text-[11px] text-[var(--color-muted)]">
+                {proposal.quorumPct}% quorum
+              </span>
             )}
           </div>
 

@@ -47,13 +47,13 @@ const ComposeModal = dynamic(
 );
 
 import { useWeb3 } from '../components/Web3Provider';
+import { useCrossReply } from '../hooks/useCrossReply';
+import { useEngage } from '../hooks/useEngage';
 import { triggerOnboarding } from '../hooks/useOnboarding';
+import { usePublish } from '../hooks/usePublish';
 import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
-import { usePublish } from '../hooks/usePublish';
-import { useCrossReply } from '../hooks/useCrossReply';
-import { useEngage } from '../hooks/useEngage';
 import { publishNoteToNostr } from '../lib/nostr';
 import {
   addStoredWallet,
@@ -336,7 +336,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               address: addr,
               chain: 'ethereum',
               walletName: null,
-              chainId: session.chainId ?? null,
+              chainId: session.chain ?? null,
               addedAt: Date.now(),
             };
             const updated = addStoredWallet(meta);
@@ -367,7 +367,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 address: addr,
                 chain: 'solana',
                 walletName: null,
-                chainId: session.chainId ?? null,
+                chainId: session.chain ?? null,
                 addedAt: Date.now(),
               };
               const updated = addStoredWallet(meta);

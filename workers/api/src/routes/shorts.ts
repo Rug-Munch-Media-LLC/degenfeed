@@ -7,9 +7,9 @@
  * GET /api/shorts?limit=20&topics=defi,nft&cursor=...
  */
 
-import { fetchShortsFeed, deduplicateVideos } from '@degenfeed/shorts-provider';
+import type { ShortVideoItem } from '@degenfeed/shorts-provider';
+import { fetchShortsFeed } from '@degenfeed/shorts-provider';
 import { rankShorts } from '@degenfeed/shorts-provider/scorer';
-import type { ShortVideoItem, ShortVideoSource } from '@degenfeed/shorts-provider';
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
 
@@ -59,10 +59,7 @@ const DEFAULT_USER_PROFILE: UserInterestProfile = {
  *   - cursor (string)              — pagination cursor (last video ID)
  *   - topics (string, comma-sep)   — topic filter (e.g. "defi,nft,trading")
  */
-export async function handleShortsFeed(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleShortsFeed(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -88,9 +85,7 @@ export async function handleShortsFeed(
 
   // Apply topic filter if specified
   if (topicFilter.length > 0) {
-    videos = videos.filter((v) =>
-      v.topics.some((t) => topicFilter.includes(t)),
-    );
+    videos = videos.filter((v) => v.topics.some((t) => topicFilter.includes(t)));
   }
 
   // Build user profile — from KV/wallet in future, default for now
@@ -105,7 +100,7 @@ export async function handleShortsFeed(
   const response: ShortsResponse = {
     videos: ranked,
     sources: feed.sources,
-    cursor: ranked.length > 0 ? ranked[ranked.length - 1]!.id : null,
+    cursor: ranked.length > 0 ? ranked[ranked.length - 1]?.id : null,
     hasMore: videos.length > limit,
   };
 
@@ -118,10 +113,7 @@ export async function handleShortsFeed(
  * Load user interest profile from session or KV storage.
  * Falls back to default profile for anonymous requests.
  */
-async function loadUserProfile(
-  _request: Request,
-  _env: Env,
-): Promise<UserInterestProfile> {
+async function loadUserProfile(_request: Request, _env: Env): Promise<UserInterestProfile> {
   // TODO: Load from KV-based user preferences when session is available
   // const session = await requireSession(request, env);
   // if (session) { load from env.CACHE or env.PREFERENCES }

@@ -16,10 +16,13 @@ const CHAIN_FOR_METHOD: Record<string, { chain: string; chainId: number }> = {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { recipient, recipientProtocol, method, amount, publicationId } = body;
+    const { recipient, method, amount, publicationId } = body;
 
     if (!recipient || !method || !amount) {
-      return NextResponse.json({ error: 'Missing required fields: recipient, method, amount' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields: recipient, method, amount' },
+        { status: 400 },
+      );
     }
 
     const chainInfo = CHAIN_FOR_METHOD[method] || { chain: 'ethereum', chainId: 1 };
@@ -34,20 +37,27 @@ export async function POST(request: Request) {
       data: publicationId ? `0x${Buffer.from(publicationId).toString('hex')}` : '0x',
       from: body.from || '',
       note: `Tip from DegenFeed${body.recipient ? ` for ${recipient}` : ''}`,
-      actionUrl: chainInfo.chainId !== 0 ? `https://app.degenfeed.xyz/tip/${method}/${recipient}` : undefined,
-      zapEndpoint: method === 'lightning_zap' ? `lnurlp://app.degenfeed.xyz/.well-known/lnurlp/${recipient}` : undefined,
+      actionUrl:
+        chainInfo.chainId !== 0
+          ? `https://app.degenfeed.xyz/tip/${method}/${recipient}`
+          : undefined,
+      zapEndpoint:
+        method === 'lightning_zap'
+          ? `lnurlp://app.degenfeed.xyz/.well-known/lnurlp/${recipient}`
+          : undefined,
     };
 
     return NextResponse.json({
       intent,
-      instructions: method === 'ethereum'
-        ? 'Send ETH to the address above. Gas fees apply on Ethereum mainnet.'
-        : method === 'solana'
-          ? 'Send SOL to the address above via the Solana network.'
-          : `Send on ${chainInfo.chain} network.`,
+      instructions:
+        method === 'ethereum'
+          ? 'Send ETH to the address above. Gas fees apply on Ethereum mainnet.'
+          : method === 'solana'
+            ? 'Send SOL to the address above via the Solana network.'
+            : `Send on ${chainInfo.chain} network.`,
       actionUrl: intent.actionUrl,
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }

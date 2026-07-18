@@ -4,9 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "xyz.degenfeed.app",
-      "sha256_cert_fingerprints": [
-        "CHANGE_ME:YOUR_APP_SIGNING_CERTIFICATE_SHA256"
-      ]
+      "sha256_cert_fingerprints": ["CHANGE_ME:YOUR_APP_SIGNING_CERTIFICATE_SHA256"]
     }
   }
 ]

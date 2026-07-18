@@ -603,6 +603,7 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
               <span className="sidebar-nav-label">{item.label}</span>
               {item.label === 'Notifications' && unreadCount > 0 && (
                 <span
+                  role="status"
                   className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-degen-500 px-1.5 text-[11px] font-bold text-black"
                   aria-label={`${unreadCount} unread notifications`}
                 >

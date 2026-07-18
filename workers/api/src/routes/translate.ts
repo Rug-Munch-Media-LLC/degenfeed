@@ -13,8 +13,8 @@
 import { translateContent } from '@degenfeed/utils';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import { hasSuspiciousPayload, sanitizeString } from '../sanitize';
+import { requireSession } from '../session';
 
 // ─── Supported protocol keys for translation ────────────────────────
 

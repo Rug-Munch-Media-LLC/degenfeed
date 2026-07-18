@@ -115,7 +115,9 @@ function WalletEntry({
           </code>
           <ChainBadge chain={meta.chain} />
           {linkedProtocols.length > 0 && (
-            <span className="text-[10px] text-[var(--color-muted)]">{linkedProtocols.length} linked</span>
+            <span className="text-[10px] text-[var(--color-muted)]">
+              {linkedProtocols.length} linked
+            </span>
           )}
         </div>
         {linkedProtocols.length > 0 && (
@@ -124,7 +126,9 @@ function WalletEntry({
               <ProtocolBadge key={lp.protocol} protocol={lp.protocol} />
             ))}
             {linkedProtocols.length > 3 && (
-              <span className="text-[9px] text-[var(--color-muted)]">+{linkedProtocols.length - 3}</span>
+              <span className="text-[9px] text-[var(--color-muted)]">
+                +{linkedProtocols.length - 3}
+              </span>
             )}
           </div>
         )}

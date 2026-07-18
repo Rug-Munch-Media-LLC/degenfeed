@@ -101,8 +101,8 @@ function DigestCard({ item }: { item: LocalDigestItem }) {
     <a
       href={item.url}
       target="_blank"
-      
       className="block rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 hover:border-degen-400/40 transition-all hover:shadow-md hover:shadow-degen-500/5"
+      rel="noopener"
     >
       <div className="flex items-start gap-4">
         {item.image && (

@@ -61,7 +61,7 @@ const GUEST_NAV: NavItem[] = [
 
 export function BottomNav() {
   const pathname = usePathname() ?? '/';
-  const { ready, signedInProtocols, openSignIn } = useAuth();
+  const { ready, signedInProtocols } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const { unreadCount: notifCount } = useNotifications(hasSignedIn);
   const [dmCount, setDmCount] = useState(0);
@@ -116,6 +116,7 @@ export function BottomNav() {
                 className={`relative flex h-8 w-8 items-center justify-center rounded-xl transition-all ${
                   active ? 'bg-degen-500/15 shadow-[0_0_12px_rgba(0,255,65,0.1)]' : ''
                 }`}
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: inline SVGs from ICONS map — content is static, not user input
                 dangerouslySetInnerHTML={{
                   __html:
                     !signedIn && item.requiresAuth
@@ -125,6 +126,7 @@ export function BottomNav() {
               />
               {signedIn && dmCount > 0 && item.href === '/messages' && (
                 <span
+                  role="status"
                   className="absolute top-0 right-1/2 translate-x-[14px] bg-degen-500 text-black text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm"
                   aria-label={`${dmCount} unread messages`}
                 >
@@ -133,6 +135,7 @@ export function BottomNav() {
               )}
               {signedIn && notifCount > 0 && item.href === '/notifications' && (
                 <span
+                  role="status"
                   className="absolute top-0 right-1/2 translate-x-[14px] bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm"
                   aria-label={`${notifCount} unread notifications`}
                 >

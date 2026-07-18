@@ -21,11 +21,11 @@ const FEED_CACHE_TTLS: Record<FeedType, number> = {
 };
 
 const FEED_CACHE_FRESH_MS: Record<FeedType, number> = {
-  trending: 15_000,   // 15s fresh
-  home: 30_000,       // 30s fresh
-  'for-you': 30_000,  // 30s fresh
+  trending: 15_000, // 15s fresh
+  home: 30_000, // 30s fresh
+  'for-you': 30_000, // 30s fresh
   everything: 45_000, // 45s fresh
-  curated: 20_000,    // 20s fresh
+  curated: 20_000, // 20s fresh
 };
 
 export function buildFeedCacheKey(userId: string | null, feedType: FeedType): string {

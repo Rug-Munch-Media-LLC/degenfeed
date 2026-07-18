@@ -48,7 +48,11 @@ describe('EmptyState', () => {
     render(
       <EmptyState
         title="Empty"
-        action={<button type="button" onClick={handleClick}>Create Post</button>}
+        action={
+          <button type="button" onClick={handleClick}>
+            Create Post
+          </button>
+        }
       />,
     );
     const button = screen.getByText('Create Post');
@@ -88,7 +92,7 @@ describe('EmptyState', () => {
 describe('EmptyRow', () => {
   it('should render default message', async () => {
     const { EmptyRow } = await import('./EmptyState');
-    const { container } = render(
+    render(
       <table>
         <tbody>
           <EmptyRow />

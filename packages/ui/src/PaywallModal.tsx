@@ -75,7 +75,9 @@ export function PaywallModal({ open, onClose, requirement, onVerify }: PaywallMo
         <div className="mb-6 text-center">
           <div className="mb-2 text-4xl">🔒</div>
           <p className="text-sm text-[var(--color-muted)]">This post is locked.</p>
-          <p className="text-2xl font-bold text-[var(--color-fg)]">Unlock for {requirement.amount} SOL</p>
+          <p className="text-2xl font-bold text-[var(--color-fg)]">
+            Unlock for {requirement.amount} SOL
+          </p>
         </div>
         <div className="space-y-3">
           <button

@@ -27,24 +27,22 @@ import {
 } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 
-// ─── Enhanced quality signals and diversity helpers ────────────────
-export {
-  checkDiversity,
-  computeAuthorReputation,
-  computeQualitySignals,
-  interleaveByProtocol,
-} from './scorer';
 export type {
   AuthorReputation,
   DiversityConstraints,
   QualitySignals,
   ScorerContext,
 } from './scorer';
-export { DEFAULT_DIVERSITY } from './scorer';
-import {
-  computeAuthorReputation as computeReputation,
+// ─── Enhanced quality signals and diversity helpers ────────────────
+export {
+  checkDiversity,
+  computeAuthorReputation,
   computeQualitySignals,
+  DEFAULT_DIVERSITY,
+  interleaveByProtocol,
 } from './scorer';
+
+import { computeQualitySignals, computeAuthorReputation as computeReputation } from './scorer';
 
 export const WEIGHTS = {
   w1: 1.0,
@@ -285,16 +283,21 @@ export function scoreBreakdownV2(post: UnifiedPost, ctx: RankingContext): ScoreB
     source * (v2.source ?? 0.8);
 
   const total =
-    baseScore *
-    freshnessBoost(post.createdAt, ctx.now) *
-    Math.max(0.05, qualityNormalized);
+    baseScore * freshnessBoost(post.createdAt, ctx.now) * Math.max(0.05, qualityNormalized);
 
   if (isMuted) reasons.unshift('muted-penalty');
 
   return {
-    recency, engagement, relevance, quality,
+    recency,
+    engagement,
+    relevance,
+    quality,
     reputation: effectiveReputation,
-    diversity, source, velocity, total, reasons,
+    diversity,
+    source,
+    velocity,
+    total,
+    reasons,
   };
 }
 

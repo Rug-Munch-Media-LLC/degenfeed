@@ -209,7 +209,9 @@ export function UnifiedTipDashboard({
               across {sent.count} tip{sent.count !== 1 ? 's' : ''}
             </span>
           </div>
-          {sentBreakdown && <div className="mt-1 text-[10px] text-[var(--color-muted)]">{sentBreakdown}</div>}
+          {sentBreakdown && (
+            <div className="mt-1 text-[10px] text-[var(--color-muted)]">{sentBreakdown}</div>
+          )}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {PLATFORM_ORDER.filter((p) => (sent.byPlatform[p]?.count ?? 0) > 0).map((p) => (
               <PlatformBadge key={p} platform={p} />
@@ -263,9 +265,7 @@ export function UnifiedTipDashboard({
                   {formatUsd(item.amountUsd)}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-[var(--color-muted)]">
-                  {item.direction === 'received'
-                    ? `from ${item.fromLabel}`
-                    : `to ${item.toLabel}`}
+                  {item.direction === 'received' ? `from ${item.fromLabel}` : `to ${item.toLabel}`}
                   {item.entityLabel ? ` · ${item.entityLabel}` : ''}
                 </span>
                 <PlatformBadge platform={item.platform} />

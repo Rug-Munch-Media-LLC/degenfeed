@@ -443,7 +443,10 @@ export async function handleWarpcastCallback(request: Request, env: Env): Promis
       avatar: data.user?.pfp_url,
     });
   } catch (err) {
-    console.error('[auth] handleWarpcastCallback failed:', err instanceof Error ? err.message : err);
+    console.error(
+      '[auth] handleWarpcastCallback failed:',
+      err instanceof Error ? err.message : err,
+    );
     return jsonResponse({ error: (err as Error).message }, 500);
   }
 }

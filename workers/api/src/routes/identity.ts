@@ -8,8 +8,8 @@
  */
 
 import { resolveHandle } from '@degenfeed/identity';
-import { identityKey } from '@degenfeed/utils';
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
+import { identityKey } from '@degenfeed/utils';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
 
@@ -73,7 +73,18 @@ export async function handleLinkIdentity(request: Request, env: Env): Promise<Re
     return jsonResponse({ error: 'Missing protocol or identity fields' }, 400);
   }
 
-  const validProtocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'lemmy', 'threads', 'rss', 'peertube'];
+  const validProtocols = [
+    'nostr',
+    'farcaster',
+    'lens',
+    'bluesky',
+    'mastodon',
+    'reddit',
+    'lemmy',
+    'threads',
+    'rss',
+    'peertube',
+  ];
   if (!validProtocols.includes(body.protocol)) {
     return jsonResponse({ error: `Unsupported protocol: ${body.protocol}` }, 400);
   }
@@ -125,7 +136,18 @@ export async function handleUnlinkIdentity(request: Request, env: Env): Promise<
     return jsonResponse({ error: 'Missing protocol parameter' }, 400);
   }
 
-  const validProtocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'lemmy', 'threads', 'rss', 'peertube'];
+  const validProtocols = [
+    'nostr',
+    'farcaster',
+    'lens',
+    'bluesky',
+    'mastodon',
+    'reddit',
+    'lemmy',
+    'threads',
+    'rss',
+    'peertube',
+  ];
   if (!validProtocols.includes(protocol)) {
     return jsonResponse({ error: `Unsupported protocol: ${protocol}` }, 400);
   }
@@ -176,16 +198,46 @@ export async function handleGetIdentityProfile(request: Request, env: Env): Prom
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-interface NostrIdentityInput { npub?: string; relays?: string[]; pubkey?: string }
-interface FarcasterIdentityInput { fid?: number; username?: string; custodyAddress?: string }
-interface LensIdentityInput { profileId?: string; handle?: string }
-interface BlueskyIdentityInput { did?: string; handle?: string }
-interface MastodonIdentityInput { handle?: string; instance?: string }
-interface RedditIdentityInput { username?: string }
-interface LemmyIdentityInput { username?: string; instance?: string }
-interface ThreadsIdentityInput { username?: string }
-interface RssIdentityInput { url?: string }
-interface PeerTubeIdentityInput { username?: string; channelId?: string; instance?: string }
+interface NostrIdentityInput {
+  npub?: string;
+  relays?: string[];
+  pubkey?: string;
+}
+interface FarcasterIdentityInput {
+  fid?: number;
+  username?: string;
+  custodyAddress?: string;
+}
+interface LensIdentityInput {
+  profileId?: string;
+  handle?: string;
+}
+interface BlueskyIdentityInput {
+  did?: string;
+  handle?: string;
+}
+interface MastodonIdentityInput {
+  handle?: string;
+  instance?: string;
+}
+interface RedditIdentityInput {
+  username?: string;
+}
+interface LemmyIdentityInput {
+  username?: string;
+  instance?: string;
+}
+interface ThreadsIdentityInput {
+  username?: string;
+}
+interface RssIdentityInput {
+  url?: string;
+}
+interface PeerTubeIdentityInput {
+  username?: string;
+  channelId?: string;
+  instance?: string;
+}
 
 function validateProtocolIdentity(
   protocol: string,
@@ -239,7 +291,11 @@ function validateProtocolIdentity(
       const handle = String(data.handle || '');
       const instance = String(data.instance || '');
       if (!handle) return null;
-      return { handle, instance: instance || 'social.degenfeed.xyz', ...(manualLinking ? { manualLinking: true } : {}) };
+      return {
+        handle,
+        instance: instance || 'social.degenfeed.xyz',
+        ...(manualLinking ? { manualLinking: true } : {}),
+      };
     }
     case 'reddit': {
       const username = String(data.username || '');
@@ -250,13 +306,21 @@ function validateProtocolIdentity(
       const username = String(data.username || '');
       const instance = String(data.instance || '');
       if (!username) return null;
-      return { username, instance: instance || 'community.degenfeed.xyz', ...(manualLinking ? { manualLinking: true } : {}) };
+      return {
+        username,
+        instance: instance || 'community.degenfeed.xyz',
+        ...(manualLinking ? { manualLinking: true } : {}),
+      };
     }
     case 'threads': {
       const username = String(data.username || '');
       const did = String(data.did || '');
       if (!username && !did) return null;
-      return { username, ...(did ? { did } : {}), ...(manualLinking ? { manualLinking: true } : {}) };
+      return {
+        username,
+        ...(did ? { did } : {}),
+        ...(manualLinking ? { manualLinking: true } : {}),
+      };
     }
     case 'rss': {
       const url = String(data.url || '');
@@ -268,7 +332,12 @@ function validateProtocolIdentity(
       const channelId = String(data.channelId || '');
       const instance = String(data.instance || '');
       if (!username && !channelId) return null;
-      return { username, channelId, instance: instance || 'video.degenfeed.xyz', ...(manualLinking ? { manualLinking: true } : {}) };
+      return {
+        username,
+        channelId,
+        instance: instance || 'video.degenfeed.xyz',
+        ...(manualLinking ? { manualLinking: true } : {}),
+      };
     }
     default:
       return null;

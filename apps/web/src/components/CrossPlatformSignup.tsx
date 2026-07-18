@@ -9,11 +9,16 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePremium } from '../hooks/usePremium';
 import { useAuth } from './AuthProvider';
-import { CredentialCard, CredentialSecurityNote, CredentialsProgressBanner, registrationToCredential } from './CredentialsDisplay';
+import {
+  CredentialCard,
+  CredentialSecurityNote,
+  CredentialsProgressBanner,
+  registrationToCredential,
+} from './CredentialsDisplay';
 import { PremiumPaymentModal } from './PremiumPaymentModal';
 import { useToast } from './Toast';
-import { usePremium } from '../hooks/usePremium';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -102,7 +107,6 @@ const SIGNUP_PLATFORMS: PlatformMeta[] = [
 // ─── Username input ───────────────────────────────────────────────────────
 
 function PlatformSignupForm({
-  platform,
   onSignup,
   loading,
 }: {
@@ -164,7 +168,7 @@ export function CrossPlatformSignup({
   onRegistrationComplete,
 }: CrossPlatformSignupProps) {
   const { walletAddress } = useAuth();
-  const { tier: currentTier, isPremium, loading: premiumLoading } = usePremium();
+  const { isPremium, loading: premiumLoading } = usePremium();
   const { showToast } = useToast();
 
   // Registration state
@@ -235,7 +239,11 @@ export function CrossPlatformSignup({
           body: JSON.stringify({ platform: platformId, username }),
         });
 
-        const data = (await res.json()) as { data?: RegistrationResult; error?: string; upgrade?: boolean };
+        const data = (await res.json()) as {
+          data?: RegistrationResult;
+          error?: string;
+          upgrade?: boolean;
+        };
 
         if (!res.ok) {
           if (data.upgrade) {
@@ -375,10 +383,7 @@ export function CrossPlatformSignup({
       )}
 
       {/* ── Progress banner ── */}
-      <CredentialsProgressBanner
-        connectedCount={connectedCount}
-        totalPlatforms={totalPlatforms}
-      />
+      <CredentialsProgressBanner connectedCount={connectedCount} totalPlatforms={totalPlatforms} />
 
       {/* ── Platform cards ── */}
       <div className="space-y-3">
@@ -444,9 +449,7 @@ export function CrossPlatformSignup({
                     onSignup={(username) => handleSignup(platform.id, username)}
                     loading={signingUpThis}
                   />
-                  {error && (
-                    <p className="mt-1.5 text-[10px] text-red-400">{error}</p>
-                  )}
+                  {error && <p className="mt-1.5 text-[10px] text-red-400">{error}</p>}
                 </div>
               )}
 
@@ -472,10 +475,8 @@ export function CrossPlatformSignup({
             </h3>
             <p className="mb-3 text-xs text-[var(--color-muted)]">
               Use these credentials to login on any{' '}
-              {credentialCards.length === 1
-                ? `${credentialCards[0]!.label}`
-                : 'compatible'}{' '}
-              app. You own this account.
+              {credentialCards.length === 1 ? `${credentialCards[0]?.label}` : 'compatible'} app.
+              You own this account.
             </p>
             <div className="space-y-3">
               {credentialCards.map((card) => (
@@ -494,9 +495,7 @@ export function CrossPlatformSignup({
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-degen-500/10 text-xl text-degen-400">
             +
           </div>
-          <h3 className="mb-1 text-sm font-bold text-[var(--color-fg)]">
-            No accounts created yet
-          </h3>
+          <h3 className="mb-1 text-sm font-bold text-[var(--color-fg)]">No accounts created yet</h3>
           <p className="mx-auto max-w-sm text-xs text-[var(--color-muted)]">
             Create accounts above to unlock cross-protocol posting and portable credentials you can
             use anywhere.

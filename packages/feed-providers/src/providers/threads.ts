@@ -55,9 +55,7 @@ export function isBridgyConfigured(): boolean {
       }
     ).process;
     const env = p?.env;
-    return !!(
-      env?.BRIDGY_FED_ENABLED === 'true' || env?.ACTIVITYPUB_BRIDGE_ENABLED === 'true'
-    );
+    return !!(env?.BRIDGY_FED_ENABLED === 'true' || env?.ACTIVITYPUB_BRIDGE_ENABLED === 'true');
   } catch {
     return false;
   }
@@ -153,19 +151,13 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-function statusToUnifiedPost(
-  status: GtSStatus,
-  instanceUrl: string,
-  handle: string,
-): UnifiedPost {
+function statusToUnifiedPost(status: GtSStatus, instanceUrl: string, handle: string): UnifiedPost {
   const original = status.reblog ?? status;
   const isBoost = status.reblog !== null;
   const text = stripHtml(original.content || '');
   const hostname = new URL(instanceUrl).hostname;
 
-  const nativeId = isBoost
-    ? `threads:boost:${status.id}:${original.id}`
-    : `threads:${original.id}`;
+  const nativeId = isBoost ? `threads:boost:${status.id}:${original.id}` : `threads:${original.id}`;
 
   const embeds: Embed[] = [];
   for (const media of original.media_attachments) {
@@ -187,9 +179,7 @@ function statusToUnifiedPost(
     });
   }
 
-  const finalText = original.spoiler_text
-    ? `[CW: ${original.spoiler_text}]\n\n${text}`
-    : text;
+  const finalText = original.spoiler_text ? `[CW: ${original.spoiler_text}]\n\n${text}` : text;
 
   const identity = {
     id: `threads:${original.account.username}@${hostname}`,
@@ -286,9 +276,7 @@ async function fetchThreadsHashtagTimeline(
 ): Promise<GtSStatus[]> {
   try {
     return await withTimeout(
-      fetchJson<GtSStatus[]>(
-        `${instanceUrl}/api/v1/timelines/tag/threads?limit=20`,
-      ),
+      fetchJson<GtSStatus[]>(`${instanceUrl}/api/v1/timelines/tag/threads?limit=20`),
       timeoutMs,
       'threads:hashtag',
     );
@@ -307,7 +295,7 @@ interface CircuitBreakerState {
   openUntil: number;
 }
 
-let circuitBreaker: CircuitBreakerState = {
+const circuitBreaker: CircuitBreakerState = {
   failureTimestamps: [],
   openUntil: 0,
 };
@@ -325,7 +313,7 @@ function isCircuitOpen(): boolean {
   return false;
 }
 
-function recordFailure(): void {
+function _recordFailure(): void {
   const now = Date.now();
   circuitBreaker.failureTimestamps.push(now);
   circuitBreaker.failureTimestamps = circuitBreaker.failureTimestamps.filter(
@@ -401,12 +389,12 @@ export class ThreadsProvider implements FeedProvider {
 
     for (const r of accountResults) {
       if (r.status === 'fulfilled') {
-    for (const post of r.value) {
-      if (!seenIds.has(post.id)) {
-        seenIds.add(post.id);
-        allPosts.push(post);
-      }
-    }
+        for (const post of r.value) {
+          if (!seenIds.has(post.id)) {
+            seenIds.add(post.id);
+            allPosts.push(post);
+          }
+        }
       }
     }
 
@@ -459,11 +447,7 @@ export class ThreadsProvider implements FeedProvider {
     }
 
     try {
-      await withTimeout(
-        fetchJson(`${this.instanceUrl}/api/v1/instance`),
-        5000,
-        'threads:health',
-      );
+      await withTimeout(fetchJson(`${this.instanceUrl}/api/v1/instance`), 5000, 'threads:health');
       return { healthy: true, latencyMs: Math.round(performance.now() - start) };
     } catch (err) {
       return {

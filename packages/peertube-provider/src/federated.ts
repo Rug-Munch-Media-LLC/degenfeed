@@ -22,7 +22,7 @@
 
 // ─── Types ───────────────────────────────────────────────────────────
 
-import type { PeerTubeFetchOptions, PeerTubeVideo, PeerTubeVideoResponse } from './index';
+import type { PeerTubeVideo, PeerTubeVideoResponse } from './index';
 
 export interface FederatedVideoItem {
   id: string;
@@ -350,25 +350,27 @@ async function batchFetchInstances(
           instanceCount++;
         }
 
-        return videos.map((v): FederatedVideoItem => ({
-          id: v.uuid,
-          title: v.name,
-          url: v.url,
-          instanceUrl: inst.url,
-          instanceName: inst.name,
-          channelName: v.channel?.displayName ?? v.channel?.name ?? 'unknown',
-          channelUrl: v.channel?.url ?? null,
-          thumbnailUrl: v.thumbnailPath ? `${inst.url}${v.thumbnailPath}` : null,
-          publishedAt: v.publishedAt,
-          publishedMs: new Date(v.publishedAt).getTime(),
-          views: v.views,
-          likes: v.likes ?? 0,
-          duration: v.duration,
-          isLive: v.isLive ?? false,
-          description: v.shortDescription || v.description || '',
-          tags: v.tags ?? [],
-          source: new URL(inst.url).hostname,
-        }));
+        return videos.map(
+          (v): FederatedVideoItem => ({
+            id: v.uuid,
+            title: v.name,
+            url: v.url,
+            instanceUrl: inst.url,
+            instanceName: inst.name,
+            channelName: v.channel?.displayName ?? v.channel?.name ?? 'unknown',
+            channelUrl: v.channel?.url ?? null,
+            thumbnailUrl: v.thumbnailPath ? `${inst.url}${v.thumbnailPath}` : null,
+            publishedAt: v.publishedAt,
+            publishedMs: new Date(v.publishedAt).getTime(),
+            views: v.views,
+            likes: v.likes ?? 0,
+            duration: v.duration,
+            isLive: v.isLive ?? false,
+            description: v.shortDescription || v.description || '',
+            tags: v.tags ?? [],
+            source: new URL(inst.url).hostname,
+          }),
+        );
       }),
     );
 
@@ -406,7 +408,8 @@ export async function searchFederatedVideos(
   // Convert to FederatedVideoItem[]
   const items: FederatedVideoItem[] = sepiasearchResults.map((v) => {
     const host = v.url ? new URL(v.url).hostname : 'unknown';
-    const instanceName = FEDERATED_PEERTUBE_INSTANCES.find((i) => i.url.includes(host))?.name ?? host;
+    const instanceName =
+      FEDERATED_PEERTUBE_INSTANCES.find((i) => i.url.includes(host))?.name ?? host;
     return {
       id: v.uuid,
       title: v.name,
@@ -516,9 +519,7 @@ export async function getTrendingVideos(
  * Get the most recent videos from all federated instances.
  * Opposite of trending — focuses on recency.
  */
-export async function getRecentFederatedVideos(
-  limit: number = 30,
-): Promise<FederatedFeedResult> {
+export async function getRecentFederatedVideos(limit: number = 30): Promise<FederatedFeedResult> {
   const cacheKey = `recent:${limit}`;
   const cached = getCached<FederatedFeedResult>(cacheKey);
   if (cached) return { ...cached, cached: true };
@@ -669,7 +670,14 @@ export async function federatedHealthCheck(): Promise<{
   const instances = results.map((r) =>
     r.status === 'fulfilled'
       ? r.value
-      : { name: 'unknown', url: 'unknown', tags: [] as string[], priority: 99, reachable: false, videoCount: 0 },
+      : {
+          name: 'unknown',
+          url: 'unknown',
+          tags: [] as string[],
+          priority: 99,
+          reachable: false,
+          videoCount: 0,
+        },
   );
 
   return {

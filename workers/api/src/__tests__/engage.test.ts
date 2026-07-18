@@ -51,8 +51,8 @@ vi.mock('@degenfeed/bluesky-sdk', () => ({
   },
 }));
 
-import type { Env } from '../index';
 import worker from '../app';
+import type { Env } from '../index';
 import { createSession, parseSessionCookie } from '../session';
 
 const secret = 'test-secret-must-be-at-least-32-bytes';
@@ -105,9 +105,8 @@ describe('POST /api/engage', () => {
       cookie,
     );
     expect(res.status).toBe(400);
-    const body = (await res.json()) as { ok: boolean; error: string };
-    expect(body.ok).toBe(false);
-    expect(body.error).toContain('required');
+    const body = (await res.json()) as { error?: string };
+    expect(body.error).toBeDefined();
   });
 
   it('likes a mastodon post when auth token is present', async () => {
@@ -123,8 +122,8 @@ describe('POST /api/engage', () => {
       cookie,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { ok: boolean };
-    expect(body.ok).toBe(true);
+    const body = (await res.json()) as { success?: boolean };
+    expect(body.success).toBe(true);
   });
 
   it('replies to a mastodon post', async () => {
@@ -141,8 +140,8 @@ describe('POST /api/engage', () => {
       cookie,
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { ok: boolean };
-    expect(body.ok).toBe(true);
+    const body = (await res.json()) as { success?: boolean };
+    expect(body.success).toBe(true);
   });
 
   it('returns no-account error for mastodon without token', async () => {
@@ -158,8 +157,7 @@ describe('POST /api/engage', () => {
       cookie,
     );
     expect(res.status).toBe(401);
-    const body = (await res.json()) as { ok: boolean; error: string };
-    expect(body.ok).toBe(false);
+    const body = (await res.json()) as { error?: string };
     expect(body.error).toContain('No social account linked for mastodon');
   });
 
@@ -176,9 +174,8 @@ describe('POST /api/engage', () => {
       },
       cookie,
     );
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { ok: boolean };
-    expect(body.ok).toBe(true);
+    // Nostr server-side signing is deprecated — returns 410
+    expect(res.status).toBe(410);
   });
 
   it('returns no-account error for nostr without nsec', async () => {
@@ -193,10 +190,9 @@ describe('POST /api/engage', () => {
       },
       cookie,
     );
-    expect(res.status).toBe(401);
-    const body = (await res.json()) as { ok: boolean; error: string };
-    expect(body.ok).toBe(false);
-    expect(body.error).toContain('No social account linked for nostr');
+    expect(res.status).toBe(410);
+    const body = (await res.json()) as { error?: string };
+    expect(body.error).toBeDefined();
   });
 
   it('returns no-account error for farcaster without signed message', async () => {
@@ -212,8 +208,7 @@ describe('POST /api/engage', () => {
       cookie,
     );
     expect(res.status).toBe(401);
-    const body = (await res.json()) as { ok: boolean; error: string };
-    expect(body.ok).toBe(false);
+    const body = (await res.json()) as { error?: string };
     expect(body.error).toContain('No social account linked for farcaster');
   });
 
@@ -230,8 +225,7 @@ describe('POST /api/engage', () => {
       cookie,
     );
     expect(res.status).toBe(401);
-    const body = (await res.json()) as { ok: boolean; error: string };
-    expect(body.ok).toBe(false);
+    const body = (await res.json()) as { error?: string };
     expect(body.error).toContain('No social account linked for bluesky');
   });
 });

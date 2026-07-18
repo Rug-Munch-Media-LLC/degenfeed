@@ -161,7 +161,9 @@ export const TIP_CHAIN_CONFIG: Record<
 export function getTipContractAddress(chain: string): `0x${string}` {
   const addr = TIP_CONTRACT_ADDRESSES[chain];
   if (!addr || addr === '0x0000000000000000000000000000000000000000') {
-    throw new Error(`Tip contract not yet deployed on ${chain}. Run scripts/deploy-tip-contract.ts first.`);
+    throw new Error(
+      `Tip contract not yet deployed on ${chain}. Run scripts/deploy-tip-contract.ts first.`,
+    );
   }
   return addr;
 }
@@ -378,10 +380,7 @@ export function encodeTipData(recipient: `0x${string}`): `0x${string}` {
 /**
  * Encode a `tipWithMessage` call data.
  */
-export function encodeTipWithMessageData(
-  recipient: `0x${string}`,
-  message: string,
-): `0x${string}` {
+export function encodeTipWithMessageData(recipient: `0x${string}`, message: string): `0x${string}` {
   // function tipWithMessage(address,string)
   // Static offset for address (32 bytes) + dynamic string
   const signature = '0xcf02c46b';
@@ -389,12 +388,12 @@ export function encodeTipWithMessageData(
   const msgHex = Array.from(new TextEncoder().encode(message))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
-  const msgLen = BigInt(message.length).toString(16).padStart(64, '0');
+  const _msgLen = BigInt(message.length).toString(16).padStart(64, '0');
   const msgData = msgHex.padEnd(64 * Math.ceil(msgHex.length / 64), '0');
   // offset for the string data (32 bytes after address)
-  const offset = '0x'.padEnd(64, '0'); // offset of string data = 0x40 (64 bytes from start)
+  const _offset = '0x'.padEnd(64, '0'); // offset of string data = 0x40 (64 bytes from start)
   // Actually, ABI encoding: address (32 bytes) + offset to string (32 bytes) + length (32 bytes) + data
-  const stringOffset = '0'.repeat(63) + '40'; // 0x40 = 64 bytes offset for string
+  const stringOffset = `${'0'.repeat(63)}40`; // 0x40 = 64 bytes offset for string
   const stringLen = BigInt(message.length).toString(16).padStart(64, '0');
   return `${signature}${addrPad}${stringOffset}${stringLen}${msgData}` as `0x${string}`;
 }

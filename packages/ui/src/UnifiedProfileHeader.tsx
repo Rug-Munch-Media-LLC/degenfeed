@@ -39,12 +39,10 @@ function formatCount(n: number): string {
 }
 
 export const UnifiedProfileHeader = memo(function UnifiedProfileHeader({
-  walletAddress,
   displayName,
   handles,
   totalFollowerCount,
   networkCount,
-  primaryProtocol,
   dfUri,
   onFollowAll,
   onShareProfile,
@@ -77,9 +75,7 @@ export const UnifiedProfileHeader = memo(function UnifiedProfileHeader({
             <span className="tabular-nums font-medium text-[var(--color-fg)]">
               {formatCount(totalFollowerCount)}
             </span>
-            {networkCount > 1
-              ? ` followers across ${networkCount} networks`
-              : ' followers'}
+            {networkCount > 1 ? ` followers across ${networkCount} networks` : ' followers'}
           </p>
         </div>
         {/* df:// URI badge */}
@@ -106,11 +102,7 @@ export const UnifiedProfileHeader = memo(function UnifiedProfileHeader({
               stroke="currentColor"
               strokeWidth="1.5"
             />
-            <path
-              d="M16 2H6a2 2 0 0 0-2 2v14"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
+            <path d="M16 2H6a2 2 0 0 0-2 2v14" stroke="currentColor" strokeWidth="1.5" />
           </svg>
           {copied ? 'Copied!' : dfUri}
         </button>
@@ -130,15 +122,10 @@ export const UnifiedProfileHeader = memo(function UnifiedProfileHeader({
               <span className="text-sm" aria-hidden="true">
                 {h.icon}
               </span>
-              <span
-                className="text-xs font-medium"
-                style={{ color: h.color }}
-              >
+              <span className="text-xs font-medium" style={{ color: h.color }}>
                 {h.protocol}
               </span>
-              <span className="text-xs text-[var(--color-fg)]">
-                {h.handle}
-              </span>
+              <span className="text-xs text-[var(--color-fg)]">{h.handle}</span>
               {h.verified && (
                 <svg
                   width="10"

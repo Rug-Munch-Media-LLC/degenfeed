@@ -110,8 +110,8 @@ export default function DevelopersPage() {
             <a
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
               target="_blank"
-              
               className="rounded-lg border border-white/10 px-5 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-all hover:border-white/20 hover:text-[var(--color-muted)]"
+              rel="noopener"
             >
               Source code
             </a>
@@ -150,7 +150,9 @@ export default function DevelopersPage() {
       {/* SDKs & Tools */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">SDKs & Tools</h2>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">Client libraries and tools for every platform.</p>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          Client libraries and tools for every platform.
+        </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
             <h3 className="font-semibold text-[var(--color-fg)]">JavaScript / TypeScript</h3>
@@ -257,7 +259,9 @@ export default function DevelopersPage() {
       {/* Integrations */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Protocol Integrations</h2>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">All 9 networks available through a single API.</p>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          All 9 networks available through a single API.
+        </p>
         <div className="mt-4 space-y-1">
           <Integration
             name="Nostr"
@@ -379,8 +383,9 @@ export default function DevelopersPage() {
 
       <div className="mt-16 border-t border-[var(--color-glass-border)] pt-6 text-center">
         <p className="text-xs text-gray-600">
-          DegenFeed is a product of <strong className="text-[var(--color-muted)]">Rug Munch Media LLC</strong>.
-          MIT Licensed. Built on open protocols.{' '}
+          DegenFeed is a product of{' '}
+          <strong className="text-[var(--color-muted)]">Rug Munch Media LLC</strong>. MIT Licensed.
+          Built on open protocols.{' '}
           <Link href="/api-docs" className="text-degen-400 underline">
             API Documentation
           </Link>{' '}

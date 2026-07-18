@@ -22,10 +22,12 @@ describe('muteIdentity / unmuteIdentity', () => {
 
   it('should sync mute action to server', async () => {
     const { muteIdentity } = await import('./muting');
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 200 }));
 
     // Mock getDb
-    const mockDb = {
+    const _mockDb = {
       put: vi.fn().mockResolvedValue(undefined),
       get: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),

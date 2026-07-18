@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +31,8 @@ const PROTOCOL_METHODS: Record<string, TipMethod[]> = {
     {
       method: 'onchain_tip',
       label: 'On-chain (0% fee)',
-      description: 'ETH via DegenFeed contract on Base/Optimism/Arbitrum — 0% fee, no intermediary.',
+      description:
+        'ETH via DegenFeed contract on Base/Optimism/Arbitrum — 0% fee, no intermediary.',
       icon: '⛓️',
       available: true,
       chain: 'base',
@@ -169,7 +170,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const protocol = searchParams.get('protocol') || 'default';
-    const authorId = searchParams.get('authorId') || '';
+    const _authorId = searchParams.get('authorId') || '';
     const postContextRaw = searchParams.get('postContext');
 
     let postContext: Record<string, unknown> | null = null;
@@ -181,13 +182,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const baseMethods: TipMethod[] = PROTOCOL_METHODS[protocol] || [...(PROTOCOL_METHODS.default || [])];
+    const baseMethods: TipMethod[] = PROTOCOL_METHODS[protocol] || [
+      ...(PROTOCOL_METHODS.default || []),
+    ];
     let methods: TipMethod[] = [...baseMethods];
 
     // If postContext has author info with addresses, mark matching methods
     const evmAddress = (postContext?.author as Record<string, string> | undefined)?.evmAddress;
-    const solanaAddress = (postContext?.author as Record<string, string> | undefined)?.solanaAddress;
-    const lightningAddress = (postContext?.author as Record<string, string> | undefined)?.lightningAddress;
+    const solanaAddress = (postContext?.author as Record<string, string> | undefined)
+      ?.solanaAddress;
+    const lightningAddress = (postContext?.author as Record<string, string> | undefined)
+      ?.lightningAddress;
 
     methods = methods.map((m) => {
       if (m.method === 'onchain_tip' && evmAddress) {
@@ -203,7 +208,10 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ methods });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to resolve tipping methods', methods: [] }, { status: 500 });
+  } catch (_error) {
+    return NextResponse.json(
+      { error: 'Failed to resolve tipping methods', methods: [] },
+      { status: 500 },
+    );
   }
 }

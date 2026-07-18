@@ -11,7 +11,7 @@
  * POST /api/presets              → save preset for a protocol
  */
 
-import { PRESET_NAMES, presetKvKey, type PresetName } from '@degenfeed/feed-core';
+import { PRESET_NAMES, type PresetName, presetKvKey } from '@degenfeed/feed-core';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
@@ -85,7 +85,10 @@ export async function handleFeedPresets(request: Request, env: Env): Promise<Res
   }
 
   if (!isValidPresetName(body.presetName)) {
-    return jsonResponse({ error: `Invalid preset name. Must be one of: ${PRESET_NAMES.join(', ')}` }, 400);
+    return jsonResponse(
+      { error: `Invalid preset name. Must be one of: ${PRESET_NAMES.join(', ')}` },
+      400,
+    );
   }
 
   const protocol = body.protocol ?? 'unified';

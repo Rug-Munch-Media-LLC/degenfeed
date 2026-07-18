@@ -59,7 +59,7 @@ describe('handleResolveIdentity', () => {
     const env = { CACHE: { get: vi.fn(), put: vi.fn() } } as unknown as Env;
     const res = await handleResolveIdentity(req, env);
     expect(res.status).toBe(400);
-    const body = await res.json() as { error?: string };
+    const body = (await res.json()) as { error?: string };
     expect(body.error).toContain('handle');
   });
 
@@ -75,7 +75,7 @@ describe('handleResolveIdentity', () => {
     const env = { CACHE: { get: vi.fn().mockResolvedValue(null), put: vi.fn() } } as unknown as Env;
     const res = await handleResolveIdentity(req, env);
     expect(res.status).toBe(200);
-    const body = await res.json() as { data?: { protocol: string } };
+    const body = (await res.json()) as { data?: { protocol: string } };
     expect(body.data).toBeDefined();
     expect(body.data?.protocol).toBe('nostr');
   });
@@ -85,7 +85,7 @@ describe('handleResolveIdentity', () => {
     const env = { CACHE: { get: vi.fn().mockResolvedValue(null), put: vi.fn() } } as unknown as Env;
     const res = await handleResolveIdentity(req, env);
     expect(res.status).toBe(200);
-    const body = await res.json() as { data?: { protocol: string; id: string } };
+    const body = (await res.json()) as { data?: { protocol: string; id: string } };
     expect(body.data?.protocol).toBe('mastodon');
     expect(body.data?.id).toContain('mastodon.social');
   });
@@ -95,7 +95,7 @@ describe('handleResolveIdentity', () => {
     const env = { CACHE: { get: vi.fn().mockResolvedValue(null), put: vi.fn() } } as unknown as Env;
     const res = await handleResolveIdentity(req, env);
     expect(res.status).toBe(200);
-    const body = await res.json() as { data?: { protocol: string } };
+    const body = (await res.json()) as { data?: { protocol: string } };
     expect(body.data?.protocol).toBe('threads');
   });
 
@@ -112,10 +112,12 @@ describe('handleResolveIdentity', () => {
   it('should return cached result when available', async () => {
     const cachedData = { protocol: 'nostr', id: 'cached-id', handle: 'cached@example.com' };
     const req = new Request('http://localhost/api/identity/resolve?handle=cached@example.com');
-    const env = { CACHE: { get: vi.fn().mockResolvedValue(JSON.stringify(cachedData)), put: vi.fn() } } as unknown as Env;
+    const env = {
+      CACHE: { get: vi.fn().mockResolvedValue(JSON.stringify(cachedData)), put: vi.fn() },
+    } as unknown as Env;
     const res = await handleResolveIdentity(req, env);
     expect(res.status).toBe(200);
-    const body = await res.json() as { data?: { protocol: string }; cached?: boolean };
+    const body = (await res.json()) as { data?: { protocol: string }; cached?: boolean };
     expect(body.data?.protocol).toBe('nostr');
     expect(body.cached).toBe(true);
   });
@@ -170,14 +172,14 @@ describe('handleLinkIdentity', () => {
 
 describe('resolveHandle dispatcher', () => {
   it('should route Mastodon handles to resolveFediverseHandle', async () => {
-    const { resolveHandle, resolveFediverseHandle } = await import('@degenfeed/identity');
+    const { resolveHandle } = await import('@degenfeed/identity');
     const result = await resolveHandle('user@mastodon.social');
     expect(result).not.toBeNull();
     expect(result?.protocol).toBe('mastodon');
   });
 
   it('should route Threads handles via WebFinger', async () => {
-    const { resolveHandle, resolveFediverseHandle } = await import('@degenfeed/identity');
+    const { resolveHandle } = await import('@degenfeed/identity');
     const result = await resolveHandle('alice@threads.net');
     expect(result).not.toBeNull();
     expect(result?.protocol).toBe('threads');

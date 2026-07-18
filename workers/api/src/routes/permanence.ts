@@ -8,7 +8,7 @@
  * Stores proofs in KV: `permanence:{contentHash}` → ContentProof JSON
  */
 
-import { type ContentProof } from '@degenfeed/types';
+import type { ContentProof } from '@degenfeed/types';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
@@ -16,12 +16,12 @@ import { requireSession } from '../session';
 // ─── Irys / Arweave constants ────────────────────────────────────────
 
 const IRYS_GATEWAY = 'https://node1.irys.xyz';
-const ARWEAVE_GATEWAY = 'https://arweave.net';
+const _ARWEAVE_GATEWAY = 'https://arweave.net';
 
 // ─── IPFS constants ──────────────────────────────────────────────────
 
 const IPFS_API = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
-const WEB3_STORAGE_API = 'https://api.web3.storage/upload';
+const _WEB3_STORAGE_API = 'https://api.web3.storage/upload';
 
 // ─── KV key helpers ──────────────────────────────────────────────────
 
@@ -84,10 +84,7 @@ async function storeOnArweave(
 
 // ─── Store on IPFS ───────────────────────────────────────────────────
 
-async function storeOnIPFS(
-  content: string,
-  env: Env,
-): Promise<string | null> {
+async function storeOnIPFS(content: string, env: Env): Promise<string | null> {
   // Try Pinata first
   const pinataKey = env.PINATA_API_KEY;
   const pinataSecret = env.PINATA_SECRET_KEY;
@@ -241,7 +238,7 @@ export async function handlePermanenceVerify(
     return jsonResponse({ error: 'Method not allowed — use GET' }, 405);
   }
 
-  if (!contentHash || contentHash.length !== 64 || !/^[0-9a-f]{64}$/i.test(contentHash)) {
+  if (contentHash?.length !== 64 || !/^[0-9a-f]{64}$/i.test(contentHash)) {
     return jsonResponse({ error: 'Invalid content hash — expected SHA-256 hex string' }, 400);
   }
 
@@ -253,7 +250,10 @@ export async function handlePermanenceVerify(
   const raw = await env.PERMANENCE.get(key);
 
   if (!raw) {
-    return noCacheJsonResponse({ verified: false, error: 'Content hash not found in permanent storage' });
+    return noCacheJsonResponse({
+      verified: false,
+      error: 'Content hash not found in permanent storage',
+    });
   }
 
   let proof: ContentProof;

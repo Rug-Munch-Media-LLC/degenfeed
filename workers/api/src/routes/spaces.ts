@@ -489,7 +489,10 @@ export async function handleSpaceEnd(
     if (body.hostId && body.hostId.toLowerCase() !== sessionAddr) {
       return jsonResponse({ error: 'hostId does not match session' }, 403);
     }
-    if (sessionAddr !== space.hostId.toLowerCase() && !space.coHosts.some((ch) => ch.toLowerCase() === sessionAddr)) {
+    if (
+      sessionAddr !== space.hostId.toLowerCase() &&
+      !space.coHosts.some((ch) => ch.toLowerCase() === sessionAddr)
+    ) {
       return jsonResponse({ error: 'Only host or co-host can end the space' }, 403);
     }
 

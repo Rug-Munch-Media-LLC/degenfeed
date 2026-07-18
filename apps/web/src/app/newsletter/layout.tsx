@@ -61,9 +61,9 @@ export const metadata: Metadata = {
 export default function NewsletterLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-newsletter" type="application/ld+json">{
-        JSON.stringify(newsletterBreadcrumb)
-      }</Script>
+      <Script id="breadcrumb-newsletter" type="application/ld+json">
+        {JSON.stringify(newsletterBreadcrumb)}
+      </Script>
       {children}
     </>
   );

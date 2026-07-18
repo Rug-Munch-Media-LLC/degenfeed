@@ -55,9 +55,9 @@ export const metadata: Metadata = {
 export default function DiscoverLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-discover" type="application/ld+json">{
-        JSON.stringify(discoverBreadcrumb)
-      }</Script>
+      <Script id="breadcrumb-discover" type="application/ld+json">
+        {JSON.stringify(discoverBreadcrumb)}
+      </Script>
       {children}
     </>
   );

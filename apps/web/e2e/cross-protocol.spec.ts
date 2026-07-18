@@ -5,15 +5,14 @@
 import { expect, test } from '@playwright/test';
 import {
   MOCK_FEED_POSTS,
+  MOCK_PREFERENCES,
+  MOCK_SIGNED_IN_STATE,
   MOCK_SINGLE_POST,
   MOCK_THREAD_DATA,
-  MOCK_BRIDGE_STATUS,
-  MOCK_SIGNED_IN_STATE,
-  MOCK_PREFERENCES,
-  mockFeedApi,
-  mockPostApi,
   mockAuthApi,
   mockCrossProtocolApi,
+  mockFeedApi,
+  mockPostApi,
 } from './fixtures';
 
 test.describe('Cross-protocol reply', () => {
@@ -51,7 +50,9 @@ test.describe('Cross-protocol reply', () => {
     let bridgeCalled = false;
     await page.route('**/api/bridge/reply', async (route) => {
       bridgeCalled = true;
-      await route.fulfill({ json: { ok: true, reply: { id: 'bridge-reply-1', protocol: 'nostr' } } });
+      await route.fulfill({
+        json: { ok: true, reply: { id: 'bridge-reply-1', protocol: 'nostr' } },
+      });
     });
 
     await page.goto('/post/post-1');

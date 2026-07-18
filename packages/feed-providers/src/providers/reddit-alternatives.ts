@@ -83,7 +83,9 @@ const DISCUIT_COMMUNITIES = ['crypto', 'ethereum', 'bitcoin', 'technology', 'pro
 
 // ─── Parser helpers ─────────────────────────────────────────
 
-function parseRssItems(xml: string): Array<{ title: string; link: string; pubDate: string; description: string }> {
+function parseRssItems(
+  xml: string,
+): Array<{ title: string; link: string; pubDate: string; description: string }> {
   const items: Array<{ title: string; link: string; pubDate: string; description: string }> = [];
   const itemRe = /<item>([\s\S]*?)<\/item>/gi;
   let m: RegExpExecArray | null;
@@ -99,7 +101,8 @@ function parseRssItems(xml: string): Array<{ title: string; link: string; pubDat
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ')
+  return html
+    .replace(/<[^>]+>/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -150,7 +153,9 @@ export class RedditAlternativesProvider implements FeedProvider {
               createdAt: new Date(item.pubDate).getTime(),
               metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
               engagement: {
-                viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
+                viewerLiked: false,
+                viewerReposted: false,
+                viewerBookmarked: false,
                 raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
               },
               community: { name: community, title: community, instance: 'squabbles.io', niche },
@@ -179,35 +184,50 @@ export class RedditAlternativesProvider implements FeedProvider {
             Math.min(timeoutMs, 4000),
             `raddle:${sub}`,
           );
-          return (data.data ?? []).map((post) => ({
-            id: `raddle:${sub}:${post.id}`,
-            protocol: 'rss' as Protocol,
-            author: {
-              id: `raddle:${post.author}`,
-              primary: { protocol: 'rss' as Protocol, id: post.author },
-              handles: {},
-              displayName: post.author,
-              bio: '',
-              avatarUrl: '',
-              verified: [],
-              followerCount: 0,
-              followingCount: 0,
-              links: [],
-              keys: {},
-            },
-            text: `${post.title}\n\n${post.content || ''}`.slice(0, 1500),
-            embeds: post.url ? [{ kind: 'link' as const, url: post.url }] : [],
-            createdAt: (post.created_utc || Date.now() / 1000) * 1000,
-            metrics: { likes: post.upvotes || 0, reposts: 0, replies: post.num_comments || 0, quotes: 0 },
-            engagement: {
-              viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-              raw: { likes: post.upvotes || 0, reposts: 0, replies: post.num_comments || 0, quotes: 0 },
-            },
-            community: { name: sub, title: sub, instance: 'raddle.it', niche: 'crypto' },
-            niches: detectNiches(`${post.title} ${post.content || ''}`),
-            raw: post,
-            dfUri: `df://raddle/${sub}/${post.id}`,
-          } as UnifiedPost));
+          return (data.data ?? []).map(
+            (post) =>
+              ({
+                id: `raddle:${sub}:${post.id}`,
+                protocol: 'rss' as Protocol,
+                author: {
+                  id: `raddle:${post.author}`,
+                  primary: { protocol: 'rss' as Protocol, id: post.author },
+                  handles: {},
+                  displayName: post.author,
+                  bio: '',
+                  avatarUrl: '',
+                  verified: [],
+                  followerCount: 0,
+                  followingCount: 0,
+                  links: [],
+                  keys: {},
+                },
+                text: `${post.title}\n\n${post.content || ''}`.slice(0, 1500),
+                embeds: post.url ? [{ kind: 'link' as const, url: post.url }] : [],
+                createdAt: (post.created_utc || Date.now() / 1000) * 1000,
+                metrics: {
+                  likes: post.upvotes || 0,
+                  reposts: 0,
+                  replies: post.num_comments || 0,
+                  quotes: 0,
+                },
+                engagement: {
+                  viewerLiked: false,
+                  viewerReposted: false,
+                  viewerBookmarked: false,
+                  raw: {
+                    likes: post.upvotes || 0,
+                    reposts: 0,
+                    replies: post.num_comments || 0,
+                    quotes: 0,
+                  },
+                },
+                community: { name: sub, title: sub, instance: 'raddle.it', niche: 'crypto' },
+                niches: detectNiches(`${post.title} ${post.content || ''}`),
+                raw: post,
+                dfUri: `df://raddle/${sub}/${post.id}`,
+              }) as UnifiedPost,
+          );
         } catch {
           return [] as UnifiedPost[];
         }
@@ -231,35 +251,55 @@ export class RedditAlternativesProvider implements FeedProvider {
             Math.min(timeoutMs, 4000),
             `discuit:${community}`,
           );
-          return (data.posts ?? []).map((post) => ({
-            id: `discuit:${community}:${post.id}`,
-            protocol: 'rss' as Protocol,
-            author: {
-              id: `discuit:${post.user.username}`,
-              primary: { protocol: 'rss' as Protocol, id: post.user.username },
-              handles: {},
-              displayName: post.user.displayName || post.user.username,
-              bio: '',
-              avatarUrl: '',
-              verified: [],
-              followerCount: 0,
-              followingCount: 0,
-              links: [],
-              keys: {},
-            },
-            text: `${post.title}\n\n${post.content || ''}`.slice(0, 1500),
-            embeds: [],
-            createdAt: new Date(post.createdAt).getTime(),
-            metrics: { likes: post.likeCount || 0, reposts: 0, replies: post.replyCount || 0, quotes: 0 },
-            engagement: {
-              viewerLiked: false, viewerReposted: false, viewerBookmarked: false,
-              raw: { likes: post.likeCount || 0, reposts: 0, replies: post.replyCount || 0, quotes: 0 },
-            },
-            community: { name: community, title: community, instance: 'discuit.net', niche: 'crypto' },
-            niches: detectNiches(`${post.title} ${post.content || ''}`),
-            raw: post,
-            dfUri: `df://discuit/${community}/${post.id}`,
-          } as UnifiedPost));
+          return (data.posts ?? []).map(
+            (post) =>
+              ({
+                id: `discuit:${community}:${post.id}`,
+                protocol: 'rss' as Protocol,
+                author: {
+                  id: `discuit:${post.user.username}`,
+                  primary: { protocol: 'rss' as Protocol, id: post.user.username },
+                  handles: {},
+                  displayName: post.user.displayName || post.user.username,
+                  bio: '',
+                  avatarUrl: '',
+                  verified: [],
+                  followerCount: 0,
+                  followingCount: 0,
+                  links: [],
+                  keys: {},
+                },
+                text: `${post.title}\n\n${post.content || ''}`.slice(0, 1500),
+                embeds: [],
+                createdAt: new Date(post.createdAt).getTime(),
+                metrics: {
+                  likes: post.likeCount || 0,
+                  reposts: 0,
+                  replies: post.replyCount || 0,
+                  quotes: 0,
+                },
+                engagement: {
+                  viewerLiked: false,
+                  viewerReposted: false,
+                  viewerBookmarked: false,
+                  raw: {
+                    likes: post.likeCount || 0,
+                    reposts: 0,
+                    replies: post.replyCount || 0,
+                    quotes: 0,
+                  },
+                },
+                community: {
+                  name: community,
+                  title: community,
+                  instance: 'discuit.net',
+                  niche: 'crypto',
+                },
+                niches: detectNiches(`${post.title} ${post.content || ''}`),
+                raw: post,
+                dfUri: `df://discuit/${community}/${post.id}`,
+              }) as UnifiedPost,
+          );
         } catch {
           return [] as UnifiedPost[];
         }

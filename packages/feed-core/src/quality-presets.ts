@@ -213,10 +213,7 @@ export interface ResolvedPreset {
  * Resolve the effective quality settings for a given protocol + preset name.
  * Merges the protocol-specific smart preset on top of the chosen profile.
  */
-export function resolvePreset(
-  presetName: PresetName,
-  protocol?: string,
-): ResolvedPreset {
+export function resolvePreset(presetName: PresetName, protocol?: string): ResolvedPreset {
   const profile = PRESET_PROFILES[presetName] ?? PRESET_PROFILES.balanced;
   const protocolPreset = protocol ? (PROTOCOL_PRESETS[protocol] ?? null) : null;
 
@@ -260,9 +257,12 @@ export interface QualityFilterResult {
  * Returns whether it passes and the reasons for filtering.
  */
 export function applyQualityFilters(
-  post: { text: string; metrics?: { likes: number; reposts: number; replies: number; quotes?: number } },
+  post: {
+    text: string;
+    metrics?: { likes: number; reposts: number; replies: number; quotes?: number };
+  },
   preset: ResolvedPreset,
-  protocol?: string,
+  _protocol?: string,
 ): QualityFilterResult {
   const reasons: string[] = [];
   const text = post.text?.trim() ?? '';

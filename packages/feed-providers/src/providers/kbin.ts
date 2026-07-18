@@ -16,13 +16,7 @@
 import { detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
-import {
-  buildUrl,
-  DEFAULT_TIMEOUT_MS,
-  DEFAULT_USER_AGENT,
-  fetchJson,
-  withTimeout,
-} from '../utils';
+import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
 
 export const KBIN_INSTANCES = [
   'https://kbin.social',
@@ -66,15 +60,38 @@ interface KbinPost {
 interface MastodonTimelineResponse extends Array<KbinPost> {}
 
 const CRYPTO_KEYWORDS = [
-  'bitcoin', 'btc', 'ethereum', 'eth', 'solana', 'sol', 'crypto', 'defi',
-  'web3', 'nft', 'blockchain', 'trading', 'token', 'altcoin', 'mining',
-  'staking', 'layer2', 'dex', 'dao', 'metaverse', 'wallet', 'airdrop',
-  'yield', 'farcaster', 'nostr', 'lens', 'bluesky',
+  'bitcoin',
+  'btc',
+  'ethereum',
+  'eth',
+  'solana',
+  'sol',
+  'crypto',
+  'defi',
+  'web3',
+  'nft',
+  'blockchain',
+  'trading',
+  'token',
+  'altcoin',
+  'mining',
+  'staking',
+  'layer2',
+  'dex',
+  'dao',
+  'metaverse',
+  'wallet',
+  'airdrop',
+  'yield',
+  'farcaster',
+  'nostr',
+  'lens',
+  'bluesky',
 ];
 
 function hasCryptoContent(post: KbinPost): boolean {
-  const text = (post.content + ' ' + (post.tags?.join(' ') ?? '')).toLowerCase();
-  return CRYPTO_KEYWORDS.some(kw => text.includes(kw));
+  const text = `${post.content} ${post.tags?.join(' ') ?? ''}`.toLowerCase();
+  return CRYPTO_KEYWORDS.some((kw) => text.includes(kw));
 }
 
 function adaptKbinPost(post: KbinPost, instance: string): UnifiedPost {
@@ -83,7 +100,7 @@ function adaptKbinPost(post: KbinPost, instance: string): UnifiedPost {
   const instanceDomain = instance.replace(/^https?:\/\//, '');
 
   const magazineName = post.magazine?.name ?? 'general';
-  const nativeId = `kbin:${magazineName}:${post.id}`;
+  const _nativeId = `kbin:${magazineName}:${post.id}`;
 
   const author: UnifiedIdentity = {
     id: `kbin:${post.account.id}`,
@@ -99,10 +116,11 @@ function adaptKbinPost(post: KbinPost, instance: string): UnifiedPost {
     keys: {},
   };
 
-  const embeds = post.media_attachments?.map(att => ({
-    kind: att.type === 'image' ? 'image' as const : 'link' as const,
-    url: att.url,
-  })) ?? [];
+  const embeds =
+    post.media_attachments?.map((att) => ({
+      kind: att.type === 'image' ? ('image' as const) : ('link' as const),
+      url: att.url,
+    })) ?? [];
 
   return {
     id: `kbin:${post.id}`,
@@ -137,7 +155,7 @@ function adaptKbinPost(post: KbinPost, instance: string): UnifiedPost {
       subscriberCount: post.magazine?.subscribers_count ?? 0,
       niche: 'crypto',
     },
-    niches: detectNiches(text + ' ' + (post.tags?.join(' ') ?? '')),
+    niches: detectNiches(`${text} ${post.tags?.join(' ') ?? ''}`),
     raw: post,
     url: post.url,
     dfUri: `df://kbin/${instanceDomain}/m/${magazineName}/${post.id}`,
@@ -167,9 +185,7 @@ export class KbinProvider implements FeedProvider {
             Math.min(timeoutMs, 5000),
             `kbin:${instance}`,
           );
-          return (data ?? [])
-            .filter(hasCryptoContent)
-            .map(post => adaptKbinPost(post, instance));
+          return (data ?? []).filter(hasCryptoContent).map((post) => adaptKbinPost(post, instance));
         } catch {
           return [] as UnifiedPost[];
         }

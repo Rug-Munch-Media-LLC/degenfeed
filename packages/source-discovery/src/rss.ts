@@ -6,16 +6,20 @@
  * post frequency and content quality.
  */
 
+import { computeQualityScore } from './quality';
 import type { DiscoveredSource } from './types';
 import { CRYPTO_KEYWORDS, DEFAULT_DISCOVERY_CONFIG } from './types';
-import { computeQualityScore } from './quality';
 
 const REQUEST_TIMEOUT_MS = 5000;
 const USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
 
 /** Known crypto news/blog sites to check for RSS feeds */
 const KNOWN_SITES: Array<{ name: string; feedUrl: string; category: string }> = [
-  { name: 'CoinDesk', feedUrl: 'https://www.coindesk.com/arc/outboundfeeds/rss/', category: 'news' },
+  {
+    name: 'CoinDesk',
+    feedUrl: 'https://www.coindesk.com/arc/outboundfeeds/rss/',
+    category: 'news',
+  },
   { name: 'CoinTelegraph', feedUrl: 'https://cointelegraph.com/rss', category: 'news' },
   { name: 'Decrypt', feedUrl: 'https://decrypt.co/feed', category: 'news' },
   { name: 'The Block', feedUrl: 'https://www.theblock.co/rss', category: 'news' },
@@ -40,15 +44,31 @@ const KNOWN_SITES: Array<{ name: string; feedUrl: string; category: string }> = 
   { name: 'Chainalysis', feedUrl: 'https://www.chainalysis.com/feed/', category: 'research' },
   { name: 'Dune Analytics', feedUrl: 'https://dune.com/blog/feed.xml', category: 'analytics' },
   { name: 'Nansen', feedUrl: 'https://www.nansen.ai/feed', category: 'analytics' },
-  { name: 'Ethereum Foundation', feedUrl: 'https://blog.ethereum.org/feed.xml', category: 'development' },
-  { name: 'Solana Foundation', feedUrl: 'https://solana.com/news/rss.xml', category: 'development' },
+  {
+    name: 'Ethereum Foundation',
+    feedUrl: 'https://blog.ethereum.org/feed.xml',
+    category: 'development',
+  },
+  {
+    name: 'Solana Foundation',
+    feedUrl: 'https://solana.com/news/rss.xml',
+    category: 'development',
+  },
   { name: 'Arbitrum', feedUrl: 'https://arbitrum.foundation/feed.xml', category: 'development' },
   { name: 'Optimism', feedUrl: 'https://optimism.io/feed.xml', category: 'development' },
   { name: 'Paradigm', feedUrl: 'https://paradigm.xyz/feed.xml', category: 'research' },
   { name: 'a16z crypto', feedUrl: 'https://a16zcrypto.com/feed/', category: 'research' },
-  { name: 'Delphi Digital', feedUrl: 'https://members.delphidigital.io/feed', category: 'research' },
+  {
+    name: 'Delphi Digital',
+    feedUrl: 'https://members.delphidigital.io/feed',
+    category: 'research',
+  },
   { name: 'Bankless', feedUrl: 'https://www.bankless.com/feed', category: 'newsletter' },
-  { name: 'Week in Ethereum', feedUrl: 'https://weekinethereumnews.com/feed/', category: 'newsletter' },
+  {
+    name: 'Week in Ethereum',
+    feedUrl: 'https://weekinethereumnews.com/feed/',
+    category: 'newsletter',
+  },
   { name: 'rekt news', feedUrl: 'https://rekt.news/feed.xml', category: 'security' },
 ];
 
@@ -62,7 +82,10 @@ async function inspectFeed(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     const res = await fetch(feedUrl, {
-      headers: { 'user-agent': USER_AGENT, accept: 'application/rss+xml, application/xml, text/xml' },
+      headers: {
+        'user-agent': USER_AGENT,
+        accept: 'application/rss+xml, application/xml, text/xml',
+      },
       signal: controller.signal,
     });
     clearTimeout(timer);
@@ -77,7 +100,8 @@ async function inspectFeed(
 
     // Count items published in the last 7 days
     const sevenDaysAgo = Date.now() - 7 * 86_400_000;
-    const dateRegex = /<pubDate[^>]*>([^<]+)<\/pubDate>|<published[^>]*>([^<]+)<\/published>|<updated[^>]*>([^<]+)<\/updated>/gi;
+    const dateRegex =
+      /<pubDate[^>]*>([^<]+)<\/pubDate>|<published[^>]*>([^<]+)<\/published>|<updated[^>]*>([^<]+)<\/updated>/gi;
     let recentPosts = 0;
     let lastPostDate = 0;
     let match;
@@ -86,7 +110,7 @@ async function inspectFeed(
       const dateStr = match[1] ?? match[2] ?? match[3];
       if (dateStr) {
         const ts = new Date(dateStr).getTime();
-        if (!isNaN(ts)) {
+        if (!Number.isNaN(ts)) {
           if (ts > lastPostDate) lastPostDate = ts;
           if (ts > sevenDaysAgo) recentPosts++;
         }
@@ -94,7 +118,7 @@ async function inspectFeed(
     }
 
     // Count total entries
-    const totalEntries = (text.match(/<(item|entry)>/g) ?? []).length;
+    const _totalEntries = (text.match(/<(item|entry)>/g) ?? []).length;
 
     return {
       recentPosts,
@@ -110,9 +134,7 @@ async function inspectFeed(
  * Discover new RSS feeds from the known sites list.
  * Checks each feed for freshness and scores by post frequency.
  */
-export async function discoverRSSFeeds(
-  existingFeeds: string[] = [],
-): Promise<DiscoveredSource[]> {
+export async function discoverRSSFeeds(existingFeeds: string[] = []): Promise<DiscoveredSource[]> {
   const sources: DiscoveredSource[] = [];
   const existingUrls = new Set(existingFeeds.map((f) => f.toLowerCase()));
 
@@ -127,8 +149,8 @@ export async function discoverRSSFeeds(
     const relevanceScore = 0.9; // All known crypto feeds are highly relevant
 
     // Estimate subscriber/follower count from content quality signals
-    const subscriberCount = site.category === 'news' ? 100000 :
-      site.category === 'research' ? 50000 : 25000;
+    const subscriberCount =
+      site.category === 'news' ? 100000 : site.category === 'research' ? 50000 : 25000;
 
     // Weekly activity: use recent posts, default to estimated if 0
     const weeklyActivity = Math.max(1, feed.recentPosts || 3);
@@ -173,9 +195,7 @@ async function discoverFeedsFromDirectories(
   sources: DiscoveredSource[],
 ): Promise<void> {
   // Check Feedspot crypto feed directory
-  const feedDirectories = [
-    'https://blog.feedspot.com/cryptocurrency_rss_feeds/',
-  ];
+  const feedDirectories = ['https://blog.feedspot.com/cryptocurrency_rss_feeds/'];
 
   for (const dirUrl of feedDirectories) {
     try {
@@ -191,17 +211,18 @@ async function discoverFeedsFromDirectories(
       const html = await res.text();
 
       // Extract feed URLs from the page
-      const feedUrls = html.match(/https?:\/\/[^"'\s]+feed[^"'\s]*\.xml|https?:\/\/[^"'\s]+\/feed\/?/gi) ?? [];
+      const feedUrls =
+        html.match(/https?:\/\/[^"'\s]+feed[^"'\s]*\.xml|https?:\/\/[^"'\s]+\/feed\/?/gi) ?? [];
       for (const url of feedUrls.slice(0, 20)) {
         if (existingUrls.has(url.toLowerCase())) continue;
         existingUrls.add(url.toLowerCase());
 
         const feed = await inspectFeed(url);
-        if (!feed || !feed.recentPosts) continue;
+        if (!feed?.recentPosts) continue;
 
-        const relevanceScore = CRYPTO_KEYWORDS.some(
-          (kw) => feed.title?.toLowerCase().includes(kw),
-        ) ? 0.8 : 0.5;
+        const relevanceScore = CRYPTO_KEYWORDS.some((kw) => feed.title?.toLowerCase().includes(kw))
+          ? 0.8
+          : 0.5;
 
         const candidate = {
           id: `rss:${encodeURIComponent(url).slice(0, 64)}`,

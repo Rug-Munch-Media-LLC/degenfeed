@@ -3,7 +3,7 @@
  */
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CrossPlatformSetup } from './CrossPlatformSetup';
 
 // ─── Fixtures ─────────────────────────────────────────────────────
@@ -54,9 +54,7 @@ afterEach(() => {
 
 describe('CrossPlatformSetup', () => {
   it('should show loading state initially', () => {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(
-      () => new Promise<Response>(() => {}),
-    );
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>(() => {}));
     render(<CrossPlatformSetup walletAddress="0xabc" />);
     expect(screen.getByText('Loading platform status...')).toBeDefined();
   });
@@ -132,9 +130,7 @@ describe('CrossPlatformSetup', () => {
   });
 
   it('should display error state on API failure', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(null, { status: 500 }),
-    );
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 500 }));
     render(<CrossPlatformSetup walletAddress="0xabc" />);
     await waitFor(() => {
       expect(screen.getByText('Failed to load status')).toBeDefined();
