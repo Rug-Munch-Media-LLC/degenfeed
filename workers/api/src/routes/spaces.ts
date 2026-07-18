@@ -27,6 +27,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { requireSession } from '../session';
 import { broadcastToAll } from '../ws-broadcast';
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -120,6 +121,9 @@ async function setUpcomingIds(env: Env, ids: string[]): Promise<void> {
 export async function handleSpaceCreate(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   try {
     interface CreateRequest {
       title?: string;
@@ -141,6 +145,9 @@ export async function handleSpaceCreate(request: Request, env: Env): Promise<Res
     }
     if (!body.hostId) {
       return jsonResponse({ error: 'hostId is required' }, 400);
+    }
+    if (body.hostId.toLowerCase() !== session.address.toLowerCase()) {
+      return jsonResponse({ error: 'hostId does not match session' }, 403);
     }
 
     const now = Date.now();
@@ -298,6 +305,9 @@ export async function handleSpaceJoin(
 ): Promise<Response> {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   try {
     const raw = await env.SPACES?.get(spaceKey(spaceId));
     if (!raw) return jsonResponse({ error: 'Space not found' }, 404);
@@ -335,6 +345,9 @@ export async function handleSpaceRequestSpeak(
 ): Promise<Response> {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   try {
     interface SpeakRequest {
       userId?: string;
@@ -346,6 +359,9 @@ export async function handleSpaceRequestSpeak(
     const body: SpeakRequest = (await request.json()) as SpeakRequest;
     if (!body.userId) {
       return jsonResponse({ error: 'userId is required' }, 400);
+    }
+    if (body.userId.toLowerCase() !== session.address.toLowerCase()) {
+      return jsonResponse({ error: 'userId does not match session' }, 403);
     }
 
     const raw = await env.SPACES?.get(spaceKey(spaceId));
@@ -392,6 +408,9 @@ export async function handleSpaceReact(
 ): Promise<Response> {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   try {
     interface ReactRequest {
       userId?: string;
@@ -401,6 +420,9 @@ export async function handleSpaceReact(
     const body: ReactRequest = (await request.json()) as ReactRequest;
     if (!body.userId || !body.emoji) {
       return jsonResponse({ error: 'userId and emoji are required' }, 400);
+    }
+    if (body.userId.toLowerCase() !== session.address.toLowerCase()) {
+      return jsonResponse({ error: 'userId does not match session' }, 403);
     }
 
     const raw = await env.SPACES?.get(spaceKey(spaceId));
@@ -447,6 +469,9 @@ export async function handleSpaceEnd(
 ): Promise<Response> {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   try {
     interface EndRequest {
       hostId?: string;
@@ -459,8 +484,12 @@ export async function handleSpaceEnd(
 
     const space = JSON.parse(raw) as SpaceRecord;
 
-    // Only host or co-host can end
-    if (body.hostId && body.hostId !== space.hostId && !space.coHosts.includes(body.hostId)) {
+    // Only host or co-host can end; verify against session
+    const sessionAddr = session.address.toLowerCase();
+    if (body.hostId && body.hostId.toLowerCase() !== sessionAddr) {
+      return jsonResponse({ error: 'hostId does not match session' }, 403);
+    }
+    if (sessionAddr !== space.hostId.toLowerCase() && !space.coHosts.some((ch) => ch.toLowerCase() === sessionAddr)) {
       return jsonResponse({ error: 'Only host or co-host can end the space' }, 403);
     }
 

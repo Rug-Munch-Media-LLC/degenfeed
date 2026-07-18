@@ -230,7 +230,6 @@ function VideosSection({ videos }: { videos: PopularVideo[] }) {
               key={v.id}
               href={v.url}
               target="_blank" rel="noopener noreferrer"
-              rel="noopener noreferrer"
               className="group flex gap-2.5 rounded-xl p-2 transition-colors hover:bg-white/5"
             >
               <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-black/40">

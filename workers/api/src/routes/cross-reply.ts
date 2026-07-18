@@ -497,6 +497,36 @@ async function publishCrossReply(
         return { ok: false, error: `Lemmy publish failed: ${errText.slice(0, 100)}` };
       }
 
+      case 'threads': {
+        const accessToken = auth.threads_accessToken || auth.threads_jwt || auth.accessJwt;
+        if (!accessToken) {
+          return { ok: false, error: 'Not signed into Threads' };
+        }
+        const threadsUserId = auth.threads_userId || auth.threads_did || '';
+        if (!threadsUserId) {
+          return { ok: false, error: 'Threads user ID missing — pass auth.threads_userId' };
+        }
+        // Post a standalone thread that links back to the original
+        const threadText = `${text}\n\n${buildCrossReplyFooter(parentProtocol, protocol)}`;
+        const threadsRes = await fetch(
+          `https://graph.threads.net/v1.0/${threadsUserId}/threads?access_token=${accessToken}`,
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              text: threadText,
+              media_type: 'TEXT',
+            }),
+          },
+        );
+        if (threadsRes.ok) {
+          const data = (await threadsRes.json()) as { id?: string };
+          return { ok: true, nativeId: data.id ?? '' };
+        }
+        const errText = await threadsRes.text();
+        return { ok: false, error: `Threads publish failed: ${errText.slice(0, 100)}` };
+      }
+
       default:
         return { ok: false, error: `Cross-reply to ${protocol} not yet supported` };
     }

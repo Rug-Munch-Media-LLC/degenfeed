@@ -313,7 +313,7 @@
 }
 
 .preview-post:hover {
-  background: #080808;
+  background: var(--landing-card-hover);
 }
 
 .preview-post-header {

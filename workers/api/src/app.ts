@@ -991,8 +991,8 @@ app.get('/v1/identity/profile', async (c) => {
   if (wallet) return handleGetIdentityProfile(c.req.raw, c.env);
   return handleIdentityProfile(c.req.raw, c.env);
 });
-app.post('/v1/identity/link', async (c) => handleLinkIdentity(c.req.raw, c.env));
-app.delete('/v1/identity/link', async (c) => handleUnlinkIdentity(c.req.raw, c.env));
+app.post('/v1/identity/link', async (c) => withSession(c, () => handleLinkIdentity(c.req.raw, c.env)));
+app.delete('/v1/identity/link', async (c) => withSession(c, () => handleUnlinkIdentity(c.req.raw, c.env)));
 
 // ─── V1: Tips ───────────────────────────────────────────
 app.all('/v1/tip/lightning/invoice', async (c) => handleLightningInvoice(c.req.raw, c.env));
@@ -1080,7 +1080,7 @@ app.all('/v1/frame/resolve', async (c) => handleFrameResolve(c.req.raw, c.env));
 app.all('/v1/frame/action', async (c) => handleFrameAction(c.req.raw, c.env));
 app.all('/v1/features', async (c) => handleFeatures(c.req.raw, c.env));
 app.all('/v1/notify', async (c) => handleNotify(c.req.raw, c.env));
-app.all('/v1/push/subscribe', async (c) => handlePushSubscribe(c.req.raw, c.env));
+app.all('/v1/push/subscribe', async (c) => withSession(c, () => handlePushSubscribe(c.req.raw, c.env)));
 
 // ─── V1: Newsletter ─────────────────────────────────────
 app.all('/v1/newsletter/subscribe', async (c) => handleNewsletterSubscribe(c.req.raw, c.env));
@@ -1187,18 +1187,18 @@ app.all('/v1/auth/wallet/verify', async (c) => handleWalletVerify(c.req.raw, c.e
 
 // ─── V1: Bookmarks ────────────────────────────────────────
 app.get('/v1/bookmarks', async (c) => handleBookmarkList(c.req.raw, c.env));
-app.post('/v1/bookmarks', async (c) => handleBookmarkAdd(c.req.raw, c.env));
-app.delete('/v1/bookmarks', async (c) => handleBookmarkRemove(c.req.raw, c.env));
+app.post('/v1/bookmarks', async (c) => withSession(c, () => handleBookmarkAdd(c.req.raw, c.env)));
+app.delete('/v1/bookmarks', async (c) => withSession(c, () => handleBookmarkRemove(c.req.raw, c.env)));
 app.get('/v1/bookmarks/check', async (c) => handleBookmarkCheck(c.req.raw, c.env));
 
 // ─── V1: Custom Feeds ─────────────────────────────────────
-app.post('/v1/custom-feeds', async (c) => handleCustomFeedCreate(c.req.raw, c.env));
+app.post('/v1/custom-feeds', async (c) => withSession(c, () => handleCustomFeedCreate(c.req.raw, c.env)));
 app.get('/v1/custom-feeds', async (c) => handleCustomFeedList(c.req.raw, c.env));
 app.get('/v1/custom-feeds/public', async (c) => handleCustomFeedPublic(c.req.raw, c.env));
-app.post('/v1/custom-feeds/:id/subscribe', async (c) => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id')));
+app.post('/v1/custom-feeds/:id/subscribe', async (c) => withSession(c, () => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id'))));
 app.get('/v1/custom-feeds/:id', async (c) => handleCustomFeedGet(c.req.raw, c.env, c.req.param('id')));
-app.put('/v1/custom-feeds/:id', async (c) => handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id')));
-app.delete('/v1/custom-feeds/:id', async (c) => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id')));
+app.put('/v1/custom-feeds/:id', async (c) => withSession(c, () => handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id'))));
+app.delete('/v1/custom-feeds/:id', async (c) => withSession(c, () => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id'))));
 
 // ─── V1: Subscription ─────────────────────────────────────
 app.all('/v1/subscription/create', async (c) =>
@@ -1244,16 +1244,16 @@ app.all('/v1/lemmy/tip', async (c) =>
 );
 
 // ─── V1: PeerTube Tips ────────────────────────────────────
-app.post('/v1/peertube/tip', async (c) => handlePeerTubeTipCreate(c.req.raw, c.env));
+app.post('/v1/peertube/tip', async (c) => withSession(c, () => handlePeerTubeTipCreate(c.req.raw, c.env)));
 app.get('/v1/peertube/tip/stats', async (c) => handlePeerTubeTipStats(c.req.raw, c.env));
 app.get('/v1/peertube/tip/leaderboard', async (c) => handlePeerTubeLeaderboard(c.req.raw, c.env));
 
 // ─── V1: Permanence (Arweave/IPFS) ──────────────────────
-app.post('/v1/permanence/store', async (c) => handlePermanenceStore(c.req.raw, c.env));
+app.post('/v1/permanence/store', async (c) => withSession(c, () => handlePermanenceStore(c.req.raw, c.env)));
 app.get('/v1/permanence/verify/:hash', async (c) =>
   handlePermanenceVerify(c.req.raw, c.env, c.req.param('hash')),
 );
-app.post('/v1/permanence/anchor', async (c) => handlePermanenceAnchor(c.req.raw, c.env));
+app.post('/v1/permanence/anchor', async (c) => withSession(c, () => handlePermanenceAnchor(c.req.raw, c.env)));
 
 // ─── V1: Reputation ────────────────────────────────────────
 app.get('/v1/reputation/leaderboard', async (c) => handleReputationLeaderboard(c.req.raw, c.env));
@@ -1285,7 +1285,7 @@ app.post('/v1/spaces/:id/react', async (c) =>
 app.post('/v1/spaces/:id/end', async (c) => handleSpaceEnd(c.req.raw, c.env, c.req.param('id')));
 
 // ─── V1: Leaderboard refresh ──────────────────────────────
-app.post('/v1/leaderboard/refresh', async (c) => handleRefreshLeaderboards(c.env));
+app.post('/v1/leaderboard/refresh', async (c) => handleRefreshLeaderboards(c.req.raw, c.env));
 
 // ─── V1: Discover (full) ─────────────────────────────────
 app.all('/v1/discover', async (c) => handleDiscover(c.req.raw, c.env));
@@ -1304,7 +1304,7 @@ app.all('/v1/feed/atom.xml', async (c) => handleRssXml(c.req.raw, c.env));
 // ─── V1: Messages (DM) ────────────────────────────────────
 app.get('/v1/messages/unread', async (c) => handleUnreadCount(c.req.raw, c.env));
 app.get('/v1/messages/conversations', async (c) => handleConversations(c.req.raw, c.env));
-app.post('/v1/messages/send', async (c) => handleSendMessage(c.req.raw, c.env));
+app.post('/v1/messages/send', async (c) => withSession(c, () => handleSendMessage(c.req.raw, c.env)));
 app.all('/v1/messages/:id', async (c) => {
   if (c.req.method === 'GET') {
     return handleConversationMessages(c.req.raw, c.env, c.req.param('id'));
@@ -1354,6 +1354,15 @@ app.all('/v1/blink/tip', async (c) => handleBlinkTip(c.req.raw, c.env));
 app.all('/v1/billing/checkout', async (c) => handleBillingCheckout(c.req.raw, c.env));
 app.all('/v1/billing/verify', async (c) => handleBillingVerify(c.req.raw, c.env));
 app.all('/v1/billing/status', async (c) => handleBillingStatus(c.req.raw, c.env));
+app.post('/v1/billing/subscribe', async (c) =>
+  withSession(c, () => handleBillingSubscribe(c.req.raw, c.env)),
+);
+app.post('/v1/billing/cancel', async (c) =>
+  withSession(c, () => handleBillingCancel(c.req.raw, c.env)),
+);
+app.get('/v1/billing/my-status', async (c) =>
+  withSession(c, () => handleBillingMyStatus(c.req.raw, c.env)),
+);
 app.all('/v1/x402/paywall', async (c) => handleX402Paywall(c.req.raw, c.env));
 app.all('/v1/x402/verify', async (c) => handleX402Verify(c.req.raw, c.env));
 app.post('/v1/token-gate/verify', async (c) => handleTokenGateVerify(c.req.raw, c.env));
@@ -1381,7 +1390,7 @@ app.get('/api/leaderboard/trending', async (c) => handleLeaderboardTrending(c.re
 app.get('/api/leaderboard/communities', async (c) =>
   handleLeaderboardCommunities(c.req.raw, c.env),
 );
-app.post('/api/leaderboard/refresh', async (c) => handleRefreshLeaderboards(c.env));
+app.post('/api/leaderboard/refresh', async (c) => handleRefreshLeaderboards(c.req.raw, c.env));
 
 // ─── Static redirects ──────────────────────────────────────
 for (const [from, to] of Object.entries(STATIC_REDIRECTS)) {
@@ -1390,10 +1399,10 @@ for (const [from, to] of Object.entries(STATIC_REDIRECTS)) {
 
 // ─── Feed cache management ─────────────────────────────────
 app.post('/api/feed/cache/invalidate', async (c) =>
-  handleFeedCacheInvalidate(c.req.raw, c.env),
+  withSession(c, () => handleFeedCacheInvalidate(c.req.raw, c.env)),
 );
 app.post('/v1/feed/cache/invalidate', async (c) =>
-  handleFeedCacheInvalidate(c.req.raw, c.env),
+  withSession(c, () => handleFeedCacheInvalidate(c.req.raw, c.env)),
 );
 
 // ─── Catch-all: return API info ─────────────────────────────

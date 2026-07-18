@@ -56,12 +56,16 @@ export interface CrossPlatformSetupProps {
 
 // ─── Platform metadata ────────────────────────────────────────────────
 
+const PREMIUM_PLATFORMS = new Set<RegistrationPlatform>(['farcaster', 'lens', 'bluesky']);
+const FREE_PLATFORMS = new Set<RegistrationPlatform>(['mastodon', 'nostr']);
+
 const PLATFORM_META: Record<RegistrationPlatform, {
   label: string;
   icon: string;
   color: string;
   description: string;
   fee: string;
+  requiresPremium: boolean;
 }> = {
   farcaster: {
     label: 'Farcaster',
@@ -69,6 +73,7 @@ const PLATFORM_META: Record<RegistrationPlatform, {
     color: '#8a63d2',
     description: 'Decentralized social protocol',
     fee: 'Gas covered',
+    requiresPremium: true,
   },
   lens: {
     label: 'Lens',
@@ -76,6 +81,7 @@ const PLATFORM_META: Record<RegistrationPlatform, {
     color: '#00501e',
     description: 'Web3 social graph',
     fee: 'Gas covered',
+    requiresPremium: true,
   },
   bluesky: {
     label: 'Bluesky',
@@ -83,6 +89,7 @@ const PLATFORM_META: Record<RegistrationPlatform, {
     color: '#1185fe',
     description: 'AT Protocol social',
     fee: 'Free',
+    requiresPremium: true,
   },
   mastodon: {
     label: 'Mastodon',
@@ -90,6 +97,7 @@ const PLATFORM_META: Record<RegistrationPlatform, {
     color: '#6364ff',
     description: 'Fediverse social',
     fee: 'Free',
+    requiresPremium: false,
   },
   nostr: {
     label: 'Nostr',
@@ -97,6 +105,7 @@ const PLATFORM_META: Record<RegistrationPlatform, {
     color: '#8b5cf6',
     description: 'Relay-based protocol',
     fee: 'Free',
+    requiresPremium: false,
   },
 };
 
@@ -315,7 +324,7 @@ export function CrossPlatformSetup({
                             Failed
                           </span>
                         )}
-                        {!isConnected && !isFailed && !isPremium && (
+                        {!isConnected && !isFailed && meta.requiresPremium && !isPremium && (
                           <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-400">
                             Pro feature
                           </span>
@@ -349,15 +358,15 @@ export function CrossPlatformSetup({
                           onChange={(e) =>
                             setUsernameInputs((prev) => ({ ...prev, [platform]: e.target.value }))
                           }
-                          disabled={isRegistering || !isPremium}
+                          disabled={isRegistering || (meta.requiresPremium && !isPremium)}
                           className="w-28 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-2.5 py-1.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] disabled:opacity-40 focus:outline-none focus:border-degen-500/50"
                         />
                         <button
                           type="button"
                           onClick={() => handleRegister(platform)}
-                          disabled={!isPremium || !usernameInput.trim() || isRegistering}
+                          disabled={(meta.requiresPremium && !isPremium) || !usernameInput.trim() || isRegistering}
                           className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                            isPremium
+                            !meta.requiresPremium || isPremium
                               ? 'bg-degen-500/15 text-degen-400 hover:bg-degen-500/25 border border-degen-500/30 disabled:opacity-40 disabled:cursor-not-allowed'
                               : 'bg-[var(--color-glass-border)] text-[var(--color-muted)] cursor-not-allowed opacity-40'
                           }`}
@@ -376,8 +385,8 @@ export function CrossPlatformSetup({
                   </div>
                 </div>
 
-                {/* Fee info for premium */}
-                {!isConnected && isPremium && (
+                {/* Fee info — show for all when user is premium, or just free platforms */}
+                {!isConnected && (isPremium || !meta.requiresPremium) && (
                   <div className="mt-2 flex items-center gap-2 text-[10px] text-[var(--color-muted)]">
                     <span className="rounded bg-[var(--color-glass-border)] px-1.5 py-0.5">{meta.fee}</span>
                   </div>

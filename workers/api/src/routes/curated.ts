@@ -112,7 +112,7 @@ const NEWSLETTER_SOURCES = [
   { name: 'Bankless', url: 'https://bankless.substack.com/feed', category: 'deep_dives' },
   { name: 'Week in Ethereum', url: 'https://weekinethereumnews.com/feed', category: 'deep_dives' },
   { name: 'ETH Daily', url: 'https://ethdaily.substack.com/feed', category: 'deep_dives' },
-  { name: 'Messari', url: 'https://messari.io/rss', category: 'deep_dives' },
+  { name: 'Messari', url: 'https://messari.substack.com/feed', category: 'deep_dives' },
   {
     name: 'Delphi Digital',
     url: 'https://members.delphidigital.com/feed/',

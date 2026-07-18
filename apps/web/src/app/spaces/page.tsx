@@ -300,6 +300,19 @@ function LiveSpaceCard({
         </div>
       )}
 
+      {/* Tip button — always visible when enabled */}
+      {space.tippingEnabled && (
+        <div className="mb-2">
+          <button
+            type="button"
+            onClick={() => onTip(space)}
+            className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2 text-xs font-medium text-gray-400 transition-all hover:border-degen-500/30 hover:text-degen-400"
+          >
+            Tip ⚡
+          </button>
+        </div>
+      )}
+
       {/* Join button — reveals on hover */}
       <div className="mt-auto">
         <button
@@ -381,6 +394,17 @@ function UpcomingSpaceCard({
             </span>
           ))}
         </div>
+      )}
+
+      {/* Tip button */}
+      {space.tippingEnabled && (
+        <button
+          type="button"
+          onClick={() => onTip(space)}
+          className="mb-2 w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2 text-xs font-medium text-gray-400 transition-all hover:border-degen-500/30 hover:text-degen-400"
+        >
+          Tip ⚡
+        </button>
       )}
 
       <button
@@ -785,7 +809,7 @@ export default function SpacesPage() {
               ) : (
                 <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-none snap-x snap-mandatory">
                   {liveSpaces.map((space) => (
-                    <LiveSpaceCard key={space.id} space={space} onJoin={handleJoin} />
+                    <LiveSpaceCard key={space.id} space={space} onJoin={handleJoin} onTip={setTipSpace} />
                   ))}
                 </div>
               )}
@@ -828,7 +852,7 @@ export default function SpacesPage() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {upcomingSpaces.map((space) => (
-                    <UpcomingSpaceCard key={space.id} space={space} onReminder={handleReminder} />
+                    <UpcomingSpaceCard key={space.id} space={space} onReminder={handleReminder} onTip={setTipSpace} />
                   ))}
                 </div>
               )}
@@ -882,6 +906,17 @@ export default function SpacesPage() {
             hostName="User"
             onSpaceCreated={handleSpaceCreated}
             onBroadcast={handleBroadcast}
+          />
+        )}
+
+        {/* Tip modal */}
+        {tipSpace && (
+          <TipModal
+            open={!!tipSpace}
+            onClose={() => setTipSpace(null)}
+            recipientProtocol={tipSpace.protocols[0] ?? 'ethereum'}
+            recipientAuthorId={tipSpace.hostId}
+            recipientDisplayName={tipSpace.hostName}
           />
         )}
 

@@ -14,6 +14,7 @@
  */
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { requireSession } from '../session';
 import {
   type DiscoveredSource,
   type SourceHealth,
@@ -257,7 +258,10 @@ export async function handleSourcesStats(_request: Request, env: Env): Promise<R
  * POST /api/sources/health-check
  * Run health check on all sources. Flags stale ones, culls low-quality ones.
  */
-export async function handleSourcesHealthCheck(_request: Request, env: Env): Promise<Response> {
+export async function handleSourcesHealthCheck(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   const healthEntries = await getAllHealth(env);
   const allSources = await getAllSources(env);
   const sourceMap = new Map(allSources.map((s) => [s.id, s]));
@@ -310,6 +314,9 @@ export async function handleSourcesHealthCheck(_request: Request, env: Env): Pro
  * Body: { sourceId: string, engagementDelta: number, postCount?: number, spamScore?: number }
  */
 export async function handleRecordEngagement(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   try {
     const body = (await request.json()) as {
       sourceId: string;

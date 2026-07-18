@@ -110,7 +110,7 @@ const NEWS_SOURCES: NewsSource[] = [
   {
     name: 'Messari',
     type: 'rss',
-    url: 'https://messari.io/rss',
+    url: 'https://messari.substack.com/feed',
     tier: 2,
     mustRead: false,
     weight: 1.1,

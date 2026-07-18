@@ -36,7 +36,7 @@ const KNOWN_SITES: Array<{ name: string; feedUrl: string; category: string }> = 
   { name: 'CoinJournal', feedUrl: 'https://coinjournal.net/feed/', category: 'news' },
   { name: 'The Crypto Basic', feedUrl: 'https://thecryptobasic.com/feed/', category: 'news' },
   { name: 'TokenInsight', feedUrl: 'https://tokeninsight.com/en/rss', category: 'research' },
-  { name: 'Messari', feedUrl: 'https://messari.io/rss', category: 'research' },
+  { name: 'Messari', feedUrl: 'https://messari.substack.com/feed', category: 'research' },
   { name: 'Chainalysis', feedUrl: 'https://www.chainalysis.com/feed/', category: 'research' },
   { name: 'Dune Analytics', feedUrl: 'https://dune.com/blog/feed.xml', category: 'analytics' },
   { name: 'Nansen', feedUrl: 'https://www.nansen.ai/feed', category: 'analytics' },

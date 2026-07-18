@@ -1,7 +1,7 @@
 'use client';
 
 import type { StoredIdentity } from '@degenfeed/storage';
-import type { PlatformAccount, ReputationBadgeProgress, ReputationBadgeScore } from '@degenfeed/ui';
+import type { ReputationBadgeProgress, ReputationBadgeScore } from '@degenfeed/ui';
 import {
   CrossPlatformCard,
   CrossPlatformSetup,

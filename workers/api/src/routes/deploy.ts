@@ -6,6 +6,7 @@
  */
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { requireSession } from '../session';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -160,6 +161,9 @@ export async function handleDeployRequest(request: Request, env: Env): Promise<R
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
   let body: unknown;
   try {

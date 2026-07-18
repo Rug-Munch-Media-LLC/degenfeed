@@ -31,6 +31,8 @@
     "@degenfeed/utils": "workspace:*",
     "@degenfeed/youtube-provider": "workspace:*",
     "@degenfeed/crossplatform-register": "workspace:*",
+    "@degenfeed/reputation": "workspace:*",
+    "@degenfeed/source-discovery": "workspace:*",
     "@noble/curves": "^1.9.7",
     "@noble/hashes": "^1.8.0",
     "@solana/web3.js": "^1.98.4",
