@@ -57,6 +57,39 @@ export type {
 } from './quality-presets';
 export { PRESET_DESCRIPTIONS } from './quality-presets';
 
+// ─── Per-protocol quality scoring (protocol pages) ────────────────
+export {
+  computeProtocolQuality,
+  KNOWN_MASTODON_INSTANCES,
+  QUALITY_BADGE_THRESHOLD,
+} from './protocol-quality';
+export type { ProtocolQualityContext, ProtocolQualityResult } from './protocol-quality';
+
+// ─── Content quality scoring v2 ──────────────────────────────────
+export {
+  buildQualityAuthorProfile,
+  computeAuthorQuality,
+  computeEngagementDensity,
+  computeQualityScore,
+  computeUniqueness,
+  estimateViews,
+  hasMedia,
+} from './quality';
+export type {
+  AuthorProfile,
+  QualityContext,
+} from './quality';
+
+// ─── Community niche mapping and quality scoring ──────────────────
+export {
+  COMMUNITY_DESCRIPTIONS,
+  LEMMY_COMMUNITY_NICHES,
+  RESERVED_COMMUNITY_NAMES,
+  scoreCommunityQuality,
+  subscriberTier,
+} from './niches';
+export type { CommunityQualityInput, CommunityQualityScore } from './niches';
+
 export const NICHE_KEYWORDS: Record<string, string[]> = {
   crypto: ['bitcoin', 'btc', 'crypto', 'cryptocurrency', 'blockchain', 'web3', 'token', 'altcoin'],
   bitcoin: ['bitcoin', 'btc', 'satoshi', 'halving', 'ordinal', 'inscription'],

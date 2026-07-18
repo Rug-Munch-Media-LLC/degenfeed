@@ -208,11 +208,21 @@ async function fetchFromRelays(
       ),
     ),
   );
-  const events: NostrEvent[] = [];
+  // Merge across relays: keep the first copy of each event and count
+  // how many relays delivered it (multi-relay = quality signal).
+  const byId = new Map<string, NostrEvent & { __relayCount?: number }>();
   for (const r of results) {
-    if (r.status === 'fulfilled') events.push(...r.value);
+    if (r.status !== 'fulfilled') continue;
+    for (const ev of r.value) {
+      const existing = byId.get(ev.id);
+      if (existing) {
+        existing.__relayCount = (existing.__relayCount ?? 1) + 1;
+      } else {
+        byId.set(ev.id, { ...ev, __relayCount: 1 });
+      }
+    }
   }
-  return events;
+  return Array.from(byId.values());
 }
 
 async function fetchFromHttp(limit: number, _timeoutMs: number): Promise<NostrEvent[]> {

@@ -54,7 +54,7 @@ export async function handleHomeFeed(
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
   const category = params.get('category')?.toLowerCase() ?? '';
-  const sort = params.get('sort') || 'scored'; // scored | hot | new | top
+  const sort = params.get('sort') || 'scored'; // scored | hot | new | top | quality | trending
   const cursor = Number(params.get('cursor')) || 0;
   const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
   const cookieHeader = request.headers.get('cookie') ?? '';

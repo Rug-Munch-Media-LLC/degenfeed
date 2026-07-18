@@ -1,5 +1,6 @@
 /**
- * RedditProvider — Multi-strategy Reddit fetcher.
+ * RedditProvider — Multi-strategy Reddit fetcher with weighted subreddits,
+ * category tagging, and quality filtering.
  *
  * Reddit blocks direct API access from CF Workers (no auth, bad UA).
  * Strategy:
@@ -23,32 +24,93 @@ import {
   withTimeout,
 } from '../utils';
 
-export const DEFAULT_SUBREDDITS = [
-  'CryptoCurrency',
-  'Bitcoin',
-  'ethereum',
-  'solana',
-  'defi',
-  'NFTs',
-  'CryptoMarkets',
-  'technology',
-  'btc',
-  'ethtrader',
-  'solanatrader',
-  'NFTMarketplace',
-  'uniswap',
-  'aave',
-  'defi_bluechips',
-  'BitcoinMining',
-  'web3dev',
-  'defi_yield',
-  'ethdev',
-  'polygon',
-  'optimism',
-  'cryptobounties',
-  'cryptotrader',
-  'Crypto_General',
-  'cryptomining',
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export type RedditCategory = 'crypto' | 'defi' | 'chain' | 'nft' | 'trading' | 'web3';
+
+export interface SubredditConfig {
+  name: string;
+  weight: number;
+  category?: RedditCategory;
+}
+
+/** Quality metadata attached to post.raw for the enrichment pipeline */
+interface PostQualityData {
+  score: number;
+  upvoteRatio?: number;
+  isStickied?: boolean;
+  selfText?: string;
+  isSelf?: boolean;
+}
+
+// ─── Crypto / Web3 Subreddit Configs ────────────────────────────────────────
+// Organized by category with engagement-based weighting.
+// Higher-weight subs get more influence in the feed.
+
+export const CRYPTO_SUBREDDIT_CONFIGS: SubredditConfig[] = [
+  // ── Crypto General (high traffic) ────────────────────────────────
+  { name: 'CryptoCurrency', weight: 1.0, category: 'crypto' },
+  { name: 'Bitcoin', weight: 0.9, category: 'crypto' },
+  { name: 'ethereum', weight: 0.9, category: 'crypto' },
+  { name: 'CryptoMarkets', weight: 0.8, category: 'crypto' },
+  { name: 'CryptoTechnology', weight: 0.7, category: 'crypto' },
+  { name: 'cryptocurrencymemes', weight: 0.5, category: 'crypto' },
+  { name: 'cryptomoonshots', weight: 0.3, category: 'crypto' },
+  // Legacy subs folded in
+  { name: 'btc', weight: 0.7, category: 'crypto' },
+  { name: 'Crypto_General', weight: 0.6, category: 'crypto' },
+  { name: 'BitcoinMining', weight: 0.4, category: 'crypto' },
+  { name: 'cryptomining', weight: 0.3, category: 'crypto' },
+  { name: 'cryptobounties', weight: 0.3, category: 'crypto' },
+
+  // ── DeFi ─────────────────────────────────────────────────────────
+  { name: 'defi', weight: 0.8, category: 'defi' },
+  { name: 'ethfinance', weight: 0.7, category: 'defi' },
+  { name: 'ethdev', weight: 0.7, category: 'defi' },
+  { name: 'UniSwap', weight: 0.6, category: 'defi' },
+  { name: 'aave', weight: 0.5, category: 'defi' },
+  { name: 'curve', weight: 0.4, category: 'defi' },
+  { name: 'defi_bluechips', weight: 0.5, category: 'defi' },
+  { name: 'defi_yield', weight: 0.5, category: 'defi' },
+
+  // ── Chain-specific ───────────────────────────────────────────────
+  { name: 'solana', weight: 0.8, category: 'chain' },
+  { name: 'Cardano', weight: 0.7, category: 'chain' },
+  { name: 'Polkadot', weight: 0.6, category: 'chain' },
+  { name: 'Avax', weight: 0.6, category: 'chain' },
+  { name: 'cosmosnetwork', weight: 0.6, category: 'chain' },
+  { name: 'ethtrader', weight: 0.5, category: 'chain' },
+  { name: 'polygon', weight: 0.5, category: 'chain' },
+  { name: 'optimism', weight: 0.5, category: 'chain' },
+
+  // ── NFT / Gaming ─────────────────────────────────────────────────
+  { name: 'NFT', weight: 0.6, category: 'nft' },
+  { name: 'NFTs', weight: 0.6, category: 'nft' },
+  { name: 'opensea', weight: 0.5, category: 'nft' },
+  { name: 'NFTMarketplace', weight: 0.5, category: 'nft' },
+  { name: 'ethgaming', weight: 0.5, category: 'nft' },
+  { name: 'playtoearn', weight: 0.4, category: 'nft' },
+
+  // ── Trading / Analysis ───────────────────────────────────────────
+  { name: 'CryptoCurrencyTrading', weight: 0.6, category: 'trading' },
+  { name: 'technicalanalysis', weight: 0.5, category: 'trading' },
+  { name: 'CryptoCurrencies', weight: 0.7, category: 'trading' },
+  { name: 'cryptotrader', weight: 0.4, category: 'trading' },
+  { name: 'solanatrader', weight: 0.4, category: 'trading' },
+
+  // ── Web3 ─────────────────────────────────────────────────────────
+  { name: 'web3', weight: 0.7, category: 'web3' },
+  { name: 'web3dev', weight: 0.5, category: 'web3' },
+  { name: 'Metamask', weight: 0.5, category: 'web3' },
+  { name: 'ledgerwallet', weight: 0.4, category: 'web3' },
+];
+
+/**
+ * ── Non-crypto legacy subreddits ───────────────────────────────
+ * Kept for general tech/science/finance coverage. These get no
+ * category tag and a neutral weight of 1.0.
+ */
+const LEGACY_SUBREDDITS: string[] = [
   // ── Tech / Programming ─────────────────────────────────────────
   'programming',
   'rust',
@@ -105,6 +167,31 @@ export const DEFAULT_SUBREDDITS = [
   'github',
 ];
 
+/**
+ * Full default subreddit list — crypto configs + legacy non-crypto subs.
+ * Built once at module load.
+ */
+function buildDefaultConfigs(): SubredditConfig[] {
+  const cryptoNames = new Set(CRYPTO_SUBREDDIT_CONFIGS.map((c) => c.name.toLowerCase()));
+  return [
+    ...CRYPTO_SUBREDDIT_CONFIGS,
+    ...LEGACY_SUBREDDITS.filter((name) => !cryptoNames.has(name.toLowerCase())).map((name) => ({
+      name,
+      weight: 1.0,
+    })),
+  ];
+}
+
+const DEFAULT_CONFIGS: SubredditConfig[] = buildDefaultConfigs();
+
+/**
+ * Backward-compatible string[] of default subreddit names.
+ * Used by external consumers (rss.ts, communities.ts, discover.ts).
+ */
+export const DEFAULT_SUBREDDITS: string[] = DEFAULT_CONFIGS.map((c) => c.name);
+
+// ─── Reddit Fetch Infrastructure ────────────────────────────────────────────
+
 // Community-run Reddit frontends used as fallback when self-hosted Redlib
 // is unreachable (e.g., from Cloudflare Workers if REDLIB_URL is not set).
 const COMMUNITY_REDDIT_FRONTENDS = [
@@ -115,7 +202,6 @@ const COMMUNITY_REDDIT_FRONTENDS = [
 ];
 
 // Reddit's own RSS feeds — these are public, no auth needed.
-// We use www.reddit.com (old.reddit.com is deprecated).
 const REDDIT_RSS_BASE = 'https://www.reddit.com';
 
 function redditHeaders(): Record<string, string> {
@@ -217,8 +303,72 @@ interface RedditJsonPost {
     subreddit?: string;
     score?: number;
     num_comments?: number;
+    /** Fraction 0.0–1.0; only available from JSON API */
+    upvote_ratio?: number;
+    /** True for moderator announcements */
+    stickied?: boolean;
+    /** True when post body is text (not a link) */
+    is_self?: boolean;
   };
 }
+
+// ─── Quality Filter & Enrichment Pipeline ────────────────────────────────────
+
+/**
+ * Apply quality filters, weight score, and add category niche tags.
+ *
+ * Quality filter (applied only when quality data is available from JSON API):
+ *   - Score < 5 → filtered out (low engagement)
+ *   - Upvote ratio < 0.6 → filtered out (controversial/heavily downvoted)
+ *   - Stickied → filtered out (mod announcements)
+ *   - Self-post with body < 100 chars → filtered out (low effort)
+ *
+ * Weight: multiplied into the score so higher-quality subs get more influence.
+ * Category: added as a niche tag for downstream ranking/surfacing.
+ */
+function enrichPost(post: UnifiedPost, config: SubredditConfig): UnifiedPost | null {
+  const quality: PostQualityData | undefined = (post.raw as Record<string, unknown>)
+    ?._redditQuality as PostQualityData | undefined;
+
+  // ── Quality filters (only when we have JSON API quality data) ──
+  if (quality) {
+    // Score < 5 (low engagement)
+    if (quality.score < 5) return null;
+    // Upvote ratio < 0.6 (controversial)
+    if (quality.upvoteRatio !== undefined && quality.upvoteRatio < 0.6) return null;
+    // Pinned/stickied (mod announcements)
+    if (quality.isStickied) return null;
+    // Self-post with body < 100 chars (low effort)
+    if (quality.isSelf && (!quality.selfText || quality.selfText.length < 100)) return null;
+  }
+
+  // ── Apply subreddit weight to score ──
+  const weightedScore = Math.round((post.metrics?.likes ?? 0) * config.weight);
+
+  // ── Build category niche tags ──
+  const categoryTags: string[] = [];
+  if (config.category) {
+    categoryTags.push(config.category);
+  }
+
+  return {
+    ...post,
+    metrics: {
+      ...post.metrics,
+      likes: weightedScore,
+    },
+    engagement: {
+      ...post.engagement,
+      raw: {
+        ...post.engagement.raw,
+        likes: weightedScore,
+      },
+    },
+    niches: [...new Set([...(post.niches ?? []), ...categoryTags])],
+  };
+}
+
+// ─── Post Construction ───────────────────────────────────────────────────────
 
 function itemToUnifiedPost(item: RssItem, subreddit: string, score = 0, comments = 0): UnifiedPost {
   const text = item.contentSnippet || item.description || item.title || '';
@@ -282,6 +432,8 @@ interface FrontendListing {
   }>;
 }
 
+// ─── Strategy Implementations ────────────────────────────────────────────────
+
 /**
  * Strategy 1: Open-source Reddit frontends (libreddit, teddit).
  * These are community-run instances that proxy Reddit's API without auth.
@@ -311,6 +463,14 @@ async function fetchFromFrontend(
     };
     const post = itemToUnifiedPost(item, sub, p.score ?? 0, p.num_comments ?? 0);
     post.createdAt = (p.created_utc ?? p.created ?? Date.now() / 1000) * 1000;
+
+    // Attach partial quality data (frontends usually don't provide upvote_ratio or stickied)
+    (post.raw as Record<string, unknown>)._redditQuality = {
+      score: p.score ?? 0,
+      isSelf: !!p.selftext,
+      selfText: p.selftext,
+    } satisfies PostQualityData;
+
     return post;
   });
 }
@@ -318,6 +478,7 @@ async function fetchFromFrontend(
 /**
  * Strategy 2: Reddit's own JSON API with proper User-Agent.
  * www.reddit.com serves JSON if you send a browser-like User-Agent.
+ * This is the richest data source — provides upvote ratio, stickied status, etc.
  */
 async function fetchFromRedditJson(
   subreddit: string,
@@ -344,13 +505,24 @@ async function fetchFromRedditJson(
     const post = itemToUnifiedPost(item, sub, d.score ?? 0, d.num_comments ?? 0);
     if (link) post.embeds.unshift({ kind: 'link', url: link });
     post.createdAt = d.created_utc * 1000;
+
+    // Attach full quality data from JSON API
+    (post.raw as Record<string, unknown>)._redditQuality = {
+      score: d.score ?? 0,
+      upvoteRatio: d.upvote_ratio,
+      isStickied: d.stickied ?? false,
+      selfText: d.selftext,
+      isSelf: d.is_self ?? false,
+    } satisfies PostQualityData;
+
     return post;
   });
 }
 
 /**
  * Strategy 3: Reddit's own RSS feed at www.reddit.com.
- * Public, no auth, parses cleanly.
+ * Public, no auth, parses cleanly. Does NOT include score or metadata,
+ * so quality filtering is bypassed for RSS-sourced posts.
  */
 async function fetchFromRedditRss(
   subreddit: string,
@@ -362,20 +534,24 @@ async function fetchFromRedditRss(
     `${REDDIT_RSS_BASE}/r/${encodeURIComponent(subreddit)}/${sortPath}/.rss?limit=${Math.min(limit, 50)}`,
     { headers: redditHeaders() },
   );
+  // RSS has no quality data — posts pass through unfiltered
   return parseRssXml(xml).map((item) => itemToUnifiedPost(item, subreddit));
 }
 
 /**
  * Fetch from a single subreddit using all available strategies in parallel.
- * Returns the first non-empty result.
+ * Returns the first non-empty result. After fetching, applies quality filter,
+ * weight, and category tags via enrichPost.
  */
 async function fetchSubreddit(
-  subreddit: string,
+  config: SubredditConfig,
   sort: string,
   limit: number,
   timeoutMs: number,
   frontends: string[],
 ): Promise<UnifiedPost[]> {
+  const { name: subreddit } = config;
+
   // Try all strategies in parallel, pick the first non-empty result
   const strategies: Array<{ name: string; fn: () => Promise<UnifiedPost[]> }> = [
     { name: 'rss', fn: () => fetchFromRedditRss(subreddit, sort, limit) },
@@ -393,14 +569,20 @@ async function fetchSubreddit(
   // Return the first strategy that produced posts
   for (const r of results) {
     if (r.status === 'fulfilled' && r.value.length > 0) {
-      return r.value;
+      // Apply enrichPost to every post (quality filter + weight + category tags)
+      return r.value
+        .map((post) => enrichPost(post, config))
+        .filter((post): post is UnifiedPost => post !== null);
     }
   }
   return [];
 }
 
+// ─── Provider Class ──────────────────────────────────────────────────────────
+
 export interface RedditProviderOptions {
-  subreddits?: string[];
+  /** Subreddits to fetch. Accepts names (string) or full SubredditConfig objects. */
+  subreddits?: (string | SubredditConfig)[];
   sort?: 'hot' | 'new' | 'top';
   /** Base URL of a self-hosted Redlib instance (e.g. https://redlib.degenfeed.xyz) */
   redlibUrl?: string;
@@ -408,12 +590,15 @@ export interface RedditProviderOptions {
 
 export class RedditProvider implements FeedProvider {
   readonly protocol: Protocol = 'reddit';
-  private readonly subreddits: string[];
+  private readonly configs: SubredditConfig[];
   private readonly sort: 'hot' | 'new' | 'top';
   private readonly frontends: string[];
 
   constructor(options: RedditProviderOptions = {}) {
-    this.subreddits = options.subreddits ?? DEFAULT_SUBREDDITS;
+    const raw = options.subreddits ?? DEFAULT_CONFIGS;
+    this.configs = raw.map((entry) =>
+      typeof entry === 'string' ? { name: entry, weight: 1.0 } : entry,
+    );
     this.sort = options.sort ?? 'hot';
     const selfHostedRedlib = options.redlibUrl ?? 'http://127.0.0.1:8281';
     this.frontends = [selfHostedRedlib, ...COMMUNITY_REDDIT_FRONTENDS];
@@ -422,11 +607,11 @@ export class RedditProvider implements FeedProvider {
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const limit = 50;
-    const perSub = Math.ceil(limit / this.subreddits.length);
+    const perSub = Math.ceil(limit / this.configs.length);
 
-    const results = await withConcurrencyLimit(this.subreddits, 4, async (sub) => {
+    const results = await withConcurrencyLimit(this.configs, 4, async (config) => {
       try {
-        return await fetchSubreddit(sub, this.sort, perSub, timeoutMs, this.frontends);
+        return await fetchSubreddit(config, this.sort, perSub, timeoutMs, this.frontends);
       } catch {
         return [] as UnifiedPost[];
       }

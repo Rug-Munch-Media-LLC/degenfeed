@@ -147,6 +147,10 @@ export interface UnifiedPost {
   isNew?: boolean;
   isHot?: boolean;
   isTrending?: boolean;
+  /** Per-protocol quality score (server-computed, additive rules per protocol) */
+  qualityScore?: { score: number; max: number; ratio: number; reasons: string[] };
+  /** Quality badge derived from protocol quality rules */
+  qualityBadge?: 'verified' | null;
   /** Community context (lemmy, reddit, etc.) */
   community?: {
     name: string;
@@ -154,6 +158,14 @@ export interface UnifiedPost {
     actorId?: string;
     icon?: string;
     instance?: string;
+    /** Number of subscribers/followers (from Lemmy counts) */
+    subscriberCount?: number;
+    /** Active users in the past month */
+    usersActiveMonth?: number;
+    /** DegenFeed niche category (crypto, defi, nft, etc.) */
+    niche?: string;
+    /** Community quality tier */
+    qualityTier?: 'low' | 'medium' | 'high' | 'vibrant';
   };
   /** Universal df:// URI for cross-protocol addressing, sharing, and bookmarking */
   dfUri?: string;

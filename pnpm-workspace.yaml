@@ -24,4 +24,6 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - viem@2.55.1
 
-overrides: '{"ws":"^8.21.1","undici":">=6.27.0"}'
+overrides:
+  ws: ^8.21.1
+  undici: '>=6.27.0'

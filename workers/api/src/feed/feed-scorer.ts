@@ -9,8 +9,11 @@
 
 import {
   applyQualityFilters,
-  resolvePreset,
+  buildQualityAuthorProfile,
+  computeProtocolQuality,
+  computeQualityScore,
   type PresetName,
+  type ProtocolQualityResult,
   type ResolvedPreset,
 } from '@degenfeed/feed-core';
 import {
@@ -240,6 +243,8 @@ export interface PostScore {
   source: number;
   velocity: number;
   spam: number;
+  /** Quality score 0-100 from the composite quality scoring system */
+  qualityScore: number;
   reasons: string[];
 }
 
@@ -258,7 +263,7 @@ export interface ScoredPost {
 export interface ScoreAndRankOptions {
   prefs: UserAlgorithmPreferences;
   followed: Set<string>;
-  /** scored | hot | new | top */
+  /** scored | hot | new | top | quality | trending */
   sort: string;
   diverse: boolean;
   limit: number;
@@ -293,6 +298,8 @@ export interface ScoreAndRankResult {
     avgQuality: number;
     avgReputation: number;
     avgVelocity: number;
+    /** Composite quality score (0-100) average across the batch */
+    avgQualityScore: number;
   };
 }
 
@@ -381,9 +388,15 @@ export async function scoreAndRank(
 
   // ── Spam integration: filter > 0.9, demote > 0.7 ───────────────
   const spamFiltered = filteredScored.filter((s) => {
-    const spam = (s.post as unknown as Record<string, unknown>).spamScore as number ?? 0;
+    const spam = ((s.post as unknown as Record<string, unknown>).spamScore as number) ?? 0;
     return spam < 0.9;
   });
+
+  // ── Per-protocol quality scores (computed once, attached to all) ─
+  const protocolQualityById = new Map<string, ProtocolQualityResult>();
+  for (const s of spamFiltered) {
+    protocolQualityById.set(s.post.id, computeProtocolQuality(s.post, { followed: opts.followed }));
+  }
 
   const rankedPosts = (() => {
     if (opts.sort === 'new') {
@@ -398,13 +411,42 @@ export async function scoreAndRank(
         .map((s) => s.post)
         .slice(0, Math.min(opts.limit, 100));
     }
+    if (opts.sort === 'quality') {
+      // Best content per protocol rules: quality ratio first, then
+      // overall score, so equally-good posts fall back to ranking v2.
+      return [...spamFiltered]
+        .sort((a, b) => {
+          const aq = protocolQualityById.get(a.post.id)?.ratio ?? 0;
+          const bq = protocolQualityById.get(b.post.id)?.ratio ?? 0;
+          if (bq !== aq) return bq - aq;
+          return b.breakdown.total - a.breakdown.total;
+        })
+        .map((s) => s.post)
+        .slice(0, Math.min(opts.limit, 100));
+    }
+    if (opts.sort === 'trending') {
+      // Rising engagement velocity: velocity first, engagement as
+      // tiebreak, restricted to the last 24h window.
+      const dayAgo = Date.now() - 24 * 3600000;
+      const windowed = spamFiltered.filter((s) => s.post.createdAt >= dayAgo);
+      const pool = windowed.length >= 5 ? windowed : spamFiltered;
+      return [...pool]
+        .sort((a, b) => {
+          if (b.breakdown.velocity !== a.breakdown.velocity) {
+            return b.breakdown.velocity - a.breakdown.velocity;
+          }
+          return b.breakdown.engagement - a.breakdown.engagement;
+        })
+        .map((s) => s.post)
+        .slice(0, Math.min(opts.limit, 100));
+    }
     if (opts.sort === 'hot') {
       return [...spamFiltered]
         .sort((a, b) => {
-          const aSpam = (a.post as unknown as Record<string, unknown>).spamScore as number ?? 0;
-          const bSpam = (b.post as unknown as Record<string, unknown>).spamScore as number ?? 0;
+          const aSpam = ((a.post as unknown as Record<string, unknown>).spamScore as number) ?? 0;
+          const bSpam = ((b.post as unknown as Record<string, unknown>).spamScore as number) ?? 0;
           // Demote high-spam to bottom, then sort by score
-          if ((aSpam > 0.7) !== (bSpam > 0.7)) return aSpam > 0.7 ? 1 : -1;
+          if (aSpam > 0.7 !== bSpam > 0.7) return aSpam > 0.7 ? 1 : -1;
           return b.breakdown.total - a.breakdown.total;
         })
         .map((s) => s.post)
@@ -424,10 +466,10 @@ export async function scoreAndRank(
 
     // ── Demote high-spam posts to the bottom ─────────────────────
     const highSpam = diversePosts.filter(
-      (p) => ((p as unknown as Record<string, unknown>).spamScore as number ?? 0) > 0.7,
+      (p) => (((p as unknown as Record<string, unknown>).spamScore as number) ?? 0) > 0.7,
     );
     const cleanPosts = diversePosts.filter(
-      (p) => ((p as unknown as Record<string, unknown>).spamScore as number ?? 0) <= 0.7,
+      (p) => (((p as unknown as Record<string, unknown>).spamScore as number) ?? 0) <= 0.7,
     );
     diversePosts = [...cleanPosts, ...highSpam];
 
@@ -462,7 +504,12 @@ export async function scoreAndRank(
     if (!breakdown) return p as RankedPost;
     const now = Date.now();
     const ageMin = (now - p.createdAt) / 60000;
-    const spam = (p as unknown as Record<string, unknown>).spamScore as number ?? 0;
+    const spam = ((p as unknown as Record<string, unknown>).spamScore as number) ?? 0;
+    const qScore = computeQualityScore(p, {
+      author: buildQualityAuthorProfile(p.author),
+      uniqueness: 10,
+    });
+    const protocolQuality = protocolQualityById.get(p.id);
     const { score: _, ...rest } = p as unknown as Record<string, unknown>;
     return {
       ...(rest as unknown as UnifiedPost),
@@ -477,11 +524,21 @@ export async function scoreAndRank(
         source: breakdown.source,
         velocity: breakdown.velocity,
         spam,
+        qualityScore: qScore,
         reasons: breakdown.reasons,
       },
       isNew: ageMin < 15,
       isHot: breakdown.velocity > 2.0,
       isTrending: breakdown.engagement > 3,
+      qualityScore: protocolQuality
+        ? {
+            score: protocolQuality.score,
+            max: protocolQuality.maxScore,
+            ratio: protocolQuality.ratio,
+            reasons: protocolQuality.reasons,
+          }
+        : undefined,
+      qualityBadge: protocolQuality?.badge ?? null,
     };
   });
 
@@ -502,15 +559,22 @@ export async function scoreAndRank(
     avgSpam:
       spamFiltered.reduce(
         (sum, s) =>
-          sum + ((s.post as unknown as Record<string, unknown>).spamScore as number ?? 0),
+          sum + (((s.post as unknown as Record<string, unknown>).spamScore as number) ?? 0),
         0,
       ) / totalPosts,
-    avgQuality:
-      spamFiltered.reduce((sum, s) => sum + s.breakdown.quality, 0) / totalPosts,
-    avgReputation:
-      spamFiltered.reduce((sum, s) => sum + s.breakdown.reputation, 0) / totalPosts,
-    avgVelocity:
-      spamFiltered.reduce((sum, s) => sum + s.breakdown.velocity, 0) / totalPosts,
+    avgQuality: spamFiltered.reduce((sum, s) => sum + s.breakdown.quality, 0) / totalPosts,
+    avgReputation: spamFiltered.reduce((sum, s) => sum + s.breakdown.reputation, 0) / totalPosts,
+    avgVelocity: spamFiltered.reduce((sum, s) => sum + s.breakdown.velocity, 0) / totalPosts,
+    avgQualityScore:
+      spamFiltered.reduce(
+        (sum, s) =>
+          sum +
+          computeQualityScore(s.post, {
+            author: buildQualityAuthorProfile(s.post.author),
+            uniqueness: 10,
+          }),
+        0,
+      ) / totalPosts,
   };
 
   return { ranked, topOfHour, nextCursor, debug };
