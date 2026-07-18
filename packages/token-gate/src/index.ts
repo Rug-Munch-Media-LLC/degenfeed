@@ -10,6 +10,9 @@
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
+/** Runtime-agnostic process.env access for Node.js vs browser/worker */
+declare const process: { env: Record<string, string | undefined> } | undefined;
+
 export type TokenGateChain = 'ethereum' | 'base' | 'polygon' | 'solana' | 'arbitrum' | 'optimism';
 export type TokenGateType = 'erc20' | 'erc721' | 'erc1155';
 

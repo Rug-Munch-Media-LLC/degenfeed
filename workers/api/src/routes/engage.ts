@@ -160,6 +160,9 @@ export async function handleEngage(request: Request, env: Env): Promise<Response
       case 'mastodon':
         response = await handleMastodon(action, nativeId, target, content, reaction, auth, env);
         break;
+      case 'lemmy':
+        response = await handleLemmy(action, nativeId, target, content, reaction, auth, env);
+        break;
       default:
         return jsonResponse({ error: `${protocol} not supported` }, 400);
     }
@@ -359,6 +362,55 @@ async function handleMastodon(
     return jsonResponse({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Mastodon engagement failed';
+    return jsonResponse({ error: message }, 500);
+  }
+}
+
+async function handleLemmy(
+  action: EngagementAction,
+  postId: string,
+  _target: { authorId: string; publicationId: string },
+  content: string,
+  _reaction: string,
+  auth: Record<string, string>,
+  _env: Env,
+): Promise<Response> {
+  const instance = auth.lemmy_instance || 'https://community.degenfeed.xyz';
+  const token = auth.lemmy ?? auth.authToken ?? '';
+  if (!token) {
+    return jsonResponse(noAccountError('lemmy'), 401);
+  }
+
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    authorization: `Bearer ${token}`,
+  };
+
+  try {
+    if (action === 'like') {
+      await fetch(`${instance}/api/v3/post/like`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ post_id: Number(postId), score: 1 }),
+      });
+    } else if (action === 'unlike') {
+      await fetch(`${instance}/api/v3/post/like`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ post_id: Number(postId), score: 0 }),
+      });
+    } else if (action === 'reply') {
+      await fetch(`${instance}/api/v3/comment`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ post_id: Number(postId), content }),
+      });
+    } else {
+      return jsonResponse({ error: `${action} not supported on lemmy` }, 400);
+    }
+    return jsonResponse({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Lemmy engagement failed';
     return jsonResponse({ error: message }, 500);
   }
 }

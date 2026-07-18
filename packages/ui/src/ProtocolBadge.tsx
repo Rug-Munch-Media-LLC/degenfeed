@@ -17,6 +17,8 @@ export const PROTOCOL_COLORS: Record<string, string> = {
   lemmy: '#00b868',
   activitypub: '#6364ff',
   rss: '#ffa500',
+  peertube: '#d22d23',
+  youtube: '#ff0000',
 };
 
 export const PROTOCOL_LABELS: Record<string, string> = {
@@ -30,19 +32,23 @@ export const PROTOCOL_LABELS: Record<string, string> = {
   lemmy: 'Lemmy',
   activitypub: 'Mastodon',
   rss: 'RSS',
+  peertube: 'PeerTube',
+  youtube: 'YouTube',
 };
 
 export const PROTOCOL_ICONS: Record<string, string> = {
-  nostr: '☰',
-  farcaster: '◈',
-  lens: '◎',
-  bluesky: '☁',
+  nostr: '\u2630',
+  farcaster: '\u25C8',
+  lens: '\u25CE',
+  bluesky: '\u2601',
   threads: '+',
   mastodon: 'M',
   reddit: 'R',
-  lemmy: '🍋',
+  lemmy: '\uD83C\uDF4B',
   activitypub: 'M',
   rss: 'A',
+  peertube: '\u25B6',
+  youtube: '\u25B6',
 };
 
 export interface ProtocolBadgeProps {

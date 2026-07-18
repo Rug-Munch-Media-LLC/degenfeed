@@ -52,7 +52,7 @@ export async function handleLinkIdentity(request: Request, env: Env): Promise<Re
     return jsonResponse({ error: 'Missing protocol or identity fields' }, 400);
   }
 
-  const validProtocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit'];
+  const validProtocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'lemmy', 'threads', 'rss', 'peertube'];
   if (!validProtocols.includes(body.protocol)) {
     return jsonResponse({ error: `Unsupported protocol: ${body.protocol}` }, 400);
   }
@@ -104,7 +104,7 @@ export async function handleUnlinkIdentity(request: Request, env: Env): Promise<
     return jsonResponse({ error: 'Missing protocol parameter' }, 400);
   }
 
-  const validProtocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit'];
+  const validProtocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'lemmy', 'threads', 'rss', 'peertube'];
   if (!validProtocols.includes(protocol)) {
     return jsonResponse({ error: `Unsupported protocol: ${protocol}` }, 400);
   }
@@ -161,6 +161,10 @@ interface LensIdentityInput { profileId?: string; handle?: string }
 interface BlueskyIdentityInput { did?: string; handle?: string }
 interface MastodonIdentityInput { handle?: string; instance?: string }
 interface RedditIdentityInput { username?: string }
+interface LemmyIdentityInput { username?: string; instance?: string }
+interface ThreadsIdentityInput { username?: string }
+interface RssIdentityInput { url?: string }
+interface PeerTubeIdentityInput { username?: string; channelId?: string; instance?: string }
 
 function validateProtocolIdentity(
   protocol: string,
@@ -172,6 +176,10 @@ function validateProtocolIdentity(
   | BlueskyIdentityInput
   | MastodonIdentityInput
   | RedditIdentityInput
+  | LemmyIdentityInput
+  | ThreadsIdentityInput
+  | RssIdentityInput
+  | PeerTubeIdentityInput
   | null {
   switch (protocol) {
     case 'nostr': {
@@ -212,6 +220,29 @@ function validateProtocolIdentity(
       const username = String(data.username || '');
       if (!username) return null;
       return { username };
+    }
+    case 'lemmy': {
+      const username = String(data.username || '');
+      const instance = String(data.instance || '');
+      if (!username) return null;
+      return { username, instance: instance || 'community.degenfeed.xyz' };
+    }
+    case 'threads': {
+      const username = String(data.username || '');
+      if (!username) return null;
+      return { username };
+    }
+    case 'rss': {
+      const url = String(data.url || '');
+      if (!url) return null;
+      return { url };
+    }
+    case 'peertube': {
+      const username = String(data.username || '');
+      const channelId = String(data.channelId || '');
+      const instance = String(data.instance || '');
+      if (!username && !channelId) return null;
+      return { username, channelId, instance: instance || 'video.degenfeed.xyz' };
     }
     default:
       return null;

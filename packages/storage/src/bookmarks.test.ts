@@ -54,7 +54,9 @@ describe('syncBookmarkToServer', () => {
         body: expect.any(String),
       }),
     );
-    const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string) as Record<string, unknown>;
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0]?.[1]?.body as string | undefined) ?? '{}',
+    ) as Record<string, unknown>;
     expect(body.postId).toBe('nostr:test');
     expect(body.tags).toEqual(['crypto', 'defi']);
   });
@@ -127,6 +129,6 @@ describe('StoredBookmark type', () => {
       authorName: 'Vitalik',
       savedAt: Date.now(),
     };
-    expect(bookmark.tags).toBeUndefined();
+    expect('tags' in bookmark).toBe(false);
   });
 });

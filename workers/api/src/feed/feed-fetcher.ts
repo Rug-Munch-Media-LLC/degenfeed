@@ -283,6 +283,10 @@ class RssWithFallbackProvider implements FeedProvider {
         'https://www.wired.com/feed/rss',
         'https://venturebeat.com/feed/',
         'https://www.technologyreview.com/feed/',
+        // ── PeerTube Video Feeds ──
+        'https://video.degenfeed.xyz/feeds/videos.xml?sort=-publishedAt',
+        'https://video.degenfeed.xyz/feeds/videos.xml?sort=-createdAt',
+        'https://video.degenfeed.xyz/feeds/videos.xml?sort=-publishedAt&category=1',
       ],
     });
   }

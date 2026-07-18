@@ -25,6 +25,7 @@ const POSTIZ_PLATFORMS = new Set([
   'farcaster',
   'lens',
   'reddit',
+  'lemmy',
 ]);
 
 /**
@@ -357,6 +358,42 @@ async function perProtocolPublishSingle(
       const client = new GtSClient(instance, accessToken);
       await client.publish(text, { visibility: 'public' });
       return { success: true };
+    }
+
+    case 'lemmy': {
+      const instance = auth.lemmy_instance || 'https://community.degenfeed.xyz';
+      const token = auth.lemmy || auth.authToken;
+      if (!token) {
+        return { error: 'Not signed into Lemmy' };
+      }
+      const communityId = auth.lemmy_community || 1;
+      await fetch(`${instance}/api/v3/post`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          community_id: Number(communityId),
+          name: text.slice(0, 200),
+          body: text,
+        }),
+      });
+      return { success: true };
+    }
+
+    case 'reddit': {
+      return {
+        error:
+          'Reddit publishing requires OAuth2. Use the official Reddit API client or Postiz integration.',
+      };
+    }
+
+    case 'rss': {
+      return {
+        error:
+          'RSS is a read-only protocol. To publish RSS content, use the RSS-to-Nostr bridge.',
+      };
     }
 
     default:

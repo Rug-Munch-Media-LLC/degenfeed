@@ -386,7 +386,9 @@ export function encodeTipWithMessageData(
   // Static offset for address (32 bytes) + dynamic string
   const signature = '0xcf02c46b';
   const addrPad = recipient.toLowerCase().replace('0x', '').padStart(64, '0');
-  const msgHex = Buffer.from(message).toString('hex');
+  const msgHex = Array.from(new TextEncoder().encode(message))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
   const msgLen = BigInt(message.length).toString(16).padStart(64, '0');
   const msgData = msgHex.padEnd(64 * Math.ceil(msgHex.length / 64), '0');
   // offset for the string data (32 bytes after address)

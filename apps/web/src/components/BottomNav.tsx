@@ -43,27 +43,20 @@ const ICONS: Record<string, string> = {
   '🔒': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
 };
 
+// Twitter-style bottom nav: max 5 items, Home + Search + Compose/SignIn + Notifications + Messages
 const AUTH_NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '🏠', priority: true },
   { href: '/search', label: 'Search', icon: '🔍', priority: true },
   { href: '/trending', label: 'Trending', icon: '🔥', priority: true },
-  { href: '/shorts', label: 'Shorts', icon: '📱', priority: true },
-  { href: '/news', label: 'News', icon: '📰', priority: true },
-  { href: '/messages', label: 'Messages', icon: '💬', priority: true, requiresAuth: true },
   { href: '/notifications', label: 'Notifs', icon: '🔔', priority: true, requiresAuth: true },
-  { href: '/spaces', label: 'Spaces', icon: '🔊', priority: false },
-  { href: '/leaderboard', label: 'Top', icon: '🏆', priority: false },
+  { href: '/messages', label: 'Messages', icon: '💬', priority: true, requiresAuth: true },
 ];
 
 const GUEST_NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '🏠', priority: true },
   { href: '/search', label: 'Search', icon: '🔍', priority: true },
   { href: '/trending', label: 'Trending', icon: '🔥', priority: true },
-  { href: '/shorts', label: 'Shorts', icon: '📱', priority: true },
-  { href: '/news', label: 'News', icon: '📰', priority: true },
-  { href: '/spaces', label: 'Spaces', icon: '🔊', priority: false },
-  { href: '/leaderboard', label: 'Top', icon: '🏆', priority: false },
-  { href: '/discover', label: 'Discover', icon: '🌐', priority: false },
+  { href: '/notifications', label: 'Notifs', icon: '🔔', priority: true },
 ];
 
 export function BottomNav() {
@@ -103,19 +96,21 @@ export function BottomNav() {
       aria-label="Mobile"
       className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-glass-bg)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <div className="flex justify-around px-1">
+      <div className="flex items-center justify-around px-2">
         {(signedIn ? AUTH_NAV : GUEST_NAV).map((item) => {
+          const isHome = item.href === '/home/all';
           const active =
             pathname === item.href ||
-            (item.href !== '/home/all' && pathname.startsWith(`${item.href}/`));
+            pathname.startsWith(`${item.href}/`) ||
+            (isHome && (pathname === '/feed' || pathname === '/home' || pathname === '/'));
           return (
             <Link
               key={item.href}
               href={item.href}
               prefetch={item.priority}
-              className={`relative flex flex-col items-center justify-center gap-0 py-1 text-[9px] font-medium transition-colors min-h-[3rem] min-w-[2.5rem] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-[-2px] ${active ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+              className={`relative flex flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium transition-colors h-full flex-1 max-w-[80px] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-[-2px] ${active ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
               aria-current={active ? 'page' : undefined}
-              title={item.requiresAuth && !signedIn ? 'Sign in to access Messages' : item.label}
+              title={item.requiresAuth && !signedIn ? 'Sign in to access' : item.label}
             >
               <span
                 className={`relative flex h-8 w-8 items-center justify-center rounded-xl transition-all ${

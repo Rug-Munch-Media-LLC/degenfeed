@@ -66,6 +66,27 @@ export const PROTOCOL_FORMATS: Record<
     supportsPolls: false,
     conventions: 'Threaded discussion. Title required. Community-focused.',
   },
+  threads: {
+    maxLength: 500,
+    supportsMarkdown: false,
+    supportsImages: true,
+    supportsPolls: false,
+    conventions: 'Meta platform style. Short text. Image-heavy. Mobile-first.',
+  },
+  reddit: {
+    maxLength: 40_000,
+    supportsMarkdown: true,
+    supportsImages: true,
+    supportsPolls: true,
+    conventions: 'Community-focused. Title required. Markdown formatting. Subreddit-aware.',
+  },
+  peertube: {
+    maxLength: 5_000,
+    supportsMarkdown: true,
+    supportsImages: true,
+    supportsPolls: false,
+    conventions: 'Video platform. Description-focused. Federation-aware. Channel-driven.',
+  },
 };
 
 // ─── Protocol labels for bridge attribution ─────────────────────────

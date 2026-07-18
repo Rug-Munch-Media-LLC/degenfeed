@@ -11,6 +11,10 @@ export const PROTOCOL_DEFAULT_CURRENCY: Record<string, string> = {
   bluesky: 'eth',
   mastodon: 'eth',
   threads: 'eth',
+  lemmy: 'eth',
+  reddit: 'eth',
+  peertube: 'usdc',
+  rss: 'usdc',
   ethereum: 'eth',
   solana: 'sol',
 };

@@ -57,10 +57,11 @@ function getProvider(): ethersProvider | null {
   return window.ethereum;
 }
 
-type ethersProvider = Pick<
-  typeof window.ethereum,
-  'request' | 'on' | 'removeListener'
->;
+type ethersProvider = {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on: (event: string, handler: (...args: unknown[]) => void) => void;
+  removeListener: (event: string, handler: (...args: unknown[]) => void) => void;
+};
 
 // Extend Window type for ethereum detection
 declare global {
@@ -304,7 +305,10 @@ function decodeTipSentEvent(log: LogEntry): OnChainTip | null {
   const stringLenHex = data.slice(messageStart, messageStart + 64);
   const stringLen = Number(BigInt(`0x${stringLenHex}`));
   const stringData = data.slice(messageStart + 64, messageStart + 64 + stringLen * 2);
-  const message = Buffer.from(stringData, 'hex').toString('utf-8');
+  const bytes = new Uint8Array(
+    stringData.match(/.{1,2}/g)?.map((b) => Number.parseInt(b, 16)) ?? [],
+  );
+  const message = new TextDecoder().decode(bytes);
 
   return {
     from,

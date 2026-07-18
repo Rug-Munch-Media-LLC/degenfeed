@@ -10,6 +10,11 @@ export const ALLOWED_PROTOCOLS = new Set([
   'ethereum',
   'solana',
   'lemmy',
+  'threads',
+  'reddit',
+  'peertube',
+  'ponder',
+  'youtube',
 ]);
 
 export function hasSuspiciousPayload(value: string): boolean {

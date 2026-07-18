@@ -49,6 +49,8 @@ function formatProtocolLabel(p: string): string {
     mastodon: 'Mastodon',
     lemmy: 'Lemmy',
     rss: 'RSS',
+    reddit: 'Reddit',
+    peertube: 'PeerTube',
   };
   return labels[p] ?? p;
 }
@@ -463,6 +465,36 @@ async function publishCrossReply(
         }
         const errText = await recordRes.text();
         return { ok: false, error: `Bluesky publish failed: ${errText.slice(0, 100)}` };
+      }
+
+      case 'lemmy': {
+        const instance = auth.lemmy_instance || 'https://community.degenfeed.xyz';
+        const token = auth.lemmy || auth.authToken;
+        if (!token) {
+          return { ok: false, error: 'Not signed into Lemmy' };
+        }
+        // Post a top-level comment that links back to the original
+        const commentText = `${text}\n\n\xf0\x9f\x94\x97 df://${parentProtocol}:${parentId}`;
+        const res = await fetch(`${instance}/api/v3/comment`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            post_id: Number(parentId) || 0,
+            content: commentText,
+          }),
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { comment_view?: { comment?: { id: number } } };
+          const nativeId = data.comment_view?.comment?.id
+            ? String(data.comment_view.comment.id)
+            : '';
+          return { ok: true, nativeId };
+        }
+        const errText = await res.text();
+        return { ok: false, error: `Lemmy publish failed: ${errText.slice(0, 100)}` };
       }
 
       default:

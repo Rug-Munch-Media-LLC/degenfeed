@@ -1,6 +1,5 @@
-import type { Protocol } from '@degenfeed/types';
+import type { Protocol, StoredIdentity } from '@degenfeed/types';
 import { getDb } from './db';
-import type { StoredIdentity } from './types';
 
 export async function saveIdentity(identity: StoredIdentity): Promise<void> {
   const db = await getDb();

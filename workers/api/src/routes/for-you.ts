@@ -1,23 +1,22 @@
 /**
- * /api/feed/for-you — AI-powered personalized feed
+ * /api/feed/for-you — TikTok-style recommendation engine v3
  *
- * Reads the user's behavior profile from KV, boosts posts matching
- * their learned interests, and falls back to the standard scored feed
- * for new users (onboarding mode).
+ * Research synthesis:
+ *   TikTok: watch time, completion rate, shares, profile visits, "not interested"
+ *   Twitter/X: engagement prediction, author diversity, topic authority, recency
+ *   Instagram: interests, relationship, timeliness, frequency, following, usage
  *
- * Also provides topic preference management endpoints so users can
- * fine-tune the AI's learned preferences.
+ * V3 pipeline:
+ *   1. Cold start: new users → high-engagement content across all categories
+ *   2. Dwell time: KV-tracked view duration → boosts similar content
+ *   3. Feedback: "Show less/more like this" → topic/creator weight adjustment
+ *   4. Engagement prediction v2: 9-factor model with dwell + feedback signals
+ *   5. Creator diversity: max 3 per creator per page, rotation enforced
+ *   6. Algorithm transparency: each post gets a human-readable "why" reason
+ *
+ * Also provides topic preference management + dwell recording + feedback endpoints.
  */
 
-import {
-  adjustTopicWeight,
-  clearTopic,
-  emptyBehaviorProfile,
-  getLearnedTopics,
-  isOnboardingMode,
-  personalizeScore,
-  type UserBehaviorProfile,
-} from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
 import { parseProtocols } from '@degenfeed/utils';
 import {
@@ -28,35 +27,58 @@ import {
   computeFreshnessMeta,
   computeTrending,
   deduplicateCrossProtocol,
+  deprioritizeStaleContent,
+  emptyDwellProfile,
+  emptyFeedbackProfile,
   FEED_GENERATION_TIMEOUT_MS,
-  feedCacheKey,
   fetchFromProviders,
-  getCachedFeed,
-  getCircuitStatus,
+  filterSuppressedPosts,
+  getCategoryCounts,
   getFeedCache,
   getLastSync,
   buildCatchUpSummary,
   loadUserRankingContext,
-  predictEngagementBoost,
+  predictEngagementV2,
+  coldStartReasons,
+  computeDwellBoost,
+  computeFeedbackBoost,
+  getDwellWeightedCreators,
+  getDwellWeightedNiches,
+  loadDwellProfile,
+  loadFeedbackProfile,
+  recordDwellEvent,
+  recordFeedback,
   prefersEnglish,
   prepareBasePosts,
   ProviderTimer,
   scoreAndRank,
-  setCachedFeed,
   setFeedCache,
   shouldTriggerSmartRefresh,
   updateFeedFreshness,
   updateLastSync,
+  verifyDiversity,
   writePostsToKV,
+  ALL_CATEGORIES,
+  ensureCategory,
 } from '../feed';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession, verifySessionCookie } from '../session';
 import { DEFAULT_PROTOCOLS } from './feed';
-import { mergePreferences, parseCookiePrefs, parsePrefsFromQuery } from '../feed/feed-scorer';
+import { mergePreferences } from '../feed/feed-scorer';
 
 type ExecCtx = { waitUntil: (p: Promise<unknown>) => void };
 
 // ─── KV helpers ─────────────────────────────────────────────────────
+
+import {
+  emptyBehaviorProfile,
+  type UserBehaviorProfile,
+  getLearnedTopics,
+  adjustTopicWeight,
+  clearTopic,
+  isOnboardingMode,
+  personalizeScore,
+} from '@degenfeed/feed-core';
 
 function behaviorKey(address: string): string {
   return `user:behavior:${address.toLowerCase()}`;
@@ -80,21 +102,14 @@ async function writeBehavior(
   if (!env.CACHE) return;
   try {
     await env.CACHE.put(behaviorKey(address), JSON.stringify(profile), {
-      expirationTtl: 60 * 60 * 24 * 30, // 30 days
+      expirationTtl: 60 * 60 * 24 * 30,
     });
   } catch {
     console.warn('[for-you] KV write failed');
   }
 }
 
-/**
- * Extract the session cookie and decode the wallet address.
- * Returns null if the user is not authenticated.
- */
-async function sessionAddress(
-  request: Request,
-  env: Env,
-): Promise<string | null> {
+async function sessionAddress(request: Request, env: Env): Promise<string | null> {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const match = cookieHeader
     .split(';')
@@ -104,6 +119,23 @@ async function sessionAddress(
   const cookieValue = match.slice('__Host-dfid='.length);
   const payload = await verifySessionCookie(cookieValue, env.AUTH_SECRET);
   return payload?.address ?? null;
+}
+
+// ─── Creator diversity enforcement ─────────────────────────────────
+
+function enforceCreatorDiversity(posts: UnifiedPost[], maxPerCreator = 3): UnifiedPost[] {
+  const creatorCounts = new Map<string, number>();
+  const result: UnifiedPost[] = [];
+
+  for (const post of posts) {
+    const creatorId = post.author.id;
+    const count = creatorCounts.get(creatorId) ?? 0;
+    if (count >= maxPerCreator) continue;
+    creatorCounts.set(creatorId, count + 1);
+    result.push(post);
+  }
+
+  return result;
 }
 
 // ─── For You feed handler ──────────────────────────────────────────
@@ -122,17 +154,23 @@ async function generateForYouFeed(
   const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
   const cookieHeader = request.headers.get('cookie') ?? '';
   const now = Date.now();
+  const feedStartTime = Date.now();
 
+  // 1. Load user context
   const userCtx = await loadUserRankingContext(request, env);
   const address = await sessionAddress(request, env);
+
+  // 2. Load behavior, dwell, and feedback profiles
   const behaviorProfile = address ? await readBehavior(env, address) : null;
+  const dwellProfile = address ? await loadDwellProfile(env, address) : emptyDwellProfile();
+  const feedbackProfile = address ? await loadFeedbackProfile(env, address) : emptyFeedbackProfile();
   const isOnboarding = !behaviorProfile || isOnboardingMode(behaviorProfile);
 
-  const feedStartTime = Date.now();
+  // 3. Fetch from providers
   const notices: string[] = [];
   const timer = new ProviderTimer();
   const fetchResults = await Promise.race([
-    fetchFromProviders(env, requestedProtocols, limit, notices, execCtx, timer),
+    fetchFromProviders(env, requestedProtocols, isOnboarding ? limit * 2 : limit, notices, execCtx, timer),
     new Promise<never>((_, reject) =>
       setTimeout(
         () => reject(new Error(`feed generation timeout after ${FEED_GENERATION_TIMEOUT_MS}ms`)),
@@ -147,7 +185,7 @@ async function generateForYouFeed(
   });
   const { posts: allPosts, errors, perProtocol } = collectProviderResults(fetchResults);
 
-  // Cross-protocol dedup
+  // 4. Dedup + enrich
   const dedupResult = deduplicateCrossProtocol(allPosts);
   const deduped = prepareBasePosts(dedupResult.posts, {
     category,
@@ -167,28 +205,49 @@ async function generateForYouFeed(
     ),
   });
 
-  // Engagement prediction boost
-  const authorStats = computeAllAuthorStats(relevant);
+  // 5. Filter suppressed posts (strong negative feedback)
+  const filtered = filterSuppressedPosts(relevant, feedbackProfile);
+
+  // 6. Compute trending
   const computedTrendingSet = new Set<string>();
-  const trending = await computeTrending(relevant, Number(params.get('trending')) || 24);
+  const trending = await computeTrending(filtered, Number(params.get('trending')) || 24);
   for (const t of trending) {
     computedTrendingSet.add(t.topic.toLowerCase());
   }
 
-  const predictionBoosts = new Map<string, number>();
-  for (const post of relevant) {
-    const stats = authorStats.get(post.author.id);
-    const pred = predictEngagementBoost({
-      post,
-      authorStats: stats,
-      trendingTopics: computedTrendingSet,
-      now,
+  const authorStats = computeAllAuthorStats(filtered);
+
+  // 7. Cold start: if onboarding, mix high-engagement across all categories
+  let coldStartPosts: UnifiedPost[] = [];
+  let isColdStart = isOnboarding;
+
+  if (isColdStart) {
+    // Sort by engagement across all categories (diverse categories enforced)
+    filtered.sort((a, b) => {
+      const engA = a.metrics.likes + a.metrics.reposts * 2 + a.metrics.replies * 3 + (a.metrics.quotes ?? 0);
+      const engB = b.metrics.likes + b.metrics.reposts * 2 + b.metrics.replies * 3 + (b.metrics.quotes ?? 0);
+      if (engB !== engA) return engB - engA;
+      return b.createdAt - a.createdAt;
     });
-    predictionBoosts.set(post.id, pred.boost);
+
+    // Enforce category diversity in cold start
+    const catCounts = new Map<string, number>();
+    const maxPerCat = Math.ceil(limit / ALL_CATEGORIES.length) + 2;
+    for (const post of filtered) {
+      const cat = ensureCategory(post);
+      const count = catCounts.get(cat) ?? 0;
+      if (count >= maxPerCat) continue;
+      catCounts.set(cat, count + 1);
+      coldStartPosts.push(post);
+      if (coldStartPosts.length >= limit * 2) break;
+    }
+    coldStartPosts = enforceCreatorDiversity(coldStartPosts, 3);
+    coldStartPosts = deprioritizeStaleContent(coldStartPosts, now);
   }
 
+  // 8. Score and rank
   const mergedPrefs = mergePreferences(null, userCtx.preferences, null);
-  const { ranked, topOfHour, nextCursor, debug } = await scoreAndRank(env, relevant, {
+  const { ranked, topOfHour, nextCursor, debug } = await scoreAndRank(env, isColdStart ? coldStartPosts : filtered, {
     prefs: mergedPrefs,
     followed: userCtx.followed,
     sort: 'scored',
@@ -205,44 +264,131 @@ async function generateForYouFeed(
     showOriginalContent:
       params.get('showOriginalContent') === 'true' ||
       userCtx.preferences?.showOriginalContent === true,
-    minEngagement: Number(params.get('minEngagement')) || userCtx.preferences?.minEngagement || 0,
+    minEngagement: isColdStart ? 5 : (Number(params.get('minEngagement')) || userCtx.preferences?.minEngagement || 0),
     maxPerNiche: Number(params.get('maxPerNiche')) || userCtx.preferences?.maxPerNiche || 5,
     interleaveProtocols:
       params.get('interleaveProtocols') !== 'false' &&
       (userCtx.preferences?.interleaveProtocols ?? true),
   });
 
-  // Personalization
+  // 9. V3 personalization: engagement prediction v2 + dwell boost + feedback boost
   let finalRanked: UnifiedPost[] = ranked;
-  let boostApplied = false;
-  let personalizationReasons: string[] = [];
+  const algorithmReasons: Map<string, string[]> = new Map();
+  let personalizationApplied = false;
 
-  if (!isOnboarding && behaviorProfile) {
-    const personalized: Array<UnifiedPost & { _boost: number; _reasons: string[] }> = ranked.map(
-      (post) => {
-        const { boost, reasons } = personalizeScore(post, behaviorProfile);
-        const mergedReasons = [...(post.score?.reasons ?? []), ...reasons];
-        return {
-          ...post,
-          score: post.score ? { ...post.score, reasons: mergedReasons } : undefined,
-          _boost: boost,
-          _reasons: reasons,
-        };
-      },
-    );
+  if (!isColdStart || !isOnboarding) {
+    // Build user signal sets
+    const userNiches = new Set<string>();
+    if (behaviorProfile) {
+      const learnedTopics = getLearnedTopics(behaviorProfile);
+      for (const { topic } of learnedTopics) userNiches.add(topic.toLowerCase());
+      // Also add topics from the behavior profile directly
+      for (const topic of Object.keys(behaviorProfile.topics ?? {})) {
+        userNiches.add(topic.toLowerCase());
+      }
+    }
+    for (const niche of userCtx.preferences?.preferredNiches ?? []) {
+      userNiches.add(niche.toLowerCase());
+    }
+    // Also add dwell-weighted niches
+    const dwellWeightedNiches = getDwellWeightedNiches(dwellProfile);
+    const dwellWeightedCreators = getDwellWeightedCreators(dwellProfile);
+
+    const userContentTypes = new Set<string>();
+    if (behaviorProfile) {
+      for (const type of Object.keys(behaviorProfile.contentTypes ?? {})) {
+        userContentTypes.add(type);
+      }
+    }
+
+    const personalized: Array<UnifiedPost & { _personalizationScore: number }> = ranked.map((post) => {
+      // A. Legacy personalizeScore (backward compat)
+      let legacyBoost = 0;
+      let legacyReasons: string[] = [];
+      if (behaviorProfile) {
+        const result = personalizeScore(post, behaviorProfile);
+        legacyBoost = result.boost;
+        legacyReasons = result.reasons;
+      }
+
+      // B. Engagement prediction v2
+      const v2Pred = predictEngagementV2({
+        post,
+        userNiches,
+        userCreators: userCtx.followed,
+        userContentTypes,
+        dwellWeightedNiches,
+        dwellWeightedCreators,
+        feedbackProfile,
+        behaviorProfile: undefined,
+        followedCreators: userCtx.followed,
+        now,
+      });
+
+      // C. Dwell boost
+      const dwellResult = computeDwellBoost(post, dwellProfile);
+
+      // D. Feedback boost
+      const feedbackResult = computeFeedbackBoost(post, feedbackProfile);
+
+      // Combine: legacy + v2 prediction + dwell + feedback
+      const combinedBoost =
+        (legacyBoost * 0.15) + // legacy weight
+        (v2Pred.normalizedScore * 0.45) + // v2 prediction weight
+        ((dwellResult.multiplier - 1.0) * 0.25) + // dwell weight (normalize to 0-1 range)
+        ((feedbackResult.multiplier - 1.0) * 0.15); // feedback weight
+
+      // Collect algorithm reasons
+      const reasons = [
+        ...v2Pred.algorithmReasons,
+        ...dwellResult.factors,
+        ...feedbackResult.factors,
+        ...legacyReasons,
+      ];
+      // Dedup reasons
+      const uniqueReasons = [...new Set(reasons)];
+      algorithmReasons.set(post.id, uniqueReasons.length > 0 ? uniqueReasons : []);
+
+      return {
+        ...post,
+        _personalizationScore: combinedBoost,
+      };
+    });
+
+    // Sort by combined score
     personalized.sort((a, b) => {
       const baseA = a.score?.total ?? 0;
       const baseB = b.score?.total ?? 0;
-      return baseB + b._boost - (baseA + a._boost);
+      return (baseB + b._personalizationScore * 10) - (baseA + a._personalizationScore * 10);
     });
-    boostApplied = true;
-    for (const post of personalized.slice(0, 3)) {
-      personalizationReasons.push(...post._reasons);
-    }
-    finalRanked = personalized.map(({ _boost, _reasons, ...clean }) => clean);
+
+    personalizationApplied = true;
+    finalRanked = personalized.map(({ _personalizationScore, ...clean }) => clean);
   }
 
-  // Smart refresh
+  // 10. Cold start: attach cold start algorithm reasons
+  if (isColdStart) {
+    for (const post of finalRanked) {
+      algorithmReasons.set(post.id, coldStartReasons(post));
+    }
+  }
+
+  // 11. Creator diversity enforcement
+  finalRanked = enforceCreatorDiversity(finalRanked, 3);
+
+  // 12. Stale content deprioritization
+  finalRanked = deprioritizeStaleContent(finalRanked, now);
+
+  // 13. Attach algorithm reasons to posts
+  finalRanked = finalRanked.map((post) => ({
+    ...post,
+    algorithmReasons: algorithmReasons.get(post.id) ?? [],
+    score: post.score
+      ? { ...post.score, algorithmReasons: algorithmReasons.get(post.id) ?? [] }
+      : undefined,
+  }));
+
+  // 14. Smart refresh
   let catchUp = null;
   if (userId) {
     const lastSync = await getLastSync(env, userId);
@@ -252,9 +398,13 @@ async function generateForYouFeed(
     void updateLastSync(env, userId);
   }
 
-  // Freshness
+  // 15. Freshness
   const freshnessEntry = await updateFeedFreshness(env, 'for-you', finalRanked);
   const freshnessMeta = computeFreshnessMeta(freshnessEntry, now);
+
+  // 16. Coverage audit
+  const categoryCounts = getCategoryCounts(finalRanked);
+  const diversityCheck = verifyDiversity(finalRanked);
 
   const feedElapsed = Date.now() - feedStartTime;
   const responseBody = {
@@ -267,7 +417,7 @@ async function generateForYouFeed(
       notices: notices.length > 0 ? notices : undefined,
       topOfHour,
       nextCursor,
-      sort: 'for-you',
+      sort: 'for-you-v3',
       fetchedAt: now,
       freshness: {
         updatedLabel: freshnessMeta.updatedLabel,
@@ -289,9 +439,36 @@ async function generateForYouFeed(
         : undefined,
       personalization: {
         hasProfile: !!behaviorProfile,
-        boostApplied,
-        isOnboarding,
-        reasons: [...new Set(personalizationReasons)].slice(0, 5),
+        personalizationApplied,
+        isOnboarding: isColdStart,
+        isColdStart,
+        hasDwellData: dwellProfile.entries.length > 0,
+        hasFeedbackData: feedbackProfile.entries.length > 0,
+        dwellEntries: dwellProfile.entries.length,
+        feedbackEntries: feedbackProfile.entries.length,
+      },
+      algorithm: {
+        version: 'v3',
+        factors: [
+          'content-similarity',
+          'creator-affinity',
+          'topic-match',
+          'timing',
+          'post-type-preference',
+          'scroll-velocity',
+          'social-proof',
+          'diversity-bonus',
+          'dwell-boost',
+          'feedback-boost',
+        ],
+        coldStartActive: isColdStart,
+      },
+      categoryCoverage: {
+        counts: categoryCounts,
+        uniqueCategories: diversityCheck.uniqueCategories,
+        dominantCategory: diversityCheck.dominantCategory,
+        dominantPct: diversityCheck.dominantPct,
+        sufficientlyDiverse: diversityCheck.diverse,
       },
     },
   };
@@ -299,22 +476,20 @@ async function generateForYouFeed(
   if (!cursor) void setFeedCache(env, userId, 'for-you', responseBody, responseBody.meta);
   const resp = cachedJsonResponse(responseBody);
 
-  const circuitStatus = await getCircuitStatus(env, requestedProtocols);
-  const circuitParts = Object.entries(circuitStatus).map(([p, s]) => `${p}=${s}`);
   const debugParts = [
     `feed-generation=${(feedElapsed / 1000).toFixed(1)}s`,
-    `timeout=${(FEED_GENERATION_TIMEOUT_MS / 1000).toFixed(0)}s`,
-    `personalized=${boostApplied},onboarding=${isOnboarding},profile=${!!behaviorProfile}`,
+    `v3-personalization=${personalizationApplied}`,
+    `cold-start=${isColdStart}`,
+    `dwell-entries=${dwellProfile.entries.length}`,
+    `feedback-entries=${feedbackProfile.entries.length}`,
     `dedup=cross=${dedupResult.crossProtocol},url=${dedupResult.urlDedup}`,
-    `engagement-prediction=${predictionBoosts.size > 0 ? 'active' : 'inactive'}`,
     `freshness=${freshnessMeta.updatedLabel}`,
+    `creator-diversity=${3}/page`,
+    `categories=${diversityCheck.uniqueCategories}/${ALL_CATEGORIES.length}`,
     catchUp?.triggered ? `catchup=${catchUp.awayMinutes}m,${catchUp.totalNewPosts}new` : '',
   ];
   if (timer.getResults().length > 0) {
     debugParts.push(`timings=${timer.toDebugString()}`);
-  }
-  if (circuitParts.length > 0) {
-    debugParts.push(`circuits=${circuitParts.join(',')}`);
   }
   resp.headers.set('X-DegenFeed-Debug', debugParts.filter(Boolean).join(' | '));
   return resp;
@@ -328,15 +503,12 @@ export async function handleForYouFeed(
   const params = new URL(request.url).searchParams;
   const userId = await sessionAddress(request, env);
 
-  // SWR cache: return stale immediately, generate fresh in background
+  // SWR cache
   if (!params.get('cursor')) {
     const cacheResult = await getFeedCache(env, userId, 'for-you');
     if (cacheResult.type === 'hit' && cacheResult.entry) {
       const resp = cachedJsonResponse(cacheResult.entry, 200, 30);
-      resp.headers.set(
-        'X-DegenFeed-Debug',
-        `cache=hit,cachedAt=${new Date(cacheResult.entry.cachedAt).toISOString()}`,
-      );
+      resp.headers.set('X-DegenFeed-Debug', `cache=hit,v3`);
       return resp;
     }
     if (cacheResult.type === 'stale' && cacheResult.entry) {
@@ -348,15 +520,146 @@ export async function handleForYouFeed(
         void generateForYouFeed(request, env, execCtx, userId);
       }
       const resp = cachedJsonResponse(cacheResult.entry, 200, 30);
-      resp.headers.set(
-        'X-DegenFeed-Debug',
-        `cache=stale(swr),cachedAt=${new Date(cacheResult.entry.cachedAt).toISOString()},background=refresh`,
-      );
+      resp.headers.set('X-DegenFeed-Debug', `cache=stale(swr),v3,background=refresh`);
       return resp;
     }
   }
 
   return generateForYouFeed(request, env, execCtx, userId);
+}
+
+// ─── Minimal post info for recording ──────────────────────────────
+interface DwellPostInfo {
+  id: string;
+  niches?: string[];
+  authorId?: string;
+  contentType?: string;
+}
+
+function buildFakePost(info: DwellPostInfo): UnifiedPost {
+  return {
+    id: info.id,
+    text: '',
+    html: '',
+    author: {
+      id: info.authorId ?? '',
+      primary: { protocol: 'nostr' as const, id: info.authorId ?? '' },
+      displayName: '',
+      bio: '',
+      avatarUrl: '',
+      handles: {},
+      verified: [],
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: {},
+    },
+    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+    embeds: [],
+    niches: info.niches ?? [],
+    createdAt: Date.now(),
+    protocol: 'nostr',
+    contentType: (info.contentType as UnifiedPost['contentType']) ?? 'text',
+    qualityScore: { score: 0, max: 100, ratio: 0, reasons: [] },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+    },
+    raw: null,
+  };
+}
+
+// ─── Dwell time recording endpoint ──────────────────────────────────
+
+export async function handleRecordDwell(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  let body: {
+    postId?: string;
+    niches?: string[];
+    authorId?: string;
+    contentType?: string;
+    dwellMs?: number;
+    completionRate?: number;
+    shared?: boolean;
+    profileVisit?: boolean;
+  } = {};
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.postId || typeof body.dwellMs !== 'number') {
+    return jsonResponse({ error: 'postId and dwellMs required' }, 400);
+  }
+
+  const fakePost = buildFakePost({
+    id: body.postId,
+    niches: body.niches,
+    authorId: body.authorId,
+    contentType: body.contentType,
+  });
+
+  await recordDwellEvent(
+    env,
+    session.address,
+    fakePost,
+    body.dwellMs ?? 0,
+    body.completionRate ?? 0,
+    body.shared ?? false,
+    body.profileVisit ?? false,
+  );
+
+  return noCacheJsonResponse({ ok: true });
+}
+
+// ─── Feedback endpoint: "Show more/less like this" ─────────────────
+
+export async function handleFeedback(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  let body: {
+    postId?: string;
+    action?: 'show-more' | 'show-less';
+    niches?: string[];
+    authorId?: string;
+    contentType?: string;
+  } = {};
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.postId || !body.action) {
+    return jsonResponse({ error: 'postId and action (show-more or show-less) required' }, 400);
+  }
+
+  if (body.action !== 'show-more' && body.action !== 'show-less') {
+    return jsonResponse({ error: 'action must be show-more or show-less' }, 400);
+  }
+
+  const fakePost = buildFakePost({
+    id: body.postId,
+    niches: body.niches,
+    authorId: body.authorId,
+    contentType: body.contentType,
+  });
+
+  const profile = await recordFeedback(env, session.address, fakePost, body.action);
+
+  return noCacheJsonResponse({
+    ok: true,
+    action: body.action,
+    topicWeights: profile.topicWeights,
+    creatorWeights: profile.creatorWeights,
+    contentTypeWeights: profile.contentTypeWeights,
+  });
 }
 
 // ─── Topic preference management endpoints ─────────────────────────

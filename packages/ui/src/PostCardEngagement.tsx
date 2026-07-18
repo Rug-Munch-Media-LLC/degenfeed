@@ -1,6 +1,6 @@
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { formatCount } from '@degenfeed/utils';
-import { memo } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { getProtocolLabel as _getProtocolLabel } from './ProtocolBadge';
 import { QuickTipButton } from './QuickTipButton';
 
@@ -83,6 +83,8 @@ export interface PostCardEngagementProps {
   onTip?: (post: UnifiedPost) => void;
   onCrossReplyOpen?: (post: UnifiedPost) => void;
   viewerProtocols?: string[];
+  /** New: called when user opens the enhanced share sheet */
+  onOpenShareSheet?: () => void;
 }
 
 // ─── Component ─────────────────────────────────────────────────────
@@ -100,7 +102,62 @@ export const PostCardEngagement = memo(function PostCardEngagement({
   onShare,
   onTip,
   onCrossReplyOpen,
+  onOpenShareSheet,
 }: PostCardEngagementProps) {
+  const [animatingRepost, setAnimatingRepost] = useState(false);
+  const [animatingBookmark, setAnimatingBookmark] = useState(false);
+  const [animatingReply, setAnimatingReply] = useState(false);
+
+  const handleLike = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      void onPerform(localState.engagement.viewerLiked ? 'unlike' : 'like');
+    },
+    [onPerform, localState.engagement.viewerLiked],
+  );
+
+  const handleRepost = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setAnimatingRepost(true);
+      setTimeout(() => setAnimatingRepost(false), 400);
+      void onPerform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
+    },
+    [onPerform, localState.engagement.viewerReposted, setAnimatingRepost],
+  );
+
+  const handleBookmark = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setAnimatingBookmark(true);
+      setTimeout(() => setAnimatingBookmark(false), 400);
+      void onPerform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
+    },
+    [onPerform, localState.engagement.viewerBookmarked, setAnimatingBookmark],
+  );
+
+  const handleReplyToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setAnimatingReply(true);
+      setTimeout(() => setAnimatingReply(false), 300);
+      onSetShowReply(!showReply);
+    },
+    [onSetShowReply, showReply, setAnimatingReply],
+  );
+
+  const handleShareClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onOpenShareSheet) {
+        onOpenShareSheet();
+      } else {
+        onShare();
+      }
+    },
+    [onOpenShareSheet, onShare],
+  );
+
   return (
     <>
       <div className="actions flex items-center gap-4 text-xs text-[var(--color-muted)]">
@@ -114,49 +171,58 @@ export const PostCardEngagement = memo(function PostCardEngagement({
           <>
             <button
               type="button"
-              className={`flex items-center gap-1 transition-colors hover:text-red-400 press-effect ${
-                localState.engagement.viewerLiked ? 'text-red-400' : ''
+              className={`flex items-center gap-1 transition-all duration-200 hover:text-red-400 press-effect ${
+                localState.engagement.viewerLiked
+                  ? 'text-red-400'
+                  : 'text-[var(--color-muted)]'
               }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                void onPerform(localState.engagement.viewerLiked ? 'unlike' : 'like');
-              }}
+              onClick={handleLike}
               aria-label="Like post"
               aria-pressed={localState.engagement.viewerLiked}
             >
               <span
-                className={`inline-block ${animatingLike ? 'animate-heart-pop' : ''}`}
+                className={`inline-block transition-transform duration-200 ${
+                  animatingLike ? 'animate-heart-bounce' : ''
+                } ${localState.engagement.viewerLiked ? 'scale-110' : ''}`}
                 style={{
                   transformOrigin: 'center',
-                  transition: 'transform var(--duration-fast) ease-out',
                 }}
+                aria-hidden="true"
               >
-                {localState.engagement.viewerLiked ? '❤' : '♡'}
+                {localState.engagement.viewerLiked ? '❤️' : '♡'}
               </span>{' '}
               <span aria-label={`${localState.metrics.likes} likes`}>{formatCount(localState.metrics.likes)}</span>
             </button>
             <button
               type="button"
-              className={`flex items-center gap-1 transition-colors hover:text-green-400 ${localState.engagement.viewerReposted ? 'text-green-400' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                void onPerform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
-              }}
+              className={`flex items-center gap-1 transition-all duration-200 hover:text-green-400 ${
+                localState.engagement.viewerReposted ? 'text-green-400' : 'text-[var(--color-muted)]'
+              }`}
+              onClick={handleRepost}
               aria-label="Repost post"
               aria-pressed={localState.engagement.viewerReposted}
             >
-              ↻ <span aria-label={`${localState.metrics.reposts} reposts`}>{formatCount(localState.metrics.reposts)}</span>
+              <span
+                className={`inline-block ${animatingRepost ? 'animate-repost-spin' : ''}`}
+                aria-hidden="true"
+              >
+                ↻
+              </span>{' '}
+              <span aria-label={`${localState.metrics.reposts} reposts`}>{formatCount(localState.metrics.reposts)}</span>
             </button>
             <button
               type="button"
-              className="flex items-center gap-1 transition-colors hover:text-blue-400"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSetShowReply(!showReply);
-              }}
+              className={`flex items-center gap-1 transition-all duration-200 hover:text-blue-400 ${
+                animatingReply ? 'scale-110' : ''
+              }`}
+              onClick={handleReplyToggle}
               aria-label="Reply to post"
+              aria-expanded={showReply}
             >
-              ↩ <span aria-label={`${localState.metrics.replies} replies`}>{formatCount(localState.metrics.replies)}</span>
+              <span className="inline-block transition-transform" aria-hidden="true">
+                ↩
+              </span>{' '}
+              <span aria-label={`${localState.metrics.replies} replies`}>{formatCount(localState.metrics.replies)}</span>
             </button>
             {onCrossReplyOpen && (
               <button
@@ -174,28 +240,35 @@ export const PostCardEngagement = memo(function PostCardEngagement({
             )}
             <button
               type="button"
-              className={`flex items-center gap-1 transition-colors hover:text-purple-400 ${localState.engagement.viewerBookmarked ? 'text-purple-400' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                void onPerform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
-              }}
+              className={`flex items-center gap-1 transition-all duration-200 hover:text-purple-400 ${
+                localState.engagement.viewerBookmarked ? 'text-purple-400' : 'text-[var(--color-muted)]'
+              }`}
+              onClick={handleBookmark}
               aria-label="Bookmark post"
               aria-pressed={localState.engagement.viewerBookmarked}
             >
-              {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
+              <span
+                className={`inline-block ${animatingBookmark ? 'animate-bookmark-pop' : ''}`}
+                aria-hidden="true"
+              >
+                {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
+              </span>
             </button>
           </>
         )}
         <button
           type="button"
-          className="flex items-center gap-1 transition-colors hover:text-purple-400"
-          onClick={(e) => {
-            e.stopPropagation();
-            void onShare();
-          }}
+          className="flex items-center gap-1 transition-all duration-200 hover:text-purple-400 text-[var(--color-muted)]"
+          onClick={handleShareClick}
           aria-label="Share post"
+          title="Share post to other platforms"
         >
-          ↗ Share
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+            <polyline points="16 6 12 2 8 6" />
+            <line x1="12" y1="2" x2="12" y2="15" />
+          </svg>
+          <span className="hidden sm:inline">Share</span>
         </button>
         {post.dfUri && (
           <button
