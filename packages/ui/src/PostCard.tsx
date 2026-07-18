@@ -185,7 +185,7 @@ interface LocalState {
 
 // ─── Main component ───────────────────────────────────────────────
 
-export const PostCard = memo(function PostCard({
+function PostCardComponent({
   post,
   onEngage,
   onClick,
@@ -205,7 +205,7 @@ export const PostCard = memo(function PostCard({
   onShowMoreLikeThis,
   onShowLessLikeThis,
   onWhyThisPost,
-}: PostCardProps) {
+}: PostCardProps): React.ReactElement | null {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
     engagement: post.engagement,
@@ -1566,4 +1566,6 @@ export const PostCard = memo(function PostCard({
       )}
     </>
   );
-});
+}
+
+// export const PostCard = memo(PostCardComponent);

@@ -22,12 +22,13 @@ import {
 import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from './cors';
 import type { Env } from './index';
 import { jsonResponse, rateLimit } from './index';
-import { parseSessionCookie, validateCsrfToken } from './session';
 import { validateBodySize } from './sanitize';
+import { parseSessionCookie, validateCsrfToken } from './session';
 
 // ─── Error logger ────────────────────────────────────────────
 
 import { logError } from './error-logger';
+import { requireAdminFromSession } from './lib/admin-guard';
 
 // ─── Route handlers ──────────────────────────────────────────
 
@@ -419,26 +420,17 @@ app.use('*', async (c, next) => {
     const origin = c.req.header('origin');
     if (origin) {
       if (!isAllowedOrigin(origin, c.env.ALLOWED_ORIGINS)) {
-        return jsonResponse(
-          { error: 'CSRF validation failed', code: 'DF-403' },
-          403,
-        );
+        return jsonResponse({ error: 'CSRF validation failed', code: 'DF-403' }, 403);
       }
     } else {
       const referer = c.req.header('referer');
       if (referer) {
         const refererOrigin = parseOriginHeader(referer);
         if (!refererOrigin || !isAllowedOrigin(refererOrigin, c.env.ALLOWED_ORIGINS)) {
-          return jsonResponse(
-            { error: 'CSRF validation failed', code: 'DF-403' },
-            403,
-          );
+          return jsonResponse({ error: 'CSRF validation failed', code: 'DF-403' }, 403);
         }
       } else {
-        return jsonResponse(
-          { error: 'CSRF validation failed', code: 'DF-403' },
-          403,
-        );
+        return jsonResponse({ error: 'CSRF validation failed', code: 'DF-403' }, 403);
       }
     }
   }
@@ -450,10 +442,7 @@ app.use('*', async (c, next) => {
     const csrfToken = c.req.header('x-csrf-token');
     const valid = await validateCsrfToken(cookieValue, csrfToken ?? null, c.env);
     if (!valid) {
-      return jsonResponse(
-        { error: 'CSRF validation failed', code: 'DF-403' },
-        403,
-      );
+      return jsonResponse({ error: 'CSRF validation failed', code: 'DF-403' }, 403);
     }
   }
 
@@ -499,6 +488,15 @@ app.use('/api/*', async (c, next) => {
       });
     }
   }
+});
+
+// ─── Middleware: Admin wallet guard ─────────────────────────
+// Protects all /api/admin/* routes — requires a valid session
+// with a wallet in the ADMIN_WALLETS env var.
+app.use('/api/admin/*', async (c, next) => {
+  const result = await requireAdminFromSession(c.req.raw, c.env);
+  if (result instanceof Response) return result;
+  return next();
 });
 
 // ─── Landing pages / static assets ─────────────────────────
@@ -1030,13 +1028,21 @@ app.get('/api/community/:name/proposals/:id/results', async (c) =>
 // ─── API: Moderation ───────────────────────────────────────
 app.get('/api/moderation/reports', (c) => handleListReports(c.req.raw, c.env));
 app.post('/api/moderation/report', (c) => handleSubmitReport(c.req.raw, c.env));
-app.post('/api/moderation/reports/:id/resolve', async (c) =>
-  withSession(c, () => handleResolveReport(c.req.raw, c.env)),
-);
-app.post('/api/moderation/reports/:id/remove', async (c) =>
-  withSession(c, () => handleRemovePost(c.req.raw, c.env)),
-);
-app.post('/api/moderation/ban', async (c) => withSession(c, () => handleBanUser(c.req.raw, c.env)));
+app.post('/api/moderation/reports/:id/resolve', async (c) => {
+  const result = await requireAdminFromSession(c.req.raw, c.env);
+  if (result instanceof Response) return result;
+  return handleResolveReport(c.req.raw, c.env);
+});
+app.post('/api/moderation/reports/:id/remove', async (c) => {
+  const result = await requireAdminFromSession(c.req.raw, c.env);
+  if (result instanceof Response) return result;
+  return handleRemovePost(c.req.raw, c.env);
+});
+app.post('/api/moderation/ban', async (c) => {
+  const result = await requireAdminFromSession(c.req.raw, c.env);
+  if (result instanceof Response) return result;
+  return handleBanUser(c.req.raw, c.env);
+});
 app.get('/api/moderation/stats', (c) => handleModerationStats(c.req.raw, c.env));
 app.get('/api/moderation/banned', (c) => handleCheckBanned(c.req.raw, c.env));
 app.all('/api/moderation/sync', (c) => handleBlockSync(c.req.raw, c.env));

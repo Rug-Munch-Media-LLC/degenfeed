@@ -1,4 +1,9 @@
-import { buildUnifiedPost, detectNiches } from '@degenfeed/feed-core';
+import {
+  buildUnifiedPost,
+  CircuitBreaker,
+  CircuitBreakerError,
+  detectNiches,
+} from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
@@ -1053,6 +1058,7 @@ export class MastodonProvider implements FeedProvider {
   readonly protocol: Protocol = 'mastodon';
   private readonly primaryUrl: string;
   private readonly fallbackUrls: string[];
+  private readonly breaker = new CircuitBreaker('mastodon');
 
   constructor(options: MastodonProviderOptions = {}) {
     this.primaryUrl = options.instanceUrl || DEFAULT_GTS_INSTANCE;
@@ -1061,11 +1067,11 @@ export class MastodonProvider implements FeedProvider {
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const limit = 50;
-    const endpoints = [this.primaryUrl, ...this.fallbackUrls];
-
     try {
+      return await this.breaker.execute(async () => {
+        const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+        const limit = 50;
+        const endpoints = [this.primaryUrl, ...this.fallbackUrls];
       const allStatuses: GtSStatus[] = [];
 
       // 0. Trending API — free public endpoint with high-engagement posts.
@@ -1256,6 +1262,13 @@ export class MastodonProvider implements FeedProvider {
         posts: [],
         notice: err instanceof Error ? err.message : 'Fediverse feed unavailable',
       };
+    }
+      });
+    } catch (err) {
+      if (err instanceof CircuitBreakerError) {
+        return { posts: [], notice: 'Mastodon/Fediverse: circuit breaker open — temporarily unavailable' };
+      }
+      return { posts: [], notice: 'Fediverse feed unavailable' };
     }
   }
 

@@ -29,7 +29,7 @@ import {
   type UserAlgorithmPreferences,
 } from '@degenfeed/ranking';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
-import type { Env } from '../index';
+import { type Env, log } from '../index';
 import type { StoredUserPreferences } from './feed-cache';
 
 // ─── Preference parsing & merging ──────────────────────────────────
@@ -62,7 +62,7 @@ export function parseCookiePrefs(cookieHeader: string): UserAlgorithmPreferences
       decodeURIComponent(cookieMatch.slice('df_prefs='.length)),
     ) as UserAlgorithmPreferences;
   } catch (err) {
-    console.warn('[feed] cookie prefs parse failed:', err instanceof Error ? err.message : err);
+    log('warn', '[feed] cookie prefs parse failed', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -196,16 +196,18 @@ export async function loadPreviousEngagement(
           previousEngagement.set(postId, snap);
         } catch (err) {
           // Non-critical — log and continue
-          console.warn(
-            '[feed] previousEngagement parse failed:',
+          log(
+            'warn',
+            '[feed] previousEngagement parse failed',
             err instanceof Error ? err.message : err,
           );
         }
       }
     }
   } catch (err) {
-    console.warn(
-      '[feed] previousEngagement KV fetch failed:',
+    log(
+      'warn',
+      '[feed] previousEngagement KV fetch failed',
       err instanceof Error ? err.message : err,
     );
   }
@@ -623,8 +625,9 @@ export async function computeTrending(
       }
     }
   } catch (err) {
-    console.warn(
-      '[feed] Mastodon trending tags fetch failed:',
+    log(
+      'warn',
+      '[feed] Mastodon trending tags fetch failed',
       err instanceof Error ? err.message : err,
     );
   }

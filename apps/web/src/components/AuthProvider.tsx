@@ -527,8 +527,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Connect a NEW wallet via the Web3 provider (without disconnecting current).
     // We call connect() which prompts the browser wallet to switch accounts.
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const provider = (typeof window !== 'undefined' ? (window as any).ethereum : null) as any;
+      interface Eip1193Provider {
+        request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+        on?: (event: string, handler: (...args: unknown[]) => void) => void;
+        removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
+      }
+      const provider: Eip1193Provider | null =
+        typeof window !== 'undefined'
+          ? ((window as unknown as { ethereum?: Eip1193Provider }).ethereum ?? null)
+          : null;
       if (!provider) {
         showToast('error', 'No Ethereum wallet detected');
         return;

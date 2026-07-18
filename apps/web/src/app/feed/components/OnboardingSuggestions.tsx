@@ -99,7 +99,7 @@ export function OnboardingSuggestions() {
         await saveFollow({
           identityId: 'self',
           targetId: suggestion.id,
-          targetProtocol: suggestion.protocol,
+          targetProtocol: suggestion.protocol as Protocol,
           targetHandle: suggestion.handle,
           followedAt: Date.now(),
         });

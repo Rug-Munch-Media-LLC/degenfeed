@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { log } from '@/lib/log';
 // TODO: Wire to worker backend
 import { rejectSources } from '../../../../lib/source-engine';
 
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
 
   const result = rejectSources(ids);
 
-  console.log(`[admin] Rejected ${result.rejected} source(s)`);
+  log('info', `[admin] Rejected ${result.rejected} source(s)`);
 
   return NextResponse.json({ ok: true, rejected: result.rejected });
 }

@@ -9,8 +9,8 @@
  *   ADMIN_WALLETS       — comma‑separated list of admin wallet addresses
  */
 
-import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { NextResponse } from 'next/server';
 
 // ─── Types ────────────────────────────────────────────────────────────
 
@@ -119,7 +119,7 @@ export function withAdminHeaders(init?: ResponseInit): ResponseInit {
 export async function requireSession(request: Request): Promise<NextResponse | null> {
   const secret = process.env.AUTH_SECRET;
   if (!secret) {
-    console.error('[auth] AUTH_SECRET not configured');
+    log('error', '[auth] AUTH_SECRET not configured');
     return NextResponse.json({ error: 'Auth not configured' }, { status: 500 });
   }
   const payload = await verifySessionCookie(request.headers.get('cookie'), secret);
@@ -140,7 +140,7 @@ export async function requireSession(request: Request): Promise<NextResponse | n
 export async function requireAdmin(request: Request): Promise<NextResponse | null> {
   const secret = process.env.AUTH_SECRET;
   if (!secret) {
-    console.error('[auth] AUTH_SECRET not configured');
+    log('error', '[auth] AUTH_SECRET not configured');
     return NextResponse.json({ error: 'Auth not configured' }, { status: 500 });
   }
   const payload = await verifySessionCookie(request.headers.get('cookie'), secret);
@@ -154,7 +154,7 @@ export async function requireAdmin(request: Request): Promise<NextResponse | nul
     .filter(Boolean);
 
   if (adminWallets.length === 0) {
-    console.error('[auth] ADMIN_WALLETS not configured');
+    log('error', '[auth] ADMIN_WALLETS not configured');
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   if (!adminWallets.includes(payload.address.toLowerCase())) {

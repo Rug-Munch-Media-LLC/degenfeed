@@ -6,6 +6,8 @@ import type {
   UnifiedPost,
 } from '@degenfeed/types';
 
+export type { CircuitState } from './circuit-breaker';
+export { CircuitBreaker, CircuitBreakerError } from './circuit-breaker';
 export type { ModerationCheckResult, ModerationThresholds } from './moderation';
 // ─── Auto-moderation configuration ────────────────────────────────
 export {

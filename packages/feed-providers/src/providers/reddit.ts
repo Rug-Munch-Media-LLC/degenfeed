@@ -12,7 +12,7 @@
  * public, no auth, and parses cleanly.
  */
 
-import { detectNiches } from '@degenfeed/feed-core';
+import { CircuitBreaker, CircuitBreakerError, detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
@@ -645,6 +645,7 @@ export class RedditProvider implements FeedProvider {
   private readonly configs: SubredditConfig[];
   private readonly sort: 'hot' | 'new' | 'top';
   private readonly frontends: string[];
+  private readonly breaker = new CircuitBreaker('reddit');
 
   constructor(options: RedditProviderOptions = {}) {
     const raw = options.subreddits ?? DEFAULT_CONFIGS;
@@ -657,24 +658,33 @@ export class RedditProvider implements FeedProvider {
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    // Increased from 50 to 100 for richer content (2026-07-18).
-    // The feed fetcher doesn't pass limit directly, so we default internally.
-    // We fetch at least 3 per sub for quality filtering headroom, capped at 100 total.
-    const limit = 100;
-    const perSub = Math.max(3, Math.ceil(limit / Math.min(this.configs.length, 50)));
+    try {
+      return await this.breaker.execute(async () => {
+        const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+        // Increased from 50 to 100 for richer content (2026-07-18).
+        // The feed fetcher doesn't pass limit directly, so we default internally.
+        // We fetch at least 3 per sub for quality filtering headroom, capped at 100 total.
+        const limit = 100;
+        const perSub = Math.max(3, Math.ceil(limit / Math.min(this.configs.length, 50)));
 
-    const results = await withConcurrencyLimit(this.configs, 4, async (config) => {
-      try {
-        return await fetchSubreddit(config, this.sort, perSub, timeoutMs, this.frontends);
-      } catch {
-        return [] as UnifiedPost[];
+        const results = await withConcurrencyLimit(this.configs, 4, async (config) => {
+          try {
+            return await fetchSubreddit(config, this.sort, perSub, timeoutMs, this.frontends);
+          } catch {
+            return [] as UnifiedPost[];
+          }
+        });
+
+        const posts = results.flat().slice(0, limit);
+        if (posts.length > 0) return { posts };
+        return { posts: [], notice: 'Reddit feed unavailable — all strategies failed' };
+      });
+    } catch (err) {
+      if (err instanceof CircuitBreakerError) {
+        return { posts: [], notice: 'Reddit: circuit breaker open — temporarily unavailable' };
       }
-    });
-
-    const posts = results.flat().slice(0, limit);
-    if (posts.length > 0) return { posts };
-    return { posts: [], notice: 'Reddit feed unavailable — all strategies failed' };
+      return { posts: [], notice: 'Reddit feed unavailable — all strategies failed' };
+    }
   }
 
   async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {

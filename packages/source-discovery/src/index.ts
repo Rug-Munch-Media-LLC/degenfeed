@@ -89,7 +89,7 @@ export async function discoverNewSources(
     if (result.status === 'fulfilled') {
       allSources.push(...result.value);
     } else {
-      console.error('[source-discovery] discoverer failed:', result.reason);
+      console.error('[source-discovery] discoverer failed', result.reason);
     }
   }
 

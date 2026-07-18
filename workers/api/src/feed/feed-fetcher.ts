@@ -30,7 +30,7 @@ import {
 } from '@degenfeed/feed-providers';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { rmiUrl } from '@degenfeed/utils';
-import type { Env } from '../index';
+import { type Env, log } from '../index';
 import { readProviderCache, writeProviderCache } from './feed-cache';
 import { sanitizePosts } from './feed-enricher';
 
@@ -309,8 +309,9 @@ class RssWithFallbackProvider implements FeedProvider {
         });
         if (result.posts.length > 0) return result;
       } catch (err) {
-        console.warn(
-          '[feed] RMI unavailable — falling back to RSS:',
+        log(
+          'warn',
+          '[feed] RMI unavailable — falling back to RSS',
           err instanceof Error ? err.message : err,
         );
       }
@@ -367,7 +368,7 @@ export async function isCircuitOpen(env: Env, protocol: string): Promise<boolean
     const { count } = JSON.parse(raw) as { count: number };
     return count >= CB_THRESHOLD;
   } catch (err) {
-    console.warn('[feed] isCircuitOpen failed:', err instanceof Error ? err.message : err);
+    log('warn', '[feed] isCircuitOpen failed', err instanceof Error ? err.message : err);
     return false;
   }
 }
@@ -381,7 +382,7 @@ export async function incrCircuit(env: Env, protocol: string): Promise<void> {
     await env.CACHE.put(key, JSON.stringify({ count }), { expirationTtl: CB_TTL });
   } catch (err) {
     // Non-critical cache write — log and continue
-    console.warn('[feed] incrCircuit KV write failed:', err instanceof Error ? err.message : err);
+    log('warn', '[feed] incrCircuit KV write failed', err instanceof Error ? err.message : err);
   }
 }
 
@@ -392,7 +393,7 @@ export async function resetCircuit(env: Env, protocol: string): Promise<void> {
     await env.CACHE.delete(key);
   } catch (err) {
     // Non-critical cache write — log and continue
-    console.warn('[feed] resetCircuit KV delete failed:', err instanceof Error ? err.message : err);
+    log('warn', '[feed] resetCircuit KV delete failed', err instanceof Error ? err.message : err);
   }
 }
 
@@ -548,9 +549,9 @@ export async function fetchFromProviders(
             await writeProviderCache(env, protocol, limit, filtered);
           } catch (err) {
             const isTimeout = err instanceof ProviderTimeoutError;
-            console.error(
-              `[feed] provider fetch failed (background refresh):`,
-              protocol,
+            log(
+              'error',
+              `[feed] provider fetch failed (background refresh): ${protocol}`,
               isTimeout
                 ? `timeout after ${(err as ProviderTimeoutError).timeoutMs}ms`
                 : err instanceof Error
@@ -592,7 +593,7 @@ export async function fetchFromProviders(
 
         // Log slow fetches (>3s) to KV for analysis
         if (elapsed > 3000) {
-          console.warn(`[feed] slow provider: ${protocol} took ${elapsed}ms`);
+          log('warn', `[feed] slow provider: ${protocol} took ${elapsed}ms`);
           void logSlowProviderToKv(env, protocol, elapsed);
         }
 
@@ -609,12 +610,12 @@ export async function fetchFromProviders(
 
         if (isTimeout) {
           void incrTimeoutCircuit(env, protocol);
-          console.warn(`[feed] provider TIMEOUT: ${protocol} after ${timeoutMs}ms`);
+          log('warn', `[feed] provider TIMEOUT: ${protocol} after ${timeoutMs}ms`);
         } else {
           void incrCircuit(env, protocol);
-          console.error(
-            '[feed] provider fetch failed:',
-            protocol,
+          log(
+            'error',
+            `[feed] provider fetch failed: ${protocol}`,
             err instanceof Error ? err.message : err,
           );
         }

@@ -269,7 +269,10 @@ export async function searchSepiasearch(
     setCache(cacheKey, videos);
     return videos;
   } catch (err) {
-    console.warn('[peertube/federated] Sepiasearch error:', err);
+    console.warn(
+      '[peertube/federated] Sepiasearch error:',
+      err instanceof Error ? err.message : String(err),
+    );
     return [];
   }
 }
