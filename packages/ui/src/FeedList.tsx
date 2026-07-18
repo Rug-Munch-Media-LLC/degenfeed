@@ -29,7 +29,7 @@ export type FeedState = 'loading' | 'loaded' | 'empty' | 'error';
  * Debounce a function — coalesces rapid-fire calls into a single trailing
  * invocation. Prevents layout thrashing from scroll/resize handlers.
  */
-function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T {
+function debounce<T extends (...args: any[]) => void>(fn: T, ms: number): T {
   let timer: ReturnType<typeof setTimeout> | null = null;
   const debounced = (...args: unknown[]) => {
     if (timer) clearTimeout(timer);
@@ -330,6 +330,8 @@ export const FeedList = memo(function FeedList({
   endOfFeedSlot,
   onDiscoveryClick,
   onPostVisibility,
+  showCategoryBreaks,
+  categoryBreakSlot,
 }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -450,14 +452,16 @@ export const FeedList = memo(function FeedList({
         const postId = postEls[idx]?.getAttribute('data-post-id');
         if (postId) {
           e.preventDefault();
-          onCrossReplyOpen?.(filteredPosts.find((p) => p.id === postId) ?? filteredPosts[0]);
+          const target = filteredPosts.find((p) => p.id === postId);
+          if (target) onCrossReplyOpen?.(target);
         }
       }
       if (e.key === 't' && idx >= 0) {
         const postId = postEls[idx]?.getAttribute('data-post-id');
         if (postId) {
           e.preventDefault();
-          onTip?.(filteredPosts.find((p) => p.id === postId) ?? filteredPosts[0]);
+          const target = filteredPosts.find((p) => p.id === postId);
+          if (target) onTip?.(target);
         }
       }
       if (e.key === 'b' && idx >= 0) {
@@ -617,7 +621,7 @@ export const FeedList = memo(function FeedList({
 
       {/* ── End-of-feed discovery cards ── */}
       {hasEndOfFeed && !endOfFeedSlot && suggestions.length > 0 && (
-        <div className="end-of-feed-section border-b border-[var(--color-glass-border)] px-4 py-8">
+        <div className="end-of-feed-section min-h-[280px] border-b border-[var(--color-glass-border)] px-4 py-8">
           <div className="mb-5 text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500/20 to-transparent">
               <svg

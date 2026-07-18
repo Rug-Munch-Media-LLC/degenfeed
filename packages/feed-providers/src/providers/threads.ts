@@ -85,10 +85,17 @@ function recordSuccess(): void {
 }
 
 export const THREADS_WEB_URL = 'https://www.threads.net';
-export const FLARESOLVERR_URL =
-  typeof process !== 'undefined' && process.env?.FLARESOLVERR_URL
-    ? process.env.FLARESOLVERR_URL
-    : ''; // Set FLARESOLVERR_URL env var or leave empty to disable
+function getFlaresolverrUrl(): string {
+  try {
+    const p = (globalThis as typeof globalThis & { process?: { env?: Record<string, string | undefined> } }).process;
+    const url = p?.env?.FLARESOLVERR_URL;
+    if (url) return url;
+  } catch {
+    // Not in a Node.js environment
+  }
+  return '';
+}
+export const FLARESOLVERR_URL = getFlaresolverrUrl();
 
 export const CURATED_THREADS_HANDLES = [
   'zuck',

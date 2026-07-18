@@ -87,6 +87,8 @@ export const PLATFORM_TIER: Record<Protocol, number> = {
   solana: 0.6,
   peertube: 0.9,
   youtube: 0.9,
+  kbin: 0.7,
+  tildes: 0.7,
 };
 
 export interface UserAlgorithmPreferences {

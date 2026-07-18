@@ -45,7 +45,7 @@ describe('withRetry', () => {
 
 describe('fetchJson', () => {
   it('parses json on success', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       statusText: 'OK',
@@ -58,7 +58,7 @@ describe('fetchJson', () => {
 
   it('throws FetchError and cancels body on non-2xx', async () => {
     const cancel = vi.fn().mockResolvedValue(undefined);
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
       statusText: 'Server Error',

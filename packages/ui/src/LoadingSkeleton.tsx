@@ -36,7 +36,7 @@ export const CardSkeleton: FC<CardSkeletonProps> = memo(function CardSkeleton({
 }) {
   const uid = useId();
   return (
-    <output className="block" role="status" aria-label="Loading content">
+    <output className="block w-full lg:max-w-[600px]" role="status" aria-label="Loading content">
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={`${uid}-card-${i}`}
