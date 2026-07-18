@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { useToast } from './Toast';
 
@@ -255,6 +256,8 @@ export function OnboardingModal() {
     return { protocolLabels, interestLabels, followedCount };
   }, [selectedProtocols, selectedInterests, followedAccounts]);
 
+  const router = useRouter();
+
   const handleComplete = useCallback(() => {
     // Save user's interest preferences
     if (selectedInterests.length > 0) {
@@ -273,7 +276,8 @@ export function OnboardingModal() {
     }
     complete();
     showToast('success', 'Welcome to DegenFeed! Your feed is ready.');
-  }, [selectedInterests, selectedProtocols, complete, showToast]);
+    router.push('/feed');
+  }, [selectedInterests, selectedProtocols, complete, showToast, router]);
 
   const handleBack = useCallback(() => {
     if (step > 0) goTo(step - 1);

@@ -1,9 +1,37 @@
 'use client';
 
-import type { BlockedCommunityEntry, MuteConfig, MutedCommunityEntry, MutedUserEntry } from '@degenfeed/storage';
-import type { StoredBlockedUser } from '@degenfeed/storage';
+import type { StoredBlockedCommunity, StoredBlockedUser, StoredMutedCommunity } from '@degenfeed/storage';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+// ─── Local types (mirroring @degenfeed/storage internals) ─────────────
+
+interface MutedUserEntry {
+  targetId: string;
+  targetHandle: string;
+  protocol: string;
+  mutedAt: number;
+}
+
+interface MutedCommunityEntry {
+  communityId: string;
+  communityName: string;
+  instance: string;
+}
+
+interface BlockedCommunityEntry {
+  communityId: string;
+  communityName: string;
+  instance: string;
+}
+
+interface MuteConfig {
+  words: string[];
+  users: MutedUserEntry[];
+  communities: MutedCommunityEntry[];
+  blockedUsers: StoredBlockedUser[];
+  blockedCommunities: BlockedCommunityEntry[];
+}
 
 // ─── Page ─────────────────────────────────────────────────────────────
 
@@ -18,7 +46,7 @@ export default function MutedSettingsPage() {
     try {
       const { getMuteConfig } = await import('@degenfeed/storage');
       const cfg = await getMuteConfig();
-      setConfig(cfg);
+      setConfig(cfg as MuteConfig);
     } catch {
       /* ignore */
     }
@@ -231,7 +259,7 @@ export default function MutedSettingsPage() {
               </p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {cfg.words.map((word) => (
+                {cfg.words.map((word: string) => (
                   <span
                     key={word}
                     className="inline-flex items-center gap-1.5 rounded-full bg-orange-900/20 px-3 py-1.5 text-sm text-orange-300"
@@ -271,7 +299,7 @@ export default function MutedSettingsPage() {
               </p>
             ) : (
               <div className="space-y-2">
-                {cfg.users.map((user) => (
+                {cfg.users.map((user: MutedUserEntry) => (
                   <MutedUserRow key={user.targetId} user={user} onUnmute={handleUnmuteUser} />
                 ))}
               </div>
@@ -298,7 +326,7 @@ export default function MutedSettingsPage() {
               </p>
             ) : (
               <div className="space-y-2">
-                {cfg.communities.map((comm) => (
+                {cfg.communities.map((comm: MutedCommunityEntry) => (
                   <CommunityRow key={comm.communityId} entry={comm} onAction={handleUnmuteCommunity} actionLabel="Unmute" />
                 ))}
               </div>
@@ -323,7 +351,7 @@ export default function MutedSettingsPage() {
               </p>
             ) : (
               <div className="space-y-2">
-                {cfg.blockedUsers.map((b) => (
+                {cfg.blockedUsers.map((b: StoredBlockedUser) => (
                   <BlockedUserRow key={b.targetId} entry={b} onUnblock={handleUnblock} />
                 ))}
               </div>
@@ -333,7 +361,7 @@ export default function MutedSettingsPage() {
           {/* ── Blocked Communities ── */}
           <SectionHeading
             title="Blocked Communities"
-            count={(cfg as MuteConfig & { blockedCommunities: BlockedCommunityEntry[] }).blockedCommunities.length}
+            count={(cfg.blockedCommunities || []).length}
             icon={
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5" />
@@ -351,7 +379,7 @@ export default function MutedSettingsPage() {
               </p>
             ) : (
               <div className="space-y-2">
-                {cfg.blockedCommunities.map((comm) => (
+                {cfg.blockedCommunities.map((comm: BlockedCommunityEntry) => (
                   <CommunityRow key={comm.communityId} entry={comm} onAction={handleUnblockCommunity} actionLabel="Unblock" />
                 ))}
               </div>

@@ -462,7 +462,8 @@ export default function MessagesPage() {
                     </div>
                   ) : (
                     messages.map((msg) => {
-                      const isMe = msg.fromId === (tokens.nostr_pubkey || '');
+                      const myIds = [tokens.nostr_pubkey, tokens.farcaster_fid ? String(tokens.farcaster_fid) : undefined, tokens.lens_profileId, tokens.bluesky_did, tokens.mastodon_handle].filter(Boolean);
+                      const isMe = myIds.includes(msg.fromId);
                       const protocolColor = getProtocolColor(msg.protocol);
                       return (
                         <div

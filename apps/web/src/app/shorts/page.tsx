@@ -130,6 +130,7 @@ export default function ShortsPage() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [prerenderedVideos, setPrerenderedVideos] = useState<Set<number>>(new Set());
   const [showToast, setShowToast] = useState<string | null>(null);
+  const [paused, setPaused] = useState(false);
 
   // Scroll-to-top on refresh (when posts array is replaced, not appended)
   useEffect(() => {
@@ -164,14 +165,19 @@ export default function ShortsPage() {
 
   // ── Touch handlers for swipe ───────────────────────────────────────────
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-    touchStartX.current = e.touches[0].clientX;
+    const touch = e.touches[0];
+    if (!touch) return;
+    touchStartY.current = touch.clientY;
+    touchStartX.current = touch.clientX;
   }, []);
 
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
-      const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+      const changedTouch = e.changedTouches[0];
+      if (!changedTouch) return;
+      if (!touchStartY.current && !touchStartX.current) return;
+      const deltaY = changedTouch.clientY - touchStartY.current;
+      const deltaX = changedTouch.clientX - touchStartX.current;
       const absY = Math.abs(deltaY);
       const absX = Math.abs(deltaX);
 
@@ -216,14 +222,17 @@ export default function ShortsPage() {
           break;
         case ' ':
           e.preventDefault();
+          setPaused((prev: boolean) => !prev);
           window.dispatchEvent(new CustomEvent('shorts-toggle-pause'));
           break;
         case 'f':
         case 'F':
           e.preventDefault();
-          void document.fullscreenElement
-            ? document.exitFullscreen()
-            : document.documentElement.requestFullscreen();
+          if (document.fullscreenElement) {
+            void document.exitFullscreen();
+          } else {
+            void document.documentElement.requestFullscreen();
+          }
           break;
         case 'm':
         case 'M':

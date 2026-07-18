@@ -48,6 +48,36 @@ binding = "GOVERNANCE"
 id = "" # TODO: create with: wrangler kv:namespace create GOVERNANCE
 preview_id = "" # TODO: create with: wrangler kv:namespace create GOVERNANCE --preview
 
+[[kv_namespaces]]
+binding = "IDENTITIES"
+id = "" # TODO: create with: wrangler kv:namespace create IDENTITIES
+preview_id = "" # TODO: create with: wrangler kv:namespace create IDENTITIES --preview
+
+[[kv_namespaces]]
+binding = "COMMUNITIES"
+id = "" # TODO: create with: wrangler kv:namespace create COMMUNITIES
+preview_id = "" # TODO: create with: wrangler kv:namespace create COMMUNITIES --preview
+
+[[kv_namespaces]]
+binding = "REPORTS"
+id = "" # TODO: create with: wrangler kv:namespace create REPORTS
+preview_id = "" # TODO: create with: wrangler kv:namespace create REPORTS --preview
+
+[[kv_namespaces]]
+binding = "SPACES"
+id = "" # TODO: create with: wrangler kv:namespace create SPACES
+preview_id = "" # TODO: create with: wrangler kv:namespace create SPACES --preview
+
+[[kv_namespaces]]
+binding = "REPUTATION"
+id = "" # TODO: create with: wrangler kv:namespace create REPUTATION
+preview_id = "" # TODO: create with: wrangler kv:namespace create REPUTATION --preview
+
+[[kv_namespaces]]
+binding = "CUSTOM_FEEDS"
+id = "" # TODO: create with: wrangler kv:namespace create CUSTOM_FEEDS
+preview_id = "" # TODO: create with: wrangler kv:namespace create CUSTOM_FEEDS --preview
+
 # Routes — main app + api on degenfeed.xyz domain
 routes = [
   { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
