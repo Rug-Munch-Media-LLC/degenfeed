@@ -98,7 +98,7 @@ function StatusBadge({ status }: { status: 'up' | 'degraded' | 'down' | 'unknown
         label: 'Unknown',
         dot: '○',
         textClass: 'text-[var(--color-muted)]',
-        bgClass: 'bg-gray-500/10 border-gray-500/20',
+        bgClass: 'bg-[color-mix(in_srgb,var(--color-muted)_10%,transparent)] border-[color-mix(in_srgb,var(--color-muted)_20%,transparent)]',
       },
     };
 

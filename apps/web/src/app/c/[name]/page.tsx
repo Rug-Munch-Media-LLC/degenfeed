@@ -232,7 +232,7 @@ export default function CommunityPage() {
                   </strong>{' '}
                   posts
                 </span>
-                <span className="text-xs text-gray-600">
+                <span className="text-xs text-[var(--color-muted)]">
                   Created{' '}
                   {new Date(community.createdAt).toLocaleDateString('en-US', {
                     month: 'short',
@@ -294,7 +294,7 @@ export default function CommunityPage() {
             {feed.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-[var(--color-muted)]">No posts in this community yet.</p>
-                <p className="mt-1 text-xs text-gray-600">
+                <p className="mt-1 text-xs text-[var(--color-muted)]">
                   Posts from all protocols will appear here.
                 </p>
               </div>
@@ -434,7 +434,7 @@ export default function CommunityPage() {
               </strong>{' '}
               members
             </p>
-            <p className="mt-2 text-xs text-gray-600">
+            <p className="mt-2 text-xs text-[var(--color-muted)]">
               Member list is available to community members. Join to see who else is here.
             </p>
             {!isMember && (

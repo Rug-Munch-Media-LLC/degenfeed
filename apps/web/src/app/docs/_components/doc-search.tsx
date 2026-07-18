@@ -414,7 +414,7 @@ export function DocSearch() {
           <path d="m21 21-4.3-4.3" />
         </svg>
         <span className="flex-1 text-left">Search docs...</span>
-        <kbd className="hidden rounded border border-[var(--color-glass-border)] px-1.5 py-0.5 font-mono text-[10px] text-gray-600 sm:inline-block">
+        <kbd className="hidden rounded border border-[var(--color-glass-border)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-muted)] sm:inline-block">
           /
         </kbd>
       </button>
@@ -458,7 +458,7 @@ export function DocSearch() {
                 className="flex-1 bg-transparent text-sm text-[var(--color-fg)] outline-none placeholder:text-[var(--color-muted)]"
                 aria-label="Search documentation"
               />
-              <kbd className="rounded border border-[var(--color-glass-border)] px-1.5 py-0.5 font-mono text-[10px] text-gray-600">
+              <kbd className="rounded border border-[var(--color-glass-border)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-muted)]">
                 ESC
               </kbd>
             </div>
@@ -485,7 +485,7 @@ export function DocSearch() {
                           }`}
                         >
                           <span className="flex-1 truncate">{item.title}</span>
-                          <span className="flex-shrink-0 text-[10px] text-gray-600">
+                          <span className="flex-shrink-0 text-[10px] text-[var(--color-muted)]">
                             {item.section}
                           </span>
                         </Link>
@@ -533,7 +533,7 @@ export function DocSearch() {
             )}
 
             {/* Footer */}
-            <div className="flex items-center gap-4 border-t border-[var(--color-glass-border)] px-4 py-2 text-[10px] text-gray-600">
+            <div className="flex items-center gap-4 border-t border-[var(--color-glass-border)] px-4 py-2 text-[10px] text-[var(--color-muted)]">
               <span>↑↓ Navigate</span>
               <span>↵ Open</span>
               <span>ESC Close</span>

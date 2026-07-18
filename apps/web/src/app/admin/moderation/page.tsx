@@ -467,7 +467,7 @@ export default function AdminModerationPage() {
                   >
                     {REASON_LABELS[report.reason] || report.reason}
                   </span>
-                  <span className="text-[10px] text-gray-600">{formatTime(report.reportedAt)}</span>
+                  <span className="text-[10px] text-[var(--color-muted)]">{formatTime(report.reportedAt)}</span>
                 </div>
 
                 <p className="mb-1 text-xs text-[var(--color-muted)]">
@@ -502,7 +502,7 @@ export default function AdminModerationPage() {
                 )}
 
                 {report.resolvedBy && (
-                  <p className="mt-1 text-[10px] text-gray-600">
+                  <p className="mt-1 text-[10px] text-[var(--color-muted)]">
                     Resolved by {shortenAddress(report.resolvedBy)}
                     {report.resolvedAt && ` · ${formatTime(report.resolvedAt)}`}
                   </p>
@@ -593,7 +593,7 @@ export default function AdminModerationPage() {
                 onChange={(e) => setBanReason(e.target.value)}
                 placeholder="Explain why this user is being banned…"
                 rows={3}
-                className="w-full resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-sm text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500 focus:outline-none"
+                className="w-full resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] focus:border-degen-500 focus:outline-none"
               />
             </div>
             <div className="flex gap-3">
@@ -652,7 +652,7 @@ function StatCard({
         {label}
       </p>
       <p className={`text-2xl font-bold ${valueClass}`}>{value}</p>
-      {subtitle && <p className="mt-1 text-[10px] text-gray-600">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-[10px] text-[var(--color-muted)]">{subtitle}</p>}
     </div>
   );
 }

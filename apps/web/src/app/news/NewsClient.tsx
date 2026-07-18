@@ -91,7 +91,7 @@ function sentimentColor(s: string | null | undefined): string {
   const t = (s ?? '').toLowerCase();
   if (t.includes('bullish')) return 'text-green-400 bg-green-500/10 border-green-500/20';
   if (t.includes('bearish')) return 'text-red-400 bg-red-500/10 border-red-500/20';
-  return 'text-[var(--color-muted)] bg-gray-500/10 border-gray-500/20';
+  return 'text-[var(--color-muted)] bg-[color-mix(in_srgb,var(--color-muted)_10%,transparent)] border-[color-mix(in_srgb,var(--color-muted)_20%,transparent)]';
 }
 
 function sentimentEmoji(s: string | null | undefined): string {
@@ -163,7 +163,7 @@ function NewsCard({ post }: { post: UnifiedPost }) {
               {sentimentEmoji(sentiment)} {sentiment}
             </span>
           )}
-          <span className="ml-auto text-[10px] text-gray-600">{formatTime(post.createdAt)}</span>
+          <span className="ml-auto text-[10px] text-[var(--color-muted)]">{formatTime(post.createdAt)}</span>
         </div>
 
         <a
@@ -211,7 +211,7 @@ function SentimentBar({ sentiment }: { sentiment: Record<string, number> | undef
       </div>
       <div className="flex h-1.5 overflow-hidden rounded-full bg-[var(--color-muted)]">
         <div className="bg-green-500 transition-all" style={{ width: `${bullish}%` }} />
-        <div className="bg-gray-600 transition-all" style={{ width: `${neutral}%` }} />
+        <div className="bg-[var(--color-muted)] transition-all" style={{ width: `${neutral}%` }} />
         <div className="bg-red-500 transition-all" style={{ width: `${bearish}%` }} />
       </div>
     </div>
@@ -336,7 +336,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
           </div>
           <div className="flex shrink-0 items-center gap-3 text-right">
             {meta && (
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-[var(--color-muted)]">
                 <span className="text-degen-400">{filteredPosts.length}</span> stories · updated{' '}
                 {formatTime(meta.fetchedAt)}
               </p>

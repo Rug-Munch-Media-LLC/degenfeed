@@ -378,7 +378,7 @@ export default function AdminContentPage() {
                           {f.replace(/_/g, ' ')}
                         </span>
                       ))}
-                      <span className="text-[10px] text-gray-600">
+                      <span className="text-[10px] text-[var(--color-muted)]">
                         {formatTime(item.timestamp)}
                       </span>
                     </div>
@@ -473,7 +473,7 @@ export default function AdminContentPage() {
                       >
                         {item.status.replace(/_/g, ' ')}
                       </span>
-                      <span className="text-[10px] text-gray-600">
+                      <span className="text-[10px] text-[var(--color-muted)]">
                         {formatTime(item.detectedAt)}
                       </span>
                     </div>

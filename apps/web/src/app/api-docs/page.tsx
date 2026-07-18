@@ -59,7 +59,7 @@ function H2({ id, children }: { id: string; children: React.ReactNode }) {
       {children}
       <a
         href={`#${id}`}
-        className="text-gray-600 opacity-0 transition-opacity group-hover:opacity-100"
+        className="text-[var(--color-muted)] opacity-0 transition-opacity group-hover:opacity-100"
       >
         #
       </a>
@@ -76,7 +76,7 @@ function H3({ id, children }: { id: string; children: React.ReactNode }) {
       {children}
       <a
         href={`#${id}`}
-        className="text-gray-600 opacity-0 transition-opacity group-hover:opacity-100"
+        className="text-[var(--color-muted)] opacity-0 transition-opacity group-hover:opacity-100"
       >
         #
       </a>
@@ -880,7 +880,7 @@ def search_identity(handle: str):
       </ol>
 
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-[var(--color-muted)]">
           Questions? Join our{' '}
           <a href="/c/developers" className="text-degen-400 underline">
             Developer Community

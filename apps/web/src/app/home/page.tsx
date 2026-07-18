@@ -67,7 +67,7 @@ export default function HomePage() {
             >
               {p.label}
             </span>
-            <span className="text-[10px] text-gray-600">{p.desc}</span>
+            <span className="text-[10px] text-[var(--color-muted)]">{p.desc}</span>
           </a>
         ))}
       </div>
@@ -122,7 +122,7 @@ export default function HomePage() {
 
       {/* Status footer */}
       <div className="mt-8 text-center">
-        <p className="text-[10px] text-gray-700">
+        <p className="text-[10px] text-[var(--color-muted)]">
           No account required to browse · Zero cookies · Zero tracking · MIT licensed
         </p>
       </div>

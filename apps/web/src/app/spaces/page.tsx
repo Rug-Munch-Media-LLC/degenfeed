@@ -257,7 +257,7 @@ function LiveSpaceCard({
               <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
                 LIVE
               </span>
-              <span className="text-[10px] text-gray-600">· {formatDuration(space.createdAt)}</span>
+              <span className="text-[10px] text-[var(--color-muted)]">· {formatDuration(space.createdAt)}</span>
             </div>
           </div>
         </div>

@@ -27,7 +27,7 @@ export function CodeBlock({ children, lang = 'bash', title }: CodeBlockProps) {
           </span>
           {title && (
             <>
-              <span className="text-gray-600">|</span>
+              <span className="text-[var(--color-muted)]">|</span>
               <span className="font-mono text-[10px] text-[var(--color-muted)]">{title}</span>
             </>
           )}

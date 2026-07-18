@@ -105,7 +105,7 @@ export default function CommunitiesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search communities…"
-              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-[var(--color-fg)] placeholder-gray-500 outline-none transition-colors focus:border-degen-500/50"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none transition-colors focus:border-degen-500/50"
             />
           </div>
         </div>
@@ -278,11 +278,11 @@ function CreateCommunityModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="crypto"
-              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none focus:border-degen-500/50"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none focus:border-degen-500/50"
               required
               maxLength={48}
             />
-            <p className="mt-1 text-[10px] text-gray-600">
+            <p className="mt-1 text-[10px] text-[var(--color-muted)]">
               URL-safe slug (letters, numbers, hyphens)
             </p>
           </div>
@@ -296,7 +296,7 @@ function CreateCommunityModal({
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Crypto & Blockchain"
-              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none focus:border-degen-500/50"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none focus:border-degen-500/50"
             />
           </div>
           <div>
@@ -309,7 +309,7 @@ function CreateCommunityModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this community about?"
               rows={3}
-              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none resize-none focus:border-degen-500/50"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none resize-none focus:border-degen-500/50"
             />
           </div>
           {error && <p className="text-xs text-red-400">{error}</p>}

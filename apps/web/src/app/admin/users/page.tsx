@@ -315,7 +315,7 @@ export default function AdminUsersPage() {
               setPage(1);
             }}
             placeholder="Search by handle, name, or wallet…"
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2.5 pl-9 text-sm text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500 focus:outline-none"
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2.5 pl-9 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] focus:border-degen-500 focus:outline-none"
           />
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]">
             🔍
@@ -686,7 +686,7 @@ export default function AdminUsersPage() {
                 onChange={(e) => setBanReason(e.target.value)}
                 placeholder="Required — explain why…"
                 rows={3}
-                className="w-full resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-sm text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500 focus:outline-none"
+                className="w-full resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] focus:border-degen-500 focus:outline-none"
               />
             </div>
             <div className="flex gap-3">

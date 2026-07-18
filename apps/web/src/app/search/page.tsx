@@ -502,7 +502,7 @@ export default function SearchPage() {
         visibleCommunities.length === 0 &&
         visibleVideos.length === 0 && (
           <div className="card py-12 text-center">
-            <div className="mb-3 text-3xl text-gray-700">⌕</div>
+            <div className="mb-3 text-3xl text-[var(--color-muted)]">⌕</div>
             <p className="text-sm text-[var(--color-muted)]">
               No results for &ldquo;{query}&rdquo;
             </p>

@@ -240,7 +240,7 @@ export default function SubscribePage() {
           Support this creator and unlock exclusive content
         </p>
         {walletAddress && (
-          <p className="mt-2 text-xs text-gray-600">Connected: {shortenAddress(walletAddress)}</p>
+          <p className="mt-2 text-xs text-[var(--color-muted)]">Connected: {shortenAddress(walletAddress)}</p>
         )}
       </div>
 
@@ -336,7 +336,7 @@ export default function SubscribePage() {
           <p className="text-sm text-[var(--color-muted)]">
             Sign the transaction in your wallet...
           </p>
-          <p className="mt-1 text-xs text-gray-600">Approve the payment in your connected wallet</p>
+          <p className="mt-1 text-xs text-[var(--color-muted)]">Approve the payment in your connected wallet</p>
         </div>
       )}
 
@@ -344,7 +344,7 @@ export default function SubscribePage() {
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] py-12 text-center">
           <div className="mb-4 inline-block animate-spin text-3xl">⏳</div>
           <p className="text-sm text-[var(--color-muted)]">Confirming subscription on-chain...</p>
-          <p className="mt-1 text-xs text-gray-600">
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
             Your subscription will be active once confirmed
           </p>
         </div>

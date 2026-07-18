@@ -129,11 +129,16 @@ export interface DiversityBonusEntry {
 /**
  * Add diversity bonuses to scored posts instead of destructive re-sorting.
  *
- * Scans the post set for unique protocols, categories, and content types,
- * then awards bonuses to posts that contribute diversity:
- *   +0.5 per unique protocol   (when interleaving is enabled)
- *   +0.3 per unique category
- *   +0.2 per unique content type
+ * Instead of giving every post the same bonus (which is a no-op for ranking),
+ * this rewards posts from UNDERREPRESENTED protocols, categories, and content
+ * types relative to their share of the post pool. A post from a protocol that
+ * represents only 10% of the pool gets a higher bonus than one from a protocol
+ * that represents 50%.
+ *
+ * Bonus formula per dimension: (1.0 - proportionOfPool) × weight
+ *   Protocol weight: 2.5 when interleaving
+ *   Category weight: 1.0 when category rotation
+ *   Content type weight: 0.6 when content type variety
  *
  * The final sort uses (baseScore + diversityBonuses) * freshness so both
  * ranking signal and diversity are preserved in a single pass.
@@ -141,7 +146,7 @@ export interface DiversityBonusEntry {
  * @param posts   The full list of posts being curated
  * @param scored  A map of post id → { total, freshness } (mutated in-place)
  * @param opts    Which diversity bonuses to apply
- * @returns       The same scored map, with diversity bonuses added to total
+ * @returns       Diversity bonus entries for diagnostics
  */
 export function addDiversityBonus(
   posts: UnifiedPost[],
@@ -152,18 +157,38 @@ export function addDiversityBonus(
     contentTypeVariety?: boolean;
   } = {},
 ): Map<string, DiversityBonusEntry> {
-  // Scan unique values
-  const protocols = new Set<string>();
-  const categories = new Set<CategorySlug>();
-  const contentTypes = new Set<string>();
+  if (posts.length === 0) return new Map();
+
+  // Count proportions for each dimension
+  const protocolCounts = new Map<string, number>();
+  const categoryCounts = new Map<CategorySlug, number>();
+  const contentTypeCounts = new Map<string, number>();
 
   for (const p of posts) {
-    protocols.add(p.protocol ?? 'unknown');
-    categories.add(ensureCategory(p));
-    contentTypes.add(getContentType(p));
+    const proto = p.protocol ?? 'unknown';
+    protocolCounts.set(proto, (protocolCounts.get(proto) ?? 0) + 1);
+
+    const cat = ensureCategory(p);
+    categoryCounts.set(cat, (categoryCounts.get(cat) ?? 0) + 1);
+
+    const ct = getContentType(p);
+    contentTypeCounts.set(ct, (contentTypeCounts.get(ct) ?? 0) + 1);
   }
 
-  // Build bonuses per post
+  const total = posts.length;
+
+  // Pre-compute underrepresented bonus scale factors
+  // More underrepresented → higher boost
+  function underrepBonus(count: number): number {
+    return Math.max(0, 1.0 - count / total);
+  }
+
+  const protocolWeights = {
+    interleaveProtocols: 2.5,
+    categoryRotation: 1.0,
+    contentTypeVariety: 0.6,
+  };
+
   const results = new Map<string, DiversityBonusEntry>();
 
   for (const p of posts) {
@@ -176,23 +201,22 @@ export function addDiversityBonus(
     let categoryBonus = 0;
     let contentTypeBonus = 0;
 
-    // Protocol diversity: +0.5 per unique protocol overall
-    // (every post with same protocol shares the same bonus — the benefit
-    //  is that underrepresented protocols get a proportional boost)
     if (opts.interleaveProtocols !== false) {
-      // Scale by how many unique protocols there are — more protocols
-      // means more diversity value per protocol
-      protocolBonus = Math.min(protocols.size, 5) * 0.5;
+      const proto = p.protocol ?? 'unknown';
+      const count = protocolCounts.get(proto) ?? 0;
+      protocolBonus = underrepBonus(count) * protocolWeights.interleaveProtocols;
     }
 
-    // Category diversity: +0.3 per unique category
     if (opts.categoryRotation !== false) {
-      categoryBonus = Math.min(categories.size, 8) * 0.3;
+      const cat = ensureCategory(p);
+      const count = categoryCounts.get(cat) ?? 0;
+      categoryBonus = underrepBonus(count) * protocolWeights.categoryRotation;
     }
 
-    // Content type diversity: +0.2 per unique content type
     if (opts.contentTypeVariety !== false) {
-      contentTypeBonus = Math.min(contentTypes.size, 5) * 0.2;
+      const ct = getContentType(p);
+      const count = contentTypeCounts.get(ct) ?? 0;
+      contentTypeBonus = underrepBonus(count) * protocolWeights.contentTypeVariety;
     }
 
     const diversityBonuses = protocolBonus + categoryBonus + contentTypeBonus;
@@ -202,9 +226,9 @@ export function addDiversityBonus(
       id: p.id,
       baseScore,
       freshness,
-      protocolBonus,
-      categoryBonus,
-      contentTypeBonus,
+      protocolBonus: Math.round(protocolBonus * 100) / 100,
+      categoryBonus: Math.round(categoryBonus * 100) / 100,
+      contentTypeBonus: Math.round(contentTypeBonus * 100) / 100,
       finalScore,
     });
   }

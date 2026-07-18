@@ -432,7 +432,7 @@ export const providers: Record<string, ProtocolProvider> = {
       </Callout>
 
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-[var(--color-muted)]">
           Want to contribute a new protocol?{' '}
           <Link href="/docs/contributing" className="text-degen-400 underline">
             Check the contributing guide

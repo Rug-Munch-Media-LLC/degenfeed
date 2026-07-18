@@ -123,7 +123,7 @@ export default function BlockedUsersPage() {
             </svg>
           </div>
           <p className="text-[var(--color-muted)]">You haven&apos;t blocked anyone</p>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
             Block or mute users from the three-dot menu on any post.
           </p>
           <Link href="/home" className="btn-primary mt-4 inline-block text-sm">
@@ -139,7 +139,7 @@ export default function BlockedUsersPage() {
             <section>
               <h2 className="mb-3 text-sm font-medium text-[var(--color-muted)] uppercase tracking-widest">
                 Blocked Users
-                <span className="ml-2 text-xs text-gray-600">({blocked.length})</span>
+                <span className="ml-2 text-xs text-[var(--color-muted)]">({blocked.length})</span>
               </h2>
               <div className="space-y-2">
                 {blocked.map((b) => (
@@ -148,7 +148,7 @@ export default function BlockedUsersPage() {
                       <p className="truncate text-sm font-medium text-[var(--color-fg)]">
                         {b.targetHandle}
                       </p>
-                      <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-600">
+                      <div className="mt-0.5 flex items-center gap-2 text-[11px] text-[var(--color-muted)]">
                         <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]">
                           {b.protocol}
                         </span>
@@ -173,7 +173,7 @@ export default function BlockedUsersPage() {
             <section>
               <h2 className="mb-3 text-sm font-medium text-[var(--color-muted)] uppercase tracking-widest">
                 Muted Users
-                <span className="ml-2 text-xs text-gray-600">({muted.length})</span>
+                <span className="ml-2 text-xs text-[var(--color-muted)]">({muted.length})</span>
               </h2>
               <div className="space-y-2">
                 {muted.map((m) => (
@@ -182,7 +182,7 @@ export default function BlockedUsersPage() {
                       <p className="truncate text-sm font-medium text-[var(--color-fg)]">
                         {m.targetHandle}
                       </p>
-                      <div className="mt-0.5 text-[11px] text-gray-600">
+                      <div className="mt-0.5 text-[11px] text-[var(--color-muted)]">
                         Muted {new Date(m.mutedAt).toLocaleDateString()}
                       </div>
                     </div>

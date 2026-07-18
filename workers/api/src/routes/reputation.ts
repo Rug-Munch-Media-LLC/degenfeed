@@ -397,7 +397,7 @@ export async function handleReputationSlash(request: Request, env: Env): Promise
     // Also slash earned
     delta -= Math.min(score.earned, 100); // flat penalty on ban
   } else {
-    delta = loseRule?.baseAmount;
+    delta = loseRule?.baseAmount ?? 0;
   }
 
   const { score: updated, event } = applyEvent(

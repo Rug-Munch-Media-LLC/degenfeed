@@ -1490,7 +1490,7 @@ export function FeedTuner({
                     onChange={(e) => setMixNameInput(e.target.value)}
                     placeholder="Mix name (e.g. 'Weekend Vibes')"
                     maxLength={50}
-                    className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500/50 focus:outline-none"
+                    className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-[var(--color-fg)] placeholder-[var(--color-muted)] focus:border-degen-500/50 focus:outline-none"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();

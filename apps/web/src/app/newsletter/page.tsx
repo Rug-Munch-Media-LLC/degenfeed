@@ -749,7 +749,7 @@ export default function NewsletterPage() {
               >
                 <span>{cat.icon}</span>
                 <span>{cat.label}</span>
-                <span className="text-gray-600">{cat.count}</span>
+                <span className="text-[var(--color-muted)]">{cat.count}</span>
               </button>
             ))}
           </div>
@@ -900,7 +900,7 @@ export default function NewsletterPage() {
                         key={t.topic}
                         className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]"
                       >
-                        #{t.topic} <span className="text-gray-600">{t.count}</span>
+                        #{t.topic} <span className="text-[var(--color-muted)]">{t.count}</span>
                       </span>
                     ))}
                   </div>
@@ -914,8 +914,8 @@ export default function NewsletterPage() {
                       >
                         {protocolEmoji(item.protocol)} {item.protocol}
                       </span>
-                      <span className="text-[10px] text-gray-600">{item.author}</span>
-                      <span className="ml-auto text-[10px] text-gray-600">
+                      <span className="text-[10px] text-[var(--color-muted)]">{item.author}</span>
+                      <span className="ml-auto text-[10px] text-[var(--color-muted)]">
                         {formatTime(item.createdAt)}
                       </span>
                     </div>
@@ -944,7 +944,7 @@ export default function NewsletterPage() {
                   </div>
                 ))}
                 {digestMeta && (
-                  <p className="text-center text-[10px] text-gray-600">
+                  <p className="text-center text-[10px] text-[var(--color-muted)]">
                     {digestMeta.total} stories · {new Date(digestMeta.fetchedAt).toUTCString()}
                   </p>
                 )}
@@ -1044,7 +1044,7 @@ export default function NewsletterPage() {
                           <li key={nl.name}>
                             ✦ {nl.name}
                             <PaywallBadge isPaid={nl.isPaid} premium={nl.premium} />
-                            <span className="text-gray-600"> ({nl.schedule})</span>
+                            <span className="text-[var(--color-muted)]"> ({nl.schedule})</span>
                           </li>
                         ))}
                       {activeTopic === 'all' && newsletters.length > 5 && !showAllNewsletters && (
@@ -1052,7 +1052,7 @@ export default function NewsletterPage() {
                           <button
                             type="button"
                             onClick={() => setShowAllNewsletters(true)}
-                            className="text-gray-600 italic hover:text-degen-400"
+                            className="text-[var(--color-muted)] italic hover:text-degen-400"
                           >
                             + {newsletters.length - 5} more...
                           </button>
@@ -1081,7 +1081,7 @@ export default function NewsletterPage() {
               <div className="space-y-2">
                 {TOP_NEWSLETTERS_THIS_WEEK.slice(0, 5).map((nl, i) => (
                   <div key={nl.name} className="flex items-center gap-2">
-                    <span className="w-4 text-[10px] font-bold text-gray-600">{i + 1}</span>
+                    <span className="w-4 text-[10px] font-bold text-[var(--color-muted)]">{i + 1}</span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[11px] font-medium text-[var(--color-fg)]">
                         {nl.name}
@@ -1123,7 +1123,7 @@ export default function NewsletterPage() {
                   </span>{' '}
                   — Some articles behind paywall. Free tier included in digest.
                 </p>
-                <p className="mt-2 text-gray-600">
+                <p className="mt-2 text-[var(--color-muted)]">
                   The DegenFeed digest always shows free previews. Click through to subscribe to
                   paid newsletters directly.
                 </p>

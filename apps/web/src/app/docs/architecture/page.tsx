@@ -179,7 +179,7 @@ export default function ArchitecturePage() {
             {packages.map(([pkg, desc]) => (
               <div key={pkg} className="flex items-baseline gap-2">
                 <code className="flex-shrink-0 font-mono text-degen-400">{pkg}</code>
-                <span className="text-gray-600">{desc}</span>
+                <span className="text-[var(--color-muted)]">{desc}</span>
               </div>
             ))}
           </div>
@@ -408,7 +408,7 @@ pnpm run deploy`}</CodeBlock>
       </Callout>
 
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-[var(--color-muted)]">
           Architecture questions?{' '}
           <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
             admin@rugmunch.io

@@ -94,7 +94,7 @@ export default function FundingPage() {
       )}
       {state === 'empty' && (
         <div className="card py-12 text-center">
-          <div className="mb-4 text-4xl text-gray-600">?</div>
+          <div className="mb-4 text-4xl text-[var(--color-muted)]">?</div>
           <p className="text-[var(--color-muted)]">No funding rounds found</p>
         </div>
       )}

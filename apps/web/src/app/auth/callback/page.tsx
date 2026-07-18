@@ -116,7 +116,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
       <div className="mb-6 text-5xl text-red-400">!</div>
       <h1 className="mb-4 text-2xl font-bold text-red-400">Exchange Failed</h1>
       <p className="mb-2 text-[var(--color-muted)]">{exchangeError}</p>
-      <p className="mb-8 text-sm text-gray-600">Code: {params.code.slice(0, 30)}...</p>
+      <p className="mb-8 text-sm text-[var(--color-muted)]">Code: {params.code.slice(0, 30)}...</p>
       <a href="/home" className="btn-primary inline-block">
         Back to DegenFeed
       </a>

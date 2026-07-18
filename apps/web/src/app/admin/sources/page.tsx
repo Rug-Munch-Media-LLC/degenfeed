@@ -442,7 +442,7 @@ export default function AdminSourcesPage() {
             {stats.lastRunDuration ? formatDuration(stats.lastRunDuration) : 'N/A'})
           </span>
           {stats.runHistory.length > 0 && (
-            <span className="text-xs text-gray-600">
+            <span className="text-xs text-[var(--color-muted)]">
               — {stats.runHistory.length} total runs, last: {stats.runHistory[0].platform} (
               {stats.runHistory[0].discovered} found)
             </span>
@@ -519,7 +519,7 @@ export default function AdminSourcesPage() {
           {/* Pending sources list */}
           {filteredPending.length === 0 ? (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-16 text-center">
-              <div className="mb-3 text-3xl text-gray-600">📡</div>
+              <div className="mb-3 text-3xl text-[var(--color-muted)]">📡</div>
               <p className="text-sm text-[var(--color-muted)]">
                 No pending sources. Click &ldquo;Run Discovery&rdquo; to find new sources.
               </p>
@@ -611,7 +611,7 @@ export default function AdminSourcesPage() {
         <div>
           {newThisWeek.length === 0 ? (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-16 text-center">
-              <div className="mb-3 text-3xl text-gray-600">🆕</div>
+              <div className="mb-3 text-3xl text-[var(--color-muted)]">🆕</div>
               <p className="text-sm text-[var(--color-muted)]">
                 No new sources discovered this week. Run discovery to find fresh sources.
               </p>
@@ -678,7 +678,7 @@ export default function AdminSourcesPage() {
         <div>
           {trending.length === 0 ? (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-16 text-center">
-              <div className="mb-3 text-3xl text-gray-600">📈</div>
+              <div className="mb-3 text-3xl text-[var(--color-muted)]">📈</div>
               <p className="text-sm text-[var(--color-muted)]">
                 No trending data yet. Engage with sources to generate trending scores.
               </p>
@@ -732,7 +732,7 @@ export default function AdminSourcesPage() {
         <div>
           {stale.length === 0 ? (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-16 text-center">
-              <div className="mb-3 text-3xl text-gray-600">✅</div>
+              <div className="mb-3 text-3xl text-[var(--color-muted)]">✅</div>
               <p className="text-sm text-[var(--color-muted)]">
                 All active sources have posted within the last 14 days. No stale sources detected.
               </p>
@@ -789,7 +789,7 @@ export default function AdminSourcesPage() {
         <div>
           {healthEntries.length === 0 ? (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-16 text-center">
-              <div className="mb-3 text-3xl text-gray-600">🏥</div>
+              <div className="mb-3 text-3xl text-[var(--color-muted)]">🏥</div>
               <p className="text-sm text-[var(--color-muted)]">
                 No health data yet. Run discovery and engage with sources to generate health scores.
               </p>

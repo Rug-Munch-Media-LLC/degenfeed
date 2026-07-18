@@ -6,7 +6,7 @@ function AnchorLink({ id }: { id: string }) {
   return (
     <a
       href={`#${id}`}
-      className="ml-2 text-gray-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-degen-400"
+      className="ml-2 text-[var(--color-muted)] opacity-0 transition-opacity group-hover:opacity-100 hover:text-degen-400"
       aria-label={`Link to ${id} section`}
     >
       #

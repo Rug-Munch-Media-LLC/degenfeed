@@ -197,7 +197,7 @@ function PostCard({
               {post.protocol}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-gray-600">
+          <div className="flex items-center gap-2 text-[11px] text-[var(--color-muted)]">
             <span>{formatTimeAgo(post.createdAt)} ago</span>
             {post.parentId && <span>· reply</span>}
             {post.text.length > 50 && <span>· {estimateReadTime(post.text)}</span>}
@@ -508,7 +508,7 @@ function ThreadReplyCard({
               ↔ {protocolLabel(bridgeSource !== reply.protocol ? bridgeSource : reply.protocol)}
             </span>
           )}
-          <span className="text-[10px] text-gray-600">{formatTimeAgo(reply.createdAt)} ago</span>
+          <span className="text-[10px] text-[var(--color-muted)]">{formatTimeAgo(reply.createdAt)} ago</span>
         </div>
         {isCrossProtocol && (
           <p className="mb-1.5 text-[10px] italic text-degen-400/80">
@@ -518,7 +518,7 @@ function ThreadReplyCard({
         <p className="text-xs leading-relaxed text-[var(--color-muted)] whitespace-pre-wrap break-words line-clamp-6">
           {reply.text}
         </p>
-        <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-600">
+        <div className="mt-2 flex items-center gap-3 text-[11px] text-[var(--color-muted)]">
           <span>{reply.metrics.likes} likes</span>
           <span>{reply.metrics.reposts} reposts</span>
           <span>{reply.metrics.replies} replies</span>
@@ -977,7 +977,7 @@ export default function PostPage({ params }: Props) {
                     }}
                     placeholder="Post your reply"
                     rows={3}
-                    className="w-full resize-none bg-transparent p-4 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none"
+                    className="w-full resize-none bg-transparent p-4 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none"
                   />
                   {replyError && <p className="px-4 pb-1 text-xs text-red-400">{replyError}</p>}
                   <div className="flex items-center justify-between border-t border-[var(--color-glass-border)] px-4 py-3">
@@ -1070,7 +1070,7 @@ export default function PostPage({ params }: Props) {
                   state === 'loaded' && (
                     <div className="card border border-[var(--color-glass-border)] bg-white/[0.02] py-12 text-center">
                       <p className="text-sm text-[var(--color-muted)]">No replies yet</p>
-                      <p className="mt-1 text-xs text-gray-600">
+                      <p className="mt-1 text-xs text-[var(--color-muted)]">
                         Be the first to join the conversation
                       </p>
                     </div>

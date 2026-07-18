@@ -99,7 +99,7 @@ export default function HealthPage() {
                 ))}
               </div>
               {feed.checkedAt && (
-                <p className="mt-3 text-[10px] text-gray-600">
+                <p className="mt-3 text-[10px] text-[var(--color-muted)]">
                   Checked at {new Date(feed.checkedAt).toUTCString()}
                 </p>
               )}

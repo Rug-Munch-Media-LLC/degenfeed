@@ -70,7 +70,7 @@ function makePost(overrides: Partial<UnifiedPost> & { id: string; protocol: stri
 }
 
 describe('addDiversityBonus', () => {
-  it('adds protocol diversity bonus based on unique protocol count', () => {
+  it('adds protocol diversity bonus proportional to underrepresentation', () => {
     const posts = [
       makePost({ id: 'a', protocol: 'nostr' }),
       makePost({ id: 'b', protocol: 'farcaster' }),
@@ -84,14 +84,15 @@ describe('addDiversityBonus', () => {
       contentTypeVariety: false,
     });
 
-    // 3 unique protocols → +0.5 * min(3,5) = +1.5 bonus
+    // 3 posts, 3 protocols, each 1/3 of pool → underrep = 2/3 ≈ 0.667
+    // protocol bonus = 0.667 * 2.5 ≈ 1.667
     for (const [, entry] of results) {
-      expect(entry.protocolBonus).toBe(1.5);
-      expect(entry.finalScore).toBe(50 + 1.5); // base + protocol bonus
+      expect(entry.protocolBonus).toBeCloseTo(1.667, 2);
+      expect(entry.finalScore).toBeCloseTo(50 + 1.667, 2);
     }
   });
 
-  it('adds category diversity bonus', () => {
+  it('adds category diversity bonus proportional to underrepresentation', () => {
     const posts = [
       makePost({ id: 'a', protocol: 'nostr', niches: ['defi'] }),
       makePost({ id: 'b', protocol: 'farcaster', niches: ['nft'] }),
@@ -105,13 +106,14 @@ describe('addDiversityBonus', () => {
       contentTypeVariety: false,
     });
 
-    // 3 unique categories → +0.3 * min(3,8) = +0.9
+    // 3 posts, 3 categories, each 1/3 of pool → underrep = 2/3
+    // category bonus = 0.667 * 1.0 ≈ 0.667
     for (const [, entry] of results) {
-      expect(entry.categoryBonus).toBeCloseTo(0.9, 5);
+      expect(entry.categoryBonus).toBeCloseTo(0.667, 2);
     }
   });
 
-  it('adds content type diversity bonus', () => {
+  it('adds content type diversity bonus proportional to underrepresentation', () => {
     const posts = [
       makePost({ id: 'a', protocol: 'nostr', contentType: 'text' }),
       makePost({
@@ -135,13 +137,14 @@ describe('addDiversityBonus', () => {
       contentTypeVariety: true,
     });
 
-    // 3 unique content types → +0.2 * min(3,5) = +0.6
+    // 3 posts, 3 content types, each 1/3 of pool → underrep = 2/3
+    // content type bonus = 0.667 * 0.6 ≈ 0.4
     for (const [, entry] of results) {
-      expect(entry.contentTypeBonus).toBeCloseTo(0.6, 5);
+      expect(entry.contentTypeBonus).toBeCloseTo(0.4, 1);
     }
   });
 
-  it('combines all diversity bonuses', () => {
+  it('combines all diversity bonuses with proportional underrepresentation', () => {
     const posts = [
       makePost({ id: 'a', protocol: 'nostr', niches: ['defi'], contentType: 'text' }),
       makePost({
@@ -167,12 +170,101 @@ describe('addDiversityBonus', () => {
       contentTypeVariety: true,
     });
 
-    // 3 unique protocols (+1.5) + 3 categories (+0.9) + 3 types (+0.6) = +3.0
+    // 3 of each, each 1/3 of pool → underrep = 2/3 ≈ 0.667
+    // protocolBonus = 0.667 * 2.5 ≈ 1.667
+    // categoryBonus = 0.667 * 1.0 ≈ 0.667
+    // contentTypeBonus = 0.667 * 0.6 ≈ 0.4
+    // total bonus = ~2.733, final = 50 + 2.733 ≈ 52.73
     for (const [, entry] of scored) {
-      expect(entry.total).toBe(53); // 50 + 3.0
+      expect(entry.total).toBeCloseTo(52.733, 1);
     }
   });
 });
+
+  it('boosts posts from underrepresented categories more than dominant ones', () => {
+    // 8 defi posts, 1 nft post, 1 trading post → 10 total
+    const posts = [
+      ...Array.from({ length: 8 }, (_, i) =>
+        makePost({ id: `defi:${i}`, protocol: 'nostr', niches: ['defi'], contentType: 'text' }),
+      ),
+      makePost({
+        id: `nft:0`,
+        protocol: 'farcaster',
+        niches: ['nft'],
+        contentType: 'image',
+        embeds: [{ kind: 'image', url: 'https://example.com/img.png' }],
+      }),
+      makePost({
+        id: `trading:0`,
+        protocol: 'lens',
+        niches: ['trading'],
+        contentType: 'link',
+        embeds: [{ kind: 'link', url: 'https://example.com' }],
+      }),
+    ];
+
+    const scored = new Map(posts.map((p) => [p.id, { total: 50, freshness: 1.0 }]));
+    const results = addDiversityBonus(posts, scored, {
+      interleaveProtocols: false,
+      categoryRotation: true,
+      contentTypeVariety: false,
+    });
+
+    // Boosts from results
+    for (const [id, entry] of results) {
+      if (id.startsWith('defi:')) {
+        // defi: 8/10 = 0.8 dominant → underrep = 0.2 → bonus = 0.2 * 1.0 = 0.2
+        expect(entry.categoryBonus).toBeCloseTo(0.2, 2);
+      } else if (id.startsWith('nft:')) {
+        // nft: 1/10 = 0.1 rare → underrep = 0.9 → bonus = 0.9 * 1.0 = 0.9
+        expect(entry.categoryBonus).toBeCloseTo(0.9, 1);
+      } else if (id.startsWith('trading:')) {
+        // trading: 1/10 = 0.1 rare → underrep = 0.9 → bonus = 0.9 * 1.0 = 0.9
+        expect(entry.categoryBonus).toBeCloseTo(0.9, 1);
+      }
+    }
+
+    // Defi posts should have lower total score than nft/trading posts (after bonuses)
+    const defiTotal = results.get('defi:0')?.finalScore ?? 0;
+    const nftTotal = results.get('nft:0')?.finalScore ?? 0;
+    const tradingTotal = results.get('trading:0')?.finalScore ?? 0;
+    expect(nftTotal).toBeGreaterThan(defiTotal);
+    expect(tradingTotal).toBeGreaterThan(defiTotal);
+  });
+
+  it('boosts underrepresented protocols proportionally', () => {
+    // 6 nostr, 2 farcaster, 1 lens, 1 rss → 10 total
+    const posts = [
+      ...Array.from({ length: 6 }, (_, i) => makePost({ id: `nostr:${i}`, protocol: 'nostr' })),
+      ...Array.from({ length: 2 }, (_, i) => makePost({ id: `fc:${i}`, protocol: 'farcaster' })),
+      makePost({ id: 'lens:0', protocol: 'lens' }),
+      makePost({ id: 'rss:0', protocol: 'rss' }),
+    ];
+
+    const scored = new Map(posts.map((p) => [p.id, { total: 50, freshness: 1.0 }]));
+    const results = addDiversityBonus(posts, scored, {
+      interleaveProtocols: true,
+      categoryRotation: false,
+      contentTypeVariety: false,
+    });
+
+    // nostr: 6/10 → underrep = 0.4 → bonus = 0.4 * 2.5 = 1.0
+    // farcaster: 2/10 → underrep = 0.8 → bonus = 0.8 * 2.5 = 2.0
+    // lens: 1/10 → underrep = 0.9 → bonus = 0.9 * 2.5 = 2.25
+    // rss: 1/10 → underrep = 0.9 → bonus = 0.9 * 2.5 = 2.25
+    const nostrEntry = results.get('nostr:0');
+    const fcEntry = results.get('fc:0');
+    const lensEntry = results.get('lens:0');
+    const rssEntry = results.get('rss:0');
+
+    expect(nostrEntry?.protocolBonus).toBeCloseTo(1.0, 1);
+    expect(fcEntry?.protocolBonus).toBeCloseTo(2.0, 1);
+    expect(lensEntry?.protocolBonus).toBeCloseTo(2.25, 1);
+    expect(rssEntry?.protocolBonus).toBeCloseTo(2.25, 1);
+
+    // Rare protocols should get higher total
+    expect(lensEntry!.finalScore).toBeGreaterThan(nostrEntry!.finalScore);
+  });
 
 describe('interleaveProtocolsRoundRobin', () => {
   it('alternates protocols in round-robin fashion', () => {

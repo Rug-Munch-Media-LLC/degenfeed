@@ -211,7 +211,7 @@ export const FeedWhyCard = memo(function FeedWhyCard({ post, onClose }: FeedWhyC
           <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
             Also contributing
           </p>
-          {secondarySignals.slice(0, 5).map((_s, _i) => (
+          {secondarySignals.slice(0, 5).map((s, i) => (
             <div key={i} className="flex items-start gap-2">
               <span className="mt-0.5 shrink-0 text-xs text-[var(--color-muted)]">{s.icon}</span>
               <span className="text-xs text-[var(--color-muted)]">{s.text}</span>

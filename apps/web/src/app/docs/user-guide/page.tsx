@@ -66,7 +66,7 @@ function H2({ id, children }: { id: string; children: React.ReactNode }) {
       {children}
       <a
         href={`#${id}`}
-        className="text-gray-600 opacity-0 transition-opacity group-hover:opacity-100"
+        className="text-[var(--color-muted)] opacity-0 transition-opacity group-hover:opacity-100"
       >
         #
       </a>
@@ -83,7 +83,7 @@ function H3({ id, children }: { id: string; children: React.ReactNode }) {
       {children}
       <a
         href={`#${id}`}
-        className="text-gray-600 opacity-0 transition-opacity group-hover:opacity-100"
+        className="text-[var(--color-muted)] opacity-0 transition-opacity group-hover:opacity-100"
       >
         #
       </a>
@@ -522,7 +522,7 @@ export default function UserGuidePage() {
               Troubleshooting
             </Link>
           </div>
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-[var(--color-muted)]">
             Need help?{' '}
             <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
               admin@rugmunch.io

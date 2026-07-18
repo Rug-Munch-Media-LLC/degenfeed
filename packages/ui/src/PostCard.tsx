@@ -1552,11 +1552,11 @@ export const PostCard = memo(function PostCard({
             }
           />
         )}
-        {post.protocol === 'nostr' && (
+        {post.protocol === 'nostr' ? (
           <NostrRelayBadge
             relays={((post.raw as Record<string, unknown> | undefined)?.relays as string[]) ?? []}
           />
-        )}
+        ) : null}
         {post.protocol === 'mastodon' && (
           <MastodonInstanceContext
             instance={
