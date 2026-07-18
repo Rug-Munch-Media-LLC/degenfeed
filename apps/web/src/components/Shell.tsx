@@ -393,7 +393,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           id="main"
           aria-label="Main content"
           tabIndex={-1}
-          className={`relative z-10 min-h-screen flex-1 animate-page-enter ${pathname === '/' ? 'w-full max-w-none' : 'w-full min-w-0 border-r border-[var(--color-glass-border)]'}`}
+          className={`relative z-10 min-h-screen flex-1 animate-page-enter pb-16 lg:pb-0 ${pathname === '/' ? 'w-full max-w-none' : 'w-full min-w-0 border-r border-[var(--color-glass-border)]'}`}
         >
           {/* Page announcements for screen readers */}
           <div aria-live="polite" aria-atomic="true" className="sr-only" role="status" />

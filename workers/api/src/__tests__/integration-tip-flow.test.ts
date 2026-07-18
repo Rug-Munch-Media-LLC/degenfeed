@@ -100,7 +100,7 @@ describe('Tip flow: validation → ranking → response', () => {
     const context: TipPostContext = {
       protocol: 'nostr',
       authorId: 'abc',
-      author: { lightningAddress: 'alice@getalby.com' },
+      // No lightningAddress — contextualization won't make lightning_zap available
     };
     const ranked = rankMethods(methods, 'nostr', context);
     const lastIdx = ranked.length - 1;

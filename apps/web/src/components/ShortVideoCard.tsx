@@ -15,7 +15,15 @@ import type { UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, VideoPlayer } from '@degenfeed/ui';
 import { formatTimeAgo, parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { QuickTipButton } from './QuickTipButton';
+
+// Lazy-load TipModal (it includes Web3 hooks)
+const TipModal = dynamic(
+  () => import('./TipModal').then((m) => ({ default: m.TipModal })),
+  { ssr: false },
+);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -249,6 +257,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   const [showCaption, setShowCaption] = useState(false);
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   const [heartVisible, setHeartVisible] = useState(false);
+  const [tipModalOpen, setTipModalOpen] = useState(false);
   const overlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressStartRef = useRef<number>(0);
@@ -525,8 +534,8 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   // ── Tip ──
   const handleTip = useCallback(() => {
     window.dispatchEvent(new CustomEvent('shorts-tip-current'));
-    window.location.href = `/post/${encodeURIComponent(post.id)}`;
-  }, [post.id]);
+    setTipModalOpen(true);
+  }, []);
 
   // ── Mute ──
   const handleMute = useCallback((e?: React.MouseEvent) => {
@@ -979,6 +988,17 @@ export const ShortVideoCard = memo(function ShortVideoCard({
           </span>
         </div>
 
+        {/* Quick inline tip */}
+        <div className="mt-1.5">
+          <QuickTipButton
+            recipientProtocol={post.protocol}
+            recipientAuthorId={post.author.id}
+            recipientDisplayName={post.author.displayName}
+            publicationId={post.id}
+            subtle
+          />
+        </div>
+
         {/* Swipe up hint */}
         {!showInfoPanel && (
           <div className="mt-3 flex items-center gap-1.5 opacity-40">
@@ -1059,6 +1079,24 @@ export const ShortVideoCard = memo(function ShortVideoCard({
           PeerTube
         </a>
       )}
+
+      {/* ── TipModal ── */}
+      <TipModal
+        open={tipModalOpen}
+        onClose={() => setTipModalOpen(false)}
+        recipientProtocol={post.protocol}
+        recipientAuthorId={post.author.id}
+        recipientDisplayName={post.author.displayName}
+        publicationId={post.id}
+        postContext={{
+          protocol: post.protocol,
+          authorId: post.author.id,
+          author: {
+            evmAddress: post.author.keys.evmAddress,
+            solanaAddress: post.author.keys.solanaAddress,
+          },
+        }}
+      />
 
       {/* ── Animations ── */}
       <style>{`

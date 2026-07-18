@@ -191,6 +191,16 @@ import {
   handlePeerTubeLeaderboard,
 } from './routes/peertube-tip';
 import {
+  handleBlueskyTipCreate,
+  handleBlueskyTipStats,
+  handleBlueskyLeaderboard,
+} from './routes/bluesky-tip';
+import {
+  handleMastodonTipCreate,
+  handleMastodonTipStats,
+  handleMastodonLeaderboard,
+} from './routes/mastodon-tip';
+import {
   handleUnifiedTipActivity,
   handleUnifiedTipCreate,
   handleUnifiedTipLeaderboard,
@@ -586,6 +596,16 @@ app.all('/api/lemmy/tip', async (c) =>
 app.post('/api/peertube/tip', async (c) => withSession(c, () => handlePeerTubeTipCreate(c.req.raw, c.env)));
 app.get('/api/peertube/tip/stats', async (c) => handlePeerTubeTipStats(c.req.raw, c.env));
 app.get('/api/peertube/tip/leaderboard', async (c) => handlePeerTubeLeaderboard(c.req.raw, c.env));
+
+// ─── API: Bluesky Tips ───────────────────────────────────────
+app.post('/api/bluesky/tip', async (c) => withSession(c, () => handleBlueskyTipCreate(c.req.raw, c.env)));
+app.get('/api/bluesky/tip/stats', async (c) => handleBlueskyTipStats(c.req.raw, c.env));
+app.get('/api/bluesky/tip/leaderboard', async (c) => handleBlueskyLeaderboard(c.req.raw, c.env));
+
+// ─── API: Mastodon Tips ──────────────────────────────────────
+app.post('/api/mastodon/tip', async (c) => withSession(c, () => handleMastodonTipCreate(c.req.raw, c.env)));
+app.get('/api/mastodon/tip/stats', async (c) => handleMastodonTipStats(c.req.raw, c.env));
+app.get('/api/mastodon/tip/leaderboard', async (c) => handleMastodonLeaderboard(c.req.raw, c.env));
 
 // ─── API: Notifications ──────────────────────────────────────
 app.all('/api/notifications', async (c) => handleNotifications(c.req.raw, c.env));

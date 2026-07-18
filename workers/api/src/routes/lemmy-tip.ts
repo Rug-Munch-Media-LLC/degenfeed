@@ -13,6 +13,7 @@
  * (see unified-tip.ts) via recordUnifiedTip().
  */
 
+import { identityKey } from '@degenfeed/utils';
 import { type Env, jsonResponse } from '../index';
 import {
   hasSuspiciousPayload,
@@ -194,8 +195,36 @@ export async function recordLemmyTip(
     totalCount: aggregate.totalCount,
   });
 
+  // ─── Identity lookup for cross-registered users ──────────────
+  // If no recipient wallets were provided, try to resolve from the
+  // unified ledger recipientUserId (which may be a wallet address).
+  let resolvedEvm = input.recipientEvm;
+  let resolvedSol = input.recipientSol;
+  if (!resolvedEvm && !resolvedSol && input.recipientUserId && env.IDENTITIES) {
+    try {
+      const key = identityKey(input.recipientUserId);
+      const raw = await env.IDENTITIES?.get(key);
+      if (raw) {
+        const identity = JSON.parse(raw) as Record<string, unknown>;
+
+        if (!resolvedEvm && identity.walletAddress && /^0x[a-f0-9]{40}$/i.test(identity.walletAddress as string)) {
+          resolvedEvm = identity.walletAddress as string;
+        }
+        if (!resolvedEvm && identity.farcaster && typeof identity.farcaster === 'object') {
+          const fc = identity.farcaster as Record<string, unknown>;
+          if (fc.custodyAddress) resolvedEvm = fc.custodyAddress as string;
+        }
+        if (!resolvedSol && identity.walletAddress && /^[1-9a-hj-z]{32,44}$/.test(identity.walletAddress as string)) {
+          resolvedSol = identity.walletAddress as string;
+        }
+      }
+    } catch {
+      // Best-effort
+    }
+  }
+
   // ─── Record in the unified cross-platform ledger ─────────────
-  const recipientUserId = input.recipientUserId || input.recipientEvm || input.recipientSol;
+  const recipientUserId = input.recipientUserId || resolvedEvm || resolvedSol;
   await recordUnifiedTip(env, {
     platform: 'lemmy',
     entityId: contentId,
@@ -209,7 +238,7 @@ export async function recordLemmyTip(
   });
 
   // ─── Store notification ──────────────────────────────────────
-  const notifRecipient = input.recipientEvm || input.recipientSol;
+  const notifRecipient = resolvedEvm || resolvedSol;
   if (notifRecipient) {
     try {
       const notifKey = `notifications:${notifRecipient}`;
