@@ -38,7 +38,7 @@ export function ComposePreview({ text, targets, author }: ComposePreviewProps) {
                 loading="lazy"
               />
             ) : (
-              <span className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+              <span className="flex h-full w-full items-center justify-center text-sm text-[var(--color-muted)]">
                 ?
               </span>
             )}
@@ -49,7 +49,7 @@ export function ComposePreview({ text, targets, author }: ComposePreviewProps) {
                 {author?.displayName || 'You'}
               </span>
               {author?.handle && (
-                <span className="truncate text-sm text-gray-500">@{author.handle}</span>
+                <span className="truncate text-sm text-[var(--color-muted)]">@{author.handle}</span>
               )}
               <span className="text-xs text-gray-600">· now</span>
             </div>

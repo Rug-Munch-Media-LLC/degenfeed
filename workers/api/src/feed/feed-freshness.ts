@@ -17,9 +17,32 @@ const FRESHNESS_KEY_PREFIX = 'feed:freshness:';
 const FEED_UPDATE_KEY_PREFIX = 'feed:updates:';
 const FRESHNESS_TTL = 300; // 5 min
 
-// Stale content thresholds
-export const STALE_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-export const HIGH_ENGAGEMENT_THRESHOLD = 25; // likes + reposts*2 + replies*3
+// Per-protocol high-engagement thresholds (likes + reposts*2 + replies*3)
+// Scaled: 25 on Nostr is viral, 30 on Farcaster is moderate engagement
+export const HIGH_ENGAGEMENT_BY_PROTOCOL: Record<string, number> = {
+  nostr: 15,
+  farcaster: 30,
+  lens: 20,
+  bluesky: 25,
+  mastodon: 15,
+  rss: 10,
+};
+export const DEFAULT_HIGH_ENGAGEMENT = 20;
+
+export function getHighEngagementThreshold(protocol?: string): number {
+  return (protocol ? HIGH_ENGAGEMENT_BY_PROTOCOL[protocol.toLowerCase()] : undefined) ?? DEFAULT_HIGH_ENGAGEMENT;
+}
+
+/**
+ * Continuous staleness decay: 1 / (1 + log2(hours/24 + 1))
+ * At 0h → 1.0, 24h → 0.5, 7d → 0.25, 30d → 0.17
+ * No cliff — posts fade out gradually instead of dying at 7 days.
+ */
+export function computeDecayMultiplier(ageMs: number, now: number = Date.now()): number {
+  const hours = (now - ageMs) / 3600000;
+  if (hours <= 0) return 1.0;
+  return 1 / (1 + Math.log2(hours / 24 + 1));
+}
 
 export interface StalePostResult {
   post: UnifiedPost;
@@ -141,44 +164,47 @@ export async function broadcastFreshContent(
 // ─── Stale content deprioritization ──────────────────────────────
 
 /**
- * Flags posts older than 7 days as stale, unless they have high engagement.
- * High engagement posts are preserved regardless of age.
- * Stale posts are moved to the end of the list.
+ * Applies continuous decay to posts. Posts are sorted by a combined
+ * score: engagement * decayMultiplier. High-engagement posts resist
+ * decay (engagement measured per-protocol). No hard 7-day cutoff.
  */
 export function deprioritizeStaleContent(
   posts: UnifiedPost[],
   now: number = Date.now(),
-  maxAgeMs: number = STALE_AGE_MS,
-  engagementThreshold: number = HIGH_ENGAGEMENT_THRESHOLD,
 ): UnifiedPost[] {
-  const fresh: UnifiedPost[] = [];
-  const staleHighEngagement: UnifiedPost[] = [];
-  const staleLowEngagement: UnifiedPost[] = [];
+  if (posts.length === 0) return posts;
 
-  for (const post of posts) {
-    const ageMs = now - post.createdAt;
-    const isStale = ageMs > maxAgeMs;
+  return [...posts].sort((a, b) => {
+    const aAge = now - a.createdAt;
+    const bAge = now - b.createdAt;
 
-    if (!isStale) {
-      fresh.push(post);
-      continue;
-    }
+    const aDecay = computeDecayMultiplier(a.createdAt, now);
+    const bDecay = computeDecayMultiplier(b.createdAt, now);
 
-    const engTotal =
-      post.metrics.likes +
-      post.metrics.reposts * 2 +
-      post.metrics.replies * 3 +
-      (post.metrics.quotes ?? 0);
+    const aEng =
+      a.metrics.likes +
+      a.metrics.reposts * 2 +
+      a.metrics.replies * 3 +
+      (a.metrics.quotes ?? 0);
+    const bEng =
+      b.metrics.likes +
+      b.metrics.reposts * 2 +
+      b.metrics.replies * 3 +
+      (b.metrics.quotes ?? 0);
 
-    if (engTotal >= engagementThreshold) {
-      staleHighEngagement.push(post);
-    } else {
-      staleLowEngagement.push(post);
-    }
-  }
+    // High-engagement resist decay: apply per-protocol threshold
+    const aThreshold = getHighEngagementThreshold(a.protocol);
+    const bThreshold = getHighEngagementThreshold(b.protocol);
+    const aHigh = aEng >= aThreshold;
+    const bHigh = bEng >= bThreshold;
 
-  // Fresh first, then high-engagement stale, then low-engagement stale
-  return [...fresh, ...staleHighEngagement, ...staleLowEngagement];
+    // Composite: engagement × decay. High-engagement gets decay floor of 0.4.
+    const aScore = aEng * (aHigh ? Math.max(aDecay, 0.4) : aDecay);
+    const bScore = bEng * (bHigh ? Math.max(bDecay, 0.4) : bDecay);
+
+    if (bScore !== aScore) return bScore - aScore;
+    return b.createdAt - a.createdAt;
+  });
 }
 
 export function classifyStalePosts(
@@ -186,14 +212,15 @@ export function classifyStalePosts(
   now: number = Date.now(),
 ): StalePostResult[] {
   return posts.map((post) => {
-    const ageMs = now - post.createdAt;
-    const isStale = ageMs > STALE_AGE_MS;
+    const decay = computeDecayMultiplier(post.createdAt, now);
     const engTotal =
       post.metrics.likes +
       post.metrics.reposts * 2 +
       post.metrics.replies * 3 +
       (post.metrics.quotes ?? 0);
-    const isHighEngagement = engTotal >= HIGH_ENGAGEMENT_THRESHOLD;
+    const threshold = getHighEngagementThreshold(post.protocol);
+    const isHighEngagement = engTotal >= threshold;
+    const isStale = decay < 0.4; // < 40% signal remaining = stale
 
     return {
       post,

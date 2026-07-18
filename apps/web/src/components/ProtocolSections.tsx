@@ -115,17 +115,17 @@ export function ProtocolSections({ protocol, color }: Props) {
               <span aria-hidden="true">{section.icon}</span>
               {section.title}
               {isChannelSection && (
-                <span className="ml-1 rounded bg-[var(--color-card)] px-1.5 py-0.5 text-[9px] font-mono text-gray-500">
+                <span className="ml-1 rounded bg-[var(--color-card)] px-1.5 py-0.5 text-[9px] font-mono text-[var(--color-muted)]">
                   /channel
                 </span>
               )}
               {isRelaySection && (
-                <span className="ml-1 rounded bg-[var(--color-card)] px-1.5 py-0.5 text-[9px] font-mono text-gray-500">
+                <span className="ml-1 rounded bg-[var(--color-card)] px-1.5 py-0.5 text-[9px] font-mono text-[var(--color-muted)]">
                   relay
                 </span>
               )}
               {isFrameSection && (
-                <span className="ml-1 rounded bg-[var(--color-card)] px-1.5 py-0.5 text-[9px] font-mono text-gray-500">
+                <span className="ml-1 rounded bg-[var(--color-card)] px-1.5 py-0.5 text-[9px] font-mono text-[var(--color-muted)]">
                   frame
                 </span>
               )}
@@ -134,7 +134,7 @@ export function ProtocolSections({ protocol, color }: Props) {
               {section.items.slice(0, 5).map((item, idx) => {
                 const inner = (
                   <>
-                    <span className="w-4 shrink-0 text-right text-[10px] tabular-nums text-gray-600">
+                    <span className="w-4 shrink-0 text-right text-[10px] tabular-nums text-[var(--color-muted)]">
                       {idx + 1}
                     </span>
                     {item.imageUrl && (
@@ -215,7 +215,7 @@ export function ProtocolSections({ protocol, color }: Props) {
                         {item.label}
                       </span>
                       {item.sublabel && (
-                        <span className="block truncate text-[10px] text-gray-500">
+                        <span className="block truncate text-[10px] text-[var(--color-muted)]">
                           {/* Protocol-specific sublabel decorations */}
                           {isRelaySection && '🔄 '}
                           {isHashtagSection && '💬 '}
@@ -227,7 +227,7 @@ export function ProtocolSections({ protocol, color }: Props) {
                       <span className="block text-xs font-bold tabular-nums" style={{ color }}>
                         {formatValue(item.value)}
                       </span>
-                      <span className="block text-[9px] text-gray-600">
+                      <span className="block text-[9px] text-[var(--color-muted)]">
                         {isChannelSection ? 'casts' : isRelaySection ? 'notes' : item.unit}
                       </span>
                     </span>

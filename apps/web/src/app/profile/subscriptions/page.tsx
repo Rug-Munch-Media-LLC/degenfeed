@@ -80,13 +80,13 @@ export default function SubscriptionsPage() {
           <div>
             <Link
               href="/profile"
-              className="mb-2 inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[var(--color-fg)] transition-colors"
+              className="mb-2 inline-flex items-center gap-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             >
               ← Back to profile
             </Link>
             <h1 className="text-2xl font-bold text-[var(--color-fg)]">Your Subscriptions</h1>
             {!loading && (
-              <p className="mt-0.5 text-xs text-gray-500">
+              <p className="mt-0.5 text-xs text-[var(--color-muted)]">
                 {subscriptions.length} active subscription{subscriptions.length !== 1 ? 's' : ''}
               </p>
             )}
@@ -116,7 +116,7 @@ export default function SubscriptionsPage() {
         {!loading && subscriptions.length === 0 && (
           <div className="card py-16 text-center">
             <div className="mb-3 text-3xl">💝</div>
-            <p className="text-gray-500">No active subscriptions yet.</p>
+            <p className="text-[var(--color-muted)]">No active subscriptions yet.</p>
             <p className="mt-1 text-sm text-gray-600">
               Support your favorite creators by subscribing to their content.
             </p>
@@ -130,7 +130,7 @@ export default function SubscriptionsPage() {
         {!loading && subscriptions.length > 0 && (
           <div className="space-y-3">
             {subscriptions.map((sub) => {
-              const colorClass = TIER_COLORS[sub.tier] || 'text-gray-400';
+              const colorClass = TIER_COLORS[sub.tier] || 'text-[var(--color-muted)]';
               const tierLabel = TIER_LABELS[sub.tier] || sub.tier;
               const tierIcon = TIER_ICONS[sub.tier] || '⭐';
 
@@ -151,7 +151,7 @@ export default function SubscriptionsPage() {
                         {tierLabel}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--color-muted)]">
                       <span>Since {formatDate(sub.startDate)}</span>
                       <span>Expires {formatDate(sub.expiryDate)}</span>
                       <span className="text-degen-400">

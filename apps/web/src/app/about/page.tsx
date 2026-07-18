@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 text-sm leading-relaxed text-gray-300">
+    <div className="mx-auto max-w-2xl px-4 py-8 text-sm leading-relaxed text-[var(--color-muted)]">
       <h1 className="mb-6 text-2xl font-bold text-[var(--color-fg)]">About DegenFeed</h1>
 
       <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">1. What is DegenFeed?</h2>

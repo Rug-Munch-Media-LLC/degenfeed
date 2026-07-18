@@ -50,7 +50,7 @@ export function PaywallModal({ open, onClose, requirement, onVerify }: PaywallMo
           <h2 className="text-lg font-bold text-[var(--color-fg)]">Unlock content</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+            className="rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close"
             type="button"
           >
@@ -74,7 +74,7 @@ export function PaywallModal({ open, onClose, requirement, onVerify }: PaywallMo
         </div>
         <div className="mb-6 text-center">
           <div className="mb-2 text-4xl">🔒</div>
-          <p className="text-sm text-gray-400">This post is locked.</p>
+          <p className="text-sm text-[var(--color-muted)]">This post is locked.</p>
           <p className="text-2xl font-bold text-[var(--color-fg)]">Unlock for {requirement.amount} SOL</p>
         </div>
         <div className="space-y-3">

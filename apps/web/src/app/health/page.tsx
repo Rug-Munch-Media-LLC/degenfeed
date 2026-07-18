@@ -62,7 +62,7 @@ export default function HealthPage() {
               <div className="space-y-2">
                 {Object.entries(api.relays).map(([relay, status]) => (
                   <div key={relay} className="flex items-center justify-between text-xs">
-                    <span className="text-gray-400 font-mono">{relay}</span>
+                    <span className="text-[var(--color-muted)] font-mono">{relay}</span>
                     <div className="flex items-center gap-2">
                       {StatusDot(status === 'ok')}
                       <span className={status === 'ok' ? 'text-green-400' : 'text-red-400'}>
@@ -72,12 +72,12 @@ export default function HealthPage() {
                   </div>
                 ))}
                 <div className="mt-2 flex items-center justify-between border-t border-[var(--color-glass-border)] pt-2 text-xs">
-                  <span className="text-gray-500">Healthy relays</span>
+                  <span className="text-[var(--color-muted)]">Healthy relays</span>
                   <span className="text-degen-400">{api.healthy ?? 0}/5</span>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-gray-500">Relay health unavailable</p>
+              <p className="text-xs text-[var(--color-muted)]">Relay health unavailable</p>
             )}
           </div>
 
@@ -88,7 +88,7 @@ export default function HealthPage() {
               <div className="space-y-2">
                 {Object.entries(feed.health).map(([protocol, h]) => (
                   <div key={protocol} className="flex items-center justify-between text-xs">
-                    <span className="text-gray-400 font-medium">{protocol}</span>
+                    <span className="text-[var(--color-muted)] font-medium">{protocol}</span>
                     <div className="flex items-center gap-3">
                       {StatusDot(h.healthy)}
                       <span className={h.healthy ? 'text-green-400' : 'text-red-400'}>
@@ -109,7 +109,7 @@ export default function HealthPage() {
           {/* App Status */}
           <div className="card">
             <h2 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">App</h2>
-            <div className="space-y-1.5 text-xs text-gray-400">
+            <div className="space-y-1.5 text-xs text-[var(--color-muted)]">
               <div className="flex justify-between">
                 <span>Client</span>
                 <span className="text-degen-400">app.degenfeed.xyz</span>

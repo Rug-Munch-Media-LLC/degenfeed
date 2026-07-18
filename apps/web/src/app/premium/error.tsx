@@ -19,7 +19,7 @@ export default function PremiumError({
           !
         </div>
         <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Page failed to load</h2>
-        <p className="mb-4 text-sm text-gray-400">Something went wrong. Please try again.</p>
+        <p className="mb-4 text-sm text-[var(--color-muted)]">Something went wrong. Please try again.</p>
         <button type="button" onClick={reset} className="btn-primary text-sm">
           Try again
         </button>

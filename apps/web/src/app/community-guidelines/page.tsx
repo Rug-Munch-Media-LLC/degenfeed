@@ -29,9 +29,9 @@ export const metadata: Metadata = {
 
 export default function CommunityGuidelinesPage() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 text-sm leading-relaxed text-gray-300">
+    <div className="mx-auto max-w-2xl px-4 py-8 text-sm leading-relaxed text-[var(--color-muted)]">
       <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">Community Guidelines</h1>
-      <p className="mb-6 text-gray-500">Federated instance rules for social.degenfeed.xyz</p>
+      <p className="mb-6 text-[var(--color-muted)]">Federated instance rules for social.degenfeed.xyz</p>
 
       <ol className="mb-4 list-inside space-y-4">
         <li>
@@ -138,7 +138,7 @@ export default function CommunityGuidelinesPage() {
         </li>
       </ol>
 
-      <p className="mt-6 text-gray-500">
+      <p className="mt-6 text-[var(--color-muted)]">
         Violations may result in content removal, account suspension, or instance defederation.
         Reports:{' '}
         <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">

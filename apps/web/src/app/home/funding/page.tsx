@@ -48,12 +48,12 @@ export default function FundingPage() {
       <div className="mb-6">
         <a
           href="/home"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-[var(--color-fg)]"
+          className="mb-4 inline-flex items-center gap-1 text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
         >
           &larr; All sections
         </a>
         <h1 className="text-2xl font-bold text-[var(--color-fg)]">Funding Tracker</h1>
-        <p className="text-sm text-gray-500">Crypto raises, rounds, and investments</p>
+        <p className="text-sm text-[var(--color-muted)]">Crypto raises, rounds, and investments</p>
         {meta.totalRaised ? (
           <p className="mt-1 text-xs text-degen-500">
             ${meta.totalRaised.toFixed(1)}M total raised (this page)
@@ -69,7 +69,7 @@ export default function FundingPage() {
             className={`rounded-full border px-3 py-1 text-xs font-medium transition-all ${
               chainFilter === c
                 ? 'border-degen-500 bg-degen-500/20 text-degen-400'
-                : 'border-white/10 bg-[var(--color-card)] text-gray-400 hover:border-degen-500/30 hover:text-[var(--color-fg)]'
+                : 'border-white/10 bg-[var(--color-card)] text-[var(--color-muted)] hover:border-degen-500/30 hover:text-[var(--color-fg)]'
             }`}
             onClick={() => setChainFilter(c)}
           >
@@ -95,7 +95,7 @@ export default function FundingPage() {
       {state === 'empty' && (
         <div className="card py-12 text-center">
           <div className="mb-4 text-4xl text-gray-600">?</div>
-          <p className="text-gray-500">No funding rounds found</p>
+          <p className="text-[var(--color-muted)]">No funding rounds found</p>
         </div>
       )}
       {state === 'error' && (

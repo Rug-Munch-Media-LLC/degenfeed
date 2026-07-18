@@ -21,7 +21,7 @@ function Badge({ children, color = 'gray' }: { children: React.ReactNode; color?
     yellow: 'bg-yellow-900/30 text-yellow-400 border-yellow-500/20',
     purple: 'bg-purple-900/30 text-purple-400 border-purple-500/20',
     blue: 'bg-blue-900/30 text-blue-400 border-blue-500/20',
-    gray: 'bg-[var(--color-muted)] text-gray-400 border-[var(--color-border)]/30',
+    gray: 'bg-[var(--color-muted)] text-[var(--color-muted)] border-[var(--color-border)]/30',
     red: 'bg-red-900/30 text-red-400 border-red-500/20',
   };
   return (
@@ -483,7 +483,7 @@ function EndpointRow({ ep }: { ep: Endpoint }) {
     <div className="group flex items-start gap-3 rounded-lg border border-white/[0.03] bg-white/[0.01] px-3 py-2.5 transition-colors hover:border-white/10">
       <MethodBadge method={ep.method} />
       <code className="mt-0.5 flex-shrink-0 font-mono text-xs text-degen-400">{ep.path}</code>
-      <span className="min-w-0 flex-1 text-xs text-gray-500">{ep.desc}</span>
+      <span className="min-w-0 flex-1 text-xs text-[var(--color-muted)]">{ep.desc}</span>
       {ep.auth && ep.auth !== 'none' && <Badge color="purple">{ep.auth}</Badge>}
     </div>
   );
@@ -502,7 +502,7 @@ export default function ApiDocsPage() {
         <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">
           DegenFeed API v1
         </h1>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-400">
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
           Build on the open social web. The DegenFeed API aggregates 9 decentralized and federated
           social networks into a single, ranked, real-time feed. All endpoints use the{' '}
           <code className="rounded-md bg-[var(--color-muted)] px-1.5 py-0.5 font-mono text-xs text-degen-400">
@@ -516,7 +516,7 @@ export default function ApiDocsPage() {
             className="group rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4 transition-all hover:border-degen-500/20 hover:bg-degen-500/[0.03]"
           >
             <div className="font-semibold text-[var(--color-fg)]">Authentication</div>
-            <div className="mt-1 text-xs text-gray-500">
+            <div className="mt-1 text-xs text-[var(--color-muted)]">
               API keys, scopes, and how to authenticate.
             </div>
           </Link>
@@ -525,7 +525,7 @@ export default function ApiDocsPage() {
             className="group rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4 transition-all hover:border-degen-500/20 hover:bg-degen-500/[0.03]"
           >
             <div className="font-semibold text-[var(--color-fg)]">Rate Limits</div>
-            <div className="mt-1 text-xs text-gray-500">
+            <div className="mt-1 text-xs text-[var(--color-muted)]">
               Free and premium tier limits with retry guidance.
             </div>
           </Link>
@@ -534,7 +534,7 @@ export default function ApiDocsPage() {
             className="group rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-4 transition-all hover:border-degen-500/20 hover:bg-degen-500/[0.03]"
           >
             <div className="font-semibold text-[var(--color-fg)]">SDK Examples</div>
-            <div className="mt-1 text-xs text-gray-500">
+            <div className="mt-1 text-xs text-[var(--color-muted)]">
               JavaScript, Python, and curl quickstarts.
             </div>
           </Link>
@@ -543,7 +543,7 @@ export default function ApiDocsPage() {
 
       {/* Authentication */}
       <H2 id="authentication">Authentication</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         All v1 API endpoints require authentication via an API key sent in the{' '}
         <code className="rounded-md bg-[var(--color-muted)] px-1.5 py-0.5 font-mono text-xs text-degen-400">
           Authorization
@@ -553,7 +553,7 @@ export default function ApiDocsPage() {
       <CodeBlock>{`Authorization: Bearer df_key_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</CodeBlock>
 
       <H3 id="get-api-key">Getting an API key</H3>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Generate an API key from your{' '}
         <Link href="/profile/settings/api" className="text-degen-400 underline">
           profile settings
@@ -564,12 +564,12 @@ export default function ApiDocsPage() {
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--color-glass-border)]">
-              <th className="py-2 pr-4 font-medium text-gray-400">Scope</th>
-              <th className="py-2 pr-4 font-medium text-gray-400">Permission</th>
-              <th className="py-2 font-medium text-gray-400">Endpoints</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Scope</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Permission</th>
+              <th className="py-2 font-medium text-[var(--color-muted)]">Endpoints</th>
             </tr>
           </thead>
-          <tbody className="text-gray-500">
+          <tbody className="text-[var(--color-muted)]">
             {[
               ['read:feed', 'Read feeds and search posts', 'Feed, search, discover, prices'],
               ['write:posts', 'Publish and engage', 'Publish, engage (session required)'],
@@ -588,7 +588,7 @@ export default function ApiDocsPage() {
       </div>
 
       <H3 id="scope-scope-errors">Error responses</H3>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Invalid or missing API keys return 401. Keys without sufficient scope return 403.
       </p>
       <CodeBlock>{`// 401 — Invalid key
@@ -599,20 +599,20 @@ export default function ApiDocsPage() {
 
       {/* Rate Limiting */}
       <H2 id="rate-limiting">Rate Limiting</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         API keys are rate-limited per key based on tier:
       </p>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--color-glass-border)]">
-              <th className="py-2 pr-4 font-medium text-gray-400">Tier</th>
-              <th className="py-2 pr-4 font-medium text-gray-400">Rate Limit</th>
-              <th className="py-2 pr-4 font-medium text-gray-400">Window</th>
-              <th className="py-2 font-medium text-gray-400">Retry-After</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Tier</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Rate Limit</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Window</th>
+              <th className="py-2 font-medium text-[var(--color-muted)]">Retry-After</th>
             </tr>
           </thead>
-          <tbody className="text-gray-500">
+          <tbody className="text-[var(--color-muted)]">
             <tr className="border-b border-white/[0.02]">
               <td className="py-2 pr-4">
                 <Badge color="gray">Free</Badge>
@@ -632,7 +632,7 @@ export default function ApiDocsPage() {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-sm leading-relaxed text-gray-400">
+      <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
         When exceeded, the API returns a 429 response with a Retry-After header. The response body
         includes the tier, limit, and remaining retry time.
       </p>
@@ -648,7 +648,7 @@ export default function ApiDocsPage() {
       <div className="my-8 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4">
         <div className="flex gap-3">
           <span className="mt-0.5 flex-shrink-0 text-sm">⚠</span>
-          <div className="min-w-0 text-sm text-gray-300">
+          <div className="min-w-0 text-sm text-[var(--color-muted)]">
             <strong>Legacy API deprecation:</strong> The{' '}
             <code className="rounded bg-[var(--color-muted)] px-1 font-mono text-xs text-degen-400">
               /api/*
@@ -665,7 +665,7 @@ export default function ApiDocsPage() {
 
       {/* Endpoints */}
       <H2 id="endpoints">Endpoints</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Base URL:{' '}
         <code className="rounded-md bg-[var(--color-muted)] px-1.5 py-0.5 font-mono text-xs text-degen-400">
           https://degenfeed.xyz/v1/
@@ -702,16 +702,16 @@ export default function ApiDocsPage() {
                 </div>
                 {ep.queryParams && ep.queryParams.length > 0 && (
                   <div className="mb-3">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                       Query Parameters
                     </span>
                     <div className="mt-1 space-y-1">
                       {ep.queryParams.map((p) => (
                         <div key={p.name} className="flex items-baseline gap-3 text-xs">
                           <code className="font-mono text-degen-400">{p.name}</code>
-                          <span className="text-gray-500">{p.type}</span>
+                          <span className="text-[var(--color-muted)]">{p.type}</span>
                           {p.required && <span className="text-red-400">required</span>}
-                          <span className="text-gray-500">{p.desc}</span>
+                          <span className="text-[var(--color-muted)]">{p.desc}</span>
                         </div>
                       ))}
                     </div>
@@ -720,20 +720,20 @@ export default function ApiDocsPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   {ep.exampleReq && (
                     <div>
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                         Request
                       </span>
-                      <pre className="mt-1 overflow-x-auto rounded bg-black/30 p-3 font-mono text-[11px] text-gray-300">
+                      <pre className="mt-1 overflow-x-auto rounded bg-black/30 p-3 font-mono text-[11px] text-[var(--color-muted)]">
                         {ep.exampleReq}
                       </pre>
                     </div>
                   )}
                   {ep.exampleRes && (
                     <div>
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                         Response
                       </span>
-                      <pre className="mt-1 overflow-x-auto rounded bg-black/30 p-3 font-mono text-[11px] text-gray-300">
+                      <pre className="mt-1 overflow-x-auto rounded bg-black/30 p-3 font-mono text-[11px] text-[var(--color-muted)]">
                         {ep.exampleRes}
                       </pre>
                     </div>
@@ -847,14 +847,14 @@ def search_identity(handle: str):
 
       {/* Migration guide */}
       <H2 id="migration">Migration from v0 (legacy /api/)</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         The legacy{' '}
         <code className="rounded-md bg-[var(--color-muted)] px-1.5 py-0.5 font-mono text-xs text-degen-400">
           /api/*
         </code>{' '}
         routes are deprecated. To migrate:
       </p>
-      <ol className="mt-3 space-y-2 text-sm text-gray-400 list-decimal list-inside">
+      <ol className="mt-3 space-y-2 text-sm text-[var(--color-muted)] list-decimal list-inside">
         <li>
           Replace{' '}
           <code className="rounded bg-[var(--color-muted)] px-1 font-mono text-xs">/api/</code> with{' '}

@@ -194,7 +194,7 @@ export default function AchievementsPage() {
                   </span>
                 )}
                 {!achievement.unlocked && (
-                  <span className="text-[10px] text-gray-500">🔒 Locked</span>
+                  <span className="text-[10px] text-[var(--color-muted)]">🔒 Locked</span>
                 )}
               </div>
             </div>

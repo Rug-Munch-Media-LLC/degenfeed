@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <div className="mx-auto max-w-lg px-4 py-20 text-center">
           <div className="mb-6 text-5xl text-red-400">!</div>
           <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Something went wrong</h2>
-          <p className="mb-4 text-sm text-gray-400">
+          <p className="mb-4 text-sm text-[var(--color-muted)]">
             {this.state.error.message || 'An unexpected error occurred'}
           </p>
           <button type="button" className="btn-primary text-sm" onClick={this.handleRetry}>

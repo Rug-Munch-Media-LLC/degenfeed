@@ -107,9 +107,16 @@ export async function resolveHandle(
     }
   }
 
-  // Bluesky handle (domain-like)
-  if (handle.includes('.') && !handle.startsWith('@')) {
+  // Bluesky handle (domain-like, but not a fediverse handle)
+  if (handle.includes('.') && !handle.startsWith('@') && !handle.includes('@')) {
     return resolveBlueskyHandle(handle, fetchFn);
+  }
+
+  // Fediverse: Mastodon / Threads / any ActivityPub instance via WebFinger
+  // Handles `user@instance.com` that didn't resolve as NIP-05 (non-Nostr)
+  if (handle.includes('@') && !handle.startsWith('@')) {
+    const fediverse = await resolveFediverseHandle(handle, fetchFn);
+    if (fediverse) return fediverse;
   }
 
   // Lens handle (no @, just name)
@@ -187,11 +194,20 @@ async function resolveLensHandle(
 }
 
 async function _resolveThreadsHandle(
-  _handle: string,
-  _fetchFn: typeof fetch,
+  handle: string,
+  fetchFn: typeof fetch,
 ): Promise<HandleResolution | null> {
-  // TODO: Threads resolution not yet wired in resolveHandle dispatcher.
-  return null;
+  // Threads uses ActivityPub WebFinger (same as Mastodon)
+  // Handles look like: user@threads.net
+  // Bridgy Fed enables Threads ActivityPub discovery
+  const atIndex = handle.indexOf('@');
+  if (atIndex <= 0 || atIndex === handle.length - 1) return null;
+
+  const domain = handle.slice(atIndex + 1);
+  // Only resolve for threads.net domains
+  if (domain !== 'threads.net' && !domain.endsWith('.threads.net')) return null;
+
+  return resolveFediverseHandle(handle, fetchFn);
 }
 
 async function resolveBlueskyHandle(
@@ -234,7 +250,9 @@ export async function resolveFediverseHandle(
     if (!json.links) return null;
     const selfLink = json.links.find((l) => l.rel === 'self');
     if (!selfLink) return null;
-    return { protocol: 'mastodon', id: selfLink.href, handle };
+    // Detect Threads vs Mastodon by domain
+    const isThreads = domain === 'threads.net' || domain.endsWith('.threads.net');
+    return { protocol: isThreads ? 'threads' : 'mastodon', id: selfLink.href, handle };
   } catch {
     return null;
   }

@@ -203,11 +203,11 @@ function EndpointRow({
         <MethodBadge method={ep.method} />
       </span>
       <code className="mt-0.5 flex-shrink-0 font-mono text-xs text-degen-400">{ep.path}</code>
-      <span className="min-w-0 flex-1 text-xs text-gray-500">{ep.desc}</span>
+      <span className="min-w-0 flex-1 text-xs text-[var(--color-muted)]">{ep.desc}</span>
       {ep.tryIt && (
         <Link
           href={ep.tryIt}
-          className="flex-shrink-0 rounded border border-white/10 px-2 py-0.5 text-[11px] text-gray-400 opacity-0 transition-all hover:border-degen-500/30 hover:text-degen-400 group-hover:opacity-100"
+          className="flex-shrink-0 rounded border border-white/10 px-2 py-0.5 text-[11px] text-[var(--color-muted)] opacity-0 transition-all hover:border-degen-500/30 hover:text-degen-400 group-hover:opacity-100"
         >
           Try →
         </Link>
@@ -224,7 +224,7 @@ export default function ApiPage() {
         <Badge color="blue">REST</Badge>
       </div>
       <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">API Reference</h1>
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400">
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
         All endpoints are served from{' '}
         <code className="rounded-md bg-[var(--color-muted)]/30 px-1.5 py-0.5 font-mono text-xs text-degen-400">
           degenfeed.xyz/api/*
@@ -235,21 +235,21 @@ export default function ApiPage() {
 
       {/* Authentication */}
       <H2 id="authentication">Authentication</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         DegenFeed uses two authentication methods depending on the endpoint:
       </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
           <h3 className="text-sm font-semibold text-[var(--color-fg)]">Public (no auth)</h3>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
             All <span className="font-mono text-degen-400">GET</span> feed and search endpoints are
             publicly accessible. Rate-limited by IP.
           </p>
         </div>
         <div className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
           <h3 className="text-sm font-semibold text-[var(--color-fg)]">Session (cookie)</h3>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
             All <span className="font-mono text-degen-400">POST</span> endpoints require a valid
             session cookie obtained via wallet authentication.
           </p>
@@ -257,12 +257,12 @@ export default function ApiPage() {
       </div>
 
       <H3 id="wallet-auth">Wallet Authentication</H3>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         DegenFeed uses Sign-In with Ethereum (EIP-4361) and Solana wallet authentication. The flow
         is a standard challenge-response:
       </p>
 
-      <ol className="mt-3 list-inside list-decimal space-y-2 text-sm text-gray-400">
+      <ol className="mt-3 list-inside list-decimal space-y-2 text-sm text-[var(--color-muted)]">
         <li>
           Request a nonce from{' '}
           <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs text-degen-400">
@@ -355,7 +355,7 @@ curl -X POST https://degenfeed.xyz/api/auth/wallet/verify \\
 
       {/* Rate Limits */}
       <H2 id="rate-limits">Rate Limits</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Rate limiting is enforced per IP address. The rate limiter uses Cloudflare KV for global
         consistency and fails open during KV outages.
       </p>
@@ -372,7 +372,7 @@ curl -X POST https://degenfeed.xyz/api/auth/wallet/verify \\
           >
             <div className="text-xs font-semibold text-[var(--color-fg)]">{r.level}</div>
             <div className="mt-1 font-mono text-lg font-bold text-degen-400">{r.limit}</div>
-            <p className="mt-1 text-[11px] text-gray-500">{r.note}</p>
+            <p className="mt-1 text-[11px] text-[var(--color-muted)]">{r.note}</p>
           </div>
         ))}
       </div>
@@ -392,7 +392,7 @@ curl -X POST https://degenfeed.xyz/api/auth/wallet/verify \\
 
       {/* Feed Endpoints */}
       <H2 id="feed-endpoints">Feed Endpoints</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Feed endpoints return paginated arrays of unified post objects. All support cursor-based
         pagination via the{' '}
         <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">cursor</code>{' '}
@@ -469,12 +469,12 @@ data = response.json()
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--color-glass-border)]">
-              <th className="py-2 pr-4 font-medium text-gray-400">Parameter</th>
-              <th className="py-2 pr-4 font-medium text-gray-400">Default</th>
-              <th className="py-2 font-medium text-gray-400">Description</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Parameter</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Default</th>
+              <th className="py-2 font-medium text-[var(--color-muted)]">Description</th>
             </tr>
           </thead>
-          <tbody className="text-gray-500">
+          <tbody className="text-[var(--color-muted)]">
             {[
               [
                 'protocols',
@@ -568,7 +568,7 @@ curl "https://degenfeed.xyz/api/search/identity?q=vitalik"`}</CodeBlock>
 
       {/* Error Codes */}
       <H2 id="error-codes">Error Codes</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         All errors return a consistent JSON structure with an appropriate HTTP status code.
       </p>
 

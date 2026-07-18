@@ -211,7 +211,7 @@ function SectionHeader({
       {icon}
       <h2 className="text-sm font-bold text-[var(--color-fg)] tracking-tight">{title}</h2>
       {count !== undefined && count > 0 && (
-        <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+        <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--color-muted)]">
           {count}
         </span>
       )}
@@ -271,7 +271,7 @@ function LiveSpaceCard({
       {/* Waveform + listeners + tip */}
       <div className="mb-3 flex items-center gap-2">
         <Waveform className="h-4" />
-        <span className="text-[11px] font-medium text-gray-500">{space.listeners} listening</span>
+        <span className="text-[11px] font-medium text-[var(--color-muted)]">{space.listeners} listening</span>
         {space.tippingEnabled && (
           <span className="ml-auto">
             <QuickTipButton
@@ -306,7 +306,7 @@ function LiveSpaceCard({
           <button
             type="button"
             onClick={() => onTip(space)}
-            className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2 text-xs font-medium text-gray-400 transition-all hover:border-degen-500/30 hover:text-degen-400"
+            className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2 text-xs font-medium text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-degen-400"
           >
             Tip ⚡
           </button>
@@ -345,7 +345,7 @@ function UpcomingSpaceCard({
         <AvatarImg src={space.hostAvatarUrl} name={space.hostName} className="h-10 w-10 shrink-0" />
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-bold text-[var(--color-fg)]">{space.title}</h3>
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="mt-0.5 text-xs text-[var(--color-muted)]">
             by <span className="font-medium text-[var(--color-fg)]">{space.hostName}</span>
           </p>
         </div>
@@ -401,7 +401,7 @@ function UpcomingSpaceCard({
         <button
           type="button"
           onClick={() => onTip(space)}
-          className="mb-2 w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2 text-xs font-medium text-gray-400 transition-all hover:border-degen-500/30 hover:text-degen-400"
+          className="mb-2 w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2 text-xs font-medium text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-degen-400"
         >
           Tip ⚡
         </button>
@@ -470,7 +470,7 @@ function PastSpaceCard({ space }: { space: SpaceItem }) {
         />
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-bold text-[var(--color-fg)]">{space.title}</h3>
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="mt-0.5 text-xs text-[var(--color-muted)]">
             {space.hostName} · {space.endedAt ? timeAgo(space.endedAt) : timeAgo(space.createdAt)}
           </p>
         </div>
@@ -497,7 +497,7 @@ function PastSpaceCard({ space }: { space: SpaceItem }) {
           Listen to Recording
         </a>
       ) : (
-        <div className="mt-auto w-full rounded-xl border border-dashed border-[var(--color-glass-border)] bg-[var(--color-muted)]/5 px-4 py-2.5 text-center text-xs text-gray-500">
+        <div className="mt-auto w-full rounded-xl border border-dashed border-[var(--color-glass-border)] bg-[var(--color-muted)]/5 px-4 py-2.5 text-center text-xs text-[var(--color-muted)]">
           No recording
         </div>
       )}
@@ -524,7 +524,7 @@ function EmptyState({
         {icon}
       </span>
       <p className="text-sm font-semibold text-[var(--color-fg)]">{title}</p>
-      <p className="mt-1 max-w-xs text-center text-xs text-gray-500">{subtitle}</p>
+      <p className="mt-1 max-w-xs text-center text-xs text-[var(--color-muted)]">{subtitle}</p>
       {action && (
         <button
           type="button"
@@ -702,7 +702,7 @@ export default function SpacesPage() {
               <h1 className="text-lg font-bold tracking-tight text-[var(--color-fg)]">
                 Audio Spaces
               </h1>
-              <p className="mt-0.5 text-xs text-gray-500">
+              <p className="mt-0.5 text-xs text-[var(--color-muted)]">
                 Live audio rooms across the open social graph
               </p>
             </div>
@@ -785,7 +785,7 @@ export default function SpacesPage() {
                 </h2>
                 {liveSpaces.length > 0 && (
                   <>
-                    <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                    <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--color-muted)]">
                       {liveSpaces.length}
                     </span>
                     <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-degen-500">
@@ -870,7 +870,7 @@ export default function SpacesPage() {
                     stroke="currentColor"
                     strokeWidth="1.5"
                     aria-hidden="true"
-                    className="text-gray-500"
+                    className="text-[var(--color-muted)]"
                   >
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />

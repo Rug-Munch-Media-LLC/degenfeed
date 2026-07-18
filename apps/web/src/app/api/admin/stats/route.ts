@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getStats, getPendingSources, getNewThisWeekSources, shouldRunDiscovery } from '../../../lib/source-engine';
+import { getStats, getPendingSources, getNewThisWeekSources, shouldRunDiscovery } from '@/lib/source-engine';
 
 export const runtime = 'nodejs';
 

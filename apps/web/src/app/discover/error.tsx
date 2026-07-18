@@ -19,7 +19,7 @@ export default function DiscoverError({
           !
         </div>
         <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Discover failed to load</h2>
-        <p className="mb-4 text-sm text-gray-400">
+        <p className="mb-4 text-sm text-[var(--color-muted)]">
           Could not load discovery data. Please try again.
         </p>
         <button type="button" onClick={reset} className="btn-primary text-sm">

@@ -18,7 +18,7 @@ export default function TipsActivityPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-[var(--color-fg)]">Tip Activity</h1>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
               Live feed of tips across DegenFeed, Lemmy, and PeerTube
             </p>
           </div>
@@ -39,7 +39,7 @@ export default function TipsActivityPage() {
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 l.active
                   ? 'bg-degen-500/20 text-degen-400'
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-[var(--color-muted)]'
+                  : 'text-[var(--color-muted)] hover:text-[var(--color-muted)] hover:bg-[var(--color-muted)]'
               }`}
             >
               {l.label}

@@ -129,7 +129,7 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
         <div className="flex-1 min-w-0">
           <span className="text-sm font-semibold text-gray-200">Lens Protocol</span>
           {handle && (
-            <span className="ml-1.5 text-xs text-gray-500">@{handle.replace(/\.lens$/, '')}</span>
+            <span className="ml-1.5 text-xs text-[var(--color-muted)]">@{handle.replace(/\.lens$/, '')}</span>
           )}
         </div>
 
@@ -184,8 +184,8 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
               strokeLinecap="round"
             />
           </svg>
-          <span className="text-xs tabular-nums text-gray-400">
-            <span className="font-semibold text-gray-300">{formatCount(mirrors)}</span> mirrors
+          <span className="text-xs tabular-nums text-[var(--color-muted)]">
+            <span className="font-semibold text-[var(--color-muted)]">{formatCount(mirrors)}</span> mirrors
           </span>
         </div>
 
@@ -216,8 +216,8 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
                 strokeLinecap="round"
               />
             </svg>
-            <span className="text-xs tabular-nums text-gray-400">
-              <span className="font-semibold text-gray-300">{formatCount(collects)}</span> collects
+            <span className="text-xs tabular-nums text-[var(--color-muted)]">
+              <span className="font-semibold text-[var(--color-muted)]">{formatCount(collects)}</span> collects
             </span>
           </div>
         )}
@@ -245,8 +245,8 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
                 strokeLinecap="round"
               />
             </svg>
-            <span className="text-xs tabular-nums text-gray-400">
-              <span className="font-semibold text-gray-300">
+            <span className="text-xs tabular-nums text-[var(--color-muted)]">
+              <span className="font-semibold text-[var(--color-muted)]">
                 {formatCount(post.metrics.quotes)}
               </span>{' '}
               quotes
@@ -261,8 +261,8 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
           <div className="flex flex-wrap gap-2 text-xs text-gray-600">
             {publicationId && (
               <span className="truncate max-w-full">
-                <span className="text-gray-500">ID:</span>{' '}
-                <code className="font-mono text-gray-400">{publicationId}</code>
+                <span className="text-[var(--color-muted)]">ID:</span>{' '}
+                <code className="font-mono text-[var(--color-muted)]">{publicationId}</code>
               </span>
             )}
             {post.engagement.viewerLiked && (
@@ -312,7 +312,7 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
             href={profileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center gap-1 px-3 py-2 text-xs text-gray-500 transition-colors hover:bg-white/[0.03] hover:text-gray-400"
+            className="flex flex-1 items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--color-muted)] transition-colors hover:bg-white/[0.03] hover:text-[var(--color-muted)]"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
@@ -333,7 +333,7 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
             href={`https://hey.xyz/posts/${publicationId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center gap-1 px-3 py-2 text-xs text-gray-500 transition-colors hover:bg-white/[0.03] hover:text-gray-400"
+            className="flex flex-1 items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--color-muted)] transition-colors hover:bg-white/[0.03] hover:text-[var(--color-muted)]"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >

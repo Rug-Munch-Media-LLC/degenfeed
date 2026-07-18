@@ -213,7 +213,7 @@ export function HostSpaceModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-[var(--color-muted)]/10 hover:text-[var(--color-fg)]"
+            className="rounded-lg p-1.5 text-[var(--color-muted)] transition-colors hover:bg-[var(--color-muted)]/10 hover:text-[var(--color-fg)]"
             aria-label="Close"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -226,7 +226,7 @@ export function HostSpaceModal({
         <div className="flex-1 overflow-y-auto space-y-5 px-5 py-4">
           {/* Title / topic */}
           <div>
-            <label htmlFor="space-title" className="mb-1.5 block text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <label htmlFor="space-title" className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
               Space topic
             </label>
             <input
@@ -241,10 +241,10 @@ export function HostSpaceModal({
             />
             {/* Character count */}
             <div className="mt-1.5 flex items-center justify-between">
-              <p className="text-[10px] text-gray-500">What&apos;s this space about?</p>
+              <p className="text-[10px] text-[var(--color-muted)]">What&apos;s this space about?</p>
               <span
                 className={`text-[10px] font-mono transition-colors ${
-                  titleRemaining < 10 ? 'text-red-400' : 'text-gray-500'
+                  titleRemaining < 10 ? 'text-red-400' : 'text-[var(--color-muted)]'
                 }`}
               >
                 {titleRemaining}
@@ -254,7 +254,7 @@ export function HostSpaceModal({
 
           {/* Description */}
           <div>
-            <label htmlFor="space-desc" className="mb-1.5 block text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <label htmlFor="space-desc" className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
               Description <span className="font-normal text-gray-600">(optional)</span>
             </label>
             <textarea
@@ -266,12 +266,12 @@ export function HostSpaceModal({
               maxLength={MAX_DESC_LENGTH}
               className="w-full resize-none rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-3 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none transition-all focus:border-degen-500/50 focus:bg-[var(--color-card)]"
             />
-            <p className="mt-1 text-[10px] text-gray-500">{description.length}/{MAX_DESC_LENGTH}</p>
+            <p className="mt-1 text-[10px] text-[var(--color-muted)]">{description.length}/{MAX_DESC_LENGTH}</p>
           </div>
 
           {/* Broadcast protocols */}
           <div>
-            <p className="mb-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <p className="mb-2.5 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
               Broadcast to protocols <span className="font-normal text-gray-600">(requires sign-in)</span>
             </p>
             <div className="flex flex-wrap gap-2">
@@ -306,7 +306,7 @@ export function HostSpaceModal({
               })}
             </div>
             {selectedCount > 0 && (
-              <p className="mt-1.5 text-[10px] text-gray-500">
+              <p className="mt-1.5 text-[10px] text-[var(--color-muted)]">
                 Broadcast post will be sent to {selectedCount} protocol{selectedCount > 1 ? 's' : ''}
               </p>
             )}
@@ -315,7 +315,7 @@ export function HostSpaceModal({
           {/* Co-hosts */}
           {coHostOptions.length > 0 && (
             <div>
-              <p className="mb-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <p className="mb-2.5 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
                 Co-hosts <span className="font-normal text-gray-600">(optional)</span>
               </p>
               <div className="flex flex-wrap gap-2">
@@ -329,7 +329,7 @@ export function HostSpaceModal({
                       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
                         isSelected
                           ? 'border-degen-500/40 bg-degen-500/10 text-degen-400'
-                          : 'border-[var(--color-glass-border)] text-gray-400 hover:text-[var(--color-fg)]'
+                          : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                       }`}
                     >
                       {cohost.avatarUrl ? (
@@ -349,7 +349,7 @@ export function HostSpaceModal({
 
           {/* When */}
           <div>
-            <p className="mb-2.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">When</p>
+            <p className="mb-2.5 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">When</p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -357,7 +357,7 @@ export function HostSpaceModal({
                 className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all ${
                   mode === 'now'
                     ? 'border-degen-500/40 bg-degen-500/10 text-degen-400 shadow-[0_0_12px_rgba(0,255,65,0.08)]'
-                    : 'border-[var(--color-glass-border)] text-gray-400 hover:text-[var(--color-fg)]'
+                    : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -371,7 +371,7 @@ export function HostSpaceModal({
                 className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all ${
                   mode === 'schedule'
                     ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.08)]'
-                    : 'border-[var(--color-glass-border)] text-gray-400 hover:text-[var(--color-fg)]'
+                    : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -384,7 +384,7 @@ export function HostSpaceModal({
             </div>
             {mode === 'schedule' && (
               <div className="mt-3 animate-slide-up">
-                <label htmlFor="space-schedule" className="mb-1.5 block text-xs font-medium text-gray-500">
+                <label htmlFor="space-schedule" className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
                   Pick date & time
                 </label>
                 <input
@@ -395,7 +395,7 @@ export function HostSpaceModal({
                   onChange={(e) => setScheduledAt(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none transition-all focus:border-cyan-500/50"
                 />
-                <p className="mt-1.5 flex items-center gap-1 text-[10px] text-gray-500">
+                <p className="mt-1.5 flex items-center gap-1 text-[10px] text-[var(--color-muted)]">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
                   </svg>

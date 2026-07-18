@@ -12,22 +12,21 @@
  */
 
 import { Hono } from 'hono';
+import {
+  apiKeyMiddleware,
+  deleteApiKey,
+  generateApiKey,
+  storeApiKey,
+  VALID_SCOPES,
+} from './api-key';
 import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from './cors';
 import type { Env } from './index';
 import { jsonResponse, rateLimit } from './index';
 import { validateBodySize } from './sanitize';
-import { apiKeyMiddleware, generateApiKey, storeApiKey, deleteApiKey, VALID_SCOPES } from './api-key';
 
 // ─── Route handlers ──────────────────────────────────────────
 
-import {
-  handleAccountDelete, handleAccountExport
-} from './routes/account';
-import {
-  handleRegisterPlatform,
-  handleRegisterPlatformStatus,
-  handleBlueskyPoolStats,
-} from './routes/register-platform';
+import { handleAccountDelete, handleAccountExport } from './routes/account';
 import { handleAnalytics } from './routes/analytics';
 import {
   handleGtSAuthorize,
@@ -48,6 +47,11 @@ import {
   handleBillingVerify,
 } from './routes/billing';
 import { handleBlinkTip } from './routes/blink';
+import {
+  handleBlueskyLeaderboard,
+  handleBlueskyTipCreate,
+  handleBlueskyTipStats,
+} from './routes/bluesky-tip';
 import { handleCommunities } from './routes/communities';
 import {
   handleCommunitiesList,
@@ -56,15 +60,15 @@ import {
   handleCommunityGet,
   handleCommunityJoin,
 } from './routes/community';
-import {
-  handleProposalCreate,
-  handleProposalVote,
-  handleProposalsList,
-  handleProposalResults,
-} from './routes/governance';
 import { handleContentResolve } from './routes/content';
 import { handleCrossReply } from './routes/cross-reply';
 import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
+import {
+  handleCuratedFeed,
+  handleEngagementFeedback,
+  handleMarkSeen,
+  handleScrollDepth,
+} from './routes/curated-feed';
 import {
   handleCustomFeedCreate,
   handleCustomFeedDelete,
@@ -75,11 +79,12 @@ import {
   handleCustomFeedUpdate,
 } from './routes/custom-feed';
 import {
-  handleCuratedFeed,
-  handleEngagementFeedback,
-  handleMarkSeen,
-  handleScrollDepth,
-} from './routes/curated-feed';
+  handleDigestStatus,
+  handleDigestSubscribeEmail,
+  handleDigestToday,
+  handleDigestUnsubscribeEmail,
+  handleDigestYesterday,
+} from './routes/digest';
 import {
   handleDiscover,
   handleDiscoverCommunities,
@@ -94,20 +99,12 @@ import { handleEngage } from './routes/engage';
 import { handleFarcasterFeed } from './routes/farcaster-feed';
 import { handleFeatures } from './routes/features';
 import {
-  handleAdjustTopic,
-  handleClearTopic,
-  handleFeedback,
-  handleForYouFeed,
-  handleGetTopics,
-  handleRecordDwell,
-} from './routes/for-you';
-import {
+  handleFeedCacheInvalidate,
   handleFeedHealth,
   handleHomeFeed,
   handleProviderFeed,
   handleRedditFeed,
   handleTrendingFeed,
-  handleFeedCacheInvalidate,
 } from './routes/feed';
 import {
   handleCategoryMixFeed,
@@ -116,10 +113,36 @@ import {
   handlePerProtocolCategoryFeed,
 } from './routes/feed-category';
 import { handleUnifiedFeed } from './routes/feed-unified';
+import {
+  handleAdjustTopic,
+  handleClearTopic,
+  handleFeedback,
+  handleForYouFeed,
+  handleGetTopics,
+  handleRecordDwell,
+} from './routes/for-you';
 import { handleFrameAction, handleFrameResolve } from './routes/frame';
 import { handleFundingFeed } from './routes/funding';
+import {
+  handleAchievementCheck,
+  handleAchievements,
+  handleActivityRecord,
+  handleChallengeProgress,
+  handleChallengesToday,
+  handleRecentActivity,
+  handleSocialProof,
+  handleStreakCheck,
+  handleStreakLeaderboard,
+  handleXp,
+  handleXpAward,
+} from './routes/gamification';
+import {
+  handleProposalCreate,
+  handleProposalResults,
+  handleProposalsList,
+  handleProposalVote,
+} from './routes/governance';
 import { handleProtocolsHealth, handleRelaysHealth } from './routes/health';
-import { handleProtocolSections } from './routes/protocol-sections';
 import {
   handleGetIdentityProfile,
   handleLinkIdentity,
@@ -141,6 +164,11 @@ import {
   handleLemmyTipStats,
 } from './routes/lemmy-tip';
 import { handleLinksPage } from './routes/links';
+import {
+  handleMastodonLeaderboard,
+  handleMastodonTipCreate,
+  handleMastodonTipStats,
+} from './routes/mastodon-tip';
 import {
   handleConversationMessages,
   handleConversations,
@@ -164,58 +192,33 @@ import {
   handleNewsletterStatus,
   handleNewsletterSubscribe,
 } from './routes/newsletter';
-import {
-  handleDigestToday,
-  handleDigestYesterday,
-  handleDigestSubscribeEmail,
-  handleDigestUnsubscribeEmail,
-  handleDigestStatus,
-} from './routes/digest';
-import {
-  handleStreakCheck,
-  handleStreakLeaderboard,
-  handleAchievements,
-  handleAchievementCheck,
-  handleChallengesToday,
-  handleChallengeProgress,
-  handleXp,
-  handleXpAward,
-  handleSocialProof,
-  handleActivityRecord,
-  handleRecentActivity,
-} from './routes/gamification';
-import { handleNotifications, handleMarkAllRead } from './routes/notifications';
+import { handleMarkAllRead, handleNotifications } from './routes/notifications';
 import { handleNotify } from './routes/notify';
 import { handlePostOg } from './routes/og';
 import {
+  handlePeerTubeLeaderboard,
   handlePeerTubeTipCreate,
   handlePeerTubeTipStats,
-  handlePeerTubeLeaderboard,
 } from './routes/peertube-tip';
 import {
-  handleBlueskyTipCreate,
-  handleBlueskyTipStats,
-  handleBlueskyLeaderboard,
-} from './routes/bluesky-tip';
-import {
-  handleMastodonTipCreate,
-  handleMastodonTipStats,
-  handleMastodonLeaderboard,
-} from './routes/mastodon-tip';
-import {
-  handleUnifiedTipActivity,
-  handleUnifiedTipCreate,
-  handleUnifiedTipLeaderboard,
-  handleUnifiedTipStats,
-} from './routes/unified-tip';
+  handlePermanenceAnchor,
+  handlePermanenceStore,
+  handlePermanenceVerify,
+} from './routes/permanence';
 import { handlePostById } from './routes/post';
 import { handlePreferences } from './routes/preferences';
 import { handleFeedPresets } from './routes/presets';
 import { handlePrices } from './routes/prices';
 import { handleIdentityProfile } from './routes/profile';
+import { handleProtocolSections } from './routes/protocol-sections';
 import { handleActivityPubFeed, handleThreadsFeed } from './routes/protocols';
 import { handlePublish } from './routes/publish';
 import { handlePushSend, handlePushSubscribe } from './routes/push';
+import {
+  handleBlueskyPoolStats,
+  handleRegisterPlatform,
+  handleRegisterPlatformStatus,
+} from './routes/register-platform';
 import { handleRelatedPosts } from './routes/related';
 import { handlePostReplies } from './routes/replies';
 import {
@@ -228,8 +231,9 @@ import {
 } from './routes/rmi';
 import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
-import { handleSchedulePost } from './routes/scheduled';
+import { handleListScheduledPosts, handleSchedulePost } from './routes/scheduled';
 import { handleSearch, handleSearchIdentity, handleSearchIndex } from './routes/search';
+import { handleShortsFeed } from './routes/shorts';
 import {
   handleSourcesApprove,
   handleSourcesDiscover,
@@ -237,15 +241,14 @@ import {
   handleSourcesReject,
 } from './routes/source-discovery';
 import {
-  handleSourcesHealth,
-  handleSourcesTrending,
-  handleSourcesStale,
-  handleSourcesNewThisWeek,
-  handleSourcesStats,
-  handleSourcesHealthCheck,
   handleRecordEngagement,
+  handleSourcesHealth,
+  handleSourcesHealthCheck,
+  handleSourcesNewThisWeek,
+  handleSourcesStale,
+  handleSourcesStats,
+  handleSourcesTrending,
 } from './routes/source-health';
-import { handleShortsFeed } from './routes/shorts';
 import { handleStreamFeed } from './routes/stream';
 import {
   handleSubscriptionCancel,
@@ -267,15 +270,16 @@ import {
   handleTipSettingsGet,
   handleTipSettingsPost,
 } from './routes/tip';
+import { handleTokenGateResolve, handleTokenGateVerify } from './routes/token-gate';
 import { handleTranslate } from './routes/translate';
+import {
+  handleUnifiedTipActivity,
+  handleUnifiedTipCreate,
+  handleUnifiedTipLeaderboard,
+  handleUnifiedTipStats,
+} from './routes/unified-tip';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleX402Paywall, handleX402Verify } from './routes/x402';
-import { handleTokenGateVerify, handleTokenGateResolve } from './routes/token-gate';
-import {
-  handlePermanenceAnchor,
-  handlePermanenceStore,
-  handlePermanenceVerify,
-} from './routes/permanence';
 
 // ─── App ────────────────────────────────────────────────────
 
@@ -480,9 +484,7 @@ app.all('/api/feed/engagement-feedback', async (c) => handleEngagementFeedback(c
 app.all('/api/feed/category/:category', async (c) =>
   handleCategorySlugFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx),
 );
-app.all('/api/feed/mix', async (c) =>
-  handleCategoryMixFeed(c.req.raw, c.env, c.executionCtx),
-);
+app.all('/api/feed/mix', async (c) => handleCategoryMixFeed(c.req.raw, c.env, c.executionCtx));
 app.all('/api/feed/everything', async (c) =>
   handleEverythingFeed(c.req.raw, c.env, c.executionCtx),
 );
@@ -543,13 +545,23 @@ app.all('/api/auth/wallet/verify', async (c) => handleWalletVerify(c.req.raw, c.
 // ─── API: Custom Feeds (session-gated) ──────────────────────
 // Static routes before parameterized routes
 
-app.post('/api/custom-feeds', async (c) => withSession(c, () => handleCustomFeedCreate(c.req.raw, c.env)));
+app.post('/api/custom-feeds', async (c) =>
+  withSession(c, () => handleCustomFeedCreate(c.req.raw, c.env)),
+);
 app.get('/api/custom-feeds', async (c) => handleCustomFeedList(c.req.raw, c.env));
 app.get('/api/custom-feeds/public', async (c) => handleCustomFeedPublic(c.req.raw, c.env));
-app.post('/api/custom-feeds/:id/subscribe', async (c) => withSession(c, () => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id'))));
-app.get('/api/custom-feeds/:id', async (c) => handleCustomFeedGet(c.req.raw, c.env, c.req.param('id')));
-app.put('/api/custom-feeds/:id', async (c) => withSession(c, () => handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id'))));
-app.delete('/api/custom-feeds/:id', async (c) => withSession(c, () => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id'))));
+app.post('/api/custom-feeds/:id/subscribe', async (c) =>
+  withSession(c, () => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id'))),
+);
+app.get('/api/custom-feeds/:id', async (c) =>
+  handleCustomFeedGet(c.req.raw, c.env, c.req.param('id')),
+);
+app.put('/api/custom-feeds/:id', async (c) =>
+  withSession(c, () => handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id'))),
+);
+app.delete('/api/custom-feeds/:id', async (c) =>
+  withSession(c, () => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id'))),
+);
 
 // ─── API: Bookmarks (session-gated) ─────────────────────────
 import {
@@ -558,11 +570,27 @@ import {
   handleBookmarkList,
   handleBookmarkRemove,
 } from './routes/bookmarks';
+import {
+  handleFollowAdd,
+  handleFollowCheck,
+  handleFollowingFeed,
+  handleFollowList,
+  handleFollowRemove,
+} from './routes/follow';
 
 app.get('/api/bookmarks', async (c) => handleBookmarkList(c.req.raw, c.env));
 app.post('/api/bookmarks', async (c) => withSession(c, () => handleBookmarkAdd(c.req.raw, c.env)));
-app.delete('/api/bookmarks', async (c) => withSession(c, () => handleBookmarkRemove(c.req.raw, c.env)));
+app.delete('/api/bookmarks', async (c) =>
+  withSession(c, () => handleBookmarkRemove(c.req.raw, c.env)),
+);
 app.get('/api/bookmarks/check', async (c) => handleBookmarkCheck(c.req.raw, c.env));
+
+// ─── API: Follow (protocol-native follow/unfollow) ─────────
+app.post('/api/follow', async (c) => withSession(c, () => handleFollowAdd(c.req.raw, c.env)));
+app.delete('/api/follow', async (c) => withSession(c, () => handleFollowRemove(c.req.raw, c.env)));
+app.get('/api/follow/list', async (c) => handleFollowList(c.req.raw, c.env));
+app.get('/api/follow/check', async (c) => handleFollowCheck(c.req.raw, c.env));
+app.get('/api/follow/feed', async (c) => handleFollowingFeed(c.req.raw, c.env));
 
 // ─── API: Account ────────────────────────────────────────────
 app.all('/api/account/export', async (c) => handleAccountExport(c.req.raw, c.env));
@@ -606,17 +634,23 @@ app.all('/api/lemmy/tip', async (c) =>
 );
 
 // ─── API: PeerTube Tips ──────────────────────────────────────
-app.post('/api/peertube/tip', async (c) => withSession(c, () => handlePeerTubeTipCreate(c.req.raw, c.env)));
+app.post('/api/peertube/tip', async (c) =>
+  withSession(c, () => handlePeerTubeTipCreate(c.req.raw, c.env)),
+);
 app.get('/api/peertube/tip/stats', async (c) => handlePeerTubeTipStats(c.req.raw, c.env));
 app.get('/api/peertube/tip/leaderboard', async (c) => handlePeerTubeLeaderboard(c.req.raw, c.env));
 
 // ─── API: Bluesky Tips ───────────────────────────────────────
-app.post('/api/bluesky/tip', async (c) => withSession(c, () => handleBlueskyTipCreate(c.req.raw, c.env)));
+app.post('/api/bluesky/tip', async (c) =>
+  withSession(c, () => handleBlueskyTipCreate(c.req.raw, c.env)),
+);
 app.get('/api/bluesky/tip/stats', async (c) => handleBlueskyTipStats(c.req.raw, c.env));
 app.get('/api/bluesky/tip/leaderboard', async (c) => handleBlueskyLeaderboard(c.req.raw, c.env));
 
 // ─── API: Mastodon Tips ──────────────────────────────────────
-app.post('/api/mastodon/tip', async (c) => withSession(c, () => handleMastodonTipCreate(c.req.raw, c.env)));
+app.post('/api/mastodon/tip', async (c) =>
+  withSession(c, () => handleMastodonTipCreate(c.req.raw, c.env)),
+);
 app.get('/api/mastodon/tip/stats', async (c) => handleMastodonTipStats(c.req.raw, c.env));
 app.get('/api/mastodon/tip/leaderboard', async (c) => handleMastodonLeaderboard(c.req.raw, c.env));
 
@@ -628,7 +662,9 @@ app.all('/api/notify', async (c) => handleNotify(c.req.raw, c.env));
 // ─── API: Messages (DM) ─────────────────────────────────────
 app.get('/api/messages/unread', async (c) => handleUnreadCount(c.req.raw, c.env));
 app.get('/api/messages/conversations', async (c) => handleConversations(c.req.raw, c.env));
-app.post('/api/messages/send', async (c) => withSession(c, () => handleSendMessage(c.req.raw, c.env)));
+app.post('/api/messages/send', async (c) =>
+  withSession(c, () => handleSendMessage(c.req.raw, c.env)),
+);
 app.all('/api/messages/:id', async (c) => {
   if (c.req.method === 'GET') {
     return handleConversationMessages(c.req.raw, c.env, c.req.param('id'));
@@ -650,8 +686,12 @@ app.get('/api/identity/profile', async (c) => {
   if (wallet) return handleGetIdentityProfile(c.req.raw, c.env);
   return handleIdentityProfile(c.req.raw, c.env);
 });
-app.post('/api/identity/link', async (c) => withSession(c, () => handleLinkIdentity(c.req.raw, c.env)));
-app.delete('/api/identity/link', async (c) => withSession(c, () => handleUnlinkIdentity(c.req.raw, c.env)));
+app.post('/api/identity/link', async (c) =>
+  withSession(c, () => handleLinkIdentity(c.req.raw, c.env)),
+);
+app.delete('/api/identity/link', async (c) =>
+  withSession(c, () => handleUnlinkIdentity(c.req.raw, c.env)),
+);
 
 // ─── API: Blink ─────────────────────────────────────────────
 app.all('/api/blink/tip', async (c) => handleBlinkTip(c.req.raw, c.env));
@@ -703,7 +743,9 @@ app.all('/api/subscription/:creator', async (c) =>
 // ─── API: Preferences ───────────────────────────────────────
 app.all('/api/preferences', async (c) => handlePreferences(c.req.raw, c.env));
 app.get('/api/preferences/topics', async (c) => handleGetTopics(c.req.raw, c.env));
-app.post('/api/preferences/topics', async (c) => withSession(c, () => handleAdjustTopic(c.req.raw, c.env)));
+app.post('/api/preferences/topics', async (c) =>
+  withSession(c, () => handleAdjustTopic(c.req.raw, c.env)),
+);
 app.post('/api/preferences/topics/clear', async (c) => handleClearTopic(c.req.raw, c.env));
 
 // ─── API: x402 ─────────────────────────────────────────────
@@ -715,21 +757,37 @@ app.post('/api/token-gate/verify', async (c) => handleTokenGateVerify(c.req.raw,
 app.post('/api/token-gate/resolve', async (c) => handleTokenGateResolve(c.req.raw, c.env));
 
 // ─── API: Cross-Platform Registration ──────────────────────
-app.all('/api/register-platform', async (c) => withSession(c, () => handleRegisterPlatform(c.req.raw, c.env)));
-app.get('/api/register-platform/status', async (c) => handleRegisterPlatformStatus(c.req.raw, c.env));
-app.get('/api/register-platform/bluesky-pool', async (c) => handleBlueskyPoolStats(c.req.raw, c.env));
+app.all('/api/register-platform', async (c) =>
+  withSession(c, () => handleRegisterPlatform(c.req.raw, c.env)),
+);
+app.get('/api/register-platform/status', async (c) =>
+  handleRegisterPlatformStatus(c.req.raw, c.env),
+);
+app.get('/api/register-platform/bluesky-pool', async (c) =>
+  handleBlueskyPoolStats(c.req.raw, c.env),
+);
 
 // ─── V1: Cross-Platform Registration ─────────────────────
-app.post('/v1/register-platform', async (c) => withSession(c, () => handleRegisterPlatform(c.req.raw, c.env)));
-app.get('/v1/register-platform/status', async (c) => handleRegisterPlatformStatus(c.req.raw, c.env));
-app.get('/v1/register-platform/bluesky-pool', async (c) => handleBlueskyPoolStats(c.req.raw, c.env));
+app.post('/v1/register-platform', async (c) =>
+  withSession(c, () => handleRegisterPlatform(c.req.raw, c.env)),
+);
+app.get('/v1/register-platform/status', async (c) =>
+  handleRegisterPlatformStatus(c.req.raw, c.env),
+);
+app.get('/v1/register-platform/bluesky-pool', async (c) =>
+  handleBlueskyPoolStats(c.req.raw, c.env),
+);
 
 // ─── API: Permanence (Arweave/IPFS) ───────────────────────
-app.post('/api/permanence/store', async (c) => withSession(c, () => handlePermanenceStore(c.req.raw, c.env)));
+app.post('/api/permanence/store', async (c) =>
+  withSession(c, () => handlePermanenceStore(c.req.raw, c.env)),
+);
 app.get('/api/permanence/verify/:hash', async (c) =>
   handlePermanenceVerify(c.req.raw, c.env, c.req.param('hash')),
 );
-app.post('/api/permanence/anchor', async (c) => withSession(c, () => handlePermanenceAnchor(c.req.raw, c.env)));
+app.post('/api/permanence/anchor', async (c) =>
+  withSession(c, () => handlePermanenceAnchor(c.req.raw, c.env)),
+);
 
 // ─── API: RMI ──────────────────────────────────────────────
 app.all('/api/rmi/news/headlines', async (c) => handleRmiHeadlines(c.req.raw, c.env));
@@ -750,7 +808,9 @@ app.get('/api/discover/featured', async (c) => handleDiscoverFeatured(c.req.raw,
 app.get('/api/discover/new', async (c) => handleDiscoverNew(c.req.raw, c.env));
 
 // ─── API: Push ─────────────────────────────────────────────
-app.all('/api/push/subscribe', async (c) => withSession(c, () => handlePushSubscribe(c.req.raw, c.env)));
+app.all('/api/push/subscribe', async (c) =>
+  withSession(c, () => handlePushSubscribe(c.req.raw, c.env)),
+);
 app.all('/api/push/send', async (c) => handlePushSend(c.req.raw, c.env));
 
 // ─── API: Newsletter ───────────────────────────────────────
@@ -763,16 +823,24 @@ app.all('/api/newsletter/digest/*', async (c) => handleNewsletterDigest(c.req.ra
 app.all('/api/digest/today', async (c) => handleDigestToday(c.req.raw, c.env));
 app.all('/api/digest/yesterday', async (c) => handleDigestYesterday(c.req.raw, c.env));
 app.all('/api/digest/subscribe-email', async (c) => handleDigestSubscribeEmail(c.req.raw, c.env));
-app.all('/api/digest/unsubscribe-email', async (c) => handleDigestUnsubscribeEmail(c.req.raw, c.env));
+app.all('/api/digest/unsubscribe-email', async (c) =>
+  handleDigestUnsubscribeEmail(c.req.raw, c.env),
+);
 app.all('/api/digest/status', async (c) => handleDigestStatus(c.req.raw, c.env));
 
 // ─── API: Gamification (Streaks / Achievements / XP / Social Proof) ──
 app.all('/api/gamification/streak', async (c) => handleStreakCheck(c.req.raw, c.env));
-app.all('/api/gamification/streak/leaderboard', async (c) => handleStreakLeaderboard(c.req.raw, c.env));
+app.all('/api/gamification/streak/leaderboard', async (c) =>
+  handleStreakLeaderboard(c.req.raw, c.env),
+);
 app.all('/api/gamification/achievements', async (c) => handleAchievements(c.req.raw, c.env));
-app.all('/api/gamification/achievements/check', async (c) => handleAchievementCheck(c.req.raw, c.env));
+app.all('/api/gamification/achievements/check', async (c) =>
+  handleAchievementCheck(c.req.raw, c.env),
+);
 app.all('/api/gamification/challenges/today', async (c) => handleChallengesToday(c.req.raw, c.env));
-app.all('/api/gamification/challenges/progress', async (c) => handleChallengeProgress(c.req.raw, c.env));
+app.all('/api/gamification/challenges/progress', async (c) =>
+  handleChallengeProgress(c.req.raw, c.env),
+);
 app.all('/api/gamification/xp', async (c) => handleXp(c.req.raw, c.env));
 app.all('/api/gamification/xp/award', async (c) => handleXpAward(c.req.raw, c.env));
 app.all('/api/gamification/social-proof', async (c) => handleSocialProof(c.req.raw, c.env));
@@ -843,7 +911,9 @@ app.get('/api/community/:name/proposals', async (c) =>
   handleProposalsList(c.req.raw, c.env, c.req.param('name')),
 );
 app.post('/api/community/:name/proposals/:id/vote', async (c) =>
-  withSession(c, () => handleProposalVote(c.req.raw, c.env, c.req.param('name'), c.req.param('id'))),
+  withSession(c, () =>
+    handleProposalVote(c.req.raw, c.env, c.req.param('name'), c.req.param('id')),
+  ),
 );
 app.get('/api/community/:name/proposals/:id/results', async (c) =>
   handleProposalResults(c.req.raw, c.env, c.req.param('name'), c.req.param('id')),
@@ -852,8 +922,12 @@ app.get('/api/community/:name/proposals/:id/results', async (c) =>
 // ─── API: Moderation ───────────────────────────────────────
 app.get('/api/moderation/reports', (c) => handleListReports(c.req.raw, c.env));
 app.post('/api/moderation/report', (c) => handleSubmitReport(c.req.raw, c.env));
-app.post('/api/moderation/reports/:id/resolve', async (c) => withSession(c, () => handleResolveReport(c.req.raw, c.env)));
-app.post('/api/moderation/reports/:id/remove', async (c) => withSession(c, () => handleRemovePost(c.req.raw, c.env)));
+app.post('/api/moderation/reports/:id/resolve', async (c) =>
+  withSession(c, () => handleResolveReport(c.req.raw, c.env)),
+);
+app.post('/api/moderation/reports/:id/remove', async (c) =>
+  withSession(c, () => handleRemovePost(c.req.raw, c.env)),
+);
 app.post('/api/moderation/ban', async (c) => withSession(c, () => handleBanUser(c.req.raw, c.env)));
 app.get('/api/moderation/stats', (c) => handleModerationStats(c.req.raw, c.env));
 app.get('/api/moderation/banned', (c) => handleCheckBanned(c.req.raw, c.env));
@@ -861,6 +935,7 @@ app.all('/api/moderation/sync', (c) => handleBlockSync(c.req.raw, c.env));
 
 // ─── API: Schedule ─────────────────────────────────────────
 app.all('/api/schedule', (c) => handleSchedulePost(c.req.raw, c.env));
+app.get('/api/scheduled', (c) => handleListScheduledPosts(c.req.raw, c.env));
 
 // ─── API: Audio Spaces ───────────────────────────────────────────
 import {
@@ -907,7 +982,9 @@ app.get('/api/reputation/leaderboard', async (c) => handleReputationLeaderboard(
 app.post('/api/reputation/earn', async (c) => handleReputationEarn(c.req.raw, c.env));
 app.post('/api/reputation/slash', async (c) => handleReputationSlash(c.req.raw, c.env));
 app.post('/api/reputation/stake', async (c) => handleReputationStake(c.req.raw, c.env));
-app.post('/api/reputation/stake/resolve', async (c) => handleReputationStakeResolve(c.req.raw, c.env));
+app.post('/api/reputation/stake/resolve', async (c) =>
+  handleReputationStakeResolve(c.req.raw, c.env),
+);
 // Parameterized routes (must be after static routes)
 app.get('/api/reputation/:userId/history', async (c) =>
   handleReputationHistory(c.req.raw, c.env, c.req.param('userId')),
@@ -959,12 +1036,8 @@ app.all('/v1/feed/engagement-feedback', async (c) => handleEngagementFeedback(c.
 app.all('/v1/feed/category/:category', async (c) =>
   handleCategorySlugFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx),
 );
-app.all('/v1/feed/mix', async (c) =>
-  handleCategoryMixFeed(c.req.raw, c.env, c.executionCtx),
-);
-app.all('/v1/feed/everything', async (c) =>
-  handleEverythingFeed(c.req.raw, c.env, c.executionCtx),
-);
+app.all('/v1/feed/mix', async (c) => handleCategoryMixFeed(c.req.raw, c.env, c.executionCtx));
+app.all('/v1/feed/everything', async (c) => handleEverythingFeed(c.req.raw, c.env, c.executionCtx));
 app.all('/v1/feed/per-protocol/:protocol/:category', async (c) =>
   handlePerProtocolCategoryFeed(
     c.req.raw,
@@ -991,8 +1064,12 @@ app.get('/v1/identity/profile', async (c) => {
   if (wallet) return handleGetIdentityProfile(c.req.raw, c.env);
   return handleIdentityProfile(c.req.raw, c.env);
 });
-app.post('/v1/identity/link', async (c) => withSession(c, () => handleLinkIdentity(c.req.raw, c.env)));
-app.delete('/v1/identity/link', async (c) => withSession(c, () => handleUnlinkIdentity(c.req.raw, c.env)));
+app.post('/v1/identity/link', async (c) =>
+  withSession(c, () => handleLinkIdentity(c.req.raw, c.env)),
+);
+app.delete('/v1/identity/link', async (c) =>
+  withSession(c, () => handleUnlinkIdentity(c.req.raw, c.env)),
+);
 
 // ─── V1: Tips ───────────────────────────────────────────
 app.all('/v1/tip/lightning/invoice', async (c) => handleLightningInvoice(c.req.raw, c.env));
@@ -1042,7 +1119,9 @@ app.get('/v1/community/:name/proposals', async (c) =>
   handleProposalsList(c.req.raw, c.env, c.req.param('name')),
 );
 app.post('/v1/community/:name/proposals/:id/vote', async (c) =>
-  withSession(c, () => handleProposalVote(c.req.raw, c.env, c.req.param('name'), c.req.param('id'))),
+  withSession(c, () =>
+    handleProposalVote(c.req.raw, c.env, c.req.param('name'), c.req.param('id')),
+  ),
 );
 app.get('/v1/community/:name/proposals/:id/results', async (c) =>
   handleProposalResults(c.req.raw, c.env, c.req.param('name'), c.req.param('id')),
@@ -1055,9 +1134,7 @@ app.all('/v1/content/*', async (c) => handleContentResolve(c.req.raw, c.env));
 app.get('/v1/leaderboard/creators', async (c) => handleLeaderboardCreators(c.req.raw, c.env));
 app.get('/v1/leaderboard/tippers', async (c) => handleLeaderboardTippers(c.req.raw, c.env));
 app.get('/v1/leaderboard/trending', async (c) => handleLeaderboardTrending(c.req.raw, c.env));
-app.get('/v1/leaderboard/communities', async (c) =>
-  handleLeaderboardCommunities(c.req.raw, c.env),
-);
+app.get('/v1/leaderboard/communities', async (c) => handleLeaderboardCommunities(c.req.raw, c.env));
 
 // ─── V1: Status — protocol health ───────────────────────
 app.all('/v1/status', async (_c) =>
@@ -1080,7 +1157,9 @@ app.all('/v1/frame/resolve', async (c) => handleFrameResolve(c.req.raw, c.env));
 app.all('/v1/frame/action', async (c) => handleFrameAction(c.req.raw, c.env));
 app.all('/v1/features', async (c) => handleFeatures(c.req.raw, c.env));
 app.all('/v1/notify', async (c) => handleNotify(c.req.raw, c.env));
-app.all('/v1/push/subscribe', async (c) => withSession(c, () => handlePushSubscribe(c.req.raw, c.env)));
+app.all('/v1/push/subscribe', async (c) =>
+  withSession(c, () => handlePushSubscribe(c.req.raw, c.env)),
+);
 
 // ─── V1: Newsletter ─────────────────────────────────────
 app.all('/v1/newsletter/subscribe', async (c) => handleNewsletterSubscribe(c.req.raw, c.env));
@@ -1091,7 +1170,9 @@ app.all('/v1/newsletter/digest', async (c) => handleNewsletterDigest(c.req.raw, 
 app.all('/v1/digest/today', async (c) => handleDigestToday(c.req.raw, c.env));
 app.all('/v1/digest/yesterday', async (c) => handleDigestYesterday(c.req.raw, c.env));
 app.all('/v1/digest/subscribe-email', async (c) => handleDigestSubscribeEmail(c.req.raw, c.env));
-app.all('/v1/digest/unsubscribe-email', async (c) => handleDigestUnsubscribeEmail(c.req.raw, c.env));
+app.all('/v1/digest/unsubscribe-email', async (c) =>
+  handleDigestUnsubscribeEmail(c.req.raw, c.env),
+);
 
 // ─── V1: API Key Management ────────────────────────────────
 
@@ -1123,14 +1204,17 @@ app.post('/v1/api-keys', async (c) => {
     label: body.label,
   });
 
-  return jsonResponse({
-    key: apiKey,
-    keyId: record.keyId,
-    scopes: record.scopes,
-    tier: record.tier,
-    createdAt: record.createdAt,
-    label: record.label,
-  }, 201);
+  return jsonResponse(
+    {
+      key: apiKey,
+      keyId: record.keyId,
+      scopes: record.scopes,
+      tier: record.tier,
+      createdAt: record.createdAt,
+      label: record.label,
+    },
+    201,
+  );
 });
 
 app.get('/v1/api-keys', async (c) => {
@@ -1188,17 +1272,36 @@ app.all('/v1/auth/wallet/verify', async (c) => handleWalletVerify(c.req.raw, c.e
 // ─── V1: Bookmarks ────────────────────────────────────────
 app.get('/v1/bookmarks', async (c) => handleBookmarkList(c.req.raw, c.env));
 app.post('/v1/bookmarks', async (c) => withSession(c, () => handleBookmarkAdd(c.req.raw, c.env)));
-app.delete('/v1/bookmarks', async (c) => withSession(c, () => handleBookmarkRemove(c.req.raw, c.env)));
+app.delete('/v1/bookmarks', async (c) =>
+  withSession(c, () => handleBookmarkRemove(c.req.raw, c.env)),
+);
 app.get('/v1/bookmarks/check', async (c) => handleBookmarkCheck(c.req.raw, c.env));
 
+// ─── V1: Follow ───────────────────────────────────────────
+app.post('/v1/follow', async (c) => withSession(c, () => handleFollowAdd(c.req.raw, c.env)));
+app.delete('/v1/follow', async (c) => withSession(c, () => handleFollowRemove(c.req.raw, c.env)));
+app.get('/v1/follow/list', async (c) => handleFollowList(c.req.raw, c.env));
+app.get('/v1/follow/check', async (c) => handleFollowCheck(c.req.raw, c.env));
+app.get('/v1/follow/feed', async (c) => handleFollowingFeed(c.req.raw, c.env));
+
 // ─── V1: Custom Feeds ─────────────────────────────────────
-app.post('/v1/custom-feeds', async (c) => withSession(c, () => handleCustomFeedCreate(c.req.raw, c.env)));
+app.post('/v1/custom-feeds', async (c) =>
+  withSession(c, () => handleCustomFeedCreate(c.req.raw, c.env)),
+);
 app.get('/v1/custom-feeds', async (c) => handleCustomFeedList(c.req.raw, c.env));
 app.get('/v1/custom-feeds/public', async (c) => handleCustomFeedPublic(c.req.raw, c.env));
-app.post('/v1/custom-feeds/:id/subscribe', async (c) => withSession(c, () => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id'))));
-app.get('/v1/custom-feeds/:id', async (c) => handleCustomFeedGet(c.req.raw, c.env, c.req.param('id')));
-app.put('/v1/custom-feeds/:id', async (c) => withSession(c, () => handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id'))));
-app.delete('/v1/custom-feeds/:id', async (c) => withSession(c, () => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id'))));
+app.post('/v1/custom-feeds/:id/subscribe', async (c) =>
+  withSession(c, () => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id'))),
+);
+app.get('/v1/custom-feeds/:id', async (c) =>
+  handleCustomFeedGet(c.req.raw, c.env, c.req.param('id')),
+);
+app.put('/v1/custom-feeds/:id', async (c) =>
+  withSession(c, () => handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id'))),
+);
+app.delete('/v1/custom-feeds/:id', async (c) =>
+  withSession(c, () => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id'))),
+);
 
 // ─── V1: Subscription ─────────────────────────────────────
 app.all('/v1/subscription/create', async (c) =>
@@ -1239,28 +1342,34 @@ app.all('/v1/moderation/sync', (c) => handleBlockSync(c.req.raw, c.env));
 // ─── V1: Lemmy Tips ──────────────────────────────────────
 app.all('/v1/lemmy/tip/leaderboard', async (c) => handleLemmyTipLeaderboard(c.req.raw, c.env));
 app.all('/v1/lemmy/tip/stats', async (c) => handleLemmyTipStats(c.req.raw, c.env));
-app.all('/v1/lemmy/tip', async (c) =>
-  withSession(c, () => handleLemmyTipCreate(c.req.raw, c.env)),
-);
+app.all('/v1/lemmy/tip', async (c) => withSession(c, () => handleLemmyTipCreate(c.req.raw, c.env)));
 
 // ─── V1: PeerTube Tips ────────────────────────────────────
-app.post('/v1/peertube/tip', async (c) => withSession(c, () => handlePeerTubeTipCreate(c.req.raw, c.env)));
+app.post('/v1/peertube/tip', async (c) =>
+  withSession(c, () => handlePeerTubeTipCreate(c.req.raw, c.env)),
+);
 app.get('/v1/peertube/tip/stats', async (c) => handlePeerTubeTipStats(c.req.raw, c.env));
 app.get('/v1/peertube/tip/leaderboard', async (c) => handlePeerTubeLeaderboard(c.req.raw, c.env));
 
 // ─── V1: Permanence (Arweave/IPFS) ──────────────────────
-app.post('/v1/permanence/store', async (c) => withSession(c, () => handlePermanenceStore(c.req.raw, c.env)));
+app.post('/v1/permanence/store', async (c) =>
+  withSession(c, () => handlePermanenceStore(c.req.raw, c.env)),
+);
 app.get('/v1/permanence/verify/:hash', async (c) =>
   handlePermanenceVerify(c.req.raw, c.env, c.req.param('hash')),
 );
-app.post('/v1/permanence/anchor', async (c) => withSession(c, () => handlePermanenceAnchor(c.req.raw, c.env)));
+app.post('/v1/permanence/anchor', async (c) =>
+  withSession(c, () => handlePermanenceAnchor(c.req.raw, c.env)),
+);
 
 // ─── V1: Reputation ────────────────────────────────────────
 app.get('/v1/reputation/leaderboard', async (c) => handleReputationLeaderboard(c.req.raw, c.env));
 app.post('/v1/reputation/earn', async (c) => handleReputationEarn(c.req.raw, c.env));
 app.post('/v1/reputation/slash', async (c) => handleReputationSlash(c.req.raw, c.env));
 app.post('/v1/reputation/stake', async (c) => handleReputationStake(c.req.raw, c.env));
-app.post('/v1/reputation/stake/resolve', async (c) => handleReputationStakeResolve(c.req.raw, c.env));
+app.post('/v1/reputation/stake/resolve', async (c) =>
+  handleReputationStakeResolve(c.req.raw, c.env),
+);
 app.get('/v1/reputation/:userId/history', async (c) =>
   handleReputationHistory(c.req.raw, c.env, c.req.param('userId')),
 );
@@ -1304,7 +1413,9 @@ app.all('/v1/feed/atom.xml', async (c) => handleRssXml(c.req.raw, c.env));
 // ─── V1: Messages (DM) ────────────────────────────────────
 app.get('/v1/messages/unread', async (c) => handleUnreadCount(c.req.raw, c.env));
 app.get('/v1/messages/conversations', async (c) => handleConversations(c.req.raw, c.env));
-app.post('/v1/messages/send', async (c) => withSession(c, () => handleSendMessage(c.req.raw, c.env)));
+app.post('/v1/messages/send', async (c) =>
+  withSession(c, () => handleSendMessage(c.req.raw, c.env)),
+);
 app.all('/v1/messages/:id', async (c) => {
   if (c.req.method === 'GET') {
     return handleConversationMessages(c.req.raw, c.env, c.req.param('id'));

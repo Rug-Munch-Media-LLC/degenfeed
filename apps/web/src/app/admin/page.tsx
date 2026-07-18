@@ -177,7 +177,7 @@ export default function AdminDashboardPage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
-          <p className="mt-4 text-sm text-gray-500">Loading dashboard…</p>
+          <p className="mt-4 text-sm text-[var(--color-muted)]">Loading dashboard…</p>
         </div>
       </div>
     );
@@ -189,7 +189,7 @@ export default function AdminDashboardPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-fg)]">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
             System overview and key metrics across all protocols
           </p>
         </div>
@@ -197,7 +197,7 @@ export default function AdminDashboardPage() {
           type="button"
           onClick={handleRefresh}
           disabled={refreshing}
-          className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm text-gray-400 transition-colors hover:bg-[var(--color-muted)] disabled:opacity-40"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-muted)] transition-colors hover:bg-[var(--color-muted)] disabled:opacity-40"
         >
           <span className={`inline-block transition-transform ${refreshing ? 'animate-spin' : ''}`}>
             ↻
@@ -265,7 +265,7 @@ export default function AdminDashboardPage() {
                   <span className="text-sm font-medium text-[var(--color-fg)]">{p.name}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-xs text-gray-500">{formatCount(p.posts24h)} posts/24h</span>
+                  <span className="text-xs text-[var(--color-muted)]">{formatCount(p.posts24h)} posts/24h</span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${
                       p.status === 'online'
@@ -287,7 +287,7 @@ export default function AdminDashboardPage() {
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-[var(--color-fg)]">Recent Activity</h2>
-            <span className="text-[10px] text-gray-500">Live</span>
+            <span className="text-[10px] text-[var(--color-muted)]">Live</span>
           </div>
           <div className="space-y-3">
             {activity.slice(0, 8).map((entry) => (
@@ -321,7 +321,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-[var(--color-fg)]">{entry.message}</p>
-                  <p className="text-[10px] text-gray-500">{formatTime(entry.timestamp)}</p>
+                  <p className="text-[10px] text-[var(--color-muted)]">{formatTime(entry.timestamp)}</p>
                 </div>
               </div>
             ))}
@@ -384,7 +384,7 @@ function MetricCard({
 }) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
         {label}
       </p>
       <p
@@ -413,7 +413,7 @@ function Gauge({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-xs text-gray-500">{label}</span>
+        <span className="text-xs text-[var(--color-muted)]">{label}</span>
         <span className="text-xs font-medium text-[var(--color-fg)]">
           {value} {unit}
         </span>

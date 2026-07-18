@@ -292,7 +292,7 @@ export default function AdminPlatformsPage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
-          <p className="mt-4 text-sm text-gray-500">Loading platform data…</p>
+          <p className="mt-4 text-sm text-[var(--color-muted)]">Loading platform data…</p>
         </div>
       </div>
     );
@@ -316,7 +316,7 @@ export default function AdminPlatformsPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--color-fg)]">Platforms</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Protocol health, activity metrics, and connector configuration
         </p>
       </div>
@@ -331,7 +331,7 @@ export default function AdminPlatformsPage() {
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === tab
                 ? 'bg-degen-500/15 text-degen-400'
-                : 'text-gray-400 hover:bg-[var(--color-muted)]'
+                : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)]'
             }`}
           >
             {tab === 'status' ? '📊 Status' : '⚙️ Config'}
@@ -383,19 +383,19 @@ export default function AdminPlatformsPage() {
 
               <div className="mb-3 space-y-1.5 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Posts today</span>
+                  <span className="text-[var(--color-muted)]">Posts today</span>
                   <span className="font-medium text-[var(--color-fg)]">
                     {formatCount(platform.postsToday)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Active users</span>
+                  <span className="text-[var(--color-muted)]">Active users</span>
                   <span className="font-medium text-[var(--color-fg)]">
                     {formatCount(platform.activeUsers24h)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Error rate</span>
+                  <span className="text-[var(--color-muted)]">Error rate</span>
                   <span
                     className={`font-medium ${platform.errorRate > 3 ? 'text-red-400' : 'text-[var(--color-fg)]'}`}
                   >
@@ -403,7 +403,7 @@ export default function AdminPlatformsPage() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Latency</span>
+                  <span className="text-[var(--color-muted)]">Latency</span>
                   <span
                     className={`font-medium ${platform.avgLatency > 500 ? 'text-yellow-400' : 'text-[var(--color-fg)]'}`}
                   >
@@ -424,7 +424,7 @@ export default function AdminPlatformsPage() {
                   className="flex cursor-pointer items-center gap-2"
                   aria-label={`Toggle ${platform.name}`}
                 >
-                  <span className="text-[10px] text-gray-500">{platform.version}</span>
+                  <span className="text-[10px] text-[var(--color-muted)]">{platform.version}</span>
                   <button
                     type="button"
                     role="switch"
@@ -446,7 +446,7 @@ export default function AdminPlatformsPage() {
         <div>
           <div className="mb-6">
             <h2 className="text-sm font-semibold text-[var(--color-fg)]">Global Configuration</h2>
-            <p className="mt-0.5 text-xs text-gray-500">Platform-wide settings and feature flags</p>
+            <p className="mt-0.5 text-xs text-[var(--color-muted)]">Platform-wide settings and feature flags</p>
           </div>
           <div className="space-y-3">
             {(configs.general || []).map((setting) => (
@@ -456,7 +456,7 @@ export default function AdminPlatformsPage() {
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-[var(--color-fg)]">{setting.label}</p>
-                  <p className="text-xs text-gray-500">{setting.description}</p>
+                  <p className="text-xs text-[var(--color-muted)]">{setting.description}</p>
                 </div>
                 <div className="ml-4 shrink-0">
                   {setting.type === 'toggle' ? (
@@ -494,7 +494,7 @@ export default function AdminPlatformsPage() {
                       <button
                         type="button"
                         onClick={() => setEditingKey(null)}
-                        className="rounded-lg px-2.5 py-1.5 text-xs text-gray-400"
+                        className="rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-muted)]"
                       >
                         Cancel
                       </button>
@@ -506,7 +506,7 @@ export default function AdminPlatformsPage() {
                         setEditingKey(setting.key);
                         setEditValue(String(setting.value));
                       }}
-                      className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-gray-400 transition-colors hover:bg-[var(--color-muted)]"
+                      className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:bg-[var(--color-muted)]"
                     >
                       {String(setting.value)}
                     </button>

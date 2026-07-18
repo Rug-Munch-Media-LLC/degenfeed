@@ -75,13 +75,13 @@ export function TranslationPreview({
     <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-2.5">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <h3 className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
           Translation Preview
         </h3>
         <button
           type="button"
           onClick={() => setCompact((v) => !v)}
-          className="rounded px-2 py-0.5 text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+          className="rounded px-2 py-0.5 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
         >
           {isSideBySide ? 'Stacked view' : 'Side-by-side'}
         </button>
@@ -103,7 +103,7 @@ export function TranslationPreview({
             </span>
             <span className="text-[10px] text-gray-600">{translated.originalLength} chars</span>
           </div>
-          <p className="whitespace-pre-wrap break-words text-sm text-gray-300">{originalContent}</p>
+          <p className="whitespace-pre-wrap break-words text-sm text-[var(--color-muted)]">{originalContent}</p>
         </div>
 
         {/* ── Translated panel ── */}

@@ -259,7 +259,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://paragraph.xyz/@divine/feed',                     { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'opinion'], authority: 1 }),
   cfg('https://mirror.xyz/0x25B0/feed',                         { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
   cfg('https://mirror.xyz/0xc0FFee/feed',                       { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
-  cfg('https://mirror.xyz/feed',                                { tier: 3, weight: 0.8, category: 'newsletter', tags: ['web3', 'crypto', 'mirror'], authority: 2, isPaid: false, schedule: 'irregular' }),
+
   cfg('https://paragraph.xyz/feed',                             { tier: 5, weight: 0.6, category: 'newsletter', tags: ['crypto', 'web3', 'publishing'], authority: 1, isPaid: false, schedule: 'irregular' }),
 
   // ═══════════════════════════════════════════════════════════════════
@@ -302,9 +302,8 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://www.zdnet.com/news/rss.xml',                     { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'security'], authority: 1 }),
   cfg('https://spectrum.ieee.org/feeds/feed.rss',              { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'engineering', 'science'], authority: 1 }),
   cfg('https://www.quantamagazine.org/feed/',                   { tier: 4, weight: 0.7, category: 'science', tags: ['science', 'math', 'physics', 'research'], authority: 2 }),
-  cfg('https://www.wired.com/feed/category/ai/rss',             { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'tech', 'culture'], authority: 3 }),
   cfg('https://venturebeat.com/category/ai/feed/',              { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'ml', 'startup'], authority: 3 }),
-  cfg('https://www.theverge.com/ai-artificial-intelligence/rss/index.xml', { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'artificial-intelligence', 'tech'], authority: 3 }),
+  // theverge.com/ai-... removed — sub-category feed 404 (main feed works)
   cfg('https://techcrunch.com/category/artificial-intelligence/feed/', { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'startup', 'tech'], authority: 3 }),
   cfg('https://www.technologyreview.com/topic/artificial-intelligence/feed/', { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'ml', 'research'], authority: 3 }),
 
@@ -321,12 +320,12 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://cohere.com/blog/rss',                            { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'llm', 'nlp'], authority: 1 }),
   cfg('https://www.semianalysis.com/feed/',                     { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'semiconductor', 'analysis'], authority: 1 }),
   cfg('https://www.ben-evans.com/feed',                         { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'strategy', 'analysis'], authority: 1 }),
-  cfg('https://blog.samaltman.com/feed/',                       { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'ai', 'opinion'], authority: 1 }),
+
 
   // ═══════════════════════════════════════════════════════════════════
   // Tech / Startup Newsletters
   // ═══════════════════════════════════════════════════════════════════
-  cfg('https://www.readthegeneralist.com/feed',                 { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'business'], authority: 1 }),
+
   cfg('https://www.notboring.co/feed',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'business', 'crypto'], authority: 1 }),
   cfg('https://lennysnewsletter.com/feed',                      { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'product', 'growth'], authority: 1 }),
   cfg('https://every.to/feed',                                  { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'business', 'ideas'], authority: 1 }),
@@ -357,7 +356,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://github.blog/feed/',                              { tier: 4, weight: 0.7, category: 'tech', tags: ['dev', 'github', 'programming'], authority: 1 }),
   cfg('https://stackoverflow.blog/feed/',                       { tier: 5, weight: 0.6, category: 'tech', tags: ['programming', 'community'], authority: 1 }),
   cfg('https://blog.cloudflare.com/rss/',                       { tier: 4, weight: 0.7, category: 'tech', tags: ['security', 'infrastructure', 'networking'], authority: 1 }),
-  cfg('https://blog.pragmaticengineer.com/feed.xml',            { tier: 4, weight: 0.7, category: 'tech', tags: ['engineering', 'career', 'tech'], authority: 1 }),
+
   cfg('https://martinfowler.com/feed.atom',                     { tier: 5, weight: 0.6, category: 'tech', tags: ['architecture', 'programming'], authority: 1 }),
   cfg('https://engineering.fb.com/feed/',                       { tier: 5, weight: 0.6, category: 'tech', tags: ['engineering', 'meta', 'infra'], authority: 1 }),
   cfg('https://netflixtechblog.com/feed',                       { tier: 5, weight: 0.6, category: 'tech', tags: ['engineering', 'infra'], authority: 1 }),
@@ -412,10 +411,9 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   // ═══════════════════════════════════════════════════════════════════
   // PeerTube — Federated Video
   // ═══════════════════════════════════════════════════════════════════
-  cfg('https://tube.cryptoconomy.com/feeds/videos.xml',         { tier: 5, weight: 0.6, category: 'video', tags: ['crypto', 'video'], authority: 1 }),
   cfg('https://tilvids.com/feeds/videos.xml',                   { tier: 5, weight: 0.6, category: 'video', tags: ['tech', 'education'], authority: 1 }),
-  cfg('https://diode.zone/feeds/videos.xml?sort=-publishedAt',  { tier: 5, weight: 0.6, category: 'video', tags: ['tech', 'video'], authority: 1 }),
   cfg('https://video.ploud.fr/feeds/videos.xml?sort=-publishedAt', { tier: 5, weight: 0.6, category: 'video', tags: ['tech', 'video'], authority: 1 }),
+  // cryptoconomy.com & diode.zone PeerTube removed — timeout
 
   // ═══════════════════════════════════════════════════════════════════
   // NEWSLETTERS — Substack (weight: 1.0, tier: 1)
@@ -681,7 +679,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   // ═══════════════════════════════════════════════════════════════════
   // LAYER 2 / SCALING — Additional L2 sources (added 2026-07-18)
   // ═══════════════════════════════════════════════════════════════════
-  cfg('https://l2beat.com/feed/',                                { tier: 3, weight: 0.8, category: 'analysis', tags: ['layer2', 'ethereum', 'scaling', 'rollup'], authority: 2 }),
+  // l2beat.com/feed removed — 404 (site restructured)
   // cointelegraph.com/tags/layer-2/feed removed — tag RSS 404
 
   // ═══════════════════════════════════════════════════════════════════

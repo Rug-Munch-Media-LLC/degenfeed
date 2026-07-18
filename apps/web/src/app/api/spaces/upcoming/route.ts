@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
-// TODO: Wire to worker backend
-import { MOCK_UPCOMING_SPACES } from '../../_mock-data';
+import { NextRequest, NextResponse } from 'next/server';
+import { proxyGet } from '../../_proxy';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-  return NextResponse.json({ spaces: MOCK_UPCOMING_SPACES });
+export async function GET(request: NextRequest) {
+  try {
+    return await proxyGet('/api/spaces/upcoming', request);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return NextResponse.json({ error: message, status: 500 }, { status: 500 });
+  }
 }

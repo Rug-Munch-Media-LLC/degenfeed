@@ -305,8 +305,10 @@ function _validateOrigin(request: Request, path: string, env: Env): boolean {
  * Called by the CF Workers cron trigger.
  *
  * Schedules:
+ *   every-1-min  — scheduled post executor
  *   every-30-min — trending content scraper
  *   daily-14:00  — daily digest + trending refresh
+ *   sun-12:00    — weekly source discovery + health maintenance
  *
  * The controller.cron field tells us which cron matched.
  * Re-exported from app.ts for the wrangler entry point.
@@ -317,19 +319,27 @@ export async function scheduled(
 ): Promise<void> {
   const cron = controller.cron;
 
-  // Trending scraper runs on every cron tick (both 30-min and daily)
-  // The 30-min cron is purely for trending; daily cron also runs the digest.
+  // ── Every minute: scheduled post executor ──────────────────────────
+  if (cron === '* * * * *') {
+    const { executeScheduledPosts } = await import('./routes/scheduled-executor');
+    await executeScheduledPosts(env).catch((err) =>
+      console.warn('[scheduled] scheduled post executor failed:', err),
+    );
+    return; // No other work on the every-minute tick
+  }
+
+  // ── Trending scraper — 30-min and daily ticks ──────────────────────
   const { scrapeTrendingContent } = await import('./routes/trending-scraper');
   await scrapeTrendingContent(env).catch((err) =>
     console.warn('[scheduled] trending scrape failed:', err),
   );
 
-  // Full digest only on the daily 14:00 UTC trigger
+  // ── Daily digest — 14:00 UTC ──────────────────────────────────────
   if (cron === '0 14 * * *') {
     await handleCron(env);
   }
 
-  // Weekly source discovery + health maintenance on Sundays at 12:00 UTC
+  // ── Weekly source discovery + health maintenance — Sunday 12:00 UTC ──
   if (cron === '0 12 * * 0') {
     // Run discovery
     try {
@@ -343,10 +353,18 @@ export async function scheduled(
 
     // Initialize health tracking for newly discovered sources
     try {
-      const { initSourceHealth, runWeeklyHealthMaintenance } = await import('./routes/source-health');
+      const { initSourceHealth, runWeeklyHealthMaintenance } = await import(
+        './routes/source-health'
+      );
       const allSourcesRaw = await env.CACHE?.get('discovered:sources:all');
       if (allSourcesRaw) {
-        const allSources = JSON.parse(allSourcesRaw) as Array<{ id: string; platform: string; weeklyActivity: number; relevanceScore: number; score: number }>;
+        const allSources = JSON.parse(allSourcesRaw) as Array<{
+          id: string;
+          platform: string;
+          weeklyActivity: number;
+          relevanceScore: number;
+          score: number;
+        }>;
         for (const source of allSources) {
           await initSourceHealth(env, source as Parameters<typeof initSourceHealth>[1]);
         }
@@ -360,7 +378,9 @@ export async function scheduled(
     try {
       const { runWeeklyHealthMaintenance } = await import('./routes/source-health');
       const result = await runWeeklyHealthMaintenance(env);
-      console.log(`[scheduled] health maintenance: ${result.checked} checked, ${result.stale} stale, ${result.culled} culled`);
+      console.log(
+        `[scheduled] health maintenance: ${result.checked} checked, ${result.stale} stale, ${result.culled} culled`,
+      );
     } catch (err) {
       console.error('[scheduled] health maintenance failed:', err);
     }

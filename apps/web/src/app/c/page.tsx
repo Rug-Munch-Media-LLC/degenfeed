@@ -73,7 +73,7 @@ export default function CommunitiesPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-[var(--color-fg)]">Communities</h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
                 Cross-protocol communities spanning Lemmy, Nostr, Farcaster, Mastodon, Bluesky, and
                 Lens.
               </p>
@@ -123,7 +123,7 @@ export default function CommunitiesPage() {
         {!loading && filtered.length === 0 && (
           <div className="py-16 text-center">
             <div className="mb-4 text-4xl">🌐</div>
-            <p className="text-gray-400">
+            <p className="text-[var(--color-muted)]">
               {search ? 'No communities match your search.' : 'No communities yet.'}
             </p>
             {!search && (
@@ -167,7 +167,7 @@ export default function CommunitiesPage() {
                     <h3 className="font-semibold text-[var(--color-fg)] truncate">
                       {community.displayName}
                     </h3>
-                    <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">
+                    <p className="mt-0.5 text-xs text-[var(--color-muted)] line-clamp-2">
                       {community.description}
                     </p>
                   </div>
@@ -187,7 +187,7 @@ export default function CommunitiesPage() {
                 </div>
 
                 {/* Stats */}
-                <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
+                <div className="mt-3 flex items-center gap-4 text-xs text-[var(--color-muted)]">
                   <span>{community.memberCount.toLocaleString()} members</span>
                   <span>{community.postCount.toLocaleString()} posts</span>
                   <span className="ml-auto text-degen-400 opacity-0 transition-opacity group-hover:opacity-100">
@@ -269,7 +269,7 @@ function CreateCommunityModal({
         <h2 className="mb-4 text-lg font-bold text-[var(--color-fg)]">Create Community</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-400">Name *</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Name *</label>
             <input
               type="text"
               value={name}
@@ -284,7 +284,7 @@ function CreateCommunityModal({
             </p>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-400">Display Name</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Display Name</label>
             <input
               type="text"
               value={displayName}
@@ -294,7 +294,7 @@ function CreateCommunityModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-400">Description</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -308,7 +308,7 @@ function CreateCommunityModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm text-gray-400 transition-colors hover:text-[var(--color-fg)]"
+              className="rounded-lg px-4 py-2 text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
             >
               Cancel
             </button>

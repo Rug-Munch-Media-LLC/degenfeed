@@ -265,7 +265,7 @@ async function perProtocolPublishSingle(
   auth: Record<string, string>,
   env: Env,
   body?: PublishRequestBody,
-): Promise<{ success?: boolean; error?: string; hash?: string }> {
+): Promise<{ success?: boolean; error?: string; hash?: string; via?: string; note?: string }> {
   switch (target) {
     case 'nostr': {
       return {
@@ -371,30 +371,48 @@ async function perProtocolPublishSingle(
     }
 
     case 'threads': {
+      // Path 1: Meta Graph API (authenticated user with Meta OAuth)
       const accessToken = auth.threads_jwt || auth.threads_accessToken || auth.accessJwt;
-      if (!accessToken) {
-        return { error: 'Not signed into Threads' };
-      }
       const threadsUserId = auth.threads_userId || auth.threads_did || '';
-      if (!threadsUserId) {
-        return { error: 'Threads user ID missing — pass auth.threads_userId' };
+      if (accessToken && threadsUserId) {
+        const threadsRes = await fetch(
+          `https://graph.threads.net/v1.0/${threadsUserId}/threads?access_token=${accessToken}`,
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              text,
+              media_type: 'TEXT',
+            }),
+          },
+        );
+        if (threadsRes.ok) {
+          return { success: true, via: 'meta-api' };
+        }
+        const errText = await threadsRes.text();
+        return { error: `Threads publish (Meta API) failed: ${errText.slice(0, 100)}` };
       }
-      const threadsRes = await fetch(
-        `https://graph.threads.net/v1.0/${threadsUserId}/threads?access_token=${accessToken}`,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            text,
-            media_type: 'TEXT',
-          }),
-        },
-      );
-      if (threadsRes.ok) {
-        return { success: true };
+
+      // Path 2: ActivityPub bridge — publish to our GotoSocial instance
+      // with #threads tag. This gets federated to Threads via ActivityPub
+      // when our instance follows Threads accounts.
+      const mastodonToken = auth.mastodon;
+      if (mastodonToken) {
+        const { GtSClient } = await import('@degenfeed/mastodon-sdk');
+        const client = new GtSClient('https://social.degenfeed.xyz', mastodonToken);
+        const taggedText = `${text}\n\n#threads`;
+        await client.publish(taggedText, { visibility: 'public' });
+        return {
+          success: true,
+          via: 'activitypub-bridge',
+          note: 'Published to Mastodon with #threads tag — federates to Threads via ActivityPub',
+        };
       }
-      const errText = await threadsRes.text();
-      return { error: `Threads publish failed: ${errText.slice(0, 100)}` };
+
+      return {
+        error:
+          'Not signed into Threads. Use Meta OAuth (auth.threads_jwt + auth.threads_userId) or Mastodon token (auth.mastodon) for ActivityPub bridge.',
+      };
     }
 
     case 'mastodon': {

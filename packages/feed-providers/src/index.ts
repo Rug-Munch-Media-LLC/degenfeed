@@ -57,7 +57,13 @@ export {
 export {
   RedditAlternativesProvider,
 } from './providers/reddit-alternatives';
-export { CURATED_THREADS_HANDLES, ThreadsProvider } from './providers/threads';
+export {
+  CURATED_THREADS_HANDLES,
+  GTS_INSTANCE,
+  isAvailable,
+  isBridgyConfigured,
+  ThreadsProvider,
+} from './providers/threads';
 export type { FeedProvider, FeedResult, FetchOptions, HealthResult } from './types';
 export {
   buildUrl,

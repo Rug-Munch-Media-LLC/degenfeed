@@ -79,11 +79,11 @@ function LinkPreview({ embed, authorName }: { embed: Embed; authorName?: string 
         </div>
       )}
       <div className="p-3">
-        {host && <p className="mb-1 text-[11px] text-gray-500 uppercase tracking-wide">{host}</p>}
+        {host && <p className="mb-1 text-[11px] text-[var(--color-muted)] uppercase tracking-wide">{host}</p>}
         {title && (
           <p className="link-title mb-1 text-sm font-semibold text-[var(--color-fg)] line-clamp-1">{title}</p>
         )}
-        {description && <p className="link-desc text-xs text-gray-400 line-clamp-2">{description}</p>}
+        {description && <p className="link-desc text-xs text-[var(--color-muted)] line-clamp-2">{description}</p>}
         {!title && !description && (
           <p className="truncate text-xs text-degen-500">{embed.url.replace(/^https?:\/\//, '')}</p>
         )}

@@ -163,12 +163,12 @@ export default function MonetizationPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="card space-y-4">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-gray-500">
+          <h2 className="text-sm font-medium uppercase tracking-widest text-[var(--color-muted)]">
             Direct Crypto
           </h2>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-gray-400">
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">
               EVM Address (Ethereum, Base, Optimism, Arbitrum, Polygon)
             </span>
             <input
@@ -182,7 +182,7 @@ export default function MonetizationPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-gray-400">Solana Address</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">Solana Address</span>
             <input
               type="text"
               value={form.solanaAddress}
@@ -197,12 +197,12 @@ export default function MonetizationPage() {
         </div>
 
         <div className="card space-y-4">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-gray-500">
+          <h2 className="text-sm font-medium uppercase tracking-widest text-[var(--color-muted)]">
             Platform Tipping
           </h2>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-gray-400">Lightning Address / LNURL</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">Lightning Address / LNURL</span>
             <input
               type="text"
               value={form.lightningAddress}
@@ -216,7 +216,7 @@ export default function MonetizationPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-gray-400">Farcaster Custody Address</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">Farcaster Custody Address</span>
             <input
               type="text"
               value={form.farcasterCustodyAddress}
@@ -230,7 +230,7 @@ export default function MonetizationPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-gray-400">Lens Profile (id or handle)</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">Lens Profile (id or handle)</span>
             <input
               type="text"
               value={form.lensProfile}
@@ -241,7 +241,7 @@ export default function MonetizationPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-gray-400">Nostr Pubkey (for zaps)</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">Nostr Pubkey (for zaps)</span>
             <input
               type="text"
               value={form.nostrPubkey}
@@ -254,7 +254,7 @@ export default function MonetizationPage() {
 
         <div className="card space-y-4">
           <label className="block">
-            <span className="mb-1 block text-xs text-gray-400">Preferred Default Method</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">Preferred Default Method</span>
             <select
               value={form.preferredMethod}
               onChange={(e) => handleChange('preferredMethod', e.target.value)}

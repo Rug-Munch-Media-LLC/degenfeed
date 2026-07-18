@@ -74,7 +74,7 @@ export function FeedSidebar({
       <Link
         href="/search"
         prefetch={true}
-        className="flex items-center gap-2 rounded-full border border-white/10 bg-[var(--color-card)] px-4 py-2.5 text-sm text-gray-400 backdrop-blur-xl transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)]"
+        className="flex items-center gap-2 rounded-full border border-white/10 bg-[var(--color-card)] px-4 py-2.5 text-sm text-[var(--color-muted)] backdrop-blur-xl transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)]"
       >
         <span className="text-lg text-degen-400">⌕</span>
         <span>Search posts, topics, tokens…</span>
@@ -91,13 +91,13 @@ export function FeedSidebar({
               <p className="truncate text-sm font-medium text-[var(--color-fg)]">
                 {walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}
               </p>
-              <p className="text-xs text-gray-500">Wallet connected</p>
+              <p className="text-xs text-[var(--color-muted)]">Wallet connected</p>
             </div>
           </div>
           <button
             type="button"
             onClick={signOut}
-            className="mt-3 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-[var(--color-fg)]"
+            className="mt-3 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] transition-colors hover:bg-white/10 hover:text-[var(--color-fg)]"
           >
             Sign out
           </button>
@@ -110,7 +110,7 @@ export function FeedSidebar({
               Read free, post with one click
             </p>
           </div>
-          <p className="mb-3 text-xs text-gray-400">
+          <p className="mb-3 text-xs text-[var(--color-muted)]">
             No account needed to browse. Sign in with a wallet to post across all networks.
           </p>
           <button type="button" onClick={openSignIn} className="btn-primary w-full text-sm">
@@ -123,10 +123,10 @@ export function FeedSidebar({
       <div className="sidebar-card rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-sm font-bold text-[var(--color-fg)]">Live networks</h2>
-          <span className="text-[10px] text-gray-500">{totalPosts} posts</span>
+          <span className="text-[10px] text-[var(--color-muted)]">{totalPosts} posts</span>
         </div>
         {protocols.length === 0 ? (
-          <p className="text-xs text-gray-500">Warming up…</p>
+          <p className="text-xs text-[var(--color-muted)]">Warming up…</p>
         ) : (
           <ul className="space-y-1">
             {protocols.slice(0, 8).map((p) => {
@@ -148,12 +148,12 @@ export function FeedSidebar({
                     />
                     <span
                       className={`flex-1 text-sm ${
-                        active ? 'font-semibold text-[var(--color-fg)]' : 'text-gray-300'
+                        active ? 'font-semibold text-[var(--color-fg)]' : 'text-[var(--color-muted)]'
                       }`}
                     >
                       {p.label}
                     </span>
-                    <span className="text-xs tabular-nums text-gray-500">{p.count}</span>
+                    <span className="text-xs tabular-nums text-[var(--color-muted)]">{p.count}</span>
                   </button>
                 </li>
               );
@@ -183,7 +183,7 @@ export function FeedSidebar({
       {/* Who to follow */}
       <div className="rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
         <h2 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Who to follow</h2>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-[var(--color-muted)]">
           Follow creators across 8 protocols to build your timeline.
         </p>
         <Link
@@ -198,7 +198,7 @@ export function FeedSidebar({
       {/* Premium CTA */}
       <div className="rounded-2xl border border-degen-500/20 bg-degen-500/5 p-4 backdrop-blur-xl">
         <h2 className="mb-1 text-sm font-bold text-[var(--color-fg)]">DegenFeed Premium</h2>
-        <p className="mb-3 text-xs text-gray-400">
+        <p className="mb-3 text-xs text-[var(--color-muted)]">
           Cross-posting, algorithm controls, analytics, and creator tools.
         </p>
         <Link href="/premium" prefetch={false} className="btn-primary block text-center text-sm">
@@ -206,7 +206,7 @@ export function FeedSidebar({
         </Link>
       </div>
 
-      <p className="px-2 text-[10px] text-gray-700">
+      <p className="px-2 text-[10px] text-[var(--color-muted)]">
         © {new Date().getFullYear()} DegenFeed · No account required to browse
       </p>
     </div>

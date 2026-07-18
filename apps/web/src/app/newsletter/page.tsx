@@ -500,7 +500,7 @@ export default function NewsletterPage() {
         <h1 className="mb-2 text-4xl font-bold tracking-tight text-[var(--color-fg)]">
           DegenFeed Daily
         </h1>
-        <p className="mx-auto max-w-xl text-sm leading-relaxed text-gray-500">
+        <p className="mx-auto max-w-xl text-sm leading-relaxed text-[var(--color-muted)]">
           The best of web3, AI, and tech — aggregated from Nostr, Farcaster, Lens, Bluesky,
           Mastodon, 353 RSS sources, and 85+ curated newsletters across crypto, tech, AI,
           DeFi, and more. Ranked by quality, recency, and diversity. Delivered to your inbox
@@ -543,10 +543,10 @@ export default function NewsletterPage() {
               return (
                 <span
                   key={catId}
-                  className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-400"
+                  className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]"
                 >
                   {cat.icon} {cat.label}{' '}
-                  <span className="font-medium text-gray-300">{count}</span>
+                  <span className="font-medium text-[var(--color-muted)]">{count}</span>
                 </span>
               );
             })}
@@ -555,7 +555,7 @@ export default function NewsletterPage() {
 
         {/* Top Newsletters This Week */}
         <div className="mb-4">
-          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
             Top Newsletters This Week
           </h3>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -576,7 +576,7 @@ export default function NewsletterPage() {
                     <p className="truncate text-xs font-medium text-[var(--color-fg)]">
                       {nl.name}
                     </p>
-                    <p className="truncate text-[10px] text-gray-500">{nl.reason}</p>
+                    <p className="truncate text-[10px] text-[var(--color-muted)]">{nl.reason}</p>
                   </div>
                 </div>
               );
@@ -586,7 +586,7 @@ export default function NewsletterPage() {
 
         {/* Browse by Category */}
         <div>
-          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+          <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
             Browse by Category
           </h3>
           <div className="flex flex-wrap gap-1.5">
@@ -598,7 +598,7 @@ export default function NewsletterPage() {
                 className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-medium transition-all ${
                   activeTopic === cat.id
                     ? 'border-degen-500 bg-degen-500/20 text-degen-400'
-                    : 'card-hover text-gray-400'
+                    : 'card-hover text-[var(--color-muted)]'
                 }`}
               >
                 <span>{cat.icon}</span>
@@ -615,7 +615,7 @@ export default function NewsletterPage() {
         <div className="lg:col-span-3">
           <div className="card border-degen-500/10 bg-gradient-to-br from-gray-900/90 to-gray-950/90 p-6">
             <h2 className="mb-1 text-lg font-bold text-[var(--color-fg)]">Subscribe</h2>
-            <p className="mb-5 text-sm text-gray-500">
+            <p className="mb-5 text-sm text-[var(--color-muted)]">
               Pick your topics and protocols, then enter your email.
             </p>
 
@@ -624,7 +624,7 @@ export default function NewsletterPage() {
               <div className="mb-5">
                 <label
                   htmlFor="newsletter-topics"
-                  className="mb-2 block text-xs font-semibold uppercase tracking-widest text-gray-500"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]"
                 >
                   Topics
                 </label>
@@ -637,7 +637,7 @@ export default function NewsletterPage() {
                       className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
                         selectedNiches.includes(n.id)
                           ? 'border-degen-500 bg-degen-500/20 text-degen-400'
-                          : 'card-hover text-gray-400'
+                          : 'card-hover text-[var(--color-muted)]'
                       }`}
                     >
                       {n.label}
@@ -650,7 +650,7 @@ export default function NewsletterPage() {
               <div className="mb-5">
                 <label
                   htmlFor="newsletter-sources"
-                  className="mb-2 block text-xs font-semibold uppercase tracking-widest text-gray-500"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]"
                 >
                   Sources
                 </label>
@@ -663,7 +663,7 @@ export default function NewsletterPage() {
                       className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
                         selectedProtocols.includes(p.id)
                           ? 'border-degen-500 bg-degen-500/20 text-degen-400'
-                          : 'card-hover text-gray-400'
+                          : 'card-hover text-[var(--color-muted)]'
                       }`}
                     >
                       {p.label}
@@ -676,7 +676,7 @@ export default function NewsletterPage() {
               <div className="mb-4">
                 <label
                   htmlFor="newsletter-email"
-                  className="mb-1.5 block text-xs font-medium text-gray-400"
+                  className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
                 >
                   Email address
                 </label>
@@ -718,7 +718,7 @@ export default function NewsletterPage() {
                 type="button"
                 onClick={loadDigest}
                 disabled={digestLoading}
-                className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/30 hover:text-degen-400"
+                className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
               >
                 {digestLoading ? 'Loading...' : 'Load Preview'}
               </button>
@@ -726,7 +726,7 @@ export default function NewsletterPage() {
 
             {digest.length === 0 && !digestLoading && (
               <div className="card py-8 text-center">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-[var(--color-muted)]">
                   Select topics/sources above and click "Load Preview" to see what your daily digest
                   will look like.
                 </p>
@@ -752,7 +752,7 @@ export default function NewsletterPage() {
                     {digestMeta.trending.slice(0, 6).map((t) => (
                       <span
                         key={t.topic}
-                        className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-400"
+                        className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]"
                       >
                         #{t.topic} <span className="text-gray-600">{t.count}</span>
                       </span>
@@ -773,7 +773,7 @@ export default function NewsletterPage() {
                         {formatTime(item.createdAt)}
                       </span>
                     </div>
-                    <p className="text-sm leading-snug text-gray-300 line-clamp-2">{item.text}</p>
+                    <p className="text-sm leading-snug text-[var(--color-muted)] line-clamp-2">{item.text}</p>
                     {item.url && (
                       <a
                         href={item.url}
@@ -809,10 +809,10 @@ export default function NewsletterPage() {
         <div className="lg:col-span-2">
           <div className="space-y-4">
             <div className="card">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                 What you get
               </h3>
-              <ul className="space-y-2 text-xs text-gray-400">
+              <ul className="space-y-2 text-xs text-[var(--color-muted)]">
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>
                   <span>Top 15 stories from all protocols, ranked by quality</span>
@@ -847,7 +847,7 @@ export default function NewsletterPage() {
             </div>
 
             <div className="card">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                 Browse by Topic
               </h3>
               <div className="flex flex-wrap gap-1.5">
@@ -859,7 +859,7 @@ export default function NewsletterPage() {
                     className={`rounded-full border px-2.5 py-1 text-[10px] font-medium transition-all ${
                       activeTopic === t.id
                         ? 'border-degen-500 bg-degen-500/20 text-degen-400'
-                        : 'card-hover text-gray-400'
+                        : 'card-hover text-[var(--color-muted)]'
                     }`}
                   >
                     {t.label}
@@ -869,7 +869,7 @@ export default function NewsletterPage() {
             </div>
 
             <div className="card">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                 Newsletter Sources
                 {activeTopic !== 'all' && (
                   <span className="ml-1 text-degen-400">
@@ -886,10 +886,10 @@ export default function NewsletterPage() {
                     ][])
                 ).map(([topic, newsletters]) => (
                   <div key={topic}>
-                    <p className="mb-1 font-medium text-gray-400">
+                    <p className="mb-1 font-medium text-[var(--color-muted)]">
                       {NEWSLETTER_TOPICS.find((t) => t.id === topic)?.label ?? topic}
                     </p>
-                    <ul className="space-y-1 text-gray-500">
+                    <ul className="space-y-1 text-[var(--color-muted)]">
                       {newsletters
                         .slice(0, activeTopic === 'all' && !showAllNewsletters ? 5 : 99)
                         .map((nl) => (
@@ -927,7 +927,7 @@ export default function NewsletterPage() {
 
             {/* Trending section */}
             <div className="card">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                 Trending This Week
               </h3>
               <div className="space-y-2">
@@ -955,10 +955,10 @@ export default function NewsletterPage() {
 
             {/* Paywall info */}
             <div className="card">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                 Content Access
               </h3>
-              <div className="space-y-1.5 text-[10px] text-gray-500">
+              <div className="space-y-1.5 text-[10px] text-[var(--color-muted)]">
                 <p>
                   <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium text-amber-400">
                     🔒 Paid
@@ -979,10 +979,10 @@ export default function NewsletterPage() {
             </div>
 
             <div className="card">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                 RSS Feeds
               </h3>
-              <ul className="space-y-2 text-xs text-gray-400">
+              <ul className="space-y-2 text-xs text-[var(--color-muted)]">
                 <li>
                   <a
                     href="/api/feed/rss.xml"
@@ -1047,22 +1047,22 @@ export default function NewsletterPage() {
             </div>
 
             <div className="card">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                 API
               </h3>
-              <ul className="space-y-1.5 text-xs text-gray-400">
+              <ul className="space-y-1.5 text-xs text-[var(--color-muted)]">
                 <li>
-                  <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-gray-500">
+                  <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-[var(--color-muted)]">
                     GET /api/newsletter/digest
                   </code>
                 </li>
                 <li>
-                  <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-gray-500">
+                  <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-[var(--color-muted)]">
                     GET /api/newsletter/digest?format=html
                   </code>
                 </li>
                 <li>
-                  <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-gray-500">
+                  <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-[var(--color-muted)]">
                     GET /api/newsletter/digest?format=text
                   </code>
                 </li>

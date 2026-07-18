@@ -6,7 +6,7 @@ import { MastodonProvider } from '../providers/mastodon';
 import { NostrProvider } from '../providers/nostr';
 import { RedditProvider } from '../providers/reddit';
 import { RssProvider } from '../providers/rss';
-import { ThreadsProvider } from '../providers/threads';
+import { isAvailable, ThreadsProvider } from '../providers/threads';
 
 function mockResponse(
   overrides: Partial<Response> & { json?: () => Promise<unknown>; text?: () => Promise<string> },
@@ -240,17 +240,117 @@ describe('feed providers', () => {
   });
 
   describe('ThreadsProvider', () => {
-    it('scrapes JSON-LD from public Threads profile pages', async () => {
-      const html =
-        '<html><head><script type="application/ld+json">{"@type":"ItemList","mainEntity":{"itemListElement":[{"name":"Threads post about crypto","url":"https://www.threads.net/@mosseri/post/abc123","datePublished":"2024-01-01T00:00:00Z","author":{"name":"Adam Mosseri","identifier":"mosseri","image":""},"interactionStatistic":[{"@type":"InteractionCounter","name":"Like","userInteractionCount":42}]}]}}</script></head></html>';
-      (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-        mockResponse({ text: async () => html }),
-      );
+    it('returns empty with notice when Bridgy Fed is not configured', async () => {
+      const provider = new ThreadsProvider({ curatedHandles: ['mosseri'] });
+      const result = await provider.fetchFeed({ timeoutMs: 1000 });
+      expect(result.posts.length).toBe(0);
+      expect(result.notice).toContain('not configured');
+    });
+
+    it('returns posts from Threads accounts via ActivityPub lookup', async () => {
+      vi.stubEnv('BRIDGY_FED_ENABLED', 'true');
+
+      // Mock account lookup
+      (globalThis.fetch as ReturnType<typeof vi.fn>)
+        // Account lookup for mosseri@threads.net
+        .mockResolvedValueOnce(
+          mockResponse({
+            json: async () => ({
+              id: '123',
+              username: 'mosseri',
+              acct: 'mosseri@threads.net',
+              display_name: 'Adam Mosseri',
+              avatar: 'https://example.com/avatar.jpg',
+              header: '',
+              header_static: '',
+              note: '<p>Threads boss</p>',
+              followers_count: 1000,
+              following_count: 100,
+              fields: [],
+            }),
+          }),
+        )
+        // Statuses for that account
+        .mockResolvedValueOnce(
+          mockResponse({
+            json: async () => [
+              {
+                id: 's1',
+                uri: 'https://threads.net/@mosseri/post/1',
+                created_at: new Date().toISOString(),
+                content: '<p>Threads post about crypto markets</p>',
+                visibility: 'public',
+                sensitive: false,
+                spoiler_text: '',
+                media_attachments: [],
+                tags: [{ name: 'crypto' }],
+                reblogs_count: 5,
+                favourites_count: 42,
+                replies_count: 3,
+                url: 'https://threads.net/@mosseri/post/1',
+                in_reply_to_id: null,
+                reblog: null,
+                card: null,
+                account: {
+                  id: '123',
+                  username: 'mosseri',
+                  acct: 'mosseri@threads.net',
+                  display_name: 'Adam Mosseri',
+                  avatar: 'https://example.com/avatar.jpg',
+                  header: '',
+                  header_static: '',
+                  note: '',
+                  followers_count: 1000,
+                  following_count: 100,
+                  fields: [],
+                },
+              },
+            ],
+          }),
+        )
+        // Hashtag timeline (empty)
+        .mockResolvedValueOnce(
+          mockResponse({
+            json: async () => [],
+          }),
+        );
+
       const provider = new ThreadsProvider({ curatedHandles: ['mosseri'] });
       const result = await provider.fetchFeed({ timeoutMs: 1000 });
       expect(result.posts.length).toBeGreaterThan(0);
+      expect(result.posts[0]?.protocol).toBe('threads');
       expect(result.posts[0]?.text).toContain('crypto');
       expect(result.posts[0]?.metrics.likes).toBe(42);
+
+      // Verify ActivityPub metadata on raw
+      const raw = result.posts[0]?.raw as Record<string, unknown>;
+      expect(raw._viaActivityPub).toBe(true);
+
+      vi.unstubAllEnvs();
+    });
+
+    it('reports unhealthy when not configured', async () => {
+      const provider = new ThreadsProvider();
+      const health = await provider.healthCheck();
+      expect(health.healthy).toBe(false);
+      expect(health.error).toContain('not configured');
+    });
+
+    it('isAvailable returns false when not configured', () => {
+      vi.unstubAllEnvs();
+      expect(isAvailable()).toBe(false);
+    });
+
+    it('isAvailable returns true when BRIDGY_FED_ENABLED is set', () => {
+      vi.stubEnv('BRIDGY_FED_ENABLED', 'true');
+      expect(isAvailable()).toBe(true);
+      vi.unstubAllEnvs();
+    });
+
+    it('isAvailable returns true when ACTIVITYPUB_BRIDGE_ENABLED is set', () => {
+      vi.stubEnv('ACTIVITYPUB_BRIDGE_ENABLED', 'true');
+      expect(isAvailable()).toBe(true);
+      vi.unstubAllEnvs();
     });
   });
 });

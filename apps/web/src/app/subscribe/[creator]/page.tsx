@@ -211,7 +211,7 @@ export default function SubscribePage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-20 text-center text-gray-500">
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center text-[var(--color-muted)]">
         <div className="mx-auto mb-4 h-2 w-32 animate-pulse rounded-full bg-[var(--color-muted)]" />
         <p>Loading tiers...</p>
       </div>
@@ -223,7 +223,7 @@ export default function SubscribePage() {
       <div className="mb-6">
         <Link
           href="/profile"
-          className="inline-flex items-center gap-1 rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
+          className="inline-flex items-center gap-1 rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-[var(--color-muted)] hover:bg-[var(--color-muted-bg)] hover:text-[var(--color-fg)] transition-colors"
         >
           ← Back to profile
         </Link>
@@ -236,7 +236,7 @@ export default function SubscribePage() {
         <h1 className="text-2xl font-bold text-[var(--color-fg)]">
           Subscribe to {shortenAddress(creator)}
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Support this creator and unlock exclusive content
         </p>
         {walletAddress && (
@@ -255,7 +255,7 @@ export default function SubscribePage() {
 
       {(subscribeState.step === 'select' || subscribeState.step === 'connect_wallet') && (
         <div className="space-y-4">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-gray-500">
+          <h2 className="text-sm font-medium uppercase tracking-widest text-[var(--color-muted)]">
             Choose a Tier
           </h2>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -267,11 +267,11 @@ export default function SubscribePage() {
                 <h3 className="text-lg font-bold text-[var(--color-fg)]">{tier.name}</h3>
                 <p className="mt-2 text-3xl font-bold text-[var(--color-fg)]">
                   ${tier.price}
-                  <span className="text-sm text-gray-500">/mo</span>
+                  <span className="text-sm text-[var(--color-muted)]">/mo</span>
                 </p>
                 <ul className="mt-4 flex-1 space-y-2">
                   {tier.benefits.map((b) => (
-                    <li key={String(b)} className="flex items-center gap-2 text-sm text-gray-400">
+                    <li key={String(b)} className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
                       <span className="shrink-0 text-degen-400">✓</span>
                       {formatBenefit(String(b))}
                     </li>
@@ -292,7 +292,7 @@ export default function SubscribePage() {
 
       {subscribeState.step === 'method_select' && (
         <div className="space-y-4">
-          <h2 className="text-sm font-medium uppercase tracking-widest text-gray-500">
+          <h2 className="text-sm font-medium uppercase tracking-widest text-[var(--color-muted)]">
             Payment Method
           </h2>
           <div className="rounded-2xl border border-degen-500/20 bg-degen-500/5 p-4">
@@ -319,7 +319,7 @@ export default function SubscribePage() {
           </div>
           <button
             onClick={() => setSubscribeState({ step: 'select' })}
-            className="text-xs text-gray-500 hover:text-gray-400 transition-colors"
+            className="text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
             type="button"
           >
             ← Choose a different tier
@@ -330,7 +330,7 @@ export default function SubscribePage() {
       {subscribeState.step === 'signing' && (
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] py-12 text-center">
           <div className="mb-4 inline-block animate-spin text-3xl">⚡</div>
-          <p className="text-sm text-gray-400">Sign the transaction in your wallet...</p>
+          <p className="text-sm text-[var(--color-muted)]">Sign the transaction in your wallet...</p>
           <p className="mt-1 text-xs text-gray-600">Approve the payment in your connected wallet</p>
         </div>
       )}
@@ -338,7 +338,7 @@ export default function SubscribePage() {
       {subscribeState.step === 'confirming' && (
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] py-12 text-center">
           <div className="mb-4 inline-block animate-spin text-3xl">⏳</div>
-          <p className="text-sm text-gray-400">Confirming subscription on-chain...</p>
+          <p className="text-sm text-[var(--color-muted)]">Confirming subscription on-chain...</p>
           <p className="mt-1 text-xs text-gray-600">
             Your subscription will be active once confirmed
           </p>
@@ -352,7 +352,7 @@ export default function SubscribePage() {
           <p className="mt-2 text-sm text-degen-400">
             You are now subscribed to the <strong>{subscribeState.tier.name}</strong> tier
           </p>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
             Expires: {new Date(subscribeState.expiresAt).toLocaleDateString()}
           </p>
           <Link href="/profile" className="btn-primary mt-6 inline-block text-sm">
@@ -365,7 +365,7 @@ export default function SubscribePage() {
         <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-center">
           <div className="mb-3 text-3xl">⚠</div>
           <h2 className="text-lg font-bold text-red-400">Subscription Failed</h2>
-          <p className="mt-2 text-sm text-gray-400">{subscribeState.error}</p>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">{subscribeState.error}</p>
           <button
             onClick={() => setSubscribeState({ step: 'select' })}
             className="btn-primary mt-4 text-sm"

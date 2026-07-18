@@ -32,7 +32,7 @@ export function DensityToggle({ value, onChange, color = 'var(--degen-500)' }: D
             className={`flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-all ${
               isActive
                 ? 'text-[var(--color-fg)] shadow-sm'
-                : 'text-gray-500 hover:text-[var(--color-fg)]'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
             }`}
             style={
               isActive

@@ -19,7 +19,7 @@ export default function ProfileError({
           !
         </div>
         <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Profile failed to load</h2>
-        <p className="mb-4 text-sm text-gray-400">
+        <p className="mb-4 text-sm text-[var(--color-muted)]">
           Could not load profile data. Check your connection.
         </p>
         <button type="button" onClick={reset} className="btn-primary text-sm">

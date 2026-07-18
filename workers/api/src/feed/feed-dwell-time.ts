@@ -139,6 +139,9 @@ export async function recordDwellEvent(
  * Computes how much a candidate post should be boosted based on the user's
  * past dwell behavior. If the user spent significant time on similar content
  * (same niches, same creator, same content type), the new post gets boosted.
+ *
+ * Normalization: dwell scores are normalized per-user so a power user who
+ * spends 30s on every post doesn't get 10x the dwell signal of a casual user.
  */
 export function computeDwellBoost(
   post: UnifiedPost,
@@ -147,6 +150,11 @@ export function computeDwellBoost(
   if (dwellProfile.entries.length === 0) {
     return { multiplier: 1.0, bucket: 'glanced' as DwellBucket, factors: [] };
   }
+
+  // Compute per-user average dwell as normalization baseline
+  const userAvgDwell =
+    dwellProfile.entries.reduce((sum, e) => sum + e.dwellMs, 0) /
+    Math.max(dwellProfile.entries.length, 1);
 
   const factors: string[] = [];
   let multiplier = 1.0;
@@ -161,24 +169,27 @@ export function computeDwellBoost(
     const ageDays = (Date.now() - entry.timestamp) / 86400000;
     const recencyWeight = Math.exp(-ageDays / 7); // 7-day half-life
 
+    // Normalize: how much above/below user average was this dwell?
+    const dwellRatio = userAvgDwell > 0 ? entry.dwellMs / userAvgDwell : 1.0;
+    const baseBoost = dwellBoostMultiplier(classifyDwell(entry.dwellMs), entry.completionRate);
+    // Scale boost by normalized dwell: a 60s dwell for a 5s-avg user > 60s for a 60s-avg user
+    const normalizedBoost = baseBoost * Math.min(dwellRatio, 3.0);
+
     const nicheMatch =
       entry.niches.filter((n) => nicheSet.has(n.toLowerCase())).length > 0;
     const creatorMatch = entry.creatorId === post.author.id;
     const typeMatch = entry.contentType === contentType;
 
     if (nicheMatch) {
-      const boost = dwellBoostMultiplier(classifyDwell(entry.dwellMs), entry.completionRate);
-      weightedBoost += boost * recencyWeight * 2.0; // niche match = 2x weight
+      weightedBoost += normalizedBoost * recencyWeight * 2.0; // niche match = 2x weight
       totalWeight += recencyWeight * 2.0;
     }
     if (creatorMatch && !nicheMatch) {
-      const boost = dwellBoostMultiplier(classifyDwell(entry.dwellMs), entry.completionRate);
-      weightedBoost += boost * recencyWeight * 1.5;
+      weightedBoost += normalizedBoost * recencyWeight * 1.5;
       totalWeight += recencyWeight * 1.5;
     }
     if (typeMatch && !nicheMatch && !creatorMatch) {
-      const boost = dwellBoostMultiplier(classifyDwell(entry.dwellMs), entry.completionRate);
-      weightedBoost += boost * recencyWeight * 0.5;
+      weightedBoost += normalizedBoost * recencyWeight * 0.5;
       totalWeight += recencyWeight * 0.5;
     }
   }

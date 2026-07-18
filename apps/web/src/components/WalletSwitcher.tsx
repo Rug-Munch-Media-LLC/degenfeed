@@ -87,7 +87,7 @@ function WalletEntry({
       {/* Wallet avatar */}
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-mono font-bold ${
-          isActive ? 'bg-degen-500/20 text-degen-400' : 'bg-white/5 text-gray-400'
+          isActive ? 'bg-degen-500/20 text-degen-400' : 'bg-white/5 text-[var(--color-muted)]'
         }`}
       >
         {address.slice(2, 4).toUpperCase()}
@@ -98,7 +98,7 @@ function WalletEntry({
         <div className="flex items-center gap-2">
           <span
             className={`text-sm font-medium truncate ${
-              isActive ? 'text-[var(--color-fg)]' : 'text-gray-300'
+              isActive ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)]'
             }`}
           >
             {meta.walletName ?? truncateAddress(address)}
@@ -110,12 +110,12 @@ function WalletEntry({
           )}
         </div>
         <div className="mt-0.5 flex items-center gap-2">
-          <code className="text-xs font-mono text-gray-500 truncate">
+          <code className="text-xs font-mono text-[var(--color-muted)] truncate">
             {truncateAddress(address)}
           </code>
           <ChainBadge chain={meta.chain} />
           {linkedProtocols.length > 0 && (
-            <span className="text-[10px] text-gray-600">{linkedProtocols.length} linked</span>
+            <span className="text-[10px] text-[var(--color-muted)]">{linkedProtocols.length} linked</span>
           )}
         </div>
         {linkedProtocols.length > 0 && (
@@ -124,7 +124,7 @@ function WalletEntry({
               <ProtocolBadge key={lp.protocol} protocol={lp.protocol} />
             ))}
             {linkedProtocols.length > 3 && (
-              <span className="text-[9px] text-gray-600">+{linkedProtocols.length - 3}</span>
+              <span className="text-[9px] text-[var(--color-muted)]">+{linkedProtocols.length - 3}</span>
             )}
           </div>
         )}
@@ -138,7 +138,7 @@ function WalletEntry({
             e.stopPropagation();
             onRemove(index);
           }}
-          className="shrink-0 rounded-full p-1 text-gray-600 opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
+          className="shrink-0 rounded-full p-1 text-[var(--color-muted)] opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
           aria-label={`Remove wallet ${truncateAddress(address)}`}
         >
           <svg
@@ -250,7 +250,7 @@ export const WalletSwitcher = memo(function WalletSwitcher({
         aria-label={`Wallets: ${truncateAddress(walletAddress)} (${walletCount} connected)`}
       >
         <ChainBadge chain={chain} />
-        <code className="flex-1 text-xs font-mono text-gray-400 truncate">
+        <code className="flex-1 text-xs font-mono text-[var(--color-muted)] truncate">
           {truncateAddress(walletAddress)}
         </code>
         <svg
@@ -260,7 +260,7 @@ export const WalletSwitcher = memo(function WalletSwitcher({
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          className={`transition-transform text-gray-500 ${open ? 'rotate-180' : ''}`}
+          className={`transition-transform text-[var(--color-muted)] ${open ? 'rotate-180' : ''}`}
           aria-hidden="true"
         >
           <polyline points="6 9 12 15 18 9" />
@@ -280,7 +280,7 @@ export const WalletSwitcher = memo(function WalletSwitcher({
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2">
             <span className="text-xs font-semibold text-[var(--color-fg)]">Wallets</span>
-            <span className="text-[10px] text-gray-500">{walletCount} connected</span>
+            <span className="text-[10px] text-[var(--color-muted)]">{walletCount} connected</span>
           </div>
 
           {/* Wallet list */}

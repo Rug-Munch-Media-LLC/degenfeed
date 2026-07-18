@@ -165,7 +165,7 @@ export default function ChangelogPage() {
         <Badge>Changelog</Badge>
       </div>
       <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">Changelog</h1>
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400">
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
         Track every release of DegenFeed. From the initial alpha to the latest cross-protocol
         features, here&rsquo;s what changed and when.
       </p>
@@ -185,7 +185,7 @@ export default function ChangelogPage() {
             {/* Version header */}
             <div className="mb-6 flex items-baseline gap-3">
               <Badge color={version.badge}>{version.version}</Badge>
-              <span className="text-sm text-gray-500">{version.date}</span>
+              <span className="text-sm text-[var(--color-muted)]">{version.date}</span>
               <span className="text-sm font-medium text-[var(--color-fg)]">{version.title}</span>
             </div>
 
@@ -198,7 +198,7 @@ export default function ChangelogPage() {
                   </h3>
                   <ul className="space-y-2">
                     {category.items.map((item) => (
-                      <li key={item} className="flex gap-2 text-sm text-gray-400">
+                      <li key={item} className="flex gap-2 text-sm text-[var(--color-muted)]">
                         <span className="mt-1 flex-shrink-0">{category.icon}</span>
                         <span>{item}</span>
                       </li>
@@ -234,7 +234,7 @@ export default function ChangelogPage() {
       <section className="mt-10">
         <H2 id="whats-next">What&rsquo;s Next</H2>
         <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-6">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-[var(--color-muted)]">
             We&rsquo;re actively developing the next major release. Here&rsquo;s what&rsquo;s on the
             roadmap:
           </p>
@@ -249,7 +249,7 @@ export default function ChangelogPage() {
               'Multi-language support for the interface',
               'Custom notification rules and webhook integrations',
             ].map((item) => (
-              <li key={item} className="flex gap-2 text-sm text-gray-400">
+              <li key={item} className="flex gap-2 text-sm text-[var(--color-muted)]">
                 <span className="text-degen-400">○</span>
                 {item}
               </li>

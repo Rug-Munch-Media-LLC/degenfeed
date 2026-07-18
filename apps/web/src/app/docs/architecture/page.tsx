@@ -47,7 +47,7 @@ export default function ArchitecturePage() {
       <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">
         System Architecture
       </h1>
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400">
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
         DegenFeed is built on a modern edge computing stack. The frontend runs on Next.js
         (Cloudflare Pages), the API on Cloudflare Workers, and caching on Cloudflare KV. This
         architecture provides global low-latency access with zero server management.
@@ -56,7 +56,7 @@ export default function ArchitecturePage() {
       {/* Overview Diagram */}
       <H2 id="overview">Architecture Overview</H2>
       <div className="my-6 overflow-x-auto rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-6">
-        <pre className="font-mono text-xs leading-relaxed text-gray-400">
+        <pre className="font-mono text-xs leading-relaxed text-[var(--color-muted)]">
           {`┌──────────────────────────────────────────────────────────────────────────┐
 │                              Users                                       │
 │                 Browser (Desktop/PWA) / API Clients                       │
@@ -103,13 +103,13 @@ export default function ArchitecturePage() {
 
       {/* Request Lifecycle */}
       <H2 id="request-lifecycle">Request Lifecycle</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Every feed request goes through a carefully orchestrated pipeline that balances speed,
         freshness, and reliability.
       </p>
 
       <div className="mt-4 rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
-        <ol className="space-y-2 text-sm text-gray-400">
+        <ol className="space-y-2 text-sm text-[var(--color-muted)]">
           {[
             'Worker receives GET /api/feed/home',
             'KV feed cache check (30s TTL) → return if cache hit',
@@ -160,14 +160,14 @@ export default function ArchitecturePage() {
             className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4"
           >
             <div className="text-sm font-semibold text-[var(--color-fg)]">{phase.title}</div>
-            <p className="mt-2 text-xs leading-relaxed text-gray-500">{phase.desc}</p>
+            <p className="mt-2 text-xs leading-relaxed text-[var(--color-muted)]">{phase.desc}</p>
           </div>
         ))}
       </div>
 
       {/* Monorepo */}
       <H2 id="monorepo-structure">Monorepo Structure</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         DegenFeed uses a Turborepo monorepo managed with pnpm. The structure separates concerns
         cleanly into application, worker, and package layers.
       </p>
@@ -212,7 +212,7 @@ export default function ArchitecturePage() {
               ].map((t) => (
                 <span
                   key={t}
-                  className="rounded-md bg-[var(--color-muted)]/30 px-2 py-1 text-[11px] text-gray-500"
+                  className="rounded-md bg-[var(--color-muted)]/30 px-2 py-1 text-[11px] text-[var(--color-muted)]"
                 >
                   {t}
                 </span>
@@ -224,7 +224,7 @@ export default function ArchitecturePage() {
 
       {/* KV Storage */}
       <H2 id="kv-storage">KV Storage Schema</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Cloudflare KV is used for distributed caching, session storage, and rate limiting. Two KV
         namespaces provide global consistency across all worker isolates.
       </p>
@@ -233,12 +233,12 @@ export default function ArchitecturePage() {
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--color-glass-border)]">
-              <th className="py-2 pr-4 font-medium text-gray-400">Key Pattern</th>
-              <th className="py-2 pr-4 font-medium text-gray-400">TTL</th>
-              <th className="py-2 font-medium text-gray-400">Purpose</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Key Pattern</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">TTL</th>
+              <th className="py-2 font-medium text-[var(--color-muted)]">Purpose</th>
             </tr>
           </thead>
-          <tbody className="text-gray-500">
+          <tbody className="text-[var(--color-muted)]">
             {[
               ['feed_cache:{key}', '30s', 'Aggregated feed response cache'],
               ['provider_cache:{p}:{key}', '60s', 'Per-protocol raw data cache'],
@@ -265,7 +265,7 @@ export default function ArchitecturePage() {
 
       {/* Deduplication */}
       <H2 id="deduplication">Deduplication Pipeline</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         11 layers prevent the same content from appearing multiple times in your feed, even when
         cross-posted across multiple protocols.
       </p>
@@ -286,7 +286,7 @@ export default function ArchitecturePage() {
         ].map((l) => (
           <div
             key={l}
-            className="rounded-lg border border-white/[0.03] bg-white/[0.01] px-3 py-1.5 text-[11px] text-gray-500"
+            className="rounded-lg border border-white/[0.03] bg-white/[0.01] px-3 py-1.5 text-[11px] text-[var(--color-muted)]"
           >
             {l}
           </div>
@@ -295,7 +295,7 @@ export default function ArchitecturePage() {
 
       {/* Deployment */}
       <H2 id="deployment">Deployment Architecture</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         DegenFeed deploys to Cloudflare&rsquo;s edge network. The frontend uses Cloudflare Pages
         (via{' '}
         <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
@@ -315,17 +315,17 @@ npx wrangler deploy workers/api/src/index.ts --name degenfeed-api
 pnpm run deploy`}</CodeBlock>
 
       <H3 id="ci-cd">CI/CD Pipeline</H3>
-      <ul className="mt-3 list-inside list-disc space-y-1.5 text-sm text-gray-400">
+      <ul className="mt-3 list-inside list-disc space-y-1.5 text-sm text-[var(--color-muted)]">
         <li>
-          <strong className="text-gray-300">Push to main:</strong> TypeScript check → Biome lint →
+          <strong className="text-[var(--color-muted)]">Push to main:</strong> TypeScript check → Biome lint →
           Vitest unit tests → Playwright E2E tests → build → deploy
         </li>
         <li>
-          <strong className="text-gray-300">PR preview:</strong> Automatic Cloudflare Pages preview
+          <strong className="text-[var(--color-muted)]">PR preview:</strong> Automatic Cloudflare Pages preview
           deployment for every PR
         </li>
         <li>
-          <strong className="text-gray-300">Rollback:</strong> Cloudflare Pages supports instant
+          <strong className="text-[var(--color-muted)]">Rollback:</strong> Cloudflare Pages supports instant
           rollback to any previous deployment
         </li>
       </ul>
@@ -338,13 +338,13 @@ pnpm run deploy`}</CodeBlock>
 
       {/* Ranking */}
       <H2 id="ranking">Ranking Algorithm</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Every post is scored by a transparent 7-factor model. Each component is exposed in the API
         response so users can see exactly why a post appears where it does.
       </p>
 
       <div className="mt-4 rounded-2xl border border-degen-500/10 bg-degen-500/[0.02] p-5">
-        <div className="font-mono text-sm leading-relaxed text-gray-300">
+        <div className="font-mono text-sm leading-relaxed text-[var(--color-muted)]">
           score = (recency x 2.4 + engagement x 3.5 + relevance x 1.8 + quality x 1.4 + diversity x
           1.0 + source x 0.8 + velocity x 1.2) x freshnessBoost x mediaBoost x contentQuality
         </div>
@@ -395,7 +395,7 @@ pnpm run deploy`}</CodeBlock>
             className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3"
           >
             <div className="text-sm font-semibold text-[var(--color-fg)]">{r.factor}</div>
-            <p className="mt-1 text-xs text-gray-500">{r.desc}</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">{r.desc}</p>
           </div>
         ))}
       </div>

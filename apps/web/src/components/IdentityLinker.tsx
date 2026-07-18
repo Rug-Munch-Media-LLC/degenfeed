@@ -18,12 +18,14 @@ interface LinkedIdentity {
   protocol: ProtocolId;
   handle?: string;
   verified: boolean;
+  manualLinking?: boolean;
 }
 
 interface LinkFormState {
   open: ProtocolId | null;
   values: Partial<Record<ProtocolId, Record<string, string>>>;
   submitting: boolean;
+  manualToggle: Partial<Record<ProtocolId, boolean>>;
 }
 
 const LINK_FIELDS: Record<
@@ -48,17 +50,33 @@ const LINK_FIELDS: Record<
     { key: 'handle', label: 'Handle', placeholder: 'alice.bsky.social' },
   ],
   mastodon: [
-    { key: 'handle', label: 'Handle', placeholder: '@alice' },
+    { key: 'handle', label: 'Handle', placeholder: 'alice' },
     { key: 'instance', label: 'Instance', placeholder: 'social.degenfeed.xyz' },
   ],
   reddit: [{ key: 'username', label: 'Reddit Username', placeholder: 'u/alice' }],
+  threads: [
+    { key: 'username', label: 'Threads Username', placeholder: 'alice' },
+    { key: 'did', label: 'Threads DID (optional)', placeholder: 'did:plc:...' },
+  ],
+  lemmy: [
+    { key: 'username', label: 'Lemmy Username', placeholder: 'alice' },
+    { key: 'instance', label: 'Instance', placeholder: 'lemmy.world' },
+  ],
+  rss: [
+    { key: 'url', label: 'RSS Feed URL', placeholder: 'https://blog.example.com/feed.xml' },
+  ],
+  peertube: [
+    { key: 'username', label: 'PeerTube Username', placeholder: 'alice' },
+    { key: 'channelId', label: 'Channel ID (optional)', placeholder: '12345' },
+    { key: 'instance', label: 'Instance', placeholder: 'video.degenfeed.xyz' },
+  ],
 };
 
 export function IdentityLinker() {
   const { walletAddress, walletAddresses, walletMeta } = useAuth();
   const [linked, setLinked] = useState<LinkedIdentity[]>([]);
   const [_loading, setLoading] = useState(true);
-  const [form, setForm] = useState<LinkFormState>({ open: null, values: {}, submitting: false });
+  const [form, setForm] = useState<LinkFormState>({ open: null, values: {}, submitting: false, manualToggle: {} });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const activeMeta = walletAddress ? walletMeta[walletAddress] : undefined;
@@ -75,56 +93,28 @@ export function IdentityLinker() {
       });
       if (!res.ok) return;
       const data = (await res.json()) as {
-        data: {
-          nostr?: { npub: string; verified: boolean };
-          farcaster?: { fid: number; username: string; verified: boolean };
-          lens?: { profileId: string; handle: string; verified: boolean };
-          bluesky?: { did: string; handle: string; verified: boolean };
-          mastodon?: { handle: string; instance: string; verified: boolean };
-          reddit?: { username: string; verified: boolean };
-        } | null;
+        data: Record<string, Record<string, unknown> | undefined> | null;
       };
       if (!data.data) {
         setLinked([]);
         return;
       }
       const ids: LinkedIdentity[] = [];
-      if (data.data.nostr)
+      const extractHandle = (d: Record<string, unknown>): string | undefined =>
+        (d.handle as string) || (d.username as string) || (d.npub as string) || (d.did as string) || (d.url as string) || undefined;
+
+      for (const [protocol, info] of Object.entries(PROTOCOL_ID_REGISTRY)) {
+        const pdata = data.data[protocol] as Record<string, unknown> | undefined;
+        if (!pdata) continue;
+        const handle = extractHandle(pdata);
+        if (!handle) continue;
         ids.push({
-          protocol: 'nostr',
-          handle: data.data.nostr.npub,
-          verified: data.data.nostr.verified,
+          protocol: protocol as ProtocolId,
+          handle,
+          verified: Boolean(pdata.verified),
+          manualLinking: Boolean(pdata.manualLinking),
         });
-      if (data.data.farcaster)
-        ids.push({
-          protocol: 'farcaster',
-          handle: data.data.farcaster.username || String(data.data.farcaster.fid),
-          verified: data.data.farcaster.verified,
-        });
-      if (data.data.lens)
-        ids.push({
-          protocol: 'lens',
-          handle: data.data.lens.handle,
-          verified: data.data.lens.verified,
-        });
-      if (data.data.bluesky)
-        ids.push({
-          protocol: 'bluesky',
-          handle: data.data.bluesky.handle,
-          verified: data.data.bluesky.verified,
-        });
-      if (data.data.mastodon)
-        ids.push({
-          protocol: 'mastodon',
-          handle: `${data.data.mastodon.handle}@${data.data.mastodon.instance}`,
-          verified: data.data.mastodon.verified,
-        });
-      if (data.data.reddit)
-        ids.push({
-          protocol: 'reddit',
-          handle: data.data.reddit.username,
-          verified: data.data.reddit.verified,
-        });
+      }
       setLinked(ids);
     } catch {
       // ignore
@@ -151,6 +141,8 @@ export function IdentityLinker() {
 
       try {
         const payload: Record<string, unknown> = { ...values };
+        const isManual = form.manualToggle[protocol] ?? false;
+        if (isManual) payload.manualLinking = true;
         // Parse numeric fields
         if (protocol === 'farcaster' && payload.fid) payload.fid = Number(payload.fid);
         // Split relays string into array
@@ -182,7 +174,7 @@ export function IdentityLinker() {
           type: 'success',
           text: `${PROTOCOL_ID_REGISTRY[protocol].displayName} linked!`,
         });
-        setForm((f) => ({ ...f, open: null, values: { ...f.values, [protocol]: {} } }));
+        setForm((f) => ({ ...f, open: null, values: { ...f.values, [protocol]: {} }, manualToggle: { ...f.manualToggle, [protocol]: false } }));
         await fetchLinked();
       } catch (err) {
         setMessage({ type: 'error', text: String(err) });
@@ -190,7 +182,7 @@ export function IdentityLinker() {
         setForm((f) => ({ ...f, submitting: false }));
       }
     },
-    [form.values, fetchLinked, walletAddress],
+    [form.values, form.manualToggle, fetchLinked, walletAddress],
   );
 
   const handleUnlink = useCallback(
@@ -223,7 +215,7 @@ export function IdentityLinker() {
 
   if (!walletAddress) {
     return (
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-center text-sm text-gray-500">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-center text-sm text-[var(--color-muted)]">
         Connect your wallet to link social identities.
       </div>
     );
@@ -258,7 +250,7 @@ export function IdentityLinker() {
 
       {/* Wallet address display */}
       {walletAddresses && walletAddresses.length > 1 && (
-        <div className="text-[11px] text-gray-500 text-center">
+        <div className="text-[11px] text-[var(--color-muted)] text-center">
           {walletAddresses.length} wallets connected ·{' '}
           <span className="text-degen-400">
             {walletAddress.slice(0, 8)}…{walletAddress.slice(-6)} active
@@ -298,15 +290,22 @@ export function IdentityLinker() {
                       {meta.displayName}
                     </span>
                     {linked && (
-                      <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
-                        ✓ Linked
-                      </span>
+                      <>
+                        <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
+                          ✓ Linked
+                        </span>
+                        {linked.find((l) => l.protocol === protocol)?.manualLinking && (
+                          <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-medium text-yellow-400">
+                            Manual
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                   {linkedHandle ? (
-                    <div className="text-xs text-gray-500 truncate">{linkedHandle}</div>
+                    <div className="text-xs text-[var(--color-muted)] truncate">{linkedHandle}</div>
                   ) : (
-                    <div className="text-xs text-gray-600">Not linked</div>
+                    <div className="text-xs text-[var(--color-muted)]">Not linked</div>
                   )}
                 </div>
                 <button
@@ -337,7 +336,7 @@ export function IdentityLinker() {
                 <div className="border-t border-[var(--color-glass-border)] px-4 py-3 space-y-3">
                   {LINK_FIELDS[protocol].map((field) => (
                     <div key={field.key}>
-                      <label className="mb-1 block text-xs text-gray-500">{field.label}</label>
+                      <label className="mb-1 block text-xs text-[var(--color-muted)]">{field.label}</label>
                       <input
                         type="text"
                         value={form.values[protocol]?.[field.key] || ''}
@@ -355,6 +354,23 @@ export function IdentityLinker() {
                       />
                     </div>
                   ))}
+                  {/* Manual linking toggle */}
+                  <label className="flex items-center gap-2 pt-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.manualToggle[protocol] ?? false}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          manualToggle: { ...f.manualToggle, [protocol]: e.target.checked },
+                        }))
+                      }
+                      className="rounded border-[var(--color-border)] bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
+                    />
+                    <span className="text-xs text-[var(--color-muted)]">
+                      Manual link (skip auto-verification — use when this identity can't be auto-resolved)
+                    </span>
+                  </label>
                   <div className="flex gap-2 pt-1">
                     <button
                       type="button"
@@ -367,7 +383,7 @@ export function IdentityLinker() {
                     <button
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, open: null }))}
-                      className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)] transition-colors"
+                      className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                     >
                       Cancel
                     </button>

@@ -162,7 +162,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
     <>
       <div className="actions flex items-center gap-4 text-xs text-[var(--color-muted)]">
         {post.protocol === 'lemmy' ? (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-[var(--color-muted)]">
             {formatCount(post.metrics.likes)} ↑ {formatCount(
               (post.raw as { counts?: { downvotes?: number } } | undefined)?.counts?.downvotes ?? 0,
             )} ↓

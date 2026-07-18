@@ -79,15 +79,15 @@ function MilestoneRow({
   tier: string;
 }) {
   const colors: Record<string, string> = {
-    bronze: achieved ? 'text-amber-500' : 'text-gray-600',
-    silver: achieved ? 'text-gray-300' : 'text-gray-600',
-    gold: achieved ? 'text-yellow-400' : 'text-gray-600',
-    diamond: achieved ? 'text-cyan-400' : 'text-gray-600',
+    bronze: achieved ? 'text-amber-500' : 'text-[var(--color-muted)]',
+    silver: achieved ? 'text-[var(--color-muted)]' : 'text-[var(--color-muted)]',
+    gold: achieved ? 'text-yellow-400' : 'text-[var(--color-muted)]',
+    diamond: achieved ? 'text-cyan-400' : 'text-[var(--color-muted)]',
   };
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className={achieved ? 'text-degen-400' : 'text-gray-600'}>{achieved ? '◆' : '◇'}</span>
-      <span className={colors[tier] ?? 'text-gray-500'}>{label}</span>
+      <span className={achieved ? 'text-degen-400' : 'text-[var(--color-muted)]'}>{achieved ? '◆' : '◇'}</span>
+      <span className={colors[tier] ?? 'text-[var(--color-muted)]'}>{label}</span>
     </div>
   );
 }
@@ -95,7 +95,7 @@ function MilestoneRow({
 function getMilestoneColor(streak: number): { bg: string; text: string } {
   if (streak >= 100) return { bg: 'bg-cyan-500/20', text: 'text-cyan-400' };
   if (streak >= 30) return { bg: 'bg-yellow-500/20', text: 'text-yellow-400' };
-  if (streak >= 7) return { bg: 'bg-gray-300/20', text: 'text-gray-300' };
+  if (streak >= 7) return { bg: 'bg-[var(--color-muted-bg)]', text: 'text-[var(--color-muted)]' };
   if (streak >= 3) return { bg: 'bg-amber-500/15', text: 'text-amber-400' };
   return { bg: 'bg-orange-500/10', text: 'text-orange-400' };
 }

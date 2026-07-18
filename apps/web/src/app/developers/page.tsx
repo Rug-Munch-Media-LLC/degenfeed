@@ -20,7 +20,7 @@ function Badge({ children, color = 'gray' }: { children: React.ReactNode; color?
     yellow: 'bg-yellow-900/30 text-yellow-400 border-yellow-500/20',
     purple: 'bg-purple-900/30 text-purple-400 border-purple-500/20',
     blue: 'bg-blue-900/30 text-blue-400 border-blue-500/20',
-    gray: 'bg-[var(--color-muted)] text-gray-400 border-[var(--color-border)]/30',
+    gray: 'bg-[var(--color-muted)] text-[var(--color-muted)] border-[var(--color-border)]/30',
   };
   return (
     <span
@@ -53,7 +53,7 @@ function Card({
     >
       {badge && <Badge color="green">{badge}</Badge>}
       <h3 className="mt-2 font-semibold text-[var(--color-fg)]">{title}</h3>
-      <p className="mt-1 text-sm text-gray-500">{desc}</p>
+      <p className="mt-1 text-sm text-[var(--color-muted)]">{desc}</p>
       <span className="mt-3 inline-block text-xs font-medium text-degen-400 opacity-0 transition-opacity group-hover:opacity-100">
         {external ? 'Open →' : 'Learn more →'}
       </span>
@@ -70,7 +70,7 @@ function Integration({ name, desc, badge }: { name: string; desc: string; badge:
           {badge}
         </Badge>
       </div>
-      <p className="mt-1 text-xs text-gray-500">{desc}</p>
+      <p className="mt-1 text-xs text-[var(--color-muted)]">{desc}</p>
     </div>
   );
 }
@@ -89,7 +89,7 @@ export default function DevelopersPage() {
           <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)] lg:text-5xl">
             Build on <span className="text-degen-400">DegenFeed</span>
           </h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-400">
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
             Aggregate 9 decentralized social networks into one ranked feed. The DegenFeed API gives
             you access to Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, Lemmy, and RSS
             — all through a single authenticated endpoint.
@@ -103,7 +103,7 @@ export default function DevelopersPage() {
             </Link>
             <Link
               href="/profile/settings/api"
-              className="rounded-lg border border-white/20 px-5 py-2.5 text-sm font-medium text-gray-300 transition-all hover:border-degen-500/30 hover:text-degen-400"
+              className="rounded-lg border border-white/20 px-5 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-degen-400"
             >
               Generate an API key
             </Link>
@@ -111,7 +111,7 @@ export default function DevelopersPage() {
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
               target="_blank"
               
-              className="rounded-lg border border-white/10 px-5 py-2.5 text-sm font-medium text-gray-500 transition-all hover:border-white/20 hover:text-gray-300"
+              className="rounded-lg border border-white/10 px-5 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-all hover:border-white/20 hover:text-[var(--color-muted)]"
             >
               Source code
             </a>
@@ -124,7 +124,7 @@ export default function DevelopersPage() {
       {/* Quick links */}
       <section className="mt-10">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Quick Start</h2>
-        <p className="mt-1 text-sm text-gray-500">Get up and running in minutes.</p>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">Get up and running in minutes.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card
             href="/api-docs#authentication"
@@ -150,14 +150,14 @@ export default function DevelopersPage() {
       {/* SDKs & Tools */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">SDKs & Tools</h2>
-        <p className="mt-1 text-sm text-gray-500">Client libraries and tools for every platform.</p>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">Client libraries and tools for every platform.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
             <h3 className="font-semibold text-[var(--color-fg)]">JavaScript / TypeScript</h3>
-            <div className="mt-3 rounded-lg bg-black/30 px-3 py-2 font-mono text-xs text-gray-400">
+            <div className="mt-3 rounded-lg bg-black/30 px-3 py-2 font-mono text-xs text-[var(--color-muted)]">
               npm install @degenfeed/api-client
             </div>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-[var(--color-muted)]">
               Full-featured client with type safety, auto-pagination, and rate limit handling. Works
               in Node.js 18+, browsers, and Cloudflare Workers.
             </p>
@@ -170,10 +170,10 @@ export default function DevelopersPage() {
           </div>
           <div className="rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
             <h3 className="font-semibold text-[var(--color-fg)]">Python</h3>
-            <div className="mt-3 rounded-lg bg-black/30 px-3 py-2 font-mono text-xs text-gray-400">
+            <div className="mt-3 rounded-lg bg-black/30 px-3 py-2 font-mono text-xs text-[var(--color-muted)]">
               pip install degenfeed-client
             </div>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-[var(--color-muted)]">
               Async-first Python client with httpx, Pydantic models, and full type annotations.
               Python 3.10+ required.
             </p>
@@ -190,7 +190,7 @@ export default function DevelopersPage() {
       {/* Example Apps */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Example Apps</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Open-source projects built on the DegenFeed API.
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -221,11 +221,11 @@ export default function DevelopersPage() {
       {/* Webhooks */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Webhooks</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Receive real-time events when new content is published.
         </p>
         <div className="mt-4 rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
-          <p className="text-sm leading-relaxed text-gray-400">
+          <p className="text-sm leading-relaxed text-[var(--color-muted)]">
             Webhooks let you subscribe to real-time events from the DegenFeed network. When new
             posts match your filters, we send an HTTP POST to your endpoint within seconds.
           </p>
@@ -233,11 +233,11 @@ export default function DevelopersPage() {
             <div className="rounded-lg border border-white/[0.03] bg-white/[0.01] p-3">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs font-bold text-blue-400">POST</span>
-                <code className="font-mono text-xs text-gray-400">
+                <code className="font-mono text-xs text-[var(--color-muted)]">
                   → your-webhook-url.com/events
                 </code>
               </div>
-              <pre className="mt-2 overflow-x-auto font-mono text-[11px] text-gray-500">{`{
+              <pre className="mt-2 overflow-x-auto font-mono text-[11px] text-[var(--color-muted)]">{`{
   "event": "post.new",
   "protocol": "nostr",
   "post": { "id": "note1...", "content": "..." },
@@ -247,7 +247,7 @@ export default function DevelopersPage() {
           </div>
           <div className="mt-4">
             <Badge color="yellow">Coming soon</Badge>
-            <span className="ml-2 text-xs text-gray-500">
+            <span className="ml-2 text-xs text-[var(--color-muted)]">
               Webhook subscriptions will be available in the developer dashboard.
             </span>
           </div>
@@ -257,7 +257,7 @@ export default function DevelopersPage() {
       {/* Integrations */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Protocol Integrations</h2>
-        <p className="mt-1 text-sm text-gray-500">All 9 networks available through a single API.</p>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">All 9 networks available through a single API.</p>
         <div className="mt-4 space-y-1">
           <Integration
             name="Nostr"
@@ -310,16 +310,16 @@ export default function DevelopersPage() {
       {/* Changelog */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Changelog</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Recent changes to the API and developer platform.
         </p>
         <div className="mt-4 space-y-4">
           <div className="rounded-lg border border-white/[0.03] bg-white/[0.01] p-4">
             <div className="flex items-center gap-2">
               <Badge color="green">v1.0.0</Badge>
-              <span className="text-xs text-gray-500">July 18, 2026</span>
+              <span className="text-xs text-[var(--color-muted)]">July 18, 2026</span>
             </div>
-            <ul className="mt-2 space-y-1 text-sm text-gray-400 list-disc list-inside">
+            <ul className="mt-2 space-y-1 text-sm text-[var(--color-muted)] list-disc list-inside">
               <li>
                 Stable v1 API with{' '}
                 <code className="rounded bg-[var(--color-muted)] px-1 font-mono text-xs">/v1/</code>{' '}
@@ -341,9 +341,9 @@ export default function DevelopersPage() {
           <div className="rounded-lg border border-white/[0.03] bg-white/[0.01] p-4">
             <div className="flex items-center gap-2">
               <Badge color="gray">v0.2.0</Badge>
-              <span className="text-xs text-gray-500">June 2026</span>
+              <span className="text-xs text-[var(--color-muted)]">June 2026</span>
             </div>
-            <ul className="mt-2 space-y-1 text-sm text-gray-400 list-disc list-inside">
+            <ul className="mt-2 space-y-1 text-sm text-[var(--color-muted)] list-disc list-inside">
               <li>Unified tipping across all protocols</li>
               <li>Community creation and management</li>
               <li>Audio Spaces (live audio rooms)</li>
@@ -356,7 +356,7 @@ export default function DevelopersPage() {
       {/* Community */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Developer Community</h2>
-        <p className="mt-1 text-sm text-gray-500">Connect with other builders.</p>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">Connect with other builders.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <Card
             href="/c/developers"
@@ -379,7 +379,7 @@ export default function DevelopersPage() {
 
       <div className="mt-16 border-t border-[var(--color-glass-border)] pt-6 text-center">
         <p className="text-xs text-gray-600">
-          DegenFeed is a product of <strong className="text-gray-500">Rug Munch Media LLC</strong>.
+          DegenFeed is a product of <strong className="text-[var(--color-muted)]">Rug Munch Media LLC</strong>.
           MIT Licensed. Built on open protocols.{' '}
           <Link href="/api-docs" className="text-degen-400 underline">
             API Documentation

@@ -384,7 +384,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
         <h1 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Unknown protocol</h1>
-        <p className="text-sm text-gray-500">No configuration found for &quot;{protocol}&quot;.</p>
+        <p className="text-sm text-[var(--color-muted)]">No configuration found for &quot;{protocol}&quot;.</p>
       </div>
     );
   }
@@ -423,7 +423,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
                       className={`relative whitespace-nowrap px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
                         isActive
                           ? 'text-[var(--color-fg)]'
-                          : 'text-gray-500 hover:text-gray-300'
+                          : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
                       }`}
                     >
                       {tab.label}
@@ -442,7 +442,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
                 {/* ── Dedicated Trending page link ── */}
                 <Link
                   href={`/${config.id}/trending`}
-                  className="relative whitespace-nowrap px-4 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-300"
+                  className="relative whitespace-nowrap px-4 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-muted)]"
                 >
                   📈 Trending
                   <span
@@ -462,7 +462,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
             {(() => {
               const currentTab = config.tabs.find((t) => t.id === activeTab);
               return currentTab?.description ? (
-                <p className="mb-4 text-xs text-gray-500">{currentTab.description}</p>
+                <p className="mb-4 text-xs text-[var(--color-muted)]">{currentTab.description}</p>
               ) : null;
             })()}
 
@@ -529,7 +529,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
                 <h3 className="mb-1 text-base font-bold" style={{ color: config.color }}>
                   No {config.postNoun}s found
                 </h3>
-                <p className="mx-auto max-w-xs text-sm text-gray-500">
+                <p className="mx-auto max-w-xs text-sm text-[var(--color-muted)]">
                   There are no {config.postNoun}s from {config.name} right now. This can happen when
                   the network is slow or the API is temporarily unavailable.
                 </p>

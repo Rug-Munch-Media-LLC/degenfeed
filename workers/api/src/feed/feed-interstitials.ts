@@ -75,6 +75,7 @@ const RELATED_CATEGORIES: Record<CategorySlug, CategorySlug[]> = {
   stablecoin: ['defi', 'regulation', 'layer2'],
   regulation: ['news', 'security', 'stablecoin'],
   gaming: ['nft', 'solana', 'ai'],
+  general: ['news', 'bitcoin', 'ethereum'],
 };
 
 // ─── Explore more cards ──────────────────────────────────────────

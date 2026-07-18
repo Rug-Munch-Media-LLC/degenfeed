@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
+// TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {

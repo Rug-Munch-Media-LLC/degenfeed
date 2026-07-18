@@ -29,7 +29,7 @@ export default function ContributingPage() {
       <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">
         Contributing to DegenFeed
       </h1>
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400">
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
         DegenFeed is MIT licensed and open to contributions from the community. Whether you&rsquo;re
         fixing a bug, adding a feature, improving documentation, or integrating a new protocol,
         we&rsquo;re glad to have you.
@@ -44,22 +44,22 @@ export default function ContributingPage() {
       <H2 id="development-setup">Development Setup</H2>
 
       <H3 id="prerequisites">Prerequisites</H3>
-      <ul className="mt-3 list-inside list-disc space-y-1.5 text-sm text-gray-400">
+      <ul className="mt-3 list-inside list-disc space-y-1.5 text-sm text-[var(--color-muted)]">
         <li>
-          <strong className="text-gray-300">Node.js</strong> 20.x or later
+          <strong className="text-[var(--color-muted)]">Node.js</strong> 20.x or later
         </li>
         <li>
-          <strong className="text-gray-300">pnpm</strong> 11.x (
+          <strong className="text-[var(--color-muted)]">pnpm</strong> 11.x (
           <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
             npm install -g pnpm
           </code>
           )
         </li>
         <li>
-          <strong className="text-gray-300">Git</strong> 2.x
+          <strong className="text-[var(--color-muted)]">Git</strong> 2.x
         </li>
         <li>
-          <strong className="text-gray-300">Wrangler CLI</strong> (
+          <strong className="text-[var(--color-muted)]">Wrangler CLI</strong> (
           <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
             npm install -g wrangler
           </code>
@@ -82,7 +82,7 @@ cp .env.example .env
 # Start development servers
 pnpm dev`}</CodeBlock>
 
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         The{' '}
         <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">pnpm dev</code>{' '}
         command starts both the Next.js frontend and the API worker in development mode. Open{' '}
@@ -93,7 +93,7 @@ pnpm dev`}</CodeBlock>
       </p>
 
       <H3 id="environment-variables">Environment Variables</H3>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Copy{' '}
         <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
           .env.example
@@ -106,12 +106,12 @@ pnpm dev`}</CodeBlock>
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--color-glass-border)]">
-              <th className="py-2 pr-4 font-medium text-gray-400">Variable</th>
-              <th className="py-2 pr-4 font-medium text-gray-400">Required</th>
-              <th className="py-2 font-medium text-gray-400">Description</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Variable</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Required</th>
+              <th className="py-2 font-medium text-[var(--color-muted)]">Description</th>
             </tr>
           </thead>
-          <tbody className="text-gray-500">
+          <tbody className="text-[var(--color-muted)]">
             {[
               [
                 'AUTH_SECRET',
@@ -145,18 +145,18 @@ pnpm dev`}</CodeBlock>
       <H2 id="development-workflow">Development Workflow</H2>
 
       <H3 id="branch-naming">Branch Naming</H3>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Use descriptive branch names prefixed by category:
       </p>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--color-glass-border)]">
-              <th className="py-2 pr-4 font-medium text-gray-400">Prefix</th>
-              <th className="py-2 font-medium text-gray-400">Example</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Prefix</th>
+              <th className="py-2 font-medium text-[var(--color-muted)]">Example</th>
             </tr>
           </thead>
-          <tbody className="text-gray-500">
+          <tbody className="text-[var(--color-muted)]">
             {[
               ['feat/', 'feat/cross-protocol-search'],
               ['fix/', 'fix/nostr-reconnect-backoff'],
@@ -175,7 +175,7 @@ pnpm dev`}</CodeBlock>
       </div>
 
       <H3 id="commit-messages">Commit Messages</H3>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Follow the Conventional Commits specification:
       </p>
       <CodeBlock lang="text">{`feat: add cross-protocol search endpoint
@@ -186,7 +186,7 @@ test: add ranking algorithm edge case tests
 chore: upgrade dependencies`}</CodeBlock>
 
       <H3 id="pre-commit-checks">Pre-Commit Checks</H3>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Run these commands before committing to ensure code quality:
       </p>
       <CodeBlock lang="bash">{`# TypeScript type checking
@@ -241,14 +241,14 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
             className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3"
           >
             <div className="text-sm font-semibold text-[var(--color-fg)]">{rule.title}</div>
-            <p className="mt-1 text-xs text-gray-500">{rule.desc}</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">{rule.desc}</p>
           </div>
         ))}
       </div>
 
       {/* Testing */}
       <H2 id="testing">Testing Guide</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         DegenFeed uses a multi-layer testing strategy. Run the relevant tests for your change.
       </p>
 
@@ -282,13 +282,13 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
               <Badge color="blue">{t.tool}</Badge>
               <code className="font-mono text-[10px] text-degen-400">{t.cmd}</code>
             </div>
-            <p className="mt-2 text-xs text-gray-500">{t.desc}</p>
+            <p className="mt-2 text-xs text-[var(--color-muted)]">{t.desc}</p>
           </div>
         ))}
       </div>
 
       <H3 id="writing-tests">Writing Tests</H3>
-      <ul className="mt-3 list-inside list-disc space-y-1.5 text-sm text-gray-400">
+      <ul className="mt-3 list-inside list-disc space-y-1.5 text-sm text-[var(--color-muted)]">
         <li>
           Place tests next to the file they test:{' '}
           <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
@@ -335,13 +335,13 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
           ],
           ['Merge', 'Your PR will be squash-merged into main. Celebrate your contribution!'],
         ].map(([step, desc], i) => (
-          <li key={step} className="flex gap-3 text-sm leading-relaxed text-gray-400">
+          <li key={step} className="flex gap-3 text-sm leading-relaxed text-[var(--color-muted)]">
             <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-degen-500/10 text-xs font-bold text-degen-400">
               {i + 1}
             </span>
             <div>
-              <strong className="text-gray-300">{step}</strong>
-              <p className="mt-0.5 text-gray-500">{desc}</p>
+              <strong className="text-[var(--color-muted)]">{step}</strong>
+              <p className="mt-0.5 text-[var(--color-muted)]">{desc}</p>
             </div>
           </li>
         ))}
@@ -349,7 +349,7 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
 
       {/* Adding Protocols */}
       <H2 id="adding-protocols">Adding a New Protocol</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         DegenFeed supports 10 protocols and is designed for extensibility. See the{' '}
         <Link href="/docs/protocols#adding-new-protocols" className="text-degen-400 underline">
           Protocol Integration Guide
@@ -360,21 +360,21 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
       {/* Code of Conduct */}
       <H2 id="code-of-conduct">Code of Conduct</H2>
       <div className="mt-4 rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
-        <ul className="space-y-2 text-sm text-gray-400">
+        <ul className="space-y-2 text-sm text-[var(--color-muted)]">
           <li>
-            <strong className="text-gray-300">Be respectful.</strong> Disagreement is fine, personal
+            <strong className="text-[var(--color-muted)]">Be respectful.</strong> Disagreement is fine, personal
             attacks are not.
           </li>
           <li>
-            <strong className="text-gray-300">Be constructive.</strong> Critique code, not people.
+            <strong className="text-[var(--color-muted)]">Be constructive.</strong> Critique code, not people.
             Suggest improvements.
           </li>
           <li>
-            <strong className="text-gray-300">Be welcoming.</strong> We welcome contributors of all
+            <strong className="text-[var(--color-muted)]">Be welcoming.</strong> We welcome contributors of all
             experience levels.
           </li>
           <li>
-            <strong className="text-gray-300">Be patient.</strong> Maintainers review PRs in their
+            <strong className="text-[var(--color-muted)]">Be patient.</strong> Maintainers review PRs in their
             free time. We&rsquo;ll get to yours.
           </li>
         </ul>
@@ -384,7 +384,7 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
         <h2 className="mb-2 text-base font-semibold text-[var(--color-fg)]">
           Ready to contribute?
         </h2>
-        <p className="mb-4 text-sm text-gray-400">
+        <p className="mb-4 text-sm text-[var(--color-muted)]">
           Clone the repo and start coding. We&rsquo;re excited to see what you build.
         </p>
         <div className="flex flex-wrap justify-center gap-3">

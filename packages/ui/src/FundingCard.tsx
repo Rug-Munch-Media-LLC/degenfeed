@@ -50,21 +50,21 @@ export function FundingCard({ round }: { round: FundingRound }) {
         >
           {round.stage || 'Round'}
         </span>
-        <span className="text-xs text-gray-500">{round.chain || 'Multi-chain'}</span>
+        <span className="text-xs text-[var(--color-muted)]">{round.chain || 'Multi-chain'}</span>
         <span className="ml-auto text-xs font-mono font-bold text-degen-500">{round.amount}</span>
       </div>
 
       <h3 className="mb-1 text-base font-bold text-[var(--color-fg)]">{round.project}</h3>
-      <p className="mb-3 text-sm text-gray-400 line-clamp-2">{round.description}</p>
+      <p className="mb-3 text-sm text-[var(--color-muted)] line-clamp-2">{round.description}</p>
 
       <div className="mb-2 flex flex-wrap gap-1">
         {round.investors.slice(0, 4).map((inv) => (
-          <span key={inv} className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-gray-300">
+          <span key={inv} className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-[var(--color-muted)]">
             {inv}
           </span>
         ))}
         {round.investors.length > 4 && (
-          <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-gray-500">
+          <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-[var(--color-muted)]">
             +{round.investors.length - 4}
           </span>
         )}

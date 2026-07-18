@@ -776,7 +776,7 @@ export function FeedTuner({
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
           <div>
             <h2 className="text-base font-bold text-[var(--color-fg)]">🎛️ Feed Controls</h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[var(--color-muted)]">
               Fine-tune every aspect of your feed
               {tunedCount > 0 && activeTab === 'topics' && (
                 <span className="ml-1.5 text-degen-400">· {tunedCount} tuned</span>
@@ -786,7 +786,7 @@ export function FeedTuner({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+            className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close tuner"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -816,7 +816,7 @@ export function FeedTuner({
               className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors border-b-2 ${
                 activeTab === tab.id
                   ? 'border-degen-500 text-[var(--color-fg)]'
-                  : 'border-transparent text-gray-500 hover:text-gray-300'
+                  : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-muted)]'
               }`}
             >
               <span>{tab.icon}</span>
@@ -830,7 +830,7 @@ export function FeedTuner({
           {/* ═══ TAB 1: TOPICS (original tuner) ═══ */}
           {activeTab === 'topics' && (
             <div className="space-y-1">
-              <p className="text-xs text-gray-500 mb-2">
+              <p className="text-xs text-[var(--color-muted)] mb-2">
                 Slide to control what topics you see more or less of
               </p>
               {TOPICS.map((topic) => {
@@ -852,7 +852,7 @@ export function FeedTuner({
                         >
                           {w}
                         </span>
-                        <span className="text-[10px] text-gray-500 w-16 text-right">
+                        <span className="text-[10px] text-[var(--color-muted)] w-16 text-right">
                           {weightLabel(w)}
                         </span>
                       </div>
@@ -870,7 +870,7 @@ export function FeedTuner({
                         step="1"
                         value={w}
                         onChange={(e) => handleSlider(topic.id, Number(e.target.value))}
-                        className="tuner-slider relative w-full h-1.5 appearance-none rounded-full bg-gray-700 cursor-pointer accent-degen-500"
+                        className="tuner-slider relative w-full h-1.5 appearance-none rounded-full bg-[var(--color-muted-bg)] cursor-pointer accent-degen-500"
                         aria-label={`${topic.label} weight`}
                         style={
                           {
@@ -910,7 +910,7 @@ export function FeedTuner({
                     <path d="M6 9l6 6 6-6" />
                   </svg>
                 </button>
-                <p className="text-[10px] text-gray-500 mb-2">
+                <p className="text-[10px] text-[var(--color-muted)] mb-2">
                   Set how much of your feed comes from each protocol (0-100%)
                 </p>
                 {!mixCollapsed && (
@@ -935,10 +935,10 @@ export function FeedTuner({
                             step="5"
                             value={pw.weight}
                             onChange={(e) => handleProtocolWeight(proto.id, Number(e.target.value))}
-                            className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                            className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-[var(--color-muted-bg)] accent-degen-500"
                             aria-label={`${proto.label} mix weight`}
                           />
-                          <span className="text-xs font-mono tabular-nums text-gray-400 w-8 text-right">
+                          <span className="text-xs font-mono tabular-nums text-[var(--color-muted)] w-8 text-right">
                             {pw.weight}
                           </span>
                         </div>
@@ -953,7 +953,7 @@ export function FeedTuner({
                 <p className="text-sm font-semibold text-[var(--color-fg)] mb-1">
                   Content Type Mix
                 </p>
-                <p className="text-[10px] text-gray-500 mb-2">
+                <p className="text-[10px] text-[var(--color-muted)] mb-2">
                   Control how much of each content type appears
                 </p>
                 <div className="space-y-2">
@@ -974,10 +974,10 @@ export function FeedTuner({
                         step="5"
                         value={localFeedMix.contentTypes[key]}
                         onChange={(e) => handleContentTypeWeight(key, Number(e.target.value))}
-                        className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                        className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-[var(--color-muted-bg)] accent-degen-500"
                         aria-label={`${meta.label} weight`}
                       />
-                      <span className="text-xs font-mono tabular-nums text-gray-400 w-8 text-right">
+                      <span className="text-xs font-mono tabular-nums text-[var(--color-muted)] w-8 text-right">
                         {localFeedMix.contentTypes[key]}
                       </span>
                     </div>
@@ -1011,7 +1011,7 @@ export function FeedTuner({
 
                   {localFeedMix.qualityThresholds.hideLowQuality && (
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-gray-400 w-16">Threshold</span>
+                      <span className="text-[10px] text-[var(--color-muted)] w-16">Threshold</span>
                       <input
                         type="range"
                         min="0"
@@ -1021,9 +1021,9 @@ export function FeedTuner({
                         onChange={(e) =>
                           handleGlobalQuality('hideThreshold', Number(e.target.value))
                         }
-                        className="flex-1 h-1 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                        className="flex-1 h-1 cursor-pointer appearance-none rounded-full bg-[var(--color-muted-bg)] accent-degen-500"
                       />
-                      <span className="text-[10px] font-mono text-gray-500 w-8 text-right">
+                      <span className="text-[10px] font-mono text-[var(--color-muted)] w-8 text-right">
                         {localFeedMix.qualityThresholds.hideThreshold.toFixed(1)}
                       </span>
                     </div>
@@ -1048,7 +1048,7 @@ export function FeedTuner({
                       <span className="text-xs font-medium text-[var(--color-fg)]">
                         Minimum engagement
                       </span>
-                      <span className="text-[10px] font-mono text-gray-500">
+                      <span className="text-[10px] font-mono text-[var(--color-muted)]">
                         {localFeedMix.qualityThresholds.globalMinEngagement}
                       </span>
                     </div>
@@ -1061,7 +1061,7 @@ export function FeedTuner({
                       onChange={(e) =>
                         handleGlobalQuality('globalMinEngagement', Number(e.target.value))
                       }
-                      className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                      className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-[var(--color-muted-bg)] accent-degen-500"
                     />
                   </div>
 
@@ -1071,7 +1071,7 @@ export function FeedTuner({
                       <span className="text-xs font-medium text-[var(--color-fg)]">
                         Minimum content length
                       </span>
-                      <span className="text-[10px] font-mono text-gray-500">
+                      <span className="text-[10px] font-mono text-[var(--color-muted)]">
                         {localFeedMix.qualityThresholds.minContentLength} chars
                       </span>
                     </div>
@@ -1084,7 +1084,7 @@ export function FeedTuner({
                       onChange={(e) =>
                         handleGlobalQuality('minContentLength', Number(e.target.value))
                       }
-                      className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                      className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-[var(--color-muted-bg)] accent-degen-500"
                     />
                   </div>
                 </div>
@@ -1126,7 +1126,7 @@ export function FeedTuner({
                           <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs font-medium text-[var(--color-fg)] hover:text-degen-400 transition-colors">
                             <span style={{ color: proto.color }}>{proto.icon}</span>
                             <span>{proto.label}</span>
-                            <span className="ml-auto text-[10px] text-gray-500">
+                            <span className="ml-auto text-[10px] text-[var(--color-muted)]">
                               {pw.minEngagement > 0 || pw.verifiedOnly || pw.minContentLength > 0
                                 ? '✓ tuned'
                                 : 'default'}
@@ -1135,7 +1135,7 @@ export function FeedTuner({
                           <div className="px-3 pb-3 space-y-2.5 border-t border-[var(--color-border)] pt-2">
                             {/* Min engagement */}
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400 w-20 shrink-0">
+                              <span className="text-[10px] text-[var(--color-muted)] w-20 shrink-0">
                                 Min engagement
                               </span>
                               <input
@@ -1151,16 +1151,16 @@ export function FeedTuner({
                                     Number(e.target.value),
                                   )
                                 }
-                                className="flex-1 h-1 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                                className="flex-1 h-1 cursor-pointer appearance-none rounded-full bg-[var(--color-muted-bg)] accent-degen-500"
                               />
-                              <span className="text-[10px] font-mono text-gray-500 w-6 text-right">
+                              <span className="text-[10px] font-mono text-[var(--color-muted)] w-6 text-right">
                                 {pw.minEngagement}
                               </span>
                             </div>
 
                             {/* Min content length */}
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400 w-20 shrink-0">
+                              <span className="text-[10px] text-[var(--color-muted)] w-20 shrink-0">
                                 Min length
                               </span>
                               <input
@@ -1176,16 +1176,16 @@ export function FeedTuner({
                                     Number(e.target.value),
                                   )
                                 }
-                                className="flex-1 h-1 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                                className="flex-1 h-1 cursor-pointer appearance-none rounded-full bg-[var(--color-muted-bg)] accent-degen-500"
                               />
-                              <span className="text-[10px] font-mono text-gray-500 w-8 text-right">
+                              <span className="text-[10px] font-mono text-[var(--color-muted)] w-8 text-right">
                                 {pw.minContentLength}c
                               </span>
                             </div>
 
                             {/* Verified only */}
                             <label className="flex items-center justify-between cursor-pointer">
-                              <span className="text-[10px] text-gray-400">Verified only</span>
+                              <span className="text-[10px] text-[var(--color-muted)]">Verified only</span>
                               <input
                                 type="checkbox"
                                 checked={pw.verifiedOnly}
@@ -1213,7 +1213,7 @@ export function FeedTuner({
                 <p className="text-sm font-semibold text-[var(--color-fg)] mb-1">
                   🎮 Feed Presets
                 </p>
-                <p className="text-[10px] text-gray-500 mb-2">
+                <p className="text-[10px] text-[var(--color-muted)] mb-2">
                   One-click feed personalities — overrides all settings below
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -1237,7 +1237,7 @@ export function FeedTuner({
                         <p className="text-xs font-semibold text-[var(--color-fg)] mt-1">
                           {preset.name}
                         </p>
-                        <p className="text-[9px] text-gray-500 mt-0.5 leading-tight">
+                        <p className="text-[9px] text-[var(--color-muted)] mt-0.5 leading-tight">
                           {preset.description}
                         </p>
                       </button>
@@ -1265,7 +1265,7 @@ export function FeedTuner({
                     <p className="text-xs font-semibold text-[var(--color-fg)]">
                       🔍 Algorithm Transparency
                     </p>
-                    <p className="text-[10px] text-gray-500">
+                    <p className="text-[10px] text-[var(--color-muted)]">
                       {localAlgorithmTransparent
                         ? '"Why this post?" explanations shown on every card'
                         : 'TikTok-style — no explanations, just content'}
@@ -1292,7 +1292,7 @@ export function FeedTuner({
                       <p className="text-xs font-semibold text-[var(--color-fg)]">
                         🌱 Content Freshness
                       </p>
-                      <p className="text-[10px] text-gray-500">
+                      <p className="text-[10px] text-[var(--color-muted)]">
                         {localFreshness < 30
                           ? 'Evergreen — only the best, regardless of age'
                           : localFreshness < 60
@@ -1300,7 +1300,7 @@ export function FeedTuner({
                             : 'Bleeding edge — mostly recent content'}
                       </p>
                     </div>
-                    <span className="text-xs font-mono tabular-nums text-gray-400 w-8 text-right">
+                    <span className="text-xs font-mono tabular-nums text-[var(--color-muted)] w-8 text-right">
                       {localFreshness}%
                     </span>
                   </div>
@@ -1316,7 +1316,7 @@ export function FeedTuner({
                       onFreshnessChange?.(val);
                       setLocalActivePreset(null);
                     }}
-                    className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                    className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-[var(--color-muted-bg)] accent-degen-500"
                     aria-label="Content freshness"
                   />
                 </div>
@@ -1328,7 +1328,7 @@ export function FeedTuner({
                       <p className="text-xs font-semibold text-[var(--color-fg)]">
                         👥 Creator Diversity
                       </p>
-                      <p className="text-[10px] text-gray-500">
+                      <p className="text-[10px] text-[var(--color-muted)]">
                         {localCreatorDiversity <= 2
                           ? 'Same few creators — familiar voices'
                           : localCreatorDiversity <= 5
@@ -1336,7 +1336,7 @@ export function FeedTuner({
                             : 'Maximum variety — many different creators'}
                       </p>
                     </div>
-                    <span className="text-xs font-mono tabular-nums text-gray-400 w-8 text-right">
+                    <span className="text-xs font-mono tabular-nums text-[var(--color-muted)] w-8 text-right">
                       {localCreatorDiversity}
                     </span>
                   </div>
@@ -1352,7 +1352,7 @@ export function FeedTuner({
                       onCreatorDiversityChange?.(val);
                       setLocalActivePreset(null);
                     }}
-                    className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                    className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-[var(--color-muted-bg)] accent-degen-500"
                     aria-label="Creator diversity"
                   />
                 </div>
@@ -1364,7 +1364,7 @@ export function FeedTuner({
                       <p className="text-xs font-semibold text-[var(--color-fg)]">
                         🧭 Explore vs Exploit
                       </p>
-                      <p className="text-[10px] text-gray-500">
+                      <p className="text-[10px] text-[var(--color-muted)]">
                         {localExploreRatio < 20
                           ? 'Familiar — content you already know you like'
                           : localExploreRatio < 60
@@ -1372,11 +1372,11 @@ export function FeedTuner({
                             : 'Discovery — new creators, topics, and formats'}
                       </p>
                     </div>
-                    <span className="text-xs font-mono tabular-nums text-gray-400 w-12 text-right">
+                    <span className="text-xs font-mono tabular-nums text-[var(--color-muted)] w-12 text-right">
                       {localExploreRatio}% explore
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-1">
+                  <div className="flex items-center gap-2 text-[10px] text-[var(--color-muted)] mb-1">
                     <span>Exploit</span>
                     <input
                       type="range"
@@ -1390,7 +1390,7 @@ export function FeedTuner({
                         onExploreRatioChange?.(val);
                         setLocalActivePreset(null);
                       }}
-                      className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                      className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-[var(--color-muted-bg)] accent-degen-500"
                       aria-label="Explore vs exploit ratio"
                     />
                     <span>Explore</span>
@@ -1400,10 +1400,10 @@ export function FeedTuner({
 
               {/* Stats summary */}
               <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/20 p-3">
-                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+                <p className="text-[10px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-1.5">
                   Current Algorithm Profile
                 </p>
-                <div className="space-y-1 text-[10px] text-gray-400">
+                <div className="space-y-1 text-[10px] text-[var(--color-muted)]">
                   <div className="flex justify-between">
                     <span>Mode</span>
                     <span className="text-[var(--color-fg)] font-medium">
@@ -1493,7 +1493,7 @@ export function FeedTuner({
                             )}
                           </p>
                           {mix.description && (
-                            <p className="text-[10px] text-gray-500 truncate">{mix.description}</p>
+                            <p className="text-[10px] text-[var(--color-muted)] truncate">{mix.description}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 ml-2 shrink-0">
@@ -1508,7 +1508,7 @@ export function FeedTuner({
                             <button
                               type="button"
                               onClick={() => handleDeleteMix(mix.id)}
-                              className="rounded-lg p-1 text-gray-500 hover:text-red-400 transition-colors"
+                              className="rounded-lg p-1 text-[var(--color-muted)] hover:text-red-400 transition-colors"
                               aria-label={`Delete ${mix.name}`}
                             >
                               <svg
@@ -1528,7 +1528,7 @@ export function FeedTuner({
                     );
                   })}
                   {localSavedMixes.length === 0 && (
-                    <p className="text-xs text-gray-500 italic py-2">
+                    <p className="text-xs text-[var(--color-muted)] italic py-2">
                       No custom mixes saved yet. Configure a mix above and save it!
                     </p>
                   )}
@@ -1621,7 +1621,7 @@ export function FeedTuner({
 
         {/* ═══ FEED PREVIEW (shown at bottom of content area) ═══ */}
         <div className="border-t border-[var(--color-border)] px-5 py-3">
-          <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-2">
+          <p className="text-[10px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-2">
             Preview with current settings
           </p>
           <div className="space-y-2">
@@ -1651,9 +1651,9 @@ export function FeedTuner({
                       {post.icon} {post.protocol}
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-400 line-clamp-2">{post.content}</p>
+                  <p className="text-[10px] text-[var(--color-muted)] line-clamp-2">{post.content}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[9px] text-gray-500">❤️ {post.likes}</span>
+                    <span className="text-[9px] text-[var(--color-muted)]">❤️ {post.likes}</span>
                   </div>
                 </div>
               </div>
@@ -1666,7 +1666,7 @@ export function FeedTuner({
           <button
             type="button"
             onClick={activeTab === 'topics' ? onReset : activeTab === 'algorithm' ? handleAlgorithmReset : handleMixReset}
-            className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-xs font-medium text-gray-400 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+            className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           >
             {activeTab === 'topics' ? 'Reset topics' : activeTab === 'algorithm' ? 'Reset algorithm' : 'Reset mix'}
           </button>
@@ -1674,7 +1674,7 @@ export function FeedTuner({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-xs font-medium text-gray-400 hover:text-[var(--color-fg)] transition-colors"
+              className="rounded-lg px-4 py-2 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             >
               Cancel
             </button>

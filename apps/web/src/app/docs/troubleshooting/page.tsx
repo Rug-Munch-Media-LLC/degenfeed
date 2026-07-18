@@ -115,10 +115,10 @@ function AccordionItem({
       >
         <div className="min-w-0">
           <span className="text-sm font-medium text-[var(--color-fg)]">{item.title}</span>
-          <p className="mt-0.5 text-xs text-gray-500">{item.summary}</p>
+          <p className="mt-0.5 text-xs text-[var(--color-muted)]">{item.summary}</p>
         </div>
         <span
-          className={`mt-1 flex-shrink-0 text-xs text-gray-500 transition-transform duration-200 ${
+          className={`mt-1 flex-shrink-0 text-xs text-[var(--color-muted)] transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
         >
@@ -129,7 +129,7 @@ function AccordionItem({
         <div className="px-3 pb-5 animate-slide-up">
           <ol className="space-y-3">
             {item.steps.map((step, i) => (
-              <li key={i} className="flex gap-3 text-sm leading-relaxed text-gray-400">
+              <li key={i} className="flex gap-3 text-sm leading-relaxed text-[var(--color-muted)]">
                 <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-degen-500/10 text-[10px] font-bold text-degen-400">
                   {i + 1}
                 </span>
@@ -164,7 +164,7 @@ export default function TroubleshootingPage() {
       <h1 className="text-3xl font-bold tracking-tight text-[var(--color-fg)]">
         Troubleshooting Guide
       </h1>
-      <p className="mt-2 max-w-xl text-sm text-gray-400">
+      <p className="mt-2 max-w-xl text-sm text-[var(--color-muted)]">
         Common issues and how to fix them. If you don&apos;t find your problem here, check the{' '}
         <Link href="/faq" className="text-degen-400 underline">
           FAQ
@@ -189,7 +189,7 @@ export default function TroubleshootingPage() {
             className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
               openIndex === issues.indexOf(issue)
                 ? 'border-degen-500/30 bg-degen-500/10 text-degen-400'
-                : 'border-[var(--color-glass-border)] text-gray-400 hover:border-degen-500/20 hover:text-degen-400'
+                : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:border-degen-500/20 hover:text-degen-400'
             }`}
           >
             {issue.title}
@@ -213,7 +213,7 @@ export default function TroubleshootingPage() {
       {/* Still stuck */}
       <div className="mt-12 rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-6 text-center">
         <h2 className="mb-2 text-base font-semibold text-[var(--color-fg)]">Still stuck?</h2>
-        <p className="mb-4 text-sm text-gray-400">
+        <p className="mb-4 text-sm text-[var(--color-muted)]">
           We&apos;re here to help. Reach out and we&apos;ll get back to you within 24 hours.
         </p>
         <div className="flex flex-wrap justify-center gap-3">

@@ -88,7 +88,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1.5 text-gray-500 transition-colors hover:text-[var(--color-fg)]"
+            className="rounded-full p-1.5 text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
             aria-label="Close"
           >
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -105,7 +105,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-400">Title *</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Title *</label>
             <input
               type="text"
               value={title}
@@ -119,7 +119,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
 
           {/* Type selector */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-400">Type *</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Type *</label>
             <div className="grid grid-cols-3 gap-2">
               {(Object.entries(PROPOSAL_TYPE_LABELS) as [ProposalType, string][]).map(
                 ([key, label]) => (
@@ -130,7 +130,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
                     className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all ${
                       type === key
                         ? 'border-degen-500/50 bg-degen-500/10 text-degen-400'
-                        : 'border-white/10 bg-white/[0.03] text-gray-400 hover:text-gray-300'
+                        : 'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]'
                     }`}
                   >
                     {label.split(' ')[0]}
@@ -146,7 +146,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
           {/* Target user (mod_action only) */}
           {type === 'mod_action' && (
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-400">
+              <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
                 Target Wallet Address *
               </label>
               <input
@@ -161,7 +161,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
 
           {/* Description */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-400">
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
               Description *
               <span className="ml-1 text-gray-600">({description.length}/10,000)</span>
             </label>
@@ -178,7 +178,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
 
           {/* Voting period */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-400">Voting Period</label>
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Voting Period</label>
             <div className="flex gap-2">
               {VOTING_PERIOD_OPTIONS.map((opt) => (
                 <button
@@ -188,7 +188,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
                   className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all ${
                     votingPeriod === opt.value
                       ? 'border-degen-500/50 bg-degen-500/10 text-degen-400'
-                      : 'border-white/10 bg-white/[0.03] text-gray-400 hover:text-gray-300'
+                      : 'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]'
                   }`}
                 >
                   {opt.label}
@@ -203,7 +203,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm text-gray-400 transition-colors hover:text-[var(--color-fg)]"
+              className="rounded-lg px-4 py-2 text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
             >
               Cancel
             </button>

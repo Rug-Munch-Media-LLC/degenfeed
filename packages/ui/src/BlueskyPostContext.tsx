@@ -108,7 +108,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
 
         <div className="flex-1 min-w-0">
           <span className="text-sm font-semibold text-gray-200">AT Protocol</span>
-          {did && <span className="ml-1.5 text-xs text-gray-500 font-mono">{formatDid(did)}</span>}
+          {did && <span className="ml-1.5 text-xs text-[var(--color-muted)] font-mono">{formatDid(did)}</span>}
         </div>
 
         {/* PDS badge */}
@@ -131,7 +131,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
         {did && (
           <div className="flex items-center gap-2 text-xs">
             <span className="w-16 flex-shrink-0 text-gray-600">DID</span>
-            <code className="truncate font-mono text-gray-400" title={did}>
+            <code className="truncate font-mono text-[var(--color-muted)]" title={did}>
               {did}
             </code>
             <button
@@ -140,7 +140,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
                 e.stopPropagation();
                 void navigator.clipboard.writeText(did);
               }}
-              className="flex-shrink-0 text-gray-700 transition-colors hover:text-gray-400"
+              className="flex-shrink-0 text-gray-700 transition-colors hover:text-[var(--color-muted)]"
               aria-label="Copy DID"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -163,7 +163,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
         {pdsHost && (
           <div className="flex items-center gap-2 text-xs">
             <span className="w-16 flex-shrink-0 text-gray-600">PDS</span>
-            <code className="truncate font-mono text-gray-400">{pdsHost}</code>
+            <code className="truncate font-mono text-[var(--color-muted)]">{pdsHost}</code>
           </div>
         )}
 
@@ -171,7 +171,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
         {rkey && (
           <div className="flex items-center gap-2 text-xs">
             <span className="w-16 flex-shrink-0 text-gray-600">Record</span>
-            <code className="truncate font-mono text-gray-400">{rkey}</code>
+            <code className="truncate font-mono text-[var(--color-muted)]">{rkey}</code>
           </div>
         )}
 
@@ -179,7 +179,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
         {atUri && (
           <div className="flex items-start gap-2 text-xs">
             <span className="w-16 flex-shrink-0 pt-0.5 text-gray-600">AT URI</span>
-            <code className="truncate font-mono text-[10px] text-gray-500 break-all" title={atUri}>
+            <code className="truncate font-mono text-[10px] text-[var(--color-muted)] break-all" title={atUri}>
               {atUri}
             </code>
           </div>
@@ -188,7 +188,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
         {/* Repository info */}
         <div className="flex items-center gap-2 text-xs">
           <span className="w-16 flex-shrink-0 text-gray-600">Author</span>
-          <span className="text-gray-400 truncate">{post.author.displayName}</span>
+          <span className="text-[var(--color-muted)] truncate">{post.author.displayName}</span>
           {post.author.handles.bluesky && (
             <span className="text-gray-600">@{post.author.handles.bluesky}</span>
           )}
@@ -201,12 +201,12 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
           className="border-t border-[var(--color-glass-border)] px-4 py-2"
           style={{ backgroundColor: `${BSKY_BLUE}08` }}
         >
-          <p className="text-[11px] text-gray-500">
-            <span className="font-medium text-gray-400">Custom feed:</span> {customFeed}
+          <p className="text-[11px] text-[var(--color-muted)]">
+            <span className="font-medium text-[var(--color-muted)]">Custom feed:</span> {customFeed}
             {feedCreator && (
               <>
                 {' '}
-                by <span className="text-gray-400">@{feedCreator}</span>
+                by <span className="text-[var(--color-muted)]">@{feedCreator}</span>
               </>
             )}
           </p>

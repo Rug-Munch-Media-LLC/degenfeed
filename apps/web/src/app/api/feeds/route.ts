@@ -1,31 +1,20 @@
-import { NextResponse } from 'next/server';
-// TODO: Wire to worker backend
-import { MOCK_MY_FEEDS as mockCustomFeeds, MOCK_PUBLIC_FEEDS as mockPublicFeeds } from '../_mock-data';
+import { NextRequest, NextResponse } from 'next/server';
+import { proxyGet, proxyPost } from '../_proxy';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    return NextResponse.json({
-      data: {
-        myFeeds: mockCustomFeeds,
-        publicFeeds: mockPublicFeeds,
-      },
-      meta: { customCount: mockCustomFeeds.length, publicCount: mockPublicFeeds.length },
-    });
+    return await proxyGet('/api/custom-feeds', request);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error';
     return NextResponse.json({ error: message, status: 500 }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    return NextResponse.json(
-      { data: { ok: true, feed: { id: 'new-feed', ...body } } },
-      { status: 201 },
-    );
+    return await proxyPost('/api/custom-feeds', request);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Invalid request body';
     return NextResponse.json({ error: message, status: 400 }, { status: 400 });

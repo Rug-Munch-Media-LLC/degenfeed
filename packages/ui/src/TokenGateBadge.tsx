@@ -101,7 +101,7 @@ export function PostGateBadge({
     return (
       <div className="mb-3 rounded-xl border border-yellow-900/30 bg-yellow-950/20 p-4 text-center">
         <div className="mb-2 text-2xl">🔒</div>
-        <p className="mb-2 text-sm text-gray-300">
+        <p className="mb-2 text-sm text-[var(--color-muted)]">
           You need <span className="font-semibold text-yellow-300">{balance} {symbol}</span> on{' '}
           <span className="font-semibold">{chainLabel}</span> to view this content.
         </p>
@@ -124,7 +124,7 @@ export function PostGateBadge({
   return (
     <div className="mb-3 rounded-xl border border-yellow-900/30 bg-yellow-950/20 p-4 text-center">
       <div className="mb-2 text-2xl">🔒</div>
-      <p className="mb-3 text-sm text-gray-400">
+      <p className="mb-3 text-sm text-[var(--color-muted)]">
         Token-gated: Hold <span className="font-semibold text-yellow-300">{symbol}</span> to view
       </p>
       {viewerWallet ? (
@@ -140,7 +140,7 @@ export function PostGateBadge({
           {verifying ? 'Verifying...' : 'Verify Wallet'}
         </button>
       ) : (
-        <p className="text-xs text-gray-500">Connect your wallet to verify access</p>
+        <p className="text-xs text-[var(--color-muted)]">Connect your wallet to verify access</p>
       )}
       {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
     </div>

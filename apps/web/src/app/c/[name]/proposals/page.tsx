@@ -139,7 +139,7 @@ export default function ProposalsPage() {
       <div className="mx-auto max-w-4xl px-4 py-16 text-center">
         <div className="mb-4 text-4xl">🔍</div>
         <h1 className="text-xl font-bold text-[var(--color-fg)]">Community Not Found</h1>
-        <p className="mt-2 text-sm text-gray-500">{error}</p>
+        <p className="mt-2 text-sm text-[var(--color-muted)]">{error}</p>
         <Link href="/c" className="mt-6 inline-block btn-primary text-sm">
           Browse Communities
         </Link>
@@ -156,12 +156,12 @@ export default function ProposalsPage() {
             <div>
               <Link
                 href={`/c/${name}`}
-                className="text-sm text-gray-500 transition-colors hover:text-[var(--color-fg)]"
+                className="text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
               >
                 ← Back to {community?.displayName || 'community'}
               </Link>
               <h1 className="mt-1 text-xl font-bold text-[var(--color-fg)]">Proposals</h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[var(--color-muted)]">
                 Vote on community governance proposals
                 {community && ` — ${community.memberCount.toLocaleString()} members`}
               </p>
@@ -190,7 +190,7 @@ export default function ProposalsPage() {
               type="button"
               onClick={() => setActiveTab(tab)}
               className={`relative px-4 py-3 text-sm font-medium capitalize transition-colors ${
-                activeTab === tab ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
+                activeTab === tab ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
               }`}
             >
               {tab}
@@ -221,7 +221,7 @@ export default function ProposalsPage() {
           (activeProposals.length === 0 ? (
             <div className="py-12 text-center">
               <div className="mb-3 text-3xl">🗳️</div>
-              <p className="text-gray-400">No active proposals</p>
+              <p className="text-[var(--color-muted)]">No active proposals</p>
               <p className="mt-1 text-xs text-gray-600">Create one to start the discussion!</p>
             </div>
           ) : (
@@ -238,7 +238,7 @@ export default function ProposalsPage() {
           (pastProposals.length === 0 ? (
             <div className="py-12 text-center">
               <div className="mb-3 text-3xl">📜</div>
-              <p className="text-gray-400">No past proposals</p>
+              <p className="text-[var(--color-muted)]">No past proposals</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -307,7 +307,7 @@ function ProposalCard({
               {statusMeta.label}
             </span>
             {proposal.quorumPct !== undefined && (
-              <span className="text-[11px] text-gray-500">{proposal.quorumPct}% quorum</span>
+              <span className="text-[11px] text-[var(--color-muted)]">{proposal.quorumPct}% quorum</span>
             )}
           </div>
 
@@ -320,7 +320,7 @@ function ProposalCard({
           </h3>
 
           {/* Creator + time */}
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
             by {proposal.creator.slice(0, 6)}...{proposal.creator.slice(-4)} &middot;{' '}
             {new Date(proposal.createdAt).toLocaleDateString('en-US', {
               month: 'short',
@@ -332,7 +332,7 @@ function ProposalCard({
         {/* Vote stats */}
         <div className="shrink-0 text-right">
           <div className="text-lg font-bold text-[var(--color-fg)]">{totalVotes}</div>
-          <div className="text-[11px] text-gray-500">votes</div>
+          <div className="text-[11px] text-[var(--color-muted)]">votes</div>
         </div>
       </div>
 
@@ -371,7 +371,7 @@ function ProposalCard({
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="mt-2 text-xs text-gray-500 transition-colors hover:text-[var(--color-fg)]"
+        className="mt-2 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
       >
         {expanded ? '▲ Show less' : '▼ View details & vote'}
       </button>

@@ -40,7 +40,7 @@ export default function HomePage() {
         <h1 className="text-3xl font-bold tracking-tight text-[var(--color-fg)] sm:text-4xl">
           The social feed of <span className="gradient-text">web3</span>
         </h1>
-        <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+        <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-muted)]">
           Pick a network. Browse, search, and cross-post everywhere.
         </p>
       </div>
@@ -87,7 +87,7 @@ export default function HomePage() {
 
       {/* Trending niches — one click into a feed */}
       <div className="card">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-500">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
           Browse by Topic
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -106,7 +106,7 @@ export default function HomePage() {
             <a
               key={n.id}
               href={`/home/${n.id}`}
-              className="rounded-full border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/50 hover:text-[var(--color-fg)]"
+              className="rounded-full border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:border-degen-500/50 hover:text-[var(--color-fg)]"
             >
               #{n.label}
             </a>

@@ -54,7 +54,7 @@ export function DocToc({ contentSelector = 'main' }: { contentSelector?: string 
 
   return (
     <nav aria-label="Table of Contents" className="text-sm">
-      <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
         On this page
       </div>
       <ul className="space-y-1.5">
@@ -67,7 +67,7 @@ export function DocToc({ contentSelector = 'main' }: { contentSelector?: string 
               } ${
                 activeId === item.id
                   ? 'border-degen-400 text-degen-400 font-medium'
-                  : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-500'
+                  : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-muted)] hover:border-gray-500'
               }`}
             >
               {item.label}

@@ -102,7 +102,7 @@ export const EmbedModal = memo(function EmbedModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+            className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close"
           >
             <svg
@@ -135,7 +135,7 @@ export const EmbedModal = memo(function EmbedModal({
                 onChange={(e) => setShowBadge(e.target.checked)}
                 className="h-4 w-4 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
               />
-              <span className="text-xs text-gray-400">Show protocol badge</span>
+              <span className="text-xs text-[var(--color-muted)]">Show protocol badge</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -144,23 +144,23 @@ export const EmbedModal = memo(function EmbedModal({
                 onChange={(e) => setShowEngagement(e.target.checked)}
                 className="h-4 w-4 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
               />
-              <span className="text-xs text-gray-400">Show engagement stats</span>
+              <span className="text-xs text-[var(--color-muted)]">Show engagement stats</span>
             </label>
           </div>
 
           {/* Embed code */}
           <div>
-            <span className="mb-1 block text-xs font-medium text-gray-500">
+            <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
               Embed HTML
             </span>
             <div className="relative">
-              <pre className="max-h-40 overflow-y-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] p-3 text-xs text-gray-400 font-mono whitespace-pre-wrap break-all">
+              <pre className="max-h-40 overflow-y-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] p-3 text-xs text-[var(--color-muted)] font-mono whitespace-pre-wrap break-all">
                 {embedSnippet}
               </pre>
               <button
                 type="button"
                 onClick={handleCopy}
-                className="absolute right-2 top-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-medium text-gray-300 hover:text-[var(--color-fg)] transition-colors"
+                className="absolute right-2 top-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
               >
                 {copied ? '✓ Copied!' : 'Copy'}
               </button>
@@ -169,7 +169,7 @@ export const EmbedModal = memo(function EmbedModal({
 
           {/* Preview */}
           <div>
-            <span className="mb-1 block text-xs font-medium text-gray-500">
+            <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
               Preview
             </span>
             <div className="rounded-lg border border-[var(--color-border)] p-4">
@@ -216,7 +216,7 @@ export const EmbedModal = memo(function EmbedModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-[var(--color-border)] bg-transparent px-4 py-2 text-xs font-medium text-gray-400 hover:text-[var(--color-fg)] transition-colors"
+            className="rounded-lg border border-[var(--color-border)] bg-transparent px-4 py-2 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           >
             Close
           </button>

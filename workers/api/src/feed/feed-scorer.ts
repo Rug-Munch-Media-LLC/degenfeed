@@ -96,6 +96,20 @@ export function mergePreferences(
     engagementWeight: 1,
     diversityBoost: true,
   };
+  // Anonymous cookie preferences (lowest priority — fill gaps, never override scalars)
+  if (cookiePrefs) {
+    for (const n of cookiePrefs.preferredNiches) {
+      if (!mergedPrefs.preferredNiches.includes(n)) {
+        mergedPrefs.preferredNiches = [...mergedPrefs.preferredNiches, n];
+      }
+    }
+    for (const p of cookiePrefs.preferredPlatforms) {
+      if (!mergedPrefs.preferredPlatforms.includes(p)) {
+        mergedPrefs.preferredPlatforms = [...mergedPrefs.preferredPlatforms, p];
+      }
+    }
+  }
+  // Stored prefs (highest priority — override cookie + query gaps)
   if (storedPrefs) {
     for (const n of storedPrefs.preferredNiches) {
       if (!mergedPrefs.preferredNiches.includes(n)) {
@@ -110,17 +124,6 @@ export function mergePreferences(
     if (storedPrefs.recencyWeight) mergedPrefs.recencyWeight = storedPrefs.recencyWeight;
     if (storedPrefs.engagementWeight) mergedPrefs.engagementWeight = storedPrefs.engagementWeight;
     if (storedPrefs.diversityBoost === false) mergedPrefs.diversityBoost = false;
-  }
-  // Anonymous cookie preferences (lowest priority — overridden by query params and auth'd prefs)
-  if (cookiePrefs) {
-    for (const n of cookiePrefs.preferredNiches) {
-      if (!mergedPrefs.preferredNiches.includes(n)) mergedPrefs.preferredNiches.push(n);
-    }
-    for (const p of cookiePrefs.preferredPlatforms) {
-      if (!mergedPrefs.preferredPlatforms.includes(p)) mergedPrefs.preferredPlatforms.push(p);
-    }
-    if (cookiePrefs.recencyWeight) mergedPrefs.recencyWeight = cookiePrefs.recencyWeight;
-    if (cookiePrefs.engagementWeight) mergedPrefs.engagementWeight = cookiePrefs.engagementWeight;
   }
   return mergedPrefs;
 }

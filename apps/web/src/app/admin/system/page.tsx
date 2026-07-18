@@ -265,7 +265,7 @@ export default function AdminSystemPage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
-          <p className="mt-4 text-sm text-gray-500">Loading system settings…</p>
+          <p className="mt-4 text-sm text-[var(--color-muted)]">Loading system settings…</p>
         </div>
       </div>
     );
@@ -291,7 +291,7 @@ export default function AdminSystemPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--color-fg)]">System Settings</h1>
-        <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
+        <div className="mt-1 flex items-center gap-3 text-sm text-[var(--color-muted)]">
           <span>v{config.apiVersion}</span>
           <span>·</span>
           <span>build {config.buildVersion}</span>
@@ -317,7 +317,7 @@ export default function AdminSystemPage() {
             <p className="text-sm font-semibold text-[var(--color-fg)]">
               {config.maintenanceMode ? '⚠️ Maintenance Mode Active' : 'System Operating Normally'}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[var(--color-muted)]">
               {config.maintenanceMode
                 ? 'Users will see a maintenance page. API requests are restricted.'
                 : 'All systems operational. Maintenance mode is disabled.'}
@@ -353,7 +353,7 @@ export default function AdminSystemPage() {
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === tab.key
                 ? 'bg-degen-500/15 text-degen-400'
-                : 'text-gray-400 hover:bg-[var(--color-muted)]'
+                : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)]'
             }`}
           >
             {tab.label}
@@ -366,7 +366,7 @@ export default function AdminSystemPage() {
         <div className="space-y-6">
           {categories.map((cat) => (
             <div key={cat}>
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 capitalize">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)] capitalize">
                 {cat}
               </h3>
               <div className="space-y-2">
@@ -380,11 +380,11 @@ export default function AdminSystemPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-medium text-[var(--color-fg)]">{flag.label}</p>
-                          <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-gray-500">
+                          <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-[var(--color-muted)]">
                             {flag.key}
                           </code>
                         </div>
-                        <p className="mt-0.5 text-xs text-gray-500">{flag.description}</p>
+                        <p className="mt-0.5 text-xs text-[var(--color-muted)]">{flag.description}</p>
                       </div>
                       <button
                         type="button"
@@ -409,8 +409,8 @@ export default function AdminSystemPage() {
       {activeTab === 'limits' && (
         <div>
           <div className="mb-4 flex items-center gap-3">
-            <p className="text-sm text-gray-500">API rate limits and current utilization</p>
-            <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-500">
+            <p className="text-sm text-[var(--color-muted)]">API rate limits and current utilization</p>
+            <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]">
               {rateLimits.filter((r) => r.status === 'near_limit').length} near limit
             </span>
           </div>
@@ -418,22 +418,22 @@ export default function AdminSystemPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                     Endpoint
                   </th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                     Limit
                   </th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                     Window
                   </th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                     Current
                   </th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                     Usage
                   </th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                     Status
                   </th>
                 </tr>
@@ -446,9 +446,9 @@ export default function AdminSystemPage() {
                       <td className="px-4 py-3 font-mono text-xs text-[var(--color-fg)]">
                         {rl.endpoint}
                       </td>
-                      <td className="px-4 py-3 text-gray-400">{rl.limit}</td>
-                      <td className="px-4 py-3 text-gray-400">{rl.window}</td>
-                      <td className="px-4 py-3 text-gray-400">{rl.current}</td>
+                      <td className="px-4 py-3 text-[var(--color-muted)]">{rl.limit}</td>
+                      <td className="px-4 py-3 text-[var(--color-muted)]">{rl.window}</td>
+                      <td className="px-4 py-3 text-[var(--color-muted)]">{rl.current}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[var(--color-muted)]">
@@ -463,7 +463,7 @@ export default function AdminSystemPage() {
                               style={{ width: `${Math.min(usagePct, 100)}%` }}
                             />
                           </div>
-                          <span className="text-[10px] text-gray-500">{usagePct.toFixed(0)}%</span>
+                          <span className="text-[10px] text-[var(--color-muted)]">{usagePct.toFixed(0)}%</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -548,7 +548,7 @@ export default function AdminSystemPage() {
 function ConfigCard({ label, value, accent }: { label: string; value: string; accent?: 'green' }) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
         {label}
       </p>
       <p
@@ -575,7 +575,7 @@ function ConfigToggleRow({
     <div className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-5 py-4">
       <div>
         <p className="text-sm font-medium text-[var(--color-fg)]">{label}</p>
-        <p className="text-xs text-gray-500">{description}</p>
+        <p className="text-xs text-[var(--color-muted)]">{description}</p>
       </div>
       <button
         type="button"

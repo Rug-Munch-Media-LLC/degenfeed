@@ -478,7 +478,7 @@ export default function ShortsPage() {
                 />
               </svg>
             </div>
-            <p className="text-sm text-gray-400">Couldn&apos;t load shorts</p>
+            <p className="text-sm text-[var(--color-muted)]">Couldn&apos;t load shorts</p>
             <p className="max-w-xs text-center text-xs text-gray-600">{error}</p>
             <button
               type="button"
@@ -514,7 +514,7 @@ export default function ShortsPage() {
                 <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
               </svg>
             </div>
-            <p className="text-sm text-gray-400">No shorts yet</p>
+            <p className="text-sm text-[var(--color-muted)]">No shorts yet</p>
             <p className="max-w-xs text-center text-xs text-gray-600">
               No shorts available. Check back later — they appear here as they&apos;re discovered
               from YouTube, PeerTube, and other protocols.
@@ -522,7 +522,7 @@ export default function ShortsPage() {
             <button
               type="button"
               onClick={refresh}
-              className="rounded-lg border border-white/10 bg-white/5 px-5 py-2 text-xs font-medium text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-lg border border-white/10 bg-white/5 px-5 py-2 text-xs font-medium text-[var(--color-muted)] transition-colors hover:bg-white/10 hover:text-white"
             >
               Refresh
             </button>
@@ -601,12 +601,12 @@ export default function ShortsPage() {
                 <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-gray-400">You&apos;re all caught up</p>
+            <p className="text-sm font-medium text-[var(--color-muted)]">You&apos;re all caught up</p>
             <p className="text-xs text-gray-600">More shorts coming soon</p>
             <button
               type="button"
               onClick={refresh}
-              className="rounded-lg border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-lg border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:bg-white/10 hover:text-white"
             >
               Refresh
             </button>
@@ -649,7 +649,7 @@ export default function ShortsPage() {
                     className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-medium transition-all ${
                       active
                         ? 'border-degen-500/40 bg-degen-500/15 text-degen-400'
-                        : 'border-white/10 bg-black/40 text-gray-500 hover:border-white/20 hover:text-gray-300'
+                        : 'border-white/10 bg-black/40 text-[var(--color-muted)] hover:border-white/20 hover:text-[var(--color-muted)]'
                     }`}
                   >
                     {topic}
@@ -664,7 +664,7 @@ export default function ShortsPage() {
         <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between px-4 pt-4">
           <a
             href="/feed"
-            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-xs font-medium text-gray-400 backdrop-blur-lg transition-all hover:border-degen-500/30 hover:text-degen-400"
+            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] backdrop-blur-lg transition-all hover:border-degen-500/30 hover:text-degen-400"
             aria-label="Back to feed"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -699,7 +699,7 @@ export default function ShortsPage() {
           {/* Index indicator */}
           {posts.length > 0 && (
             <div className="pointer-events-auto rounded-full border border-white/10 bg-black/60 px-2.5 py-1 backdrop-blur-lg">
-              <span className="font-mono text-[11px] text-gray-500">
+              <span className="font-mono text-[11px] text-[var(--color-muted)]">
                 <span className="text-white/80">{currentIndex + 1}</span>
                 <span className="mx-1">/</span>
                 <span>{posts.length}</span>

@@ -268,7 +268,7 @@ export function PeerTubeTipOverlay({
         {/* ── Quick-tip menu ── */}
         {showTipMenu && (
           <div className="absolute bottom-full left-0 mb-2 flex flex-col gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-2 shadow-2xl z-50 min-w-[130px] backdrop-blur-sm">
-            <div className="px-2 py-1 text-[10px] text-gray-500 border-b border-[var(--color-border)] mb-1">
+            <div className="px-2 py-1 text-[10px] text-[var(--color-muted)] border-b border-[var(--color-border)] mb-1">
               ⚡ Tip {creatorName}
             </div>
             <div className="flex flex-col gap-1">
@@ -277,7 +277,7 @@ export function PeerTubeTipOverlay({
                   key={amount}
                   type="button"
                   onClick={() => handleTip(amount)}
-                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-degen-500/10 hover:text-degen-400 text-gray-300"
+                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-degen-500/10 hover:text-degen-400 text-[var(--color-muted)]"
                 >
                   <span>${amount}</span>
                   <span className="text-[10px] text-gray-600">USD</span>

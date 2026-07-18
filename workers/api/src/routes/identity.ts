@@ -15,15 +15,36 @@ import { requireSession } from '../session';
 
 // ─── Existing: resolve a handle ───────────────────────────────────────
 
-export async function handleResolveIdentity(request: Request, _env: Env): Promise<Response> {
+export async function handleResolveIdentity(request: Request, env: Env): Promise<Response> {
   const handle = new URL(request.url).searchParams.get('handle');
   if (!handle) {
     return jsonResponse({ error: 'Missing handle parameter' }, 400);
   }
+
+  // Check KV cache first (5 minute TTL for resolved handles)
+  const cacheKey = `resolve:${encodeURIComponent(handle.toLowerCase())}`;
+  try {
+    const cached = await env.CACHE?.get(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      return jsonResponse({ data: parsed, cached: true });
+    }
+  } catch {
+    /* cache miss or unavailable — proceed */
+  }
+
   const result = await resolveHandle(handle);
   if (!result) {
     return jsonResponse({ error: 'Handle not found', handle }, 404);
   }
+
+  // Cache the result (5 min TTL)
+  try {
+    await env.CACHE?.put(cacheKey, JSON.stringify(result), { expirationTtl: 300 });
+  } catch {
+    /* cache write failure is non-fatal */
+  }
+
   return jsonResponse({ data: result });
 }
 
@@ -181,6 +202,9 @@ function validateProtocolIdentity(
   | RssIdentityInput
   | PeerTubeIdentityInput
   | null {
+  // Extract optional manualLinking flag from all inputs
+  const manualLinking = Boolean(data.manualLinking);
+
   switch (protocol) {
     case 'nostr': {
       const npub = String(data.npub || '');
@@ -189,6 +213,7 @@ function validateProtocolIdentity(
       return {
         npub: npub || `npub1${pubkey.slice(0, 8)}...`,
         relays: Array.isArray(data.relays) ? data.relays.map(String) : [],
+        ...(manualLinking ? { manualLinking: true } : {}),
       };
     }
     case 'farcaster': {
@@ -196,53 +221,54 @@ function validateProtocolIdentity(
       const username = String(data.username || '');
       const custodyAddress = String(data.custodyAddress || '');
       if (!fid || !username) return null;
-      return { fid, username, custodyAddress };
+      return { fid, username, custodyAddress, ...(manualLinking ? { manualLinking: true } : {}) };
     }
     case 'lens': {
       const profileId = String(data.profileId || '');
       const handle = String(data.handle || '');
       if (!profileId && !handle) return null;
-      return { profileId, handle };
+      return { profileId, handle, ...(manualLinking ? { manualLinking: true } : {}) };
     }
     case 'bluesky': {
       const did = String(data.did || '');
       const handle = String(data.handle || '');
       if (!did && !handle) return null;
-      return { did, handle };
+      return { did, handle, ...(manualLinking ? { manualLinking: true } : {}) };
     }
     case 'mastodon': {
       const handle = String(data.handle || '');
       const instance = String(data.instance || '');
       if (!handle) return null;
-      return { handle, instance: instance || 'social.degenfeed.xyz' };
+      return { handle, instance: instance || 'social.degenfeed.xyz', ...(manualLinking ? { manualLinking: true } : {}) };
     }
     case 'reddit': {
       const username = String(data.username || '');
       if (!username) return null;
-      return { username };
+      return { username, ...(manualLinking ? { manualLinking: true } : {}) };
     }
     case 'lemmy': {
       const username = String(data.username || '');
       const instance = String(data.instance || '');
       if (!username) return null;
-      return { username, instance: instance || 'community.degenfeed.xyz' };
+      return { username, instance: instance || 'community.degenfeed.xyz', ...(manualLinking ? { manualLinking: true } : {}) };
     }
     case 'threads': {
       const username = String(data.username || '');
-      if (!username) return null;
-      return { username };
+      const did = String(data.did || '');
+      if (!username && !did) return null;
+      return { username, ...(did ? { did } : {}), ...(manualLinking ? { manualLinking: true } : {}) };
     }
     case 'rss': {
       const url = String(data.url || '');
       if (!url) return null;
-      return { url };
+      return { url, ...(manualLinking ? { manualLinking: true } : {}) };
     }
     case 'peertube': {
       const username = String(data.username || '');
       const channelId = String(data.channelId || '');
       const instance = String(data.instance || '');
       if (!username && !channelId) return null;
-      return { username, channelId, instance: instance || 'video.degenfeed.xyz' };
+      return { username, channelId, instance: instance || 'video.degenfeed.xyz', ...(manualLinking ? { manualLinking: true } : {}) };
     }
     default:
       return null;

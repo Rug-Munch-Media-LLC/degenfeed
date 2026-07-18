@@ -84,6 +84,27 @@ export function getLinkedProtocols(
     });
   }
   if (identity.reddit) protocols.push({ protocol: 'reddit', handle: identity.reddit.username });
+  if (identity.threads) {
+    protocols.push({
+      protocol: 'threads',
+      handle: identity.threads.username || identity.threads.did || '',
+    });
+  }
+  if (identity.lemmy) {
+    protocols.push({
+      protocol: 'lemmy',
+      handle: identity.lemmy.instance
+        ? `${identity.lemmy.username}@${identity.lemmy.instance}`
+        : identity.lemmy.username,
+    });
+  }
+  if (identity.rss) protocols.push({ protocol: 'rss', handle: identity.rss.url });
+  if (identity.peertube) {
+    protocols.push({
+      protocol: 'peertube',
+      handle: identity.peertube.username || identity.peertube.channelId || '',
+    });
+  }
 
   return protocols;
 }

@@ -143,14 +143,14 @@ function CommunityCard({ community }: { community: FederatedCommunity }) {
           </p>
 
           {/* Niche badge */}
-          <span className="mt-1.5 inline-block rounded-full bg-[var(--color-overlay)] px-1.5 py-0.5 text-[9px] text-gray-500">
+          <span className="mt-1.5 inline-block rounded-full bg-[var(--color-overlay)] px-1.5 py-0.5 text-[9px] text-[var(--color-muted)]">
             {community.niche}
           </span>
         </div>
       </div>
 
       {/* Stats row */}
-      <div className="mt-auto flex items-center gap-4 border-t border-white/[0.04] px-4 py-2.5 text-[11px] text-gray-500">
+      <div className="mt-auto flex items-center gap-4 border-t border-white/[0.04] px-4 py-2.5 text-[11px] text-[var(--color-muted)]">
         <span className="flex items-center gap-1">
           <span className="font-semibold text-[var(--color-fg)]">
             {formatCount(community.subscribers)}
@@ -297,7 +297,7 @@ export default function BrowseCommunitiesPage() {
           {/* Search + Sort row */}
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]">
                 🔍
               </span>
               <input
@@ -348,7 +348,7 @@ export default function BrowseCommunitiesPage() {
                   className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
                     isActive
                       ? 'bg-degen-500/15 text-degen-400 ring-1 ring-degen-500/30'
-                      : 'border border-white/10 bg-white/[0.03] text-gray-500 hover:border-degen-500/30 hover:text-[var(--color-fg)]'
+                      : 'border border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:border-degen-500/30 hover:text-[var(--color-fg)]'
                   }`}
                 >
                   <span>{cat.emoji}</span>
@@ -381,7 +381,7 @@ export default function BrowseCommunitiesPage() {
         {!loading && !error && communities.length === 0 && (
           <div className="py-20 text-center">
             <div className="mb-4 text-5xl">🔍</div>
-            <p className="text-lg text-gray-500">
+            <p className="text-lg text-[var(--color-muted)]">
               {search || category ? 'No communities match your filters.' : 'No communities found.'}
             </p>
             {(search || category) && (

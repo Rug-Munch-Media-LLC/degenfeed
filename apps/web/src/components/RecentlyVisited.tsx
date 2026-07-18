@@ -19,7 +19,7 @@ export function RecentlyVisited() {
         <button
           type="button"
           onClick={clearRecent}
-          className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+          className="text-[10px] text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
           aria-label="Clear recent pages"
         >
           Clear
@@ -30,13 +30,13 @@ export function RecentlyVisited() {
           <li key={`${page.href}-${page.timestamp}`}>
             <Link
               href={page.href}
-              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-300 transition-colors hover:bg-white/5"
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--color-muted)] transition-colors hover:bg-white/5"
             >
-              <span className="text-xs text-gray-500" aria-hidden="true">
+              <span className="text-xs text-[var(--color-muted)]" aria-hidden="true">
                 ·
               </span>
               <span className="truncate">{page.label}</span>
-              <span className="ml-auto text-[10px] text-gray-600">
+              <span className="ml-auto text-[10px] text-[var(--color-muted)]">
                 {formatRelativeTime(page.timestamp)}
               </span>
             </Link>

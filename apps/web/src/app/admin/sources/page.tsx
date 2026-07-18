@@ -324,7 +324,7 @@ export default function AdminSourcesPage() {
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
         <div className="mb-6 text-5xl">🔒</div>
         <h1 className="mb-4 text-2xl font-bold text-[var(--color-fg)]">Admin Access Required</h1>
-        <p className="mb-8 text-gray-400">
+        <p className="mb-8 text-[var(--color-muted)]">
           You need an admin wallet to access the source discovery dashboard.
         </p>
         <a href="/home" className="btn-primary inline-block">
@@ -338,7 +338,7 @@ export default function AdminSourcesPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-20 text-center">
         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
-        <p className="mt-4 text-gray-500">Loading source discovery…</p>
+        <p className="mt-4 text-[var(--color-muted)]">Loading source discovery…</p>
       </div>
     );
   }
@@ -810,7 +810,7 @@ export default function AdminSourcesPage() {
                             ? 'bg-yellow-900/20 text-yellow-400'
                             : signals.lifecycle === 'dormant'
                               ? 'bg-red-900/20 text-red-400'
-                              : 'bg-gray-900/20 text-gray-400'
+                              : 'bg-[var(--color-card)]/20 text-[var(--color-muted)]'
                       }`}
                     >
                       {signals.lifecycle}

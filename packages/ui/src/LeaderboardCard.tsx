@@ -42,7 +42,7 @@ const RANK_COLORS: Record<number, { bg: string; text: string; label: string }> =
   },
   2: {
     bg: 'from-gray-300/20 to-gray-400/10 border-gray-400/40',
-    text: 'text-gray-300',
+    text: 'text-[var(--color-muted)]',
     label: '🥈',
   },
   3: {
@@ -216,7 +216,7 @@ export function MiniLeaderboard({ entries, title = '🏆 Top Creators' }: {
         </a>
       </div>
       {top3.length === 0 ? (
-        <p className="text-xs text-gray-500">No data yet.</p>
+        <p className="text-xs text-[var(--color-muted)]">No data yet.</p>
       ) : (
         <div className="space-y-2">
           {top3.map((entry) => {

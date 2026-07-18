@@ -89,7 +89,7 @@ export const MastodonInstanceContext = memo(function MastodonInstanceContext({
           </div>
 
           {description && (
-            <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">{description}</p>
+            <p className="mt-0.5 text-xs text-[var(--color-muted)] line-clamp-1">{description}</p>
           )}
 
           {/* Stats row */}
@@ -137,8 +137,8 @@ export const MastodonInstanceContext = memo(function MastodonInstanceContext({
       {federatedFrom && federatedFrom !== cleanInstance && (
         <div className="border-t border-[var(--color-glass-border)] px-4 py-2">
           <p className="text-[11px] leading-relaxed text-gray-600">
-            <span className="font-medium text-gray-500">Fediverse:</span> This post originated on{' '}
-            <span className="text-gray-400">{federatedFrom.replace(/^https?:\/\//, '')}</span> and
+            <span className="font-medium text-[var(--color-muted)]">Fediverse:</span> This post originated on{' '}
+            <span className="text-[var(--color-muted)]">{federatedFrom.replace(/^https?:\/\//, '')}</span> and
             was federated to {displayName}.
           </p>
         </div>

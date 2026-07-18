@@ -65,7 +65,7 @@ export function QuickJumpSidebar({ color, activeTab, onJump }: QuickJumpSidebarP
                   className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition-all ${
                     isActive
                       ? 'text-[var(--color-fg)]'
-                      : 'text-gray-500 hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
+                      : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
                   }`}
                   style={
                     isActive
@@ -121,7 +121,7 @@ export function QuickJumpSidebar({ color, activeTab, onJump }: QuickJumpSidebarP
                   type="button"
                   onClick={() => handleJump(item.id)}
                   className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
-                    isActive ? 'font-medium' : 'text-gray-500'
+                    isActive ? 'font-medium' : 'text-[var(--color-muted)]'
                   }`}
                   style={
                     isActive

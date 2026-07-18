@@ -29,7 +29,7 @@ export default function QuickstartPage() {
       <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">
         5-Minute Quickstart
       </h1>
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400">
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
         Get up and running with DegenFeed in five minutes. By the end, you&rsquo;ll have your wallet
         connected, a protocol linked, and you&rsquo;ll have made your first cross-protocol post and
         tip.
@@ -37,7 +37,7 @@ export default function QuickstartPage() {
 
       {/* Step 1 */}
       <H2 id="connect-wallet">Step 1: Connect Your Wallet</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         You don&rsquo;t need a wallet to <em>browse</em> DegenFeed, but connecting one unlocks
         posting, tipping, and identity features. DegenFeed supports both Solana and EVM wallets.
       </p>
@@ -45,7 +45,7 @@ export default function QuickstartPage() {
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
           <h3 className="mb-2 text-sm font-semibold text-[var(--color-fg)]">Solana</h3>
-          <ul className="space-y-1.5 text-sm text-gray-400">
+          <ul className="space-y-1.5 text-sm text-[var(--color-muted)]">
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
               Phantom
@@ -62,7 +62,7 @@ export default function QuickstartPage() {
         </div>
         <div className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
           <h3 className="mb-2 text-sm font-semibold text-[var(--color-fg)]">EVM</h3>
-          <ul className="space-y-1.5 text-sm text-gray-400">
+          <ul className="space-y-1.5 text-sm text-[var(--color-muted)]">
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
               MetaMask
@@ -92,7 +92,7 @@ export default function QuickstartPage() {
         <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
           Screenshot
         </div>
-        <div className="mt-2 text-sm text-gray-500">
+        <div className="mt-2 text-sm text-[var(--color-muted)]">
           The Connect Wallet button appears in the top-right corner of the header. Click it and
           approve the connection in your wallet extension.
         </div>
@@ -100,7 +100,7 @@ export default function QuickstartPage() {
 
       {/* Step 2 */}
       <H2 id="link-protocol">Step 2: Link Your First Protocol</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         After connecting a wallet, link your social accounts to post and engage across protocols. Go
         to <strong>Settings → Connected Accounts</strong> to get started.
       </p>
@@ -135,7 +135,7 @@ export default function QuickstartPage() {
 
       {/* Step 3 */}
       <H2 id="browse-feed">Step 3: Browse Your Feed</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Once you&rsquo;ve linked at least one protocol, your feed will populate with posts from that
         network. Visit the home page to see your aggregated timeline.
       </p>
@@ -159,25 +159,25 @@ export default function QuickstartPage() {
             className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3"
           >
             <span className="font-mono text-xs font-bold text-degen-400">{s.mode}</span>
-            <p className="mt-1 text-xs text-gray-500">{s.desc}</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">{s.desc}</p>
           </div>
         ))}
       </div>
 
       <H3 id="filters">Filters</H3>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Narrow your feed with filters available in the sidebar or as URL parameters:
       </p>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--color-glass-border)]">
-              <th className="py-2 pr-4 font-medium text-gray-400">Parameter</th>
-              <th className="py-2 pr-4 font-medium text-gray-400">Example</th>
-              <th className="py-2 font-medium text-gray-400">Description</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Parameter</th>
+              <th className="py-2 pr-4 font-medium text-[var(--color-muted)]">Example</th>
+              <th className="py-2 font-medium text-[var(--color-muted)]">Description</th>
             </tr>
           </thead>
-          <tbody className="text-gray-500">
+          <tbody className="text-[var(--color-muted)]">
             {[
               ['protocols', 'nostr,farcaster', 'Comma-separated protocol filter'],
               ['category', 'defi', 'Niche: defi, ai, bitcoin, ethereum, solana, security'],
@@ -204,7 +204,7 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
 
       {/* Step 4 */}
       <H2 id="first-post">Step 4: Make Your First Post</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Ready to publish to the multiverse? Here&rsquo;s how to make your first cross-protocol post:
       </p>
 
@@ -221,13 +221,13 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
           ],
           ['Click Post', 'Your content is sent to each selected protocol simultaneously.'],
         ].map(([step, desc], i) => (
-          <li key={step} className="flex gap-3 text-sm leading-relaxed text-gray-400">
+          <li key={step} className="flex gap-3 text-sm leading-relaxed text-[var(--color-muted)]">
             <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-degen-500/10 text-xs font-bold text-degen-400">
               {i + 1}
             </span>
             <div>
-              <strong className="text-gray-300">{step}</strong>
-              <p className="mt-0.5 text-gray-500">{desc}</p>
+              <strong className="text-[var(--color-muted)]">{step}</strong>
+              <p className="mt-0.5 text-[var(--color-muted)]">{desc}</p>
             </div>
           </li>
         ))}
@@ -243,14 +243,14 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
         <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
           Screenshot
         </div>
-        <div className="mt-2 text-sm text-gray-500">
+        <div className="mt-2 text-sm text-[var(--color-muted)]">
           The compose dialog shows protocol selector checkboxes, text area, and media upload.
         </div>
       </div>
 
       {/* Step 5 */}
       <H2 id="tip-creator">Step 5: Tip a Creator</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Show appreciation for content you love by sending a crypto tip. DegenFeed supports tips in
         ETH, SOL, USDC, and Lightning Network zaps.
       </p>
@@ -272,13 +272,13 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
             'Approve the transaction. The tip goes directly to the creator on-chain.',
           ],
         ].map(([step, desc], i) => (
-          <li key={step} className="flex gap-3 text-sm leading-relaxed text-gray-400">
+          <li key={step} className="flex gap-3 text-sm leading-relaxed text-[var(--color-muted)]">
             <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-degen-500/10 text-xs font-bold text-degen-400">
               {i + 1}
             </span>
             <div>
-              <strong className="text-gray-300">{step}</strong>
-              <p className="mt-0.5 text-gray-500">{desc}</p>
+              <strong className="text-[var(--color-muted)]">{step}</strong>
+              <p className="mt-0.5 text-[var(--color-muted)]">{desc}</p>
             </div>
           </li>
         ))}
@@ -302,7 +302,7 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
             className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4 text-center transition-all hover:border-degen-500/30 hover:bg-degen-500/[0.03]"
           >
             <div className="text-sm font-medium text-[var(--color-fg)]">{link.title}</div>
-            <p className="mt-1 text-xs text-gray-500">{link.desc}</p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">{link.desc}</p>
           </a>
         ))}
       </div>

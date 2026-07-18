@@ -449,7 +449,7 @@ export default function FeedPage() {
   );
 
   /** Quick-tune: boost a topic by +5 (capped at 100) */
-  const _handleShowMoreLikeThis = useCallback(
+  const handleShowMoreLikeThis = useCallback(
     (topic: string) => {
       const topicId = TOPICS.find(
         (t) => t.id === topic || t.label.toLowerCase() === topic.toLowerCase(),
@@ -470,7 +470,7 @@ export default function FeedPage() {
   );
 
   /** Quick-tune: demote a topic by -5 (capped at 0) */
-  const _handleShowLessLikeThis = useCallback(
+  const handleShowLessLikeThis = useCallback(
     (topic: string) => {
       const topicId = TOPICS.find(
         (t) => t.id === topic || t.label.toLowerCase() === topic.toLowerCase(),
@@ -1752,6 +1752,8 @@ export default function FeedPage() {
                 onAdminRemove={handleAdminRemove}
                 onAdminBan={handleAdminBan}
                 onWhyThisPost={handleWhyThisPost}
+                onShowMoreLikeThis={handleShowMoreLikeThis}
+                onShowLessLikeThis={handleShowLessLikeThis}
                 onContextMenu={(e: React.MouseEvent, postId: string) => {
                   const url = `${window.location.origin}/post/${postId}`;
                   handleContextMenu(e, postId, url);

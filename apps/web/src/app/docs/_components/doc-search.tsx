@@ -394,7 +394,7 @@ export function DocSearch() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-2 rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] px-3 py-2 text-sm text-gray-500 transition-colors hover:border-degen-500/30 hover:text-gray-300"
+        className="flex w-full items-center gap-2 rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] px-3 py-2 text-sm text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-[var(--color-muted)]"
         aria-label="Search documentation"
       >
         <svg
@@ -440,7 +440,7 @@ export function DocSearch() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="text-gray-500"
+                className="text-[var(--color-muted)]"
                 role="img"
                 aria-labelledby="search-icon-title"
               >
@@ -455,7 +455,7 @@ export function DocSearch() {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Search documentation..."
-                className="flex-1 bg-transparent text-sm text-[var(--color-fg)] outline-none placeholder:text-gray-500"
+                className="flex-1 bg-transparent text-sm text-[var(--color-fg)] outline-none placeholder:text-[var(--color-muted)]"
                 aria-label="Search documentation"
               />
               <kbd className="rounded border border-[var(--color-glass-border)] px-1.5 py-0.5 font-mono text-[10px] text-gray-600">
@@ -468,7 +468,7 @@ export function DocSearch() {
               <div className="max-h-80 overflow-y-auto p-2">
                 {Object.entries(grouped).map(([section, items]) => (
                   <div key={section} className="mb-2">
-                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                       {section}
                     </div>
                     {items.map((item, _i) => {
@@ -481,7 +481,7 @@ export function DocSearch() {
                           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                             globalIdx === selectedIndex
                               ? 'bg-degen-500/10 text-degen-400'
-                              : 'text-gray-300 hover:bg-white/[0.03]'
+                              : 'text-[var(--color-muted)] hover:bg-white/[0.03]'
                           }`}
                         >
                           <span className="flex-1 truncate">{item.title}</span>
@@ -498,14 +498,14 @@ export function DocSearch() {
 
             {/* Empty state */}
             {query.trim() && results.length === 0 && (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
+              <div className="px-4 py-8 text-center text-sm text-[var(--color-muted)]">
                 No results found for &ldquo;{query}&rdquo;
               </div>
             )}
 
             {!query.trim() && (
               <div className="px-4 py-6">
-                <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)] mb-3">
                   Popular searches
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -523,7 +523,7 @@ export function DocSearch() {
                       key={tag}
                       type="button"
                       onClick={() => setQuery(tag)}
-                      className="rounded-lg border border-[var(--color-glass-border)] px-2.5 py-1 text-xs text-gray-400 transition-colors hover:border-degen-500/30 hover:text-degen-400"
+                      className="rounded-lg border border-[var(--color-glass-border)] px-2.5 py-1 text-xs text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
                     >
                       {tag}
                     </button>

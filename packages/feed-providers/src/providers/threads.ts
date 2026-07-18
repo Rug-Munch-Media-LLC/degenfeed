@@ -1,106 +1,75 @@
 /**
- * ⚠️ EXPERIMENTAL — Threads has no public read API. This provider uses
- * HTML scraping and will break. Use at your own risk. Consider this a
- * best-effort integration only.
+ * Threads (via ActivityPub + Bridgy Fed)
  *
- * ⚠️ ThreadsProvider — Dual-path Threads content fetcher
+ * Replaces the broken HTML scraper. Threads content now arrives through
+ * ActivityPub federation on our GotoSocial instance (social.degenfeed.xyz).
  *
- * ⚠️ ⚠️ ⚠️  CRITICAL WARNING  ⚠️ ⚠️ ⚠️
- * Threads has NO public read API for arbitrary profiles. Meta's official
- * Threads API (graph.threads.net) is a PUBLISHING API only — it lets
- * authenticated users read their OWN threads, not arbitrary public feeds.
+ * Architecture:
+ *   Threads user ──ActivityPub──▶ social.degenfeed.xyz ──▶ this provider ──▶ feed
+ *   Bluesky user  ──Bridgy Fed──▶ Fediverse ──▶ social.degenfeed.xyz ──▶ feed
  *
- * This provider uses HTML SCRAPING of public profile pages. When Meta
- * changes their page structure (which they do regularly), this will break.
- * This is a BEST-EFFORT integration — DO NOT rely on it for critical paths.
+ * How content flows:
+ *   1. READ (this provider): We follow Threads profiles from our
+ *      Mastodon/GotoSocial instance at social.degenfeed.xyz. Threads supports
+ *      ActivityPub federation, so their posts arrive as fediverse statuses.
+ *      This provider queries the Mastodon API to find and return them as
+ *      Threads protocol posts.
+ *   2. Bluesky accounts bridged through Bridgy Fed also federate to our
+ *      instance and appear here (via the `#threads` tag or follow relationship).
+ *   3. WRITE (publish): See publish.ts — uses Meta Graph API (authenticated)
+ *      or ActivityPub bridge (publish to social.degenfeed.xyz with `#threads`).
+ *   4. ENGAGE: Not supported from this provider. Use the Threads app or your
+ *      Mastodon client for likes, replies, and reposts.
  *
- * If you need reliable Threads data, petition Meta to open a public API:
- *   https://developers.facebook.com/support/
+ * Configuration:
+ *   Set BRIDGY_FED_ENABLED=true or ACTIVITYPUB_BRIDGE_ENABLED=true to activate
+ *   this provider. Without it, Threads returns empty (no scraping, no failures).
  *
- * Strategy:
- *   1. READ curated handles: HTML scraper (public profile pages).
- *      Brittle but there is no alternative.
- *   2. READ authenticated user's feed: official graph.threads.net API.
- *      Used via @degenfeed/threads-sdk when the user has signed in.
- *   3. WRITE (publish): official graph.threads.net API (see publish.ts).
- *   4. ENGAGE: NOT supported. The Threads API does not support liking,
- *      reposting, or replying to other people's threads. Users must use
- *      the Threads app for engagement.
- *
- * Circuit breaker:
- *   If the scraper fails more than 5 times in a rolling 1-hour window,
- *   the circuit opens and Threads is SKIPPED for 30 minutes to avoid
- *   wasted compute and error noise. The breaker resets automatically.
+ * isAvailable():
+ *   Returns true when BRIDGY_FED_ENABLED=true or ACTIVITYPUB_BRIDGE_ENABLED=true.
+ *   When false, returns empty feed with a notice — no more scraping failures.
  */
 
 import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import type { Embed, Protocol, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
-import { DEFAULT_TIMEOUT_MS, fetchText, withTimeout } from '../utils';
+import { DEFAULT_TIMEOUT_MS, fetchJson, withTimeout } from '../utils';
 
-// ─── Circuit breaker ─────────────────────────────────────────────────────
-// If scrapeProfile fails >5× in a rolling hour, skip for 30 min.
+// ─── Configuration ───────────────────────────────────────────────────
 
-interface CircuitBreakerState {
-  failureTimestamps: number[];
-  openUntil: number;
-}
+/**
+ * Our Mastodon/GotoSocial instance. Threads content arrives here via
+ * ActivityPub federation. This provider queries it for Threads posts.
+ */
+export const GTS_INSTANCE = 'https://social.degenfeed.xyz';
 
-let circuitBreaker: CircuitBreakerState = {
-  failureTimestamps: [],
-  openUntil: 0,
-};
-
-const CB_THRESHOLD = 5;        // failures before opening
-const CB_WINDOW_MS = 60 * 60 * 1000; // 1 hour rolling window
-const CB_COOLDOWN_MS = 30 * 60 * 1000; // 30 minute cooldown
-
-function isCircuitOpen(): boolean {
-  const now = Date.now();
-  if (circuitBreaker.openUntil > now) return true;
-  // Prune timestamps outside the rolling window
-  circuitBreaker.failureTimestamps = circuitBreaker.failureTimestamps.filter(
-    (t) => now - t < CB_WINDOW_MS,
-  );
-  return false;
-}
-
-function recordFailure(): void {
-  const now = Date.now();
-  circuitBreaker.failureTimestamps.push(now);
-  // Prune old timestamps
-  circuitBreaker.failureTimestamps = circuitBreaker.failureTimestamps.filter(
-    (t) => now - t < CB_WINDOW_MS,
-  );
-  if (circuitBreaker.failureTimestamps.length > CB_THRESHOLD) {
-    circuitBreaker.openUntil = now + CB_COOLDOWN_MS;
-    console.warn(
-      `[threads] Circuit opened for ${CB_COOLDOWN_MS / 60000} min after ${circuitBreaker.failureTimestamps.length} failures`,
-    );
-  }
-}
-
-function recordSuccess(): void {
-  // On success, prune old timestamps but keep the array (resets on cooldown)
-  const now = Date.now();
-  circuitBreaker.failureTimestamps = circuitBreaker.failureTimestamps.filter(
-    (t) => now - t < CB_WINDOW_MS,
-  );
-}
-
-export const THREADS_WEB_URL = 'https://www.threads.net';
-function getFlaresolverrUrl(): string {
+/**
+ * Check whether the Bridgy Fed / ActivityPub bridge is configured.
+ * When false, the Threads provider returns empty (no scraping, no errors).
+ */
+export function isBridgyConfigured(): boolean {
   try {
-    const p = (globalThis as typeof globalThis & { process?: { env?: Record<string, string | undefined> } }).process;
-    const url = p?.env?.FLARESOLVERR_URL;
-    if (url) return url;
+    const p = (
+      globalThis as typeof globalThis & {
+        process?: { env?: Record<string, string | undefined> };
+      }
+    ).process;
+    const env = p?.env;
+    return !!(
+      env?.BRIDGY_FED_ENABLED === 'true' || env?.ACTIVITYPUB_BRIDGE_ENABLED === 'true'
+    );
   } catch {
-    // Not in a Node.js environment
+    return false;
   }
-  return '';
 }
-export const FLARESOLVERR_URL = getFlaresolverrUrl();
 
+/** Semantic alias for isBridgyConfigured. */
+export const isAvailable = isBridgyConfigured;
+
+/**
+ * Curated Threads handles that we follow from our Mastodon instance.
+ * Their posts arrive via ActivityPub federation.
+ */
 export const CURATED_THREADS_HANDLES = [
   'zuck',
   'mosseri',
@@ -120,219 +89,387 @@ export const CURATED_THREADS_HANDLES = [
   'solana',
 ];
 
-interface ThreadsPost {
+// ─── GotoSocial / Mastodon API types (subset) ────────────────────────
+
+interface GtSAccount {
   id: string;
-  text: string;
-  createdAt: number;
-  likes: number;
-  replies: number;
-  author?: { username?: string; name?: string; avatar?: string };
+  acct: string;
+  username: string;
+  display_name: string;
+  avatar: string;
+  header: string;
+  header_static: string;
+  note: string;
+  followers_count: number;
+  following_count: number;
+  fields: Array<{ name: string; value: string; verified_at: string | null }>;
 }
 
-function threadsHeaders(): Record<string, string> {
-  return {
-    'user-agent':
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'accept-language': 'en-US,en;q=0.9',
+interface GtSMediaAttachment {
+  type: 'image' | 'video' | 'gifv' | 'audio' | 'unknown';
+  url: string;
+}
+
+interface GtSCard {
+  url: string;
+  title: string;
+  description: string;
+  image: string | null;
+}
+
+interface GtSStatus {
+  id: string;
+  uri: string;
+  created_at: string;
+  content: string;
+  visibility: 'public' | 'unlisted' | 'private' | 'direct';
+  sensitive: boolean;
+  spoiler_text: string;
+  media_attachments: GtSMediaAttachment[];
+  tags: Array<{ name: string }>;
+  reblogs_count: number;
+  favourites_count: number;
+  replies_count: number;
+  url: string;
+  in_reply_to_id: string | null;
+  reblog: GtSStatus | null;
+  card: GtSCard | null;
+  account: GtSAccount;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function statusToUnifiedPost(
+  status: GtSStatus,
+  instanceUrl: string,
+  handle: string,
+): UnifiedPost {
+  const original = status.reblog ?? status;
+  const isBoost = status.reblog !== null;
+  const text = stripHtml(original.content || '');
+  const hostname = new URL(instanceUrl).hostname;
+
+  const nativeId = isBoost
+    ? `threads:boost:${status.id}:${original.id}`
+    : `threads:${original.id}`;
+
+  const embeds: Embed[] = [];
+  for (const media of original.media_attachments) {
+    if (media.type === 'image' || media.type === 'gifv') {
+      embeds.push({ kind: 'image' as const, url: media.url });
+    } else if (media.type === 'video') {
+      embeds.push({ kind: 'video' as const, url: media.url });
+    }
+  }
+  if (original.card) {
+    embeds.push({
+      kind: 'link' as const,
+      url: original.card.url,
+      meta: {
+        title: original.card.title,
+        description: original.card.description,
+        image: original.card.image,
+      },
+    });
+  }
+
+  const finalText = original.spoiler_text
+    ? `[CW: ${original.spoiler_text}]\n\n${text}`
+    : text;
+
+  const identity = {
+    id: `threads:${original.account.username}@${hostname}`,
+    primary: { protocol: 'threads' as Protocol, id: original.account.id },
+    handles: {
+      nostr: null,
+      farcaster: null,
+      lens: null,
+      bluesky: null,
+      threads: handle,
+      rss: null,
+      mastodon: original.account.acct,
+    },
+    displayName: original.account.display_name || original.account.username,
+    bio: stripHtml(original.account.note),
+    avatarUrl: original.account.avatar || '',
+    bannerUrl:
+      original.account.header !== original.account.header_static
+        ? original.account.header
+        : undefined,
+    verified: original.account.fields
+      .filter((f) => f.verified_at)
+      .map((f) => ({ protocol: 'threads' as Protocol, badge: f.name })),
+    followerCount: original.account.followers_count,
+    followingCount: original.account.following_count,
+    links: original.account.fields.map((f) => ({ label: f.name, url: f.value })),
+    keys: {},
   };
+
+  return buildUnifiedPost({
+    protocol: 'threads',
+    nativeId,
+    author: identity,
+    text: finalText,
+    embeds,
+    parentNativeId: original.in_reply_to_id ?? undefined,
+    createdAt: new Date(original.created_at).getTime(),
+    metrics: {
+      likes: original.favourites_count ?? 0,
+      reposts: original.reblogs_count ?? 0,
+      replies: original.replies_count ?? 0,
+      quotes: 0,
+    },
+    // Stamp metadata for frontend badges
+    raw: {
+      ...original,
+      _viaActivityPub: true,
+      _viaBridgyFed: true,
+      _fediverseSource: instanceUrl,
+    },
+  });
 }
 
-async function fetchViaFlareSolverr(url: string, timeoutMs: number): Promise<string> {
-  const resp = await withTimeout(
-    fetch(FLARESOLVERR_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        cmd: 'request.get',
-        url,
-        maxTimeout: Math.min(timeoutMs, 30000),
-      }),
-    }),
-    timeoutMs + 5000,
-    'threads:flaresolverr',
-  );
-  const data = (await resp.json()) as { solution?: { response?: string }; status?: string };
-  if (data.solution?.response) return data.solution.response;
-  throw new Error(data.status || 'no response');
-}
-
-async function scrapeProfile(handle: string, timeoutMs: number): Promise<ThreadsPost[]> {
-  if (isCircuitOpen()) {
-    return [];
-  }
-  const normalized = handle.replace(/^@/, '');
-  const url = `${THREADS_WEB_URL}/@${normalized}`;
+async function lookupThreadsAccount(
+  instanceUrl: string,
+  handle: string,
+  timeoutMs: number,
+): Promise<GtSAccount | null> {
   try {
-    let html: string;
-    try {
-      html = await withTimeout(
-        fetchText(url, { headers: threadsHeaders() }),
-        Math.min(timeoutMs, 3000),
-        `threads:${handle}`,
-      );
-    } catch {
-      html = await fetchViaFlareSolverr(url, timeoutMs);
-    }
-
-    // Strategy 1: Extract from JSON-LD (still present for SEO on threads.net)
-    const ldMatches = [
-      ...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi),
-    ];
-    for (const m of ldMatches) {
-      try {
-        const data = JSON.parse(m[1] || '{}');
-        if (data.mainEntity?.itemListElement) {
-          recordSuccess();
-          return data.mainEntity.itemListElement
-            .filter((e: Record<string, unknown>) => e.url && e.name)
-            .map((e: Record<string, unknown>) => ({
-              id: `threads:${normalized}:${e.url || ''}`.slice(0, 128),
-              text: String(e.name || ''),
-              createdAt: Date.now(),
-              likes:
-                (
-                  e.interactionStatistic as Array<{ userInteractionCount?: number }> | undefined
-                )?.[0]?.userInteractionCount || 0,
-              replies: e.commentCount || 0,
-            }));
-        }
-      } catch {}
-    }
-
-    // Strategy 2: Extract from __INITIAL_STATE__ or similar state blobs
-    const stateMatch = html.match(/"thread_items":\s*(\[[^\]]*\])/);
-    if (stateMatch?.[1]) {
-      try {
-        const items = JSON.parse(stateMatch[1]) as Array<{
-          post?: {
-            pk?: string;
-            code?: string;
-            caption?: { text?: string };
-            taken_at?: number;
-            like_count?: number;
-            comment_count?: number;
-            user?: { username?: string; full_name?: string; profile_pic_url?: string };
-          };
-        }>;
-        recordSuccess();
-        return items
-          .filter((p) => p?.post)
-          .map((p) => ({
-            id: `threads:${p.post?.code || p.post?.pk}`,
-            text: p.post?.caption?.text || '',
-            createdAt: (p.post?.taken_at || 0) * 1000,
-            likes: p.post?.like_count || 0,
-            replies: p.post?.comment_count || 0,
-            author: p.post?.user
-              ? {
-                  username: p.post?.user.username,
-                  name: p.post?.user.full_name,
-                  avatar: p.post?.user.profile_pic_url,
-                }
-              : undefined,
-          }));
-      } catch {
-        /* structure changed */
-      }
-    }
-
-    // Got HTML but no posts found — not necessarily a failure, just empty
-    recordSuccess();
-    return [];
+    const acct = `${handle.replace(/^@/, '')}@threads.net`;
+    return await withTimeout(
+      fetchJson<GtSAccount>(
+        `${instanceUrl}/api/v1/accounts/lookup?acct=${encodeURIComponent(acct)}`,
+      ),
+      timeoutMs,
+      `threads:lookup:${handle}`,
+    );
   } catch {
-    recordFailure();
+    return null;
+  }
+}
+
+async function fetchAccountStatuses(
+  instanceUrl: string,
+  accountId: string,
+  timeoutMs: number,
+): Promise<GtSStatus[]> {
+  try {
+    return await withTimeout(
+      fetchJson<GtSStatus[]>(
+        `${instanceUrl}/api/v1/accounts/${accountId}/statuses?limit=5&exclude_reblogs=true`,
+      ),
+      timeoutMs,
+      `threads:statuses:${accountId}`,
+    );
+  } catch {
     return [];
   }
 }
+
+async function fetchThreadsHashtagTimeline(
+  instanceUrl: string,
+  timeoutMs: number,
+): Promise<GtSStatus[]> {
+  try {
+    return await withTimeout(
+      fetchJson<GtSStatus[]>(
+        `${instanceUrl}/api/v1/timelines/tag/threads?limit=20`,
+      ),
+      timeoutMs,
+      'threads:hashtag',
+    );
+  } catch {
+    return [];
+  }
+}
+
+// ─── Circuit breaker (kept for API failure tracking, simplified) ─────
+// Unlike the old HTML scraper that broke every time Meta changed its
+// DOM, this circuit only triggers if the Mastodon API is unreachable.
+// Realistically this should never trip for long.
+
+interface CircuitBreakerState {
+  failureTimestamps: number[];
+  openUntil: number;
+}
+
+let circuitBreaker: CircuitBreakerState = {
+  failureTimestamps: [],
+  openUntil: 0,
+};
+
+const CB_THRESHOLD = 10; // higher threshold — ActivityPub is far more stable
+const CB_WINDOW_MS = 60 * 60 * 1000;
+const CB_COOLDOWN_MS = 30 * 60 * 1000;
+
+function isCircuitOpen(): boolean {
+  const now = Date.now();
+  if (circuitBreaker.openUntil > now) return true;
+  circuitBreaker.failureTimestamps = circuitBreaker.failureTimestamps.filter(
+    (t) => now - t < CB_WINDOW_MS,
+  );
+  return false;
+}
+
+function recordFailure(): void {
+  const now = Date.now();
+  circuitBreaker.failureTimestamps.push(now);
+  circuitBreaker.failureTimestamps = circuitBreaker.failureTimestamps.filter(
+    (t) => now - t < CB_WINDOW_MS,
+  );
+  if (circuitBreaker.failureTimestamps.length > CB_THRESHOLD) {
+    circuitBreaker.openUntil = now + CB_COOLDOWN_MS;
+    console.warn(
+      `[threads] Circuit opened for ${CB_COOLDOWN_MS / 60000} min after ${circuitBreaker.failureTimestamps.length} API failures`,
+    );
+  }
+}
+
+// ─── Provider options ────────────────────────────────────────────────
 
 export interface ThreadsProviderOptions {
   curatedHandles?: string[];
+  instanceUrl?: string;
 }
+
+// ─── ThreadsProvider — ActivityPub-based reader ──────────────────────
 
 export class ThreadsProvider implements FeedProvider {
   readonly protocol: Protocol = 'threads';
   private readonly curatedHandles: string[];
+  private readonly instanceUrl: string;
 
   constructor(options: ThreadsProviderOptions = {}) {
     this.curatedHandles = options.curatedHandles ?? CURATED_THREADS_HANDLES;
+    this.instanceUrl = options.instanceUrl ?? GTS_INSTANCE;
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    // ⚠️ Circuit breaker: if scraper has failed >5× in the last hour, skip for 30 min
-    if (isCircuitOpen()) {
-      const until = new Date(circuitBreaker.openUntil).toISOString();
+    // Guard: Bridgy Fed must be configured
+    if (!isBridgyConfigured()) {
       return {
         posts: [],
-        notice: `Threads circuit breaker open until ${until} — scraper exceeded failure threshold`,
+        notice:
+          'Threads via ActivityPub: not configured. Set BRIDGY_FED_ENABLED=true to enable. Threads content flows through ActivityPub federation — follow Threads users from your Mastodon/GotoSocial instance and this provider will find them.',
+      };
+    }
+
+    if (isCircuitOpen()) {
+      return {
+        posts: [],
+        notice: `Threads via ActivityPub: circuit breaker open until ${new Date(circuitBreaker.openUntil).toISOString()} — API failure threshold exceeded`,
       };
     }
 
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const allPosts: UnifiedPost[] = [];
+    const seenIds = new Set<string>();
 
-    // Scrape 6 handles per request, rotating through the full list
-    const handles = this.curatedHandles.slice(0, 6);
-    const results = await Promise.allSettled(
-      handles.map(async (handle) => {
-        const posts = await scrapeProfile(handle, timeoutMs);
-        return posts.map((p) => {
-          const username = p.author?.username || handle;
-          return buildUnifiedPost({
-            protocol: 'threads',
-            nativeId: p.id,
-            author: {
-              id: `threads:${username}`,
-              primary: { protocol: 'threads', id: username },
-              handles: {
-                nostr: null,
-                farcaster: null,
-                lens: null,
-                bluesky: null,
-                threads: username,
-                rss: null,
-                mastodon: null,
-              },
-              displayName: p.author?.name || username,
-              bio: '',
-              avatarUrl: p.author?.avatar || '',
-              verified: [],
-              followerCount: 0,
-              followingCount: 0,
-              links: [],
-              keys: {},
-            },
-            text: p.text,
-            createdAt: p.createdAt || Date.now(),
-            metrics: { likes: p.likes, reposts: 0, replies: p.replies, quotes: 0 },
-            raw: p,
-          });
-        });
+    // ── Step 1: Look up curated Threads accounts on our instance ──
+    // For each handle, try to find them as @handle@threads.net on our
+    // GotoSocial instance and fetch their recent statuses.
+    const accountResults = await Promise.allSettled(
+      this.curatedHandles.map(async (handle) => {
+        const account = await lookupThreadsAccount(
+          this.instanceUrl,
+          handle,
+          Math.min(timeoutMs, 3000),
+        );
+        if (!account) return [];
+        const statuses = await fetchAccountStatuses(
+          this.instanceUrl,
+          account.id,
+          Math.min(timeoutMs, 3000),
+        );
+        return statuses.map((s) => statusToUnifiedPost(s, this.instanceUrl, handle));
       }),
     );
-    for (const r of results) {
-      if (r.status === 'fulfilled') allPosts.push(...r.value);
+
+    for (const r of accountResults) {
+      if (r.status === 'fulfilled') {
+    for (const post of r.value) {
+      if (!seenIds.has(post.id)) {
+        seenIds.add(post.id);
+        allPosts.push(post);
+      }
     }
+      }
+    }
+
+    // ── Step 2: #threads hashtag timeline on our instance ──────────
+    // Catches posts from Bluesky→Bridgy Fed or Threads accounts that
+    // tag #threads — even if we don't follow them directly.
+    const hashtagPosts = await fetchThreadsHashtagTimeline(
+      this.instanceUrl,
+      Math.min(timeoutMs, 3000),
+    );
+    for (const s of hashtagPosts) {
+      const postId = `threads:${s.id}`;
+      if (seenIds.has(postId)) continue;
+      seenIds.add(postId);
+      const handle = s.account.acct.includes('@')
+        ? (s.account.acct.split('@')[0] ?? s.account.username)
+        : s.account.username;
+      allPosts.push(statusToUnifiedPost(s, this.instanceUrl, handle));
+    }
+
+    if (allPosts.length === 0) {
+      const hostname = new URL(this.instanceUrl).hostname;
+      return {
+        posts: [],
+        notice: `Threads via ActivityPub: no content found on ${hostname}. Follow Threads users from your instance to populate the feed.`,
+      };
+    }
+
     return { posts: allPosts.map(enrichPostNiches) };
   }
 
   async healthCheck(): Promise<HealthResult> {
     const start = performance.now();
+
+    if (!isBridgyConfigured()) {
+      return {
+        healthy: false,
+        latencyMs: Math.round(performance.now() - start),
+        error:
+          'Threads via ActivityPub: not configured. Set BRIDGY_FED_ENABLED=true or ACTIVITYPUB_BRIDGE_ENABLED=true.',
+      };
+    }
+
     if (isCircuitOpen()) {
       return {
         healthy: false,
         latencyMs: Math.round(performance.now() - start),
-        error: `Threads circuit breaker open until ${new Date(circuitBreaker.openUntil).toISOString()}`,
+        error: `Circuit breaker open until ${new Date(circuitBreaker.openUntil).toISOString()}`,
       };
     }
+
     try {
-      await withTimeout(scrapeProfile('zuck', 3000), 4000, 'threads:health');
+      await withTimeout(
+        fetchJson(`${this.instanceUrl}/api/v1/instance`),
+        5000,
+        'threads:health',
+      );
       return { healthy: true, latencyMs: Math.round(performance.now() - start) };
-    } catch {
+    } catch (err) {
       return {
         healthy: false,
         latencyMs: Math.round(performance.now() - start),
-        error: 'Threads scraper failed',
+        error: err instanceof Error ? err.message : 'Threads via ActivityPub unavailable',
       };
     }
   }

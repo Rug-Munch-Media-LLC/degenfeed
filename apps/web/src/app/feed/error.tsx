@@ -19,7 +19,7 @@ export default function FeedError({
           !
         </div>
         <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Feed failed to load</h2>
-        <p className="mb-4 text-sm text-gray-400">Something went wrong loading the timeline.</p>
+        <p className="mb-4 text-sm text-[var(--color-muted)]">Something went wrong loading the timeline.</p>
         <button type="button" onClick={reset} className="btn-primary text-sm">
           Try again
         </button>

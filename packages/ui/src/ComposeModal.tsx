@@ -637,7 +637,7 @@ export function ComposeModal({
                 className={`text-xs font-medium rounded-md px-2 py-1 transition-colors ${
                   showScheduledView
                     ? 'bg-cyan-900/40 text-cyan-300'
-                    : 'text-gray-500 hover:text-gray-300'
+                    : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
                 }`}
               >
                 Scheduled ({scheduledPosts.length})
@@ -645,11 +645,11 @@ export function ComposeModal({
             )}
           </div>
           <div className="flex items-center gap-2">
-            {!scheduledAt && <span className="text-xs text-gray-500">Ctrl+Enter to post</span>}
+            {!scheduledAt && <span className="text-xs text-[var(--color-muted)]">Ctrl+Enter to post</span>}
             {scheduledAt && <span className="text-xs text-cyan-500">Ctrl+Enter to schedule</span>}
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+              className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
               type="button"
               aria-label="Close"
             >
@@ -677,7 +677,7 @@ export function ComposeModal({
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {!hasSignedIn ? (
             <div className="py-12 text-center">
-              <p className="mb-4 text-gray-500">Sign in to compose</p>
+              <p className="mb-4 text-[var(--color-muted)]">Sign in to compose</p>
               <a href="/home" className="btn-primary text-sm">
                 Sign In
               </a>
@@ -758,7 +758,7 @@ export function ComposeModal({
                     <button
                       key={cmd}
                       type="button"
-                      className="w-full rounded px-3 py-1.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+                      className="w-full rounded px-3 py-1.5 text-left text-sm text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                       onClick={() => handleSlashCommand(cmd)}
                     >
                       /{cmd}
@@ -804,7 +804,7 @@ export function ComposeModal({
                     }}
                     className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-2 text-sm text-[var(--color-fg)] outline-none focus:border-cyan-500"
                   />
-                  <p className="mt-1.5 text-[11px] text-gray-500">
+                  <p className="mt-1.5 text-[11px] text-[var(--color-muted)]">
                     Must be at least 5 minutes from now
                   </p>
                 </div>
@@ -815,7 +815,7 @@ export function ComposeModal({
                 <div className="mb-3 flex items-center gap-2 rounded-lg border border-blue-900/40 bg-blue-950/20 px-3 py-2">
                   <span className="flex-shrink-0 text-blue-400 text-xs font-bold">&#x2194;</span>
                   <span className="text-[11px] text-blue-300">{prefillLabel}</span>
-                  <span className="ml-auto text-[10px] text-gray-500">
+                  <span className="ml-auto text-[10px] text-[var(--color-muted)]">
                     You can edit before posting
                   </span>
                 </div>
@@ -865,7 +865,7 @@ export function ComposeModal({
                     </span>
                     <button
                       type="button"
-                      className="text-[10px] text-gray-500 hover:text-[var(--color-fg)] transition-colors"
+                      className="text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         // Dismiss this offer
@@ -929,7 +929,7 @@ export function ComposeModal({
                       setScheduledAt(null);
                       setShowSchedulePicker(false);
                     }}
-                    className="ml-auto rounded p-0.5 text-gray-500 hover:text-[var(--color-fg)] transition-colors"
+                    className="ml-auto rounded p-0.5 text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                     aria-label="Clear schedule"
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -950,7 +950,7 @@ export function ComposeModal({
         {/* Cross-protocol reply switcher */}
         {isReplyMode && replyContext && availableReplyProtocols.length > 1 && (
           <div className="border-b border-[var(--color-border)] px-4 py-3">
-            <p className="mb-2 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+            <p className="mb-2 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
               Reply as
             </p>
             <div className="flex flex-wrap gap-2">
@@ -1068,7 +1068,7 @@ export function ComposeModal({
             </div>
 
             {targets.find((t) => t.id === 'mastodon')?.enabled && nostrBridgePublicId && (
-              <label className="mb-3 flex items-center gap-2 text-xs text-gray-400">
+              <label className="mb-3 flex items-center gap-2 text-xs text-[var(--color-muted)]">
                 <input
                   type="checkbox"
                   checked={bridgeToNostr}
@@ -1086,7 +1086,7 @@ export function ComposeModal({
             )}
 
             {targets.find((t) => t.id === 'lens')?.enabled && (
-              <label className="mb-3 flex items-center gap-2 text-xs text-gray-400">
+              <label className="mb-3 flex items-center gap-2 text-xs text-[var(--color-muted)]">
                 <input
                   type="checkbox"
                   checked={lensCollect}
@@ -1103,7 +1103,7 @@ export function ComposeModal({
             )}
 
             {/* ── Make Permanent (Arweave + IPFS) ── */}
-            <label className="mb-3 flex items-center gap-2 text-xs text-gray-400">
+            <label className="mb-3 flex items-center gap-2 text-xs text-[var(--color-muted)]">
               <input
                 type="checkbox"
                 checked={makePermanent}
@@ -1118,7 +1118,7 @@ export function ComposeModal({
               ) : permanenceProof ? (
                 <span className="text-cyan-400">
                   ✓ Stored permanently{' '}
-                  <span className="text-[10px] text-gray-500">
+                  <span className="text-[10px] text-[var(--color-muted)]">
                     (Arweave{permanenceProof.arweaveTxId ? ' ✓' : ''}
                     {permanenceProof.ipfsCid ? ' + IPFS ✓' : ''})
                   </span>
@@ -1163,7 +1163,7 @@ export function ComposeModal({
             {/* Scheduled posts viewer */}
             {showScheduledView && scheduledPosts && scheduledPosts.length > 0 && (
               <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] p-3">
-                <h3 className="mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <h3 className="mb-2 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
                   Upcoming Scheduled Posts
                 </h3>
                 <div className="flex flex-col gap-2">
@@ -1174,7 +1174,7 @@ export function ComposeModal({
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm text-gray-200">{sp.text || '(empty)'}</p>
-                        <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-500">
+                        <div className="mt-1 flex items-center gap-2 text-[11px] text-[var(--color-muted)]">
                           <span>{formatScheduledItem(sp.scheduledAt)}</span>
                           <span className="text-gray-700">·</span>
                           <span>
@@ -1197,7 +1197,7 @@ export function ComposeModal({
                           <button
                             type="button"
                             onClick={() => onCancelSchedule(sp.id)}
-                            className="rounded px-2 py-1 text-[11px] font-medium text-gray-500 hover:bg-[var(--color-muted)] hover:text-red-400 transition-colors"
+                            className="rounded px-2 py-1 text-[11px] font-medium text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-red-400 transition-colors"
                             title="Cancel"
                           >
                             Cancel
@@ -1240,7 +1240,7 @@ export function ComposeModal({
                   )}
                 </span>
                 {permanenceProof.arweaveTxId && (
-                  <span className="ml-auto text-[10px] font-mono text-gray-500 truncate max-w-[120px]" title={permanenceProof.arweaveTxId}>
+                  <span className="ml-auto text-[10px] font-mono text-[var(--color-muted)] truncate max-w-[120px]" title={permanenceProof.arweaveTxId}>
                     {permanenceProof.arweaveTxId.slice(0, 8)}...{permanenceProof.arweaveTxId.slice(-4)}
                   </span>
                 )}
@@ -1254,7 +1254,7 @@ export function ComposeModal({
                   className={`text-xs ${
                     targets.some((t) => t.enabled && text.length > t.charLimit)
                       ? 'text-red-400'
-                      : 'text-gray-500'
+                      : 'text-[var(--color-muted)]'
                   }`}
                 >
                   {text.length}/{MAX_CHARS}
@@ -1319,7 +1319,7 @@ export function ComposeModal({
             <div className="mt-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span
-                  className={`text-xs ${text.length > (TARGETS.find((t) => t.id === replyProtocol)?.charLimit ?? 5000) ? 'text-red-400' : 'text-gray-500'}`}
+                  className={`text-xs ${text.length > (TARGETS.find((t) => t.id === replyProtocol)?.charLimit ?? 5000) ? 'text-red-400' : 'text-[var(--color-muted)]'}`}
                 >
                   {text.length}/{TARGETS.find((t) => t.id === replyProtocol)?.charLimit ?? 5000}
                 </span>
