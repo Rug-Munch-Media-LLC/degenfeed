@@ -3,7 +3,7 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { type Env, jsonResponse, rateLimit } from '../index';
-import { createSession } from '../session';
+import { createSession, storeCsrfToken } from '../session';
 
 const GTS_SCOPES = 'read write follow push';
 const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -248,6 +248,9 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
 
     const { setCookie, payload } = await createSession(body.address, body.chain, env.AUTH_SECRET);
 
+    // Generate and store CSRF token for the new session
+    const csrfToken = await storeCsrfToken(setCookie, env);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -267,6 +270,7 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
         headers: {
           'content-type': 'application/json',
           'set-cookie': setCookie,
+          'x-csrf-token': csrfToken,
           'cache-control': 'no-store',
         },
       },

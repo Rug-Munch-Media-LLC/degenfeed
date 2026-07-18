@@ -4,6 +4,7 @@ import type { WalletSession } from '@degenfeed/auth';
 import { buildSiweMessage, requestWalletNonce, verifyWalletSignature } from '@degenfeed/auth';
 import { saveWalletIdentity } from '@degenfeed/storage';
 import { useCallback, useState } from 'react';
+import { setCsrfToken } from '../lib/csrf';
 import { useWeb3 } from '../components/Web3Provider';
 
 export function useWalletSignIn() {
@@ -31,6 +32,8 @@ export function useWalletSignIn() {
       const signature = await signMessage(message);
 
       const session = await verifyWalletSignature(address, signature, message, 'ethereum', nonce);
+      // Store the CSRF token for subsequent state-changing requests
+      setCsrfToken(session.csrfToken);
       await saveWalletIdentity(session.address, session.chain);
 
       return session;

@@ -2,6 +2,7 @@ export interface WalletSession {
   address: string;
   chain: 'ethereum' | 'solana';
   accessToken?: string;
+  csrfToken?: string;
   gtsAuthorizeUrl?: string | null;
   profile?: Record<string, unknown> | null;
 }
@@ -70,6 +71,9 @@ export async function verifyWalletSignature(
     throw new Error(err.error || 'Verification failed');
   }
 
+  // Capture the CSRF token from the response header
+  const csrfToken = res.headers.get('x-csrf-token') ?? undefined;
+
   const data = (await res.json()) as WalletVerifyResponse;
   if (!data.success) {
     throw new Error('Invalid verification response');
@@ -78,6 +82,7 @@ export async function verifyWalletSignature(
   return {
     address: data.walletAddress,
     chain: data.chain,
+    csrfToken,
     gtsAuthorizeUrl: data.gtsAuthorizeUrl ?? null,
     profile: data.identity ?? null,
   };

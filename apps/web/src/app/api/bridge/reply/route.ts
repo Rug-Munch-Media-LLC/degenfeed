@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+import { requireSession } from '../../_auth';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
@@ -6,7 +7,9 @@ export const dynamic = 'force-dynamic';
  * Cross-protocol bridge reply endpoint.
  * Accepts a reply composed on one protocol and relays it to the target protocol.
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const session = await requireSession(request);
+  if (session instanceof NextResponse) return session;
   try {
     const body = await request.json();
     const { parentPostUri, parentProtocol, replyProtocol, content, authorId } = body;

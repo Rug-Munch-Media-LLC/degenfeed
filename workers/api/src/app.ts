@@ -22,6 +22,7 @@ import {
 import { applyCors, getAllowedOrigin, isAllowedOrigin, parseOriginHeader } from './cors';
 import type { Env } from './index';
 import { jsonResponse, rateLimit } from './index';
+import { parseSessionCookie, validateCsrfToken } from './session';
 import { validateBodySize } from './sanitize';
 
 // ─── Error logger ────────────────────────────────────────────
@@ -315,6 +316,7 @@ app.onError(async (err, c) => {
 // ─── Constants ──────────────────────────────────────────────
 
 const CSRF_EXEMPT_PATHS = ['/api/tip/frame/', '/api/blink/tip', '/api/x402/verify'];
+const CSRF_SKIP_PREFIXES = ['/api/auth/'];
 const MAX_BODY_BYTES = 1_048_576;
 const DEFAULT_RATE_WINDOW = 5000;
 const DEFAULT_RATE_MAX = 20;
@@ -370,35 +372,91 @@ app.use('*', async (c, next) => {
 });
 
 // ─── Middleware: body size + CSRF for state-changing requests ──
+// Protects POST/PUT/PATCH/DELETE against cross-site request forgery via:
+//   1. Origin / Referer header validation (same‑site check)
+//   2. X‑CSRF‑Token header validation against a per‑session token stored in KV
+// Skips GET/HEAD/OPTIONS (safe methods), /api/auth/* (auth flows use their
+// own nonce‑based CSRF), and requests with Authorization: Bearer (API clients
+// are already independently authenticated).
 app.use('*', async (c, next) => {
   const method = c.req.method;
-  if (!['POST', 'PUT', 'DELETE'].includes(method)) {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
     return next();
   }
   const path = c.req.path;
+
+  // Skip body size and CSRF for /api/auth/* — these use OAuth state nonces
+  // which provide their own CSRF protection.
+  const isAuthPath = CSRF_SKIP_PREFIXES.some((prefix) => path.startsWith(prefix));
+  if (isAuthPath) {
+    // Still enforce body size limits for auth endpoints
+    const sizeCheck = validateBodySize(c.req.raw, MAX_BODY_BYTES);
+    if (!sizeCheck.ok) {
+      return jsonResponse({ error: sizeCheck.error }, 413);
+    }
+    return next();
+  }
+
+  // Skip CSRF for API clients using Bearer tokens — already authenticated
+  // via API key middleware (separate scoped keys, not session cookies).
+  const authHeader = c.req.header('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const sizeCheck = validateBodySize(c.req.raw, MAX_BODY_BYTES);
+    if (!sizeCheck.ok) {
+      return jsonResponse({ error: sizeCheck.error }, 413);
+    }
+    return next();
+  }
+
   const sizeCheck = validateBodySize(c.req.raw, MAX_BODY_BYTES);
   if (!sizeCheck.ok) {
     return jsonResponse({ error: sizeCheck.error }, 413);
   }
-  const isCsrfExempt = (p: string) => CSRF_EXEMPT_PATHS.some((prefix) => p.startsWith(prefix));
-  if (!isCsrfExempt(path)) {
+
+  // ── Origin / Referer validation ──────────────────────────────
+  const isWebhookExempt = CSRF_EXEMPT_PATHS.some((prefix) => path.startsWith(prefix));
+  if (!isWebhookExempt) {
     const origin = c.req.header('origin');
     if (origin) {
       if (!isAllowedOrigin(origin, c.env.ALLOWED_ORIGINS)) {
-        return jsonResponse({ error: 'Forbidden' }, 403);
+        return jsonResponse(
+          { error: 'CSRF validation failed', code: 'DF-403' },
+          403,
+        );
       }
     } else {
       const referer = c.req.header('referer');
       if (referer) {
         const refererOrigin = parseOriginHeader(referer);
         if (!refererOrigin || !isAllowedOrigin(refererOrigin, c.env.ALLOWED_ORIGINS)) {
-          return jsonResponse({ error: 'Forbidden' }, 403);
+          return jsonResponse(
+            { error: 'CSRF validation failed', code: 'DF-403' },
+            403,
+          );
         }
       } else {
-        return jsonResponse({ error: 'Forbidden' }, 403);
+        return jsonResponse(
+          { error: 'CSRF validation failed', code: 'DF-403' },
+          403,
+        );
       }
     }
   }
+
+  // ── X-CSRF-Token validation ──────────────────────────────────
+  // Only applies to cookie‑authenticated sessions (not Bearer API keys).
+  const cookieValue = parseSessionCookie(c.req.header('cookie') ?? null);
+  if (cookieValue) {
+    const csrfToken = c.req.header('x-csrf-token');
+    const valid = await validateCsrfToken(cookieValue, csrfToken ?? null, c.env);
+    if (!valid) {
+      return jsonResponse(
+        { error: 'CSRF validation failed', code: 'DF-403' },
+        403,
+      );
+    }
+  }
+
   await next();
 });
 

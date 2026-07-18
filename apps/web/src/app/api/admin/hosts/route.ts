@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '../_auth';
 
 export const runtime = 'nodejs';
 
@@ -132,7 +133,10 @@ const SERVERS = [
   },
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (auth) return auth;
+
   return NextResponse.json(
     { servers: SERVERS },
     {

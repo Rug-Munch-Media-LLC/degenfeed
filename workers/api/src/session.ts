@@ -10,6 +10,72 @@ export interface SessionPayload {
 
 const COOKIE_NAME = '__Host-dfid';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const CSRF_TTL_SECONDS = 3600;
+
+// ─── CSRF token helpers ──────────────────────────────────────────────
+
+export function generateCsrfToken(): string {
+  return bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+}
+
+function csrfTokenKey(sessionCookieValue: string): string {
+  return `csrf:${sessionCookieValue}`;
+}
+
+/**
+ * Store a CSRF token in KV keyed by the session cookie value.
+ * TTL: 1 hour. Returns the generated token.
+ */
+export async function storeCsrfToken(
+  sessionCookieValue: string,
+  env: Env,
+): Promise<string> {
+  const token = generateCsrfToken();
+  const key = csrfTokenKey(sessionCookieValue);
+  try {
+    await env.CACHE?.put(key, token, { expirationTtl: CSRF_TTL_SECONDS });
+  } catch {
+    // KV unavailable — token validation is skipped in dev mode
+  }
+  return token;
+}
+
+/**
+ * Validate an X-CSRF-Token against the stored value for a session.
+ * Returns true if the token matches or if KV is unavailable (dev mode).
+ */
+export async function validateCsrfToken(
+  sessionCookieValue: string,
+  token: string | null,
+  env: Env,
+): Promise<boolean> {
+  if (!token) return false;
+  if (!env.CACHE) return true; // No KV bound (local dev) — skip check
+  try {
+    const key = csrfTokenKey(sessionCookieValue);
+    const stored = await env.CACHE.get(key);
+    if (!stored) return false;
+    return stored === token;
+  } catch {
+    // KV hiccup — fail closed (reject the request) to be safe
+    return false;
+  }
+}
+
+/**
+ * Delete a CSRF token from KV (e.g., on sign-out).
+ */
+export async function deleteCsrfToken(
+  sessionCookieValue: string,
+  env: Env,
+): Promise<void> {
+  const key = csrfTokenKey(sessionCookieValue);
+  try {
+    await env.CACHE?.delete(key);
+  } catch {
+    // ignore cleanup failure
+  }
+}
 
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -145,7 +211,13 @@ export async function refreshSessionCookie(
   return setCookie;
 }
 
-export async function handleSessionSignOut(_request: Request, _env: Env): Promise<Response> {
+export async function handleSessionSignOut(request: Request, env: Env): Promise<Response> {
+  // Clean up CSRF token on sign-out
+  const cookieValue = parseSessionCookie(request.headers.get('cookie'));
+  if (cookieValue) {
+    await deleteCsrfToken(cookieValue, env);
+  }
+
   return new Response(JSON.stringify({ success: true }), {
     status: 200,
     headers: {

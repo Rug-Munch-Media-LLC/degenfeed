@@ -1,9 +1,14 @@
 'use client';
 
+import { getCsrfToken } from './csrf';
+
 /**
  * Fetch with automatic retries + exponential backoff.
  * Retries on network errors, 408, 429, and 5xx responses.
  * Stops on 4xx (except 408/429) and redirects.
+ *
+ * Automatically attaches the X-CSRF-Token header to state-changing
+ * API requests when a CSRF token is available.
  */
 export interface RetryOptions {
   /** Max retry attempts (default 3) */
@@ -18,6 +23,27 @@ export interface RetryOptions {
 
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504]);
 
+function attachCsrfHeader(
+  url: string,
+  fetchOptions?: RequestInit,
+): RequestInit | undefined {
+  const method = fetchOptions?.method ?? 'GET';
+  // Only attach CSRF token to state-changing /api/* requests
+  if (
+    ['GET', 'HEAD'].includes(method.toUpperCase()) ||
+    !url.startsWith('/api/')
+  ) {
+    return fetchOptions;
+  }
+  const token = getCsrfToken();
+  if (!token) return fetchOptions;
+  const headers = new Headers(fetchOptions?.headers);
+  if (!headers.has('x-csrf-token')) {
+    headers.set('x-csrf-token', token);
+  }
+  return { ...fetchOptions, headers };
+}
+
 export async function retryFetch(url: string, options: RetryOptions = {}): Promise<Response> {
   const { maxRetries = 3, baseDelayMs = 300, maxDelayMs = 10_000, fetchOptions } = options;
 
@@ -30,7 +56,7 @@ export async function retryFetch(url: string, options: RetryOptions = {}): Promi
 
       const res = await fetch(url, {
         credentials: 'include',
-        ...fetchOptions,
+        ...attachCsrfHeader(url, fetchOptions),
         signal: fetchOptions?.signal ?? controller.signal,
       });
 

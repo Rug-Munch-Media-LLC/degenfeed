@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+import { requireAdmin, withAdminHeaders } from '../_auth';
 
 export const runtime = 'nodejs';
 
@@ -111,11 +112,14 @@ const DEFAULT_FLAGS = [
   },
 ];
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (auth) return auth;
+
   return NextResponse.json(
     { flags: DEFAULT_FLAGS },
-    {
+    withAdminHeaders({
       headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' },
-    },
+    }),
   );
 }

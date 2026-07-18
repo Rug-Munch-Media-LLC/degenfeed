@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '../../../_auth';
 
 export const runtime = 'nodejs';
 
 // TODO: Wire to worker backend
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin(request);
+  if (auth) return auth;
+
   const { id } = await params;
   const body = (await request.json()) as { enabled: boolean };
 
