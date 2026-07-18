@@ -461,7 +461,7 @@ export default function ShortsPage() {
               <span className="text-sm font-bold tracking-wide text-white/40">Shorts</span>
             </div>
             <div className="mb-4 h-10 w-10 animate-spin rounded-full border-2 border-degen-500/30 border-t-degen-400" />
-            <p className="text-xs text-gray-600">Loading shorts…</p>
+            <p className="text-xs text-[var(--color-muted)]">Loading shorts…</p>
           </div>
         )}
 
@@ -480,7 +480,7 @@ export default function ShortsPage() {
               </svg>
             </div>
             <p className="text-sm text-[var(--color-muted)]">Couldn&apos;t load shorts</p>
-            <p className="max-w-xs text-center text-xs text-gray-600">{error}</p>
+            <p className="max-w-xs text-center text-xs text-[var(--color-muted)]">{error}</p>
             <button
               type="button"
               onClick={refresh}
@@ -516,7 +516,7 @@ export default function ShortsPage() {
               </svg>
             </div>
             <p className="text-sm text-[var(--color-muted)]">No shorts yet</p>
-            <p className="max-w-xs text-center text-xs text-gray-600">
+            <p className="max-w-xs text-center text-xs text-[var(--color-muted)]">
               No shorts available. Check back later — they appear here as they&apos;re discovered
               from YouTube, PeerTube, and other protocols.
             </p>
@@ -573,7 +573,7 @@ export default function ShortsPage() {
           <div className="flex h-screen w-full snap-start items-center justify-center bg-black">
             <div className="flex flex-col items-center gap-3">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-degen-500/30 border-t-degen-400" />
-              <p className="text-xs text-gray-600">Loading more…</p>
+              <p className="text-xs text-[var(--color-muted)]">Loading more…</p>
             </div>
           </div>
         )}
@@ -605,7 +605,7 @@ export default function ShortsPage() {
             <p className="text-sm font-medium text-[var(--color-muted)]">
               You&apos;re all caught up
             </p>
-            <p className="text-xs text-gray-600">More shorts coming soon</p>
+            <p className="text-xs text-[var(--color-muted)]">More shorts coming soon</p>
             <button
               type="button"
               onClick={refresh}

@@ -21,12 +21,14 @@ const SPAM_PATTERNS: RegExp[] = [
   /\b(click here|link in bio|dm me|message me|join my vip|pump group|signals group)\b/gi,
   /\b(casino|lottery|gift card|free crypto|free bitcoin|airdrop scam|claim now)\b/gi,
   /\b(viagra|cialis|escort|onlyfans)\b/gi,
-  /🚀{4,}|💰{4,}|🔥{4,}|🌙{4,}/g,
+  /🚀{4,}|💰{4,}|🔥{4,}|🌙{4,}/gu,
 ];
 
 /** Additional crypto/web3-specific scam patterns. */
 const SCAM_PATTERNS: RegExp[] = [
-  /\b(giveaway|giveaway)\b.*\b(eth|btc|sol|usdt|crypto)\b/i,
+  // Bidirectional: "giveaway ETH" OR "ETH giveaway"
+  /\b(giveaway)\b.*\b(eth|btc|sol|usdt|crypto)\b/i,
+  /\b(eth|btc|sol|usdt|crypto)\b.*\b(giveaway)\b/i,
   /\b(free\s+(eth|btc|sol|nft|crypto))\b.*\b(claim|send|click|join)\b/i,
   /\b(send\s+\d+\s*(eth|btc|sol|usdt)\s+(to|get|receive)\s+\d+)\b/i,
   /\b(airdrop|claim\s+(now|your))\b.*\b(eth|btc|sol|token)\b/i,
@@ -209,6 +211,7 @@ export function isSpamPost(post: UnifiedPost): boolean {
 export function contentQualityScore(text: string): number {
   if (!text) return 0.5;
   const trimmed = text.trim();
+  if (!trimmed) return 0.5;
   const words = trimmed.split(/\s+/).filter((w) => w.length > 0);
 
   if (words.length === 1 && (words[0]?.length ?? 0) < 20) return 0.3;

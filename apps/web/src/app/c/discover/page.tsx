@@ -137,7 +137,7 @@ function CommunityCard({ community }: { community: FederatedCommunity }) {
           </div>
 
           {/* Instance name */}
-          <p className="mt-0.5 text-[10px] text-gray-600">
+          <p className="mt-0.5 text-[10px] text-[var(--color-muted)]">
             on <span className="font-mono">{community.instance}</span>
           </p>
 
@@ -304,7 +304,7 @@ export default function BrowseCommunitiesPage() {
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search communities…"
-                className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 pl-10 pr-4 text-sm text-[var(--color-fg)] placeholder-gray-500 outline-none transition-colors focus:border-degen-500/50"
+                className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2.5 pl-10 pr-4 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none transition-colors focus:border-degen-500/50"
               />
             </div>
             <div className="flex gap-2">
@@ -402,7 +402,7 @@ export default function BrowseCommunitiesPage() {
         {/* Results */}
         {!loading && !error && communities.length > 0 && (
           <>
-            <p className="mb-4 text-xs text-gray-600">
+            <p className="mb-4 text-xs text-[var(--color-muted)]">
               Showing {communities.length} community{communities.length !== 1 ? 'ies' : 'y'}
               {meta?.category ? ` in "${meta.category}"` : ''}
               {sort !== 'subscribers' ? ` sorted by ${sort}` : ''}

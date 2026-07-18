@@ -94,8 +94,8 @@ export default function QuickstartPage() {
         chains and use protocol-specific features like Lens on Polygon and Farcaster on Optimism.
       </Callout>
 
-      <div className="my-4 rounded-lg border border-dashed border-gray-700 bg-white/[0.01] p-6 text-center">
-        <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+      <div className="my-4 rounded-lg border border-dashed border-[var(--color-muted)] bg-white/[0.01] p-6 text-center">
+        <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)]">
           Screenshot
         </div>
         <div className="mt-2 text-sm text-[var(--color-muted)]">
@@ -245,8 +245,8 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
         a protocol&rsquo;s limit before publishing.
       </Callout>
 
-      <div className="mt-4 rounded-lg border border-dashed border-gray-700 bg-white/[0.01] p-6 text-center">
-        <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+      <div className="mt-4 rounded-lg border border-dashed border-[var(--color-muted)] bg-white/[0.01] p-6 text-center">
+        <div className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)]">
           Screenshot
         </div>
         <div className="mt-2 text-sm text-[var(--color-muted)]">
@@ -314,7 +314,7 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
       </div>
 
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-[var(--color-muted)]">
           Questions?{' '}
           <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
             admin@rugmunch.io

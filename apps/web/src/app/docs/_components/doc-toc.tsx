@@ -67,7 +67,7 @@ export function DocToc({ contentSelector = 'main' }: { contentSelector?: string 
               } ${
                 activeId === item.id
                   ? 'border-degen-400 text-degen-400 font-medium'
-                  : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-muted)] hover:border-gray-500'
+                  : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-muted)] hover:border-[var(--color-muted)]'
               }`}
             >
               {item.label}

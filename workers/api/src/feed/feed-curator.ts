@@ -936,7 +936,7 @@ export function curateFeed(
     postsShown,
     streak,
     opts.lastVisitTimestamp ?? 0,
-    finalPosts.length > 0 ? finalPosts[0]?.createdAt : 0,
+    finalPosts.length > 0 ? (finalPosts[0]?.createdAt ?? 0) : 0,
   );
 
   return {

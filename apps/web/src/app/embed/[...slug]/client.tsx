@@ -234,7 +234,7 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
         </article>
 
         {/* Embed hint */}
-        <p className="mt-4 text-center text-[11px] text-gray-600">
+        <p className="mt-4 text-center text-[11px] text-[var(--color-muted)]">
           Embed this post on your site with{' '}
           <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 font-mono text-[10px] text-degen-400">
             {'<script src="https://app.degenfeed.xyz/embed.js"></script>'}
@@ -246,7 +246,7 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
       <footer className="border-t border-[var(--color-glass-border)] py-4 text-center">
         <a
           href="/"
-          className="text-xs text-gray-600 hover:text-[var(--color-muted)] transition-colors"
+          className="text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
         >
           Powered by DegenFeed — The social feed of web3
         </a>

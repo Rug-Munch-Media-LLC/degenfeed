@@ -259,7 +259,7 @@ export default function ChangelogPage() {
       </section>
 
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-[var(--color-muted)]">
           Want to contribute to a future release?{' '}
           <a href="/docs/contributing" className="text-degen-400 underline">
             Check the contributing guide

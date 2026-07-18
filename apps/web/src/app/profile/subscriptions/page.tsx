@@ -117,7 +117,7 @@ export default function SubscriptionsPage() {
           <div className="card py-16 text-center">
             <div className="mb-3 text-3xl">💝</div>
             <p className="text-[var(--color-muted)]">No active subscriptions yet.</p>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
               Support your favorite creators by subscribing to their content.
             </p>
             <Link href="/discover" className="btn-primary mt-4 inline-block text-sm">
@@ -175,7 +175,7 @@ export default function SubscriptionsPage() {
 
         {/* Info footer */}
         {!loading && subscriptions.length > 0 && (
-          <div className="mt-6 text-center text-[10px] text-gray-700">
+          <div className="mt-6 text-center text-[10px] text-[var(--color-muted)]">
             Subscriptions are active for 30 days from confirmation. Renew before expiry to keep your
             benefits.
           </div>

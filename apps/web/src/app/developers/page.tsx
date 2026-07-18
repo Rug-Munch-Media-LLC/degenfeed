@@ -382,7 +382,7 @@ export default function DevelopersPage() {
       </section>
 
       <div className="mt-16 border-t border-[var(--color-glass-border)] pt-6 text-center">
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-[var(--color-muted)]">
           DegenFeed is a product of{' '}
           <strong className="text-[var(--color-muted)]">Rug Munch Media LLC</strong>. MIT Licensed.
           Built on open protocols.{' '}

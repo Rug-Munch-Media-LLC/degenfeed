@@ -608,7 +608,7 @@ curl "https://degenfeed.xyz/api/search/identity?q=vitalik"`}</CodeBlock>
       </Callout>
 
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-[var(--color-muted)]">
           Questions about the API?{' '}
           <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
             admin@rugmunch.io

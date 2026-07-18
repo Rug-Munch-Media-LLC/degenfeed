@@ -1,6 +1,6 @@
+import { PostCardSkeleton } from '@degenfeed/ui';
 import {
   ContentShellSkeleton,
-  ListSkeleton,
   SidebarSkeleton,
 } from '@/components/loading/PageSkeleton';
 
@@ -32,8 +32,8 @@ export default function FeedLoading() {
         ))}
       </div>
 
-      {/* Feed posts */}
-      <ListSkeleton count={8} />
+      {/* Feed posts — uses PostCardSkeleton that matches PostCard layout exactly */}
+      <PostCardSkeleton count={8} />
     </ContentShellSkeleton>
   );
 }

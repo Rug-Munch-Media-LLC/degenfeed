@@ -224,7 +224,7 @@ export default function ProposalsPage() {
             <div className="py-12 text-center">
               <div className="mb-3 text-3xl">🗳️</div>
               <p className="text-[var(--color-muted)]">No active proposals</p>
-              <p className="mt-1 text-xs text-gray-600">Create one to start the discussion!</p>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">Create one to start the discussion!</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -352,7 +352,7 @@ function ProposalCard({
             style={{ width: `${(proposal.voteTotals.against / totalVotes) * 100}%` }}
           />
           <div
-            className="bg-gray-500 transition-all"
+            className="bg-[var(--color-muted)] transition-all"
             style={{ width: `${(proposal.voteTotals.abstain / totalVotes) * 100}%` }}
           />
         </div>

@@ -223,9 +223,9 @@ export default function BookmarksPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search bookmarks..."
-            className="w-full rounded-lg bg-[var(--color-muted)] border border-white/10 px-3 py-2 pl-8 text-sm text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500/50 focus:outline-none"
+            className="w-full rounded-lg bg-[var(--color-muted)] border border-white/10 px-3 py-2 pl-8 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] focus:border-degen-500/50 focus:outline-none"
           />
-          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-600">
+          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--color-muted)]">
             🔍
           </span>
         </div>
@@ -291,7 +291,7 @@ export default function BookmarksPage() {
           <p className="text-[var(--color-muted)]">
             {search || tagFilter ? 'No bookmarks match your filters.' : 'No bookmarks yet.'}
           </p>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
             {search || tagFilter
               ? 'Try different search terms or clear filters.'
               : 'Bookmark posts from any protocol to save them here.'}
@@ -344,7 +344,7 @@ export default function BookmarksPage() {
                 </Link>
 
                 {/* Author + date */}
-                <div className="mt-1 flex items-center gap-2 text-[11px] text-gray-600">
+                <div className="mt-1 flex items-center gap-2 text-[11px] text-[var(--color-muted)]">
                   <span className="truncate">{b.authorName}</span>
                   <span>&middot;</span>
                   <span>
@@ -364,7 +364,7 @@ export default function BookmarksPage() {
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       placeholder="tag1, tag2, tag3"
-                      className="flex-1 rounded bg-[var(--color-muted)] border border-white/10 px-2 py-1 text-xs text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500/50 focus:outline-none"
+                      className="flex-1 rounded bg-[var(--color-muted)] border border-white/10 px-2 py-1 text-xs text-[var(--color-fg)] placeholder-[var(--color-muted)] focus:border-degen-500/50 focus:outline-none"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') saveTagEdit(b.postId);
                         if (e.key === 'Escape') cancelTagEdit();
@@ -389,7 +389,7 @@ export default function BookmarksPage() {
                   <button
                     type="button"
                     onClick={() => startTagEdit(b.postId, b.tags)}
-                    className="mt-1 rounded bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-600 hover:text-[var(--color-muted)] transition-colors"
+                    className="mt-1 rounded bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-fg)] hover:text-[var(--color-accent)] transition-colors"
                   >
                     {b.tags?.length ? 'Edit tags' : '+ Add tags'}
                   </button>
@@ -414,7 +414,7 @@ export default function BookmarksPage() {
 
       {/* Info footer */}
       {!loading && bookmarks.length > 0 && (
-        <div className="mt-6 text-center text-[10px] text-gray-700">
+        <div className="mt-6 text-center text-[10px] text-[var(--color-muted)]">
           Bookmarks are synced to the server when signed in.
         </div>
       )}

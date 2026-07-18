@@ -100,7 +100,7 @@ export async function handleShortsFeed(request: Request, env: Env): Promise<Resp
   const response: ShortsResponse = {
     videos: ranked,
     sources: feed.sources,
-    cursor: ranked.length > 0 ? ranked[ranked.length - 1]?.id : null,
+    cursor: ranked.length > 0 ? (ranked[ranked.length - 1]?.id ?? null) : null,
     hasMore: videos.length > limit,
   };
 

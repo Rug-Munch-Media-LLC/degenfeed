@@ -122,7 +122,7 @@ function PublicFeedCard({ feed }: { feed: CustomFeed }) {
                 {SOURCE_EMOJIS[src] || '📡'} {SOURCE_LABELS[src] || src}
               </span>
             ))}
-            <span className="text-[10px] text-gray-600">by {feed.authorId?.slice(0, 8)}</span>
+            <span className="text-[10px] text-[var(--color-muted)]">by {feed.authorId?.slice(0, 8)}</span>
           </div>
         </div>
         <span className="shrink-0 text-[var(--color-muted)] transition-transform group-hover:translate-x-1">

@@ -33,7 +33,7 @@ function Check() {
 }
 
 function Dash() {
-  return <span className="text-gray-600">—</span>;
+  return <span className="text-[var(--color-muted)]">—</span>;
 }
 
 function Section({ id, children }: { id: string; children: React.ReactNode }) {
@@ -53,7 +53,7 @@ function H2({ id, children }: { id: string; children: React.ReactNode }) {
       {children}
       <a
         href={`#${id}`}
-        className="text-gray-600 opacity-0 transition-opacity group-hover:opacity-100"
+        className="text-[var(--color-muted)] opacity-0 transition-opacity group-hover:opacity-100"
       >
         #
       </a>
@@ -262,15 +262,15 @@ export default function ComparisonPage() {
             <h3 className="mb-1 font-semibold text-[var(--color-fg)]">What X still does better</h3>
             <ul className="space-y-2 text-sm text-[var(--color-muted)]">
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Largest user base — harder to find DegenFeed users at scale</span>
               </li>
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Multimedia infrastructure (native video player, Spaces recording)</span>
               </li>
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Established verification system (blue check)</span>
               </li>
             </ul>
@@ -325,15 +325,15 @@ export default function ComparisonPage() {
             </h3>
             <ul className="space-y-2 text-sm text-[var(--color-muted)]">
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Frames — interactive mini-apps embedded in posts</span>
               </li>
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Dedicated mobile app (Warpcast) with polished UX</span>
               </li>
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Growing developer ecosystem around Frames and actions</span>
               </li>
             </ul>
@@ -390,15 +390,15 @@ export default function ComparisonPage() {
             </h3>
             <ul className="space-y-2 text-sm text-[var(--color-muted)]">
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Fully on-chain social graph — portability across Lens apps</span>
               </li>
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Collects — mint posts as NFTs natively</span>
               </li>
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Open Actions — third-party integrations within posts</span>
               </li>
             </ul>
@@ -452,15 +452,15 @@ export default function ComparisonPage() {
             </h3>
             <ul className="space-y-2 text-sm text-[var(--color-muted)]">
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Custom feeds — user-created algorithmic feeds (already popular)</span>
               </li>
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>Larger active user base with mainstream crypto/non-crypto crossover</span>
               </li>
               <li className="flex gap-2">
-                <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
+                <span className="mt-0.5 flex-shrink-0 text-[var(--color-muted)]">○</span>
                 <span>AT Protocol federation — users choose their PDS provider</span>
               </li>
             </ul>
@@ -482,7 +482,7 @@ export default function ComparisonPage() {
               Troubleshooting
             </Link>
           </div>
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-[var(--color-muted)]">
             Last updated July 2026. Feature sets change — check each platform for current status.
           </p>
         </div>
