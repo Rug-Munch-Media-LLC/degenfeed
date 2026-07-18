@@ -86,6 +86,8 @@ export type { PeerTubeEmbedProps } from './PeerTubeEmbed';
 export { PeerTubeEmbed } from './PeerTubeEmbed';
 export type { PeerTubeTipOverlayProps } from './PeerTubeTipOverlay';
 export { PeerTubeTipOverlay } from './PeerTubeTipOverlay';
+export type { FeedWhyCardProps } from './FeedWhyCard';
+export { FeedWhyCard } from './FeedWhyCard';
 export type { EngageHandler, EngageResult, PostCardProps } from './PostCard';
 export { PostCard } from './PostCard';
 export { PricePill, usePricesForText } from './PricePill';

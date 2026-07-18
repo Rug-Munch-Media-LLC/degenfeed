@@ -3,15 +3,12 @@
 /**
  * @components/ShortVideoCard — Full-screen TikTok-style video overlay card.
  *
- * Renders the video player, right-side action rail (like, comment, share, tip, bookmark),
- * bottom info overlay (creator, caption, music), mute toggle, progress bar,
- * and long-press-to-pause.
+ * Right rail: Like ❤️, Comment 💬, Tip ⚡, Share ↗️, Bookmark 🔖
+ * Bottom info: creator avatar + name, caption, hashtags, sound
+ * Top progress bar. Mute toggle. Double-tap heart burst.
+ * Seek by tapping edges. Long-press to pause.
  *
- * Accessibility: All action buttons have aria-labels, keyboard-operable,
- * visible focus indicators. Progress bar uses aria-valuenow.
- *
- * Design: Neon dark cyberpunk with degen-green accents. Glass-morphism overlays.
- * Transitions on overlay show/hide.
+ * Design: Neon dark cyberpunk with degen-green glass accents.
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
@@ -20,8 +17,6 @@ import { formatTimeAgo, parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
 import Image from 'next/image';
 import {
   memo,
-  type PointerEvent as ReactPointerEvent,
-  type TouchEvent as ReactTouchEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -52,7 +47,8 @@ function truncateText(text: string, maxLen = 100): string {
 interface ShortVideoCardProps {
   post: UnifiedPost;
   isActive: boolean;
-  onPlayStateChange: (paused: boolean) => void;
+  onDoubleTap?: () => void;
+  onPlayStateChange?: (paused: boolean) => void;
 }
 
 // ─── Action Button ────────────────────────────────────────────────────────
@@ -99,11 +95,160 @@ const ActionButton = memo(function ActionButton({
   );
 });
 
+// ─── Heart Burst ──────────────────────────────────────────────────────────
+
+function HeartBurst({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+  return (
+    <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center">
+      {/* Central heart */}
+      <svg
+        width="80"
+        height="80"
+        viewBox="0 0 24 24"
+        fill="#ff2d55"
+        className="drop-shadow-[0_0_30px_rgba(255,45,85,0.6)]"
+        style={{ animation: 'shorts-heart-pop 0.8s ease-out forwards' }}
+        aria-hidden="true"
+      >
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      </svg>
+      {/* Orbiting hearts */}
+      {[0, 1, 2, 3].map((i) => {
+        const angle = (i / 4) * 360;
+        return (
+          <svg
+            key={i}
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="#ff2d55"
+            className="absolute drop-shadow-[0_0_12px_rgba(255,45,85,0.4)]"
+            style={{
+              animation: `shorts-heart-orbit 0.8s ease-out forwards`,
+              animationDelay: `${i * 0.05}s`,
+              transformOrigin: 'center',
+              '--angle': `${angle}deg`,
+            } as React.CSSProperties}
+            aria-hidden="true"
+          >
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Video Info Panel ─────────────────────────────────────────────────────
+
+function VideoInfoPanel({
+  post,
+  visible,
+}: {
+  post: UnifiedPost;
+  visible: boolean;
+}) {
+  const hashtags = useMemo(() => extractHashtags(post.text), [post.text]);
+  const protocolColor = getProtocolColor(post.protocol);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className="absolute inset-x-0 bottom-0 z-40 max-h-[60vh] overflow-y-auto rounded-t-3xl border-t border-white/[0.06] bg-[#0a0a0a]/98 px-5 pb-8 pt-5 backdrop-blur-2xl"
+      style={{ animation: 'shorts-panel-slide-up 0.35s cubic-bezier(0.32, 0.72, 0, 1)' }}
+      onClick={(e) => e.stopPropagation()}
+      role="region"
+      aria-label="Video information"
+    >
+      {/* Handle */}
+      <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+
+      {/* Full description */}
+      <h3 className="mb-1 text-sm font-bold text-white">Description</h3>
+      <p className="mb-4 text-sm leading-relaxed text-white/70 whitespace-pre-wrap">
+        {post.text}
+      </p>
+
+      {/* All hashtags */}
+      {hashtags.length > 0 && (
+        <div className="mb-4">
+          <h4 className="mb-1.5 text-xs font-medium text-white/50">Topics</h4>
+          <div className="flex flex-wrap gap-1.5">
+            {hashtags.map((tag) => (
+              <a
+                key={tag}
+                href={`/topics/${encodeURIComponent(tag.slice(1))}`}
+                className="rounded-full bg-degen-500/10 px-2.5 py-1 text-xs font-medium text-degen-400 transition-colors hover:bg-degen-500/20"
+              >
+                {tag}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Creator info */}
+      <div className="mb-4">
+        <h4 className="mb-1.5 text-xs font-medium text-white/50">Creator</h4>
+        <a
+          href={`/profile?protocol=${post.protocol}&id=${encodeURIComponent(post.author.id)}`}
+          className="flex items-center gap-3 rounded-xl bg-white/[0.03] p-3 transition-colors hover:bg-white/[0.06]"
+        >
+          {post.author.avatarUrl ? (
+            <Image
+              src={post.author.avatarUrl}
+              alt={post.author.displayName}
+              width={36}
+              height={36}
+              className="h-9 w-9 rounded-full border border-white/10 object-cover"
+            />
+          ) : (
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-degen-500/20 text-xs font-bold text-degen-400">
+              {post.author.displayName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">{post.author.displayName}</p>
+            <p className="text-xs text-white/50 truncate">
+              @{post.author.handles[post.protocol] ?? post.author.id.slice(0, 16)}
+            </p>
+          </div>
+          <span
+            className="rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider shrink-0"
+            style={{ backgroundColor: `${protocolColor}18`, color: protocolColor }}
+          >
+            {post.protocol}
+          </span>
+        </a>
+      </div>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-3 gap-3 rounded-xl bg-white/[0.03] p-3">
+        <div className="text-center">
+          <p className="text-sm font-bold text-white">{formatCount(post.metrics.likes)}</p>
+          <p className="text-[10px] text-white/40">Likes</p>
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-bold text-white">{formatCount(post.metrics.replies)}</p>
+          <p className="text-[10px] text-white/40">Comments</p>
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-bold text-white">{formatCount(post.metrics.reposts)}</p>
+          <p className="text-[10px] text-white/40">Shares</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────
 
 export const ShortVideoCard = memo(function ShortVideoCard({
   post,
   isActive,
+  onDoubleTap,
   onPlayStateChange,
 }: ShortVideoCardProps) {
   const [liked, setLiked] = useState(false);
@@ -113,11 +258,15 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   const [progress, setProgress] = useState(0);
   const [tipCount, setTipCount] = useState(0);
   const [showCaption, setShowCaption] = useState(false);
+  const [showInfoPanel, setShowInfoPanel] = useState(false);
+  const [heartVisible, setHeartVisible] = useState(false);
   const overlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressStartRef = useRef<number>(0);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTapTime = useRef(0);
 
-  // Detect video info
+  // ── Video detection ───────────────────────────────────────────────────
   const videoInfo = useMemo<VideoInfo | null>(() => {
     for (const embed of post.embeds) {
       const info = parseVideoUrl(embed.url);
@@ -126,14 +275,14 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     return null;
   }, [post.embeds]);
 
-  // YouTube ID fallback from text
   const textYoutubeId = useMemo(() => {
     if (videoInfo) return null;
     const match = post.text.match(/(?:v=|\/|youtu\.be\/)([\w-]{11})/);
     return match?.[1] ?? null;
   }, [post.text, videoInfo]);
 
-  const youtubeId = videoInfo?.platform === 'youtube' ? videoInfo.id : (textYoutubeId ?? undefined);
+  const youtubeId =
+    videoInfo?.platform === 'youtube' ? videoInfo.id : (textYoutubeId ?? undefined);
   const isYoutube = !!youtubeId;
   const isDirect = videoInfo?.platform === 'direct';
   const isPeertube = videoInfo?.platform === 'peertube';
@@ -142,26 +291,80 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   const authorHandle = post.author.handles[post.protocol] ?? post.author.id.slice(0, 16);
   const protocolColor = getProtocolColor(post.protocol);
 
-  // ── Mute toggle via keyboard event ──
+  // ── Custom event listeners ────────────────────────────────────────────
   useEffect(() => {
     if (!isActive) return;
-    const handler = () => setMuted((prev) => !prev);
-    window.addEventListener('shorts-toggle-mute', handler);
-    return () => window.removeEventListener('shorts-toggle-mute', handler);
+
+    const onMute = () => setMuted((prev) => !prev);
+    const onLike = () => { setLiked((prev) => !prev); showHeart(); };
+    const onBookmark = () => setBookmarked((prev) => !prev);
+    const onOverlay = () => {
+      setShowOverlay((prev) => !prev);
+      if (showOverlay) {
+        if (overlayTimer.current) clearTimeout(overlayTimer.current);
+      } else {
+        resetOverlayTimer();
+      }
+    };
+    // Seek indicators are handled at the page level (toast).
+    // VideoPlayer handles the actual seek internally.
+    const onSeekBack = () => { void 0; };
+    const onSeekForward = () => { void 0; };
+    const onDoubleTapLike = () => {
+      setLiked(true);
+      showHeart();
+    };
+    const onPauseToggle = () => {
+      onPlayStateChange?.(true);
+      setTimeout(() => onPlayStateChange?.(false), 100);
+    };
+
+    window.addEventListener('shorts-toggle-mute', onMute);
+    window.addEventListener('shorts-like-current', onLike);
+    window.addEventListener('shorts-bookmark-current', onBookmark);
+    window.addEventListener('shorts-toggle-overlay', onOverlay);
+    window.addEventListener('shorts-seek-back', onSeekBack);
+    window.addEventListener('shorts-seek-forward', onSeekForward);
+    window.addEventListener('shorts-double-tap-like', onDoubleTapLike);
+    window.addEventListener('shorts-toggle-pause', onPauseToggle);
+
+    return () => {
+      window.removeEventListener('shorts-toggle-mute', onMute);
+      window.removeEventListener('shorts-like-current', onLike);
+      window.removeEventListener('shorts-bookmark-current', onBookmark);
+      window.removeEventListener('shorts-toggle-overlay', onOverlay);
+      window.removeEventListener('shorts-seek-back', onSeekBack);
+      window.removeEventListener('shorts-seek-forward', onSeekForward);
+      window.removeEventListener('shorts-double-tap-like', onDoubleTapLike);
+      window.removeEventListener('shorts-toggle-pause', onPauseToggle);
+    };
+    // NOTE: showOverlay is intentionally excluded from deps — re-registering
+    // listeners on every overlay toggle would be wasteful. The closure reads
+    // showOverlay and resetOverlayTimer which are stable across renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
 
-  // ── Auto-hide overlay after 3s of inactivity ──
+  // ── Heart burst animation ─────────────────────────────────────────────
+  const showHeart = useCallback(() => {
+    setHeartVisible(true);
+    setTimeout(() => setHeartVisible(false), 900);
+  }, []);
+
+  // ── Overlay auto-hide after 3s ────────────────────────────────────────
   const resetOverlayTimer = useCallback(() => {
     setShowOverlay(true);
     if (overlayTimer.current) clearTimeout(overlayTimer.current);
-    overlayTimer.current = setTimeout(() => setShowOverlay(false), 3000);
-  }, []);
+    overlayTimer.current = setTimeout(() => {
+      if (!showInfoPanel) setShowOverlay(false);
+    }, 3000);
+  }, [showInfoPanel]);
 
   useEffect(() => {
     if (isActive) {
       resetOverlayTimer();
     } else {
       setShowOverlay(false);
+      setShowInfoPanel(false);
       if (overlayTimer.current) clearTimeout(overlayTimer.current);
     }
     return () => {
@@ -169,35 +372,66 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     };
   }, [isActive, resetOverlayTimer]);
 
-  // ── Tap to toggle overlay ──
-  const handleTap = useCallback(() => {
-    if (showOverlay) {
-      setShowOverlay(false);
-    } else {
-      resetOverlayTimer();
-    }
-  }, [showOverlay, resetOverlayTimer]);
+  // ── Tap area management ───────────────────────────────────────────────
+  const handleContainerClick = useCallback(
+    (e: React.MouseEvent) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const width = rect.width;
 
-  // ── Long press to pause ──
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handlePointerDown = useCallback(
-    (_e: ReactPointerEvent | ReactTouchEvent) => {
-      longPressTimer.current = setTimeout(() => {
-        onPlayStateChange(true);
-      }, 300);
+      // If info panel is open, don't process taps on the video area
+      if (showInfoPanel) return;
+
+      // Left 30% → seek back
+      if (x < width * 0.25) {
+        window.dispatchEvent(new CustomEvent('shorts-seek-back'));
+        return;
+      }
+      // Right 30% → seek forward
+      if (x > width * 0.75) {
+        window.dispatchEvent(new CustomEvent('shorts-seek-forward'));
+        return;
+      }
+      // Center → toggle overlay
+      if (showOverlay) {
+        setShowOverlay(false);
+        if (overlayTimer.current) clearTimeout(overlayTimer.current);
+      } else {
+        resetOverlayTimer();
+      }
     },
-    [onPlayStateChange],
+    [showOverlay, resetOverlayTimer, showInfoPanel],
   );
+
+  // ── Double-tap to like ─────────────────────────────────────────────────
+  const handleTap = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTapTime.current < 350) {
+      setLiked(true);
+      showHeart();
+      onDoubleTap?.();
+      lastTapTime.current = 0;
+    } else {
+      lastTapTime.current = now;
+    }
+  }, [onDoubleTap, showHeart]);
+
+  // ── Long press to pause ───────────────────────────────────────────────
+  const handlePointerDown = useCallback(() => {
+    longPressTimer.current = setTimeout(() => {
+      onPlayStateChange?.(true);
+    }, 300);
+  }, [onPlayStateChange]);
 
   const handlePointerUp = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    onPlayStateChange(false);
+    onPlayStateChange?.(false);
   }, [onPlayStateChange]);
 
-  // ── Timer-based progress bar (TikTok-style, estimated duration ~30s) ──
+  // ── Progress bar ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!isActive) {
       if (progressTimer.current) {
@@ -208,20 +442,18 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       return;
     }
 
-    // Reset progress when video becomes active
     setProgress(0);
     progressStartRef.current = Date.now();
-    const ESTIMATED_DURATION_MS = 30_000; // Assume ~30s for shorts
+    const ESTIMATED_DURATION_MS = 30_000;
 
     progressTimer.current = setInterval(() => {
       const elapsed = Date.now() - progressStartRef.current;
-      const p = Math.min(elapsed / ESTIMATED_DURATION_MS, 1);
-      setProgress(p);
-      if (p >= 1 && progressTimer.current) {
+      setProgress(Math.min(elapsed / ESTIMATED_DURATION_MS, 1));
+      if (elapsed >= ESTIMATED_DURATION_MS && progressTimer.current) {
         clearInterval(progressTimer.current);
         progressTimer.current = null;
       }
-    }, 100); // Update 10fps for smooth bar
+    }, 100);
 
     return () => {
       if (progressTimer.current) {
@@ -241,126 +473,117 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         if (!cancelled && data) setTipCount(data.count);
       })
       .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [isPeertube, videoInfo]);
 
-  // ── Like action ──
+  // ── Like ──
   const handleLike = useCallback(() => {
     setLiked((prev) => !prev);
     window.dispatchEvent(new CustomEvent('shorts-like-current'));
   }, []);
 
-  // ── Bookmark action ──
+  // ── Bookmark ──
   const handleBookmark = useCallback(async () => {
     setBookmarked((prev) => !prev);
     try {
       const { addBookmark, removeBookmark } = await import('@degenfeed/storage');
       if (!bookmarked) {
-        await addBookmark(
-          post.id,
-          post.dfUri ?? '',
-          post.protocol,
-          post.text.slice(0, 60),
-          post.author.displayName || '',
-        );
+        await addBookmark(post.id, post.dfUri ?? '', post.protocol, post.text.slice(0, 60), post.author.displayName || '');
       } else {
         await removeBookmark(post.id);
       }
-    } catch {
-      // Silently fail — IndexedDB may be unavailable
-    }
+    } catch { /* IndexedDB may be unavailable */ }
     window.dispatchEvent(new CustomEvent('shorts-bookmark-current'));
   }, [bookmarked, post.id, post.dfUri, post.protocol, post.text, post.author.displayName]);
 
-  // ── Share action ──
+  // ── Share ──
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}/post/${encodeURIComponent(post.id)}`;
     try {
       const { Share } = await import('@capacitor/share');
       await Share.share({ url, title: post.text.slice(0, 80) });
     } catch {
-      // Fallback: copy to clipboard
       await navigator.clipboard.writeText(url).catch(() => {});
-      window.dispatchEvent(
-        new CustomEvent('df-toast', {
-          detail: { kind: 'success', message: 'Link copied!' },
-        }),
-      );
+      window.dispatchEvent(new CustomEvent('df-toast', {
+        detail: { kind: 'success', message: 'Link copied!' },
+      }));
     }
   }, [post.id, post.text]);
 
-  // ── Comment action ──
+  // ── Comment ──
   const handleComment = useCallback(() => {
     window.location.href = `/post/${encodeURIComponent(post.id)}`;
   }, [post.id]);
 
-  // ── Tip action ──
+  // ── Tip ──
   const handleTip = useCallback(() => {
     window.dispatchEvent(new CustomEvent('shorts-tip-current'));
-    // Navigate to post page for tipping
     window.location.href = `/post/${encodeURIComponent(post.id)}`;
   }, [post.id]);
 
-  // ── Mute toggle ──
-  const handleMute = useCallback(() => {
+  // ── Mute ──
+  const handleMute = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setMuted((prev) => !prev);
   }, []);
 
-  // ── Keyboard: Only handle when this card is the active one ──
-  // (global keys handled by parent page)
+  // ── Info panel toggle — swipe up gesture on bottom area ──
+  const handleInfoDrag = useCallback(
+    (_e: React.TouchEvent | React.MouseEvent, deltaY: number) => {
+      if (deltaY < -40 && !showInfoPanel) setShowInfoPanel(true);
+      if (deltaY > 40 && showInfoPanel) setShowInfoPanel(false);
+    },
+    [showInfoPanel],
+  );
+
+  // Track Y start for panel drag
+  const panelDragStartRef = useRef(0);
+  const handleInfoTouchStart = useCallback((e: React.TouchEvent) => {
+    panelDragStartRef.current = e.touches[0].clientY;
+  }, []);
+  const handleInfoTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const deltaY = e.changedTouches[0].clientY - panelDragStartRef.current;
+      handleInfoDrag(e, deltaY);
+    },
+    [handleInfoDrag],
+  );
+
+  // ── Render ─────────────────────────────────────────────────────────────
 
   return (
     <section
-      className="relative h-full w-full overflow-hidden bg-black"
+      className="relative h-full w-full overflow-hidden bg-black select-none"
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
-      onTouchStart={handlePointerDown}
-      onTouchEnd={handlePointerUp}
       aria-label={`Video by ${post.author.displayName}`}
     >
-      {/* ── Progress Bar ── */}
-      {isYoutube ? (
-        <div className="absolute left-0 right-0 top-0 z-30 h-0.5">
-          <div className="h-full w-full bg-white/10">
-            <div
-              className="h-full bg-degen-400 transition-all duration-200 ease-linear"
-              style={{ width: `${progress * 100}%` }}
-              role="progressbar"
-              aria-valuenow={Math.round(progress * 100)}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label="Video progress"
-            />
-          </div>
+      {/* ── Progress Bar (thin, at very top) ── */}
+      <div className="pointer-events-none absolute left-0 right-0 top-0 z-30 h-0.5">
+        <div className="h-full w-full bg-white/10">
+          <div
+            className="h-full bg-gradient-to-r from-degen-500 to-degen-400 transition-all duration-150 ease-linear"
+            style={{ width: `${progress * 100}%` }}
+            role="progressbar"
+            aria-valuenow={Math.round(progress * 100)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Video progress"
+          />
         </div>
-      ) : (
-        /* HTML5 video: progress tracked inside VideoPlayer — show a thin overlay bar */
-        <div className="absolute left-0 right-0 top-0 z-30 h-0.5">
-          <div className="h-full w-full bg-white/10">
-            <div
-              className="h-full bg-degen-400 transition-all duration-200 ease-linear"
-              style={{ width: `${progress * 100}%` }}
-              role="progressbar"
-              aria-valuenow={Math.round(progress * 100)}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label="Video progress"
-            />
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* ── Video Player ── */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: role="presentation" with onKeyDown for Enter/Space */}
       <div
-        className="absolute inset-0"
-        onClick={handleTap}
+        className="absolute inset-0 cursor-pointer"
+        onClick={handleContainerClick}
+        onDoubleClick={handleTap}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            handleTap();
+            handleContainerClick(e as unknown as React.MouseEvent<HTMLDivElement>);
           }
         }}
         role="presentation"
@@ -372,8 +595,8 @@ export const ShortVideoCard = memo(function ShortVideoCard({
             aspectRatio="9:16"
             title={post.text}
             showMetadata={false}
-            onPlay={() => onPlayStateChange(false)}
-            onPause={() => onPlayStateChange(true)}
+            onPlay={() => onPlayStateChange?.(false)}
+            onPause={() => onPlayStateChange?.(true)}
             className="h-full w-full"
           />
         ) : isDirect && videoInfo?.platform === 'direct' ? (
@@ -383,8 +606,8 @@ export const ShortVideoCard = memo(function ShortVideoCard({
             aspectRatio="9:16"
             title={post.text}
             showMetadata={false}
-            onPlay={() => onPlayStateChange(false)}
-            onPause={() => onPlayStateChange(true)}
+            onPlay={() => onPlayStateChange?.(false)}
+            onPause={() => onPlayStateChange?.(true)}
             className="h-full w-full"
           />
         ) : isPeertube && videoInfo?.platform === 'peertube' ? (
@@ -395,12 +618,12 @@ export const ShortVideoCard = memo(function ShortVideoCard({
             aspectRatio="9:16"
             title={post.text}
             showMetadata={false}
-            onPlay={() => onPlayStateChange(false)}
-            onPause={() => onPlayStateChange(true)}
+            onPlay={() => onPlayStateChange?.(false)}
+            onPause={() => onPlayStateChange?.(true)}
             className="h-full w-full"
           />
         ) : (
-          /* Fallback: show thumbnail with play link */
+          /* Fallback */
           <div className="flex h-full w-full items-center justify-center bg-gray-950">
             {post.author.avatarUrl && (
               <Image
@@ -413,21 +636,14 @@ export const ShortVideoCard = memo(function ShortVideoCard({
             )}
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-md">
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="text-white/70"
-                  aria-hidden="true"
-                >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-white/70" aria-hidden="true">
                   <path d="M8 5V19L19 12L8 5Z" />
                 </svg>
               </div>
               <p className="text-xs text-gray-500">Video unavailable</p>
               <a
                 href={post.embeds[0]?.url ?? '#'}
-                target="_blank" rel="noopener noreferrer"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
               >
@@ -437,18 +653,33 @@ export const ShortVideoCard = memo(function ShortVideoCard({
           </div>
         )}
 
-        {/* ── Left-side gradient (for readability) ── */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        {/* ── Gradient overlays ── */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[15%] bg-gradient-to-b from-black/40 to-transparent" />
       </div>
 
-      {/* ── Mute/Unmute button (top-right) ── */}
+      {/* ── Heart burst animation ── */}
+      <HeartBurst visible={heartVisible} />
+
+      {/* ── Seek hint overlays (shown briefly on tap) ── */}
+      {/* Left seek zone */}
+      <div className="pointer-events-none absolute left-0 top-0 z-20 flex h-full w-[25%] items-center justify-start pl-3">
+        <span className="text-2xl text-white/30 drop-shadow-lg opacity-0 transition-opacity duration-200">
+          ⏪
+        </span>
+      </div>
+      {/* Right seek zone */}
+      <div className="pointer-events-none absolute right-0 top-0 z-20 flex h-full w-[25%] items-center justify-end pr-3">
+        <span className="text-2xl text-white/30 drop-shadow-lg opacity-0 transition-opacity duration-200">
+          ⏩
+        </span>
+      </div>
+
+      {/* ── Mute/Unmute button ── */}
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleMute();
-        }}
-        className={`absolute right-4 top-16 z-30 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition-all ${
+        onClick={handleMute}
+        className={`absolute right-4 top-16 z-30 flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 ${
           muted
             ? 'bg-white/10 text-white/70 hover:bg-white/20'
             : 'bg-degen-500/20 text-degen-400 hover:bg-degen-500/30'
@@ -457,40 +688,23 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       >
         {muted ? (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M11 5L6 9H2v6h4l5 4V5z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M23 9l-6 6M17 9l6 6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
+            <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M23 9l-6 6M17 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         ) : (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </button>
 
       {/* ── Right-side action rail ── */}
       <div
-        className={`absolute bottom-28 right-3 z-30 flex flex-col items-center gap-3 transition-opacity duration-300 sm:bottom-32 ${
-          showOverlay ? 'opacity-100' : 'opacity-0'
+        className={`absolute bottom-24 right-3 z-30 flex flex-col items-center gap-3 transition-all duration-300 sm:bottom-28 ${
+          showOverlay && !showInfoPanel ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
         }`}
       >
-        {/* Avatar / Creator (top of rail on mobile) */}
+        {/* Avatar */}
         <div className="mb-1 flex flex-col items-center">
           <a
             href={`/profile?protocol=${post.protocol}&id=${encodeURIComponent(post.author.id)}`}
@@ -511,35 +725,19 @@ export const ShortVideoCard = memo(function ShortVideoCard({
               </div>
             )}
           </a>
-          {/* Follow indicator line */}
-          <span
-            className="mt-0.5 h-0.5 w-4 rounded-full"
-            style={{ backgroundColor: protocolColor }}
-          />
+          <span className="mt-0.5 h-0.5 w-4 rounded-full" style={{ backgroundColor: protocolColor }} />
         </div>
 
         {/* Like */}
         <ActionButton
           icon={
             liked ? (
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             ) : (
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )
           }
@@ -554,17 +752,11 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         <ActionButton
           icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           }
           label="Comment"
-          count={post.metrics.reposts > 0 ? post.metrics.reposts : undefined}
+          count={post.metrics.replies > 0 ? post.metrics.replies : undefined}
           onClick={handleComment}
         />
 
@@ -572,13 +764,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         <ActionButton
           icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           }
           label="Share"
@@ -586,17 +772,10 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         />
 
         {/* Tip */}
-
         <ActionButton
           icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           }
           label="Tip"
@@ -610,11 +789,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
           icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
-                d={
-                  bookmarked
-                    ? 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z'
-                    : 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z'
-                }
+                d={bookmarked ? 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z' : 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z'}
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
@@ -632,9 +807,11 @@ export const ShortVideoCard = memo(function ShortVideoCard({
 
       {/* ── Bottom info overlay ── */}
       <div
-        className={`absolute bottom-0 left-0 right-0 z-30 px-4 pb-8 pt-20 transition-opacity duration-300 ${
-          showOverlay ? 'opacity-100' : 'opacity-0'
+        className={`absolute bottom-0 left-0 right-0 z-30 px-4 pb-6 pt-20 transition-all duration-300 ${
+          showOverlay && !showInfoPanel ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
         }`}
+        onTouchStart={handleInfoTouchStart}
+        onTouchEnd={handleInfoTouchEnd}
       >
         {/* Creator row */}
         <div className="mb-2 flex items-center gap-2">
@@ -672,10 +849,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         <div className="mb-1">
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowCaption((prev) => !prev);
-            }}
+            onClick={(e) => { e.stopPropagation(); setShowCaption((prev) => !prev); }}
             className="block text-left"
             aria-expanded={showCaption}
             aria-label={showCaption ? 'Collapse caption' : 'Expand caption'}
@@ -701,23 +875,10 @@ export const ShortVideoCard = memo(function ShortVideoCard({
           </div>
         )}
 
-        {/* Music / Sound */}
+        {/* Sound / Music */}
         <div className="mt-1 flex items-center gap-1.5">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-            className="text-white/50"
-          >
-            <path
-              d="M9 18V5l12-2v13"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-white/50">
+            <path d="M9 18V5l12-2v13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <circle cx="6" cy="18" r="3" stroke="currentColor" strokeWidth="1.5" />
             <circle cx="18" cy="16" r="3" stroke="currentColor" strokeWidth="1.5" />
           </svg>
@@ -729,32 +890,73 @@ export const ShortVideoCard = memo(function ShortVideoCard({
                 : formatTimeAgo(post.createdAt)}
           </span>
         </div>
+
+        {/* Swipe up hint */}
+        {!showInfoPanel && (
+          <div className="mt-3 flex items-center gap-1.5 opacity-40">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-white/50">
+              <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="text-[9px] text-white/40">Swipe up for details</span>
+          </div>
+        )}
       </div>
 
-      {/* ── No video available overlay — PeerTube tip button ── */}
-      {isPeertube && (
+      {/* ── Video Info Panel ── */}
+      <VideoInfoPanel post={post} visible={showInfoPanel} />
+
+      {/* ── Close info panel button ── */}
+      {showInfoPanel && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setShowInfoPanel(false); }}
+          className="absolute right-4 top-16 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 backdrop-blur-md transition-colors hover:bg-white/10"
+          aria-label="Close info panel"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white/70" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
+
+      {/* ── PeerTube external link ── */}
+      {isPeertube && !showInfoPanel && (
         <a
           href={videoInfo?.platform === 'peertube' ? videoInfo.url : '#'}
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
           className="absolute bottom-36 right-16 z-30 inline-flex items-center gap-1.5 rounded-full border border-degen-500/30 bg-degen-500/10 px-3 py-1.5 text-xs font-medium text-degen-400 backdrop-blur-sm transition-all hover:bg-degen-500/20 hover:shadow-[0_0_12px_rgba(0,255,65,0.2)]"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect
-              x="4"
-              y="4"
-              width="16"
-              height="16"
-              rx="3"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
+            <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
             <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
           </svg>
-          Watch on PeerTube
+          PeerTube
         </a>
       )}
+
+      {/* ── Animations ── */}
+      <style>{`
+        @keyframes shorts-heart-pop {
+          0% { transform: scale(0.3); opacity: 0; }
+          25% { transform: scale(1.5); opacity: 1; }
+          50% { transform: scale(1); opacity: 1; }
+          100% { transform: scale(1) translateY(-30px); opacity: 0; }
+        }
+        @keyframes shorts-heart-orbit {
+          0% { transform: rotate(var(--angle)) translateX(0) scale(0); opacity: 0; }
+          30% { transform: rotate(var(--angle)) translateX(40px) scale(1); opacity: 1; }
+          100% { transform: rotate(var(--angle)) translateX(60px) scale(0.5); opacity: 0; }
+        }
+        @keyframes shorts-panel-slide-up {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          * { animation-duration: 0.01ms !important; }
+        }
+      `}</style>
     </section>
   );
 });

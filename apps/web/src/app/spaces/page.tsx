@@ -39,43 +39,78 @@ interface SpaceItem {
   reactions: SpaceReaction[];
   tipTokenAddress?: string;
   tippingEnabled: boolean;
+  recordingUrl?: string;
+  endedAt?: number;
 }
 
-// ─── Loading Skeleton ─────────────────────────────────────────────
+// ─── Animation keyframes ──────────────────────────────────────────
 
-function SpaceCardSkeleton() {
+const ANIM_STYLES = `
+@keyframes waveform {
+  0%, 100% { transform: scaleY(0.25); }
+  50% { transform: scaleY(1); }
+}
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+`;
+
+// ─── Shared components ────────────────────────────────────────────
+
+function LiveDot({ className = '' }: { className?: string }) {
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 animate-pulse rounded-full bg-[var(--color-muted)]" />
-        <div className="flex-1 space-y-2">
-          <div className="h-4 w-3/4 animate-pulse rounded bg-[var(--color-muted)]" />
-          <div className="h-3 w-1/2 animate-pulse rounded bg-[var(--color-muted)]" />
-          <div className="flex gap-2">
-            <div className="h-5 w-14 animate-pulse rounded-full bg-[var(--color-muted)]" />
-            <div className="h-5 w-14 animate-pulse rounded-full bg-[var(--color-muted)]" />
-          </div>
-        </div>
-      </div>
+    <span className={`relative flex h-2.5 w-2.5 items-center justify-center ${className}`} role="img" aria-label="Live">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+    </span>
+  );
+}
+
+function Waveform({ className = '' }: { className?: string }) {
+  const bars = [12, 20, 14, 22, 16, 18];
+  return (
+    <span className={`inline-flex items-end gap-[2px] ${className}`} aria-hidden="true">
+      {bars.map((h, i) => (
+        <span
+          key={i}
+          className="w-[2px] rounded-full bg-degen-500/70"
+          style={{
+            height: `${h}%`,
+            animation: `waveform 0.9s ease-in-out ${i * 0.12}s infinite`,
+            transformOrigin: 'bottom',
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function AvatarImg({ src, name, className = '' }: { src?: string; name: string; className?: string }) {
+  if (src) {
+    return <img src={src} alt={name} className={`rounded-full object-cover ${className}`} />;
+  }
+  return (
+    <div
+      className={`flex items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 to-purple-600/30 text-sm font-bold text-[var(--color-fg)] ${className}`}
+    >
+      {name[0]?.toUpperCase() || '?'}
     </div>
   );
 }
 
-// ─── Empty State ──────────────────────────────────────────────────
-
-function EmptyState({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
-      <span className="mb-4 text-4xl opacity-30" aria-hidden="true">
-        {icon}
-      </span>
-      <p className="text-base font-medium text-[var(--color-muted)]">{title}</p>
-      <p className="mt-1 text-sm text-[var(--color-muted)]">{subtitle}</p>
-    </div>
-  );
+function formatDuration(startTime: number): string {
+  const m = Math.floor((Date.now() - startTime) / 60000);
+  if (m < 60) return `${m}m`;
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
 }
-
-// ─── Time helpers ────────────────────────────────────────────────
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts;
@@ -95,198 +130,276 @@ function formatScheduledDate(iso: string): string {
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const isToday = d.toDateString() === now.toDateString();
-  const isTomorrow = d.toDateString() === tomorrow.toDateString();
-
   const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-
-  if (isToday) return `Today at ${time}`;
-  if (isTomorrow) return `Tomorrow at ${time}`;
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  if (d.toDateString() === now.toDateString()) return `Today at ${time}`;
+  if (d.toDateString() === tomorrow.toDateString()) return `Tomorrow at ${time}`;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-// ─── SpaceCard ────────────────────────────────────────────────────
+function SpacesIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-500">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
+      <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+    </svg>
+  );
+}
+
+function SectionHeader({ icon, title, count, accent }: { icon: React.ReactNode; title: string; count?: number; accent?: string }) {
+  return (
+    <div className="mb-4 flex items-center gap-2">
+      {icon}
+      <h2 className="text-sm font-bold text-[var(--color-fg)] tracking-tight">{title}</h2>
+      {count !== undefined && count > 0 && (
+        <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+          {count}
+        </span>
+      )}
+      {accent && (
+        <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-degen-500">{accent}</span>
+      )}
+    </div>
+  );
+}
+
+// ─── LiveSpaceCard ────────────────────────────────────────────────
 
 function LiveSpaceCard({ space, onJoin }: { space: SpaceItem; onJoin: (id: string) => void }) {
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/30 hover:shadow-[0_0_16px_rgba(34,197,94,0.08)]">
-      <div className="flex items-start gap-3">
-        {/* Host avatar */}
-        {space.hostAvatarUrl ? (
-          <img
-            src={space.hostAvatarUrl}
-            alt={space.hostName}
-            className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-muted)] text-sm font-bold text-[var(--color-fg)]">
-            {space.hostName[0]?.toUpperCase() || '?'}
-          </div>
-        )}
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-[var(--color-fg)] truncate">{space.title}</h3>
-            <span className="flex-shrink-0 flex items-center gap-1 rounded-full bg-degen-500/20 px-2 py-0.5 text-[10px] font-bold text-degen-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-degen-500 animate-pulse" />
-              LIVE
-            </span>
-          </div>
-
-          <p className="mt-0.5 text-xs text-gray-500">
-            hosted by <span className="font-medium text-[var(--color-fg)]">{space.hostName}</span>
-          </p>
-
-          {/* Metrics */}
-          <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-500">
-            <span>
-              {space.speakers.length} speaker{space.speakers.length !== 1 ? 's' : ''}
-            </span>
-            <span>·</span>
-            <span>
-              {space.listeners} listener{space.listeners !== 1 ? 's' : ''}
-            </span>
-          </div>
-
-          {/* Protocol badges */}
-          {space.protocols.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {space.protocols.map((protocol) => (
-                <span
-                  key={protocol}
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
-                  style={{
-                    backgroundColor: `${getProtocolColor(protocol)}18`,
-                    color: getProtocolColor(protocol),
-                  }}
-                >
-                  <span className="text-[0.6em]">{getProtocolIcon(protocol)}</span>
-                  {protocol}
-                </span>
-              ))}
+    <div
+      className="group relative flex w-[300px] shrink-0 snap-start flex-col rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5 transition-all duration-300 hover:border-degen-500/40 hover:shadow-[0_0_24px_rgba(0,255,65,0.06)]"
+      style={{ animation: 'slideUp 0.35s ease-out both' }}
+    >
+      {/* Host row */}
+      <div className="mb-3 flex items-start justify-between">
+        <div className="flex items-center gap-2.5">
+          <AvatarImg src={space.hostAvatarUrl} name={space.hostName} className="h-9 w-9 ring-2 ring-degen-500/20" />
+          <div className="min-w-0">
+            <p className="truncate text-xs font-semibold text-[var(--color-fg)]">{space.hostName}</p>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <LiveDot />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">LIVE</span>
+              <span className="text-[10px] text-gray-600">· {formatDuration(space.createdAt)}</span>
             </div>
-          )}
+          </div>
         </div>
+      </div>
 
+      {/* Topic */}
+      <h3 className="mb-3 line-clamp-2 text-sm font-bold leading-snug text-[var(--color-fg)]">{space.title}</h3>
+
+      {/* Waveform + listeners */}
+      <div className="mb-3 flex items-center gap-2">
+        <Waveform className="h-4" />
+        <span className="text-[11px] font-medium text-gray-500">{space.listeners} listening</span>
+      </div>
+
+      {/* Protocols */}
+      {space.protocols.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1">
+          {space.protocols.map((p) => (
+            <span
+              key={p}
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
+              style={{ backgroundColor: `${getProtocolColor(p)}15`, color: getProtocolColor(p) }}
+            >
+              <span className="text-[0.6em]">{getProtocolIcon(p)}</span>
+              {p}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Join button — reveals on hover */}
+      <div className="mt-auto">
         <button
           type="button"
           onClick={() => onJoin(space.id)}
-          className="flex-shrink-0 rounded-lg bg-degen-500/20 px-4 py-2 text-xs font-semibold text-degen-400 hover:bg-degen-500/30 transition-colors"
+          className="w-full translate-y-1 rounded-xl border border-transparent bg-degen-500/10 px-4 py-2.5 text-xs font-bold text-degen-400 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 hover:border-degen-500/30 hover:bg-degen-500/20"
         >
-          Join
+          Join Space
         </button>
       </div>
     </div>
   );
 }
 
-function UpcomingSpaceCard({ space, onRSVP }: { space: SpaceItem; onRSVP: (id: string) => void }) {
-  const [rsvped, setRsvped] = useState(false);
+// ─── UpcomingSpaceCard ────────────────────────────────────────────
 
+function UpcomingSpaceCard({ space, onReminder }: { space: SpaceItem; onReminder: (id: string) => void }) {
+  const [reminded, setReminded] = useState(false);
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-      <div className="flex items-start gap-3">
-        {space.hostAvatarUrl ? (
-          <img
-            src={space.hostAvatarUrl}
-            alt={space.hostName}
-            className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-muted)] text-sm font-bold text-[var(--color-fg)]">
-            {space.hostName[0]?.toUpperCase() || '?'}
-          </div>
-        )}
-
+    <div className="flex flex-col rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5 transition-all duration-200 hover:border-[var(--color-border)] hover:bg-[var(--color-card-hover)]">
+      <div className="mb-3 flex items-start gap-3">
+        <AvatarImg src={space.hostAvatarUrl} name={space.hostName} className="h-10 w-10 shrink-0" />
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-[var(--color-fg)] truncate">{space.title}</h3>
+          <h3 className="truncate text-sm font-bold text-[var(--color-fg)]">{space.title}</h3>
           <p className="mt-0.5 text-xs text-gray-500">
-            hosted by <span className="font-medium text-[var(--color-fg)]">{space.hostName}</span>
+            by <span className="font-medium text-[var(--color-fg)]">{space.hostName}</span>
           </p>
-
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-[11px] text-cyan-400 font-medium">
-              {space.scheduledAt ? formatScheduledDate(space.scheduledAt) : 'TBD'}
-            </span>
-          </div>
-
-          {space.protocols.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {space.protocols.map((protocol) => (
-                <span
-                  key={protocol}
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
-                  style={{
-                    backgroundColor: `${getProtocolColor(protocol)}18`,
-                    color: getProtocolColor(protocol),
-                  }}
-                >
-                  <span className="text-[0.6em]">{getProtocolIcon(protocol)}</span>
-                  {protocol}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
+      </div>
 
+      {/* Schedule */}
+      <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-cyan-400">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <span>{space.scheduledAt ? formatScheduledDate(space.scheduledAt) : 'TBD'}</span>
+      </div>
+
+      {/* Protocols */}
+      {space.protocols.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1">
+          {space.protocols.map((p) => (
+            <span
+              key={p}
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
+              style={{ backgroundColor: `${getProtocolColor(p)}15`, color: getProtocolColor(p) }}
+            >
+              <span className="text-[0.6em]">{getProtocolIcon(p)}</span>
+              {p}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => { setReminded(true); onReminder(space.id); }}
+        disabled={reminded}
+        className={`mt-auto w-full rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-200 ${
+          reminded
+            ? 'border border-degen-500/30 bg-degen-500/15 text-degen-400'
+            : 'border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 text-[var(--color-fg)] hover:border-[var(--color-border)] hover:bg-[var(--color-muted)]/20'
+        }`}
+      >
+        {reminded ? (
+          <span className="flex items-center justify-center gap-1.5">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Reminder Set
+          </span>
+        ) : (
+          <span className="flex items-center justify-center gap-1.5">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            Set Reminder
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
+
+// ─── PastSpaceCard ────────────────────────────────────────────────
+
+function PastSpaceCard({ space }: { space: SpaceItem }) {
+  return (
+    <div className="flex flex-col rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)]/50 p-5 opacity-70 transition-all duration-200 hover:border-[var(--color-border)] hover:opacity-100">
+      <div className="mb-3 flex items-start gap-3">
+        <AvatarImg src={space.hostAvatarUrl} name={space.hostName} className="h-10 w-10 shrink-0 opacity-70" />
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-sm font-bold text-[var(--color-fg)]">{space.title}</h3>
+          <p className="mt-0.5 text-xs text-gray-500">
+            {space.hostName} · {space.endedAt ? timeAgo(space.endedAt) : timeAgo(space.createdAt)}
+          </p>
+        </div>
+      </div>
+
+      {space.recordingUrl ? (
+        <a
+          href={space.recordingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2.5 text-xs font-semibold text-[var(--color-fg)] transition-all hover:border-[var(--color-border)] hover:bg-[var(--color-muted)]/20"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          Listen to Recording
+        </a>
+      ) : (
+        <div className="mt-auto w-full rounded-xl border border-dashed border-[var(--color-glass-border)] bg-[var(--color-muted)]/5 px-4 py-2.5 text-center text-xs text-gray-500">
+          No recording
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── EmptyState ───────────────────────────────────────────────────
+
+function EmptyState({ icon, title, subtitle, action }: {
+  icon: string; title: string; subtitle: string;
+  action?: { label: string; onClick: () => void };
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-glass-border)] bg-[var(--color-card)]/30 px-4 py-12">
+      <span className="mb-4 text-3xl opacity-25" aria-hidden="true">{icon}</span>
+      <p className="text-sm font-semibold text-[var(--color-fg)]">{title}</p>
+      <p className="mt-1 max-w-xs text-center text-xs text-gray-500">{subtitle}</p>
+      {action && (
         <button
           type="button"
-          onClick={() => {
-            setRsvped(true);
-            onRSVP(space.id);
-          }}
-          disabled={rsvped}
-          className={`flex-shrink-0 rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${
-            rsvped
-              ? 'bg-degen-500/20 text-degen-400 border border-degen-500/30'
-              : 'bg-[var(--color-muted)] text-[var(--color-fg)] hover:bg-[var(--color-overlay)] border border-[var(--color-border)]'
-          }`}
+          onClick={action.onClick}
+          className="mt-5 rounded-xl bg-degen-500 px-5 py-2.5 text-xs font-bold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_16px_rgba(0,255,65,0.2)]"
         >
-          {rsvped ? "✓ RSVP'd" : 'RSVP'}
+          {action.label}
         </button>
-      </div>
+      )}
     </div>
   );
 }
 
-function _PastSpaceCard({ space }: { space: SpaceItem }) {
+// ─── Skeletons ────────────────────────────────────────────────────
+
+function LiveSkeleton() {
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 opacity-60">
-      <div className="flex items-start gap-3">
-        {space.hostAvatarUrl ? (
-          <img
-            src={space.hostAvatarUrl}
-            alt={space.hostName}
-            className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-muted)] text-sm font-bold">
-            {space.hostName[0]?.toUpperCase() || '?'}
-          </div>
-        )}
-
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-[var(--color-fg)] truncate">{space.title}</h3>
-          <p className="mt-0.5 text-xs text-gray-500">
-            hosted by {space.hostName} · {timeAgo(space.createdAt)}
-          </p>
+    <div className="flex w-[300px] shrink-0 flex-col rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+      <div className="mb-3 flex items-center gap-2.5">
+        <div className="h-9 w-9 animate-pulse rounded-full bg-[var(--color-muted)]/20" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-3 w-24 animate-pulse rounded bg-[var(--color-muted)]/20" />
+          <div className="h-2 w-16 animate-pulse rounded bg-[var(--color-muted)]/15" />
         </div>
-
-        <span className="flex-shrink-0 rounded-full border border-[var(--color-border)] px-3 py-1 text-[10px] font-medium text-gray-500">
-          Recording
-        </span>
       </div>
-      <p className="mt-2 text-[11px] text-gray-500 italic">Recording playback coming soon</p>
+      <div className="mb-2 h-4 w-3/4 animate-pulse rounded bg-[var(--color-muted)]/20" />
+      <div className="mb-4 h-4 w-1/2 animate-pulse rounded bg-[var(--color-muted)]/15" />
+      <div className="mb-4 flex gap-[2px]">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-3 w-[2px] animate-pulse rounded-full bg-[var(--color-muted)]/20" />
+        ))}
+      </div>
+      <div className="h-10 w-full animate-pulse rounded-xl bg-[var(--color-muted)]/10" />
     </div>
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────
+function GridSkeleton() {
+  return (
+    <div className="flex flex-col rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
+      <div className="mb-3 flex items-start gap-3">
+        <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-[var(--color-muted)]/20" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-3/4 animate-pulse rounded bg-[var(--color-muted)]/20" />
+          <div className="h-3 w-1/2 animate-pulse rounded bg-[var(--color-muted)]/15" />
+        </div>
+      </div>
+      <div className="mb-3 h-3 w-24 animate-pulse rounded bg-[var(--color-muted)]/15" />
+      <div className="h-10 w-full animate-pulse rounded-xl bg-[var(--color-muted)]/10" />
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────
 
 export default function SpacesPage() {
   const { ready, signedInProtocols, openSignIn } = useAuth();
@@ -294,26 +407,24 @@ export default function SpacesPage() {
 
   const [liveSpaces, setLiveSpaces] = useState<SpaceItem[]>([]);
   const [upcomingSpaces, setUpcomingSpaces] = useState<SpaceItem[]>([]);
+  const [pastSpaces, setPastSpaces] = useState<SpaceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showHostModal, setShowHostModal] = useState(false);
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>(null);
 
-  // Active space data
   const activeSpace = useMemo(
     () => liveSpaces.find((s) => s.id === activeSpaceId) || null,
     [liveSpaces, activeSpaceId],
   );
 
-  // Fetch spaces
   const fetchSpaces = useCallback(async () => {
     try {
       const [liveRes, upcomingRes] = await Promise.all([
         fetch('/api/spaces/live'),
         fetch('/api/spaces/upcoming'),
       ]);
-
       if (liveRes.ok) {
         const liveData = (await liveRes.json()) as { spaces: SpaceItem[] };
         setLiveSpaces(liveData.spaces);
@@ -322,6 +433,12 @@ export default function SpacesPage() {
         const upcomingData = (await upcomingRes.json()) as { spaces: SpaceItem[] };
         setUpcomingSpaces(upcomingData.spaces);
       }
+      // Try fetching past spaces (may not exist yet)
+      const pastRes = await fetch('/api/spaces/past').catch(() => null);
+      if (pastRes?.ok) {
+        const pastData = (await pastRes.json()) as { spaces: SpaceItem[] };
+        setPastSpaces(pastData.spaces);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load spaces');
     } finally {
@@ -329,50 +446,34 @@ export default function SpacesPage() {
     }
   }, []);
 
-  // Initial fetch + polling
   useEffect(() => {
     fetchSpaces();
     pollRef.current = setInterval(fetchSpaces, 15000);
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [fetchSpaces]);
 
-  // Join a space
   const handleJoin = useCallback(async (id: string) => {
     try {
-      await fetch(`/api/spaces/${id}/join`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-      });
-    } catch {
-      /* non-critical */
-    }
+      await fetch(`/api/spaces/${id}/join`, { method: 'POST', headers: { 'content-type': 'application/json' } });
+    } catch { /* non-critical */ }
     setActiveSpaceId(id);
   }, []);
 
-  // RSVP handler (placeholder — could store in KV/user prefs)
-  const handleRSVP = useCallback((_id: string) => {
-    // Placeholder: could notify host, add to user calendar, etc.
+  const handleReminder = useCallback((_id: string) => {
+    // Could integrate with calendar/notification system
   }, []);
 
-  // Space created handler
   const handleSpaceCreated = useCallback(
     (space: { id: string; title: string; protocols: string[]; status: 'live' | 'scheduled' }) => {
-      if (space.status === 'live') {
-        setActiveSpaceId(space.id);
-      }
+      if (space.status === 'live') setActiveSpaceId(space.id);
       fetchSpaces();
     },
     [fetchSpaces],
   );
 
-  // Broadcast handler
   const handleBroadcast = useCallback(async (text: string, protocols: string[]) => {
-    // Reuse the publish API endpoint
     const res = await fetch('/api/publish', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ text, targets: protocols }),
     });
     if (!res.ok) {
@@ -381,151 +482,187 @@ export default function SpacesPage() {
     }
   }, []);
 
-  // If we're in a live space room
+  // ── Live Space Room ──
   if (activeSpace) {
     return (
-      <SpaceRoom
-        space={activeSpace}
-        currentUserId={hasSignedIn ? 'current-user' : 'anonymous'}
-        currentUserDisplayName={hasSignedIn ? 'User' : 'Guest'}
-        onLeave={() => setActiveSpaceId(null)}
-      />
+      <>
+        <style>{ANIM_STYLES}</style>
+        <SpaceRoom
+          space={activeSpace}
+          currentUserId={hasSignedIn ? 'current-user' : 'anonymous'}
+          currentUserDisplayName={hasSignedIn ? 'User' : 'Guest'}
+          onLeave={() => setActiveSpaceId(null)}
+        />
+      </>
     );
   }
 
   return (
-    <div className="mx-auto max-w-[1280px] px-4 py-4 sm:px-6">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-[var(--color-fg)]">
-            <span className="mr-2">🔊</span>
-            Spaces
-          </h1>
-          <p className="text-xs text-gray-500 mt-0.5">Live audio rooms for the open social graph</p>
-        </div>
+    <>
+      <style>{ANIM_STYLES}</style>
+      <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 lg:px-8">
+        {/* ═══ Header ═══ */}
+        <header className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-degen-500/20 bg-degen-500/10">
+              <SpacesIcon />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-[var(--color-fg)]">Audio Spaces</h1>
+              <p className="mt-0.5 text-xs text-gray-500">Live audio rooms across the open social graph</p>
+            </div>
+          </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            if (hasSignedIn) {
-              setShowHostModal(true);
-            } else {
-              openSignIn();
-            }
-          }}
-          className="rounded-xl bg-degen-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-degen-400 transition-colors"
-        >
-          {hasSignedIn ? 'Start a Space' : 'Connect to Host'}
-        </button>
-      </div>
-
-      {/* Loading */}
-      {loading && (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <SpaceCardSkeleton key={i} />
-          ))}
-        </div>
-      )}
-
-      {/* Error */}
-      {error && !loading && (
-        <div className="mb-6 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3">
-          <p className="text-xs text-red-400">{error}</p>
           <button
             type="button"
-            onClick={fetchSpaces}
-            className="mt-2 text-xs text-red-400 underline hover:text-red-300"
+            onClick={() => { if (hasSignedIn) setShowHostModal(true); else openSignIn(); }}
+            className="inline-flex items-center gap-2 rounded-xl bg-degen-500 px-5 py-2.5 text-sm font-bold text-black transition-all duration-200 hover:bg-degen-400 hover:shadow-[0_0_20px_rgba(0,255,65,0.3)] active:scale-[0.97]"
           >
-            Retry
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            {hasSignedIn ? 'Start a Space' : 'Connect to Host'}
           </button>
-        </div>
-      )}
+        </header>
 
-      {/* Live spaces */}
-      {!loading && (
-        <>
-          <section className="mb-8">
-            <div className="mb-3 flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-degen-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]" />
-              <h2 className="text-sm font-semibold text-[var(--color-fg)]">Live Now</h2>
-              {liveSpaces.length > 0 && (
-                <span className="text-xs text-gray-500">({liveSpaces.length})</span>
-              )}
-            </div>
-
-            {liveSpaces.length === 0 ? (
-              <EmptyState
-                icon="🎙️"
-                title="No live spaces right now"
-                subtitle="Start one or check back later"
-              />
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {liveSpaces.map((space) => (
-                  <LiveSpaceCard key={space.id} space={space} onJoin={handleJoin} />
-                ))}
+        {/* ═══ Loading ═══ */}
+        {loading && (
+          <div className="space-y-8">
+            <section>
+              <SectionHeader icon={<LiveDot />} title="Live Now" />
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+                {Array.from({ length: 4 }).map((_, i) => <LiveSkeleton key={i} />)}
               </div>
-            )}
-          </section>
-
-          {/* Upcoming spaces */}
-          <section className="mb-8">
-            <div className="mb-3 flex items-center gap-2">
-              <span className="text-sm">📅</span>
-              <h2 className="text-sm font-semibold text-[var(--color-fg)]">Upcoming</h2>
-              {upcomingSpaces.length > 0 && (
-                <span className="text-xs text-gray-500">({upcomingSpaces.length})</span>
-              )}
-            </div>
-
-            {upcomingSpaces.length === 0 ? (
-              <EmptyState
-                icon="🗓️"
-                title="No upcoming spaces"
-                subtitle="Schedule one to get started"
-              />
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {upcomingSpaces.map((space) => (
-                  <UpcomingSpaceCard key={space.id} space={space} onRSVP={handleRSVP} />
-                ))}
+            </section>
+            <section>
+              <SectionHeader icon={<span className="text-sm">📅</span>} title="Upcoming" />
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => <GridSkeleton key={i} />)}
               </div>
-            )}
-          </section>
+            </section>
+          </div>
+        )}
 
-          {/* Past spaces — placeholder section */}
-          <section className="mb-8">
-            <div className="mb-3 flex items-center gap-2">
-              <span className="text-sm">📼</span>
-              <h2 className="text-sm font-semibold text-[var(--color-fg)]">Past Spaces</h2>
+        {/* ═══ Error ═══ */}
+        {error && !loading && (
+          <div className="mb-6 rounded-2xl border border-red-900/40 bg-red-950/20 px-5 py-4 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <span className="text-lg text-red-400" aria-hidden="true">⚠</span>
+              <p className="text-sm text-red-400">{error}</p>
+              <button
+                type="button"
+                onClick={fetchSpaces}
+                className="ml-auto rounded-lg border border-red-900/40 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-950/30"
+              >
+                Retry
+              </button>
             </div>
+          </div>
+        )}
 
-            <EmptyState
-              icon="📼"
-              title="No past spaces yet"
-              subtitle="Recording playback is coming soon"
-            />
-          </section>
-        </>
-      )}
+        {/* ═══ Content ═══ */}
+        {!loading && (
+          <div className="space-y-10">
+            {/* ── Live Now ── */}
+            <section>
+              <div className="mb-4 flex items-center gap-2">
+                <LiveDot />
+                <h2 className="text-sm font-bold tracking-tight text-[var(--color-fg)]">Live Now</h2>
+                {liveSpaces.length > 0 && (
+                  <>
+                    <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+                      {liveSpaces.length}
+                    </span>
+                    <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-degen-500">LIVE</span>
+                  </>
+                )}
+              </div>
 
-      {/* Host modal */}
-      {hasSignedIn && (
-        <HostSpaceModal
-          open={showHostModal}
-          onClose={() => setShowHostModal(false)}
-          signedInProtocols={signedInProtocols}
-          hostId={hasSignedIn ? 'current-user' : ''}
-          hostName="User"
-          onSpaceCreated={handleSpaceCreated}
-          onBroadcast={handleBroadcast}
-        />
-      )}
+              {liveSpaces.length === 0 ? (
+                <EmptyState
+                  icon="🎙️"
+                  title="No live spaces right now"
+                  subtitle="Start one or check back later. Live audio rooms appear here when hosts go live."
+                  action={hasSignedIn ? { label: 'Start a Space', onClick: () => setShowHostModal(true) } : undefined}
+                />
+              ) : (
+                <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-none snap-x snap-mandatory">
+                  {liveSpaces.map((space) => (
+                    <LiveSpaceCard key={space.id} space={space} onJoin={handleJoin} />
+                  ))}
+                </div>
+              )}
+            </section>
 
-      {/* Bottom spacing for mobile nav */}
-      <div className="h-16 lg:hidden" />
-    </div>
+            {/* ── Upcoming ── */}
+            <section>
+              <SectionHeader
+                icon={
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="text-cyan-400">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                }
+                title="Upcoming"
+                count={upcomingSpaces.length}
+              />
+              {upcomingSpaces.length === 0 ? (
+                <EmptyState
+                  icon="🗓️"
+                  title="No upcoming spaces"
+                  subtitle="Schedule one to get started."
+                  action={hasSignedIn ? { label: 'Schedule a Space', onClick: () => setShowHostModal(true) } : undefined}
+                />
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {upcomingSpaces.map((space) => (
+                    <UpcomingSpaceCard key={space.id} space={space} onReminder={handleReminder} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* ── Recent ── */}
+            <section>
+              <SectionHeader
+                icon={
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="text-gray-500">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                }
+                title="Recent"
+                count={pastSpaces.length}
+              />
+              {pastSpaces.length === 0 ? (
+                <EmptyState icon="📼" title="No past spaces yet" subtitle="Recording playback will appear here once spaces end." />
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {pastSpaces.map((space) => (
+                    <PastSpaceCard key={space.id} space={space} />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+
+        {/* Host modal */}
+        {hasSignedIn && (
+          <HostSpaceModal
+            open={showHostModal}
+            onClose={() => setShowHostModal(false)}
+            signedInProtocols={signedInProtocols}
+            hostId={hasSignedIn ? 'current-user' : ''}
+            hostName="User"
+            onSpaceCreated={handleSpaceCreated}
+            onBroadcast={handleBroadcast}
+          />
+        )}
+
+        <div className="h-20 lg:hidden" />
+      </div>
+    </>
   );
 }

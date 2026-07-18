@@ -119,6 +119,11 @@ export interface PostCardProps {
    * The post's niches[0] is used as the topic to demote.
    */
   onShowLessLikeThis?: (topic: string) => void;
+  /**
+   * Called when user clicks "Why am I seeing this?" in the three-dot menu.
+   * Opens the FeedWhyCard transparency panel for this post.
+   */
+  onWhyThisPost?: (post: UnifiedPost) => void;
 }
 
 const MAX_TEXT_LENGTH = 500;
@@ -174,6 +179,7 @@ export const PostCard = memo(function PostCard({
   reputationProgress,
   onShowMoreLikeThis,
   onShowLessLikeThis,
+  onWhyThisPost,
 }: PostCardProps) {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
@@ -591,7 +597,7 @@ export const PostCard = memo(function PostCard({
         style={{ transitionDuration: 'var(--duration-fast)' }}
       >
         {/* Author row */}
-        <div className="author-row mb-2 flex items-center gap-3">
+        <div className="author-row group mb-2 flex items-center gap-3">
           <Image
             src={
               post.author.avatarUrl ||
@@ -702,6 +708,25 @@ export const PostCard = memo(function PostCard({
                         </svg>
                         Embed post
                       </button>
+
+                      {onWhyThisPost && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMenu(false);
+                            onWhyThisPost(post);
+                          }}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-degen-400 hover:bg-degen-500/10 transition-colors"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
+                            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
+                            <path d="M8 7.5v4M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
+                          Why am I seeing this?
+                        </button>
+                      )}
 
                       <button
                         type="button"
@@ -1006,6 +1031,15 @@ export const PostCard = memo(function PostCard({
                   title={buildQualityTooltip(post.qualityScore)}
                 >
                   Q {post.qualityScore.score}/{post.qualityScore.max}
+                </span>
+              )}
+              {/* Hover-only high-quality badge */}
+              {(post.feedDebug?.qualityScore ?? (post.score?.quality ?? 0) / 3) > 0.7 && (
+                <span
+                  className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="This post was rated as high quality by the content quality filter"
+                >
+                  ⚡ High Quality
                 </span>
               )}
             </div>

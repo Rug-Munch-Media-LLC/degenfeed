@@ -143,8 +143,9 @@ function NotificationRow({
       {/* Unread indicator dot */}
       {!read && (
         <span
-          className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-degen-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]"
+          role="img"
           aria-label="Unread"
+          className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-degen-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]"
         />
       )}
 

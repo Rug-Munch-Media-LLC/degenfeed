@@ -136,8 +136,10 @@ export default function AchievementsPage() {
       <div className="flex gap-1.5 mb-6 overflow-x-auto pb-2 scrollbar-none">
         {CATEGORIES.map((cat) => (
           <button
+            type="button"
             key={cat.id}
             onClick={() => setActiveCategory(cat.id)}
+            aria-pressed={activeCategory === cat.id}
             className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
               activeCategory === cat.id
                 ? 'bg-degen-500/20 text-degen-400 border border-degen-500/30'

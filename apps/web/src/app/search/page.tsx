@@ -59,26 +59,7 @@ interface FederatedSearchResponse {
   videos?: VideoResult[];
 }
 
-type SearchTab = 'all' | 'posts' | 'people' | 'communities' | 'videos' | 'topics';
-
-// ─── Niches / Topics ──────────────────────────────────────────
-
-const ALL_TOPICS = [
-  { id: 'crypto', label: 'Crypto', emoji: '₿' },
-  { id: 'bitcoin', label: 'Bitcoin', emoji: '₿' },
-  { id: 'ethereum', label: 'Ethereum', emoji: '◆' },
-  { id: 'solana', label: 'Solana', emoji: '◎' },
-  { id: 'defi', label: 'DeFi', emoji: '🏦' },
-  { id: 'nft', label: 'NFT', emoji: '🖼' },
-  { id: 'ai', label: 'AI', emoji: '🤖' },
-  { id: 'regulation', label: 'Regulation', emoji: '⚖' },
-  { id: 'security', label: 'Security', emoji: '🔒' },
-  { id: 'mining', label: 'Mining', emoji: '⛏' },
-  { id: 'gaming', label: 'Gaming', emoji: '🎮' },
-  { id: 'privacy', label: 'Privacy', emoji: '👁' },
-  { id: 'memes', label: 'Memes', emoji: '😂' },
-  { id: 'oss', label: 'Open Source', emoji: '📖' },
-];
+type SearchTab = 'top' | 'latest' | 'people' | 'communities' | 'videos';
 
 // ─── Protocol filter pills ────────────────────────────────────
 
@@ -163,7 +144,7 @@ export default function SearchPage() {
   const initialQ = searchParams.get('q') || '';
 
   const [query, setQuery] = useState(initialQ);
-  const [tab, setTab] = useState<SearchTab>('all');
+  const [tab, setTab] = useState<SearchTab>('top');
   const [posts, setPosts] = useState<SearchResult[]>([]);
   const [identities, setIdentities] = useState<IdentityResult[]>([]);
   const [communities, setCommunities] = useState<CommunityResult[]>([]);
@@ -274,18 +255,17 @@ export default function SearchPage() {
     [query, doSearch, updateUrl],
   );
 
-  // ─── Derive topics from results ─────────────────────────────
-  const mentionedTopics = ALL_TOPICS.filter((t) =>
-    posts.some((p) => p.niches.includes(t.id)),
-  ).slice(0, 8);
-
   const filteredPosts =
     protocolFilter && tab !== 'people' ? posts.filter((p) => p.protocol === protocolFilter) : posts;
 
-  const visiblePosts = tab === 'all' || tab === 'posts' ? filteredPosts : [];
-  const visibleIdentities = tab === 'all' || tab === 'people' ? identities : [];
-  const visibleCommunities = tab === 'all' || tab === 'communities' ? communities : [];
-  const visibleVideos = tab === 'all' || tab === 'videos' ? videos : [];
+  const showAll = tab === 'top' || tab === 'latest';
+  const sortedPosts = tab === 'latest'
+    ? [...filteredPosts].sort((a, b) => b.createdAt - a.createdAt)
+    : filteredPosts;
+  const visiblePosts = showAll ? sortedPosts : [];
+  const visibleIdentities = showAll || tab === 'people' ? identities : [];
+  const visibleCommunities = showAll || tab === 'communities' ? communities : [];
+  const visibleVideos = showAll || tab === 'videos' ? videos : [];
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
@@ -348,12 +328,11 @@ export default function SearchPage() {
         <div className="mb-6 flex gap-1 rounded-xl bg-[var(--color-card)] p-1">
           {(
             [
-              { id: 'all' as const, label: 'All' },
-              { id: 'posts' as const, label: 'Posts' },
+              { id: 'top' as const, label: 'Top' },
+              { id: 'latest' as const, label: 'Latest' },
               { id: 'people' as const, label: 'People' },
               { id: 'communities' as const, label: 'Communities' },
               { id: 'videos' as const, label: 'Videos' },
-              { id: 'topics' as const, label: 'Topics' },
             ] as const
           ).map((t) => (
             <button
@@ -367,7 +346,6 @@ export default function SearchPage() {
               }`}
             >
               {t.label}
-              {t.id === 'posts' && posts.length > 0 && ` (${posts.length})`}
               {t.id === 'people' && identities.length > 0 && ` (${identities.length})`}
               {t.id === 'communities' && communities.length > 0 && ` (${communities.length})`}
               {t.id === 'videos' && videos.length > 0 && ` (${videos.length})`}
@@ -403,8 +381,7 @@ export default function SearchPage() {
         visiblePosts.length === 0 &&
         visibleIdentities.length === 0 &&
         visibleCommunities.length === 0 &&
-        visibleVideos.length === 0 &&
-        tab !== 'topics' && (
+        visibleVideos.length === 0 && (
           <div className="card py-12 text-center">
             <div className="mb-3 text-3xl text-gray-700">⌕</div>
             <p className="text-sm text-[var(--color-muted)]">
@@ -417,53 +394,6 @@ export default function SearchPage() {
             )}
           </div>
         )}
-
-      {/* ═══ Topics Tab ═══ */}
-      {tab === 'topics' && (
-        <div>
-          <p className="mb-4 text-xs text-[var(--color-muted)]">
-            Browse or search by topic to find relevant posts across all protocols.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {ALL_TOPICS.map((topic) => (
-              <a
-                key={topic.id}
-                href={`/feed?niche=${topic.id}&q=${encodeURIComponent(query)}`}
-                className="card-hover flex items-center gap-2 rounded-xl px-4 py-3 transition-colors"
-              >
-                <span className="text-lg">{topic.emoji}</span>
-                <div>
-                  <div className="text-sm font-medium text-[var(--color-fg)]">{topic.label}</div>
-                  {query && (
-                    <div className="text-[10px] text-[var(--color-muted)]">
-                      Filter by &ldquo;{query}&rdquo;
-                    </div>
-                  )}
-                </div>
-              </a>
-            ))}
-          </div>
-
-          {mentionedTopics.length > 0 && (
-            <div className="mt-8">
-              <h3 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
-                Topics found in results
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {mentionedTopics.map((topic) => (
-                  <a
-                    key={topic.id}
-                    href={`/feed?niche=${topic.id}`}
-                    className="rounded-full bg-[var(--color-card)] px-3 py-1.5 text-xs text-[var(--color-muted)] hover:bg-[var(--color-card)] hover:text-[var(--color-fg)] transition-colors"
-                  >
-                    {topic.emoji} {topic.label}
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ═══ People Results ═══ */}
       {visibleIdentities.length > 0 && (

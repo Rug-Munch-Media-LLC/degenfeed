@@ -97,6 +97,31 @@ export interface PostScore {
   reasons: string[];
 }
 
+/**
+ * Transparency debug data embedded in each post for the "Why this post?" UI.
+ * These fields explain to the user why a particular post appeared in their feed.
+ */
+export interface FeedDebug {
+  /** Spam detection result 0-1 (lower = cleaner). */
+  spamScore: number;
+  /** Content quality 0-1 (higher = better). */
+  qualityScore: number;
+  /** Author reputation signal 0+ (combined from verification, followers, etc.). */
+  authorReputation: number;
+  /** How well the post matches the viewer's topic interests (0-1). */
+  topicMatch: number;
+  /** Engagement velocity boost factor (1 = baseline, higher = trending). */
+  velocity: number;
+  /** Recency/freshness boost factor (0-2+, higher = newer). */
+  freshness: number;
+  /** Which protocol this post was sourced from. */
+  sourceProtocol: string;
+  /** Whether the viewer follows this author. */
+  isFollowed: boolean;
+  /** Whether the viewer has muted or blocked this author. */
+  isMutedOrBlocked: boolean;
+}
+
 export interface UnifiedPost {
   /** Canonical id: `${protocol}:${nativeId}` */
   id: string;
@@ -121,9 +146,15 @@ export interface UnifiedPost {
   /** Niche tags derived from content (crypto, ai, oss, security, art, music) */
   niches: string[];
   /** Optional ranking breakdown for transparency / hover signals. */
+  score?: PostScore;
+  /**
+   * Feed transparency debug data — explains why this post was shown.
+   * Populated server-side from ranking signals and embedded in the post
+   * for the "Why this post?" UI.
+   */
+  feedDebug?: FeedDebug;
   /** Protocols this post was also found on (cross-post dedup). */
   crossPostedTo?: Protocol[];
-  score?: PostScore;
   /** Optional paywall requirement for paid content */
   paywall?: { amount: string; recipient: string };
   /** Token gate for restricted content — only holders can view */
