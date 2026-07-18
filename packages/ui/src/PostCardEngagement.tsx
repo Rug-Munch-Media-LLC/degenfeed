@@ -103,7 +103,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
 }: PostCardEngagementProps) {
   return (
     <>
-      <div className="actions flex items-center gap-4 text-xs text-gray-500">
+      <div className="actions flex items-center gap-4 text-xs text-[var(--color-muted)]">
         {post.protocol === 'lemmy' ? (
           <span className="text-xs text-gray-500">
             {formatCount(post.metrics.likes)} ↑ {formatCount(
@@ -264,7 +264,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
             value={replyText}
             onChange={(e) => onSetReplyText(e.target.value)}
             placeholder="Write a reply..."
-            className="flex-1 rounded border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-1.5 text-sm text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500 focus:outline-none"
+            className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent-glow)]"
             maxLength={1000}
           />
           <button type="submit" className="btn-primary text-xs">

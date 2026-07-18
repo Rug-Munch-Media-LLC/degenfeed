@@ -28,15 +28,18 @@ import {
 } from '../../components/FeedTuner';
 import { GettingStartedChecklist } from '../../components/GettingStartedChecklist';
 import { GuidedTour } from '../../components/GuidedTour';
+import { PostCardPrefetcher } from '../../components/PostCardPrefetcher';
 import { PostContextMenu, useContextMenu } from '../../components/PostContextMenu';
 import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
 import { useToast } from '../../components/Toast';
 import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
 import { useFeedLayout } from '../../hooks/useFeedLayout';
 import { useFeedPosition } from '../../hooks/useFeedPosition';
+import { useHoverPrefetch } from '../../hooks/useHoverPrefetch';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
-import { getCached } from '../../lib/fetchWithCache';
+import { useViewportPrefetch } from '../../hooks/useViewportPrefetch';
+import { fetchWithSwr, getCached, setCache } from '../../lib/fetchWithCache';
 import { retryFetch } from '../../lib/retryFetch';
 
 const TipModal = dynamic(
@@ -142,6 +145,26 @@ export default function FeedPage() {
   useEdgeSwipeBack(() => {
     window.history.back();
   });
+
+  // ── Feed preloading: prefetch post routes when cards enter viewport ──
+  useViewportPrefetch([
+    { href: '/feed', priority: 1 },
+    { href: '/trending', priority: 1 },
+    { href: '/notifications', priority: 2 },
+    { href: '/messages', priority: 2 },
+    { href: '/search', priority: 2 },
+  ]);
+
+  // ── Tab hover preloading: prefetch feed data when hovering over tabs ──
+  const hoverPrefetch = useHoverPrefetch(200);
+  const tabPrefetchMap = useMemo(
+    () => ({
+      'for-you': '/api/feed/for-you',
+      following: '/api/feed/home?filter=following',
+      'custom-mix': '/api/feed/for-you?mix=true',
+    }),
+    [],
+  );
 
   // ── Right-click context menu
   const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
@@ -430,6 +453,9 @@ export default function FeedPage() {
       if (!checkOnly) setState('loading');
       try {
         const endpoint = activeTab === 'for-you' ? '/api/feed/for-you' : '/api/feed/home';
+        // Build cache key from active tab + filters for SWR deduplication
+        const cacheKey = `feed_${activeTab}_${protocolFilter ?? 'all'}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}`;
+
         const url = new URL(endpoint, window.location.origin);
         url.searchParams.set('limit', String(loadedLimit));
         const protocolsToFetch = protocolFilter
@@ -460,15 +486,15 @@ export default function FeedPage() {
           url.searchParams.set('engagementWeight', String(engagementWeight));
         const tw = encodeTopicWeights(topicWeights);
         if (tw) url.searchParams.set('topic_weights', tw);
-        const res = await retryFetch(url.toString(), {
-          fetchOptions: {
-            credentials: 'include',
-            cache: 'no-store',
-            headers: { 'cache-control': 'no-store' },
-          },
-        });
-        if (!res.ok) throw new Error(`Feed returned ${res.status}`);
-        const data = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
+
+        // Use SWR: prefer stale cache for instant render, refresh in background
+        const swrResult = await fetchWithSwr<{ data?: UnifiedPost[]; meta?: FeedMeta }>(
+          url.toString(),
+          cacheKey,
+          { credentials: 'include' },
+        );
+        let data = swrResult.data;
+
         let feed = data.data ?? [];
 
         if (activeTab === 'following') {
@@ -492,15 +518,21 @@ export default function FeedPage() {
         setPosts(feed);
         setFeedMeta(data.meta || {});
         setState(feed.length ? 'loaded' : 'empty');
+        if (swrResult.stale) {
+          setError('Showing cached results. Updating…');
+        } else {
+          setError(undefined);
+        }
         if (!checkOnly && feed.length > 0) {
-          announce(`${feed.length} posts loaded`, 'polite');
+          announce(`${feed.length} posts loaded${swrResult.fromCache ? ' (cached)' : ''}`, 'polite');
         }
       } catch (err) {
         if (!checkOnly) {
           // Graceful degradation: show cached feed on failure
-          const cached = getCached<{ posts: UnifiedPost[]; meta?: FeedMeta }>(`feed_${activeTab}`);
-          if (cached && cached.posts.length > 0) {
-            setPosts(cached.posts);
+          const cached = getCached<{ data?: UnifiedPost[]; meta?: FeedMeta }>(`feed_${activeTab}`);
+          if (cached && (cached.data ?? []).length > 0) {
+            const cachedFeed = cached.data ?? [];
+            setPosts(cachedFeed);
             setFeedMeta(cached.meta ?? {});
             setState('loaded');
             setError("Couldn't load feed. Showing cached version.");
@@ -879,7 +911,7 @@ export default function FeedPage() {
                   <h1 className="text-lg font-bold text-[var(--color-fg)] leading-none">
                     DegenFeed
                   </h1>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-[var(--color-muted)]">
                     {activeTab === 'for-you'
                       ? 'Your unified timeline'
                       : activeTab === 'custom-mix'
@@ -916,7 +948,7 @@ export default function FeedPage() {
                     <button
                       type="button"
                       onClick={signOut}
-                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-[var(--color-fg)] lg:hidden"
+                      className="rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs font-medium text-[var(--color-fg)] transition-colors hover:bg-[var(--color-card-hover)] hover:text-[var(--color-fg)] lg:hidden"
                     >
                       Sign out
                     </button>
@@ -931,12 +963,14 @@ export default function FeedPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('for-you')}
+                  onMouseEnter={() => hoverPrefetch.onMouseEnter(tabPrefetchMap['for-you'])}
+                  onMouseLeave={hoverPrefetch.onMouseLeave}
                   role="tab"
                   aria-selected={activeTab === 'for-you'}
                   className={`w-full py-3 text-sm font-medium transition-colors ${
                     activeTab === 'for-you'
                       ? 'text-[var(--color-fg)]'
-                      : 'text-gray-500 hover:text-gray-300'
+                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                   }`}
                 >
                   For You
@@ -952,12 +986,14 @@ export default function FeedPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('following')}
+                  onMouseEnter={() => hoverPrefetch.onMouseEnter(tabPrefetchMap['following'])}
+                  onMouseLeave={hoverPrefetch.onMouseLeave}
                   role="tab"
                   aria-selected={activeTab === 'following'}
                   className={`w-full py-3 text-sm font-medium transition-colors ${
                     activeTab === 'following'
                       ? 'text-[var(--color-fg)]'
-                      : 'text-gray-500 hover:text-gray-300'
+                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                   }`}
                 >
                   Following
@@ -976,12 +1012,14 @@ export default function FeedPage() {
                     setActiveTab('custom-mix');
                     setShowTuner(true);
                   }}
+                  onMouseEnter={() => hoverPrefetch.onMouseEnter(tabPrefetchMap['custom-mix'])}
+                  onMouseLeave={hoverPrefetch.onMouseLeave}
                   role="tab"
                   aria-selected={activeTab === 'custom-mix'}
                   className={`w-full py-3 text-sm font-medium transition-colors ${
                     activeTab === 'custom-mix'
                       ? 'text-[var(--color-fg)]'
-                      : 'text-gray-500 hover:text-gray-300'
+                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                   }`}
                 >
                   Custom Mix
@@ -1003,7 +1041,7 @@ export default function FeedPage() {
                 className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                   protocolFilter === null
                     ? 'bg-degen-500/15 text-degen-400'
-                    : 'text-gray-500 hover:text-gray-300'
+                    : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                 }`}
               >
                 All
@@ -1016,7 +1054,7 @@ export default function FeedPage() {
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                     protocolFilter === p.id
                       ? 'text-[var(--color-fg)]'
-                      : 'text-gray-500 hover:text-gray-300'
+                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                   }`}
                   style={
                     protocolFilter === p.id
@@ -1026,7 +1064,7 @@ export default function FeedPage() {
                 >
                   <span>{p.label}</span>
                   <span
-                    className={`text-[10px] ${protocolFilter === p.id ? 'opacity-90' : 'text-gray-600'}`}
+                    className={`text-[10px] ${protocolFilter === p.id ? 'opacity-90' : 'text-[var(--color-muted)]'}`}
                   >
                     {p.count}
                   </span>
@@ -1036,7 +1074,7 @@ export default function FeedPage() {
 
             {/* Personalization bar for For You tab */}
             {activeTab === 'for-you' && feedMeta.personalization && (
-              <div className="border-t border-degen-500/20 bg-degen-500/5 px-4 py-2 text-[11px] text-gray-400">
+              <div className="border-t border-degen-500/20 bg-degen-500/5 px-4 py-2 text-[11px] text-[var(--color-muted)]">
                 <span className="font-semibold text-degen-400">For You</span>
                 {' — '}
                 {feedMeta.personalization.isOnboarding
@@ -1059,7 +1097,7 @@ export default function FeedPage() {
             )}
 
             {/* Quality controls */}
-            <div className="quality-controls flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--color-glass-border)] px-4 py-2 text-[11px] text-gray-400">
+            <div className="quality-controls flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--color-glass-border)] px-4 py-2 text-[11px] text-[var(--color-muted)]">
               <button
                 type="button"
                 onClick={toggleHideLowQuality}
@@ -1068,7 +1106,7 @@ export default function FeedPage() {
                 className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium transition-colors ${
                   hideLowQuality
                     ? 'bg-degen-500/15 text-degen-400'
-                    : 'text-gray-500 hover:text-gray-300'
+                    : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                 }`}
                 title="Hide posts with low ranking scores"
               >
@@ -1098,7 +1136,7 @@ export default function FeedPage() {
                     className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
                     aria-label="Hide threshold"
                   />
-                  <span className="font-mono text-[10px] text-gray-500">
+                  <span className="font-mono text-[10px] text-[var(--color-muted)]">
                     {hideThreshold.toFixed(1)}
                   </span>
                 </label>
@@ -1113,7 +1151,7 @@ export default function FeedPage() {
                     setShowOriginalContent(next);
                     persistPrefs({ showOriginalContent: next });
                   }}
-                  className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
+                  className="h-3 w-3 rounded border-[var(--color-border)] bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
                 />
                 <span title="Hide reposts and link-only posts">Original</span>
               </label>
@@ -1137,14 +1175,14 @@ export default function FeedPage() {
                   className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
                   aria-label="Minimum engagement"
                 />
-                <span className="font-mono text-[10px] text-gray-500">{minEngagement}</span>
+                <span className="font-mono text-[10px] text-[var(--color-muted)]">{minEngagement}</span>
               </label>
               <label className="flex items-center gap-1">
                 <input
                   type="checkbox"
                   checked={allowNonCrypto}
                   onChange={(e) => setAllowNonCryptoAndPersist(e.target.checked)}
-                  className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
+                  className="h-3 w-3 rounded border-[var(--color-border)] bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
                 />
                 <span>Non-crypto</span>
               </label>
@@ -1163,7 +1201,7 @@ export default function FeedPage() {
                   className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
                   aria-label="Recency weight"
                 />
-                <span className="font-mono text-[10px] text-gray-500">
+                <span className="font-mono text-[10px] text-[var(--color-muted)]">
                   {recencyWeight.toFixed(1)}
                 </span>
               </label>
@@ -1182,11 +1220,11 @@ export default function FeedPage() {
                   className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
                   aria-label="Engagement weight"
                 />
-                <span className="font-mono text-[10px] text-gray-500">
+                <span className="font-mono text-[10px] text-[var(--color-muted)]">
                   {engagementWeight.toFixed(1)}
                 </span>
               </label>
-              <span className="ml-auto hidden text-[10px] text-gray-600 sm:inline">
+              <span className="ml-auto hidden text-[10px] text-[var(--color-muted)] sm:inline">
                 Hover ★ on any post for ranking breakdown
               </span>
             </div>
@@ -1194,7 +1232,7 @@ export default function FeedPage() {
             {/* ── Custom Mix: Pre-built mix quick pick ── */}
             {activeTab === 'custom-mix' && (
               <div className="border-t border-[var(--color-glass-border)] px-4 py-2.5">
-                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-2">
+                <p className="text-[10px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-2">
                   Quick Pick a Mix
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -1285,7 +1323,7 @@ export default function FeedPage() {
               onRequestSignIn={openSignIn}
             />
           ) : (
-            <div className="border-b border-white/10 px-4 py-4">
+            <div className="border-b border-[var(--color-border)] px-4 py-4">
               <div className="flex items-start gap-3">
                 <Image
                   src="/icon.svg"
@@ -1298,12 +1336,12 @@ export default function FeedPage() {
                   <button
                     type="button"
                     onClick={() => openSignIn()}
-                    className="w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-base text-gray-400 transition-colors hover:border-degen-500/30 hover:bg-white/5"
+                    className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-overlay)] px-4 py-3 text-left text-base text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:bg-[var(--color-overlay)]"
                   >
                     What is happening across web3?
                   </button>
                   <div className="mt-3 flex items-center justify-between">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[var(--color-muted)]">
                       Sign in to like, reply, and cross-post everywhere.
                     </p>
                     <button type="button" onClick={openSignIn} className="btn-primary text-sm">
@@ -1358,6 +1396,7 @@ export default function FeedPage() {
 
           {/* Feed */}
           <div className="relative">
+            <PostCardPrefetcher />
             <div aria-live="polite" aria-label="Feed posts" role="feed">
               <FeedList
                 state={state}
@@ -1389,7 +1428,7 @@ export default function FeedPage() {
                       <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
                         Your feed is quiet
                       </h3>
-                      <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">
+                      <p className="mx-auto mb-6 max-w-sm text-sm text-[var(--color-muted)]">
                         Follow topics you care about to personalize your feed. Like, repost, or bookmark posts to help us learn your interests.
                       </p>
                       {!hasSignedIn && (
@@ -1406,7 +1445,7 @@ export default function FeedPage() {
                       <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
                         No posts in this mix yet
                       </h3>
-                      <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">
+                      <p className="mx-auto mb-6 max-w-sm text-sm text-[var(--color-muted)]">
                         Create a custom mix to combine your favorite topics. Use the Tuner above to select topics and adjust their weights.
                       </p>
                       <button
@@ -1476,7 +1515,7 @@ export default function FeedPage() {
               <p className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
                 Liking what you see?
               </p>
-              <p className="mb-4 text-xs text-gray-400">
+              <p className="mb-4 text-xs text-[var(--color-muted)]">
                 Sign in once to post, like, and reply across all 8 networks.
               </p>
               <button type="button" onClick={openSignIn} className="btn-primary text-sm">
@@ -1597,7 +1636,7 @@ function FeedHealthSection({
       open={open}
       onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
     >
-      <summary className="flex cursor-pointer items-center justify-between px-4 py-2 text-[11px] text-gray-500 hover:text-gray-300 transition-colors select-none">
+      <summary className="flex cursor-pointer items-center justify-between px-4 py-2 text-[11px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors select-none">
         <span className="flex items-center gap-1.5">
           <svg
             width="10"
@@ -1620,7 +1659,7 @@ function FeedHealthSection({
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15 text-[10px] text-emerald-400">
             ✓
           </span>
-          <span className="text-gray-300">
+          <span className="text-[var(--color-fg)]">
             Your feed is healthy:{' '}
             <strong className="text-emerald-400">
               {protocolBreakdown.length > 1 ? '85%' : '100%'}
@@ -1635,13 +1674,13 @@ function FeedHealthSection({
 
         {/* Protocol breakdown */}
         <div>
-          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-gray-500">
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
             From
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {protocolBreakdown.map((p) => (
-              <span key={p.label} className="text-xs text-gray-400">
-                {p.label} (<strong className="text-gray-300">{p.pct}%</strong>)
+              <span key={p.label} className="text-xs text-[var(--color-muted)]">
+                {p.label} (<strong className="text-[var(--color-fg)]">{p.pct}%</strong>)
               </span>
             ))}
           </div>
@@ -1649,25 +1688,25 @@ function FeedHealthSection({
 
         {/* Composition: followed vs suggested vs explore */}
         <div>
-          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-gray-500">
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
             Sources
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-[var(--color-muted)]">
               Followed (
               <strong className="text-degen-400">
                 {((composition.followed / total) * 100).toFixed(0)}%
               </strong>
               )
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-[var(--color-muted)]">
               Suggested (
               <strong className="text-degen-400">
                 {((composition.suggested / total) * 100).toFixed(0)}%
               </strong>
               )
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-[var(--color-muted)]">
               Explore (
               <strong className="text-degen-400">
                 {((composition.explore / total) * 100).toFixed(0)}%
@@ -1678,7 +1717,7 @@ function FeedHealthSection({
         </div>
 
         {/* Total post count */}
-        <p className="text-[10px] text-gray-600">
+        <p className="text-[10px] text-[var(--color-muted)]">
           {total} posts loaded · Last fetched{' '}
           {fetchedAt ? new Date(fetchedAt).toLocaleTimeString() : 'just now'}
         </p>

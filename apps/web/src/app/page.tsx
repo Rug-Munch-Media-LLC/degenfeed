@@ -205,7 +205,7 @@ export default function HomePage() {
             </div>
 
             <p className="hero-stats">
-              10 protocols &middot; 319 RSS sources &middot; 137 Reddit communities &middot; 68
+              10 protocols &middot; 353 RSS sources &middot; 137 Reddit communities &middot; 68
               YouTube channels &middot; 55K PeerTube videos
             </p>
           </div>

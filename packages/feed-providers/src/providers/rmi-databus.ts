@@ -1,7 +1,7 @@
 /**
  * RmiDataBusProvider — pulls institutional-grade crypto news + intel
  * directly from the rmi-backend's /api/v1/news/* routes. This is the
- * bridge between RMI's 319+ source DataBus aggregator and DegenFeed.
+ * bridge between RMI's 353+ source DataBus aggregator and DegenFeed.
  *
  * Wire in: set RMI_BACKEND_URL in the worker env (default
  * http://127.0.0.1:8000 on Talos, https://api.rugmunch.io in prod).

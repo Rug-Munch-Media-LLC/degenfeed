@@ -14,6 +14,7 @@ import { type DensityMode, DensityToggle } from './DensityToggle';
 import { FeedPollerBanner } from './FeedPollerBanner';
 import { ProtocolHero } from './ProtocolHero';
 import { ProtocolSections } from './ProtocolSections';
+import { ProtocolSidebar } from './ProtocolSidebar';
 import { QuickJumpSidebar } from './QuickJumpSidebar';
 
 const TipModal = dynamic(() => import('./TipModal').then((m) => ({ default: m.TipModal })), {
@@ -483,9 +484,12 @@ export function ProtocolFeedPage({ protocol }: Props) {
             )}
           </div>
 
-          {/* Right column — Quick Jump sidebar (desktop only) */}
-          <div className="hidden w-44 shrink-0 lg:block">
-            <QuickJumpSidebar color={config.color} activeTab={activeTab} onJump={setActiveTab} />
+          {/* Right column — Protocol-specific sidebar (desktop only) */}
+          <div className="hidden w-64 shrink-0 lg:block">
+            <div className="sticky top-[124px] space-y-3">
+              <ProtocolSidebar protocol={config.id} color={config.color} />
+              <QuickJumpSidebar color={config.color} activeTab={activeTab} onJump={setActiveTab} />
+            </div>
           </div>
         </div>
 

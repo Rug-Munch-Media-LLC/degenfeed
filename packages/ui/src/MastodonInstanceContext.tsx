@@ -11,6 +11,7 @@
  * Tonal reference: Mastodon's profile page — instance-aware, federated.
  */
 
+import Image from 'next/image';
 import { memo } from 'react';
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -67,7 +68,7 @@ export const MastodonInstanceContext = memo(function MastodonInstanceContext({
           style={{ backgroundColor: `${MASTODON_PURPLE}18`, color: MASTODON_PURPLE }}
         >
           {iconUrl ? (
-            <img src={iconUrl} alt="" className="h-9 w-9 rounded-lg object-cover" loading="lazy" />
+            <Image src={iconUrl} alt="" width={36} height={36} className="h-9 w-9 rounded-lg object-cover" loading="lazy" decoding="async" />
           ) : (
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M21.5 12.5C21.5 18 17.5 21 12 21C6.5 21 2.5 18 2.5 12.5V5.5L12 3L21.5 5.5V12.5Z" />

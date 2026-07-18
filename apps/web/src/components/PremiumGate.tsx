@@ -9,9 +9,14 @@
  *   </PremiumGate>
  */
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { type PremiumTier, usePremium } from '../hooks/usePremium';
-import { PremiumPaymentModal } from './PremiumPaymentModal';
+
+const PremiumPaymentModal = dynamic(
+  () => import('./PremiumPaymentModal').then((m) => ({ default: m.PremiumPaymentModal })),
+  { ssr: false, loading: () => null },
+);
 
 interface PremiumGateProps {
   /** Minimum tier required to access children */

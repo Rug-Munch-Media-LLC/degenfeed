@@ -1,6 +1,7 @@
 'use client';
 
 import { getProtocolColor, getProtocolIcon, HostSpaceModal, SpaceRoom } from '@degenfeed/ui';
+import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 
@@ -107,7 +108,17 @@ function AvatarImg({
   className?: string;
 }) {
   if (src) {
-    return <img src={src} alt={name} className={`rounded-full object-cover ${className}`} />;
+    return (
+      <Image
+        src={src}
+        alt={name}
+        width={40}
+        height={40}
+        className={`rounded-full object-cover ${className}`}
+        loading="lazy"
+        decoding="async"
+      />
+    );
   }
   return (
     <div

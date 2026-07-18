@@ -78,7 +78,7 @@ body { font-family: 'Inter', system-ui, sans-serif; background: #000; color: #ff
     <div class="product-name">DegenFeed</div>
   </div>
   <p class="product-desc">Open-source web3 social aggregator. 10 protocols, one window. Browse Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, Threads, Reddit, and RSS in a unified, ranked timeline. No account needed.</p>
-  <p class="product-meta">degenfeed.xyz · 10 protocols · 550+ RSS sources · 93 YouTube channels</p>
+  <p class="product-meta">degenfeed.xyz · 10 protocols · 353 RSS sources · 68 YouTube channels</p>
 </a>
 
 <a href="https://walletpress.rugmunch.io" class="product">

@@ -82,7 +82,7 @@ const PROTOCOLS: Protocol[] = [
     label: 'RSS / News',
     color: '#ffa500',
     icon: '📰',
-    description: '400+ feeds. 319+ sources.',
+    description: '353+ feeds. 11 categories.',
   },
 ];
 
@@ -480,7 +480,7 @@ export function OnboardingModal() {
                               {p.id === 'mastodon' && 'ActivityPub · 15M+ accounts'}
                               {p.id === 'threads' && "Meta's microblog · Millions daily"}
                               {p.id === 'reddit' && 'Crypto subreddits · 8M+ daily'}
-                              {p.id === 'rss' && '400+ feeds · 319+ sources'}
+                              {p.id === 'rss' && '353+ feeds · 11 categories'}
                             </p>
                           </div>
                         </label>

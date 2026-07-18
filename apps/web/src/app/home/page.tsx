@@ -16,7 +16,7 @@ const PROTOCOLS = [
   { id: 'bluesky', label: 'Bluesky', emoji: '🦋', color: '#1185fe', desc: 'AT Protocol' },
   { id: 'mastodon', label: 'Mastodon', emoji: '🐘', color: '#6364ff', desc: 'Fediverse' },
   { id: 'reddit', label: 'Reddit', emoji: '🔴', color: '#ff4500', desc: 'Reddit feeds' },
-  { id: 'rss', label: 'News', emoji: '📰', color: '#ffa500', desc: '319 RSS sources' },
+  { id: 'rss', label: 'News', emoji: '📰', color: '#ffa500', desc: '353 RSS sources' },
   { id: 'threads', label: 'Threads', emoji: '🧵', color: '#888', desc: 'Meta threads' },
 ] as const;
 

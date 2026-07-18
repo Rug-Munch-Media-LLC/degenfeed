@@ -412,7 +412,7 @@ function WalletUserCard({
               >
                 {isEth ? 'ETH' : 'SOL'}
               </span>
-              <code className="text-xs font-mono text-gray-400">
+              <code className="text-xs font-mono text-[var(--color-muted)]">
                 {walletAddress.slice(0, 8)}…{walletAddress.slice(-6)}
               </code>
               <span className="ml-auto text-[10px] font-medium text-degen-400">Active</span>
@@ -447,13 +447,13 @@ function WalletUserCard({
                   type="button"
                   onClick={() => handleSwitch(idx)}
                   className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors ${
-                    isActive ? 'bg-degen-500/10' : 'hover:bg-white/[0.04]'
+                    isActive ? 'bg-degen-500/10' : 'hover:bg-[var(--color-overlay)]'
                   }`}
                   role="menuitem"
                 >
                   <div
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-mono font-bold ${
-                      isActive ? 'bg-degen-500/20 text-degen-400' : 'bg-white/5 text-gray-500'
+                      isActive ? 'bg-degen-500/20 text-degen-400' : 'bg-[var(--color-overlay)] text-[var(--color-muted)]'
                     }`}
                   >
                     {addr.slice(2, 4).toUpperCase()}

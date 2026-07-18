@@ -37,6 +37,14 @@ export interface LemmyComment {
   id: string;
   author: string;
   authorAvatar?: string;
+  /** Wallet addresses from the comment author's linked identity — enables tipping */
+  authorEvmAddress?: string;
+  authorSolanaAddress?: string;
+  /** 
+   * The comment author's primary protocol (nostr, farcaster, lens, bluesky, etc.)
+   * Used by tip method auto-detection to recommend the best currency.
+   */
+  authorProtocol?: string;
   content: string;
   score: number;
   upvotes: number;
@@ -664,9 +672,13 @@ const ReplyForm = memo(function ReplyForm({ parentId: _parentId, authorName, onC
 interface CommentNodeProps {
   comment: LemmyComment;
   depth: number;
-  /** Wallet addresses from the author profile for tipping */
-  postAuthorEvmAddress?: string;
-  postAuthorSolanaAddress?: string;
+  /** 
+   * Fallback wallet addresses from the post author profile.
+   * The comment author's own wallets (from comment.authorEvmAddress / .authorSolanaAddress)
+   * are preferred; these are used only when the comment author hasn't linked wallets.
+   */
+  fallbackEvmAddress?: string;
+  fallbackSolanaAddress?: string;
   /** Current user's vote state for this comment */
   userVote?: 'up' | 'down' | null;
   /** Callback for vote changes */
@@ -676,8 +688,8 @@ interface CommentNodeProps {
 const CommentNode = memo(function CommentNode({
   comment,
   depth,
-  postAuthorEvmAddress,
-  postAuthorSolanaAddress,
+  fallbackEvmAddress,
+  fallbackSolanaAddress,
   userVote: externalVote,
   onVote,
 }: CommentNodeProps) {
@@ -685,6 +697,11 @@ const CommentNode = memo(function CommentNode({
   const [localVote, setLocalVote] = useState<'up' | 'down' | null>(externalVote ?? null);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [commentTipCount, setCommentTipCount] = useState(0);
+
+  // Derive the effective wallet for this comment author:
+  //   comment author's own wallets > fallback (post author's) wallets
+  const effectiveEvmAddress = comment.authorEvmAddress || fallbackEvmAddress;
+  const effectiveSolanaAddress = comment.authorSolanaAddress || fallbackSolanaAddress;
   const [swipeAction, setSwipeAction] = useState<'vote' | 'reply' | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const threadDotRef = useRef<HTMLButtonElement>(null);
@@ -714,7 +731,7 @@ const CommentNode = memo(function CommentNode({
 
   // Fetch tip stats for this comment
   useEffect(() => {
-    if (!postAuthorEvmAddress && !postAuthorSolanaAddress) return;
+    if (!effectiveEvmAddress && !effectiveSolanaAddress) return;
     let cancelled = false;
     fetch(`/api/lemmy/tip/stats?contentId=${encodeURIComponent(comment.id)}`)
       .then((r) => (r.ok ? r.json() : null))
@@ -727,7 +744,7 @@ const CommentNode = memo(function CommentNode({
     return () => {
       cancelled = true;
     };
-  }, [comment.id, postAuthorEvmAddress, postAuthorSolanaAddress]);
+  }, [comment.id, effectiveEvmAddress, effectiveSolanaAddress]);
 
   // ── Handlers ──
 
@@ -1044,14 +1061,15 @@ const CommentNode = memo(function CommentNode({
                   </button>
 
                   {/* Tip button for comment */}
-                  {(postAuthorEvmAddress || postAuthorSolanaAddress) && (
+                  {(effectiveEvmAddress || effectiveSolanaAddress) && (
                     <>
                       <span className="text-gray-700" aria-hidden="true">·</span>
                       <LemmyTipButton
                         contentId={comment.id}
                         contentType="comment"
-                        authorEvmAddress={postAuthorEvmAddress}
-                        authorSolanaAddress={postAuthorSolanaAddress}
+                        authorEvmAddress={effectiveEvmAddress}
+                        authorSolanaAddress={effectiveSolanaAddress}
+                        connectedProtocol={comment.authorProtocol}
                         tipCount={commentTipCount}
                         compact
                       />
@@ -1084,8 +1102,8 @@ const CommentNode = memo(function CommentNode({
                       key={reply.id}
                       comment={reply}
                       depth={depth + 1}
-                      postAuthorEvmAddress={postAuthorEvmAddress}
-                      postAuthorSolanaAddress={postAuthorSolanaAddress}
+                      fallbackEvmAddress={effectiveEvmAddress}
+                      fallbackSolanaAddress={effectiveSolanaAddress}
                       userVote={reply.userVote}
                       onVote={onVote}
                     />
@@ -1120,16 +1138,16 @@ const CommentNode = memo(function CommentNode({
 interface VirtualizedCommentListProps {
   comments: LemmyComment[];
   depth: number;
-  postAuthorEvmAddress?: string;
-  postAuthorSolanaAddress?: string;
+  fallbackEvmAddress?: string;
+  fallbackSolanaAddress?: string;
   onVote?: (commentId: string, direction: 'up' | 'down' | null) => void;
 }
 
 const VirtualizedCommentList = memo(function VirtualizedCommentList({
   comments,
   depth,
-  postAuthorEvmAddress,
-  postAuthorSolanaAddress,
+  fallbackEvmAddress,
+  fallbackSolanaAddress,
   onVote,
 }: VirtualizedCommentListProps) {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: Math.min(15, comments.length) });
@@ -1168,8 +1186,8 @@ const VirtualizedCommentList = memo(function VirtualizedCommentList({
           key={comment.id}
           comment={comment}
           depth={depth}
-          postAuthorEvmAddress={postAuthorEvmAddress}
-          postAuthorSolanaAddress={postAuthorSolanaAddress}
+          fallbackEvmAddress={fallbackEvmAddress}
+          fallbackSolanaAddress={fallbackSolanaAddress}
           userVote={comment.userVote}
           onVote={onVote}
         />
@@ -1352,8 +1370,8 @@ export const LemmyThreadView = memo(function LemmyThreadView({
           <VirtualizedCommentList
             comments={comments}
             depth={0}
-            postAuthorEvmAddress={authorEvmAddress}
-            postAuthorSolanaAddress={authorSolanaAddress}
+            fallbackEvmAddress={authorEvmAddress}
+            fallbackSolanaAddress={authorSolanaAddress}
           />
         </div>
       )}
@@ -1395,6 +1413,12 @@ interface RawComment {
   id: string;
   author: string;
   author_avatar?: string;
+  /** EVM wallet address linked to the comment author */
+  author_evm_address?: string;
+  /** Solana wallet address linked to the comment author */
+  author_solana_address?: string;
+  /** Comment author's primary protocol (nostr, farcaster, lens, bluesky, etc.) */
+  author_protocol?: string;
   content: string;
   score: number;
   upvotes?: number;
@@ -1441,6 +1465,9 @@ function buildCommentTree(flat: RawComment[], userVotes?: (number | null)[]): Le
       id: rc.id,
       author: rc.author,
       authorAvatar: rc.author_avatar,
+      authorEvmAddress: rc.author_evm_address,
+      authorSolanaAddress: rc.author_solana_address,
+      authorProtocol: rc.author_protocol,
       content: rc.content,
       score: rc.score ?? (rc.upvotes ?? 0) - (rc.downvotes ?? 0),
       upvotes: rc.upvotes ?? 0,

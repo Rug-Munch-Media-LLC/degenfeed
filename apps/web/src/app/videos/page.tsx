@@ -14,6 +14,7 @@
 import {
   ErrorBoundary,
   MixedVideoGrid,
+  PeerTubeTipOverlay,
   type VideoCategory,
   VideoFilterBar,
   type VideoSort,
@@ -300,6 +301,7 @@ export default function VideosPage() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [tipVideo, setTipVideo] = useState<YouTubeVideoCardItem | null>(null);
 
   // Filters
   const [activeTab, setActiveTab] = useState<VideoTab>('all');
@@ -450,6 +452,21 @@ export default function VideosPage() {
     window.open(video.url, '_blank', 'noopener noreferrer');
   }, []);
 
+  // ── Tip handler ──
+  const handleTip = useCallback((video: YouTubeVideoCardItem) => {
+    if (video.source === 'peertube') {
+      setTipVideo(video);
+    } else {
+      // YouTube tips — copy URL and show toast as fallback
+      window.dispatchEvent(
+        new CustomEvent('df-toast', {
+          detail: { kind: 'info', message: `Tip ${video.channelName} on YouTube` },
+        }),
+      );
+      window.open(video.channelUrl ?? video.url, '_blank', 'noopener noreferrer');
+    }
+  }, []);
+
   // ── Refresh handler ──
   const handleRefresh = useCallback(() => {
     setYoutubePage(1);
@@ -544,11 +561,33 @@ export default function VideosPage() {
           activeCategory={activeCategory}
           sort={sort}
           onPlay={handlePlay}
+          onTip={handleTip}
           onLoadMore={handleLoadMore}
           loading={loading}
           hasMore={hasMore}
           error={error}
         />
+
+        {/* ── PeerTube Tip Overlay ── */}
+        {tipVideo && tipVideo.source === 'peertube' && (
+          <div className="fixed bottom-6 right-6 z-50">
+            <PeerTubeTipOverlay
+              videoId={tipVideo.id}
+              creatorName={tipVideo.channelName}
+              creatorChannel={tipVideo.channelName.toLowerCase().replace(/\s+/g, '-')}
+              videoTitle={tipVideo.title}
+              instanceDomain={PEERTUBE_INSTANCE}
+              className="shadow-2xl"
+            />
+            <button
+              type="button"
+              onClick={() => setTipVideo(null)}
+              className="mt-1 w-full rounded-lg bg-gray-800/80 px-3 py-1 text-[10px] text-gray-400 hover:text-white transition-colors backdrop-blur-sm"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* ── Footer note ── */}
         {!loading && videos.length > 0 && (

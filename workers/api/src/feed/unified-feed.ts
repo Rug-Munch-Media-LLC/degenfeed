@@ -7,6 +7,7 @@
 import { deduplicatePosts } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { Env } from '../index';
+import { applyCurationPipeline } from './feed-curation-rules';
 import type { ExecutionContext } from './feed-fetcher';
 import {
   collectProviderResults,
@@ -130,7 +131,7 @@ export async function buildUnifiedFeed(
   const startTime = Date.now();
   const sources = resolveSources(opts.sources);
   const mix = getMixWeights(opts.mix ?? 'balanced');
-  const limit = Math.min(opts.limit ?? 50, 100);
+  const limit = Math.min(opts.limit ?? 50, 150);
   const section = opts.section ?? 'hot';
 
   const fetchPromises: Promise<{ source: SourceCategory; posts: UnifiedPost[]; error?: string }>[] =
@@ -346,8 +347,23 @@ export async function buildUnifiedFeed(
   // Interleave by time (newest first), not grouped by source
   deduped.sort((a, b) => b.createdAt - a.createdAt);
 
+  // Apply curation pipeline: freshness boost, protocol interleaving, content type
+  // variety, and category rotation before limiting
+  const curated = applyCurationPipeline(
+    deduped as unknown as UnifiedPost[],
+    {
+      freshnessBoost: true,
+      interleaveProtocols: true,
+      maxConsecutiveProtocols: 2,
+      contentTypeVariety: true,
+      maxConsecutiveContentType: 3,
+      categoryRotation: true,
+      minCategories: 3,
+    },
+  ) as unknown as Array<UnifiedPost & { sourceCategory: SourceCategory }>;
+
   // Limit
-  const limited = deduped.slice(0, limit);
+  const limited = curated.slice(0, limit);
 
   // Attach badge metadata
   const enriched: UnifiedFeedPost[] = limited.map((p) => {

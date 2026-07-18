@@ -33,6 +33,22 @@ export interface LemmyTipButtonProps {
   connectedProtocol?: string;
 }
 
+/**
+ * Map of protocol → default LEMMY_TIP_METHODS key.
+ * Used for auto-detecting the best tip currency based on the comment author's protocol.
+ */
+const PROTOCOL_TO_TIP_METHOD: Record<string, string> = {
+  farcaster: 'base',
+  lens: 'matic',
+  nostr: 'btc',
+  solana: 'sol',
+  ethereum: 'eth',
+  bluesky: 'eth',
+  mastodon: 'eth',
+  threads: 'eth',
+  lemmy: 'eth',
+};
+
 export function LemmyTipButton({
   contentId,
   contentType,
@@ -41,12 +57,18 @@ export function LemmyTipButton({
   tipCount = 0,
   tipTotalUsd = 0,
   compact = false,
-  connectedProtocol: _connectedProtocol,
+  connectedProtocol,
 }: LemmyTipButtonProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [tipping, setTipping] = useState(false);
   const [tipped, setTipped] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<(typeof LEMMY_TIP_METHODS)[number]>(LEMMY_TIP_METHODS[0]);
+
+  // Auto-select default method based on the comment author's protocol
+  const defaultMethodKey = connectedProtocol
+    ? PROTOCOL_TO_TIP_METHOD[connectedProtocol] ?? 'eth'
+    : 'eth';
+  const defaultMethod = LEMMY_TIP_METHODS.find((m) => m.key === defaultMethodKey) ?? LEMMY_TIP_METHODS[0];
+  const [selectedMethod, setSelectedMethod] = useState<(typeof LEMMY_TIP_METHODS)[number]>(defaultMethod);
 
   const handleTip = useCallback(
     async (amount: number) => {

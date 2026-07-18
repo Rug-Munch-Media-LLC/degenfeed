@@ -61,7 +61,7 @@ function LinkPreview({ embed, authorName }: { embed: Embed; authorName?: string 
       href={embed.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="link-preview group mt-2 block overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:bg-[var(--color-muted)]"
+      className="link-preview group mt-2 block overflow-hidden rounded-[12px] border border-[var(--color-border)] bg-[var(--color-card)] transition-all hover:border-[color-mix(in_srgb,var(--color-accent)_30%,transparent)] hover:bg-[var(--color-card-hover)]"
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
     >
@@ -127,7 +127,7 @@ function ImageGrid({ images, authorName }: { images: string[]; authorName?: stri
 
   if (images.length === 1) {
     return (
-      <div className="image-grid mt-2 max-h-80 overflow-hidden rounded-xl" role="group" aria-label="Post images">
+      <div className="image-grid mt-2 max-h-80 overflow-hidden rounded-[12px] border border-[var(--color-border)]" role="group" aria-label="Post images">
         <Image
           src={images[0]!}
           alt={altText}

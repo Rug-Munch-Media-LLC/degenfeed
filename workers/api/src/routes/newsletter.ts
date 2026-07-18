@@ -115,7 +115,7 @@ export async function gatherDigestPosts(
   const all: UnifiedPost[] = [];
   const timeoutMs = 5000;
 
-  // RMI DataBus (institutional-grade news, 319+ sources) — only reachable from internal network.
+  // RMI DataBus (institutional-grade news, 353+ sources) — only reachable from internal network.
   try {
     const rmiUrlValue = rmiUrl(env);
     const rmiConfigured =
@@ -289,7 +289,7 @@ export function buildDigestHtml(
     </p>
   </div>
   <p style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:20px">
-    The best of web3, AI, and tech — aggregated from Nostr, Farcaster, Lens, Bluesky, Mastodon, and 319 RSS sources. Ranked by quality, recency, and diversity.
+    The best of web3, AI, and tech — aggregated from Nostr, Farcaster, Lens, Bluesky, Mastodon, and 353 RSS sources. Ranked by quality, recency, and diversity.
   </p>
   ${trendingHtml.length > 0 ? `<div style="margin-bottom:20px;text-align:center">${trendingHtml}</div>` : ''}
   ${list}

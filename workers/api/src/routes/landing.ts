@@ -86,7 +86,7 @@ export const LANDING_HTML = `<!doctype html>
           </div>
           <div class="stats-row">
             <div class="stat"><span class="stat-value">7</span><span class="stat-label">Protocols</span></div>
-            <div class="stat"><span class="stat-value">319</span><span class="stat-label">RSS sources</span></div>
+            <div class="stat"><span class="stat-value">353</span><span class="stat-label">RSS sources</span></div>
             <div class="stat"><span class="stat-value">10M+</span><span class="stat-label">Reachable users</span></div>
             <div class="stat"><span class="stat-value">∞</span><span class="stat-label">Free reads</span></div>
           </div>
@@ -152,8 +152,8 @@ export const LANDING_HTML = `<!doctype html>
           <article class="pd-card" style="--pcolor:#1185fe"><div class="pd-icon">☁</div><h3>Bluesky</h3><p class="pd-desc">AT Protocol social. Public AppView API.</p><span class="pd-stat">5M+ users</span></article>
           <article class="pd-card" style="--pcolor:#888"><div class="pd-icon">+</div><h3>Threads</h3><p class="pd-desc">Instagram's AT Protocol network. Free reads.</p><span class="pd-stat">200M+ reachable</span></article>
           <article class="pd-card" style="--pcolor:#6364ff"><div class="pd-icon">M</div><h3>Mastodon</h3><p class="pd-desc">Self-hosted GotoSocial. Create a free @degenfeed.xyz account in 30 seconds.</p><span class="pd-stat"><a href="https://social.degenfeed.xyz" target="_blank" rel="noopener" style="color:#6364ff;text-decoration:underline">Create account →</a></span></article>
-          <article class="pd-card" style="--pcolor:#ff4500"><div class="pd-icon">R</div><h3>Reddit</h3><p class="pd-desc">Free RSS feeds. No API key required.</p><span class="pd-stat">1000+ subs</span></article>
-          <article class="pd-card" style="--pcolor:#ffa500"><div class="pd-icon">A</div><h3>RSS + Articles</h3><p class="pd-desc">Mirror, Substack, Medium, Paragraph, and any feed URL.</p><span class="pd-stat">319 sources</span></article>
+          <article class="pd-card" style="--pcolor:#ff4500"><div class="pd-icon">R</div><h3>Reddit</h3><p class="pd-desc">Free RSS feeds. No API key required.</p><span class="pd-stat">137 subs</span></article>
+          <article class="pd-card" style="--pcolor:#ffa500"><div class="pd-icon">A</div><h3>RSS + Articles</h3><p class="pd-desc">Mirror, Substack, Medium, Paragraph, and any feed URL.</p><span class="pd-stat">353 sources</span></article>
         </div>
       </section>
       <section class="stack" aria-labelledby="stack-title">
@@ -182,7 +182,7 @@ export const LANDING_HTML = `<!doctype html>
         <div class="manifesto-content">
           <p>The open social graph is fractured across a dozen protocols, each with its own app, its own feed, its own set of accounts to manage.</p>
           <p><strong>DegenFeed is the window that sees them all.</strong></p>
-          <p>One UI. One composer. One ranked feed. 10 protocols. 319 RSS sources. Zero accounts required to read. Sign in with what you already have to write.</p>
+          <p>One UI. One composer. One ranked feed. 10 protocols. 353 RSS sources. Zero accounts required to read. Sign in with what you already have to write.</p>
           <p class="manifesto-tagline">The graph belongs to the protocols. The window belongs to you.</p>
         </div>
       </section>

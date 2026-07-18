@@ -103,7 +103,7 @@ const PROTOCOL_STATS: ProtocolHealth[] = [
     usersOnline: 0,
     stats: [
       { label: 'articles today', value: '15,231' },
-      { label: 'sources', value: '550+' },
+      { label: 'sources', value: '353+' },
     ],
   },
 ];
