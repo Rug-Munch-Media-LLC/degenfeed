@@ -2,20 +2,19 @@ import { describe, expect, it } from 'vitest';
 
 import worker from '../app';
 import type { Env } from '../index';
-import { createSession, parseSessionCookie } from '../session';
+import { sessionWithCsrf } from './test-utils';
 
-const secret = 'test-secret-must-be-at-least-32-bytes';
-const env: Env = { AUTH_SECRET: secret };
+const env: Env = { AUTH_SECRET: 'test-secret-must-be-at-least-32-bytes' };
 
 async function signedRequest(url: string, method = 'GET', body?: BodyInit): Promise<Request> {
-  const { setCookie } = await createSession('0xAbCd', 'ethereum', secret);
-  const cookieValue = parseSessionCookie(setCookie);
-  if (!cookieValue) throw new Error('missing cookie');
+  const { cookie, token } = await sessionWithCsrf(env);
   const headers: Record<string, string> = {
-    cookie: `__Host-dfid=${cookieValue}`,
+    cookie,
     origin: 'https://app.degenfeed.xyz',
   };
   if (body) headers['content-type'] = 'application/json';
+  // State-changing methods need the CSRF token
+  if (method !== 'GET') headers['x-csrf-token'] = token;
   return new Request(url, { method, headers, body });
 }
 

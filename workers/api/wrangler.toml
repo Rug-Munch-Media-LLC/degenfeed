@@ -90,6 +90,7 @@ routes = [
 #   wrangler secret put GTS_CLIENT_SECRET
 #   wrangler secret put PUSH_API_KEY
 #   wrangler secret put NEWSLETTER_API_KEY
+#   wrangler secret put ADMIN_WALLETS
 #   wrangler secret put ADMIN_API_KEY  (deprecated — use scoped keys above)
 # Generate AUTH_SECRET with:  openssl rand -hex 32
 # GTS_CLIENT_SECRET is from your GotoSocial app config.
@@ -119,6 +120,10 @@ THREADS_APP_ID = ""
 FARCASTER_CLIENT_ID = ""
 # Reddit OAuth — for /api/auth/reddit/callback route
 REDDIT_CLIENT_ID = ""
+# Comma-separated admin wallet addresses for moderation/admin API access.
+# Set via wrangler secret in production; example value here for preview/dev.
+# ADMIN_WALLETS = "0x1e3ac01d0fdb976179790bdd02823196a92705c9"
+
 # Comma-separated list of allowed CORS origins for state-changing requests.
 # Add your own preview hosts here.
 ALLOWED_ORIGINS = "https://degenfeed.xyz,https://app.degenfeed.xyz,https://social.degenfeed.xyz,http://localhost:3000"

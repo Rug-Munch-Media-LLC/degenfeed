@@ -14,6 +14,12 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
+declare global {
+  interface Window {
+    ethereum?: ethersProvider;
+  }
+}
+
 export interface OnChainTip {
   from: `0x${string}`;
   to: `0x${string}`;
@@ -53,7 +59,7 @@ function getProvider(): ethersProvider | null {
     console.warn('[tipContract] No Ethereum wallet detected (window.ethereum)');
     return null;
   }
-  return window.ethereum as ethersProvider;
+  return window.ethereum;
 }
 
 type ethersProvider = {

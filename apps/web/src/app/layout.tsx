@@ -132,12 +132,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* ── LCP: Preconnect to critical origins ── */}
         <link rel="preconnect" href="https://app.degenfeed.xyz" />
         <link rel="preconnect" href="https://degenfeed.xyz" />
-        <link rel="preconnect" href="https://cdn.degenfeed.xyz" />
         <link rel="preconnect" href="https://community.degenfeed.xyz" />
         <link rel="preconnect" href="https://video.degenfeed.xyz" />
         <link rel="dns-prefetch" href="https://app.degenfeed.xyz" />
         <link rel="dns-prefetch" href="https://degenfeed.xyz" />
-        <link rel="dns-prefetch" href="https://cdn.degenfeed.xyz" />
         <link rel="dns-prefetch" href="https://community.degenfeed.xyz" />
         <link rel="dns-prefetch" href="https://video.degenfeed.xyz" />
         <link rel="dns-prefetch" href="https://pbs.twimg.com" />

@@ -204,33 +204,6 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     };
   }, [tourState, currentStep]);
 
-  // ── Keyboard handlers ───────────────────────────────────────────────
-  useEffect(() => {
-    if (tourState !== 'active') return;
-
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleSkip();
-      }
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleNext();
-      }
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        handleNext();
-      }
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        handlePrev();
-      }
-    };
-
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tourState, handleSkip, handlePrev, handleNext]);
-
   // ── Navigation handlers ─────────────────────────────────────────────
   const handleNext = useCallback(() => {
     if (currentStep < STEPS.length - 1) {
@@ -259,6 +232,33 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     markTourCompleted();
     onComplete?.();
   }, [onComplete]);
+
+  // ── Keyboard handlers ───────────────────────────────────────────────
+  useEffect(() => {
+    if (tourState !== 'active') return;
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleSkip();
+      }
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleNext();
+      }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        handleNext();
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        handlePrev();
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tourState, handleSkip, handlePrev, handleNext]);
 
   // ── Compute tooltip position ────────────────────────────────────────
   const tooltipStyle = useMemo(() => {

@@ -64,6 +64,15 @@ export function ContextualTooltip({
     return () => clearTimeout(showTimer);
   }, [id]);
 
+  const handleDismiss = useCallback(() => {
+    setDismissing(true);
+    markSeen(id);
+    setTimeout(() => {
+      setVisible(false);
+      onDismiss?.();
+    }, 200);
+  }, [id, onDismiss]);
+
   // Auto-dismiss after timeout
   useEffect(() => {
     if (!visible) return;
@@ -75,15 +84,6 @@ export function ContextualTooltip({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, timeout, handleDismiss]);
-
-  const handleDismiss = useCallback(() => {
-    setDismissing(true);
-    markSeen(id);
-    setTimeout(() => {
-      setVisible(false);
-      onDismiss?.();
-    }, 200);
-  }, [id, onDismiss]);
 
   // Click anywhere to dismiss
   useEffect(() => {
