@@ -69,7 +69,13 @@ export default function QuickstartPage() {
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full text-blue-500">
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+                <svg
+                  width="8"
+                  height="8"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <rect x="2" y="2" width="20" height="20" rx="4" />
                 </svg>
               </span>

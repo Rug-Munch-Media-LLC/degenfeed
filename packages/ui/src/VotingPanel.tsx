@@ -68,7 +68,17 @@ function formatTimeAgo(ts: number): string {
   return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function VoteBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
+function VoteBar({
+  label,
+  count,
+  total,
+  color,
+}: {
+  label: string;
+  count: number;
+  total: number;
+  color: string;
+}) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
     <div className="space-y-1">
@@ -94,7 +104,9 @@ export function VotingPanel({
   initialYourVote = null,
 }: VotingPanelProps) {
   const [yourVote, setYourVote] = useState<VoteChoice | null>(initialYourVote);
-  const [totals, setTotals] = useState<VoteResults>(initialTotals ?? { for: 0, against: 0, abstain: 0 });
+  const [totals, setTotals] = useState<VoteResults>(
+    initialTotals ?? { for: 0, against: 0, abstain: 0 },
+  );
   const [voting, setVoting] = useState(false);
   const [error, setError] = useState('');
   const [timeRemaining, setTimeRemaining] = useState(Math.max(0, proposal.endsAt - Date.now()));
@@ -169,7 +181,9 @@ export function VotingPanel({
       {/* Title & description */}
       <div>
         <h3 className="text-base font-bold text-[var(--color-fg)]">{proposal.title}</h3>
-        <p className="mt-2 whitespace-pre-wrap text-sm text-[var(--color-muted)]">{proposal.description}</p>
+        <p className="mt-2 whitespace-pre-wrap text-sm text-[var(--color-muted)]">
+          {proposal.description}
+        </p>
         {proposal.targetUser && (
           <p className="mt-2 text-xs text-[var(--color-muted)]">
             Target: <span className="font-mono">{proposal.targetUser}</span>
@@ -179,15 +193,15 @@ export function VotingPanel({
 
       {/* Meta info */}
       <div className="flex flex-wrap gap-3 text-xs text-[var(--color-muted)]">
-        <span>
-          Created {formatTimeAgo(proposal.createdAt)}
-        </span>
+        <span>Created {formatTimeAgo(proposal.createdAt)}</span>
         {isActive && (
           <span className={timeRemaining < 86_400_000 ? 'text-yellow-400' : ''}>
             {timeRemaining > 0 ? `${formatTimeRemaining(timeRemaining)} remaining` : 'Ending soon'}
           </span>
         )}
-        <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
+        <span>
+          {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {/* Vote bars */}
@@ -203,9 +217,21 @@ export function VotingPanel({
           <div className="flex gap-2">
             {(['for', 'against', 'abstain'] as VoteChoice[]).map((choice) => {
               const colors: Record<VoteChoice, { active: string; default: string }> = {
-                for: { active: 'border-green-500/50 bg-green-500/10 text-green-400', default: 'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]' },
-                against: { active: 'border-red-500/50 bg-red-500/10 text-red-400', default: 'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]' },
-                abstain: { active: 'border-gray-500/50 bg-gray-500/10 text-[var(--color-muted)]', default: 'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]' },
+                for: {
+                  active: 'border-green-500/50 bg-green-500/10 text-green-400',
+                  default:
+                    'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]',
+                },
+                against: {
+                  active: 'border-red-500/50 bg-red-500/10 text-red-400',
+                  default:
+                    'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]',
+                },
+                abstain: {
+                  active: 'border-gray-500/50 bg-gray-500/10 text-[var(--color-muted)]',
+                  default:
+                    'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]',
+                },
               };
               const isSelected = yourVote === choice;
               return (

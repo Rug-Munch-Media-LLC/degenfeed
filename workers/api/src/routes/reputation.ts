@@ -18,31 +18,29 @@
  *   POST /api/reputation/stake/resolve — Resolve a stake
  */
 
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import {
   applyEarnMultipliers,
   applyEvent,
   computeDailyTotals,
   computeLevel,
   createDefaultScore,
-  defaultMultipliers,
   EARN_RULES,
   LOSE_RULES,
   nextLevelThreshold,
+  type ReputationEvent,
+  type ReputationEventKind,
+  type ReputationScore,
   resolveStake,
+  type StakeToPost,
   stakeOnPost,
   TIER_BENEFITS,
   TIER_LABELS,
   TIER_POST_LIMITS,
-  TIER_THRESHOLDS,
   wouldExceedDailyCap,
-  type ReputationEvent,
-  type ReputationEventKind,
-  type ReputationScore,
-  type StakeToPost,
 } from '@degenfeed/reputation';
+import type { Env } from '../index';
+import { jsonResponse, noCacheJsonResponse } from '../index';
+import { requireSession } from '../session';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -148,14 +146,14 @@ async function updateLeaderboard(env: Env, score: ReputationScore): Promise<void
 
 // ─── Timestamp helpers ────────────────────────────────────────────────────
 
-function todayStart(): number {
+function _todayStart(): number {
   const d = new Date();
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
 // ─── Parse userId from path ───────────────────────────────────────────────
 
-function parseUserId(url: string, prefix: string): string | null {
+function _parseUserId(url: string, prefix: string): string | null {
   const parts = url.split(prefix);
   if (parts.length < 2) return null;
   const after = parts[1];
@@ -174,7 +172,7 @@ function parseUserId(url: string, prefix: string): string | null {
  * progress to next level, and tier benefits.
  */
 export async function handleReputationGet(
-  request: Request,
+  _request: Request,
   env: Env,
   userId: string,
 ): Promise<Response> {
@@ -233,10 +231,7 @@ export async function handleReputationHistory(
  *
  * Top users by reputation score.
  */
-export async function handleReputationLeaderboard(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleReputationLeaderboard(request: Request, env: Env): Promise<Response> {
   if (!env.REPUTATION) {
     return jsonResponse({ entries: [] });
   }
@@ -252,17 +247,19 @@ export async function handleReputationLeaderboard(
 
   try {
     const board = JSON.parse(raw);
-    const entries = board.slice(0, limit).map(
-      (e: { userId: string; total: number; level: string; displayName?: string }, i: number) => ({
-        rank: i + 1,
-        userId: e.userId,
-        total: e.total,
-        level: e.level,
-        label: TIER_LABELS[e.level as keyof typeof TIER_LABELS]?.label ?? 'Newcomer',
-        icon: TIER_LABELS[e.level as keyof typeof TIER_LABELS]?.icon ?? '🌱',
-        displayName: e.displayName,
-      }),
-    );
+    const entries = board
+      .slice(0, limit)
+      .map(
+        (e: { userId: string; total: number; level: string; displayName?: string }, i: number) => ({
+          rank: i + 1,
+          userId: e.userId,
+          total: e.total,
+          level: e.level,
+          label: TIER_LABELS[e.level as keyof typeof TIER_LABELS]?.label ?? 'Newcomer',
+          icon: TIER_LABELS[e.level as keyof typeof TIER_LABELS]?.icon ?? '🌱',
+          displayName: e.displayName,
+        }),
+      );
     return noCacheJsonResponse({ entries, count: entries.length });
   } catch {
     return jsonResponse({ entries: [] });
@@ -275,16 +272,18 @@ export async function handleReputationLeaderboard(
  * Record an earn event for a user.
  * Body: { userId, kind: 'earn:post' | 'earn:like' | 'earn:tip' | 'earn:follow' | 'earn:bridge', ref?, reason? }
  */
-export async function handleReputationEarn(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleReputationEarn(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
   let body: { userId: string; kind: string; ref?: string; reason?: string };
   try {
-    body = await request.json() as { userId: string; kind: string; ref?: string; reason?: string };
+    body = (await request.json()) as {
+      userId: string;
+      kind: string;
+      ref?: string;
+      reason?: string;
+    };
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, 400);
   }
@@ -308,17 +307,28 @@ export async function handleReputationEarn(
   if (rule.dailyCap > 0) {
     const history = await getHistory(env, body.userId, 200);
     const dailyTotals = computeDailyTotals(history);
-    const effective = applyEarnMultipliers(rule.baseAmount, body.kind as ReputationEventKind, score.multipliers);
+    const effective = applyEarnMultipliers(
+      rule.baseAmount,
+      body.kind as ReputationEventKind,
+      score.multipliers,
+    );
     if (wouldExceedDailyCap(body.kind as ReputationEventKind, effective, dailyTotals)) {
-      return jsonResponse({
-        error: `Daily cap reached for ${body.kind} (max ${rule.dailyCap}/day)`,
-        dailyCap: rule.dailyCap,
-        dailyTotal: dailyTotals.get(body.kind) ?? 0,
-      }, 429);
+      return jsonResponse(
+        {
+          error: `Daily cap reached for ${body.kind} (max ${rule.dailyCap}/day)`,
+          dailyCap: rule.dailyCap,
+          dailyTotal: dailyTotals.get(body.kind) ?? 0,
+        },
+        429,
+      );
     }
   }
 
-  const amount = applyEarnMultipliers(rule.baseAmount, body.kind as ReputationEventKind, score.multipliers);
+  const amount = applyEarnMultipliers(
+    rule.baseAmount,
+    body.kind as ReputationEventKind,
+    score.multipliers,
+  );
   const { score: updated, event } = applyEvent(
     score,
     body.kind as ReputationEventKind,
@@ -331,17 +341,20 @@ export async function handleReputationEarn(
   await prependEvent(env, body.userId, event);
   await updateLeaderboard(env, updated);
 
-  return jsonResponse({
-    ok: true,
-    event,
-    score: {
-      total: updated.total,
-      earned: updated.earned,
-      staked: updated.staked,
-      slashed: updated.slashed,
-      level: updated.level,
+  return jsonResponse(
+    {
+      ok: true,
+      event,
+      score: {
+        total: updated.total,
+        earned: updated.earned,
+        staked: updated.staked,
+        slashed: updated.slashed,
+        level: updated.level,
+      },
     },
-  }, 201);
+    201,
+  );
 }
 
 /**
@@ -350,16 +363,18 @@ export async function handleReputationEarn(
  * Record a slash event (spam, report, ban).
  * Body: { userId, kind: 'slash:spam' | 'slash:report' | 'slash:ban', ref?, reason? }
  */
-export async function handleReputationSlash(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleReputationSlash(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
   let body: { userId: string; kind: string; ref?: string; reason?: string };
   try {
-    body = await request.json() as { userId: string; kind: string; ref?: string; reason?: string };
+    body = (await request.json()) as {
+      userId: string;
+      kind: string;
+      ref?: string;
+      reason?: string;
+    };
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, 400);
   }
@@ -382,7 +397,7 @@ export async function handleReputationSlash(
     // Also slash earned
     delta -= Math.min(score.earned, 100); // flat penalty on ban
   } else {
-    delta = loseRule!.baseAmount;
+    delta = loseRule?.baseAmount;
   }
 
   const { score: updated, event } = applyEvent(
@@ -397,17 +412,20 @@ export async function handleReputationSlash(
   await prependEvent(env, body.userId, event);
   await updateLeaderboard(env, updated);
 
-  return jsonResponse({
-    ok: true,
-    event,
-    score: {
-      total: updated.total,
-      earned: updated.earned,
-      staked: updated.staked,
-      slashed: updated.slashed,
-      level: updated.level,
+  return jsonResponse(
+    {
+      ok: true,
+      event,
+      score: {
+        total: updated.total,
+        earned: updated.earned,
+        staked: updated.staked,
+        slashed: updated.slashed,
+        level: updated.level,
+      },
     },
-  }, 201);
+    201,
+  );
 }
 
 /**
@@ -416,16 +434,13 @@ export async function handleReputationSlash(
  * Stake reputation on a post.
  * Body: { userId, postId, amount }
  */
-export async function handleReputationStake(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleReputationStake(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
   let body: { userId: string; postId: string; amount: number };
   try {
-    body = await request.json() as { userId: string; postId: string; amount: number };
+    body = (await request.json()) as { userId: string; postId: string; amount: number };
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, 400);
   }
@@ -460,20 +475,27 @@ export async function handleReputationStake(
     const stakesRaw = await env.REPUTATION.get(stakesKey(body.userId));
     let stakes: StakeToPost[] = [];
     if (stakesRaw) {
-      try { stakes = JSON.parse(stakesRaw); } catch { /* reset */ }
+      try {
+        stakes = JSON.parse(stakesRaw);
+      } catch {
+        /* reset */
+      }
     }
     stakes.push(stake);
     await env.REPUTATION.put(stakesKey(body.userId), JSON.stringify(stakes));
   }
 
-  return jsonResponse({
-    ok: true,
-    stake,
-    score: {
-      total: updated.total,
-      staked: updated.staked,
+  return jsonResponse(
+    {
+      ok: true,
+      stake,
+      score: {
+        total: updated.total,
+        staked: updated.staked,
+      },
     },
-  }, 201);
+    201,
+  );
 }
 
 /**
@@ -482,16 +504,23 @@ export async function handleReputationStake(
  * Resolve a stake (return or slash).
  * Body: { userId, postId, outcome: 'return' | 'return-bonus' | 'slash', engagementCount? }
  */
-export async function handleReputationStakeResolve(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleReputationStakeResolve(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
-  let body: { userId: string; postId: string; outcome: 'return' | 'return-bonus' | 'slash'; engagementCount?: number };
+  let body: {
+    userId: string;
+    postId: string;
+    outcome: 'return' | 'return-bonus' | 'slash';
+    engagementCount?: number;
+  };
   try {
-    body = await request.json() as { userId: string; postId: string; outcome: 'return' | 'return-bonus' | 'slash'; engagementCount?: number };
+    body = (await request.json()) as {
+      userId: string;
+      postId: string;
+      outcome: 'return' | 'return-bonus' | 'slash';
+      engagementCount?: number;
+    };
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, 400);
   }
@@ -536,11 +565,12 @@ export async function handleReputationStakeResolve(
   const score = await getScore(env, body.userId);
   const kind: ReputationEventKind = body.outcome === 'slash' ? 'slash:stake' : 'stake:return';
   const ref = body.postId;
-  const reason = body.outcome === 'slash'
-    ? `Stake slashed on post (${resolution.stake.amount} lost)`
-    : resolution.stake.bonus
-      ? `Stake returned with ${resolution.stake.bonus} bonus`
-      : 'Stake returned';
+  const reason =
+    body.outcome === 'slash'
+      ? `Stake slashed on post (${resolution.stake.amount} lost)`
+      : resolution.stake.bonus
+        ? `Stake returned with ${resolution.stake.bonus} bonus`
+        : 'Stake returned';
 
   const { score: updated, event } = applyEvent(score, kind, resolution.delta, ref, reason);
   await putScore(env, updated);
@@ -564,7 +594,7 @@ export async function handleReputationStakeResolve(
  * Returns active stakes for a user.
  */
 export async function handleReputationStakes(
-  request: Request,
+  _request: Request,
   env: Env,
   userId: string,
 ): Promise<Response> {

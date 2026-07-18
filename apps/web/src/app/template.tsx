@@ -46,7 +46,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
     // Only run on key change to prevent re-render loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [children]);
 
   // ── Coordinate LoadingBar with page transitions ────────────
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
     };
     // Re-run on key changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, []);
 
   return (
     <>

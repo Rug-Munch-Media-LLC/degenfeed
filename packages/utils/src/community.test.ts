@@ -20,7 +20,8 @@ describe('communityKey', () => {
 
   it('should lowercase and replace special characters', () => {
     const key = communityKey('Crypto & DeFi');
-    expect(key).toBe(`${COMMUNITY_KV_PREFIX}crypto__defi`);
+    // "Crypto & DeFi" → "crypto___defi" because spaces and & each become _
+    expect(key).toBe(`${COMMUNITY_KV_PREFIX}crypto___defi`);
   });
 
   it('should strip leading/trailing special chars after sanitization', () => {

@@ -36,9 +36,7 @@ describe('TokenChart', () => {
 
   it('should show loading state initially', () => {
     // Keep fetch unresolved to show loading
-    vi.spyOn(globalThis, 'fetch').mockImplementation(
-      () => new Promise<Response>(() => {}),
-    );
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>(() => {}));
     const { container } = render(<TokenChart symbol="BTC" />);
     expect(container.querySelector('.animate-pulse')).toBeDefined();
   });
@@ -75,9 +73,7 @@ describe('TokenChart', () => {
   });
 
   it('should handle API error gracefully (return null)', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(null, { status: 500 }),
-    );
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 500 }));
     const { container } = render(<TokenChart symbol="BTC" />);
     await waitFor(() => {
       expect(container.innerHTML).toBe('');

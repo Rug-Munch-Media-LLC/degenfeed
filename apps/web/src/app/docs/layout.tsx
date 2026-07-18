@@ -68,7 +68,19 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
               className="rounded p-1 text-[var(--color-muted)] hover:text-[var(--color-fg)]"
               aria-label="Close sidebar"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" role="img" aria-labelledby="close-docs-title"><title id="close-docs-title">Close documentation sidebar</title><path d="M18 6 6 18M6 6l12 12" /></svg>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                role="img"
+                aria-labelledby="close-docs-title"
+              >
+                <title id="close-docs-title">Close documentation sidebar</title>
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
             </button>
           </div>
 
@@ -134,7 +146,22 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         className="fixed bottom-4 left-4 z-20 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] p-3 text-[var(--color-fg)] shadow-lg lg:hidden"
         aria-label="Open sidebar"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" role="img" aria-labelledby="open-docs-title"><title id="open-docs-title">Open documentation sidebar</title><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          role="img"
+          aria-labelledby="open-docs-title"
+        >
+          <title id="open-docs-title">Open documentation sidebar</title>
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
       </button>
 
       {/* Main content area */}

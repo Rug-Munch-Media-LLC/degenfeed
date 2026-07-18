@@ -1,3 +1,4 @@
+import { identityKey } from '@degenfeed/utils';
 import { type Env, jsonResponse } from '../index';
 import {
   hasSuspiciousPayload,
@@ -8,8 +9,7 @@ import {
   sanitizeString,
   validateBodySize,
 } from '../sanitize';
-import { identityKey } from '@degenfeed/utils';
-import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
+import { broadcastToAll } from '../ws-broadcast';
 import { buildLensCollectIntent } from './lens';
 import { fetchZapInvoice, resolveLnurlFromPubkey } from './lightning';
 import { recordUnifiedTip, type TipEntityType } from './unified-tip';
@@ -215,7 +215,8 @@ function buildBaseMethods(protocol: string, env: Env): ResolvedTipMethod[] {
   methods.push({
     method: 'onchain_tip',
     label: 'Direct on-chain (0% fee)',
-    description: 'ETH via DegenFeed contract on Base, Optimism, or Arbitrum — 0% fee, no intermediary',
+    description:
+      'ETH via DegenFeed contract on Base, Optimism, or Arbitrum — 0% fee, no intermediary',
     icon: '⛓️',
     available: false,
     chain: 'base',
@@ -327,9 +328,9 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
   // like a wallet address, look up the recipient's cross-platform identity
   // from KV to fill in missing wallet addresses for tipping.
   if (
-    (!postContext?.author?.evmAddress &&
-      !postContext?.author?.solanaAddress &&
-      !postContext?.author?.farcasterCustodyAddress) &&
+    !postContext?.author?.evmAddress &&
+    !postContext?.author?.solanaAddress &&
+    !postContext?.author?.farcasterCustodyAddress &&
     (/^0x[a-f0-9]{40}$/i.test(authorId) || /^[1-9a-hj-z]{32,44}$/.test(authorId))
   ) {
     try {
@@ -360,7 +361,11 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
         }
 
         // Lens profile from linked identity
-        if (!postContext?.author?.lensProfile && identity.lens && typeof identity.lens === 'object') {
+        if (
+          !postContext?.author?.lensProfile &&
+          identity.lens &&
+          typeof identity.lens === 'object'
+        ) {
           const lens = identity.lens as Record<string, unknown>;
           if (lens.handle) author.lensProfile = lens.handle as string;
         }
@@ -376,7 +381,10 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
 
         // Merge into postContext if we found anything
         if (Object.keys(author).length > 0 && postContext) {
-          postContext.author = { ...(postContext.author || {}), ...author } as TipPostContext['author'];
+          postContext.author = {
+            ...(postContext.author || {}),
+            ...author,
+          } as TipPostContext['author'];
         }
       }
     } catch {
@@ -418,9 +426,20 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
     const publicationId = sanitizeString(body.publicationId, 128);
 
     // Validate currency/method
-    const validMethods = ['onchain_tip', 'ethereum', 'base', 'solana', 'lightning_zap', 'farcaster_frame', 'lens_collect'];
+    const validMethods = [
+      'onchain_tip',
+      'ethereum',
+      'base',
+      'solana',
+      'lightning_zap',
+      'farcaster_frame',
+      'lens_collect',
+    ];
     if (!validMethods.includes(method)) {
-      return jsonResponse({ error: `Invalid tipping method: ${method}. Valid: ${validMethods.join(', ')}` }, 400);
+      return jsonResponse(
+        { error: `Invalid tipping method: ${method}. Valid: ${validMethods.join(', ')}` },
+        400,
+      );
     }
 
     // Validate amount is a positive number
@@ -444,7 +463,14 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
     if (recipientProtocol && !isAllowedProtocol(recipientProtocol)) {
       return jsonResponse({ error: 'Invalid recipientProtocol' }, 400);
     }
-    if (chain && chain !== 'ethereum' && chain !== 'solana' && chain !== 'base' && chain !== 'optimism' && chain !== 'arbitrum') {
+    if (
+      chain &&
+      chain !== 'ethereum' &&
+      chain !== 'solana' &&
+      chain !== 'base' &&
+      chain !== 'optimism' &&
+      chain !== 'arbitrum'
+    ) {
       return jsonResponse({ error: 'Invalid chain' }, 400);
     }
 
@@ -470,7 +496,7 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
           intent: {
             to: recipient,
             value: amount,
-            chain: method === 'base' ? 'base' : (chain || 'ethereum'),
+            chain: method === 'base' ? 'base' : chain || 'ethereum',
           },
           instructions:
             'Sign with your Ethereum wallet (MetaMask, Rabby, Rainbow, etc.) to send the tip',
@@ -577,11 +603,9 @@ export async function handleTipCreate(request: Request, env: Env): Promise<Respo
         };
         const existingRaw = env.CACHE ? await env.CACHE.get(notifKey) : null;
         const existing: unknown[] = existingRaw ? JSON.parse(existingRaw) : [];
-        await env.CACHE?.put(
-          notifKey,
-          JSON.stringify([tipNotif, ...existing].slice(0, 100)),
-          { expirationTtl: 60 * 60 * 24 * 30 },
-        );
+        await env.CACHE?.put(notifKey, JSON.stringify([tipNotif, ...existing].slice(0, 100)), {
+          expirationTtl: 60 * 60 * 24 * 30,
+        });
       } catch (kvErr) {
         const msg = kvErr instanceof Error ? kvErr.message : String(kvErr);
         console.warn('[tip] failed to store notification:', msg);

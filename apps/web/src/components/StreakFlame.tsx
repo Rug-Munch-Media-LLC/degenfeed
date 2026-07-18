@@ -86,7 +86,9 @@ function MilestoneRow({
   };
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className={achieved ? 'text-degen-400' : 'text-[var(--color-muted)]'}>{achieved ? '◆' : '◇'}</span>
+      <span className={achieved ? 'text-degen-400' : 'text-[var(--color-muted)]'}>
+        {achieved ? '◆' : '◇'}
+      </span>
       <span className={colors[tier] ?? 'text-[var(--color-muted)]'}>{label}</span>
     </div>
   );

@@ -10,6 +10,7 @@
  * is preserved as handleEmbedResolve.
  */
 
+import { enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
 import {
   BlueskyProvider,
   FarcasterProvider,
@@ -21,10 +22,9 @@ import {
   RssProvider,
   ThreadsProvider,
 } from '@degenfeed/feed-providers';
-import { enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
-import { decodeContentUri, rmiUrl, formatTimeAgo } from '@degenfeed/utils';
 import type { ProtocolSource } from '@degenfeed/utils';
+import { decodeContentUri, formatTimeAgo, rmiUrl } from '@degenfeed/utils';
 import { type Env, jsonResponse } from '../index';
 import { isValidFetchUrl, safeFetch } from '../sanitize';
 
@@ -234,9 +234,21 @@ function buildEmbedHtml(post: UnifiedPost, origin: string): string {
     },
     datePublished: new Date(post.createdAt).toISOString(),
     interactionStatistic: [
-      { '@type': 'InteractionCounter', interactionType: 'https://schema.org/LikeAction', userInteractionCount: post.metrics.likes },
-      { '@type': 'InteractionCounter', interactionType: 'https://schema.org/ShareAction', userInteractionCount: post.metrics.reposts },
-      { '@type': 'InteractionCounter', interactionType: 'https://schema.org/CommentAction', userInteractionCount: post.metrics.replies },
+      {
+        '@type': 'InteractionCounter',
+        interactionType: 'https://schema.org/LikeAction',
+        userInteractionCount: post.metrics.likes,
+      },
+      {
+        '@type': 'InteractionCounter',
+        interactionType: 'https://schema.org/ShareAction',
+        userInteractionCount: post.metrics.reposts,
+      },
+      {
+        '@type': 'InteractionCounter',
+        interactionType: 'https://schema.org/CommentAction',
+        userInteractionCount: post.metrics.replies,
+      },
     ],
   };
 

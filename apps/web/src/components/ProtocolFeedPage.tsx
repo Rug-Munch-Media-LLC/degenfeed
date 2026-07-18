@@ -6,7 +6,7 @@ import { ErrorBoundary, FeedList } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useTransition, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { useAuth } from './AuthProvider';
 import { ContentFilterBar, type ContentType } from './ContentFilterBar';
 import { ContentMosaic } from './ContentMosaic';
@@ -171,7 +171,7 @@ interface Props {
 export function ProtocolFeedPage({ protocol }: Props) {
   const config: ProtocolFeedConfig = PROTOCOL_CONFIGS[protocol] as ProtocolFeedConfig;
   const router = useRouter();
-  const pathname = usePathname();
+  const _pathname = usePathname();
   const { engage, openComposeReply } = useAuth();
   const [, startTransition] = useTransition();
 
@@ -220,19 +220,22 @@ export function ProtocolFeedPage({ protocol }: Props) {
   }, [protocol, config]);
 
   // ── Handle tab change with smooth transition ──
-  const handleTabChange = useCallback((tabId: string) => {
-    if (tabId === activeTab) return;
-    const tabIds = config?.tabs.map((t) => t.id) ?? [];
-    const oldIdx = tabIds.indexOf(activeTab);
-    const newIdx = tabIds.indexOf(tabId);
-    setTabDirection(newIdx > oldIdx ? 'right' : 'left');
-    setTabTransitioning(true);
-    startTransition(() => {
-      setActiveTab(tabId);
-    });
-    // Brief delay to allow exit animation to play, then re-enable
-    setTimeout(() => setTabTransitioning(false), 350);
-  }, [activeTab, config, startTransition]);
+  const handleTabChange = useCallback(
+    (tabId: string) => {
+      if (tabId === activeTab) return;
+      const tabIds = config?.tabs.map((t) => t.id) ?? [];
+      const oldIdx = tabIds.indexOf(activeTab);
+      const newIdx = tabIds.indexOf(tabId);
+      setTabDirection(newIdx > oldIdx ? 'right' : 'left');
+      setTabTransitioning(true);
+      startTransition(() => {
+        setActiveTab(tabId);
+      });
+      // Brief delay to allow exit animation to play, then re-enable
+      setTimeout(() => setTabTransitioning(false), 350);
+    },
+    [activeTab, config],
+  );
 
   const fetchFeed = useCallback(async () => {
     setState('loading');
@@ -384,7 +387,9 @@ export function ProtocolFeedPage({ protocol }: Props) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
         <h1 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Unknown protocol</h1>
-        <p className="text-sm text-[var(--color-muted)]">No configuration found for &quot;{protocol}&quot;.</p>
+        <p className="text-sm text-[var(--color-muted)]">
+          No configuration found for &quot;{protocol}&quot;.
+        </p>
       </div>
     );
   }

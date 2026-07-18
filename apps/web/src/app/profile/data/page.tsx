@@ -11,20 +11,20 @@
 
 import {
   getAllIdentities,
+  getBlockedCommunities,
+  getBlockedUsers,
   getBookmarks,
   getFollows,
+  getMutedCommunities,
   getMutedIdentities,
   getMutedWords,
   getPreferences,
-  getBlockedUsers,
-  getMutedCommunities,
-  getBlockedCommunities,
   type StoredIdentity,
 } from '@degenfeed/storage';
+import { ErrorBoundary } from '@degenfeed/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useToast } from '../../../components/Toast';
-import { ErrorBoundary } from '@degenfeed/ui';
 
 /* ─── Types ──────────────────────────────────────────────────── */
 
@@ -69,7 +69,7 @@ const DATA_CATEGORIES: Array<{
   {
     key: 'bookmarks',
     label: 'Bookmarks',
-    description: 'Posts you\'ve saved across all protocols',
+    description: "Posts you've saved across all protocols",
     icon: 'M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z',
   },
   {
@@ -145,7 +145,7 @@ const HOSTED_INSTANCES = [
 
 /* ─── Skeletons ───────────────────────────────────────────────── */
 
-function SectionSkeleton() {
+function _SectionSkeleton() {
   return (
     <div className="rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden animate-pulse">
       <div className="px-5 py-4 border-b border-[var(--color-glass-border)]">
@@ -197,9 +197,7 @@ function DataSection({
           )}
           <div className="min-w-0 flex-1">
             <h2 className="text-sm font-bold text-[var(--color-fg)]">{title}</h2>
-            {subtitle && (
-              <p className="text-xs text-[var(--color-muted)] mt-0.5">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-xs text-[var(--color-muted)] mt-0.5">{subtitle}</p>}
           </div>
         </div>
       )}
@@ -211,7 +209,7 @@ function DataSection({
 /* ─── Main Page ───────────────────────────────────────────────── */
 
 export default function DataPage() {
-  const { primaryIdentity, linkedIdentities, signOut, ready } = useAuth();
+  const { primaryIdentity, linkedIdentities, signOut } = useAuth();
   const { showToast } = useToast();
 
   const [exportState, setExportState] = useState<ExportState>({ status: 'idle' });
@@ -223,8 +221,7 @@ export default function DataPage() {
   const [loadingStats, setLoadingStats] = useState(true);
 
   const displayName = primaryIdentity?.displayName ?? 'User';
-  const hasIdentities =
-    (primaryIdentity ? 1 : 0) + linkedIdentities.length > 0;
+  const hasIdentities = (primaryIdentity ? 1 : 0) + linkedIdentities.length > 0;
 
   /* ─── Load data stats ─────────────────────────────────────── */
 
@@ -274,23 +271,31 @@ export default function DataPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [primaryIdentity?.id]);
 
   /* ─── Collect all user data from IndexedDB ────────────────── */
 
   const collectAllData = useCallback(async (): Promise<Record<string, unknown>> => {
     const identityId = primaryIdentity?.id ?? '';
-    const [identities, bookmarks, follows, muted, mutedWords, blocked, mutedCommunities, blockedCommunities] =
-      await Promise.all([
-        getAllIdentities().catch(() => []),
-        getBookmarks().catch(() => []),
-        getFollows().catch(() => []),
-        getMutedIdentities(identityId).catch(() => []),
-        getMutedWords(identityId).catch(() => []),
-        getBlockedUsers(identityId).catch(() => []),
-        getMutedCommunities().catch(() => []),
-        getBlockedCommunities().catch(() => []),
-      ]);
+    const [
+      identities,
+      bookmarks,
+      follows,
+      muted,
+      mutedWords,
+      blocked,
+      mutedCommunities,
+      blockedCommunities,
+    ] = await Promise.all([
+      getAllIdentities().catch(() => []),
+      getBookmarks().catch(() => []),
+      getFollows().catch(() => []),
+      getMutedIdentities(identityId).catch(() => []),
+      getMutedWords(identityId).catch(() => []),
+      getBlockedUsers(identityId).catch(() => []),
+      getMutedCommunities().catch(() => []),
+      getBlockedCommunities().catch(() => []),
+    ]);
 
     let preferences: Record<string, unknown> | null = null;
     try {
@@ -336,38 +341,65 @@ export default function DataPage() {
         linkedAt: i.linkedAt,
         verified: i.verified,
       })),
-      bookmarks: bookmarks.map((b: { postId: unknown; title: unknown; authorName: unknown; protocol: unknown; savedAt: unknown; dfUri: unknown; tags?: unknown[] }) => ({
-        postId: b.postId,
-        title: b.title,
-        authorName: b.authorName,
-        protocol: b.protocol,
-        savedAt: b.savedAt,
-        dfUri: b.dfUri,
-        tags: b.tags ?? [],
-      })),
-      follows: follows.map((f: { identityId: unknown; targetId: unknown; targetProtocol: unknown; targetHandle: unknown; followedAt: unknown }) => ({
-        identityId: f.identityId,
-        targetId: f.targetId,
-        targetProtocol: f.targetProtocol,
-        targetHandle: f.targetHandle,
-        followedAt: f.followedAt,
-      })),
-      mutedUsers: muted.map((m: { targetId: unknown; targetHandle: unknown; mutedAt: unknown }) => ({
-        targetId: m.targetId,
-        targetHandle: m.targetHandle,
-        mutedAt: m.mutedAt,
-      })),
+      bookmarks: bookmarks.map(
+        (b: {
+          postId: unknown;
+          title: unknown;
+          authorName: unknown;
+          protocol: unknown;
+          savedAt: unknown;
+          dfUri: unknown;
+          tags?: unknown[];
+        }) => ({
+          postId: b.postId,
+          title: b.title,
+          authorName: b.authorName,
+          protocol: b.protocol,
+          savedAt: b.savedAt,
+          dfUri: b.dfUri,
+          tags: b.tags ?? [],
+        }),
+      ),
+      follows: follows.map(
+        (f: {
+          identityId: unknown;
+          targetId: unknown;
+          targetProtocol: unknown;
+          targetHandle: unknown;
+          followedAt: unknown;
+        }) => ({
+          identityId: f.identityId,
+          targetId: f.targetId,
+          targetProtocol: f.targetProtocol,
+          targetHandle: f.targetHandle,
+          followedAt: f.followedAt,
+        }),
+      ),
+      mutedUsers: muted.map(
+        (m: { targetId: unknown; targetHandle: unknown; mutedAt: unknown }) => ({
+          targetId: m.targetId,
+          targetHandle: m.targetHandle,
+          mutedAt: m.mutedAt,
+        }),
+      ),
       mutedWords: mutedWords.map((mw: { word: unknown; mutedAt: unknown }) => ({
         word: mw.word,
         mutedAt: mw.mutedAt,
       })),
-      blockedUsers: blocked.map((b: { targetId: unknown; targetHandle: unknown; blockedAt: unknown }) => ({
-        targetId: b.targetId,
-        targetHandle: b.targetHandle,
-        blockedAt: b.blockedAt,
-      })),
+      blockedUsers: blocked.map(
+        (b: { targetId: unknown; targetHandle: unknown; blockedAt: unknown }) => ({
+          targetId: b.targetId,
+          targetHandle: b.targetHandle,
+          blockedAt: b.blockedAt,
+        }),
+      ),
       mutedCommunities: mutedCommunities.map(
-        (mc: { communityId: unknown; communityName: unknown; instance?: unknown; mutedAt: unknown }) => ({
+        (mc: {
+          communityId: unknown;
+          communityName: unknown;
+          instance?: unknown;
+          mutedAt: unknown;
+        }) => ({
           communityId: mc.communityId,
           communityName: mc.communityName,
           instance: mc.instance ?? null,
@@ -375,7 +407,12 @@ export default function DataPage() {
         }),
       ),
       blockedCommunities: blockedCommunities.map(
-        (bc: { communityId: unknown; communityName: unknown; instance?: unknown; blockedAt: unknown }) => ({
+        (bc: {
+          communityId: unknown;
+          communityName: unknown;
+          instance?: unknown;
+          blockedAt: unknown;
+        }) => ({
           communityId: bc.communityId,
           communityName: bc.communityName,
           instance: bc.instance ?? null,
@@ -437,9 +474,7 @@ export default function DataPage() {
 
   /* ─── Collect portable credentials ────────────────────────── */
 
-  const collectCredentials = useCallback(async (): Promise<
-    Array<Record<string, unknown>>
-  > => {
+  const collectCredentials = useCallback(async (): Promise<Array<Record<string, unknown>>> => {
     const identities = await getAllIdentities().catch(() => [] as StoredIdentity[]);
 
     return identities
@@ -542,7 +577,10 @@ export default function DataPage() {
       showToast('success', '✓ Your data has been downloaded');
       setTimeout(() => setExportState({ status: 'idle' }), 3000);
     } catch (err) {
-      setExportState({ status: 'error', message: err instanceof Error ? err.message : 'Export failed' });
+      setExportState({
+        status: 'error',
+        message: err instanceof Error ? err.message : 'Export failed',
+      });
     }
   }, [collectAllData, showToast]);
 
@@ -779,7 +817,7 @@ export default function DataPage() {
                       {count}
                     </span>
                     <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)] text-center">
-                      {cat.label.length > 12 ? cat.label.slice(0, 12) + '…' : cat.label}
+                      {cat.label.length > 12 ? `${cat.label.slice(0, 12)}…` : cat.label}
                     </span>
                   </div>
                 );
@@ -898,10 +936,9 @@ export default function DataPage() {
                   <p className="mt-0.5 text-xs text-[var(--color-muted)] leading-relaxed">
                     Use these credentials on any compatible app — Mastodon clients, Nostr apps,
                     Bluesky clients, and more. Your accounts on{' '}
-                    <strong>social.degenfeed.xyz</strong>,{' '}
-                    <strong>community.degenfeed.xyz</strong>, and{' '}
-                    <strong>video.degenfeed.xyz</strong> work with any standard-compatible software.
-                    No lock-in, ever.
+                    <strong>social.degenfeed.xyz</strong>, <strong>community.degenfeed.xyz</strong>,
+                    and <strong>video.degenfeed.xyz</strong> work with any standard-compatible
+                    software. No lock-in, ever.
                   </p>
                 </div>
               </div>
@@ -1086,10 +1123,10 @@ export default function DataPage() {
                   <code className="text-degen-400 text-[11px]">social.degenfeed.xyz</code>,{' '}
                   <code className="text-degen-400 text-[11px]">community.degenfeed.xyz</code>,{' '}
                   <code className="text-degen-400 text-[11px]">video.degenfeed.xyz</code>) are
-                  standard Mastodon, Lemmy, and PeerTube accounts respectively. Use the &ldquo;Download
-                  Portable Credentials&rdquo; button to get your credentials, then sign into any
-                  compatible app. Your Nostr nsec works with any Nostr client. Your Bluesky
-                  credentials work with any Bluesky client. No lock-in, ever.
+                  standard Mastodon, Lemmy, and PeerTube accounts respectively. Use the
+                  &ldquo;Download Portable Credentials&rdquo; button to get your credentials, then
+                  sign into any compatible app. Your Nostr nsec works with any Nostr client. Your
+                  Bluesky credentials work with any Bluesky client. No lock-in, ever.
                 </p>
               </div>
 
@@ -1099,11 +1136,11 @@ export default function DataPage() {
                   How are my private keys stored?
                 </h4>
                 <p className="text-xs text-[var(--color-muted)] leading-relaxed">
-                  Private keys (like Nostr nsec) are encrypted at rest using AES-256-GCM with a
-                  key derived from your passphrase via Argon2id. We never store keys in plaintext.
-                  When you export your credentials, you&apos;re downloading the decrypted keys that
-                  you already control. For wallet-based protocols (Ethereum, Solana), no private
-                  keys are ever stored — we use standard wallet signatures.
+                  Private keys (like Nostr nsec) are encrypted at rest using AES-256-GCM with a key
+                  derived from your passphrase via Argon2id. We never store keys in plaintext. When
+                  you export your credentials, you&apos;re downloading the decrypted keys that you
+                  already control. For wallet-based protocols (Ethereum, Solana), no private keys
+                  are ever stored — we use standard wallet signatures.
                 </p>
               </div>
             </div>
@@ -1142,8 +1179,8 @@ export default function DataPage() {
                   <p className="mt-0.5 text-xs text-[var(--color-muted)] leading-relaxed">
                     Permanently remove all your data from DegenFeed. This deletes your identities,
                     bookmarks, follows, preferences, and all stored data. Your posts on external
-                    protocols (Nostr, Farcaster, Bluesky, etc.) remain on those networks as they
-                    are governed by their own protocols.
+                    protocols (Nostr, Farcaster, Bluesky, etc.) remain on those networks as they are
+                    governed by their own protocols.
                   </p>
 
                   {deleteState.status === 'confirming' ? (

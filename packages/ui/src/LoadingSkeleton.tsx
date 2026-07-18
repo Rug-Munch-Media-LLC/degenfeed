@@ -36,9 +36,10 @@ export const CardSkeleton: FC<CardSkeletonProps> = memo(function CardSkeleton({
 }) {
   const uid = useId();
   return (
-    <output className="block w-full lg:max-w-[600px]" role="status" aria-label="Loading content">
+    <output className="block w-full lg:max-w-[600px]" aria-label="Loading content">
       {Array.from({ length: count }).map((_, i) => (
         <div
+          {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
           key={`${uid}-card-${i}`}
           className="border-b border-[var(--color-glass-border)] px-4 py-3"
         >
@@ -62,6 +63,7 @@ export const CardSkeleton: FC<CardSkeletonProps> = memo(function CardSkeleton({
           {!avatar && <div className="pt-1" />}
           {Array.from({ length: lines }).map((_, j) => (
             <Pulse
+              {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
               key={`line-${j}`}
               className={`mb-2 h-3 ${j === lines - 1 ? 'w-3/4' : j === 0 ? 'w-full' : 'w-11/12'}`}
             />
@@ -103,9 +105,10 @@ export const ListSkeleton: FC<ListSkeletonProps> = memo(function ListSkeleton({
 }) {
   const uid = useId();
   return (
-    <output className="block" role="status" aria-label="Loading list">
+    <output className="block" aria-label="Loading list">
       <div className="divide-y divide-[var(--color-glass-border)]">
-        {Array.from({ length: count }).map((_, i) => (
+        {Array.from({ length: count }).map((_, _i) => (
+          {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
           <div key={`${uid}-list-${i}`} className="flex items-center gap-3 px-4 py-3.5">
             {leading && <Pulse className="h-10 w-10 shrink-0 rounded-full" />}
             <div className="flex-1 space-y-2">
@@ -135,10 +138,11 @@ export const GridSkeleton: FC<GridSkeletonProps> = memo(function GridSkeleton({
 }) {
   const uid = useId();
   return (
-    <output className="block" role="status" aria-label="Loading grid">
+    <output className="block" aria-label="Loading grid">
       <div className={`grid gap-3 ${gridClass}`}>
         {Array.from({ length: count }).map((_, i) => (
           <div
+            {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
             key={`${uid}-grid-${i}`}
             className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4"
           >
@@ -175,12 +179,13 @@ export const TableSkeleton: FC<TableSkeletonProps> = memo(function TableSkeleton
 }) {
   const uid = useId();
   return (
-    <output className="block" role="status" aria-label="Loading table">
+    <output className="block" aria-label="Loading table">
       <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
         <table className="w-full">
           <thead>
             <tr className="border-b border-[var(--color-border)]">
               {Array.from({ length: cols }).map((_, j) => (
+                {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
                 <th key={`${uid}-th-${j}`} className="px-4 py-3">
                   <Pulse className="h-3 w-20" />
                 </th>
@@ -189,8 +194,10 @@ export const TableSkeleton: FC<TableSkeletonProps> = memo(function TableSkeleton
           </thead>
           <tbody>
             {Array.from({ length: rows }).map((_, i) => (
+              {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
               <tr key={`${uid}-tr-${i}`} className="border-b border-[var(--color-border)]">
                 {Array.from({ length: cols }).map((_, j) => (
+                  {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
                   <td key={`${uid}-td-${i}-${j}`} className="px-4 py-3">
                     <Pulse className={`h-3 ${j === 0 ? 'w-32' : 'w-20'}`} />
                   </td>
@@ -221,10 +228,7 @@ export interface SpinnerProps {
   label?: string;
 }
 
-export const Spinner: FC<SpinnerProps> = memo(function Spinner({
-  size = 'md',
-  label = 'Loading',
-}) {
+export const Spinner: FC<SpinnerProps> = memo(function Spinner({ size = 'md', label = 'Loading' }) {
   const sizeMap = { sm: 'h-4 w-4', md: 'h-6 w-6', lg: 'h-8 w-8' };
   return (
     <div

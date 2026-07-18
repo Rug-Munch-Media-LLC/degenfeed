@@ -7,8 +7,8 @@
  * Posts older than 7 days are deprioritized unless they have high engagement.
  */
 
-import type { Env } from '../index';
 import type { UnifiedPost } from '@degenfeed/types';
+import type { Env } from '../index';
 import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
 import type { FeedType } from './feed-cache-layer';
@@ -30,7 +30,10 @@ export const HIGH_ENGAGEMENT_BY_PROTOCOL: Record<string, number> = {
 export const DEFAULT_HIGH_ENGAGEMENT = 20;
 
 export function getHighEngagementThreshold(protocol?: string): number {
-  return (protocol ? HIGH_ENGAGEMENT_BY_PROTOCOL[protocol.toLowerCase()] : undefined) ?? DEFAULT_HIGH_ENGAGEMENT;
+  return (
+    (protocol ? HIGH_ENGAGEMENT_BY_PROTOCOL[protocol.toLowerCase()] : undefined) ??
+    DEFAULT_HIGH_ENGAGEMENT
+  );
 }
 
 /**
@@ -175,22 +178,16 @@ export function deprioritizeStaleContent(
   if (posts.length === 0) return posts;
 
   return [...posts].sort((a, b) => {
-    const aAge = now - a.createdAt;
-    const bAge = now - b.createdAt;
+    const _aAge = now - a.createdAt;
+    const _bAge = now - b.createdAt;
 
     const aDecay = computeDecayMultiplier(a.createdAt, now);
     const bDecay = computeDecayMultiplier(b.createdAt, now);
 
     const aEng =
-      a.metrics.likes +
-      a.metrics.reposts * 2 +
-      a.metrics.replies * 3 +
-      (a.metrics.quotes ?? 0);
+      a.metrics.likes + a.metrics.reposts * 2 + a.metrics.replies * 3 + (a.metrics.quotes ?? 0);
     const bEng =
-      b.metrics.likes +
-      b.metrics.reposts * 2 +
-      b.metrics.replies * 3 +
-      (b.metrics.quotes ?? 0);
+      b.metrics.likes + b.metrics.reposts * 2 + b.metrics.replies * 3 + (b.metrics.quotes ?? 0);
 
     // High-engagement resist decay: apply per-protocol threshold
     const aThreshold = getHighEngagementThreshold(a.protocol);

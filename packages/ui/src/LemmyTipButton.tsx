@@ -65,10 +65,12 @@ export function LemmyTipButton({
 
   // Auto-select default method based on the comment author's protocol
   const defaultMethodKey = connectedProtocol
-    ? PROTOCOL_TO_TIP_METHOD[connectedProtocol] ?? 'eth'
+    ? (PROTOCOL_TO_TIP_METHOD[connectedProtocol] ?? 'eth')
     : 'eth';
-  const defaultMethod = LEMMY_TIP_METHODS.find((m) => m.key === defaultMethodKey) ?? LEMMY_TIP_METHODS[0];
-  const [selectedMethod, setSelectedMethod] = useState<(typeof LEMMY_TIP_METHODS)[number]>(defaultMethod);
+  const defaultMethod =
+    LEMMY_TIP_METHODS.find((m) => m.key === defaultMethodKey) ?? LEMMY_TIP_METHODS[0];
+  const [selectedMethod, setSelectedMethod] =
+    useState<(typeof LEMMY_TIP_METHODS)[number]>(defaultMethod);
 
   const handleTip = useCallback(
     async (amount: number) => {
@@ -141,11 +143,7 @@ export function LemmyTipButton({
               <span className="text-[10px]">Tip</span>
             </>
           )}
-          {showTipMeta && (
-            <span className="text-[10px] text-[var(--color-muted)]">
-              {tipCount}
-            </span>
-          )}
+          {showTipMeta && <span className="text-[10px] text-[var(--color-muted)]">{tipCount}</span>}
         </button>
 
         {showMenu && (
@@ -160,19 +158,19 @@ export function LemmyTipButton({
             {/* Method selector */}
             <div className="mb-1.5 flex flex-wrap gap-1">
               {LEMMY_TIP_METHODS.map((method) => (
-              <button
-                key={method.key}
-                type="button"
-                onClick={() => setSelectedMethod(method)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') setSelectedMethod(method);
-                }}
-                className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] transition-colors ${
-                  selectedMethod.key === method.key
-                    ? 'bg-green-500/20 text-green-400'
-                    : 'text-[var(--color-muted)] hover:text-[var(--color-muted)] hover:bg-white/5'
-                }`}
-              >
+                <button
+                  key={method.key}
+                  type="button"
+                  onClick={() => setSelectedMethod(method)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') setSelectedMethod(method);
+                  }}
+                  className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] transition-colors ${
+                    selectedMethod.key === method.key
+                      ? 'bg-green-500/20 text-green-400'
+                      : 'text-[var(--color-muted)] hover:text-[var(--color-muted)] hover:bg-white/5'
+                  }`}
+                >
                   <span>{method.icon}</span>
                   <span>{method.symbol}</span>
                 </button>
@@ -198,7 +196,10 @@ export function LemmyTipButton({
             <div className="mt-1 flex items-center gap-1 border-t border-[var(--color-border)] pt-1 text-[9px] text-gray-600">
               <span
                 className="inline-flex h-3 w-3 items-center justify-center rounded-full text-[8px]"
-                style={{ backgroundColor: `${selectedMethod.color}22`, color: selectedMethod.color }}
+                style={{
+                  backgroundColor: `${selectedMethod.color}22`,
+                  color: selectedMethod.color,
+                }}
               >
                 {selectedMethod.icon}
               </span>
@@ -320,7 +321,10 @@ export function LemmyTipButton({
               {meta.label} ({meta.symbol})
             </span>
             {authorEvmAddress && (
-              <span className="ml-auto font-mono text-[9px] text-gray-700" title="Recipient address">
+              <span
+                className="ml-auto font-mono text-[9px] text-gray-700"
+                title="Recipient address"
+              >
                 {authorEvmAddress.slice(0, 6)}...{authorEvmAddress.slice(-4)}
               </span>
             )}

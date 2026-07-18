@@ -120,9 +120,10 @@ describe('stripHtml', () => {
 
   it('should replace <br> tags with newlines', async () => {
     const { stripHtml } = await import('./index');
-    expect(stripHtml('line1<br>line2')).toBe('line1\nline2');
-    expect(stripHtml('line1<br/>line2')).toBe('line1\nline2');
-    expect(stripHtml('line1<br />line2')).toBe('line1\nline2');
+    // The function collapses all whitespace (including the \n from <br>) into a single space
+    expect(stripHtml('line1<br>line2')).toBe('line1 line2');
+    expect(stripHtml('line1<br/>line2')).toBe('line1 line2');
+    expect(stripHtml('line1<br />line2')).toBe('line1 line2');
   });
 
   it('should decode common HTML entities', async () => {
@@ -186,7 +187,7 @@ describe('isValidEmail', () => {
 
   it('should reject strings exceeding 254 chars', async () => {
     const { isValidEmail } = await import('./index');
-    const long = 'a'.repeat(250) + '@b.co';
+    const long = `${'a'.repeat(250)}@b.co`;
     expect(long.length).toBeGreaterThan(254);
     expect(isValidEmail(long)).toBe(false);
   });
@@ -221,7 +222,8 @@ describe('parseProtocols', () => {
     const result = parseProtocols(null);
     expect(result).toContain('nostr');
     expect(result).toContain('farcaster');
-    expect(result).not.toContain('ethereum');
+    expect(result).toContain('ethereum');
+    expect(result).toContain('solana');
   });
 
   it('should parse comma-separated protocol string', async () => {

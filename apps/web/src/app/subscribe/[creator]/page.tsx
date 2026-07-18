@@ -271,7 +271,10 @@ export default function SubscribePage() {
                 </p>
                 <ul className="mt-4 flex-1 space-y-2">
                   {tier.benefits.map((b) => (
-                    <li key={String(b)} className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                    <li
+                      key={String(b)}
+                      className="flex items-center gap-2 text-sm text-[var(--color-muted)]"
+                    >
                       <span className="shrink-0 text-degen-400">✓</span>
                       {formatBenefit(String(b))}
                     </li>
@@ -330,7 +333,9 @@ export default function SubscribePage() {
       {subscribeState.step === 'signing' && (
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] py-12 text-center">
           <div className="mb-4 inline-block animate-spin text-3xl">⚡</div>
-          <p className="text-sm text-[var(--color-muted)]">Sign the transaction in your wallet...</p>
+          <p className="text-sm text-[var(--color-muted)]">
+            Sign the transaction in your wallet...
+          </p>
           <p className="mt-1 text-xs text-gray-600">Approve the payment in your connected wallet</p>
         </div>
       )}

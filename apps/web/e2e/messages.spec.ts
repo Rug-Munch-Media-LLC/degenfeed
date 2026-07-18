@@ -4,15 +4,12 @@
 
 import { expect, test } from '@playwright/test';
 import {
-  MOCK_CONVERSATIONS,
-  MOCK_MESSAGES,
-  MOCK_SEND_MESSAGE_RESPONSE,
   MOCK_EMPTY_CONVERSATIONS,
-  MOCK_NOTIFICATIONS,
+  MOCK_SEND_MESSAGE_RESPONSE,
   MOCK_SIGNED_IN_STATE,
+  mockAuthApi,
   mockMessagesApi,
   mockNotificationsApi,
-  mockAuthApi,
 } from './fixtures';
 
 test.describe('Messages — Signed out', () => {
@@ -66,7 +63,9 @@ test.describe('Messages — Conversation list', () => {
     }
 
     // Messages should show in the right panel
-    await expect(page.getByText('Hey, are you going').or(page.getByText('Sounds great!'))).toBeVisible({
+    await expect(
+      page.getByText('Hey, are you going').or(page.getByText('Sounds great!')),
+    ).toBeVisible({
       timeout: 10000,
     });
   });
@@ -78,7 +77,9 @@ test.describe('Messages — Conversation list', () => {
 
   test('protocol badge shown on conversations', async ({ page }) => {
     await page.goto('/messages');
-    await expect(page.getByText('Nostr').or(page.getByText('Farcaster')).or(page.getByText('Bluesky'))).toBeVisible({
+    await expect(
+      page.getByText('Nostr').or(page.getByText('Farcaster')).or(page.getByText('Bluesky')),
+    ).toBeVisible({
       timeout: 10000,
     });
   });
@@ -174,7 +175,9 @@ test.describe('Messages — Conversation compose bar', () => {
     // Click send arrow
     const arrowBtn = page.locator('button', { hasText: '→' });
     await arrowBtn.click();
-    await expect(page.getByText(/Sending|replying|New message|showing messages in/i)).not.toBeAttached({
+    await expect(
+      page.getByText(/Sending|replying|New message|showing messages in/i),
+    ).not.toBeAttached({
       timeout: 10000,
     });
   });
@@ -211,8 +214,13 @@ test.describe('Messages — Notification bell integration', () => {
 
     await page.goto('/feed');
     // Notification bell should be visible
-    await expect(page.locator('[class*="bell"], [class*="notification"], button').filter({
-      has: page.locator('svg'),
-    }).first()).toBeVisible({ timeout: 30000 });
+    await expect(
+      page
+        .locator('[class*="bell"], [class*="notification"], button')
+        .filter({
+          has: page.locator('svg'),
+        })
+        .first(),
+    ).toBeVisible({ timeout: 30000 });
   });
 });

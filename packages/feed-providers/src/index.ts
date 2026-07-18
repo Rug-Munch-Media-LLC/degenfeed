@@ -1,6 +1,10 @@
 export { BlueskyProvider, CURATED_BSKY_ACTORS } from './providers/bluesky';
 export { CURATED_FARCASTER_FIDS, DEFAULT_HUB_URL, FarcasterProvider } from './providers/farcaster';
 export {
+  KBIN_INSTANCES,
+  KbinProvider,
+} from './providers/kbin';
+export {
   type DiscoverCommunitiesOptions,
   discoverCommunities,
   type FederatedCommunity,
@@ -27,6 +31,7 @@ export {
   RedditProvider,
   type SubredditConfig,
 } from './providers/reddit';
+export { RedditAlternativesProvider } from './providers/reddit-alternatives';
 export type {
   RmiArticle,
   RmiDataBusProviderOptions,
@@ -47,23 +52,16 @@ export {
 } from './providers/rss';
 export { RssBridgeProvider } from './providers/rss-bridge';
 export {
-  KBIN_INSTANCES,
-  KbinProvider,
-} from './providers/kbin';
-export {
-  TILDES_GROUPS,
-  TildesProvider,
-} from './providers/tildes';
-export {
-  RedditAlternativesProvider,
-} from './providers/reddit-alternatives';
-export {
   CURATED_THREADS_HANDLES,
   GTS_INSTANCE,
   isAvailable,
   isBridgyConfigured,
   ThreadsProvider,
 } from './providers/threads';
+export {
+  TILDES_GROUPS,
+  TildesProvider,
+} from './providers/tildes';
 export type { FeedProvider, FeedResult, FetchOptions, HealthResult } from './types';
 export {
   buildUrl,

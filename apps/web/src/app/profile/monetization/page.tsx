@@ -202,7 +202,9 @@ export default function MonetizationPage() {
           </h2>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-[var(--color-muted)]">Lightning Address / LNURL</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">
+              Lightning Address / LNURL
+            </span>
             <input
               type="text"
               value={form.lightningAddress}
@@ -216,7 +218,9 @@ export default function MonetizationPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-[var(--color-muted)]">Farcaster Custody Address</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">
+              Farcaster Custody Address
+            </span>
             <input
               type="text"
               value={form.farcasterCustodyAddress}
@@ -230,7 +234,9 @@ export default function MonetizationPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-[var(--color-muted)]">Lens Profile (id or handle)</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">
+              Lens Profile (id or handle)
+            </span>
             <input
               type="text"
               value={form.lensProfile}
@@ -241,7 +247,9 @@ export default function MonetizationPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs text-[var(--color-muted)]">Nostr Pubkey (for zaps)</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">
+              Nostr Pubkey (for zaps)
+            </span>
             <input
               type="text"
               value={form.nostrPubkey}
@@ -254,7 +262,9 @@ export default function MonetizationPage() {
 
         <div className="card space-y-4">
           <label className="block">
-            <span className="mb-1 block text-xs text-[var(--color-muted)]">Preferred Default Method</span>
+            <span className="mb-1 block text-xs text-[var(--color-muted)]">
+              Preferred Default Method
+            </span>
             <select
               value={form.preferredMethod}
               onChange={(e) => handleChange('preferredMethod', e.target.value)}

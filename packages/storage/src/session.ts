@@ -1,6 +1,7 @@
 // ─── Active Session (in-memory only) ───────────────────────────────────
 
 import type { ActiveSession } from '@degenfeed/types';
+
 // ActiveSession is defined in @degenfeed/types (via StoredIdentity) to prevent
 // a conceptual circular dependency between @degenfeed/auth and @degenfeed/storage.
 // We import and re-export it here for package-level accessibility.

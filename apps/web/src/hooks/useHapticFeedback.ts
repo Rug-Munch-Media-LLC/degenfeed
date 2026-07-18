@@ -18,9 +18,7 @@ export function useHapticFeedback() {
         const now = Date.now();
         if (now - lastVibratedRef.current > 200) {
           lastVibratedRef.current = now;
-          navigator.vibrate(
-            Array.isArray(pattern) ? pattern : [pattern],
-          );
+          navigator.vibrate(Array.isArray(pattern) ? pattern : [pattern]);
         }
       }
     } catch {
@@ -51,7 +49,6 @@ export function useHapticFeedback() {
     triggerReply,
     vibrate,
     /** Check if vibration is supported */
-    isSupported:
-      typeof navigator !== 'undefined' && 'vibrate' in navigator,
+    isSupported: typeof navigator !== 'undefined' && 'vibrate' in navigator,
   };
 }

@@ -241,7 +241,10 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
         </div>
       ) : fetching ? (
         /* ── Loading skeleton — same dimensions as video player to prevent CLS ── */
-        <div className="aspect-video w-full bg-[var(--color-card)] flex items-center justify-center" style={{ minHeight: '200px' }}>
+        <div
+          className="aspect-video w-full bg-[var(--color-card)] flex items-center justify-center"
+          style={{ minHeight: '200px' }}
+        >
           <div
             className="h-8 w-8 rounded-full border-2 border-white/10 border-t-degen-400 animate-spin"
             role="status"
@@ -252,7 +255,8 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
         /* ── Error state ── */
         <a
           href={url}
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex aspect-video w-full items-center justify-center bg-[var(--color-muted)] text-[var(--color-muted)] hover:text-degen-400 transition-colors"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
@@ -352,7 +356,8 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
       {/* ── "Watch on" link ── */}
       <a
         href={url}
-        target="_blank" rel="noopener noreferrer"
+        target="_blank"
+        rel="noopener noreferrer"
         className="flex items-center justify-center border-t border-[var(--color-border)] px-4 py-2 text-xs text-degen-500 transition-colors hover:bg-[var(--color-muted)] hover:text-degen-400"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}

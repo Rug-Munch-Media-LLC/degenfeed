@@ -323,7 +323,9 @@ export default function AdminModerationPage() {
               <div className="space-y-1.5">
                 {stats.topReporters.slice(0, 5).map((r) => (
                   <div key={r.address} className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-[var(--color-muted)]">{shortenAddress(r.address)}</span>
+                    <span className="font-mono text-[var(--color-muted)]">
+                      {shortenAddress(r.address)}
+                    </span>
                     <span className="font-medium text-[var(--color-fg)]">{r.count} reports</span>
                   </div>
                 ))}
@@ -371,13 +373,11 @@ export default function AdminModerationPage() {
           className="rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-1.5 text-xs text-[var(--color-fg)] focus:border-degen-500 focus:outline-none"
         >
           <option value="">All Protocols</option>
-          {['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'].map(
-            (p) => (
-              <option key={p} value={p}>
-                {PROTOCOL_ICONS[p] || ''} {p}
-              </option>
-            ),
-          )}
+          {['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'].map((p) => (
+            <option key={p} value={p}>
+              {PROTOCOL_ICONS[p] || ''} {p}
+            </option>
+          ))}
         </select>
 
         <select
@@ -489,7 +489,9 @@ export default function AdminModerationPage() {
                 {report.postAuthorHandle && (
                   <p className="mb-1 text-xs text-[var(--color-muted)]">
                     Author:{' '}
-                    <span className="font-mono text-[var(--color-muted)]">{report.postAuthorHandle}</span>
+                    <span className="font-mono text-[var(--color-muted)]">
+                      {report.postAuthorHandle}
+                    </span>
                   </p>
                 )}
 
@@ -579,7 +581,10 @@ export default function AdminModerationPage() {
               )}
             </p>
             <div className="mb-4">
-              <label htmlFor="ban-reason" className="mb-1 block text-sm font-medium text-[var(--color-muted)]">
+              <label
+                htmlFor="ban-reason"
+                className="mb-1 block text-sm font-medium text-[var(--color-muted)]"
+              >
                 Reason for ban
               </label>
               <textarea

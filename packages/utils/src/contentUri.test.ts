@@ -56,9 +56,7 @@ describe('contentUri', () => {
 
     it('should decode bluesky AT URI (colon in id)', async () => {
       const { decodeContentUri } = await import('./contentUri');
-      const result = decodeContentUri(
-        'df://bluesky:at://did:plc:abc/app.bsky.feed.post/123',
-      );
+      const result = decodeContentUri('df://bluesky:at://did:plc:abc/app.bsky.feed.post/123');
       expect(result).toEqual({
         protocol: 'bluesky',
         id: 'at://did:plc:abc/app.bsky.feed.post/123',
@@ -67,9 +65,7 @@ describe('contentUri', () => {
 
     it('should decode lemmy URI (slashes in id after instance)', async () => {
       const { decodeContentUri } = await import('./contentUri');
-      const result = decodeContentUri(
-        'df://lemmy/community.degenfeed.xyz/post/123',
-      );
+      const result = decodeContentUri('df://lemmy/community.degenfeed.xyz/post/123');
       expect(result).toEqual({
         protocol: 'lemmy',
         instance: 'community.degenfeed.xyz',

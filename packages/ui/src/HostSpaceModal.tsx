@@ -160,13 +160,23 @@ export function HostSpaceModal({
       }
 
       const data = (await res.json()) as {
-        space: { id: string; title: string; protocols: string[]; status: 'live' | 'scheduled'; scheduledAt?: string };
+        space: {
+          id: string;
+          title: string;
+          protocols: string[];
+          status: 'live' | 'scheduled';
+          scheduledAt?: string;
+        };
         ok: boolean;
       };
 
       if (selectedProtocols.length > 0 && onBroadcast) {
         const broadcastText = `🔊 LIVE: ${title.trim()} — Join the Space on DegenFeed`;
-        try { await onBroadcast(broadcastText, selectedProtocols); } catch { /* non-fatal */ }
+        try {
+          await onBroadcast(broadcastText, selectedProtocols);
+        } catch {
+          /* non-fatal */
+        }
       }
 
       onSpaceCreated(data.space);
@@ -177,9 +187,18 @@ export function HostSpaceModal({
       setCreating(false);
     }
   }, [
-    title, description, hostId, hostName, hostAvatarUrl,
-    selectedCoHosts, enabledProtocols, mode, scheduledAt,
-    onBroadcast, onSpaceCreated, onClose,
+    title,
+    description,
+    hostId,
+    hostName,
+    hostAvatarUrl,
+    selectedCoHosts,
+    enabledProtocols,
+    mode,
+    scheduledAt,
+    onBroadcast,
+    onSpaceCreated,
+    onClose,
   ]);
 
   if (!open) return null;
@@ -203,7 +222,14 @@ export function HostSpaceModal({
         <div className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-5 py-3.5">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-degen-500/10">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-500">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="text-degen-500"
+              >
                 <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
                 <circle cx="12" cy="12" r="2" fill="currentColor" />
               </svg>
@@ -217,7 +243,12 @@ export function HostSpaceModal({
             aria-label="Close"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M12 4L4 12M4 4l8 8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -226,7 +257,10 @@ export function HostSpaceModal({
         <div className="flex-1 overflow-y-auto space-y-5 px-5 py-4">
           {/* Title / topic */}
           <div>
-            <label htmlFor="space-title" className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
+            <label
+              htmlFor="space-title"
+              className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider"
+            >
               Space topic
             </label>
             <input
@@ -254,7 +288,10 @@ export function HostSpaceModal({
 
           {/* Description */}
           <div>
-            <label htmlFor="space-desc" className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
+            <label
+              htmlFor="space-desc"
+              className="mb-1.5 block text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider"
+            >
               Description <span className="font-normal text-gray-600">(optional)</span>
             </label>
             <textarea
@@ -266,13 +303,16 @@ export function HostSpaceModal({
               maxLength={MAX_DESC_LENGTH}
               className="w-full resize-none rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-3 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none transition-all focus:border-degen-500/50 focus:bg-[var(--color-card)]"
             />
-            <p className="mt-1 text-[10px] text-[var(--color-muted)]">{description.length}/{MAX_DESC_LENGTH}</p>
+            <p className="mt-1 text-[10px] text-[var(--color-muted)]">
+              {description.length}/{MAX_DESC_LENGTH}
+            </p>
           </div>
 
           {/* Broadcast protocols */}
           <div>
             <p className="mb-2.5 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
-              Broadcast to protocols <span className="font-normal text-gray-600">(requires sign-in)</span>
+              Broadcast to protocols{' '}
+              <span className="font-normal text-gray-600">(requires sign-in)</span>
             </p>
             <div className="flex flex-wrap gap-2">
               {BROADCAST_PROTOCOLS.map((protocol) => {
@@ -282,7 +322,9 @@ export function HostSpaceModal({
                   <button
                     key={protocol.id}
                     type="button"
-                    onClick={() => { if (isConnected) toggleProtocol(protocol.id); }}
+                    onClick={() => {
+                      if (isConnected) toggleProtocol(protocol.id);
+                    }}
                     disabled={!isConnected}
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all border ${
                       isEnabled
@@ -291,7 +333,9 @@ export function HostSpaceModal({
                     } ${!isConnected ? 'cursor-not-allowed opacity-20' : 'cursor-pointer'}`}
                     style={{
                       color: isEnabled ? getProtocolColor(protocol.id) : '#666',
-                      backgroundColor: isEnabled ? `${getProtocolColor(protocol.id)}15` : 'transparent',
+                      backgroundColor: isEnabled
+                        ? `${getProtocolColor(protocol.id)}15`
+                        : 'transparent',
                     }}
                     title={
                       !isConnected
@@ -307,7 +351,8 @@ export function HostSpaceModal({
             </div>
             {selectedCount > 0 && (
               <p className="mt-1.5 text-[10px] text-[var(--color-muted)]">
-                Broadcast post will be sent to {selectedCount} protocol{selectedCount > 1 ? 's' : ''}
+                Broadcast post will be sent to {selectedCount} protocol
+                {selectedCount > 1 ? 's' : ''}
               </p>
             )}
           </div>
@@ -333,7 +378,14 @@ export function HostSpaceModal({
                       }`}
                     >
                       {cohost.avatarUrl ? (
-                        <Image src={cohost.avatarUrl} alt="" width={16} height={16} className="h-4 w-4 rounded-full" unoptimized />
+                        <Image
+                          src={cohost.avatarUrl}
+                          alt=""
+                          width={16}
+                          height={16}
+                          className="h-4 w-4 rounded-full"
+                          unoptimized
+                        />
                       ) : (
                         <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-muted)]/20 text-[8px]">
                           {cohost.displayName[0]?.toUpperCase() || '?'}
@@ -349,7 +401,9 @@ export function HostSpaceModal({
 
           {/* When */}
           <div>
-            <p className="mb-2.5 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">When</p>
+            <p className="mb-2.5 text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
+              When
+            </p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -360,7 +414,15 @@ export function HostSpaceModal({
                     : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                 }`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
                 Start Now
@@ -374,9 +436,18 @@ export function HostSpaceModal({
                     : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                 }`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
                 Schedule
@@ -384,7 +455,10 @@ export function HostSpaceModal({
             </div>
             {mode === 'schedule' && (
               <div className="mt-3 animate-slide-up">
-                <label htmlFor="space-schedule" className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]">
+                <label
+                  htmlFor="space-schedule"
+                  className="mb-1.5 block text-xs font-medium text-[var(--color-muted)]"
+                >
                   Pick date & time
                 </label>
                 <input
@@ -396,8 +470,18 @@ export function HostSpaceModal({
                   className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2.5 text-sm text-[var(--color-fg)] outline-none transition-all focus:border-cyan-500/50"
                 />
                 <p className="mt-1.5 flex items-center gap-1 text-[10px] text-[var(--color-muted)]">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
                   </svg>
                   Must be at least 5 minutes from now
                 </p>

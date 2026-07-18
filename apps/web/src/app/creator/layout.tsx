@@ -52,9 +52,9 @@ export const metadata: Metadata = {
 export default function CreatorLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-creator" type="application/ld+json">{
-        JSON.stringify(creatorBreadcrumb)
-      }</Script>
+      <Script id="breadcrumb-creator" type="application/ld+json">
+        {JSON.stringify(creatorBreadcrumb)}
+      </Script>
       {children}
     </>
   );

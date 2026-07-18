@@ -1,13 +1,16 @@
 'use client';
 
+import type { UnifiedPost } from '@degenfeed/types';
 import Link from 'next/link';
 import { useMemo } from 'react';
-import type { UnifiedPost } from '@degenfeed/types';
 
 /**
  * Category labels derived from post niches with human-readable names.
  */
-const CATEGORY_LABELS: Record<string, { label: string; icon: string; href: string; color: string }> = {
+const CATEGORY_LABELS: Record<
+  string,
+  { label: string; icon: string; href: string; color: string }
+> = {
   defi: { label: 'DeFi', icon: '🏦', href: '/feed?topic=defi', color: '#f59e0b' },
   nft: { label: 'NFTs', icon: '🖼️', href: '/feed?topic=nft', color: '#8b5cf6' },
   ai: { label: 'AI & ML', icon: '🤖', href: '/feed?topic=ai', color: '#06b6d4' },
@@ -21,7 +24,12 @@ const CATEGORY_LABELS: Record<string, { label: string; icon: string; href: strin
   tech: { label: 'Tech', icon: '⚡', href: '/feed?topic=tech', color: '#2563eb' },
   science: { label: 'Science', icon: '🔬', href: '/feed?topic=science', color: '#0d9488' },
   layer2: { label: 'L2s & Scaling', icon: '⚙️', href: '/feed?topic=layer2', color: '#6366f1' },
-  stablecoin: { label: 'Stablecoins', icon: '💵', href: '/feed?topic=stablecoin', color: '#16a34a' },
+  stablecoin: {
+    label: 'Stablecoins',
+    icon: '💵',
+    href: '/feed?topic=stablecoin',
+    color: '#16a34a',
+  },
   onchain: { label: 'On-chain', icon: '🔗', href: '/feed?topic=onchain', color: '#ca8a04' },
 };
 
@@ -30,9 +38,21 @@ const CATEGORY_LABELS: Record<string, { label: string; icon: string; href: strin
  */
 function pickCategory(niches: string[]): string | null {
   const priority = [
-    'ai', 'defi', 'nft', 'memecoin', 'bitcoin', 'ethereum', 'solana',
-    'security', 'regulation', 'macro', 'tech', 'science', 'layer2',
-    'stablecoin', 'onchain',
+    'ai',
+    'defi',
+    'nft',
+    'memecoin',
+    'bitcoin',
+    'ethereum',
+    'solana',
+    'security',
+    'regulation',
+    'macro',
+    'tech',
+    'science',
+    'layer2',
+    'stablecoin',
+    'onchain',
   ];
   for (const p of priority) {
     if (niches.includes(p)) return p;
@@ -65,7 +85,7 @@ export function CategoryBreakCard({ niches, index }: CategoryBreakProps) {
         role="separator"
         aria-label={`${fallbackLabel} section`}
       >
-        <hr className="border-t border-[var(--color-glass-border)]" aria-hidden="true" />
+        <hr className="border-t border-[var(--color-glass-border)]" />
       </div>
     );
   }
@@ -90,9 +110,7 @@ export function CategoryBreakCard({ niches, index }: CategoryBreakProps) {
             <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-fg)] truncate">
               {meta.label}
             </p>
-            <p
-              className="text-[10px] text-[var(--color-muted)] truncate"
-            >
+            <p className="text-[10px] text-[var(--color-muted)] truncate">
               Posts trending in this category
             </p>
           </div>
@@ -106,7 +124,8 @@ export function CategoryBreakCard({ niches, index }: CategoryBreakProps) {
             } as React.CSSProperties
           }
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = `var(--hover-bg, ${meta.color}22)`;
+            (e.currentTarget as HTMLElement).style.backgroundColor =
+              `var(--hover-bg, ${meta.color}22)`;
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
@@ -140,10 +159,7 @@ export function CategoryBreakCard({ niches, index }: CategoryBreakProps) {
  * Determines if a category break should be inserted at this index.
  * Returns the aggregated niches of the next batch if the break position matches.
  */
-export function shouldInsertCategoryBreak(
-  index: number,
-  total: number,
-): boolean {
+export function shouldInsertCategoryBreak(index: number, total: number): boolean {
   if (index === 0) return false;
   if (index >= total - 1) return false;
 
@@ -155,11 +171,7 @@ export function shouldInsertCategoryBreak(
 /**
  * Aggregate niches from a slice of posts for the category break label.
  */
-export function aggregateNiches(
-  posts: UnifiedPost[],
-  startIndex: number,
-  batchSize = 8,
-): string[] {
+export function aggregateNiches(posts: UnifiedPost[], startIndex: number, batchSize = 8): string[] {
   const nicheCounts = new Map<string, number>();
   for (let i = startIndex; i < Math.min(startIndex + batchSize, posts.length); i++) {
     const post = posts[i];

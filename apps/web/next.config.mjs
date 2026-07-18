@@ -1,6 +1,6 @@
 /** @type {import("next").NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  output: 'standalone',
 
   // ── Compression (Brotli/gzip) for TTFB ──
   compress: true,
@@ -37,14 +37,14 @@ const nextConfig = {
 
   // ── Monorepo transpilation ──
   transpilePackages: [
-    "@degenfeed/types",
-    "@degenfeed/feed-core",
-    "@degenfeed/ranking",
-    "@degenfeed/nostr-sdk",
-    "@degenfeed/storage",
-    "@degenfeed/auth",
-    "@degenfeed/identity",
-    "@degenfeed/ui",
+    '@degenfeed/types',
+    '@degenfeed/feed-core',
+    '@degenfeed/ranking',
+    '@degenfeed/nostr-sdk',
+    '@degenfeed/storage',
+    '@degenfeed/auth',
+    '@degenfeed/identity',
+    '@degenfeed/ui',
   ],
 
   // ── Headers for caching & security ──

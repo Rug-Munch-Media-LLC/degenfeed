@@ -281,7 +281,7 @@ export default function FeedDetailPage() {
           href="/feeds"
           className="inline-flex items-center gap-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors mb-4"
         >
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path
               d="M10 12L6 8l4-4"
               stroke="currentColor"
@@ -298,7 +298,9 @@ export default function FeedDetailPage() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <h1 className="text-xl font-bold text-[var(--color-fg)]">{feed.name}</h1>
-              {feed.description && <p className="mt-1 text-sm text-[var(--color-muted)]">{feed.description}</p>}
+              {feed.description && (
+                <p className="mt-1 text-sm text-[var(--color-muted)]">{feed.description}</p>
+              )}
               <div className="mt-2 flex items-center gap-3 text-xs text-[var(--color-muted)]">
                 <span>
                   by {feed.creator.slice(0, 6)}...{feed.creator.slice(-4)}
@@ -309,7 +311,7 @@ export default function FeedDetailPage() {
                   {feed.isPublic ? '🌍 Public' : '🔒 Private'}
                 </span>
                 <span className="inline-flex items-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path
                       d="M1 8s2-4 7-4 7 4 7 4-2 4-7 4-7-4-7-4z"
                       stroke="currentColor"
@@ -379,7 +381,9 @@ export default function FeedDetailPage() {
             {/* Boosted topics */}
             {Object.entries(feed.config.topics).filter(([, w]) => w > 0).length > 0 && (
               <div>
-                <p className="text-xs font-medium text-[var(--color-muted)] mb-1.5">Boosted Topics</p>
+                <p className="text-xs font-medium text-[var(--color-muted)] mb-1.5">
+                  Boosted Topics
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {Object.entries(feed.config.topics)
                     .filter(([, w]) => w > 0)

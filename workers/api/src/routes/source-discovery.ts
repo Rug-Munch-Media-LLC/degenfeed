@@ -14,15 +14,13 @@
  *   discovered:sources:run:{date} — Snapshot of a discovery run
  */
 
-import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import {
-  discoverNewSources,
   type DiscoveredSource,
-  DEFAULT_DISCOVERY_CONFIG,
-  computeQualityScore,
+  discoverNewSources,
   type SourceHealth,
 } from '@degenfeed/source-discovery';
+import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { requireSession } from '../session';
 
 // ─── KV key helpers ───────────────────────────────────────────────────
 
@@ -80,7 +78,9 @@ async function saveAllSources(env: Env, sources: DiscoveredSource[]): Promise<vo
 }
 
 async function saveRejectedIds(env: Env, ids: Set<string>): Promise<void> {
-  await env.CACHE?.put(rejectedSourcesKey(), JSON.stringify([...ids]), { expirationTtl: 86400 * 30 });
+  await env.CACHE?.put(rejectedSourcesKey(), JSON.stringify([...ids]), {
+    expirationTtl: 86400 * 30,
+  });
 }
 
 // ─── Load known active sources from existing providers ────────────────
@@ -88,9 +88,24 @@ async function saveRejectedIds(env: Env, ids: Set<string>): Promise<void> {
 // In production this would pull from a database, but for now we use a static list.
 
 const KNOWN_REDDIT_SUBS = [
-  'cryptocurrency', 'bitcoin', 'ethereum', 'cryptomarkets', 'cryptotechnology',
-  'defi', 'ethfinance', 'ethdev', 'uniswap', 'aave', 'solana', 'cardano',
-  'polkadot', 'avax', 'cosmosnetwork', 'ethtrader', 'optimism', 'arbitrum',
+  'cryptocurrency',
+  'bitcoin',
+  'ethereum',
+  'cryptomarkets',
+  'cryptotechnology',
+  'defi',
+  'ethfinance',
+  'ethdev',
+  'uniswap',
+  'aave',
+  'solana',
+  'cardano',
+  'polkadot',
+  'avax',
+  'cosmosnetwork',
+  'ethtrader',
+  'optimism',
+  'arbitrum',
 ];
 
 async function getExistingSources(env: Env): Promise<Record<string, string[]>> {
@@ -98,7 +113,10 @@ async function getExistingSources(env: Env): Promise<Record<string, string[]>> {
   const approved = all.filter((s) => s.status === 'approved');
 
   return {
-    reddit: [...KNOWN_REDDIT_SUBS, ...approved.filter((s) => s.platform === 'reddit').map((s) => s.name.replace('r/', ''))],
+    reddit: [
+      ...KNOWN_REDDIT_SUBS,
+      ...approved.filter((s) => s.platform === 'reddit').map((s) => s.name.replace('r/', '')),
+    ],
     youtube: approved.filter((s) => s.platform === 'youtube').map((s) => s.name.toLowerCase()),
     rss: approved.filter((s) => s.platform === 'rss').map((s) => s.url),
     lemmy: approved.filter((s) => s.platform === 'lemmy').map((s) => s.name.toLowerCase()),
@@ -115,10 +133,7 @@ function isAdmin(env: Env, address: string): boolean {
   return admins.includes(address.toLowerCase());
 }
 
-async function requireAdmin(
-  request: Request,
-  env: Env,
-): Promise<{ address: string } | Response> {
+async function requireAdmin(request: Request, env: Env): Promise<{ address: string } | Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
   if (!isAdmin(env, session.address)) {
@@ -168,7 +183,7 @@ export async function handleSourcesDiscover(request: Request, env: Env): Promise
     // Merge with existing known sources
     const existingAll = await getAllSources(env);
     const existingIds = new Set(existingAll.map((s) => s.id));
-    const newSources = sources.filter((s) => !existingIds.has(s.id));
+    const _newSources = sources.filter((s) => !existingIds.has(s.id));
 
     // Save to KV
     const mergedAll = [...existingAll, ...autoApproved];

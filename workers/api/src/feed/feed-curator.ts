@@ -110,7 +110,11 @@ export async function storeBehaviorProfile(
   if (!env.CACHE || !wallet) return;
   try {
     const key = `${BEHAVIOR_KEY_PREFIX}${wallet.toLowerCase()}`;
-    const toStore = { ...profile, scrollTimestamps: [], scrollSpeeds: profile.scrollSpeeds.slice(-SCROLL_SPEED_WINDOW) };
+    const toStore = {
+      ...profile,
+      scrollTimestamps: [],
+      scrollSpeeds: profile.scrollSpeeds.slice(-SCROLL_SPEED_WINDOW),
+    };
     await env.CACHE.put(key, JSON.stringify(toStore), { expirationTtl: BEHAVIOR_TTL });
   } catch {
     /* non-critical */
@@ -130,7 +134,10 @@ export function updateStreak(profile: BehaviorProfile): BehaviorProfile {
   return profile;
 }
 
-export function recordScrollEvent(profile: BehaviorProfile, postId: string): {
+export function recordScrollEvent(
+  profile: BehaviorProfile,
+  _postId: string,
+): {
   avgSpeed: number;
   speedTrend: 'accelerating' | 'steady' | 'slowing';
   isBored: boolean;
@@ -151,8 +158,7 @@ export function recordScrollEvent(profile: BehaviorProfile, postId: string): {
   }
 
   profile.flowState =
-    profile.scrollSpeeds.length >= 5 &&
-    profile.scrollSpeeds.slice(-5).every((s) => s < 3000);
+    profile.scrollSpeeds.length >= 5 && profile.scrollSpeeds.slice(-5).every((s) => s < 3000);
 
   const speeds = profile.scrollSpeeds;
   const avgSpeed = speeds.length > 0 ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
@@ -178,11 +184,14 @@ export function recordLinger(profile: BehaviorProfile, postId: string, ms: numbe
 }
 
 export function inferPreferences(profile: BehaviorProfile, posts: UnifiedPost[]): void {
-  const lingeredIds = new Set(Object.keys(profile.lingerPosts).filter((k) => (profile.lingerPosts[k] ?? 0) > 2000));
+  const lingeredIds = new Set(
+    Object.keys(profile.lingerPosts).filter((k) => (profile.lingerPosts[k] ?? 0) > 2000),
+  );
   for (const post of posts) {
     if (!lingeredIds.has(post.id)) continue;
     const type = post.contentType ?? 'text';
-    profile.preferredContentTypesInferred[type] = (profile.preferredContentTypesInferred[type] ?? 0) + 1;
+    profile.preferredContentTypesInferred[type] =
+      (profile.preferredContentTypesInferred[type] ?? 0) + 1;
     for (const niche of post.niches) {
       const lower = niche.toLowerCase();
       profile.preferredNichesInferred[lower] = (profile.preferredNichesInferred[lower] ?? 0) + 1;
@@ -205,10 +214,19 @@ export function applyFreshnessBias(posts: UnifiedPost[], now: number): Freshness
     let boost = 0;
     let multiplier = 1.0;
 
-    if (ageHours < 1) { boost = 2; multiplier = 2.0; }
-    else if (ageHours < 6) { boost = 1; multiplier = 1.5; }
-    else if (ageHours < 24) { boost = 0.5; multiplier = 1.0; }
-    else if (ageHours > 72) { boost = -1; multiplier = 0.8; }
+    if (ageHours < 1) {
+      boost = 2;
+      multiplier = 2.0;
+    } else if (ageHours < 6) {
+      boost = 1;
+      multiplier = 1.5;
+    } else if (ageHours < 24) {
+      boost = 0.5;
+      multiplier = 1.0;
+    } else if (ageHours > 72) {
+      boost = -1;
+      multiplier = 0.8;
+    }
 
     return { post, boost, multiplier };
   });
@@ -614,9 +632,15 @@ export function ensureHookPosts(posts: UnifiedPost[]): UnifiedPost[] {
   if (posts.length <= HOOK_POSTS_COUNT) return posts;
   const hookCandidates = [...posts].sort((a, b) => {
     const engA =
-      (a.metrics.likes ?? 0) + (a.metrics.reposts ?? 0) + (a.metrics.replies ?? 0) + (a.score?.total ?? 0);
+      (a.metrics.likes ?? 0) +
+      (a.metrics.reposts ?? 0) +
+      (a.metrics.replies ?? 0) +
+      (a.score?.total ?? 0);
     const engB =
-      (b.metrics.likes ?? 0) + (b.metrics.reposts ?? 0) + (b.metrics.replies ?? 0) + (b.score?.total ?? 0);
+      (b.metrics.likes ?? 0) +
+      (b.metrics.reposts ?? 0) +
+      (b.metrics.replies ?? 0) +
+      (b.score?.total ?? 0);
     return engB - engA;
   });
   const hooks = hookCandidates.slice(0, HOOK_POSTS_COUNT);
@@ -634,9 +658,7 @@ export function injectSurpriseContent(
 ): UnifiedPost[] {
   const result: UnifiedPost[] = [];
   const seenNiches = new Set<string>();
-  const availablePool = allAvailablePosts.filter(
-    (p) => !posts.some((fp) => fp.id === p.id),
-  );
+  const availablePool = allAvailablePosts.filter((p) => !posts.some((fp) => fp.id === p.id));
 
   for (let i = 0; i < posts.length; i++) {
     const post = posts[i];
@@ -667,8 +689,12 @@ export function injectSurpriseContent(
 export function alternateContentTypes(posts: UnifiedPost[]): UnifiedPost[] {
   const VISUAL_TYPES = ['image', 'video'] as const;
   const TEXT_TYPES = ['text', 'thread', 'link'] as const;
-  const byVisual = posts.filter((p) => (VISUAL_TYPES as readonly string[]).includes(p.contentType ?? 'text'));
-  const byText = posts.filter((p) => (TEXT_TYPES as readonly string[]).includes(p.contentType ?? 'text'));
+  const byVisual = posts.filter((p) =>
+    (VISUAL_TYPES as readonly string[]).includes(p.contentType ?? 'text'),
+  );
+  const byText = posts.filter((p) =>
+    (TEXT_TYPES as readonly string[]).includes(p.contentType ?? 'text'),
+  );
   const other = posts.filter(
     (p) =>
       !(VISUAL_TYPES as readonly string[]).includes(p.contentType ?? 'text') &&
@@ -676,7 +702,9 @@ export function alternateContentTypes(posts: UnifiedPost[]): UnifiedPost[] {
   );
 
   const result: UnifiedPost[] = [];
-  let vi = 0, ti = 0, oi = 0;
+  let vi = 0,
+    ti = 0,
+    oi = 0;
 
   while (vi < byVisual.length || ti < byText.length || oi < other.length) {
     if (ti < byText.length) result.push(byText[ti++]!);
@@ -709,9 +737,10 @@ export function computeDopamineSignals(
   return {
     caughtUp: postsShown >= CAUGHT_UP_THRESHOLD,
     streakCount: streak.count,
-    newSinceLastVisit: lastVisitTimestamp > 0
-      ? Math.max(0, newestPostTimestamp > lastVisitTimestamp ? 1 : 0) // simplified; caller provides count
-      : 0,
+    newSinceLastVisit:
+      lastVisitTimestamp > 0
+        ? Math.max(0, newestPostTimestamp > lastVisitTimestamp ? 1 : 0) // simplified; caller provides count
+        : 0,
     postCount: postsShown,
   };
 }
@@ -728,9 +757,18 @@ export interface VelocityBoostInput {
 export function applyVelocityBoost(input: VelocityBoostInput, baseScore: number): number {
   let multiplier = 1.0;
   const factors: string[] = [];
-  if (input.rapidEngagement) { multiplier *= 2.0; factors.push('rapid-engagement-2x'); }
-  if (input.tippedCreator) { multiplier *= 1.5; factors.push('tipped-creator-1.5x'); }
-  if (input.memberCommunity) { multiplier *= 1.3; factors.push('member-community-1.3x'); }
+  if (input.rapidEngagement) {
+    multiplier *= 2.0;
+    factors.push('rapid-engagement-2x');
+  }
+  if (input.tippedCreator) {
+    multiplier *= 1.5;
+    factors.push('tipped-creator-1.5x');
+  }
+  if (input.memberCommunity) {
+    multiplier *= 1.3;
+    factors.push('member-community-1.3x');
+  }
   return baseScore * multiplier;
 }
 
@@ -745,7 +783,7 @@ export function computeRapidEngagement(
   const prevTotal = prev.likes + prev.reposts + prev.replies;
   const currTotal = post.metrics.likes + post.metrics.reposts + post.metrics.replies;
   const delta = currTotal - prevTotal;
-  const rate = (delta / (elapsedMs / 60_000));
+  const rate = delta / (elapsedMs / 60_000);
   return rate > 2.0;
 }
 
@@ -806,7 +844,7 @@ export function curateFeed(
 
   // 4. Engagement prediction with temporal + velocity boosts + freshness multiplier
   const inferredNiches = opts.behaviorProfile?.preferredNichesInferred ?? {};
-  const biasedMap = new Map(biasedPosts.map((b) => [b.post.id, b]));
+  const _biasedMap = new Map(biasedPosts.map((b) => [b.post.id, b]));
   const predicted = predictEngagement(
     biasedPosts.map((b) => {
       const post = b.post;
@@ -849,9 +887,7 @@ export function curateFeed(
       : 0;
 
   // 5. Dynamic explore/exploit ratio
-  const sessionDuration = opts.behaviorProfile
-    ? now - opts.behaviorProfile.sessionStartedAt
-    : 0;
+  const sessionDuration = opts.behaviorProfile ? now - opts.behaviorProfile.sessionStartedAt : 0;
   const ratio = getDynamicExploreExploitRatio(sessionDuration);
 
   const { exploit, explore } = splitExploreExploit(
@@ -900,7 +936,7 @@ export function curateFeed(
     postsShown,
     streak,
     opts.lastVisitTimestamp ?? 0,
-    finalPosts.length > 0 ? finalPosts[0]!.createdAt : 0,
+    finalPosts.length > 0 ? finalPosts[0]?.createdAt : 0,
   );
 
   return {

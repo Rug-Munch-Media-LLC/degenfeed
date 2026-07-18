@@ -262,7 +262,10 @@ export default function ProtocolsPage() {
                       </div>
                       <ul className="space-y-1">
                         {p.data.map((d) => (
-                          <li key={d} className="flex items-start gap-1.5 text-xs text-[var(--color-muted)]">
+                          <li
+                            key={d}
+                            className="flex items-start gap-1.5 text-xs text-[var(--color-muted)]"
+                          >
                             <span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-degen-500/50" />
                             {d}
                           </li>

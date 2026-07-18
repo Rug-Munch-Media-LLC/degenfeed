@@ -9,10 +9,7 @@ import { useEffect, useRef, useState } from 'react';
  * @param targetId - The `id` of the element to track.
  * @param enabled - Whether tracking is active (e.g. post is expanded).
  */
-export function useReadingProgress(
-  targetId: string | null,
-  enabled = true,
-): number {
+export function useReadingProgress(targetId: string | null, enabled = true): number {
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number | null>(null);
 

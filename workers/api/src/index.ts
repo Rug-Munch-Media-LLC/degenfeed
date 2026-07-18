@@ -353,9 +353,7 @@ export async function scheduled(
 
     // Initialize health tracking for newly discovered sources
     try {
-      const { initSourceHealth, runWeeklyHealthMaintenance } = await import(
-        './routes/source-health'
-      );
+      const { initSourceHealth } = await import('./routes/source-health');
       const allSourcesRaw = await env.CACHE?.get('discovered:sources:all');
       if (allSourcesRaw) {
         const allSources = JSON.parse(allSourcesRaw) as Array<{

@@ -201,10 +201,7 @@ export default function TrendingPage() {
         const url = new URL('/api/feed/home', window.location.origin);
         url.searchParams.set('limit', '1');
         url.searchParams.set('trending', String(filter.windowHours));
-        url.searchParams.set(
-          'protocols',
-          'nostr,farcaster,lens,bluesky,mastodon,reddit,rss',
-        );
+        url.searchParams.set('protocols', 'nostr,farcaster,lens,bluesky,mastodon,reddit,rss');
         const res = await retryFetch(url.toString(), {
           fetchOptions: {
             credentials: 'include',

@@ -13,8 +13,8 @@
  *   - limit: number (max 100)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import { discoverCommunities } from '@degenfeed/feed-providers';
+import { type NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -31,10 +31,7 @@ export async function GET(request: NextRequest) {
       | 'posts'
       | 'new';
     const minSubs = parseInt(searchParams.get('min_subs') || '0', 10) || 0;
-    const limit = Math.min(
-      parseInt(searchParams.get('limit') || '50', 10) || 50,
-      100,
-    );
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10) || 50, 100);
 
     const communities = await discoverCommunities({
       category,

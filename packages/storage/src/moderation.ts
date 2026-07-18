@@ -230,9 +230,7 @@ export async function unblockCommunity(communityId: string): Promise<void> {
 
 export async function getMutedCommunities(): Promise<StoredMutedCommunity[]> {
   const db = await getDb();
-  const index = (
-    db as import('idb').IDBPDatabase<{ 'muted-communities': StoredMutedCommunity }>
-  )
+  const index = (db as import('idb').IDBPDatabase<{ 'muted-communities': StoredMutedCommunity }>)
     .transaction('muted-communities')
     .store.index('mutedBy');
   return (await index.getAll('self')) as StoredMutedCommunity[];

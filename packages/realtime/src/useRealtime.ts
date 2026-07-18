@@ -15,7 +15,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ChannelName } from './channels';
-import { CHANNELS } from './channels';
 
 const RECONNECT_DELAYS = [1000, 2000, 5000, 10000, 30000];
 
@@ -56,7 +55,7 @@ export function useRealtime(userId?: string | null) {
       wsRef.current = null;
     }
 
-    let url = `${WS_BASE_URL}?userId=${encodeURIComponent(id)}&v=1`;
+    const url = `${WS_BASE_URL}?userId=${encodeURIComponent(id)}&v=1`;
 
     const ws = new WebSocket(url);
 
@@ -155,7 +154,7 @@ export function useRealtime(userId?: string | null) {
 
   const send = useCallback((type: string, data?: unknown) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type, ...(data as Record<string, unknown> ?? {}) }));
+      wsRef.current.send(JSON.stringify({ type, ...((data as Record<string, unknown>) ?? {}) }));
     }
   }, []);
 

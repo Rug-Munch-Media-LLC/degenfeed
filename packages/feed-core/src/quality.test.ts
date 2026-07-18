@@ -20,10 +20,7 @@ import {
   type QualityContext,
 } from './quality';
 
-function makePost(
-  text: string,
-  overrides: Partial<UnifiedPost> = {},
-): UnifiedPost {
+function makePost(text: string, overrides: Partial<UnifiedPost> = {}): UnifiedPost {
   return buildUnifiedPost({
     protocol: 'nostr',
     nativeId: `quality-test-${Math.random().toString(36).slice(2)}`,
@@ -58,9 +55,10 @@ describe('estimateViews', () => {
 });
 
 describe('computeEngagementDensity', () => {
-  it('should return 0 when there is no engagement', () => {
+  it('should return 1 (minimum floor) when there is no engagement', () => {
     const post = makePost('Hello');
-    expect(computeEngagementDensity(post)).toBe(0);
+    // estimateViews returns at least 1 (Math.max(1, ...)), so density is >= 1
+    expect(computeEngagementDensity(post)).toBe(1);
   });
 
   it('should return higher scores for higher engagement', () => {

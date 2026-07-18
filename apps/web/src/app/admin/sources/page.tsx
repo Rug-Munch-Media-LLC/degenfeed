@@ -57,7 +57,13 @@ interface DiscoveryStats {
   perPlatform: Record<string, { discovered: number; approved: number; pending: number }>;
   lastRunAt: number | null;
   lastRunDuration: number | null;
-  runHistory: Array<{ platform: string; discovered: number; autoApproved: number; pending: number; timestamp: number }>;
+  runHistory: Array<{
+    platform: string;
+    discovered: number;
+    autoApproved: number;
+    pending: number;
+    timestamp: number;
+  }>;
 }
 
 // ─── Admin wallets ────────────────────────────────────────────────────
@@ -134,7 +140,9 @@ export default function AdminSourcesPage() {
   const [stale, setStale] = useState<StaleSource[]>([]);
   const [healthEntries, setHealthEntries] = useState<SourceHealthEntry[]>([]);
   const [stats, setStats] = useState<DiscoveryStats | null>(null);
-  const [activeTab, setActiveTab] = useState<'pending' | 'new-this-week' | 'trending' | 'stale' | 'health'>('pending');
+  const [activeTab, setActiveTab] = useState<
+    'pending' | 'new-this-week' | 'trending' | 'stale' | 'health'
+  >('pending');
 
   const showToast = useCallback((message: string, kind: 'success' | 'error' = 'success') => {
     setToast({ message, kind });
@@ -187,10 +195,10 @@ export default function AdminSourcesPage() {
         const d = (await statsRes.json()) as { stats: DiscoveryStats };
         setStats(d.stats);
       }
-    } catch (e) {
+    } catch (_e) {
       // Non-critical, individual fetches handle their own errors
     }
-  }, [fetchPending]);
+  }, []);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -295,12 +303,15 @@ export default function AdminSourcesPage() {
 
   const handleRunHealthCheck = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/sources/health-check', { method: 'POST', credentials: 'include' });
+      const res = await fetch('/api/admin/sources/health-check', {
+        method: 'POST',
+        credentials: 'include',
+      });
       if (res.ok) {
         showToast('Health check complete', 'success');
         await fetchAll();
       }
-    } catch (e) {
+    } catch (_e) {
       showToast('Health check failed', 'error');
     }
   }, [fetchAll, showToast]);
@@ -404,22 +415,36 @@ export default function AdminSourcesPage() {
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
           <StatCard label="Total Runs" value={String(stats.totalRuns)} />
           <StatCard label="Total Discovered" value={formatCount(stats.totalDiscovered)} />
-          <StatCard label="Approved" value={formatCount(stats.totalApproved)} color="text-green-400" />
+          <StatCard
+            label="Approved"
+            value={formatCount(stats.totalApproved)}
+            color="text-green-400"
+          />
           <StatCard label="Pending" value={String(stats.pendingCount)} color="text-yellow-400" />
-          <StatCard label="Stale" value={String(stats.staleSources)} color={stats.staleSources > 5 ? 'text-red-400' : 'text-yellow-400'} />
-          <StatCard label="New This Week" value={String(stats.newThisWeek)} color="text-degen-400" />
+          <StatCard
+            label="Stale"
+            value={String(stats.staleSources)}
+            color={stats.staleSources > 5 ? 'text-red-400' : 'text-yellow-400'}
+          />
+          <StatCard
+            label="New This Week"
+            value={String(stats.newThisWeek)}
+            color="text-degen-400"
+          />
         </div>
       )}
 
       {/* ── Last run info ── */}
-      {stats && stats.lastRunAt && (
+      {stats?.lastRunAt && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2">
           <span className="text-xs text-[var(--color-muted)]">
-            Last discovery run: {formatTime(stats.lastRunAt)} ({stats.lastRunDuration ? formatDuration(stats.lastRunDuration) : 'N/A'})
+            Last discovery run: {formatTime(stats.lastRunAt)} (
+            {stats.lastRunDuration ? formatDuration(stats.lastRunDuration) : 'N/A'})
           </span>
           {stats.runHistory.length > 0 && (
             <span className="text-xs text-gray-600">
-              — {stats.runHistory.length} total runs, last: {stats.runHistory[0].platform} ({stats.runHistory[0].discovered} found)
+              — {stats.runHistory.length} total runs, last: {stats.runHistory[0].platform} (
+              {stats.runHistory[0].discovered} found)
             </span>
           )}
         </div>
@@ -462,22 +487,22 @@ export default function AdminSourcesPage() {
           {/* Platform filter + batch actions */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2">
-              {(['all', 'reddit', 'youtube', 'rss', 'lemmy', 'peertube', 'newsletter'] as const).map(
-                (p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPlatformFilter(p)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      platformFilter === p
-                        ? 'bg-degen-500/20 text-degen-400'
-                        : 'bg-[var(--color-card)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-                    }`}
-                  >
-                    {p === 'all' ? 'All' : (PLATFORM_LABELS[p] ?? p)}
-                  </button>
-                ),
-              )}
+              {(
+                ['all', 'reddit', 'youtube', 'rss', 'lemmy', 'peertube', 'newsletter'] as const
+              ).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPlatformFilter(p)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                    platformFilter === p
+                      ? 'bg-degen-500/20 text-degen-400'
+                      : 'bg-[var(--color-card)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                  }`}
+                >
+                  {p === 'all' ? 'All' : (PLATFORM_LABELS[p] ?? p)}
+                </button>
+              ))}
             </div>
             {selectedIds.size > 0 && (
               <button
@@ -673,7 +698,9 @@ export default function AdminSourcesPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-[var(--color-fg)]">{t.name}</p>
-                    <p className="text-[10px] text-[var(--color-muted)]">{PLATFORM_LABELS[t.platform]}</p>
+                    <p className="text-[10px] text-[var(--color-muted)]">
+                      {PLATFORM_LABELS[t.platform]}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-degen-400">
@@ -688,9 +715,7 @@ export default function AdminSourcesPage() {
                     <p className="text-[10px] text-[var(--color-muted)]">engagement</p>
                   </div>
                   <div className="hidden text-right sm:block">
-                    <p className="text-xs text-[var(--color-fg)]">
-                      {t.postVelocity.toFixed(1)}/d
-                    </p>
+                    <p className="text-xs text-[var(--color-fg)]">{t.postVelocity.toFixed(1)}/d</p>
                     <p className="text-[10px] text-[var(--color-muted)]">posts</p>
                   </div>
                 </div>

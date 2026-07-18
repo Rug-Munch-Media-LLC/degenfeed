@@ -1,16 +1,14 @@
-import { learnFromInteraction, emptyBehaviorProfile, type UserBehaviorProfile } from '@degenfeed/feed-core';
 import { BskyClient } from '@degenfeed/bluesky-sdk';
 import { HubClient } from '@degenfeed/farcaster-sdk';
+import {
+  emptyBehaviorProfile,
+  learnFromInteraction,
+  type UserBehaviorProfile,
+} from '@degenfeed/feed-core';
 import { LensClient } from '@degenfeed/lens-sdk';
 import { GtSClient } from '@degenfeed/mastodon-sdk';
 import type { EngagementAction, Protocol } from '@degenfeed/types';
-import {
-  BSKY_SOCIAL,
-  type Env,
-  FARCASTER_HUBS,
-  jsonResponse,
-  LENS_APIS,
-} from '../index';
+import { BSKY_SOCIAL, type Env, FARCASTER_HUBS, jsonResponse, LENS_APIS } from '../index';
 import { hasSuspiciousPayload, isAllowedProtocol, sanitizeString } from '../sanitize';
 
 const ALLOWED_ACTIONS = new Set<EngagementAction>([
@@ -47,7 +45,10 @@ function nativeIdFromPostId(postId: string, protocol: string): string {
 
 // ─── Behavior tracking ──────────────────────────────────────────────
 
-const ACTION_MAP: Record<string, 'view' | 'like' | 'repost' | 'reply' | 'tip' | 'bookmark' | 'dismiss'> = {
+const ACTION_MAP: Record<
+  string,
+  'view' | 'like' | 'repost' | 'reply' | 'tip' | 'bookmark' | 'dismiss'
+> = {
   like: 'like',
   unlike: 'dismiss',
   repost: 'repost',
@@ -93,7 +94,12 @@ async function trackBehavior(
       createdAt: Date.now(),
       contentType: 'text' as const,
       metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-      engagement: { viewerLiked: false, viewerReposted: false, viewerBookmarked: false, raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 } },
+      engagement: {
+        viewerLiked: false,
+        viewerReposted: false,
+        viewerBookmarked: false,
+        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      },
       raw: {},
     };
 
@@ -143,7 +149,9 @@ export async function handleEngage(request: Request, env: Env): Promise<Response
 
     switch (protocol) {
       case 'nostr':
-        response = await Promise.resolve(handleNostr(action, nativeId, target, content, reaction, auth, env));
+        response = await Promise.resolve(
+          handleNostr(action, nativeId, target, content, reaction, auth, env),
+        );
         break;
       case 'farcaster':
         response = await handleFarcaster(action, nativeId, target, content, reaction, auth, env);

@@ -7,10 +7,9 @@ import {
   MOCK_COMMUNITIES_LIST,
   MOCK_COMMUNITY_DETAIL,
   MOCK_COMMUNITY_FEED,
-  MOCK_COMMUNITY_CREATE_RESPONSE,
   MOCK_FEED_POSTS,
-  MOCK_SIGNED_IN_STATE,
   MOCK_PREFERENCES,
+  MOCK_SIGNED_IN_STATE,
   mockCommunityApi,
   mockFeedApi,
 } from './fixtures';
@@ -92,7 +91,9 @@ test.describe('Community detail page', () => {
   test('community feed displays posts', async ({ page }) => {
     await page.goto('/c/bitcoin');
     // Community posts should be visible
-    await expect(page.getByText('Bitcoin is settling billions daily').or(page.getByText('Lightning'))).toBeVisible({
+    await expect(
+      page.getByText('Bitcoin is settling billions daily').or(page.getByText('Lightning')),
+    ).toBeVisible({
       timeout: 30000,
     });
   });
@@ -157,7 +158,9 @@ test.describe('Community governance', () => {
       await route.fulfill({ json: MOCK_COMMUNITIES_LIST });
     });
     await page.route('**/api/communities/c-bitcoin', async (route) => {
-      await route.fulfill({ json: { ...MOCK_COMMUNITY_DETAIL, moderators: ['npub1abc'], isMember: true } });
+      await route.fulfill({
+        json: { ...MOCK_COMMUNITY_DETAIL, moderators: ['npub1abc'], isMember: true },
+      });
     });
     await page.route('**/api/communities/c-bitcoin/feed**', async (route) => {
       await route.fulfill({ json: { data: MOCK_COMMUNITY_FEED } });

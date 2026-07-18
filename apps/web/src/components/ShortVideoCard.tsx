@@ -14,16 +14,15 @@
 import type { UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, VideoPlayer } from '@degenfeed/ui';
 import { formatTimeAgo, parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { QuickTipButton } from './QuickTipButton';
 
 // Lazy-load TipModal (it includes Web3 hooks)
-const TipModal = dynamic(
-  () => import('./TipModal').then((m) => ({ default: m.TipModal })),
-  { ssr: false },
-);
+const TipModal = dynamic(() => import('./TipModal').then((m) => ({ default: m.TipModal })), {
+  ssr: false,
+});
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 

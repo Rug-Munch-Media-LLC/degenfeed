@@ -7,7 +7,12 @@ const breadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Bluesky', item: 'https://app.degenfeed.xyz/bluesky' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Bluesky',
+      item: 'https://app.degenfeed.xyz/bluesky',
+    },
     {
       '@type': 'ListItem',
       position: 3,
@@ -21,7 +26,13 @@ export const metadata: Metadata = {
   title: 'Bluesky Trending — Trending Skeets, Custom Feeds & Topics',
   description:
     'Trending Bluesky skeets, custom feeds, and topics ranked by engagement velocity. See what the AT Protocol community is talking about right now.',
-  keywords: ['bluesky trending', 'trending skeets', 'bluesky custom feeds', 'trending topics bluesky', 'at protocol trending'],
+  keywords: [
+    'bluesky trending',
+    'trending skeets',
+    'bluesky custom feeds',
+    'trending topics bluesky',
+    'at protocol trending',
+  ],
   openGraph: {
     title: 'Bluesky Trending — Trending Skeets, Custom Feeds & Topics | DegenFeed',
     description: 'Trending Bluesky skeets, custom feeds, and topics ranked by engagement velocity.',
@@ -32,9 +43,9 @@ export const metadata: Metadata = {
 export default function BlueskyTrendingPage() {
   return (
     <>
-      <Script id="breadcrumb-bluesky-trending" type="application/ld+json">{
-        JSON.stringify(breadcrumb)
-      }</Script>
+      <Script id="breadcrumb-bluesky-trending" type="application/ld+json">
+        {JSON.stringify(breadcrumb)}
+      </Script>
       <PerPlatformTrending protocol="bluesky" />
     </>
   );

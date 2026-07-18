@@ -31,7 +31,18 @@ describe('IDENTITY_KV_PREFIX', () => {
 
 describe('PROTOCOL_ID_REGISTRY', () => {
   it('should contain all supported protocols', () => {
-    const protocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'threads', 'lemmy', 'rss', 'peertube'];
+    const protocols = [
+      'nostr',
+      'farcaster',
+      'lens',
+      'bluesky',
+      'mastodon',
+      'reddit',
+      'threads',
+      'lemmy',
+      'rss',
+      'peertube',
+    ];
     for (const p of protocols) {
       const key = p as keyof typeof PROTOCOL_ID_REGISTRY;
       expect(PROTOCOL_ID_REGISTRY[key]).toBeDefined();

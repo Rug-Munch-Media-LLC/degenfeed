@@ -64,13 +64,10 @@ export function computeCategoryTrending(
     const scored = recentPosts
       .map((p) => {
         const engTotal =
-          p.metrics.likes +
-          p.metrics.reposts * 2 +
-          p.metrics.replies * 3 +
-          (p.metrics.quotes ?? 0);
+          p.metrics.likes + p.metrics.reposts * 2 + p.metrics.replies * 3 + (p.metrics.quotes ?? 0);
         const ageHours = (now - p.createdAt) / 3600000;
         const agePenalty = Math.max(0.2, 1 - ageHours / maxAgeHours);
-        const trendScore = (engTotal * agePenalty) + p.categoryScore * 5;
+        const trendScore = engTotal * agePenalty + p.categoryScore * 5;
 
         return {
           postId: p.id,
@@ -125,7 +122,13 @@ export function computeCategoryTrending(
 export function getTrendingSummary(
   trending: Record<CategorySlug, CategoryTrendingResult>,
   topN = 5,
-): Array<{ category: CategorySlug; label: string; emoji: string; topItem: CategoryTrendingItem | null; totalTrending: number }> {
+): Array<{
+  category: CategorySlug;
+  label: string;
+  emoji: string;
+  topItem: CategoryTrendingItem | null;
+  totalTrending: number;
+}> {
   return ALL_CATEGORIES.map((cat) => {
     const data = trending[cat];
     return {
@@ -136,10 +139,6 @@ export function getTrendingSummary(
       totalTrending: data.trending.length,
     };
   })
-    .sort(
-      (a, b) =>
-        (b.topItem?.score ?? 0) -
-        (a.topItem?.score ?? 0),
-    )
+    .sort((a, b) => (b.topItem?.score ?? 0) - (a.topItem?.score ?? 0))
     .slice(0, topN);
 }

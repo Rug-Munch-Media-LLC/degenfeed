@@ -37,8 +37,15 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const PROTOCOL_DISPLAY_ORDER = [
-  'nostr', 'farcaster', 'lens', 'bluesky',
-  'mastodon', 'activitypub', 'lemmy', 'rss', 'reddit',
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'activitypub',
+  'lemmy',
+  'rss',
+  'reddit',
 ];
 
 export const ProtocolHealthDots = memo(function ProtocolHealthDots({
@@ -74,15 +81,14 @@ export const ProtocolHealthDots = memo(function ProtocolHealthDots({
   }, [fetchHealth]);
 
   const protocols = health
-    ? Object.entries(health)
-        .sort(([a], [b]) => {
-          const ai = PROTOCOL_DISPLAY_ORDER.indexOf(a);
-          const bi = PROTOCOL_DISPLAY_ORDER.indexOf(b);
-          if (ai === -1 && bi === -1) return a.localeCompare(b);
-          if (ai === -1) return 1;
-          if (bi === -1) return -1;
-          return ai - bi;
-        })
+    ? Object.entries(health).sort(([a], [b]) => {
+        const ai = PROTOCOL_DISPLAY_ORDER.indexOf(a);
+        const bi = PROTOCOL_DISPLAY_ORDER.indexOf(b);
+        if (ai === -1 && bi === -1) return a.localeCompare(b);
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      })
     : [];
 
   const summary = health
@@ -122,11 +128,12 @@ export const ProtocolHealthDots = memo(function ProtocolHealthDots({
             className="inline-block h-2 w-2 rounded-full transition-colors"
             style={{
               backgroundColor: STATUS_COLORS[status.status] ?? '#666',
-              boxShadow: status.status === 'degraded'
-                ? '0 0 4px rgba(250, 204, 21, 0.5)'
-                : status.status === 'down'
-                  ? '0 0 4px rgba(244, 33, 46, 0.5)'
-                  : 'none',
+              boxShadow:
+                status.status === 'degraded'
+                  ? '0 0 4px rgba(250, 204, 21, 0.5)'
+                  : status.status === 'down'
+                    ? '0 0 4px rgba(244, 33, 46, 0.5)'
+                    : 'none',
             }}
           />
           {showLabels && (

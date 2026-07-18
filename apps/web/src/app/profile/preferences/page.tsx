@@ -10,14 +10,7 @@ import {
 import type { Protocol } from '@degenfeed/types';
 import { useCallback, useEffect, useState } from 'react';
 
-const PROTOCOLS: Protocol[] = [
-  'nostr',
-  'farcaster',
-  'lens',
-  'bluesky',
-  'mastodon',
-  'rss',
-];
+const PROTOCOLS: Protocol[] = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'rss'];
 
 const NICHES = [
   'crypto',
@@ -122,7 +115,11 @@ export default function PreferencesPage() {
   }, []);
 
   if (!prefs) {
-    return <div className="mx-auto max-w-2xl px-4 py-20 text-center text-[var(--color-muted)]">Loading...</div>;
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center text-[var(--color-muted)]">
+        Loading...
+      </div>
+    );
   }
 
   const update = (patch: Partial<UserPreferences>) => {
@@ -249,7 +246,13 @@ export default function PreferencesPage() {
                     aria-label={`Increase ${t.topic} preference`}
                     title="I want more of this topic"
                   >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
                       <path d="M8 3l5 10H3L8 3z" />
                     </svg>
                   </button>
@@ -260,7 +263,13 @@ export default function PreferencesPage() {
                     aria-label={`Decrease ${t.topic} preference`}
                     title="Show me less of this topic"
                   >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
                       <path d="M3 5h10L8 15 3 5z" />
                     </svg>
                   </button>
@@ -271,7 +280,7 @@ export default function PreferencesPage() {
                     aria-label={`Remove ${t.topic}`}
                     title="Forget this topic"
                   >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                       <path
                         d="M4 4l8 8M12 4l-8 8"
                         stroke="currentColor"

@@ -220,9 +220,7 @@ export async function handleFollowRemove(request: Request, env: Env): Promise<Re
   // Remove from KV
   const wallet = session.address;
   const entries = await loadFollows(env, wallet);
-  const filtered = entries.filter(
-    (e) => !(e.targetId === targetId && e.protocol === protocol),
-  );
+  const filtered = entries.filter((e) => !(e.targetId === targetId && e.protocol === protocol));
 
   if (filtered.length === entries.length) {
     return jsonResponse({ ok: true, following: false, note: 'Not currently following' });

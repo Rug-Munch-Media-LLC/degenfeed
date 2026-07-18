@@ -8,22 +8,21 @@ import { deduplicatePosts } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { Env } from '../index';
 import { applyCurationPipeline } from './feed-curation-rules';
-import {
-  applyQualityPipeline,
-  DEFAULT_FRESHNESS_CONFIG,
-  HOT_FRESHNESS_CONFIG,
-  TOP_FRESHNESS_CONFIG,
-  TRENDING_FRESHNESS_CONFIG,
-  type FreshnessScoringConfig,
-  type QualityPipelineOptions,
-} from './feed-quality-gates';
 import type { ExecutionContext } from './feed-fetcher';
 import {
   collectProviderResults,
   FEED_GENERATION_TIMEOUT_MS,
   fetchFromProviders,
-  ProviderTimer,
 } from './feed-fetcher';
+import {
+  applyQualityPipeline,
+  DEFAULT_FRESHNESS_CONFIG,
+  type FreshnessScoringConfig,
+  HOT_FRESHNESS_CONFIG,
+  type QualityPipelineOptions,
+  TOP_FRESHNESS_CONFIG,
+  TRENDING_FRESHNESS_CONFIG,
+} from './feed-quality-gates';
 import { fetchLemmyPosts, fetchPeerTubeVideos, fetchYouTubeVideos } from './unified-fetchers';
 
 const SOCIAL_PROTOCOLS: Protocol[] = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
@@ -78,7 +77,10 @@ const BADGES: Record<string, { emoji: string; color: string; label: string }> = 
  * Resolve badge for a post. Mastodon posts check the raw _fediverseSoftware
  * field to render Pleroma/Akkoma/Misskey/Firefish badges instead.
  */
-function badgeFor(protocol: string, post?: { raw?: Record<string, unknown> }): { emoji: string; color: string; label: string } {
+function badgeFor(
+  protocol: string,
+  post?: { raw?: Record<string, unknown> },
+): { emoji: string; color: string; label: string } {
   // Fediverse software detection: any mastodon-protocol post with _fediverseSoftware
   if (protocol === 'mastodon' && post?.raw) {
     const software = (post.raw as Record<string, unknown>)._fediverseSoftware as string | undefined;
@@ -93,10 +95,14 @@ function badgeFor(protocol: string, post?: { raw?: Record<string, unknown> }): {
 
 function freshnessConfigForTab(tab: string): FreshnessScoringConfig {
   switch (tab) {
-    case 'trending': return TRENDING_FRESHNESS_CONFIG;
-    case 'top': return TOP_FRESHNESS_CONFIG;
-    case 'new': return DEFAULT_FRESHNESS_CONFIG;
-    default: return HOT_FRESHNESS_CONFIG;
+    case 'trending':
+      return TRENDING_FRESHNESS_CONFIG;
+    case 'top':
+      return TOP_FRESHNESS_CONFIG;
+    case 'new':
+      return DEFAULT_FRESHNESS_CONFIG;
+    default:
+      return HOT_FRESHNESS_CONFIG;
   }
 }
 
@@ -344,10 +350,7 @@ export async function buildUnifiedFeed(
   const fetchTimeout: Promise<{ results: FetchResult[]; timedOut: boolean }> = Promise.race([
     Promise.allSettled(fetchPromises).then((r) => ({ results: r, timedOut: false })),
     new Promise<{ results: FetchResult[]; timedOut: boolean }>((resolve) =>
-      setTimeout(
-        () => resolve({ results: [], timedOut: true }),
-        FEED_GENERATION_TIMEOUT_MS,
-      ),
+      setTimeout(() => resolve({ results: [], timedOut: true }), FEED_GENERATION_TIMEOUT_MS),
     ),
   ]);
 
@@ -357,7 +360,7 @@ export async function buildUnifiedFeed(
   const allPosts: Array<UnifiedPost & { sourceCategory: SourceCategory }> = [];
   const errors: string[] = [];
   const perSource: Record<string, number> = {};
-  let feedTimedOut = timedOut;
+  const feedTimedOut = timedOut;
 
   for (const r of results) {
     if (r.status === 'fulfilled') {
@@ -375,7 +378,9 @@ export async function buildUnifiedFeed(
 
   // If the feed timed out, add a notice
   if (feedTimedOut) {
-    errors.push(`feed generation timed out after ${FEED_GENERATION_TIMEOUT_MS}ms — partial results`);
+    errors.push(
+      `feed generation timed out after ${FEED_GENERATION_TIMEOUT_MS}ms — partial results`,
+    );
   }
 
   // Deduplicate across all sources
@@ -402,25 +407,19 @@ export async function buildUnifiedFeed(
     now: Date.now(),
     ...opts.qualityGate,
   };
-  const qualityResult = applyQualityPipeline(
-    deduped as unknown as UnifiedPost[],
-    qualityOpts,
-  );
+  const qualityResult = applyQualityPipeline(deduped as unknown as UnifiedPost[], qualityOpts);
 
   // Apply curation pipeline: freshness boost, protocol interleaving, content type
   // variety, and category rotation before limiting — now on quality-filtered posts
-  const curated = applyCurationPipeline(
-    qualityResult.posts,
-    {
-      freshnessBoost: freshnessTab !== 'everything',
-      interleaveProtocols: true,
-      maxConsecutiveProtocols: 2,
-      contentTypeVariety: true,
-      maxConsecutiveContentType: 3,
-      categoryRotation: true,
-      minCategories: 3,
-    },
-  ) as unknown as Array<UnifiedPost & { sourceCategory: SourceCategory }>;
+  const curated = applyCurationPipeline(qualityResult.posts, {
+    freshnessBoost: freshnessTab !== 'everything',
+    interleaveProtocols: true,
+    maxConsecutiveProtocols: 2,
+    contentTypeVariety: true,
+    maxConsecutiveContentType: 3,
+    categoryRotation: true,
+    minCategories: 3,
+  }) as unknown as Array<UnifiedPost & { sourceCategory: SourceCategory }>;
 
   // Limit
   const limited = curated.slice(0, limit);

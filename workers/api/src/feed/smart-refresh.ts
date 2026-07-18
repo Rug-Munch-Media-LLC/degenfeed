@@ -90,9 +90,7 @@ export function buildCatchUpSummary(
 
   const topPosts = sorted.slice(0, CATCHUP_MAX_POSTS);
 
-  const fromFollowed = sorted
-    .filter((p) => followed.has(p.author.id))
-    .slice(0, CATCHUP_MAX_POSTS);
+  const fromFollowed = sorted.filter((p) => followed.has(p.author.id)).slice(0, CATCHUP_MAX_POSTS);
 
   // Compute trending topics since last visit
   const topicCount = new Map<string, number>();

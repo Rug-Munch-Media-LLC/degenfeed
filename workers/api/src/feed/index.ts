@@ -4,14 +4,14 @@
  * fetch → enrich → dedup → score → cache, orchestrated by routes/feed.ts.
  */
 
+export * from './content-dedup';
+export * from './engagement-predictor';
+export * from './engagement-predictor-v2';
 export * from './feed-cache';
 export * from './feed-cache-layer';
 export * from './feed-categories';
 export * from './feed-category-coverage';
-export * from './content-dedup';
 export * from './feed-curation-rules';
-export * from './engagement-predictor';
-export * from './engagement-predictor-v2';
 export * from './feed-curator';
 export * from './feed-dwell-time';
 export * from './feed-enricher';

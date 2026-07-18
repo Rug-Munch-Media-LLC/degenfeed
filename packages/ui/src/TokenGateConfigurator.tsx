@@ -13,7 +13,13 @@
  *   - Live preview of the gate: "Only holders of SYMBOL on Chain can view"
  */
 
-import { type TokenGate, type TokenGateChain, type TokenGateType, CHAIN_LABELS, TYPE_LABELS } from '@degenfeed/token-gate';
+import {
+  CHAIN_LABELS,
+  type TokenGate,
+  type TokenGateChain,
+  type TokenGateType,
+  TYPE_LABELS,
+} from '@degenfeed/token-gate';
 import { useCallback, useEffect, useState } from 'react';
 
 const CHAINS: TokenGateChain[] = ['ethereum', 'base', 'polygon', 'solana', 'arbitrum', 'optimism'];
@@ -46,7 +52,9 @@ export function TokenGateConfigurator({
   const [contractAddress, setContractAddress] = useState(gate?.contractAddress ?? '');
   const [tokenId, setTokenId] = useState(gate?.tokenId ?? '');
   const [minBalance, setMinBalance] = useState(String(gate?.minBalance ?? 1));
-  const [minBalanceDecimals, setMinBalanceDecimals] = useState(String(gate?.minBalanceDecimals ?? 18));
+  const [minBalanceDecimals, setMinBalanceDecimals] = useState(
+    String(gate?.minBalanceDecimals ?? 18),
+  );
 
   const [expanded, setExpanded] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
@@ -138,14 +146,25 @@ export function TokenGateConfigurator({
         >
           <span className="text-base">🔒</span>
           {gate && displaySymbol ? (
-            <span>
-              Gated: {previewParts.length > 0 ? previewParts.join(' ') : 'Token-gated'}
-            </span>
+            <span>Gated: {previewParts.length > 0 ? previewParts.join(' ') : 'Token-gated'}</span>
           ) : (
             <span>Token Gate — restrict access to token/NFT holders</span>
           )}
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="ml-auto" aria-hidden="true">
-            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 16 16"
+            fill="none"
+            className="ml-auto"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 6l4 4 4-4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
       ) : (
@@ -162,13 +181,19 @@ export function TokenGateConfigurator({
               aria-label="Remove token gate"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M12 4L4 12M4 4l8 8"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           </div>
 
           {/* Chain selector */}
           <div>
+            {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
             <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
               Chain
             </label>
@@ -192,6 +217,7 @@ export function TokenGateConfigurator({
 
           {/* Token type selector */}
           <div>
+            {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
             <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
               Token Type
             </label>
@@ -215,6 +241,7 @@ export function TokenGateConfigurator({
 
           {/* Contract address */}
           <div>
+            {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
             <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
               Contract Address
             </label>
@@ -225,22 +252,22 @@ export function TokenGateConfigurator({
               placeholder={chain === 'solana' ? 'Token mint address...' : '0x...'}
               className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none focus:border-yellow-600 font-mono"
             />
-            {addressError && (
-              <p className="mt-1 text-[11px] text-red-400">{addressError}</p>
-            )}
+            {addressError && <p className="mt-1 text-[11px] text-red-400">{addressError}</p>}
             {contractAddress.trim() && !addressError && resolving && (
-              <p className="mt-1 text-[11px] text-yellow-500 animate-pulse">Resolving token info...</p>
+              <p className="mt-1 text-[11px] text-yellow-500 animate-pulse">
+                Resolving token info...
+              </p>
             )}
-            {error && (
-              <p className="mt-1 text-[11px] text-red-400">{error}</p>
-            )}
+            {error && <p className="mt-1 text-[11px] text-red-400">{error}</p>}
           </div>
 
           {/* Token ID (for NFTs) */}
           {(type === 'erc721' || type === 'erc1155') && (
             <div>
+              {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
               <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
-                Token ID {type === 'erc721' ? '(optional — leave empty to gate on any)' : '(required)'}
+                Token ID{' '}
+                {type === 'erc721' ? '(optional — leave empty to gate on any)' : '(required)'}
               </label>
               <input
                 type="text"
@@ -256,6 +283,7 @@ export function TokenGateConfigurator({
           {type === 'erc20' && (
             <div className="grid grid-cols-2 gap-3">
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
                   Min Balance
                 </label>
@@ -268,6 +296,7 @@ export function TokenGateConfigurator({
                 />
               </div>
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
                   Decimals
                 </label>
@@ -286,8 +315,8 @@ export function TokenGateConfigurator({
           {/* Preview */}
           {previewParts.length > 0 && (
             <div className="rounded-lg border border-yellow-900/30 bg-yellow-950/30 px-3 py-2 text-xs text-yellow-200">
-              <span className="font-medium">Preview:</span>{' '}
-              Only holders of {previewParts.join(' ')} can view this content
+              <span className="font-medium">Preview:</span> Only holders of {previewParts.join(' ')}{' '}
+              can view this content
             </div>
           )}
 

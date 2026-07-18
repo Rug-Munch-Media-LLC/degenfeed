@@ -1,11 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
-const VALID_PROTOCOLS = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'threads', 'lemmy', 'rss', 'peertube'];
+const VALID_PROTOCOLS = [
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'reddit',
+  'threads',
+  'lemmy',
+  'rss',
+  'peertube',
+];
 
 export async function GET() {
-  return NextResponse.json({ error: 'Method not allowed. Use POST to link or DELETE to unlink.' }, { status: 405 });
+  return NextResponse.json(
+    { error: 'Method not allowed. Use POST to link or DELETE to unlink.' },
+    { status: 405 },
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -14,15 +28,25 @@ export async function POST(request: NextRequest) {
     const { protocol, identity: identityData, walletAddress } = body;
 
     if (!protocol || !VALID_PROTOCOLS.includes(protocol)) {
-      return NextResponse.json({ error: `Invalid protocol. Must be one of: ${VALID_PROTOCOLS.join(', ')}` }, { status: 400 });
+      return NextResponse.json(
+        { error: `Invalid protocol. Must be one of: ${VALID_PROTOCOLS.join(', ')}` },
+        { status: 400 },
+      );
     }
 
-    if (!identityData || typeof identityData !== 'object' || Object.keys(identityData).length === 0) {
+    if (
+      !identityData ||
+      typeof identityData !== 'object' ||
+      Object.keys(identityData).length === 0
+    ) {
       return NextResponse.json({ error: 'Identity data is required' }, { status: 400 });
     }
 
     if (!walletAddress) {
-      return NextResponse.json({ error: 'walletAddress is required to link an identity' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'walletAddress is required to link an identity' },
+        { status: 400 },
+      );
     }
 
     // Validate required fields per protocol
@@ -34,7 +58,10 @@ export async function POST(request: NextRequest) {
         break;
       case 'farcaster':
         if (!identityData.fid && !identityData.username) {
-          return NextResponse.json({ error: 'farcaster requires fid or username' }, { status: 400 });
+          return NextResponse.json(
+            { error: 'farcaster requires fid or username' },
+            { status: 400 },
+          );
         }
         break;
       case 'lens':
@@ -74,14 +101,17 @@ export async function POST(request: NextRequest) {
         break;
       case 'peertube':
         if (!identityData.username && !identityData.channelId) {
-          return NextResponse.json({ error: 'peertube requires username or channelId' }, { status: 400 });
+          return NextResponse.json(
+            { error: 'peertube requires username or channelId' },
+            { status: 400 },
+          );
         }
         break;
     }
 
     // In production, this stores the linked identity in Postgres/KV
     return NextResponse.json({ success: true, protocol, linked: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }
@@ -93,7 +123,10 @@ export async function DELETE(request: NextRequest) {
     const wallet = searchParams.get('wallet');
 
     if (!protocol || !VALID_PROTOCOLS.includes(protocol)) {
-      return NextResponse.json({ error: `Invalid protocol. Must be one of: ${VALID_PROTOCOLS.join(', ')}` }, { status: 400 });
+      return NextResponse.json(
+        { error: `Invalid protocol. Must be one of: ${VALID_PROTOCOLS.join(', ')}` },
+        { status: 400 },
+      );
     }
 
     if (!wallet) {
@@ -102,7 +135,7 @@ export async function DELETE(request: NextRequest) {
 
     // In production, this removes the linked identity from Postgres/KV
     return NextResponse.json({ success: true, protocol, unlinked: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to unlink identity' }, { status: 500 });
   }
 }

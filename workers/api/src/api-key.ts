@@ -5,8 +5,8 @@
  * and tiered rate limiting for the v1 public API.
  */
 
-import type { Env } from './index';
 import type { Context, Next } from 'hono';
+import type { Env } from './index';
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -45,7 +45,10 @@ export const SCOPES_DESCRIPTION: Record<string, string> = {
   'read:analytics': 'Read analytics data',
 };
 
-export const RATE_LIMITS: Record<string, { maxReq: number; windowMs: number }> & { free: { maxReq: number; windowMs: number }; premium: { maxReq: number; windowMs: number } } = {
+export const RATE_LIMITS: Record<string, { maxReq: number; windowMs: number }> & {
+  free: { maxReq: number; windowMs: number };
+  premium: { maxReq: number; windowMs: number };
+} = {
   free: { maxReq: 1000, windowMs: 3600_000 }, // 1000 req/hour
   premium: { maxReq: 10000, windowMs: 3600_000 }, // 10000 req/hour
 };
@@ -88,10 +91,7 @@ export async function storeApiKey(
   return record;
 }
 
-export async function getApiKeyRecord(
-  env: Env,
-  apiKey: string,
-): Promise<ApiKeyRecord | null> {
+export async function getApiKeyRecord(env: Env, apiKey: string): Promise<ApiKeyRecord | null> {
   if (!env.API_KEYS) return null;
   const raw = await env.API_KEYS.get(KV_PREFIX + apiKey);
   if (!raw) return null;
@@ -118,7 +118,7 @@ export async function updateLastUsed(
 
 export async function apiKeyMiddleware(c: Context, next: Next): Promise<void> {
   const authHeader = c.req.header('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith('Bearer ')) {
     await next();
     return;
   }

@@ -12,16 +12,33 @@ export async function POST(request: Request) {
     const { parentPostUri, parentProtocol, replyProtocol, content, authorId } = body;
 
     if (!parentProtocol || !replyProtocol || !content) {
-      return NextResponse.json({ error: 'Missing required fields: parentProtocol, replyProtocol, content' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields: parentProtocol, replyProtocol, content' },
+        { status: 400 },
+      );
     }
 
     if (parentProtocol === replyProtocol) {
-      return NextResponse.json({ error: 'parentProtocol and replyProtocol must differ for bridge' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'parentProtocol and replyProtocol must differ for bridge' },
+        { status: 400 },
+      );
     }
 
-    const validProtocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'threads'];
+    const validProtocols = [
+      'nostr',
+      'farcaster',
+      'lens',
+      'bluesky',
+      'mastodon',
+      'reddit',
+      'threads',
+    ];
     if (!validProtocols.includes(parentProtocol) || !validProtocols.includes(replyProtocol)) {
-      return NextResponse.json({ error: `Invalid protocol. Must be one of: ${validProtocols.join(', ')}` }, { status: 400 });
+      return NextResponse.json(
+        { error: `Invalid protocol. Must be one of: ${validProtocols.join(', ')}` },
+        { status: 400 },
+      );
     }
 
     // Generate a bridged reply ID with bridge metadata
@@ -41,7 +58,7 @@ export async function POST(request: Request) {
         authorId: authorId || 'anonymous',
       },
     });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }

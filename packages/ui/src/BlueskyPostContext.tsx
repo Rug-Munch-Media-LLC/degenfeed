@@ -108,7 +108,11 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
 
         <div className="flex-1 min-w-0">
           <span className="text-sm font-semibold text-gray-200">AT Protocol</span>
-          {did && <span className="ml-1.5 text-xs text-[var(--color-muted)] font-mono">{formatDid(did)}</span>}
+          {did && (
+            <span className="ml-1.5 text-xs text-[var(--color-muted)] font-mono">
+              {formatDid(did)}
+            </span>
+          )}
         </div>
 
         {/* PDS badge */}
@@ -179,7 +183,10 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
         {atUri && (
           <div className="flex items-start gap-2 text-xs">
             <span className="w-16 flex-shrink-0 pt-0.5 text-gray-600">AT URI</span>
-            <code className="truncate font-mono text-[10px] text-[var(--color-muted)] break-all" title={atUri}>
+            <code
+              className="truncate font-mono text-[10px] text-[var(--color-muted)] break-all"
+              title={atUri}
+            >
               {atUri}
             </code>
           </div>

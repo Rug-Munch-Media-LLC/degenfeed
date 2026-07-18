@@ -317,16 +317,16 @@ pnpm run deploy`}</CodeBlock>
       <H3 id="ci-cd">CI/CD Pipeline</H3>
       <ul className="mt-3 list-inside list-disc space-y-1.5 text-sm text-[var(--color-muted)]">
         <li>
-          <strong className="text-[var(--color-muted)]">Push to main:</strong> TypeScript check → Biome lint →
-          Vitest unit tests → Playwright E2E tests → build → deploy
+          <strong className="text-[var(--color-muted)]">Push to main:</strong> TypeScript check →
+          Biome lint → Vitest unit tests → Playwright E2E tests → build → deploy
         </li>
         <li>
-          <strong className="text-[var(--color-muted)]">PR preview:</strong> Automatic Cloudflare Pages preview
-          deployment for every PR
+          <strong className="text-[var(--color-muted)]">PR preview:</strong> Automatic Cloudflare
+          Pages preview deployment for every PR
         </li>
         <li>
-          <strong className="text-[var(--color-muted)]">Rollback:</strong> Cloudflare Pages supports instant
-          rollback to any previous deployment
+          <strong className="text-[var(--color-muted)]">Rollback:</strong> Cloudflare Pages supports
+          instant rollback to any previous deployment
         </li>
       </ul>
 

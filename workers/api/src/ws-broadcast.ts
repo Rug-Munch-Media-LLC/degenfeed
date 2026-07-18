@@ -25,11 +25,7 @@ export function broadcastToUser(userId: string, channel: ChannelName, data: unkn
   _send({ channel, data, userId });
 }
 
-function _send(payload: {
-  channel: ChannelName;
-  data: unknown;
-  userId?: string;
-}): void {
+function _send(payload: { channel: ChannelName; data: unknown; userId?: string }): void {
   // Fire-and-forget — use waitUntil if available, otherwise background
   const promise = fetch(WS_WORKER_URL, {
     method: 'POST',
@@ -41,7 +37,10 @@ function _send(payload: {
 
   // In Cloudflare Workers, we must use waitUntil to keep the fetch alive
   // after the response is sent. In non-CF environments, just let it run.
-  if (typeof (globalThis as unknown as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil === 'function') {
+  if (
+    typeof (globalThis as unknown as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil ===
+    'function'
+  ) {
     (globalThis as unknown as { waitUntil: (p: Promise<unknown>) => void }).waitUntil(promise);
   }
 }

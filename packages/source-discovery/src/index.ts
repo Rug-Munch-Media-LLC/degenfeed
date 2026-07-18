@@ -10,44 +10,57 @@
  */
 
 import type { DiscoveredSource } from './types';
+
+export {
+  aggregateStats,
+  buildTrendingSource,
+  computeQualityScore,
+  computeSourceHealthScore,
+  computeTrendingScore,
+  detectStaleSources,
+  estimateRelevance,
+  getNewThisWeek,
+  isBlocklisted,
+} from './quality';
 export type {
   DiscoveredSource,
   DiscoveryConfig,
+  DiscoveryRun,
+  DiscoveryStats,
   DiscoveryStatus,
   Platform,
   SourceHealth,
-  TrendingSource,
-  DiscoveryRun,
-  DiscoveryStats,
   SourceLifecycle,
+  TrendingSource,
 } from './types';
 export {
   CRYPTO_KEYWORDS,
   DEFAULT_DISCOVERY_CONFIG,
   SEARCH_KEYWORDS,
 } from './types';
-export {
-  computeQualityScore,
-  estimateRelevance,
-  isBlocklisted,
-  computeSourceHealthScore,
-  detectStaleSources,
-  computeTrendingScore,
-  buildTrendingSource,
-  getNewThisWeek,
-  aggregateStats,
-} from './quality';
+
 import { discoverRedditSubreddits } from './reddit';
+
 export { discoverRedditSubreddits } from './reddit';
+
 import { discoverYouTubeChannels } from './youtube';
+
 export { discoverYouTubeChannels } from './youtube';
+
 import { discoverRSSFeeds } from './rss';
+
 export { discoverRSSFeeds } from './rss';
+
 import { discoverLemmyCommunities } from './lemmy';
+
 export { discoverLemmyCommunities } from './lemmy';
+
 import { discoverPeerTubeChannels } from './peertube';
+
 export { discoverPeerTubeChannels } from './peertube';
+
 import { discoverNewsletters } from './newsletter';
+
 export { discoverNewsletters } from './newsletter';
 
 /**

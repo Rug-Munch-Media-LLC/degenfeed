@@ -8,9 +8,9 @@
  * degradation on failure.
  */
 
-import type { Env } from '../index';
-import { fetchYouTubeFeed } from '@degenfeed/youtube-provider';
 import type { YouTubeVideoItem } from '@degenfeed/youtube-provider';
+import { fetchYouTubeFeed } from '@degenfeed/youtube-provider';
+import type { Env } from '../index';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -128,9 +128,7 @@ export async function scrapeTrendingContent(env: Env): Promise<TrendingData> {
     nostr.items.length +
     bluesky.items.length;
 
-  console.log(
-    `[trending-scraper] scraped ${totalItems} items across 5 platforms in ${elapsed}ms`,
-  );
+  console.log(`[trending-scraper] scraped ${totalItems} items across 5 platforms in ${elapsed}ms`);
 
   return trending;
 }
@@ -149,13 +147,10 @@ export async function scrapeRedditTrending(env: Env): Promise<PlatformTrending> 
   for (const sub of subreddits) {
     try {
       const limit = sub === 'CryptoCurrency' ? 25 : 10;
-      const res = await fetch(
-        `${redlibUrl}/r/${sub}/hot.json?limit=${limit}`,
-        {
-          headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
-          signal: AbortSignal.timeout(FETCH_TIMEOUT),
-        },
-      );
+      const res = await fetch(`${redlibUrl}/r/${sub}/hot.json?limit=${limit}`, {
+        headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT),
+      });
       if (!res.ok) continue;
 
       const body = (await res.json()) as {
@@ -190,7 +185,7 @@ export async function scrapeRedditTrending(env: Env): Promise<PlatformTrending> 
             comments: numComments,
           },
           publishedAt,
-          thumbnailUrl: thumbnail && thumbnail.startsWith('http') ? thumbnail : undefined,
+          thumbnailUrl: thumbnail?.startsWith('http') ? thumbnail : undefined,
           summary: selftext ? selftext.replace(/\n+/g, ' ').trim().slice(0, 200) : undefined,
         });
       }
@@ -245,7 +240,9 @@ export async function scrapeYouTubeTrending(): Promise<PlatformTrending> {
           shares: 0,
         },
         publishedAt: publishedMs,
-        summary: v.description ? v.description.replace(/\n+/g, ' ').trim().slice(0, 200) : undefined,
+        summary: v.description
+          ? v.description.replace(/\n+/g, ' ').trim().slice(0, 200)
+          : undefined,
       };
     });
 
@@ -383,11 +380,12 @@ export async function scrapeNostrTrending(): Promise<PlatformTrending> {
       const replies = note.replies ?? 0;
       const compositeScore = likes * 2 + replies * 3;
 
-      const cleanedContent = note.content
-        ?.replace(/https?:\/\/\S+/g, '')
-        .replace(/\n+/g, ' ')
-        .trim()
-        .slice(0, 300) || '(media)';
+      const cleanedContent =
+        note.content
+          ?.replace(/https?:\/\/\S+/g, '')
+          .replace(/\n+/g, ' ')
+          .trim()
+          .slice(0, 300) || '(media)';
 
       return {
         id: `nostr:${note.id}`,
@@ -446,16 +444,13 @@ interface BskyFeedPost {
  */
 export async function scrapeBlueskyTrending(): Promise<PlatformTrending> {
   try {
-    const res = await fetch(
-      'https://public.api.bsky.app/xrpc/app.bsky.feed.getPopular?limit=30',
-      {
-        headers: {
-          'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
-          accept: 'application/json',
-        },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT),
+    const res = await fetch('https://public.api.bsky.app/xrpc/app.bsky.feed.getPopular?limit=30', {
+      headers: {
+        'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
+        accept: 'application/json',
       },
-    );
+      signal: AbortSignal.timeout(FETCH_TIMEOUT),
+    });
 
     if (!res.ok) {
       // Try alternative endpoint

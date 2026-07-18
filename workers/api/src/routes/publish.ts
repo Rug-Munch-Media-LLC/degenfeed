@@ -1,4 +1,5 @@
 import { type Env, jsonResponse } from '../index';
+import { requirePremiumTier } from '../premium';
 import {
   hasSuspiciousPayload,
   isAllowedProtocol,
@@ -6,7 +7,6 @@ import {
   sanitizeStringArray,
 } from '../sanitize';
 import { requireSession } from '../session';
-import { requirePremiumTier } from '../premium';
 
 // ─── RSS-to-Nostr bridge ─────────────────────────────────────────────
 // (unchanged — see bottom of file)
@@ -125,7 +125,7 @@ async function tryPostizPublish(
   const fallbackTargets = targets.filter((t) => !POSTIZ_PLATFORMS.has(t));
 
   // Build fallback function for platforms Postiz doesn't support
-  const fallbackFn = async (platform: string) => {
+  const _fallbackFn = async (platform: string) => {
     return perProtocolPublishSingle(platform, text, {}, env);
   };
 
@@ -198,13 +198,13 @@ async function tryPostizPublish(
       });
 
       if (res.ok) {
-        const data = (await res.json()) as { postId?: string };
+        const _data = (await res.json()) as { postId?: string };
         results[target] = {
-      success: true,
-    };
-  } else {
-    const errText = await res.text().catch(() => '');
-    results[target] = {
+          success: true,
+        };
+      } else {
+        const errText = await res.text().catch(() => '');
+        results[target] = {
           error: `Postiz error: ${errText.slice(0, 200)}`,
         };
       }
@@ -458,8 +458,7 @@ async function perProtocolPublishSingle(
 
     case 'rss': {
       return {
-        error:
-          'RSS is a read-only protocol. To publish RSS content, use the RSS-to-Nostr bridge.',
+        error: 'RSS is a read-only protocol. To publish RSS content, use the RSS-to-Nostr bridge.',
       };
     }
 

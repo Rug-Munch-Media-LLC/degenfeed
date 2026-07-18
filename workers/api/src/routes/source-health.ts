@@ -13,19 +13,18 @@
  *   discovered:sources:last-health-check     — ISO timestamp
  */
 
+import {
+  aggregateStats,
+  buildTrendingSource,
+  computeSourceHealthScore,
+  type DiscoveredSource,
+  getNewThisWeek,
+  type SourceHealth,
+  type SourceLifecycle,
+  type TrendingSource,
+} from '@degenfeed/source-discovery';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
-import {
-  type DiscoveredSource,
-  type SourceHealth,
-  type TrendingSource,
-  type SourceLifecycle,
-  computeSourceHealthScore,
-  detectStaleSources,
-  buildTrendingSource,
-  getNewThisWeek,
-  aggregateStats,
-} from '@degenfeed/source-discovery';
 
 // ─── KV keys ──────────────────────────────────────────────────────────
 
@@ -35,7 +34,7 @@ function healthKey(sourceId: string): string {
 
 const HEALTH_INDEX_KEY = 'discovered:sources:health:index';
 const TRENDING_CACHE_KEY = 'discovered:sources:trending:cached';
-const NEW_WEEK_KEY = 'discovered:sources:new-week-cache';
+const _NEW_WEEK_KEY = 'discovered:sources:new-week-cache';
 const CULLED_KEY = 'discovered:sources:culled';
 const LAST_CHECK_KEY = 'discovered:sources:last-health-check';
 const LAST_RUN_KEY = 'discovered:sources:discovery:last-run';
@@ -65,7 +64,9 @@ async function getHealth(env: Env, sourceId: string): Promise<SourceHealth | nul
 }
 
 async function saveHealth(env: Env, health: SourceHealth): Promise<void> {
-  await env.CACHE?.put(healthKey(health.sourceId), JSON.stringify(health), { expirationTtl: 86400 * 90 });
+  await env.CACHE?.put(healthKey(health.sourceId), JSON.stringify(health), {
+    expirationTtl: 86400 * 90,
+  });
 }
 
 async function getAllHealth(env: Env): Promise<SourceHealth[]> {
@@ -78,7 +79,7 @@ async function getAllHealth(env: Env): Promise<SourceHealth[]> {
   return healthEntries;
 }
 
-async function getCulledIds(env: Env): Promise<string[]> {
+async function _getCulledIds(env: Env): Promise<string[]> {
   try {
     const raw = await env.CACHE?.get(CULLED_KEY);
     return raw ? (JSON.parse(raw) as string[]) : [];
@@ -98,7 +99,7 @@ async function getAllSources(env: Env): Promise<DiscoveredSource[]> {
   }
 }
 
-async function getPendingSources(env: Env): Promise<DiscoveredSource[]> {
+async function _getPendingSources(env: Env): Promise<DiscoveredSource[]> {
   try {
     const raw = await env.CACHE?.get('discovered:sources:pending');
     return raw ? (JSON.parse(raw) as DiscoveredSource[]) : [];
@@ -139,7 +140,9 @@ export async function handleSourcesTrending(_request: Request, env: Env): Promis
       const parsed = JSON.parse(cached) as TrendingSource[];
       return jsonResponse({ trending: parsed });
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   const healthEntries = await getAllHealth(env);
   const allSources = await getAllSources(env);
@@ -151,7 +154,7 @@ export async function handleSourcesTrending(_request: Request, env: Env): Promis
 
   for (const health of healthEntries) {
     const source = sourceMap.get(health.sourceId);
-    if (!source || source.status !== 'approved') continue;
+    if (source?.status !== 'approved') continue;
 
     const daysActive = Math.max(1, (now - health.lastCheckedAt) / 86_400_000);
     const engagementVelocity = health.engagement30d / daysActive;
@@ -200,7 +203,7 @@ export async function handleSourcesStale(_request: Request, env: Env): Promise<R
   for (const health of healthEntries) {
     if (health.lastPostAt >= threshold) continue;
     const source = sourceMap.get(health.sourceId);
-    if (!source || source.status !== 'approved') continue;
+    if (source?.status !== 'approved') continue;
 
     stale.push({
       source,
@@ -234,14 +237,22 @@ export async function handleSourcesStats(_request: Request, env: Env): Promise<R
   const healthMap = new Map(healthEntries.map((h) => [h.sourceId, h]));
 
   // Get discovery run history from KV
-  const runHistory: Array<{ platform: string; discovered: number; autoApproved: number; pending: number; timestamp: number }> = [];
+  const runHistory: Array<{
+    platform: string;
+    discovered: number;
+    autoApproved: number;
+    pending: number;
+    timestamp: number;
+  }> = [];
   try {
     const raw = await env.CACHE?.get('discovered:sources:run-history');
     if (raw) {
       const parsed = JSON.parse(raw) as typeof runHistory;
       runHistory.push(...parsed);
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   const lastRunRaw = await env.CACHE?.get(LAST_RUN_KEY);
 
@@ -291,9 +302,11 @@ export async function handleSourcesHealthCheck(request: Request, env: Env): Prom
   }
 
   // Save updated sources back
-  const approvedSources = allSources.filter((s) => s.status === 'approved');
-  const pendingSources = allSources.filter((s) => s.status === 'pending');
-  await env.CACHE?.put('discovered:sources:all', JSON.stringify(allSources), { expirationTtl: 86400 * 90 });
+  const _approvedSources = allSources.filter((s) => s.status === 'approved');
+  const _pendingSources = allSources.filter((s) => s.status === 'pending');
+  await env.CACHE?.put('discovered:sources:all', JSON.stringify(allSources), {
+    expirationTtl: 86400 * 90,
+  });
 
   const nowISO = new Date().toISOString();
   await env.CACHE?.put(LAST_CHECK_KEY, nowISO);
@@ -327,7 +340,7 @@ export async function handleRecordEngagement(request: Request, env: Env): Promis
 
     const { sourceId, engagementDelta, postCount = 0, spamScore } = body;
 
-    let health = await getHealth(env, sourceId);
+    const health = await getHealth(env, sourceId);
     if (!health) {
       return jsonResponse({ error: 'Source not found in health index' }, 404);
     }
@@ -343,7 +356,10 @@ export async function handleRecordEngagement(request: Request, env: Env): Promis
     }
 
     health.postFrequency = health.postCount30d / Math.max(1, 30);
-    health.engagementScore = Math.min(1, health.engagement30d / Math.max(1, health.postCount30d || 1));
+    health.engagementScore = Math.min(
+      1,
+      health.engagement30d / Math.max(1, health.postCount30d || 1),
+    );
 
     const result = computeSourceHealthScore(health);
     health.compositeScore = result.score;
@@ -364,10 +380,7 @@ export async function handleRecordEngagement(request: Request, env: Env): Promis
 /**
  * Initialize health tracking for a newly discovered source.
  */
-export async function initSourceHealth(
-  env: Env,
-  source: DiscoveredSource,
-): Promise<void> {
+export async function initSourceHealth(env: Env, source: DiscoveredSource): Promise<void> {
   const health: SourceHealth = {
     sourceId: source.id,
     platform: source.platform,
@@ -401,7 +414,10 @@ export async function runWeeklyHealthMaintenance(env: Env): Promise<{
   stale: number;
   culled: number;
 }> {
-  const result = await handleSourcesHealthCheck(new Request('http://localhost/api/sources/health-check'), env);
+  const result = await handleSourcesHealthCheck(
+    new Request('http://localhost/api/sources/health-check'),
+    env,
+  );
   const data = (await result.json()) as { checked: number; stale: number; culled: number };
   return data;
 }

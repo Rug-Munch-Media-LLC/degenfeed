@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PROTOCOL_ICONS, getProtocolColor, getProtocolLabel } from './ProtocolBadge';
+import { getProtocolColor, getProtocolLabel, PROTOCOL_ICONS } from './ProtocolBadge';
 
 export interface Notification {
   id: string;
@@ -171,7 +171,10 @@ export function NotificationBell({
               {onMarkAllRead && unreadCount > 0 && (
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); onMarkAllRead(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMarkAllRead();
+                  }}
                   className="text-[10px] text-degen-400 hover:text-degen-300 transition-colors"
                 >
                   Mark all read
@@ -179,7 +182,10 @@ export function NotificationBell({
               )}
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); setGrouped((v) => !v); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setGrouped((v) => !v);
+                }}
                 className="text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
               >
                 {grouped ? 'Ungroup' : 'Group'}
@@ -188,7 +194,9 @@ export function NotificationBell({
           </div>
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="py-8 text-center text-sm text-[var(--color-muted)]">No notifications yet</div>
+              <div className="py-8 text-center text-sm text-[var(--color-muted)]">
+                No notifications yet
+              </div>
             ) : grouped ? (
               groups.slice(0, 30).map((g) => (
                 <button

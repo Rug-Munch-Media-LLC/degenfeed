@@ -43,7 +43,9 @@ function SectionNav({ current }: { current: string }) {
           key={s.id}
           href={`/home/${s.id}`}
           className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-            s.id === current ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
+            s.id === current
+              ? 'text-[var(--color-fg)]'
+              : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
           }`}
           style={s.id === current ? { backgroundColor: `${s.color}22`, color: s.color } : {}}
         >

@@ -47,10 +47,30 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83C\uDFE6',
     niches: ['defi', 'layer2', 'stablecoin', 'etf', 'onchain'],
     keywords: [
-      'defi', 'decentralized finance', 'lending', 'yield', 'staking', 'swap',
-      'dex', 'amm', 'liquidity', 'vault', 'restaking', 'layer 2', 'l2',
-      'rollup', 'stablecoin', 'usdt', 'usdc', 'etf', 'onchain',
-      'arbitrum', 'optimism', 'base', 'zk-', 'zero knowledge',
+      'defi',
+      'decentralized finance',
+      'lending',
+      'yield',
+      'staking',
+      'swap',
+      'dex',
+      'amm',
+      'liquidity',
+      'vault',
+      'restaking',
+      'layer 2',
+      'l2',
+      'rollup',
+      'stablecoin',
+      'usdt',
+      'usdc',
+      'etf',
+      'onchain',
+      'arbitrum',
+      'optimism',
+      'base',
+      'zk-',
+      'zero knowledge',
     ],
   },
   nft: {
@@ -59,8 +79,18 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83D\uDDBC\uFE0F',
     niches: ['nft', 'gaming', 'art', 'music'],
     keywords: [
-      'nft', 'collectible', 'mint', 'opensea', 'blur', 'digital art',
-      'metaverse', 'gaming', 'art', 'music', 'punk', 'azuki',
+      'nft',
+      'collectible',
+      'mint',
+      'opensea',
+      'blur',
+      'digital art',
+      'metaverse',
+      'gaming',
+      'art',
+      'music',
+      'punk',
+      'azuki',
     ],
   },
   trading: {
@@ -69,10 +99,23 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83D\uDCCA',
     niches: ['trading', 'macro', 'etf'],
     keywords: [
-      'trading', 'technical analysis', 'chart', 'price action',
-      'support resistance', 'market structure', 'breakout', 'volume',
-      'fomc', 'fed', 'inflation', 'interest rate', 'recession',
-      'nasdaq', 'spx', 'cpi', 'dollar',
+      'trading',
+      'technical analysis',
+      'chart',
+      'price action',
+      'support resistance',
+      'market structure',
+      'breakout',
+      'volume',
+      'fomc',
+      'fed',
+      'inflation',
+      'interest rate',
+      'recession',
+      'nasdaq',
+      'spx',
+      'cpi',
+      'dollar',
     ],
   },
   ai: {
@@ -81,9 +124,21 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83E\uDD16',
     niches: ['ai', 'tech', 'startups'],
     keywords: [
-      'ai', 'artificial intelligence', 'machine learning', 'llm', 'gpt',
-      'openai', 'deepseek', 'claude', 'gemini', 'neural', 'deep learning',
-      'transformer', 'agent', 'copilot', 'diffusion',
+      'ai',
+      'artificial intelligence',
+      'machine learning',
+      'llm',
+      'gpt',
+      'openai',
+      'deepseek',
+      'claude',
+      'gemini',
+      'neural',
+      'deep learning',
+      'transformer',
+      'agent',
+      'copilot',
+      'diffusion',
     ],
   },
   memecoin: {
@@ -92,8 +147,16 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83C\uDFAD',
     niches: ['memecoin'],
     keywords: [
-      'memecoin', 'meme coin', 'dogecoin', 'shiba', 'pepe', 'bonk', 'wif',
-      'moon', 'pump', 'dump',
+      'memecoin',
+      'meme coin',
+      'dogecoin',
+      'shiba',
+      'pepe',
+      'bonk',
+      'wif',
+      'moon',
+      'pump',
+      'dump',
     ],
   },
   security: {
@@ -102,9 +165,19 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83D\uDD12',
     niches: ['security', 'privacy'],
     keywords: [
-      'hack', 'exploit', 'vulnerability', 'audit', 'phishing', 'rug pull',
-      'rekt', 'breach', 'privacy', 'anonymous', 'immunefi',
-      'smart contract', 'solidity',
+      'hack',
+      'exploit',
+      'vulnerability',
+      'audit',
+      'phishing',
+      'rug pull',
+      'rekt',
+      'breach',
+      'privacy',
+      'anonymous',
+      'immunefi',
+      'smart contract',
+      'solidity',
     ],
   },
   news: {
@@ -113,9 +186,22 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83D\uDCF0',
     niches: ['crypto', 'regulation', 'macro', 'etf', 'startups'],
     keywords: [
-      'news', 'breaking', 'announces', 'launch', 'regulation', 'sec',
-      'cftc', 'congress', 'senate', 'policy', 'compliance', 'lawsuit',
-      'mica', 'bitcoin', 'ethereum', 'solana',
+      'news',
+      'breaking',
+      'announces',
+      'launch',
+      'regulation',
+      'sec',
+      'cftc',
+      'congress',
+      'senate',
+      'policy',
+      'compliance',
+      'lawsuit',
+      'mica',
+      'bitcoin',
+      'ethereum',
+      'solana',
     ],
   },
   memes: {
@@ -123,9 +209,7 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     label: 'Memes',
     emoji: '\uD83D\uDE02',
     niches: ['memecoin', 'gaming'],
-    keywords: [
-      'meme', 'memes', 'funny', 'lol', 'humor', 'degen',
-    ],
+    keywords: ['meme', 'memes', 'funny', 'lol', 'humor', 'degen'],
   },
   bitcoin: {
     slug: 'bitcoin',
@@ -133,9 +217,21 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83D\uDCB0',
     niches: ['bitcoin', 'btc', 'macro', 'mining'],
     keywords: [
-      'bitcoin', 'btc', 'satoshi', 'halving', 'blockchain', 'mining',
-      'hashrate', 'lightning network', 'ordinal', 'brc-20', 'rune',
-      'taproot', 'schnorr', 'btc etf', 'bitcoin etf',
+      'bitcoin',
+      'btc',
+      'satoshi',
+      'halving',
+      'blockchain',
+      'mining',
+      'hashrate',
+      'lightning network',
+      'ordinal',
+      'brc-20',
+      'rune',
+      'taproot',
+      'schnorr',
+      'btc etf',
+      'bitcoin etf',
     ],
   },
   ethereum: {
@@ -144,9 +240,21 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83D\uDCE6',
     niches: ['ethereum', 'evm', 'defi', 'layer2'],
     keywords: [
-      'ethereum', 'eth', 'vitalik', 'eip', 'erc-20', 'erc-721',
-      'ethereum etf', 'ethereum upgrade', 'execution layer', 'consensus',
-      'danksharding', 'blob', 'cancun', 'dencun', 'prague',
+      'ethereum',
+      'eth',
+      'vitalik',
+      'eip',
+      'erc-20',
+      'erc-721',
+      'ethereum etf',
+      'ethereum upgrade',
+      'execution layer',
+      'consensus',
+      'danksharding',
+      'blob',
+      'cancun',
+      'dencun',
+      'prague',
     ],
   },
   solana: {
@@ -155,9 +263,20 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\u2600\uFE0F',
     niches: ['solana', 'defi', 'memecoin', 'nft'],
     keywords: [
-      'solana', 'sol', 'phantom', 'serum', 'jupiter', 'orca',
-      'raydium', 'pyth', 'mango', 'solana pay', 'spl', 'token-2022',
-      'blink', 'action',
+      'solana',
+      'sol',
+      'phantom',
+      'serum',
+      'jupiter',
+      'orca',
+      'raydium',
+      'pyth',
+      'mango',
+      'solana pay',
+      'spl',
+      'token-2022',
+      'blink',
+      'action',
     ],
   },
   layer2: {
@@ -166,9 +285,22 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\u2699\uFE0F',
     niches: ['layer2', 'ethereum', 'defi', 'tech'],
     keywords: [
-      'layer 2', 'l2', 'rollup', 'optimistic', 'zk rollup', 'arbitrum',
-      'optimism', 'base', 'zksync', 'starknet', 'polygon', 'scroll',
-      'linea', 'taiko', 'blob', 'gas fee',
+      'layer 2',
+      'l2',
+      'rollup',
+      'optimistic',
+      'zk rollup',
+      'arbitrum',
+      'optimism',
+      'base',
+      'zksync',
+      'starknet',
+      'polygon',
+      'scroll',
+      'linea',
+      'taiko',
+      'blob',
+      'gas fee',
     ],
   },
   stablecoin: {
@@ -177,9 +309,20 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83C\uDFE6',
     niches: ['stablecoin', 'defi', 'regulation', 'macro'],
     keywords: [
-      'stablecoin', 'usdt', 'usdc', 'dai', 'frax', 'lusd', 'terrausd',
-      'ust', 'stablecoin regulation', 'stablecoin bill', 'rwa',
-      'real world asset', 'yield bearing', 'synthetic dollar',
+      'stablecoin',
+      'usdt',
+      'usdc',
+      'dai',
+      'frax',
+      'lusd',
+      'terrausd',
+      'ust',
+      'stablecoin regulation',
+      'stablecoin bill',
+      'rwa',
+      'real world asset',
+      'yield bearing',
+      'synthetic dollar',
     ],
   },
   regulation: {
@@ -188,9 +331,25 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\u2696\uFE0F',
     niches: ['regulation', 'news', 'macro', 'legal'],
     keywords: [
-      'regulation', 'regulatory', 'sec', 'cftc', 'lawsuit', 'compliance',
-      'mica', 'kyc', 'aml', 'congress', 'senate', 'hearing', 'subpoena',
-      'doj', 'fincen', 'esma', 'fsa', 'biden', 'trump',
+      'regulation',
+      'regulatory',
+      'sec',
+      'cftc',
+      'lawsuit',
+      'compliance',
+      'mica',
+      'kyc',
+      'aml',
+      'congress',
+      'senate',
+      'hearing',
+      'subpoena',
+      'doj',
+      'fincen',
+      'esma',
+      'fsa',
+      'biden',
+      'trump',
     ],
   },
   gaming: {
@@ -199,9 +358,22 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     emoji: '\uD83C\uDFAE',
     niches: ['gaming', 'metaverse', 'nft', 'social'],
     keywords: [
-      'gaming', 'game', 'web3 gaming', 'play to earn', 'p2e', 'immutable',
-      'gala', 'axie', 'illuvium', 'metaverse', 'mmo', 'rpg',
-      'onchain game', 'fren pet', 'telegram game', 'tap to earn',
+      'gaming',
+      'game',
+      'web3 gaming',
+      'play to earn',
+      'p2e',
+      'immutable',
+      'gala',
+      'axie',
+      'illuvium',
+      'metaverse',
+      'mmo',
+      'rpg',
+      'onchain game',
+      'fren pet',
+      'telegram game',
+      'tap to earn',
     ],
   },
   general: {
@@ -209,9 +381,7 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     label: 'General',
     emoji: '\uD83C\uDF10',
     niches: ['crypto', 'blockchain', 'web3'],
-    keywords: [
-      'crypto', 'blockchain', 'web3', 'cryptocurrency', 'token', 'decentralized',
-    ],
+    keywords: ['crypto', 'blockchain', 'web3', 'cryptocurrency', 'token', 'decentralized'],
   },
 };
 
@@ -231,7 +401,30 @@ for (const cat of Object.values(CATEGORIES)) {
  * "bitcoin"  → "bitcoin" (does NOT match "bitcoincash")
  * No heavy NLP — avoids false substring matches from raw includes().
  */
-const STEM_SUFFIXES = ['ing', 'ed', 'es', 's', 'ly', 'ment', 'tion', 'ness', 'ful', 'less', 'able', 'ible', 'al', 'ive', 'ous', 'ize', 'ise', 'er', 'est', 'ment', 'ship', 'ity'];
+const STEM_SUFFIXES = [
+  'ing',
+  'ed',
+  'es',
+  's',
+  'ly',
+  'ment',
+  'tion',
+  'ness',
+  'ful',
+  'less',
+  'able',
+  'ible',
+  'al',
+  'ive',
+  'ous',
+  'ize',
+  'ise',
+  'er',
+  'est',
+  'ment',
+  'ship',
+  'ity',
+];
 
 export function stemWord(word: string): string {
   let s = word.toLowerCase();
@@ -280,7 +473,9 @@ export function scoreCategoryRelevance(post: UnifiedPost): Map<CategorySlug, num
     post.html ?? '',
     post.author.displayName,
     post.author.bio,
-    ...post.embeds.map((e) => [e.url, e.meta?.title, e.meta?.description].filter(Boolean).join(' ')),
+    ...post.embeds.map((e) =>
+      [e.url, e.meta?.title, e.meta?.description].filter(Boolean).join(' '),
+    ),
   ]
     .join(' ')
     .toLowerCase();
@@ -319,10 +514,7 @@ export function scoreCategoryRelevance(post: UnifiedPost): Map<CategorySlug, num
  * Returns the best-matching category for a post, or null if none exceed
  * the minimum threshold (default 0.15).
  */
-export function primaryCategory(
-  post: UnifiedPost,
-  minScore = 0.15,
-): CategorySlug | null {
+export function primaryCategory(post: UnifiedPost, minScore = 0.15): CategorySlug | null {
   const scores = scoreCategoryRelevance(post);
   let best: CategorySlug | null = null;
   let bestScore = 0;
@@ -459,8 +651,10 @@ export function buildCategoryFeed(
     // Primary: category score
     if (b.categoryScore !== a.categoryScore) return b.categoryScore - a.categoryScore;
     // Secondary: engagement
-    const engA = a.metrics.likes + a.metrics.reposts * 2 + a.metrics.replies * 3 + (a.metrics.quotes ?? 0);
-    const engB = b.metrics.likes + b.metrics.reposts * 2 + b.metrics.replies * 3 + (b.metrics.quotes ?? 0);
+    const engA =
+      a.metrics.likes + a.metrics.reposts * 2 + a.metrics.replies * 3 + (a.metrics.quotes ?? 0);
+    const engB =
+      b.metrics.likes + b.metrics.reposts * 2 + b.metrics.replies * 3 + (b.metrics.quotes ?? 0);
     if (engB !== engA) return engB - engA;
     // Tertiary: recency
     return b.createdAt - a.createdAt;
@@ -489,9 +683,7 @@ export function buildCategoryFeed(
   }
 
   const totalRel =
-    filtered.length > 0
-      ? filtered.reduce((s, p) => s + p.categoryScore, 0) / filtered.length
-      : 0;
+    filtered.length > 0 ? filtered.reduce((s, p) => s + p.categoryScore, 0) / filtered.length : 0;
 
   return {
     posts: filtered,
@@ -543,8 +735,10 @@ export function buildCategoryMix(
   }
 
   // Build each category feed
-  const feeds: Record<CategorySlug, Array<UnifiedPost & { categoryScore: number }>> =
-    {} as Record<CategorySlug, Array<UnifiedPost & { categoryScore: number }>>;
+  const feeds: Record<CategorySlug, Array<UnifiedPost & { categoryScore: number }>> = {} as Record<
+    CategorySlug,
+    Array<UnifiedPost & { categoryScore: number }>
+  >;
   const feedIndexes: Record<CategorySlug, number> = {} as Record<CategorySlug, number>;
 
   for (const cat of Object.keys(targets) as CategorySlug[]) {
@@ -575,7 +769,10 @@ export function buildCategoryMix(
   let idx = 0;
   while (blended.length < limit) {
     const cat = roundOrder[idx % roundOrder.length];
-    if (!cat) { idx++; continue; }
+    if (!cat) {
+      idx++;
+      continue;
+    }
 
     const feed = feeds[cat];
     const fi = feedIndexes[cat] ?? 0;
@@ -600,7 +797,10 @@ export function buildCategoryMix(
       perCategory,
       total: blended.length,
       ratios: Object.fromEntries(
-        Object.entries(targets).map(([cat, tgt]) => [cat, Math.round((tgt / totalWeight) * 100) / 100]),
+        Object.entries(targets).map(([cat, tgt]) => [
+          cat,
+          Math.round((tgt / totalWeight) * 100) / 100,
+        ]),
       ),
     },
   };
@@ -667,7 +867,10 @@ export function buildEverythingBlend(
     return { post: p, interestScore, isTrending, isFollowed, qualityScore, noveltyScore };
   });
 
-  const buckets: Record<'interest' | 'trending' | 'followed' | 'discovery' | 'quality', BlendSignal[]> = {
+  const buckets: Record<
+    'interest' | 'trending' | 'followed' | 'discovery' | 'quality',
+    BlendSignal[]
+  > = {
     interest: [],
     trending: [],
     followed: [],
@@ -700,9 +903,9 @@ export function buildEverythingBlend(
 
   // Blend targets
   const targets = {
-    interest: Math.round(limit * 0.30),
-    trending: Math.round(limit * 0.20),
-    followed: Math.round(limit * 0.20),
+    interest: Math.round(limit * 0.3),
+    trending: Math.round(limit * 0.2),
+    followed: Math.round(limit * 0.2),
     discovery: Math.round(limit * 0.15),
     quality: Math.round(limit * 0.15),
   };
@@ -730,9 +933,7 @@ export function buildEverythingBlend(
 
   // Fill remaining slots from all buckets
   if (result.length < limit) {
-    const allSorted = [...signals]
-      .filter((s) => !seenIds.has(s.post.id))
-      .sort(sortFn);
+    const allSorted = [...signals].filter((s) => !seenIds.has(s.post.id)).sort(sortFn);
     for (const s of allSorted) {
       if (result.length >= limit) break;
       result.push(s.post);

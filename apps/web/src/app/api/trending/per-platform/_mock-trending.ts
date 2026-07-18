@@ -51,7 +51,7 @@ export interface TrendingResponse {
   topics: TrendingTopic[];
   channels: TrendingChannel[];
   creators: TrendingCreator[];
-  fetchedAt: number;
+  fetchedAt?: number;
 }
 
 // ─── Per-platform mock data ────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Env } from '../index';
 import worker from '../app';
+import type { Env } from '../index';
 import { createSession, parseSessionCookie, verifySessionCookie } from '../session';
 
 const secret = 'test-secret-must-be-at-least-32-bytes';

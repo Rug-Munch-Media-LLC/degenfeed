@@ -12,14 +12,21 @@
  * Supports infinite-scroll via IntersectionObserver.
  */
 
-import { memo, useEffect, useId, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { YouTubeVideoCard, type YouTubeVideoCardItem } from './YouTubeVideoCard';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
 export type VideoSort = 'recent' | 'popular' | 'trending';
 export type VideoTab = 'all' | 'youtube' | 'peertube' | 'federated' | 'shorts' | 'live';
-export type VideoCategory = 'all' | 'crypto' | 'defi' | 'nft' | 'tutorial' | 'news' | 'entertainment';
+export type VideoCategory =
+  | 'all'
+  | 'crypto'
+  | 'defi'
+  | 'nft'
+  | 'tutorial'
+  | 'news'
+  | 'entertainment';
 
 export interface MixedVideoGridProps {
   /** All videos from all sources */
@@ -97,6 +104,7 @@ function GridSkeleton({ count = 6 }: { count?: number }) {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: count }).map((_, i) => (
         <div
+          {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
           key={i}
           className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden animate-pulse"
           aria-hidden="true"
@@ -127,15 +135,7 @@ function EmptyState({ tab, category }: { tab: VideoTab; category: VideoCategory 
           aria-hidden="true"
           className="text-[var(--color-muted)]"
         >
-          <rect
-            x="4"
-            y="4"
-            width="16"
-            height="16"
-            rx="3"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
+          <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
           <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
         </svg>
       </div>
@@ -224,7 +224,9 @@ export const MixedVideoGrid = memo(function MixedVideoGrid({
       {initialLoad && loading && <GridSkeleton count={6} />}
 
       {/* ── Empty State ── */}
-      {!initialLoad && isEmpty && !loading && <EmptyState tab={activeTab} category={activeCategory} />}
+      {!initialLoad && isEmpty && !loading && (
+        <EmptyState tab={activeTab} category={activeCategory} />
+      )}
 
       {/* ── Video Grid ── */}
       {sorted.length > 0 && (
@@ -322,7 +324,11 @@ export const VideoFilterBar = memo(function VideoFilterBar({
 
       {/* ── Category chips + Sort ── */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none flex-wrap" role="group" aria-label="Video categories">
+        <div
+          className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none flex-wrap"
+          role="group"
+          aria-label="Video categories"
+        >
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}

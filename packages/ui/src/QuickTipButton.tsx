@@ -30,7 +30,6 @@ interface QuickTipButtonProps {
 
 export function QuickTipButton({
   postId,
-  authorAddress,
   tipAmounts = [1, 5, 10],
   tipCount = 0,
   onOpenModal,

@@ -13,7 +13,7 @@
  *   - Shows where to acquire the token
  */
 
-import { CHAIN_LABELS, type TokenGate, formatGateDescription } from '@degenfeed/token-gate';
+import { CHAIN_LABELS, formatGateDescription, type TokenGate } from '@degenfeed/token-gate';
 import { useCallback, useEffect, useState } from 'react';
 
 // ─── Post Card Gate Badge ──────────────────────────────────────────────────
@@ -102,8 +102,11 @@ export function PostGateBadge({
       <div className="mb-3 rounded-xl border border-yellow-900/30 bg-yellow-950/20 p-4 text-center">
         <div className="mb-2 text-2xl">🔒</div>
         <p className="mb-2 text-sm text-[var(--color-muted)]">
-          You need <span className="font-semibold text-yellow-300">{balance} {symbol}</span> on{' '}
-          <span className="font-semibold">{chainLabel}</span> to view this content.
+          You need{' '}
+          <span className="font-semibold text-yellow-300">
+            {balance} {symbol}
+          </span>{' '}
+          on <span className="font-semibold">{chainLabel}</span> to view this content.
         </p>
         {onAcquire && (
           <button
@@ -167,9 +170,7 @@ export function CommunityGateBadge({
   const [checking, setChecking] = useState(false);
 
   const symbol = displaySymbol ?? gate.contractAddress.slice(0, 8);
-  const label = compact
-    ? `🔒 ${symbol} holders only`
-    : formatGateDescription(gate, symbol);
+  const label = compact ? `🔒 ${symbol} holders only` : formatGateDescription(gate, symbol);
 
   // Auto-verify if we have a wallet
   useEffect(() => {
@@ -195,8 +196,7 @@ export function CommunityGateBadge({
       className="inline-flex items-center gap-1 rounded-full border border-yellow-900/30 bg-yellow-950/20 px-2.5 py-0.5 text-[11px] font-medium text-yellow-300"
       title={label}
     >
-      🔒
-      {compact ? symbol : label.substring(0, 50)}
+      🔒{compact ? symbol : label.substring(0, 50)}
       {!compact && label.length > 50 && '...'}
     </span>
   );

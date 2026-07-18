@@ -62,12 +62,8 @@ export const ErrorState: FC<ErrorStateProps> = memo(function ErrorState({
           </svg>
         )}
       </div>
-      <p className="mb-1 text-sm font-medium text-red-300">
-        {message || 'Something went wrong'}
-      </p>
-      {details && (
-        <p className="mb-5 max-w-md text-xs text-[var(--color-muted)]">{details}</p>
-      )}
+      <p className="mb-1 text-sm font-medium text-red-300">{message || 'Something went wrong'}</p>
+      {details && <p className="mb-5 max-w-md text-xs text-[var(--color-muted)]">{details}</p>}
       {action
         ? action
         : onRetry && (

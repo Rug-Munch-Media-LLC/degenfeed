@@ -27,7 +27,7 @@ const NETWORK_HINTS: Record<string, string> = {
   lens: 'User-owned graph',
   bluesky: 'AT Protocol',
   mastodon: 'Fediverse (GotoSocial)',
-  threads: 'Experimental — Meta AT Protocol',
+  threads: 'via ActivityPub federation',
   reddit: 'Crypto subreddits',
   rss: '353+ news sources',
 };
@@ -148,12 +148,16 @@ export function FeedSidebar({
                     />
                     <span
                       className={`flex-1 text-sm ${
-                        active ? 'font-semibold text-[var(--color-fg)]' : 'text-[var(--color-muted)]'
+                        active
+                          ? 'font-semibold text-[var(--color-fg)]'
+                          : 'text-[var(--color-muted)]'
                       }`}
                     >
                       {p.label}
                     </span>
-                    <span className="text-xs tabular-nums text-[var(--color-muted)]">{p.count}</span>
+                    <span className="text-xs tabular-nums text-[var(--color-muted)]">
+                      {p.count}
+                    </span>
                   </button>
                 </li>
               );

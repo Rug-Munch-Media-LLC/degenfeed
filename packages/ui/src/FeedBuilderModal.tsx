@@ -11,7 +11,7 @@ const SOURCES = [
   { id: 'lens', label: 'Lens', emoji: '🌿' },
   { id: 'bluesky', label: 'Bluesky', emoji: '🦋' },
   { id: 'mastodon', label: 'Mastodon', emoji: '🐘' },
-  { id: 'threads', label: 'Threads (Experimental)', emoji: '🧵' },
+  { id: 'threads', label: 'Threads', emoji: '🧵' },
   { id: 'reddit', label: 'Reddit', emoji: '🔴' },
   { id: 'rss', label: 'RSS', emoji: '📰' },
   { id: 'lemmy', label: 'Lemmy', emoji: '🌲' },
@@ -88,17 +88,16 @@ export interface FeedBuilderModalProps {
 
 // ─── Component ────────────────────────────────────────────────
 
-export function FeedBuilderModal({
-  open,
-  onClose,
-  onSave,
-  initial,
-}: FeedBuilderModalProps) {
+export function FeedBuilderModal({ open, onClose, onSave, initial }: FeedBuilderModalProps) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);
-  const [config, setConfig] = useState<FeedRecipe>({ ...DEFAULT_CONFIG, topics: {}, contentTypes: [...DEFAULT_CONFIG.contentTypes] });
+  const [config, setConfig] = useState<FeedRecipe>({
+    ...DEFAULT_CONFIG,
+    topics: {},
+    contentTypes: [...DEFAULT_CONFIG.contentTypes],
+  });
   const [customTopic, setCustomTopic] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,7 +110,11 @@ export function FeedBuilderModal({
       setName(initial.name);
       setDescription(initial.description);
       setIsPublic(initial.isPublic);
-      setConfig({ ...initial.config, topics: { ...initial.config.topics }, contentTypes: [...initial.config.contentTypes] });
+      setConfig({
+        ...initial.config,
+        topics: { ...initial.config.topics },
+        contentTypes: [...initial.config.contentTypes],
+      });
     } else {
       setName('');
       setDescription('');
@@ -129,18 +132,30 @@ export function FeedBuilderModal({
     if (!open) return;
     const el = overlayRef.current;
     if (!el) return;
-    const first = el.querySelector<HTMLElement>('button, input, textarea, select, [tabindex]:not([tabindex="-1"])');
+    const first = el.querySelector<HTMLElement>(
+      'button, input, textarea, select, [tabindex]:not([tabindex="-1"])',
+    );
     first?.focus();
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
       if (e.key !== 'Tab') return;
-      const focusable = el.querySelectorAll<HTMLElement>('button, input, textarea, select, [tabindex]:not([tabindex="-1"])');
+      const focusable = el.querySelectorAll<HTMLElement>(
+        'button, input, textarea, select, [tabindex]:not([tabindex="-1"])',
+      );
       if (!focusable.length) return;
       const f = focusable[0];
       const l = focusable[focusable.length - 1];
       if (!f || !l) return;
-      if (e.shiftKey && document.activeElement === f) { l.focus(); e.preventDefault(); }
-      else if (!e.shiftKey && document.activeElement === l) { f.focus(); e.preventDefault(); }
+      if (e.shiftKey && document.activeElement === f) {
+        l.focus();
+        e.preventDefault();
+      } else if (!e.shiftKey && document.activeElement === l) {
+        f.focus();
+        e.preventDefault();
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -152,9 +167,7 @@ export function FeedBuilderModal({
       const has = prev.sources.includes(sourceId);
       return {
         ...prev,
-        sources: has
-          ? prev.sources.filter((s) => s !== sourceId)
-          : [...prev.sources, sourceId],
+        sources: has ? prev.sources.filter((s) => s !== sourceId) : [...prev.sources, sourceId],
       };
     });
   }, []);
@@ -178,9 +191,7 @@ export function FeedBuilderModal({
       const has = prev.contentTypes.includes(id);
       return {
         ...prev,
-        contentTypes: has
-          ? prev.contentTypes.filter((c) => c !== id)
-          : [...prev.contentTypes, id],
+        contentTypes: has ? prev.contentTypes.filter((c) => c !== id) : [...prev.contentTypes, id],
       };
     });
   }, []);
@@ -207,7 +218,12 @@ export function FeedBuilderModal({
     setSaving(true);
     setError(null);
     try {
-      const result = await onSave({ name: name.trim(), description: description.trim(), isPublic, config });
+      const result = await onSave({
+        name: name.trim(),
+        description: description.trim(),
+        isPublic,
+        config,
+      });
       if (result.ok) {
         onClose();
       } else {
@@ -226,7 +242,9 @@ export function FeedBuilderModal({
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
+      onClick={(e) => {
+        if (e.target === overlayRef.current) onClose();
+      }}
     >
       <div
         className="w-full max-w-lg rounded-2xl border border-white/10 bg-[var(--color-card)] shadow-2xl backdrop-blur-xl max-h-[90vh] flex flex-col"
@@ -243,8 +261,13 @@ export function FeedBuilderModal({
             className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M12 4L4 12M4 4l8 8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -266,18 +289,25 @@ export function FeedBuilderModal({
               >
                 {i < step ? '✓' : i + 1}
               </button>
-              <span className={`text-[10px] hidden sm:block ${i === step ? 'text-degen-400 font-semibold' : 'text-[var(--color-muted)]'}`}>
+              <span
+                className={`text-[10px] hidden sm:block ${i === step ? 'text-degen-400 font-semibold' : 'text-[var(--color-muted)]'}`}
+              >
                 {label}
               </span>
               {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-px mx-1 ${i < step ? 'bg-degen-500/50' : 'bg-white/10'}`} />
+                <div
+                  className={`flex-1 h-px mx-1 ${i < step ? 'bg-degen-500/50' : 'bg-white/10'}`}
+                />
               )}
             </div>
           ))}
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4" style={{ scrollbarWidth: 'thin' }}>
+        <div
+          className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
+          style={{ scrollbarWidth: 'thin' }}
+        >
           {error && (
             <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
               {error}
@@ -288,6 +318,7 @@ export function FeedBuilderModal({
           {step === 0 && (
             <div className="space-y-4">
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <label className="block text-sm font-medium text-[var(--color-fg)] mb-1.5">
                   Feed Name <span className="text-red-400">*</span>
                 </label>
@@ -298,11 +329,13 @@ export function FeedBuilderModal({
                   placeholder='e.g. "DeFi Deep Dive"'
                   maxLength={100}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500/50 focus:outline-none focus:ring-1 focus:ring-degen-500/30 transition-colors"
-                  autoFocus
                 />
-                <p className="mt-1 text-right text-[10px] text-[var(--color-muted)]">{name.length}/100</p>
+                <p className="mt-1 text-right text-[10px] text-[var(--color-muted)]">
+                  {name.length}/100
+                </p>
               </div>
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <label className="block text-sm font-medium text-[var(--color-fg)] mb-1.5">
                   Description
                 </label>
@@ -314,7 +347,9 @@ export function FeedBuilderModal({
                   rows={3}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500/50 focus:outline-none focus:ring-1 focus:ring-degen-500/30 transition-colors resize-none"
                 />
-                <p className="mt-1 text-right text-[10px] text-[var(--color-muted)]">{description.length}/500</p>
+                <p className="mt-1 text-right text-[10px] text-[var(--color-muted)]">
+                  {description.length}/500
+                </p>
               </div>
               <label className="flex items-center gap-3 cursor-pointer">
                 <div className="relative">
@@ -324,13 +359,19 @@ export function FeedBuilderModal({
                     onChange={(e) => setIsPublic(e.target.checked)}
                     className="sr-only"
                   />
-                  <div className={`w-10 h-5 rounded-full transition-colors ${isPublic ? 'bg-degen-500' : 'bg-white/20'}`}>
-                    <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform mt-0.5 ${isPublic ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  <div
+                    className={`w-10 h-5 rounded-full transition-colors ${isPublic ? 'bg-degen-500' : 'bg-white/20'}`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-full bg-white shadow transition-transform mt-0.5 ${isPublic ? 'translate-x-5' : 'translate-x-0.5'}`}
+                    />
                   </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-[var(--color-fg)]">Make public</p>
-                  <p className="text-xs text-[var(--color-muted)]">Other users can discover and subscribe</p>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    Other users can discover and subscribe
+                  </p>
                 </div>
               </label>
             </div>
@@ -379,7 +420,9 @@ export function FeedBuilderModal({
                 {TOPICS.map((topic) => (
                   <div key={topic.id} className="flex items-center gap-3">
                     <span className="text-base w-6 text-center shrink-0">{topic.emoji}</span>
-                    <span className="text-sm text-[var(--color-fg)] w-20 shrink-0">{topic.label}</span>
+                    <span className="text-sm text-[var(--color-fg)] w-20 shrink-0">
+                      {topic.label}
+                    </span>
                     <input
                       type="range"
                       min={0}
@@ -404,7 +447,12 @@ export function FeedBuilderModal({
                   onChange={(e) => setCustomTopic(e.target.value)}
                   placeholder="Add custom topic"
                   className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500/50 focus:outline-none"
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomTopic(); } }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCustomTopic();
+                    }
+                  }}
                 />
                 <button
                   type="button"
@@ -416,20 +464,26 @@ export function FeedBuilderModal({
                 </button>
               </div>
               {/* Custom topics display */}
-              {Object.keys(config.topics).filter((t) => !TOPICS.find((pt) => pt.id === t)).length > 0 && (
+              {Object.keys(config.topics).filter((t) => !TOPICS.find((pt) => pt.id === t)).length >
+                0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {Object.entries(config.topics)
                     .filter(([t]) => !TOPICS.find((pt) => pt.id === t))
                     .map(([t, w]) => (
-                      <span key={t} className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2.5 py-1 text-xs text-degen-400">
+                      <span
+                        key={t}
+                        className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2.5 py-1 text-xs text-degen-400"
+                      >
                         {t} {w > 0 && <span className="text-[var(--color-muted)]">({w})</span>}
                         <button
                           type="button"
-                          onClick={() => setConfig((prev) => {
-                            const next = { ...prev.topics };
-                            delete next[t];
-                            return { ...prev, topics: next };
-                          })}
+                          onClick={() =>
+                            setConfig((prev) => {
+                              const next = { ...prev.topics };
+                              delete next[t];
+                              return { ...prev, topics: next };
+                            })
+                          }
                           className="ml-0.5 text-[var(--color-muted)] hover:text-red-400"
                         >
                           ×
@@ -445,6 +499,7 @@ export function FeedBuilderModal({
           {step === 3 && (
             <div className="space-y-5">
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <label className="block text-sm font-medium text-[var(--color-fg)] mb-2">
                   Content Types
                 </label>
@@ -470,6 +525,7 @@ export function FeedBuilderModal({
               </div>
 
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <label className="block text-sm font-medium text-[var(--color-fg)] mb-2">
                   Minimum Engagement (likes + reposts)
                 </label>
@@ -480,42 +536,61 @@ export function FeedBuilderModal({
                     max={100}
                     step={5}
                     value={config.minEngagement}
-                    onChange={(e) => setConfig((prev) => ({ ...prev, minEngagement: Number(e.target.value) }))}
+                    onChange={(e) =>
+                      setConfig((prev) => ({ ...prev, minEngagement: Number(e.target.value) }))
+                    }
                     className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-white/10 accent-degen-500"
                   />
-                  <span className="text-xs font-mono text-degen-400 w-8 text-right">{config.minEngagement}</span>
+                  <span className="text-xs font-mono text-degen-400 w-8 text-right">
+                    {config.minEngagement}
+                  </span>
                 </div>
               </div>
 
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <label className="block text-sm font-medium text-[var(--color-fg)] mb-2">
                   Language
                 </label>
                 <select
                   value={config.language || ''}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, language: e.target.value || undefined }))}
+                  onChange={(e) =>
+                    setConfig((prev) => ({ ...prev, language: e.target.value || undefined }))
+                  }
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-[var(--color-fg)] focus:border-degen-500/50 focus:outline-none"
                 >
                   {LANGUAGES.map((l) => (
-                    <option key={l.code} value={l.code} className="bg-[var(--color-card)]">{l.label}</option>
+                    <option key={l.code} value={l.code} className="bg-[var(--color-card)]">
+                      {l.label}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <label className="block text-sm font-medium text-[var(--color-fg)] mb-2">
                   Exclude Words (comma separated)
                 </label>
                 <input
                   type="text"
                   value={config.excludeWords.join(', ')}
-                  onChange={(e) => setConfig((prev) => ({ ...prev, excludeWords: e.target.value.split(',').map((w) => w.trim()).filter(Boolean) }))}
+                  onChange={(e) =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      excludeWords: e.target.value
+                        .split(',')
+                        .map((w) => w.trim())
+                        .filter(Boolean),
+                    }))
+                  }
                   placeholder="politics, crypto crash, scam"
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500/50 focus:outline-none"
                 />
               </div>
 
               <div>
+                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <label className="block text-sm font-medium text-[var(--color-fg)] mb-2">
                   Exclude Topics
                 </label>
@@ -533,7 +608,8 @@ export function FeedBuilderModal({
                             : 'bg-white/5 text-[var(--color-muted)] border border-white/10 hover:text-[var(--color-muted)]'
                         }`}
                       >
-                        {excluded ? '✕ ' : ''}{topic.emoji} {topic.label}
+                        {excluded ? '✕ ' : ''}
+                        {topic.emoji} {topic.label}
                       </button>
                     );
                   })}
@@ -548,15 +624,28 @@ export function FeedBuilderModal({
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
                 <div>
                   <h3 className="text-base font-bold text-[var(--color-fg)]">{name}</h3>
-                  {description && <p className="text-xs text-[var(--color-muted)] mt-0.5">{description}</p>}
+                  {description && (
+                    <p className="text-xs text-[var(--color-muted)] mt-0.5">{description}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${isPublic ? 'bg-degen-500/10 text-degen-400' : 'bg-white/10 text-[var(--color-muted)]'}`}>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${isPublic ? 'bg-degen-500/10 text-degen-400' : 'bg-white/10 text-[var(--color-muted)]'}`}
+                  >
                     {isPublic ? '🌍 Public' : '🔒 Private'}
                   </span>
-                  <span>{config.sources.length} source{config.sources.length !== 1 ? 's' : ''}</span>
-                  <span>{Object.keys(config.topics).filter((t) => (config.topics[t] ?? 0) > 0).length} boosted topic{Object.keys(config.topics).filter((t) => (config.topics[t] ?? 0) > 0).length !== 1 ? 's' : ''}</span>
+                  <span>
+                    {config.sources.length} source{config.sources.length !== 1 ? 's' : ''}
+                  </span>
+                  <span>
+                    {Object.keys(config.topics).filter((t) => (config.topics[t] ?? 0) > 0).length}{' '}
+                    boosted topic
+                    {Object.keys(config.topics).filter((t) => (config.topics[t] ?? 0) > 0)
+                      .length !== 1
+                      ? 's'
+                      : ''}
+                  </span>
                 </div>
 
                 <div>
@@ -565,7 +654,10 @@ export function FeedBuilderModal({
                     {config.sources.map((src) => {
                       const meta = SOURCES.find((s) => s.id === src);
                       return (
-                        <span key={src} className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs text-[var(--color-muted)]">
+                        <span
+                          key={src}
+                          className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs text-[var(--color-muted)]"
+                        >
                           {meta?.emoji} {meta?.label || src}
                         </span>
                       );
@@ -573,15 +665,21 @@ export function FeedBuilderModal({
                   </div>
                 </div>
 
-                {Object.keys(config.topics).filter((t) => (config.topics[t] ?? 0) > 0).length > 0 && (
+                {Object.keys(config.topics).filter((t) => (config.topics[t] ?? 0) > 0).length >
+                  0 && (
                   <div>
-                    <p className="text-xs font-medium text-[var(--color-muted)] mb-1.5">Boosted Topics</p>
+                    <p className="text-xs font-medium text-[var(--color-muted)] mb-1.5">
+                      Boosted Topics
+                    </p>
                     <div className="flex flex-wrap gap-1.5">
                       {Object.entries(config.topics)
                         .filter(([, w]) => w > 0)
                         .sort(([, a], [, b]) => b - a)
                         .map(([t, w]) => (
-                          <span key={t} className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2 py-0.5 text-xs text-degen-400">
+                          <span
+                            key={t}
+                            className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2 py-0.5 text-xs text-degen-400"
+                          >
                             {t} <span className="text-[var(--color-muted)]">({w})</span>
                           </span>
                         ))}
@@ -592,11 +690,26 @@ export function FeedBuilderModal({
                 <div>
                   <p className="text-xs font-medium text-[var(--color-muted)] mb-1.5">Filters</p>
                   <div className="space-y-1 text-xs text-[var(--color-muted)]">
-                    <span className="block">Content: {config.contentTypes.join(', ') || 'none'}</span>
-                    {config.minEngagement > 0 && <span className="block">Min engagement: {config.minEngagement}</span>}
+                    <span className="block">
+                      Content: {config.contentTypes.join(', ') || 'none'}
+                    </span>
+                    {config.minEngagement > 0 && (
+                      <span className="block">Min engagement: {config.minEngagement}</span>
+                    )}
                     {config.language && <span className="block">Language: {config.language}</span>}
-                    {config.excludeWords.length > 0 && <span className="block">Excluded words: {config.excludeWords.slice(0, 3).join(', ')}{config.excludeWords.length > 3 ? ` +${config.excludeWords.length - 3} more` : ''}</span>}
-                    {config.excludeTopics.length > 0 && <span className="block">Excluded topics: {config.excludeTopics.join(', ')}</span>}
+                    {config.excludeWords.length > 0 && (
+                      <span className="block">
+                        Excluded words: {config.excludeWords.slice(0, 3).join(', ')}
+                        {config.excludeWords.length > 3
+                          ? ` +${config.excludeWords.length - 3} more`
+                          : ''}
+                      </span>
+                    )}
+                    {config.excludeTopics.length > 0 && (
+                      <span className="block">
+                        Excluded topics: {config.excludeTopics.join(', ')}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

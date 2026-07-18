@@ -10,7 +10,6 @@ import {
   encodeTipWithMessageData,
   getTipChainConfig,
   getTipContractAddress,
-  TIP_CONTRACT_ABI,
 } from '@degenfeed/tip-contract';
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -115,7 +114,8 @@ export async function switchToTipChain(chain: string): Promise<void> {
 export async function tipOnChain(options: TipOnChainOptions): Promise<TipResult> {
   const { chain, recipient, amount, message, communityAddress } = options;
   const provider = getProvider();
-  if (!provider) throw new Error('No Ethereum wallet detected. Install MetaMask, Rabby, or Rainbow.');
+  if (!provider)
+    throw new Error('No Ethereum wallet detected. Install MetaMask, Rabby, or Rainbow.');
 
   // 1. Get current account
   const accounts = (await provider.request({
@@ -206,11 +206,7 @@ export async function getOnChainTips(
           address: contractAddress,
           fromBlock: typeof fromBlock === 'number' ? `0x${fromBlock.toString(16)}` : '0x0',
           toBlock: toBlock === 'latest' ? 'latest' : `0x${(toBlock as number).toString(16)}`,
-          topics: [
-            tipSentTopic,
-            address.toLowerCase().padStart(66, '0x') as `0x${string}`,
-            null,
-          ],
+          topics: [tipSentTopic, address.toLowerCase().padStart(66, '0x') as `0x${string}`, null],
         },
       ],
     }) as Promise<LogEntry[]>,
@@ -221,11 +217,7 @@ export async function getOnChainTips(
           address: contractAddress,
           fromBlock: typeof fromBlock === 'number' ? `0x${fromBlock.toString(16)}` : '0x0',
           toBlock: toBlock === 'latest' ? 'latest' : `0x${(toBlock as number).toString(16)}`,
-          topics: [
-            tipSentTopic,
-            null,
-            address.toLowerCase().padStart(66, '0x') as `0x${string}`,
-          ],
+          topics: [tipSentTopic, null, address.toLowerCase().padStart(66, '0x') as `0x${string}`],
         },
       ],
     }) as Promise<LogEntry[]>,
@@ -277,8 +269,8 @@ interface LogEntry {
  * data      = abi.encode(amount, message) — dynamic string after a 32-byte uint256
  */
 function decodeTipSentEvent(log: LogEntry): OnChainTip | null {
-  const from = `0x${log.topics[1]!.slice(26)}` as `0x${string}`;
-  const to = `0x${log.topics[2]!.slice(26)}` as `0x${string}`;
+  const from = `0x${log.topics[1]?.slice(26)}` as `0x${string}`;
+  const to = `0x${log.topics[2]?.slice(26)}` as `0x${string}`;
 
   // data layout: uint256 amount (32 bytes) | offset to string (32 bytes) | string length (32 bytes) | string data
   const data = log.data.replace('0x', '');

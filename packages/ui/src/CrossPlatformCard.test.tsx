@@ -38,9 +38,7 @@ describe('CrossPlatformCard', () => {
 
   it('should show loading spinner initially', () => {
     // Keep fetch unresolved
-    vi.spyOn(globalThis, 'fetch').mockImplementation(
-      () => new Promise<Response>(() => {}),
-    );
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>(() => {}));
     render(<CrossPlatformCard walletAddress="0xabc" />);
     expect(document.querySelector('.animate-spin')).toBeDefined();
   });

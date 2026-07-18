@@ -3,12 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import {
-  registerOnPlatform,
-  platformAccountKey,
-  platformAccountsIndexKey,
-  type PlatformRegistration,
-} from './index';
+import { platformAccountKey, platformAccountsIndexKey, registerOnPlatform } from './index';
 
 describe('crossplatform-register', () => {
   describe('registerOnPlatform', () => {
@@ -51,19 +46,14 @@ describe('crossplatform-register', () => {
 
   describe('key helpers', () => {
     it('generates correct platform account key', () => {
-      const key = platformAccountKey(
-        '0x1234567890abcdef1234567890abcdef12345678',
-        'farcaster',
-      );
+      const key = platformAccountKey('0x1234567890abcdef1234567890abcdef12345678', 'farcaster');
       expect(key).toContain('platform:account');
       expect(key).toContain('0x1234567890abcdef1234567890abcdef12345678');
       expect(key).toContain('farcaster');
     });
 
     it('generates correct platform accounts index key', () => {
-      const key = platformAccountsIndexKey(
-        '0x1234567890abcdef1234567890abcdef12345678',
-      );
+      const key = platformAccountsIndexKey('0x1234567890abcdef1234567890abcdef12345678');
       expect(key).toContain('platform:accounts');
     });
 

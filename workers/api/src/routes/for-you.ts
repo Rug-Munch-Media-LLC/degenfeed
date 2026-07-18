@@ -20,38 +20,40 @@
 import type { UnifiedPost } from '@degenfeed/types';
 import { parseProtocols } from '@degenfeed/utils';
 import {
+  ALL_CATEGORIES,
   applyUserFilters,
+  buildCatchUpSummary,
   cachedJsonResponse,
+  coldStartReasons,
   collectProviderResults,
   computeAllAuthorStats,
+  computeDwellBoost,
+  computeFeedbackBoost,
   computeFreshnessMeta,
   computeTrending,
   deduplicateCrossProtocol,
   deprioritizeStaleContent,
   emptyDwellProfile,
   emptyFeedbackProfile,
+  ensureCategory,
   FEED_GENERATION_TIMEOUT_MS,
   fetchFromProviders,
   filterSuppressedPosts,
   findUnderservedCategories,
   getCategoryCounts,
-  getFeedCache,
-  getLastSync,
-  buildCatchUpSummary,
-  loadUserRankingContext,
-  predictEngagementV2,
-  coldStartReasons,
-  computeDwellBoost,
-  computeFeedbackBoost,
   getDwellWeightedCreators,
   getDwellWeightedNiches,
+  getFeedCache,
+  getLastSync,
   loadDwellProfile,
   loadFeedbackProfile,
-  recordDwellEvent,
-  recordFeedback,
+  loadUserRankingContext,
+  ProviderTimer,
+  predictEngagementV2,
   prefersEnglish,
   prepareBasePosts,
-  ProviderTimer,
+  recordDwellEvent,
+  recordFeedback,
   scoreAndRank,
   setFeedCache,
   shouldTriggerSmartRefresh,
@@ -59,26 +61,24 @@ import {
   updateLastSync,
   verifyDiversity,
   writePostsToKV,
-  ALL_CATEGORIES,
-  ensureCategory,
 } from '../feed';
+import { mergePreferences } from '../feed/feed-scorer';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession, verifySessionCookie } from '../session';
 import { DEFAULT_PROTOCOLS } from './feed';
-import { mergePreferences } from '../feed/feed-scorer';
 
 type ExecCtx = { waitUntil: (p: Promise<unknown>) => void };
 
 // ─── KV helpers ─────────────────────────────────────────────────────
 
 import {
-  emptyBehaviorProfile,
-  type UserBehaviorProfile,
-  getLearnedTopics,
   adjustTopicWeight,
   clearTopic,
+  emptyBehaviorProfile,
+  getLearnedTopics,
   isOnboardingMode,
   personalizeScore,
+  type UserBehaviorProfile,
 } from '@degenfeed/feed-core';
 
 function behaviorKey(address: string): string {
@@ -153,7 +153,7 @@ async function generateForYouFeed(
   const category = params.get('category')?.toLowerCase() ?? '';
   const cursor = Number(params.get('cursor')) || 0;
   const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
-  const cookieHeader = request.headers.get('cookie') ?? '';
+  const _cookieHeader = request.headers.get('cookie') ?? '';
   const now = Date.now();
   const feedStartTime = Date.now();
 
@@ -164,14 +164,23 @@ async function generateForYouFeed(
   // 2. Load behavior, dwell, and feedback profiles
   const behaviorProfile = address ? await readBehavior(env, address) : null;
   const dwellProfile = address ? await loadDwellProfile(env, address) : emptyDwellProfile();
-  const feedbackProfile = address ? await loadFeedbackProfile(env, address) : emptyFeedbackProfile();
+  const feedbackProfile = address
+    ? await loadFeedbackProfile(env, address)
+    : emptyFeedbackProfile();
   const isOnboarding = !behaviorProfile || isOnboardingMode(behaviorProfile);
 
   // 3. Fetch from providers
   const notices: string[] = [];
   const timer = new ProviderTimer();
   const fetchResults = await Promise.race([
-    fetchFromProviders(env, requestedProtocols, isOnboarding ? limit * 2 : limit, notices, execCtx, timer),
+    fetchFromProviders(
+      env,
+      requestedProtocols,
+      isOnboarding ? limit * 2 : limit,
+      notices,
+      execCtx,
+      timer,
+    ),
     new Promise<never>((_, reject) =>
       setTimeout(
         () => reject(new Error(`feed generation timeout after ${FEED_GENERATION_TIMEOUT_MS}ms`)),
@@ -216,17 +225,19 @@ async function generateForYouFeed(
     computedTrendingSet.add(t.topic.toLowerCase());
   }
 
-  const authorStats = computeAllAuthorStats(filtered);
+  const _authorStats = computeAllAuthorStats(filtered);
 
   // 7. Cold start: if onboarding, mix high-engagement across all categories
   let coldStartPosts: UnifiedPost[] = [];
-  let isColdStart = isOnboarding;
+  const isColdStart = isOnboarding;
 
   if (isColdStart) {
     // Sort by engagement across all categories (diverse categories enforced)
     filtered.sort((a, b) => {
-      const engA = a.metrics.likes + a.metrics.reposts * 2 + a.metrics.replies * 3 + (a.metrics.quotes ?? 0);
-      const engB = b.metrics.likes + b.metrics.reposts * 2 + b.metrics.replies * 3 + (b.metrics.quotes ?? 0);
+      const engA =
+        a.metrics.likes + a.metrics.reposts * 2 + a.metrics.replies * 3 + (a.metrics.quotes ?? 0);
+      const engB =
+        b.metrics.likes + b.metrics.reposts * 2 + b.metrics.replies * 3 + (b.metrics.quotes ?? 0);
       if (engB !== engA) return engB - engA;
       return b.createdAt - a.createdAt;
     });
@@ -248,29 +259,35 @@ async function generateForYouFeed(
 
   // 8. Score and rank
   const mergedPrefs = mergePreferences(null, userCtx.preferences, null);
-  const { ranked, topOfHour, nextCursor, debug } = await scoreAndRank(env, isColdStart ? coldStartPosts : filtered, {
-    prefs: mergedPrefs,
-    followed: userCtx.followed,
-    sort: 'scored',
-    diverse: params.get('diverse') !== 'false',
-    limit,
-    cursor,
-    direction,
-    hideLowQuality:
-      params.get('hideLowQuality') === 'true' || userCtx.preferences?.hideLowQuality === true,
-    hideLowQualityThreshold:
-      Number(params.get('hideLowQualityThreshold')) ||
-      userCtx.preferences?.hideLowQualityThreshold ||
-      1.0,
-    showOriginalContent:
-      params.get('showOriginalContent') === 'true' ||
-      userCtx.preferences?.showOriginalContent === true,
-    minEngagement: isColdStart ? 5 : (Number(params.get('minEngagement')) || userCtx.preferences?.minEngagement || 0),
-    maxPerNiche: Number(params.get('maxPerNiche')) || userCtx.preferences?.maxPerNiche || 5,
-    interleaveProtocols:
-      params.get('interleaveProtocols') !== 'false' &&
-      (userCtx.preferences?.interleaveProtocols ?? true),
-  });
+  const { ranked, topOfHour, nextCursor } = await scoreAndRank(
+    env,
+    isColdStart ? coldStartPosts : filtered,
+    {
+      prefs: mergedPrefs,
+      followed: userCtx.followed,
+      sort: 'scored',
+      diverse: params.get('diverse') !== 'false',
+      limit,
+      cursor,
+      direction,
+      hideLowQuality:
+        params.get('hideLowQuality') === 'true' || userCtx.preferences?.hideLowQuality === true,
+      hideLowQualityThreshold:
+        Number(params.get('hideLowQualityThreshold')) ||
+        userCtx.preferences?.hideLowQualityThreshold ||
+        1.0,
+      showOriginalContent:
+        params.get('showOriginalContent') === 'true' ||
+        userCtx.preferences?.showOriginalContent === true,
+      minEngagement: isColdStart
+        ? 5
+        : Number(params.get('minEngagement')) || userCtx.preferences?.minEngagement || 0,
+      maxPerNiche: Number(params.get('maxPerNiche')) || userCtx.preferences?.maxPerNiche || 5,
+      interleaveProtocols:
+        params.get('interleaveProtocols') !== 'false' &&
+        (userCtx.preferences?.interleaveProtocols ?? true),
+    },
+  );
 
   // 9. V3 personalization: engagement prediction v2 + dwell boost + feedback boost
   let finalRanked: UnifiedPost[] = ranked;
@@ -302,65 +319,67 @@ async function generateForYouFeed(
       }
     }
 
-    const personalized: Array<UnifiedPost & { _personalizationScore: number }> = ranked.map((post) => {
-      // A. Legacy personalizeScore (backward compat)
-      let legacyBoost = 0;
-      let legacyReasons: string[] = [];
-      if (behaviorProfile) {
-        const result = personalizeScore(post, behaviorProfile);
-        legacyBoost = result.boost;
-        legacyReasons = result.reasons;
-      }
+    const personalized: Array<UnifiedPost & { _personalizationScore: number }> = ranked.map(
+      (post) => {
+        // A. Legacy personalizeScore (backward compat)
+        let legacyBoost = 0;
+        let legacyReasons: string[] = [];
+        if (behaviorProfile) {
+          const result = personalizeScore(post, behaviorProfile);
+          legacyBoost = result.boost;
+          legacyReasons = result.reasons;
+        }
 
-      // B. Engagement prediction v2
-      const v2Pred = predictEngagementV2({
-        post,
-        userNiches,
-        userCreators: userCtx.followed,
-        userContentTypes,
-        dwellWeightedNiches,
-        dwellWeightedCreators,
-        feedbackProfile,
-        behaviorProfile: undefined,
-        followedCreators: userCtx.followed,
-        now,
-      });
+        // B. Engagement prediction v2
+        const v2Pred = predictEngagementV2({
+          post,
+          userNiches,
+          userCreators: userCtx.followed,
+          userContentTypes,
+          dwellWeightedNiches,
+          dwellWeightedCreators,
+          feedbackProfile,
+          behaviorProfile: undefined,
+          followedCreators: userCtx.followed,
+          now,
+        });
 
-      // C. Dwell boost
-      const dwellResult = computeDwellBoost(post, dwellProfile);
+        // C. Dwell boost
+        const dwellResult = computeDwellBoost(post, dwellProfile);
 
-      // D. Feedback boost
-      const feedbackResult = computeFeedbackBoost(post, feedbackProfile);
+        // D. Feedback boost
+        const feedbackResult = computeFeedbackBoost(post, feedbackProfile);
 
-      // Combine: legacy + v2 prediction + dwell + feedback
-      const combinedBoost =
-        (legacyBoost * 0.15) + // legacy weight
-        (v2Pred.normalizedScore * 0.45) + // v2 prediction weight
-        ((dwellResult.multiplier - 1.0) * 0.25) + // dwell weight (normalize to 0-1 range)
-        ((feedbackResult.multiplier - 1.0) * 0.15); // feedback weight
+        // Combine: legacy + v2 prediction + dwell + feedback
+        const combinedBoost =
+          legacyBoost * 0.15 + // legacy weight
+          v2Pred.normalizedScore * 0.45 + // v2 prediction weight
+          (dwellResult.multiplier - 1.0) * 0.25 + // dwell weight (normalize to 0-1 range)
+          (feedbackResult.multiplier - 1.0) * 0.15; // feedback weight
 
-      // Collect algorithm reasons
-      const reasons = [
-        ...v2Pred.algorithmReasons,
-        ...dwellResult.factors,
-        ...feedbackResult.factors,
-        ...legacyReasons,
-      ];
-      // Dedup reasons
-      const uniqueReasons = [...new Set(reasons)];
-      algorithmReasons.set(post.id, uniqueReasons.length > 0 ? uniqueReasons : []);
+        // Collect algorithm reasons
+        const reasons = [
+          ...v2Pred.algorithmReasons,
+          ...dwellResult.factors,
+          ...feedbackResult.factors,
+          ...legacyReasons,
+        ];
+        // Dedup reasons
+        const uniqueReasons = [...new Set(reasons)];
+        algorithmReasons.set(post.id, uniqueReasons.length > 0 ? uniqueReasons : []);
 
-      return {
-        ...post,
-        _personalizationScore: combinedBoost,
-      };
-    });
+        return {
+          ...post,
+          _personalizationScore: combinedBoost,
+        };
+      },
+    );
 
     // Sort by combined score
     personalized.sort((a, b) => {
       const baseA = a.score?.total ?? 0;
       const baseB = b.score?.total ?? 0;
-      return (baseB + b._personalizationScore * 10) - (baseA + a._personalizationScore * 10);
+      return baseB + b._personalizationScore * 10 - (baseA + a._personalizationScore * 10);
     });
 
     personalizationApplied = true;
@@ -452,7 +471,7 @@ async function generateForYouFeed(
         urlDedup: dedupResult.urlDedup,
         totalRemoved: dedupResult.deduped,
       },
-      catchUp: catchUp && catchUp.triggered
+      catchUp: catchUp?.triggered
         ? {
             triggered: true,
             awayMinutes: catchUp.awayMinutes,
@@ -537,9 +556,7 @@ export async function handleForYouFeed(
     }
     if (cacheResult.type === 'stale' && cacheResult.entry) {
       if (execCtx?.waitUntil) {
-        execCtx.waitUntil(
-          generateForYouFeed(request, env, execCtx, userId).catch(() => {}),
-        );
+        execCtx.waitUntil(generateForYouFeed(request, env, execCtx, userId).catch(() => {}));
       } else {
         void generateForYouFeed(request, env, execCtx, userId);
       }

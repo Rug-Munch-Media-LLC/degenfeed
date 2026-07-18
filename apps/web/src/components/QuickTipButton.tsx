@@ -35,7 +35,7 @@ export function QuickTipButton({
   onTipSent,
   subtle = false,
 }: QuickTipButtonProps) {
-  const { state, createTip } = useTip();
+  const { createTip } = useTip();
   const { account, connect: connectWallet } = useWeb3();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);

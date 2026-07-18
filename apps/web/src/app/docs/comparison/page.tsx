@@ -228,7 +228,9 @@ export default function ComparisonPage() {
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">Multi-protocol, not single-platform.</strong>{' '}
+                  <strong className="text-[var(--color-muted)]">
+                    Multi-protocol, not single-platform.
+                  </strong>{' '}
                   One app to read and post across Nostr, Farcaster, Lens, Bluesky, Mastodon, and
                   more.
                 </span>
@@ -236,8 +238,8 @@ export default function ComparisonPage() {
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">Web3-native.</strong> Wallet sign-in, crypto
-                  tipping, on-chain identity. No credit card required.
+                  <strong className="text-[var(--color-muted)]">Web3-native.</strong> Wallet
+                  sign-in, crypto tipping, on-chain identity. No credit card required.
                 </span>
               </li>
               <li className="flex gap-2">
@@ -250,8 +252,8 @@ export default function ComparisonPage() {
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">Open source.</strong> AGPL-3.0 licensed.
-                  Self-host your own instance.
+                  <strong className="text-[var(--color-muted)]">Open source.</strong> AGPL-3.0
+                  licensed. Self-host your own instance.
                 </span>
               </li>
             </ul>
@@ -288,29 +290,31 @@ export default function ComparisonPage() {
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">Multi-chain, not just Optimism.</strong>{' '}
+                  <strong className="text-[var(--color-muted)]">
+                    Multi-chain, not just Optimism.
+                  </strong>{' '}
                   DegenFeed works with Solana, EVM chains, and more.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">AI-powered ranking.</strong> Transparent
-                  7-factor scoring vs Farcaster&apos;s chronological or simple trending.
+                  <strong className="text-[var(--color-muted)]">AI-powered ranking.</strong>{' '}
+                  Transparent 7-factor scoring vs Farcaster&apos;s chronological or simple trending.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">Own your infrastructure.</strong> Self-host
-                  DegenFeed. Farcaster requires running a Hub or relying on public Hubs.
+                  <strong className="text-[var(--color-muted)]">Own your infrastructure.</strong>{' '}
+                  Self-host DegenFeed. Farcaster requires running a Hub or relying on public Hubs.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">More protocols.</strong> DegenFeed reads 10
-                  protocols including RSS, Reddit, and Threads — not just Farcaster.
+                  <strong className="text-[var(--color-muted)]">More protocols.</strong> DegenFeed
+                  reads 10 protocols including RSS, Reddit, and Threads — not just Farcaster.
                 </span>
               </li>
             </ul>
@@ -349,29 +353,33 @@ export default function ComparisonPage() {
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">Cross-protocol bridging.</strong> Post to Lens
-                  AND Nostr AND Farcaster simultaneously. Lens is protocol-locked.
+                  <strong className="text-[var(--color-muted)]">Cross-protocol bridging.</strong>{' '}
+                  Post to Lens AND Nostr AND Farcaster simultaneously. Lens is protocol-locked.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">YouTube/PeerTube integration.</strong> DegenFeed
-                  pulls video from RSS and YouTube channels into your feed.
+                  <strong className="text-[var(--color-muted)]">
+                    YouTube/PeerTube integration.
+                  </strong>{' '}
+                  DegenFeed pulls video from RSS and YouTube channels into your feed.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">No gas fees for basic actions.</strong> Lens
-                  requires MATIC for some on-chain operations.
+                  <strong className="text-[var(--color-muted)]">
+                    No gas fees for basic actions.
+                  </strong>{' '}
+                  Lens requires MATIC for some on-chain operations.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">Better discovery.</strong> AI-ranked feed with
-                  trending categories vs Lens&apos;s timeline.
+                  <strong className="text-[var(--color-muted)]">Better discovery.</strong> AI-ranked
+                  feed with trending categories vs Lens&apos;s timeline.
                 </span>
               </li>
             </ul>
@@ -410,29 +418,30 @@ export default function ComparisonPage() {
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">More protocols.</strong> DegenFeed supports 10
-                  protocols. Bluesky is one protocol (AT Protocol) with bridges.
+                  <strong className="text-[var(--color-muted)]">More protocols.</strong> DegenFeed
+                  supports 10 protocols. Bluesky is one protocol (AT Protocol) with bridges.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">Crypto tipping.</strong> Send ETH, SOL, or USDC
-                  with on-chain transactions. Bluesky has no native payments.
+                  <strong className="text-[var(--color-muted)]">Crypto tipping.</strong> Send ETH,
+                  SOL, or USDC with on-chain transactions. Bluesky has no native payments.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">Communities & DAOs.</strong> Create communities
-                  with governance features. Bluesky has Starter Packs but no group spaces.
+                  <strong className="text-[var(--color-muted)]">Communities & DAOs.</strong> Create
+                  communities with governance features. Bluesky has Starter Packs but no group
+                  spaces.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
                 <span>
-                  <strong className="text-[var(--color-muted)]">Fediverse integration.</strong> Full ActivityPub
-                  federation via GotoSocial. Bluesky bridges are one-directional.
+                  <strong className="text-[var(--color-muted)]">Fediverse integration.</strong> Full
+                  ActivityPub federation via GotoSocial. Bluesky bridges are one-directional.
                 </span>
               </li>
             </ul>

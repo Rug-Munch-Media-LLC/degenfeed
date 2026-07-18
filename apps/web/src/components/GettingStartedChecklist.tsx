@@ -199,11 +199,13 @@ export function GettingStartedChecklist({
               />
             </svg>
           </div>
-          <h3 className="text-lg font-bold" style={{color: 'var(--color-fg)'}}>You&apos;re all set!</h3>
-          <p className="mt-1 text-sm" style={{color: 'var(--color-muted)'}}>
+          <h3 className="text-lg font-bold" style={{ color: 'var(--color-fg)' }}>
+            You&apos;re all set!
+          </h3>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-muted)' }}>
             You&apos;ve completed the getting started checklist.
           </p>
-          <p className="mt-4 text-xs" style={{color: 'var(--color-muted)', opacity: 0.7}}>
+          <p className="mt-4 text-xs" style={{ color: 'var(--color-muted)', opacity: 0.7 }}>
             Tip: The more you engage, the better your For You feed becomes.
           </p>
         </div>
@@ -249,15 +251,22 @@ export function GettingStartedChecklist({
                   </linearGradient>
                 </defs>
               </svg>
-              <span className="relative text-lg font-bold" style={{color: 'var(--color-fg)'}}>{percent}%</span>
+              <span className="relative text-lg font-bold" style={{ color: 'var(--color-fg)' }}>
+                {percent}%
+              </span>
             </div>
             <div>
-              <h2 className="text-base font-bold" style={{color: 'var(--color-fg)'}}>Getting Started</h2>
-              <p className="text-xs" style={{color: 'var(--color-muted)'}}>
+              <h2 className="text-base font-bold" style={{ color: 'var(--color-fg)' }}>
+                Getting Started
+              </h2>
+              <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
                 {completedCount} of {totalCount} tasks complete
               </p>
               {!compact && (
-                <p className="mt-1 text-[11px]" style={{color: 'var(--color-muted)', opacity: 0.7}}>
+                <p
+                  className="mt-1 text-[11px]"
+                  style={{ color: 'var(--color-muted)', opacity: 0.7 }}
+                >
                   Complete these tasks to unlock the full DegenFeed experience.
                 </p>
               )}
@@ -349,7 +358,8 @@ export function GettingStartedChecklist({
                       height="14"
                       viewBox="0 0 16 16"
                       fill="none"
-                      className="mt-1 shrink-0 transition-transform group-hover:translate-x-0.5" style={{color: 'var(--color-muted)', opacity: 0.3}}
+                      className="mt-1 shrink-0 transition-transform group-hover:translate-x-0.5"
+                      style={{ color: 'var(--color-muted)', opacity: 0.3 }}
                       aria-hidden="true"
                     >
                       <path
@@ -368,7 +378,10 @@ export function GettingStartedChecklist({
 
           {/* ── Compact footer ── */}
           {!compact && (
-            <p className="mt-4 text-center text-[10px]" style={{color: 'var(--color-muted)', opacity: 0.3}}>
+            <p
+              className="mt-4 text-center text-[10px]"
+              style={{ color: 'var(--color-muted)', opacity: 0.3 }}
+            >
               Tasks auto-detect when completed. You can also manually check them off.
             </p>
           )}

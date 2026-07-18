@@ -26,10 +26,11 @@ describe('handleHomeFeed', () => {
   it('should return 200 with data array and meta', async () => {
     const { handleHomeFeed } = await import('../routes/feed');
     const req = new Request('http://localhost/api/feed/home?limit=10');
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const env = {} as any;
     const res = await handleHomeFeed(req, env);
     expect(res.status).toBe(200);
-    const body = await res.json() as { data?: unknown[]; meta?: Record<string, unknown> };
+    const body = (await res.json()) as { data?: unknown[]; meta?: Record<string, unknown> };
     expect(Array.isArray(body.data)).toBe(true);
     expect(body.meta).toBeDefined();
   });
@@ -37,6 +38,7 @@ describe('handleHomeFeed', () => {
   it('should parse protocol query parameter', async () => {
     const { handleHomeFeed } = await import('../routes/feed');
     const req = new Request('http://localhost/api/feed/home?protocols=nostr,farcaster');
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const env = {} as any;
     const res = await handleHomeFeed(req, env);
     expect(res.status).toBe(200);
@@ -45,6 +47,7 @@ describe('handleHomeFeed', () => {
   it('should handle missing query parameters gracefully', async () => {
     const { handleHomeFeed } = await import('../routes/feed');
     const req = new Request('http://localhost/api/feed/home');
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const env = {} as any;
     const res = await handleHomeFeed(req, env);
     expect(res.status).toBe(200);
@@ -55,6 +58,7 @@ describe('handleFeedHealth', () => {
   it('should return 200 with health status', async () => {
     const { handleFeedHealth } = await import('../routes/feed-misc');
     const req = new Request('http://localhost/api/feed/health');
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const env = {} as any;
     const res = await handleFeedHealth(req, env);
     expect(res.status).toBe(200);

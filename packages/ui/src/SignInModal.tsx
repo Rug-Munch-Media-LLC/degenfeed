@@ -124,8 +124,12 @@ function NostrForm({
         >
           <span className="text-lg">🧩</span>
           <div>
-            <div className="text-sm font-semibold text-[var(--color-fg)]">Use browser extension</div>
-            <div className="text-xs text-[var(--color-muted)]">Alby, nos2x, or any NIP-07 signer</div>
+            <div className="text-sm font-semibold text-[var(--color-fg)]">
+              Use browser extension
+            </div>
+            <div className="text-xs text-[var(--color-muted)]">
+              Alby, nos2x, or any NIP-07 signer
+            </div>
           </div>
         </button>
         <button
@@ -152,7 +156,8 @@ function NostrForm({
           No NIP-07 extension detected. Install{' '}
           <a
             href="https://getalby.com"
-            target="_blank" rel="noopener noreferrer"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-degen-400 underline"
           >
             Alby
@@ -160,7 +165,8 @@ function NostrForm({
           or{' '}
           <a
             href="https://github.com/fiatjaf/nos2x"
-            target="_blank" rel="noopener noreferrer"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-degen-400 underline"
           >
             nos2x
@@ -181,7 +187,9 @@ function NostrForm({
   return (
     <div className="space-y-3">
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">nsec (secret key)</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+          nsec (secret key)
+        </span>
         <input
           type="password"
           value={nsec}
@@ -250,8 +258,12 @@ function FarcasterForm({
         >
           <span className="text-lg">🔐</span>
           <div>
-            <div className="text-sm font-semibold text-[var(--color-fg)]">Enter FID + signer key</div>
-            <div className="text-xs text-[var(--color-muted)]">For self-custody Farcaster signers</div>
+            <div className="text-sm font-semibold text-[var(--color-fg)]">
+              Enter FID + signer key
+            </div>
+            <div className="text-xs text-[var(--color-muted)]">
+              For self-custody Farcaster signers
+            </div>
           </div>
         </button>
         <button
@@ -261,8 +273,12 @@ function FarcasterForm({
         >
           <span className="text-lg">🔗</span>
           <div>
-            <div className="text-sm font-semibold text-[var(--color-fg)]">Sign in with Warpcast</div>
-            <div className="text-xs text-[var(--color-muted)]">Use your Warpcast account via OAuth</div>
+            <div className="text-sm font-semibold text-[var(--color-fg)]">
+              Sign in with Warpcast
+            </div>
+            <div className="text-xs text-[var(--color-muted)]">
+              Use your Warpcast account via OAuth
+            </div>
           </div>
         </button>
         <button
@@ -289,7 +305,9 @@ function FarcasterForm({
         />
       </label>
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">FID (numeric)</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+          FID (numeric)
+        </span>
         <input
           type="text"
           value={fid}
@@ -366,7 +384,9 @@ function BlueskyForm({
         />
       </label>
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">App Password</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+          App Password
+        </span>
         <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
@@ -385,7 +405,8 @@ function BlueskyForm({
         </div>
         <a
           href="https://bsky.app/settings/app-passwords"
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
+          rel="noopener noreferrer"
           className="text-[10px] text-degen-400 hover:underline"
         >
           Create one at bsky.app/settings/app-passwords →
@@ -480,7 +501,9 @@ function MastodonForm({
   return (
     <div className="space-y-3">
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Instance URL</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+          Instance URL
+        </span>
         <input
           type="url"
           value={instance}
@@ -498,7 +521,9 @@ function MastodonForm({
         OAuth with {instance.replace(/^https?:\/\//, '')}
       </button>
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Or paste access token</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+          Or paste access token
+        </span>
         <input
           type="password"
           value={accessToken}
@@ -574,7 +599,9 @@ function WalletSection({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">Web3 Wallets</h3>
+      <h3 className="text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+        Web3 Wallets
+      </h3>
 
       {/* Connected wallet display */}
       {walletAddress ? (
@@ -611,7 +638,9 @@ function WalletSection({
                   )}
                 </div>
                 {w.detected && (
-                  <span className="text-xs text-[var(--color-muted)] group-hover:text-[var(--color-muted)]">Connect →</span>
+                  <span className="text-xs text-[var(--color-muted)] group-hover:text-[var(--color-muted)]">
+                    Connect →
+                  </span>
                 )}
               </button>
             );

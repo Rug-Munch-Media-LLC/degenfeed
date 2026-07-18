@@ -90,10 +90,7 @@ export async function syncBlockedFromServer(): Promise<void> {
 
     // Merge server muted communities into local IndexedDB
     for (const entry of data.mutedCommunities || []) {
-      const existing = await db.get('muted-communities', [
-        entry.communityId,
-        'self',
-      ]);
+      const existing = await db.get('muted-communities', [entry.communityId, 'self']);
       if (!existing) {
         await db.put('muted-communities', {
           communityId: entry.communityId,
@@ -107,10 +104,7 @@ export async function syncBlockedFromServer(): Promise<void> {
 
     // Merge server blocked communities into local IndexedDB
     for (const entry of data.blockedCommunities || []) {
-      const existing = await db.get('blocked-communities', [
-        entry.communityId,
-        'self',
-      ]);
+      const existing = await db.get('blocked-communities', [entry.communityId, 'self']);
       if (!existing) {
         await db.put('blocked-communities', {
           communityId: entry.communityId,

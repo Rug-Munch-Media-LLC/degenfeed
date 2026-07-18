@@ -103,7 +103,9 @@ export function TranslationPreview({
             </span>
             <span className="text-[10px] text-gray-600">{translated.originalLength} chars</span>
           </div>
-          <p className="whitespace-pre-wrap break-words text-sm text-[var(--color-muted)]">{originalContent}</p>
+          <p className="whitespace-pre-wrap break-words text-sm text-[var(--color-muted)]">
+            {originalContent}
+          </p>
         </div>
 
         {/* ── Translated panel ── */}

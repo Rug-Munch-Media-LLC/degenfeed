@@ -64,28 +64,58 @@ export const FEED_PRESETS: FeedPreset[] = [
     name: 'TikTok Mode',
     description: 'Video-forward, rapid-fire content. Max freshness, low creator diversity.',
     icon: '🎵',
-    config: { freshnessPreference: 90, creatorDiversity: 2, exploreRatio: 60, algorithmTransparent: false, recencyWeight: 2.5, engagementWeight: 3.0, contentTypes: { posts: 20, images: 30, videos: 100, links: 10, threads: 10 } },
+    config: {
+      freshnessPreference: 90,
+      creatorDiversity: 2,
+      exploreRatio: 60,
+      algorithmTransparent: false,
+      recencyWeight: 2.5,
+      engagementWeight: 3.0,
+      contentTypes: { posts: 20, images: 30, videos: 100, links: 10, threads: 10 },
+    },
   },
   {
     id: 'twitter-mode',
     name: 'Twitter Mode',
     description: 'Text-forward, chronological-leaning. Balanced discovery.',
     icon: '🐦',
-    config: { freshnessPreference: 70, creatorDiversity: 5, exploreRatio: 30, algorithmTransparent: true, recencyWeight: 2.0, engagementWeight: 1.5, contentTypes: { posts: 100, images: 40, videos: 20, links: 30, threads: 40 } },
+    config: {
+      freshnessPreference: 70,
+      creatorDiversity: 5,
+      exploreRatio: 30,
+      algorithmTransparent: true,
+      recencyWeight: 2.0,
+      engagementWeight: 1.5,
+      contentTypes: { posts: 100, images: 40, videos: 20, links: 30, threads: 40 },
+    },
   },
   {
     id: 'discover-mode',
     name: 'Discover Mode',
     description: 'Explore-heavy. Maximize new creators, topics, and content types.',
     icon: '✨',
-    config: { freshnessPreference: 40, creatorDiversity: 10, exploreRatio: 90, algorithmTransparent: true, recencyWeight: 1.0, engagementWeight: 2.0 },
+    config: {
+      freshnessPreference: 40,
+      creatorDiversity: 10,
+      exploreRatio: 90,
+      algorithmTransparent: true,
+      recencyWeight: 1.0,
+      engagementWeight: 2.0,
+    },
   },
   {
     id: 'focus-mode',
     name: 'Focus Mode',
     description: 'Followed creators only. Minimum noise, maximum signal.',
     icon: '🎯',
-    config: { freshnessPreference: 30, creatorDiversity: 3, exploreRatio: 5, algorithmTransparent: false, recencyWeight: 1.5, engagementWeight: 2.5 },
+    config: {
+      freshnessPreference: 30,
+      creatorDiversity: 3,
+      exploreRatio: 5,
+      algorithmTransparent: false,
+      recencyWeight: 1.5,
+      engagementWeight: 2.5,
+    },
   },
 ];
 
@@ -577,7 +607,9 @@ export function FeedTuner({
   const [mixSavedToast, setMixSavedToast] = useState(false);
   const [mixCollapsed, setMixCollapsed] = useState(false);
   const [qualityCollapsed, setQualityCollapsed] = useState(false);
-  const [localAlgorithmTransparent, setLocalAlgorithmTransparent] = useState(algorithmTransparent ?? false);
+  const [localAlgorithmTransparent, setLocalAlgorithmTransparent] = useState(
+    algorithmTransparent ?? false,
+  );
   const [localFreshness, setLocalFreshness] = useState(freshnessPreference ?? 50);
   const [localCreatorDiversity, setLocalCreatorDiversity] = useState(creatorDiversity ?? 5);
   const [localExploreRatio, setLocalExploreRatio] = useState(exploreRatio ?? 30);
@@ -739,7 +771,12 @@ export function FeedTuner({
     onFreshnessChange?.(50);
     onCreatorDiversityChange?.(5);
     onExploreRatioChange?.(30);
-  }, [onAlgorithmTransparencyChange, onFreshnessChange, onCreatorDiversityChange, onExploreRatioChange]);
+  }, [
+    onAlgorithmTransparencyChange,
+    onFreshnessChange,
+    onCreatorDiversityChange,
+    onExploreRatioChange,
+  ]);
 
   // ─── Immediate mix persist ─────────────────────────────────
 
@@ -1185,7 +1222,9 @@ export function FeedTuner({
 
                             {/* Verified only */}
                             <label className="flex items-center justify-between cursor-pointer">
-                              <span className="text-[10px] text-[var(--color-muted)]">Verified only</span>
+                              <span className="text-[10px] text-[var(--color-muted)]">
+                                Verified only
+                              </span>
                               <input
                                 type="checkbox"
                                 checked={pw.verifiedOnly}
@@ -1210,9 +1249,7 @@ export function FeedTuner({
             <div className="space-y-5">
               {/* Feed Presets */}
               <div>
-                <p className="text-sm font-semibold text-[var(--color-fg)] mb-1">
-                  🎮 Feed Presets
-                </p>
+                <p className="text-sm font-semibold text-[var(--color-fg)] mb-1">🎮 Feed Presets</p>
                 <p className="text-[10px] text-[var(--color-muted)] mb-2">
                   One-click feed personalities — overrides all settings below
                 </p>
@@ -1416,7 +1453,9 @@ export function FeedTuner({
                   </div>
                   <div className="flex justify-between">
                     <span>Creator cap</span>
-                    <span className="text-[var(--color-fg)] font-medium">{localCreatorDiversity}/page</span>
+                    <span className="text-[var(--color-fg)] font-medium">
+                      {localCreatorDiversity}/page
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Explore ratio</span>
@@ -1426,7 +1465,8 @@ export function FeedTuner({
                     <div className="flex justify-between">
                       <span>Preset</span>
                       <span className="text-degen-400 font-medium">
-                        {(feedPresets ?? FEED_PRESETS).find((p) => p.id === localActivePreset)?.name ?? localActivePreset}
+                        {(feedPresets ?? FEED_PRESETS).find((p) => p.id === localActivePreset)
+                          ?.name ?? localActivePreset}
                       </span>
                     </div>
                   )}
@@ -1493,7 +1533,9 @@ export function FeedTuner({
                             )}
                           </p>
                           {mix.description && (
-                            <p className="text-[10px] text-[var(--color-muted)] truncate">{mix.description}</p>
+                            <p className="text-[10px] text-[var(--color-muted)] truncate">
+                              {mix.description}
+                            </p>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 ml-2 shrink-0">
@@ -1551,7 +1593,9 @@ export function FeedTuner({
                         preset: localActivePreset,
                       },
                     };
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const blob = new Blob([JSON.stringify(data, null, 2)], {
+                      type: 'application/json',
+                    });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -1605,9 +1649,17 @@ export function FeedTuner({
                               setLocalActivePreset(data.algorithm.preset);
                             }
                           }
-                          window.dispatchEvent(new CustomEvent('df-toast', { detail: { kind: 'success', message: 'Config imported!' } }));
+                          window.dispatchEvent(
+                            new CustomEvent('df-toast', {
+                              detail: { kind: 'success', message: 'Config imported!' },
+                            }),
+                          );
                         } catch {
-                          window.dispatchEvent(new CustomEvent('df-toast', { detail: { kind: 'error', message: 'Invalid config file' } }));
+                          window.dispatchEvent(
+                            new CustomEvent('df-toast', {
+                              detail: { kind: 'error', message: 'Invalid config file' },
+                            }),
+                          );
                         }
                       };
                       reader.readAsText(file);
@@ -1651,7 +1703,9 @@ export function FeedTuner({
                       {post.icon} {post.protocol}
                     </span>
                   </div>
-                  <p className="text-[10px] text-[var(--color-muted)] line-clamp-2">{post.content}</p>
+                  <p className="text-[10px] text-[var(--color-muted)] line-clamp-2">
+                    {post.content}
+                  </p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[9px] text-[var(--color-muted)]">❤️ {post.likes}</span>
                   </div>
@@ -1665,10 +1719,20 @@ export function FeedTuner({
         <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] px-5 py-4">
           <button
             type="button"
-            onClick={activeTab === 'topics' ? onReset : activeTab === 'algorithm' ? handleAlgorithmReset : handleMixReset}
+            onClick={
+              activeTab === 'topics'
+                ? onReset
+                : activeTab === 'algorithm'
+                  ? handleAlgorithmReset
+                  : handleMixReset
+            }
             className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           >
-            {activeTab === 'topics' ? 'Reset topics' : activeTab === 'algorithm' ? 'Reset algorithm' : 'Reset mix'}
+            {activeTab === 'topics'
+              ? 'Reset topics'
+              : activeTab === 'algorithm'
+                ? 'Reset algorithm'
+                : 'Reset mix'}
           </button>
           <div className="flex items-center gap-2">
             <button

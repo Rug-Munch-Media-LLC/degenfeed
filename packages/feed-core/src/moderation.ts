@@ -139,7 +139,10 @@ export function checkText(text: string): ModerationCheckResult {
     if (re.test(text)) {
       const match = text.match(re);
       const label = match
-        ? `spam-pattern:${match[0]?.slice(0, 30).toLowerCase().replace(/[^a-z0-9]/g, '-')}`
+        ? `spam-pattern:${match[0]
+            ?.slice(0, 30)
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '-')}`
         : 'spam-pattern';
       reasons.push(label);
       flag = true;
@@ -153,9 +156,6 @@ export function checkText(text: string): ModerationCheckResult {
  * Check if a user is banned. Reads from the bans KV store.
  * Stub for dependency injection — the actual KV read is done in the worker.
  */
-export function isUserBanned(
-  userId: string,
-  bannedUsers: Set<string>,
-): boolean {
+export function isUserBanned(userId: string, bannedUsers: Set<string>): boolean {
   return bannedUsers.has(userId) || bannedUsers.has(userId.toLowerCase());
 }

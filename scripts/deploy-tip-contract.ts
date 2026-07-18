@@ -22,7 +22,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createWalletClient, http, publicActions } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { base, optimism, arbitrum } from 'viem/chains';
+import { arbitrum, base, optimism } from 'viem/chains';
 
 // ─── Config ───────────────────────────────────────────────────────────────
 
@@ -137,7 +137,9 @@ async function deployToNetwork(
   console.log(`  Balance:  ${formatEther(balance)} ${config.chain.nativeCurrency.symbol}\n`);
 
   if (balance < parseEther('0.001')) {
-    console.error(`❌ Insufficient balance on ${config.name}. Need at least 0.001 ${config.chain.nativeCurrency.symbol}`);
+    console.error(
+      `❌ Insufficient balance on ${config.name}. Need at least 0.001 ${config.chain.nativeCurrency.symbol}`,
+    );
     return;
   }
 
@@ -177,7 +179,7 @@ async function deployToNetwork(
 
   console.log(`  Deploying contract...`);
 
-  let txHash: string;
+  let _txHash: string;
   let contractAddress: string;
 
   try {
@@ -187,7 +189,7 @@ async function deployToNetwork(
       bytecode: bytecode as `0x${string}`,
     });
 
-    txHash = hash;
+    _txHash = hash;
     console.log(`  Tx submitted: ${config.explorer}/tx/${hash}`);
 
     // Wait for transaction receipt
@@ -288,7 +290,7 @@ async function verifyContract(
   apiUrl: string,
   apiKey: string,
   contractAddress: string,
-  networkKey: string,
+  _networkKey: string,
 ): Promise<boolean> {
   // Read the Solidity source
   const sourcePath = resolve(
@@ -343,14 +345,14 @@ function updateAddressBook(networkKey: string, address: `0x${string}`) {
     const content = readFileSync(ADDRESS_BOOK_PATH, 'utf-8');
 
     // Find and replace the address for the given network
-    const regex = new RegExp(
-      `(${networkKey}:\\s*)'[^']*'`,
-    );
+    const regex = new RegExp(`(${networkKey}:\\s*)'[^']*'`);
     const updated = content.replace(regex, `$1'${address}'`);
 
     if (updated !== content) {
       writeFileSync(ADDRESS_BOOK_PATH, updated, 'utf-8');
-      console.log(`  📝 Updated TIP_CONTRACT_ADDRESSES.${networkKey} in packages/tip-contract/src/index.ts`);
+      console.log(
+        `  📝 Updated TIP_CONTRACT_ADDRESSES.${networkKey} in packages/tip-contract/src/index.ts`,
+      );
     } else {
       console.warn(`  ⚠️  Could not find ${networkKey} entry in address book. Update manually.`);
     }

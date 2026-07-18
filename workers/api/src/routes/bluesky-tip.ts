@@ -13,12 +13,7 @@
  */
 
 import { type Env, jsonResponse } from '../index';
-import {
-  hasSuspiciousPayload,
-  isValidAmount,
-  sanitizeString,
-  validateBodySize,
-} from '../sanitize';
+import { hasSuspiciousPayload, isValidAmount, sanitizeString, validateBodySize } from '../sanitize';
 import { recordUnifiedTip } from './unified-tip';
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -91,7 +86,10 @@ async function saveAggregate(env: Env, agg: BlueskyTipAggregate): Promise<void> 
       expirationTtl: TTL_SECONDS,
     });
   } catch (err) {
-    console.warn('[bluesky-tip] failed to save aggregate:', err instanceof Error ? err.message : err);
+    console.warn(
+      '[bluesky-tip] failed to save aggregate:',
+      err instanceof Error ? err.message : err,
+    );
   }
 }
 
@@ -112,7 +110,10 @@ async function updateLeaderboard(env: Env, entry: BlueskyLeaderboardEntry): Prom
       expirationTtl: TTL_SECONDS,
     });
   } catch (err) {
-    console.warn('[bluesky-tip] leaderboard update failed:', err instanceof Error ? err.message : err);
+    console.warn(
+      '[bluesky-tip] leaderboard update failed:',
+      err instanceof Error ? err.message : err,
+    );
   }
 }
 
@@ -207,11 +208,9 @@ export async function recordBlueskyTip(
       };
       const existingRaw = await env.CACHE?.get(notifKey);
       const existingNotifs: unknown[] = existingRaw ? JSON.parse(existingRaw) : [];
-      await env.CACHE?.put(
-        notifKey,
-        JSON.stringify([tipNotif, ...existingNotifs].slice(0, 100)),
-        { expirationTtl: 60 * 60 * 24 * 30 },
-      );
+      await env.CACHE?.put(notifKey, JSON.stringify([tipNotif, ...existingNotifs].slice(0, 100)), {
+        expirationTtl: 60 * 60 * 24 * 30,
+      });
     } catch (kvErr) {
       console.warn('[bluesky-tip] failed to store notification:', String(kvErr));
     }

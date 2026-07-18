@@ -160,7 +160,7 @@ interface FlatItem {
 function SearchIcon({ loading }: { loading: boolean }) {
   if (loading) {
     return (
-      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <circle
           className="opacity-25"
           cx="12"

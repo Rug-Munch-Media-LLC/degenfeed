@@ -56,17 +56,20 @@ export interface CrossPlatformSetupProps {
 
 // ─── Platform metadata ────────────────────────────────────────────────
 
-const PREMIUM_PLATFORMS = new Set<RegistrationPlatform>(['farcaster', 'lens', 'bluesky']);
-const FREE_PLATFORMS = new Set<RegistrationPlatform>(['mastodon', 'nostr']);
+const _PREMIUM_PLATFORMS = new Set<RegistrationPlatform>(['farcaster', 'lens', 'bluesky']);
+const _FREE_PLATFORMS = new Set<RegistrationPlatform>(['mastodon', 'nostr']);
 
-const PLATFORM_META: Record<RegistrationPlatform, {
-  label: string;
-  icon: string;
-  color: string;
-  description: string;
-  fee: string;
-  requiresPremium: boolean;
-}> = {
+const PLATFORM_META: Record<
+  RegistrationPlatform,
+  {
+    label: string;
+    icon: string;
+    color: string;
+    description: string;
+    fee: string;
+    requiresPremium: boolean;
+  }
+> = {
   farcaster: {
     label: 'Farcaster',
     icon: '◈',
@@ -112,7 +115,6 @@ const PLATFORM_META: Record<RegistrationPlatform, {
 // ─── Component ────────────────────────────────────────────────────────
 
 export function CrossPlatformSetup({
-  walletAddress,
   isPremium: propIsPremium,
   onAccountsLoaded,
   onRegistered,
@@ -124,7 +126,9 @@ export function CrossPlatformSetup({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [registeringFor, setRegisteringFor] = useState<RegistrationPlatform | null>(null);
-  const [usernameInputs, setUsernameInputs] = useState<Partial<Record<RegistrationPlatform, string>>>({});
+  const [usernameInputs, setUsernameInputs] = useState<
+    Partial<Record<RegistrationPlatform, string>>
+  >({});
 
   const isPremium = propIsPremium ?? statusData?.isPremium ?? false;
 
@@ -144,12 +148,14 @@ export function CrossPlatformSetup({
           setError('Sign in required');
           return;
         }
-        const errData = await res.json().catch(() => ({ error: 'Failed to load status' })) as { error?: string };
+        const errData = (await res.json().catch(() => ({ error: 'Failed to load status' }))) as {
+          error?: string;
+        };
         setError(errData.error || 'Failed to load status');
         return;
       }
 
-      const json = await res.json() as { data: RegisterPlatformStatusData };
+      const json = (await res.json()) as { data: RegisterPlatformStatusData };
       setStatusData(json.data);
       setAccounts(json.data.accounts || []);
       onAccountsLoaded?.(json.data.accounts || []);
@@ -166,63 +172,66 @@ export function CrossPlatformSetup({
 
   // ── Register on platform ──────────────────────────────────────
 
-  const handleRegister = useCallback(async (platform: RegistrationPlatform) => {
-    const desiredUsername = usernameInputs[platform]?.trim();
-    if (!desiredUsername) return;
+  const handleRegister = useCallback(
+    async (platform: RegistrationPlatform) => {
+      const desiredUsername = usernameInputs[platform]?.trim();
+      if (!desiredUsername) return;
 
-    setRegisteringFor(platform);
+      setRegisteringFor(platform);
 
-    try {
-      const res = await fetch(`${apiBase}/api/register-platform`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ platform, username: desiredUsername }),
-      });
+      try {
+        const res = await fetch(`${apiBase}/api/register-platform`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ platform, username: desiredUsername }),
+        });
 
-      const json = await res.json() as { data: PlatformAccount; error?: string };
+        const json = (await res.json()) as { data: PlatformAccount; error?: string };
 
-      if (!res.ok || json.data?.status === 'failed') {
-        const errMsg = json.data?.error || json.error || 'Registration failed';
+        if (!res.ok || json.data?.status === 'failed') {
+          const errMsg = json.data?.error || json.error || 'Registration failed';
 
-        // Update the account in the list
+          // Update the account in the list
+          setAccounts((prev) => [
+            ...prev.filter((a) => a.platform !== platform),
+            { platform, status: 'failed', error: errMsg },
+          ]);
+
+          setError(errMsg);
+          return;
+        }
+
+        // Success
+        const result: PlatformAccount = {
+          platform: json.data.platform,
+          status: 'created',
+          username: json.data.username,
+          txHash: json.data.txHash,
+          accountInfo: json.data.accountInfo,
+        };
+
+        setAccounts((prev) => [...prev.filter((a) => a.platform !== platform), result]);
+        setUsernameInputs((prev) => ({ ...prev, [platform]: '' }));
+        onRegistered?.(result);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Network error');
         setAccounts((prev) => [
           ...prev.filter((a) => a.platform !== platform),
-          { platform, status: 'failed', error: errMsg },
+          { platform, status: 'failed', error: 'Network error' },
         ]);
-
-        setError(errMsg);
-        return;
+      } finally {
+        setRegisteringFor(null);
       }
-
-      // Success
-      const result: PlatformAccount = {
-        platform: json.data.platform,
-        status: 'created',
-        username: json.data.username,
-        txHash: json.data.txHash,
-        accountInfo: json.data.accountInfo,
-      };
-
-      setAccounts((prev) => [...prev.filter((a) => a.platform !== platform), result]);
-      setUsernameInputs((prev) => ({ ...prev, [platform]: '' }));
-      onRegistered?.(result);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Network error');
-      setAccounts((prev) => [
-        ...prev.filter((a) => a.platform !== platform),
-        { platform, status: 'failed', error: 'Network error' },
-      ]);
-    } finally {
-      setRegisteringFor(null);
-    }
-  }, [apiBase, usernameInputs, onRegistered]);
+    },
+    [apiBase, usernameInputs, onRegistered],
+  );
 
   // ── Derived state ─────────────────────────────────────────────
 
   const connectedCount = accounts.filter((a) => a.status === 'created').length;
-  const connectedPlatformNames = accounts
+  const _connectedPlatformNames = accounts
     .filter((a) => a.status === 'created')
     .map((a) => a.platform);
 
@@ -263,8 +272,12 @@ export function CrossPlatformSetup({
         <div className="flex items-center gap-2">
           <div className="text-right">
             <span className="text-lg font-bold text-[var(--color-fg)]">{connectedCount}</span>
-            <span className="text-sm text-[var(--color-muted)]">/{statusData?.totalPlatforms ?? 5}</span>
-            <p className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider">Connected</p>
+            <span className="text-sm text-[var(--color-muted)]">
+              /{statusData?.totalPlatforms ?? 5}
+            </span>
+            <p className="text-[10px] text-[var(--color-muted)] uppercase tracking-wider">
+              Connected
+            </p>
           </div>
           {/* Progress bar */}
           <div className="h-12 w-1 rounded-full bg-[var(--color-glass-border)] overflow-hidden">
@@ -280,121 +293,145 @@ export function CrossPlatformSetup({
 
       {/* ── Platform list ── */}
       <div className="space-y-3">
-        {(Object.entries(PLATFORM_META) as [RegistrationPlatform, typeof PLATFORM_META[RegistrationPlatform]][]).map(
-          ([platform, meta]) => {
-            const account = accounts.find((a) => a.platform === platform);
-            const isConnected = account?.status === 'created';
-            const isFailed = account?.status === 'failed';
-            const isPending = account?.status === 'pending' && !isFailed;
-            const isRegistering = registeringFor === platform;
-            const usernameInput = usernameInputs[platform] || '';
+        {(
+          Object.entries(PLATFORM_META) as [
+            RegistrationPlatform,
+            (typeof PLATFORM_META)[RegistrationPlatform],
+          ][]
+        ).map(([platform, meta]) => {
+          const account = accounts.find((a) => a.platform === platform);
+          const isConnected = account?.status === 'created';
+          const isFailed = account?.status === 'failed';
+          const _isPending = account?.status === 'pending' && !isFailed;
+          const isRegistering = registeringFor === platform;
+          const usernameInput = usernameInputs[platform] || '';
 
-            return (
-              <div
-                key={platform}
-                className={`rounded-xl border p-4 transition-colors ${
-                  isConnected
-                    ? 'border-green-500/30 bg-green-500/5'
-                    : isFailed
-                      ? 'border-red-500/30 bg-red-500/5'
-                      : 'border-[var(--color-glass-border)] bg-[var(--color-overlay)]'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  {/* Platform info */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-lg flex-shrink-0" aria-hidden="true">
-                      {meta.icon}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-[var(--color-fg)]" style={{ color: meta.color }}>
-                          {meta.label}
-                        </span>
-                        {isConnected && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-medium text-green-400">
-                            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
-                            </svg>
-                            Created
-                          </span>
-                        )}
-                        {isFailed && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-medium text-red-400">
-                            Failed
-                          </span>
-                        )}
-                        {!isConnected && !isFailed && meta.requiresPremium && !isPremium && (
-                          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-                            Pro feature
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-[var(--color-muted)] mt-0.5">
-                        {isConnected && account?.username
-                          ? `@${account.username}`
-                          : isFailed && account?.error
-                            ? account.error
-                            : meta.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Action */}
-                  <div className="flex-shrink-0 ml-3">
-                    {isConnected ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-green-500/10 px-3 py-1.5 text-xs font-medium text-green-400">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
-                        </svg>
-                        Connected
+          return (
+            <div
+              key={platform}
+              className={`rounded-xl border p-4 transition-colors ${
+                isConnected
+                  ? 'border-green-500/30 bg-green-500/5'
+                  : isFailed
+                    ? 'border-red-500/30 bg-red-500/5'
+                    : 'border-[var(--color-glass-border)] bg-[var(--color-overlay)]'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                {/* Platform info */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-lg flex-shrink-0" aria-hidden="true">
+                    {meta.icon}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-sm font-medium text-[var(--color-fg)]"
+                        style={{ color: meta.color }}
+                      >
+                        {meta.label}
                       </span>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          placeholder="username"
-                          value={usernameInput}
-                          onChange={(e) =>
-                            setUsernameInputs((prev) => ({ ...prev, [platform]: e.target.value }))
-                          }
-                          disabled={isRegistering || (meta.requiresPremium && !isPremium)}
-                          className="w-28 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-2.5 py-1.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] disabled:opacity-40 focus:outline-none focus:border-degen-500/50"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleRegister(platform)}
-                          disabled={(meta.requiresPremium && !isPremium) || !usernameInput.trim() || isRegistering}
-                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                            !meta.requiresPremium || isPremium
-                              ? 'bg-degen-500/15 text-degen-400 hover:bg-degen-500/25 border border-degen-500/30 disabled:opacity-40 disabled:cursor-not-allowed'
-                              : 'bg-[var(--color-glass-border)] text-[var(--color-muted)] cursor-not-allowed opacity-40'
-                          }`}
-                        >
-                          {isRegistering ? (
-                            <>
-                              <div className="h-3 w-3 animate-spin rounded-full border-2 border-degen-400 border-t-transparent" />
-                              Creating...
-                            </>
-                          ) : (
-                            'Create'
-                          )}
-                        </button>
-                      </div>
-                    )}
+                      {isConnected && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-medium text-green-400">
+                          <svg
+                            width="8"
+                            height="8"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+                          </svg>
+                          Created
+                        </span>
+                      )}
+                      {isFailed && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                          Failed
+                        </span>
+                      )}
+                      {!isConnected && !isFailed && meta.requiresPremium && !isPremium && (
+                        <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                          Pro feature
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[var(--color-muted)] mt-0.5">
+                      {isConnected && account?.username
+                        ? `@${account.username}`
+                        : isFailed && account?.error
+                          ? account.error
+                          : meta.description}
+                    </p>
                   </div>
                 </div>
 
-                {/* Fee info — show for all when user is premium, or just free platforms */}
-                {!isConnected && (isPremium || !meta.requiresPremium) && (
-                  <div className="mt-2 flex items-center gap-2 text-[10px] text-[var(--color-muted)]">
-                    <span className="rounded bg-[var(--color-glass-border)] px-1.5 py-0.5">{meta.fee}</span>
-                  </div>
-                )}
+                {/* Action */}
+                <div className="flex-shrink-0 ml-3">
+                  {isConnected ? (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-green-500/10 px-3 py-1.5 text-xs font-medium text-green-400">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+                      </svg>
+                      Connected
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="username"
+                        value={usernameInput}
+                        onChange={(e) =>
+                          setUsernameInputs((prev) => ({ ...prev, [platform]: e.target.value }))
+                        }
+                        disabled={isRegistering || (meta.requiresPremium && !isPremium)}
+                        className="w-28 rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-2.5 py-1.5 text-xs text-[var(--color-fg)] placeholder:text-[var(--color-muted)] disabled:opacity-40 focus:outline-none focus:border-degen-500/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRegister(platform)}
+                        disabled={
+                          (meta.requiresPremium && !isPremium) ||
+                          !usernameInput.trim() ||
+                          isRegistering
+                        }
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                          !meta.requiresPremium || isPremium
+                            ? 'bg-degen-500/15 text-degen-400 hover:bg-degen-500/25 border border-degen-500/30 disabled:opacity-40 disabled:cursor-not-allowed'
+                            : 'bg-[var(--color-glass-border)] text-[var(--color-muted)] cursor-not-allowed opacity-40'
+                        }`}
+                      >
+                        {isRegistering ? (
+                          <>
+                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-degen-400 border-t-transparent" />
+                            Creating...
+                          </>
+                        ) : (
+                          'Create'
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            );
-          },
-        )}
+
+              {/* Fee info — show for all when user is premium, or just free platforms */}
+              {!isConnected && (isPremium || !meta.requiresPremium) && (
+                <div className="mt-2 flex items-center gap-2 text-[10px] text-[var(--color-muted)]">
+                  <span className="rounded bg-[var(--color-glass-border)] px-1.5 py-0.5">
+                    {meta.fee}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* ── Global error ── */}

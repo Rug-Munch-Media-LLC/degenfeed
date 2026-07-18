@@ -24,6 +24,10 @@ import type { Env } from './index';
 import { jsonResponse, rateLimit } from './index';
 import { validateBodySize } from './sanitize';
 
+// ─── Error logger ────────────────────────────────────────────
+
+import { logError } from './error-logger';
+
 // ─── Route handlers ──────────────────────────────────────────
 
 import { handleAccountDelete, handleAccountExport } from './routes/account';
@@ -285,6 +289,29 @@ import { handleX402Paywall, handleX402Verify } from './routes/x402';
 
 const app = new Hono<{ Bindings: Env }>();
 
+// ─── Global onError handler ─────────────────────────────────
+// Catches uncaught exceptions from any route handler so the API
+// never returns an unhandled 500 without structured logging.
+app.onError(async (err, c) => {
+  const path = c.req.path;
+  const method = c.req.method;
+  const code = await logError(c.env, err, {
+    route: path,
+    method,
+    statusCode: 500,
+  });
+  return new Response(
+    JSON.stringify({
+      error: 'Internal server error',
+      code,
+    }),
+    {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
+    },
+  );
+});
+
 // ─── Constants ──────────────────────────────────────────────
 
 const CSRF_EXEMPT_PATHS = ['/api/tip/frame/', '/api/blink/tip', '/api/x402/verify'];
@@ -436,7 +463,30 @@ app.all('/', (c) => handleLandingHtml(c.req.raw, c.env));
 app.all('/index.html', (c) => handleLandingHtml(c.req.raw, c.env));
 
 // ─── API: Health ────────────────────────────────────────────
-app.all('/api/health', async (c) => handleRelaysHealth(c.env));
+app.all('/api/health', async (c) => {
+  // Base relay health
+  const relayResp = await handleRelaysHealth(c.env);
+  const relayBody = await relayResp.json();
+
+  // Append error counts if available
+  const { getErrorCounts } = await import('./error-logger');
+  const errorCounts = await getErrorCounts(c.env);
+
+  return jsonResponse({
+    status: 'ok',
+    service: 'degenfeed-api',
+    relays: (relayBody as Record<string, unknown>).relays,
+    healthy: (relayBody as Record<string, unknown>).healthy,
+    errors: errorCounts
+      ? {
+          total: errorCounts.total,
+          byRoute: errorCounts.byRoute,
+          since: errorCounts.since,
+        }
+      : null,
+    checkedAt: Date.now(),
+  });
+});
 app.get('/api/health/protocols', async (c) => handleProtocolsHealth(c.env));
 
 // ─── API: Analytics ─────────────────────────────────────────
@@ -1093,7 +1143,23 @@ app.get('/v1/tip/unified/leaderboard', async (c) => handleUnifiedTipLeaderboard(
 app.get('/v1/tip/unified/activity', async (c) => handleUnifiedTipActivity(c.req.raw, c.env));
 
 // ─── V1: Health ─────────────────────────────────────────
-app.all('/v1/health', async (c) => handleRelaysHealth(c.env));
+app.all('/v1/health', async (c) => {
+  const relayResp = await handleRelaysHealth(c.env);
+  const relayBody = await relayResp.json();
+  const { getErrorCounts } = await import('./error-logger');
+  const errorCounts = await getErrorCounts(c.env);
+  return jsonResponse({
+    status: 'ok',
+    service: 'degenfeed-api',
+    version: '1.0.0',
+    relays: (relayBody as Record<string, unknown>).relays,
+    healthy: (relayBody as Record<string, unknown>).healthy,
+    errors: errorCounts
+      ? { total: errorCounts.total, byRoute: errorCounts.byRoute, since: errorCounts.since }
+      : null,
+    checkedAt: Date.now(),
+  });
+});
 app.get('/v1/health/protocols', async (c) => handleProtocolsHealth(c.env));
 
 // ─── V1: Communities ────────────────────────────────────
@@ -1177,7 +1243,7 @@ app.all('/v1/digest/unsubscribe-email', async (c) =>
 // ─── V1: API Key Management ────────────────────────────────
 
 app.post('/v1/api-keys', async (c) => {
-  const { requireSession, applySessionRefresh } = await import('./session');
+  const { requireSession } = await import('./session');
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 

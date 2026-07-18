@@ -40,7 +40,7 @@ export const EmbedModal = memo(function EmbedModal({
 
   const dfUri = postUri || `df://${protocol}:${postId.replace(`${protocol}:`, '')}`;
   const postUrl = `${window.location.origin}/post/${encodeURIComponent(postId)}`;
-  const embedUrl = `${window.location.origin}/embed/${encodeURIComponent(dfUri)}`;
+  const _embedUrl = `${window.location.origin}/embed/${encodeURIComponent(dfUri)}`;
 
   const embedSnippet = useMemo(() => {
     const textPreview = truncate(text, 280);
@@ -173,11 +173,38 @@ export const EmbedModal = memo(function EmbedModal({
               Preview
             </span>
             <div className="rounded-lg border border-[var(--color-border)] p-4">
-              <blockquote className="degenfeed-post" style={{ all: 'revert', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', maxWidth: '100%', margin: 0, padding: '12px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', background: 'var(--color-card)' }}>
-                <p style={{ margin: '0 0 8px', fontSize: '14px', lineHeight: 1.5, color: 'var(--color-fg)', wordBreak: 'break-word' }}>
+              <blockquote
+                className="degenfeed-post"
+                style={{
+                  all: 'revert',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  maxWidth: '100%',
+                  margin: 0,
+                  padding: '12px 16px',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '8px',
+                  background: 'var(--color-card)',
+                }}
+              >
+                <p
+                  style={{
+                    margin: '0 0 8px',
+                    fontSize: '14px',
+                    lineHeight: 1.5,
+                    color: 'var(--color-fg)',
+                    wordBreak: 'break-word',
+                  }}
+                >
                   {truncate(text, 280)}
                 </p>
-                <footer style={{ fontSize: '12px', color: 'var(--color-muted-foreground)', borderTop: '1px solid var(--color-border)', paddingTop: '8px' }}>
+                <footer
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--color-muted-foreground)',
+                    borderTop: '1px solid var(--color-border)',
+                    paddingTop: '8px',
+                  }}
+                >
                   —{' '}
                   <cite style={{ fontStyle: 'normal' }}>
                     <a

@@ -15,14 +15,11 @@
  */
 
 import { isSpamPost } from '@degenfeed/feed-core';
+import type { TrendingTopic } from '@degenfeed/ranking';
 import type { UnifiedPost } from '@degenfeed/types';
-import {
-  COMMUNITY_KV_PREFIX,
-  type CrossProtocolCommunity,
-} from '@degenfeed/utils';
+import { COMMUNITY_KV_PREFIX, type CrossProtocolCommunity } from '@degenfeed/utils';
 import { type Env, jsonResponse } from '../index';
 import { isValidInstanceUrl } from '../sanitize';
-import type { TrendingTopic } from '@degenfeed/ranking';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -70,7 +67,7 @@ import { liveIndexKey, spaceKey, upcomingIndexKey } from '../kv-helpers';
 /**
  * Fetch recent posts from the home feed pipeline.
  */
-async function fetchRecentPosts(env: Env, limit = 100): Promise<UnifiedPost[]> {
+async function fetchRecentPosts(_env: Env, limit = 100): Promise<UnifiedPost[]> {
   try {
     const feedReq = new Request(
       `http://localhost/api/feed/home?limit=${limit}&sort=hot&protocols=nostr,farcaster,lens,bluesky,mastodon,threads,reddit,rss`,
@@ -289,7 +286,7 @@ export async function handleDiscoverCommunities(_request: Request, env: Env): Pr
 
 // ─── GET /api/discover/people ─────────────────────────────────────────
 
-export async function handleDiscoverPeople(request: Request, env: Env): Promise<Response> {
+export async function handleDiscoverPeople(_request: Request, env: Env): Promise<Response> {
   const cacheKey = 'discover:people:v1';
 
   // Try cache
@@ -302,7 +299,8 @@ export async function handleDiscoverPeople(request: Request, env: Env): Promise<
 
   try {
     const posts = await fetchRecentPosts(env, 200);
-    if (!posts?.length) return jsonResponse({ data: [], meta: { total: 0, fetchedAt: Date.now() } });
+    if (!posts?.length)
+      return jsonResponse({ data: [], meta: { total: 0, fetchedAt: Date.now() } });
 
     const authorStats = new Map<
       string,
@@ -408,7 +406,11 @@ export async function handleDiscoverTopics(_request: Request, env: Env): Promise
   }
 
   const topics: TrendingTopic[] = Array.from(nicheMap.entries())
-    .map(([topic, data]) => ({ topic, count: data.count, score: Math.round(data.score * 100) / 100 }))
+    .map(([topic, data]) => ({
+      topic,
+      count: data.count,
+      score: Math.round(data.score * 100) / 100,
+    }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 30);
 
@@ -554,7 +556,11 @@ export async function handleDiscoverFeatured(_request: Request, env: Env): Promi
   }
 
   const trending: TrendingTopic[] = Array.from(nicheMap.entries())
-    .map(([topic, data]) => ({ topic, count: data.count, score: Math.round(data.score * 100) / 100 }))
+    .map(([topic, data]) => ({
+      topic,
+      count: data.count,
+      score: Math.round(data.score * 100) / 100,
+    }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
 

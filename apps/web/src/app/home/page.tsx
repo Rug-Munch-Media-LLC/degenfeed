@@ -17,7 +17,13 @@ const PROTOCOLS = [
   { id: 'mastodon', label: 'Mastodon', emoji: '🐘', color: '#6364ff', desc: 'Fediverse' },
   { id: 'reddit', label: 'Reddit', emoji: '🔴', color: '#ff4500', desc: 'Reddit feeds' },
   { id: 'rss', label: 'News', emoji: '📰', color: '#ffa500', desc: '353 RSS sources' },
-  { id: 'threads', label: 'Threads (Experimental)', emoji: '🧵', color: '#888', desc: 'Meta threads — Experimental' },
+  {
+    id: 'threads',
+    label: 'Threads (Experimental)',
+    emoji: '🧵',
+    color: '#888',
+    desc: 'Meta threads — Experimental',
+  },
 ] as const;
 
 export default function HomePage() {

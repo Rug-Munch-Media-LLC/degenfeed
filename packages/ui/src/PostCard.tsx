@@ -10,10 +10,10 @@ import {
   saveFollow,
   unmuteIdentity,
 } from '@degenfeed/storage';
-import type { Embed, EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { detectTokens, formatTimeAgo, parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
+import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
+import { detectTokens, formatTimeAgo, parseVideoUrl } from '@degenfeed/utils';
 import Image from 'next/image';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { BlueskyPostContext } from './BlueskyPostContext';
 import { CommunityBadge } from './CommunityBadge';
 import { EmbedModal } from './EmbedModal';
@@ -24,14 +24,28 @@ import { MastodonInstanceContext } from './MastodonInstanceContext';
 import { NostrRelayBadge } from './NostrRelayBadge';
 import { PeerTubeEmbed } from './PeerTubeEmbed';
 import {
+  applyOptimistic,
+  PostCardEngagement,
+  type PostCardEngagementProps,
+} from './PostCardEngagement';
+import {
+  FrameCard,
+  ImageGrid,
+  LinkPreview,
+  PermanenceBadge,
+  VideoEmbedCard,
+} from './PostCardMedia';
+import {
   getProtocolIcon as _getProtocolIcon,
   getProtocolLabel as _getProtocolLabel,
   ProtocolBadge,
 } from './ProtocolBadge';
-import { PostCardEngagement, type PostCardEngagementProps, applyOptimistic } from './PostCardEngagement';
-import { FrameCard, ImageGrid, LinkPreview, PermanenceBadge, VideoEmbedCard } from './PostCardMedia';
-import { ReputationBadge, type ReputationBadgeScore, type ReputationBadgeProgress } from './ReputationBadge';
 import { ReportModal } from './ReportModal';
+import {
+  ReputationBadge,
+  type ReputationBadgeProgress,
+  type ReputationBadgeScore,
+} from './ReputationBadge';
 import { TokenChart } from './TokenChart';
 import { TranslationPreview } from './TranslationPreview';
 
@@ -158,6 +172,122 @@ function buildQualityTooltip(quality: NonNullable<UnifiedPost['qualityScore']>):
   return lines.join('\n');
 }
 
+// ─── Skeleton (loading) variant ────────────────────────────────────
+
+export interface PostCardSkeletonProps {
+  /** Number of skeleton cards (default: 1) */
+  count?: number;
+}
+
+/**
+ * Skeleton placeholder that exactly matches PostCard layout dimensions
+ * to prevent Cumulative Layout Shift (CLS) during loading.
+ * Renders `count` skeleton cards with `role="status"` for a11y.
+ */
+export function PostCardSkeleton({ count = 1 }: PostCardSkeletonProps) {
+  const uid = useId();
+  return (
+    <output className="block w-full" aria-label="Loading posts">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
+          key={`${uid}-skel-${i}`}
+          className="post-card border-b border-[var(--color-border)] px-4 py-3"
+          style={{ animationDelay: `${i * 0.05}s` }}
+        >
+          {/* Author row skeleton — matches PostCard layout */}
+          <div className="author-row mb-3 flex items-center gap-3">
+            <div className="skeleton-shimmer h-8 w-8 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <div className="skeleton-shimmer h-3.5 w-28 rounded" />
+                <div className="skeleton-shimmer h-3.5 w-14 rounded" />
+                <div className="ml-auto skeleton-shimmer h-5 w-14 rounded-full" />
+              </div>
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="skeleton-shimmer h-2.5 w-20 rounded" />
+                <div className="skeleton-shimmer h-2.5 w-2.5 rounded-full" />
+                <div className="skeleton-shimmer h-2.5 w-14 rounded" />
+                <div className="skeleton-shimmer h-3.5 w-10 rounded-full" />
+              </div>
+            </div>
+          </div>
+          {/* Content lines skeleton — matches PostCard's content-text mb-3 */}
+          <div className="mb-3 space-y-2">
+            <div className="skeleton-shimmer h-3 w-full rounded" />
+            <div className="skeleton-shimmer h-3 w-11/12 rounded" />
+            <div className="skeleton-shimmer h-3 w-3/4 rounded" />
+          </div>
+          {/* Engagement bar skeleton — matches PostCardEngagement layout */}
+          <div className="mt-1 flex items-center gap-4">
+            {[0, 1, 2, 3].map((k) => (
+              <div key={k} className="flex items-center gap-1.5">
+                <div className="skeleton-shimmer h-4 w-4 rounded" />
+                <div className="skeleton-shimmer h-2.5 w-6 rounded" />
+              </div>
+            ))}
+            <div className="ml-auto skeleton-shimmer h-6 w-20 rounded-full" />
+          </div>
+        </div>
+      ))}
+    </output>
+  );
+}
+
+// ─── Empty state variant ────────────────────────────────────────────
+
+export interface PostCardEmptyProps {
+  /** Primary heading text */
+  title?: string;
+  /** Supporting description */
+  description?: string;
+  /** Optional action label (renders a button) */
+  actionLabel?: string;
+  /** Called when action button is clicked */
+  onAction?: () => void;
+  /** Optional icon/emoji */
+  icon?: string;
+}
+
+/**
+ * Empty state for a single post card slot.
+ * Shown when a post slot has no content to display (e.g. filtered out,
+ * blocked, or removed).
+ */
+export function PostCardEmpty({
+  title = 'No post to show',
+  description = 'This post may have been removed or is no longer available.',
+  actionLabel,
+  onAction,
+  icon = '○',
+}: PostCardEmptyProps) {
+  return (
+    <div
+      className="post-card border-b border-[var(--color-border)] px-4 py-8 text-center"
+      role="status"
+    >
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-muted)]/20">
+        <span className="text-lg text-[var(--color-muted)]" aria-hidden="true">
+          {icon}
+        </span>
+      </div>
+      <p className="mb-1 text-sm font-medium text-[var(--color-fg)]">{title}</p>
+      {description && (
+        <p className="mx-auto mb-4 max-w-xs text-xs text-[var(--color-muted)]">{description}</p>
+      )}
+      {actionLabel && onAction && (
+        <button
+          type="button"
+          onClick={onAction}
+          className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-fg)] hover:bg-[var(--color-overlay)] transition-colors"
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── Local state type (shared with PostCardEngagement) ────────────
 
 interface LocalState {
@@ -224,13 +354,14 @@ export const PostCard = memo(function PostCard({
   useEffect(() => {
     if (typeof window === 'undefined' || !post.author.id) return;
     let cancelled = false;
+    const fmCommunityName = post.community?.name?.toLowerCase() ?? '';
     Promise.all([
       isFollowing('self', post.author.id),
       getMutedIdentities('self').then((m) => m.some((x) => x.targetId === post.author.id)),
       import('@degenfeed/storage').then(({ isBlocked }) => isBlocked(post.author.id, 'self')),
-      post.community
+      post.community && fmCommunityName
         ? import('@degenfeed/storage').then(({ isCommunityMuted }) =>
-            isCommunityMuted(post.community!.name.toLowerCase()),
+            isCommunityMuted(fmCommunityName),
           )
         : Promise.resolve(false),
     ])
@@ -282,9 +413,12 @@ export const PostCard = memo(function PostCard({
     let cancelled = false;
     scheduleIdle(() => {
       if (cancelled) return;
-      fetch(`/api/cross-reply/status?parentPostUri=${encodeURIComponent(post.dfUri!)}`)
+      if (!post.dfUri) return;
+      fetch(`/api/cross-reply/status?parentPostUri=${encodeURIComponent(post.dfUri)}`)
         .then((r) =>
-          r.ok ? (r.json() as Promise<{ total: number; byProtocol: Record<string, number> }>) : null,
+          r.ok
+            ? (r.json() as Promise<{ total: number; byProtocol: Record<string, number> }>)
+            : null,
         )
         .then((data) => {
           if (!cancelled && data && data.total > 0) setBridgeReplies(data.byProtocol);
@@ -300,40 +434,51 @@ export const PostCard = memo(function PostCard({
   const displayText =
     needsTruncation && !showFullText ? `${post.text.slice(0, MAX_TEXT_LENGTH)}...` : post.text;
 
-  async function perform(action: EngagementAction, content?: string) {
-    if (!onEngage) return;
-    const previous = localState;
-    setLocalState((s) => applyOptimistic(s, action));
-    if (action === 'like' || action === 'unlike') {
-      setAnimatingLike(true);
-      setTimeout(() => setAnimatingLike(false), 400);
-    }
-    const result = await onEngage(action, post.id, content);
-    if (!result.ok) {
-      setLocalState(previous);
-    } else if (action === 'reply') {
-      setReplyText('');
-      setShowReply(false);
-    } else if (action === 'bookmark') {
-      try {
-        await addBookmark(
-          post.id,
-          `df://${post.protocol}:${post.id.replace(/^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/, '')}`,
-          post.protocol,
-          post.text.slice(0, 120) || post.id,
-          post.author.displayName || post.author.handles[post.protocol] || 'Unknown',
-        );
-      } catch {
-        // offline — local state already updated
+  const perform = useCallback(
+    async (action: EngagementAction, content?: string) => {
+      if (!onEngage) return;
+      const previous = localState;
+      setLocalState((s) => applyOptimistic(s, action));
+      if (action === 'like' || action === 'unlike') {
+        setAnimatingLike(true);
+        setTimeout(() => setAnimatingLike(false), 400);
       }
-    } else if (action === 'unbookmark') {
-      try {
-        await removeBookmark(post.id);
-      } catch {
-        // offline
+      const result = await onEngage(action, post.id, content);
+      if (!result.ok) {
+        setLocalState(previous);
+      } else if (action === 'reply') {
+        setReplyText('');
+        setShowReply(false);
+      } else if (action === 'bookmark') {
+        try {
+          await addBookmark(
+            post.id,
+            `df://${post.protocol}:${post.id.replace(/^(nostr:|farcaster:|lens:|bluesky:|mastodon:|reddit:|rss:|threads:)/, '')}`,
+            post.protocol,
+            post.text.slice(0, 120) || post.id,
+            post.author.displayName || post.author.handles[post.protocol] || 'Unknown',
+          );
+        } catch {
+          // offline — local state already updated
+        }
+      } else if (action === 'unbookmark') {
+        try {
+          await removeBookmark(post.id);
+        } catch {
+          // offline
+        }
       }
-    }
-  }
+    },
+    [
+      onEngage,
+      post.id,
+      post.protocol,
+      post.text,
+      post.author.displayName,
+      post.author.handles,
+      localState,
+    ],
+  );
 
   const toggleFollow = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -435,19 +580,16 @@ export const PostCard = memo(function PostCard({
     }
   }, [communityMuted, post.community]);
 
-  const handleMuteWordFromMenu = useCallback(
-    async (word: string) => {
-      setShowMenu(false);
-      setShowMuteWordMenu(false);
-      try {
-        const { addMutedWord } = await import('@degenfeed/storage');
-        await addMutedWord(word);
-      } catch {
-        /* ignore */
-      }
-    },
-    [],
-  );
+  const handleMuteWordFromMenu = useCallback(async (word: string) => {
+    setShowMenu(false);
+    setShowMuteWordMenu(false);
+    try {
+      const { addMutedWord } = await import('@degenfeed/storage');
+      await addMutedWord(word);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const handleFlagAsSpam = useCallback(async () => {
     setShowMenu(false);
@@ -587,6 +729,9 @@ export const PostCard = memo(function PostCard({
       animatingLike,
       onTip,
       onCrossReplyOpen,
+      perform,
+      onOpenShareSheet,
+      handleShare,
     ],
   );
 
@@ -602,7 +747,6 @@ export const PostCard = memo(function PostCard({
           }
         }}
         aria-label={`Post by ${post.author.displayName}`}
-        tabIndex={0}
         style={{ transitionDuration: 'var(--duration-fast)' }}
       >
         {/* Author row */}
@@ -623,11 +767,7 @@ export const PostCard = memo(function PostCard({
           <div className="flex-1 min-w-0">
             {post.protocol === 'lemmy' && post.community && (
               <div className="lemmy-community-row mb-0.5">
-                <CommunityBadge
-                  name={post.community.name}
-                  icon={post.community.icon}
-                  size="sm"
-                />
+                <CommunityBadge name={post.community.name} icon={post.community.icon} size="sm" />
                 <span className="ml-1 text-xs text-muted-foreground">posted in </span>
                 <a
                   href={`/c/${post.community.name}`}
@@ -714,8 +854,20 @@ export const PostCard = memo(function PostCard({
                         onClick={handleEmbed}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-blue-400">
-                          <path d="M4 2v12M12 2v12M2 4h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-blue-400"
+                        >
+                          <path
+                            d="M4 2v12M12 2v12M2 4h12M2 12h12"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
                         </svg>
                         Embed post
                       </button>
@@ -731,9 +883,21 @@ export const PostCard = memo(function PostCard({
                           }}
                           className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-degen-400 hover:bg-degen-500/10 transition-colors"
                         >
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            aria-hidden="true"
+                            className="shrink-0"
+                          >
                             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
-                            <path d="M8 7.5v4M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                            <path
+                              d="M8 7.5v4M8 5v.5"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                            />
                           </svg>
                           Why am I seeing this?
                         </button>
@@ -745,8 +909,21 @@ export const PostCard = memo(function PostCard({
                         onClick={handleFlagAsSpam}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-orange-400">
-                          <path d="M4 2v12M4 2l8 3-8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-orange-400"
+                        >
+                          <path
+                            d="M4 2v12M4 2l8 3-8 3"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                         Flag as spam
                       </button>
@@ -762,8 +939,20 @@ export const PostCard = memo(function PostCard({
                           }}
                           className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-green-400 hover:bg-green-500/10 transition-colors"
                         >
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
-                            <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            aria-hidden="true"
+                            className="shrink-0"
+                          >
+                            <path
+                              d="M8 2v12M2 8h12"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                            />
                           </svg>
                           Show more like this
                         </button>
@@ -779,8 +968,20 @@ export const PostCard = memo(function PostCard({
                           }}
                           className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-orange-400 hover:bg-orange-500/10 transition-colors"
                         >
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
-                            <path d="M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            aria-hidden="true"
+                            className="shrink-0"
+                          >
+                            <path
+                              d="M2 8h12"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                            />
                           </svg>
                           Show less like this
                         </button>
@@ -792,7 +993,14 @@ export const PostCard = memo(function PostCard({
                         onClick={handleReport}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-yellow-500">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-yellow-500"
+                        >
                           <path d="M8 1L16 15H0L8 1Z" fill="currentColor" opacity="0.8" />
                         </svg>
                         Report post
@@ -805,8 +1013,21 @@ export const PostCard = memo(function PostCard({
                           onClick={handleAdminRemove}
                           className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                         >
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
-                            <path d="M2 4h12M5 4V2h6v2M3 4l1 10h8l1-10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            aria-hidden="true"
+                            className="shrink-0"
+                          >
+                            <path
+                              d="M2 4h12M5 4V2h6v2M3 4l1 10h8l1-10"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
                           </svg>
                           Remove post
                         </button>
@@ -818,10 +1039,30 @@ export const PostCard = memo(function PostCard({
                           onClick={handleAdminBan}
                           className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-orange-400 hover:bg-orange-500/10 transition-colors"
                         >
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            aria-hidden="true"
+                            className="shrink-0"
+                          >
                             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-                            <line x1="3.5" y1="8" x2="12.5" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M8 3v3M8 10v3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+                            <line
+                              x1="3.5"
+                              y1="8"
+                              x2="12.5"
+                              y2="8"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                            />
+                            <path
+                              d="M8 3v3M8 10v3"
+                              stroke="currentColor"
+                              strokeWidth="1"
+                              strokeLinecap="round"
+                            />
                           </svg>
                           Ban user
                         </button>
@@ -836,9 +1077,24 @@ export const PostCard = memo(function PostCard({
                         }}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-blue-400">
-                          <path d="M2 2h6l1 2H3L2 2zm2 4h4l1 2H5l-1-2zm3 4h2l3 6H8l-1-2-1 2H4l3-6z" fill="currentColor" />
-                          <path d="M12 2l2 4-2 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-blue-400"
+                        >
+                          <path
+                            d="M2 2h6l1 2H3L2 2zm2 4h4l1 2H5l-1-2zm3 4h2l3 6H8l-1-2-1 2H4l3-6z"
+                            fill="currentColor"
+                          />
+                          <path
+                            d="M12 2l2 4-2 4"
+                            stroke="currentColor"
+                            strokeWidth="1.2"
+                            strokeLinecap="round"
+                          />
                         </svg>
                         Translate to...
                       </button>
@@ -879,11 +1135,50 @@ export const PostCard = memo(function PostCard({
                           onClick={handleMuteCommunity}
                           className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
                         >
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-purple-400">
-                            <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                            <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                            <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                            <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            aria-hidden="true"
+                            className="shrink-0 text-purple-400"
+                          >
+                            <rect
+                              x="2"
+                              y="2"
+                              width="5"
+                              height="5"
+                              rx="1"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                            />
+                            <rect
+                              x="9"
+                              y="2"
+                              width="5"
+                              height="5"
+                              rx="1"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                            />
+                            <rect
+                              x="2"
+                              y="9"
+                              width="5"
+                              height="5"
+                              rx="1"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                            />
+                            <rect
+                              x="9"
+                              y="9"
+                              width="5"
+                              height="5"
+                              rx="1"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                            />
                           </svg>
                           {communityMuted ? 'Unmute community' : `Mute /c/${post.community.name}`}
                         </button>
@@ -898,45 +1193,68 @@ export const PostCard = memo(function PostCard({
                         }}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-orange-400">
-                          <path d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                          <line x1="2" y1="14" x2="14" y2="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-orange-400"
+                        >
+                          <path
+                            d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                          <line
+                            x1="2"
+                            y1="14"
+                            x2="14"
+                            y2="2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
                         </svg>
                         Mute word
                       </button>
 
-                      {showMuteWordMenu && (() => {
-                        const candidates = [
-                          ...new Set(
-                            (post.text || '')
-                              .toLowerCase()
-                              .split(/[\s,;:.!?]+/)
-                              .filter((w) => w.length > 3 && w.length < 30 && !/^\d+$/.test(w))
-                              .slice(0, 6),
-                          ),
-                        ];
-                        return (
-                          <div className="border-t border-[var(--color-border)]">
-                            {candidates.length === 0 && (
-                              <p className="px-4 py-2 text-xs text-[var(--color-muted)]">No words to mute</p>
-                            )}
-                            {candidates.map((word) => (
-                              <button
-                                key={word}
-                                type="button"
-                                role="menuitem"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void handleMuteWordFromMenu(word);
-                                }}
-                                className="flex w-full items-center gap-3 px-4 py-2 pl-8 text-left text-sm text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
-                              >
-                                &ldquo;{word}&rdquo;
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      })()}
+                      {showMuteWordMenu &&
+                        (() => {
+                          const candidates = [
+                            ...new Set(
+                              (post.text || '')
+                                .toLowerCase()
+                                .split(/[\s,;:.!?]+/)
+                                .filter((w) => w.length > 3 && w.length < 30 && !/^\d+$/.test(w))
+                                .slice(0, 6),
+                            ),
+                          ];
+                          return (
+                            <div className="border-t border-[var(--color-border)]">
+                              {candidates.length === 0 && (
+                                <p className="px-4 py-2 text-xs text-[var(--color-muted)]">
+                                  No words to mute
+                                </p>
+                              )}
+                              {candidates.map((word) => (
+                                <button
+                                  key={word}
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void handleMuteWordFromMenu(word);
+                                  }}
+                                  className="flex w-full items-center gap-3 px-4 py-2 pl-8 text-left text-sm text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+                                >
+                                  &ldquo;{word}&rdquo;
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()}
 
                       <button
                         type="button"
@@ -944,9 +1262,24 @@ export const PostCard = memo(function PostCard({
                         onClick={handleBlock}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-red-400">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-red-400"
+                        >
                           <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-                          <line x1="3.5" y1="8" x2="12.5" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          <line
+                            x1="3.5"
+                            y1="8"
+                            x2="12.5"
+                            y2="8"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
                         </svg>
                         {blocked ? 'Unblock user' : 'Block user'}
                       </button>
@@ -956,9 +1289,29 @@ export const PostCard = memo(function PostCard({
                         onClick={handleMuteFromMenu}
                         className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-[var(--color-fg)] hover:bg-[var(--color-muted)] transition-colors"
                       >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-[var(--color-muted)]">
-                          <path d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                          <line x1="2" y1="14" x2="14" y2="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-[var(--color-muted)]"
+                        >
+                          <path
+                            d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                          <line
+                            x1="2"
+                            y1="14"
+                            x2="14"
+                            y2="2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
                         </svg>
                         {muted ? 'Unmute user' : 'Mute user'}
                       </button>
@@ -975,7 +1328,11 @@ export const PostCard = memo(function PostCard({
                     ? 'bg-degen-500/20 text-degen-400'
                     : 'border border-[var(--color-border)] text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400'
                 }`}
-                aria-label={following ? `Unfollow ${post.author.handles[post.protocol] ?? post.author.displayName}` : `Follow ${post.author.handles[post.protocol] ?? post.author.displayName}`}
+                aria-label={
+                  following
+                    ? `Unfollow ${post.author.handles[post.protocol] ?? post.author.displayName}`
+                    : `Follow ${post.author.handles[post.protocol] ?? post.author.displayName}`
+                }
                 aria-pressed={following}
                 title={following ? 'Unfollow' : 'Follow'}
               >
@@ -989,14 +1346,18 @@ export const PostCard = memo(function PostCard({
                     ? 'bg-red-500/20 text-red-400'
                     : 'border border-[var(--color-border)] text-[var(--color-muted)] hover:border-red-500/30 hover:text-red-400'
                 }`}
-                aria-label={muted ? `Unmute ${post.author.handles[post.protocol] ?? post.author.displayName}` : `Mute ${post.author.handles[post.protocol] ?? post.author.displayName}`}
+                aria-label={
+                  muted
+                    ? `Unmute ${post.author.handles[post.protocol] ?? post.author.displayName}`
+                    : `Mute ${post.author.handles[post.protocol] ?? post.author.displayName}`
+                }
                 aria-pressed={muted}
                 title={muted ? 'Unmute author' : 'Mute author'}
               >
                 {muted ? '🔇 Muted' : '🔇'}
               </button>
             </div>
-              <div className="author-handle flex items-center gap-2 text-xs text-[var(--color-muted)]">
+            <div className="author-handle flex items-center gap-2 text-xs text-[var(--color-muted)]">
               <span className="truncate">
                 {post.author.handles[post.protocol] ?? post.author.id.slice(0, 16)}
               </span>
@@ -1096,33 +1457,45 @@ export const PostCard = memo(function PostCard({
         {/* Inline token charts */}
         {post.text &&
           detectTokens(post.text).map((token, i) => (
-            <TokenChart key={`${token.symbol ?? token.address}-${i}`} {...token} compact />
+            <TokenChart key={token.address ?? token.symbol ?? `token-${i}`} {...token} compact />
           ))}
 
         {/* Embeds (media, links, frames, videos) */}
         {post.embeds.length > 0 && (
           <div className="mb-3">
-                {(() => {
+            {(() => {
               const images = post.embeds.filter((e) => e.kind === 'image').map((e) => e.url);
               const links = post.embeds.filter((e) => e.kind === 'link');
               const videos = post.embeds.filter((e) => e.kind === 'video');
               const frames = post.embeds.filter((e) => e.kind === 'frame');
               return (
                 <>
-                  {images.length > 0 && <ImageGrid images={images} authorName={post.author.displayName} />}
+                  {images.length > 0 && (
+                    <ImageGrid images={images} authorName={post.author.displayName} />
+                  )}
                   {frames.map((embed) => (
                     <FrameCard key={`frame-${embed.url}`} url={embed.url} />
                   ))}
                   {frames.length === 0 &&
                     post.protocol === 'farcaster' &&
                     links.length > 0 &&
-                    links[0]?.url && <FrameCard key={`link-frame-${links[0].url}`} url={links[0].url} />}
+                    links[0]?.url && (
+                      <FrameCard key={`link-frame-${links[0].url}`} url={links[0].url} />
+                    )}
                   {links.map((embed) => {
                     const linkVideoInfo = parseVideoUrl(embed.url);
                     if (linkVideoInfo) {
-                      return <VideoEmbedCard key={`link-video-${embed.url}`} videoInfo={linkVideoInfo} />;
+                      return (
+                        <VideoEmbedCard key={`link-video-${embed.url}`} videoInfo={linkVideoInfo} />
+                      );
                     }
-                    return <LinkPreview key={`link-${embed.url}`} embed={embed} authorName={post.author.displayName} />;
+                    return (
+                      <LinkPreview
+                        key={`link-${embed.url}`}
+                        embed={embed}
+                        authorName={post.author.displayName}
+                      />
+                    );
                   })}
                   {videos.map((embed) => {
                     const videoInfo = parseVideoUrl(embed.url);
@@ -1198,6 +1571,35 @@ export const PostCard = memo(function PostCard({
         )}
         {post.protocol === 'lens' && <LensPublicationBadge post={post} />}
         {post.protocol === 'bluesky' && <BlueskyPostContext post={post} />}
+        {post.protocol === 'threads' &&
+          (post.raw as Record<string, unknown> | undefined)?._viaActivityPub && (
+            <span
+              className="mb-2 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-medium"
+              style={{
+                backgroundColor: '#1010101a',
+                color: '#101010',
+              }}
+              title="Delivered via ActivityPub federation"
+            >
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+                className="shrink-0"
+              >
+                <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
+                <path
+                  d="M8 2v12M2 8h12"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              via ActivityPub
+            </span>
+          )}
 
         {/* Engagement metrics + Tip */}
         <PostCardEngagement {...engagementProps} />
@@ -1253,9 +1655,21 @@ export const PostCard = memo(function PostCard({
                 className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 aria-label="Close"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" role="img" aria-label="Close icon">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  role="img"
+                  aria-label="Close icon"
+                >
                   <title>Close</title>
-                  <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path
+                    d="M12 4L4 12M4 4l8 8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </button>
             </div>

@@ -61,14 +61,14 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   reddit: 5000,
   lemmy: 5000,
   peertube: 5000,
-  rss: 3000,    // RSS is slow — aggressive timeout
+  rss: 3000, // RSS is slow — aggressive timeout
   threads: 2000, // Threads is scraping — aggressive timeout (experimental)
   youtube: 5000,
-  ponder: 3000,  // Ponder is slow — aggressive timeout
+  ponder: 3000, // Ponder is slow — aggressive timeout
   ethereum: 8000, // On-chain data fetch
-  solana: 8000,   // On-chain data fetch
-  kbin: 5000,     // Fediverse — moderate timeout
-  tildes: 5000,   // Link aggregator — moderate timeout
+  solana: 8000, // On-chain data fetch
+  kbin: 5000, // Fediverse — moderate timeout
+  tildes: 5000, // Link aggregator — moderate timeout
 };
 
 // ─── Per-provider fetch timer ────────────────────────────────────
@@ -149,11 +149,7 @@ export async function withProviderTimeout<T>(
 // ─── KV log for slow providers ───────────────────────────────────
 // Logs any provider fetch taking >3s to KV for analysis and tuning.
 
-async function logSlowProviderToKv(
-  env: Env,
-  protocol: string,
-  durationMs: number,
-): Promise<void> {
+async function logSlowProviderToKv(env: Env, protocol: string, durationMs: number): Promise<void> {
   if (!env.CACHE) return;
   try {
     const key = `feed:slow:${protocol}:${Math.floor(Date.now() / 60000)}`;
@@ -337,7 +333,7 @@ class RssWithFallbackProvider implements FeedProvider {
       }),
       'rss',
       batchTimeoutMs,
-    ).catch(() => ({ posts: [] } as FeedResult));
+    ).catch(() => ({ posts: [] }) as FeedResult);
 
     return result;
   }
@@ -555,7 +551,11 @@ export async function fetchFromProviders(
             console.error(
               `[feed] provider fetch failed (background refresh):`,
               protocol,
-              isTimeout ? `timeout after ${(err as ProviderTimeoutError).timeoutMs}ms` : err instanceof Error ? err.message : err,
+              isTimeout
+                ? `timeout after ${(err as ProviderTimeoutError).timeoutMs}ms`
+                : err instanceof Error
+                  ? err.message
+                  : err,
             );
             if (isTimeout) {
               void incrTimeoutCircuit(env, protocol);
@@ -609,9 +609,7 @@ export async function fetchFromProviders(
 
         if (isTimeout) {
           void incrTimeoutCircuit(env, protocol);
-          console.warn(
-            `[feed] provider TIMEOUT: ${protocol} after ${timeoutMs}ms`,
-          );
+          console.warn(`[feed] provider TIMEOUT: ${protocol} after ${timeoutMs}ms`);
         } else {
           void incrCircuit(env, protocol);
           console.error(

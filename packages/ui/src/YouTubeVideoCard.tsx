@@ -9,7 +9,7 @@
  * States: normal, hover (enlarged thumbnail), loading (skeleton).
  */
 
-import { memo, useCallback, useState } from 'react';
+import { memo, useState } from 'react';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -160,13 +160,7 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
           }`}
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-degen-500/90 text-black shadow-lg shadow-degen-500/30 transition-transform duration-200 group-hover:scale-110">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M8 5V19L19 12L8 5Z" />
             </svg>
           </div>
@@ -175,9 +169,7 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
         {/* Source badge */}
         <span
           className={`absolute top-2 left-2 rounded px-1.5 py-0.5 text-[10px] font-semibold backdrop-blur-sm pointer-events-none ${
-            isYouTube
-              ? 'bg-red-600/80 text-white'
-              : 'bg-purple-600/80 text-white'
+            isYouTube ? 'bg-red-600/80 text-white' : 'bg-purple-600/80 text-white'
           }`}
         >
           {isYouTube ? '\u25B6 YouTube' : '\uD83D\uDCF9 PeerTube'}
@@ -200,14 +192,10 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
 
         {/* Channel + source */}
         <div className="mt-1.5 flex items-center gap-2">
-          <span className="text-xs text-[var(--color-muted)] truncate">
-            {video.channelName}
-          </span>
+          <span className="text-xs text-[var(--color-muted)] truncate">{video.channelName}</span>
           <span
             className={`inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-medium ${
-              isYouTube
-                ? 'bg-red-500/10 text-red-500'
-                : 'bg-purple-500/10 text-purple-500'
+              isYouTube ? 'bg-red-500/10 text-red-500' : 'bg-purple-500/10 text-purple-500'
             }`}
           >
             {isYouTube ? '\u25B6' : '\uD83D\uDCF9'}
@@ -217,9 +205,7 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
 
         {/* Views + time ago */}
         <div className="mt-auto pt-2 flex items-center gap-2 text-[11px] text-[var(--color-muted)] tabular-nums">
-          {video.views != null && (
-            <span>{formatCount(video.views)} views</span>
-          )}
+          {video.views != null && <span>{formatCount(video.views)} views</span>}
           <span>&middot;</span>
           <span>{formatTimeAgo(video.publishedMs)} ago</span>
         </div>
@@ -254,13 +240,7 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
           className={`flex flex-1 items-center justify-center gap-1 px-2 py-2 text-[10px] text-[var(--color-muted)] hover:text-degen-400 hover:bg-[var(--color-overlay)] transition-colors focus:outline-none ${onTip ? '' : 'w-full'}`}
           aria-label={`Watch on ${isYouTube ? 'YouTube' : 'PeerTube'}`}
         >
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 12 12"
-            fill="none"
-            aria-hidden="true"
-          >
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
             <path
               d="M5 2H2V10H10V7M6 6L10 2M10 2H7M10 2V5"
               stroke="currentColor"

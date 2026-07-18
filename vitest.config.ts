@@ -1,21 +1,12 @@
-import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  root: '.',
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
   test: {
     globals: true,
+    testTimeout: 15_000,
+    // Default environment (packages override per their needs)
     environment: 'node',
-    include: [
-      'apps/*/src/**/*.{test,spec}.{ts,tsx}',
-      'packages/*/src/**/*.{test,spec}.{ts,tsx}',
-      'workers/*/src/**/*.{test,spec}.{ts,tsx}',
-    ],
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'dist', '.next', '.turbo', 'e2e'],
     coverage: {
       provider: 'v8',

@@ -18,9 +18,7 @@
  * @license MIT
  * @version 1.0.0
  */
-(function () {
-  'use strict';
-
+(() => {
   var API_BASE = 'https://app.degenfeed.xyz';
   var STYLES_ID = 'df-embed-styles';
 
@@ -230,8 +228,8 @@
   // ─── Helpers ─────────────────────────────────────────────────────────
 
   function formatCount(n) {
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
     return String(n);
   }
 
@@ -239,11 +237,11 @@
     var diff = Date.now() - ts;
     var mins = Math.floor(diff / 60000);
     if (mins < 1) return 'now';
-    if (mins < 60) return mins + 'm';
+    if (mins < 60) return `${mins}m`;
     var hours = Math.floor(mins / 60);
-    if (hours < 24) return hours + 'h';
+    if (hours < 24) return `${hours}h`;
     var days = Math.floor(hours / 24);
-    if (days < 7) return days + 'd';
+    if (days < 7) return `${days}d`;
     var d = new Date(ts);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
@@ -275,8 +273,10 @@
     var post = postData.data || postData;
     var protocol = post.protocol || '';
     var text = post.text || '';
-    var author = post.author ? (post.author.displayName || post.author.handles && post.author.handles[protocol] || 'Unknown') : 'Unknown';
-    var handle = post.author && post.author.handles ? post.author.handles[protocol] || '' : '';
+    var author = post.author
+      ? post.author.displayName || post.author.handles?.[protocol] || 'Unknown'
+      : 'Unknown';
+    var handle = post.author?.handles ? post.author.handles[protocol] || '' : '';
     var avatar = post.author ? post.author.avatarUrl || '' : '';
     var metrics = post.metrics || { likes: 0, reposts: 0, replies: 0 };
     var embeds = post.embeds || [];
@@ -289,40 +289,54 @@
     }
 
     var postId = post.id || post.dfUri || '';
-    var postUrl = API_BASE + '/post/' + encodeURIComponent(postId);
+    var postUrl = `${API_BASE}/post/${encodeURIComponent(postId)}`;
     var protocolLabel = protocol.charAt(0).toUpperCase() + protocol.slice(1);
     var protocolColor = getProtocolColor(protocol);
 
     // Build rich embed HTML
     var html =
       '<div class="df-embed-row">' +
-        '<div class="df-embed-avatar-wrap">' +
-          (avatar
-            ? '<img class="df-embed-avatar" src="' + escapeHtml(avatar) + '" alt="' + escapeHtml(author) + '" loading="lazy" />'
-            : '<div class="df-embed-avatar" style="display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#6b7280;">' + escapeHtml(author.charAt(0).toUpperCase()) + '</div>'
-          ) +
-        '</div>' +
-        '<div class="df-embed-body">' +
-          '<div class="df-embed-name-row">' +
-            '<span class="df-embed-name">' + escapeHtml(author) + '</span>' +
-            '<span class="df-embed-badge" style="color:' + protocolColor + '!important;background:' + protocolColor + '15!important;">' + escapeHtml(protocolLabel) + '</span>' +
-          '</div>' +
-          (handle ? '<div class="df-embed-handle">@' + escapeHtml(handle) + '</div>' : '') +
-          '<div class="df-embed-text">' + escapeHtml(text) + '</div>' +
-          (imageUrl
-            ? '<div class="df-embed-image"><img src="' + escapeHtml(imageUrl) + '" alt="" loading="lazy" /></div>'
-            : ''
-          ) +
-          '<div class="df-embed-footer">' +
-            '<span>' + timeAgo(post.createdAt) + ' ago</span>' +
-            '<div class="df-embed-stats">' +
-              (metrics.likes > 0 ? '<span>&#10084; ' + formatCount(metrics.likes) + '</span>' : '') +
-              (metrics.reposts > 0 ? '<span>&#8634; ' + formatCount(metrics.reposts) + '</span>' : '') +
-              (metrics.replies > 0 ? '<span>&#8617; ' + formatCount(metrics.replies) + '</span>' : '') +
-            '</div>' +
-            '<cite>&mdash; <a href="' + escapeHtml(postUrl) + '" target="_blank" rel="noopener noreferrer">@' + escapeHtml(author) + ' on DegenFeed</a></cite>' +
-          '</div>' +
-        '</div>' +
+      '<div class="df-embed-avatar-wrap">' +
+      (avatar
+        ? `<img class="df-embed-avatar" src="${escapeHtml(avatar)}" alt="${escapeHtml(author)}" loading="lazy" />`
+        : `<div class="df-embed-avatar" style="display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#6b7280;">${escapeHtml(author.charAt(0).toUpperCase())}</div>`) +
+      '</div>' +
+      '<div class="df-embed-body">' +
+      '<div class="df-embed-name-row">' +
+      '<span class="df-embed-name">' +
+      escapeHtml(author) +
+      '</span>' +
+      '<span class="df-embed-badge" style="color:' +
+      protocolColor +
+      '!important;background:' +
+      protocolColor +
+      '15!important;">' +
+      escapeHtml(protocolLabel) +
+      '</span>' +
+      '</div>' +
+      (handle ? `<div class="df-embed-handle">@${escapeHtml(handle)}</div>` : '') +
+      '<div class="df-embed-text">' +
+      escapeHtml(text) +
+      '</div>' +
+      (imageUrl
+        ? `<div class="df-embed-image"><img src="${escapeHtml(imageUrl)}" alt="" loading="lazy" /></div>`
+        : '') +
+      '<div class="df-embed-footer">' +
+      '<span>' +
+      timeAgo(post.createdAt) +
+      ' ago</span>' +
+      '<div class="df-embed-stats">' +
+      (metrics.likes > 0 ? `<span>&#10084; ${formatCount(metrics.likes)}</span>` : '') +
+      (metrics.reposts > 0 ? `<span>&#8634; ${formatCount(metrics.reposts)}</span>` : '') +
+      (metrics.replies > 0 ? `<span>&#8617; ${formatCount(metrics.replies)}</span>` : '') +
+      '</div>' +
+      '<cite>&mdash; <a href="' +
+      escapeHtml(postUrl) +
+      '" target="_blank" rel="noopener noreferrer">@' +
+      escapeHtml(author) +
+      ' on DegenFeed</a></cite>' +
+      '</div>' +
+      '</div>' +
       '</div>';
 
     blockquote.innerHTML = html;
@@ -330,12 +344,13 @@
   }
 
   function showError(blockquote, message) {
-    blockquote.innerHTML = '<div class="df-embed-error">' + escapeHtml(message || 'Could not load post') + '</div>';
+    blockquote.innerHTML = `<div class="df-embed-error">${escapeHtml(message || 'Could not load post')}</div>`;
     blockquote.className = 'degenfeed-post df-embed-error';
   }
 
   function showLoading(blockquote) {
-    blockquote.innerHTML = '<div class="df-embed-loading"><span class="df-embed-spinner"></span> Loading post&hellip;</div>';
+    blockquote.innerHTML =
+      '<div class="df-embed-loading"><span class="df-embed-spinner"></span> Loading post&hellip;</div>';
   }
 
   // ─── Fetch & Hydrate ────────────────────────────────────────────────
@@ -349,9 +364,9 @@
 
     // Determine the API endpoint
     var apiPath = postId
-      ? '/api/feed/post/' + encodeURIComponent(postId)
+      ? `/api/feed/post/${encodeURIComponent(postId)}`
       : postUri
-        ? '/api/content/' + encodeURIComponent(postUri)
+        ? `/api/content/${encodeURIComponent(postUri)}`
         : null;
 
     if (!apiPath) {
@@ -363,7 +378,7 @@
     xhr.open('GET', API_BASE + apiPath, true);
     xhr.withCredentials = false;
 
-    xhr.onload = function () {
+    xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           var data = JSON.parse(xhr.responseText);
@@ -372,7 +387,7 @@
           } else {
             showError(blockquote, 'Post data unavailable');
           }
-        } catch (e) {
+        } catch (_e) {
           showError(blockquote, 'Failed to parse post data');
         }
       } else if (xhr.status === 404) {
@@ -382,7 +397,7 @@
       }
     };
 
-    xhr.onerror = function () {
+    xhr.onerror = () => {
       showError(blockquote, 'Network error');
     };
 
@@ -403,17 +418,17 @@
 
     // Hydrate each blockquote
     for (var i = 0; i < count; i++) {
-      (function (el) {
+      ((el) => {
         // Don't re-hydrate already loaded embeds
         if (el.classList.contains('df-embed-loaded')) return;
 
         // Use requestAnimationFrame for non-blocking hydration
         if (window.requestAnimationFrame) {
-          window.requestAnimationFrame(function () {
+          window.requestAnimationFrame(() => {
             hydrateBlockquote(el);
           });
         } else {
-          setTimeout(function () {
+          setTimeout(() => {
             hydrateBlockquote(el);
           }, 0);
         }
@@ -432,13 +447,13 @@
 
   // Also watch for dynamic content changes (e.g., SPAs inserting embeds)
   if (typeof MutationObserver !== 'undefined') {
-    var observer = new MutationObserver(function (mutations) {
+    var observer = new MutationObserver((mutations) => {
       var needsHydration = false;
       for (var i = 0; i < mutations.length; i++) {
         var addedNodes = mutations[i].addedNodes;
         for (var j = 0; j < addedNodes.length; j++) {
           if (addedNodes[j].nodeType === 1) {
-            if (addedNodes[j].matches && addedNodes[j].matches('blockquote.degenfeed-post')) {
+            if (addedNodes[j].matches?.('blockquote.degenfeed-post')) {
               needsHydration = true;
               break;
             }
@@ -454,9 +469,11 @@
         if (needsHydration) break;
       }
       if (needsHydration) {
-        var blockquotes = document.querySelectorAll('blockquote.degenfeed-post:not(.df-embed-loaded)');
+        var blockquotes = document.querySelectorAll(
+          'blockquote.degenfeed-post:not(.df-embed-loaded)',
+        );
         for (var k = 0; k < blockquotes.length; k++) {
-          (function (el) {
+          ((el) => {
             hydrateBlockquote(el);
           })(blockquotes[k]);
         }

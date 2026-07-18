@@ -40,9 +40,9 @@ export const metadata: Metadata = {
 export default function FarcasterPage() {
   return (
     <>
-      <Script id="breadcrumb-farcaster" type="application/ld+json">{
-        JSON.stringify(farcasterBreadcrumb)
-      }</Script>
+      <Script id="breadcrumb-farcaster" type="application/ld+json">
+        {JSON.stringify(farcasterBreadcrumb)}
+      </Script>
       <ProtocolFeedPage protocol="farcaster" />
     </>
   );

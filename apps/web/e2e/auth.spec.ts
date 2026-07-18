@@ -5,11 +5,11 @@
 import { expect, test } from '@playwright/test';
 import {
   MOCK_AUTH_CALLBACK_RESPONSE,
+  MOCK_FEED_POSTS,
+  MOCK_PREFERENCES,
   MOCK_SIGNED_IN_STATE,
   mockAuthApi,
   mockFeedApi,
-  MOCK_FEED_POSTS,
-  MOCK_PREFERENCES,
 } from './fixtures';
 
 test.describe('Auth — Sign out flow', () => {

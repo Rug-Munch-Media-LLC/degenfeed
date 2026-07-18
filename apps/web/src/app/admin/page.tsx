@@ -265,7 +265,9 @@ export default function AdminDashboardPage() {
                   <span className="text-sm font-medium text-[var(--color-fg)]">{p.name}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-xs text-[var(--color-muted)]">{formatCount(p.posts24h)} posts/24h</span>
+                  <span className="text-xs text-[var(--color-muted)]">
+                    {formatCount(p.posts24h)} posts/24h
+                  </span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${
                       p.status === 'online'
@@ -321,7 +323,9 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-[var(--color-fg)]">{entry.message}</p>
-                  <p className="text-[10px] text-[var(--color-muted)]">{formatTime(entry.timestamp)}</p>
+                  <p className="text-[10px] text-[var(--color-muted)]">
+                    {formatTime(entry.timestamp)}
+                  </p>
                 </div>
               </div>
             ))}

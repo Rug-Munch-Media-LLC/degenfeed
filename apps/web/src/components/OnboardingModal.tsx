@@ -3,8 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOnboarding } from '../hooks/useOnboarding';
-import { resetTour } from './GuidedTour';
 import { CrossPlatformSignup } from './CrossPlatformSignup';
+import { resetTour } from './GuidedTour';
 import { useToast } from './Toast';
 
 /* ── Types ───────────────────────────────────────────────── */
@@ -66,10 +66,10 @@ const PROTOCOLS: Protocol[] = [
   },
   {
     id: 'threads',
-    label: 'Threads (Experimental)',
-    color: '#888888',
+    label: 'Threads',
+    color: '#101010',
     icon: '⊞',
-    description: "Meta's microblog · Experimental · HTML scraping",
+    description: "Meta's microblog · via ActivityPub federation",
   },
   {
     id: 'reddit',
@@ -706,7 +706,9 @@ export function OnboardingModal() {
                   {/* Security note */}
                   <div className="mx-auto mt-4 max-w-sm rounded-xl border border-amber-500/10 bg-amber-500/[0.03] px-4 py-3">
                     <div className="flex items-start gap-2">
-                      <span className="mt-0.5 text-sm" aria-hidden="true">🔒</span>
+                      <span className="mt-0.5 text-sm" aria-hidden="true">
+                        🔒
+                      </span>
                       <div>
                         <p className="text-xs font-semibold text-white/80">
                           Your credentials are encrypted and stored securely.

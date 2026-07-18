@@ -123,7 +123,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
       setTimeout(() => setAnimatingRepost(false), 400);
       void onPerform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
     },
-    [onPerform, localState.engagement.viewerReposted, setAnimatingRepost],
+    [onPerform, localState.engagement.viewerReposted],
   );
 
   const handleBookmark = useCallback(
@@ -133,7 +133,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
       setTimeout(() => setAnimatingBookmark(false), 400);
       void onPerform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
     },
-    [onPerform, localState.engagement.viewerBookmarked, setAnimatingBookmark],
+    [onPerform, localState.engagement.viewerBookmarked],
   );
 
   const handleReplyToggle = useCallback(
@@ -143,7 +143,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
       setTimeout(() => setAnimatingReply(false), 300);
       onSetShowReply(!showReply);
     },
-    [onSetShowReply, showReply, setAnimatingReply],
+    [onSetShowReply, showReply],
   );
 
   const handleShareClick = useCallback(
@@ -163,18 +163,18 @@ export const PostCardEngagement = memo(function PostCardEngagement({
       <div className="actions flex items-center gap-4 text-xs text-[var(--color-muted)]">
         {post.protocol === 'lemmy' ? (
           <span className="text-xs text-[var(--color-muted)]">
-            {formatCount(post.metrics.likes)} ↑ {formatCount(
+            {formatCount(post.metrics.likes)} ↑{' '}
+            {formatCount(
               (post.raw as { counts?: { downvotes?: number } } | undefined)?.counts?.downvotes ?? 0,
-            )} ↓
+            )}{' '}
+            ↓
           </span>
         ) : (
           <>
             <button
               type="button"
               className={`flex items-center gap-1 transition-all duration-200 hover:text-red-400 press-effect ${
-                localState.engagement.viewerLiked
-                  ? 'text-red-400'
-                  : 'text-[var(--color-muted)]'
+                localState.engagement.viewerLiked ? 'text-red-400' : 'text-[var(--color-muted)]'
               }`}
               onClick={handleLike}
               aria-label="Like post"
@@ -191,12 +191,16 @@ export const PostCardEngagement = memo(function PostCardEngagement({
               >
                 {localState.engagement.viewerLiked ? '❤️' : '♡'}
               </span>{' '}
-              <span aria-label={`${localState.metrics.likes} likes`}>{formatCount(localState.metrics.likes)}</span>
+              <span aria-label={`${localState.metrics.likes} likes`}>
+                {formatCount(localState.metrics.likes)}
+              </span>
             </button>
             <button
               type="button"
               className={`flex items-center gap-1 transition-all duration-200 hover:text-green-400 ${
-                localState.engagement.viewerReposted ? 'text-green-400' : 'text-[var(--color-muted)]'
+                localState.engagement.viewerReposted
+                  ? 'text-green-400'
+                  : 'text-[var(--color-muted)]'
               }`}
               onClick={handleRepost}
               aria-label="Repost post"
@@ -208,7 +212,9 @@ export const PostCardEngagement = memo(function PostCardEngagement({
               >
                 ↻
               </span>{' '}
-              <span aria-label={`${localState.metrics.reposts} reposts`}>{formatCount(localState.metrics.reposts)}</span>
+              <span aria-label={`${localState.metrics.reposts} reposts`}>
+                {formatCount(localState.metrics.reposts)}
+              </span>
             </button>
             <button
               type="button"
@@ -222,7 +228,9 @@ export const PostCardEngagement = memo(function PostCardEngagement({
               <span className="inline-block transition-transform" aria-hidden="true">
                 ↩
               </span>{' '}
-              <span aria-label={`${localState.metrics.replies} replies`}>{formatCount(localState.metrics.replies)}</span>
+              <span aria-label={`${localState.metrics.replies} replies`}>
+                {formatCount(localState.metrics.replies)}
+              </span>
             </button>
             {onCrossReplyOpen && (
               <button
@@ -241,7 +249,9 @@ export const PostCardEngagement = memo(function PostCardEngagement({
             <button
               type="button"
               className={`flex items-center gap-1 transition-all duration-200 hover:text-purple-400 ${
-                localState.engagement.viewerBookmarked ? 'text-purple-400' : 'text-[var(--color-muted)]'
+                localState.engagement.viewerBookmarked
+                  ? 'text-purple-400'
+                  : 'text-[var(--color-muted)]'
               }`}
               onClick={handleBookmark}
               aria-label="Bookmark post"
@@ -263,7 +273,18 @@ export const PostCardEngagement = memo(function PostCardEngagement({
           aria-label="Share post"
           title="Share post to other platforms"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className="shrink-0"
+          >
             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
             <polyline points="16 6 12 2 8 6" />
             <line x1="12" y1="2" x2="12" y2="15" />

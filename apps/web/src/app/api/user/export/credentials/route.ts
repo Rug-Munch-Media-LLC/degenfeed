@@ -20,10 +20,7 @@ export async function POST(request: NextRequest) {
     };
 
     if (!Array.isArray(body.credentials) || body.credentials.length === 0) {
-      return NextResponse.json(
-        { error: 'Missing or empty "credentials" array' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Missing or empty "credentials" array' }, { status: 400 });
     }
 
     // Build a portable credential bundle with a standard format

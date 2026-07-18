@@ -23,7 +23,8 @@ export type { Notification };
 
 function detectProtocol(n: Notification): string {
   if (n.protocol && n.protocol !== 'tip') return n.protocol;
-  if (n.type === 'tip') return n.currency === 'base' ? 'farcaster' : n.currency === 'solana' ? 'solana' : 'ethereum';
+  if (n.type === 'tip')
+    return n.currency === 'base' ? 'farcaster' : n.currency === 'solana' ? 'solana' : 'ethereum';
   return n.protocol || 'unknown';
 }
 
@@ -76,7 +77,10 @@ async function loadNotifPrefs(env: Env, userId: string): Promise<NotificationPro
     const parsed = JSON.parse(raw) as { notifications?: NotificationProtocolPrefs };
     return parsed.notifications ?? null;
   } catch (err) {
-    console.warn('[notifications] loadNotifPrefs failed:', err instanceof Error ? err.message : err);
+    console.warn(
+      '[notifications] loadNotifPrefs failed:',
+      err instanceof Error ? err.message : err,
+    );
     return null;
   }
 }
@@ -93,7 +97,10 @@ async function fetchKvNotifications(env: Env, recipient: string): Promise<Notifi
     const parsed = JSON.parse(raw) as Notification[];
     return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    console.warn('[notifications] fetchKvNotifications failed:', err instanceof Error ? err.message : err);
+    console.warn(
+      '[notifications] fetchKvNotifications failed:',
+      err instanceof Error ? err.message : err,
+    );
     return [];
   }
 }
@@ -702,7 +709,10 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
     });
   }
 
-  return noCacheJsonResponse({ notifications: unified.slice(0, 100), meta: { total: unified.length } });
+  return noCacheJsonResponse({
+    notifications: unified.slice(0, 100),
+    meta: { total: unified.length },
+  });
 }
 
 /**

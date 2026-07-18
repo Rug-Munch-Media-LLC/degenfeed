@@ -183,17 +183,14 @@ async function fetchFarcasterProfile(
   // Primary: Neynar API v2 (requires API key)
   if (neynarApiKey) {
     try {
-      const res = await fetch(
-        `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
-        {
-          headers: {
-            accept: 'application/json',
-            'user-agent': 'DegenFeed/0.1',
-            'x-api-key': neynarApiKey,
-          },
-          signal: AbortSignal.timeout(5000),
+      const res = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
+        headers: {
+          accept: 'application/json',
+          'user-agent': 'DegenFeed/0.1',
+          'x-api-key': neynarApiKey,
         },
-      );
+        signal: AbortSignal.timeout(5000),
+      });
       if (res.ok) {
         const data = (await res.json()) as {
           users?: Array<{
@@ -340,7 +337,7 @@ async function searchMeiliPosts(
 
     const primaryQuery = queries[0];
     const headers: Record<string, string> = { 'content-type': 'application/json' };
-    if (apiKey) headers['authorization'] = `Bearer ${apiKey}`;
+    if (apiKey) headers.authorization = `Bearer ${apiKey}`;
 
     const body: Record<string, unknown> = {
       q: primaryQuery,

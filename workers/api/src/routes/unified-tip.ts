@@ -198,8 +198,7 @@ function sanitizeEntityId(raw: unknown): string | null {
 }
 
 function sanitizeAmountUsd(raw: unknown): number | null {
-  const num =
-    typeof raw === 'number' ? raw : Number.parseFloat(sanitizeString(raw, 64) || 'NaN');
+  const num = typeof raw === 'number' ? raw : Number.parseFloat(sanitizeString(raw, 64) || 'NaN');
   if (!Number.isFinite(num) || num <= 0 || num > MAX_TIP_USD) return null;
   return Math.round(num * 100) / 100;
 }
@@ -239,7 +238,10 @@ async function kvPutJson(env: Env, key: string, value: unknown): Promise<void> {
   try {
     await env.CACHE?.put(key, JSON.stringify(value), { expirationTtl: TTL_1Y });
   } catch (err) {
-    console.warn(`[unified-tip] KV put failed for ${key}:`, err instanceof Error ? err.message : err);
+    console.warn(
+      `[unified-tip] KV put failed for ${key}:`,
+      err instanceof Error ? err.message : err,
+    );
   }
 }
 
@@ -264,7 +266,10 @@ function bumpBreakdown(
  *
  * Returns the activity item that was appended to the live feed.
  */
-export async function recordUnifiedTip(env: Env, event: UnifiedTipEvent): Promise<ActivityItem | null> {
+export async function recordUnifiedTip(
+  env: Env,
+  event: UnifiedTipEvent,
+): Promise<ActivityItem | null> {
   if (!env.CACHE) return null;
 
   const entityId = sanitizeEntityId(event.entityId);
@@ -372,7 +377,13 @@ export async function recordUnifiedTip(env: Env, event: UnifiedTipEvent): Promis
         }
         let entry = record.entries.find((e) => e.userId === toUserId);
         if (!entry) {
-          entry = { userId: toUserId, totalUsd: 0, count: 0, platform: event.platform, byPlatform: {} };
+          entry = {
+            userId: toUserId,
+            totalUsd: 0,
+            count: 0,
+            platform: event.platform,
+            byPlatform: {},
+          };
           record.entries.push(entry);
         }
         entry.totalUsd = Math.round((entry.totalUsd + amountUsd) * 100) / 100;
@@ -483,9 +494,15 @@ export async function handleUnifiedTipCreate(request: Request, env: Env): Promis
         const { recordPeerTubeTip } = await import('./peertube-tip');
         const result = await recordPeerTubeTip(env, {
           videoId: entityId,
-          creatorName: sanitizeString(payload.creatorName, 256) || sanitizeString(body.toLabel, 64) || 'Unknown creator',
+          creatorName:
+            sanitizeString(payload.creatorName, 256) ||
+            sanitizeString(body.toLabel, 64) ||
+            'Unknown creator',
           creatorChannel: sanitizeString(payload.creatorChannel, 256) || toUserId || 'unknown',
-          videoTitle: sanitizeString(payload.videoTitle, 512) || sanitizeString(body.entityLabel, 200) || entityId,
+          videoTitle:
+            sanitizeString(payload.videoTitle, 512) ||
+            sanitizeString(body.entityLabel, 200) ||
+            entityId,
           instanceDomain: sanitizeString(payload.instanceDomain, 128) || 'video.degenfeed.xyz',
           amountUsd,
           sender: fromUserId,
@@ -571,7 +588,13 @@ export async function handleUnifiedTipCreate(request: Request, env: Env): Promis
             console.warn('[unified-tip] failed to store notification:', String(kvErr));
           }
         }
-        return jsonResponse({ success: true, platform, entityId, activityId: activity.id, amountUsd });
+        return jsonResponse({
+          success: true,
+          platform,
+          entityId,
+          activityId: activity.id,
+          amountUsd,
+        });
       }
     }
   } catch (err) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { getPrimaryIdentity } from '@degenfeed/storage';
-import { ComposePreview, getProtocolColor, getProtocolIcon, getProtocolLabel } from '@degenfeed/ui';
+import { ComposePreview, getProtocolColor, getProtocolIcon } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { publishNoteToNostr } from '../lib/nostr';
@@ -13,7 +13,7 @@ const TARGETS = [
   { id: 'farcaster', label: 'Farcaster', charLimit: 320 },
   { id: 'lens', label: 'Lens', charLimit: 5000 },
   { id: 'bluesky', label: 'Bluesky', charLimit: 300 },
-  { id: 'threads', label: 'Threads (Experimental)', charLimit: 500 },
+  { id: 'threads', label: 'Threads', charLimit: 500 },
   { id: 'mastodon', label: 'Mastodon', charLimit: 5000 },
 ];
 
@@ -29,7 +29,7 @@ function getComposerPlaceholder(protocolId: string): string {
   const placeholders: Record<string, string> = {
     farcaster: 'What is happening?!',
     lens: 'Share a publication...',
-    bluesky: 'What\'s on your mind?',
+    bluesky: "What's on your mind?",
     nostr: 'Write a note...',
     mastodon: 'What would you like to toot?',
     threads: 'Start a thread...',
@@ -172,9 +172,7 @@ export function FeedComposer({
     <div
       className="composer border-b px-4 py-3 transition-all duration-200"
       style={{
-        borderColor: activeProtocolColor
-          ? `${activeProtocolColor}44`
-          : 'var(--color-border)',
+        borderColor: activeProtocolColor ? `${activeProtocolColor}44` : 'var(--color-border)',
         boxShadow: activeProtocolColor
           ? `inset 0 -1px 0 ${activeProtocolColor}22, 0 0 30px ${activeProtocolColor}11`
           : undefined,
@@ -198,20 +196,22 @@ export function FeedComposer({
         </div>
         <div
           className="min-w-0 flex-1"
-              style={
-                firstSelected
-                  ? {
-                      '--composer-accent': getProtocolColor(firstSelected),
-                      '--composer-accent-rgb': hexToRgb(getProtocolColor(firstSelected)),
-                    } as React.CSSProperties
-                  : undefined
-              }
+          style={
+            firstSelected
+              ? ({
+                  '--composer-accent': getProtocolColor(firstSelected),
+                  '--composer-accent-rgb': hexToRgb(getProtocolColor(firstSelected)),
+                } as React.CSSProperties)
+              : undefined
+          }
         >
           <textarea
             ref={textareaRef}
             value={text}
             onChange={handleTextChange}
-            placeholder={firstSelected ? getComposerPlaceholder(firstSelected) : "What is happening?!"}
+            placeholder={
+              firstSelected ? getComposerPlaceholder(firstSelected) : 'What is happening?!'
+            }
             rows={1}
             className="w-full resize-none bg-transparent py-2 text-lg text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none"
             aria-label="Compose a new post"
@@ -227,7 +227,9 @@ export function FeedComposer({
                   type="button"
                   onClick={() => toggleTarget(t.id)}
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all border ${
-                    active ? 'border-current' : 'border-[var(--color-border)] hover:border-[var(--color-muted)]'
+                    active
+                      ? 'border-current'
+                      : 'border-[var(--color-border)] hover:border-[var(--color-muted)]'
                   } ${connected ? '' : 'opacity-40 hover:opacity-70'}`}
                   style={{
                     color: active ? getProtocolColor(t.id) : connected ? '#9ca3af' : '#666',
@@ -291,7 +293,11 @@ export function FeedComposer({
             <div className="flex items-center gap-3 text-xs">
               <span
                 className={
-                  overLimit ? 'text-red-400' : nearLimit ? 'text-yellow-400' : 'text-[var(--color-muted)]'
+                  overLimit
+                    ? 'text-red-400'
+                    : nearLimit
+                      ? 'text-yellow-400'
+                      : 'text-[var(--color-muted)]'
                 }
               >
                 {charCount}

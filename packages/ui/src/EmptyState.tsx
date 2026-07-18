@@ -50,7 +50,8 @@ export const EmptyState: FC<EmptyStateProps> = memo(function EmptyState({
           className="empty-state-icon"
           aria-hidden="true"
           style={{
-            background: 'linear-gradient(135deg, var(--color-accent-glow), rgba(139, 92, 246, 0.12))',
+            background:
+              'linear-gradient(135deg, var(--color-accent-glow), rgba(139, 92, 246, 0.12))',
             boxShadow: '0 0 30px color-mix(in srgb, var(--color-accent) 10%, transparent)',
           }}
         >
@@ -68,9 +69,7 @@ export const EmptyState: FC<EmptyStateProps> = memo(function EmptyState({
           {description}
         </p>
       )}
-      {action && (
-        <div className="flex flex-wrap items-center justify-center gap-3">{action}</div>
-      )}
+      {action && <div className="flex flex-wrap items-center justify-center gap-3">{action}</div>}
       {secondaryAction && <div className="mt-3">{secondaryAction}</div>}
     </div>
   );

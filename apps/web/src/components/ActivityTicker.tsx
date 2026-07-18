@@ -88,7 +88,9 @@ export function ActivityTicker() {
                 <span className="text-[var(--color-muted)]"> {a.target.slice(0, 20)}</span>
               ) : null}
             </span>
-            <span className="ml-auto shrink-0 text-[10px] text-[var(--color-muted)]">{timeAgo(a.at)}</span>
+            <span className="ml-auto shrink-0 text-[10px] text-[var(--color-muted)]">
+              {timeAgo(a.at)}
+            </span>
           </div>
         ))}
       </div>

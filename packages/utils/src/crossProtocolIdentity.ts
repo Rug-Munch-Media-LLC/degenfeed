@@ -11,7 +11,13 @@ export interface CrossProtocolIdentity {
   /** Nostr identity */
   nostr?: { npub: string; relays: string[]; verified: boolean; manualLinking?: boolean };
   /** Farcaster identity */
-  farcaster?: { fid: number; username: string; custodyAddress: string; verified: boolean; manualLinking?: boolean };
+  farcaster?: {
+    fid: number;
+    username: string;
+    custodyAddress: string;
+    verified: boolean;
+    manualLinking?: boolean;
+  };
   /** Lens Protocol identity */
   lens?: { profileId: string; handle: string; verified: boolean; manualLinking?: boolean };
   /** Bluesky AT Protocol identity */
@@ -27,25 +33,37 @@ export interface CrossProtocolIdentity {
   /** RSS source URL identity */
   rss?: { url: string; verified: boolean; manualLinking?: boolean };
   /** PeerTube / ActivityPub video identity */
-  peertube?: { username: string; channelId?: string; instance?: string; verified: boolean; manualLinking?: boolean };
+  peertube?: {
+    username: string;
+    channelId?: string;
+    instance?: string;
+    verified: boolean;
+    manualLinking?: boolean;
+  };
   /** When the wallet first linked any identity */
   linkedAt: number;
   /** When any linked identity was last re-verified */
   lastVerified: number;
 }
 
-export type ProtocolId = keyof Omit<CrossProtocolIdentity, 'walletAddress' | 'linkedAt' | 'lastVerified'>;
+export type ProtocolId = keyof Omit<
+  CrossProtocolIdentity,
+  'walletAddress' | 'linkedAt' | 'lastVerified'
+>;
 
 /**
  * Registry of supported social/identity protocols.
  * Each entry has display metadata and the API endpoint to resolve/link.
  */
-export const PROTOCOL_ID_REGISTRY: Record<ProtocolId, {
-  displayName: string;
-  icon: string;
-  color: string;
-  resolveEndpoint: string;
-}> = {
+export const PROTOCOL_ID_REGISTRY: Record<
+  ProtocolId,
+  {
+    displayName: string;
+    icon: string;
+    color: string;
+    resolveEndpoint: string;
+  }
+> = {
   nostr: {
     displayName: 'Nostr',
     icon: '⚡',

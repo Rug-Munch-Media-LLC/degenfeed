@@ -19,7 +19,7 @@ export async function GET() {
     ];
 
     return NextResponse.json({ ok: true, bridges });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch bridge status' }, { status: 500 });
   }
 }

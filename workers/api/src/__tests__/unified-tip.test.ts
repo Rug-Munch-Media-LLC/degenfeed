@@ -66,9 +66,11 @@ describe('recordUnifiedTip', () => {
     expect(entity?.tips).toHaveLength(1);
     expect(entity?.lastTipAt).toBeGreaterThan(0);
 
-    const sent = readJson<{ totalUsd: number; count: number; byPlatform: Record<string, { totalUsd: number }> }>(
-      'tip:user:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:sent',
-    );
+    const sent = readJson<{
+      totalUsd: number;
+      count: number;
+      byPlatform: Record<string, { totalUsd: number }>;
+    }>('tip:user:0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:sent');
     expect(sent?.totalUsd).toBe(5);
     expect(sent?.count).toBe(1);
     expect(sent?.byPlatform.lemmy?.totalUsd).toBe(5);

@@ -13,13 +13,15 @@ describe('encodeContentUri', () => {
   });
 
   it('should encode with instance for federated protocols', () => {
-    expect(encodeContentUri('mastodon', '1098765432', 'mastodon.social'))
-      .toBe('df://mastodon/mastodon.social/1098765432');
+    expect(encodeContentUri('mastodon', '1098765432', 'mastodon.social')).toBe(
+      'df://mastodon/mastodon.social/1098765432',
+    );
   });
 
   it('should encode lemmy with community instance', () => {
-    expect(encodeContentUri('lemmy', '123', 'community.degenfeed.xyz'))
-      .toBe('df://lemmy/community.degenfeed.xyz/123');
+    expect(encodeContentUri('lemmy', '123', 'community.degenfeed.xyz')).toBe(
+      'df://lemmy/community.degenfeed.xyz/123',
+    );
   });
 });
 
@@ -64,12 +66,14 @@ describe('decodeContentUri', () => {
 
 describe('getPostContentUri', () => {
   it('should generate content URI for nostr posts', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const post = { protocol: 'nostr', id: 'note1abc' } as any;
     const uri = getPostContentUri(post);
     expect(uri).toBe('df://nostr:note1abc');
   });
 
   it('should generate content URI for farcaster posts', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     const post = { protocol: 'farcaster', id: '0xabc123' } as any;
     const uri = getPostContentUri(post);
     expect(uri).toBe('df://farcaster:0xabc123');
@@ -79,7 +83,8 @@ describe('getPostContentUri', () => {
     const post = {
       protocol: 'mastodon',
       id: '1098765432',
-      raw: { instance: 'mastodon.social' },
+      raw: { uri: 'https://mastodon.social/@user/1098765432' },
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
     } as any;
     const uri = getPostContentUri(post);
     expect(uri).toBe('df://mastodon/mastodon.social/1098765432');

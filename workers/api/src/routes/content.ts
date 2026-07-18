@@ -8,6 +8,7 @@
  *   3. Fall back to an RSS provider for unmatched protocols.
  */
 
+import { enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
 import {
   BlueskyProvider,
   FarcasterProvider,
@@ -19,10 +20,9 @@ import {
   RssProvider,
   ThreadsProvider,
 } from '@degenfeed/feed-providers';
-import { enrichPostNiches, isSpamPost } from '@degenfeed/feed-core';
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
-import { decodeContentUri, rmiUrl } from '@degenfeed/utils';
+import type { UnifiedPost } from '@degenfeed/types';
 import type { ProtocolSource } from '@degenfeed/utils';
+import { decodeContentUri, rmiUrl } from '@degenfeed/utils';
 import { type Env, jsonResponse } from '../index';
 
 function providerFor(protocol: ProtocolSource, env: Env) {
@@ -120,10 +120,7 @@ async function fetchPostByUri(
   return null;
 }
 
-export async function handleContentResolve(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleContentResolve(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const rawUri = url.pathname.replace(/^\/(api|v1)\/content\//, '');
   const uri = decodeURIComponent(rawUri);
@@ -165,7 +162,7 @@ export async function handleContentResolve(
 
 // ─── df://profile/ resolution ─────────────────────────────────────
 
-import { identityKey, type CrossProtocolIdentity } from '@degenfeed/utils';
+import { type CrossProtocolIdentity, identityKey } from '@degenfeed/utils';
 
 async function handleProfileResolve(uri: string, env: Env): Promise<Response> {
   const address = uri.replace('df://profile/', '').trim().toLowerCase();
@@ -177,7 +174,14 @@ async function handleProfileResolve(uri: string, env: Env): Promise<Response> {
   try {
     const raw = await env.IDENTITIES?.get(key);
     if (!raw) {
-      return jsonResponse({ data: null, uri, message: 'Profile not found. Link your wallet in Settings to create one.' }, 200);
+      return jsonResponse(
+        {
+          data: null,
+          uri,
+          message: 'Profile not found. Link your wallet in Settings to create one.',
+        },
+        200,
+      );
     }
     const identity = JSON.parse(raw) as CrossProtocolIdentity;
 

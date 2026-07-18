@@ -235,20 +235,30 @@ export async function loadUserRankingContext(
   if (!payload) return empty;
   // Load user-specific KV entries
   try {
-    const [followsRaw, mutedAuthorsRaw, mutedWordsRaw, mutedCommunitiesRaw, blockedCommunitiesRaw, prefsRaw] =
-      await Promise.all([
-        env.CACHE?.get(`user:follows:${payload.address}`),
-        env.CACHE?.get(`user:muted_authors:${payload.address}`),
-        env.CACHE?.get(`user:muted_words:${payload.address}`),
-        env.CACHE?.get(`user:muted_communities:${payload.address}`),
-        env.CACHE?.get(`user:blocked_communities:${payload.address}`),
-        env.CACHE?.get(`user:prefs:${payload.address}`),
-      ]);
+    const [
+      followsRaw,
+      mutedAuthorsRaw,
+      mutedWordsRaw,
+      mutedCommunitiesRaw,
+      blockedCommunitiesRaw,
+      prefsRaw,
+    ] = await Promise.all([
+      env.CACHE?.get(`user:follows:${payload.address}`),
+      env.CACHE?.get(`user:muted_authors:${payload.address}`),
+      env.CACHE?.get(`user:muted_words:${payload.address}`),
+      env.CACHE?.get(`user:muted_communities:${payload.address}`),
+      env.CACHE?.get(`user:blocked_communities:${payload.address}`),
+      env.CACHE?.get(`user:prefs:${payload.address}`),
+    ]);
     const followed = new Set<string>(followsRaw ? JSON.parse(followsRaw) : []);
     const mutedAuthors = new Set<string>(mutedAuthorsRaw ? JSON.parse(mutedAuthorsRaw) : []);
     const mutedWords = new Set<string>(mutedWordsRaw ? JSON.parse(mutedWordsRaw) : []);
-    const mutedCommunities = new Set<string>(mutedCommunitiesRaw ? JSON.parse(mutedCommunitiesRaw) : []);
-    const blockedCommunities = new Set<string>(blockedCommunitiesRaw ? JSON.parse(blockedCommunitiesRaw) : []);
+    const mutedCommunities = new Set<string>(
+      mutedCommunitiesRaw ? JSON.parse(mutedCommunitiesRaw) : [],
+    );
+    const blockedCommunities = new Set<string>(
+      blockedCommunitiesRaw ? JSON.parse(blockedCommunitiesRaw) : [],
+    );
     const preferences = prefsRaw ? (JSON.parse(prefsRaw) as StoredUserPreferences) : null;
     if (preferences && typeof preferences.hideLowQuality !== 'boolean') {
       preferences.hideLowQuality = false;
@@ -272,7 +282,14 @@ export async function loadUserRankingContext(
     if (preferences && typeof preferences.interleaveProtocols !== 'boolean') {
       preferences.interleaveProtocols = true;
     }
-    return { followed, mutedAuthors, mutedWords, mutedCommunities, blockedCommunities, preferences };
+    return {
+      followed,
+      mutedAuthors,
+      mutedWords,
+      mutedCommunities,
+      blockedCommunities,
+      preferences,
+    };
   } catch (err) {
     console.warn('[feed] loadUserRankingContext failed:', err instanceof Error ? err.message : err);
     return empty;

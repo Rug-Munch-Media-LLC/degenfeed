@@ -61,7 +61,7 @@ const RPC_URLS: Record<TokenGateChain, string> = {
 
 function getRpcUrl(chain: TokenGateChain): string {
   const envKey = `${chain.toUpperCase()}_RPC_URL`;
-  if (typeof process !== 'undefined' && process.env?.[envKey]) {
+  if (process?.env?.[envKey]) {
     return process.env[envKey]!;
   }
   return RPC_URLS[chain];
@@ -76,11 +76,7 @@ const ERC20_SYMBOL = '0x95d89b41';
 const ERC721_TOKEN_URI = '0xc87b56dd';
 const ERC1155_URI = '0x0e89341c';
 
-async function ethCall(
-  chain: TokenGateChain,
-  to: string,
-  data: string,
-): Promise<string | null> {
+async function ethCall(chain: TokenGateChain, to: string, data: string): Promise<string | null> {
   const url = getRpcUrl(chain);
   try {
     const res = await fetch(url, {
@@ -130,8 +126,9 @@ async function solanaGetTokenAccounts(
 ): Promise<Array<{ mint: string; amount: bigint }>> {
   const url = getRpcUrl('solana');
   try {
-    const params: Record<string, unknown> =
-      mint ? { owner, mint } : { owner, programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' };
+    const params: Record<string, unknown> = mint
+      ? { owner, mint }
+      : { owner, programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' };
 
     const res = await fetch(url, {
       method: 'POST',
@@ -145,7 +142,13 @@ async function solanaGetTokenAccounts(
     });
     if (!res.ok) return [];
     const json = (await res.json()) as {
-      result?: { value?: Array<{ account: { data: { parsed: { info: { mint: string; tokenAmount: { amount: string } } } } } }> };
+      result?: {
+        value?: Array<{
+          account: {
+            data: { parsed: { info: { mint: string; tokenAmount: { amount: string } } } };
+          };
+        }>;
+      };
     };
     if (!json.result?.value) return [];
     return json.result.value.map((v) => ({
@@ -167,10 +170,7 @@ async function solanaGetTokenAccounts(
  *
  * Returns true if the wallet satisfies the gate requirements.
  */
-export async function checkTokenGate(
-  gate: TokenGate,
-  walletAddress: string,
-): Promise<boolean> {
+export async function checkTokenGate(gate: TokenGate, walletAddress: string): Promise<boolean> {
   if (!walletAddress) return false;
 
   // Solana chain
@@ -274,8 +274,7 @@ export async function resolveNFTMetadata(
     return null;
   }
 
-  const selector =
-    gate.type === 'erc1155' ? ERC1155_URI : ERC721_TOKEN_URI;
+  const selector = gate.type === 'erc1155' ? ERC1155_URI : ERC721_TOKEN_URI;
   const tokenIdHex = BigInt(gate.tokenId).toString(16).padStart(64, '0');
   const data = `${selector}${tokenIdHex}`;
   const result = await ethCall(gate.chain, gate.contractAddress, data);
@@ -356,10 +355,7 @@ export async function checkTokenGateCached(
 /**
  * Build a human-readable gate description string.
  */
-export function formatGateDescription(
-  gate: TokenGate,
-  symbol: string,
-): string {
+export function formatGateDescription(gate: TokenGate, symbol: string): string {
   const chainLabel = CHAIN_LABELS[gate.chain];
 
   if (gate.type === 'erc721' && gate.tokenId) {

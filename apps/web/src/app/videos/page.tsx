@@ -141,6 +141,7 @@ function formatDuration(seconds?: number): string {
 // ─── Fetch Federated PeerTube feed ───────────────────────────────────────
 // Searches across multiple PeerTube instances for crypto/tech content.
 
+// biome-ignore lint/correctness/noUnusedVariables: keep for documentation
 interface FederatedVideoItem {
   id: string;
   title: string;

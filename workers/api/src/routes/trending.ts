@@ -10,12 +10,12 @@
 
 import { type Env, jsonResponse } from '../index';
 import {
-  TRENDING_CACHE_KEY,
-  type TrendingData,
-  type TrendingItem,
   getPlatformTrending,
   mergeTrendingItems,
   scrapeTrendingContent,
+  TRENDING_CACHE_KEY,
+  type TrendingData,
+  type TrendingItem,
 } from './trending-scraper';
 
 // ─── KV / TTL ────────────────────────────────────────────────────────────
@@ -51,10 +51,7 @@ async function loadTrendingData(env: Env): Promise<TrendingData | null> {
  *   - minScore (number, default 0): minimum engagement score filter
  *   - platforms (string, comma-separated): filter to specific platforms
  */
-export async function handleTrendingAggregated(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleTrendingAggregated(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
   const minScore = Number(url.searchParams.get('minScore')) || 0;
@@ -64,9 +61,7 @@ export async function handleTrendingAggregated(
   let data = await loadTrendingData(env);
 
   // Stale-while-revalidate: if cache is old, trigger background refresh
-  const shouldRefresh =
-    !data ||
-    (Date.now() - data.timestamp) > CACHE_MAX_AGE;
+  const shouldRefresh = !data || Date.now() - data.timestamp > CACHE_MAX_AGE;
 
   if (shouldRefresh) {
     // Inline refresh for first request after expiry
@@ -74,10 +69,7 @@ export async function handleTrendingAggregated(
   }
 
   if (!data) {
-    return jsonResponse(
-      { data: [], meta: { total: 0, note: 'Trending data unavailable' } },
-      503,
-    );
+    return jsonResponse({ data: [], meta: { total: 0, note: 'Trending data unavailable' } }, 503);
   }
 
   // Merge all items
@@ -118,10 +110,7 @@ export async function handleTrendingAggregated(
  *   - platform (required): reddit | youtube | farcaster | nostr | bluesky
  *   - limit (number, default 50): max items
  */
-export async function handleTrendingPerPlatform(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleTrendingPerPlatform(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const platform = url.searchParams.get('platform')?.toLowerCase() as
     | keyof TrendingData['platforms']
@@ -140,19 +129,14 @@ export async function handleTrendingPerPlatform(
 
   let data = await loadTrendingData(env);
 
-  const shouldRefresh =
-    !data ||
-    (Date.now() - data.timestamp) > CACHE_MAX_AGE;
+  const shouldRefresh = !data || Date.now() - data.timestamp > CACHE_MAX_AGE;
 
   if (shouldRefresh) {
     data = await scrapeTrendingContent(env);
   }
 
   if (!data) {
-    return jsonResponse(
-      { data: [], meta: { total: 0, note: 'Trending data unavailable' } },
-      503,
-    );
+    return jsonResponse({ data: [], meta: { total: 0, note: 'Trending data unavailable' } }, 503);
   }
 
   const platformData = getPlatformTrending(data, platform);
@@ -177,16 +161,13 @@ export async function handleTrendingPerPlatform(
  * Compact "Trending Now" response designed for in-feed embedding.
  * Returns the top 5 items across all platforms with minimal payload.
  */
-export async function handleTrendingNow(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleTrendingNow(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const count = Math.min(Number(url.searchParams.get('count')) || 5, 20);
 
   let data = await loadTrendingData(env);
 
-  if (!data || (Date.now() - data.timestamp) > CACHE_MAX_AGE) {
+  if (!data || Date.now() - data.timestamp > CACHE_MAX_AGE) {
     data = await scrapeTrendingContent(env);
   }
 

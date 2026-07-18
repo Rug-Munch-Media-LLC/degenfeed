@@ -89,17 +89,11 @@ export async function fetchWithSwr<T>(
     revalidateInBackground(url, cacheKey, fetchOptions);
     return { data: stale, fromCache: true, stale: true };
   }
-
-  // No cache — fetch from network
-  try {
-    const res = await fetch(url, { credentials: 'include', ...fetchOptions });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = (await res.json()) as T;
-    setCache(cacheKey, data);
-    return { data, fromCache: false, stale: false };
-  } catch (err) {
-    throw err;
-  }
+  const res = await fetch(url, { credentials: 'include', ...fetchOptions });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = (await res.json()) as T;
+  setCache(cacheKey, data);
+  return { data, fromCache: false, stale: false };
 }
 
 function revalidateInBackground<T>(

@@ -124,7 +124,9 @@ export function FAQClient() {
       <div className="divide-y divide-[var(--color-glass-border)]">
         {filtered.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-sm text-[var(--color-muted)]">No results for &ldquo;{search}&rdquo;</p>
+            <p className="text-sm text-[var(--color-muted)]">
+              No results for &ldquo;{search}&rdquo;
+            </p>
             <button
               type="button"
               onClick={() => {
@@ -175,8 +177,8 @@ export function FAQClient() {
           <a
             href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
             target="_blank"
-            
             className="text-degen-400 underline"
+            rel="noopener"
           >
             Forgejo
           </a>

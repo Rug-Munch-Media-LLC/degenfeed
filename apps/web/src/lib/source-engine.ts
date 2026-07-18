@@ -7,23 +7,18 @@
  * is stateless — data comes from the worker API.
  */
 
+import fs from 'node:fs';
 import {
-  discoverNewSources,
-  computeQualityScore,
-  computeSourceHealthScore,
-  detectStaleSources,
-  buildTrendingSource,
-  getNewThisWeek,
   aggregateStats,
-  DEFAULT_DISCOVERY_CONFIG,
+  buildTrendingSource,
+  computeSourceHealthScore,
   type DiscoveredSource,
+  discoverNewSources,
+  getNewThisWeek,
+  type Platform,
   type SourceHealth,
   type TrendingSource,
-  type SourceLifecycle,
-  type Platform,
 } from '@degenfeed/source-discovery';
-import fs from 'node:fs';
-import path from 'node:path';
 
 // ─── Persistent storage (file-backed) ──────────────────────────────────
 
@@ -52,7 +47,9 @@ function loadData(): PersistedData {
       const raw = fs.readFileSync(STORAGE_PATH, 'utf-8');
       return JSON.parse(raw) as PersistedData;
     }
-  } catch { /* ignore corrupt data */ }
+  } catch {
+    /* ignore corrupt data */
+  }
   return {
     allSources: [],
     pendingSources: [],
@@ -68,15 +65,32 @@ function loadData(): PersistedData {
 function saveData(data: PersistedData): void {
   try {
     fs.writeFileSync(STORAGE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-  } catch { /* ignore write errors */ }
+  } catch {
+    /* ignore write errors */
+  }
 }
 
 // ─── Known existing sources ──────────────────────────────────────────
 
 const KNOWN_REDDIT_SUBS = [
-  'cryptocurrency', 'bitcoin', 'ethereum', 'cryptomarkets', 'cryptotechnology',
-  'defi', 'ethfinance', 'ethdev', 'uniswap', 'aave', 'solana', 'cardano',
-  'polkadot', 'avax', 'cosmosnetwork', 'ethtrader', 'optimism', 'arbitrum',
+  'cryptocurrency',
+  'bitcoin',
+  'ethereum',
+  'cryptomarkets',
+  'cryptotechnology',
+  'defi',
+  'ethfinance',
+  'ethdev',
+  'uniswap',
+  'aave',
+  'solana',
+  'cardano',
+  'polkadot',
+  'avax',
+  'cosmosnetwork',
+  'ethtrader',
+  'optimism',
+  'arbitrum',
 ];
 
 function getExistingSources(data: PersistedData): Record<string, string[]> {
@@ -243,7 +257,10 @@ export function getPendingSources(): { sources: DiscoveredSource[]; total: numbe
 /**
  * Approve sources by ID.
  */
-export function approveSources(ids: string[]): { approved: number; sources: Array<{ id: string; name: string; platform: string }> } {
+export function approveSources(ids: string[]): {
+  approved: number;
+  sources: Array<{ id: string; name: string; platform: string }>;
+} {
   const data = loadData();
   const approved: DiscoveredSource[] = [];
   const remaining: DiscoveredSource[] = [];
@@ -289,7 +306,7 @@ export function getTrendingSources(limit = 10): { trending: TrendingSource[] } {
 
   for (const health of Object.values(data.healthMap)) {
     const source = data.allSources.find((s) => s.id === health.sourceId);
-    if (!source || source.status !== 'approved') continue;
+    if (source?.status !== 'approved') continue;
 
     // Compute engagement velocity (eng/day over 7d window)
     const daysActive = Math.max(1, (now - health.lastCheckedAt) / 86_400_000);
@@ -318,17 +335,23 @@ export function getTrendingSources(limit = 10): { trending: TrendingSource[] } {
 /**
  * Get stale sources (no activity in 14+ days).
  */
-export function getStaleSources(): { sources: Array<{ source: DiscoveredSource; health: SourceHealth; daysSinceLastPost: number }> } {
+export function getStaleSources(): {
+  sources: Array<{ source: DiscoveredSource; health: SourceHealth; daysSinceLastPost: number }>;
+} {
   const data = loadData();
   const now = Date.now();
   const threshold = now - 14 * 86_400_000;
 
-  const stale: Array<{ source: DiscoveredSource; health: SourceHealth; daysSinceLastPost: number }> = [];
+  const stale: Array<{
+    source: DiscoveredSource;
+    health: SourceHealth;
+    daysSinceLastPost: number;
+  }> = [];
 
   for (const health of Object.values(data.healthMap)) {
     if (health.lastPostAt >= threshold) continue;
     const source = data.allSources.find((s) => s.id === health.sourceId);
-    if (!source || source.status !== 'approved') continue;
+    if (source?.status !== 'approved') continue;
 
     stale.push({
       source,
@@ -370,9 +393,19 @@ export function getStats() {
 /**
  * Get all health scores.
  */
-export function getSourceHealth(): { health: Array<{ source: DiscoveredSource; health: SourceHealth; signals: ReturnType<typeof computeSourceHealthScore> }> } {
+export function getSourceHealth(): {
+  health: Array<{
+    source: DiscoveredSource;
+    health: SourceHealth;
+    signals: ReturnType<typeof computeSourceHealthScore>;
+  }>;
+} {
   const data = loadData();
-  const result: Array<{ source: DiscoveredSource; health: SourceHealth; signals: ReturnType<typeof computeSourceHealthScore> }> = [];
+  const result: Array<{
+    source: DiscoveredSource;
+    health: SourceHealth;
+    signals: ReturnType<typeof computeSourceHealthScore>;
+  }> = [];
 
   for (const health of Object.values(data.healthMap)) {
     const source = data.allSources.find((s) => s.id === health.sourceId);
@@ -411,7 +444,10 @@ export function recordEngagement(
 
   // Recompute frequency
   health.postFrequency = health.postCount30d / Math.max(1, 30);
-  health.engagementScore = Math.min(1, health.engagement30d / Math.max(1, health.postCount30d || 1));
+  health.engagementScore = Math.min(
+    1,
+    health.engagement30d / Math.max(1, health.postCount30d || 1),
+  );
 
   const result = computeSourceHealthScore(health);
   health.compositeScore = result.score;
@@ -420,7 +456,11 @@ export function recordEngagement(
   if (result.lifecycle === 'culled') {
     const idx = data.allSources.findIndex((s) => s.id === sourceId);
     if (idx !== -1) {
-      data.allSources[idx] = { ...data.allSources[idx], lifecycle: 'culled', lifecycleCheckedAt: Date.now() };
+      data.allSources[idx] = {
+        ...data.allSources[idx],
+        lifecycle: 'culled',
+        lifecycleCheckedAt: Date.now(),
+      };
     }
   }
 
@@ -436,7 +476,9 @@ export function cullLowQualitySources(): { culled: number; ids: string[] } {
 
   for (const [sourceId, health] of Object.entries(data.healthMap)) {
     const result = computeSourceHealthScore(health);
-    const daysSinceLastPost = health.lastPostAt ? (Date.now() - health.lastPostAt) / 86_400_000 : Infinity;
+    const daysSinceLastPost = health.lastPostAt
+      ? (Date.now() - health.lastPostAt) / 86_400_000
+      : Infinity;
 
     if (result.score < 0.3 && daysSinceLastPost >= 14) {
       const idx = data.allSources.findIndex((s) => s.id === sourceId);
@@ -468,7 +510,7 @@ export function runHealthCheck(): { checked: number; stale: number; culled: numb
   let stale = 0;
   let culledCount = 0;
   const now = Date.now();
-  const staleThreshold = now - 14 * 86_400_000;
+  const _staleThreshold = now - 14 * 86_400_000;
 
   for (const health of Object.values(data.healthMap)) {
     health.lastCheckedAt = now;
@@ -480,7 +522,11 @@ export function runHealthCheck(): { checked: number; stale: number; culled: numb
       culledCount++;
       const idx = data.allSources.findIndex((s) => s.id === health.sourceId);
       if (idx !== -1) {
-        data.allSources[idx] = { ...data.allSources[idx], lifecycle: 'culled', lifecycleCheckedAt: now };
+        data.allSources[idx] = {
+          ...data.allSources[idx],
+          lifecycle: 'culled',
+          lifecycleCheckedAt: now,
+        };
       }
     }
   }
@@ -493,7 +539,11 @@ export function runHealthCheck(): { checked: number; stale: number; culled: numb
  * Check if the auto-discovery cron should run.
  * Runs if last run was > 7 days ago or never.
  */
-export function shouldRunDiscovery(): { shouldRun: boolean; lastRunAt: number | null; hoursSinceLastRun: number } {
+export function shouldRunDiscovery(): {
+  shouldRun: boolean;
+  lastRunAt: number | null;
+  hoursSinceLastRun: number;
+} {
   const data = loadData();
   if (!data.lastRunAt) {
     return { shouldRun: true, lastRunAt: null, hoursSinceLastRun: Infinity };

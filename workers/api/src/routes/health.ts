@@ -73,7 +73,9 @@ export async function handleProtocolsHealth(env: Env): Promise<Response> {
   const cached = await readProtocolsCache(env, cacheKey);
   if (cached) return jsonResponse(cached);
 
-  const { checkProvidersHealth, isCircuitOpen, DEFAULT_PROTOCOLS } = await import('../feed/feed-fetcher');
+  const { checkProvidersHealth, isCircuitOpen, DEFAULT_PROTOCOLS } = await import(
+    '../feed/feed-fetcher'
+  );
 
   // Run health checks in parallel — this is the expensive part.
   const health = await checkProvidersHealth(env);
@@ -109,9 +111,9 @@ export async function handleProtocolsHealth(env: Env): Promise<Response> {
   // ── Postiz cross-posting health ───────────────────────────────
   if (env.POSTIZ_BASE_URL && env.POSTIZ_API_KEY) {
     const postizStatus = await checkPostizHealth(env);
-    protocols['postiz'] = postizStatus;
+    protocols.postiz = postizStatus;
   } else {
-    protocols['postiz'] = {
+    protocols.postiz = {
       status: 'down',
       latency: 0,
       lastChecked: now,
@@ -199,7 +201,11 @@ async function readProtocolsCache(env: Env, key: string): Promise<ProtocolsHealt
   }
 }
 
-async function writeProtocolsCache(env: Env, key: string, body: ProtocolsHealthResponse): Promise<void> {
+async function writeProtocolsCache(
+  env: Env,
+  key: string,
+  body: ProtocolsHealthResponse,
+): Promise<void> {
   if (!env.CACHE) return;
   try {
     await env.CACHE.put(key, JSON.stringify(body), { expirationTtl: 60 });

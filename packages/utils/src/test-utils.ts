@@ -36,10 +36,7 @@ export function makeMockIdentity(overrides: Partial<UnifiedIdentity> = {}): Unif
 
 // ─── Mock post builder ─────────────────────────────────────────────
 
-export function makeMockPost(
-  id: string,
-  overrides: Partial<UnifiedPost> = {},
-): UnifiedPost {
+export function makeMockPost(id: string, overrides: Partial<UnifiedPost> = {}): UnifiedPost {
   return {
     id,
     protocol: 'nostr',
@@ -89,7 +86,10 @@ const mockHandlers = new Map<string, MockResponse>();
  * Register a mock response for a URL pattern (string prefix match).
  */
 export function mockFetch(urlPrefix: string, response: MockResponse): void {
-  mockHandlers.set(urlPrefix, { ...response, ok: response.ok ?? (response.status >= 200 && response.status < 300) });
+  mockHandlers.set(urlPrefix, {
+    ...response,
+    ok: response.ok ?? (response.status >= 200 && response.status < 300),
+  });
 }
 
 /**
@@ -167,9 +167,7 @@ export interface MockProtocolData {
 /**
  * Create a mock protocol data object for testing protocol-specific features.
  */
-export function makeMockProtocolData(
-  overrides: Partial<MockProtocolData> = {},
-): MockProtocolData {
+export function makeMockProtocolData(overrides: Partial<MockProtocolData> = {}): MockProtocolData {
   return {
     protocol: 'nostr',
     displayName: 'Nostr',

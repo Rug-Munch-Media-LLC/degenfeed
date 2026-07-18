@@ -29,18 +29,90 @@ export interface AchievementDef {
 }
 
 export const ACHIEVEMENTS: AchievementDef[] = [
-  { id: 'first-post', title: 'First Post', description: 'Create your first post', icon: '🗣️', category: 'creation' },
-  { id: 'cross-poster', title: 'Cross-Poster', description: 'Post to 3+ protocols at once', icon: '🌐', category: 'creation' },
-  { id: 'networker', title: 'Networker', description: 'Link 3+ protocol identities', icon: '🤝', category: 'social' },
-  { id: 'conversationalist', title: 'Conversationalist', description: 'Reply to 50 posts', icon: '💬', category: 'engagement' },
-  { id: 'loved', title: 'Loved', description: 'Receive 100 likes across your posts', icon: '❤️', category: 'engagement' },
-  { id: 'generous', title: 'Generous', description: 'Send 10 tips', icon: '⚡', category: 'engagement' },
-  { id: 'earner', title: 'Earner', description: 'Receive 5 tips', icon: '💰', category: 'engagement' },
-  { id: 'curator', title: 'Curator', description: 'Bookmark 20 posts', icon: '🔖', category: 'engagement' },
-  { id: 'informed', title: 'Informed', description: 'Read the Daily Digest 7 days in a row', icon: '📰', category: 'loyalty' },
-  { id: 'community-builder', title: 'Community Builder', description: 'Create a community', icon: '🏛️', category: 'social' },
-  { id: 'governor', title: 'Governor', description: 'Vote on 10 proposals', icon: '🗳️', category: 'governance' },
-  { id: 'completionist', title: 'Completionist', description: 'Unlock 10 achievements', icon: '🎯', category: 'milestone' },
+  {
+    id: 'first-post',
+    title: 'First Post',
+    description: 'Create your first post',
+    icon: '🗣️',
+    category: 'creation',
+  },
+  {
+    id: 'cross-poster',
+    title: 'Cross-Poster',
+    description: 'Post to 3+ protocols at once',
+    icon: '🌐',
+    category: 'creation',
+  },
+  {
+    id: 'networker',
+    title: 'Networker',
+    description: 'Link 3+ protocol identities',
+    icon: '🤝',
+    category: 'social',
+  },
+  {
+    id: 'conversationalist',
+    title: 'Conversationalist',
+    description: 'Reply to 50 posts',
+    icon: '💬',
+    category: 'engagement',
+  },
+  {
+    id: 'loved',
+    title: 'Loved',
+    description: 'Receive 100 likes across your posts',
+    icon: '❤️',
+    category: 'engagement',
+  },
+  {
+    id: 'generous',
+    title: 'Generous',
+    description: 'Send 10 tips',
+    icon: '⚡',
+    category: 'engagement',
+  },
+  {
+    id: 'earner',
+    title: 'Earner',
+    description: 'Receive 5 tips',
+    icon: '💰',
+    category: 'engagement',
+  },
+  {
+    id: 'curator',
+    title: 'Curator',
+    description: 'Bookmark 20 posts',
+    icon: '🔖',
+    category: 'engagement',
+  },
+  {
+    id: 'informed',
+    title: 'Informed',
+    description: 'Read the Daily Digest 7 days in a row',
+    icon: '📰',
+    category: 'loyalty',
+  },
+  {
+    id: 'community-builder',
+    title: 'Community Builder',
+    description: 'Create a community',
+    icon: '🏛️',
+    category: 'social',
+  },
+  {
+    id: 'governor',
+    title: 'Governor',
+    description: 'Vote on 10 proposals',
+    icon: '🗳️',
+    category: 'governance',
+  },
+  {
+    id: 'completionist',
+    title: 'Completionist',
+    description: 'Unlock 10 achievements',
+    icon: '🎯',
+    category: 'milestone',
+  },
 ];
 
 // ─── Daily challenge definitions ────────────────────────────────────────
@@ -54,14 +126,62 @@ export interface ChallengeDef {
 }
 
 const CHALLENGE_POOL: ChallengeDef[] = [
-  { id: 'read-posts', title: 'Read 10 Posts', description: 'View 10 posts in the feed', target: 10, icon: '📖' },
-  { id: 'like-posts', title: 'Like 5 Posts', description: 'Show some love to 5 posts', target: 5, icon: '❤️' },
-  { id: 'multi-protocol', title: 'Post Across Networks', description: 'Create posts in 2 different protocols', target: 2, icon: '🌐' },
-  { id: 'tip-creator', title: 'Tip a Creator', description: 'Support a creator with a tip', target: 1, icon: '⚡' },
-  { id: 'reply-threads', title: 'Join the Conversation', description: 'Reply to 3 posts', target: 3, icon: '💬' },
-  { id: 'explore-topics', title: 'Explore Topics', description: 'Visit 3 different topic pages', target: 3, icon: '🔍' },
-  { id: 'daily-digest', title: 'Read Your Digest', description: 'Open the Daily Digest', target: 1, icon: '📋' },
-  { id: 'share-content', title: 'Share Content', description: 'Share 2 posts', target: 2, icon: '📤' },
+  {
+    id: 'read-posts',
+    title: 'Read 10 Posts',
+    description: 'View 10 posts in the feed',
+    target: 10,
+    icon: '📖',
+  },
+  {
+    id: 'like-posts',
+    title: 'Like 5 Posts',
+    description: 'Show some love to 5 posts',
+    target: 5,
+    icon: '❤️',
+  },
+  {
+    id: 'multi-protocol',
+    title: 'Post Across Networks',
+    description: 'Create posts in 2 different protocols',
+    target: 2,
+    icon: '🌐',
+  },
+  {
+    id: 'tip-creator',
+    title: 'Tip a Creator',
+    description: 'Support a creator with a tip',
+    target: 1,
+    icon: '⚡',
+  },
+  {
+    id: 'reply-threads',
+    title: 'Join the Conversation',
+    description: 'Reply to 3 posts',
+    target: 3,
+    icon: '💬',
+  },
+  {
+    id: 'explore-topics',
+    title: 'Explore Topics',
+    description: 'Visit 3 different topic pages',
+    target: 3,
+    icon: '🔍',
+  },
+  {
+    id: 'daily-digest',
+    title: 'Read Your Digest',
+    description: 'Open the Daily Digest',
+    target: 1,
+    icon: '📋',
+  },
+  {
+    id: 'share-content',
+    title: 'Share Content',
+    description: 'Share 2 posts',
+    target: 2,
+    icon: '📤',
+  },
 ];
 
 export interface ChallengeWithProgress extends ChallengeDef {
@@ -85,8 +205,13 @@ const LEVEL_PERKS: Record<number, string> = {
 // ─── X P  system ───────────────────────────────────────────────────────
 
 const XP_ACTIONS: Record<string, number> = {
-  post: 10, like: 1, reply: 5, tip: 15,
-  daily_visit: 5, bookmark: 2, share: 3,
+  post: 10,
+  like: 1,
+  reply: 5,
+  tip: 15,
+  daily_visit: 5,
+  bookmark: 2,
+  share: 3,
 };
 
 function computeLevel(totalXp: number): number {
@@ -118,7 +243,7 @@ function yesterdayStr(): string {
 function deterministicPick<T>(items: T[], seed: string, count: number): T[] {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
     hash |= 0;
   }
   const shuffled = [...items];
@@ -137,7 +262,8 @@ async function resolveWallet(request: Request, env: Env): Promise<string | null>
   if (queryWallet) return queryWallet;
 
   const cookieHeader = request.headers.get('cookie') ?? '';
-  const match = cookieHeader.split(';')
+  const match = cookieHeader
+    .split(';')
     .map((s) => s.trim())
     .find((s) => s.startsWith('__Host-dfid='));
   if (!match || !env.AUTH_SECRET) return null;
@@ -156,14 +282,18 @@ async function kvGet<T>(env: Env, key: string): Promise<T | null> {
   try {
     const raw = await env.CACHE.get(key);
     return raw ? (JSON.parse(raw) as T) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 async function kvPut(env: Env, key: string, value: unknown, ttl = 0): Promise<void> {
   if (!env.CACHE) return;
   try {
     await env.CACHE.put(key, JSON.stringify(value), ttl > 0 ? { expirationTtl: ttl } : undefined);
-  } catch { /* non-critical */ }
+  } catch {
+    /* non-critical */
+  }
 }
 
 // ─── Streak System ─────────────────────────────────────────────────────
@@ -188,7 +318,12 @@ function flameTier(streak: number): string {
   return '';
 }
 
-function streakMilestones(streak: number): { bronze: boolean; silver: boolean; gold: boolean; diamond: boolean } {
+function streakMilestones(streak: number): {
+  bronze: boolean;
+  silver: boolean;
+  gold: boolean;
+  diamond: boolean;
+} {
   return {
     bronze: streak >= 3,
     silver: streak >= 7,
@@ -224,7 +359,7 @@ async function loadAndUpdateStreak(env: Env, wallet: string): Promise<StreakData
 
   // Update leaderboard
   const lbKey = 'streak:leaderboard';
-  const lb = await kvGet<Array<{ wallet: string; streak: number }>>(env, lbKey) ?? [];
+  const lb = (await kvGet<Array<{ wallet: string; streak: number }>>(env, lbKey)) ?? [];
   const idx = lb.findIndex((e) => e.wallet === wallet.toLowerCase());
   if (idx >= 0) {
     lb[idx]!.streak = streak.count;
@@ -252,9 +387,9 @@ export async function handleStreakCheck(request: Request, env: Env): Promise<Res
   });
 }
 
-export async function handleStreakLeaderboard(request: Request, env: Env): Promise<Response> {
+export async function handleStreakLeaderboard(_request: Request, env: Env): Promise<Response> {
   const lbKey = 'streak:leaderboard';
-  const lb = await kvGet<Array<{ wallet: string; streak: number }>>(env, lbKey) ?? [];
+  const lb = (await kvGet<Array<{ wallet: string; streak: number }>>(env, lbKey)) ?? [];
   return jsonResponse({ leaderboard: lb.slice(0, 20), total: lb.length });
 }
 
@@ -269,7 +404,8 @@ export async function handleAchievements(request: Request, env: Env): Promise<Re
   const wallet = await resolveWallet(request, env);
   if (!wallet) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  const records = await kvGet<AchievementRecord[]>(env, `achievements:${wallet.toLowerCase()}`) ?? [];
+  const records =
+    (await kvGet<AchievementRecord[]>(env, `achievements:${wallet.toLowerCase()}`)) ?? [];
   const unlocked = new Set(records.map((r) => r.id));
 
   const achievements = ACHIEVEMENTS.map((a) => ({
@@ -278,10 +414,10 @@ export async function handleAchievements(request: Request, env: Env): Promise<Re
     unlockedAt: records.find((r) => r.id === a.id)?.unlockedAt ?? null,
   }));
 
-  const totalUsers = 1000; // estimate for rarity percentage
+  const _totalUsers = 1000; // estimate for rarity percentage
   const rarity: Record<string, number> = {};
   for (const a of ACHIEVEMENTS) {
-    rarity[a.id] = Math.round((Math.random() * 40 + 10)); // simulated rarity
+    rarity[a.id] = Math.round(Math.random() * 40 + 10); // simulated rarity
   }
 
   return noCacheJsonResponse({
@@ -299,11 +435,15 @@ export async function handleAchievementCheck(request: Request, env: Env): Promis
   if (!wallet) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   let body: { action?: string; data?: Record<string, unknown> } = {};
-  try { body = (await request.json()) as typeof body; } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
   if (!body.action) return jsonResponse({ error: 'action required' }, 400);
 
   const key = `achievements:${wallet.toLowerCase()}`;
-  const records = await kvGet<AchievementRecord[]>(env, key) ?? [];
+  const records = (await kvGet<AchievementRecord[]>(env, key)) ?? [];
   const unlocked = new Set(records.map((r) => r.id));
   const data = body.data ?? {};
 
@@ -330,18 +470,42 @@ export async function handleAchievementCheck(request: Request, env: Env): Promis
 
     let met = false;
     switch (achievement.id) {
-      case 'first-post': met = postCount >= 1; break;
-      case 'cross-poster': met = (data.multiProtocolPosts as number ?? 0) >= 1; break;
-      case 'networker': met = identities >= 3; break;
-      case 'conversationalist': met = replies >= 50; break;
-      case 'loved': met = likesReceived >= 100; break;
-      case 'generous': met = tipsSent >= 10; break;
-      case 'earner': met = tipsReceived >= 5; break;
-      case 'curator': met = bookmarks >= 20; break;
-      case 'informed': met = streakCount >= 7 && (data.digestRead as boolean ?? false); break;
-      case 'community-builder': met = communities >= 1; break;
-      case 'governor': met = votes >= 10; break;
-      case 'completionist': met = unlocked.size + newlyUnlocked.length >= 10; break;
+      case 'first-post':
+        met = postCount >= 1;
+        break;
+      case 'cross-poster':
+        met = ((data.multiProtocolPosts as number) ?? 0) >= 1;
+        break;
+      case 'networker':
+        met = identities >= 3;
+        break;
+      case 'conversationalist':
+        met = replies >= 50;
+        break;
+      case 'loved':
+        met = likesReceived >= 100;
+        break;
+      case 'generous':
+        met = tipsSent >= 10;
+        break;
+      case 'earner':
+        met = tipsReceived >= 5;
+        break;
+      case 'curator':
+        met = bookmarks >= 20;
+        break;
+      case 'informed':
+        met = streakCount >= 7 && ((data.digestRead as boolean) ?? false);
+        break;
+      case 'community-builder':
+        met = communities >= 1;
+        break;
+      case 'governor':
+        met = votes >= 10;
+        break;
+      case 'completionist':
+        met = unlocked.size + newlyUnlocked.length >= 10;
+        break;
     }
 
     if (met) {
@@ -374,8 +538,13 @@ export async function handleChallengesToday(request: Request, env: Env): Promise
 
   const today = todayStr();
   const challenges = deterministicPick(CHALLENGE_POOL, today, 3);
-  const state = await kvGet<ChallengeState>(env, `challenges:${today}:${wallet.toLowerCase()}`) ?? {
-    completed: [], progress: {}, allDone: false,
+  const state = (await kvGet<ChallengeState>(
+    env,
+    `challenges:${today}:${wallet.toLowerCase()}`,
+  )) ?? {
+    completed: [],
+    progress: {},
+    allDone: false,
   };
 
   const withProgress: ChallengeWithProgress[] = challenges.map((c) => ({
@@ -398,13 +567,19 @@ export async function handleChallengeProgress(request: Request, env: Env): Promi
   if (!wallet) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   let body: { challengeId?: string; increment?: number } = {};
-  try { body = (await request.json()) as typeof body; } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
   if (!body.challengeId) return jsonResponse({ error: 'challengeId required' }, 400);
 
   const today = todayStr();
   const key = `challenges:${today}:${wallet.toLowerCase()}`;
-  const state = await kvGet<ChallengeState>(env, key) ?? {
-    completed: [], progress: {}, allDone: false,
+  const state = (await kvGet<ChallengeState>(env, key)) ?? {
+    completed: [],
+    progress: {},
+    allDone: false,
   };
 
   if (state.allDone) {
@@ -415,7 +590,11 @@ export async function handleChallengeProgress(request: Request, env: Env): Promi
   state.progress[body.challengeId] = currentProgress + (body.increment ?? 1);
 
   const challenge = CHALLENGE_POOL.find((c) => c.id === body.challengeId);
-  if (challenge && state.progress[body.challengeId]! >= challenge.target && !state.completed.includes(body.challengeId)) {
+  if (
+    challenge &&
+    state.progress[body.challengeId]! >= challenge.target &&
+    !state.completed.includes(body.challengeId)
+  ) {
     state.completed.push(body.challengeId);
   }
 
@@ -439,7 +618,11 @@ export async function handleXp(request: Request, env: Env): Promise<Response> {
   const wallet = await resolveWallet(request, env);
   if (!wallet) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  const data = await kvGet<XpData>(env, `xp:${wallet.toLowerCase()}`) ?? { total: 0, level: 1, history: [] };
+  const data = (await kvGet<XpData>(env, `xp:${wallet.toLowerCase()}`)) ?? {
+    total: 0,
+    level: 1,
+    history: [],
+  };
   const level = computeLevel(data.total);
   const xpToNext = xpForLevel(level);
   const progress = data.total > 0 ? (data.total % xpToNext) / xpToNext : 0;
@@ -460,14 +643,18 @@ export async function handleXpAward(request: Request, env: Env): Promise<Respons
   if (!wallet) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   let body: { action?: string } = {};
-  try { body = (await request.json()) as typeof body; } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
   if (!body.action) return jsonResponse({ error: 'action required' }, 400);
 
   const xpAmount = XP_ACTIONS[body.action];
   if (!xpAmount) return jsonResponse({ error: `Unknown action: ${body.action}` }, 400);
 
   const key = `xp:${wallet.toLowerCase()}`;
-  const data = await kvGet<XpData>(env, key) ?? { total: 0, level: 1, history: [] };
+  const data = (await kvGet<XpData>(env, key)) ?? { total: 0, level: 1, history: [] };
 
   const oldLevel = computeLevel(data.total);
   data.total += xpAmount;
@@ -488,19 +675,23 @@ export async function handleXpAward(request: Request, env: Env): Promise<Respons
     xpAwarded: xpAmount,
     xpToNext,
     leveledUp,
-    newPerks: leveledUp ? getPerksForLevel(newLevel).filter((p) => !getPerksForLevel(oldLevel).includes(p)) : [],
+    newPerks: leveledUp
+      ? getPerksForLevel(newLevel).filter((p) => !getPerksForLevel(oldLevel).includes(p))
+      : [],
   });
 }
 
 // ─── Social Proof ─────────────────────────────────────────────────────
 
 export async function handleSocialProof(request: Request, env: Env): Promise<Response> {
-  const wallet = await resolveWallet(request, env);
+  const _wallet = await resolveWallet(request, env);
 
   // Count recent activity for "active readers"
-  const recentActivity = await kvGet<Array<{ type: string; actor: string; at: number }>>(env, 'activity:recent') ?? [];
+  const recentActivity =
+    (await kvGet<Array<{ type: string; actor: string; at: number }>>(env, 'activity:recent')) ?? [];
   const fiveMinAgo = Date.now() - 300000;
-  const activeReaders = recentActivity.filter((a) => a.at > fiveMinAgo).length + Math.floor(Math.random() * 30 + 20);
+  const activeReaders =
+    recentActivity.filter((a) => a.at > fiveMinAgo).length + Math.floor(Math.random() * 30 + 20);
 
   // Count unique wallets that joined today (approximate from streak creation)
   const joinedToday = Math.floor(Math.random() * 12 + 3);
@@ -519,11 +710,18 @@ export async function handleActivityRecord(request: Request, env: Env): Promise<
   if (!wallet) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   let body: { type?: string; target?: string } = {};
-  try { body = (await request.json()) as typeof body; } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
   if (!body.type) return jsonResponse({ error: 'type required' }, 400);
 
   const key = 'activity:recent';
-  const activities = await kvGet<Array<{ type: string; actor: string; actorWallet: string; target?: string; at: number }>>(env, key) ?? [];
+  const activities =
+    (await kvGet<
+      Array<{ type: string; actor: string; actorWallet: string; target?: string; at: number }>
+    >(env, key)) ?? [];
 
   activities.unshift({
     type: body.type,
@@ -538,7 +736,11 @@ export async function handleActivityRecord(request: Request, env: Env): Promise<
   return jsonResponse({ ok: true });
 }
 
-export async function handleRecentActivity(request: Request, env: Env): Promise<Response> {
-  const activities = await kvGet<Array<{ type: string; actor: string; target?: string; at: number }>>(env, 'activity:recent') ?? [];
+export async function handleRecentActivity(_request: Request, env: Env): Promise<Response> {
+  const activities =
+    (await kvGet<Array<{ type: string; actor: string; target?: string; at: number }>>(
+      env,
+      'activity:recent',
+    )) ?? [];
   return jsonResponse({ activities: activities.slice(0, 20) });
 }

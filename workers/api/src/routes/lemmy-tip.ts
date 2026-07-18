@@ -99,10 +99,7 @@ async function saveAggregate(env: Env, agg: LemmyTipAggregate): Promise<void> {
   }
 }
 
-async function updateLeaderboard(
-  env: Env,
-  entry: LemmyLeaderboardEntry,
-): Promise<void> {
+async function updateLeaderboard(env: Env, entry: LemmyLeaderboardEntry): Promise<void> {
   if (!env.CACHE) return;
   try {
     const raw = await env.CACHE.get(LEMMY_LEADERBOARD_KEY);
@@ -124,7 +121,10 @@ async function updateLeaderboard(
       expirationTtl: TTL_SECONDS,
     });
   } catch (err) {
-    console.warn('[lemmy-tip] leaderboard update failed:', err instanceof Error ? err.message : err);
+    console.warn(
+      '[lemmy-tip] leaderboard update failed:',
+      err instanceof Error ? err.message : err,
+    );
   }
 }
 
@@ -207,14 +207,22 @@ export async function recordLemmyTip(
       if (raw) {
         const identity = JSON.parse(raw) as Record<string, unknown>;
 
-        if (!resolvedEvm && identity.walletAddress && /^0x[a-f0-9]{40}$/i.test(identity.walletAddress as string)) {
+        if (
+          !resolvedEvm &&
+          identity.walletAddress &&
+          /^0x[a-f0-9]{40}$/i.test(identity.walletAddress as string)
+        ) {
           resolvedEvm = identity.walletAddress as string;
         }
         if (!resolvedEvm && identity.farcaster && typeof identity.farcaster === 'object') {
           const fc = identity.farcaster as Record<string, unknown>;
           if (fc.custodyAddress) resolvedEvm = fc.custodyAddress as string;
         }
-        if (!resolvedSol && identity.walletAddress && /^[1-9a-hj-z]{32,44}$/.test(identity.walletAddress as string)) {
+        if (
+          !resolvedSol &&
+          identity.walletAddress &&
+          /^[1-9a-hj-z]{32,44}$/.test(identity.walletAddress as string)
+        ) {
           resolvedSol = identity.walletAddress as string;
         }
       }
@@ -257,11 +265,9 @@ export async function recordLemmyTip(
       };
       const existingRaw = await env.CACHE?.get(notifKey);
       const existingNotifs: unknown[] = existingRaw ? JSON.parse(existingRaw) : [];
-      await env.CACHE?.put(
-        notifKey,
-        JSON.stringify([tipNotif, ...existingNotifs].slice(0, 100)),
-        { expirationTtl: 60 * 60 * 24 * 30 },
-      );
+      await env.CACHE?.put(notifKey, JSON.stringify([tipNotif, ...existingNotifs].slice(0, 100)), {
+        expirationTtl: 60 * 60 * 24 * 30,
+      });
     } catch (kvErr) {
       console.warn('[lemmy-tip] failed to store notification:', String(kvErr));
     }

@@ -42,7 +42,9 @@ export function CodeBlock({ children, lang = 'bash', title }: CodeBlockProps) {
         </button>
       </div>
       <pre className="overflow-x-auto px-4 py-3">
-        <code className="font-mono text-xs leading-relaxed text-[var(--color-muted)]">{children}</code>
+        <code className="font-mono text-xs leading-relaxed text-[var(--color-muted)]">
+          {children}
+        </code>
       </pre>
     </div>
   );

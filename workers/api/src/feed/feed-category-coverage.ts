@@ -8,12 +8,7 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import {
-  ALL_CATEGORIES,
-  CATEGORIES,
-  ensureCategory,
-  type CategorySlug,
-} from './feed-categories';
+import { ALL_CATEGORIES, CATEGORIES, type CategorySlug, ensureCategory } from './feed-categories';
 
 export const MIN_POSTS_THRESHOLD = 10;
 export const COVERAGE_WARN_THRESHOLD = 5;
@@ -38,9 +33,7 @@ export interface CoverageReport {
   summary: string;
 }
 
-export function getCategoryCounts(
-  posts: UnifiedPost[],
-): Record<CategorySlug, number> {
+export function getCategoryCounts(posts: UnifiedPost[]): Record<CategorySlug, number> {
   const counts: Record<string, number> = {};
   for (const cat of ALL_CATEGORIES) {
     counts[cat] = 0;
@@ -63,9 +56,7 @@ export function auditCategoryCoverage(posts: UnifiedPost[]): CoverageReport {
     const count = counts[cat] ?? 0;
     const def = CATEGORIES[cat];
     const status: CategoryCoverage['status'] =
-      count >= MIN_POSTS_THRESHOLD ? 'healthy'
-        : count >= 1 ? 'thin'
-          : 'empty';
+      count >= MIN_POSTS_THRESHOLD ? 'healthy' : count >= 1 ? 'thin' : 'empty';
 
     if (status === 'healthy') healthy++;
     else if (status === 'thin') thin++;
@@ -102,7 +93,7 @@ export function auditCategoryCoverage(posts: UnifiedPost[]): CoverageReport {
 
 export function findUnderservedCategories(
   posts: UnifiedPost[],
-  minPosts = MIN_POSTS_THRESHOLD,
+  _minPosts = MIN_POSTS_THRESHOLD,
 ): CategoryCoverage[] {
   const report = auditCategoryCoverage(posts);
   return Object.values(report.perCategory).filter(
@@ -110,9 +101,7 @@ export function findUnderservedCategories(
   );
 }
 
-export function getCategoryDistributionPct(
-  posts: UnifiedPost[],
-): Record<CategorySlug, number> {
+export function getCategoryDistributionPct(posts: UnifiedPost[]): Record<CategorySlug, number> {
   const counts = getCategoryCounts(posts);
   const total = posts.length;
   if (total === 0) {
@@ -131,7 +120,12 @@ export function verifyDiversity(
   posts: UnifiedPost[],
   minCategories = 4,
   maxSinglePct = 40,
-): { diverse: boolean; dominantCategory: CategorySlug | null; dominantPct: number; uniqueCategories: number } {
+): {
+  diverse: boolean;
+  dominantCategory: CategorySlug | null;
+  dominantPct: number;
+  uniqueCategories: number;
+} {
   const pct = getCategoryDistributionPct(posts);
   let dominant: CategorySlug | null = null;
   let dominantPct = 0;

@@ -303,18 +303,18 @@ export default function MutedSettingsPage() {
               >
                 <div>
                   <p className="text-sm font-medium text-[var(--color-fg)]">{u.targetHandle}</p>
-<p className="text-xs text-[var(--color-muted)]">
+                  <p className="text-xs text-[var(--color-muted)]">
                     {PROTOCOL_ICONS[u.protocol] || ''} {protocolLabel(u.protocol)} · Muted{' '}
                     {formatDate(u.mutedAt)}
                   </p>
                 </div>
-                  <button
-                    type="button"
-                    onClick={() => unmuteUser(u.targetId)}
-                    className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
-                  >
-                    Unmute
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => unmuteUser(u.targetId)}
+                  className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+                >
+                  Unmute
+                </button>
               </div>
             ))}
           </div>
@@ -402,7 +402,9 @@ export default function MutedSettingsPage() {
                         <p className="text-sm font-medium text-[var(--color-fg)]">
                           {c.communityName}
                         </p>
-                        {c.instance && <p className="text-xs text-[var(--color-muted)]">{c.instance}</p>}
+                        {c.instance && (
+                          <p className="text-xs text-[var(--color-muted)]">{c.instance}</p>
+                        )}
                       </div>
                       <button
                         type="button"

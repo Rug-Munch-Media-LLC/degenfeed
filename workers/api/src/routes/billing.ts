@@ -1,5 +1,5 @@
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
-import { isValidEvmAddress, isValidSolanaAddress, sanitizeString } from '../sanitize';
+import { isValidSolanaAddress, sanitizeString } from '../sanitize';
 import { requireSession } from '../session';
 
 export type SubscriptionTier = 'pro' | 'creator';
@@ -198,10 +198,7 @@ function premiumKey(address: string): string {
 
 // ─── NEW: POST /api/billing/subscribe — Create platform subscription ───
 
-export async function handleBillingSubscribe(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleBillingSubscribe(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -221,9 +218,7 @@ export async function handleBillingSubscribe(
   const firstMonth = Boolean(body.firstMonth);
 
   const address = session.address.toLowerCase();
-  const identityId = session.chain
-    ? `${session.chain}:${address}`
-    : `evm:${address}`;
+  const identityId = session.chain ? `${session.chain}:${address}` : `evm:${address}`;
   const now = Date.now();
   const expiresAt = now + PREMIUM_TTL_MS;
   const txHash = `sim_${now}_${address.slice(0, 8)}`;
@@ -291,10 +286,7 @@ export async function handleBillingSubscribe(
 
 // ─── NEW: POST /api/billing/cancel — Cancel platform subscription ──────
 
-export async function handleBillingCancel(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleBillingCancel(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -330,10 +322,7 @@ export async function handleBillingCancel(
 
 // ─── NEW: GET /api/billing/my-status — Get current user's premium status ─
 
-export async function handleBillingMyStatus(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+export async function handleBillingMyStatus(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -348,7 +337,7 @@ export async function handleBillingMyStatus(
     /* ignore */
   }
 
-  if (!record || record.status !== 'active' || record.expiresAt <= Date.now()) {
+  if (record?.status !== 'active' || record.expiresAt <= Date.now()) {
     return jsonResponse({
       tier: 'free',
       isPremium: false,
@@ -359,9 +348,7 @@ export async function handleBillingMyStatus(
     });
   }
 
-  const daysRemaining = Math.ceil(
-    (record.expiresAt - Date.now()) / (1000 * 60 * 60 * 24),
-  );
+  const daysRemaining = Math.ceil((record.expiresAt - Date.now()) / (1000 * 60 * 60 * 24));
 
   return jsonResponse({
     tier: record.tier,

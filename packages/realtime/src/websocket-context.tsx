@@ -7,7 +7,8 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
+import type React from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import type { ChannelName } from './channels';
 import { useRealtime } from './useRealtime';
 
@@ -56,13 +57,19 @@ export function RealtimeStatusDot() {
   return (
     <span
       aria-label={connected ? 'Real-time connection active' : 'Real-time connection unavailable'}
-      title={connected ? 'WebSocket connected — live updates active' : 'WebSocket disconnected — falling back to polling'}
+      title={
+        connected
+          ? 'WebSocket connected — live updates active'
+          : 'WebSocket disconnected — falling back to polling'
+      }
       className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--color-muted)] transition-colors"
     >
       <span
         className="inline-block h-2 w-2 rounded-full"
         style={{
-          backgroundColor: connected ? 'var(--color-degen, #22c55e)' : 'var(--color-error, #ef4444)',
+          backgroundColor: connected
+            ? 'var(--color-degen, #22c55e)'
+            : 'var(--color-error, #ef4444)',
           boxShadow: connected
             ? '0 0 6px rgba(34, 197, 94, 0.6)'
             : '0 0 6px rgba(239, 68, 68, 0.4)',

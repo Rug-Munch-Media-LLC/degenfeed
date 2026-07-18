@@ -59,7 +59,10 @@ export function FundingCard({ round }: { round: FundingRound }) {
 
       <div className="mb-2 flex flex-wrap gap-1">
         {round.investors.slice(0, 4).map((inv) => (
-          <span key={inv} className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-[var(--color-muted)]">
+          <span
+            key={inv}
+            className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-[var(--color-muted)]"
+          >
             {inv}
           </span>
         ))}

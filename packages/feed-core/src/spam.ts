@@ -154,9 +154,7 @@ export function spamScore(post: UnifiedPost, context?: SpamContext): SpamResult 
 
   // ── Repeated identical content in the same feed window ────────────
   if (context?.recentPosts && context.recentPosts.length > 0) {
-    const dupes = context.recentPosts.filter(
-      (p) => p.id !== post.id && p.text.trim() === text,
-    );
+    const dupes = context.recentPosts.filter((p) => p.id !== post.id && p.text.trim() === text);
     if (dupes.length > 0) {
       score += Math.min(dupes.length * 0.25, 0.7);
       signals.push(`duplicate-content:${dupes.length}`);
@@ -222,8 +220,7 @@ export function contentQualityScore(text: string): number {
   const capsRatio = (trimmed.match(/[A-Z]/g) ?? []).length / Math.max(trimmed.length, 1);
   if (capsRatio > 0.8 && trimmed.length > 15) return 0.3;
 
-  const hashtagRatio1 =
-    (trimmed.match(/#[a-zA-Z0-9_]+/g) ?? []).length / Math.max(words.length, 1);
+  const hashtagRatio1 = (trimmed.match(/#[a-zA-Z0-9_]+/g) ?? []).length / Math.max(words.length, 1);
   if (hashtagRatio1 > 0.5 && words.length > 3) return 0.4;
 
   const urlFree = trimmed.replace(/https?:\/\/\S+/g, '').trim();

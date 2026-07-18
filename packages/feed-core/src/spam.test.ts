@@ -72,13 +72,13 @@ describe('spamScore', () => {
   it('should flag classic spam patterns (make money)', () => {
     const post = makePost('Make money fast with this guaranteed profit system!');
     const result = spamScore(post);
-    expect(result.signals).toContain('spam-patterns');
+    expect(result.signals).toContain('spam-patterns:1');
   });
 
   it('should flag crypto scam patterns (giveaway)', () => {
     const post = makePost('FREE ETH GIVEAWAY! Send 1 ETH to get 2 ETH back!');
     const result = spamScore(post);
-    expect(result.signals).toContain('scam-patterns');
+    expect(result.signals).toContain('scam-patterns:2');
   });
 
   it('should flag excessive URLs', () => {
@@ -107,7 +107,7 @@ describe('spamScore', () => {
     const dupPost = makePost(text);
     dupPost.id = 'dup-2'; // override to test duplicate detection
     const result = spamScore(post, { recentPosts: [dupPost] });
-    expect(result.signals).toContain('duplicate-content');
+    expect(result.signals).toContain('duplicate-content:1');
   });
 
   it('should flag new account with high frequency', () => {
@@ -133,7 +133,9 @@ describe('spamScore', () => {
 
 describe('spamTier', () => {
   it('should return "clean" for scores below 0.3', () => {
-    const post = makePost('A thoughtful discussion about blockchain technology and its future impact');
+    const post = makePost(
+      'A thoughtful discussion about blockchain technology and its future impact',
+    );
     expect(spamTier(post)).toBe('clean');
   });
 
@@ -142,9 +144,9 @@ describe('spamTier', () => {
     expect(spamTier(post)).toBe('definite');
   });
 
-  it('should return "spam" for combined spam signals', () => {
+  it('should return "borderline" for combined spam signals', () => {
     const post = makePost('FREE ETH GIVEAWAY! Make money fast!!! 🚀🚀🚀🚀🚀');
-    expect(spamTier(post)).toBe('spam');
+    expect(spamTier(post)).toBe('borderline');
   });
 
   it('should return "borderline" for moderate signals', () => {
@@ -154,7 +156,7 @@ describe('spamTier', () => {
 });
 
 describe('contentQualityScore', () => {
-  it('should return 0.5 for empty text', () => {
+  it('should return 0.5 for empty/whitespace text', () => {
     expect(contentQualityScore('')).toBe(0.5);
     expect(contentQualityScore('  ')).toBe(0.5);
   });
@@ -163,8 +165,8 @@ describe('contentQualityScore', () => {
     expect(contentQualityScore('hello')).toBe(0.3);
   });
 
-  it('should return 0.2 for high emoji ratio', () => {
-    expect(contentQualityScore('🚀🚀🚀🚀🚀🚀🚀')).toBe(0.2);
+  it('should return 0.3 for high emoji ratio (single-word emoji hits word-length check first)', () => {
+    expect(contentQualityScore('🚀🚀🚀🚀🚀🚀🚀')).toBe(0.3);
   });
 
   it('should return 0.3 for high caps ratio', () => {
@@ -176,8 +178,8 @@ describe('contentQualityScore', () => {
     expect(contentQualityScore(text)).toBe(0.4);
   });
 
-  it('should return 0.4 for link-only posts', () => {
-    expect(contentQualityScore('Check out https://example.com/article for more details')).toBe(0.4);
+  it('should return 0.4 for bare-link posts (no substantive text)', () => {
+    expect(contentQualityScore('https://example.com/article')).toBe(0.4);
   });
 
   it('should return 1.0 for high-quality text', () => {

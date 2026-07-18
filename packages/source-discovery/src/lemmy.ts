@@ -5,15 +5,15 @@
  * Searches our own instance + known public instances.
  */
 
+import { computeQualityScore, estimateRelevance } from './quality';
 import type { DiscoveredSource } from './types';
 import { CRYPTO_KEYWORDS, DEFAULT_DISCOVERY_CONFIG, SEARCH_KEYWORDS } from './types';
-import { computeQualityScore, estimateRelevance } from './quality';
 
 const REQUEST_TIMEOUT_MS = 5000;
 
 /** Known Lemmy instances (our own + popular public ones) */
 const LEMMY_INSTANCES = [
-  'https://community.degenfeed.xyz',    // Own instance
+  'https://community.degenfeed.xyz', // Own instance
   'https://lemmy.world',
   'https://lemmy.ml',
   'https://sh.itjust.works',
@@ -93,9 +93,7 @@ async function searchLemmyInstance(
 /**
  * Get trending communities from a Lemmy instance (general browsing).
  */
-async function getTrendingCommunities(
-  instanceUrl: string,
-): Promise<LemmyCommunity[]> {
+async function getTrendingCommunities(instanceUrl: string): Promise<LemmyCommunity[]> {
   try {
     const url = `${instanceUrl}/api/v3/community/list?type_=All&sort=Hot&limit=20`;
     const controller = new AbortController();
@@ -144,7 +142,8 @@ export async function discoverLemmyCommunities(
         );
 
         const subscriberCount = c.counts?.subscribers ?? 0;
-        const weeklyActivity = c.counts?.users_active_week ??
+        const weeklyActivity =
+          c.counts?.users_active_week ??
           Math.max(1, Math.round((c.counts?.users_active_month ?? 10) / 4));
 
         const candidate = {
@@ -183,7 +182,8 @@ export async function discoverLemmyCommunities(
 
       // Check if title has crypto keywords
       const hasCryptoKeywords = CRYPTO_KEYWORDS.some(
-        (kw) => community.title?.toLowerCase().includes(kw) ||
+        (kw) =>
+          community.title?.toLowerCase().includes(kw) ||
           community.description?.toLowerCase().includes(kw),
       );
       if (!hasCryptoKeywords) continue;
@@ -194,7 +194,8 @@ export async function discoverLemmyCommunities(
       );
 
       const subscriberCount = c.counts?.subscribers ?? 0;
-      const weeklyActivity = c.counts?.users_active_week ??
+      const weeklyActivity =
+        c.counts?.users_active_week ??
         Math.max(1, Math.round((c.counts?.users_active_month ?? 10) / 4));
 
       const candidate = {

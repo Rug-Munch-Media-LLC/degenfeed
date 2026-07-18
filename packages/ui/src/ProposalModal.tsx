@@ -105,7 +105,10 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Title *</label>
+            {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              Title *
+            </label>
             <input
               type="text"
               value={title}
@@ -119,7 +122,10 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
 
           {/* Type selector */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Type *</label>
+            {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              Type *
+            </label>
             <div className="grid grid-cols-3 gap-2">
               {(Object.entries(PROPOSAL_TYPE_LABELS) as [ProposalType, string][]).map(
                 ([key, label]) => (
@@ -135,7 +141,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
                   >
                     {label.split(' ')[0]}
                     <span className="block text-[10px] opacity-60">
-                      {label.includes('(') ? label.split('(')[1]!.replace(')', '') : ''}
+                      {label.includes('(') ? label.split('(')[1]?.replace(')', '') : ''}
                     </span>
                   </button>
                 ),
@@ -146,6 +152,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
           {/* Target user (mod_action only) */}
           {type === 'mod_action' && (
             <div>
+              {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
               <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
                 Target Wallet Address *
               </label>
@@ -161,9 +168,9 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
 
           {/* Description */}
           <div>
+            {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
             <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
-              Description *
-              <span className="ml-1 text-gray-600">({description.length}/10,000)</span>
+              Description *<span className="ml-1 text-gray-600">({description.length}/10,000)</span>
             </label>
             <textarea
               value={description}
@@ -178,7 +185,10 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
 
           {/* Voting period */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Voting Period</label>
+            {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              Voting Period
+            </label>
             <div className="flex gap-2">
               {VOTING_PERIOD_OPTIONS.map((opt) => (
                 <button

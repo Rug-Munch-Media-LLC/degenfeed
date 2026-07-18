@@ -1,4 +1,4 @@
-export { CHANNELS, CHANNEL_LIST } from './channels';
 export type { ChannelName } from './channels';
+export { CHANNEL_LIST, CHANNELS } from './channels';
 export { useRealtime } from './useRealtime';
-export { RealtimeStatusDot, WebSocketProvider, useRealtimeContext } from './websocket-context';
+export { RealtimeStatusDot, useRealtimeContext, WebSocketProvider } from './websocket-context';

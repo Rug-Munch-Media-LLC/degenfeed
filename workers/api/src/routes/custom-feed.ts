@@ -18,8 +18,8 @@
 
 import type { CustomFeed, FeedRecipe } from '@degenfeed/types';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
 import { requirePremiumTier } from '../premium';
+import { requireSession } from '../session';
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -48,8 +48,17 @@ function generateId(): string {
 }
 
 const VALID_SOURCES = [
-  'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon',
-  'threads', 'reddit', 'rss', 'lemmy', 'peertube', 'youtube',
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'threads',
+  'reddit',
+  'rss',
+  'lemmy',
+  'peertube',
+  'youtube',
 ] as const;
 
 const VALID_CONTENT_TYPES = ['text', 'image', 'video', 'link', 'thread'] as const;
@@ -58,14 +67,22 @@ function validateRecipe(config: unknown): config is FeedRecipe {
   if (!config || typeof config !== 'object') return false;
   const c = config as Record<string, unknown>;
   if (!Array.isArray(c.sources) || c.sources.length === 0) return false;
-  if (!c.sources.every((s: unknown) => VALID_SOURCES.includes(s as typeof VALID_SOURCES[number]))) {
+  if (
+    !c.sources.every((s: unknown) => VALID_SOURCES.includes(s as (typeof VALID_SOURCES)[number]))
+  ) {
     return false;
   }
   if (!c.topics || typeof c.topics !== 'object') return false;
-  if (c.minEngagement !== undefined && (typeof c.minEngagement !== 'number' || c.minEngagement < 0)) return false;
-  if (c.contentTypes && (!Array.isArray(c.contentTypes) || !c.contentTypes.every(
-    (t: unknown) => VALID_CONTENT_TYPES.includes(t as typeof VALID_CONTENT_TYPES[number]),
-  ))) return false;
+  if (c.minEngagement !== undefined && (typeof c.minEngagement !== 'number' || c.minEngagement < 0))
+    return false;
+  if (
+    c.contentTypes &&
+    (!Array.isArray(c.contentTypes) ||
+      !c.contentTypes.every((t: unknown) =>
+        VALID_CONTENT_TYPES.includes(t as (typeof VALID_CONTENT_TYPES)[number]),
+      ))
+  )
+    return false;
   if (c.excludeTopics && !Array.isArray(c.excludeTopics)) return false;
   if (c.excludeWords && !Array.isArray(c.excludeWords)) return false;
   if (c.language !== undefined && typeof c.language !== 'string') return false;
@@ -269,7 +286,11 @@ export async function handleCustomFeedPublic(request: Request, env: Env): Promis
   const indexRaw = await env.CUSTOM_FEEDS.get('custom-feed:public-index');
   let publicIds: string[] = [];
   if (indexRaw) {
-    try { publicIds = JSON.parse(indexRaw) as string[]; } catch { /* ignore */ }
+    try {
+      publicIds = JSON.parse(indexRaw) as string[];
+    } catch {
+      /* ignore */
+    }
   }
 
   // If no index, we can't scan KV — return empty with a note
@@ -305,7 +326,7 @@ export async function handleCustomFeedPublic(request: Request, env: Env): Promis
  * GET /api/custom-feeds/:id — Get feed details
  */
 export async function handleCustomFeedGet(
-  request: Request,
+  _request: Request,
   env: Env,
   id: string,
 ): Promise<Response> {
@@ -417,7 +438,7 @@ export async function handleCustomFeedDelete(
   await setUserFeedIds(env, session.address, filtered);
 
   // Remove subscribers index
-  await env.CUSTOM_FEEDS!.delete(subscribersKey(id));
+  await env.CUSTOM_FEEDS?.delete(subscribersKey(id));
 
   return jsonResponse({ ok: true });
 }

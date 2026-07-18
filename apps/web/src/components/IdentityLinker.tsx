@@ -62,9 +62,7 @@ const LINK_FIELDS: Record<
     { key: 'username', label: 'Lemmy Username', placeholder: 'alice' },
     { key: 'instance', label: 'Instance', placeholder: 'lemmy.world' },
   ],
-  rss: [
-    { key: 'url', label: 'RSS Feed URL', placeholder: 'https://blog.example.com/feed.xml' },
-  ],
+  rss: [{ key: 'url', label: 'RSS Feed URL', placeholder: 'https://blog.example.com/feed.xml' }],
   peertube: [
     { key: 'username', label: 'PeerTube Username', placeholder: 'alice' },
     { key: 'channelId', label: 'Channel ID (optional)', placeholder: '12345' },
@@ -76,7 +74,12 @@ export function IdentityLinker() {
   const { walletAddress, walletAddresses, walletMeta } = useAuth();
   const [linked, setLinked] = useState<LinkedIdentity[]>([]);
   const [_loading, setLoading] = useState(true);
-  const [form, setForm] = useState<LinkFormState>({ open: null, values: {}, submitting: false, manualToggle: {} });
+  const [form, setForm] = useState<LinkFormState>({
+    open: null,
+    values: {},
+    submitting: false,
+    manualToggle: {},
+  });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const activeMeta = walletAddress ? walletMeta[walletAddress] : undefined;
@@ -101,9 +104,14 @@ export function IdentityLinker() {
       }
       const ids: LinkedIdentity[] = [];
       const extractHandle = (d: Record<string, unknown>): string | undefined =>
-        (d.handle as string) || (d.username as string) || (d.npub as string) || (d.did as string) || (d.url as string) || undefined;
+        (d.handle as string) ||
+        (d.username as string) ||
+        (d.npub as string) ||
+        (d.did as string) ||
+        (d.url as string) ||
+        undefined;
 
-      for (const [protocol, info] of Object.entries(PROTOCOL_ID_REGISTRY)) {
+      for (const [protocol, _info] of Object.entries(PROTOCOL_ID_REGISTRY)) {
         const pdata = data.data[protocol] as Record<string, unknown> | undefined;
         if (!pdata) continue;
         const handle = extractHandle(pdata);
@@ -174,7 +182,12 @@ export function IdentityLinker() {
           type: 'success',
           text: `${PROTOCOL_ID_REGISTRY[protocol].displayName} linked!`,
         });
-        setForm((f) => ({ ...f, open: null, values: { ...f.values, [protocol]: {} }, manualToggle: { ...f.manualToggle, [protocol]: false } }));
+        setForm((f) => ({
+          ...f,
+          open: null,
+          values: { ...f.values, [protocol]: {} },
+          manualToggle: { ...f.manualToggle, [protocol]: false },
+        }));
         await fetchLinked();
       } catch (err) {
         setMessage({ type: 'error', text: String(err) });
@@ -336,7 +349,9 @@ export function IdentityLinker() {
                 <div className="border-t border-[var(--color-glass-border)] px-4 py-3 space-y-3">
                   {LINK_FIELDS[protocol].map((field) => (
                     <div key={field.key}>
-                      <label className="mb-1 block text-xs text-[var(--color-muted)]">{field.label}</label>
+                      <label className="mb-1 block text-xs text-[var(--color-muted)]">
+                        {field.label}
+                      </label>
                       <input
                         type="text"
                         value={form.values[protocol]?.[field.key] || ''}
@@ -368,7 +383,8 @@ export function IdentityLinker() {
                       className="rounded border-[var(--color-border)] bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
                     />
                     <span className="text-xs text-[var(--color-muted)]">
-                      Manual link (skip auto-verification — use when this identity can't be auto-resolved)
+                      Manual link (skip auto-verification — use when this identity can't be
+                      auto-resolved)
                     </span>
                   </label>
                   <div className="flex gap-2 pt-1">

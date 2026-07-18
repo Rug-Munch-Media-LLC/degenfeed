@@ -21,7 +21,13 @@ export const metadata: Metadata = {
   title: 'Nostr Trending — Trending Notes, Relays & Topics',
   description:
     'Trending Nostr notes, relays, and topics ranked by engagement velocity. See what the Nostr relay network is talking about right now.',
-  keywords: ['nostr trending', 'trending notes', 'nostr relays', 'trending topics nostr', 'nostr zaps trending'],
+  keywords: [
+    'nostr trending',
+    'trending notes',
+    'nostr relays',
+    'trending topics nostr',
+    'nostr zaps trending',
+  ],
   openGraph: {
     title: 'Nostr Trending — Trending Notes, Relays & Topics | DegenFeed',
     description: 'Trending Nostr notes, relays, and topics ranked by engagement velocity.',
@@ -32,9 +38,9 @@ export const metadata: Metadata = {
 export default function NostrTrendingPage() {
   return (
     <>
-      <Script id="breadcrumb-nostr-trending" type="application/ld+json">{
-        JSON.stringify(breadcrumb)
-      }</Script>
+      <Script id="breadcrumb-nostr-trending" type="application/ld+json">
+        {JSON.stringify(breadcrumb)}
+      </Script>
       <PerPlatformTrending protocol="nostr" />
     </>
   );

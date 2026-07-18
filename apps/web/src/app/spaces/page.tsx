@@ -1,8 +1,8 @@
 'use client';
 
 import { getProtocolColor, getProtocolIcon, HostSpaceModal, SpaceRoom } from '@degenfeed/ui';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { QuickTipButton } from '../../components/QuickTipButton';
@@ -271,7 +271,9 @@ function LiveSpaceCard({
       {/* Waveform + listeners + tip */}
       <div className="mb-3 flex items-center gap-2">
         <Waveform className="h-4" />
-        <span className="text-[11px] font-medium text-[var(--color-muted)]">{space.listeners} listening</span>
+        <span className="text-[11px] font-medium text-[var(--color-muted)]">
+          {space.listeners} listening
+        </span>
         {space.tippingEnabled && (
           <span className="ml-auto">
             <QuickTipButton
@@ -809,7 +811,12 @@ export default function SpacesPage() {
               ) : (
                 <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-none snap-x snap-mandatory">
                   {liveSpaces.map((space) => (
-                    <LiveSpaceCard key={space.id} space={space} onJoin={handleJoin} onTip={setTipSpace} />
+                    <LiveSpaceCard
+                      key={space.id}
+                      space={space}
+                      onJoin={handleJoin}
+                      onTip={setTipSpace}
+                    />
                   ))}
                 </div>
               )}
@@ -852,7 +859,12 @@ export default function SpacesPage() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {upcomingSpaces.map((space) => (
-                    <UpcomingSpaceCard key={space.id} space={space} onReminder={handleReminder} onTip={setTipSpace} />
+                    <UpcomingSpaceCard
+                      key={space.id}
+                      space={space}
+                      onReminder={handleReminder}
+                      onTip={setTipSpace}
+                    />
                   ))}
                 </div>
               )}

@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+
 /**
  * seed-content.ts — Content seeding script for DegenFeed
  *
@@ -19,9 +20,9 @@
  * OUTPUT: ./seed-data/ directory with JSON files that API routes import.
  */
 
+import { createHash, randomBytes } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { createHash, randomBytes } from 'node:crypto';
 
 // ─── Seed data output directory ──────────────────────────────────────────────
 const SEED_DIR = path.resolve(__dirname, 'seed-data');
@@ -40,7 +41,7 @@ function daysAgo(d: number): number {
   return now() - d * 86_400_000;
 }
 
-function shortId(len = 12): string {
+function _shortId(len = 12): string {
   return randomBytes(len).toString('hex').slice(0, len);
 }
 
@@ -449,7 +450,7 @@ const CRYPTO_POSTS: ContentTemplate[] = [
   },
   {
     niches: ['crypto', 'solana'],
-    text: 'Solana has 5+ million monthly active users. Compare to Ethereum\'s 500K. The gap in user activity vs market cap tells you everything about where growth is happening.',
+    text: "Solana has 5+ million monthly active users. Compare to Ethereum's 500K. The gap in user activity vs market cap tells you everything about where growth is happening.",
   },
   {
     niches: ['crypto', 'regulation'],
@@ -461,7 +462,7 @@ const CRYPTO_POSTS: ContentTemplate[] = [
   },
   {
     niches: ['crypto', 'etf'],
-    text: 'Spot Ethereum ETFs now hold over 1M ETH combined. That\'s ~$3.5B in AUM. BlackRock leads with $1.2B. Institutional demand for ETH is real and growing.',
+    text: "Spot Ethereum ETFs now hold over 1M ETH combined. That's ~$3.5B in AUM. BlackRock leads with $1.2B. Institutional demand for ETH is real and growing.",
   },
 ];
 
@@ -496,7 +497,7 @@ const DEFI_POSTS: ContentTemplate[] = [
   },
   {
     niches: ['defi', 'stablecoin'],
-    text: 'Ethena\'s USDe surpassed $3B supply. The delta-neutral stablecoin model is absorbing real demand. 30%+ yield on sUSDe is bringing massive TVL.',
+    text: "Ethena's USDe surpassed $3B supply. The delta-neutral stablecoin model is absorbing real demand. 30%+ yield on sUSDe is bringing massive TVL.",
   },
   {
     niches: ['defi'],
@@ -577,7 +578,7 @@ const TRADING_POSTS: ContentTemplate[] = [
   },
   {
     niches: ['trading', 'crypto'],
-    text: 'Open interest in BTC futures just hit $38B ATH. New money is flowing in, but it\'s all levered. The derivatives market is pricing in volatility.',
+    text: "Open interest in BTC futures just hit $38B ATH. New money is flowing in, but it's all levered. The derivatives market is pricing in volatility.",
   },
   {
     niches: ['trading', 'crypto'],
@@ -608,7 +609,7 @@ const SECURITY_POSTS: ContentTemplate[] = [
   },
   {
     niches: ['security'],
-    text: 'Smart contract audits are good, but they\'re not a guarantee. The $47M KyberSwap hack passed 4 audits. Defense in depth: audits + fuzzing + formal verification + bug bounties.',
+    text: "Smart contract audits are good, but they're not a guarantee. The $47M KyberSwap hack passed 4 audits. Defense in depth: audits + fuzzing + formal verification + bug bounties.",
   },
   {
     niches: ['security', 'defi'],
@@ -623,7 +624,7 @@ const SECURITY_POSTS: ContentTemplate[] = [
 const MEME_POSTS: ContentTemplate[] = [
   {
     niches: ['memecoin', 'crypto'],
-    text: 'I bought the top so you don\'t have to. You\'re welcome, anons.',
+    text: "I bought the top so you don't have to. You're welcome, anons.",
   },
   {
     niches: ['memecoin', 'crypto'],
@@ -681,7 +682,7 @@ const SCIENCE_POSTS: ContentTemplate[] = [
   },
   {
     niches: ['science'],
-    text: 'Neuralink\'s first human patient is controlling a computer with their thoughts. Brain-computer interfaces went from science fiction to reality in one year.',
+    text: "Neuralink's first human patient is controlling a computer with their thoughts. Brain-computer interfaces went from science fiction to reality in one year.",
   },
   {
     niches: ['science', 'energy'],
@@ -696,7 +697,7 @@ const ONCHAIN_POSTS: ContentTemplate[] = [
   },
   {
     niches: ['onchain', 'ethereum'],
-    text: 'New addresses at ATH — 300K+ new wallets created daily on Ethereum L1 alone. L2 onboarding is pushing this even higher. Adoption numbers don\'t lie.',
+    text: "New addresses at ATH — 300K+ new wallets created daily on Ethereum L1 alone. L2 onboarding is pushing this even higher. Adoption numbers don't lie.",
   },
   {
     niches: ['onchain', 'bitcoin'],
@@ -715,8 +716,8 @@ const ONCHAIN_POSTS: ContentTemplate[] = [
 const COMMUNITY_DISCUSSIONS: ContentTemplate[] = [
   {
     niches: ['crypto'],
-    text: '🏆 **Community Discussion: What altcoins are you accumulating right now?**\n\nDrop your current bags and why you\'re bullish. Let\'s share alpha and research.',
-    html: '<p>🏆 <strong>Community Discussion: What altcoins are you accumulating right now?</strong></p><p>Drop your current bags and why you\'re bullish. Let\'s share alpha and research.</p>',
+    text: "🏆 **Community Discussion: What altcoins are you accumulating right now?**\n\nDrop your current bags and why you're bullish. Let's share alpha and research.",
+    html: "<p>🏆 <strong>Community Discussion: What altcoins are you accumulating right now?</strong></p><p>Drop your current bags and why you're bullish. Let's share alpha and research.</p>",
   },
   {
     niches: ['defi'],
@@ -725,12 +726,12 @@ const COMMUNITY_DISCUSSIONS: ContentTemplate[] = [
   },
   {
     niches: ['nft'],
-    text: '🎨 **NFT Trend Watch**\n\nWhat upcoming mints are you watching? Any projects with strong art + community that aren\'t hyped yet? Share alpha below.',
+    text: "🎨 **NFT Trend Watch**\n\nWhat upcoming mints are you watching? Any projects with strong art + community that aren't hyped yet? Share alpha below.",
     html: '<p>🎨 <strong>NFT Trend Watch</strong></p><p>What upcoming mints are you watching?</p>',
   },
   {
     niches: ['tech', 'ai'],
-    text: '🤖 **What AI tools are you using daily?**\n\nList your top 3 AI tools and how they\'ve changed your workflow. Looking for new recommendations!',
+    text: "🤖 **What AI tools are you using daily?**\n\nList your top 3 AI tools and how they've changed your workflow. Looking for new recommendations!",
     html: '<p>🤖 <strong>What AI tools are you using daily?</strong></p>',
   },
   {
@@ -745,7 +746,7 @@ const COMMUNITY_DISCUSSIONS: ContentTemplate[] = [
   },
   {
     niches: ['crypto', 'security'],
-    text: '🔒 **Security Saturday: Recent hacks discussion**\n\nLet\'s break down the latest exploits and what we can learn from them. Education prevents rekt.',
+    text: "🔒 **Security Saturday: Recent hacks discussion**\n\nLet's break down the latest exploits and what we can learn from them. Education prevents rekt.",
     html: '<p>🔒 <strong>Security Saturday: Recent hacks discussion</strong></p>',
   },
   {
@@ -755,7 +756,7 @@ const COMMUNITY_DISCUSSIONS: ContentTemplate[] = [
   },
   {
     niches: ['solana', 'crypto'],
-    text: '🌊 **Solana Ecosystem Roundup**\n\nWhat\'s happening in Solana this week? New protocols, airdrops, and ecosystem news.',
+    text: "🌊 **Solana Ecosystem Roundup**\n\nWhat's happening in Solana this week? New protocols, airdrops, and ecosystem news.",
     html: '<p>🌊 <strong>Solana Ecosystem Roundup</strong></p>',
   },
   {
@@ -784,7 +785,8 @@ const COMMUNITIES: CommunityDef[] = [
   {
     name: 'crypto',
     displayName: 'Crypto General',
-    description: 'General cryptocurrency discussion. Markets, news, prices, and ecosystem talk. No shilling, no scams.',
+    description:
+      'General cryptocurrency discussion. Markets, news, prices, and ecosystem talk. No shilling, no scams.',
     icon: '₿',
     niche: 'crypto',
     rules: [
@@ -802,7 +804,8 @@ const COMMUNITIES: CommunityDef[] = [
   {
     name: 'defi',
     displayName: 'Decentralized Finance',
-    description: 'Discuss DeFi protocols, yield strategies, lending, DEXs, and the future of finance. Yield farmers welcome.',
+    description:
+      'Discuss DeFi protocols, yield strategies, lending, DEXs, and the future of finance. Yield farmers welcome.',
     icon: '🏦',
     niche: 'defi',
     rules: [
@@ -819,7 +822,8 @@ const COMMUNITIES: CommunityDef[] = [
   {
     name: 'nft',
     displayName: 'NFT & Collectibles',
-    description: 'NFT art, collectibles, gaming assets, and digital ownership. Mint discussions, market analysis, and community building.',
+    description:
+      'NFT art, collectibles, gaming assets, and digital ownership. Mint discussions, market analysis, and community building.',
     icon: '🖼',
     niche: 'nft',
     rules: [
@@ -836,7 +840,8 @@ const COMMUNITIES: CommunityDef[] = [
   {
     name: 'ai',
     displayName: 'AI & Machine Learning',
-    description: 'Artificial intelligence, LLMs, agents, research, and the intersection of AI with crypto and web3.',
+    description:
+      'Artificial intelligence, LLMs, agents, research, and the intersection of AI with crypto and web3.',
     icon: '🤖',
     niche: 'ai',
     rules: [
@@ -853,13 +858,14 @@ const COMMUNITIES: CommunityDef[] = [
   {
     name: 'trading',
     displayName: 'Trading & TA',
-    description: 'Technical analysis, trading strategies, signals, market structure, and trade ideas for crypto markets.',
+    description:
+      'Technical analysis, trading strategies, signals, market structure, and trade ideas for crypto markets.',
     icon: '📈',
     niche: 'trading',
     rules: [
       'Tag charts with analysis',
       'No paid signals or groups',
-      'Explain your logic — don\'t just post screenshots',
+      "Explain your logic — don't just post screenshots",
       'No leverage shaming',
     ],
     subscriberCount: 22100,
@@ -887,7 +893,8 @@ const COMMUNITIES: CommunityDef[] = [
   {
     name: 'security',
     displayName: 'Crypto Security',
-    description: 'Blockchain security, smart contract audits, wallet safety, exploit analysis, and threat intelligence.',
+    description:
+      'Blockchain security, smart contract audits, wallet safety, exploit analysis, and threat intelligence.',
     icon: '🔒',
     niche: 'security',
     rules: [
@@ -904,7 +911,8 @@ const COMMUNITIES: CommunityDef[] = [
   {
     name: 'tech',
     displayName: 'Tech & Development',
-    description: 'Software engineering, blockchain development, open source, and tech infrastructure for web3 builders.',
+    description:
+      'Software engineering, blockchain development, open source, and tech infrastructure for web3 builders.',
     icon: '💻',
     niche: 'tech',
     rules: [
@@ -921,7 +929,8 @@ const COMMUNITIES: CommunityDef[] = [
   {
     name: 'ethereum',
     displayName: 'Ethereum Ecosystem',
-    description: 'Ethereum L1, L2s, EVM development, governance, and ecosystem. For ETH maxis and builders.',
+    description:
+      'Ethereum L1, L2s, EVM development, governance, and ecosystem. For ETH maxis and builders.',
     icon: 'Ξ',
     niche: 'ethereum',
     rules: [
@@ -937,7 +946,8 @@ const COMMUNITIES: CommunityDef[] = [
   {
     name: 'solana',
     displayName: 'Solana Ecosystem',
-    description: 'Solana blockchain news, development, DeFi, NFTs, and community. High performance, low fees.',
+    description:
+      'Solana blockchain news, development, DeFi, NFTs, and community. High performance, low fees.',
     icon: '◉',
     niche: 'solana',
     rules: [
@@ -997,9 +1007,8 @@ function buildCreatorPost(
       bio: creator.bio,
       avatarUrl: creator.avatarUrl,
       bannerUrl: undefined,
-      verified: creator.verified
-        ? [{ protocol: creator.protocol as any, badge: 'verified' }]
-        : [],
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
+      verified: creator.verified ? [{ protocol: creator.protocol as any, badge: 'verified' }] : [],
       followerCount: creator.followerCount,
       followingCount: randInt(100, 5000),
       links: [],
@@ -1015,7 +1024,8 @@ function buildCreatorPost(
     text: content.text,
     html: content.html,
     embeds: overrides?.embedUrl
-      ? [{ kind: (overrides.embedKind ?? 'link') as any, url: overrides.embedUrl }]
+      ? // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
+        [{ kind: (overrides.embedKind ?? 'link') as any, url: overrides.embedUrl }]
       : [],
     parentId: undefined,
     rootId: undefined,
@@ -1035,7 +1045,10 @@ function buildCreatorPost(
       recency: Math.exp(-(now() - timeAgoMs) / 86400000),
       engagement: Math.log(likes + reposts + 1) / 10,
       relevance: content.niches.length / 5,
-      quality: Math.min(1, (creator.followerCount > 10000 ? 0.8 : 0.5) + (creator.verified ? 0.2 : 0)),
+      quality: Math.min(
+        1,
+        (creator.followerCount > 10000 ? 0.8 : 0.5) + (creator.verified ? 0.2 : 0),
+      ),
       diversity: 0.5,
       source: creator.verified ? 0.9 : 0.5,
       velocity: Math.log(likes + reposts + 1) / 100,
@@ -1096,12 +1109,17 @@ function buildCommunityPost(
 // ─── Build all seed data ────────────────────────────────────────────────────
 
 interface SeedOutput {
+  // biome-ignore lint/suspicious/noExplicitAny: intentional
   posts: any[];
   communities: CommunityDef[];
   creators: CreatorDef[];
+  // biome-ignore lint/suspicious/noExplicitAny: intentional
   customFeeds: any[];
+  // biome-ignore lint/suspicious/noExplicitAny: intentional
   welcomePost: any;
+  // biome-ignore lint/suspicious/noExplicitAny: intentional
   notifications: any[];
+  // biome-ignore lint/suspicious/noExplicitAny: intentional
   gettingStartedGuide: any;
   metadata: {
     generatedAt: number;
@@ -1112,6 +1130,7 @@ interface SeedOutput {
 }
 
 function generateSeedData(): SeedOutput {
+  // biome-ignore lint/suspicious/noExplicitAny: intentional
   const allPosts: any[] = [];
   const usedContent = new Set<string>();
 
@@ -1257,6 +1276,7 @@ Welcome aboard. 🟢`,
       isPinned: true,
     },
   );
+  // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
   (welcomePost as any).isPinned = true;
   allPosts.push(welcomePost);
 
@@ -1266,7 +1286,8 @@ Welcome aboard. 🟢`,
       id: 'feed:defi-deep-dive',
       name: 'DeFi Deep Dive',
       title: 'DeFi Deep Dive',
-      description: 'Farcaster + Lens, DeFi only, high engagement. The best DeFi content from the open social graph.',
+      description:
+        'Farcaster + Lens, DeFi only, high engagement. The best DeFi content from the open social graph.',
       authorId: 'DegenFeed',
       sources: ['farcaster', 'lens'],
       isPublic: true,
@@ -1288,7 +1309,8 @@ Welcome aboard. 🟢`,
       id: 'feed:crypto-news',
       name: 'Crypto News',
       title: 'Crypto News',
-      description: 'RSS + Reddit, news category only. Stay informed with the latest crypto news from top sources.',
+      description:
+        'RSS + Reddit, news category only. Stay informed with the latest crypto news from top sources.',
       authorId: 'DegenFeed',
       sources: ['rss', 'reddit'],
       isPublic: true,
@@ -1310,7 +1332,8 @@ Welcome aboard. 🟢`,
       id: 'feed:memecoin-watch',
       name: 'Memecoin Watch',
       title: 'Memecoin Watch',
-      description: 'Track the wild world of memecoins across all protocols. High risk, high entertainment.',
+      description:
+        'Track the wild world of memecoins across all protocols. High risk, high entertainment.',
       authorId: 'DegenFeed',
       sources: ['farcaster', 'bluesky', 'reddit'],
       isPublic: true,
@@ -1332,7 +1355,8 @@ Welcome aboard. 🟢`,
       id: 'feed:ai-crypto-cross',
       name: 'AI x Crypto',
       title: 'AI x Crypto',
-      description: 'The intersection of artificial intelligence and blockchain technology. Agents, ZK-ML, decentralized compute.',
+      description:
+        'The intersection of artificial intelligence and blockchain technology. Agents, ZK-ML, decentralized compute.',
       authorId: 'DegenFeed',
       sources: ['nostr', 'bluesky', 'rss'],
       isPublic: true,
@@ -1358,7 +1382,8 @@ Welcome aboard. 🟢`,
       id: 'notif:welcome-1',
       type: 'system',
       title: 'Welcome to DegenFeed! 🎉',
-      message: 'You\'ve just joined the most unified feed in web3. Browse 8+ protocols in one timeline.',
+      message:
+        "You've just joined the most unified feed in web3. Browse 8+ protocols in one timeline.",
       createdAt: hoursAgo(2),
       read: false,
       actionUrl: '/feed',
@@ -1516,6 +1541,7 @@ Cross-posting means one message reaches your audience on Farcaster, Lens, and No
   };
 
   // Sort posts by createdAt (newest first)
+  // biome-ignore lint/suspicious/noExplicitAny: intentional
   allPosts.sort((a: any, b: any) => b.createdAt - a.createdAt);
 
   return {
@@ -1542,6 +1568,7 @@ function writeSeedFiles(data: SeedOutput): void {
     fs.mkdirSync(SEED_DIR, { recursive: true });
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: intentional
   const files: [string, any][] = [
     ['posts.json', data.posts],
     ['communities.json', data.communities],
@@ -1576,7 +1603,9 @@ function main() {
   console.log(`    • ${data.customFeeds.length} sample custom feeds (public)`);
   console.log(`    • ${data.notifications.length} welcome notifications`);
   console.log(`    • 1 pinned welcome post`);
-  console.log(`    • 1 getting started guide (${data.gettingStartedGuide.sections.length} sections)\n`);
+  console.log(
+    `    • 1 getting started guide (${data.gettingStartedGuide.sections.length} sections)\n`,
+  );
 
   writeSeedFiles(data);
 
@@ -1625,9 +1654,7 @@ function main() {
   }
 
   console.log(`\n  ── Posts by Protocol ──`);
-  for (const [protocol, count] of Object.entries(protocolCounts).sort(
-    (a, b) => b[1] - a[1],
-  )) {
+  for (const [protocol, count] of Object.entries(protocolCounts).sort((a, b) => b[1] - a[1])) {
     console.log(`    ${protocol.padEnd(12)} ${count}`);
   }
 

@@ -269,7 +269,10 @@ function CreateCommunityModal({
         <h2 className="mb-4 text-lg font-bold text-[var(--color-fg)]">Create Community</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Name *</label>
+            {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              Name *
+            </label>
             <input
               type="text"
               value={name}
@@ -284,7 +287,10 @@ function CreateCommunityModal({
             </p>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Display Name</label>
+            {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              Display Name
+            </label>
             <input
               type="text"
               value={displayName}
@@ -294,7 +300,10 @@ function CreateCommunityModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Description</label>
+            {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
+            <label className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+              Description
+            </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
