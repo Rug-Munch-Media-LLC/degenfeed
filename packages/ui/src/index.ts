@@ -46,6 +46,8 @@ export type { LemmyComment, LemmyThreadViewProps } from './LemmyThreadView';
 export { LemmyThreadView } from './LemmyThreadView';
 export type { LemmyTipButtonProps } from './LemmyTipButton';
 export { LemmyTipButton } from './LemmyTipButton';
+export type { LemmyVotingProps } from './LemmyVoting';
+export { LemmyVoting } from './LemmyVoting';
 export type { LensPublicationBadgeProps } from './LensPublicationBadge';
 export { LensPublicationBadge } from './LensPublicationBadge';
 export type {
@@ -121,6 +123,8 @@ export type { ActivityItem, TipActivityFeedProps } from './TipActivityFeed';
 export { TipActivityFeed } from './TipActivityFeed';
 export type { TokenChartProps } from './TokenChart';
 export { TokenChart } from './TokenChart';
+export type { CommunityBadgeProps } from './CommunityBadge';
+export { CommunityBadge, COMMUNITY_COLORS } from './CommunityBadge';
 export type { CommunityGateBadgeProps, PostGateBadgeProps } from './TokenGateBadge';
 export { CommunityGateBadge, PostGateBadge } from './TokenGateBadge';
 export type { TokenGateConfiguratorProps } from './TokenGateConfigurator';
@@ -146,3 +150,5 @@ export type {
   VotingPanelProps,
 } from './VotingPanel';
 export { VotingPanel } from './VotingPanel';
+export type { FeedBuilderModalProps } from './FeedBuilderModal';
+export { FeedBuilderModal } from './FeedBuilderModal';

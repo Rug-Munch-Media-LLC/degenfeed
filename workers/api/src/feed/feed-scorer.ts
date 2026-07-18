@@ -8,6 +8,12 @@
  */
 
 import {
+  applyQualityFilters,
+  resolvePreset,
+  type PresetName,
+  type ResolvedPreset,
+} from '@degenfeed/feed-core';
+import {
   checkDiversity,
   computeTrendingTopics,
   interleaveByProtocol,
@@ -270,6 +276,11 @@ export interface ScoreAndRankOptions {
   maxPerNiche: number;
   /** Whether to interleave protocols. */
   interleaveProtocols: boolean;
+  // ── Protocol quality preset options ────────────────────────────
+  /** Active preset name for the current protocol/feed. */
+  presetName?: PresetName;
+  /** Resolved preset ready to apply. */
+  resolvedPreset?: ResolvedPreset;
 }
 
 export interface ScoreAndRankResult {
@@ -328,8 +339,17 @@ export async function scoreAndRank(
         : scoredRelevant.filter((s) => s.post.createdAt < opts.cursor);
   }
 
+  // ── Protocol quality preset filter ─────────────────────────────
+  let presetFiltered = cursorScored;
+  if (opts.resolvedPreset) {
+    presetFiltered = cursorScored.filter((s) => {
+      const result = applyQualityFilters(s.post, opts.resolvedPreset!, s.post.protocol);
+      return result.passed;
+    });
+  }
+
   // ── New quality filters ────────────────────────────────────────
-  let qualityFiltered = cursorScored;
+  let qualityFiltered = presetFiltered;
 
   // Show only original content (no reposts, no link-only)
   if (opts.showOriginalContent) {

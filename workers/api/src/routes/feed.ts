@@ -9,6 +9,12 @@
 
 import { parseProtocols } from '@degenfeed/utils';
 import {
+  PRESET_NAMES,
+  presetKvKey,
+  resolvePreset,
+  type PresetName,
+} from '@degenfeed/feed-core';
+import {
   applyUserFilters,
   cachedJsonResponse,
   collectProviderResults,
@@ -30,6 +36,7 @@ import {
   writePostsToKV,
 } from '../feed';
 import { type Env, jsonResponse } from '../index';
+import type { StoredPresetEntry } from './presets';
 
 // Backward-compatible re-exports for stream.ts, newsletter.ts, app.ts, and tests.
 export { DEFAULT_PROTOCOLS, getProvider } from '../feed';
@@ -73,6 +80,8 @@ export async function handleHomeFeed(
   const relevant = applyUserFilters(deduped, {
     mutedAuthors: userCtx.mutedAuthors,
     mutedWords: userCtx.mutedWords,
+    mutedCommunities: userCtx.mutedCommunities,
+    blockedCommunities: userCtx.blockedCommunities,
     allowNonCrypto,
     preferEnglish: prefersEnglish(
       params.get('lang') || '',
@@ -81,7 +90,43 @@ export async function handleHomeFeed(
   });
   await enrichNostrEngagement(relevant);
 
-  // 5. Score and rank with merged preferences (query > stored > cookie).
+  // 5a. Resolve quality preset from KV (query param > KV stored > default).
+  const presetParam = params.get('preset');
+  const protocolsParam = params.get('protocols');
+  const activeProtocol = protocolsParam?.split(',')?.filter(Boolean)?.[0] ?? null;
+  let presetName: PresetName = 'balanced';
+  if (presetParam && (PRESET_NAMES as readonly string[]).includes(presetParam)) {
+    presetName = presetParam as PresetName;
+  } else if (userCtx.preferences?.presetName) {
+    presetName = userCtx.preferences.presetName;
+  } else if (activeProtocol) {
+    // Try to load per-protocol preset from KV
+    try {
+      const wallet = request.headers.get('cookie')
+        ?.split(';')
+        .map((s) => s.trim())
+        .find((s) => s.startsWith('__Host-dfid='))
+        ?.slice('__Host-dfid='.length);
+      if (wallet && env.CACHE) {
+        const { verifySessionCookie } = await import('../session');
+        const payload = await verifySessionCookie(wallet, env.AUTH_SECRET ?? '');
+        if (payload?.address) {
+          const raw = await env.CACHE.get(presetKvKey(payload.address, activeProtocol));
+          if (raw) {
+            const stored = JSON.parse(raw) as StoredPresetEntry;
+            if ((PRESET_NAMES as readonly string[]).includes(stored.presetName)) {
+              presetName = stored.presetName as PresetName;
+            }
+          }
+        }
+      }
+    } catch {
+      // Non-critical — default to balanced
+    }
+  }
+  const resolvedPreset = resolvePreset(presetName, activeProtocol ?? undefined);
+
+  // 5b. Score and rank with merged preferences (query > stored > cookie).
   const mergedPrefs = mergePreferences(
     parsePrefsFromQuery(params),
     userCtx.preferences,
@@ -116,6 +161,8 @@ export async function handleHomeFeed(
     minEngagement,
     maxPerNiche,
     interleaveProtocols,
+    presetName,
+    resolvedPreset,
   });
   const trending = await computeTrending(relevant, Number(params.get('trending')) || 24);
 
@@ -151,6 +198,8 @@ export async function handleHomeFeed(
       topOfHour,
       nextCursor,
       sort,
+      presetName,
+      presetLabel: resolvedPreset.profile.label,
       newSinceLastVisit: countNewSinceLastVisit(cookieHeader, ranked),
       fetchedAt: Date.now(),
     },

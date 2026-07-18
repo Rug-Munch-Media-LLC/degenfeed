@@ -52,6 +52,15 @@ import { handleContentResolve } from './routes/content';
 import { handleCrossReply } from './routes/cross-reply';
 import { handleAltFeed, handleNewsletterFeed, handleTopFeed } from './routes/curated';
 import {
+  handleCustomFeedCreate,
+  handleCustomFeedDelete,
+  handleCustomFeedGet,
+  handleCustomFeedList,
+  handleCustomFeedPublic,
+  handleCustomFeedSubscribe,
+  handleCustomFeedUpdate,
+} from './routes/custom-feed';
+import {
   handleCuratedFeed,
   handleEngagementFeedback,
   handleMarkSeen,
@@ -439,6 +448,17 @@ app.all('/api/auth/session', async (c) => {
 });
 app.all('/api/auth/wallet/nonce', async (c) => handleWalletNonce(c.req.raw, c.env));
 app.all('/api/auth/wallet/verify', async (c) => handleWalletVerify(c.req.raw, c.env));
+
+// ─── API: Custom Feeds (session-gated) ──────────────────────
+// Static routes before parameterized routes
+
+app.post('/api/custom-feeds', async (c) => handleCustomFeedCreate(c.req.raw, c.env));
+app.get('/api/custom-feeds', async (c) => handleCustomFeedList(c.req.raw, c.env));
+app.get('/api/custom-feeds/public', async (c) => handleCustomFeedPublic(c.req.raw, c.env));
+app.post('/api/custom-feeds/:id/subscribe', async (c) => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id')));
+app.get('/api/custom-feeds/:id', async (c) => handleCustomFeedGet(c.req.raw, c.env, c.req.param('id')));
+app.put('/api/custom-feeds/:id', async (c) => handleCustomFeedUpdate(c.req.raw, c.env, c.req.param('id')));
+app.delete('/api/custom-feeds/:id', async (c) => handleCustomFeedDelete(c.req.raw, c.env, c.req.param('id')));
 
 // ─── API: Bookmarks (session-gated) ─────────────────────────
 import {

@@ -100,8 +100,14 @@ interface ModEntry {
   targetId: string;
   targetHandle: string;
   protocol: string;
-  action: 'block' | 'mute';
+  action: string;
   timestamp: number;
+  /** For word mutes */
+  word?: string;
+  /** For community actions */
+  communityId?: string;
+  communityName?: string;
+  instance?: string;
 }
 
 interface ModStore {
@@ -502,18 +508,26 @@ export async function handleCheckBanned(request: Request, env: Env): Promise<Res
 }
 
 // ═════════════════════════════════════════════════════════════════════
-// Existing: block/mute sync (unchanged)
+// Block/mute sync — also supports communities and words
 // ═════════════════════════════════════════════════════════════════════
 
 interface SyncBody {
-  targetId: string;
+  targetId?: string;
   targetHandle?: string;
-  protocol: string;
-  action: 'block' | 'unblock' | 'mute' | 'unmute';
+  protocol?: string;
+  action: string;
+  word?: string;
+  communityId?: string;
+  communityName?: string;
+  instance?: string;
+}
+
+function modStoreKey(address: string): string {
+  return `user:moderation:${address.toLowerCase()}`;
 }
 
 export async function handleBlockSync(request: Request, env: Env): Promise<Response> {
-  // ── GET: return blocked/muted lists for the authenticated user ──
+  // ── GET: return all moderation state for the authenticated user ──
   if (request.method === 'GET') {
     const session = await requireSession(request, env);
     if (session instanceof Response) return session;
@@ -532,11 +546,20 @@ export async function handleBlockSync(request: Request, env: Env): Promise<Respo
     const muted = store.entries
       .filter((e) => e.action === 'mute')
       .map((e) => ({ targetId: e.targetId, targetHandle: e.targetHandle, mutedAt: e.timestamp }));
+    const mutedWords = store.entries
+      .filter((e) => e.action === 'mute_word')
+      .map((e) => ({ word: e.word, mutedAt: e.timestamp }));
+    const mutedCommunities = store.entries
+      .filter((e) => e.action === 'mute_community')
+      .map((e) => ({ communityId: e.communityId, communityName: e.communityName, instance: e.instance, mutedAt: e.timestamp }));
+    const blockedCommunities = store.entries
+      .filter((e) => e.action === 'block_community')
+      .map((e) => ({ communityId: e.communityId, communityName: e.communityName, instance: e.instance, blockedAt: e.timestamp }));
 
-    return noCacheJsonResponse({ blocked, muted });
+    return noCacheJsonResponse({ blocked, muted, mutedWords, mutedCommunities, blockedCommunities });
   }
 
-  // ── POST: sync a block/mute action from the client ──
+  // ── POST: sync a moderation action from the client ──
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405);
   }
@@ -551,45 +574,118 @@ export async function handleBlockSync(request: Request, env: Env): Promise<Respo
     return jsonResponse({ error: 'Invalid JSON' }, 400);
   }
 
-  const { targetId, targetHandle, protocol, action } = body;
+  const { targetId, targetHandle, protocol, action, word, communityId, communityName, instance } = body;
 
-  if (!targetId || !action) {
-    return jsonResponse({ error: 'targetId and action required' }, 400);
+  if (!action) {
+    return jsonResponse({ error: 'action required' }, 400);
   }
 
-  if (!['block', 'unblock', 'mute', 'unmute'].includes(action)) {
-    return jsonResponse({ error: 'Invalid action' }, 400);
+  const validActions = [
+    'block', 'unblock', 'mute', 'unmute',
+    'mute_word', 'unmute_word',
+    'mute_community', 'unmute_community',
+    'block_community', 'unblock_community',
+  ];
+
+  if (!validActions.includes(action)) {
+    return jsonResponse({ error: `Invalid action: ${action}` }, 400);
   }
+
+  const addr = address.toLowerCase();
 
   try {
-    const raw = await env.CACHE?.get(modKey(address));
+    // Store in the moderation store for cross-device sync
+    const raw = await env.CACHE?.get(modKey(addr));
     const store: ModStore = raw ? JSON.parse(raw) : { entries: [] };
 
+    // ── User block/unblock ──
     if (action === 'block' || action === 'mute') {
-      store.entries = store.entries.filter((e) => e.targetId !== targetId);
+      if (!targetId) return jsonResponse({ error: 'targetId required' }, 400);
+      store.entries = store.entries.filter((e) => !(e.targetId === targetId && (e.action === 'block' || e.action === 'mute')));
       store.entries.push({
         targetId,
         targetHandle: targetHandle || '',
-        protocol,
+        protocol: protocol || '',
         action,
         timestamp: Date.now(),
       });
+      // Also write to dedicated KV for feed pipeline
+      const setKey = action === 'block' ? `user:muted_authors:${addr}` : `user:muted_authors:${addr}`;
+      await syncUserSet(env, setKey, targetId, action === 'block' ? 'add' : 'add');
     } else if (action === 'unblock') {
-      store.entries = store.entries.filter(
-        (e) => !(e.targetId === targetId && e.action === 'block'),
-      );
+      if (!targetId) return jsonResponse({ error: 'targetId required' }, 400);
+      store.entries = store.entries.filter((e) => !(e.targetId === targetId && e.action === 'block'));
+      await syncUserSet(env, `user:muted_authors:${addr}`, targetId, 'remove');
     } else if (action === 'unmute') {
-      store.entries = store.entries.filter(
-        (e) => !(e.targetId === targetId && e.action === 'mute'),
-      );
+      if (!targetId) return jsonResponse({ error: 'targetId required' }, 400);
+      store.entries = store.entries.filter((e) => !(e.targetId === targetId && e.action === 'mute'));
+      await syncUserSet(env, `user:muted_authors:${addr}`, targetId, 'remove');
     }
 
-    await env.CACHE?.put(modKey(address), JSON.stringify(store), {
+    // ── Word mute/unmute ──
+    if (action === 'mute_word') {
+      if (!word) return jsonResponse({ error: 'word required' }, 400);
+      store.entries = store.entries.filter((e) => !(e.word === word && e.action === 'mute_word'));
+      store.entries.push({ targetId: '', targetHandle: '', protocol: '', action, word, timestamp: Date.now() });
+      await syncUserSet(env, `user:muted_words:${addr}`, word, 'add');
+    } else if (action === 'unmute_word') {
+      if (!word) return jsonResponse({ error: 'word required' }, 400);
+      store.entries = store.entries.filter((e) => !(e.word === word && e.action === 'mute_word'));
+      await syncUserSet(env, `user:muted_words:${addr}`, word, 'remove');
+    }
+
+    // ── Community mute/unmute/block/unblock ──
+    if (action === 'mute_community' || action === 'block_community') {
+      if (!communityId) return jsonResponse({ error: 'communityId required' }, 400);
+      store.entries = store.entries.filter(
+        (e) => !(e.communityId === communityId && (e.action === 'mute_community' || e.action === 'block_community')),
+      );
+      store.entries.push({
+        targetId: '', targetHandle: '', protocol: '',
+        action, communityId, communityName: communityName || '', instance,
+        timestamp: Date.now(),
+      });
+      const setKey = action === 'mute_community' ? `user:muted_communities:${addr}` : `user:blocked_communities:${addr}`;
+      await syncUserSet(env, setKey, communityId, 'add');
+    } else if (action === 'unmute_community' || action === 'unblock_community') {
+      if (!communityId) return jsonResponse({ error: 'communityId required' }, 400);
+      store.entries = store.entries.filter(
+        (e) => !(e.communityId === communityId && (e.action === 'mute_community' || e.action === 'block_community')),
+      );
+      const setKey = action === 'unmute_community' ? `user:muted_communities:${addr}` : `user:blocked_communities:${addr}`;
+      await syncUserSet(env, setKey, communityId, 'remove');
+    }
+
+    await env.CACHE?.put(modKey(addr), JSON.stringify(store), {
       expirationTtl: 60 * 60 * 24 * 400,
     });
 
     return jsonResponse({ ok: true, action, targetId, protocol });
-  } catch {
+  } catch (err) {
+    console.error('[moderation] sync failed:', err instanceof Error ? err.message : err);
     return jsonResponse({ error: 'Failed to persist moderation state' }, 500);
+  }
+}
+
+/** Helper: add/remove a value from a JSON-encoded Set in KV. */
+async function syncUserSet(
+  env: Env,
+  key: string,
+  value: string,
+  op: 'add' | 'remove',
+): Promise<void> {
+  if (!env.CACHE) return;
+  try {
+    const raw = await env.CACHE.get(key);
+    const set: string[] = raw ? JSON.parse(raw) : [];
+    if (op === 'add') {
+      if (!set.includes(value)) set.push(value);
+    } else {
+      const idx = set.indexOf(value);
+      if (idx !== -1) set.splice(idx, 1);
+    }
+    await env.CACHE.put(key, JSON.stringify(set), { expirationTtl: 60 * 60 * 24 * 400 });
+  } catch {
+    // non-critical
   }
 }

@@ -286,22 +286,54 @@ export default function PreferencesPage() {
         )}
       </div>
 
-      {/* ── Layout Density ── */}
+      {/* ── Protocol Quality Presets ── */}
       <div className="card mb-4">
-        <h2 className="mb-3 text-sm font-semibold text-degen-400">Layout density</h2>
+        <h2 className="mb-3 text-sm font-semibold text-degen-400">Protocol Quality</h2>
+        <p className="mb-3 text-xs text-gray-500">
+          Each protocol has smart quality defaults. Choose a preset or stick with the smart defaults.
+        </p>
+        {PROTOCOLS.map((p) => {
+          const currentPreset = prefs.protocolPresets?.[p] ?? 'quality';
+          return (
+            <div
+              key={p}
+              className="mb-2 flex items-center justify-between rounded-lg bg-[var(--color-muted)] px-3 py-2"
+            >
+              <span className="text-sm capitalize text-[var(--color-fg)]">{p}</span>
+              <select
+                value={currentPreset}
+                onChange={(e) => {
+                  const newPresets = { ...(prefs.protocolPresets ?? {}), [p]: e.target.value };
+                  update({ protocolPresets: newPresets });
+                }}
+                className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-xs text-gray-400 focus:outline-none focus:ring-1 focus:ring-degen-500"
+                aria-label={`${p} quality preset`}
+              >
+                <option value="quality">Quality (smart defaults)</option>
+                <option value="balanced">Balanced</option>
+                <option value="everything">Everything (no filter)</option>
+              </select>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Feed Layout ── */}
+      <div className="card mb-4">
+        <h2 className="mb-3 text-sm font-semibold text-degen-400">Feed Layout</h2>
         <div className="grid grid-cols-2 gap-3">
           {/* Comfortable */}
           <button
             type="button"
-            onClick={() => update({ layoutDensity: 'comfortable' })}
+            onClick={() => update({ feedLayout: 'comfortable' })}
             className={`relative rounded-xl border-2 p-4 text-left transition-all ${
-              prefs.layoutDensity === 'comfortable'
+              prefs.feedLayout === 'comfortable'
                 ? 'border-degen-500 bg-degen-500/10 shadow-[0_0_12px_rgba(34,197,94,0.15)]'
                 : 'border-[var(--color-border)] bg-[var(--color-muted)] hover:border-degen-500/30'
             }`}
-            aria-pressed={prefs.layoutDensity === 'comfortable'}
+            aria-pressed={prefs.feedLayout === 'comfortable'}
           >
-            {prefs.layoutDensity === 'comfortable' && (
+            {prefs.feedLayout === 'comfortable' && (
               <span className="absolute right-2 top-2 text-degen-400 text-xs font-bold">✓</span>
             )}
             <div className="mb-2 text-[11px] font-semibold text-[var(--color-fg)]">Comfortable</div>
@@ -323,15 +355,15 @@ export default function PreferencesPage() {
           {/* Compact */}
           <button
             type="button"
-            onClick={() => update({ layoutDensity: 'compact' })}
+            onClick={() => update({ feedLayout: 'compact' })}
             className={`relative rounded-xl border-2 p-4 text-left transition-all ${
-              prefs.layoutDensity === 'compact'
+              prefs.feedLayout === 'compact'
                 ? 'border-degen-500 bg-degen-500/10 shadow-[0_0_12px_rgba(34,197,94,0.15)]'
                 : 'border-[var(--color-border)] bg-[var(--color-muted)] hover:border-degen-500/30'
             }`}
-            aria-pressed={prefs.layoutDensity === 'compact'}
+            aria-pressed={prefs.feedLayout === 'compact'}
           >
-            {prefs.layoutDensity === 'compact' && (
+            {prefs.feedLayout === 'compact' && (
               <span className="absolute right-2 top-2 text-degen-400 text-xs font-bold">✓</span>
             )}
             <div className="mb-2 text-[11px] font-semibold text-[var(--color-fg)]">Compact</div>
@@ -350,6 +382,9 @@ export default function PreferencesPage() {
             <div className="mt-2 text-[10px] text-gray-500">Twitter-like density. More content per screen.</div>
           </button>
         </div>
+        <p className="mt-3 text-xs text-gray-500">
+          Also available: <strong>Media Grid</strong> (images/videos only) and <strong>Reader</strong> (full article view). Press Ctrl+Shift+L to cycle layouts.
+        </p>
       </div>
 
       <div className="card mb-4">

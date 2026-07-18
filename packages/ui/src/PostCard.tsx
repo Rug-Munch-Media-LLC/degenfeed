@@ -32,10 +32,12 @@ const scheduleIdle =
     ? (fn: () => void) => window.requestIdleCallback(fn, { timeout: 2000 })
     : (fn: () => void) => setTimeout(fn, 1);
 import { BlueskyPostContext } from './BlueskyPostContext';
+import { CommunityBadge } from './CommunityBadge';
 import { EmbedModal } from './EmbedModal';
 import { FrameEmbed } from './FrameEmbed';
 import { IdentityBadge } from './IdentityBadge';
 import { LemmyThreadView } from './LemmyThreadView';
+import { LemmyVoting } from './LemmyVoting';
 import { LensPublicationBadge } from './LensPublicationBadge';
 import { MastodonInstanceContext } from './MastodonInstanceContext';
 import { NostrRelayBadge } from './NostrRelayBadge';
@@ -156,6 +158,16 @@ export interface PostCardProps {
    * Optional progress data for the reputation level progress bar (shown in tooltip).
    */
   reputationProgress?: ReputationBadgeProgress | null;
+  /**
+   * Called when user clicks "Show more like this" — boosts the post's topic.
+   * The post's niches[0] is used as the topic to boost.
+   */
+  onShowMoreLikeThis?: (topic: string) => void;
+  /**
+   * Called when user clicks "Show less like this" — demotes the post's topic.
+   * The post's niches[0] is used as the topic to demote.
+   */
+  onShowLessLikeThis?: (topic: string) => void;
 }
 
 const MAX_TEXT_LENGTH = 500;
@@ -464,6 +476,8 @@ export const PostCard = memo(function PostCard({
   const [showEmbedModal, setShowEmbedModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showTranslateMenu, setShowTranslateMenu] = useState(false);
+  const [communityMuted, setCommunityMuted] = useState(false);
+  const [showMuteWordMenu, setShowMuteWordMenu] = useState(false);
   const [animatingLike, setAnimatingLike] = useState(false);
   const [translateTarget, setTranslateTarget] = useState<string | null>(null);
   const [translationResult, setTranslationResult] = useState<{
@@ -487,19 +501,25 @@ export const PostCard = memo(function PostCard({
       isFollowing('self', post.author.id),
       getMutedIdentities('self').then((m) => m.some((x) => x.targetId === post.author.id)),
       import('@degenfeed/storage').then(({ isBlocked }) => isBlocked(post.author.id, 'self')),
+      post.community
+        ? import('@degenfeed/storage').then(({ isCommunityMuted }) =>
+            isCommunityMuted(post.community!.name.toLowerCase()),
+          )
+        : Promise.resolve(false),
     ])
-      .then(([f, m, b]) => {
+      .then(([f, m, b, cm]) => {
         if (!cancelled) {
           setFollowing(f);
           setMuted(m);
           setBlocked(b);
+          setCommunityMuted(cm);
         }
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [post.author.id]);
+  }, [post.author.id, post.community]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -671,6 +691,38 @@ export const PostCard = memo(function PostCard({
     setShowEmbedModal(true);
   }, []);
 
+  const handleMuteCommunity = useCallback(async () => {
+    setShowMenu(false);
+    if (!post.community) return;
+    const communityName = post.community.name;
+    const next = !communityMuted;
+    setCommunityMuted(next);
+    try {
+      const { muteCommunity, unmuteCommunity } = await import('@degenfeed/storage');
+      if (next) {
+        await muteCommunity(communityName.toLowerCase(), communityName, post.community.instance);
+      } else {
+        await unmuteCommunity(communityName.toLowerCase());
+      }
+    } catch {
+      setCommunityMuted(!next);
+    }
+  }, [communityMuted, post.community]);
+
+  const handleMuteWordFromMenu = useCallback(
+    async (word: string) => {
+      setShowMenu(false);
+      setShowMuteWordMenu(false);
+      try {
+        const { addMutedWord } = await import('@degenfeed/storage');
+        await addMutedWord(word);
+      } catch {
+        /* ignore */
+      }
+    },
+    [],
+  );
+
   const handleFlagAsSpam = useCallback(async () => {
     setShowMenu(false);
     try {
@@ -817,6 +869,25 @@ export const PostCard = memo(function PostCard({
             decoding="async"
           />
           <div className="flex-1 min-w-0">
+            {/* ── Community row for Lemmy posts ── */}
+            {post.protocol === 'lemmy' && post.community && (
+              <div className="lemmy-community-row mb-0.5">
+                <CommunityBadge
+                  name={post.community.name}
+                  icon={post.community.icon}
+                  size="sm"
+                />
+                <span className="ml-1 text-xs text-muted-foreground">posted in </span>
+                <a
+                  href={`/c/${post.community.name}`}
+                  className="text-xs font-medium hover:underline text-muted-foreground"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  c/{post.community.name}
+                </a>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <span className="author-name truncate text-sm font-semibold text-[var(--color-fg)]">
                 {post.author.displayName}
@@ -924,6 +995,42 @@ export const PostCard = memo(function PostCard({
                         </svg>
                         Flag as spam
                       </button>
+
+                      {/* ── Quick-tune: Show more/less like this ── */}
+                      {post.niches.length > 0 && onShowMoreLikeThis && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMenu(false);
+                            onShowMoreLikeThis(post.niches[0] ?? 'crypto');
+                          }}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-green-400 hover:bg-green-500/10 transition-colors"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
+                            <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
+                          Show more like this
+                        </button>
+                      )}
+                      {post.niches.length > 0 && onShowLessLikeThis && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMenu(false);
+                            onShowLessLikeThis(post.niches[0] ?? 'crypto');
+                          }}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-orange-400 hover:bg-orange-500/10 transition-colors"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
+                            <path d="M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          </svg>
+                          Show less like this
+                        </button>
+                      )}
 
                       <button
                         type="button"
@@ -1034,6 +1141,89 @@ export const PostCard = memo(function PostCard({
                             ))}
                         </div>
                       )}
+
+                      {/* ── Mute this community ── */}
+                      {post.community && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={handleMuteCommunity}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            aria-hidden="true"
+                            className="shrink-0 text-purple-400"
+                          >
+                            <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                            <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                            <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                            <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                          </svg>
+                          {communityMuted ? 'Unmute community' : `Mute /c/${post.community.name}`}
+                        </button>
+                      )}
+
+                      {/* ── Mute word ── */}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowMuteWordMenu((v) => !v);
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
+                          className="shrink-0 text-orange-400"
+                        >
+                          <path d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                          <line x1="2" y1="14" x2="14" y2="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        Mute word
+                      </button>
+
+                      {showMuteWordMenu && (() => {
+                        // Extract candidate words from the post text (unique, non-trivial words)
+                        const candidates = [
+                          ...new Set(
+                            (post.text || '')
+                              .toLowerCase()
+                              .split(/[\s,;:.!?]+/)
+                              .filter((w) => w.length > 3 && w.length < 30 && !/^\d+$/.test(w))
+                              .slice(0, 6),
+                          ),
+                        ];
+                        return (
+                          <div className="border-t border-[var(--color-border)]">
+                            {candidates.length === 0 && (
+                              <p className="px-4 py-2 text-xs text-gray-500">No words to mute</p>
+                            )}
+                            {candidates.map((word) => (
+                              <button
+                                key={word}
+                                type="button"
+                                role="menuitem"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleMuteWordFromMenu(word);
+                                }}
+                                className="flex w-full items-center gap-3 px-4 py-2 pl-8 text-left text-sm text-gray-400 hover:bg-[var(--color-muted)] hover:text-gray-200 transition-colors"
+                              >
+                                &ldquo;{word}&rdquo;
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      })()}
 
                       <button
                         type="button"
@@ -1300,75 +1490,87 @@ export const PostCard = memo(function PostCard({
 
         {/* Engagement metrics + Tip */}
         <div className="actions flex items-center gap-4 text-xs text-gray-500">
-          <button
-            type="button"
-            className={`flex items-center gap-1 transition-colors hover:text-red-400 press-effect ${
-              localState.engagement.viewerLiked ? 'text-red-400' : ''
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              void perform(localState.engagement.viewerLiked ? 'unlike' : 'like');
-            }}
-            aria-label={`${localState.metrics.likes} likes`}
-          >
-            <span
-              className={`inline-block ${animatingLike ? 'animate-heart-pop' : ''}`}
-              style={{
-                transformOrigin: 'center',
-                transition: 'transform var(--duration-fast) ease-out',
-              }}
-            >
-              {localState.engagement.viewerLiked ? '❤' : '♡'}
-            </span>{' '}
-            {formatCount(localState.metrics.likes)}
-          </button>
-          <button
-            type="button"
-            className={`flex items-center gap-1 transition-colors hover:text-green-400 ${localState.engagement.viewerReposted ? 'text-green-400' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              void perform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
-            }}
-            aria-label={`${localState.metrics.reposts} reposts`}
-          >
-            ↻ {formatCount(localState.metrics.reposts)}
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-1 transition-colors hover:text-blue-400"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowReply((v) => !v);
-            }}
-            aria-label={`${localState.metrics.replies} replies`}
-          >
-            ↩ {formatCount(localState.metrics.replies)}
-          </button>
-          {onCrossReplyOpen && (
-            <button
-              type="button"
-              className="flex items-center gap-1 transition-colors hover:text-purple-400"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCrossReplyOpen(post);
-              }}
-              aria-label="Reply from another protocol"
-              title="Reply from another protocol via the DegenFeed bridge"
-            >
-              ⇄
-            </button>
+          {post.protocol === 'lemmy' ? (
+            <LemmyVoting
+              score={post.metrics.likes - ((post.raw as { counts?: { downvotes?: number } } | undefined)?.counts?.downvotes ?? 0)}
+              upvotes={post.metrics.likes}
+              downvotes={(post.raw as { counts?: { downvotes?: number } } | undefined)?.counts?.downvotes ?? 0}
+              comments={post.metrics.replies}
+              compact
+            />
+          ) : (
+            <>
+              <button
+                type="button"
+                className={`flex items-center gap-1 transition-colors hover:text-red-400 press-effect ${
+                  localState.engagement.viewerLiked ? 'text-red-400' : ''
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void perform(localState.engagement.viewerLiked ? 'unlike' : 'like');
+                }}
+                aria-label={`${localState.metrics.likes} likes`}
+              >
+                <span
+                  className={`inline-block ${animatingLike ? 'animate-heart-pop' : ''}`}
+                  style={{
+                    transformOrigin: 'center',
+                    transition: 'transform var(--duration-fast) ease-out',
+                  }}
+                >
+                  {localState.engagement.viewerLiked ? '❤' : '♡'}
+                </span>{' '}
+                {formatCount(localState.metrics.likes)}
+              </button>
+              <button
+                type="button"
+                className={`flex items-center gap-1 transition-colors hover:text-green-400 ${localState.engagement.viewerReposted ? 'text-green-400' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void perform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
+                }}
+                aria-label={`${localState.metrics.reposts} reposts`}
+              >
+                ↻ {formatCount(localState.metrics.reposts)}
+              </button>
+              <button
+                type="button"
+                className="flex items-center gap-1 transition-colors hover:text-blue-400"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowReply((v) => !v);
+                }}
+                aria-label={`${localState.metrics.replies} replies`}
+              >
+                ↩ {formatCount(localState.metrics.replies)}
+              </button>
+              {onCrossReplyOpen && (
+                <button
+                  type="button"
+                  className="flex items-center gap-1 transition-colors hover:text-purple-400"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCrossReplyOpen(post);
+                  }}
+                  aria-label="Reply from another protocol"
+                  title="Reply from another protocol via the DegenFeed bridge"
+                >
+                  ⇄
+                </button>
+              )}
+              <button
+                type="button"
+                className={`flex items-center gap-1 transition-colors hover:text-purple-400 ${localState.engagement.viewerBookmarked ? 'text-purple-400' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void perform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
+                }}
+                aria-label={localState.engagement.viewerBookmarked ? 'Bookmarked' : 'Bookmark'}
+              >
+                {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            className={`flex items-center gap-1 transition-colors hover:text-purple-400 ${localState.engagement.viewerBookmarked ? 'text-purple-400' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              void perform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
-            }}
-            aria-label={localState.engagement.viewerBookmarked ? 'Bookmarked' : 'Bookmark'}
-          >
-            {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
-          </button>
           <button
             type="button"
             className="flex items-center gap-1 transition-colors hover:text-purple-400"

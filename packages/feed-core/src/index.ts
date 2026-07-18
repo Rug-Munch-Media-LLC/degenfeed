@@ -38,6 +38,25 @@ export {
 } from './moderation';
 export type { ModerationCheckResult, ModerationThresholds } from './moderation';
 
+// ─── Protocol quality presets ─────────────────────────────────────
+export {
+  PRESET_LABELS,
+  PRESET_NAMES,
+  PRESET_PROFILES,
+  PROTOCOL_PRESETS,
+  applyQualityFilters,
+  presetKvKey,
+  resolvePreset,
+} from './quality-presets';
+export type {
+  PresetName,
+  PresetProfile,
+  ProtocolQualityPreset,
+  QualityFilterResult,
+  ResolvedPreset,
+} from './quality-presets';
+export { PRESET_DESCRIPTIONS } from './quality-presets';
+
 export const NICHE_KEYWORDS: Record<string, string[]> = {
   crypto: ['bitcoin', 'btc', 'crypto', 'cryptocurrency', 'blockchain', 'web3', 'token', 'altcoin'],
   bitcoin: ['bitcoin', 'btc', 'satoshi', 'halving', 'ordinal', 'inscription'],

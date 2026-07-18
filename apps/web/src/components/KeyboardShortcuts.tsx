@@ -52,10 +52,11 @@ const GROUPS: ShortcutGroup[] = [
     ],
   },
   {
-    title: 'Theme',
+    title: 'Theme & Layout',
     icon: '☀',
     shortcuts: [
       { keys: ['Ctrl', 'Shift', 'D'], desc: 'Toggle dark mode' },
+      { keys: ['Ctrl', 'Shift', 'L'], desc: 'Cycle feed layout (compact → comfortable → media-grid → reader)' },
     ],
   },
 ];

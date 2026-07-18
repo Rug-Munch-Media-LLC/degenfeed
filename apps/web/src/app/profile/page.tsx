@@ -524,31 +524,31 @@ export default function ProfilePage() {
               <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
                 Moderation
               </h2>
-              <div className="card-hover flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
-                      <path
-                        d="M8 12h8"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                <div className="card-hover flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+                        <path
+                          d="M8 12h8"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-[var(--color-fg)]">Muted &amp; Blocked</div>
+                      <div className="text-xs text-gray-500">Manage muted words, users, communities, and blocked accounts</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-semibold text-[var(--color-fg)]">Blocked &amp; Muted</div>
-                    <div className="text-xs text-gray-500">Manage your blocked and muted users</div>
-                  </div>
+                  <a
+                    href="/settings/muted"
+                    className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
+                  >
+                    Manage
+                  </a>
                 </div>
-                <a
-                  href="/profile/blocked"
-                  className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
-                >
-                  Manage
-                </a>
-              </div>
             </div>
 
             {/* Subscription management — as subscriber */}

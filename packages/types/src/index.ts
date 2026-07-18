@@ -161,6 +161,39 @@ export interface UnifiedPost {
   contentProof?: ContentProof;
 }
 
+// ─── Custom Feeds ─────────────────────────────────────────────
+
+export interface FeedRecipe {
+  /** Protocol sources to include */
+  sources: Protocol[];
+  /** Topic boost weights (0-100), e.g. { defi: 80, nft: 30 } */
+  topics: Record<string, number>;
+  /** Content type filters */
+  contentTypes: string[];
+  /** Minimum total engagement (likes + reposts) */
+  minEngagement: number;
+  /** Topics to exclude entirely */
+  excludeTopics: string[];
+  /** Words/phrases to hide posts containing them */
+  excludeWords: string[];
+  /** Optional language filter (ISO code) */
+  language?: string;
+  /** Optional — only from these author IDs */
+  creatorFilter?: string[];
+}
+
+export interface CustomFeed {
+  id: string;
+  name: string;
+  description: string;
+  creator: string;
+  isPublic: boolean;
+  config: FeedRecipe;
+  createdAt: number;
+  updatedAt: number;
+  subscribers: number;
+}
+
 export interface ContentProof {
   /** Arweave transaction ID (from Bundlr/Irys upload) */
   arweaveTxId?: string;

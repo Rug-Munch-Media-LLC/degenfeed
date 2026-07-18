@@ -173,21 +173,45 @@ export function prepareBasePosts(
   return out;
 }
 
-/** Filters out muted authors and posts containing muted words. */
+/** Filters out muted authors, muted/blocked communities, and posts containing muted words. */
 export function applyMuteFilters(
   posts: UnifiedPost[],
   mutedAuthors: Set<string>,
   mutedWords: Set<string>,
+  mutedCommunities?: Set<string>,
+  blockedCommunities?: Set<string>,
 ): UnifiedPost[] {
-  if (mutedAuthors.size === 0 && mutedWords.size === 0) return posts;
+  if (
+    mutedAuthors.size === 0 &&
+    mutedWords.size === 0 &&
+    !mutedCommunities?.size &&
+    !blockedCommunities?.size
+  )
+    return posts;
   return posts.filter((p) => {
+    // Muted author
     if (p.author.id && mutedAuthors.has(p.author.id)) return false;
+
+    // Muted / blocked community
+    if (p.community) {
+      const communityKey = p.community.name.toLowerCase();
+      if (mutedCommunities?.has(communityKey)) return false;
+      if (blockedCommunities?.has(communityKey)) return false;
+      // Also check by actorId if available
+      if (p.community.actorId) {
+        if (mutedCommunities?.has(p.community.actorId)) return false;
+        if (blockedCommunities?.has(p.community.actorId)) return false;
+      }
+    }
+
+    // Muted words (case-insensitive)
     if (mutedWords.size > 0) {
       const text = `${p.text} ${p.html ?? ''}`.toLowerCase();
       for (const word of mutedWords) {
         if (text.includes(word.toLowerCase())) return false;
       }
     }
+
     return true;
   });
 }
@@ -204,6 +228,8 @@ export function prefersEnglish(langParam: string, acceptLang: string): boolean {
 export interface UserFilterOptions {
   mutedAuthors: Set<string>;
   mutedWords: Set<string>;
+  mutedCommunities?: Set<string>;
+  blockedCommunities?: Set<string>;
   /**
    * Skip the crypto-gating relevance filter when the user opts into
    * non-crypto content. The spam filter still applies so we don't
@@ -215,7 +241,13 @@ export interface UserFilterOptions {
 
 /** Applies mute, relevance, and language filters in the legacy order. */
 export function applyUserFilters(posts: UnifiedPost[], opts: UserFilterOptions): UnifiedPost[] {
-  let out = applyMuteFilters(posts, opts.mutedAuthors, opts.mutedWords);
+  let out = applyMuteFilters(
+    posts,
+    opts.mutedAuthors,
+    opts.mutedWords,
+    opts.mutedCommunities,
+    opts.blockedCommunities,
+  );
   out = opts.allowNonCrypto ? out : out.filter(isRelevantPost);
   if (opts.preferEnglish) {
     out = out.filter((p) => isEnglishPost(p.text));
@@ -261,7 +293,10 @@ export async function enrichNostrEngagement(posts: UnifiedPost[]): Promise<void>
   }
 }
 
-export interface EnrichOptions extends BaseFilterOptions, Partial<UserFilterOptions> {}
+export interface EnrichOptions extends BaseFilterOptions, Partial<UserFilterOptions> {
+  mutedCommunities?: Set<string>;
+  blockedCommunities?: Set<string>;
+}
 
 /**
  * Full enrichment pipeline: dedup → category/type filters → mute
@@ -278,6 +313,8 @@ export async function enrichPosts(
   const filtered = applyUserFilters(base, {
     mutedAuthors: opts.mutedAuthors ?? new Set(),
     mutedWords: opts.mutedWords ?? new Set(),
+    mutedCommunities: opts.mutedCommunities,
+    blockedCommunities: opts.blockedCommunities,
     allowNonCrypto: opts.allowNonCrypto ?? false,
     preferEnglish: opts.preferEnglish ?? true,
   });
