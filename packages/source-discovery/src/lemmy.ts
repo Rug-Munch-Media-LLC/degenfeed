@@ -23,6 +23,21 @@ const LEMMY_INSTANCES = [
   'https://discuss.online',
   'https://programming.dev',
   'https://lemm.ee',
+  'https://lemmy.dbzer0.com',
+  'https://sopuli.xyz',
+  'https://feddit.org',
+  'https://lemmy.zip',
+  'https://discuss.tchncs.de',
+  'https://lemmy.nz',
+  'https://feddit.uk',
+  'https://lemmy.blahaj.zone',
+  'https://lemmy.sdf.org',
+  'https://lemmy.eco.br',
+  'https://lemmy.fmhy.ml',
+  'https://midwest.social',
+  'https://reddthat.com',
+  'https://startrek.website',
+  'https://infosec.pub',
 ];
 
 interface LemmyCommunity {

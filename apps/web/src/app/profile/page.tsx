@@ -7,6 +7,8 @@ import {
   CrossPlatformSetup,
   ErrorBoundary,
   ReputationBadge,
+  type PlatformAccount,
+  type RegisterPlatformStatusData,
 } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -14,6 +16,12 @@ import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { useAuth } from '../../components/AuthProvider';
 import { EditProfileModal } from '../../components/EditProfileModal';
 import { IdentityLinker } from '../../components/IdentityLinker';
+import {
+  CredentialCard,
+  CredentialSecurityNote,
+  CredentialsProgressBanner,
+  registrationToCredential,
+} from '../../components/CredentialsDisplay';
 import { useToast } from '../../components/Toast';
 import { useWeb3 } from '../../components/Web3Provider';
 import { useOnboarding } from '../../hooks/useOnboarding';
@@ -954,6 +962,11 @@ export default function ProfilePage() {
             </div>
 
             {/* ════════════════════════════════════════════════════
+                PORTABLE CREDENTIALS
+            ════════════════════════════════════════════════════ */}
+            <ProfileCredentialsSection walletAddress={walletAddress} />
+
+            {/* ════════════════════════════════════════════════════
                 LINKS
             ════════════════════════════════════════════════════ */}
             <div className="grid gap-3 sm:grid-cols-2">
@@ -1136,5 +1149,60 @@ export default function ProfilePage() {
         />
       </div>
     </ErrorBoundary>
+  );
+}
+
+// ─── Portable Credentials Section for Profile ─────────────────────────────
+
+function ProfileCredentialsSection({ walletAddress }: { walletAddress?: string }) {
+  const [accounts, setAccounts] = useState<PlatformAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!walletAddress) {
+      setLoading(false);
+      return;
+    }
+    fetch('/api/register-platform/status', { credentials: 'include', cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d: { data: RegisterPlatformStatusData }) => {
+        setAccounts(d.data.accounts ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [walletAddress]);
+
+  if (loading) return null;
+
+  const createdAccounts = accounts.filter((a) => a.status === 'created');
+  if (createdAccounts.length === 0) return null;
+
+  const credentialCards = createdAccounts
+    .map((a) => registrationToCredential(a as Parameters<typeof registrationToCredential>[0]))
+    .filter(Boolean) as NonNullable<ReturnType<typeof registrationToCredential>>[];
+
+  if (credentialCards.length === 0) return null;
+
+  return (
+    <div className="mb-8">
+      <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">
+        Portable Credentials
+      </h2>
+      <p className="mb-3 text-xs text-[var(--color-muted)]">
+        Use these credentials to login on any Mastodon/Lemmy/PeerTube app. You own this account.
+      </p>
+      <CredentialsProgressBanner
+        connectedCount={createdAccounts.length}
+        totalPlatforms={5}
+      />
+      <div className="mt-3 space-y-3">
+        {credentialCards.map((card) => (
+          <CredentialCard key={card.platform} credential={card} />
+        ))}
+      </div>
+      <div className="mt-3">
+        <CredentialSecurityNote />
+      </div>
+    </div>
   );
 }

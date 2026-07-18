@@ -8,6 +8,15 @@ import { deduplicatePosts } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { Env } from '../index';
 import { applyCurationPipeline } from './feed-curation-rules';
+import {
+  applyQualityPipeline,
+  DEFAULT_FRESHNESS_CONFIG,
+  HOT_FRESHNESS_CONFIG,
+  TOP_FRESHNESS_CONFIG,
+  TRENDING_FRESHNESS_CONFIG,
+  type FreshnessScoringConfig,
+  type QualityPipelineOptions,
+} from './feed-quality-gates';
 import type { ExecutionContext } from './feed-fetcher';
 import {
   collectProviderResults,
@@ -36,6 +45,10 @@ export interface UnifiedFeedOptions {
   limit?: number;
   section?: string;
   cursor?: string;
+  /** Quality pipeline options. Set qualityGate.freshnessConfig to null to disable freshness scoring. */
+  qualityGate?: QualityPipelineOptions;
+  /** Tab name for freshness config selection (hot, trending, top, new). Overrides qualityGate.freshnessConfig. */
+  freshnessTab?: 'everything' | 'hot' | 'trending' | 'top' | 'new';
 }
 
 export interface UnifiedFeedPost extends UnifiedPost {
@@ -50,6 +63,10 @@ const BADGES: Record<string, { emoji: string; color: string; label: string }> = 
   lens: { emoji: '\uD83C\uDF3F', color: '#abfe2c', label: 'Lens' },
   bluesky: { emoji: '\uD83E\uDD8B', color: '#1185fe', label: 'Bluesky' },
   mastodon: { emoji: '\uD83D\uDC18', color: '#6364ff', label: 'Mastodon' },
+  pleroma: { emoji: '\uD83D\uDC18', color: '#9b59b6', label: 'Pleroma' },
+  akkoma: { emoji: '\uD83D\uDC18', color: '#e67e22', label: 'Akkoma' },
+  misskey: { emoji: '\uD83D\uDCF7', color: '#4ecdc4', label: 'Misskey' },
+  firefish: { emoji: '\uD83D\uDCF7', color: '#ff6b6b', label: 'Firefish' },
   lemmy: { emoji: '\uD83C\uDF4B', color: '#00b868', label: 'Lemmy' },
   peertube: { emoji: '\uD83D\uDCF9', color: '#f1680d', label: 'PeerTube' },
   youtube: { emoji: '\u25B6\uFE0F', color: '#ff0000', label: 'YouTube' },
@@ -57,8 +74,30 @@ const BADGES: Record<string, { emoji: string; color: string; label: string }> = 
   reddit: { emoji: '\uD83D\uDD34', color: '#ff4500', label: 'Reddit' },
 };
 
-function badgeFor(protocol: string) {
+/**
+ * Resolve badge for a post. Mastodon posts check the raw _fediverseSoftware
+ * field to render Pleroma/Akkoma/Misskey/Firefish badges instead.
+ */
+function badgeFor(protocol: string, post?: { raw?: Record<string, unknown> }): { emoji: string; color: string; label: string } {
+  // Fediverse software detection: any mastodon-protocol post with _fediverseSoftware
+  if (protocol === 'mastodon' && post?.raw) {
+    const software = (post.raw as Record<string, unknown>)._fediverseSoftware as string | undefined;
+    if (software && BADGES[software]) {
+      return BADGES[software] as { emoji: string; color: string; label: string };
+    }
+  }
   return BADGES[protocol] ?? { emoji: '\u25CF', color: '#666', label: protocol };
+}
+
+// ─── Freshness config per tab ─────────────────────────────────────
+
+function freshnessConfigForTab(tab: string): FreshnessScoringConfig {
+  switch (tab) {
+    case 'trending': return TRENDING_FRESHNESS_CONFIG;
+    case 'top': return TOP_FRESHNESS_CONFIG;
+    case 'new': return DEFAULT_FRESHNESS_CONFIG;
+    default: return HOT_FRESHNESS_CONFIG;
+  }
 }
 
 // ─── Mix weights by blend mode ─────────────────────────────────────
@@ -347,12 +386,33 @@ export async function buildUnifiedFeed(
   // Interleave by time (newest first), not grouped by source
   deduped.sort((a, b) => b.createdAt - a.createdAt);
 
-  // Apply curation pipeline: freshness boost, protocol interleaving, content type
-  // variety, and category rotation before limiting
-  const curated = applyCurationPipeline(
+  // ── Quality pipeline ───────────────────────────────────────────
+  // quality gate → engagement floor → language filter → dedup
+  // → freshness → diversity → curation
+  const freshnessTab = opts.freshnessTab ?? 'hot';
+  const freshnessConfig = freshnessConfigForTab(freshnessTab);
+  const qualityOpts: QualityPipelineOptions = {
+    minQualityScore: freshnessTab === 'everything' ? 0 : 0.3,
+    enforceEngagementFloor: freshnessTab !== 'everything',
+    engagementFloorAgeHours: 24,
+    preferEnglish: freshnessTab !== 'everything',
+    crossProtocolDedup: true,
+    freshnessConfig,
+    maxPctPerSource: 30,
+    now: Date.now(),
+    ...opts.qualityGate,
+  };
+  const qualityResult = applyQualityPipeline(
     deduped as unknown as UnifiedPost[],
+    qualityOpts,
+  );
+
+  // Apply curation pipeline: freshness boost, protocol interleaving, content type
+  // variety, and category rotation before limiting — now on quality-filtered posts
+  const curated = applyCurationPipeline(
+    qualityResult.posts,
     {
-      freshnessBoost: true,
+      freshnessBoost: freshnessTab !== 'everything',
       interleaveProtocols: true,
       maxConsecutiveProtocols: 2,
       contentTypeVariety: true,
@@ -368,7 +428,8 @@ export async function buildUnifiedFeed(
   // Attach badge metadata
   const enriched: UnifiedFeedPost[] = limited.map((p) => {
     const protocol = (p as unknown as { protocol?: string }).protocol ?? 'rss';
-    const badge = badgeFor(protocol);
+    const raw = (p as unknown as { raw?: Record<string, unknown> }).raw;
+    const badge = badgeFor(protocol, raw ? { raw } : undefined);
     return {
       ...p,
       sourceBadge: badge.emoji,
@@ -392,6 +453,18 @@ export async function buildUnifiedFeed(
       feedTimeoutMs: FEED_GENERATION_TIMEOUT_MS,
       mix: opts.mix ?? 'balanced',
       sources: Array.from(sources),
+      qualityGate: {
+        qualityFiltered: qualityResult.meta.quality.filtered,
+        engagementDeprioritized: qualityResult.meta.engagement.deprioritized,
+        languageFiltered: qualityResult.meta.language.filtered,
+        crossProtocolDeduped: qualityResult.meta.dedup.deduped,
+        crossProtocolDedupCount: qualityResult.meta.dedup.crossProtocol,
+        sourceDiverse: qualityResult.meta.diversity.diverse,
+        sourceBreakdown: qualityResult.meta.diversity.sourceBreakdown,
+        freshnessConfig: freshnessTab,
+        totalFiltered: qualityResult.meta.totalFiltered,
+        inputPosts: qualityResult.meta.inputCount,
+      },
     },
   };
 }

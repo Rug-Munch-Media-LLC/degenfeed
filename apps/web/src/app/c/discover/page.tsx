@@ -3,7 +3,7 @@
 /**
  * Browse Communities — Discover communities across the Lemmy fediverse.
  *
- * Fetches from /api/lemmy/discover with category, search, and sort filters.
+ * Fetches from /api/communities/discover with category, search, and sort filters.
  * Shows federated community cards with instance badges and subscriber counts.
  */
 
@@ -244,7 +244,7 @@ export default function BrowseCommunitiesPage() {
       if (minSubs > 0) params.set('min_subs', String(minSubs));
       params.set('limit', '50');
 
-      const res = await fetch(`/api/lemmy/discover?${params.toString()}`);
+      const res = await fetch(`/api/communities/discover?${params.toString()}`);
       if (!res.ok) {
         setError(`HTTP ${res.status}`);
         setLoading(false);

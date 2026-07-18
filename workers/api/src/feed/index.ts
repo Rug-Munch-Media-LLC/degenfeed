@@ -20,6 +20,7 @@ export * from './feed-fetcher';
 export * from './feed-freshness';
 export * from './feed-interstitials';
 export * from './feed-per-category-trending';
+export * from './feed-quality-gates';
 export * from './feed-scorer';
 export * from './smart-refresh';
 export * from './unified-feed';

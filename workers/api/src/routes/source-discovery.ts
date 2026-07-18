@@ -20,6 +20,7 @@ import {
   type DiscoveredSource,
   DEFAULT_DISCOVERY_CONFIG,
   computeQualityScore,
+  type SourceHealth,
 } from '@degenfeed/source-discovery';
 
 // ─── KV key helpers ───────────────────────────────────────────────────
@@ -220,6 +221,38 @@ export async function handleSourcesApprove(request: Request, env: Env): Promise<
     // Move approved to all sources
     await saveAllSources(env, [...all, ...approved]);
     await savePendingSources(env, remaining);
+
+    // Initialize health tracking for newly approved sources
+    for (const source of approved) {
+      const healthKey = `discovered:sources:health:${source.id}`;
+      const existingHealth = await env.CACHE?.get(healthKey);
+      if (!existingHealth) {
+        const health: SourceHealth = {
+          sourceId: source.id,
+          platform: source.platform,
+          lastPostAt: Date.now(),
+          postFrequency: source.weeklyActivity,
+          engagementScore: source.relevanceScore * 0.5,
+          relevanceScore: source.relevanceScore,
+          spamScore: 0,
+          compositeScore: source.score,
+          lastCheckedAt: Date.now(),
+          spamFlagCount: 0,
+          engagement30d: 0,
+          postCount30d: 0,
+        };
+        await env.CACHE?.put(healthKey, JSON.stringify(health), { expirationTtl: 86400 * 90 });
+
+        // Add to health index
+        const indexKey = 'discovered:sources:health:index';
+        const raw = await env.CACHE?.get(indexKey);
+        const index: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+        if (!index.includes(source.id)) {
+          index.push(source.id);
+          await env.CACHE?.put(indexKey, JSON.stringify(index), { expirationTtl: 86400 * 90 });
+        }
+      }
+    }
 
     return jsonResponse({
       success: true,

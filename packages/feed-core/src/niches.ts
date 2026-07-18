@@ -29,6 +29,23 @@ export const LEMMY_COMMUNITY_NICHES: Record<string, string[]> = {
   philosophy: ['philosophy', 'ethics', 'governance'],
   ai: ['ai', 'machine-learning', 'llm', 'deep-learning', 'research'],
   startups: ['startups', 'venture-capital', 'funding', 'founder', 'saas'],
+  economics: ['economics', 'macro', 'finance', 'markets'],
+  programming: ['programming', 'coding', 'software', 'development', 'engineering'],
+  linux: ['linux', 'unix', 'foss', 'opensource', 'selfhosted'],
+  foss: ['foss', 'opensource', 'free-software', 'linux'],
+  hardware: ['hardware', 'electronics', 'maker', 'diy', 'gadgets'],
+  space: ['space', 'astronomy', 'astrophysics', 'nasa', 'spacex'],
+  energy: ['energy', 'renewable', 'solar', 'nuclear', 'climate'],
+  health: ['health', 'fitness', 'medicine', 'wellness', 'longevity'],
+  sports: ['sports', 'nfl', 'nba', 'soccer', 'baseball'],
+  history: ['history', 'historical', 'ancient', 'medieval'],
+  books: ['books', 'reading', 'literature', 'writing', 'publishing'],
+  movies: ['movies', 'film', 'cinema', 'hollywood', 'documentary'],
+  food: ['food', 'cooking', 'recipes', 'cuisine', 'nutrition'],
+  travel: ['travel', 'adventure', 'exploration', 'wanderlust', 'backpacking'],
+  photography: ['photography', 'photos', 'camera', 'imaging'],
+  diy: ['diy', 'maker', 'craft', 'woodworking', 'repair'],
+  meta: ['meta', 'fediverse', 'lemmy', 'kbin', 'degenfeed', 'community'],
 };
 
 // ─── Community descriptions ───────────────────────────────────────
@@ -126,6 +143,91 @@ export const COMMUNITY_DESCRIPTIONS: Record<
     description: 'Startup culture, venture capital, product launches, and founder stories',
     emoji: '🚀',
   },
+  economics: {
+    title: 'Economics',
+    description: 'Economic theory, macroeconomics, market analysis, and financial systems',
+    emoji: '📈',
+  },
+  programming: {
+    title: 'Programming',
+    description: 'Software development, coding languages, algorithms, and engineering best practices',
+    emoji: '💻',
+  },
+  linux: {
+    title: 'Linux & FOSS',
+    description: 'Linux, open source software, self-hosting, and free software advocacy',
+    emoji: '🐧',
+  },
+  foss: {
+    title: 'Free & Open Source',
+    description: 'FOSS projects, open source philosophy, licensing, and community initiatives',
+    emoji: '📖',
+  },
+  hardware: {
+    title: 'Hardware',
+    description: 'Computer hardware, electronics, gadgets, and DIY tech projects',
+    emoji: '🔧',
+  },
+  space: {
+    title: 'Space',
+    description: 'Space exploration, astronomy, astrophysics, and space technology',
+    emoji: '🚀',
+  },
+  energy: {
+    title: 'Energy',
+    description: 'Energy markets, renewable energy, nuclear, and climate technology',
+    emoji: '⚡',
+  },
+  health: {
+    title: 'Health',
+    description: 'Health, fitness, medicine, wellness, and longevity research',
+    emoji: '🏥',
+  },
+  sports: {
+    title: 'Sports',
+    description: 'Professional sports, athletics, teams, and sporting events',
+    emoji: '🏀',
+  },
+  history: {
+    title: 'History',
+    description: 'Historical events, civilizations, and lessons from the past',
+    emoji: '📜',
+  },
+  books: {
+    title: 'Books',
+    description: 'Literature, reading, book recommendations, and author discussions',
+    emoji: '📚',
+  },
+  movies: {
+    title: 'Movies',
+    description: 'Film, cinema, reviews, recommendations, and industry news',
+    emoji: '🎬',
+  },
+  food: {
+    title: 'Food',
+    description: 'Cooking, recipes, cuisine, nutrition, and food culture',
+    emoji: '🍳',
+  },
+  travel: {
+    title: 'Travel',
+    description: 'Travel destinations, adventure, backpacking, and cultural exploration',
+    emoji: '✈️',
+  },
+  photography: {
+    title: 'Photography',
+    description: 'Photography techniques, gear, composition, and visual storytelling',
+    emoji: '📷',
+  },
+  diy: {
+    title: 'DIY',
+    description: 'Do-it-yourself projects, crafting, woodworking, repairs, and making',
+    emoji: '🛠',
+  },
+  meta: {
+    title: 'Meta',
+    description: 'Community meta discussions, platform news, and community governance',
+    emoji: '🔄',
+  },
 };
 
 // ─── Reserved community names ─────────────────────────────────────
@@ -153,6 +255,23 @@ export const RESERVED_COMMUNITY_NAMES = [
   'philosophy',
   'ai',
   'startups',
+  'economics',
+  'programming',
+  'linux',
+  'foss',
+  'hardware',
+  'space',
+  'energy',
+  'health',
+  'sports',
+  'history',
+  'books',
+  'movies',
+  'food',
+  'travel',
+  'photography',
+  'diy',
+  'meta',
 ] as const;
 
 // ─── Quality scoring ──────────────────────────────────────────────

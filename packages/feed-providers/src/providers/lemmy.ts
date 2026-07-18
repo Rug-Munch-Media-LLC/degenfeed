@@ -36,6 +36,20 @@ export const LEMMY_INSTANCES = [
   'https://feddit.org',
   'https://lemmy.zip',
   'https://discuss.tchncs.de',
+  'https://lemmy.ca',
+  'https://lemmy.one',
+  'https://lemmy.nz',
+  'https://feddit.uk',
+  'https://feddit.de',
+  'https://lemmy.blahaj.zone',
+  'https://lemmy.sdf.org',
+  'https://lemmy.eco.br',
+  'https://lemmy.fmhy.ml',
+  'https://midwest.social',
+  'https://reddthat.com',
+  'https://startrek.website',
+  'https://iusearchlinux.fyi',
+  'https://infosec.pub',
 ];
 
 /** Map of niche -> display label for category filtering */
@@ -62,6 +76,24 @@ export const LEMMY_NICHE_LABELS: Record<string, string> = {
   ai: 'AI',
   music: 'Music',
   philosophy: 'Philosophy',
+  startups: 'Startups',
+  economics: 'Economics',
+  programming: 'Programming',
+  linux: 'Linux',
+  foss: 'FOSS',
+  hardware: 'Hardware',
+  space: 'Space',
+  energy: 'Energy',
+  health: 'Health',
+  sports: 'Sports',
+  history: 'History',
+  books: 'Books',
+  movies: 'Movies',
+  food: 'Food',
+  travel: 'Travel',
+  photography: 'Photography',
+  diy: 'DIY',
+  meta: 'Meta',
 };
 
 const CURATED_COMMUNITIES: Array<{ community: string; niche: string }> = [
@@ -169,6 +201,131 @@ const CURATED_COMMUNITIES: Array<{ community: string; niche: string }> = [
   { community: 'economics@lemmy.ml', niche: 'regulation' },
   { community: 'startups@lemmy.world', niche: 'tech' },
   { community: 'energy@lemmy.ml', niche: 'science' },
+
+  // ── New Instances: lemmy.ca ──────────────────────────────────────
+  { community: 'crypto@lemmy.ca', niche: 'crypto' },
+  { community: 'bitcoin@lemmy.ca', niche: 'bitcoin' },
+  { community: 'ethereum@lemmy.ca', niche: 'ethereum' },
+  { community: 'technology@lemmy.ca', niche: 'tech' },
+  { community: 'privacy@lemmy.ca', niche: 'privacy' },
+
+  // ── New Instances: feddit.uk ─────────────────────────────────────
+  { community: 'crypto@feddit.uk', niche: 'crypto' },
+  { community: 'technology@feddit.uk', niche: 'tech' },
+  { community: 'gaming@feddit.uk', niche: 'gaming' },
+
+  // ── New Instances: feddit.de ─────────────────────────────────────
+  { community: 'crypto@feddit.de', niche: 'crypto' },
+  { community: 'technik@feddit.de', niche: 'tech' },
+
+  // ── New Instances: lemmy.blahaj.zone ─────────────────────────────
+  { community: 'crypto@lemmy.blahaj.zone', niche: 'crypto' },
+  { community: 'technology@lemmy.blahaj.zone', niche: 'tech' },
+  { community: 'gaming@lemmy.blahaj.zone', niche: 'gaming' },
+
+  // ── New Instances: lemmy.sdf.org ─────────────────────────────────
+  { community: 'crypto@lemmy.sdf.org', niche: 'crypto' },
+  { community: 'technology@lemmy.sdf.org', niche: 'tech' },
+  { community: 'science@lemmy.sdf.org', niche: 'science' },
+
+  // ── New Instances: lemmy.eco.br ──────────────────────────────────
+  { community: 'crypto@lemmy.eco.br', niche: 'crypto' },
+  { community: 'tecnologia@lemmy.eco.br', niche: 'tech' },
+
+  // ── New Instances: lemmy.fmhy.ml ─────────────────────────────────
+  { community: 'crypto@lemmy.fmhy.ml', niche: 'crypto' },
+  { community: 'technology@lemmy.fmhy.ml', niche: 'tech' },
+
+  // ── New Instances: midwest.social ────────────────────────────────
+  { community: 'technology@midwest.social', niche: 'tech' },
+  { community: 'privacy@midwest.social', niche: 'privacy' },
+
+  // ── New Instances: reddthat.com ──────────────────────────────────
+  { community: 'crypto@reddthat.com', niche: 'crypto' },
+  { community: 'tech@reddthat.com', niche: 'tech' },
+  { community: 'gaming@reddthat.com', niche: 'gaming' },
+
+  // ── Additional communities on existing instances ─────────────────
+  // lemmy.world
+  { community: 'ai@lemmy.world', niche: 'ai' },
+  { community: 'artificial@lemmy.world', niche: 'ai' },
+  { community: 'programming@lemmy.world', niche: 'tech' },
+  { community: 'linux@lemmy.world', niche: 'opensource' },
+  { community: 'opensource@lemmy.world', niche: 'opensource' },
+  { community: 'economics@lemmy.world', niche: 'regulation' },
+  { community: 'startups@lemmy.world', niche: 'startups' },
+  { community: 'entrepreneur@lemmy.world', niche: 'startups' },
+
+  // lemmy.ml
+  { community: 'ai@lemmy.ml', niche: 'ai' },
+  { community: 'programming@lemmy.ml', niche: 'tech' },
+  { community: 'linux@lemmy.ml', niche: 'opensource' },
+  { community: 'opensource@lemmy.ml', niche: 'opensource' },
+  { community: 'space@lemmy.ml', niche: 'science' },
+  { community: 'hardware@lemmy.ml', niche: 'hardware' },
+
+  // programming.dev
+  { community: 'ai@programming.dev', niche: 'ai' },
+  { community: 'typescript@programming.dev', niche: 'tech' },
+  { community: 'webdev@programming.dev', niche: 'tech' },
+  { community: 'devops@programming.dev', niche: 'tech' },
+  { community: 'linux@programming.dev', niche: 'opensource' },
+  { community: 'selfhosted@programming.dev', niche: 'tech' },
+
+  // sh.itjust.works
+  { community: 'crypto@sh.itjust.works', niche: 'crypto' },
+  { community: 'technology@sh.itjust.works', niche: 'tech' },
+  { community: 'science@sh.itjust.works', niche: 'science' },
+  { community: 'privacy@sh.itjust.works', niche: 'privacy' },
+
+  // lemm.ee
+  { community: 'crypto@lemm.ee', niche: 'crypto' },
+  { community: 'linux@lemm.ee', niche: 'opensource' },
+  { community: 'ai@lemm.ee', niche: 'ai' },
+
+  // lemmy.zip
+  { community: 'crypto@lemmy.zip', niche: 'crypto' },
+  { community: 'tech@lemmy.zip', niche: 'tech' },
+  { community: 'gaming@lemmy.zip', niche: 'gaming' },
+  { community: 'ai@lemmy.zip', niche: 'ai' },
+
+  // lemmy.one
+  { community: 'crypto@lemmy.one', niche: 'crypto' },
+  { community: 'technology@lemmy.one', niche: 'tech' },
+
+  // lemmy.nz
+  { community: 'crypto@lemmy.nz', niche: 'crypto' },
+  { community: 'technology@lemmy.nz', niche: 'tech' },
+
+  // discuss.tchncs.de
+  { community: 'technology@discuss.tchncs.de', niche: 'tech' },
+  { community: 'privacy@discuss.tchncs.de', niche: 'privacy' },
+  { community: 'linux@discuss.tchncs.de', niche: 'opensource' },
+
+  // sopuli.xyz
+  { community: 'crypto@sopuli.xyz', niche: 'crypto' },
+  { community: 'technology@sopuli.xyz', niche: 'tech' },
+  { community: 'science@sopuli.xyz', niche: 'science' },
+
+  // infosec.pub
+  { community: 'cybersecurity@infosec.pub', niche: 'security' },
+  { community: 'privacy@infosec.pub', niche: 'privacy' },
+  { community: 'technology@infosec.pub', niche: 'tech' },
+  { community: 'crypto@infosec.pub', niche: 'crypto' },
+
+  // Additional niche communities on lemmy.world
+  { community: 'hardware@lemmy.world', niche: 'hardware' },
+  { community: 'homelab@lemmy.world', niche: 'tech' },
+  { community: 'photography@lemmy.world', niche: 'photography' },
+  { community: 'space@lemmy.world', niche: 'space' },
+  { community: 'books@lemmy.world', niche: 'books' },
+  { community: 'movies@lemmy.world', niche: 'movies' },
+  { community: 'food@lemmy.world', niche: 'food' },
+  { community: 'diy@lemmy.world', niche: 'diy' },
+  { community: 'history@lemmy.world', niche: 'history' },
+  { community: 'sports@lemmy.world', niche: 'sports' },
+  { community: 'health@lemmy.world', niche: 'health' },
+  { community: 'energy@lemmy.world', niche: 'energy' },
 ];
 
 // ─── Raw API types ──────────────────────────────────────────────────

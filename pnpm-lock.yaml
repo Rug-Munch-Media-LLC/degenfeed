@@ -90,6 +90,9 @@ importers:
       '@degenfeed/realtime':
         specifier: workspace:*
         version: link:../../packages/realtime
+      '@degenfeed/source-discovery':
+        specifier: workspace:*
+        version: link:../../packages/source-discovery
       '@degenfeed/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -697,6 +700,9 @@ importers:
       '@degenfeed/bluesky-sdk':
         specifier: workspace:*
         version: link:../../packages/bluesky-sdk
+      '@degenfeed/crossplatform-register':
+        specifier: workspace:*
+        version: link:../../packages/crossplatform-register
       '@degenfeed/farcaster-sdk':
         specifier: workspace:*
         version: link:../../packages/farcaster-sdk
@@ -739,6 +745,9 @@ importers:
       '@degenfeed/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@degenfeed/youtube-provider':
+        specifier: workspace:*
+        version: link:../../packages/youtube-provider
       '@noble/curves':
         specifier: ^1.9.7
         version: 1.9.7

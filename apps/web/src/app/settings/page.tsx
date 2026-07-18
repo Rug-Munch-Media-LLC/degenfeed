@@ -9,7 +9,14 @@
 
 import type { Protocol } from '@degenfeed/types';
 import type { PlatformAccount } from '@degenfeed/ui';
-import { CrossPlatformSetup, ErrorBoundary } from '@degenfeed/ui';
+import { CrossPlatformSetup, ErrorBoundary, type PlatformAccount, type RegisterPlatformStatusData } from '@degenfeed/ui';
+import {
+  CredentialCard,
+  CredentialSecurityNote,
+  CredentialsProgressBanner,
+  registrationToCredential,
+  getRecommendedApps,
+} from '../../components/CredentialsDisplay';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
@@ -868,9 +875,24 @@ export default function SettingsPage() {
                     key={crossPlatformKey}
                     walletAddress={walletAddress ?? ''}
                     isPremium={isPremium}
-                    onRegistered={handleCrossPlatformRegistered}
+                    onRegistered={(result) => {
+                      handleCrossPlatformRegistered(result);
+                      setCrossPlatformKey((k) => k + 1);
+                    }}
                     onUpgrade={() => setShowUpgradeModal(true)}
                   />
+
+                  {/* ── Portable Credentials ── */}
+                  <div className="mt-6 border-t border-[var(--color-glass-border)] pt-4">
+                    <h4 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
+                      Your Portable Credentials
+                    </h4>
+                    <p className="mb-3 text-xs text-[var(--color-muted)]">
+                      Use these credentials to login on any Mastodon/Lemmy/PeerTube app.
+                      You own this account.
+                    </p>
+                    <AccountsCredentialsDisplay walletAddress={walletAddress} />
+                  </div>
                 </div>
               </div>
             ) : (
@@ -899,9 +921,26 @@ export default function SettingsPage() {
                     key={crossPlatformKey}
                     walletAddress={walletAddress ?? ''}
                     isPremium={isPremium}
-                    onRegistered={handleCrossPlatformRegistered}
+                    onRegistered={(result) => {
+                      handleCrossPlatformRegistered(result);
+                      setCrossPlatformKey((k) => k + 1);
+                    }}
                     onUpgrade={() => setShowUpgradeModal(true)}
                   />
+
+                  {/* ── Portable Credentials ── */}
+                  {isPremium && (
+                    <div className="mt-6 border-t border-[var(--color-glass-border)] pt-4">
+                      <h4 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
+                        Your Portable Credentials
+                      </h4>
+                      <p className="mb-3 text-xs text-[var(--color-muted)]">
+                        Use these credentials to login on any Mastodon/Lemmy/PeerTube app.
+                        You own this account.
+                      </p>
+                      <AccountsCredentialsDisplay walletAddress={walletAddress} />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -993,5 +1032,73 @@ export default function SettingsPage() {
         onSuccess={refreshPremium}
       />
     </ErrorBoundary>
+  );
+}
+
+// ─── Credentials display for registered accounts ─────────────────────────
+
+function AccountsCredentialsDisplay({ walletAddress }: { walletAddress?: string }) {
+  const [accounts, setAccounts] = useState<PlatformAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!walletAddress) {
+      setLoading(false);
+      return;
+    }
+
+    fetch('/api/register-platform/status', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+      .then((r) => r.json())
+      .then((d: { data: RegisterPlatformStatusData }) => {
+        setAccounts(d.data.accounts ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [walletAddress]);
+
+  // Only react to crossPlatformKey changes — use a ref to avoid loops
+  useEffect(() => {
+    // Refresh when crossPlatformKey changes
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  const createdAccounts = accounts.filter((a) => a.status === 'created');
+  if (createdAccounts.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 text-center">
+        <p className="text-xs text-[var(--color-muted)]">
+          No accounts created yet. Create accounts above to see your portable credentials.
+        </p>
+      </div>
+    );
+  }
+
+  const credentialCards = createdAccounts
+    .map((a) => registrationToCredential(a as Parameters<typeof registrationToCredential>[0]))
+    .filter(Boolean) as NonNullable<ReturnType<typeof registrationToCredential>>[];
+
+  return (
+    <div className="space-y-4">
+      <CredentialsProgressBanner
+        connectedCount={createdAccounts.length}
+        totalPlatforms={5}
+      />
+      <div className="space-y-3">
+        {credentialCards.map((card) => (
+          <CredentialCard key={card.platform} credential={card} />
+        ))}
+      </div>
+      <CredentialSecurityNote />
+    </div>
   );
 }

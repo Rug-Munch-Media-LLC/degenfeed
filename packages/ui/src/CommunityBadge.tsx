@@ -27,6 +27,8 @@ export interface CommunityBadgeProps {
 export const COMMUNITY_COLORS: Record<string, string> = {
   lemmy: '#00b868',
   reddit: '#ff4500',
+  kbin: '#6366f1',
+  tildes: '#22d3ee',
 };
 
 export function CommunityBadge({

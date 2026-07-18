@@ -11,8 +11,12 @@ export {
 export { CURATED_LENS_HANDLES, LENS_API_URL, LensProvider } from './providers/lens';
 export {
   DEFAULT_GTS_INSTANCE,
+  type FediverseInstance,
+  type FediverseSoftware,
+  getFediverseStats,
   MastodonProvider,
   PUBLIC_MASTODON_INSTANCES,
+  TRENDING_INSTANCES,
 } from './providers/mastodon';
 export { DEFAULT_RELAYS, NostrProvider } from './providers/nostr';
 export { PonderProvider } from './providers/ponder';
@@ -42,6 +46,17 @@ export {
   RssProvider,
 } from './providers/rss';
 export { RssBridgeProvider } from './providers/rss-bridge';
+export {
+  KBIN_INSTANCES,
+  KbinProvider,
+} from './providers/kbin';
+export {
+  TILDES_GROUPS,
+  TildesProvider,
+} from './providers/tildes';
+export {
+  RedditAlternativesProvider,
+} from './providers/reddit-alternatives';
 export { CURATED_THREADS_HANDLES, ThreadsProvider } from './providers/threads';
 export type { FeedProvider, FeedResult, FetchOptions, HealthResult } from './types';
 export {
