@@ -4,6 +4,7 @@ import { TrendingSidebar, type TrendingSidebarData } from '@degenfeed/ui';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
+import { GettingStartedChecklist } from './GettingStartedChecklist';
 import { RecentlyVisited } from './RecentlyVisited';
 
 interface FeedSidebarProps {
@@ -175,6 +176,9 @@ export function FeedSidebar({
 
       {/* What's Happening — SUPER Trending Sidebar */}
       <TrendingSidebar data={sidebarData} />
+
+      {/* Getting started checklist — compact mode, hides when all done */}
+      <GettingStartedChecklist compact />
 
       {/* Who to follow */}
       <div className="rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">

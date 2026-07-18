@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const PLATFORM_LINKS = [
   { href: '/activity/tips', label: 'Tips', active: true },
-  { href: '/leaderboard', label: 'Leaderboard' },
+  { href: '/leaderboard', label: 'Leaderboard', active: false },
 ] as const;
 
 export default function TipsActivityPage() {

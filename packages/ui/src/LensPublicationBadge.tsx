@@ -288,7 +288,7 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
         {postUrl && (
           <a
             href={postUrl}
-            target="_blank" rel="noopener noreferrer"
+            target="_blank"
             rel="noopener noreferrer"
             className="flex flex-1 items-center justify-center gap-1 px-3 py-2 text-xs transition-colors hover:bg-white/[0.03]"
             style={{ color: LENS_GREEN }}
@@ -310,7 +310,7 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
         {profileUrl && (
           <a
             href={profileUrl}
-            target="_blank" rel="noopener noreferrer"
+            target="_blank"
             rel="noopener noreferrer"
             className="flex flex-1 items-center justify-center gap-1 px-3 py-2 text-xs text-gray-500 transition-colors hover:bg-white/[0.03] hover:text-gray-400"
             onClick={(e) => e.stopPropagation()}
@@ -331,7 +331,7 @@ export const LensPublicationBadge = memo(function LensPublicationBadge({
         {publicationId && !postUrl && (
           <a
             href={`https://hey.xyz/posts/${publicationId}`}
-            target="_blank" rel="noopener noreferrer"
+            target="_blank"
             rel="noopener noreferrer"
             className="flex flex-1 items-center justify-center gap-1 px-3 py-2 text-xs text-gray-500 transition-colors hover:bg-white/[0.03] hover:text-gray-400"
             onClick={(e) => e.stopPropagation()}

@@ -971,6 +971,7 @@ export default function PostPage({ params }: Props) {
           />
         )}
       </div>
+    </div>
     </ErrorBoundary>
   );
 }

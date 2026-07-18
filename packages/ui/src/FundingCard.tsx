@@ -74,7 +74,7 @@ export function FundingCard({ round }: { round: FundingRound }) {
         <span>{new Date(round.announcedAt).toLocaleDateString()}</span>
         <a
           href={round.sourceUrl}
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
           rel="noopener noreferrer"
           className="text-degen-500 hover:underline"
         >

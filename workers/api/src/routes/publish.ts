@@ -65,7 +65,9 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
       const postizResults = await tryPostizPublish(text, targets, env);
       if (postizResults) {
         await recordCrosspostSiblings(env, postizResults);
-        return jsonResponse({ results: postizResults, via: 'postiz' });
+        const resp = jsonResponse({ results: postizResults, via: 'postiz' });
+        resp.headers.set('X-Postiz-Used', 'true');
+        return resp;
       }
       // Postiz returned null → fall through to per-protocol logic
     }
