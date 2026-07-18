@@ -1,4 +1,4 @@
-import { PostCardSkeleton } from '@degenfeed/ui';
+import { PostCardSkeleton } from '@degenfeed/ui/server';
 import {
   ContentShellSkeleton,
   SidebarSkeleton,
