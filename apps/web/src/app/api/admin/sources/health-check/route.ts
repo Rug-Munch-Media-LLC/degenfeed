@@ -1,10 +1,14 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '../../_auth';
 // TODO: Wire to worker backend
 import { cullLowQualitySources, getStats, runHealthCheck } from '../../../../../lib/source-engine';
 
 export const runtime = 'nodejs';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (auth) return auth;
+
   try {
     // Run health check
     const healthResult = runHealthCheck();

@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '../_auth';
 
 export const runtime = 'nodejs';
 
@@ -16,13 +17,19 @@ const SYSTEM_CONFIG = {
   environment: process.env.NODE_ENV || 'production',
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (auth) return auth;
+
   return NextResponse.json(SYSTEM_CONFIG, {
     headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
   });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await requireAdmin(request);
+  if (auth) return auth;
+
   try {
     const body = (await request.json()) as { key: string; value: unknown };
 

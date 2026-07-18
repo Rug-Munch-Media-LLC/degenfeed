@@ -1,9 +1,14 @@
 'use client';
 
+import { getCsrfToken } from './csrf';
+
 /**
  * Fetch with localStorage cache fallback + stale-while-revalidate (SWR).
  * On success: stores response in localStorage.
  * On failure or slow network: returns cached version immediately while fetching fresh data in background.
+ *
+ * Automatically attaches the X-CSRF-Token header to state-changing
+ * API requests when a CSRF token is available.
  */
 
 const CACHE_PREFIX = 'df_cache_';
@@ -22,6 +27,21 @@ interface SwrResult<T> {
 }
 
 const pendingRefetches = new Map<string, Promise<unknown>>();
+
+function mergeFetchOptions(url: string, fetchOptions?: RequestInit): RequestInit {
+  const method = fetchOptions?.method ?? 'GET';
+  const opts = { credentials: 'include' as const, ...fetchOptions };
+  if (['GET', 'HEAD'].includes(method.toUpperCase()) || !url.startsWith('/api/')) {
+    return opts;
+  }
+  const token = getCsrfToken();
+  if (!token) return opts;
+  const headers = new Headers(opts.headers);
+  if (!headers.has('x-csrf-token')) {
+    headers.set('x-csrf-token', token);
+  }
+  return { ...opts, headers };
+}
 
 export function getCached<T>(key: string): T | null {
   try {
@@ -89,7 +109,7 @@ export async function fetchWithSwr<T>(
     revalidateInBackground(url, cacheKey, fetchOptions);
     return { data: stale, fromCache: true, stale: true };
   }
-  const res = await fetch(url, { credentials: 'include', ...fetchOptions });
+  const res = await fetch(url, mergeFetchOptions(url, fetchOptions));
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = (await res.json()) as T;
   setCache(cacheKey, data);
@@ -104,7 +124,7 @@ function revalidateInBackground<T>(
   // Deduplicate concurrent background refetches
   if (pendingRefetches.has(cacheKey)) return;
 
-  const promise = fetch(url, { credentials: 'include', ...fetchOptions })
+  const promise = fetch(url, mergeFetchOptions(url, fetchOptions))
     .then((res) => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json() as Promise<T>;
@@ -131,7 +151,7 @@ export async function fetchWithCache<T>(
   fetchOptions?: RequestInit,
 ): Promise<{ data: T; fromCache: boolean }> {
   try {
-    const res = await fetch(url, { credentials: 'include', ...fetchOptions });
+    const res = await fetch(url, mergeFetchOptions(url, fetchOptions));
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = (await res.json()) as T;
     setCache(cacheKey, data);

@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { requireSession } from '../../../_auth';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,8 @@ export const dynamic = 'force-dynamic';
  * Response: JSON file download with portable credential format.
  */
 export async function POST(request: NextRequest) {
+  const session = await requireSession(request);
+  if (session instanceof NextResponse) return session;
   try {
     const body = (await request.json()) as {
       credentials?: Array<Record<string, unknown>>;

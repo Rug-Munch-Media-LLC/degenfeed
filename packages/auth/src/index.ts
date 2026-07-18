@@ -23,3 +23,5 @@ export {
   verifyWalletSignature,
 } from './providers/wallet';
 export { forgetIdentity, lockIdentity, refreshSessionIfNeeded, unlockIdentity } from './session';
+export type { TokenPayload } from './token';
+export { verifyToken } from './token';
