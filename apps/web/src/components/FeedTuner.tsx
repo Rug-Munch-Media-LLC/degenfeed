@@ -42,6 +42,53 @@ export interface SavedMix {
   config: FeedMixConfig;
 }
 
+export interface FeedPreset {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  config: {
+    freshnessPreference: number;
+    creatorDiversity: number;
+    exploreRatio: number;
+    algorithmTransparent: boolean;
+    recencyWeight: number;
+    engagementWeight: number;
+    contentTypes?: Record<string, number>;
+  };
+}
+
+export const FEED_PRESETS: FeedPreset[] = [
+  {
+    id: 'tiktok-mode',
+    name: 'TikTok Mode',
+    description: 'Video-forward, rapid-fire content. Max freshness, low creator diversity.',
+    icon: '🎵',
+    config: { freshnessPreference: 90, creatorDiversity: 2, exploreRatio: 60, algorithmTransparent: false, recencyWeight: 2.5, engagementWeight: 3.0, contentTypes: { posts: 20, images: 30, videos: 100, links: 10, threads: 10 } },
+  },
+  {
+    id: 'twitter-mode',
+    name: 'Twitter Mode',
+    description: 'Text-forward, chronological-leaning. Balanced discovery.',
+    icon: '🐦',
+    config: { freshnessPreference: 70, creatorDiversity: 5, exploreRatio: 30, algorithmTransparent: true, recencyWeight: 2.0, engagementWeight: 1.5, contentTypes: { posts: 100, images: 40, videos: 20, links: 30, threads: 40 } },
+  },
+  {
+    id: 'discover-mode',
+    name: 'Discover Mode',
+    description: 'Explore-heavy. Maximize new creators, topics, and content types.',
+    icon: '✨',
+    config: { freshnessPreference: 40, creatorDiversity: 10, exploreRatio: 90, algorithmTransparent: true, recencyWeight: 1.0, engagementWeight: 2.0 },
+  },
+  {
+    id: 'focus-mode',
+    name: 'Focus Mode',
+    description: 'Followed creators only. Minimum noise, maximum signal.',
+    icon: '🎯',
+    config: { freshnessPreference: 30, creatorDiversity: 3, exploreRatio: 5, algorithmTransparent: false, recencyWeight: 1.5, engagementWeight: 2.5 },
+  },
+];
+
 // ─── Defaults ─────────────────────────────────────────────────
 
 const DEFAULT_PROTOCOL_WEIGHT = 50;
@@ -453,7 +500,7 @@ function weightLabel(weight: number): string {
 
 // ─── Tuner Section Types ──────────────────────────────────────
 
-type TunerTab = 'topics' | 'mix' | 'quality' | 'mixes';
+type TunerTab = 'topics' | 'mix' | 'quality' | 'algorithm' | 'mixes';
 
 // ─── FeedTuner Props ──────────────────────────────────────────
 
@@ -473,6 +520,23 @@ interface FeedTunerProps {
   onSaveMix?: (mix: SavedMix) => void;
   onLoadMix?: (mix: SavedMix) => void;
   onDeleteMix?: (id: string) => void;
+  /** Algorithm transparency toggle */
+  algorithmTransparent?: boolean;
+  onAlgorithmTransparencyChange?: (value: boolean) => void;
+  /** Content freshness (0-100) */
+  freshnessPreference?: number;
+  onFreshnessChange?: (value: number) => void;
+  /** Creator diversity (1-10) */
+  creatorDiversity?: number;
+  onCreatorDiversityChange?: (value: number) => void;
+  /** Explore vs exploit ratio (0-100) */
+  exploreRatio?: number;
+  onExploreRatioChange?: (value: number) => void;
+  /** Active feed preset */
+  activePreset?: string | null;
+  onApplyPreset?: (presetId: string) => void;
+  /** Feed presets catalog */
+  feedPresets?: FeedPreset[];
 }
 
 export function FeedTuner({
@@ -489,6 +553,17 @@ export function FeedTuner({
   onSaveMix,
   onLoadMix,
   onDeleteMix,
+  algorithmTransparent,
+  onAlgorithmTransparencyChange,
+  freshnessPreference,
+  onFreshnessChange,
+  creatorDiversity,
+  onCreatorDiversityChange,
+  exploreRatio,
+  onExploreRatioChange,
+  activePreset,
+  onApplyPreset,
+  feedPresets,
 }: FeedTunerProps) {
   const [activeTab, setActiveTab] = useState<TunerTab>('topics');
   const [localWeights, setLocalWeights] = useState<Record<string, number>>(weights);
@@ -502,6 +577,11 @@ export function FeedTuner({
   const [mixSavedToast, setMixSavedToast] = useState(false);
   const [mixCollapsed, setMixCollapsed] = useState(false);
   const [qualityCollapsed, setQualityCollapsed] = useState(false);
+  const [localAlgorithmTransparent, setLocalAlgorithmTransparent] = useState(algorithmTransparent ?? false);
+  const [localFreshness, setLocalFreshness] = useState(freshnessPreference ?? 50);
+  const [localCreatorDiversity, setLocalCreatorDiversity] = useState(creatorDiversity ?? 5);
+  const [localExploreRatio, setLocalExploreRatio] = useState(exploreRatio ?? 30);
+  const [localActivePreset, setLocalActivePreset] = useState(activePreset ?? null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const previewPosts = useMemo(() => generatePreviewPosts(localFeedMix), [localFeedMix]);
@@ -518,6 +598,22 @@ export function FeedTuner({
   useEffect(() => {
     if (externalSavedMixes) setLocalSavedMixes(externalSavedMixes);
   }, [externalSavedMixes]);
+
+  useEffect(() => {
+    if (algorithmTransparent !== undefined) setLocalAlgorithmTransparent(algorithmTransparent);
+  }, [algorithmTransparent]);
+  useEffect(() => {
+    if (freshnessPreference !== undefined) setLocalFreshness(freshnessPreference);
+  }, [freshnessPreference]);
+  useEffect(() => {
+    if (creatorDiversity !== undefined) setLocalCreatorDiversity(creatorDiversity);
+  }, [creatorDiversity]);
+  useEffect(() => {
+    if (exploreRatio !== undefined) setLocalExploreRatio(exploreRatio);
+  }, [exploreRatio]);
+  useEffect(() => {
+    if (activePreset !== undefined) setLocalActivePreset(activePreset);
+  }, [activePreset]);
 
   const tunedCount = countTunedTopics(localWeights);
 
@@ -633,6 +729,18 @@ export function FeedTuner({
     onFeedMixReset?.();
   }, [onFeedMixReset]);
 
+  const handleAlgorithmReset = useCallback(() => {
+    setLocalAlgorithmTransparent(false);
+    setLocalFreshness(50);
+    setLocalCreatorDiversity(5);
+    setLocalExploreRatio(30);
+    setLocalActivePreset(null);
+    onAlgorithmTransparencyChange?.(false);
+    onFreshnessChange?.(50);
+    onCreatorDiversityChange?.(5);
+    onExploreRatioChange?.(30);
+  }, [onAlgorithmTransparencyChange, onFreshnessChange, onCreatorDiversityChange, onExploreRatioChange]);
+
   // ─── Immediate mix persist ─────────────────────────────────
 
   const _persistMixImmediately = useCallback(
@@ -649,6 +757,7 @@ export function FeedTuner({
     { id: 'topics', label: 'Topics', icon: '🎚️' },
     { id: 'mix', label: 'Feed Mix', icon: '🔀' },
     { id: 'quality', label: 'Quality', icon: '🛡️' },
+    { id: 'algorithm', label: 'Algorithm', icon: '🧠' },
     { id: 'mixes', label: 'Saved', icon: '💾' },
   ];
 
@@ -1096,7 +1205,237 @@ export function FeedTuner({
             </div>
           )}
 
-          {/* ═══ TAB 4: SAVED MIXES ═══ */}
+          {/* ═══ TAB 4: ALGORITHM ═══ */}
+          {activeTab === 'algorithm' && (
+            <div className="space-y-5">
+              {/* Feed Presets */}
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-fg)] mb-1">
+                  🎮 Feed Presets
+                </p>
+                <p className="text-[10px] text-gray-500 mb-2">
+                  One-click feed personalities — overrides all settings below
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(feedPresets ?? FEED_PRESETS).map((preset) => {
+                    const isActive = localActivePreset === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => {
+                          setLocalActivePreset(preset.id);
+                          onApplyPreset?.(preset.id);
+                        }}
+                        className={`rounded-xl border p-3 text-left transition-all ${
+                          isActive
+                            ? 'border-degen-500 bg-degen-500/10 ring-1 ring-degen-500/30'
+                            : 'border-[var(--color-border)] bg-[var(--color-muted)]/20 hover:border-degen-500/30'
+                        }`}
+                      >
+                        <span className="text-lg">{preset.icon}</span>
+                        <p className="text-xs font-semibold text-[var(--color-fg)] mt-1">
+                          {preset.name}
+                        </p>
+                        <p className="text-[9px] text-gray-500 mt-0.5 leading-tight">
+                          {preset.description}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+                {localActivePreset && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocalActivePreset(null);
+                      onApplyPreset?.('__clear__');
+                    }}
+                    className="mt-2 text-[10px] text-degen-400 hover:text-degen-300"
+                  >
+                    Clear preset → manual control
+                  </button>
+                )}
+              </div>
+
+              <div className="border-t border-[var(--color-border)] pt-4 space-y-4">
+                {/* Algorithm transparency */}
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div>
+                    <p className="text-xs font-semibold text-[var(--color-fg)]">
+                      🔍 Algorithm Transparency
+                    </p>
+                    <p className="text-[10px] text-gray-500">
+                      {localAlgorithmTransparent
+                        ? '"Why this post?" explanations shown on every card'
+                        : 'TikTok-style — no explanations, just content'}
+                    </p>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={localAlgorithmTransparent}
+                      onChange={(e) => {
+                        setLocalAlgorithmTransparent(e.target.checked);
+                        onAlgorithmTransparencyChange?.(e.target.checked);
+                        setLocalActivePreset(null);
+                      }}
+                      className="h-4 w-4 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
+                    />
+                  </div>
+                </label>
+
+                {/* Content freshness */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--color-fg)]">
+                        🌱 Content Freshness
+                      </p>
+                      <p className="text-[10px] text-gray-500">
+                        {localFreshness < 30
+                          ? 'Evergreen — only the best, regardless of age'
+                          : localFreshness < 60
+                            ? 'Balanced — mix of fresh and established'
+                            : 'Bleeding edge — mostly recent content'}
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono tabular-nums text-gray-400 w-8 text-right">
+                      {localFreshness}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={localFreshness}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setLocalFreshness(val);
+                      onFreshnessChange?.(val);
+                      setLocalActivePreset(null);
+                    }}
+                    className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                    aria-label="Content freshness"
+                  />
+                </div>
+
+                {/* Creator diversity */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--color-fg)]">
+                        👥 Creator Diversity
+                      </p>
+                      <p className="text-[10px] text-gray-500">
+                        {localCreatorDiversity <= 2
+                          ? 'Same few creators — familiar voices'
+                          : localCreatorDiversity <= 5
+                            ? 'Moderate diversity'
+                            : 'Maximum variety — many different creators'}
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono tabular-nums text-gray-400 w-8 text-right">
+                      {localCreatorDiversity}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="1"
+                    value={localCreatorDiversity}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setLocalCreatorDiversity(val);
+                      onCreatorDiversityChange?.(val);
+                      setLocalActivePreset(null);
+                    }}
+                    className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                    aria-label="Creator diversity"
+                  />
+                </div>
+
+                {/* Explore vs Exploit */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--color-fg)]">
+                        🧭 Explore vs Exploit
+                      </p>
+                      <p className="text-[10px] text-gray-500">
+                        {localExploreRatio < 20
+                          ? 'Familiar — content you already know you like'
+                          : localExploreRatio < 60
+                            ? 'Balanced — some discovery, mostly familiar'
+                            : 'Discovery — new creators, topics, and formats'}
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono tabular-nums text-gray-400 w-12 text-right">
+                      {localExploreRatio}% explore
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-1">
+                    <span>Exploit</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      value={localExploreRatio}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setLocalExploreRatio(val);
+                        onExploreRatioChange?.(val);
+                        setLocalActivePreset(null);
+                      }}
+                      className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                      aria-label="Explore vs exploit ratio"
+                    />
+                    <span>Explore</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats summary */}
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/20 p-3">
+                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1.5">
+                  Current Algorithm Profile
+                </p>
+                <div className="space-y-1 text-[10px] text-gray-400">
+                  <div className="flex justify-between">
+                    <span>Mode</span>
+                    <span className="text-[var(--color-fg)] font-medium">
+                      {localAlgorithmTransparent ? 'Transparent' : 'Black Box'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Freshness</span>
+                    <span className="text-[var(--color-fg)] font-medium">{localFreshness}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Creator cap</span>
+                    <span className="text-[var(--color-fg)] font-medium">{localCreatorDiversity}/page</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Explore ratio</span>
+                    <span className="text-[var(--color-fg)] font-medium">{localExploreRatio}%</span>
+                  </div>
+                  {localActivePreset && (
+                    <div className="flex justify-between">
+                      <span>Preset</span>
+                      <span className="text-degen-400 font-medium">
+                        {(feedPresets ?? FEED_PRESETS).find((p) => p.id === localActivePreset)?.name ?? localActivePreset}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ TAB 5: SAVED MIXES ═══ */}
           {activeTab === 'mixes' && (
             <div className="space-y-4">
               {/* Save current mix */}
@@ -1195,6 +1534,87 @@ export function FeedTuner({
                   )}
                 </div>
               </div>
+
+              {/* Import / Export */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const data = {
+                      feedMixConfig: localFeedMix,
+                      savedMixes: localSavedMixes,
+                      algorithm: {
+                        transparent: localAlgorithmTransparent,
+                        freshness: localFreshness,
+                        diversity: localCreatorDiversity,
+                        explore: localExploreRatio,
+                        preset: localActivePreset,
+                      },
+                    };
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `degenfeed-config-${new Date().toISOString().slice(0, 10)}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="flex-1 rounded-lg border border-degen-500/30 px-3 py-2 text-xs font-medium text-degen-400 hover:bg-degen-500/10 transition-colors text-center"
+                >
+                  ⬇️ Export Config
+                </button>
+                <label className="flex-1 cursor-pointer rounded-lg border border-degen-500/30 px-3 py-2 text-xs font-medium text-degen-400 hover:bg-degen-500/10 transition-colors text-center">
+                  📂 Import Config
+                  <input
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        try {
+                          const data = JSON.parse(ev.target?.result as string);
+                          if (data.feedMixConfig) {
+                            setLocalFeedMix(data.feedMixConfig);
+                            saveFeedMixConfig(data.feedMixConfig);
+                          }
+                          if (data.savedMixes) {
+                            setLocalSavedMixes(data.savedMixes);
+                            saveSavedMixes(data.savedMixes);
+                          }
+                          if (data.algorithm) {
+                            if (typeof data.algorithm.transparent === 'boolean') {
+                              setLocalAlgorithmTransparent(data.algorithm.transparent);
+                              onAlgorithmTransparencyChange?.(data.algorithm.transparent);
+                            }
+                            if (typeof data.algorithm.freshness === 'number') {
+                              setLocalFreshness(data.algorithm.freshness);
+                              onFreshnessChange?.(data.algorithm.freshness);
+                            }
+                            if (typeof data.algorithm.diversity === 'number') {
+                              setLocalCreatorDiversity(data.algorithm.diversity);
+                              onCreatorDiversityChange?.(data.algorithm.diversity);
+                            }
+                            if (typeof data.algorithm.explore === 'number') {
+                              setLocalExploreRatio(data.algorithm.explore);
+                              onExploreRatioChange?.(data.algorithm.explore);
+                            }
+                            if (data.algorithm.preset) {
+                              setLocalActivePreset(data.algorithm.preset);
+                            }
+                          }
+                          window.dispatchEvent(new CustomEvent('df-toast', { detail: { kind: 'success', message: 'Config imported!' } }));
+                        } catch {
+                          window.dispatchEvent(new CustomEvent('df-toast', { detail: { kind: 'error', message: 'Invalid config file' } }));
+                        }
+                      };
+                      reader.readAsText(file);
+                    }}
+                  />
+                </label>
+              </div>
             </div>
           )}
         </div>
@@ -1245,10 +1665,10 @@ export function FeedTuner({
         <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] px-5 py-4">
           <button
             type="button"
-            onClick={activeTab === 'topics' ? onReset : handleMixReset}
+            onClick={activeTab === 'topics' ? onReset : activeTab === 'algorithm' ? handleAlgorithmReset : handleMixReset}
             className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-xs font-medium text-gray-400 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           >
-            {activeTab === 'topics' ? 'Reset topics' : 'Reset mix'}
+            {activeTab === 'topics' ? 'Reset topics' : activeTab === 'algorithm' ? 'Reset algorithm' : 'Reset mix'}
           </button>
           <div className="flex items-center gap-2">
             <button

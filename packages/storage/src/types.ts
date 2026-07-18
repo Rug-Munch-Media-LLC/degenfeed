@@ -17,13 +17,16 @@
  * the pre-encrypted blobs and decryptable fields.
  */
 
-import type { Protocol, StoredIdentity } from '@degenfeed/types';
+import type { Protocol } from '@degenfeed/types';
+import type { StoredIdentity } from '@degenfeed/types';
 
 // ─── Schema Types ──────────────────────────────────────────────────────
 
 // StoredIdentity is defined in @degenfeed/types to prevent a circular
 // dependency between @degenfeed/auth and @degenfeed/storage.
 // Both packages import it from @degenfeed/types instead.
+
+export type { StoredIdentity };
 
 export interface StoredFollow {
   identityId: string; // our identity that follows

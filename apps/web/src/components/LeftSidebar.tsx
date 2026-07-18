@@ -453,7 +453,9 @@ function WalletUserCard({
                 >
                   <div
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-mono font-bold ${
-                      isActive ? 'bg-degen-500/20 text-degen-400' : 'bg-[var(--color-overlay)] text-[var(--color-muted)]'
+                      isActive
+                        ? 'bg-degen-500/20 text-degen-400'
+                        : 'bg-[var(--color-overlay)] text-[var(--color-muted)]'
                     }`}
                   >
                     {addr.slice(2, 4).toUpperCase()}
@@ -544,7 +546,12 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
   const { unreadCount } = useNotifications(hasSignedIn);
 
   const isActive = (href: string) => {
-    if (href === '/feed') return pathname === '/feed' || pathname === '/home/all';
+    if (href === '/feed')
+      return (
+        pathname === '/feed' || pathname === '/home/all' || pathname === '/home' || pathname === '/'
+      );
+    if (href === '/search') return pathname === '/search' || pathname.startsWith('/search/');
+    if (href === '/c') return pathname === '/c' || pathname.startsWith('/c/');
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 

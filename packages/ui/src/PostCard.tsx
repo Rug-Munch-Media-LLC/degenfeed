@@ -124,6 +124,12 @@ export interface PostCardProps {
    * Opens the FeedWhyCard transparency panel for this post.
    */
   onWhyThisPost?: (post: UnifiedPost) => void;
+  /**
+   * Called when user opens the enhanced share sheet from engagement bar.
+   * Receives the post to share. When provided, overrides the default
+   * native Web Share API behavior.
+   */
+  onOpenShareSheet?: (post: UnifiedPost) => void;
 }
 
 const MAX_TEXT_LENGTH = 500;
@@ -569,6 +575,7 @@ export const PostCard = memo(function PostCard({
       onShare: handleShare,
       onTip,
       onCrossReplyOpen,
+      onOpenShareSheet: onOpenShareSheet ? () => onOpenShareSheet(post) : undefined,
     }),
     [
       post,

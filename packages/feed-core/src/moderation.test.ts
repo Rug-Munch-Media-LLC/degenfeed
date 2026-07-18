@@ -63,9 +63,9 @@ describe('checkText', () => {
   it('should return a ModerationCheckResult for clean text', () => {
     const result = checkText('This is a clean post about blockchain technology');
     expect(result).toBeDefined();
-    expect(typeof result.shouldFlag).toBe('boolean');
-    expect(typeof result.shouldReject).toBe('boolean');
-    expect(typeof result.spamScore).toBe('number');
+    expect(typeof result.flag).toBe('boolean');
+    expect(typeof result.reject).toBe('boolean');
+    expect(Array.isArray(result.reasons)).toBe(true);
   });
 });
 
@@ -75,20 +75,16 @@ describe('isUserBanned', () => {
   });
 
   it('should return false for an empty ban list', () => {
-    expect(isUserBanned('user123', [])).toBe(false);
+    expect(isUserBanned('user123', new Set())).toBe(false);
   });
 
   it('should return true for a banned user', () => {
-    const banList = [
-      { userId: 'user123', reason: 'spam', bannedAt: Date.now() },
-    ];
+    const banList = new Set(['user123']);
     expect(isUserBanned('user123', banList)).toBe(true);
   });
 
   it('should return false for a non-banned user', () => {
-    const banList = [
-      { userId: 'spammer1', reason: 'spam', bannedAt: Date.now() },
-    ];
+    const banList = new Set(['spammer1']);
     expect(isUserBanned('innocent_user', banList)).toBe(false);
   });
 });

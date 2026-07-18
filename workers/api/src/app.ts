@@ -96,8 +96,10 @@ import { handleFeatures } from './routes/features';
 import {
   handleAdjustTopic,
   handleClearTopic,
+  handleFeedback,
   handleForYouFeed,
   handleGetTopics,
+  handleRecordDwell,
 } from './routes/for-you';
 import {
   handleFeedHealth,
@@ -434,6 +436,8 @@ app.get('/api/shorts', async (c) => handleShortsFeed(c.req.raw, c.env));
 app.all('/api/feed/home', async (c) => handleHomeFeed(c.req.raw, c.env, c.executionCtx));
 app.get('/api/feed/protocol-sections', async (c) => handleProtocolSections(c.req.raw, c.env));
 app.all('/api/feed/for-you', async (c) => handleForYouFeed(c.req.raw, c.env, c.executionCtx));
+app.post('/api/feed/dwell', async (c) => handleRecordDwell(c.req.raw, c.env));
+app.post('/api/feed/feedback', async (c) => handleFeedback(c.req.raw, c.env));
 app.all('/api/feed/trending', async (c) => handleTrendingFeed(c.req.raw, c.env, c.executionCtx));
 app.all('/api/feed/health', async (c) => handleFeedHealth(c.req.raw, c.env));
 app.all('/api/feed/rss.xml', async (c) => handleRssXml(c.req.raw, c.env));

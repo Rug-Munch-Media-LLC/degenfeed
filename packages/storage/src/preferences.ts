@@ -1,10 +1,10 @@
 // ─── Preferences ───────────────────────────────────────────────────────
 
+import type { StoredIdentity } from '@degenfeed/types';
 import { getDb } from './db';
 import { clearAllSessions } from './session';
 import type {
   StoredFollow,
-  StoredIdentity,
   StoredMutedIdentity,
   StoredMutedWord,
   UserPreferences,

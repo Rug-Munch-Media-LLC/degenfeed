@@ -33,9 +33,10 @@ describe('PROTOCOL_ID_REGISTRY', () => {
   it('should contain all supported protocols', () => {
     const protocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit'];
     for (const p of protocols) {
-      expect(PROTOCOL_ID_REGISTRY[p]).toBeDefined();
-      expect(PROTOCOL_ID_REGISTRY[p].displayName).toBeTruthy();
-      expect(PROTOCOL_ID_REGISTRY[p].resolveEndpoint).toContain('/api/identity/resolve');
+      const key = p as keyof typeof PROTOCOL_ID_REGISTRY;
+      expect(PROTOCOL_ID_REGISTRY[key]).toBeDefined();
+      expect(PROTOCOL_ID_REGISTRY[key].displayName).toBeTruthy();
+      expect(PROTOCOL_ID_REGISTRY[key].resolveEndpoint).toContain('/api/identity/resolve');
     }
   });
 

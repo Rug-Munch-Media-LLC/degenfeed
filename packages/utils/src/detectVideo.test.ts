@@ -16,21 +16,21 @@ describe('parseYouTubeUrl', () => {
   it('should parse standard YouTube URLs', () => {
     const result = parseYouTubeUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     expect(result).not.toBeNull();
-    expect(result?.videoId).toBe('dQw4w9WgXcQ');
-    expect(result?.kind).toBe('youtube');
+    expect(result?.id).toBe('dQw4w9WgXcQ');
+    expect(result?.platform).toBe('youtube');
   });
 
   it('should parse shortened youtu.be URLs', () => {
     const result = parseYouTubeUrl('https://youtu.be/dQw4w9WgXcQ');
     expect(result).not.toBeNull();
-    expect(result?.videoId).toBe('dQw4w9WgXcQ');
+    expect(result?.id).toBe('dQw4w9WgXcQ');
   });
 
   it('should parse YouTube shorts URLs', () => {
     const result = parseYouTubeUrl('https://www.youtube.com/shorts/abc123');
     expect(result).not.toBeNull();
     if (result) {
-      expect(result.videoId).toBe('abc123');
+      expect(result.id).toBe('abc123');
     }
   });
 
@@ -67,17 +67,17 @@ describe('parseDirectVideoUrl', () => {
 describe('parseVideoUrl', () => {
   it('should detect YouTube URLs', () => {
     const result = parseVideoUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-    expect(result?.kind).toBe('youtube');
+    expect(result?.platform).toBe('youtube');
   });
 
   it('should detect PeerTube URLs', () => {
     const result = parseVideoUrl('https://video.degenfeed.xyz/w/abc123');
-    expect(result?.kind).toBe('peertube');
+    expect(result?.platform).toBe('peertube');
   });
 
   it('should detect direct video URLs', () => {
     const result = parseVideoUrl('https://cdn.example.com/video.mp4');
-    expect(result?.kind).toBe('direct');
+    expect(result?.platform).toBe('direct');
   });
 
   it('should return null for unknown URLs', () => {
@@ -108,8 +108,8 @@ describe('detectVideoFromEmbeds', () => {
       { kind: 'link', url: 'https://example.com/article' },
     ];
     const videos = detectVideoFromEmbeds(embeds as any[]);
-    expect(videos.length).toBeGreaterThanOrEqual(1);
-    expect(videos[0]?.kind).toBe('youtube');
+    expect(videos).not.toBeNull();
+    expect(videos!.platform).toBe('youtube');
   });
 
   it('should return empty array for embeds without video URLs', () => {
@@ -118,6 +118,6 @@ describe('detectVideoFromEmbeds', () => {
       { kind: 'image', url: 'https://example.com/image.jpg' },
     ];
     const videos = detectVideoFromEmbeds(embeds as any[]);
-    expect(videos).toHaveLength(0);
+    expect(videos).toBeNull();
   });
 });

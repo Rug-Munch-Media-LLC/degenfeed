@@ -11,13 +11,15 @@
  * forcing virtualization today.
  *
  * ENHANCED: End-of-feed discovery cards, smooth staggered fade-in for new
- * posts, boredom-aware content injection.
+ * posts, boredom-aware content injection, category breaks every ~12 posts,
+ * and optional reading progress tracking for expanded posts.
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { type EngageHandler, PostCard } from './PostCard';
 import { CardSkeleton } from './LoadingSkeleton';
+import type { DiscoverSuggestion as DiscoverSuggestionType } from './FeedList';
 
 export type { UnifiedPost };
 
@@ -99,6 +101,22 @@ export interface FeedListProps {
    * a post enters/leaves the viewport. Used for dwell-time tracking.
    */
   onPostVisibility?: (postId: string, isVisible: boolean) => void;
+  /**
+   * Category break component slot. If provided, rendered between groups
+   * of posts (every ~12 posts) to break up the infinite scroll.
+   * Passes index and batch niches as props.
+   */
+  categoryBreakSlot?: ReactNode;
+  /**
+   * If true, shows category breaks every 12 posts using aggregated niches.
+   * Default: true
+   */
+  showCategoryBreaks?: boolean;
+  /**
+   * The aggregated niches for the next batch, updated by the parent
+   * on each render cycle that includes a category break position.
+   */
+  categoryNiches?: string[];
 }
 
 /* ── Sub-components ───────────────────────────────────────────── */
@@ -525,39 +543,64 @@ export const FeedList = memo(function FeedList({
       role="feed"
       aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
     >
-      {filteredPosts.map((post, i) => {
-        const isNew = !seenIdsRef.current.has(post.id);
-        return (
-          <article
-            key={post.id}
-            id={`post-${post.id}`}
-            data-post-id={post.id}
-            tabIndex={-1}
-            aria-label={`Post by ${post.author.displayName || 'unknown'}`}
-            className={isNew ? 'feed-item-enter' : ''}
-            style={
-              {
-                contentVisibility: 'auto',
-                containIntrinsicSize: '0 200px',
-                '--stagger-i': i,
-              } as React.CSSProperties
-            }
-          >
-            <PostCard
-              post={post}
-              onClick={() => handlePostClick(post.id)}
-              onTip={onTip}
-              onEngage={onEngage}
-              onReport={onReport}
-              onCrossReplyOpen={onCrossReplyOpen}
-              isAdmin={isAdmin}
-              onAdminRemove={onAdminRemove}
-              onAdminBan={onAdminBan}
-              onWhyThisPost={onWhyThisPost}
-            />
-          </article>
-        );
-      })}
+      {(() => {
+        const BREAK_INTERVAL = 12;
+        const items: ReactNode[] = [];
+
+        for (let i = 0; i < filteredPosts.length; i++) {
+          const post = filteredPosts[i];
+          if (!post) continue;
+
+          // Category break: insert every BREAK_INTERVAL posts (not at position 0)
+          if (
+            showCategoryBreaks !== false &&
+            i > 0 &&
+            i < filteredPosts.length - 1 &&
+            i % BREAK_INTERVAL === 0 &&
+            categoryBreakSlot
+          ) {
+            items.push(
+              <div key={`category-break-${i}`} className="animate-category-break">
+                {categoryBreakSlot}
+              </div>,
+            );
+          }
+
+          const isNew = !seenIdsRef.current.has(post.id);
+          items.push(
+            <article
+              key={post.id}
+              id={`post-${post.id}`}
+              data-post-id={post.id}
+              tabIndex={-1}
+              aria-label={`Post by ${post.author.displayName || 'unknown'}`}
+              className={isNew ? 'feed-item-enter' : ''}
+              style={
+                {
+                  contentVisibility: 'auto',
+                  containIntrinsicSize: '0 200px',
+                  '--stagger-i': i,
+                } as React.CSSProperties
+              }
+            >
+              <PostCard
+                post={post}
+                onClick={() => handlePostClick(post.id)}
+                onTip={onTip}
+                onEngage={onEngage}
+                onReport={onReport}
+                onCrossReplyOpen={onCrossReplyOpen}
+                isAdmin={isAdmin}
+                onAdminRemove={onAdminRemove}
+                onAdminBan={onAdminBan}
+                onWhyThisPost={onWhyThisPost}
+              />
+            </article>,
+          );
+        }
+
+        return items;
+      })()}
 
       {/* ── Scroll sentinel for infinite scroll ── */}
       {hasMore && (

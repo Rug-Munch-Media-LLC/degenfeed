@@ -105,9 +105,7 @@ function usePageTitle() {
 
     // Fallback: derive from last path segment
     const segment = pathname.split('/').filter(Boolean).pop() ?? 'DegenFeed';
-    return segment
-      .replace(/[-_]/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
+    return segment.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }, [pathname]);
 }
 
@@ -117,10 +115,15 @@ function MobileTopBar({ onMenuToggle }: { onMenuToggle: () => void }) {
   const router = useRouter();
 
   // Show back button when not on top-level pages
-  const showBack = !['/', '/feed', '/home/all', '/home', '/search'].includes(pathname) && !pathname.startsWith('/feed/');
+  const showBack =
+    !['/', '/feed', '/home/all', '/home', '/search'].includes(pathname) &&
+    !pathname.startsWith('/feed/');
 
   return (
-    <div className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-4 py-2 lg:hidden" style={{ zIndex: 'var(--z-sticky, 10)' }}>
+    <div
+      className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-4 py-2 lg:hidden"
+      style={{ zIndex: 'var(--z-sticky, 10)' }}
+    >
       <div className="flex items-center gap-1">
         {showBack ? (
           <button
@@ -272,7 +275,12 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
   useEffect(() => {
     if (mobileDrawerOpen) return;
     // Only on top-level pages where back navigation isn't needed
-    const isTopLevel = pathname === '/feed' || pathname === '/home/all' || pathname === '/home' || pathname === '/search' || pathname === '/';
+    const isTopLevel =
+      pathname === '/feed' ||
+      pathname === '/home/all' ||
+      pathname === '/home' ||
+      pathname === '/search' ||
+      pathname === '/';
     if (!isTopLevel) return;
 
     const handler = (e: TouchEvent) => {
@@ -296,6 +304,22 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     };
   }, [mobileDrawerOpen, pathname]);
 
+  // Pages that manage their own internal 3-column layout (need center to expand beyond 600px)
+  const isSelfLayoutPage =
+    pathname.startsWith('/feed') || // Feed has its own FeedSidebar
+    pathname.startsWith('/feeds/') || // Feed detail has own layout
+    pathname.startsWith('/messages') || // Messages has chat layout
+    pathname.startsWith('/notifications') || // Notifications has own grid layout
+    pathname.startsWith('/spaces') || // Spaces has own full-width layout
+    pathname.startsWith('/c/') || // Community pages
+    pathname.startsWith('/post/') || // Post detail page
+    pathname.startsWith('/home/') || // Home section pages
+    pathname.startsWith('/activity/') || // Activity/tips pages
+    pathname.startsWith('/token/') || // Token detail pages
+    pathname.startsWith('/topics/') || // Topic detail pages
+    pathname.startsWith('/digest/'); // Digest detail pages
+  // Note: admin, docs, embed have their own full layouts outside Shell
+
   // ── Protocol transition flash on route change between protocols ──
   const prevPathRef = useRef(pathname);
   useEffect(() => {
@@ -306,15 +330,17 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     const nowProtocol = PROTOCOL_ROUTES.find((r) => pathname === r || pathname.startsWith(`${r}/`));
     if (wasProtocol && nowProtocol && wasProtocol !== nowProtocol) {
       // Use the protocol accent color from CSS variable (set by ProtocolFeedPage)
-      const color = getComputedStyle(document.documentElement)
-        .getPropertyValue('--protocol-accent')
-        .trim() || '#00ff41';
+      const color =
+        getComputedStyle(document.documentElement).getPropertyValue('--protocol-accent').trim() ||
+        '#00ff41';
       const overlay = document.createElement('div');
       overlay.className = 'protocol-transition-overlay';
       overlay.style.backgroundColor = color;
       overlay.style.opacity = '0.25';
       document.body.appendChild(overlay);
-      setTimeout(() => { overlay.remove(); }, 700);
+      setTimeout(() => {
+        overlay.remove();
+      }, 700);
     }
   }, [pathname]);
 
@@ -410,8 +436,9 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
 
       {/* ══════════════════════════════════════════════════════════
            DESKTOP: Three-column layout (skip sidebars on landing page)
+           Twitter spec: left 275px | center max-w-[600px] | right 350px
       ══════════════════════════════════════════════════════════ */}
-      <div className="mx-auto flex w-full max-w-[1280px] flex-1">
+      <div className="mx-auto flex w-full max-w-[1260px] flex-1">
         {/* ── Left Sidebar (desktop, hide on landing page) ── */}
         {pathname !== '/' && (
           <div className="hidden lg:block sticky top-0 h-screen w-[275px] shrink-0 border-r border-[var(--color-glass-border)]">
@@ -424,7 +451,17 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           id="main"
           aria-label="Main content"
           tabIndex={-1}
-          className={`relative z-10 min-h-screen flex-1 animate-page-enter pb-16 lg:pb-0 ${pathname === '/' ? 'w-full max-w-none' : 'w-full min-w-0 border-r border-[var(--color-glass-border)]'}`}
+          className={`
+            relative z-10 min-h-screen animate-page-enter pb-16 lg:pb-0
+            w-full min-w-0 border-r border-[var(--color-glass-border)]
+            ${
+              pathname === '/'
+                ? 'max-w-none border-r-0'
+                : isSelfLayoutPage
+                  ? 'flex-1'
+                  : 'max-w-[600px] flex-1'
+            }
+          `}
         >
           {/* Page announcements for screen readers */}
           <div aria-live="polite" aria-atomic="true" className="sr-only" role="status" />
@@ -432,7 +469,10 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           <MobileTopBar onMenuToggle={() => setMobileDrawerOpen(true)} />
 
           {/* Mobile slide-out drawer */}
-          <MobileDrawer open={mobileDrawerOpen} onClose={() => setMobileDrawerOpen(false)} onSwipeRight={() => setMobileDrawerOpen(false)} />
+          <MobileDrawer
+            open={mobileDrawerOpen}
+            onClose={() => setMobileDrawerOpen(false)}
+          />
 
           {/* Content */}
           <OnboardingProvider>
@@ -444,9 +484,9 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           </OnboardingProvider>
         </main>
 
-        {/* ── Right Sidebar (desktop, hide on landing page, feed, and protocol pages) ── */}
+        {/* ── Right Sidebar (desktop, hidden on landing, self-layout, and protocol pages) ── */}
         {pathname !== '/' &&
-          !pathname.startsWith('/feed') &&
+          !isSelfLayoutPage &&
           !['/farcaster', '/lens', '/bluesky', '/nostr', '/mastodon'].some(
             (p) => pathname === p || pathname.startsWith(`${p}/`),
           ) && (

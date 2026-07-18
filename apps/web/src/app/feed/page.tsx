@@ -36,12 +36,19 @@ import { useToast } from '../../components/Toast';
 import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
 import { useFeedLayout } from '../../hooks/useFeedLayout';
 import { useFeedPosition } from '../../hooks/useFeedPosition';
+import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { useHoverPrefetch } from '../../hooks/useHoverPrefetch';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useReadingProgress } from '../../hooks/useReadingProgress';
 import { useReturningUser } from '../../hooks/useReturningUser';
 import { useScrollVelocity } from '../../hooks/useScrollVelocity';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
 import { useViewportPrefetch } from '../../hooks/useViewportPrefetch';
+import { CategoryBreakCard, aggregateNiches, shouldInsertCategoryBreak } from './components/CategoryBreak';
+import { ModerationNote, type ModerationFlag } from './components/ModerationNote';
+import { OnboardingSuggestions } from './components/OnboardingSuggestions';
+import { ReadingProgressBar } from './components/ReadingProgressBar';
+import { ShareSheet } from './components/ShareSheet';
 import { fetchWithSwr, getCached, setCache } from '../../lib/fetchWithCache';
 import { retryFetch } from '../../lib/retryFetch';
 
@@ -99,6 +106,53 @@ const ADMIN_WALLETS = new Set(
     .filter(Boolean),
 );
 
+export interface FeedPreset {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  config: {
+    freshnessPreference: number;
+    creatorDiversity: number;
+    exploreRatio: number;
+    algorithmTransparent: boolean;
+    recencyWeight: number;
+    engagementWeight: number;
+    contentTypes?: Record<string, number>;
+  };
+}
+
+export const FEED_PRESETS: FeedPreset[] = [
+  {
+    id: 'tiktok-mode',
+    name: 'TikTok Mode',
+    description: 'Video-forward, rapid-fire content. Max freshness, low creator diversity.',
+    icon: '🎵',
+    config: { freshnessPreference: 90, creatorDiversity: 2, exploreRatio: 60, algorithmTransparent: false, recencyWeight: 2.5, engagementWeight: 3.0, contentTypes: { posts: 20, images: 30, videos: 100, links: 10, threads: 10 } },
+  },
+  {
+    id: 'twitter-mode',
+    name: 'Twitter Mode',
+    description: 'Text-forward, chronological-leaning. Balanced discovery.',
+    icon: '🐦',
+    config: { freshnessPreference: 70, creatorDiversity: 5, exploreRatio: 30, algorithmTransparent: true, recencyWeight: 2.0, engagementWeight: 1.5, contentTypes: { posts: 100, images: 40, videos: 20, links: 30, threads: 40 } },
+  },
+  {
+    id: 'discover-mode',
+    name: 'Discover Mode',
+    description: 'Explore-heavy. Maximize new creators, topics, and content types.',
+    icon: '✨',
+    config: { freshnessPreference: 40, creatorDiversity: 10, exploreRatio: 90, algorithmTransparent: true, recencyWeight: 1.0, engagementWeight: 2.0 },
+  },
+  {
+    id: 'focus-mode',
+    name: 'Focus Mode',
+    description: 'Followed creators only. Minimum noise, maximum signal.',
+    icon: '🎯',
+    config: { freshnessPreference: 30, creatorDiversity: 3, exploreRatio: 5, algorithmTransparent: false, recencyWeight: 1.5, engagementWeight: 2.5 },
+  },
+];
+
 export default function FeedPage() {
   const {
     signedInProtocols,
@@ -129,6 +183,16 @@ export default function FeedPage() {
   const [minEngagement, setMinEngagement] = useState(0);
   const [maxPerNiche, setMaxPerNiche] = useState(5);
   const [protocolFilter, setProtocolFilter] = useState<string | null>(null);
+  // ── Algorithm transparency ────────────────────────────────────
+  const [algorithmTransparent, setAlgorithmTransparent] = useState(false);
+  // ── Content freshness slider (0-100, 0=evergreen, 100=bleeding-edge) ──
+  const [freshnessPreference, setFreshnessPreference] = useState(50);
+  // ── Creator diversity (1-10, max posts per creator per page) ──
+  const [creatorDiversity, setCreatorDiversity] = useState(5);
+  // ── Explore vs Exploit (0-100, 0=only familiar, 100=only discovery) ──
+  const [exploreRatio, setExploreRatio] = useState(30);
+  // ── Active feed preset ────────────────────────────────────────
+  const [activePreset, setActivePreset] = useState<string | null>(null);
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const { notifications, unreadCount, fetchNotifications, markRead } =
     useNotifications(hasSignedIn);
@@ -148,6 +212,47 @@ export default function FeedPage() {
   useEdgeSwipeBack(() => {
     window.history.back();
   });
+
+  // ── 2026 Social UX: Haptic feedback for engagement actions ──
+  const haptic = useHapticFeedback();
+
+  // ── 2026 Social UX: Share sheet state ──
+  const [sharePost, setSharePost] = useState<UnifiedPost | null>(null);
+
+  // ── 2026 Social UX: Reading progress tracking (expanded long posts) ──
+  const [readingPostId, setReadingPostId] = useState<string | null>(null);
+
+  // ── 2026 Social UX: Category break state ──
+  const [categoryNiches, setCategoryNiches] = useState<string[]>([]);
+  // Track which break index we've computed niches for
+  const lastBreakIdxRef = useRef<number>(-1);
+
+  // ── 2026 Social UX: First-visit detection for onboarding suggestions ──
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const visited = localStorage.getItem('degenfeed_visited_before');
+      if (!visited) {
+        setIsFirstVisit(true);
+        localStorage.setItem('degenfeed_visited_before', 'true');
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // ── 2026 Social UX: Toast for share sheet ──
+  const handleShareToast = useCallback(
+    (message: string) => {
+      window.dispatchEvent(
+        new CustomEvent('df-toast', {
+          detail: { kind: 'success', message },
+        }),
+      );
+    },
+    [],
+  );
 
   // ── Feed preloading: prefetch post routes when cards enter viewport ──
   useViewportPrefetch([
@@ -219,6 +324,21 @@ export default function FeedPage() {
     persistTopicWeights(defaults);
   }, [persistTopicWeights]);
 
+  // ── Debounced persistence ─────────────────────────────────────
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const persistPrefs = useCallback((patch: Record<string, unknown>) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      void fetch('/api/preferences', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(patch),
+      }).catch(() => {});
+    }, 300);
+  }, []);
+
   // ── Feed mix handlers ──────────────────────────────────────────
   const handleFeedMixChange = useCallback((config: FeedMixConfig) => {
     setFeedMixConfig(config);
@@ -287,6 +407,47 @@ export default function FeedPage() {
     [persistPrefs],
   );
 
+  /** Apply a feed preset */
+  const applyFeedPreset = useCallback(
+    (presetId: string) => {
+      if (presetId === '__clear__') {
+        setActivePreset(null);
+        persistPrefs({ activePreset: null });
+        return;
+      }
+      const preset = FEED_PRESETS.find((p) => p.id === presetId);
+      if (!preset) return;
+      setActivePreset(presetId);
+      setAlgorithmTransparent(preset.config.algorithmTransparent);
+      setFreshnessPreference(preset.config.freshnessPreference);
+      setCreatorDiversity(preset.config.creatorDiversity);
+      setExploreRatio(preset.config.exploreRatio);
+      setRecencyWeight(preset.config.recencyWeight);
+      setEngagementWeight(preset.config.engagementWeight);
+      // Apply content type weights if present
+      if (preset.config.contentTypes && feedMixConfig) {
+        const updatedConfig = {
+          ...feedMixConfig,
+          contentTypes: {
+            ...feedMixConfig.contentTypes,
+            ...preset.config.contentTypes,
+          },
+        };
+        setFeedMixConfig(updatedConfig);
+        saveFeedMixConfig(updatedConfig);
+      }
+      persistPrefs({
+        activePreset: presetId,
+        algorithmTransparent: preset.config.algorithmTransparent,
+        freshnessPreference: preset.config.freshnessPreference,
+        creatorDiversity: preset.config.creatorDiversity,
+        exploreRatio: preset.config.exploreRatio,
+      });
+      setShowTuner(true);
+    },
+    [persistPrefs, feedMixConfig],
+  );
+
   /** Quick-tune: boost a topic by +5 (capped at 100) */
   const _handleShowMoreLikeThis = useCallback(
     (topic: string) => {
@@ -349,6 +510,11 @@ export default function FeedPage() {
           topicWeights?: Record<string, number>;
           feedMixConfig?: FeedMixConfig;
           savedMixes?: SavedMix[];
+          algorithmTransparent?: boolean;
+          freshnessPreference?: number;
+          creatorDiversity?: number;
+          exploreRatio?: number;
+          activePreset?: string | null;
         };
         if (typeof data.hideLowQuality === 'boolean') setHideLowQuality(data.hideLowQuality);
         if (typeof data.hideLowQualityThreshold === 'number') {
@@ -361,6 +527,12 @@ export default function FeedPage() {
           setShowOriginalContent(data.showOriginalContent);
         if (typeof data.minEngagement === 'number') setMinEngagement(data.minEngagement);
         if (typeof data.maxPerNiche === 'number') setMaxPerNiche(data.maxPerNiche);
+        // Load algorithm controls
+        if (typeof data.algorithmTransparent === 'boolean') setAlgorithmTransparent(data.algorithmTransparent);
+        if (typeof data.freshnessPreference === 'number') setFreshnessPreference(data.freshnessPreference);
+        if (typeof data.creatorDiversity === 'number') setCreatorDiversity(data.creatorDiversity);
+        if (typeof data.exploreRatio === 'number') setExploreRatio(data.exploreRatio);
+        if (typeof data.activePreset === 'string') setActivePreset(data.activePreset);
         // Load topic weights
         if (data.topicWeights && typeof data.topicWeights === 'object') {
           setTopicWeights((prev) => ({ ...prev, ...data.topicWeights }));
@@ -380,19 +552,6 @@ export default function FeedPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  const persistPrefs = useCallback((patch: Record<string, unknown>) => {
-    // Debounce: clear previous timeout so rapid slider changes don't fire N requests
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      void fetch('/api/preferences', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(patch),
-      }).catch(() => {});
-    }, 300);
   }, []);
 
   const setHideThresholdAndPersist = useCallback(
@@ -442,7 +601,6 @@ export default function FeedPage() {
 
   const [newAvailable, setNewAvailable] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const lastPostIdRef = useRef<string | null>(null);
   const [loadedLimit, setLoadedLimit] = useState(50);
   const hasMore = loadedLimit < 200;
@@ -518,7 +676,7 @@ export default function FeedPage() {
       try {
         const endpoint = activeTab === 'for-you' ? '/api/feed/for-you' : '/api/feed/home';
         // Build cache key from active tab + filters for SWR deduplication
-        const cacheKey = `feed_${activeTab}_${protocolFilter ?? 'all'}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}`;
+        const cacheKey = `feed_${activeTab}_${protocolFilter ?? 'all'}_${loadedLimit}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${activePreset ?? 'none'}_${freshnessPreference}_${exploreRatio}`;
 
         const url = new URL(endpoint, window.location.origin);
         url.searchParams.set('limit', String(loadedLimit));
@@ -550,6 +708,23 @@ export default function FeedPage() {
           url.searchParams.set('engagementWeight', String(engagementWeight));
         const tw = encodeTopicWeights(topicWeights);
         if (tw) url.searchParams.set('topic_weights', tw);
+
+        // New algorithm controls
+        if (algorithmTransparent) {
+          url.searchParams.set('algorithmTransparent', 'true');
+        }
+        if (freshnessPreference !== 50) {
+          url.searchParams.set('freshness', String(freshnessPreference));
+        }
+        if (creatorDiversity !== 5) {
+          url.searchParams.set('creatorDiversity', String(creatorDiversity));
+        }
+        if (exploreRatio !== 30) {
+          url.searchParams.set('exploreRatio', String(exploreRatio));
+        }
+        if (activePreset) {
+          url.searchParams.set('preset', activePreset);
+        }
 
         // Use SWR: prefer stale cache for instant render, refresh in background
         const swrResult = await fetchWithSwr<{ data?: UnifiedPost[]; meta?: FeedMeta }>(
@@ -620,6 +795,11 @@ export default function FeedPage() {
       engagementWeight,
       protocolFilter,
       topicWeights,
+      algorithmTransparent,
+      freshnessPreference,
+      creatorDiversity,
+      exploreRatio,
+      activePreset,
       announce,
     ],
   );
@@ -647,6 +827,17 @@ export default function FeedPage() {
   ): Promise<{ ok: boolean; error?: string }> => {
     const post = posts.find((p) => p.id === postId);
     if (!post) return { ok: false, error: 'Post not found' };
+
+    // 2026 Social UX: Trigger haptic feedback for engagement actions
+    if (action === 'like' || action === 'unlike') {
+      haptic.triggerLike();
+    } else if (action === 'repost' || action === 'unrepost') {
+      haptic.triggerRepost();
+    } else if (action === 'bookmark' || action === 'unbookmark') {
+      haptic.triggerBookmark();
+    } else if (action === 'reply') {
+      haptic.triggerReply();
+    }
 
     if ((action === 'bookmark' || action === 'unbookmark') && post.protocol !== 'mastodon') {
       try {
@@ -942,6 +1133,22 @@ export default function FeedPage() {
       if (pullRefreshCleanupRef.current) pullRefreshCleanupRef.current();
     };
   }, []);
+
+  // ── Compute category break niches when posts change ─────────────
+  useEffect(() => {
+    if (posts.length === 0) return;
+    // Aggregate niches from first batch for the first category break (at index 12)
+    const batchSize = 12;
+    const firstBreakIndex = batchSize;
+    if (firstBreakIndex < posts.length) {
+      const niches = aggregateNiches(posts, firstBreakIndex, 8);
+      setCategoryNiches(niches.length > 0 ? niches : ['content']);
+    } else {
+      // Not enough posts for a break yet — aggregate what we have
+      const niches = aggregateNiches(posts, 0, posts.length);
+      setCategoryNiches(niches.length > 0 ? niches : ['content']);
+    }
+  }, [posts]);
 
   return (
     <ErrorBoundary>
@@ -1517,6 +1724,16 @@ export default function FeedPage() {
               </div>
             )}
 
+            {/* 2026 Social UX: Reading progress bar when a post is expanded */}
+            {readingPostId && (
+              <ReadingProgressBar postId={readingPostId} enabled={true} />
+            )}
+
+            {/* 2026 Social UX: Onboarding suggestions for first-time visitors */}
+            {state === 'empty' && isFirstVisit && activeTab === 'for-you' && (
+              <OnboardingSuggestions />
+            )}
+
             <div aria-live="polite" aria-label="Feed posts" role="feed">
               <FeedList
                 state={state}
@@ -1552,7 +1769,16 @@ export default function FeedPage() {
                   } else {
                     scrollVel._onPostHidden(postId);
                   }
+                  // Track reading progress for expanded posts
+                  if (isVisible) {
+                    setReadingPostId((prev) => prev || null);
+                  }
                 }}
+                showCategoryBreaks={true}
+                categoryNiches={categoryNiches}
+                categoryBreakSlot={
+                  <CategoryBreakCard niches={categoryNiches} index={-1} />
+                }
                 emptySlot={
                   state === 'empty' && activeTab === 'for-you' ? (
                     <div className="border-b border-[var(--color-glass-border)] px-4 py-16 text-center">
@@ -1660,7 +1886,7 @@ export default function FeedPage() {
         </main>
 
         {/* Right sidebar — visible at lg+ (Shell's RightSidebar is suppressed for /feed) */}
-        <aside className="sidebar hidden w-72 shrink-0 lg:block">
+        <aside className="hidden w-[350px] shrink-0 lg:block">
           <div
             className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto"
             style={{ scrollbarWidth: 'thin' }}
@@ -1687,6 +1913,16 @@ export default function FeedPage() {
           />
         )}
 
+        {/* 2026 Social UX: Share sheet for multi-platform sharing */}
+        {sharePost && (
+          <ShareSheet
+            post={sharePost}
+            open={!!sharePost}
+            onClose={() => setSharePost(null)}
+            onToast={handleShareToast}
+          />
+        )}
+
         {/* ── Floating "Back to Top" button — appears after ~3 pages ── */}
         <ScrollToTop />
 
@@ -1706,6 +1942,17 @@ export default function FeedPage() {
             onSaveMix={handleSaveMix}
             onLoadMix={handleLoadMix}
             onDeleteMix={handleDeleteMix}
+            algorithmTransparent={algorithmTransparent}
+            onAlgorithmTransparencyChange={setAlgorithmTransparent}
+            freshnessPreference={freshnessPreference}
+            onFreshnessChange={setFreshnessPreference}
+            creatorDiversity={creatorDiversity}
+            onCreatorDiversityChange={setCreatorDiversity}
+            exploreRatio={exploreRatio}
+            onExploreRatioChange={setExploreRatio}
+            activePreset={activePreset}
+            onApplyPreset={applyFeedPreset}
+            feedPresets={FEED_PRESETS}
           />
         )}
       </div>

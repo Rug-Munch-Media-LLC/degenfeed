@@ -38,14 +38,14 @@ describe('COMMUNITY_DESCRIPTIONS', () => {
     for (const name of RESERVED_COMMUNITY_NAMES) {
       const desc = COMMUNITY_DESCRIPTIONS[name];
       expect(desc).toBeDefined();
-      expect(desc.title).toBeTruthy();
-      expect(desc.description).toBeTruthy();
-      expect(desc.emoji).toBeTruthy();
+      expect(desc!.title).toBeTruthy();
+      expect(desc!.description).toBeTruthy();
+      expect(desc!.emoji).toBeTruthy();
     }
   });
 
   it('should have unique emoji for each community', () => {
-    const emojis = RESERVED_COMMUNITY_NAMES.map((n) => COMMUNITY_DESCRIPTIONS[n].emoji);
+    const emojis = RESERVED_COMMUNITY_NAMES.map((n) => COMMUNITY_DESCRIPTIONS[n]?.emoji ?? '');
     const unique = new Set(emojis);
     expect(unique.size).toBe(emojis.length);
   });
