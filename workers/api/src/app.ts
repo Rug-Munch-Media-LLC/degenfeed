@@ -198,6 +198,7 @@ import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
 import { handleSchedulePost } from './routes/scheduled';
 import { handleSearch, handleSearchIdentity, handleSearchIndex } from './routes/search';
+import { handleShortsFeed } from './routes/shorts';
 import { handleStreamFeed } from './routes/stream';
 import {
   handleSubscriptionCancel,
@@ -389,6 +390,9 @@ app.get('/api/health/protocols', async (c) => handleProtocolsHealth(c.env));
 
 // ─── API: Analytics ─────────────────────────────────────────
 app.get('/api/analytics', (c) => handleAnalytics(c.req.raw, c.env));
+
+// ─── API: Shorts ─────────────────────────────────────────
+app.get('/api/shorts', async (c) => handleShortsFeed(c.req.raw, c.env));
 
 // ─── API: Feed (specific routes before parameterized) ──────
 app.all('/api/feed/home', async (c) => handleHomeFeed(c.req.raw, c.env, c.executionCtx));
@@ -813,6 +817,9 @@ app.get('/api/reputation/:userId', async (c) =>
 // ═══════════════════════════════════════════════════════════
 // V1 ROUTES — Stable, versioned public API
 // ═══════════════════════════════════════════════════════════
+
+// ─── V1: Shorts ─────────────────────────────────────────
+app.get('/v1/shorts', async (c) => handleShortsFeed(c.req.raw, c.env));
 
 // ─── V1: Feed ───────────────────────────────────────────
 app.all('/v1/feed/home', async (c) => handleHomeFeed(c.req.raw, c.env, c.executionCtx));

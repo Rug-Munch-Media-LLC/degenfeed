@@ -449,6 +449,31 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
 
+  packages/shorts-provider:
+    dependencies:
+      '@degenfeed/feed-core':
+        specifier: workspace:*
+        version: link:../feed-core
+      '@degenfeed/peertube-provider':
+        specifier: workspace:*
+        version: link:../peertube-provider
+      '@degenfeed/types':
+        specifier: workspace:*
+        version: link:../types
+      '@degenfeed/youtube-provider':
+        specifier: workspace:*
+        version: link:../youtube-provider
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.5.2
+        version: 2.5.2
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@26.1.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
+
   packages/storage:
     dependencies:
       '@degenfeed/types':
@@ -635,6 +660,9 @@ importers:
       '@degenfeed/rss-sdk':
         specifier: workspace:*
         version: link:../../packages/rss-sdk
+      '@degenfeed/shorts-provider':
+        specifier: workspace:*
+        version: link:../../packages/shorts-provider
       '@degenfeed/threads-sdk':
         specifier: workspace:*
         version: link:../../packages/threads-sdk
@@ -7244,7 +7272,7 @@ snapshots:
       decimal.js: 10.6.0
       html-encoding-sniffer: 6.0.0(@noble/hashes@1.8.0)
       is-potential-custom-element-name: 1.0.1
-      lru-cache: 11.5.1
+      lru-cache: 11.5.2
       parse5: 8.0.1
       saxes: 6.0.0
       symbol-tree: 3.2.4
@@ -7271,7 +7299,7 @@ snapshots:
       decimal.js: 10.6.0
       html-encoding-sniffer: 6.0.0(@noble/hashes@2.2.0)
       is-potential-custom-element-name: 1.0.1
-      lru-cache: 11.5.1
+      lru-cache: 11.5.2
       parse5: 8.0.1
       saxes: 6.0.0
       symbol-tree: 3.2.4
