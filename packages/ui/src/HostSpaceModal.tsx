@@ -17,6 +17,7 @@
 
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolBadge';
 
@@ -358,7 +359,7 @@ export function HostSpaceModal({
                       }`}
                     >
                       {cohost.avatarUrl ? (
-                        <img src={cohost.avatarUrl} alt="" className="h-4 w-4 rounded-full" />
+                        <Image src={cohost.avatarUrl} alt="" width={16} height={16} className="h-4 w-4 rounded-full" unoptimized />
                       ) : (
                         <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-muted)] text-[8px]">
                           {cohost.displayName[0]?.toUpperCase() || '?'}

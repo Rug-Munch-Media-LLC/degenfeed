@@ -14,12 +14,12 @@
     "lint": "biome check src/"
   },
   "dependencies": {
-    "@degenfeed/types": "workspace:*",
-    "@degenfeed/nostr-sdk": "workspace:*"
+    "@degenfeed/nostr-sdk": "workspace:*",
+    "@degenfeed/types": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.2",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0"
+    "vitest": "^4.1.10"
   }
 }

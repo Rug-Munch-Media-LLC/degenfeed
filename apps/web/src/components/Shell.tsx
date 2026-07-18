@@ -43,7 +43,7 @@ const NAV: NavItem[] = [
   { href: '/c', label: 'Communities' },
   { href: '/news', label: 'News' },
   { href: '/messages', label: '\u{1F4AC} Messages' },
-  { href: '/notifications', label: 'Alerts' },
+  { href: '/notifications', label: 'Notifications' },
   { href: '/discover', label: 'Discover' },
   { href: '/deploy', label: 'Launch' },
   { href: '/docs', label: 'Docs' },
@@ -349,7 +349,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
               className="rounded-lg px-2 py-2 text-sm text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? '☀' : '☾'}
+              {theme === 'dark' ? '☾' : '☀'}
             </button>
             <FeedLayoutSwitcher current={layout} onChange={setLayout} />
             {!ready ? (

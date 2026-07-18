@@ -662,7 +662,8 @@ export default function AnalyticsDashboard() {
         if (walletAddress) params.set('wallet', walletAddress);
         if (forceRefresh) params.set('refresh', 'true');
         const qs = params.toString();
-        const res = await fetch(`/api/analytics${qs ? `?${qs}` : ''}`);
+        const workerBase = process.env.NEXT_PUBLIC_WORKER_API_URL || 'https://api.degenfeed.xyz';
+        const res = await fetch(`${workerBase}/api/analytics${qs ? `?${qs}` : ''}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as AnalyticsData;
         if (mountedRef.current) setData(json);

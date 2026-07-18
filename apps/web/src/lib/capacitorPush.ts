@@ -69,6 +69,7 @@ class CapacitorPushService {
   private webHandlers = new Set<NotificationHandler>();
   private tokenHandlers = new Set<TokenHandler>();
   private registered = false;
+  private _messageListener: ((event: MessageEvent) => void) | null = null;
 
   /**
    * Register for push notifications.
@@ -200,14 +201,15 @@ class CapacitorPushService {
       // showNotification).  We don't need to duplicate that handler.
       // But we DO listen for tap-to-open from the service worker
       // via a custom event bridge.
-      navigator.serviceWorker.addEventListener('message', (event) => {
+      this._messageListener = (event: MessageEvent) => {
         if (event.data?.type === 'degenfeed-notification-tap') {
           this.webHandlers.forEach((h) => h(event.data.payload));
           if (event.data.payload?.url) {
             window.location.href = event.data.payload.url;
           }
         }
-      });
+      };
+      navigator.serviceWorker.addEventListener('message', this._messageListener);
 
       return token;
     } catch (err) {
@@ -260,6 +262,14 @@ class CapacitorPushService {
   /** The current token, if registered. */
   get currentToken(): PushToken | null {
     return this.token;
+  }
+
+  /** Clean up service worker message listener to prevent memory leaks. */
+  dispose(): void {
+    if (this._messageListener && typeof navigator !== 'undefined' && navigator.serviceWorker) {
+      navigator.serviceWorker.removeEventListener('message', this._messageListener);
+      this._messageListener = null;
+    }
   }
 
   /** Whether the device supports push (any method). */

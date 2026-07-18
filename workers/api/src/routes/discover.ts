@@ -63,19 +63,7 @@ interface FeaturedSpace {
   scheduledAt?: string;
 }
 
-// ─── KV helpers (mirrored from spaces.ts to avoid import cycle) ────────
-
-function liveIndexKey(): string {
-  return 'spaces:live';
-}
-
-function upcomingIndexKey(): string {
-  return 'spaces:upcoming';
-}
-
-function spaceKey(id: string): string {
-  return `spaces:${id}`;
-}
+import { liveIndexKey, spaceKey, upcomingIndexKey } from '../kv-helpers';
 
 // ─── Feed helpers ══════════════════════════════════════════════════════
 

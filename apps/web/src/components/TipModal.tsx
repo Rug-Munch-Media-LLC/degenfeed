@@ -1,13 +1,13 @@
 'use client';
 
+import { TIP_CHAIN_CONFIG } from '@degenfeed/tip-contract';
+import { tipOnChain } from '@degenfeed/web3';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TipPostContext } from '../hooks/useTip';
 import { useTip } from '../hooks/useTip';
 import { useSolana } from './SolanaProvider';
 import { useWeb3 } from './Web3Provider';
-import { tipOnChain } from '@degenfeed/web3';
-import { TIP_CHAIN_CONFIG } from '@degenfeed/tip-contract';
 
 interface TipModalProps {
   open: boolean;
@@ -56,7 +56,8 @@ export function TipModal({
           const onchainMethod = {
             method: 'onchain_tip',
             label: 'Direct on-chain (0% fee)',
-            description: 'ETH via DegenFeed contract on Base, Optimism, or Arbitrum — 0% fee, no intermediary',
+            description:
+              'ETH via DegenFeed contract on Base, Optimism, or Arbitrum — 0% fee, no intermediary',
             icon: '⛓️',
             available: true,
             address: evmAddress,
@@ -73,12 +74,18 @@ export function TipModal({
             const rank = (m: { method: string; rank?: number }) => {
               if (m.rank !== undefined) return m.rank;
               switch (m.method) {
-                case 'lightning_zap': return 1;
-                case 'onchain_tip': return 2;
-                case 'ethereum': return 3;
-                case 'base': return 3;
-                case 'solana': return 4;
-                default: return 99;
+                case 'lightning_zap':
+                  return 1;
+                case 'onchain_tip':
+                  return 2;
+                case 'ethereum':
+                  return 3;
+                case 'base':
+                  return 3;
+                case 'solana':
+                  return 4;
+                default:
+                  return 99;
               }
             };
             return rank(a) - rank(b);
@@ -86,7 +93,8 @@ export function TipModal({
         }
         // Invalidate the react state by using a fresh array reference
         // The hook's state.methods will be updated on next render
-        const recommended = methods.find((m) => m.available && m.recommended) ?? methods.find((m) => m.available);
+        const recommended =
+          methods.find((m) => m.available && m.recommended) ?? methods.find((m) => m.available);
         // Re-select if current method is no longer available
         setSelectedMethod((prev) => {
           if (prev && methods.some((m) => m.method === prev && m.available)) return prev;
@@ -167,6 +175,9 @@ export function TipModal({
 
         setTipStatus('sent', result.txHash);
         setOnchainPending(false);
+        window.dispatchEvent(
+          new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
+        );
         return;
       }
 
@@ -196,7 +207,15 @@ export function TipModal({
             if (e.code === 4902) {
               await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
-                params: [{ chainId: '0x2105', chainName: 'Base', nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 }, rpcUrls: ['https://mainnet.base.org'], blockExplorerUrls: ['https://basescan.org'] }],
+                params: [
+                  {
+                    chainId: '0x2105',
+                    chainName: 'Base',
+                    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                    rpcUrls: ['https://mainnet.base.org'],
+                    blockExplorerUrls: ['https://basescan.org'],
+                  },
+                ],
               });
             }
           }
@@ -210,6 +229,9 @@ export function TipModal({
           params: [{ to: intent.intent.to, value: valueHex }],
         });
         setTipStatus('sent', txHash as string);
+        window.dispatchEvent(
+          new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
+        );
         return;
       }
 
@@ -234,6 +256,9 @@ export function TipModal({
           Number.parseFloat(amount),
         );
         setTipStatus('sent', signature);
+        window.dispatchEvent(
+          new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
+        );
         return;
       }
 
@@ -244,6 +269,9 @@ export function TipModal({
         if (!result) return;
         setInvoice(result.invoice);
         setTipStatus('sent', result.invoice);
+        window.dispatchEvent(
+          new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
+        );
         return;
       }
 
@@ -289,6 +317,9 @@ export function TipModal({
           ],
         });
         setTipStatus('sent', txHash as string);
+        window.dispatchEvent(
+          new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
+        );
         return;
       }
 
@@ -302,6 +333,9 @@ export function TipModal({
       );
       if (!intent) return;
       setTipStatus('sent', intent.actionUrl || 'ok');
+      window.dispatchEvent(
+        new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
+      );
     } catch (err) {
       setOnchainPending(false);
       setTipStatus('failed', undefined, err instanceof Error ? err.message : String(err));
@@ -340,14 +374,22 @@ export function TipModal({
   // Derive block explorer from chain config for the on-chain method
   const explorerUrlForMethod = (method: string, txHash: string): string => {
     switch (method) {
-      case 'ethereum': return `https://etherscan.io/tx/${txHash}`;
-      case 'base': return `https://basescan.org/tx/${txHash}`;
-      case 'optimism': return `https://optimistic.etherscan.io/tx/${txHash}`;
-      case 'arbitrum': return `https://arbiscan.io/tx/${txHash}`;
-      case 'onchain_tip': return chainCfg ? `${chainCfg.explorer}/tx/${txHash}` : `https://basescan.org/tx/${txHash}`;
-      case 'solana': return `https://solscan.io/tx/${txHash}`;
-      case 'lens_collect': return `https://polygonscan.com/tx/${txHash}`;
-      default: return '#';
+      case 'ethereum':
+        return `https://etherscan.io/tx/${txHash}`;
+      case 'base':
+        return `https://basescan.org/tx/${txHash}`;
+      case 'optimism':
+        return `https://optimistic.etherscan.io/tx/${txHash}`;
+      case 'arbitrum':
+        return `https://arbiscan.io/tx/${txHash}`;
+      case 'onchain_tip':
+        return chainCfg ? `${chainCfg.explorer}/tx/${txHash}` : `https://basescan.org/tx/${txHash}`;
+      case 'solana':
+        return `https://solscan.io/tx/${txHash}`;
+      case 'lens_collect':
+        return `https://polygonscan.com/tx/${txHash}`;
+      default:
+        return '#';
     }
   };
 
@@ -371,7 +413,9 @@ export function TipModal({
         tabIndex={-1}
       >
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
-          <h2 className="text-sm font-semibold text-[var(--color-fg)]">Tip {recipientDisplayName}</h2>
+          <h2 className="text-sm font-semibold text-[var(--color-fg)]">
+            Tip {recipientDisplayName}
+          </h2>
           <button
             onClick={handleClose}
             className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-card)] hover:text-[var(--color-fg)] transition-colors"
@@ -404,7 +448,9 @@ export function TipModal({
             </div>
           ) : state.methods.length === 0 || availableMethods.length === 0 ? (
             <div className="py-8 text-center">
-              <p className="mb-2 text-[var(--color-muted)]">No tipping methods available for this creator</p>
+              <p className="mb-2 text-[var(--color-muted)]">
+                No tipping methods available for this creator
+              </p>
               <p className="mb-4 text-xs text-[var(--color-muted)]">
                 They may not have linked any wallets or payment accounts yet.
               </p>
@@ -440,14 +486,18 @@ export function TipModal({
                       <span className="text-lg">{m.icon}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <div className="text-sm font-medium text-[var(--color-fg)]">{m.label}</div>
+                          <div className="text-sm font-medium text-[var(--color-fg)]">
+                            {m.label}
+                          </div>
                           {m.recommended && (
                             <span className="shrink-0 rounded-full bg-degen-500/20 px-2 py-0.5 text-[10px] font-medium text-degen-400">
                               Recommended
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-[var(--color-muted)] truncate">{m.description}</div>
+                        <div className="text-xs text-[var(--color-muted)] truncate">
+                          {m.description}
+                        </div>
                       </div>
                       {m.fee && (
                         <span className="shrink-0 rounded-full bg-[var(--color-card)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]">
@@ -481,14 +531,14 @@ export function TipModal({
                     {selected?.method === 'lightning_zap'
                       ? 'sats'
                       : selected?.method === 'ethereum'
-                      ? 'ETH'
-                      : selected?.method === 'base'
-                      ? 'ETH (Base)'
-                      : selected?.method === 'solana'
-                      ? 'SOL'
-                      : isOnchain
-                      ? `ETH (${chainCfg?.name ?? 'Base'})`
-                      : ''}
+                        ? 'ETH'
+                        : selected?.method === 'base'
+                          ? 'ETH (Base)'
+                          : selected?.method === 'solana'
+                            ? 'SOL'
+                            : isOnchain
+                              ? `ETH (${chainCfg?.name ?? 'Base'})`
+                              : ''}
                   </span>
                 </div>
                 <div className="flex gap-2">
@@ -553,7 +603,8 @@ export function TipModal({
               {isOnchain && !account && (
                 <div className="mb-4 rounded-lg border border-cyan-900/50 bg-cyan-900/10 p-3">
                   <p className="text-xs text-cyan-400">
-                    Connect your wallet to send a direct on-chain tip. Only L2 gas fees apply — 0% platform fee.
+                    Connect your wallet to send a direct on-chain tip. Only L2 gas fees apply — 0%
+                    platform fee.
                   </p>
                 </div>
               )}
@@ -587,7 +638,9 @@ export function TipModal({
               <button
                 type="button"
                 disabled={
-                  !selectedMethod || ['creating', 'signing', 'sending'].includes(state.status) || onchainPending
+                  !selectedMethod ||
+                  ['creating', 'signing', 'sending'].includes(state.status) ||
+                  onchainPending
                 }
                 onClick={handleSend}
                 className="btn-primary w-full text-sm disabled:opacity-50"
@@ -597,14 +650,14 @@ export function TipModal({
                     ? `Confirm on ${chainCfg?.name ?? 'wallet'}...`
                     : 'Sign in wallet...'
                   : state.status === 'creating'
-                  ? 'Preparing...'
-                  : state.status === 'sending'
-                  ? 'Sending...'
-                  : state.status === 'sent'
-                  ? '✓ Sent!'
-                  : state.status === 'failed'
-                  ? 'Failed - Try Again'
-                  : 'Send Tip'}
+                    ? 'Preparing...'
+                    : state.status === 'sending'
+                      ? 'Sending...'
+                      : state.status === 'sent'
+                        ? '✓ Sent!'
+                        : state.status === 'failed'
+                          ? 'Failed - Try Again'
+                          : 'Send Tip'}
               </button>
 
               {state.status === 'failed' && state.error && (

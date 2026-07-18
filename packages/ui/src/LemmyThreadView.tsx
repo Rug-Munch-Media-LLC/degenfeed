@@ -27,6 +27,7 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
+import Image from 'next/image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LemmyTipButton } from './LemmyTipButton';
 
@@ -1263,8 +1264,7 @@ export const LemmyThreadView = memo(function LemmyThreadView({
           style={{ backgroundColor: '#00b86822', color: '#00b868' }}
         >
           {communityIcon ? (
-            // biome-ignore lint/performance/noImgElement: community icon
-            <img src={communityIcon} alt="" className="h-6 w-6 rounded-full object-cover" />
+            <Image src={communityIcon} alt="" width={24} height={24} className="h-6 w-6 rounded-full object-cover" unoptimized />
           ) : (
             communityName.charAt(0).toUpperCase()
           )}

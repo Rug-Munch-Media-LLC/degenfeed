@@ -103,9 +103,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
           <script
             // biome-ignore lint/security/noDangerouslySetInnerHtml: server-generated JSON stringified token stored client-side
             dangerouslySetInnerHTML={{
-              __html: `try { localStorage.setItem('degenfeed_pending_identity', ${JSON.stringify(
-                pending,
-              )}); localStorage.setItem('degenfeed_auth_updated', Date.now().toString()); } catch(e) { console.error('Token storage failed', e); } window.location.href = '/home';`,
+              __html: `try { localStorage.setItem('degenfeed_pending_identity', ${JSON.stringify(pending).replace(/</g, '\\u003c')}); localStorage.setItem('degenfeed_auth_updated', Date.now().toString()); } catch(e) { console.error('Token storage failed', e); } window.location.href = '/home';`,
             }}
           />
         </body>

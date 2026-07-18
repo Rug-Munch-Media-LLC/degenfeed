@@ -139,6 +139,9 @@ RMI_BACKEND_URL = "http://100.104.130.92:8000"
 RSS_BRIDGE_URL = "https://rss-bridge.degenfeed.xyz"
 # Feature flags — comma-separated list of flags that should default to enabled
 FEATURE_FLAGS_DEFAULT = "reply-composer,dark-mode-only,farcaster-frames"
+# Postiz cross-posting API — for scheduled social media publishing
+POSTIZ_BASE_URL = "http://127.0.0.1:3105"
+POSTIZ_API_KEY = "CHANGEME"
 
 # Per-environment overrides. Preview deploys (PR builds) use --env preview.
 [env.preview]

@@ -88,7 +88,7 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
  */
 async function recordCrosspostSiblings(
   env: Env,
-  results: Record<string, { ok: boolean; error?: string; hash?: string }>,
+  results: Record<string, { success?: boolean; error?: string; hash?: string }>,
 ): Promise<void> {
   try {
     const { storeCrosspostSiblings } = await import('./thread');
@@ -107,7 +107,7 @@ async function tryPostizPublish(
   text: string,
   targets: string[],
   env: Env,
-): Promise<Record<string, { ok: boolean; error?: string; hash?: string }> | null> {
+): Promise<Record<string, { success?: boolean; error?: string; hash?: string }> | null> {
   // Separate Postiz-capable targets from the rest
   const postizTargets = targets.filter((t) => POSTIZ_PLATFORMS.has(t));
   const fallbackTargets = targets.filter((t) => !POSTIZ_PLATFORMS.has(t));
@@ -144,7 +144,7 @@ async function tryPostizPublish(
     return null; // Postiz unreachable — full fallback
   }
 
-  const results: Record<string, { ok: boolean; error?: string; hash?: string }> = {};
+  const results: Record<string, { success?: boolean; error?: string; hash?: string }> = {};
 
   // Handle Postiz-capable platforms
   for (const target of postizTargets) {
@@ -188,19 +188,16 @@ async function tryPostizPublish(
       if (res.ok) {
         const data = (await res.json()) as { postId?: string };
         results[target] = {
-          ok: true,
-          hash: data.postId,
-        };
-      } else {
-        const errText = await res.text().catch(() => '');
-        results[target] = {
-          ok: false,
+      success: true,
+    };
+  } else {
+    const errText = await res.text().catch(() => '');
+    results[target] = {
           error: `Postiz error: ${errText.slice(0, 200)}`,
         };
       }
     } catch (e) {
       results[target] = {
-        ok: false,
         error: `Postiz error: ${e instanceof Error ? e.message : String(e)}`,
       };
     }
@@ -213,7 +210,6 @@ async function tryPostizPublish(
       results[target] = result;
     } catch (e) {
       results[target] = {
-        ok: false,
         error: String(e),
       };
     }
@@ -230,15 +226,15 @@ async function perProtocolPublish(
   auth: Record<string, string>,
   body: PublishRequestBody,
   env: Env,
-): Promise<Record<string, { ok: boolean; error?: string; hash?: string }>> {
-  const results: Record<string, { ok: boolean; error?: string; hash?: string }> = {};
+): Promise<Record<string, { success?: boolean; error?: string; hash?: string }>> {
+  const results: Record<string, { success?: boolean; error?: string; hash?: string }> = {};
 
   for (const target of targets) {
     try {
       const result = await perProtocolPublishSingle(target, text, auth, env, body);
       results[target] = result;
     } catch (e) {
-      results[target] = { ok: false, error: String(e) };
+      results[target] = { error: String(e) };
     }
   }
 
@@ -257,11 +253,10 @@ async function perProtocolPublishSingle(
   auth: Record<string, string>,
   env: Env,
   body?: PublishRequestBody,
-): Promise<{ ok: boolean; error?: string; hash?: string }> {
+): Promise<{ success?: boolean; error?: string; hash?: string }> {
   switch (target) {
     case 'nostr': {
       return {
-        ok: false,
         error:
           'Server-side Nostr signing is deprecated. Sign your event client-side using @degenfeed/nostr-sdk.',
       };
@@ -278,13 +273,12 @@ async function perProtocolPublishSingle(
         });
         if (submitRes.ok) {
           const submitData = (await submitRes.json()) as Record<string, unknown>;
-          return { ok: true, hash: String(submitData.hash || '') || undefined };
+          return { success: true, hash: String(submitData.hash || '') || undefined };
         }
         const errText = await submitRes.text();
-        return { ok: false, error: `Farcaster Hub rejected: ${errText.slice(0, 100)}` };
+        return { error: `Farcaster Hub rejected: ${errText.slice(0, 100)}` };
       }
       return {
-        ok: false,
         error:
           'Client must sign cast using @farcaster/hub-web, then submit signedMessage in publish request.',
       };
@@ -310,16 +304,15 @@ async function perProtocolPublishSingle(
             | Record<string, unknown>
             | undefined;
           return {
-            ok: !!result?.txHash,
+            success: !!result?.txHash,
             hash: result?.txHash as string | undefined,
             error: result?.reason as string | undefined,
           };
         }
         const errText = await broadcastRes.text();
-        return { ok: false, error: `Lens broadcast failed: ${errText.slice(0, 100)}` };
+        return { error: `Lens broadcast failed: ${errText.slice(0, 100)}` };
       }
       return {
-        ok: false,
         error:
           'Client must sign typed data using wallet, then submit typedDataId + signature in publish request.',
       };
@@ -333,7 +326,7 @@ async function perProtocolPublishSingle(
           : env.THREADS_PDS_URL || 'https://public.threads.net';
       const accessJwt = auth[`${target}_jwt`] || auth[`${target}_accessJwt`] || auth.accessJwt;
       if (!accessJwt) {
-        return { ok: false, error: `Not signed into ${target}` };
+        return { error: `Not signed into ${target}` };
       }
       const repoDid = auth[`${target}_did`] || '';
       const recordRes = await fetch(`${pdsUrl}/xrpc/com.atproto.repo.createRecord`, {
@@ -346,10 +339,10 @@ async function perProtocolPublishSingle(
         }),
       });
       if (recordRes.ok) {
-        return { ok: true };
+        return { success: true };
       }
       const errText = await recordRes.text();
-      return { ok: false, error: `${target} publish failed: ${errText.slice(0, 100)}` };
+      return { error: `${target} publish failed: ${errText.slice(0, 100)}` };
     }
 
     case 'mastodon': {
@@ -357,15 +350,15 @@ async function perProtocolPublishSingle(
       const instance = auth.mastodon_instance || 'https://social.degenfeed.xyz';
       const accessToken = auth.mastodon;
       if (!accessToken) {
-        return { ok: false, error: 'Not signed into Mastodon' };
+        return { error: 'Not signed into Mastodon' };
       }
       const client = new GtSClient(instance, accessToken);
       await client.publish(text, { visibility: 'public' });
-      return { ok: true };
+      return { success: true };
     }
 
     default:
-      return { ok: false, error: `${target} not supported` };
+      return { error: `${target} not supported` };
   }
 }
 
@@ -394,7 +387,7 @@ export async function handleRssToNostrBridge(request: Request, _env: Env): Promi
       eoseTimeout: 3000,
     });
 
-    const results: Array<{ title: string; ok: boolean; error?: string }> = [];
+    const results: Array<{ title: string; success?: boolean; error?: string }> = [];
     const maxItems = Math.min(posts.length, 5);
 
     for (const post of posts.slice(0, maxItems)) {
@@ -406,9 +399,9 @@ export async function handleRssToNostrBridge(request: Request, _env: Env): Promi
         ev.id = nostr.getEventHash(ev);
         nostr.signEvent(ev, nsec);
         await pool.publish(ev);
-        results.push({ title: post.text.slice(0, 50), ok: true });
+        results.push({ title: post.text.slice(0, 50), success: true });
       } catch (e) {
-        results.push({ title: post.text.slice(0, 50), ok: false, error: String(e) });
+        results.push({ title: post.text.slice(0, 50), error: String(e) });
       }
     }
     pool.disconnectAll();

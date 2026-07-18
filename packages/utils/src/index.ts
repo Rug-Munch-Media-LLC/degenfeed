@@ -141,18 +141,6 @@ export async function withConcurrencyLimit<T, R>(
   return results;
 }
 
-export async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  const controller = new AbortController();
-  const timeout = new Promise<never>((_, reject) => {
-    const id = setTimeout(() => {
-      controller.abort();
-      reject(new Error(`${label} timeout after ${ms}ms`));
-    }, ms);
-    void promise.finally(() => clearTimeout(id)).catch(() => {});
-  });
-  return Promise.race([promise, timeout]);
-}
-
 // ─── Protocol color/emoji maps ────────────────────────────────────────
 
 export const PROTOCOL_COLORS: Record<string, string> = {
@@ -220,11 +208,7 @@ export function isValidEmail(s: string): boolean {
 
 // ─── Protocol → currency mapping for tipping ──────────────────────────
 
-export {
-  CURRENCY_META,
-  getDefaultCurrency,
-  PROTOCOL_DEFAULT_CURRENCY,
-} from './protocolCurrency';
+export { CURRENCY_META } from './protocolCurrency';
 
 // ─── Cross-protocol identity resolution ────────────────────────────────
 
