@@ -311,8 +311,8 @@ const Controls = memo(function Controls({
   setShowQualityMenu,
 }: ControlsProps) {
   const progressRef = useRef<HTMLDivElement>(null);
-  const [hoverTime, setHoverTime] = useState<number | null>(null);
-  const [hoverX, setHoverX] = useState(0);
+  const hoverTimeRef = useRef<number | null>(null);
+  const hoverXRef = useRef(0);
   const seekProgress = duration > 0 ? (currentTime / duration) * 100 : 0;
   const bufferedProgress = duration > 0 ? (buffered / duration) * 100 : 0;
   const volumePercent = muted ? 0 : volume * 100;
@@ -335,14 +335,14 @@ const Controls = memo(function Controls({
       if (!rect) return;
       const x = e.clientX - rect.left;
       const fraction = Math.max(0, Math.min(1, x / rect.width));
-      setHoverTime(fraction * duration);
-      setHoverX(e.clientX - rect.left);
+      hoverTimeRef.current = fraction * duration;
+      hoverXRef.current = e.clientX - rect.left;
     },
     [duration],
   );
 
   const handleProgressLeave = useCallback(() => {
-    setHoverTime(null);
+    hoverTimeRef.current = null;
   }, []);
 
   const handleProgressKeyDown = useCallback(
@@ -393,13 +393,13 @@ const Controls = memo(function Controls({
           onMouseLeave={handleProgressLeave}
           onKeyDown={handleProgressKeyDown}
         >
-          {/* Time tooltip on hover */}
-          {hoverTime != null && duration > 0 && (
+          {/* Time tooltip on hover — uses ref for transient state; re-renders from video timeupdate */}
+          {hoverTimeRef.current != null && duration > 0 && (
             <div
               className="absolute -top-8 z-30 -translate-x-1/2 rounded-md bg-black/90 px-2 py-1 text-[11px] font-mono text-white shadow-lg pointer-events-none whitespace-nowrap"
-              style={{ left: `${hoverX}px` }}
+              style={{ left: `${hoverXRef.current}px` }}
             >
-              {formatTime(hoverTime)}
+              {formatTime(hoverTimeRef.current)}
             </div>
           )}
           {/* Buffered bar */}
@@ -666,19 +666,20 @@ export const VideoPlayer = memo(function VideoPlayer({
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  // Transient / 1-time states converted to refs to avoid unnecessary re-renders
+  const reducedMotionRef = useRef(false);
+  const pipSupportedRef = useRef(false);
+  const touchControlsDismissedRef = useRef(false);
   const [isVertical, setIsVertical] = useState(aspectRatio === '9:16');
   const [showPlayOverlay, setShowPlayOverlay] = useState(true);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
-  const [pipSupported, setPipSupported] = useState(false);
   const [inPip, setInPip] = useState(false);
   const [autoPlayCountdown, setAutoPlayCountdown] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showMiniPlayer, setShowMiniPlayer] = useState(false);
   const [currentQuality, setCurrentQuality] = useState(0);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
-  const [touchControlsDismissed, setTouchControlsDismissed] = useState(false);
 
   const fullscreenSupported = typeof document !== 'undefined' && document.fullscreenEnabled;
 
@@ -686,8 +687,8 @@ export const VideoPlayer = memo(function VideoPlayer({
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    reducedMotionRef.current = mq.matches;
+    const handler = (e: MediaQueryListEvent) => { reducedMotionRef.current = e.matches; };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
@@ -788,13 +789,13 @@ export const VideoPlayer = memo(function VideoPlayer({
   }, [playing]);
 
   useEffect(() => {
-    if (playing && !reducedMotion) {
+    if (playing && !reducedMotionRef.current) {
       resetControlsTimer();
     }
     return () => {
       if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
     };
-  }, [playing, reducedMotion, resetControlsTimer]);
+  }, [playing, resetControlsTimer]);
 
   // ── Video event handlers ──
   const handlePlayPauseToggle = useCallback(() => {
@@ -1275,7 +1276,7 @@ export const VideoPlayer = memo(function VideoPlayer({
               <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                 <div
                   className={`h-8 w-8 rounded-full border-2 border-white/20 border-t-degen-400 ${
-                    reducedMotion ? 'animate-none' : 'animate-spin'
+                    reducedMotionRef.current ? 'animate-none' : 'animate-spin'
                   }`}
                   role="status"
                   aria-label="Loading video"

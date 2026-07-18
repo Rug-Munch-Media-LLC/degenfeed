@@ -658,8 +658,11 @@ export class RedditProvider implements FeedProvider {
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const limit = 50;
-    const perSub = Math.ceil(limit / this.configs.length);
+    // Increased from 50 to 100 for richer content (2026-07-18).
+    // The feed fetcher doesn't pass limit directly, so we default internally.
+    // We fetch at least 3 per sub for quality filtering headroom, capped at 100 total.
+    const limit = 100;
+    const perSub = Math.max(3, Math.ceil(limit / Math.min(this.configs.length, 50)));
 
     const results = await withConcurrencyLimit(this.configs, 4, async (config) => {
       try {

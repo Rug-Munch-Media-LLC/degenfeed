@@ -4,5 +4,10 @@ import { mockPublicFeeds } from '../../_mock-data';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return NextResponse.json({ feeds: mockPublicFeeds });
+  try {
+    return NextResponse.json({ data: { feeds: mockPublicFeeds }, meta: { count: mockPublicFeeds.length } });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return NextResponse.json({ error: message, status: 500 }, { status: 500 });
+  }
 }

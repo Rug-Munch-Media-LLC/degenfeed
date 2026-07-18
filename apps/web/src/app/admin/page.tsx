@@ -11,7 +11,11 @@ interface DashboardStats {
   totalTips: number;
   tipVolumeUsd: number;
   activeProtocols: number;
-  activeProtocolsList: { name: string; status: 'online' | 'degraded' | 'offline'; posts24h: number }[];
+  activeProtocolsList: {
+    name: string;
+    status: 'online' | 'degraded' | 'offline';
+    posts24h: number;
+  }[];
   moderationQueue: number;
   pendingSources: number;
   systemUptime: number;
@@ -84,13 +88,55 @@ const DEFAULT_STATS: DashboardStats = {
 };
 
 const DEFAULT_ACTIVITY: ActivityEntry[] = [
-  { id: 'a1', type: 'post', message: 'New milestone: 1,000+ posts today across all protocols', timestamp: Date.now() - 60000, severity: 'info' },
-  { id: 'a2', type: 'tip', message: 'Record tip of 0.5 ETH ($1,650) sent on Farcaster', timestamp: Date.now() - 180000, severity: 'info' },
-  { id: 'a3', type: 'system', message: 'Mastodon fetcher latency increased to 2.3s', timestamp: Date.now() - 300000, severity: 'warning' },
-  { id: 'a4', type: 'user_joined', message: '12 new users registered in the last hour', timestamp: Date.now() - 600000, severity: 'info' },
-  { id: 'a5', type: 'source', message: '3 new RSS sources auto-discovered from Reddit', timestamp: Date.now() - 1200000, severity: 'info' },
-  { id: 'a6', type: 'report', message: '2 new moderation reports filed (spam, scam)', timestamp: Date.now() - 1800000, severity: 'warning' },
-  { id: 'a7', type: 'ban', message: '1 user banned for repeated policy violations', timestamp: Date.now() - 3600000, severity: 'info' },
+  {
+    id: 'a1',
+    type: 'post',
+    message: 'New milestone: 1,000+ posts today across all protocols',
+    timestamp: Date.now() - 60000,
+    severity: 'info',
+  },
+  {
+    id: 'a2',
+    type: 'tip',
+    message: 'Record tip of 0.5 ETH ($1,650) sent on Farcaster',
+    timestamp: Date.now() - 180000,
+    severity: 'info',
+  },
+  {
+    id: 'a3',
+    type: 'system',
+    message: 'Mastodon fetcher latency increased to 2.3s',
+    timestamp: Date.now() - 300000,
+    severity: 'warning',
+  },
+  {
+    id: 'a4',
+    type: 'user_joined',
+    message: '12 new users registered in the last hour',
+    timestamp: Date.now() - 600000,
+    severity: 'info',
+  },
+  {
+    id: 'a5',
+    type: 'source',
+    message: '3 new RSS sources auto-discovered from Reddit',
+    timestamp: Date.now() - 1200000,
+    severity: 'info',
+  },
+  {
+    id: 'a6',
+    type: 'report',
+    message: '2 new moderation reports filed (spam, scam)',
+    timestamp: Date.now() - 1800000,
+    severity: 'warning',
+  },
+  {
+    id: 'a7',
+    type: 'ban',
+    message: '1 user banned for repeated policy violations',
+    timestamp: Date.now() - 3600000,
+    severity: 'info',
+  },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────
@@ -170,11 +216,32 @@ export default function AdminDashboardPage() {
       {/* ── Row 1: Key metric cards ── */}
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <MetricCard label="Total Users" value={formatCount(stats.totalUsers)} subtitle="All time" />
-        <MetricCard label="Posts Today" value={formatCount(stats.postsToday)} subtitle={`${formatCount(stats.postsThisWeek)} this week`} />
-        <MetricCard label="Tips" value={formatCount(stats.totalTips)} subtitle={`$${formatCount(stats.tipVolumeUsd)} volume`} accent="green" />
-        <MetricCard label="Active Protocols" value={stats.activeProtocols} subtitle={`${stats.activeProtocolsList.filter((p) => p.status === 'online').length} online`} />
-        <MetricCard label="DAO Users" value={formatCount(stats.dailyActiveUsers)} subtitle="Daily active" />
-        <MetricCard label="Uptime" value={formatDuration(stats.systemUptime)} subtitle={`${stats.avgResponseTime}ms avg response`} />
+        <MetricCard
+          label="Posts Today"
+          value={formatCount(stats.postsToday)}
+          subtitle={`${formatCount(stats.postsThisWeek)} this week`}
+        />
+        <MetricCard
+          label="Tips"
+          value={formatCount(stats.totalTips)}
+          subtitle={`$${formatCount(stats.tipVolumeUsd)} volume`}
+          accent="green"
+        />
+        <MetricCard
+          label="Active Protocols"
+          value={stats.activeProtocols}
+          subtitle={`${stats.activeProtocolsList.filter((p) => p.status === 'online').length} online`}
+        />
+        <MetricCard
+          label="DAO Users"
+          value={formatCount(stats.dailyActiveUsers)}
+          subtitle="Daily active"
+        />
+        <MetricCard
+          label="Uptime"
+          value={formatDuration(stats.systemUptime)}
+          subtitle={`${stats.avgResponseTime}ms avg response`}
+        />
       </div>
 
       {/* ── Row 2: Protocol health + Activity feed ── */}
@@ -235,7 +302,21 @@ export default function AdminDashboardPage() {
                           : 'bg-degen-500/15 text-degen-400'
                     }`}
                   >
-                    {entry.type === 'post' ? '📝' : entry.type === 'tip' ? '💸' : entry.type === 'user_joined' ? '👤' : entry.type === 'report' ? '🚨' : entry.type === 'source' ? '📡' : entry.type === 'ban' ? '🚫' : entry.type === 'system' ? '⚙️' : '•'}
+                    {entry.type === 'post'
+                      ? '📝'
+                      : entry.type === 'tip'
+                        ? '💸'
+                        : entry.type === 'user_joined'
+                          ? '👤'
+                          : entry.type === 'report'
+                            ? '🚨'
+                            : entry.type === 'source'
+                              ? '📡'
+                              : entry.type === 'ban'
+                                ? '🚫'
+                                : entry.type === 'system'
+                                  ? '⚙️'
+                                  : '•'}
                   </div>
                 </div>
                 <div className="min-w-0 flex-1">
@@ -265,8 +346,18 @@ export default function AdminDashboardPage() {
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
           <h2 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
-            <QuickActionButton href="/admin/moderation" icon="🛡️" label="Moderation Queue" count={stats.moderationQueue} />
-            <QuickActionButton href="/admin/sources" icon="📡" label="Source Discovery" count={stats.pendingSources} />
+            <QuickActionButton
+              href="/admin/moderation"
+              icon="🛡️"
+              label="Moderation Queue"
+              count={stats.moderationQueue}
+            />
+            <QuickActionButton
+              href="/admin/sources"
+              icon="📡"
+              label="Source Discovery"
+              count={stats.pendingSources}
+            />
             <QuickActionButton href="/admin/content" icon="📝" label="Content Feed" />
             <QuickActionButton href="/admin/users" icon="👥" label="User Management" />
             <QuickActionButton href="/admin/system" icon="⚙️" label="System Settings" />
@@ -296,7 +387,9 @@ function MetricCard({
       <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
         {label}
       </p>
-      <p className={`text-xl font-bold ${accent === 'green' ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}>
+      <p
+        className={`text-xl font-bold ${accent === 'green' ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}
+      >
         {value}
       </p>
       {subtitle && <p className="mt-0.5 text-[10px] text-gray-600">{subtitle}</p>}
@@ -316,8 +409,7 @@ function Gauge({
   unit: string;
 }) {
   const pct = Math.min((value / max) * 100, 100);
-  const color =
-    pct > 80 ? 'bg-red-500' : pct > 60 ? 'bg-yellow-500' : 'bg-degen-500';
+  const color = pct > 80 ? 'bg-red-500' : pct > 60 ? 'bg-yellow-500' : 'bg-degen-500';
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">

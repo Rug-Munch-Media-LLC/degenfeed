@@ -170,7 +170,7 @@ export default function PreferencesPage() {
               className={`rounded-full px-3 py-1 text-xs font-medium ${
                 prefs.preferredPlatforms.includes(p)
                   ? 'bg-degen-500 text-black'
-                  : 'bg-[var(--color-muted)] text-gray-400 hover:bg-gray-700'
+                  : 'bg-[var(--color-muted)] text-[var(--color-muted)] hover:bg-[var(--color-overlay)]'
               }`}
             >
               {p}
@@ -190,7 +190,7 @@ export default function PreferencesPage() {
               className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${
                 prefs.preferredNiches.includes(n)
                   ? 'bg-degen-500 text-black'
-                  : 'bg-[var(--color-muted)] text-gray-400 hover:bg-gray-700'
+                  : 'bg-[var(--color-muted)] text-[var(--color-muted)] hover:bg-[var(--color-overlay)]'
               }`}
             >
               {n}
@@ -235,7 +235,7 @@ export default function PreferencesPage() {
                         ? 'bg-degen-500/15 text-degen-400'
                         : t.direction === 'down'
                           ? 'bg-red-500/10 text-red-400'
-                          : 'bg-gray-500/10 text-gray-400'
+                          : 'bg-[var(--color-overlay)] text-[var(--color-muted)]'
                     }`}
                   >
                     {t.direction === 'up' ? '↑' : t.direction === 'down' ? '↓' : '—'}
@@ -268,7 +268,7 @@ export default function PreferencesPage() {
                   <button
                     type="button"
                     onClick={() => clearTopic(t.topic)}
-                    className="rounded-md p-1 text-gray-500 hover:bg-gray-500/10 hover:text-gray-400 transition-colors"
+                    className="rounded-md p-1 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-muted)] transition-colors"
                     aria-label={`Remove ${t.topic}`}
                     title="Forget this topic"
                   >

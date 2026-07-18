@@ -5,8 +5,14 @@ import { memo, useEffect, useState } from 'react';
 /**
  * Floating scroll-to-top button with circular progress indicator.
  * Appears after scrolling down past the threshold.
+ *
+ * @param thresholdPages — Number of viewport-heights to scroll before showing (default 3)
  */
-export const ScrollToTop = memo(function ScrollToTop() {
+export const ScrollToTop = memo(function ScrollToTop({
+  thresholdPages = 3,
+}: {
+  thresholdPages?: number;
+}) {
   const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -16,12 +22,12 @@ export const ScrollToTop = memo(function ScrollToTop() {
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       const pct = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
       setProgress(pct);
-      setVisible(scrollTop > window.innerHeight * 2);
+      setVisible(scrollTop > window.innerHeight * thresholdPages);
     };
     window.addEventListener('scroll', handler, { passive: true });
     handler();
     return () => window.removeEventListener('scroll', handler);
-  }, []);
+  }, [thresholdPages]);
 
   const handleClick = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -38,14 +44,15 @@ export const ScrollToTop = memo(function ScrollToTop() {
       aria-label="Scroll to top"
       title={`${Math.round(progress * 100)}% read — back to top`}
     >
-      <svg
-        className="progress-ring"
-        width="44"
-        height="44"
-        viewBox="0 0 44 44"
-        aria-hidden="true"
-      >
-        <circle cx="22" cy="22" r="16" stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" fill="none" />
+      <svg className="progress-ring" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+        <circle
+          cx="22"
+          cy="22"
+          r="16"
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="2.5"
+          fill="none"
+        />
         <circle
           cx="22"
           cy="22"

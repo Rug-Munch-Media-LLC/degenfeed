@@ -17,6 +17,7 @@ const TipModal = dynamic(
 );
 
 import { Breadcrumbs } from '../../../components/Breadcrumbs';
+import { QuickTipButton } from '../../../components/QuickTipButton';
 import { sanitizeHtml } from '../../../lib/sanitize';
 
 // ─── Read time helper ─────────────────────────────────────────
@@ -521,6 +522,15 @@ function ThreadReplyCard({
           <span>{reply.metrics.likes} likes</span>
           <span>{reply.metrics.reposts} reposts</span>
           <span>{reply.metrics.replies} replies</span>
+          <span className="ml-auto">
+            <QuickTipButton
+              recipientProtocol={reply.protocol}
+              recipientAuthorId={reply.author.id}
+              recipientDisplayName={reply.author.displayName}
+              publicationId={reply.id}
+              subtle
+            />
+          </span>
         </div>
       </div>
       {children.length > 0 && (

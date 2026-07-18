@@ -2,9 +2,10 @@
 
 import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { ErrorBoundary, FeedList, FeedWhyCard, NotificationBell, PostCard } from '@degenfeed/ui';
+import { ErrorBoundary, FeedList, FeedWhyCard, NotificationBell, PostCard, ScrollToTop } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
@@ -37,6 +38,8 @@ import { useFeedLayout } from '../../hooks/useFeedLayout';
 import { useFeedPosition } from '../../hooks/useFeedPosition';
 import { useHoverPrefetch } from '../../hooks/useHoverPrefetch';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useReturningUser } from '../../hooks/useReturningUser';
+import { useScrollVelocity } from '../../hooks/useScrollVelocity';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
 import { useViewportPrefetch } from '../../hooks/useViewportPrefetch';
 import { fetchWithSwr, getCached, setCache } from '../../lib/fetchWithCache';
@@ -447,6 +450,67 @@ export default function FeedPage() {
   const loadMore = useCallback(() => {
     setLoadedLimit((prev) => Math.min(prev + 25, 200));
   }, []);
+
+  // ── "While you were away" — detects return after >30min ──────
+  const returning = useReturningUser();
+  const [showReturnCard, setShowReturnCard] = useState(true);
+
+  // ── Boredom detection via scroll velocity ────────────────────
+  const scrollVel = useScrollVelocity(800, 2000);
+  const [injectedExplore, setInjectedExplore] = useState(0);
+  const lastPaceRef = useRef<string>('idle');
+
+  // When scrolling fast, inject explore cards into the feed
+  useEffect(() => {
+    const pace = scrollVel.pace;
+    if (pace === 'fast' || pace === 'racing') {
+      if (lastPaceRef.current !== 'fast' && lastPaceRef.current !== 'racing') {
+        // Just entered fast-scroll mode — inject an explore suggestion
+        setInjectedExplore((prev) => Math.min(prev + 1, 3));
+      }
+    }
+    lastPaceRef.current = pace;
+  }, [scrollVel.pace]);
+
+  // Reset injected explore when feed changes tab or refreshes
+  useEffect(() => {
+    setInjectedExplore(0);
+  }, [activeTab]);
+
+  // ── End-of-feed discovery suggestions ────────────────────────
+  const endOfFeedSuggestions = useMemo(
+    () => [
+      {
+        id: 'trending',
+        label: 'Trending',
+        description: 'See what the DegenFeed community is buzzing about right now.',
+        color: '#f59e0b',
+        icon: '🔥',
+      },
+      {
+        id: 'news',
+        label: 'Crypto News',
+        description: 'Stay informed with the latest crypto news aggregated from 350+ RSS sources.',
+        color: '#ffa500',
+        icon: '📰',
+      },
+      {
+        id: 'discover',
+        label: 'Discover',
+        description: 'New accounts, new topics, new conversations. Expand your web3 horizons.',
+        color: '#8b5cf6',
+        icon: '✨',
+      },
+      {
+        id: 'videos',
+        label: 'Videos & Shorts',
+        description: 'Watch the latest crypto videos, interviews, and short-form content.',
+        color: '#ef4444',
+        icon: '🎬',
+      },
+    ],
+    [],
+  );
 
   const fetchFeed = useCallback(
     async (checkOnly = false) => {
@@ -986,7 +1050,7 @@ export default function FeedPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('following')}
-                  onMouseEnter={() => hoverPrefetch.onMouseEnter(tabPrefetchMap['following'])}
+                  onMouseEnter={() => hoverPrefetch.onMouseEnter(tabPrefetchMap.following)}
                   onMouseLeave={hoverPrefetch.onMouseLeave}
                   role="tab"
                   aria-selected={activeTab === 'following'}
@@ -1397,6 +1461,62 @@ export default function FeedPage() {
           {/* Feed */}
           <div className="relative">
             <PostCardPrefetcher />
+
+            {/* ── "While you were away" card ── */}
+            {returning.showCard &&
+              showReturnCard &&
+              state === 'loaded' &&
+              posts.length > 0 && (
+                <WhileYouWereAwayCard
+                  awayMinutes={Math.round(returning.awayDurationMs / 60000)}
+                  postCount={posts.length}
+                  onDismiss={() => {
+                    setShowReturnCard(false);
+                    returning.dismiss();
+                  }}
+                  onScrollToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                />
+              )}
+
+            {/* ── Boredom-breaker explore cards injected when fast-scrolling ── */}
+            {injectedExplore > 0 && state === 'loaded' && posts.length > 0 && (
+              <div className="space-y-0">
+                {Array.from({ length: injectedExplore }).map((_, idx) => (
+                  <div key={`boredom-${idx}`} className="feed-item-enter">
+                    <div className="border-b border-[var(--color-glass-border)] px-4 py-4">
+                      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 16v-4M12 8h.01" />
+                        </svg>
+                        Explore something new
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {endOfFeedSuggestions.slice(idx * 2, idx * 2 + 2).map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => {
+                              if (s.id === 'trending') router.push('/trending');
+                              else if (s.id === 'news') router.push('/news');
+                              else if (s.id === 'discover') router.push('/discover');
+                              else if (s.id === 'videos') router.push('/videos');
+                            }}
+                            className="flex flex-col items-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 text-center transition-all hover:border-degen-500/30 hover:bg-[var(--color-card-hover)]"
+                          >
+                            <span className="text-2xl" aria-hidden="true">{s.icon}</span>
+                            <span className="text-xs font-semibold text-[var(--color-fg)]">
+                              {s.label}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div aria-live="polite" aria-label="Feed posts" role="feed">
               <FeedList
                 state={state}
@@ -1418,6 +1538,20 @@ export default function FeedPage() {
                 onContextMenu={(e: React.MouseEvent, postId: string) => {
                   const url = `${window.location.origin}/post/${postId}`;
                   handleContextMenu(e, postId, url);
+                }}
+                endOfFeedSuggestions={endOfFeedSuggestions}
+                onDiscoveryClick={(suggestionId) => {
+                  if (suggestionId === 'trending') router.push('/trending');
+                  else if (suggestionId === 'news') router.push('/news');
+                  else if (suggestionId === 'discover') router.push('/discover');
+                  else if (suggestionId === 'videos') router.push('/videos');
+                }}
+                onPostVisibility={(postId, isVisible) => {
+                  if (isVisible) {
+                    scrollVel._onPostVisible(postId);
+                  } else {
+                    scrollVel._onPostHidden(postId);
+                  }
                 }}
                 emptySlot={
                   state === 'empty' && activeTab === 'for-you' ? (
@@ -1552,6 +1686,9 @@ export default function FeedPage() {
             }
           />
         )}
+
+        {/* ── Floating "Back to Top" button — appears after ~3 pages ── */}
+        <ScrollToTop />
 
         {/* ── FeedTuner modal ── */}
         {showTuner && (
@@ -1723,5 +1860,93 @@ function FeedHealthSection({
         </p>
       </div>
     </details>
+  );
+}
+
+// ─── "While you were away" card ───────────────────────────────────
+
+function WhileYouWereAwayCard({
+  awayMinutes,
+  postCount,
+  onDismiss,
+  onScrollToTop,
+}: {
+  awayMinutes: number;
+  postCount: number;
+  onDismiss: () => void;
+  onScrollToTop: () => void;
+}) {
+  const hours = Math.floor(awayMinutes / 60);
+  const mins = awayMinutes % 60;
+  const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+
+  return (
+    <div className="while-away-card mx-4 mb-3 overflow-hidden rounded-2xl border border-degen-500/20 bg-gradient-to-br from-degen-500/8 to-transparent">
+      <div className="p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-500/10">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-amber-400"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[var(--color-fg)]">
+                While you were away
+              </p>
+              <p className="text-[11px] text-[var(--color-muted)]">
+                {timeStr} · {postCount} new posts
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+            aria-label="Dismiss"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex flex-1 gap-1">
+            {Array.from({ length: Math.min(postCount, 5) }).map((_, i) => (
+              <div
+                key={i}
+                className="h-1.5 flex-1 rounded-full"
+                style={{
+                  background: `linear-gradient(90deg, var(--color-accent) ${Math.max(20, 100 - i * 15)}%, transparent)`,
+                  opacity: 1 - i * 0.12,
+                }}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={onScrollToTop}
+            className="inline-flex items-center gap-1.5 rounded-full bg-degen-500 px-3.5 py-1.5 text-[11px] font-semibold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_16px_rgba(0,255,65,0.3)]"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+            See newest
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

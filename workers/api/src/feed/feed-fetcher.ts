@@ -217,16 +217,72 @@ class RssWithFallbackProvider implements FeedProvider {
   constructor(env: Env) {
     this.env = env;
     this.rmi = new RmiDataBusProvider({ backendUrl: rmiUrl(env) });
-    // Uses the hardcoded feeds for edge reliability
+    // Uses the hardcoded feeds for edge reliability.
+    // Expanded 2026-07-18: includes ALL tier-1 and most tier-2 feeds
+    // to ensure RSS returns 50+ posts every cycle.
     this.qualityRss = new RssProvider({
       feeds: [
+        // ── Tier 1 — Must Have Crypto News ──
         'https://cointelegraph.com/rss',
         'https://decrypt.co/feed',
-        'https://bitcoinmagazine.com/.rss/full/',
-        'https://blog.ethereum.org/feed.xml',
-        'https://blog.chain.link/feed/',
-        'https://bankless.substack.com/feed',
-        'https://weekinethereumnews.com/feed',
+        'https://www.coindesk.com/arc/outboundfeeds/rss/',
+        'https://www.theblock.co/rss',
+        'https://blockworks.co/feed',
+        'https://thedefiant.io/feed',
+        'https://newsletter.banklesshq.com/feed',
+        'https://banklesshq.substack.com/feed',
+        'https://messari.io/feed',
+        'https://blog.chainalysis.com/feed/',
+        // ── Tier 2 — High Quality Research / VC ──
+        'https://www.paradigm.xyz/feed/atom',
+        'https://a16zcrypto.com/feed/',
+        'https://blog.electriccapital.com/rss',
+        'https://multicoin.capital/feed',
+        'https://panteracapital.com/feed',
+        'https://members.delphidigital.io/feed',
+        'https://www.galaxy.com/insights/feed/',
+        'https://coinmetrics.io/feed',
+        'https://dune.com/blog/rss.xml',
+        'https://nansen.substack.com/feed',
+        'https://variant.fund/feed',
+        'https://dragonfly.xyz/feed/',
+        // ── Markets & Analysis ──
+        'https://blog.kaiko.com/feed',
+        'https://insights.glassnode.com/feed/',
+        'https://www.artemis.xyz/blog/rss',
+        'https://defillama.com/feed',
+        'https://santiment.net/feed/',
+        // ── Security & Policy ──
+        'https://rekt.news/feed.xml',
+        'https://blog.trailofbits.com/feed/',
+        'https://www.coincenter.org/feed/',
+        'https://cointelegraph.com/tags/regulation/feed',
+        'https://blog.openzeppelin.com/feed',
+        // ── AI x Crypto ──
+        'https://www.interconnects.ai/feed/',
+        'https://thesequence.substack.com/feed',
+        'https://venturebeat.com/category/ai/feed/',
+        'https://techcrunch.com/category/artificial-intelligence/feed/',
+        // ── Protocol / Dev Blogs ──
+        'https://bitcoinops.org/en/feed.xml',
+        'https://blog.polygon.technology/feed',
+        'https://blog.arbitrum.io/feed.xml',
+        'https://optimism.mirror.xyz/feed/atom',
+        'https://l2beat.com/feed/',
+        'https://blog.eigenlayer.xyz/rss',
+        'https://blog.celestia.org/rss',
+        // ── Gaming & NFT ──
+        'https://www.nftnow.com/feed/',
+        'https://opensea.io/blog/feed.xml',
+        'https://blog.decentraland.org/feed/',
+        'https://axieinfinity.com/feed/',
+        // ── Tech / Science ──
+        'https://techcrunch.com/feed/',
+        'https://www.theverge.com/rss/index.xml',
+        'https://arstechnica.com/feed/',
+        'https://www.wired.com/feed/rss',
+        'https://venturebeat.com/feed/',
+        'https://www.technologyreview.com/feed/',
       ],
     });
   }

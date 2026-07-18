@@ -651,6 +651,72 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://thegraph.com/blog/rss',                          { tier: 4, weight: 0.6, category: 'development', tags: ['thegraph', 'subgraph', 'indexing'], authority: 1 }),
   cfg('https://moralis.io/blog/feed',                           { tier: 4, weight: 0.6, category: 'development', tags: ['moralis', 'web3', 'api', 'sdk'], authority: 1 }),
   cfg('https://www.alchemy.com/blog/rss',                       { tier: 4, weight: 0.6, category: 'development', tags: ['alchemy', 'web3', 'api', 'infrastructure'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // GAMING — Web3 Gaming, GameFi, Metaverse (added 2026-07-18)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://decrypt.co/gaming/feed',                          { tier: 3, weight: 0.8, category: 'news', tags: ['gaming', 'web3-gaming', 'gamefi'], authority: 2 }),
+  cfg('https://cointelegraph.com/tags/gaming/feed',              { tier: 3, weight: 0.8, category: 'news', tags: ['gaming', 'gamefi'], authority: 2 }),
+  cfg('https://www.gamedeveloper.com/rss.xml',                   { tier: 4, weight: 0.7, category: 'tech', tags: ['gaming', 'game-dev', 'technology'], authority: 1 }),
+  cfg('https://www.polygon.technology/gaming/feed',              { tier: 3, weight: 0.8, category: 'development', tags: ['polygon', 'gaming', 'web3'], authority: 2 }),
+  cfg('https://immutable.com/feed.xml',                          { tier: 4, weight: 0.7, category: 'news', tags: ['gaming', 'nft', 'immutable', 'web3-gaming'], authority: 1 }),
+  cfg('https://blog.sequence.xyz/feed',                          { tier: 4, weight: 0.7, category: 'development', tags: ['gaming', 'web3', 'blockchain-gaming'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // REGULATION / POLICY — Government & Legal (added 2026-07-18)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://www.coindesk.com/policy/feed/',                   { tier: 2, weight: 0.9, category: 'policy', tags: ['regulation', 'policy', 'crypto'], authority: 3 }),
+  cfg('https://blockworks.co/category/policy/feed',              { tier: 3, weight: 0.8, category: 'policy', tags: ['regulation', 'policy', 'crypto'], authority: 2 }),
+  cfg('https://decrypt.co/regulation/feed',                      { tier: 3, weight: 0.8, category: 'policy', tags: ['regulation', 'policy', 'sec'], authority: 2 }),
+  cfg('https://www.europarl.europa.eu/rss/topic/economic-and-monetary-affairs.xml', { tier: 4, weight: 0.7, category: 'policy', tags: ['regulation', 'eu', 'mica', 'policy'], authority: 1 }),
+  cfg('https://www.theblock.co/post/type/regulation/feed',       { tier: 3, weight: 0.8, category: 'policy', tags: ['regulation', 'policy', 'sec', 'cftc'], authority: 2 }),
+  cfg('https://blog.coinbase.com/category/regulation/feed',      { tier: 3, weight: 0.8, category: 'policy', tags: ['regulation', 'coinbase', 'policy'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // STABLECOINS — Dedicated stablecoin & RWA feeds (added 2026-07-18)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://cointelegraph.com/tags/stablecoins/feed',         { tier: 3, weight: 0.8, category: 'news', tags: ['stablecoin', 'usdt', 'usdc', 'rwa'], authority: 2 }),
+  cfg('https://defillama.com/stablecoin/rss',                    { tier: 3, weight: 0.8, category: 'analysis', tags: ['stablecoin', 'tvl', 'defi'], authority: 2 }),
+  cfg('https://decrypt.co/stablecoins/feed',                     { tier: 3, weight: 0.8, category: 'news', tags: ['stablecoin', 'usdc', 'usdt', 'dai'], authority: 2 }),
+  cfg('https://coindesk.com/stablecoins/feed/',                  { tier: 3, weight: 0.8, category: 'news', tags: ['stablecoin', 'defi', 'rwa'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // MEMECOINS — Dedicated meme coin coverage (added 2026-07-18)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://cointelegraph.com/tags/meme-coins/feed',          { tier: 3, weight: 0.8, category: 'news', tags: ['memecoin', 'meme-coin', 'doge', 'pepe', 'shib'], authority: 2 }),
+  cfg('https://decrypt.co/memecoins/feed',                       { tier: 3, weight: 0.8, category: 'news', tags: ['memecoin', 'meme-coin', 'degen'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // LAYER 2 / SCALING — Additional L2 sources (added 2026-07-18)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://l2beat.com/feed/',                                { tier: 3, weight: 0.8, category: 'analysis', tags: ['layer2', 'ethereum', 'scaling', 'rollup'], authority: 2 }),
+  cfg('https://cointelegraph.com/tags/layer-2/feed',             { tier: 3, weight: 0.8, category: 'news', tags: ['layer2', 'rollup', 'arbitrum', 'optimism', 'base'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // BITCOIN — Additional BTC analysis (added 2026-07-18)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://bitcoinmagazine.com/.rss/full/',                  { tier: 2, weight: 1.0, category: 'news', tags: ['bitcoin', 'btc', 'mining', 'lightning'], authority: 3 }),
+  cfg('https://cointelegraph.com/tags/bitcoin/feed',             { tier: 3, weight: 0.8, category: 'news', tags: ['bitcoin', 'btc', 'mining'], authority: 2 }),
+  cfg('https://www.blockchain.com/blog/feed/',                   { tier: 4, weight: 0.7, category: 'tech', tags: ['bitcoin', 'blockchain', 'data'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DeFi DEEP — Additional yield & protocol coverage (added 2026-07-18)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://cointelegraph.com/tags/defi/feed',                { tier: 3, weight: 0.8, category: 'news', tags: ['defi', 'yield', 'lending', 'dex'], authority: 2 }),
+  cfg('https://decrypt.co/defi/feed',                            { tier: 3, weight: 0.8, category: 'news', tags: ['defi', 'dex', 'yield', 'lending'], authority: 2 }),
+  cfg('https://thedefiant.io/feed',                              { tier: 2, weight: 0.9, category: 'news', tags: ['defi', 'crypto', 'ethereum', 'yield'], authority: 3 }),
+  cfg('https://coingecko.com/en/blog/rss',                       { tier: 3, weight: 0.8, category: 'markets', tags: ['defi', 'crypto', 'prices', 'data'], authority: 2 }),
+  cfg('https://blog.intotheblock.com/feed/',                     { tier: 3, weight: 0.8, category: 'analysis', tags: ['defi', 'onchain', 'analytics', 'crypto'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SECURITY — Additional security research (added 2026-07-18)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://cointelegraph.com/tags/hacking/feed',             { tier: 3, weight: 0.8, category: 'news', tags: ['security', 'hack', 'exploit'], authority: 2 }),
+  cfg('https://decrypt.co/security/feed',                        { tier: 3, weight: 0.8, category: 'news', tags: ['security', 'hack', 'audit'], authority: 2 }),
+  cfg('https://slowmist.medium.com/feed',                        { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit', 'blockchain'], authority: 1 }),
+  cfg('https://www.certik.com/blog/feed',                        { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit', 'blockchain'], authority: 1 }),
+  cfg('https://peckshield.medium.com/feed',                      { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit', 'exploits'], authority: 1 }),
+  cfg('https://blog.halborn.com/feed',                           { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit', 'web3'], authority: 1 }),
 ];
 
 export interface RssProviderOptions {

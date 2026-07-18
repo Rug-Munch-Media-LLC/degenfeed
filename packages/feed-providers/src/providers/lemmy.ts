@@ -367,7 +367,8 @@ export class LemmyProvider implements FeedProvider {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const allPosts: UnifiedPost[] = [];
 
-    const communityBatches = this.communities.slice(0, 25);
+    // Increased community limit from 25→30 and per-community from 10→15 (2026-07-18)
+    const communityBatches = this.communities.slice(0, 30);
     const results = await Promise.allSettled(
       communityBatches.map(async ({ community }) => {
         const parts = community.split('@');
@@ -385,7 +386,7 @@ export class LemmyProvider implements FeedProvider {
                 buildUrl(instance, '/api/v3/post/list', {
                   community_name: communityName,
                   sort: 'Hot',
-                  limit: '10',
+                  limit: '15',
                 }),
                 { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
               ),

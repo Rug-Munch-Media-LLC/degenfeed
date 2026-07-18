@@ -202,7 +202,7 @@ export default function BookmarksPage() {
             type="button"
             onClick={handleSync}
             disabled={syncing}
-            className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors disabled:opacity-50"
+            className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors disabled:opacity-50"
           >
             {syncing ? 'Syncing...' : 'Sync'}
           </button>
@@ -249,7 +249,7 @@ export default function BookmarksPage() {
             className={`rounded-full px-3 py-1 text-xs transition-colors ${
               tagFilter === null
                 ? 'bg-degen-500/20 text-degen-400'
-                : 'bg-[var(--color-muted)] text-gray-500 hover:bg-gray-700 hover:text-gray-300'
+                : 'bg-[var(--color-muted)] text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
             }`}
           >
             All
@@ -262,7 +262,7 @@ export default function BookmarksPage() {
               className={`rounded-full px-3 py-1 text-xs transition-colors ${
                 tagFilter === tag
                   ? 'bg-degen-500/20 text-degen-400'
-                  : 'bg-[var(--color-muted)] text-gray-500 hover:bg-gray-700 hover:text-gray-300'
+                  : 'bg-[var(--color-muted)] text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
               }`}
             >
               {tag}

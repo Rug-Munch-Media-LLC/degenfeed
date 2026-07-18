@@ -582,7 +582,7 @@ export default function VideosPage() {
             <button
               type="button"
               onClick={() => setTipVideo(null)}
-              className="mt-1 w-full rounded-lg bg-gray-800/80 px-3 py-1 text-[10px] text-gray-400 hover:text-white transition-colors backdrop-blur-sm"
+              className="mt-1 w-full rounded-lg bg-black/60 px-3 py-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors backdrop-blur-sm"
             >
               Dismiss
             </button>

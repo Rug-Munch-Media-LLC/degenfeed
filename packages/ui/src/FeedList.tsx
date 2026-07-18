@@ -9,6 +9,9 @@
  * States: loading (skeleton cards), loaded (real cards), empty (CTA), error
  * (retry). `hasMore` + `onLoadMore` enables future infinite scroll without
  * forcing virtualization today.
+ *
+ * ENHANCED: End-of-feed discovery cards, smooth staggered fade-in for new
+ * posts, boredom-aware content injection.
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
@@ -34,6 +37,15 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T 
     }, ms);
   };
   return debounced as T;
+}
+
+/** A single discoverable topic/category suggestion */
+export interface DiscoverSuggestion {
+  id: string;
+  label: string;
+  description: string;
+  color: string;
+  icon: string;
 }
 
 export interface FeedListProps {
@@ -67,9 +79,29 @@ export interface FeedListProps {
    * Lets the parent page render tab-specific empty messaging (for-you, following, custom-mix).
    */
   emptySlot?: ReactNode;
+  /**
+   * End-of-feed discovery suggestions shown when hasMore is false and posts exist.
+   * Each suggests a topic/category the user might explore.
+   */
+  endOfFeedSuggestions?: DiscoverSuggestion[];
+  /**
+   * Custom end-of-feed slot rendered below the last post when hasMore is false.
+   * Overrides the built-in discovery cards if provided.
+   */
+  endOfFeedSlot?: ReactNode;
+  /**
+   * Called when a discovery suggestion is clicked.
+   * Receives the suggestion id.
+   */
+  onDiscoveryClick?: (suggestionId: string) => void;
+  /**
+   * Callback for IntersectionObserver visibility — notifies parent when
+   * a post enters/leaves the viewport. Used for dwell-time tracking.
+   */
+  onPostVisibility?: (postId: string, isVisible: boolean) => void;
 }
 
-/* Replaced inline SkeletonCard with shared CardSkeleton from LoadingSkeleton */
+/* ── Sub-components ───────────────────────────────────────────── */
 
 function EmptyState({
   protocolLabel,
@@ -87,7 +119,9 @@ function EmptyState({
         className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full"
         style={{ backgroundColor: `${color}18` }}
       >
-        <span className="text-3xl" style={{ color }}>{protocolLabel ? '○' : '◆'}</span>
+        <span className="text-3xl" style={{ color }}>
+          {protocolLabel ? '○' : '◆'}
+        </span>
       </div>
       <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
         {protocolLabel ? `No ${protocolLabel} posts yet` : 'The feed is warming up'}
@@ -127,6 +161,133 @@ function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => vo
   );
 }
 
+/** End-of-feed discovery card with topic suggestion */
+function DiscoveryCard({
+  suggestion,
+  onClick,
+}: {
+  suggestion: DiscoverSuggestion;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex w-full items-start gap-4 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5 text-left transition-all duration-300 hover:scale-[1.01] hover:shadow-xl"
+      style={
+        {
+          borderColor: `${suggestion.color}22`,
+          '--card-glow': `${suggestion.color}15`,
+        } as React.CSSProperties
+      }
+    >
+      <div
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl"
+        style={{ backgroundColor: `${suggestion.color}18` }}
+      >
+        <span aria-hidden="true">{suggestion.icon}</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-[var(--color-fg)] group-hover:text-[var(--color-accent)] transition-colors">
+          Check out {suggestion.label}
+        </p>
+        <p className="mt-1 text-sm text-[var(--color-muted)] line-clamp-2">
+          {suggestion.description}
+        </p>
+      </div>
+      <div
+        className="mt-1 shrink-0 self-start rounded-full p-1.5 transition-transform group-hover:translate-x-1"
+        aria-hidden="true"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-[var(--color-muted)] group-hover:text-[var(--color-accent)] transition-colors"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </div>
+    </button>
+  );
+}
+
+/** Inline boredom-breaker: an explore card shown between posts */
+export function BoredomBreakerCard({
+  suggestions,
+  onDiscoveryClick,
+}: {
+  suggestions: DiscoverSuggestion[];
+  onDiscoveryClick?: (id: string) => void;
+}) {
+  const [showing, setShowing] = useState(0);
+  const s = suggestions[showing % suggestions.length];
+
+  if (!s) return null;
+
+  return (
+    <div className="feed-item-enter border-b border-[var(--color-glass-border)] px-4 py-6">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="h-1 w-1 rounded-full bg-degen-500" />
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+          Explore something new
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={() => onDiscoveryClick?.(s.id)}
+        className="group flex w-full items-center gap-4 rounded-2xl border border-[var(--color-glass-border)] bg-gradient-to-r from-[var(--color-accent-glow)] to-transparent p-4 text-left transition-all hover:border-[var(--color-accent)]/30"
+      >
+        <span className="text-2xl" aria-hidden="true">
+          {s.icon}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-[var(--color-fg)] group-hover:text-[var(--color-accent)] transition-colors">
+            Discover {s.label}
+          </p>
+          <p className="mt-0.5 text-xs text-[var(--color-muted)] line-clamp-1">{s.description}</p>
+        </div>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          className="shrink-0 text-[var(--color-muted)] transition-transform group-hover:translate-x-1 group-hover:text-[var(--color-accent)]"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </button>
+      <div className="mt-2 flex justify-center gap-1">
+        {suggestions.slice(0, 4).map((s, idx) => (
+          <button
+            key={`dot-${s.id}`}
+            type="button"
+            onClick={() => setShowing(idx)}
+            className={`h-1.5 rounded-full transition-all ${
+              idx === showing % suggestions.length
+                ? 'w-4 bg-degen-500'
+                : 'w-1.5 bg-[var(--color-muted)]/30'
+            }`}
+            aria-label={`Show suggestion ${idx + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Main FeedList component ─────────────────────────────────── */
+
 export const FeedList = memo(function FeedList({
   state,
   posts,
@@ -147,10 +308,18 @@ export const FeedList = memo(function FeedList({
   onAdminBan,
   onWhyThisPost,
   emptySlot,
+  endOfFeedSuggestions,
+  endOfFeedSlot,
+  onDiscoveryClick,
+  onPostVisibility,
 }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const SCROLL_KEY = 'df_scroll';
+
+  // Track previously seen post IDs so new loads animate in, existing ones don't re-animate
+  const seenIdsRef = useRef(new Set<string>());
+  const [renderTick, setRenderTick] = useState(0);
 
   // Filter out blocked/muted users from the feed
   const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set());
@@ -179,6 +348,24 @@ export const FeedList = memo(function FeedList({
     () => posts.filter((p) => !blockedIds.has(p.author.id) && !mutedIds.has(p.author.id)),
     [posts, blockedIds, mutedIds],
   );
+
+  // Track new posts for animation: mark all current posts as seen after render
+  useEffect(() => {
+    if (state === 'loaded' && filteredPosts.length > 0) {
+      const ids = filteredPosts.map((p) => p.id);
+      let hasNew = false;
+      for (const id of ids) {
+        if (!seenIdsRef.current.has(id)) {
+          hasNew = true;
+          seenIdsRef.current.add(id);
+        }
+      }
+      if (hasNew) {
+        // Trigger a re-render so new posts get the animation class
+        setRenderTick((t) => t + 1);
+      }
+    }
+  }, [filteredPosts, state]);
 
   // Scroll position restore
   useEffect(() => {
@@ -289,6 +476,31 @@ export const FeedList = memo(function FeedList({
     return () => observer.disconnect();
   }, [hasMore, onLoadMore]);
 
+  // Post visibility tracking for dwell-time (boredom detection)
+  useEffect(() => {
+    if (!onPostVisibility || state !== 'loaded') return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const postEls = container.querySelectorAll<HTMLElement>('[data-post-id]');
+    if (!postEls.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const postId = (entry.target as HTMLElement).getAttribute('data-post-id');
+          if (postId) {
+            onPostVisibility(postId, entry.isIntersecting);
+          }
+        }
+      },
+      { threshold: 0.3 },
+    );
+
+    for (const el of postEls) observer.observe(el);
+    return () => observer.disconnect();
+  }, [state, filteredPosts.length, onPostVisibility, renderTick]);
+
   if (state === 'loading') {
     return <CardSkeleton count={5} avatar lines={3} />;
   }
@@ -299,8 +511,13 @@ export const FeedList = memo(function FeedList({
 
   if (state === 'empty' || filteredPosts.length === 0) {
     if (emptySlot) return <>{emptySlot}</>;
-    return <EmptyState protocolLabel={protocolLabel} protocolColor={protocolColor} onSignIn={onSignIn} />;
+    return (
+      <EmptyState protocolLabel={protocolLabel} protocolColor={protocolColor} onSignIn={onSignIn} />
+    );
   }
+
+  const hasEndOfFeed = !hasMore && filteredPosts.length > 0;
+  const suggestions = endOfFeedSuggestions ?? [];
 
   return (
     <div
@@ -308,15 +525,16 @@ export const FeedList = memo(function FeedList({
       role="feed"
       aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
     >
-      <div className="reveal-enter" key={filteredPosts.map((p) => p.id).join('')}>
-        {filteredPosts.map((post, i) => (
-          <div
+      {filteredPosts.map((post, i) => {
+        const isNew = !seenIdsRef.current.has(post.id);
+        return (
+          <article
             key={post.id}
             id={`post-${post.id}`}
             data-post-id={post.id}
             tabIndex={-1}
-            role="article"
             aria-label={`Post by ${post.author.displayName || 'unknown'}`}
+            className={isNew ? 'feed-item-enter' : ''}
             style={
               {
                 contentVisibility: 'auto',
@@ -337,9 +555,11 @@ export const FeedList = memo(function FeedList({
               onAdminBan={onAdminBan}
               onWhyThisPost={onWhyThisPost}
             />
-          </div>
-        ))}
-      </div>
+          </article>
+        );
+      })}
+
+      {/* ── Scroll sentinel for infinite scroll ── */}
       {hasMore && (
         <div
           ref={sentinelRef}
@@ -351,6 +571,45 @@ export const FeedList = memo(function FeedList({
           </span>
         </div>
       )}
+
+      {/* ── End-of-feed discovery cards ── */}
+      {hasEndOfFeed && !endOfFeedSlot && suggestions.length > 0 && (
+        <div className="end-of-feed-section border-b border-[var(--color-glass-border)] px-4 py-8">
+          <div className="mb-5 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500/20 to-transparent">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-degen-400"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" />
+              </svg>
+            </div>
+            <p className="text-sm font-semibold text-[var(--color-fg)]">
+              You&apos;re all caught up!
+            </p>
+            <p className="mt-1 text-xs text-[var(--color-muted)]">
+              Explore more topics or check back later for new posts.
+            </p>
+          </div>
+          <div className="mx-auto max-w-lg space-y-3">
+            {suggestions.map((s) => (
+              <DiscoveryCard key={s.id} suggestion={s} onClick={() => onDiscoveryClick?.(s.id)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Custom end-of-feed slot ── */}
+      {hasEndOfFeed && endOfFeedSlot}
     </div>
   );
 });

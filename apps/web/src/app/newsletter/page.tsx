@@ -2,6 +2,7 @@
 
 import { getProtocolColor } from '@degenfeed/ui';
 import { useCallback, useState } from 'react';
+import { QuickTipButton } from '../../components/QuickTipButton';
 
 const ALL_NICHES = [
   { id: 'bitcoin', label: 'Bitcoin' },
@@ -410,6 +411,15 @@ export default function NewsletterPage() {
                         Read more →
                       </a>
                     )}
+                    <div className="mt-2 flex items-center justify-between">
+                      <QuickTipButton
+                        recipientProtocol={item.protocol}
+                        recipientAuthorId={item.author}
+                        recipientDisplayName={item.author}
+                        publicationId={item.id}
+                        subtle
+                      />
+                    </div>
                   </div>
                 ))}
                 {digestMeta && (

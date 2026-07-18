@@ -163,7 +163,7 @@ export default function SubscriptionsPage() {
                   </div>
                   <Link
                     href={`/subscribe/${encodeURIComponent(sub.creator)}`}
-                    className="shrink-0 rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
+                    className="shrink-0 rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
                   >
                     Manage
                   </Link>
