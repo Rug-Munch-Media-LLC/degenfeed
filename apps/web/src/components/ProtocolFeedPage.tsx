@@ -474,8 +474,8 @@ export function ProtocolFeedPage({ protocol }: Props) {
                 <button
                   type="button"
                   onClick={handleRetry}
-                  className="mt-4 rounded-lg px-4 py-2 text-sm font-medium text-white transition-all"
-                  style={{ backgroundColor: config.color }}
+                  className="mt-4 rounded-lg px-4 py-2 text-sm font-medium transition-all"
+                  style={{ backgroundColor: config.color, color: '#fff' }}
                 >
                   Retry
                 </button>

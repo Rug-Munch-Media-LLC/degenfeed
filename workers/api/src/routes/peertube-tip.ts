@@ -15,6 +15,7 @@
  * NotificationBell can pick up.
  */
 
+import { identityKey } from '@degenfeed/utils';
 import { type Env, jsonResponse } from '../index';
 import { hasSuspiciousPayload, isValidAmount, sanitizeString, validateBodySize } from '../sanitize';
 import { recordUnifiedTip } from './unified-tip';
@@ -220,6 +221,25 @@ export async function recordPeerTubeTip(
   }
   await putLeaderboard(env, leaderboard);
 
+  // ─── Identity lookup for cross-registered users ──────────────
+  // If recipientUserId looks like a wallet address, resolve linked
+  // identities to surface the recipient's wallet for notifications.
+  let resolvedUserId = input.recipientUserId || creatorChannel;
+  if (!/^0x[a-f0-9]{40}$/i.test(resolvedUserId) && !/^[1-9a-hj-z]{32,44}$/.test(resolvedUserId) && env.IDENTITIES) {
+    try {
+      const key = identityKey(resolvedUserId);
+      const raw = await env.IDENTITIES?.get(key);
+      if (raw) {
+        const identity = JSON.parse(raw) as Record<string, unknown>;
+        if (identity.walletAddress && /^0x[a-f0-9]{40}$/i.test(identity.walletAddress as string)) {
+          resolvedUserId = identity.walletAddress as string;
+        }
+      }
+    } catch {
+      // Best-effort
+    }
+  }
+
   // ─── Record in the unified cross-platform ledger ─────────────
   await recordUnifiedTip(env, {
     platform: 'peertube',
@@ -227,7 +247,7 @@ export async function recordPeerTubeTip(
     entityType: 'video',
     amountUsd: roundedAmount,
     fromUserId: sender || undefined,
-    toUserId: input.recipientUserId || creatorChannel,
+    toUserId: resolvedUserId,
     fromLabel: input.senderLabel,
     toLabel: creatorName,
     entityLabel: videoTitle,

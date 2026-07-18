@@ -32,7 +32,7 @@ import { hasSuspiciousPayload, sanitizeString, validateBodySize } from '../sanit
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-export type TipPlatform = 'degenfeed' | 'lemmy' | 'peertube';
+export type TipPlatform = 'degenfeed' | 'lemmy' | 'peertube' | 'bluesky' | 'mastodon';
 export type TipEntityType = 'post' | 'comment' | 'video' | 'space';
 export type TipPeriod = 'daily' | 'weekly' | 'monthly' | 'alltime';
 
@@ -126,7 +126,7 @@ export interface ActivityItem {
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
-const PLATFORMS = new Set<string>(['degenfeed', 'lemmy', 'peertube']);
+const PLATFORMS = new Set<string>(['degenfeed', 'lemmy', 'peertube', 'bluesky', 'mastodon']);
 const ENTITY_TYPES = new Set<string>(['post', 'comment', 'video', 'space']);
 const PERIODS: TipPeriod[] = ['daily', 'weekly', 'monthly', 'alltime'];
 
@@ -492,6 +492,38 @@ export async function handleUnifiedTipCreate(request: Request, env: Env): Promis
           senderLabel: sanitizeString(body.fromLabel, 64) || undefined,
           currency: method,
           recipientUserId: toUserId,
+        });
+        return jsonResponse({ success: true, platform, entityId, ...result });
+      }
+
+      case 'bluesky': {
+        const { recordBlueskyTip } = await import('./bluesky-tip');
+        const result = await recordBlueskyTip(env, {
+          postId: entityId,
+          authorDid: toUserId || sanitizeString(payload.authorDid, 256) || entityId,
+          authorHandle: sanitizeString(body.toLabel, 64),
+          amountUsd,
+          currency: method,
+          method,
+          from: fromUserId,
+          fromLabel: sanitizeString(body.fromLabel, 64) || undefined,
+          toLabel: sanitizeString(body.toLabel, 64) || undefined,
+        });
+        return jsonResponse({ success: true, platform, entityId, ...result });
+      }
+
+      case 'mastodon': {
+        const { recordMastodonTip } = await import('./mastodon-tip');
+        const result = await recordMastodonTip(env, {
+          statusId: entityId,
+          authorAcct: toUserId || sanitizeString(payload.authorAcct, 256) || entityId,
+          authorDisplayName: sanitizeString(body.toLabel, 64),
+          amountUsd,
+          currency: method,
+          method,
+          from: fromUserId,
+          fromLabel: sanitizeString(body.fromLabel, 64) || undefined,
+          toLabel: sanitizeString(body.toLabel, 64) || undefined,
         });
         return jsonResponse({ success: true, platform, entityId, ...result });
       }

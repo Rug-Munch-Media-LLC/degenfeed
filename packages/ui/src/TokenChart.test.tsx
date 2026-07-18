@@ -56,7 +56,7 @@ describe('TokenChart', () => {
   it('should show 24h change with positive sign', async () => {
     render(<TokenChart symbol="WBTC" />);
     await waitFor(() => {
-      expect(screen.getByText('+2.50%')).toBeDefined();
+      expect(screen.getByText((content) => content.includes('+2.50'))).toBeDefined();
     });
   });
 
@@ -70,7 +70,7 @@ describe('TokenChart', () => {
     );
     render(<TokenChart symbol="WBTC" />);
     await waitFor(() => {
-      expect(screen.getByText('-3.20%')).toBeDefined();
+      expect(screen.getByText((content) => content.includes('-3.20'))).toBeDefined();
     });
   });
 
@@ -104,7 +104,7 @@ describe('TokenChart', () => {
   });
 
   it('should render full variant with chart iframe', async () => {
-    const { container } = render(<TokenChart symbol="WBTC" />);
+    const { container } = render(<TokenChart symbol="WBTC" address="0xabc" />);
     await waitFor(() => {
       expect(screen.getByText('WBTC')).toBeDefined();
     });

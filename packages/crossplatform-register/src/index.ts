@@ -5,6 +5,22 @@
  * Premium users can create accounts on Farcaster, Lens, Bluesky,
  * Mastodon, and Nostr with a single call — we handle fees, gas,
  * invite codes, and key generation.
+ *
+ * PROTOCOL-SPECIFIC FEES:
+ * ──────────────────────────────────────────────────────────────
+ * Farcaster: ~$5 registration fee (IdRegistry contract on Base).
+ *            Covered by the premium wallet during the first month.
+ *            After the first month, users must maintain premium
+ *            to keep the account or pay renewal fees directly.
+ *
+ * Lens:      Gas fees on Polygon (~$0.01-0.05). No platform fee.
+ *            Supported by premium wallet for first month.
+ *
+ * Bluesky:   Free (invite code from provider pool). No blockchain tx.
+ *
+ * Mastodon:  Free on social.degenfeed.xyz instance. No fees.
+ *
+ * Nostr:     Free (local key generation). No blockchain tx.
  */
 
 import { BskyClient } from '@degenfeed/bluesky-sdk';

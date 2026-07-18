@@ -161,6 +161,7 @@ describe('PostCard', () => {
 
   it('should render Tip button', () => {
     renderPostCard();
-    expect(screen.getByText('⚡Tip')).toBeDefined();
+    // QuickTipButton renders ⚡ and Tip as separate spans; find by accessible label
+    expect(screen.getByLabelText('Tip author')).toBeDefined();
   });
 });

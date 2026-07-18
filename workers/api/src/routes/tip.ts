@@ -8,6 +8,7 @@ import {
   sanitizeString,
   validateBodySize,
 } from '../sanitize';
+import { identityKey } from '@degenfeed/utils';
 import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
 import { buildLensCollectIntent } from './lens';
 import { fetchZapInvoice, resolveLnurlFromPubkey } from './lightning';
@@ -130,7 +131,7 @@ export function rankMethods(
       break;
     case 'farcaster':
       if (author?.farcasterCustodyAddress) {
-        nativeMethod = 'base';  // Base chain for Farcaster
+        nativeMethod = 'farcaster_frame';
       } else if (author?.evmAddress) {
         nativeMethod = 'ethereum';
       }
@@ -193,7 +194,11 @@ export function rankMethods(
     return { ...m, rank };
   });
 
-  ranked.sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+  ranked.sort((a, b) => {
+    // Unavailable methods sort after available ones
+    if (a.available !== b.available) return a.available ? -1 : 1;
+    return (a.rank ?? 99) - (b.rank ?? 99);
+  });
 
   // Mark the first available method as recommended
   const firstAvailable = ranked.find((m) => m.available);
@@ -288,8 +293,14 @@ function buildBaseMethods(protocol: string, env: Env): ResolvedTipMethod[] {
       break;
 
     case 'bluesky':
-    case 'threads':
     case 'mastodon':
+    case 'threads':
+      // Bluesky and Mastodon use generic tipping methods (ETH, SOL, USDC)
+      // through the unified DegenFeed pipeline. No protocol-specific method
+      // is needed — the generic onchain_tip/ethereum/base/solana methods
+      // are sufficient. Dedicated platform routes (/api/bluesky/tip,
+      // /api/mastodon/tip) handle platform-specific KV storage and
+      // unified-ledger recording.
       break;
 
     default:
@@ -310,6 +321,68 @@ export async function handleTipResolve(request: Request, env: Env): Promise<Resp
   }
 
   const postContext = parsePostContext(postContextParam);
+
+  // ── Identity KV lookup for cross-registered users ──────────────
+  // If the postContext has no author addresses and the authorId looks
+  // like a wallet address, look up the recipient's cross-platform identity
+  // from KV to fill in missing wallet addresses for tipping.
+  if (
+    (!postContext?.author?.evmAddress &&
+      !postContext?.author?.solanaAddress &&
+      !postContext?.author?.farcasterCustodyAddress) &&
+    (/^0x[a-f0-9]{40}$/i.test(authorId) || /^[1-9a-hj-z]{32,44}$/.test(authorId))
+  ) {
+    try {
+      const key = identityKey(authorId);
+      const raw = await env.IDENTITIES?.get(key);
+      if (raw) {
+        const identity = JSON.parse(raw) as Record<string, unknown>;
+        const author: Record<string, string | undefined> = {};
+
+        // Wallet address as EVM address
+        if (
+          identity.walletAddress &&
+          /^0x[a-f0-9]{40}$/i.test(identity.walletAddress as string) &&
+          !postContext?.author?.evmAddress
+        ) {
+          author.evmAddress = (identity.walletAddress as string).toLowerCase();
+        }
+
+        // Farcaster custody address from linked identity
+        if (!author.evmAddress && identity.farcaster && typeof identity.farcaster === 'object') {
+          const fc = identity.farcaster as Record<string, unknown>;
+          if (fc.custodyAddress && !postContext?.author?.farcasterCustodyAddress) {
+            author.farcasterCustodyAddress = fc.custodyAddress as string;
+          }
+          if (fc.custodyAddress && !postContext?.author?.evmAddress) {
+            author.evmAddress = fc.custodyAddress as string;
+          }
+        }
+
+        // Lens profile from linked identity
+        if (!postContext?.author?.lensProfile && identity.lens && typeof identity.lens === 'object') {
+          const lens = identity.lens as Record<string, unknown>;
+          if (lens.handle) author.lensProfile = lens.handle as string;
+        }
+
+        // Solana wallet from identity walletAddress
+        if (
+          !postContext?.author?.solanaAddress &&
+          identity.walletAddress &&
+          /^[1-9a-hj-z]{32,44}$/.test(identity.walletAddress as string)
+        ) {
+          author.solanaAddress = identity.walletAddress as string;
+        }
+
+        // Merge into postContext if we found anything
+        if (Object.keys(author).length > 0 && postContext) {
+          postContext.author = { ...(postContext.author || {}), ...author } as TipPostContext['author'];
+        }
+      }
+    } catch {
+      // Identity lookup is best-effort — don't break tip resolution
+    }
+  }
 
   const baseMethods = buildBaseMethods(protocol, env);
   const rankedMethods = rankMethods(baseMethods, protocol, postContext);

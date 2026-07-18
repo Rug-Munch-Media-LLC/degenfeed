@@ -147,12 +147,12 @@ export async function recordThreadRelationship(
  */
 export async function storeCrosspostSiblings(
   env: Env,
-  results: Record<string, { success?: boolean; error?: string; hash?: string }>,
+  results: Record<string, { success?: boolean; ok?: boolean; error?: string; hash?: string }>,
 ): Promise<void> {
   const cache = env.CACHE;
   if (!cache) return;
   const published = Object.entries(results).filter(
-    ([protocol, r]) => r.success && r.hash && ALLOWED_PROTOCOLS.has(protocol),
+    ([protocol, r]) => (r.success || r.ok) && r.hash && ALLOWED_PROTOCOLS.has(protocol),
   );
   if (published.length < 2) return;
   const siblings: CrosspostSibling[] = published.map(([protocol, r]) => ({
