@@ -8,28 +8,31 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
-import { PostContextMenu, useContextMenu } from '../../components/PostContextMenu';
-import { retryFetch } from '../../lib/retryFetch';
-import { getCached, setCache } from '../../lib/fetchWithCache';
-import { useSwipeTabs } from '../../hooks/useSwipeTabs';
-import { useFeedPosition } from '../../hooks/useFeedPosition';
-import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
+import { ContextualTooltip } from '../../components/ContextualTooltip';
 import { FeedComposer } from '../../components/FeedComposer';
 import { FeedLayoutSwitcher } from '../../components/FeedLayoutSwitcher';
 import { FeedSidebar } from '../../components/FeedSidebar';
-import { useToast } from '../../components/Toast';
-import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
-import { useFeedLayout } from '../../hooks/useFeedLayout';
-import { useNotifications } from '../../hooks/useNotifications';
 import {
-  FeedTuner,
-  type TopicDef,
-  TOPICS,
-  getDefaultWeights,
-  encodeTopicWeights,
   countTunedTopics,
+  encodeTopicWeights,
+  FeedTuner,
+  getDefaultWeights,
+  TOPICS,
+  type TopicDef,
 } from '../../components/FeedTuner';
+import { GettingStartedChecklist } from '../../components/GettingStartedChecklist';
+import { GuidedTour } from '../../components/GuidedTour';
 import { PostCardPrefetcher } from '../../components/PostCardPrefetcher';
+import { PostContextMenu, useContextMenu } from '../../components/PostContextMenu';
+import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
+import { useToast } from '../../components/Toast';
+import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
+import { useFeedLayout } from '../../hooks/useFeedLayout';
+import { useFeedPosition } from '../../hooks/useFeedPosition';
+import { useNotifications } from '../../hooks/useNotifications';
+import { useSwipeTabs } from '../../hooks/useSwipeTabs';
+import { getCached, setCache } from '../../lib/fetchWithCache';
+import { retryFetch } from '../../lib/retryFetch';
 
 const TipModal = dynamic(
   () => import('../../components/TipModal').then((m) => ({ default: m.TipModal })),
@@ -77,11 +80,12 @@ const PROTOCOL_META: Record<string, { label: string; color: string; emoji: strin
 };
 
 // ─── Admin wallets ──────────────────────────────────────────────────
-const ADMIN_WALLETS_RAW = typeof process !== 'undefined'
-  ? (process.env.NEXT_PUBLIC_ADMIN_WALLETS || '')
-  : '';
+const ADMIN_WALLETS_RAW =
+  typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_ADMIN_WALLETS || '' : '';
 const ADMIN_WALLETS = new Set(
-  ADMIN_WALLETS_RAW.split(',').map((a) => a.trim().toLowerCase()).filter(Boolean),
+  ADMIN_WALLETS_RAW.split(',')
+    .map((a) => a.trim().toLowerCase())
+    .filter(Boolean),
 );
 
 export default function FeedPage() {
@@ -154,13 +158,10 @@ export default function FeedPage() {
     }, 2000);
   }, []);
 
-  const handleTunerWeightsChange = useCallback(
-    (weights: Record<string, number>) => {
-      setTopicWeights(weights);
-      // Real-time preview: don't persist yet, just update state for next feed fetch
-    },
-    [],
-  );
+  const handleTunerWeightsChange = useCallback((weights: Record<string, number>) => {
+    setTopicWeights(weights);
+    // Real-time preview: don't persist yet, just update state for next feed fetch
+  }, []);
 
   const handleTunerApply = useCallback(
     (weights: Record<string, number>) => {
@@ -410,7 +411,7 @@ export default function FeedPage() {
             setPosts(cached.posts);
             setFeedMeta(cached.meta ?? {});
             setState('loaded');
-            setError('Couldn\'t load feed. Showing cached version.');
+            setError("Couldn't load feed. Showing cached version.");
           } else {
             setError(err instanceof Error ? err.message : 'Failed');
             setState('error');
@@ -460,7 +461,14 @@ export default function FeedPage() {
 
     if ((action === 'bookmark' || action === 'unbookmark') && post.protocol !== 'mastodon') {
       try {
-        if (action === 'bookmark') await addBookmark(postId, post.dfUri ?? '', post.protocol, post.text.slice(0, 60), post.author.displayName || '');
+        if (action === 'bookmark')
+          await addBookmark(
+            postId,
+            post.dfUri ?? '',
+            post.protocol,
+            post.text.slice(0, 60),
+            post.author.displayName || '',
+          );
         else await removeBookmark(postId);
         return { ok: true };
       } catch (err) {
@@ -637,6 +645,8 @@ export default function FeedPage() {
 
   return (
     <ErrorBoundary>
+      {/* Guided tour — auto-detects if tour should show based on localStorage */}
+      <GuidedTour />
       <div
         className="mx-auto grid max-w-[1280px] grid-cols-1 gap-4 px-3 py-3 sm:px-4 lg:grid-cols-12"
         onTouchStart={(e) => {
@@ -687,7 +697,9 @@ export default function FeedPage() {
 
             {!hasSignedIn && (
               <div className="rounded-2xl border border-degen-500/30 bg-degen-500/5 p-4 backdrop-blur-xl">
-                <p className="mb-1 text-sm font-semibold text-[var(--color-fg)]">Sign in to post & engage</p>
+                <p className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
+                  Sign in to post & engage
+                </p>
                 <p className="mb-3 text-xs text-gray-400">
                   Browse without an account. Sign in with one click to like, reply, and cross-post.
                 </p>
@@ -715,79 +727,95 @@ export default function FeedPage() {
                   className="h-9 w-9 rounded-xl logo-glow shadow-[0_0_14px_rgba(0,255,65,0.3)]"
                 />
                 <div>
-                  <h1 className="text-lg font-bold text-[var(--color-fg)] leading-none">DegenFeed</h1>
+                  <h1 className="text-lg font-bold text-[var(--color-fg)] leading-none">
+                    DegenFeed
+                  </h1>
                   <p className="text-[10px] text-gray-500">
                     {activeTab === 'for-you' ? 'Your unified timeline' : 'Posts you follow'}
                   </p>
                 </div>
               </div>
-                <div className="flex items-center gap-2">
-                  {/* ── Tune Feed button ── */}
-                  <button
-                    type="button"
-                    onClick={() => setShowTuner(true)}
-                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
-                    aria-label="Tune your feed"
-                    title="Tune your feed — control topic visibility"
-                  >
-                    <span className="text-sm">🎚️</span>
-                    {countTunedTopics(topicWeights) > 0 && (
-                      <span className="hidden sm:inline text-degen-400">
-                        {countTunedTopics(topicWeights)} tuned
-                      </span>
-                    )}
-                  </button>
-              {hasSignedIn && (
-                <div className="flex items-center gap-2">
-                  <NotificationBell
-                    notifications={notifications}
-                    unreadCount={unreadCount}
-                    onFetch={fetchNotifications}
-                    onMarkRead={markRead}
-                  />
-                  <FeedLayoutSwitcher current={layout} onChange={setLayout} />
-                  <button
-                    type="button"
-                    onClick={signOut}
-                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-[var(--color-fg)] lg:hidden"
-                  >
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
+              <div className="flex items-center gap-2">
+                {/* ── Tune Feed button ── */}
+                <button
+                  type="button"
+                  onClick={() => setShowTuner(true)}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+                  aria-label="Tune your feed"
+                  title="Tune your feed — control topic visibility"
+                >
+                  <span className="text-sm">🎚️</span>
+                  {countTunedTopics(topicWeights) > 0 && (
+                    <span className="hidden sm:inline text-degen-400">
+                      {countTunedTopics(topicWeights)} tuned
+                    </span>
+                  )}
+                </button>
+                {hasSignedIn && (
+                  <div className="flex items-center gap-2">
+                    <NotificationBell
+                      notifications={notifications}
+                      unreadCount={unreadCount}
+                      onFetch={fetchNotifications}
+                      onMarkRead={markRead}
+                    />
+                    <FeedLayoutSwitcher current={layout} onChange={setLayout} />
+                    <button
+                      type="button"
+                      onClick={signOut}
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:bg-white/10 hover:text-[var(--color-fg)] lg:hidden"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Tabs */}
             <div className="feed-header-tabs flex" role="tablist" aria-label="Feed tabs">
-              <button
-                type="button"
-                onClick={() => setActiveTab('for-you')}
-                role="tab"
-                aria-selected={activeTab === 'for-you'}
-                className={`relative flex-1 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'for-you' ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
-                }`}
-              >
-                For You
-                {activeTab === 'for-you' && (
-                  <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('following')}
-                role="tab"
-                aria-selected={activeTab === 'following'}
-                className={`relative flex-1 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'following' ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
-                }`}
-              >
-                Following
-                {activeTab === 'following' && (
-                  <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
-                )}
-              </button>
+              <div className="relative flex-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('for-you')}
+                  role="tab"
+                  aria-selected={activeTab === 'for-you'}
+                  className={`w-full py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'for-you'
+                      ? 'text-[var(--color-fg)]'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  For You
+                  {activeTab === 'for-you' && (
+                    <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
+                  )}
+                </button>
+                <ContextualTooltip id="jk-keys" align="center" icon="⌨️">
+                  Use j/k keys to navigate between posts
+                </ContextualTooltip>
+              </div>
+              <div className="relative flex-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('following')}
+                  role="tab"
+                  aria-selected={activeTab === 'following'}
+                  className={`w-full py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'following'
+                      ? 'text-[var(--color-fg)]'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  Following
+                  {activeTab === 'following' && (
+                    <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
+                  )}
+                </button>
+                <ContextualTooltip id="ai-for-you" align="center" icon="🤖">
+                  Try the AI-powered For You feed instead
+                </ContextualTooltip>
+              </div>
             </div>
 
             {/* Protocol pills + filter */}
@@ -809,7 +837,9 @@ export default function FeedPage() {
                   type="button"
                   onClick={() => handleProtocolFilter(p.id)}
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                    protocolFilter === p.id ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
+                    protocolFilter === p.id
+                      ? 'text-[var(--color-fg)]'
+                      : 'text-gray-500 hover:text-gray-300'
                   }`}
                   style={
                     protocolFilter === p.id
@@ -828,31 +858,31 @@ export default function FeedPage() {
             </div>
 
             {/* Personalization bar for For You tab */}
-          {activeTab === 'for-you' && feedMeta.personalization && (
-            <div className="border-t border-degen-500/20 bg-degen-500/5 px-4 py-2 text-[11px] text-gray-400">
-              <span className="font-semibold text-degen-400">For You</span>
-              {' — '}
-              {feedMeta.personalization.isOnboarding
-                ? 'New user mode: showing trending content to learn what you like. Like, repost, or bookmark posts to personalize your feed.'
-                : feedMeta.personalization.reasons && feedMeta.personalization.reasons.length > 0
-                  ? `Personalized: ${feedMeta.personalization.reasons.slice(0, 3).join(' · ')}`
-                  : 'Personalized based on your activity'}
-              {feedMeta.personalization.hasProfile && (
-                <a
-                  href="/profile/preferences#topics"
-                  className="ml-2 text-degen-500 hover:text-degen-400 underline decoration-dotted"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = '/profile/preferences#topics';
-                  }}
-                >
-                  Manage topics
-                </a>
-              )}
-            </div>
-          )}
+            {activeTab === 'for-you' && feedMeta.personalization && (
+              <div className="border-t border-degen-500/20 bg-degen-500/5 px-4 py-2 text-[11px] text-gray-400">
+                <span className="font-semibold text-degen-400">For You</span>
+                {' — '}
+                {feedMeta.personalization.isOnboarding
+                  ? 'New user mode: showing trending content to learn what you like. Like, repost, or bookmark posts to personalize your feed.'
+                  : feedMeta.personalization.reasons && feedMeta.personalization.reasons.length > 0
+                    ? `Personalized: ${feedMeta.personalization.reasons.slice(0, 3).join(' · ')}`
+                    : 'Personalized based on your activity'}
+                {feedMeta.personalization.hasProfile && (
+                  <a
+                    href="/profile/preferences#topics"
+                    className="ml-2 text-degen-500 hover:text-degen-400 underline decoration-dotted"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = '/profile/preferences#topics';
+                    }}
+                  >
+                    Manage topics
+                  </a>
+                )}
+              </div>
+            )}
 
-          {/* Quality controls */}
+            {/* Quality controls */}
             <div className="quality-controls flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--color-glass-border)] px-4 py-2 text-[11px] text-gray-400">
               <button
                 type="button"
@@ -1054,15 +1084,11 @@ export default function FeedPage() {
 
           {/* New posts pill */}
           {newAvailable && (
-              <button
-                type="button"
-                onClick={refreshNow}
-                className="new-posts-pill"
-              >
-                <span className="pulse-dot" />
-                <span className="df-label">New posts available</span>
-                <span className="df-arrow">↑</span>
-              </button>
+            <button type="button" onClick={refreshNow} className="new-posts-pill">
+              <span className="pulse-dot" />
+              <span className="df-label">New posts available</span>
+              <span className="df-arrow">↑</span>
+            </button>
           )}
 
           {/* Notices */}
@@ -1098,7 +1124,7 @@ export default function FeedPage() {
             })()}
 
           {/* Feed */}
-          <div>
+          <div className="relative">
             <FeedList
               state={state}
               posts={posts}
@@ -1121,6 +1147,13 @@ export default function FeedPage() {
               }}
             />
 
+            {/* Bookmark tooltip — appears near the first post's bookmark button */}
+            {hasSignedIn && (
+              <ContextualTooltip id="bookmark-posts" align="left" icon="🔖">
+                Bookmark posts to save them for later
+              </ContextualTooltip>
+            )}
+
             {/* Right-click context menu */}
             {contextMenu && (
               <PostContextMenu
@@ -1142,11 +1175,8 @@ export default function FeedPage() {
           </div>
 
           {activeTab === 'following' && state === 'empty' && (
-            <div className="border-b border-[var(--color-glass-border)] px-4 py-10 text-center">
-              <p className="text-gray-400">You are not following anyone yet.</p>
-              <p className="mt-1 text-xs text-gray-600">
-                Tap the Follow button on any post to build your timeline.
-              </p>
+            <div className="border-b border-[var(--color-glass-border)] px-4 py-6">
+              <GettingStartedChecklist />
             </div>
           )}
 
@@ -1166,7 +1196,12 @@ export default function FeedPage() {
                     aria-label="Close"
                   >
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path
+                        d="M12 4L4 12M4 4l8 8"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -1177,10 +1212,12 @@ export default function FeedPage() {
                       <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
                         <span className="mt-0.5 shrink-0 text-degen-400">◆</span>
                         <span>
-                          {reason === 'fresh' && 'This post is recent — fresh content gets priority'}
+                          {reason === 'fresh' &&
+                            'This post is recent — fresh content gets priority'}
                           {reason === 'viral' && 'High engagement — lots of likes and reposts'}
                           {reason === 'on-topic' && 'Matches topics you care about'}
-                          {reason === 'original-content' && 'Original content — not a repost or link drop'}
+                          {reason === 'original-content' &&
+                            'Original content — not a repost or link drop'}
                           {reason === 'media' && 'Contains images or video'}
                           {reason === 'verified-author' && 'Published by a verified author'}
                           {reason === 'established-author' && 'From an established account'}
@@ -1201,24 +1238,43 @@ export default function FeedPage() {
                           {reason === 'trending content' && (
                             <span className="text-degen-400">Trending across the network</span>
                           )}
-                          {!['fresh', 'viral', 'on-topic', 'original-content', 'media', 'verified-author', 'established-author', 'trending-now', 'followed'].includes(reason) &&
-                           !reason.startsWith('you like') &&
-                           !reason.startsWith('you follow') &&
-                           !reason.startsWith('you engage on') &&
-                           reason !== 'recently active in this topic' &&
-                           reason !== 'trending content' && reason}
+                          {![
+                            'fresh',
+                            'viral',
+                            'on-topic',
+                            'original-content',
+                            'media',
+                            'verified-author',
+                            'established-author',
+                            'trending-now',
+                            'followed',
+                          ].includes(reason) &&
+                            !reason.startsWith('you like') &&
+                            !reason.startsWith('you follow') &&
+                            !reason.startsWith('you engage on') &&
+                            reason !== 'recently active in this topic' &&
+                            reason !== 'trending content' &&
+                            reason}
                         </span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-gray-500">Scored by the DegenFeed ranking algorithm based on recency, engagement, quality, and relevance signals.</p>
+                  <p className="text-xs text-gray-500">
+                    Scored by the DegenFeed ranking algorithm based on recency, engagement, quality,
+                    and relevance signals.
+                  </p>
                 )}
 
                 {explainPost.score && (
                   <div className="mt-3 border-t border-[var(--color-glass-border)] pt-2">
                     <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>Algorithm score: <strong className="text-degen-400">{Math.round(explainPost.score.total * 10) / 10}</strong></span>
+                      <span>
+                        Algorithm score:{' '}
+                        <strong className="text-degen-400">
+                          {Math.round(explainPost.score.total * 10) / 10}
+                        </strong>
+                      </span>
                       <span className="text-[10px] text-gray-600">★ Score breakdown</span>
                     </div>
                     <div className="mt-1.5 flex flex-wrap gap-2 text-[10px] text-gray-500">
@@ -1232,7 +1288,8 @@ export default function FeedPage() {
                 )}
 
                 <p className="mt-3 text-[10px] text-gray-600">
-                  Tip: The more you like, repost, and bookmark, the better your For You feed becomes.
+                  Tip: The more you like, repost, and bookmark, the better your For You feed
+                  becomes.
                 </p>
               </div>
             </div>
@@ -1241,7 +1298,9 @@ export default function FeedPage() {
           {/* Bottom CTA — repeat sign-in pitch */}
           {!hasSignedIn && state === 'loaded' && (
             <div className="m-4 rounded-2xl border border-degen-500/30 bg-gradient-to-br from-degen-500/10 to-transparent p-5 text-center">
-              <p className="mb-1 text-sm font-semibold text-[var(--color-fg)]">Liking what you see?</p>
+              <p className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
+                Liking what you see?
+              </p>
               <p className="mb-4 text-xs text-gray-400">
                 Sign in once to post, like, and reply across all 8 networks.
               </p>
@@ -1254,7 +1313,10 @@ export default function FeedPage() {
 
         {/* Right sidebar */}
         <aside className="sidebar hidden lg:col-span-4 lg:block xl:col-span-3">
-          <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+          <div
+            className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto"
+            style={{ scrollbarWidth: 'thin' }}
+          >
             <FeedSidebar
               trending={feedMeta.trending ?? []}
               protocolSummaries={protocolSummaries}

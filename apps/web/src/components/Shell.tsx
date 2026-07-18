@@ -1,32 +1,33 @@
 'use client';
 
 import { RealtimeStatusDot } from '@degenfeed/realtime';
+import { ScrollToTop } from '@degenfeed/ui';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useFeedLayout } from '../hooks/useFeedLayout';
 import { OnboardingProvider } from '../hooks/useOnboarding';
+import { useRecentVisited } from '../hooks/useRecentVisited';
+import { ActivityTicker } from './ActivityTicker';
 import { AddToHomeScreenToast } from './AddToHomeScreenToast';
-import { OfflineBanner } from './OfflineBanner';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
-import { FeedLayoutSwitcher } from './FeedLayoutSwitcher';
-import { StreakFlame } from './StreakFlame';
+import { ContextualTooltip } from './ContextualTooltip';
 import { DailyChallenges } from './DailyChallenges';
-import { ActivityTicker } from './ActivityTicker';
+import { FeedLayoutSwitcher } from './FeedLayoutSwitcher';
 import { InstallPrompt } from './InstallPrompt';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { OfflineBanner } from './OfflineBanner';
 import { OnboardingModal } from './OnboardingModal';
-import { WelcomeBackModal } from './WelcomeBackModal';
-import { ScrollToTop } from '@degenfeed/ui';
 import { QuickJumpFloating } from './QuickJumpFloating';
 import { RecentlyVisited } from './RecentlyVisited';
-import { SearchOverlay } from './SearchOverlay';
 import { ScreenReaderAnnouncerProvider } from './ScreenReaderAnnouncer';
+import { SearchOverlay } from './SearchOverlay';
 import { SkipLinks } from './SkipLinks';
-import { useRecentVisited } from '../hooks/useRecentVisited';
+import { StreakFlame } from './StreakFlame';
 import { useToast } from './Toast';
+import { WelcomeBackModal } from './WelcomeBackModal';
 
 // ─── Protocol nav items ──────────────────────────────────────────────────
 
@@ -144,7 +145,11 @@ function Logo() {
       />
       <span
         className="shell-logo-text text-lg font-bold"
-        style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)', letterSpacing: '-0.03em' }}
+        style={{
+          color: 'var(--color-fg)',
+          fontFamily: 'var(--font-heading)',
+          letterSpacing: '-0.03em',
+        }}
       >
         DegenFeed
       </span>
@@ -158,8 +163,14 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
 
   // Priority prefetch for above-the-fold routes
   const priorityRoutes = new Set([
-    '/feed', '/discover', '/trending', '/shorts',
-    '/notifications', '/messages', '/search', '/home',
+    '/feed',
+    '/discover',
+    '/trending',
+    '/shorts',
+    '/notifications',
+    '/messages',
+    '/search',
+    '/home',
   ]);
   const shouldPrefetch = priorityRoutes.has(item.href);
 
@@ -368,9 +379,18 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           <Logo />
 
           <nav className="hidden items-center gap-1 md:flex" aria-label="Primary" id="main-nav">
-            {NAV.map((item) => (
-              <NavLink key={item.href} item={item} />
-            ))}
+            {NAV.map((item) =>
+              item.href === '/feeds' ? (
+                <div key={item.href} className="relative">
+                  <NavLink item={item} />
+                  <ContextualTooltip id="custom-feeds" align="center" icon="🌟">
+                    New! Custom Feeds — build your own timeline
+                  </ContextualTooltip>
+                </div>
+              ) : (
+                <NavLink key={item.href} item={item} />
+              ),
+            )}
           </nav>
 
           <div className="hidden items-center gap-1 md:flex">
@@ -596,9 +616,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         <OnboardingProvider>
           <ScreenReaderAnnouncerProvider>
             <div className="mx-auto flex max-w-7xl gap-6 px-4">
-              <div className="min-w-0 flex-1">
-                {children}
-              </div>
+              <div className="min-w-0 flex-1">{children}</div>
               <aside className="hidden xl:block w-72 shrink-0 space-y-4 pt-2">
                 <DailyChallenges />
                 <ActivityTicker />
@@ -624,42 +642,90 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             </span>
           </div>
           <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--color-muted)' }}>
-            <Link href="/feed" prefetch={true} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/feed"
+              prefetch={true}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Feed
             </Link>
-            <Link href="/shorts" prefetch={true} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/shorts"
+              prefetch={true}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Shorts
             </Link>
-            <Link href="/c" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/c"
+              prefetch={false}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Communities
             </Link>
-            <Link href="/messages" prefetch={true} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/messages"
+              prefetch={true}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Messages
             </Link>
-            <Link href="/news" prefetch={true} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/news"
+              prefetch={true}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               News
             </Link>
-            <Link href="/docs" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/docs"
+              prefetch={false}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Docs
             </Link>
-            <Link href="/developers" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/developers"
+              prefetch={false}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Developers
             </Link>
-            <Link href="/premium" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/premium"
+              prefetch={false}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Premium
             </Link>
-            <Link href="/creator" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/creator"
+              prefetch={false}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Creator Studio
             </Link>
-            <Link href="/profile" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/profile"
+              prefetch={false}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Profile
             </Link>
           </div>
           <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-muted)' }}>
-            <Link href="/privacy" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/privacy"
+              prefetch={false}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Privacy
             </Link>
-            <Link href="/terms" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
+            <Link
+              href="/terms"
+              prefetch={false}
+              className="transition-colors hover:text-[var(--color-fg)]"
+            >
               Terms
             </Link>
             <Link
@@ -677,7 +743,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             No account required. Open source on{' '}
             <a
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
-              target="_blank" rel="noopener noreferrer"
+              target="_blank"
+              rel="noopener noreferrer"
               rel="noopener noreferrer"
               className="underline transition-all hover:brightness-150"
               style={{ color: 'var(--color-muted)' }}
@@ -687,7 +754,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             ,{' '}
             <a
               href="https://gitlab.com/cryptorugmuncher/degenfeed-web"
-              target="_blank" rel="noopener noreferrer"
+              target="_blank"
+              rel="noopener noreferrer"
               rel="noopener noreferrer"
               className="underline transition-all hover:brightness-150"
               style={{ color: 'var(--color-muted)' }}
@@ -697,7 +765,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             , and{' '}
             <a
               href="https://codeberg.org/cryptorugmunch/degenfeed-web"
-              target="_blank" rel="noopener noreferrer"
+              target="_blank"
+              rel="noopener noreferrer"
               rel="noopener noreferrer"
               className="underline transition-all hover:brightness-150"
               style={{ color: 'var(--color-muted)' }}

@@ -29,6 +29,10 @@
 
 import type { Protocol } from '@degenfeed/types';
 
+// ─── Re-exports ──────────────────────────────────────────────────────
+
+export { getFederatedFeed } from './federated';
+
 // ─── Constants ───────────────────────────────────────────────────────
 
 /** Default PeerTube instance (our self-hosted). */

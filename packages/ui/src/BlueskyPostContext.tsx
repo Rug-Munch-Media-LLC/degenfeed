@@ -217,7 +217,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
       {viewUrl && (
         <a
           href={viewUrl}
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center border-t border-[var(--color-glass-border)] px-4 py-2 text-xs text-blue-400 transition-colors hover:bg-white/[0.03] hover:text-blue-300"
           onClick={(e) => e.stopPropagation()}
@@ -247,7 +247,7 @@ export const BlueskyPostContext = memo(function BlueskyPostContext({
       {!viewUrl && did && (
         <a
           href={`https://bsky.app/profile/${did}`}
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center border-t border-[var(--color-glass-border)] px-4 py-2 text-xs text-blue-400 transition-colors hover:bg-white/[0.03] hover:text-blue-300"
           onClick={(e) => e.stopPropagation()}

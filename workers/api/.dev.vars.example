@@ -33,3 +33,11 @@ SOLANA_RPC_URL=
 
 # Optional: Sentry DSN for error reporting
 SENTRY_DSN=
+
+# ── Postiz cross-posting ──────────────────────────────────────
+# Base URL of the Postiz instance (default: http://127.0.0.1:3105)
+POSTIZ_BASE_URL=http://127.0.0.1:3105
+# API key generated via Postiz UI: Settings > Developers > Public API
+POSTIZ_API_KEY=
+# JSON map of platform -> Postiz integration ID, e.g.:
+# POSTIZ_INTEGRATIONS={"mastodon":"int-abc","bluesky":"int-def"}

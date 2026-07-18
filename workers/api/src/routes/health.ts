@@ -106,6 +106,20 @@ export async function handleProtocolsHealth(env: Env): Promise<Response> {
     };
   }
 
+  // ── Postiz cross-posting health ───────────────────────────────
+  if (env.POSTIZ_BASE_URL && env.POSTIZ_API_KEY) {
+    const postizStatus = await checkPostizHealth(env);
+    protocols['postiz'] = postizStatus;
+  } else {
+    protocols['postiz'] = {
+      status: 'down',
+      latency: 0,
+      lastChecked: now,
+      circuitBreakerOpen: false,
+      error: 'not configured',
+    };
+  }
+
   const values = Object.values(protocols);
   const body: ProtocolsHealthResponse = {
     protocols,
@@ -122,6 +136,51 @@ export async function handleProtocolsHealth(env: Env): Promise<Response> {
   await writeProtocolsCache(env, cacheKey, body);
 
   return jsonResponse(body);
+}
+
+// ─── Postiz health check ─────────────────────────────────────────
+
+/**
+ * Quick health check of the Postiz API.
+ * Uses a GET to /public/v1/posts — if it responds <500, Postiz is alive.
+ */
+async function checkPostizHealth(env: Env): Promise<ProtocolStatus> {
+  const now = Date.now();
+  try {
+    const start = performance.now();
+    const res = await fetch(`${env.POSTIZ_BASE_URL}/public/v1/posts`, {
+      method: 'GET',
+      headers: {
+        Authorization: env.POSTIZ_API_KEY ?? '',
+        'Content-Type': 'application/json',
+      },
+      signal: AbortSignal.timeout(5_000),
+    });
+    const latency = Math.round(performance.now() - start);
+    if (res.ok || res.status < 500) {
+      return {
+        status: 'up',
+        latency,
+        lastChecked: now,
+        circuitBreakerOpen: false,
+      };
+    }
+    return {
+      status: 'down',
+      latency,
+      lastChecked: now,
+      circuitBreakerOpen: false,
+      error: `Postiz returned ${res.status}`,
+    };
+  } catch (e) {
+    return {
+      status: 'down',
+      latency: 0,
+      lastChecked: now,
+      circuitBreakerOpen: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
 }
 
 // ─── KV-backed cache (30s TTL) ───────────────────────────────────

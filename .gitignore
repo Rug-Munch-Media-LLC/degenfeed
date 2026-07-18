@@ -28,6 +28,9 @@ yarn-debug.log
 dist/
 build/
 .next/
+
+# ── Generated seed data ──────────────────────────────────────
+/scripts/seed-data/
 .turbo/
 out/
 *.tsbuildinfo

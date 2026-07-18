@@ -163,7 +163,7 @@ export function ComposeModal({
   const [tokenGate, setTokenGate] = useState<TokenGate | null>(null);
   const [gateSymbol, setGateSymbol] = useState<string>('');
   const [gateResolving, setGateResolving] = useState(false);
-  const [gateError, setGateError] = useState<string | null>(null);
+  const [gateError, setGateError] = useState<string | undefined>(undefined);
   const gateResolveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Resolve symbol when gate config changes
@@ -173,11 +173,11 @@ export function ComposeModal({
     }
     if (!tokenGate) {
       setGateSymbol('');
-      setGateError(null);
+      setGateError(undefined);
       return;
     }
     setGateResolving(true);
-    setGateError(null);
+    setGateError(undefined);
     gateResolveTimeout.current = setTimeout(async () => {
       try {
         const sym = await resolveTokenGateSymbol(tokenGate);
@@ -1141,7 +1141,7 @@ export function ComposeModal({
                   {permanenceProof.arweaveTxId && (
                     <a
                       href={`https://arweave.net/${permanenceProof.arweaveTxId}`}
-                      target="_blank" rel="noopener noreferrer"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="ml-1 underline hover:text-[var(--color-fg)]"
                       onClick={(e) => e.stopPropagation()}
@@ -1152,7 +1152,7 @@ export function ComposeModal({
                   {permanenceProof.ipfsCid && (
                     <a
                       href={`https://ipfs.io/ipfs/${permanenceProof.ipfsCid}`}
-                      target="_blank" rel="noopener noreferrer"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="ml-1 underline hover:text-[var(--color-fg)]"
                       onClick={(e) => e.stopPropagation()}

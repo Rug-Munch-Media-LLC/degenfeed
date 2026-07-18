@@ -146,7 +146,7 @@ export const MastodonInstanceContext = memo(function MastodonInstanceContext({
       {/* ── "View original" link ── */}
       <a
         href={originalUrl}
-        target="_blank" rel="noopener noreferrer"
+        target="_blank"
         rel="noopener noreferrer"
         className="flex items-center justify-center border-t border-[var(--color-glass-border)] px-4 py-2 text-xs transition-colors"
         style={{ color: MASTODON_PURPLE }}

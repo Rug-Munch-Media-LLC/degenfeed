@@ -165,7 +165,7 @@ async function fetchFederatedFeed(
   signal?: AbortSignal,
 ): Promise<YouTubeVideoCardItem[]> {
   try {
-    const { getFederatedFeed } = await import('@degenfeed/peertube-provider/federated');
+    const { getFederatedFeed } = await import('@degenfeed/peertube-provider');
     const result = await getFederatedFeed({ sort, limit });
     return result.items.map((v) => ({
       id: `federated-${v.id}`,
