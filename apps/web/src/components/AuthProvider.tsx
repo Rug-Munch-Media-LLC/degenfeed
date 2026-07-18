@@ -24,26 +24,12 @@ import {
 
 const SignInModal = dynamic(
   () => import('@degenfeed/ui').then((m) => ({ default: m.SignInModal })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="animate-spin h-8 w-8 rounded-full border-2 border-degen-500 border-t-transparent" />
-      </div>
-    ),
-  },
+  { ssr: false, loading: () => null },
 );
 
 const ComposeModal = dynamic(
   () => import('@degenfeed/ui').then((m) => ({ default: m.ComposeModal })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-        <div className="animate-spin h-8 w-8 rounded-full border-2 border-degen-500 border-t-transparent" />
-      </div>
-    ),
-  },
+  { ssr: false, loading: () => null },
 );
 
 import { useWeb3 } from '../components/Web3Provider';
