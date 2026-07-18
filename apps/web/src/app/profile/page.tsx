@@ -522,6 +522,29 @@ export default function ProfilePage() {
 
             <div className="mb-6">
               <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
+                Achievements
+              </h2>
+              <a
+                href="/profile/achievements"
+                className="card-hover flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-500/10 text-yellow-400">
+                    <span className="text-lg">🏆</span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-[var(--color-fg)]">Achievements</div>
+                    <div className="text-xs text-gray-500">Track your badges and progress</div>
+                  </div>
+                </div>
+                <span className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400">
+                  View all
+                </span>
+              </a>
+            </div>
+
+            <div className="mb-6">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-widest text-gray-500">
                 Moderation
               </h2>
                 <div className="card-hover flex items-center justify-between">

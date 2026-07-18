@@ -16,6 +16,24 @@ const PRIORITY = new Set([
   '/feed', '/notifications', '/messages',
 ]);
 
+/**
+ * Simple feather-style SVG icons for bottom nav.
+ * Using inline SVGs avoids emoji rendering inconsistencies across platforms.
+ */
+const ICONS: Record<string, string> = {
+  '🏠': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+  '📱': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
+  '📋': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+  '🔍': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+  '🏆': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C5 4 6 3 7 2v4"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C19 4 18 3 17 2v4"/><path d="M6 9v4a6 6 0 0 0 12 0V9"/><path d="M8 22h8"/><path d="M12 16v6"/></svg>',
+  '🌐': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+  '🔊': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
+  '🔥': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
+  '📰': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>',
+  '💬': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  '🔔': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+};
+
 const NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '🏠', priority: true },
   { href: '/shorts', label: 'Shorts', icon: '📱', priority: true },
@@ -70,7 +88,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Mobile"
-      className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-card)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-glass-bg)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <div className="grid grid-cols-11">
         {NAV.map((item) => {
@@ -82,25 +100,30 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               prefetch={item.priority}
-              className={`flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors ${active ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+              className={`relative flex flex-col items-center justify-center gap-1 py-1 text-[10px] font-medium transition-colors min-h-[3.5rem] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-[-2px] ${active ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
               aria-current={active ? 'page' : undefined}
             >
               <span
-                className={`relative flex h-7 w-12 items-center justify-center rounded-full ${active ? 'bg-degen-500/15' : ''}`}
-              >
-                <span className="text-lg leading-none">{item.icon}</span>
-                {dmCount > 0 && item.href === '/messages' && (
-                  <span className="absolute -top-1 -right-1 bg-degen-500 text-[var(--color-fg)] text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                    {dmCount > 9 ? '9+' : dmCount}
-                  </span>
-                )}
-                {notifCount > 0 && item.href === '/notifications' && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-[var(--color-fg)] text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
-                    {notifCount > 9 ? '9+' : notifCount}
-                  </span>
-                )}
-              </span>
-              <span>{item.label}</span>
+                className={`relative flex h-9 w-12 items-center justify-center rounded-xl transition-all ${
+                  active
+                    ? 'bg-degen-500/15 shadow-[0_0_12px_rgba(0,255,65,0.1)]'
+                    : ''
+                }`}
+                dangerouslySetInnerHTML={{
+                  __html: ICONS[item.icon] ?? item.icon,
+                }}
+              />
+              {dmCount > 0 && item.href === '/messages' && (
+                <span className="absolute top-0 right-1/2 translate-x-[18px] bg-degen-500 text-black text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm">
+                  {dmCount > 9 ? '9+' : dmCount}
+                </span>
+              )}
+              {notifCount > 0 && item.href === '/notifications' && (
+                <span className="absolute top-0 right-1/2 translate-x-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm">
+                  {notifCount > 9 ? '9+' : notifCount}
+                </span>
+              )}
+              <span className="leading-none truncate max-w-[4rem]">{item.label}</span>
             </Link>
           );
         })}

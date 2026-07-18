@@ -12,6 +12,9 @@ import { OfflineBanner } from './OfflineBanner';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
 import { FeedLayoutSwitcher } from './FeedLayoutSwitcher';
+import { StreakFlame } from './StreakFlame';
+import { DailyChallenges } from './DailyChallenges';
+import { ActivityTicker } from './ActivityTicker';
 import { InstallPrompt } from './InstallPrompt';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { OnboardingModal } from './OnboardingModal';
@@ -137,8 +140,8 @@ function Logo() {
         className="h-8 w-8 rounded-lg logo-glow transition-shadow group-hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
       />
       <span
-        className="shell-logo-text text-lg font-bold tracking-tight"
-        style={{ color: 'var(--color-fg)' }}
+        className="shell-logo-text text-lg font-bold"
+        style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-heading)', letterSpacing: '-0.03em' }}
       >
         DegenFeed
       </span>
@@ -449,6 +452,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
               {theme === 'dark' ? '☾' : '☀'}
             </button>
             <FeedLayoutSwitcher current={layout} onChange={setLayout} />
+            <StreakFlame />
             {!ready ? (
               <div className="skeleton h-9 w-24" />
             ) : hasSignedIn ? (
@@ -569,7 +573,15 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         </div>
         <OnboardingProvider>
           <ScreenReaderAnnouncerProvider>
-            {children}
+            <div className="mx-auto flex max-w-7xl gap-6 px-4">
+              <div className="min-w-0 flex-1">
+                {children}
+              </div>
+              <aside className="hidden xl:block w-72 shrink-0 space-y-4 pt-2">
+                <DailyChallenges />
+                <ActivityTicker />
+              </aside>
+            </div>
             <OnboardingModal />
             <WelcomeBackModal />
           </ScreenReaderAnnouncerProvider>

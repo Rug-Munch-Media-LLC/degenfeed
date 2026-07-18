@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { getProtocolColor } from './ProtocolBadge';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { PROTOCOL_ICONS, getProtocolColor, getProtocolLabel } from './ProtocolBadge';
 
 export interface Notification {
   id: string;
@@ -18,6 +18,17 @@ export interface Notification {
   /** Tip-specific fields */
   amount?: string;
   currency?: string;
+}
+
+export interface NotificationGroup {
+  key: string;
+  type: string;
+  postId?: string;
+  postText?: string;
+  actors: { name: string; protocol: string }[];
+  protocols: string[];
+  count: number;
+  latestAt: number;
 }
 
 function timeAgo(ts: number): string {
@@ -45,11 +56,53 @@ function getTypeLabel(type: string): string {
   return labels[type] || 'interacted with you';
 }
 
+function getTypePlural(type: string): string {
+  const plurals: Record<string, string> = {
+    like: 'people liked your post',
+    repost: 'people reposted your post',
+    reply: 'people replied',
+    follow: 'people followed you',
+    mention: 'people mentioned you',
+    mirror: 'people mirrored your post',
+    tip: 'people tipped you',
+  };
+  return plurals[type] || 'people interacted with your post';
+}
+
+function groupNotifications(notifications: Notification[]): NotificationGroup[] {
+  const groups = new Map<string, NotificationGroup>();
+  for (const n of notifications) {
+    const key = `${n.type}:${n.postId || 'no-post'}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.actors.push({ name: n.actorName, protocol: n.protocol });
+      if (!existing.protocols.includes(n.protocol)) {
+        existing.protocols.push(n.protocol);
+      }
+      existing.count += 1;
+      existing.latestAt = Math.max(existing.latestAt, n.createdAt);
+    } else {
+      groups.set(key, {
+        key,
+        type: n.type,
+        postId: n.postId,
+        postText: n.postText,
+        actors: [{ name: n.actorName, protocol: n.protocol }],
+        protocols: [n.protocol],
+        count: 1,
+        latestAt: n.createdAt,
+      });
+    }
+  }
+  return [...groups.values()].sort((a, b) => b.latestAt - a.latestAt);
+}
+
 export interface NotificationBellProps {
   notifications: Notification[];
   unreadCount: number;
   onFetch: () => void;
   onMarkRead: (id: string) => void;
+  onMarkAllRead?: () => void;
 }
 
 export function NotificationBell({
@@ -57,9 +110,13 @@ export function NotificationBell({
   unreadCount,
   onFetch,
   onMarkRead,
+  onMarkAllRead,
 }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
+  const [grouped, setGrouped] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
+
+  const groups = useMemo(() => groupNotifications(notifications), [notifications]);
 
   // Close on click outside
   useEffect(() => {
@@ -108,12 +165,76 @@ export function NotificationBell({
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl">
-          <div className="border-b border-[var(--color-border)] px-4 py-3">
+          <div className="border-b border-[var(--color-border)] px-4 py-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-[var(--color-fg)]">Notifications</h3>
+            <div className="flex items-center gap-2">
+              {onMarkAllRead && unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onMarkAllRead(); }}
+                  className="text-[10px] text-degen-400 hover:text-degen-300 transition-colors"
+                >
+                  Mark all read
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setGrouped((v) => !v); }}
+                className="text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+              >
+                {grouped ? 'Ungroup' : 'Group'}
+              </button>
+            </div>
           </div>
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="py-8 text-center text-sm text-gray-500">No notifications yet</div>
+            ) : grouped ? (
+              groups.slice(0, 30).map((g) => (
+                <button
+                  key={g.key}
+                  type="button"
+                  className="flex w-full items-start gap-3 border-b border-[var(--color-border)]/50 px-4 py-3 text-left transition-colors hover:bg-[var(--color-muted)]"
+                >
+                  <div className="flex-shrink-0 flex -space-x-1">
+                    {g.protocols.slice(0, 3).map((p) => (
+                      <span
+                        key={p}
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold"
+                        style={{
+                          backgroundColor: `${getProtocolColor(p)}22`,
+                          color: getProtocolColor(p),
+                          border: '1.5px solid var(--color-card)',
+                        }}
+                        title={getProtocolLabel(p)}
+                      >
+                        {PROTOCOL_ICONS[p] || p[0]}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-[var(--color-fg)]">
+                      {g.count === 1
+                        ? `${g.actors[0]?.name} ${getTypeLabel(g.type)}`
+                        : `${g.count} ${getTypePlural(g.type)}`}
+                    </div>
+                    {g.count > 1 && g.actors.length <= 3 && (
+                      <div className="mt-0.5 text-xs text-[var(--color-muted)] truncate">
+                        {g.actors.map((a) => a.name).join(', ')}
+                      </div>
+                    )}
+                    {g.protocols.length > 1 && (
+                      <div className="mt-0.5 text-[10px] text-gray-600">
+                        across {g.protocols.map((p) => getProtocolLabel(p)).join(', ')}
+                      </div>
+                    )}
+                    {g.postText && (
+                      <div className="mt-1 text-xs text-gray-600 truncate">{g.postText}</div>
+                    )}
+                    <div className="mt-0.5 text-[10px] text-gray-700">{timeAgo(g.latestAt)}</div>
+                  </div>
+                </button>
+              ))
             ) : (
               notifications.slice(0, 30).map((n) => (
                 <button
@@ -126,7 +247,7 @@ export function NotificationBell({
                     className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-muted)] text-xs font-bold"
                     style={{ color: getProtocolColor(n.protocol) }}
                   >
-                    {(n.protocol[0] || '').toUpperCase()}
+                    {PROTOCOL_ICONS[n.protocol] || (n.protocol[0] || '').toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-[var(--color-fg)] truncate">{n.actorName}</div>
@@ -143,7 +264,7 @@ export function NotificationBell({
                       color: getProtocolColor(n.protocol),
                     }}
                   >
-                    {n.protocol}
+                    {getProtocolLabel(n.protocol)}
                   </span>
                 </button>
               ))

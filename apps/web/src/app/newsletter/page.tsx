@@ -20,6 +20,80 @@ const ALL_NICHES = [
   { id: 'onchain', label: 'On-Chain' },
 ];
 
+const NEWSLETTER_TOPICS = [
+  { id: 'all', label: 'All' },
+  { id: 'research', label: 'Research' },
+  { id: 'defi-alpha', label: 'DeFi Alpha' },
+  { id: 'bitcoin', label: 'Bitcoin' },
+  { id: 'trading-markets', label: 'Trading/Markets' },
+  { id: 'web3-builders', label: 'Web3/Builders' },
+  { id: 'ai-crypto', label: 'AI x Crypto' },
+  { id: 'tech-startup', label: 'Tech/Startup' },
+];
+
+const NEWSLETTERS_BY_TOPIC: Record<string, { name: string; schedule: string }[]> = {
+  research: [
+    { name: '0xResearch', schedule: 'daily' },
+    { name: 'The Block Research', schedule: 'weekly' },
+    { name: 'Reflexivity Research', schedule: 'weekly' },
+    { name: 'Cane Island Digital', schedule: 'weekly' },
+    { name: 'Ecoinometrics', schedule: 'weekly' },
+    { name: 'Messari Unqualified', schedule: 'weekly' },
+    { name: 'Delphi Digital', schedule: 'weekly' },
+  ],
+  'defi-alpha': [
+    { name: 'OurNetwork', schedule: 'weekly' },
+    { name: 'DeFi Weekly', schedule: 'weekly' },
+    { name: 'Blockcrunch', schedule: 'weekly' },
+    { name: 'DeFi Dad', schedule: 'weekly' },
+    { name: 'Route 2 FI', schedule: 'weekly' },
+    { name: 'Ignas DeFi Research', schedule: 'weekly' },
+    { name: 'Token Terminal', schedule: 'weekly' },
+    { name: 'Dune Digest', schedule: 'weekly' },
+  ],
+  bitcoin: [
+    { name: 'Bitcoin Magazine Pro', schedule: 'weekly' },
+    { name: 'Satoshi\'s Journal', schedule: 'weekly' },
+    { name: 'The Bitcoin Layer', schedule: 'weekly' },
+    { name: 'Nik Bhatia', schedule: 'weekly' },
+    { name: 'Pomp Letter', schedule: 'daily' },
+    { name: 'Pantera Blockchain', schedule: 'weekly' },
+  ],
+  'trading-markets': [
+    { name: 'MacroScope', schedule: 'daily' },
+    { name: 'The Transcript', schedule: 'daily' },
+    { name: 'Exec Sum', schedule: 'daily' },
+    { name: 'The Market Ear', schedule: 'daily' },
+    { name: 'Bankless', schedule: 'daily' },
+    { name: 'Milk Road', schedule: 'daily' },
+  ],
+  'web3-builders': [
+    { name: 'Developer DAO', schedule: 'weekly' },
+    { name: 'Web3 with a16z', schedule: 'weekly' },
+    { name: 'Li Jin (Variant)', schedule: 'weekly' },
+    { name: 'Mirror Development', schedule: 'irregular' },
+    { name: 'Paragraph Blog', schedule: 'irregular' },
+    { name: 'Unchained', schedule: 'weekly' },
+  ],
+  'ai-crypto': [
+    { name: 'Supervised', schedule: 'weekly' },
+    { name: 'The AI Report', schedule: 'weekly' },
+    { name: 'TLDR AI', schedule: 'weekly' },
+    { name: 'Import AI', schedule: 'weekly' },
+    { name: 'Last Week in AI', schedule: 'weekly' },
+    { name: 'AI Supremacy', schedule: 'weekly' },
+  ],
+  'tech-startup': [
+    { name: 'TLDR Tech', schedule: 'daily' },
+    { name: 'Not Boring', schedule: 'weekly' },
+    { name: 'Benedict Evans', schedule: 'weekly' },
+    { name: 'Exponential View', schedule: 'weekly' },
+    { name: 'Stratechery', schedule: 'daily' },
+    { name: 'HackerNoon', schedule: 'daily' },
+    { name: 'Towards Data Science', schedule: 'daily' },
+  ],
+};
+
 const ALL_PROTOCOLS = [
   { id: 'nostr', label: 'Nostr', color: '#8e30eb' },
   { id: 'farcaster', label: 'Farcaster', color: '#8a63d2' },
@@ -80,6 +154,7 @@ export default function NewsletterPage() {
   const [digest, setDigest] = useState<DigestItem[]>([]);
   const [digestMeta, setDigestMeta] = useState<DigestMeta | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
+  const [activeTopic, setActiveTopic] = useState('all');
 
   const toggleNiche = (id: string) => {
     setSelectedNiches((prev) => (prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id]));
@@ -373,7 +448,7 @@ export default function NewsletterPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>
-                  <span>Premium newsletter content from 28+ top Substacks</span>
+                  <span>Premium newsletter content from 50+ top Substacks</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>
@@ -388,45 +463,60 @@ export default function NewsletterPage() {
 
             <div className="card">
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+                Browse by Topic
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {NEWSLETTER_TOPICS.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setActiveTopic(t.id)}
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-medium transition-all ${
+                      activeTopic === t.id
+                        ? 'border-degen-500 bg-degen-500/20 text-degen-400'
+                        : 'card-hover text-gray-400'
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="card">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
                 Newsletter Sources
+                {activeTopic !== 'all' && (
+                  <span className="ml-1 text-degen-400">
+                    — {NEWSLETTERS_BY_TOPIC[activeTopic]?.length ?? 0}
+                  </span>
+                )}
               </h3>
               <div className="space-y-3 text-xs">
-                <div>
-                  <p className="mb-1 font-medium text-gray-400">Top Crypto</p>
-                  <ul className="space-y-1 text-gray-500">
-                    <li>✦ Bankless (daily)</li>
-                    <li>✦ Milk Road (daily)</li>
-                    <li>✦ Messari Unqualified (weekly)</li>
-                    <li>✦ 0xResearch (daily)</li>
-                    <li>✦ Pomp Letter (daily)</li>
-                  </ul>
-                </div>
-                <div>
-                  <p className="mb-1 font-medium text-gray-400">DeFi &amp; Protocol</p>
-                  <ul className="space-y-1 text-gray-500">
-                    <li>✦ DeFi Weekly</li>
-                    <li>✦ Week in Ethereum</li>
-                    <li>✦ Token Terminal</li>
-                    <li>✦ EigenLayer Blog</li>
-                  </ul>
-                </div>
-                <div>
-                  <p className="mb-1 font-medium text-gray-400">AI x Crypto</p>
-                  <ul className="space-y-1 text-gray-500">
-                    <li>✦ Supervised</li>
-                    <li>✦ TLDR AI</li>
-                    <li>✦ Import AI</li>
-                  </ul>
-                </div>
-                <div>
-                  <p className="mb-1 font-medium text-gray-400">Web3 Publishing</p>
-                  <ul className="space-y-1 text-gray-500">
-                    <li>✦ Mirror Development</li>
-                    <li>✦ Paragraph Blog</li>
-                    <li>✦ CoinMonks (Medium)</li>
-                    <li>✦ HackerNoon (Medium)</li>
-                  </ul>
-                </div>
+                {(activeTopic === 'all' ? Object.entries(NEWSLETTERS_BY_TOPIC) : [[activeTopic, NEWSLETTERS_BY_TOPIC[activeTopic] ?? []]] as [string, { name: string; schedule: string }[]][]).map(
+                  ([topic, newsletters]) => (
+                    <div key={topic}>
+                      <p className="mb-1 font-medium text-gray-400">
+                        {NEWSLETTER_TOPICS.find((t) => t.id === topic)?.label ?? topic}
+                      </p>
+                      <ul className="space-y-1 text-gray-500">
+                        {newsletters.slice(0, activeTopic === 'all' ? 5 : 99).map((nl) => (
+                          <li key={nl.name}>
+                            ✦ {nl.name}{' '}
+                            <span className="text-gray-600">
+                              ({nl.schedule})
+                            </span>
+                          </li>
+                        ))}
+                        {activeTopic === 'all' && newsletters.length > 5 && (
+                          <li className="text-gray-600 italic">
+                            + {newsletters.length - 5} more...
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  ),
+                )}
               </div>
             </div>
 

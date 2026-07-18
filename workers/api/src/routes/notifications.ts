@@ -1,4 +1,4 @@
-import { type Env, noCacheJsonResponse } from '../index';
+import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
 import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
 
@@ -645,4 +645,34 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
   }
 
   return noCacheJsonResponse({ notifications: unified.slice(0, 100), meta: { total: unified.length } });
+}
+
+/**
+ * POST /api/notifications/mark-all-read
+ * Marks all notifications as read for the authenticated user.
+ */
+export async function handleMarkAllRead(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const userId = session.address || 'anon';
+  if (!env.CACHE) {
+    return jsonResponse({ error: 'KV not available' }, 503);
+  }
+
+  try {
+    // Store a "marked all read at" timestamp so the frontend can hide everything before it
+    const markKey = `notif:markAllRead:${userId}`;
+    await env.CACHE.put(markKey, JSON.stringify({ markedAt: Date.now() }), {
+      expirationTtl: 365 * 86400,
+    });
+
+    // Also clear the individual read IDs to save space
+    await env.CACHE.delete(`notif:read:${userId}`);
+
+    return jsonResponse({ success: true, markedAt: Date.now() });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ error: `Failed to mark all read: ${msg}` }, 500);
+  }
 }

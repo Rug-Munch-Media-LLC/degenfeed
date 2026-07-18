@@ -149,7 +149,20 @@ import {
   handleDigestUnsubscribeEmail,
   handleDigestStatus,
 } from './routes/digest';
-import { handleNotifications } from './routes/notifications';
+import {
+  handleStreakCheck,
+  handleStreakLeaderboard,
+  handleAchievements,
+  handleAchievementCheck,
+  handleChallengesToday,
+  handleChallengeProgress,
+  handleXp,
+  handleXpAward,
+  handleSocialProof,
+  handleActivityRecord,
+  handleRecentActivity,
+} from './routes/gamification';
+import { handleNotifications, handleMarkAllRead } from './routes/notifications';
 import { handleNotify } from './routes/notify';
 import { handlePostOg } from './routes/og';
 import {
@@ -531,6 +544,7 @@ app.get('/api/peertube/tip/leaderboard', async (c) => handlePeerTubeLeaderboard(
 
 // ─── API: Notifications ──────────────────────────────────────
 app.all('/api/notifications', async (c) => handleNotifications(c.req.raw, c.env));
+app.post('/api/notifications/mark-all-read', async (c) => handleMarkAllRead(c.req.raw, c.env));
 app.all('/api/notify', async (c) => handleNotify(c.req.raw, c.env));
 
 // ─── API: Messages (DM) ─────────────────────────────────────
@@ -653,6 +667,19 @@ app.all('/api/digest/yesterday', async (c) => handleDigestYesterday(c.req.raw, c
 app.all('/api/digest/subscribe-email', async (c) => handleDigestSubscribeEmail(c.req.raw, c.env));
 app.all('/api/digest/unsubscribe-email', async (c) => handleDigestUnsubscribeEmail(c.req.raw, c.env));
 app.all('/api/digest/status', async (c) => handleDigestStatus(c.req.raw, c.env));
+
+// ─── API: Gamification (Streaks / Achievements / XP / Social Proof) ──
+app.all('/api/gamification/streak', async (c) => handleStreakCheck(c.req.raw, c.env));
+app.all('/api/gamification/streak/leaderboard', async (c) => handleStreakLeaderboard(c.req.raw, c.env));
+app.all('/api/gamification/achievements', async (c) => handleAchievements(c.req.raw, c.env));
+app.all('/api/gamification/achievements/check', async (c) => handleAchievementCheck(c.req.raw, c.env));
+app.all('/api/gamification/challenges/today', async (c) => handleChallengesToday(c.req.raw, c.env));
+app.all('/api/gamification/challenges/progress', async (c) => handleChallengeProgress(c.req.raw, c.env));
+app.all('/api/gamification/xp', async (c) => handleXp(c.req.raw, c.env));
+app.all('/api/gamification/xp/award', async (c) => handleXpAward(c.req.raw, c.env));
+app.all('/api/gamification/social-proof', async (c) => handleSocialProof(c.req.raw, c.env));
+app.all('/api/gamification/activity', async (c) => handleActivityRecord(c.req.raw, c.env));
+app.all('/api/gamification/activity/recent', async (c) => handleRecentActivity(c.req.raw, c.env));
 
 // ─── API: Deploy ──────────────────────────────────────────
 import { handleDeployRequest, handleDeployStatus } from './routes/deploy';
@@ -917,6 +944,7 @@ app.all('/v1/engage', async (c) => withSession(c, () => handleEngage(c.req.raw, 
 // ─── V1: Other public endpoints ─────────────────────────
 app.all('/v1/analytics', (c) => handleAnalytics(c.req.raw, c.env));
 app.all('/v1/notifications', async (c) => handleNotifications(c.req.raw, c.env));
+app.post('/v1/notifications/mark-all-read', async (c) => handleMarkAllRead(c.req.raw, c.env));
 app.all('/v1/discover', async (c) => handleDiscover(c.req.raw, c.env));
 app.all('/v1/discover/people', async (c) => handleDiscoverPeople(c.req.raw, c.env));
 app.all('/v1/prices', async (c) => handlePrices(c.req.raw, c.env));

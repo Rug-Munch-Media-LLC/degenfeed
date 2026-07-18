@@ -41,8 +41,12 @@ const CATEGORIES = [
   { id: 'security', label: 'Security', emoji: '🛡️' },
   { id: 'regulation', label: 'Regulation', emoji: '⚖️' },
   { id: 'macro', label: 'Macro', emoji: '📊' },
+  { id: 'mining', label: 'Mining', emoji: '⛏️' },
+  { id: 'privacy', label: 'Privacy', emoji: '👁️' },
+  { id: 'onchain', label: 'On-Chain', emoji: '🔗' },
+  { id: 'vc', label: 'VC', emoji: '💰' },
   { id: 'nft', label: 'NFTs', emoji: '🖼️' },
-  { id: 'layer2', label: 'Layer 2', emoji: '⚡' },
+  { id: 'layer2', label: 'L2', emoji: '⚡' },
   { id: 'memecoin', label: 'Memes', emoji: '🐸' },
   { id: 'stablecoin', label: 'Stablecoins', emoji: '💲' },
   { id: 'etf', label: 'ETFs', emoji: '📈' },
@@ -322,7 +326,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               </span>
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Curated intelligence from {sourceCount || '200+'} sources across RSS, Reddit, and
+              Curated intelligence from {sourceCount || '319+'} sources across RSS, Reddit, and
               Hacker News — ranked by quality, recency, and sentiment.
             </p>
           </div>

@@ -16,8 +16,11 @@
  */
 
 import type { Protocol, UnifiedIdentity } from '@degenfeed/types';
+import type { CrossProtocolIdentity, ProtocolId } from '@degenfeed/utils';
+import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
 
 export type { Protocol, UnifiedIdentity };
+export type { CrossProtocolIdentity, ProtocolId };
 
 // ─── Identity mapping types ────────────────────────────────────────────
 
@@ -237,7 +240,88 @@ export async function resolveFediverseHandle(
   }
 }
 
-// ─── Identity merging ──────────────────────────────────────────────────
+// ─── Unified cross-protocol profile ───────────────────────────────────
+
+export interface ProtocolHandle {
+  protocol: string;
+  handle: string;
+  icon: string;
+  color: string;
+  verified: boolean;
+  followerCount?: number;
+}
+
+export interface UnifiedProfile {
+  walletAddress: string;
+  displayName: string;
+  handles: ProtocolHandle[];
+  totalFollowerCount: number;
+  networkCount: number;
+  linkedAt: number;
+  lastVerified: number;
+  primaryProtocol: string;
+  dfUri: string;
+}
+
+export function buildUnifiedProfile(
+  identity: CrossProtocolIdentity,
+  followerCounts?: Partial<Record<ProtocolId, number>>,
+): UnifiedProfile {
+  const handles: ProtocolHandle[] = [];
+
+  for (const [protocol, info] of Object.entries(PROTOCOL_ID_REGISTRY)) {
+    const ident = (identity as unknown as Record<string, unknown>)[protocol];
+    if (!ident || typeof ident !== 'object') continue;
+
+    const p = ident as Record<string, unknown>;
+    const handle =
+      (p.handle as string) ||
+      (p.username as string) ||
+      (p.npub as string) ||
+      (p.did as string) ||
+      (p.id as string) ||
+      '';
+
+    if (!handle) continue;
+
+    handles.push({
+      protocol,
+      handle,
+      icon: info.icon,
+      color: info.color,
+      verified: (p.verified as boolean) || false,
+      followerCount: followerCounts?.[protocol as ProtocolId],
+    });
+  }
+
+  const primary = handles[0];
+  const totalFollowerCount = handles.reduce((sum, h) => sum + (h.followerCount || 0), 0);
+
+  return {
+    walletAddress: identity.walletAddress,
+    displayName: handles.map((h) => h.handle).join(' / '),
+    handles,
+    totalFollowerCount,
+    networkCount: handles.length,
+    linkedAt: identity.linkedAt,
+    lastVerified: identity.lastVerified,
+    primaryProtocol: primary?.protocol ?? 'nostr',
+    dfUri: `df://profile/${identity.walletAddress}`,
+  };
+}
+
+export function formatCrossProtocolFollowers(count: number, networks: number): string {
+  if (count === 0) return 'No followers yet';
+  const formatted = count >= 1_000_000
+    ? `${(count / 1_000_000).toFixed(1)}M`
+    : count >= 1_000
+      ? `${(count / 1_000).toFixed(1)}K`
+      : String(count);
+  return `${formatted} followers${networks > 1 ? ` across ${networks} networks` : ''}`;
+}
+
+/**
+
 
 /**
  * Merge multiple protocol identities into a single UnifiedIdentity.

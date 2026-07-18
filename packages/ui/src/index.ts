@@ -139,6 +139,12 @@ export type { MixedVideoGridProps, VideoCategory, VideoFilterBarProps, VideoSort
 export { MixedVideoGrid, VideoFilterBar } from './MixedVideoGrid';
 export type { YouTubeVideoCardItem, YouTubeVideoCardProps } from './YouTubeVideoCard';
 export { YouTubeVideoCard } from './YouTubeVideoCard';
+export type { UnifiedProfileHeaderProps, ProfileHandle } from './UnifiedProfileHeader';
+export { UnifiedProfileHeader } from './UnifiedProfileHeader';
+export type { ProtocolHealth, ProtocolHealthDotsProps } from './ProtocolHealthDots';
+export { ProtocolHealthDots } from './ProtocolHealthDots';
+export type { CrossProtocolReplyCount, CrossProtocolThreadIndicatorProps } from './CrossProtocolThreadIndicator';
+export { CrossProtocolThreadIndicator } from './CrossProtocolThreadIndicator';
 export type { AspectRatio, VideoPlatform, VideoPlayerProps } from './VideoPlayer';
 export { VideoPlayer } from './VideoPlayer';
 export type {
