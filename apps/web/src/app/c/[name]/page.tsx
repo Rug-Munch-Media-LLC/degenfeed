@@ -152,7 +152,7 @@ export default function CommunityPage() {
       <div className="mx-auto max-w-4xl px-4 py-16 text-center">
         <div className="mb-4 text-4xl">🔍</div>
         <h1 className="text-xl font-bold text-[var(--color-fg)]">Community Not Found</h1>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-[var(--color-muted)]">
           {error || 'The community you are looking for does not exist.'}
         </p>
         <Link href="/c" className="mt-6 inline-block btn-primary text-sm">
@@ -198,7 +198,7 @@ export default function CommunityPage() {
 
             <div className="min-w-0 flex-1">
               <h1 className="text-xl font-bold text-[var(--color-fg)]">{community.displayName}</h1>
-              <p className="mt-1 text-sm text-gray-400 line-clamp-2">{community.description}</p>
+              <p className="mt-1 text-sm text-[var(--color-muted)] line-clamp-2">{community.description}</p>
 
               {/* Protocol badges */}
               <div className="mt-3 flex flex-wrap gap-1.5">
@@ -217,7 +217,7 @@ export default function CommunityPage() {
               </div>
 
               {/* Stats */}
-              <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
+              <div className="mt-3 flex items-center gap-4 text-sm text-[var(--color-muted)]">
                 <span>
                   <strong className="text-[var(--color-fg)]">
                     {community.memberCount.toLocaleString()}
@@ -267,7 +267,7 @@ export default function CommunityPage() {
               type="button"
               onClick={() => setActiveTab(tab)}
               className={`relative px-4 py-3 text-sm font-medium capitalize transition-colors ${
-                activeTab === tab ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
+                activeTab === tab ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
               }`}
             >
               {tab}
@@ -278,7 +278,7 @@ export default function CommunityPage() {
           ))}
           <Link
             href={`/c/${name}/proposals`}
-            className="relative px-4 py-3 text-sm font-medium capitalize text-gray-500 transition-colors hover:text-gray-300"
+            className="relative px-4 py-3 text-sm font-medium capitalize text-[var(--color-muted)] transition-colors hover:text-[var(--color-muted)]"
           >
             Proposals
           </Link>
@@ -289,7 +289,7 @@ export default function CommunityPage() {
           <div className="space-y-3">
             {feed.length === 0 ? (
               <div className="py-12 text-center">
-                <p className="text-gray-500">No posts in this community yet.</p>
+                <p className="text-[var(--color-muted)]">No posts in this community yet.</p>
                 <p className="mt-1 text-xs text-gray-600">
                   Posts from all protocols will appear here.
                 </p>
@@ -320,7 +320,7 @@ export default function CommunityPage() {
                       <span className="text-sm font-semibold text-[var(--color-fg)]">
                         {item.author.displayName}
                       </span>
-                      <span className="text-xs text-gray-500">@{item.author.handle}</span>
+                      <span className="text-xs text-[var(--color-muted)]">@{item.author.handle}</span>
                       {/* Protocol badge */}
                       <span
                         className="ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-medium"
@@ -333,8 +333,8 @@ export default function CommunityPage() {
                         {PROTOCOL_META[item.protocol]?.label || item.protocol}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-gray-300 line-clamp-3">{item.text}</p>
-                    <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
+                    <p className="mt-1 text-sm text-[var(--color-muted)] line-clamp-3">{item.text}</p>
+                    <div className="mt-2 flex items-center gap-3 text-xs text-[var(--color-muted)]">
                       <span>{formatDate(item.createdAt)}</span>
                       <span>♥ {item.likes}</span>
                       <span>💬 {item.replies}</span>
@@ -350,7 +350,7 @@ export default function CommunityPage() {
           <div className="card space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-[var(--color-fg)]">Description</h3>
-              <p className="mt-1 text-sm text-gray-400 whitespace-pre-wrap">
+              <p className="mt-1 text-sm text-[var(--color-muted)] whitespace-pre-wrap">
                 {community.description || 'No description provided.'}
               </p>
             </div>
@@ -362,7 +362,7 @@ export default function CommunityPage() {
                   {community.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-gray-400"
+                      className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs text-[var(--color-muted)]"
                     >
                       #{tag}
                     </span>
@@ -388,7 +388,7 @@ export default function CommunityPage() {
                         >
                           {p.emoji} {p.label}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-[var(--color-muted)]">
                           {pd
                             ? Object.entries(pd)
                                 .filter(
@@ -410,7 +410,7 @@ export default function CommunityPage() {
 
             <div>
               <h3 className="text-sm font-semibold text-[var(--color-fg)]">Creator</h3>
-              <p className="mt-1 font-mono text-xs text-gray-500">
+              <p className="mt-1 font-mono text-xs text-[var(--color-muted)]">
                 {community.creator.walletAddress.slice(0, 6)}...
                 {community.creator.walletAddress.slice(-4)}
               </p>
@@ -420,7 +420,7 @@ export default function CommunityPage() {
 
         {activeTab === 'members' && (
           <div className="card">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-[var(--color-muted)]">
               <strong className="text-[var(--color-fg)]">
                 {community.memberCount.toLocaleString()}
               </strong>{' '}

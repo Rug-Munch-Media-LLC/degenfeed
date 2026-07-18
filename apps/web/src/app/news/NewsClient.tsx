@@ -91,7 +91,7 @@ function sentimentColor(s: string | null | undefined): string {
   const t = (s ?? '').toLowerCase();
   if (t.includes('bullish')) return 'text-green-400 bg-green-500/10 border-green-500/20';
   if (t.includes('bearish')) return 'text-red-400 bg-red-500/10 border-red-500/20';
-  return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
+  return 'text-[var(--color-muted)] bg-gray-500/10 border-gray-500/20';
 }
 
 function sentimentEmoji(s: string | null | undefined): string {
@@ -143,7 +143,7 @@ function NewsCard({ post }: { post: UnifiedPost }) {
       )}
       <div className="flex flex-1 flex-col p-4">
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          <span className="rounded-md bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gray-400">
+          <span className="rounded-md bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
             {sourceIcon(kind)} {post.author.displayName}
           </span>
           {mustRead && (
@@ -175,13 +175,13 @@ function NewsCard({ post }: { post: UnifiedPost }) {
           {title}
         </a>
 
-        <p className="mb-3 text-xs leading-relaxed text-gray-500 line-clamp-2">{desc}</p>
+        <p className="mb-3 text-xs leading-relaxed text-[var(--color-muted)] line-clamp-2">{desc}</p>
 
         <div className="mt-auto flex flex-wrap gap-1">
           {post.niches.slice(0, 4).map((niche) => (
             <span
               key={niche}
-              className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-500"
+              className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]"
             >
               #{niche}
             </span>
@@ -201,10 +201,10 @@ function SentimentBar({ sentiment }: { sentiment: Record<string, number> | undef
   const neutral = ((sentiment.neutral ?? 0) / total) * 100;
   return (
     <div className="mb-4">
-      <div className="mb-1 flex items-center justify-between text-[11px] text-gray-500">
+      <div className="mb-1 flex items-center justify-between text-[11px] text-[var(--color-muted)]">
         <span>Market Sentiment</span>
         <span className="text-green-400">🟢 {Math.round(bullish)}%</span>
-        <span className="text-gray-400">⚪ {Math.round(neutral)}%</span>
+        <span className="text-[var(--color-muted)]">⚪ {Math.round(neutral)}%</span>
         <span className="text-red-400">🔴 {Math.round(bearish)}%</span>
       </div>
       <div className="flex h-1.5 overflow-hidden rounded-full bg-[var(--color-muted)]">
@@ -327,7 +327,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
                 LIVE
               </span>
             </div>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
               Curated intelligence from {sourceCount || '353+'} sources across RSS, Reddit, and
               Hacker News — ranked by quality, recency, and sentiment.
             </p>
@@ -343,7 +343,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               href="/api/feed/rss.xml?category=news"
               target="_blank"
               
-              className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/30 hover:text-degen-400"
+              className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
             >
               RSS
             </a>
@@ -388,7 +388,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
             className={`rounded-xl border px-4 py-2.5 text-xs font-medium transition-colors ${
               mustRead
                 ? 'border-degen-500 bg-degen-500/20 text-degen-400'
-                : 'card-hover text-gray-400'
+                : 'card-hover text-[var(--color-muted)]'
             }`}
           >
             Must Read
@@ -405,7 +405,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
                 category === c.id
                   ? 'border-degen-500 bg-degen-500/20 text-degen-400 shadow-[0_0_12px_rgba(34,197,94,0.2)]'
-                  : 'card-hover text-gray-400'
+                  : 'card-hover text-[var(--color-muted)]'
               }`}
             >
               {c.emoji} {c.label}
@@ -423,7 +423,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                 sourceTab === tab.id
                   ? 'bg-[var(--color-muted)] text-[var(--color-fg)]'
-                  : 'text-gray-500 hover:text-gray-300'
+                  : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
               }`}
             >
               {tab.label}
@@ -447,7 +447,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
 
           {state === 'loaded' && filteredPosts.length === 0 && (
             <div className="card py-12 text-center">
-              <p className="text-gray-500">No news found for these filters.</p>
+              <p className="text-[var(--color-muted)]">No news found for these filters.</p>
             </div>
           )}
 
@@ -464,7 +464,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
           {/* Trending */}
           {meta?.trending && meta.trending.length > 0 && (
             <div className="card">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-500">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                 Trending Topics
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -476,10 +476,10 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
                       setQuery(t.topic);
                       setSearchInput(t.topic);
                     }}
-                    className="rounded-full bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-300 transition-colors hover:bg-gray-700 hover:text-[var(--color-fg)]"
+                    className="rounded-full bg-[var(--color-muted)] px-3 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:bg-[var(--color-muted-bg)] hover:text-[var(--color-fg)]"
                   >
                     #{t.topic}
-                    <span className="ml-1.5 text-[10px] text-gray-500">{t.count}</span>
+                    <span className="ml-1.5 text-[10px] text-[var(--color-muted)]">{t.count}</span>
                   </button>
                 ))}
               </div>
@@ -489,7 +489,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
           {/* Sources */}
           {meta?.sourceCounts && (
             <div className="card">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-500">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                 Sources
               </h3>
               <div className="space-y-1.5">
@@ -498,8 +498,8 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
                   .slice(0, 12)
                   .map(([name, count]) => (
                     <div key={name} className="flex items-center justify-between text-xs">
-                      <span className="text-gray-400">{name}</span>
-                      <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-gray-500">
+                      <span className="text-[var(--color-muted)]">{name}</span>
+                      <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[var(--color-muted)]">
                         {count}
                       </span>
                     </div>
@@ -513,7 +513,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-degen-400">
               Daily Digest
             </h3>
-            <p className="mb-3 text-[11px] text-gray-500">
+            <p className="mb-3 text-[11px] text-[var(--color-muted)]">
               Get the top stories delivered to your inbox every morning.
             </p>
             <a href="/newsletter" className="btn-primary block text-center text-xs">
@@ -523,10 +523,10 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
 
           {/* How it works */}
           <div className="card">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
               How it works
             </h3>
-            <ul className="space-y-1.5 text-[11px] text-gray-500">
+            <ul className="space-y-1.5 text-[11px] text-[var(--color-muted)]">
               <li>• Stories ranked by source quality + recency</li>
               <li>• Deduplicated by canonical URL</li>
               <li>• Categorized by AI keyword extraction</li>

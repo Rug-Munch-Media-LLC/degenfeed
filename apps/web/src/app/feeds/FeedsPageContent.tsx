@@ -68,7 +68,7 @@ function FeedCard({
             {feed.sources?.map((src) => (
               <span
                 key={src}
-                className="inline-flex items-center gap-1 rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[10px] text-gray-500"
+                className="inline-flex items-center gap-1 rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]"
               >
                 {SOURCE_EMOJIS[src] || '📡'} {SOURCE_LABELS[src] || src}
               </span>
@@ -84,7 +84,7 @@ function FeedCard({
           <button
             type="button"
             onClick={() => onTogglePin(feed.id)}
-            className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[11px] font-medium text-gray-400 hover:text-[var(--color-fg)] transition-colors"
+            className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[11px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           >
             {feed.isPinned ? 'Unpin' : 'Pin'}
           </button>
@@ -117,7 +117,7 @@ function PublicFeedCard({ feed }: { feed: CustomFeed }) {
             {feed.sources?.map((src) => (
               <span
                 key={src}
-                className="inline-flex items-center gap-1 rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[10px] text-gray-500"
+                className="inline-flex items-center gap-1 rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]"
               >
                 {SOURCE_EMOJIS[src] || '📡'} {SOURCE_LABELS[src] || src}
               </span>

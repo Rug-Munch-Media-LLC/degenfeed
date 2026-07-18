@@ -142,7 +142,7 @@ export function LemmyTipButton({
             </>
           )}
           {showTipMeta && (
-            <span className="text-[10px] text-gray-500">
+            <span className="text-[10px] text-[var(--color-muted)]">
               {tipCount}
             </span>
           )}
@@ -170,7 +170,7 @@ export function LemmyTipButton({
                 className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] transition-colors ${
                   selectedMethod.key === method.key
                     ? 'bg-green-500/20 text-green-400'
-                    : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                    : 'text-[var(--color-muted)] hover:text-[var(--color-muted)] hover:bg-white/5'
                 }`}
               >
                   <span>{method.icon}</span>
@@ -188,7 +188,7 @@ export function LemmyTipButton({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') handleTip(amount);
                   }}
-                  className="flex-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-green-500/15 hover:text-green-400 text-gray-500"
+                  className="flex-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-green-500/15 hover:text-green-400 text-[var(--color-muted)]"
                 >
                   ${amount}
                 </button>
@@ -235,7 +235,7 @@ export function LemmyTipButton({
         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
           tipped
             ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-            : 'border border-green-500/20 text-gray-400 hover:text-green-400 hover:bg-green-500/10 hover:border-green-500/40'
+            : 'border border-green-500/20 text-[var(--color-muted)] hover:text-green-400 hover:bg-green-500/10 hover:border-green-500/40'
         }`}
         aria-label={`Tip this ${contentType}`}
       >
@@ -282,7 +282,7 @@ export function LemmyTipButton({
                 className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-all ${
                   selectedMethod.key === method.key
                     ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500/30'
-                    : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                    : 'text-[var(--color-muted)] hover:text-[var(--color-muted)] hover:bg-white/5'
                 }`}
               >
                 <span className="text-sm">{method.icon}</span>
@@ -301,7 +301,7 @@ export function LemmyTipButton({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') handleTip(amount);
                 }}
-                className="flex-1 rounded-lg border border-green-500/15 px-3 py-2 text-sm font-semibold transition-all hover:bg-green-500/15 hover:text-green-400 hover:border-green-500/30 text-gray-400"
+                className="flex-1 rounded-lg border border-green-500/15 px-3 py-2 text-sm font-semibold transition-all hover:bg-green-500/15 hover:text-green-400 hover:border-green-500/30 text-[var(--color-muted)]"
               >
                 ${amount}
               </button>

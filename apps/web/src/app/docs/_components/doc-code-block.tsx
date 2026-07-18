@@ -22,27 +22,27 @@ export function CodeBlock({ children, lang = 'bash', title }: CodeBlockProps) {
     <div className="group relative my-3 overflow-hidden rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)]">
       <div className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-4 py-2">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] tracking-wider text-gray-500 uppercase">
+          <span className="font-mono text-[10px] tracking-wider text-[var(--color-muted)] uppercase">
             {lang}
           </span>
           {title && (
             <>
               <span className="text-gray-600">|</span>
-              <span className="font-mono text-[10px] text-gray-500">{title}</span>
+              <span className="font-mono text-[10px] text-[var(--color-muted)]">{title}</span>
             </>
           )}
         </div>
         <button
           type="button"
           onClick={handleCopy}
-          className="rounded px-2 py-0.5 text-[10px] text-gray-500 opacity-0 transition-all hover:text-[var(--color-fg)] group-hover:opacity-100"
+          className="rounded px-2 py-0.5 text-[10px] text-[var(--color-muted)] opacity-0 transition-all hover:text-[var(--color-fg)] group-hover:opacity-100"
           aria-label={copied ? 'Copied' : 'Copy code'}
         >
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
       <pre className="overflow-x-auto px-4 py-3">
-        <code className="font-mono text-xs leading-relaxed text-gray-300">{children}</code>
+        <code className="font-mono text-xs leading-relaxed text-[var(--color-muted)]">{children}</code>
       </pre>
     </div>
   );
@@ -67,7 +67,7 @@ export function CodeTabs({ tabs }: CodeTabsProps) {
             className={`px-3 py-2 text-[11px] font-medium transition-colors ${
               i === activeIndex
                 ? 'border-b-2 border-degen-400 text-degen-400 bg-degen-500/5'
-                : 'text-gray-500 hover:text-gray-300'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
             }`}
           >
             {tab.label}

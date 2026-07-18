@@ -20,7 +20,7 @@ export function DocTable({ columns, data }: DocTableProps) {
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="px-4 py-2.5 font-semibold text-gray-400 text-xs uppercase tracking-wider"
+                className="px-4 py-2.5 font-semibold text-[var(--color-muted)] text-xs uppercase tracking-wider"
               >
                 {col.header}
               </th>
@@ -31,7 +31,7 @@ export function DocTable({ columns, data }: DocTableProps) {
           {data.map((row, i) => (
             <tr key={i} className="transition-colors hover:bg-white/[0.01]">
               {columns.map((col) => (
-                <td key={col.key} className="px-4 py-2.5 text-sm text-gray-400">
+                <td key={col.key} className="px-4 py-2.5 text-sm text-[var(--color-muted)]">
                   {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? '')}
                 </td>
               ))}

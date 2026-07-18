@@ -69,15 +69,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="text-center">
           <div className="mb-6 text-6xl">🔒</div>
           <h1 className="mb-4 text-3xl font-bold text-[var(--color-fg)]">Admin Access Required</h1>
-          <p className="mb-2 text-gray-400">You need an admin wallet to access this area.</p>
+          <p className="mb-2 text-[var(--color-muted)]">You need an admin wallet to access this area.</p>
           {walletAddress && (
-            <p className="mb-6 text-sm text-gray-500">
+            <p className="mb-6 text-sm text-[var(--color-muted)]">
               Connected: <code className="text-degen-400">{shortAddr(walletAddress)}</code>
               {' — '}not in admin list.
             </p>
           )}
           {!walletAddress && (
-            <p className="mb-6 text-sm text-gray-500">Please connect your wallet first.</p>
+            <p className="mb-6 text-sm text-[var(--color-muted)]">Please connect your wallet first.</p>
           )}
           <Link
             href="/feed"
@@ -119,7 +119,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <button
             type="button"
             onClick={() => setSidebarOpen(false)}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] transition-colors lg:hidden"
+            className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-muted)] transition-colors lg:hidden"
             aria-label="Close sidebar"
           >
             ✕
@@ -130,7 +130,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {NAV_SECTIONS.map((section) => (
             <div key={section.label} className="mb-5">
-              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+              <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
                 {section.label}
               </p>
               {section.items.map((item) => {
@@ -143,7 +143,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                       isActive
                         ? 'bg-degen-500/15 text-degen-400'
-                        : 'text-gray-400 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                        : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'
                     }`}
                   >
                     <span className="text-base">{item.icon}</span>
@@ -159,13 +159,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="border-t border-[var(--color-border)] p-4">
           <div className="mb-3 flex items-center gap-2 rounded-xl bg-[var(--color-muted)] px-3 py-2">
             <div className="h-2 w-2 rounded-full bg-degen-500" />
-            <span className="truncate font-mono text-xs text-gray-400">
+            <span className="truncate font-mono text-xs text-[var(--color-muted)]">
               {shortAddr(walletAddress)}
             </span>
           </div>
           <Link
             href="/feed"
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-medium text-gray-400 transition-colors hover:bg-[var(--color-muted)]"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-muted)]"
           >
             ← Back to App
           </Link>
@@ -179,7 +179,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="rounded-lg p-2 text-gray-400 hover:bg-[var(--color-muted)] transition-colors"
+            className="rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-muted)] transition-colors"
             aria-label="Open sidebar"
           >
             <svg

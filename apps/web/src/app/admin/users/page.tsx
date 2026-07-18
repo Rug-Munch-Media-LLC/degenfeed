@@ -254,7 +254,7 @@ export default function AdminUsersPage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
-          <p className="mt-4 text-sm text-gray-500">Loading users…</p>
+          <p className="mt-4 text-sm text-[var(--color-muted)]">Loading users…</p>
         </div>
       </div>
     );
@@ -278,7 +278,7 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--color-fg)]">Users</h1>
-        <p className="mt-1 text-sm text-gray-500">Manage platform users, bans, and warnings</p>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">Manage platform users, bans, and warnings</p>
       </div>
 
       {/* Stats chips */}
@@ -315,7 +315,7 @@ export default function AdminUsersPage() {
             placeholder="Search by handle, name, or wallet…"
             className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2.5 pl-9 text-sm text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500 focus:outline-none"
           />
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]">
             🔍
           </span>
         </div>
@@ -354,7 +354,7 @@ export default function AdminUsersPage() {
         <button
           type="button"
           onClick={() => fetchUsers()}
-          className="rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-xs text-gray-400 transition-colors hover:bg-[var(--color-muted)]"
+          className="rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-xs text-[var(--color-muted)] transition-colors hover:bg-[var(--color-muted)]"
         >
           ↻ Refresh
         </button>
@@ -373,28 +373,28 @@ export default function AdminUsersPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
               <tr>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   User
                 </th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   Protocol
                 </th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   Posts
                 </th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   Tips
                 </th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   Rep
                 </th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   Status
                 </th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   Last Active
                 </th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   Actions
                 </th>
               </tr>
@@ -402,7 +402,7 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-[var(--color-border)]">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-[var(--color-muted)]">
                     No users found.
                   </td>
                 </tr>
@@ -422,7 +422,7 @@ export default function AdminUsersPage() {
                           <p className="text-sm font-medium text-[var(--color-fg)]">
                             {user.displayName}
                           </p>
-                          <p className="text-[10px] text-gray-500">@{user.handle}</p>
+                          <p className="text-[10px] text-[var(--color-muted)]">@{user.handle}</p>
                         </div>
                       </div>
                     </td>
@@ -431,10 +431,10 @@ export default function AdminUsersPage() {
                         {PROTOCOL_ICONS[user.protocol] || ''} {user.protocol}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">
+                    <td className="px-4 py-3 text-xs text-[var(--color-muted)]">
                       {formatCount(user.postCount)}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">
+                    <td className="px-4 py-3 text-xs text-[var(--color-muted)]">
                       {formatCount(user.tipCount)}
                     </td>
                     <td className="px-4 py-3">
@@ -445,7 +445,7 @@ export default function AdminUsersPage() {
                             style={{ width: `${user.reputation * 100}%` }}
                           />
                         </div>
-                        <span className="text-[10px] text-gray-500">
+                        <span className="text-[10px] text-[var(--color-muted)]">
                           {(user.reputation * 100).toFixed(0)}%
                         </span>
                       </div>
@@ -465,7 +465,7 @@ export default function AdminUsersPage() {
                         {user.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[10px] text-gray-500">
+                    <td className="px-4 py-3 text-[10px] text-[var(--color-muted)]">
                       {formatTime(user.lastActive)}
                     </td>
                     <td
@@ -516,7 +516,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Pagination */}
-      <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
+      <div className="mt-4 flex items-center justify-between text-xs text-[var(--color-muted)]">
         <span>{users.length} users</span>
         <div className="flex gap-2">
           <button
@@ -567,13 +567,13 @@ export default function AdminUsersPage() {
                   <h2 className="text-lg font-bold text-[var(--color-fg)]">
                     {selectedUser.displayName}
                   </h2>
-                  <p className="text-sm text-gray-500">@{selectedUser.handle}</p>
+                  <p className="text-sm text-[var(--color-muted)]">@{selectedUser.handle}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedUser(null)}
-                className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] transition-colors"
+                className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-muted)] transition-colors"
                 aria-label="Close"
               >
                 ✕
@@ -663,7 +663,7 @@ export default function AdminUsersPage() {
             <h2 className="mb-2 text-lg font-bold text-[var(--color-fg)] capitalize">
               {confirmAction.action} User
             </h2>
-            <p className="mb-4 text-sm text-gray-400">
+            <p className="mb-4 text-sm text-[var(--color-muted)]">
               This will {confirmAction.action} the user{' '}
               <span className="font-medium text-[var(--color-fg)]">@{selectedUser?.handle}</span>.
               {confirmAction.action === 'ban' && ' This action is irreversible.'}
@@ -671,7 +671,7 @@ export default function AdminUsersPage() {
             <div className="mb-4">
               <label
                 htmlFor="action-reason"
-                className="mb-1 block text-xs font-medium text-gray-400"
+                className="mb-1 block text-xs font-medium text-[var(--color-muted)]"
               >
                 Reason
               </label>
@@ -692,7 +692,7 @@ export default function AdminUsersPage() {
                   setBanReason('');
                 }}
                 disabled={Boolean(actionLoading)}
-                className="flex-1 rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm text-gray-400 transition-colors hover:bg-[var(--color-muted)] disabled:opacity-40"
+                className="flex-1 rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm text-[var(--color-muted)] transition-colors hover:bg-[var(--color-muted)] disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -719,7 +719,7 @@ export default function AdminUsersPage() {
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">{label}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">{label}</p>
       <p className="text-sm font-medium text-[var(--color-fg)] capitalize">{value}</p>
     </div>
   );

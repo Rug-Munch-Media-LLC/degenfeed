@@ -69,7 +69,7 @@ export function ContentFilterBar({ active, onChange, color }: ContentFilterBarPr
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
                   isActive
                     ? 'text-[var(--color-fg)] shadow-sm'
-                    : 'text-gray-500 hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
+                    : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
                 }`}
                 style={
                   isActive

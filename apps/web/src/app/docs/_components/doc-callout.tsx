@@ -19,8 +19,8 @@ export function Callout({
     <div className={`my-4 rounded-lg border ${s.border} ${s.bg} p-4`}>
       <div className="flex gap-3">
         <span className="mt-0.5 flex-shrink-0 text-sm">{s.icon}</span>
-        <div className="min-w-0 text-sm text-gray-300 [&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1 [&_code]:font-mono [&_code]:text-degen-400 [&_code]:text-xs">
-          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <div className="min-w-0 text-sm text-[var(--color-muted)] [&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1 [&_code]:font-mono [&_code]:text-degen-400 [&_code]:text-xs">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)]">
             {s.label}
           </span>
           {children}

@@ -253,7 +253,7 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
         <a
           href={url}
           target="_blank" rel="noopener noreferrer"
-          className="flex aspect-video w-full items-center justify-center bg-[var(--color-muted)] text-gray-500 hover:text-degen-400 transition-colors"
+          className="flex aspect-video w-full items-center justify-center bg-[var(--color-muted)] text-[var(--color-muted)] hover:text-degen-400 transition-colors"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
@@ -284,7 +284,7 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
 
       {/* ── Metadata row ── */}
       <div className="px-4 py-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--color-muted)]">
           {displayChannel && (
             <span className="inline-flex items-center gap-1">
               <svg
@@ -331,7 +331,7 @@ export const PeerTubeEmbed = memo(function PeerTubeEmbed({
             className={`inline-flex items-center gap-1 tabular-nums transition-colors ${
               tipCount > 0
                 ? 'text-degen-400 hover:text-degen-300'
-                : 'text-gray-500 hover:text-degen-400'
+                : 'text-[var(--color-muted)] hover:text-degen-400'
             }`}
             aria-label={`${tipCount} tips totaling $${tipTotal.toFixed(2)}`}
           >

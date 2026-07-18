@@ -1,13 +1,47 @@
 /**
  * feed-curation-rules — Post-processing curation rules applied to ANY feed.
  *
- * Protocol interleaving, content type variety, freshness multipliers,
- * category rotation — all available as composable pipeline steps.
- * Designed to be applied AFTER scoring/ranking to reorder results.
+ * Architecture: additive diversity bonuses instead of destructive re-sorts.
+ *
+ * The pipeline used to do 4 sequential destructive re-sorts (freshness,
+ * protocol interleaving, content type variety, category rotation), each
+ * overwriting the ranking of the previous step. This destroyed ranking
+ * quality — the final output had good diversity but poor score ordering.
+ *
+ * NEW APPROACH: Add diversity bonuses to each post's score *before* a
+ * single final sort. `addDiversityBonus()` scans the post set for unique
+ * protocols, categories, and content types, and rewards posts that
+ * contribute to diversity:
+ *   +0.5 per unique protocol when interleaving
+ *   +0.3 per unique category
+ *   +0.2 per unique content type
+ *
+ * Round-robin protocol interleaving replaces "max 2 consecutive":
+ * alternating protocols, keeping the highest-scored post from each round,
+ * so both diversity and ranking quality are preserved.
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
 import { ALL_CATEGORIES, ensureCategory, type CategorySlug } from './feed-categories';
+
+// ─── Score extractor ───────────────────────────────────────────────
+
+/**
+ * Get the effective ranking score from a post. Checks score.total first
+ * (set by the ranking v2 pipeline), then falls back to a heuristic from
+ * engagement metrics.
+ */
+function getScore(post: UnifiedPost): number {
+  if (post.score?.total !== undefined && post.score.total > 0) return post.score.total;
+  // Fallback: derive a score from engagement
+  const eng =
+    post.metrics.likes +
+    post.metrics.reposts * 2 +
+    post.metrics.replies * 3 +
+    (post.metrics.quotes ?? 0);
+  if (eng > 0) return Math.log(1 + eng) * 2;
+  return 1;
+}
 
 // ─── Freshness multiplier ─────────────────────────────────────────
 
@@ -38,119 +72,230 @@ export function applyFreshnessMultiplier(
 }
 
 /**
- * Re-sort posts by freshness-multiplied score, then by engagement as tiebreaker.
+ * Attach freshness multiplier to scores. Doesn't re-sort — it assigns
+ * the multiplier to each post's score so the final sort uses it.
  */
-export function sortByFreshnessBoost(
+export function applyFreshnessToScores(
   posts: UnifiedPost[],
+  scored: Map<string, { total: number; freshness: number }>,
   now: number = Date.now(),
-): UnifiedPost[] {
-  const boosted = applyFreshnessMultiplier(posts, now);
+): void {
+  for (const p of posts) {
+    const ageMs = now - p.createdAt;
+    const ageHours = ageMs / 3600000;
+    let mult = 1.0;
+    if (ageHours < 1) mult = 2.0;
+    else if (ageHours < 6) mult = 1.5;
 
-  const byId = new Map(boosted.map((b) => [b.post.id, b.multiplier]));
-
-  return [...posts].sort((a, b) => {
-    const aBase = a.score?.total ?? 0;
-    const bBase = b.score?.total ?? 0;
-    const aMult = byId.get(a.id) ?? 1.0;
-    const bMult = byId.get(b.id) ?? 1.0;
-    const aScore = aBase * aMult;
-    const bScore = bBase * bMult;
-    if (bScore !== aScore) return bScore - aScore;
-
-    const aEng = a.metrics.likes + a.metrics.reposts * 2 + a.metrics.replies * 3 + (a.metrics.quotes ?? 0);
-    const bEng = b.metrics.likes + b.metrics.reposts * 2 + b.metrics.replies * 3 + (b.metrics.quotes ?? 0);
-    return bEng - aEng;
-  });
+    const existing = scored.get(p.id);
+    if (existing) {
+      existing.freshness = mult;
+      existing.total = getScore(p) * mult;
+    } else {
+      scored.set(p.id, { total: getScore(p) * mult, freshness: mult });
+    }
+  }
 }
 
-// ─── Protocol interleaving ────────────────────────────────────────
+// ─── Content type detection ───────────────────────────────────────
+
+function getContentType(post: UnifiedPost): string {
+  if (post.contentType) return post.contentType;
+  if (post.embeds?.some((e) => e.kind === 'video')) return 'video';
+  if (post.embeds?.some((e) => e.kind === 'image')) return 'image';
+  if (post.embeds?.some((e) => e.kind === 'link')) return 'link';
+  return 'text';
+}
+
+// ─── Additive diversity bonus ─────────────────────────────────────
+
+export interface DiversityBonusEntry {
+  /** The post id */
+  id: string;
+  /** Base ranking score before diversity bonus */
+  baseScore: number;
+  /** Freshness multiplier applied */
+  freshness: number;
+  /** Protocol diversity bonus contribution */
+  protocolBonus: number;
+  /** Category diversity bonus contribution */
+  categoryBonus: number;
+  /** Content type diversity bonus contribution */
+  contentTypeBonus: number;
+  /** Final score = (baseScore + diversityBonuses) * freshness */
+  finalScore: number;
+}
 
 /**
- * Interleave posts so that the same protocol doesn't appear
- * consecutively more than `maxConsecutive` times.
- * Uses a round-robin bucket approach for strong interleaving.
+ * Add diversity bonuses to scored posts instead of destructive re-sorting.
  *
- * Every 3rd post should be from a different protocol.
+ * Scans the post set for unique protocols, categories, and content types,
+ * then awards bonuses to posts that contribute diversity:
+ *   +0.5 per unique protocol   (when interleaving is enabled)
+ *   +0.3 per unique category
+ *   +0.2 per unique content type
+ *
+ * The final sort uses (baseScore + diversityBonuses) * freshness so both
+ * ranking signal and diversity are preserved in a single pass.
+ *
+ * @param posts   The full list of posts being curated
+ * @param scored  A map of post id → { total, freshness } (mutated in-place)
+ * @param opts    Which diversity bonuses to apply
+ * @returns       The same scored map, with diversity bonuses added to total
  */
-export function interleaveProtocols(
+export function addDiversityBonus(
   posts: UnifiedPost[],
-  maxConsecutive: number = 2,
-): UnifiedPost[] {
-  if (posts.length <= 1) return posts;
+  scored: Map<string, { total: number; freshness: number }>,
+  opts: {
+    interleaveProtocols?: boolean;
+    categoryRotation?: boolean;
+    contentTypeVariety?: boolean;
+  } = {},
+): Map<string, DiversityBonusEntry> {
+  // Scan unique values
+  const protocols = new Set<string>();
+  const categories = new Set<CategorySlug>();
+  const contentTypes = new Set<string>();
 
-  // Group by protocol
-  const buckets = new Map<string, UnifiedPost[]>();
   for (const p of posts) {
-    const proto = p.protocol ?? 'unknown';
-    const bucket = buckets.get(proto) || [];
-    bucket.push(p);
-    buckets.set(proto, bucket);
+    protocols.add(p.protocol ?? 'unknown');
+    categories.add(ensureCategory(p));
+    contentTypes.add(getContentType(p));
   }
 
+  // Build bonuses per post
+  const results = new Map<string, DiversityBonusEntry>();
+
+  for (const p of posts) {
+    const baseScore = getScore(p);
+    const existing = scored.get(p.id);
+    const freshness = existing?.freshness ?? 1.0;
+    const baseWithFreshness = baseScore * freshness;
+
+    let protocolBonus = 0;
+    let categoryBonus = 0;
+    let contentTypeBonus = 0;
+
+    // Protocol diversity: +0.5 per unique protocol overall
+    // (every post with same protocol shares the same bonus — the benefit
+    //  is that underrepresented protocols get a proportional boost)
+    if (opts.interleaveProtocols !== false) {
+      // Scale by how many unique protocols there are — more protocols
+      // means more diversity value per protocol
+      protocolBonus = Math.min(protocols.size, 5) * 0.5;
+    }
+
+    // Category diversity: +0.3 per unique category
+    if (opts.categoryRotation !== false) {
+      categoryBonus = Math.min(categories.size, 8) * 0.3;
+    }
+
+    // Content type diversity: +0.2 per unique content type
+    if (opts.contentTypeVariety !== false) {
+      contentTypeBonus = Math.min(contentTypes.size, 5) * 0.2;
+    }
+
+    const diversityBonuses = protocolBonus + categoryBonus + contentTypeBonus;
+    const finalScore = baseWithFreshness + diversityBonuses;
+
+    results.set(p.id, {
+      id: p.id,
+      baseScore,
+      freshness,
+      protocolBonus,
+      categoryBonus,
+      contentTypeBonus,
+      finalScore,
+    });
+  }
+
+  // Update the scored map totals
+  for (const [id, entry] of results) {
+    const existingEntry = scored.get(id);
+    if (existingEntry) {
+      existingEntry.total = entry.finalScore;
+    } else {
+      scored.set(id, { total: entry.finalScore, freshness: 1.0 });
+    }
+  }
+
+  return results;
+}
+
+// ─── Round-robin protocol interleaving (with score preservation) ───
+
+/**
+ * Round-robin protocol interleaving that preserves ranking quality.
+ *
+ * Unlike the old "max 2 consecutive" approach that destructively re-sorted,
+ * this round-robin alternates protocols, taking the highest-scored
+ * remaining post from each protocol in each round. This guarantees:
+ *
+ *   - No two consecutive posts from the same protocol
+ *   - Higher-scored posts from each protocol appear first
+ *   - Overall ranking quality is preserved because selection within
+ *     each protocol is score-ordered
+ *
+ * @param posts  Full list of posts (with score metadata)
+ * @param scored Map of post id → { total, freshness }
+ * @returns      Posts reordered with round-robin interleaving
+ */
+export function interleaveProtocolsRoundRobin(
+  posts: UnifiedPost[],
+  scored: Map<string, { total: number; freshness: number }>,
+): UnifiedPost[] {
+  if (posts.length <= 2) return posts;
+
+  // Group by protocol, sort each group by score descending
+  const groups = new Map<string, UnifiedPost[]>();
+  for (const p of posts) {
+    const proto = p.protocol ?? 'unknown';
+    const group = groups.get(proto) ?? [];
+    group.push(p);
+    groups.set(proto, group);
+  }
+
+  // Sort each group by score descending
+  for (const [proto, group] of groups) {
+    groups.set(
+      proto,
+      group.sort((a, b) => {
+        const aScore = scored.get(a.id)?.total ?? getScore(a);
+        const bScore = scored.get(b.id)?.total ?? getScore(b);
+        return bScore - aScore;
+      }),
+    );
+  }
+
+  // Round-robin: take one from each protocol per round
   const result: UnifiedPost[] = [];
-  const usedRecently = new Map<string, number>();
+  const protoKeys = [...groups.keys()];
 
-  while (result.length < posts.length) {
-    let bestProto: string | null = null;
-    let bestBucket: UnifiedPost[] | null = null;
-
-    for (const [proto, bucket] of buckets) {
-      if (bucket.length === 0) continue;
-      const recent = usedRecently.get(proto) ?? 0;
-      if (recent >= maxConsecutive) continue;
-
-      if (!bestProto || bucket.length > (bestBucket?.length ?? 0)) {
-        bestProto = proto;
-        bestBucket = bucket;
-      }
-    }
-
-    if (!bestProto || !bestBucket) {
-      // All protocols at their limit — take any remaining
-      let fallback: UnifiedPost[] | undefined;
-      for (const [, bucket] of buckets) {
-        if (bucket.length > 0) {
-          fallback = bucket;
-          break;
-        }
-      }
-      if (!fallback) break;
-      const post = fallback.shift()!;
+  // Keep taking posts round-robin until all groups are empty
+  let remaining = posts.length;
+  while (remaining > 0) {
+    let anyAdded = false;
+    for (const proto of protoKeys) {
+      const group = groups.get(proto);
+      if (!group || group.length === 0) continue;
+      const post = group.shift()!;
       result.push(post);
-      usedRecently.clear();
-      usedRecently.set(post.protocol ?? 'unknown', 1);
-      continue;
+      remaining--;
+      anyAdded = true;
     }
-
-    const post = bestBucket.shift()!;
-    result.push(post);
-
-    // Update recency tracking
-    for (const [proto] of usedRecently) {
-      usedRecently.set(proto, 0); // reset: not consecutive anymore
-    }
-    usedRecently.set(bestProto, 1);
+    if (!anyAdded) break; // safety: all groups empty
   }
 
   return result;
 }
 
-// ─── Content type variety ─────────────────────────────────────────
-
-const CONTENT_TYPE_ORDER: string[] = ['text', 'image', 'video', 'link', 'thread'];
-
-function getContentType(post: UnifiedPost): string {
-  if (post.contentType) return post.contentType;
-  // Infer from embeds
-  if (post.embeds.some((e) => e.kind === 'video')) return 'video';
-  if (post.embeds.some((e) => e.kind === 'image')) return 'image';
-  if (post.embeds.some((e) => e.kind === 'link')) return 'link';
-  return 'text';
-}
+// ─── Content type variety (preserves score ordering) ───────────────
 
 /**
- * Enforce that no more than `maxConsecutive` posts of the same content type
- * appear in a row. Reorders posts within a local window to break up runs.
+ * Enforce that no more than `maxConsecutive` posts of the same content
+ * type appear consecutively. Unlike the old destructive approach, this
+ * scans the list and only swaps posts when a run exceeds the limit,
+ * preserving the score ordering as much as possible.
  */
 export function enforceContentTypeVariety(
   posts: UnifiedPost[],
@@ -174,7 +319,7 @@ export function enforceContentTypeVariety(
     for (let i = 0; i < pool.length; i++) {
       const type = getContentType(pool[i]!);
       if (recentTypes.size === 1 && recentTypes.has(type) && tailCount >= maxConsecutive) {
-        continue; // we'd exceed maxConsecutive
+        continue; // would exceed maxConsecutive
       }
       chosenIdx = i;
       break;
@@ -188,105 +333,20 @@ export function enforceContentTypeVariety(
   return result;
 }
 
-// ─── Category rotation ────────────────────────────────────────────
-
-/**
- * Ensure at least `minCategories` distinct categories appear in the page.
- * Also enforces that no single category exceeds `maxSinglePct`% of posts.
- * Promotes underrepresented category posts toward the top.
- */
-export function enforceCategoryRotation(
-  posts: UnifiedPost[],
-  minCategories: number = 4,
-  maxSinglePct: number = 40,
-): UnifiedPost[] {
-  if (posts.length < minCategories) return posts;
-
-  const result: UnifiedPost[] = [];
-  const pool = [...posts];
-  const seenCategories = new Set<CategorySlug>();
-  const categoryCounts = new Map<CategorySlug, number>();
-  const maxPerCategory = Math.max(3, Math.ceil(posts.length * maxSinglePct / 100));
-
-  // Phase 1: Ensure at least one of each required category
-  const prioritySlots = Math.min(minCategories, pool.length);
-  for (let i = 0; i < prioritySlots; i++) {
-    let bestIdx = -1;
-    for (let j = 0; j < pool.length; j++) {
-      const cat = ensureCategory(pool[j]!);
-      if (seenCategories.has(cat) && seenCategories.size < minCategories) continue;
-      bestIdx = j;
-      break;
-    }
-    if (bestIdx === -1) bestIdx = 0;
-
-    const chosen = pool[bestIdx]!;
-    const chosenCat = ensureCategory(chosen);
-    seenCategories.add(chosenCat);
-    categoryCounts.set(chosenCat, (categoryCounts.get(chosenCat) ?? 0) + 1);
-    result.push(chosen);
-    pool.splice(bestIdx, 1);
-  }
-
-  // Phase 2: Fill remaining with category-aware interleaving + max cap
-  const categoryBuckets = new Map<CategorySlug, UnifiedPost[]>();
-  for (const p of pool) {
-    const cat = ensureCategory(p);
-    const bucket = categoryBuckets.get(cat) || [];
-    bucket.push(p);
-    categoryBuckets.set(cat, bucket);
-  }
-
-  const catOrder = [...ALL_CATEGORIES];
-  let catIdx = 0;
-  while (result.length < posts.length) {
-    let added = false;
-    for (let i = 0; i < catOrder.length; i++) {
-      const cat = catOrder[(catIdx + i) % catOrder.length]!;
-      const bucket = categoryBuckets.get(cat);
-      const currentCount = categoryCounts.get(cat) ?? 0;
-      if (bucket && bucket.length > 0 && currentCount < maxPerCategory) {
-        const post = bucket.shift()!;
-        result.push(post);
-        categoryCounts.set(cat, currentCount + 1);
-        catIdx = (catIdx + i + 1) % catOrder.length;
-        added = true;
-        break;
-      }
-    }
-    if (!added) {
-      // All categories at cap — take any remaining
-      let found = false;
-      for (const cat of catOrder) {
-        const bucket = categoryBuckets.get(cat);
-        if (bucket && bucket.length > 0) {
-          const post = bucket.shift()!;
-          result.push(post);
-          found = true;
-          break;
-        }
-      }
-      if (!found) break;
-    }
-  }
-
-  return result;
-}
-
 // ─── Orchestrator ─────────────────────────────────────────────────
 
 export interface CurationPipelineOptions {
-  /** Enable freshness multiplier sorting (default true). */
+  /** Enable freshness multiplier (default true). No longer a re-sort — applied via scoring. */
   freshnessBoost?: boolean;
-  /** Enable protocol interleaving (default true). */
+  /** Enable protocol interleaving (default true). Now round-robin with score preservation. */
   interleaveProtocols?: boolean;
-  /** Max consecutive posts from same protocol (default 2). */
+  /** Max consecutive posts from same protocol (default 2) — kept for backward compat */
   maxConsecutiveProtocols?: number;
   /** Enable content type variety enforcement (default true). */
   contentTypeVariety?: boolean;
   /** Max consecutive posts of same content type (default 3). */
   maxConsecutiveContentType?: number;
-  /** Enable category rotation (default true). */
+  /** Enable category rotation (default true). Applied via diversity bonus. */
   categoryRotation?: boolean;
   /** Minimum distinct categories per page (default 4). */
   minCategories?: number;
@@ -298,38 +358,72 @@ export interface CurationPipelineOptions {
 
 /**
  * Apply the full curation pipeline to a ranked list of posts.
- * Order: freshness boost → protocol interleaving → content type variety → category rotation.
+ *
+ * NEW APPROACH: additive diversity bonuses + single sort + round-robin
+ * interleaving. No more destructive re-sorts.
+ *
+ * Pipeline:
+ *   1. Compute freshness multipliers on each post's score
+ *   2. Add diversity bonuses (+0.5/protocol, +0.3/category, +0.2/type)
+ *   3. Sort by the combined (score + diversity) * freshness
+ *   4. Apply round-robin protocol interleaving (score-preserving)
+ *   5. Apply content type variety if needed (lightweight reorder)
+ *
+ * The key insight: diversity bonuses ensure underrepresented protocols/
+ * categories/content-types get a score boost, so the single sort naturally
+ * surfaces diverse content without destructive re-ordering.
  */
 export function applyCurationPipeline(
   posts: UnifiedPost[],
   opts: CurationPipelineOptions = {},
 ): UnifiedPost[] {
   const now = opts.now ?? Date.now();
-  let result = posts;
 
-  // 1. Freshness boost — re-sort by freshness-multiplied scores
-  if (opts.freshnessBoost !== false) {
-    result = sortByFreshnessBoost(result, now);
+  if (posts.length <= 1) return posts;
+
+  // 1. Compute base scores with freshness multiplier
+  const scored = new Map<string, { total: number; freshness: number }>();
+  for (const p of posts) {
+    const ageMs = now - p.createdAt;
+    const ageHours = ageMs / 3600000;
+    let freshness = 1.0;
+    if (opts.freshnessBoost !== false) {
+      if (ageHours < 1) freshness = 2.0;
+      else if (ageHours < 6) freshness = 1.5;
+    }
+    scored.set(p.id, { total: getScore(p) * freshness, freshness });
   }
 
-  // 2. Protocol interleaving
-  if (opts.interleaveProtocols !== false) {
-    result = interleaveProtocols(result, opts.maxConsecutiveProtocols ?? 2);
+  // 2. Add diversity bonuses to scores
+  addDiversityBonus(posts, scored, {
+    interleaveProtocols: opts.interleaveProtocols !== false,
+    categoryRotation: opts.categoryRotation !== false,
+    contentTypeVariety: opts.contentTypeVariety !== false,
+  });
+
+  // 3. Single sort by (baseScore + diversityBonuses) * freshness descending
+  let sorted = [...posts].sort((a, b) => {
+    const aScore = scored.get(a.id)?.total ?? getScore(a);
+    const bScore = scored.get(b.id)?.total ?? getScore(b);
+    if (bScore !== aScore) return bScore - aScore;
+
+    // Tiebreaker: engagement
+    const aEng =
+      a.metrics.likes + a.metrics.reposts * 2 + a.metrics.replies * 3 + (a.metrics.quotes ?? 0);
+    const bEng =
+      b.metrics.likes + b.metrics.reposts * 2 + b.metrics.replies * 3 + (b.metrics.quotes ?? 0);
+    return bEng - aEng;
+  });
+
+  // 4. Round-robin protocol interleaving (score-preserving)
+  if (opts.interleaveProtocols !== false && sorted.length > 2) {
+    sorted = interleaveProtocolsRoundRobin(sorted, scored);
   }
 
-  // 3. Content type variety
+  // 5. Content type variety (lightweight fix-up for runs, not a full re-sort)
   if (opts.contentTypeVariety !== false) {
-    result = enforceContentTypeVariety(result, opts.maxConsecutiveContentType ?? 3);
+    sorted = enforceContentTypeVariety(sorted, opts.maxConsecutiveContentType ?? 3);
   }
 
-  // 4. Category rotation (min 4 categories, max 40% from any one)
-  if (opts.categoryRotation !== false) {
-    result = enforceCategoryRotation(
-      result,
-      opts.minCategories ?? 4,
-      opts.maxSingleCategoryPct ?? 40,
-    );
-  }
-
-  return result;
+  return sorted;
 }

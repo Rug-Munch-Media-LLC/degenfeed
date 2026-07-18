@@ -43,7 +43,7 @@ function SectionNav({ current }: { current: string }) {
           key={s.id}
           href={`/home/${s.id}`}
           className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-            s.id === current ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
+            s.id === current ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)] hover:text-[var(--color-muted)]'
           }`}
           style={s.id === current ? { backgroundColor: `${s.color}22`, color: s.color } : {}}
         >
@@ -74,7 +74,7 @@ function SectionEmptyState({
     return (
       <div className="card mt-6 border-red-500/20 bg-red-500/5 py-8 text-center">
         <h3 className="mb-2 text-base font-bold text-red-400">Feed unavailable</h3>
-        <p className="mb-4 text-sm text-gray-400">
+        <p className="mb-4 text-sm text-[var(--color-muted)]">
           The {section} source failed to load. This is usually a network or rate-limit issue.
         </p>
         <button type="button" onClick={onRetry} className="btn-primary text-sm">
@@ -144,7 +144,7 @@ function SectionEmptyState({
   return (
     <div className="card mt-6 border-degen-500/20 bg-degen-500/5 py-8 text-center">
       <h3 className="mb-2 text-base font-bold text-degen-400">{msg.title}</h3>
-      <p className="mb-4 text-sm text-gray-400">{msg.body}</p>
+      <p className="mb-4 text-sm text-[var(--color-muted)]">{msg.body}</p>
       <div className="flex justify-center gap-2">
         {msg.cta ? (
           <a href={msg.cta.href} className="btn-primary text-sm">
@@ -374,7 +374,7 @@ function SectionContent({ section }: { section: string }) {
                   setFeedMeta(result.meta ?? {});
                   setState(result.data.length ? 'loaded' : 'empty');
                 }}
-                className="rounded-md border border-[var(--color-border)] bg-[var(--color-muted)] px-2 py-1 text-[11px] text-gray-400 focus:outline-none focus:ring-1 focus:ring-degen-500"
+                className="rounded-md border border-[var(--color-border)] bg-[var(--color-muted)] px-2 py-1 text-[11px] text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-degen-500"
                 aria-label="Quality preset"
               >
                 {PRESET_NAMES.map((name) => (
@@ -444,7 +444,7 @@ function SectionContent({ section }: { section: string }) {
         )}
 
         {hasSignedIn && (
-          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-[var(--color-muted)]">
             <span className="text-degen-400">Signed in:</span>
             {Object.keys(signedInProtocols).map((p) => (
               <span

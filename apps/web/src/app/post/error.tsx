@@ -19,7 +19,7 @@ export default function PostError({
           !
         </div>
         <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Post failed to load</h2>
-        <p className="mb-4 text-sm text-gray-400">
+        <p className="mb-4 text-sm text-[var(--color-muted)]">
           This post may have been deleted or is temporarily unavailable.
         </p>
         <button type="button" onClick={reset} className="btn-primary text-sm">

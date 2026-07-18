@@ -29,9 +29,9 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 text-sm leading-relaxed text-gray-300">
+    <div className="mx-auto max-w-2xl px-4 py-8 text-sm leading-relaxed text-[var(--color-muted)]">
       <h1 className="mb-6 text-2xl font-bold text-[var(--color-fg)]">Privacy Policy</h1>
-      <p className="mb-4 text-gray-500">Last updated: July 2026</p>
+      <p className="mb-4 text-[var(--color-muted)]">Last updated: July 2026</p>
 
       <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">1. What We Collect</h2>
       <p className="mb-4">DegenFeed is an open-source social aggregator. We store:</p>

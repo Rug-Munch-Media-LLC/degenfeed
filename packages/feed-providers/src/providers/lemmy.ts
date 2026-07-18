@@ -24,32 +24,17 @@ import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeou
  * prioritize local content, then fall through to the fediverse.
  * 12 instances total covering the broadest federated network.
  */
+/**
+ * Priority-ordered list of Lemmy instances to query.
+ * Only instances verified HEALTHY are listed.
+ * Updated 2026-07-18: removed lemmy.world (all endpoints 404),
+ * sh.itjust.works, sopuli.xyz, lemm.ee, discuss.tchncs.de,
+ * lemmy.ca, and others that no longer respond.
+ */
 export const LEMMY_INSTANCES = [
   'https://community.degenfeed.xyz',
-  'https://lemmy.world',
   'https://lemmy.ml',
   'https://programming.dev',
-  'https://sh.itjust.works',
-  'https://lemmy.dbzer0.com',
-  'https://sopuli.xyz',
-  'https://lemm.ee',
-  'https://feddit.org',
-  'https://lemmy.zip',
-  'https://discuss.tchncs.de',
-  'https://lemmy.ca',
-  'https://lemmy.one',
-  'https://lemmy.nz',
-  'https://feddit.uk',
-  'https://feddit.de',
-  'https://lemmy.blahaj.zone',
-  'https://lemmy.sdf.org',
-  'https://lemmy.eco.br',
-  'https://lemmy.fmhy.ml',
-  'https://midwest.social',
-  'https://reddthat.com',
-  'https://startrek.website',
-  'https://iusearchlinux.fyi',
-  'https://infosec.pub',
 ];
 
 /** Map of niche -> display label for category filtering */

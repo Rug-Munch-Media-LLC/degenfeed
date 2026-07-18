@@ -158,7 +158,7 @@ export function TokenGateConfigurator({
             <button
               type="button"
               onClick={handleClear}
-              className="rounded p-1 text-xs text-gray-500 hover:text-red-400 transition-colors"
+              className="rounded p-1 text-xs text-[var(--color-muted)] hover:text-red-400 transition-colors"
               aria-label="Remove token gate"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -169,7 +169,7 @@ export function TokenGateConfigurator({
 
           {/* Chain selector */}
           <div>
-            <label className="mb-1 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+            <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
               Chain
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -181,7 +181,7 @@ export function TokenGateConfigurator({
                   className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                     chain === c
                       ? 'bg-yellow-700/40 text-yellow-200 border border-yellow-600/50'
-                      : 'bg-[var(--color-muted)] text-gray-400 border border-transparent hover:text-gray-200'
+                      : 'bg-[var(--color-muted)] text-[var(--color-muted)] border border-transparent hover:text-gray-200'
                   }`}
                 >
                   {CHAIN_LABELS[c]}
@@ -192,7 +192,7 @@ export function TokenGateConfigurator({
 
           {/* Token type selector */}
           <div>
-            <label className="mb-1 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+            <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
               Token Type
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -204,7 +204,7 @@ export function TokenGateConfigurator({
                   className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                     type === t
                       ? 'bg-yellow-700/40 text-yellow-200 border border-yellow-600/50'
-                      : 'bg-[var(--color-muted)] text-gray-400 border border-transparent hover:text-gray-200'
+                      : 'bg-[var(--color-muted)] text-[var(--color-muted)] border border-transparent hover:text-gray-200'
                   }`}
                 >
                   {TYPE_LABELS[t]}
@@ -215,7 +215,7 @@ export function TokenGateConfigurator({
 
           {/* Contract address */}
           <div>
-            <label className="mb-1 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+            <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
               Contract Address
             </label>
             <input
@@ -239,7 +239,7 @@ export function TokenGateConfigurator({
           {/* Token ID (for NFTs) */}
           {(type === 'erc721' || type === 'erc1155') && (
             <div>
-              <label className="mb-1 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+              <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
                 Token ID {type === 'erc721' ? '(optional — leave empty to gate on any)' : '(required)'}
               </label>
               <input
@@ -256,7 +256,7 @@ export function TokenGateConfigurator({
           {type === 'erc20' && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+                <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
                   Min Balance
                 </label>
                 <input
@@ -268,7 +268,7 @@ export function TokenGateConfigurator({
                 />
               </div>
               <div>
-                <label className="mb-1 text-[11px] font-medium text-gray-500 uppercase tracking-wider">
+                <label className="mb-1 text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wider">
                   Decimals
                 </label>
                 <input

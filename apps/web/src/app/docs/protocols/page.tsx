@@ -223,7 +223,7 @@ export default function ProtocolsPage() {
       <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">
         Protocol Integration Guide
       </h1>
-      <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400">
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
         DegenFeed aggregates content from 9 decentralized and federated protocols plus RSS/Atom.
         Each protocol has a dedicated provider adapter that handles authentication, content
         normalization, and health monitoring.
@@ -257,12 +257,12 @@ export default function ProtocolsPage() {
 
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <div>
-                      <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)] mb-1.5">
                         Data Fetched
                       </div>
                       <ul className="space-y-1">
                         {p.data.map((d) => (
-                          <li key={d} className="flex items-start gap-1.5 text-xs text-gray-400">
+                          <li key={d} className="flex items-start gap-1.5 text-xs text-[var(--color-muted)]">
                             <span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-degen-500/50" />
                             {d}
                           </li>
@@ -270,10 +270,10 @@ export default function ProtocolsPage() {
                       </ul>
                     </div>
                     <div>
-                      <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)] mb-1.5">
                         Authentication
                       </div>
-                      <p className="text-xs text-gray-400">{p.auth}</p>
+                      <p className="text-xs text-[var(--color-muted)]">{p.auth}</p>
                     </div>
                   </div>
 
@@ -282,13 +282,13 @@ export default function ProtocolsPage() {
                       <div className="text-xs font-semibold text-[var(--color-fg)]">
                         Rate Limits
                       </div>
-                      <p className="mt-0.5 text-xs text-gray-500">{p.limits}</p>
+                      <p className="mt-0.5 text-xs text-[var(--color-muted)]">{p.limits}</p>
                     </div>
                     <div className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3">
                       <div className="text-xs font-semibold text-[var(--color-fg)]">
                         Health Monitoring
                       </div>
-                      <p className="mt-0.5 text-xs text-gray-500">{p.health}</p>
+                      <p className="mt-0.5 text-xs text-[var(--color-muted)]">{p.health}</p>
                     </div>
                   </div>
                 </div>
@@ -300,7 +300,7 @@ export default function ProtocolsPage() {
 
       {/* Adding a New Protocol */}
       <H2 id="adding-new-protocols">Adding a New Protocol</H2>
-      <p className="text-sm leading-relaxed text-gray-400">
+      <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         DegenFeed is designed to be extensible. Adding a new protocol requires implementing a
         provider that follows the standard interface.
       </p>
@@ -355,13 +355,13 @@ export default function ProtocolsPage() {
           ['Add frontend support', 'Add to the protocol selector in the frontend.'],
           ['Write tests', 'Add unit and integration tests for the provider.'],
         ].map(([step, desc], i) => (
-          <li key={step} className="flex gap-3 text-sm leading-relaxed text-gray-400">
+          <li key={step} className="flex gap-3 text-sm leading-relaxed text-[var(--color-muted)]">
             <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-degen-500/10 text-xs font-bold text-degen-400">
               {i + 1}
             </span>
             <div>
-              <strong className="text-gray-300">{step}</strong>
-              <p className="mt-0.5 text-gray-500">{desc}</p>
+              <strong className="text-[var(--color-muted)]">{step}</strong>
+              <p className="mt-0.5 text-[var(--color-muted)]">{desc}</p>
             </div>
           </li>
         ))}

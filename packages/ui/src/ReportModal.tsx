@@ -107,7 +107,7 @@ export function ReportModal({ open, onClose, postId, onSubmitted }: ReportModalP
           <h2 className="text-lg font-bold text-[var(--color-fg)]">Report post</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+            className="rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close"
             type="button"
           >
@@ -130,7 +130,7 @@ export function ReportModal({ open, onClose, postId, onSubmitted }: ReportModalP
           </button>
         </div>
 
-        <p className="mb-4 text-sm text-gray-400">
+        <p className="mb-4 text-sm text-[var(--color-muted)]">
           Help us keep DegenFeed safe. Your report is anonymous.
         </p>
 
@@ -150,14 +150,14 @@ export function ReportModal({ open, onClose, postId, onSubmitted }: ReportModalP
                   onChange={(e) => setReason(e.target.value)}
                   className="h-4 w-4 accent-degen-500"
                 />
-                <span className="text-sm text-gray-300">{r.label}</span>
+                <span className="text-sm text-[var(--color-muted)]">{r.label}</span>
               </label>
             ))}
           </div>
         </fieldset>
 
         <div className="mb-4">
-          <label htmlFor="report-desc" className="mb-1 block text-sm font-medium text-gray-400">
+          <label htmlFor="report-desc" className="mb-1 block text-sm font-medium text-[var(--color-muted)]">
             Additional details <span className="text-gray-600">(optional)</span>
           </label>
           <textarea

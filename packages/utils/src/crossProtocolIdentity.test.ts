@@ -31,7 +31,7 @@ describe('IDENTITY_KV_PREFIX', () => {
 
 describe('PROTOCOL_ID_REGISTRY', () => {
   it('should contain all supported protocols', () => {
-    const protocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit'];
+    const protocols = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'threads', 'lemmy', 'rss', 'peertube'];
     for (const p of protocols) {
       const key = p as keyof typeof PROTOCOL_ID_REGISTRY;
       expect(PROTOCOL_ID_REGISTRY[key]).toBeDefined();
@@ -52,5 +52,20 @@ describe('PROTOCOL_ID_REGISTRY', () => {
 
   it('should have Mastodon with correct icon', () => {
     expect(PROTOCOL_ID_REGISTRY.mastodon.icon).toBe('🐘');
+  });
+
+  it('should have Threads in the registry', () => {
+    expect(PROTOCOL_ID_REGISTRY.threads.displayName).toBe('Threads');
+    expect(PROTOCOL_ID_REGISTRY.threads.icon).toBe('🪡');
+  });
+
+  it('should have Lemmy in the registry', () => {
+    expect(PROTOCOL_ID_REGISTRY.lemmy.displayName).toBe('Lemmy');
+    expect(PROTOCOL_ID_REGISTRY.lemmy.color).toBe('#0a0');
+  });
+
+  it('should have RSS and PeerTube in the registry', () => {
+    expect(PROTOCOL_ID_REGISTRY.rss.displayName).toBe('RSS');
+    expect(PROTOCOL_ID_REGISTRY.peertube.displayName).toBe('PeerTube');
   });
 });

@@ -191,7 +191,7 @@ function PostCard({
               {post.author.displayName}
             </span>
             <span
-              className="text-[10px] text-gray-500"
+              className="text-[10px] text-[var(--color-muted)]"
               style={{ color: getProtocolColor(post.protocol) }}
             >
               {post.protocol}
@@ -248,7 +248,7 @@ function PostCard({
             />
           )}
           <div className="p-3">
-            <div className="text-[10px] text-gray-500">
+            <div className="text-[10px] text-[var(--color-muted)]">
               {embedData.siteName ||
                 new URL(post.embeds.find((e) => e.kind === 'link')?.url || '').hostname}
             </div>
@@ -256,7 +256,7 @@ function PostCard({
               {embedData.title}
             </div>
             {embedData.description && (
-              <div className="mt-0.5 text-xs text-gray-500 line-clamp-2">
+              <div className="mt-0.5 text-xs text-[var(--color-muted)] line-clamp-2">
                 {embedData.description}
               </div>
             )}
@@ -283,7 +283,7 @@ function PostCard({
                   type="button"
                   disabled={frameLoading}
                   onClick={() => handleFrameAction(btn.index)}
-                  className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-gray-300 transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)] disabled:opacity-50"
+                  className="flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)] disabled:opacity-50"
                 >
                   {btn.label}
                 </button>
@@ -320,7 +320,7 @@ function PostCard({
           {post.niches.map((n) => (
             <span
               key={n}
-              className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-500"
+              className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]"
             >
               #{n}
             </span>
@@ -328,7 +328,7 @@ function PostCard({
         </div>
       )}
 
-      <div className="mb-4 flex items-center gap-4 text-xs text-gray-500">
+      <div className="mb-4 flex items-center gap-4 text-xs text-[var(--color-muted)]">
         <span>{metrics.likes} likes</span>
         <span>{metrics.reposts} reposts</span>
         <span>{metrics.replies} replies</span>
@@ -340,7 +340,7 @@ function PostCard({
           type="button"
           onClick={() => handleAction('like')}
           disabled={engaging === 'like'}
-          className={`rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors flex-1 sm:flex-none ${liked ? 'bg-degen-500/20 text-degen-400' : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+          className={`rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors flex-1 sm:flex-none ${liked ? 'bg-degen-500/20 text-degen-400' : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
         >
           {liked ? '♥' : '♡'} {metrics.likes}
         </button>
@@ -348,7 +348,7 @@ function PostCard({
           type="button"
           onClick={() => handleAction('repost')}
           disabled={engaging === 'repost'}
-          className={`rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors flex-1 sm:flex-none ${reposted ? 'bg-green-500/20 text-green-400' : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+          className={`rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors flex-1 sm:flex-none ${reposted ? 'bg-green-500/20 text-green-400' : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
         >
           ↻ {metrics.reposts}
         </button>
@@ -356,21 +356,21 @@ function PostCard({
           type="button"
           onClick={() => handleAction(bookmarked ? 'unbookmark' : 'bookmark')}
           disabled={engaging === 'bookmark' || engaging === 'unbookmark'}
-          className={`rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors flex-1 sm:flex-none ${bookmarked ? 'bg-yellow-500/20 text-yellow-400' : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+          className={`rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors flex-1 sm:flex-none ${bookmarked ? 'bg-yellow-500/20 text-yellow-400' : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
         >
           {bookmarked ? '★' : '☆'}
         </button>
         <button
           type="button"
           onClick={() => onTip(post)}
-          className="rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors flex-1 sm:flex-none"
+          className="rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors flex-1 sm:flex-none"
         >
           Tip
         </button>
         <button
           type="button"
           onClick={handleShare}
-          className="rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors flex-1 sm:flex-none"
+          className="rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors flex-1 sm:flex-none"
           title="Share this post"
         >
           ↗
@@ -378,7 +378,7 @@ function PostCard({
         <button
           type="button"
           onClick={handleEmbed}
-          className="rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors flex-1 sm:flex-none"
+          className="rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors flex-1 sm:flex-none"
           title="Copy embed code"
         >
           &lt;/&gt;
@@ -515,7 +515,7 @@ function ThreadReplyCard({
             ↔ Replied from {protocolLabel(bridgeSource)} via DegenFeed bridge
           </p>
         )}
-        <p className="text-xs leading-relaxed text-gray-400 whitespace-pre-wrap break-words line-clamp-6">
+        <p className="text-xs leading-relaxed text-[var(--color-muted)] whitespace-pre-wrap break-words line-clamp-6">
           {reply.text}
         </p>
         <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-600">
@@ -829,7 +829,7 @@ export default function PostPage({ params }: Props) {
           <div className="mb-4 flex items-center justify-between gap-2">
             <a
               href="/feed"
-              className="inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-[var(--color-fg)]"
+              className="inline-flex items-center gap-1 text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
             >
               &larr; Back to feed
             </a>
@@ -838,7 +838,7 @@ export default function PostPage({ params }: Props) {
               <button
                 type="button"
                 onClick={() => setShowReaderControls(!showReaderControls)}
-                className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+                className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 aria-label="Reader settings"
                 title="Text size & spacing"
               >
@@ -861,7 +861,7 @@ export default function PostPage({ params }: Props) {
               </button>
               {showReaderControls && (
                 <div className="absolute right-0 top-full mt-1 z-50 rounded-xl border border-white/10 bg-[var(--color-card)] p-3 shadow-2xl backdrop-blur-xl min-w-[200px]">
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                     Font Size
                   </p>
                   <div className="flex gap-1 mb-3">
@@ -873,14 +873,14 @@ export default function PostPage({ params }: Props) {
                         className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
                           settings.fontSize === size
                             ? 'bg-degen-500/20 text-degen-400'
-                            : 'text-gray-500 hover:bg-[var(--color-muted)]'
+                            : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)]'
                         }`}
                       >
                         {fontSizeLabel[size]}
                       </button>
                     ))}
                   </div>
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                     Line Spacing
                   </p>
                   <div className="flex gap-1">
@@ -892,7 +892,7 @@ export default function PostPage({ params }: Props) {
                         className={`flex-1 rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors ${
                           settings.lineSpacing === spacing
                             ? 'bg-degen-500/20 text-degen-400'
-                            : 'text-gray-500 hover:bg-[var(--color-muted)]'
+                            : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)]'
                         }`}
                       >
                         {lineSpacingLabel[spacing]}
@@ -935,7 +935,7 @@ export default function PostPage({ params }: Props) {
               {signedIn.length > 0 ? (
                 <div className="card mt-4 border border-[var(--color-glass-border)] bg-white/[0.02]">
                   <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--color-glass-border)] px-4 py-2.5">
-                    <span className="mr-1 text-[11px] text-gray-500">Reply as:</span>
+                    <span className="mr-1 text-[11px] text-[var(--color-muted)]">Reply as:</span>
                     {signedIn.map((p) => {
                       const active = (replyProtocol ?? post.protocol) === p;
                       const color = getProtocolColor(p);
@@ -947,7 +947,7 @@ export default function PostPage({ params }: Props) {
                           className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
                             active
                               ? ''
-                              : 'border-[var(--color-glass-border)] text-gray-500 hover:text-[var(--color-fg)]'
+                              : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                           }`}
                           style={
                             active
@@ -987,7 +987,7 @@ export default function PostPage({ params }: Props) {
                           ? 'text-red-400'
                           : replyText.length > 400
                             ? 'text-yellow-400'
-                            : 'text-gray-500'
+                            : 'text-[var(--color-muted)]'
                       }`}
                     >
                       {replyText.length}
@@ -1004,7 +1004,7 @@ export default function PostPage({ params }: Props) {
                 </div>
               ) : (
                 <div className="card mt-4 border border-[var(--color-glass-border)] bg-white/[0.02] py-6 text-center">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[var(--color-muted)]">
                     <button
                       type="button"
                       onClick={openSignIn}
@@ -1047,7 +1047,7 @@ export default function PostPage({ params }: Props) {
                             className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors ${
                               sortMode === mode
                                 ? 'bg-degen-500/20 text-degen-400'
-                                : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                                : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'
                             }`}
                           >
                             {label}

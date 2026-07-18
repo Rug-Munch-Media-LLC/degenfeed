@@ -92,7 +92,7 @@ export function FAQClient() {
         <h1 className="text-3xl font-bold tracking-tight text-[var(--color-fg)]">
           Frequently Asked Questions
         </h1>
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="mt-2 text-sm text-[var(--color-muted)]">
           Everything you need to know about DegenFeed. Can&apos;t find what you&apos;re looking for?
           Email{' '}
           <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
@@ -104,7 +104,7 @@ export function FAQClient() {
 
       {/* Search */}
       <div className="relative mb-8">
-        <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-sm text-gray-500">
+        <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-sm text-[var(--color-muted)]">
           ⌕
         </span>
         <input
@@ -124,7 +124,7 @@ export function FAQClient() {
       <div className="divide-y divide-[var(--color-glass-border)]">
         {filtered.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-sm text-gray-500">No results for &ldquo;{search}&rdquo;</p>
+            <p className="text-sm text-[var(--color-muted)]">No results for &ldquo;{search}&rdquo;</p>
             <button
               type="button"
               onClick={() => {
@@ -147,7 +147,7 @@ export function FAQClient() {
               >
                 <span className="text-sm font-medium text-[var(--color-fg)]">{faq.q}</span>
                 <span
-                  className={`flex-shrink-0 text-xs text-gray-500 transition-transform duration-200 ${
+                  className={`flex-shrink-0 text-xs text-[var(--color-muted)] transition-transform duration-200 ${
                     openIndex === i ? 'rotate-180' : ''
                   }`}
                 >
@@ -155,7 +155,7 @@ export function FAQClient() {
                 </span>
               </button>
               {openIndex === i && (
-                <div className="px-3 pb-4 text-sm leading-relaxed text-gray-400 animate-slide-up">
+                <div className="px-3 pb-4 text-sm leading-relaxed text-[var(--color-muted)] animate-slide-up">
                   {faq.a}
                 </div>
               )}
@@ -166,7 +166,7 @@ export function FAQClient() {
 
       {/* Contact */}
       <div className="mt-12 rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-6 text-center">
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-[var(--color-muted)]">
           Still have questions? Reach out to{' '}
           <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
             admin@rugmunch.io

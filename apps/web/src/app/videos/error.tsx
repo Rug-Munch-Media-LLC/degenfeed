@@ -19,7 +19,7 @@ export default function VideosError({
           !
         </div>
         <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Videos failed to load</h2>
-        <p className="mb-4 text-sm text-gray-400">Could not load video feed.</p>
+        <p className="mb-4 text-sm text-[var(--color-muted)]">Could not load video feed.</p>
         <button type="button" onClick={reset} className="btn-primary text-sm">
           Try again
         </button>

@@ -73,7 +73,7 @@ function VoteBar({ label, count, total, color }: { label: string; count: number;
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-gray-400">{label}</span>
+        <span className="font-medium text-[var(--color-muted)]">{label}</span>
         <span className="text-[var(--color-fg)]">{count}</span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-white/5">
@@ -161,7 +161,7 @@ export function VotingPanel({
           </span>
           <StatusBadge status={proposal.status} />
         </div>
-        <span className="shrink-0 text-xs text-gray-500">
+        <span className="shrink-0 text-xs text-[var(--color-muted)]">
           by {proposal.creator.slice(0, 6)}...{proposal.creator.slice(-4)}
         </span>
       </div>
@@ -169,16 +169,16 @@ export function VotingPanel({
       {/* Title & description */}
       <div>
         <h3 className="text-base font-bold text-[var(--color-fg)]">{proposal.title}</h3>
-        <p className="mt-2 whitespace-pre-wrap text-sm text-gray-400">{proposal.description}</p>
+        <p className="mt-2 whitespace-pre-wrap text-sm text-[var(--color-muted)]">{proposal.description}</p>
         {proposal.targetUser && (
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-[var(--color-muted)]">
             Target: <span className="font-mono">{proposal.targetUser}</span>
           </p>
         )}
       </div>
 
       {/* Meta info */}
-      <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+      <div className="flex flex-wrap gap-3 text-xs text-[var(--color-muted)]">
         <span>
           Created {formatTimeAgo(proposal.createdAt)}
         </span>
@@ -203,9 +203,9 @@ export function VotingPanel({
           <div className="flex gap-2">
             {(['for', 'against', 'abstain'] as VoteChoice[]).map((choice) => {
               const colors: Record<VoteChoice, { active: string; default: string }> = {
-                for: { active: 'border-green-500/50 bg-green-500/10 text-green-400', default: 'border-white/10 bg-white/[0.03] text-gray-400 hover:text-gray-300' },
-                against: { active: 'border-red-500/50 bg-red-500/10 text-red-400', default: 'border-white/10 bg-white/[0.03] text-gray-400 hover:text-gray-300' },
-                abstain: { active: 'border-gray-500/50 bg-gray-500/10 text-gray-400', default: 'border-white/10 bg-white/[0.03] text-gray-400 hover:text-gray-300' },
+                for: { active: 'border-green-500/50 bg-green-500/10 text-green-400', default: 'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]' },
+                against: { active: 'border-red-500/50 bg-red-500/10 text-red-400', default: 'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]' },
+                abstain: { active: 'border-gray-500/50 bg-gray-500/10 text-[var(--color-muted)]', default: 'border-white/10 bg-white/[0.03] text-[var(--color-muted)] hover:text-[var(--color-muted)]' },
               };
               const isSelected = yourVote === choice;
               return (
@@ -225,7 +225,7 @@ export function VotingPanel({
           </div>
           {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
           {yourVote && (
-            <p className="mt-2 text-center text-xs text-gray-500">
+            <p className="mt-2 text-center text-xs text-[var(--color-muted)]">
               You voted <span className="font-medium text-[var(--color-fg)]">{yourVote}</span>
             </p>
           )}
@@ -241,7 +241,7 @@ export function VotingPanel({
             <span className="text-red-400">✗ Proposal Rejected</span>
           )}
           {yourVote && (
-            <span className="ml-2 text-xs text-gray-500">
+            <span className="ml-2 text-xs text-[var(--color-muted)]">
               — You voted <span className="font-medium text-[var(--color-fg)]">{yourVote}</span>
             </span>
           )}

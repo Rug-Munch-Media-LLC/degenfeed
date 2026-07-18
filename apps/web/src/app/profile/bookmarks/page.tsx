@@ -192,7 +192,7 @@ export default function BookmarksPage() {
           </p>
           <h1 className="text-2xl font-bold text-[var(--color-fg)]">Bookmarks</h1>
           {!loading && (
-            <p className="mt-0.5 text-xs text-gray-500">
+            <p className="mt-0.5 text-xs text-[var(--color-muted)]">
               {bookmarks.length} bookmark{bookmarks.length !== 1 ? 's' : ''}
             </p>
           )}
@@ -208,7 +208,7 @@ export default function BookmarksPage() {
           </button>
           <Link
             href="/home"
-            className="text-sm text-gray-500 hover:text-[var(--color-fg)] transition-colors"
+            className="text-sm text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           >
             &larr; Feed
           </Link>
@@ -232,7 +232,7 @@ export default function BookmarksPage() {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortMode)}
-          className="rounded-lg bg-[var(--color-muted)] border border-white/10 px-3 py-2 text-sm text-gray-300 focus:border-degen-500/50 focus:outline-none"
+          className="rounded-lg bg-[var(--color-muted)] border border-white/10 px-3 py-2 text-sm text-[var(--color-muted)] focus:border-degen-500/50 focus:outline-none"
         >
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
@@ -288,7 +288,7 @@ export default function BookmarksPage() {
       {!loading && displayed.length === 0 && (
         <div className="card py-16 text-center">
           <div className="mb-3 text-3xl">📑</div>
-          <p className="text-gray-500">
+          <p className="text-[var(--color-muted)]">
             {search || tagFilter ? 'No bookmarks match your filters.' : 'No bookmarks yet.'}
           </p>
           <p className="mt-1 text-sm text-gray-600">
@@ -326,7 +326,7 @@ export default function BookmarksPage() {
                           key={tag}
                           type="button"
                           onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
-                          className="rounded-full bg-[var(--color-muted)] px-1.5 py-0.5 text-[9px] text-gray-500 hover:text-gray-300 transition-colors"
+                          className="rounded-full bg-[var(--color-muted)] px-1.5 py-0.5 text-[9px] text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
                         >
                           {tag}
                         </button>
@@ -380,7 +380,7 @@ export default function BookmarksPage() {
                     <button
                       type="button"
                       onClick={cancelTagEdit}
-                      className="rounded bg-[var(--color-muted)] px-2 py-1 text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+                      className="rounded bg-[var(--color-muted)] px-2 py-1 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
                     >
                       Cancel
                     </button>
@@ -389,7 +389,7 @@ export default function BookmarksPage() {
                   <button
                     type="button"
                     onClick={() => startTagEdit(b.postId, b.tags)}
-                    className="mt-1 rounded bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+                    className="mt-1 rounded bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-600 hover:text-[var(--color-muted)] transition-colors"
                   >
                     {b.tags?.length ? 'Edit tags' : '+ Add tags'}
                   </button>
@@ -401,7 +401,7 @@ export default function BookmarksPage() {
                 <button
                   type="button"
                   onClick={() => handleRemove(b.postId)}
-                  className="rounded-lg px-3 py-1.5 text-xs text-gray-500 hover:bg-red-900/20 hover:text-red-400 transition-colors"
+                  className="rounded-lg px-3 py-1.5 text-xs text-[var(--color-muted)] hover:bg-red-900/20 hover:text-red-400 transition-colors"
                   title="Remove bookmark"
                 >
                   Remove

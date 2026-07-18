@@ -54,7 +54,7 @@ function getProvider(): ethersProvider | null {
     console.warn('[tipContract] No Ethereum wallet detected (window.ethereum)');
     return null;
   }
-  return window.ethereum;
+  return window.ethereum as ethersProvider;
 }
 
 type ethersProvider = {
@@ -62,19 +62,6 @@ type ethersProvider = {
   on: (event: string, handler: (...args: unknown[]) => void) => void;
   removeListener: (event: string, handler: (...args: unknown[]) => void) => void;
 };
-
-// Extend Window type for ethereum detection
-declare global {
-  interface Window {
-    ethereum?: ethersProvider & {
-      isMetaMask?: boolean;
-      isRabby?: boolean;
-      isRainbow?: boolean;
-      isCoinbaseWallet?: boolean;
-      selectedAddress?: string;
-    };
-  }
-}
 
 // ─── Chain switching ──────────────────────────────────────────────────────
 

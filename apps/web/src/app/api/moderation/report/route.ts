@@ -10,6 +10,7 @@
 export const runtime = 'edge';
 
 import { NextResponse } from 'next/server';
+// TODO: Wire to worker backend
 
 interface ReportEntry {
   postId: string;

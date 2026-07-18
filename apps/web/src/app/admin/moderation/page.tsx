@@ -230,7 +230,7 @@ export default function AdminModerationPage() {
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
         <div className="mb-6 text-5xl">🔒</div>
         <h1 className="mb-4 text-2xl font-bold text-[var(--color-fg)]">Admin Access Required</h1>
-        <p className="mb-8 text-gray-400">
+        <p className="mb-8 text-[var(--color-muted)]">
           You need an admin wallet to access the moderation dashboard.
           <br />
           {walletAddress ? (
@@ -253,7 +253,7 @@ export default function AdminModerationPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-20 text-center">
         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
-        <p className="mt-4 text-gray-500">Loading moderation dashboard…</p>
+        <p className="mt-4 text-[var(--color-muted)]">Loading moderation dashboard…</p>
       </div>
     );
   }
@@ -276,7 +276,7 @@ export default function AdminModerationPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[var(--color-fg)]">Moderation Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Review and manage reported content across all protocols
         </p>
       </div>
@@ -317,13 +317,13 @@ export default function AdminModerationPage() {
           {/* Top reporters */}
           {stats.topReporters.length > 0 && (
             <div className="col-span-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                 Top Reporters
               </h3>
               <div className="space-y-1.5">
                 {stats.topReporters.slice(0, 5).map((r) => (
                   <div key={r.address} className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-gray-400">{shortenAddress(r.address)}</span>
+                    <span className="font-mono text-[var(--color-muted)]">{shortenAddress(r.address)}</span>
                     <span className="font-medium text-[var(--color-fg)]">{r.count} reports</span>
                   </div>
                 ))}
@@ -334,13 +334,13 @@ export default function AdminModerationPage() {
           {/* Most reported users */}
           {stats.mostReported.length > 0 && (
             <div className="col-span-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                 Most Reported Users
               </h3>
               <div className="space-y-1.5">
                 {stats.mostReported.slice(0, 5).map((r) => (
                   <div key={r.userId} className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-gray-400">
+                    <span className="font-mono text-[var(--color-muted)]">
                       {r.userId.length > 30 ? `${r.userId.slice(0, 30)}…` : r.userId}
                     </span>
                     <span className="font-medium text-red-400">{r.count} reports</span>
@@ -399,7 +399,7 @@ export default function AdminModerationPage() {
             void fetchReports();
             void fetchStats();
           }}
-          className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-gray-400 hover:bg-[var(--color-muted)] transition-colors"
+          className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted)] hover:bg-[var(--color-muted)] transition-colors"
         >
           ↻ Refresh
         </button>
@@ -425,7 +425,7 @@ export default function AdminModerationPage() {
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-8 text-center">
             <div className="mb-3 text-4xl">✅</div>
             <h3 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">All Clear</h3>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[var(--color-muted)]">
               No {statusFilter !== 'all' ? statusFilter : ''} reports to review.
             </p>
           </div>
@@ -453,7 +453,7 @@ export default function AdminModerationPage() {
                   >
                     {report.status}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] font-medium text-gray-400">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-muted)]">
                     {PROTOCOL_ICONS[report.protocol] || ''} {report.protocol}
                   </span>
                   <span
@@ -462,7 +462,7 @@ export default function AdminModerationPage() {
                         ? 'bg-red-500/20 text-red-400'
                         : report.reason === 'harassment'
                           ? 'bg-orange-500/20 text-orange-400'
-                          : 'bg-[var(--color-muted)] text-gray-400'
+                          : 'bg-[var(--color-muted)] text-[var(--color-muted)]'
                     }`}
                   >
                     {REASON_LABELS[report.reason] || report.reason}
@@ -470,31 +470,31 @@ export default function AdminModerationPage() {
                   <span className="text-[10px] text-gray-600">{formatTime(report.reportedAt)}</span>
                 </div>
 
-                <p className="mb-1 text-xs text-gray-500">
-                  Report <span className="font-mono text-gray-400">{report.id}</span>
+                <p className="mb-1 text-xs text-[var(--color-muted)]">
+                  Report <span className="font-mono text-[var(--color-muted)]">{report.id}</span>
                   {' · '}
                   Reporter:{' '}
-                  <span className="font-mono text-gray-400">
+                  <span className="font-mono text-[var(--color-muted)]">
                     {shortenAddress(report.reporterAddress)}
                   </span>
                 </p>
 
-                <p className="mb-1 text-xs text-gray-500">
+                <p className="mb-1 text-xs text-[var(--color-muted)]">
                   Post:{' '}
-                  <span className="font-mono text-gray-400">
+                  <span className="font-mono text-[var(--color-muted)]">
                     {report.postId.length > 40 ? `${report.postId.slice(0, 40)}…` : report.postId}
                   </span>
                 </p>
 
                 {report.postAuthorHandle && (
-                  <p className="mb-1 text-xs text-gray-500">
+                  <p className="mb-1 text-xs text-[var(--color-muted)]">
                     Author:{' '}
-                    <span className="font-mono text-gray-400">{report.postAuthorHandle}</span>
+                    <span className="font-mono text-[var(--color-muted)]">{report.postAuthorHandle}</span>
                   </p>
                 )}
 
                 {report.description && (
-                  <p className="mt-2 rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 italic">
+                  <p className="mt-2 rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-[var(--color-muted)] italic">
                     "{report.description}"
                   </p>
                 )}
@@ -568,7 +568,7 @@ export default function AdminModerationPage() {
             role="none"
           >
             <h2 className="mb-4 text-lg font-bold text-[var(--color-fg)]">Ban User</h2>
-            <p className="mb-4 text-sm text-gray-400">
+            <p className="mb-4 text-sm text-[var(--color-muted)]">
               This will block the user across all protocols.
               {showBanModal.postAuthorHandle && (
                 <>
@@ -579,7 +579,7 @@ export default function AdminModerationPage() {
               )}
             </p>
             <div className="mb-4">
-              <label htmlFor="ban-reason" className="mb-1 block text-sm font-medium text-gray-400">
+              <label htmlFor="ban-reason" className="mb-1 block text-sm font-medium text-[var(--color-muted)]">
                 Reason for ban
               </label>
               <textarea
@@ -599,7 +599,7 @@ export default function AdminModerationPage() {
                   setBanReason('');
                 }}
                 disabled={banning}
-                className="flex-1 rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm text-gray-400 hover:bg-[var(--color-muted)] transition-colors disabled:opacity-40"
+                className="flex-1 rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm text-[var(--color-muted)] hover:bg-[var(--color-muted)] transition-colors disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -643,7 +643,7 @@ function StatCard({
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
         {label}
       </p>
       <p className={`text-2xl font-bold ${valueClass}`}>{value}</p>

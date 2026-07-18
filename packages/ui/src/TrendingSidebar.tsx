@@ -154,7 +154,7 @@ function TrendingTopicsSection({ topics }: { topics: TrendingTopic[] }) {
   if (topics.length === 0) {
     return (
       <SectionShell title="🔥 Trending Topics" seeMoreHref="/trending">
-        <p className="text-xs text-gray-500">Trending topics appear as you browse.</p>
+        <p className="text-xs text-[var(--color-muted)]">Trending topics appear as you browse.</p>
       </SectionShell>
     );
   }
@@ -188,7 +188,7 @@ function CommunitiesSection({ communities }: { communities: ActiveCommunity[] })
   return (
     <SectionShell title="🏛️ Active Communities" seeMoreHref="/c">
       {communities.length === 0 ? (
-        <p className="text-xs text-gray-500">No communities yet.</p>
+        <p className="text-xs text-[var(--color-muted)]">No communities yet.</p>
       ) : (
         <div className="space-y-2">
           {communities.map((c) => (
@@ -222,7 +222,7 @@ function VideosSection({ videos }: { videos: PopularVideo[] }) {
   return (
     <SectionShell title="🎬 Popular Videos" seeMoreHref="/videos">
       {videos.length === 0 ? (
-        <p className="text-xs text-gray-500">No trending videos right now.</p>
+        <p className="text-xs text-[var(--color-muted)]">No trending videos right now.</p>
       ) : (
         <div className="space-y-2">
           {videos.map((v) => (
@@ -242,7 +242,7 @@ function VideosSection({ videos }: { videos: PopularVideo[] }) {
                     loading="lazy"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-gray-500">
+                  <div className="flex h-full items-center justify-center text-xs text-[var(--color-muted)]">
                     ▶
                   </div>
                 )}
@@ -270,7 +270,7 @@ function SpacesSection({ spaces }: { spaces: LiveSpace[] }) {
   return (
     <SectionShell title="🎙️ Live Spaces" seeMoreHref="/spaces">
       {spaces.length === 0 ? (
-        <p className="text-xs text-gray-500">No live spaces right now.</p>
+        <p className="text-xs text-[var(--color-muted)]">No live spaces right now.</p>
       ) : (
         <div className="space-y-2">
           {spaces.map((s) => (
@@ -311,7 +311,7 @@ function NostrSection({ notes }: { notes: TrendingNostrNote[] }) {
   return (
     <SectionShell title="⚡ Hot on Nostr" seeMoreHref="/trending?source=nostr">
       {notes.length === 0 ? (
-        <p className="text-xs text-gray-500">No trending notes.</p>
+        <p className="text-xs text-[var(--color-muted)]">No trending notes.</p>
       ) : (
         <div className="space-y-2">
           {notes.map((n) => (
@@ -342,7 +342,7 @@ function FarcasterSection({ casts }: { casts: TrendingFarcasterCast[] }) {
   return (
     <SectionShell title="🟣 Trending on Farcaster" seeMoreHref="/trending?source=farcaster">
       {casts.length === 0 ? (
-        <p className="text-xs text-gray-500">No trending casts.</p>
+        <p className="text-xs text-[var(--color-muted)]">No trending casts.</p>
       ) : (
         <div className="space-y-2">
           {casts.map((c) => (
@@ -373,7 +373,7 @@ function TippersSection({ tippers }: { tippers: TopTipper[] }) {
   if (tippers.length === 0) {
     return (
       <SectionShell title="🏆 Top Tippers" seeMoreHref="/leaderboard">
-        <p className="text-xs text-gray-500">No tipper data yet.</p>
+        <p className="text-xs text-[var(--color-muted)]">No tipper data yet.</p>
       </SectionShell>
     );
   }
@@ -447,7 +447,7 @@ export function TrendingSidebar({ data }: TrendingSidebarProps) {
       {/* What's Happening header */}
       <div className="rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
         <h2 className="text-base font-bold text-[var(--color-fg)]">What&apos;s Happening</h2>
-        {loading && <p className="mt-2 text-xs text-gray-500">Loading…</p>}
+        {loading && <p className="mt-2 text-xs text-[var(--color-muted)]">Loading…</p>}
       </div>
 
       {/* Trending Topics */}

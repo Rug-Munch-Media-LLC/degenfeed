@@ -116,7 +116,7 @@ export default function DocsLandingPage() {
         <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)] lg:text-5xl">
           DegenFeed Documentation
         </h1>
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400">
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
           DegenFeed is an open-source multi-protocol social aggregator for web3. It pulls public
           posts from 10 decentralized and federated networks into one unified, ranked timeline.
         </p>
@@ -140,7 +140,7 @@ export default function DocsLandingPage() {
               <div className="relative">
                 <span className="mb-2 block text-2xl">{card.icon}</span>
                 <h3 className="font-semibold text-[var(--color-fg)]">{card.title}</h3>
-                <p className="mt-1 text-sm text-gray-500">{card.desc}</p>
+                <p className="mt-1 text-sm text-[var(--color-muted)]">{card.desc}</p>
               </div>
             </Link>
           ))}
@@ -158,7 +158,7 @@ export default function DocsLandingPage() {
               className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3 transition-all hover:border-degen-500/20 hover:bg-degen-500/[0.03]"
             >
               <div className="text-sm font-medium text-[var(--color-fg)]">{topic.title}</div>
-              <p className="mt-0.5 text-xs text-gray-500">{topic.desc}</p>
+              <p className="mt-0.5 text-xs text-[var(--color-muted)]">{topic.desc}</p>
             </Link>
           ))}
         </div>
@@ -176,8 +176,8 @@ export default function DocsLandingPage() {
           {changelogItems.map((item) => (
             <div key={item.version} className="flex items-center gap-3">
               <Badge color={item.color}>{item.version}</Badge>
-              <span className="text-xs text-gray-500">{item.date}</span>
-              <span className="text-sm text-gray-400">{item.label}</span>
+              <span className="text-xs text-[var(--color-muted)]">{item.date}</span>
+              <span className="text-sm text-[var(--color-muted)]">{item.label}</span>
             </div>
           ))}
         </div>
@@ -249,7 +249,7 @@ export default function DocsLandingPage() {
               className={`rounded-lg border border-[var(--color-glass-border)] border-l-2 bg-white/[0.02] p-4 transition-all hover:bg-white/[0.04] ${doc.color}`}
             >
               <h3 className="font-medium text-[var(--color-fg)] text-sm">{doc.title}</h3>
-              <p className="mt-0.5 text-xs text-gray-500">{doc.desc}</p>
+              <p className="mt-0.5 text-xs text-[var(--color-muted)]">{doc.desc}</p>
             </Link>
           ))}
         </div>
@@ -258,7 +258,7 @@ export default function DocsLandingPage() {
       {/* Footer */}
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
         <p className="text-xs text-gray-600">
-          DegenFeed is a product of <strong className="text-gray-500">Rug Munch Media LLC</strong>.
+          DegenFeed is a product of <strong className="text-[var(--color-muted)]">Rug Munch Media LLC</strong>.
           MIT Licensed. Built on open protocols. 10 networks. One window.
         </p>
       </div>

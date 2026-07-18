@@ -65,7 +65,7 @@ export const LemmyVoting = memo(function LemmyVoting({
   if (compact) {
     // Compact inline row for feed cards
     return (
-      <div className="flex items-center gap-0.5 text-xs text-gray-500">
+      <div className="flex items-center gap-0.5 text-xs text-[var(--color-muted)]">
         {/* Upvote */}
         <button
           type="button"
@@ -101,7 +101,7 @@ export const LemmyVoting = memo(function LemmyVoting({
               : localVote === 'down'
                 ? 'text-blue-400'
                 : displayScore >= 0
-                  ? 'text-gray-500'
+                  ? 'text-[var(--color-muted)]'
                   : 'text-gray-600'
           }`}
         >
@@ -190,7 +190,7 @@ export const LemmyVoting = memo(function LemmyVoting({
             : localVote === 'down'
               ? 'text-blue-400'
               : displayScore >= 0
-                ? 'text-gray-500'
+                ? 'text-[var(--color-muted)]'
                 : 'text-gray-600'
         }`}
       >

@@ -178,7 +178,7 @@ export const FeedWhyCard = memo(function FeedWhyCard({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg p-1 text-gray-500 hover:bg-[var(--color-muted)] hover:text-gray-300 transition-colors"
+          className="rounded-lg p-1 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
           aria-label="Close"
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -193,7 +193,7 @@ export const FeedWhyCard = memo(function FeedWhyCard({
           <span className="mt-0.5 shrink-0 text-base">{mainReason.icon}</span>
           <div>
             <p className="text-xs font-medium text-[var(--color-fg)]">{mainReason.text}</p>
-            <p className="mt-0.5 text-[10px] text-gray-500">Main reason this post appeared</p>
+            <p className="mt-0.5 text-[10px] text-[var(--color-muted)]">Main reason this post appeared</p>
           </div>
         </div>
       </div>
@@ -201,13 +201,13 @@ export const FeedWhyCard = memo(function FeedWhyCard({
       {/* Secondary signals */}
       {secondarySignals.length > 0 && (
         <div className="mb-3 space-y-2">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
             Also contributing
           </p>
           {secondarySignals.slice(0, 5).map((s, i) => (
             <div key={i} className="flex items-start gap-2">
-              <span className="mt-0.5 shrink-0 text-xs text-gray-400">{s.icon}</span>
-              <span className="text-xs text-gray-400">{s.text}</span>
+              <span className="mt-0.5 shrink-0 text-xs text-[var(--color-muted)]">{s.icon}</span>
+              <span className="text-xs text-[var(--color-muted)]">{s.text}</span>
             </div>
           ))}
         </div>
@@ -224,7 +224,7 @@ export const FeedWhyCard = memo(function FeedWhyCard({
           ) : (
             <>
               <span className="text-degen-400">✓</span>
-              <span className="text-gray-300">Not muted or blocked</span>
+              <span className="text-[var(--color-muted)]">Not muted or blocked</span>
             </>
           )}
         </div>
@@ -233,16 +233,16 @@ export const FeedWhyCard = memo(function FeedWhyCard({
       {/* Source + quality */}
       <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-lg bg-[var(--color-muted)] p-2">
-          <span className="block text-[10px] text-gray-500">Source</span>
-          <span className="font-medium text-gray-300">
+          <span className="block text-[10px] text-[var(--color-muted)]">Source</span>
+          <span className="font-medium text-[var(--color-muted)]">
             {feedDebug
               ? `${protocolLabel(feedDebug.sourceProtocol)} via DegenFeed bridge`
               : protocolLabel(post.protocol)}
           </span>
         </div>
         <div className="rounded-lg bg-[var(--color-muted)] p-2">
-          <span className="block text-[10px] text-gray-500">Quality</span>
-          <span className="font-medium text-gray-300">
+          <span className="block text-[10px] text-[var(--color-muted)]">Quality</span>
+          <span className="font-medium text-[var(--color-muted)]">
             {qualityScore !== null
               ? `${(qualityScore * 100).toFixed(0)}/100`
               : 'N/A'}
@@ -253,7 +253,7 @@ export const FeedWhyCard = memo(function FeedWhyCard({
       {/* Score breakdown (if available) */}
       {score && (
         <details className="group mb-3">
-          <summary className="cursor-pointer text-[10px] font-medium text-gray-500 hover:text-gray-300 transition-colors">
+          <summary className="cursor-pointer text-[10px] font-medium text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors">
             <span className="inline-flex items-center gap-1">
               <svg
                 width="8"
@@ -313,7 +313,7 @@ function ScoreBar({
 }) {
   const pct = Math.min((value / max) * 100, 100);
   return (
-    <div className="flex items-center gap-2 text-[10px] text-gray-500">
+    <div className="flex items-center gap-2 text-[10px] text-[var(--color-muted)]">
       <span className="w-16 shrink-0 text-right">{label}</span>
       <div className="flex-1 h-1.5 rounded-full bg-[var(--color-muted)]">
         <div
@@ -321,7 +321,7 @@ function ScoreBar({
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-8 text-right font-mono text-[9px] text-gray-500">
+      <span className="w-8 text-right font-mono text-[9px] text-[var(--color-muted)]">
         {value.toFixed(2)}
       </span>
     </div>

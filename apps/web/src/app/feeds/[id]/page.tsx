@@ -262,7 +262,7 @@ export default function FeedDetailPage() {
         <div className="rounded-2xl border border-white/10 bg-[var(--color-card)] p-8 text-center backdrop-blur-xl">
           <p className="text-3xl mb-3">🔍</p>
           <h1 className="text-lg font-bold text-[var(--color-fg)] mb-1">Feed not found</h1>
-          <p className="text-sm text-gray-400 mb-4">
+          <p className="text-sm text-[var(--color-muted)] mb-4">
             This custom feed doesn&apos;t exist or has been deleted.
           </p>
           <Link href="/feeds" className="btn-primary text-sm inline-block">
@@ -279,7 +279,7 @@ export default function FeedDetailPage() {
         {/* Back link */}
         <Link
           href="/feeds"
-          className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 transition-colors mb-4"
+          className="inline-flex items-center gap-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors mb-4"
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
             <path
@@ -298,13 +298,13 @@ export default function FeedDetailPage() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <h1 className="text-xl font-bold text-[var(--color-fg)]">{feed.name}</h1>
-              {feed.description && <p className="mt-1 text-sm text-gray-400">{feed.description}</p>}
-              <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
+              {feed.description && <p className="mt-1 text-sm text-[var(--color-muted)]">{feed.description}</p>}
+              <div className="mt-2 flex items-center gap-3 text-xs text-[var(--color-muted)]">
                 <span>
                   by {feed.creator.slice(0, 6)}...{feed.creator.slice(-4)}
                 </span>
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${feed.isPublic ? 'bg-degen-500/10 text-degen-400' : 'bg-white/10 text-gray-400'}`}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${feed.isPublic ? 'bg-degen-500/10 text-degen-400' : 'bg-white/10 text-[var(--color-muted)]'}`}
                 >
                   {feed.isPublic ? '🌍 Public' : '🔒 Private'}
                 </span>
@@ -329,7 +329,7 @@ export default function FeedDetailPage() {
                   <button
                     type="button"
                     onClick={handleEdit}
-                    className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-gray-300 hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+                    className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
                   >
                     Edit
                   </button>
@@ -363,12 +363,12 @@ export default function FeedDetailPage() {
           <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
             {/* Sources */}
             <div>
-              <p className="text-xs font-medium text-gray-400 mb-1.5">Sources</p>
+              <p className="text-xs font-medium text-[var(--color-muted)] mb-1.5">Sources</p>
               <div className="flex flex-wrap gap-1.5">
                 {feed.config.sources.map((src) => (
                   <span
                     key={src}
-                    className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs text-gray-300"
+                    className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs text-[var(--color-muted)]"
                   >
                     {SOURCE_EMOJIS[src] || '🌐'} {SOURCE_LABELS[src] || src}
                   </span>
@@ -379,7 +379,7 @@ export default function FeedDetailPage() {
             {/* Boosted topics */}
             {Object.entries(feed.config.topics).filter(([, w]) => w > 0).length > 0 && (
               <div>
-                <p className="text-xs font-medium text-gray-400 mb-1.5">Boosted Topics</p>
+                <p className="text-xs font-medium text-[var(--color-muted)] mb-1.5">Boosted Topics</p>
                 <div className="flex flex-wrap gap-1.5">
                   {Object.entries(feed.config.topics)
                     .filter(([, w]) => w > 0)
@@ -389,7 +389,7 @@ export default function FeedDetailPage() {
                         key={t}
                         className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2.5 py-1 text-xs text-degen-400"
                       >
-                        {t} <span className="text-gray-500">({w})</span>
+                        {t} <span className="text-[var(--color-muted)]">({w})</span>
                       </span>
                     ))}
                 </div>
@@ -397,7 +397,7 @@ export default function FeedDetailPage() {
             )}
 
             {/* Filters summary */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--color-muted)]">
               <span>Content: {feed.config.contentTypes.join(', ')}</span>
               {feed.config.minEngagement > 0 && (
                 <span>Min engagement: {feed.config.minEngagement}</span>

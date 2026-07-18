@@ -50,7 +50,7 @@ export interface EngagementPredictionV2Output {
   topicMatchScore: number;
   timingScore: number;
   postTypeScore: number;
-  socialProofScore: number;
+  popularityScore: number;
 }
 
 export interface PreditionFactor {
@@ -205,19 +205,20 @@ export function predictEngagementV2(
     : sessionDurationMs < 15 * 60_000 ? 'mid'
     : 'late';
 
-  // ─── 7. Social proof ───────────────────────────────────────────
-  // How many of the user's followed creators also engaged with this?
-  const socialEngagement =
+  // ─── 7. Popularity — global engagement signal ───────────────
+  // NOTE: uses aggregate metrics, not per-follower engagement.
+  // Renamed from "social proof" to reflect what it actually measures.
+  const totalEngagement =
     post.metrics.likes + post.metrics.reposts * 2 + post.metrics.replies * 3 + (post.metrics.quotes ?? 0);
-  const socialProofScore = Math.min(1.0, socialEngagement / 100);
+  const popularityScore = Math.min(1.0, totalEngagement / 100);
 
-  if (socialProofScore > 0.4) {
+  if (popularityScore > 0.4) {
     if (input.followedCreators.size > 0) {
-      algorithmReasons.push('Liked by people you follow');
+      algorithmReasons.push('Popular with people you follow');
     } else {
       algorithmReasons.push('Popular on ' + (post.protocol ?? 'social'));
     }
-    factors.push({ name: 'social-proof', score: socialProofScore, weight: WEIGHTS.socialProof, description: 'High engagement from trusted sources' });
+    factors.push({ name: 'popularity', score: popularityScore, weight: WEIGHTS.socialProof, description: 'High global engagement signal' });
   }
 
   // ─── 8. Diversity bonus ────────────────────────────────────────
@@ -234,7 +235,7 @@ export function predictEngagementV2(
     topicMatchScore * WEIGHTS.topicMatch +
     timingScore * WEIGHTS.timing +
     postTypeScore * WEIGHTS.postType +
-    socialProofScore * WEIGHTS.socialProof +
+    popularityScore * WEIGHTS.socialProof +
     diversityBonus * WEIGHTS.diversityBonus;
 
   // Respect "not interested" feedback — if all topics are demoted, score should be near 0
@@ -257,7 +258,7 @@ export function predictEngagementV2(
       topicMatchScore,
       timingScore,
       postTypeScore,
-      socialProofScore,
+      popularityScore,
     };
   }
 
@@ -275,7 +276,7 @@ export function predictEngagementV2(
     topicMatchScore,
     timingScore,
     postTypeScore,
-    socialProofScore,
+    popularityScore,
   };
 }
 

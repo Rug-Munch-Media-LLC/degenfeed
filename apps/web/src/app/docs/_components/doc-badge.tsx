@@ -6,7 +6,7 @@ const colors: Record<string, string> = {
   purple: 'bg-purple-900/30 text-purple-400 border-purple-500/20',
   blue: 'bg-blue-900/30 text-blue-400 border-blue-500/20',
   red: 'bg-red-900/30 text-red-400 border-red-500/20',
-  gray: 'bg-[var(--color-muted)]/20 text-gray-400 border-[var(--color-border)]/30',
+  gray: 'bg-[var(--color-muted)]/20 text-[var(--color-muted)] border-[var(--color-border)]/30',
 };
 
 export function Badge({

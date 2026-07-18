@@ -34,7 +34,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
       <div className="mx-auto max-w-md px-4 py-20 text-center">
         <div className="mb-6 text-5xl text-red-400">!</div>
         <h1 className="mb-4 text-2xl font-bold text-red-400">Authorization Failed</h1>
-        <p className="mb-8 text-gray-400">{params.error}</p>
+        <p className="mb-8 text-[var(--color-muted)]">{params.error}</p>
         <a href="/home" className="btn-primary inline-block">
           Back to DegenFeed
         </a>
@@ -45,9 +45,9 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
   if (!params.code) {
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
-        <div className="mb-6 text-5xl text-gray-500">?</div>
+        <div className="mb-6 text-5xl text-[var(--color-muted)]">?</div>
         <h1 className="mb-4 text-2xl font-bold text-[var(--color-fg)]">No Authorization Code</h1>
-        <p className="mb-8 text-gray-400">
+        <p className="mb-8 text-[var(--color-muted)]">
           No authorization code was received. Please try signing in again.
         </p>
         <a href="/home" className="btn-primary inline-block">
@@ -98,7 +98,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
           <div className="mx-auto max-w-md px-4 py-20 text-center">
             <div className="mb-6 text-5xl text-degen-400">✓</div>
             <h1 className="mb-4 text-2xl font-bold text-[var(--color-fg)]">Signed in!</h1>
-            <p className="mb-8 text-gray-400">Redirecting to your feed...</p>
+            <p className="mb-8 text-[var(--color-muted)]">Redirecting to your feed...</p>
           </div>
           <script
             // biome-ignore lint/security/noDangerouslySetInnerHtml: server-generated JSON stringified token stored client-side
@@ -115,7 +115,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
     <div className="mx-auto max-w-md px-4 py-20 text-center">
       <div className="mb-6 text-5xl text-red-400">!</div>
       <h1 className="mb-4 text-2xl font-bold text-red-400">Exchange Failed</h1>
-      <p className="mb-2 text-gray-400">{exchangeError}</p>
+      <p className="mb-2 text-[var(--color-muted)]">{exchangeError}</p>
       <p className="mb-8 text-sm text-gray-600">Code: {params.code.slice(0, 30)}...</p>
       <a href="/home" className="btn-primary inline-block">
         Back to DegenFeed

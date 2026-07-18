@@ -116,7 +116,7 @@ export function TipActivityFeed({
             setLoading(true);
             void load();
           }}
-          className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:text-[var(--color-fg)]"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
         >
           Retry
         </button>
@@ -126,7 +126,7 @@ export function TipActivityFeed({
 
   if (items.length === 0) {
     return (
-      <p className="py-6 text-center text-xs text-gray-500">
+      <p className="py-6 text-center text-xs text-[var(--color-muted)]">
         No recent tips. Be the first to tip! ⚡
       </p>
     );
@@ -144,7 +144,7 @@ export function TipActivityFeed({
             <span className="shrink-0 text-sm" style={{ color: meta.color }}>
               ⚡
             </span>
-            <span className="min-w-0 flex-1 truncate text-gray-400">
+            <span className="min-w-0 flex-1 truncate text-[var(--color-muted)]">
               <span className="font-medium text-[var(--color-fg)]">{item.fromLabel}</span>
               {' tipped '}
               <span className="font-semibold text-green-400">

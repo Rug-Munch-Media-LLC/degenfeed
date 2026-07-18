@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-
+// TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
 const VALID_TARGETS = ['nostr', 'farcaster', 'lens', 'bluesky', 'threads', 'mastodon', 'lemmy', 'peertube'];

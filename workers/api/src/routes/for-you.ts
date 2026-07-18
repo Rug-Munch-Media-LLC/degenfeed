@@ -33,6 +33,7 @@ import {
   FEED_GENERATION_TIMEOUT_MS,
   fetchFromProviders,
   filterSuppressedPosts,
+  findUnderservedCategories,
   getCategoryCounts,
   getFeedCache,
   getLastSync,
@@ -371,6 +372,29 @@ async function generateForYouFeed(
     for (const post of finalRanked) {
       algorithmReasons.set(post.id, coldStartReasons(post));
     }
+  }
+
+  // 10b. Underserved category boost — detect thin/empty categories and
+  // boost posts from those categories by 1.2x to improve coverage diversity.
+  const underserved = findUnderservedCategories(finalRanked);
+  if (underserved.length > 0) {
+    const underservedSlugs = new Set(underserved.map((c) => c.slug));
+    finalRanked = finalRanked.map((post) => {
+      const cat = ensureCategory(post);
+      if (underservedSlugs.has(cat) && post.score) {
+        return {
+          ...post,
+          score: { ...post.score, total: post.score.total * 1.2 },
+        };
+      }
+      return post;
+    });
+    // Re-sort after boosting underserved categories
+    finalRanked.sort((a, b) => {
+      const aScore = a.score?.total ?? 0;
+      const bScore = b.score?.total ?? 0;
+      return bScore - aScore;
+    });
   }
 
   // 11. Creator diversity enforcement

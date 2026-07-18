@@ -241,7 +241,7 @@ export default function AdminHostsPage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
-          <p className="mt-4 text-sm text-gray-500">Loading host information…</p>
+          <p className="mt-4 text-sm text-[var(--color-muted)]">Loading host information…</p>
         </div>
       </div>
     );
@@ -252,7 +252,7 @@ export default function AdminHostsPage() {
   if (!activeServer) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6 text-center">
-        <p className="text-sm text-gray-500">No server data available.</p>
+        <p className="text-sm text-[var(--color-muted)]">No server data available.</p>
       </div>
     );
   }
@@ -275,7 +275,7 @@ export default function AdminHostsPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[var(--color-fg)]">Hosts & Infrastructure</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Server health, resource usage, and service management
         </p>
       </div>
@@ -554,7 +554,7 @@ function ResourceCard({
           style={{ width: `${Math.min(usage, 100)}%` }}
         />
       </div>
-      <p className="text-xs text-gray-500">{detail}</p>
+      <p className="text-xs text-[var(--color-muted)]">{detail}</p>
     </div>
   );
 }
@@ -562,7 +562,7 @@ function ResourceCard({
 function InfoBadge({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
         {label}
       </p>
       <p className="text-xs font-medium text-[var(--color-fg)] truncate">{value}</p>

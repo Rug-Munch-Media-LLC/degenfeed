@@ -73,7 +73,7 @@ function kindClasses(kind: ToastKind): string {
     case 'tip':
       return 'border-amber-400/40 bg-amber-500/10 text-amber-300';
     default:
-      return 'border-white/10 bg-[var(--color-muted)] text-gray-200';
+      return 'border-white/10 bg-[var(--color-muted)] text-[var(--color-fg)]';
   }
 }
 

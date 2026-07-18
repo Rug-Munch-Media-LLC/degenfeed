@@ -76,6 +76,10 @@ export interface FeedListProps {
   onAdminBan?: (userId: string, protocol: string, handle?: string) => void;
   /** Called when user clicks "Why am I seeing this?" in the three-dot menu */
   onWhyThisPost?: (post: UnifiedPost) => void;
+  /** Called when user clicks "Show more like this" — boosts the post's topic. */
+  onShowMoreLikeThis?: (topic: string) => void;
+  /** Called when user clicks "Show less like this" — demotes the post's topic. */
+  onShowLessLikeThis?: (topic: string) => void;
   /**
    * Optional slot replacing the default EmptyState when state is 'empty'.
    * Lets the parent page render tab-specific empty messaging (for-you, following, custom-mix).
@@ -144,7 +148,7 @@ function EmptyState({
       <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
         {protocolLabel ? `No ${protocolLabel} posts yet` : 'The feed is warming up'}
       </h3>
-      <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">
+      <p className="mx-auto mb-6 max-w-sm text-sm text-[var(--color-muted)]">
         {protocolLabel
           ? 'This network is quiet right now. Try another tab or sign in to compose.'
           : 'Pulling the first posts from every network. This usually takes a few seconds.'}
@@ -332,6 +336,8 @@ export const FeedList = memo(function FeedList({
   onPostVisibility,
   showCategoryBreaks,
   categoryBreakSlot,
+  onShowMoreLikeThis,
+  onShowLessLikeThis,
 }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -387,30 +393,70 @@ export const FeedList = memo(function FeedList({
     }
   }, [filteredPosts, state]);
 
-  // Scroll position restore
+  // ── Scroll position restore ("continue reading") ───────────────
+  // Restores the exact Y position the user was at when they clicked
+  // a post, so navigating back returns them to the same spot.
+
+  // Save scroll position to sessionStorage
+  const saveScrollPos = useCallback(() => {
+    const scrollY = window.scrollY;
+    if (scrollY <= 0) return;
+    // Find the nearest visible post ID for anchor-based restore
+    const postEls = document.querySelectorAll<HTMLElement>('[data-post-id]');
+    let anchorId = '';
+    for (const el of postEls) {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.5) {
+        anchorId = el.getAttribute('data-post-id') ?? '';
+      } else {
+        break;
+      }
+    }
+    sessionStorage.setItem(
+      SCROLL_KEY,
+      JSON.stringify({ y: scrollY, id: anchorId }),
+    );
+  }, []);
+
+  // Save on page unload so refresh/back works
+  useEffect(() => {
+    const handleBeforeUnload = () => saveScrollPos();
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [saveScrollPos]);
+
+  // Restore scroll position when feed loads
   useEffect(() => {
     if (state !== 'loaded' || filteredPosts.length === 0) return;
     const saved = sessionStorage.getItem(SCROLL_KEY);
     if (saved) {
-      const { y, id } = JSON.parse(saved) as { y: number; id: string };
-      const el = document.getElementById(`post-${id}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        return;
+      try {
+        const { y, id } = JSON.parse(saved) as { y: number; id: string };
+        // Clear saved position to prevent stale restore on future visits
+        sessionStorage.removeItem(SCROLL_KEY);
+
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          if (id) {
+            const el = document.getElementById(`post-${id}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'instant' as ScrollBehavior, block: 'start' });
+              return;
+            }
+          }
+          if (y > 0) {
+            window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
+          }
+        });
+      } catch {
+        // Ignore parse errors
       }
-      window.scrollTo({ top: y, behavior: 'smooth' });
     }
   }, [state, filteredPosts.length]);
 
-  // Save scroll position on post click (debounced to avoid layout thrash)
-  const saveScrollPos = useRef(
-    debounce((y: number, id: string) => {
-      sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ y, id }));
-    }, 150),
-  ).current;
-
+  // Save scroll position on post click
   const handlePostClick = (postId: string) => {
-    saveScrollPos(window.scrollY, postId);
+    saveScrollPos();
     onPostClick?.(postId);
   };
 
@@ -598,6 +644,8 @@ export const FeedList = memo(function FeedList({
                 onAdminRemove={onAdminRemove}
                 onAdminBan={onAdminBan}
                 onWhyThisPost={onWhyThisPost}
+                onShowMoreLikeThis={onShowMoreLikeThis}
+                onShowLessLikeThis={onShowLessLikeThis}
               />
             </article>,
           );
@@ -610,7 +658,7 @@ export const FeedList = memo(function FeedList({
       {hasMore && (
         <div
           ref={sentinelRef}
-          className="border-b border-[var(--color-glass-border)] px-4 py-6 text-center text-sm text-gray-500"
+          className="border-b border-[var(--color-glass-border)] px-4 py-6 text-center text-sm text-[var(--color-muted)]"
         >
           <span className="inline-flex items-center gap-2">
             <span className="h-2 w-2 animate-pulse rounded-full bg-degen-500" />

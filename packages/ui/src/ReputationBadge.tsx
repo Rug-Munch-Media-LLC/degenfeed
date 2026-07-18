@@ -48,7 +48,7 @@ const TIER_STYLES: Record<ReputationLevel, { icon: string; label: string; color:
   newcomer: {
     icon: '🌱',
     label: 'Newcomer',
-    color: 'text-gray-400',
+    color: 'text-[var(--color-muted)]',
     bg: 'bg-gray-500/10',
   },
   member: {
@@ -143,7 +143,7 @@ export function ReputationBadge({
     const pct = Math.round(progress.progress * 100);
     return (
       <div className="mt-1 w-full">
-        <div className="flex justify-between text-[10px] text-gray-500">
+        <div className="flex justify-between text-[10px] text-[var(--color-muted)]">
           <span>
             {progress.currentMin.toLocaleString()}
           </span>
@@ -154,7 +154,7 @@ export function ReputationBadge({
             {progress.nextMin.toLocaleString()} to {progress.next}
           </span>
         </div>
-        <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-gray-700">
+        <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-[var(--color-muted-bg)]">
           <div
             className="h-full rounded-full transition-all duration-300"
             style={{
@@ -206,30 +206,30 @@ export function ReputationBadge({
             <div className="mb-1 font-semibold text-[var(--color-fg)]">
               {displayIcon} {displayLabel}
             </div>
-            <div className="flex justify-between text-gray-400">
+            <div className="flex justify-between text-[var(--color-muted)]">
               <span>Total</span>
               <span className="font-medium text-[var(--color-fg)]">{score.total.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-gray-400">
+            <div className="flex justify-between text-[var(--color-muted)]">
               <span>Earned</span>
               <span className="font-medium text-green-400">+{score.earned.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-gray-400">
+            <div className="flex justify-between text-[var(--color-muted)]">
               <span>Staked</span>
               <span className="font-medium text-blue-400">{score.staked.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-gray-400">
+            <div className="flex justify-between text-[var(--color-muted)]">
               <span>Slashed</span>
               <span className="font-medium text-red-400">-{score.slashed.toLocaleString()}</span>
             </div>
             {progress && progress.next && (
               <>
                 <hr className="my-1 border-[var(--color-border)]" />
-                <div className="text-gray-400">
+                <div className="text-[var(--color-muted)]">
                   Progress to {TIER_STYLES[progress.next]?.icon}{' '}
                   {TIER_STYLES[progress.next]?.label || progress.next}:
                 </div>
-                <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-gray-700">
+                <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-muted-bg)]">
                   <div
                     className="h-full rounded-full transition-all"
                     style={{
@@ -238,7 +238,7 @@ export function ReputationBadge({
                     }}
                   />
                 </div>
-                <div className="mt-0.5 text-right text-[10px] text-gray-500">
+                <div className="mt-0.5 text-right text-[10px] text-[var(--color-muted)]">
                   {score.total.toLocaleString()} / {progress.nextMin.toLocaleString()}
                 </div>
               </>

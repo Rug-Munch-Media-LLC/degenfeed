@@ -101,7 +101,7 @@ export default function BlockedUsersPage() {
         </div>
         <Link
           href="/home"
-          className="text-sm text-gray-500 hover:text-[var(--color-fg)] transition-colors"
+          className="text-sm text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
         >
           &larr; Feed
         </Link>
@@ -116,13 +116,13 @@ export default function BlockedUsersPage() {
               viewBox="0 0 24 24"
               fill="none"
               aria-hidden="true"
-              className="text-gray-500"
+              className="text-[var(--color-muted)]"
             >
               <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
               <path d="M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
-          <p className="text-gray-500">You haven&apos;t blocked anyone</p>
+          <p className="text-[var(--color-muted)]">You haven&apos;t blocked anyone</p>
           <p className="mt-1 text-sm text-gray-600">
             Block or mute users from the three-dot menu on any post.
           </p>
@@ -137,7 +137,7 @@ export default function BlockedUsersPage() {
           {/* Blocked users */}
           {blocked.length > 0 && (
             <section>
-              <h2 className="mb-3 text-sm font-medium text-gray-400 uppercase tracking-widest">
+              <h2 className="mb-3 text-sm font-medium text-[var(--color-muted)] uppercase tracking-widest">
                 Blocked Users
                 <span className="ml-2 text-xs text-gray-600">({blocked.length})</span>
               </h2>
@@ -149,7 +149,7 @@ export default function BlockedUsersPage() {
                         {b.targetHandle}
                       </p>
                       <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-600">
-                        <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-gray-400">
+                        <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-[10px] text-[var(--color-muted)]">
                           {b.protocol}
                         </span>
                         <span>Blocked {new Date(b.blockedAt).toLocaleDateString()}</span>
@@ -171,7 +171,7 @@ export default function BlockedUsersPage() {
           {/* Muted users */}
           {muted.length > 0 && (
             <section>
-              <h2 className="mb-3 text-sm font-medium text-gray-400 uppercase tracking-widest">
+              <h2 className="mb-3 text-sm font-medium text-[var(--color-muted)] uppercase tracking-widest">
                 Muted Users
                 <span className="ml-2 text-xs text-gray-600">({muted.length})</span>
               </h2>
@@ -189,7 +189,7 @@ export default function BlockedUsersPage() {
                     <button
                       type="button"
                       onClick={() => handleUnmute(m.targetId)}
-                      className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-[var(--color-muted)] transition-colors"
+                      className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-muted)] transition-colors"
                     >
                       Unmute
                     </button>

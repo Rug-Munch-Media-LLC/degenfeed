@@ -112,7 +112,7 @@ function NostrForm({
           <span className="text-lg">🔑</span>
           <div>
             <div className="text-sm font-semibold text-[var(--color-fg)]">Paste nsec / NIP-07</div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-[var(--color-muted)]">
               Enter your secret key or use a browser extension
             </div>
           </div>
@@ -125,13 +125,13 @@ function NostrForm({
           <span className="text-lg">🧩</span>
           <div>
             <div className="text-sm font-semibold text-[var(--color-fg)]">Use browser extension</div>
-            <div className="text-xs text-gray-500">Alby, nos2x, or any NIP-07 signer</div>
+            <div className="text-xs text-[var(--color-muted)]">Alby, nos2x, or any NIP-07 signer</div>
           </div>
         </button>
         <button
           type="button"
           onClick={onBack}
-          className="w-full text-center text-xs text-gray-500 hover:text-gray-300"
+          className="w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)]"
         >
           ← Back
         </button>
@@ -148,7 +148,7 @@ function NostrForm({
     }
     return (
       <div className="space-y-3">
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-[var(--color-muted)]">
           No NIP-07 extension detected. Install{' '}
           <a
             href="https://getalby.com"
@@ -170,7 +170,7 @@ function NostrForm({
         <button
           type="button"
           onClick={() => setMode('choice')}
-          className="w-full text-center text-xs text-gray-500 hover:text-gray-300"
+          className="w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)]"
         >
           ← Back
         </button>
@@ -181,7 +181,7 @@ function NostrForm({
   return (
     <div className="space-y-3">
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">nsec (secret key)</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">nsec (secret key)</span>
         <input
           type="password"
           value={nsec}
@@ -201,7 +201,7 @@ function NostrForm({
         <button
           type="button"
           onClick={() => setMode('choice')}
-          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)]"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)]"
         >
           Back
         </button>
@@ -251,7 +251,7 @@ function FarcasterForm({
           <span className="text-lg">🔐</span>
           <div>
             <div className="text-sm font-semibold text-[var(--color-fg)]">Enter FID + signer key</div>
-            <div className="text-xs text-gray-500">For self-custody Farcaster signers</div>
+            <div className="text-xs text-[var(--color-muted)]">For self-custody Farcaster signers</div>
           </div>
         </button>
         <button
@@ -262,13 +262,13 @@ function FarcasterForm({
           <span className="text-lg">🔗</span>
           <div>
             <div className="text-sm font-semibold text-[var(--color-fg)]">Sign in with Warpcast</div>
-            <div className="text-xs text-gray-500">Use your Warpcast account via OAuth</div>
+            <div className="text-xs text-[var(--color-muted)]">Use your Warpcast account via OAuth</div>
           </div>
         </button>
         <button
           type="button"
           onClick={onBack}
-          className="w-full text-center text-xs text-gray-500 hover:text-gray-300"
+          className="w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)]"
         >
           ← Back
         </button>
@@ -279,7 +279,7 @@ function FarcasterForm({
   return (
     <div className="space-y-3">
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">Username</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Username</span>
         <input
           type="text"
           value={username}
@@ -289,7 +289,7 @@ function FarcasterForm({
         />
       </label>
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">FID (numeric)</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">FID (numeric)</span>
         <input
           type="text"
           value={fid}
@@ -300,7 +300,7 @@ function FarcasterForm({
         />
       </label>
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
           Signer private key (hex)
         </span>
         <input
@@ -319,7 +319,7 @@ function FarcasterForm({
         <button
           type="button"
           onClick={() => setMode('choice')}
-          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)]"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)]"
         >
           Back
         </button>
@@ -356,7 +356,7 @@ function BlueskyForm({
   return (
     <div className="space-y-3">
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">Handle</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Handle</span>
         <input
           type="text"
           value={handle}
@@ -366,7 +366,7 @@ function BlueskyForm({
         />
       </label>
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">App Password</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">App Password</span>
         <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
@@ -378,7 +378,7 @@ function BlueskyForm({
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-300"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)]"
           >
             {showPassword ? 'Hide' : 'Show'}
           </button>
@@ -396,7 +396,7 @@ function BlueskyForm({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)]"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)]"
         >
           Back
         </button>
@@ -433,7 +433,7 @@ function LensForm({
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-gray-400">
+      <p className="text-sm text-[var(--color-muted)]">
         Lens uses your Ethereum wallet to sign in. Make sure MetaMask, Rainbow, or another EVM
         wallet is installed.
       </p>
@@ -447,7 +447,7 @@ function LensForm({
       <button
         type="button"
         onClick={onBack}
-        className="w-full text-center text-xs text-gray-500 hover:text-gray-300"
+        className="w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)]"
       >
         ← Back
       </button>
@@ -480,7 +480,7 @@ function MastodonForm({
   return (
     <div className="space-y-3">
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">Instance URL</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Instance URL</span>
         <input
           type="url"
           value={instance}
@@ -498,7 +498,7 @@ function MastodonForm({
         OAuth with {instance.replace(/^https?:\/\//, '')}
       </button>
       <label className="block">
-        <span className="mb-1 block text-xs font-medium text-gray-400">Or paste access token</span>
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Or paste access token</span>
         <input
           type="password"
           value={accessToken}
@@ -512,7 +512,7 @@ function MastodonForm({
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)]"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)]"
         >
           Back
         </button>
@@ -552,7 +552,7 @@ function ProtocolForm({
     case 'mastodon':
       return <MastodonForm {...props} />;
     default:
-      return <p className="text-sm text-gray-500">Unknown protocol</p>;
+      return <p className="text-sm text-[var(--color-muted)]">Unknown protocol</p>;
   }
 }
 
@@ -574,12 +574,12 @@ function WalletSection({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-medium uppercase tracking-widest text-gray-500">Web3 Wallets</h3>
+      <h3 className="text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">Web3 Wallets</h3>
 
       {/* Connected wallet display */}
       {walletAddress ? (
         <div className="rounded-xl border border-degen-500/30 bg-degen-500/10 px-4 py-3">
-          <div className="text-xs text-gray-500 mb-1">Connected Wallet</div>
+          <div className="text-xs text-[var(--color-muted)] mb-1">Connected Wallet</div>
           <div className="text-sm font-mono text-degen-400 break-all">{walletAddress}</div>
         </div>
       ) : null}
@@ -611,7 +611,7 @@ function WalletSection({
                   )}
                 </div>
                 {w.detected && (
-                  <span className="text-xs text-gray-500 group-hover:text-gray-300">Connect →</span>
+                  <span className="text-xs text-[var(--color-muted)] group-hover:text-[var(--color-muted)]">Connect →</span>
                 )}
               </button>
             );
@@ -651,7 +651,7 @@ function WalletSection({
         <span className="text-lg">🔗</span>
         <div className="flex-1">
           <div className="text-sm font-medium text-[#3b99fc]">WalletConnect</div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-[var(--color-muted)]">
             Scan QR with your mobile wallet
             <span className="ml-1.5 rounded bg-[#3b99fc]/20 px-1.5 py-0.5 text-[10px] text-[#3b99fc]">
               Coming soon
@@ -719,7 +719,7 @@ export const SignInModal = memo(function SignInModal({
             <h2 className="text-lg font-bold text-[var(--color-fg)]">
               {selectedProtocol ? `Sign in with ${selectedProtocol.label}` : 'Sign In'}
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-[var(--color-muted)]">
               {selectedProtocol
                 ? selectedProtocol.description
                 : 'Sign in with your wallet to post, tip, and cross-post across the open social graph.'}
@@ -730,7 +730,7 @@ export const SignInModal = memo(function SignInModal({
               setSelectedProtocol(null);
               onClose();
             }}
-            className="rounded-lg p-2 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+            className="rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close"
             type="button"
           >
@@ -796,7 +796,7 @@ export const SignInModal = memo(function SignInModal({
                     <div className="text-sm font-semibold text-[var(--color-fg)] group-hover:text-degen-400 transition-colors">
                       {proto.label}
                     </div>
-                    <div className="text-xs text-gray-500">{proto.description}</div>
+                    <div className="text-xs text-[var(--color-muted)]">{proto.description}</div>
                   </div>
                   <span className="text-xs text-gray-600">→</span>
                 </button>

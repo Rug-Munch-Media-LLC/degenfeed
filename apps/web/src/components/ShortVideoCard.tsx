@@ -640,7 +640,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
           />
         ) : (
           /* Fallback */
-          <div className="flex h-full w-full items-center justify-center bg-gray-950">
+          <div className="flex h-full w-full items-center justify-center bg-[var(--color-bg)]">
             {post.author.avatarUrl && (
               <Image
                 src={post.author.avatarUrl}
@@ -663,12 +663,12 @@ export const ShortVideoCard = memo(function ShortVideoCard({
                   <path d="M8 5V19L19 12L8 5Z" />
                 </svg>
               </div>
-              <p className="text-xs text-gray-500">Video unavailable</p>
+              <p className="text-xs text-[var(--color-muted)]">Video unavailable</p>
               <a
                 href={post.embeds[0]?.url ?? '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:bg-white/10 hover:text-white"
               >
                 Open original
               </a>

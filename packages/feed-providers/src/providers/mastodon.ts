@@ -41,15 +41,12 @@ export const TRENDING_INSTANCES: FediverseInstance[] = [
   { url: 'https://mastodon.world', weight: 0.8, label: 'World', software: 'mastodon', topics: ['general'] },
   { url: 'https://mastodon.online', weight: 0.7, label: 'Online', software: 'mastodon', topics: ['general'] },
   { url: 'https://mastodon.cloud', weight: 0.7, label: 'Cloud', software: 'mastodon', topics: ['general'] },
-  { url: 'https://fedi.social', weight: 0.7, label: 'Fedi', software: 'mastodon', topics: ['general', 'tech'] },
   { url: 'https://ohai.social', weight: 0.7, label: 'Ohai', software: 'mastodon', topics: ['general', 'tech'] },
   { url: 'https://universeodon.com', weight: 0.7, label: 'Universe', software: 'mastodon', topics: ['general'] },
   { url: 'https://mastodon.scot', weight: 0.6, label: 'Scot', software: 'mastodon', topics: ['general'] },
   { url: 'https://mastodon.au', weight: 0.6, label: 'AU', software: 'mastodon', topics: ['general'] },
 
   // ── Mastodon: Crypto / Bitcoin / Web3 ──────────────────────────
-  { url: 'https://bitcoinhackers.org', weight: 1.0, label: 'BTC', software: 'mastodon', topics: ['bitcoin', 'crypto'] },
-  { url: 'https://cryptodon.lol', weight: 1.0, label: 'CryptoDon', software: 'mastodon', topics: ['crypto', 'web3'] },
   { url: 'https://noagendasocial.com', weight: 0.8, label: 'NoAgenda', software: 'mastodon', topics: ['crypto', 'news'] },
   { url: 'https://satoshis.space', weight: 0.8, label: 'Sats', software: 'mastodon', topics: ['bitcoin', 'crypto'] },
   { url: 'https://sovereignfinance.social', weight: 0.7, label: 'Sovereign', software: 'mastodon', topics: ['bitcoin', 'finance'] },
@@ -90,23 +87,16 @@ export const TRENDING_INSTANCES: FediverseInstance[] = [
   { url: 'https://writing.exchange', weight: 0.6, label: 'Writing', software: 'mastodon', topics: ['writing', 'publishing'] },
 
   // ── Pleroma / Akkoma (Mastodon-API-compatible) ─────────────────
-  { url: 'https://bae.st', weight: 0.6, label: 'Bae', software: 'pleroma', topics: ['general', 'tech'] },
   { url: 'https://gleasonator.com', weight: 0.7, label: 'Gleason', software: 'pleroma', topics: ['tech', 'foss'] },
-  { url: 'https://poa.st', weight: 0.6, label: 'Poa', software: 'pleroma', topics: ['general'] },
   { url: 'https://nicecrew.digital', weight: 0.6, label: 'NiceCrew', software: 'pleroma', topics: ['general', 'news'] },
-  { url: 'https://pleroma.site', weight: 0.6, label: 'PleromaSite', software: 'pleroma', topics: ['general', 'tech'] },
+  { url: 'https://bae.st', weight: 0.6, label: 'Bae', software: 'pleroma', topics: ['general', 'tech'] },
   { url: 'https://shitpost.cloud', weight: 0.5, label: 'Shitpost', software: 'pleroma', topics: ['memes', 'general'] },
   { url: 'https://sleepiness.cc', weight: 0.5, label: 'Sleepy', software: 'pleroma', topics: ['general', 'tech'] },
   { url: 'https://akko.bune.city', weight: 0.6, label: 'BuneCity', software: 'akkoma', topics: ['tech', 'general'] },
   { url: 'https://pub.solar', weight: 0.6, label: 'PubSolar', software: 'pleroma', topics: ['foss', 'tech'] },
   { url: 'https://tavern.antipope.info', weight: 0.5, label: 'Tavern', software: 'pleroma', topics: ['general', 'writing'] },
-
-  // ── Misskey / Firefish (limited Mastodon API compat) ───────────
-  { url: 'https://misskey.io', weight: 0.7, label: 'Misskey', software: 'misskey', topics: ['general', 'tech'] },
-  { url: 'https://misskey.design', weight: 0.6, label: 'MisskeyDesign', software: 'misskey', topics: ['design', 'art'] },
-  { url: 'https://mkkey.net', weight: 0.6, label: 'MkKey', software: 'misskey', topics: ['general'] },
-  { url: 'https://firefish.city', weight: 0.6, label: 'Firefish', software: 'firefish', topics: ['general', 'tech'] },
-  { url: 'https://mi.ikanago.net', weight: 0.6, label: 'Ika', software: 'misskey', topics: ['crypto', 'tech'] },
+  // poa.st removed — 404
+  // pleroma.site removed — timeout
 ];
 
 /**

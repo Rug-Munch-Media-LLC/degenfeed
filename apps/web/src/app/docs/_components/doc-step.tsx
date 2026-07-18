@@ -16,7 +16,7 @@ export function Step({
       </span>
       <div>
         <div className="mb-1 text-sm font-semibold text-[var(--color-fg)]">{label}</div>
-        <p className="text-sm leading-relaxed text-gray-400">{children}</p>
+        <p className="text-sm leading-relaxed text-[var(--color-muted)]">{children}</p>
       </div>
     </div>
   );

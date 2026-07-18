@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
 export default function LegalPage() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 text-sm leading-relaxed text-gray-300">
+    <div className="mx-auto max-w-2xl px-4 py-8 text-sm leading-relaxed text-[var(--color-muted)]">
       <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">Legal Notice</h1>
       <p className="mb-8 text-lg text-degen-400">Rug Munch Media LLC</p>
 

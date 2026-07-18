@@ -25,6 +25,7 @@ export const ALL_CATEGORIES = [
   'stablecoin',
   'regulation',
   'gaming',
+  'general',
 ] as const;
 
 export type CategorySlug = (typeof ALL_CATEGORIES)[number];
@@ -203,6 +204,15 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
       'onchain game', 'fren pet', 'telegram game', 'tap to earn',
     ],
   },
+  general: {
+    slug: 'general',
+    label: 'General',
+    emoji: '\uD83C\uDF10',
+    niches: ['crypto', 'blockchain', 'web3'],
+    keywords: [
+      'crypto', 'blockchain', 'web3', 'cryptocurrency', 'token', 'decentralized',
+    ],
+  },
 };
 
 /** Category niches indexed by niche name → category slug for quick lookup. */
@@ -211,6 +221,43 @@ for (const cat of Object.values(CATEGORIES)) {
   for (const n of cat.niches) {
     NICHE_TO_CATEGORY.set(n, cat.slug);
   }
+}
+
+// ─── Simple suffix-stripping stemmer ─────────────────────────────────
+
+/**
+ * Strips common English suffixes for basic stemming.
+ * "trading"  → "trade"  (matches "traded")
+ * "bitcoin"  → "bitcoin" (does NOT match "bitcoincash")
+ * No heavy NLP — avoids false substring matches from raw includes().
+ */
+const STEM_SUFFIXES = ['ing', 'ed', 'es', 's', 'ly', 'ment', 'tion', 'ness', 'ful', 'less', 'able', 'ible', 'al', 'ive', 'ous', 'ize', 'ise', 'er', 'est', 'ment', 'ship', 'ity'];
+
+export function stemWord(word: string): string {
+  let s = word.toLowerCase();
+  if (s.length <= 3) return s;
+  for (const suffix of STEM_SUFFIXES) {
+    if (s.endsWith(suffix) && s.length - suffix.length >= 3) {
+      s = s.slice(0, -suffix.length);
+      break; // strip one suffix only
+    }
+  }
+  return s;
+}
+
+/**
+ * Returns true if any stemmed word in the text matches the stemmed keyword.
+ * Uses word-boundary splitting so "bitcoin" won't match "bitcoincash".
+ */
+function keywordMatches(text: string, keyword: string): boolean {
+  const stemmedKw = stemWord(keyword);
+  const words = text.split(/\s+/);
+  for (const w of words) {
+    if (stemWord(w) === stemmedKw) return true;
+  }
+  // Also check the raw form for hyphenated / compound keywords
+  if (text.includes(keyword)) return true;
+  return false;
 }
 
 // ─── Category relevance scoring ───────────────────────────────────────
@@ -252,10 +299,10 @@ export function scoreCategoryRelevance(post: UnifiedPost): Map<CategorySlug, num
       score += Math.min(nicheMatches * 0.3, 0.6);
     }
 
-    // Keyword matches (weaker signal) — up to 0.3
+    // Keyword matches (weaker signal, stemmed) — up to 0.3
     let kwMatches = 0;
     for (const kw of cat.keywords) {
-      if (text.includes(kw)) kwMatches++;
+      if (keywordMatches(text, kw)) kwMatches++;
     }
     if (kwMatches > 0) {
       score += Math.min(kwMatches * 0.05, 0.3);
@@ -302,8 +349,8 @@ export function ensureCategory(post: UnifiedPost): CategorySlug {
     if (cat) return cat;
   }
 
-  // Default to 'news' as catch-all for crypto content
-  return 'news';
+  // Default to 'general' for uncategorized content
+  return 'general';
 }
 
 // ─── Category feed filtering ──────────────────────────────────────────
@@ -351,6 +398,7 @@ const CATEGORY_FALLBACKS: Record<CategorySlug, CategorySlug[]> = {
   stablecoin: ['defi', 'ethereum', 'news'],
   regulation: ['news', 'bitcoin', 'defi'],
   gaming: ['nft', 'news', 'memes'],
+  general: ['news', 'bitcoin', 'defi'],
 };
 
 /**

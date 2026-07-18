@@ -149,7 +149,7 @@ export function UnifiedTipDashboard({
 
   if (!userId) {
     return (
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-center text-xs text-gray-500">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-center text-xs text-[var(--color-muted)]">
         Connect a wallet to see your cross-platform tipping activity.
       </div>
     );
@@ -174,7 +174,7 @@ export function UnifiedTipDashboard({
             setLoading(true);
             void load();
           }}
-          className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-gray-400 transition-colors hover:text-[var(--color-fg)]"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
         >
           Retry
         </button>
@@ -199,17 +199,17 @@ export function UnifiedTipDashboard({
       {/* Summary cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-          <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+          <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
             <span>↑</span>
             <span>Sent</span>
           </div>
           <div className="text-xl font-bold text-[var(--color-fg)]">
             {formatUsd(sent.totalUsd)}
-            <span className="ml-1.5 text-xs font-normal text-gray-500">
+            <span className="ml-1.5 text-xs font-normal text-[var(--color-muted)]">
               across {sent.count} tip{sent.count !== 1 ? 's' : ''}
             </span>
           </div>
-          {sentBreakdown && <div className="mt-1 text-[10px] text-gray-500">{sentBreakdown}</div>}
+          {sentBreakdown && <div className="mt-1 text-[10px] text-[var(--color-muted)]">{sentBreakdown}</div>}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {PLATFORM_ORDER.filter((p) => (sent.byPlatform[p]?.count ?? 0) > 0).map((p) => (
               <PlatformBadge key={p} platform={p} />
@@ -224,12 +224,12 @@ export function UnifiedTipDashboard({
           </div>
           <div className="text-xl font-bold text-[var(--color-fg)]">
             {formatUsd(received.totalUsd)}
-            <span className="ml-1.5 text-xs font-normal text-gray-500">
+            <span className="ml-1.5 text-xs font-normal text-[var(--color-muted)]">
               from {received.tipperCount} tipper{received.tipperCount !== 1 ? 's' : ''}
             </span>
           </div>
           {receivedBreakdown && (
-            <div className="mt-1 text-[10px] text-gray-500">{receivedBreakdown}</div>
+            <div className="mt-1 text-[10px] text-[var(--color-muted)]">{receivedBreakdown}</div>
           )}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {PLATFORM_ORDER.filter((p) => (received.byPlatform[p]?.count ?? 0) > 0).map((p) => (
@@ -241,11 +241,11 @@ export function UnifiedTipDashboard({
 
       {/* Tip history */}
       <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-        <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+        <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)]">
           Tip History
         </h3>
         {history.length === 0 ? (
-          <p className="py-3 text-center text-xs text-gray-500">
+          <p className="py-3 text-center text-xs text-[var(--color-muted)]">
             No tips yet — tip a post, comment, or video to get started. ⚡
           </p>
         ) : (
@@ -254,7 +254,7 @@ export function UnifiedTipDashboard({
               <li key={item.id} className="flex items-center gap-2 py-2 text-xs">
                 <span
                   className={`shrink-0 font-bold ${
-                    item.direction === 'received' ? 'text-green-400' : 'text-gray-400'
+                    item.direction === 'received' ? 'text-green-400' : 'text-[var(--color-muted)]'
                   }`}
                 >
                   {item.direction === 'received' ? '↓' : '↑'}
@@ -262,7 +262,7 @@ export function UnifiedTipDashboard({
                 <span className="shrink-0 font-semibold text-[var(--color-fg)]">
                   {formatUsd(item.amountUsd)}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-gray-500">
+                <span className="min-w-0 flex-1 truncate text-[var(--color-muted)]">
                   {item.direction === 'received'
                     ? `from ${item.fromLabel}`
                     : `to ${item.toLabel}`}

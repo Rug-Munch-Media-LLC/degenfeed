@@ -252,7 +252,7 @@ export default function AdminContentPage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
-          <p className="mt-4 text-sm text-gray-500">Loading content…</p>
+          <p className="mt-4 text-sm text-[var(--color-muted)]">Loading content…</p>
         </div>
       </div>
     );
@@ -279,7 +279,7 @@ export default function AdminContentPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--color-fg)]">Content Management</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Feed moderation, spam queue, and trending curation
         </p>
       </div>
@@ -298,7 +298,7 @@ export default function AdminContentPage() {
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === tab.key
                 ? 'bg-degen-500/15 text-degen-400'
-                : 'text-gray-400 hover:bg-[var(--color-muted)]'
+                : 'text-[var(--color-muted)] hover:bg-[var(--color-muted)]'
             }`}
           >
             {tab.label}
@@ -336,7 +336,7 @@ export default function AdminContentPage() {
                 </option>
               ))}
             </select>
-            <span className="text-xs text-gray-500">{content.length} items</span>
+            <span className="text-xs text-[var(--color-muted)]">{content.length} items</span>
           </div>
 
           <div className="space-y-3">
@@ -387,13 +387,13 @@ export default function AdminContentPage() {
                     <p className="text-sm text-[var(--color-fg)] line-clamp-3">{item.text}</p>
 
                     {/* Engagement */}
-                    <div className="mt-2 flex items-center gap-4 text-[10px] text-gray-500">
+                    <div className="mt-2 flex items-center gap-4 text-[10px] text-[var(--color-muted)]">
                       <span>❤️ {formatCount(item.engagement.likes)}</span>
                       <span>💬 {formatCount(item.engagement.replies)}</span>
                       <span>💸 {formatCount(item.engagement.tips)}</span>
                       <span className="ml-auto">
                         Score:{' '}
-                        <span className={item.score > 0.7 ? 'text-degen-400' : 'text-gray-400'}>
+                        <span className={item.score > 0.7 ? 'text-degen-400' : 'text-[var(--color-muted)]'}>
                           {(item.score * 100).toFixed(0)}%
                         </span>
                       </span>
@@ -434,7 +434,7 @@ export default function AdminContentPage() {
           {spam.length === 0 ? (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-16 text-center">
               <div className="mb-3 text-3xl">✅</div>
-              <p className="text-sm text-gray-500">No spam in the queue.</p>
+              <p className="text-sm text-[var(--color-muted)]">No spam in the queue.</p>
             </div>
           ) : (
             spam.map((item) => (
@@ -455,7 +455,7 @@ export default function AdminContentPage() {
                       <span className="text-xs">
                         {PROTOCOL_ICONS[item.protocol]} {item.protocol}
                       </span>
-                      <span className="text-xs text-gray-500">@{item.authorHandle}</span>
+                      <span className="text-xs text-[var(--color-muted)]">@{item.authorHandle}</span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                           item.status === 'pending'
@@ -472,7 +472,7 @@ export default function AdminContentPage() {
                       </span>
                     </div>
                     <p className="mb-1 text-sm text-[var(--color-fg)] line-clamp-2">{item.text}</p>
-                    <p className="text-[10px] text-gray-500">Reason: {item.reason}</p>
+                    <p className="text-[10px] text-[var(--color-muted)]">Reason: {item.reason}</p>
                   </div>
 
                   {item.status === 'pending' && (
@@ -505,7 +505,7 @@ export default function AdminContentPage() {
       {/* ── Trending Curation Tab ── */}
       {activeTab === 'trending' && (
         <div>
-          <p className="mb-4 text-sm text-gray-500">
+          <p className="mb-4 text-sm text-[var(--color-muted)]">
             Curate trending content. Items with high engagement are auto-promoted.
           </p>
           <div className="space-y-3">
@@ -527,7 +527,7 @@ export default function AdminContentPage() {
                         <span className="text-xs font-medium text-[var(--color-fg)]">
                           @{item.authorHandle}
                         </span>
-                        <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                        <div className="flex items-center gap-3 text-[10px] text-[var(--color-muted)]">
                           <span>❤️ {formatCount(item.engagement.likes)}</span>
                           <span>💬 {formatCount(item.engagement.replies)}</span>
                           <span>💸 {formatCount(item.engagement.tips)}</span>

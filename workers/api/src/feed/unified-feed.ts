@@ -170,7 +170,7 @@ export async function buildUnifiedFeed(
   const startTime = Date.now();
   const sources = resolveSources(opts.sources);
   const mix = getMixWeights(opts.mix ?? 'balanced');
-  const limit = Math.min(opts.limit ?? 50, 150);
+  const limit = Math.min(opts.limit ?? 100, 200);
   const section = opts.section ?? 'hot';
 
   const fetchPromises: Promise<{ source: SourceCategory; posts: UnifiedPost[]; error?: string }>[] =

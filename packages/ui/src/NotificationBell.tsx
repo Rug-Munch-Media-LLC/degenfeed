@@ -138,7 +138,7 @@ export function NotificationBell({
     <div ref={ref} className="relative">
       <button
         type="button"
-        className="relative rounded-lg p-2 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+        className="relative rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
         onClick={handleToggle}
         aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
       >
@@ -188,7 +188,7 @@ export function NotificationBell({
           </div>
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="py-8 text-center text-sm text-gray-500">No notifications yet</div>
+              <div className="py-8 text-center text-sm text-[var(--color-muted)]">No notifications yet</div>
             ) : grouped ? (
               groups.slice(0, 30).map((g) => (
                 <button
@@ -251,7 +251,7 @@ export function NotificationBell({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-[var(--color-fg)] truncate">{n.actorName}</div>
-                    <div className="text-xs text-gray-500">{getTypeLabel(n.type)}</div>
+                    <div className="text-xs text-[var(--color-muted)]">{getTypeLabel(n.type)}</div>
                     {n.postText && (
                       <div className="mt-1 text-xs text-gray-600 truncate">{n.postText}</div>
                     )}

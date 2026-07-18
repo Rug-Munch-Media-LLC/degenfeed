@@ -467,7 +467,7 @@ const VideoPreview = memo(function VideoPreview({ url }: VideoPreviewProps) {
           className="group relative block w-full overflow-hidden rounded-lg border border-white/10 bg-black/40 transition-all hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-degen-400/60"
           aria-label="Play video"
         >
-          <div className="aspect-video flex items-center justify-center bg-gray-900">
+          <div className="aspect-video flex items-center justify-center bg-[var(--color-card)]">
             {/* Play button icon */}
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-all group-hover:scale-110 group-hover:bg-white/25">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -511,7 +511,7 @@ const LinkPreview = memo(function LinkPreview({ url }: LinkPreviewProps) {
           loading="lazy"
         />
       )}
-      <span className="flex-1 truncate text-gray-500 transition-colors group-hover:text-gray-300">
+      <span className="flex-1 truncate text-[var(--color-muted)] transition-colors group-hover:text-[var(--color-muted)]">
         {domain}
       </span>
       <svg
@@ -638,7 +638,7 @@ const ReplyForm = memo(function ReplyForm({ parentId: _parentId, authorName, onC
         onKeyDown={handleKeyDown}
         placeholder={`Reply to ${authorName}…`}
         rows={3}
-        className="w-full resize-none rounded-md border border-white/10 bg-black/30 px-2.5 py-1.5 text-xs text-gray-300 placeholder-gray-600 focus:border-degen-500/30 focus:outline-none focus:ring-1 focus:ring-degen-500/20"
+        className="w-full resize-none rounded-md border border-white/10 bg-black/30 px-2.5 py-1.5 text-xs text-[var(--color-muted)] placeholder-gray-600 focus:border-degen-500/30 focus:outline-none focus:ring-1 focus:ring-degen-500/20"
         aria-label={`Reply to ${authorName}`}
       />
       <div className="mt-1.5 flex items-center justify-between">
@@ -649,7 +649,7 @@ const ReplyForm = memo(function ReplyForm({ parentId: _parentId, authorName, onC
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md px-2 py-1 text-[11px] text-gray-500 transition-colors hover:text-gray-300"
+            className="rounded-md px-2 py-1 text-[11px] text-[var(--color-muted)] transition-colors hover:text-[var(--color-muted)]"
           >
             Cancel
           </button>
@@ -920,7 +920,7 @@ const CommentNode = memo(function CommentNode({
                   comment.author.charAt(0)
                 )}
               </button>
-              <span className="font-medium text-gray-300">
+              <span className="font-medium text-[var(--color-muted)]">
                 {comment.author}
               </span>
               <span
@@ -948,7 +948,7 @@ const CommentNode = memo(function CommentNode({
             {/* ── Content (hidden when collapsed) ── */}
             {!collapsed && (
               <>
-                <div className="mb-1.5 text-sm leading-relaxed text-gray-400 whitespace-pre-wrap break-words">
+                <div className="mb-1.5 text-sm leading-relaxed text-[var(--color-muted)] whitespace-pre-wrap break-words">
                   {cleanText || comment.content}
                 </div>
 
@@ -1012,7 +1012,7 @@ const CommentNode = memo(function CommentNode({
                   <button
                     type="button"
                     onClick={toggleReplyForm}
-                    className={`flex items-center gap-1 rounded-md px-1.5 py-1 transition-all duration-150 hover:bg-gray-500/10 hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 min-h-[28px] ${
+                    className={`flex items-center gap-1 rounded-md px-1.5 py-1 transition-all duration-150 hover:bg-gray-500/10 hover:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-offset-1 min-h-[28px] ${
                       showReplyForm ? 'text-degen-400' : 'text-gray-600'
                     }`}
                     aria-label="Reply"
@@ -1041,7 +1041,7 @@ const CommentNode = memo(function CommentNode({
                     type="button"
                     id={`share-${comment.id}`}
                     onClick={handleShare}
-                    className="flex items-center gap-1 rounded-md px-1.5 py-1 transition-all duration-150 hover:bg-gray-500/10 hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-1 min-h-[28px] text-gray-600"
+                    className="flex items-center gap-1 rounded-md px-1.5 py-1 transition-all duration-150 hover:bg-gray-500/10 hover:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-offset-1 min-h-[28px] text-gray-600"
                     aria-label="Share comment"
                   >
                     <svg
@@ -1337,7 +1337,7 @@ export const LemmyThreadView = memo(function LemmyThreadView({
           {/* Metadata row + Tip button */}
           <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
             <span>
-              Posted by <span className="font-medium text-gray-500">{post.author.displayName}</span>
+              Posted by <span className="font-medium text-[var(--color-muted)]">{post.author.displayName}</span>
             </span>
             <span aria-hidden="true">·</span>
             <span>{post.metrics.replies} comments</span>

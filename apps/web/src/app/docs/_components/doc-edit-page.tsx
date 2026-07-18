@@ -17,7 +17,7 @@ export function EditPage() {
       href={editUrl}
       target="_blank"
       
-      className="inline-flex items-center gap-1.5 text-xs text-gray-500 transition-colors hover:text-degen-400"
+      className="inline-flex items-center gap-1.5 text-xs text-[var(--color-muted)] transition-colors hover:text-degen-400"
     >
       <svg
         width="14"

@@ -122,7 +122,7 @@ export default function PreferencesPage() {
   }, []);
 
   if (!prefs) {
-    return <div className="mx-auto max-w-2xl px-4 py-20 text-center text-gray-500">Loading...</div>;
+    return <div className="mx-auto max-w-2xl px-4 py-20 text-center text-[var(--color-muted)]">Loading...</div>;
   }
 
   const update = (patch: Partial<UserPreferences>) => {
@@ -203,18 +203,18 @@ export default function PreferencesPage() {
         <h2 className="mb-3 text-sm font-semibold text-degen-400">
           AI-learned topics
           {!topicsLoading && learnedTopics.length > 0 && (
-            <span className="ml-2 text-[10px] font-normal text-gray-500">
+            <span className="ml-2 text-[10px] font-normal text-[var(--color-muted)]">
               Based on your likes, reposts, and bookmarks
             </span>
           )}
         </h2>
         {topicsLoading ? (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
             <span className="h-2 w-2 animate-pulse rounded-full bg-degen-500" />
             Loading your learned topics...
           </div>
         ) : learnedTopics.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[var(--color-border)] p-4 text-center text-xs text-gray-500">
+          <div className="rounded-lg border border-dashed border-[var(--color-border)] p-4 text-center text-xs text-[var(--color-muted)]">
             Start liking, reposting, and bookmarking posts to build your AI profile.
             <br />
             The feed learns what topics you care about automatically.
@@ -290,7 +290,7 @@ export default function PreferencesPage() {
       {/* ── Protocol Quality Presets ── */}
       <div className="card mb-4">
         <h2 className="mb-3 text-sm font-semibold text-degen-400">Protocol Quality</h2>
-        <p className="mb-3 text-xs text-gray-500">
+        <p className="mb-3 text-xs text-[var(--color-muted)]">
           Each protocol has smart quality defaults. Choose a preset or stick with the smart
           defaults.
         </p>
@@ -308,7 +308,7 @@ export default function PreferencesPage() {
                   const newPresets = { ...(prefs.protocolPresets ?? {}), [p]: e.target.value };
                   update({ protocolPresets: newPresets });
                 }}
-                className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-xs text-gray-400 focus:outline-none focus:ring-1 focus:ring-degen-500"
+                className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-xs text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-degen-500"
                 aria-label={`${p} quality preset`}
               >
                 <option value="quality">Quality (smart defaults)</option>
@@ -351,7 +351,7 @@ export default function PreferencesPage() {
                 <div className="h-2 w-6 rounded bg-blue-400/30" />
               </div>
             </div>
-            <div className="mt-2 text-[10px] text-gray-500">
+            <div className="mt-2 text-[10px] text-[var(--color-muted)]">
               Relaxed spacing. More breathing room.
             </div>
           </button>
@@ -383,12 +383,12 @@ export default function PreferencesPage() {
                 <div className="h-1.5 w-5 rounded bg-blue-400/30" />
               </div>
             </div>
-            <div className="mt-2 text-[10px] text-gray-500">
+            <div className="mt-2 text-[10px] text-[var(--color-muted)]">
               Twitter-like density. More content per screen.
             </div>
           </button>
         </div>
-        <p className="mt-3 text-xs text-gray-500">
+        <p className="mt-3 text-xs text-[var(--color-muted)]">
           Also available: <strong>Media Grid</strong> (images/videos only) and{' '}
           <strong>Reader</strong> (full article view). Press Ctrl+Shift+L to cycle layouts.
         </p>
@@ -397,7 +397,7 @@ export default function PreferencesPage() {
       <div className="card mb-4">
         <h2 className="mb-3 text-sm font-semibold text-degen-400">Ranking weights</h2>
         <div className="mb-4">
-          <label className="mb-1 block text-xs text-gray-400">
+          <label className="mb-1 block text-xs text-[var(--color-muted)]">
             Recency weight: {prefs.recencyWeight.toFixed(1)}
             <input
               type="range"
@@ -411,7 +411,7 @@ export default function PreferencesPage() {
           </label>
         </div>
         <div className="mb-4">
-          <label className="mb-1 block text-xs text-gray-400">
+          <label className="mb-1 block text-xs text-[var(--color-muted)]">
             Engagement weight: {prefs.engagementWeight.toFixed(1)}
             <input
               type="range"
@@ -424,7 +424,7 @@ export default function PreferencesPage() {
             />
           </label>
         </div>
-        <label className="flex items-center gap-2 text-sm text-gray-400">
+        <label className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
           <input
             type="checkbox"
             checked={prefs.diversityBoost}

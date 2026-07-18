@@ -275,7 +275,7 @@ export const LiveChatFeed = memo(function LiveChatFeed({
   if (visible.length === 0) {
     return (
       <div className="flex h-full items-center justify-center px-4">
-        <p className="text-center text-[11px] text-gray-500">
+        <p className="text-center text-[11px] text-[var(--color-muted)]">
           No messages yet.
           <br />
           <span className="text-degen-400">Be the first to chat!</span>
@@ -320,7 +320,7 @@ export const LiveChatFeed = memo(function LiveChatFeed({
                   loading="lazy"
                 />
               ) : (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-muted)] text-[7px] font-bold text-gray-500">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-muted)] text-[7px] font-bold text-[var(--color-muted)]">
                   {msg.username[0]?.toUpperCase() ?? '?'}
                 </span>
               )}

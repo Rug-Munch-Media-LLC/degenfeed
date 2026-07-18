@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-
+// TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
-const VALID_PROTOCOLS = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit'];
+const VALID_PROTOCOLS = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'threads', 'lemmy', 'rss', 'peertube'];
 
 export async function GET() {
   return NextResponse.json({ error: 'Method not allowed. Use POST to link or DELETE to unlink.' }, { status: 405 });
@@ -55,6 +55,26 @@ export async function POST(request: NextRequest) {
       case 'reddit':
         if (!identityData.username) {
           return NextResponse.json({ error: 'reddit requires username' }, { status: 400 });
+        }
+        break;
+      case 'threads':
+        if (!identityData.username && !identityData.did) {
+          return NextResponse.json({ error: 'threads requires username or did' }, { status: 400 });
+        }
+        break;
+      case 'lemmy':
+        if (!identityData.username) {
+          return NextResponse.json({ error: 'lemmy requires username' }, { status: 400 });
+        }
+        break;
+      case 'rss':
+        if (!identityData.url) {
+          return NextResponse.json({ error: 'rss requires url' }, { status: 400 });
+        }
+        break;
+      case 'peertube':
+        if (!identityData.username && !identityData.channelId) {
+          return NextResponse.json({ error: 'peertube requires username or channelId' }, { status: 400 });
         }
         break;
     }

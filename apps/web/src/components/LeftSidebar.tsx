@@ -462,7 +462,7 @@ function WalletUserCard({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <code className="text-xs font-mono truncate text-gray-400">
+                      <code className="text-xs font-mono truncate text-[var(--color-muted)]">
                         {addr.slice(0, 6)}…{addr.slice(-4)}
                       </code>
                       {isActive && (

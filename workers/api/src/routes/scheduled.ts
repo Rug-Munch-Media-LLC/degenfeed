@@ -1,16 +1,20 @@
 /**
  * @degenfeed/api-worker — Scheduled post route
  *
- * POST /api/schedule — Schedule a cross-platform post
+ * POST /api/schedule   — Schedule a cross-platform post
+ * GET  /api/scheduled  — List active scheduled posts for the current user
  *
  * Premium gating:
  *   Free users:   max 5 active scheduled posts
  *   Pro+:         unlimited
+ *
+ * The GET endpoint requires authentication and returns all scheduled posts
+ * (pending, published, failed) for the requesting user, newest first.
  */
 
 import { type Env, jsonResponse } from '../index';
-import { requireSession } from '../session';
 import { requirePremiumTier } from '../premium';
+import { requireSession } from '../session';
 
 /** Scheduled post KV prefix */
 const SCHEDULED_PREFIX = 'scheduled:';
@@ -23,7 +27,7 @@ function scheduledKey(id: string): string {
   return `${SCHEDULED_PREFIX}${id}`;
 }
 
-interface ScheduledEntry {
+export interface ScheduledEntry {
   id: string;
   text: string;
   targets: string[];
@@ -31,6 +35,8 @@ interface ScheduledEntry {
   createdAt: string;
   status: 'pending' | 'published' | 'failed';
   wallet: string;
+  retries?: number;
+  lastError?: string;
 }
 
 export async function handleSchedulePost(request: Request, env: Env): Promise<Response> {
@@ -45,9 +51,17 @@ export async function handleSchedulePost(request: Request, env: Env): Promise<Re
   const wallet = session.address.toLowerCase();
 
   // ── Parse body ──────────────────────────────────────────────────
-  let body: { text: string; targets: string[]; scheduledAt: string };
+  let body: {
+    text: string;
+    targets: string[];
+    scheduledAt: string;
+  };
   try {
-    body = (await request.json()) as { text: string; targets: string[]; scheduledAt: string };
+    body = (await request.json()) as {
+      text: string;
+      targets: string[];
+      scheduledAt: string;
+    };
   } catch {
     return jsonResponse({ error: 'Invalid JSON' }, 400);
   }
@@ -92,9 +106,52 @@ export async function handleSchedulePost(request: Request, env: Env): Promise<Re
   }
 }
 
+// ─── GET /api/scheduled — List user's scheduled posts ────────────────
+
+export async function handleListScheduledPosts(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const wallet = session.address.toLowerCase();
+  const ids = await getUserScheduledIds(env, wallet);
+
+  const posts: Array<{
+    id: string;
+    text: string;
+    targets: string[];
+    scheduledAt: string;
+    createdAt: string;
+    status: string;
+    retries?: number;
+    lastError?: string;
+  }> = [];
+
+  for (const id of ids) {
+    try {
+      const raw = await env.CACHE?.get(scheduledKey(id));
+      if (!raw) continue;
+      const entry = JSON.parse(raw) as ScheduledEntry;
+      posts.push({
+        id: entry.id,
+        text: entry.text.slice(0, 200),
+        targets: entry.targets,
+        scheduledAt: entry.scheduledAt,
+        createdAt: entry.createdAt,
+        status: entry.status,
+        retries: entry.retries,
+        lastError: entry.lastError,
+      });
+    } catch {
+      // Skip malformed entries
+    }
+  }
+
+  return jsonResponse({ posts });
+}
+
 // ─── User index helpers ─────────────────────────────────────────
 
-async function getUserScheduledIds(env: Env, wallet: string): Promise<string[]> {
+export async function getUserScheduledIds(env: Env, wallet: string): Promise<string[]> {
   if (!env.CACHE) return [];
   try {
     const raw = await env.CACHE.get(userScheduledKey(wallet));
@@ -102,6 +159,23 @@ async function getUserScheduledIds(env: Env, wallet: string): Promise<string[]> 
     return JSON.parse(raw) as string[];
   } catch {
     return [];
+  }
+}
+
+/**
+ * Remove a post ID from the user's scheduled index.
+ * Called by the cron executor after a successful publish.
+ */
+export async function removeFromUserIndex(env: Env, wallet: string, postId: string): Promise<void> {
+  try {
+    const key = userScheduledKey(wallet);
+    const ids = await getUserScheduledIds(env, wallet);
+    const filtered = ids.filter((id) => id !== postId);
+    await env.CACHE?.put(key, JSON.stringify(filtered), {
+      expirationTtl: 60 * 60 * 24 * 30,
+    });
+  } catch {
+    // Non-fatal
   }
 }
 

@@ -227,7 +227,7 @@ export function FeedComposer({
                   type="button"
                   onClick={() => toggleTarget(t.id)}
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all border ${
-                    active ? 'border-current' : 'border-[var(--color-border)] hover:border-gray-600'
+                    active ? 'border-current' : 'border-[var(--color-border)] hover:border-[var(--color-muted)]'
                   } ${connected ? '' : 'opacity-40 hover:opacity-70'}`}
                   style={{
                     color: active ? getProtocolColor(t.id) : connected ? '#9ca3af' : '#666',

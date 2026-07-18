@@ -240,7 +240,7 @@ export function FeedBuilderModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-gray-300 transition-colors"
+            className="rounded-lg p-1.5 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors"
             aria-label="Close"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -261,12 +261,12 @@ export function FeedBuilderModal({
                     ? 'bg-degen-500 text-black'
                     : i < step
                       ? 'bg-degen-500/30 text-degen-400'
-                      : 'bg-white/10 text-gray-500'
+                      : 'bg-white/10 text-[var(--color-muted)]'
                 }`}
               >
                 {i < step ? '✓' : i + 1}
               </button>
-              <span className={`text-[10px] hidden sm:block ${i === step ? 'text-degen-400 font-semibold' : 'text-gray-500'}`}>
+              <span className={`text-[10px] hidden sm:block ${i === step ? 'text-degen-400 font-semibold' : 'text-[var(--color-muted)]'}`}>
                 {label}
               </span>
               {i < STEPS.length - 1 && (
@@ -300,7 +300,7 @@ export function FeedBuilderModal({
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500/50 focus:outline-none focus:ring-1 focus:ring-degen-500/30 transition-colors"
                   autoFocus
                 />
-                <p className="mt-1 text-right text-[10px] text-gray-500">{name.length}/100</p>
+                <p className="mt-1 text-right text-[10px] text-[var(--color-muted)]">{name.length}/100</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--color-fg)] mb-1.5">
@@ -314,7 +314,7 @@ export function FeedBuilderModal({
                   rows={3}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500/50 focus:outline-none focus:ring-1 focus:ring-degen-500/30 transition-colors resize-none"
                 />
-                <p className="mt-1 text-right text-[10px] text-gray-500">{description.length}/500</p>
+                <p className="mt-1 text-right text-[10px] text-[var(--color-muted)]">{description.length}/500</p>
               </div>
               <label className="flex items-center gap-3 cursor-pointer">
                 <div className="relative">
@@ -330,7 +330,7 @@ export function FeedBuilderModal({
                 </div>
                 <div>
                   <p className="text-sm font-medium text-[var(--color-fg)]">Make public</p>
-                  <p className="text-xs text-gray-500">Other users can discover and subscribe</p>
+                  <p className="text-xs text-[var(--color-muted)]">Other users can discover and subscribe</p>
                 </div>
               </label>
             </div>
@@ -339,7 +339,7 @@ export function FeedBuilderModal({
           {/* Step 2: Source Selection */}
           {step === 1 && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-[var(--color-muted)]">
                 Choose protocols to include. At least one required.
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -353,7 +353,7 @@ export function FeedBuilderModal({
                       className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
                         selected
                           ? 'border-degen-500/50 bg-degen-500/10 text-degen-400'
-                          : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300'
+                          : 'border-white/10 bg-white/5 text-[var(--color-muted)] hover:border-white/20 hover:text-[var(--color-muted)]'
                       }`}
                     >
                       <span className="text-base">{src.emoji}</span>
@@ -363,7 +363,7 @@ export function FeedBuilderModal({
                   );
                 })}
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[var(--color-muted)]">
                 {config.sources.length} source{config.sources.length !== 1 ? 's' : ''} selected
               </p>
             </div>
@@ -372,7 +372,7 @@ export function FeedBuilderModal({
           {/* Step 3: Topic Tuning */}
           {step === 2 && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-[var(--color-muted)]">
                 Boost topics you care about (0 = off, 100 = max boost).
               </p>
               <div className="space-y-3">
@@ -390,7 +390,7 @@ export function FeedBuilderModal({
                       className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-white/10 accent-degen-500"
                       aria-label={`${topic.label} boost weight`}
                     />
-                    <span className="text-xs font-mono text-gray-400 w-8 text-right">
+                    <span className="text-xs font-mono text-[var(--color-muted)] w-8 text-right">
                       {config.topics[topic.id] ?? 0}
                     </span>
                   </div>
@@ -422,7 +422,7 @@ export function FeedBuilderModal({
                     .filter(([t]) => !TOPICS.find((pt) => pt.id === t))
                     .map(([t, w]) => (
                       <span key={t} className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2.5 py-1 text-xs text-degen-400">
-                        {t} {w > 0 && <span className="text-gray-500">({w})</span>}
+                        {t} {w > 0 && <span className="text-[var(--color-muted)]">({w})</span>}
                         <button
                           type="button"
                           onClick={() => setConfig((prev) => {
@@ -430,7 +430,7 @@ export function FeedBuilderModal({
                             delete next[t];
                             return { ...prev, topics: next };
                           })}
-                          className="ml-0.5 text-gray-500 hover:text-red-400"
+                          className="ml-0.5 text-[var(--color-muted)] hover:text-red-400"
                         >
                           ×
                         </button>
@@ -459,7 +459,7 @@ export function FeedBuilderModal({
                         className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                           selected
                             ? 'bg-degen-500/15 text-degen-400 border border-degen-500/30'
-                            : 'bg-white/5 text-gray-400 border border-white/10 hover:text-gray-300'
+                            : 'bg-white/5 text-[var(--color-muted)] border border-white/10 hover:text-[var(--color-muted)]'
                         }`}
                       >
                         {ct.label}
@@ -530,7 +530,7 @@ export function FeedBuilderModal({
                         className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                           excluded
                             ? 'bg-red-500/15 text-red-400 border border-red-500/30'
-                            : 'bg-white/5 text-gray-400 border border-white/10 hover:text-gray-300'
+                            : 'bg-white/5 text-[var(--color-muted)] border border-white/10 hover:text-[var(--color-muted)]'
                         }`}
                       >
                         {excluded ? '✕ ' : ''}{topic.emoji} {topic.label}
@@ -548,11 +548,11 @@ export function FeedBuilderModal({
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
                 <div>
                   <h3 className="text-base font-bold text-[var(--color-fg)]">{name}</h3>
-                  {description && <p className="text-xs text-gray-400 mt-0.5">{description}</p>}
+                  {description && <p className="text-xs text-[var(--color-muted)] mt-0.5">{description}</p>}
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${isPublic ? 'bg-degen-500/10 text-degen-400' : 'bg-white/10 text-gray-400'}`}>
+                <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${isPublic ? 'bg-degen-500/10 text-degen-400' : 'bg-white/10 text-[var(--color-muted)]'}`}>
                     {isPublic ? '🌍 Public' : '🔒 Private'}
                   </span>
                   <span>{config.sources.length} source{config.sources.length !== 1 ? 's' : ''}</span>
@@ -560,12 +560,12 @@ export function FeedBuilderModal({
                 </div>
 
                 <div>
-                  <p className="text-xs font-medium text-gray-400 mb-1.5">Sources</p>
+                  <p className="text-xs font-medium text-[var(--color-muted)] mb-1.5">Sources</p>
                   <div className="flex flex-wrap gap-1.5">
                     {config.sources.map((src) => {
                       const meta = SOURCES.find((s) => s.id === src);
                       return (
-                        <span key={src} className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-300">
+                        <span key={src} className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs text-[var(--color-muted)]">
                           {meta?.emoji} {meta?.label || src}
                         </span>
                       );
@@ -575,14 +575,14 @@ export function FeedBuilderModal({
 
                 {Object.keys(config.topics).filter((t) => (config.topics[t] ?? 0) > 0).length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-gray-400 mb-1.5">Boosted Topics</p>
+                    <p className="text-xs font-medium text-[var(--color-muted)] mb-1.5">Boosted Topics</p>
                     <div className="flex flex-wrap gap-1.5">
                       {Object.entries(config.topics)
                         .filter(([, w]) => w > 0)
                         .sort(([, a], [, b]) => b - a)
                         .map(([t, w]) => (
                           <span key={t} className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2 py-0.5 text-xs text-degen-400">
-                            {t} <span className="text-gray-500">({w})</span>
+                            {t} <span className="text-[var(--color-muted)]">({w})</span>
                           </span>
                         ))}
                     </div>
@@ -590,8 +590,8 @@ export function FeedBuilderModal({
                 )}
 
                 <div>
-                  <p className="text-xs font-medium text-gray-400 mb-1.5">Filters</p>
-                  <div className="space-y-1 text-xs text-gray-500">
+                  <p className="text-xs font-medium text-[var(--color-muted)] mb-1.5">Filters</p>
+                  <div className="space-y-1 text-xs text-[var(--color-muted)]">
                     <span className="block">Content: {config.contentTypes.join(', ') || 'none'}</span>
                     {config.minEngagement > 0 && <span className="block">Min engagement: {config.minEngagement}</span>}
                     {config.language && <span className="block">Language: {config.language}</span>}
@@ -609,7 +609,7 @@ export function FeedBuilderModal({
           <button
             type="button"
             onClick={step === 0 ? onClose : () => setStep((s) => s - 1)}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-400 hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
           >
             {step === 0 ? 'Cancel' : 'Back'}
           </button>

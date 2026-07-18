@@ -159,7 +159,7 @@ function SpeakerAvatar({
       {/* Name */}
       <div className="text-center">
         <p className="text-sm font-semibold text-[var(--color-fg)]">{speaker.displayName}</p>
-        {speaker.handle && <p className="text-[10px] text-gray-500">@{speaker.handle}</p>}
+        {speaker.handle && <p className="text-[10px] text-[var(--color-muted)]">@{speaker.handle}</p>}
       </div>
 
       {/* Tip button */}
@@ -167,7 +167,7 @@ function SpeakerAvatar({
         <button
           type="button"
           onClick={() => onTip?.(spaceId, speaker.id)}
-          className="mt-0.5 rounded-full border border-[var(--color-border)] px-2.5 py-1 text-[9px] font-semibold text-gray-400 transition-all hover:border-amber-500/40 hover:bg-amber-500/10 hover:text-amber-400"
+          className="mt-0.5 rounded-full border border-[var(--color-border)] px-2.5 py-1 text-[9px] font-semibold text-[var(--color-muted)] transition-all hover:border-amber-500/40 hover:bg-amber-500/10 hover:text-amber-400"
         >
           ⚡ Tip
         </button>
@@ -319,7 +319,7 @@ export function SpaceRoom({
             <button
               type="button"
               onClick={onLeave}
-              className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-gray-400 transition-all hover:bg-[var(--color-muted)]/10 hover:text-[var(--color-fg)]"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-[var(--color-muted)] transition-all hover:bg-[var(--color-muted)]/10 hover:text-[var(--color-fg)]"
               aria-label="Leave space"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -329,7 +329,7 @@ export function SpaceRoom({
             </button>
             <div className="min-w-0">
               <h1 className="truncate text-sm font-bold text-[var(--color-fg)]">{space.title}</h1>
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+              <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-muted)]">
                 <span className="inline-flex items-center gap-1">
                   <LiveDot />
                   <span className="font-bold uppercase tracking-wider text-red-400">LIVE</span>
@@ -389,14 +389,14 @@ export function SpaceRoom({
               ) : (
                 <>
                   <span className="h-2.5 w-2.5 rounded-full bg-gray-600" />
-                  <span className="text-xs text-gray-500">Audio placeholder — LiveKit integration pending</span>
+                  <span className="text-xs text-[var(--color-muted)]">Audio placeholder — LiveKit integration pending</span>
                 </>
               )}
             </div>
 
             {/* Speaker grid */}
             {space.speakers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+              <div className="flex flex-col items-center justify-center py-16 text-[var(--color-muted)]">
                 <span className="mb-3 text-4xl opacity-30" aria-hidden="true">🎙️</span>
                 <p className="text-sm font-medium">No speakers yet</p>
                 <p className="mt-1 text-xs">Request to speak or wait for an invitation</p>
@@ -424,8 +424,8 @@ export function SpaceRoom({
           {/* Audience */}
           <div className="border-b border-[var(--color-glass-border)] p-4">
             <div className="mb-3 flex items-center gap-2">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Audience</h2>
-              <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Audience</h2>
+              <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--color-muted)]">
                 {space.listeners}
               </span>
             </div>
@@ -435,7 +435,7 @@ export function SpaceRoom({
               ))}
               {space.listeners > space.speakers.length && (
                 <div className="flex items-center gap-2 rounded-full border border-dashed border-[var(--color-glass-border)] px-3 py-1.5">
-                  <span className="text-[10px] text-gray-500">
+                  <span className="text-[10px] text-[var(--color-muted)]">
                     +{space.listeners - space.speakers.length} more
                   </span>
                 </div>
@@ -445,7 +445,7 @@ export function SpaceRoom({
 
           {/* Reactions */}
           <div className="flex-1 p-4">
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">Reactions</h2>
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Reactions</h2>
 
             {/* Quick emoji grid */}
             <div className="mb-3 flex flex-wrap gap-1.5">
@@ -486,19 +486,19 @@ export function SpaceRoom({
             {/* Reaction feed */}
             <div className="mt-3 max-h-40 space-y-1 overflow-y-auto">
               {reactions.length === 0 && space.reactions.length === 0 ? (
-                <p className="py-4 text-center text-[11px] text-gray-500">No reactions yet — be the first!</p>
+                <p className="py-4 text-center text-[11px] text-[var(--color-muted)]">No reactions yet — be the first!</p>
               ) : (
                 <>
                   {space.reactions.slice(-10).map((r, i) => (
                     <div key={`${r.createdAt}-${i}`} className="flex items-center gap-2 rounded-lg bg-[var(--color-muted)]/10 px-3 py-1.5">
                       <span className="text-lg">{r.emoji}</span>
-                      <span className="text-[10px] text-gray-500">{timeAgo(r.createdAt)}</span>
+                      <span className="text-[10px] text-[var(--color-muted)]">{timeAgo(r.createdAt)}</span>
                     </div>
                   ))}
                   {reactions.map((r, i) => (
                     <div key={`live-${r.createdAt}-${i}`} className="flex items-center gap-2 rounded-lg bg-degen-500/10 px-3 py-1.5 animate-slide-up">
                       <span className="text-lg">{r.emoji}</span>
-                      <span className="text-[10px] text-gray-500">{timeAgo(r.createdAt)}</span>
+                      <span className="text-[10px] text-[var(--color-muted)]">{timeAgo(r.createdAt)}</span>
                     </div>
                   ))}
                   <div ref={reactionsEndRef} />
@@ -559,7 +559,7 @@ export function SpaceRoom({
 
             {/* Mic status text */}
             {isSpeaker && !connecting && (
-              <span className="hidden text-xs text-gray-500 sm:block">
+              <span className="hidden text-xs text-[var(--color-muted)] sm:block">
                 {micEnabled ? 'Mic on' : 'Mic muted'}
               </span>
             )}

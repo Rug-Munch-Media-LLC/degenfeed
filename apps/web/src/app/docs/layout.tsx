@@ -65,7 +65,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
-              className="rounded p-1 text-gray-400 hover:text-[var(--color-fg)]"
+              className="rounded p-1 text-[var(--color-muted)] hover:text-[var(--color-fg)]"
               aria-label="Close sidebar"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" role="img" aria-labelledby="close-docs-title"><title id="close-docs-title">Close documentation sidebar</title><path d="M18 6 6 18M6 6l12 12" /></svg>
@@ -89,7 +89,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
                     className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors ${
                       isActive
                         ? 'bg-degen-500/10 text-degen-400 font-medium'
-                        : 'text-gray-400 hover:text-[var(--color-fg)] hover:bg-white/[0.03]'
+                        : 'text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:bg-white/[0.03]'
                     }`}
                   >
                     {s.icon && <span className="text-xs opacity-60">{s.icon}</span>}
@@ -102,7 +102,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
                           key={ss.id}
                           href={ss.href ?? `#${ss.id}`}
                           onClick={() => setSidebarOpen(false)}
-                          className="block rounded px-2 py-1 text-xs text-gray-500 transition-colors hover:text-gray-300"
+                          className="block rounded px-2 py-1 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-muted)]"
                         >
                           {ss.label}
                         </a>
@@ -118,7 +118,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           <div className="mt-auto border-t border-[var(--color-glass-border)] pt-4">
             <Link
               href="/status"
-              className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-gray-500 transition-colors hover:text-[var(--color-fg)]"
+              className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
               All systems operational
@@ -194,7 +194,7 @@ function DocRightSidebar() {
     <aside className="hidden xl:block w-56 flex-shrink-0 border-l border-[var(--color-glass-border)] px-4 py-8">
       {showToc && (
         <nav aria-label="On this page" className="sticky top-24">
-          <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+          <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
             On this page
           </div>
           <ul className="space-y-1.5">
@@ -207,7 +207,7 @@ function DocRightSidebar() {
                   } ${
                     activeId === item.id
                       ? 'border-degen-400 text-degen-400 font-medium'
-                      : 'border-transparent text-gray-500 hover:text-gray-300 hover:border-gray-500'
+                      : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-muted)] hover:border-gray-500'
                   }`}
                 >
                   {item.label}
