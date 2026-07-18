@@ -23,6 +23,7 @@
     "@degenfeed/mastodon-sdk": "workspace:*",
     "@degenfeed/nostr-sdk": "workspace:*",
     "@degenfeed/ranking": "workspace:*",
+    "@degenfeed/shorts-provider": "workspace:*",
     "@degenfeed/rss-sdk": "workspace:*",
     "@degenfeed/threads-sdk": "workspace:*",
     "@degenfeed/token-gate": "workspace:*",

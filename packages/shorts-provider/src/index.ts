@@ -1,0 +1,358 @@
+/**
+ * @degenfeed/shorts-provider
+ *
+ * Smart shorts video content pipeline. Fetches vertical/short-form video
+ * content from federated PeerTube instances and YouTube Shorts via RSS,
+ * then ranks them with a learning algorithm for the DegenFeed /shorts feed.
+ *
+ * ## Sources
+ *   1. PeerTube federated instances — searches for short/vertical crypto content
+ *   2. YouTube Shorts via RSS — filters for #shorts and short-duration videos
+ *   3. Twitter/X crypto clips (future via RSS bridge)
+ *   4. DEX/Trading screener clips (future)
+ *
+ * ## Usage
+ * ```ts
+ * import { fetchShortsFeed } from '@degenfeed/shorts-provider';
+ * const feed = await fetchShortsFeed({ limit: 20 });
+ * ```
+ */
+
+import { detectNiches } from '@degenfeed/feed-core';
+import type { PeerTubeVideo } from '@degenfeed/peertube-provider';
+import {
+  FEDERATED_PEERTUBE_INSTANCES,
+  searchSepiasearch,
+} from '@degenfeed/peertube-provider/federated';
+import type { YouTubeVideoItem } from '@degenfeed/youtube-provider';
+import { fetchYouTubeFeed } from '@degenfeed/youtube-provider';
+
+export type { UserInterestProfile } from './scorer';
+export { computeShortScore, rankShorts } from './scorer';
+
+// ─── Types ────────────────────────────────────────────────────────────────
+
+export type ShortVideoSource = 'peertube' | 'youtube' | 'twitter' | 'tiktok_rss' | 'direct';
+
+export interface ShortVideoItem {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  videoUrl: string;
+  /** Duration in seconds */
+  duration: number;
+  authorName: string;
+  authorAvatar?: string;
+  views: number;
+  likes: number;
+  source: ShortVideoSource;
+  sourceUrl: string;
+  /** Detected topics (defi, nft, trading, etc.) */
+  topics: string[];
+  publishedAt: number;
+  /** True if detected as vertical format */
+  vertical: boolean;
+  /** Quality signal 0-1 */
+  qualityScore: number;
+  /** Human-readable source label for UI badges */
+  sourceLabel: string;
+}
+
+export interface ShortsFeedResult {
+  videos: ShortVideoItem[];
+  sources: {
+    peertube: number;
+    youtube: number;
+  };
+  cursor: string | null;
+  hasMore: boolean;
+}
+
+export interface FetchShortsOptions {
+  /** Max videos to return (default 20) */
+  limit?: number;
+  /** Comma-separated topic filter */
+  topics?: string[];
+  /** AbortSignal for cancellation */
+  signal?: AbortSignal;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────
+
+/** Max duration in seconds for a video to be considered a "short" */
+export const SHORTS_MAX_DURATION = 120;
+/** Aspect ratio threshold for vertical video detection (height/width > 1.2) */
+export const VERTICAL_ASPECT_RATIO = 1.2;
+
+// ─── PeerTube Shorts Fetcher ─────────────────────────────────────────────
+
+/**
+ * Search for short-form video content across federated PeerTube instances.
+ * Searches for "shorts" and crypto terms, filtering by duration.
+ */
+export async function fetchPeerTubeShorts(limit: number = 20): Promise<ShortVideoItem[]> {
+  const searchTerms = ['shorts', 'crypto shorts', 'crypto', 'bitcoin', 'defi', 'trading'];
+
+  const results = await Promise.allSettled(
+    searchTerms.map((term) => searchSepiasearch(term, Math.ceil(limit / searchTerms.length) + 5)),
+  );
+
+  const allVideos: PeerTubeVideo[] = [];
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      allVideos.push(...result.value);
+    }
+  }
+
+  // Deduplicate by UUID
+  const seen = new Set<string>();
+  const unique = allVideos.filter((v) => {
+    if (seen.has(v.uuid)) return false;
+    seen.add(v.uuid);
+    return true;
+  });
+
+  // Map to ShortVideoItem, filtering for shorts
+  const shorts: ShortVideoItem[] = [];
+  for (const video of unique) {
+    // Filter: must be short duration
+    if (video.duration > SHORTS_MAX_DURATION && !video.name.toLowerCase().includes('shorts')) {
+      continue;
+    }
+
+    const host = video.url ? new URL(video.url).hostname : 'unknown';
+    const instanceInfo = FEDERATED_PEERTUBE_INSTANCES.find((i: { url: string }) =>
+      i.url.includes(host),
+    );
+    const instanceBaseUrl = instanceInfo?.url ?? `https://${host}`;
+    const textContent = `${video.name} ${video.shortDescription ?? ''} ${video.tags?.join(' ') ?? ''}`;
+    const topics = detectNiches(textContent);
+
+    shorts.push({
+      id: `peertube:${video.uuid}`,
+      title: video.name,
+      description: video.shortDescription || video.description?.slice(0, 500) || '',
+      thumbnailUrl: video.thumbnailPath ? `${instanceBaseUrl}${video.thumbnailPath}` : '',
+      videoUrl: video.url,
+      duration: video.duration,
+      authorName: video.channel?.displayName ?? video.channel?.name ?? 'unknown',
+      authorAvatar: video.channel?.avatar?.path
+        ? `${instanceBaseUrl}${video.channel.avatar.path}`
+        : undefined,
+      views: video.views,
+      likes: video.likes ?? 0,
+      source: 'peertube',
+      sourceUrl: video.url,
+      topics,
+      publishedAt: new Date(video.publishedAt).getTime(),
+      vertical: video.duration <= 90, // short duration is a proxy for vertical
+      qualityScore: computePeerTubeQuality(video),
+      sourceLabel: instanceInfo?.name ?? host,
+    });
+  }
+
+  // Sort by views descending, take top N
+  shorts.sort((a, b) => b.views - a.views);
+  return shorts.slice(0, limit);
+}
+
+/**
+ * Compute a quality score (0-1) for a PeerTube video.
+ */
+function computePeerTubeQuality(video: PeerTubeVideo): number {
+  let score = 0.3; // base score
+
+  // Engagement bonus
+  if (video.views > 0) {
+    const engagementRate = video.likes / Math.max(video.views, 1);
+    score += Math.min(engagementRate * 10, 0.3);
+  }
+
+  // Views bonus
+  if (video.views > 10000) score += 0.2;
+  else if (video.views > 1000) score += 0.1;
+
+  // Has channel with avatar
+  if (video.channel?.avatar) score += 0.1;
+
+  // Has tags (indicates curation)
+  if ((video.tags?.length ?? 0) > 2) score += 0.1;
+
+  return Math.min(score, 1);
+}
+
+// ─── YouTube Shorts Fetcher ──────────────────────────────────────────────
+
+/**
+ * Fetch YouTube Shorts from curated crypto channels.
+ * Filters for videos with #shorts in title or short duration (< 60s).
+ */
+export async function fetchYouTubeShorts(limit: number = 20): Promise<ShortVideoItem[]> {
+  const feed = await fetchYouTubeFeed({
+    limit: limit * 2, // fetch extra to account for filtering
+    sort: 'recent',
+    disableQualityFilter: true, // we do our own filtering
+  });
+
+  const shorts: ShortVideoItem[] = [];
+  for (const video of feed) {
+    const titleLower = video.title.toLowerCase();
+    const hasShortsTag =
+      titleLower.includes('#shorts') ||
+      titleLower.includes('shorts ') ||
+      titleLower.startsWith('shorts');
+
+    const description = video.description ?? '';
+    const textContent = `${video.title} ${description}`;
+    const topics = detectNiches(textContent);
+
+    shorts.push({
+      id: `youtube:${video.id}`,
+      title: video.title,
+      description: description.slice(0, 500),
+      thumbnailUrl: video.thumbnailUrl,
+      videoUrl: video.url,
+      duration: parseDurationSeconds(video.duration),
+      authorName: video.channelName,
+      authorAvatar: undefined,
+      views: video.views ?? 0,
+      likes: 0, // RSS doesn't provide likes
+      source: 'youtube',
+      sourceUrl: video.url,
+      topics,
+      publishedAt: video.publishedMs,
+      vertical: hasShortsTag || parseDurationSeconds(video.duration) < 60,
+      qualityScore: computeYouTubeQuality(video),
+      sourceLabel: 'YouTube',
+    });
+  }
+
+  // Sort: prioritize verified shorts, then by views
+  shorts.sort((a, b) => {
+    // Explicit #shorts ranked higher
+    const aShorts = a.title.toLowerCase().includes('#shorts') ? 1 : 0;
+    const bShorts = b.title.toLowerCase().includes('#shorts') ? 1 : 0;
+    if (aShorts !== bShorts) return bShorts - aShorts;
+    return b.views - a.views;
+  });
+
+  return shorts.slice(0, limit);
+}
+
+/**
+ * Compute a quality score (0-1) for a YouTube video item.
+ */
+function computeYouTubeQuality(video: YouTubeVideoItem): number {
+  let score = 0.4; // YouTube base is higher (established platform)
+
+  // Channel weight from curation
+  if (video.channelWeight) {
+    score += video.channelWeight * 0.2;
+  }
+
+  // Views bonus
+  if (video.views) {
+    if (video.views > 50000) score += 0.2;
+    else if (video.views > 10000) score += 0.15;
+    else if (video.views > 1000) score += 0.1;
+
+    // Engagement density (views/age)
+    const ageHours = (Date.now() - video.publishedMs) / 3600000;
+    if (ageHours > 0 && ageHours < 168) {
+      const viewsPerHour = video.views / ageHours;
+      if (viewsPerHour > 100) score += 0.1;
+    }
+  }
+
+  return Math.min(score, 1);
+}
+
+// ─── Utility ──────────────────────────────────────────────────────────────
+
+/**
+ * Parse a duration string like "10:30" or "1:23:45" to total seconds.
+ */
+function parseDurationSeconds(duration?: string): number {
+  if (!duration) return 0;
+  const parts = duration.split(':').map(Number);
+  if (parts.length === 3) return (parts[0] ?? 0) * 3600 + (parts[1] ?? 0) * 60 + (parts[2] ?? 0);
+  if (parts.length === 2) return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
+  return parts[0] ?? 0;
+}
+
+// ─── Deduplication ────────────────────────────────────────────────────────
+
+/**
+ * Deduplicate videos by URL similarity and title fuzzy matching.
+ * Prefers videos with higher quality scores.
+ */
+export function deduplicateVideos(videos: ShortVideoItem[]): ShortVideoItem[] {
+  const seen = new Map<string, ShortVideoItem>();
+
+  for (const video of videos) {
+    // Generate dedup key from normalized URL or title
+    let key = '';
+
+    try {
+      const url = new URL(video.videoUrl);
+      key = url.hostname + url.pathname.replace(/\/$/, '').toLowerCase();
+    } catch {
+      // Fallback: use normalized title
+      key = video.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, ' ')
+        .trim()
+        .slice(0, 60);
+    }
+
+    const existing = seen.get(key);
+    if (!existing || video.qualityScore > existing.qualityScore) {
+      seen.set(key, video);
+    }
+  }
+
+  return Array.from(seen.values());
+}
+
+// ─── Main Feed Fetcher ────────────────────────────────────────────────────
+
+/**
+ * Fetch the shorts feed by querying all sources in parallel.
+ *
+ * @param options - Fetch options (limit, topics filter, signal)
+ * @returns ShortsFeedResult with ranked, deduplicated videos
+ */
+export async function fetchShortsFeed(options: FetchShortsOptions = {}): Promise<ShortsFeedResult> {
+  const { limit = 20 } = options;
+
+  // Fetch from all sources in parallel
+  const [peerTubeResult, youTubeResult] = await Promise.allSettled([
+    fetchPeerTubeShorts(limit),
+    fetchYouTubeShorts(limit),
+  ]);
+
+  const peerTubeVideos = peerTubeResult.status === 'fulfilled' ? peerTubeResult.value : [];
+  const youTubeVideos = youTubeResult.status === 'fulfilled' ? youTubeResult.value : [];
+
+  // Combine and deduplicate
+  const allVideos = [...peerTubeVideos, ...youTubeVideos];
+  const deduped = deduplicateVideos(allVideos);
+
+  // Apply topic filter if specified
+  const topics = options.topics;
+  const filtered =
+    topics && topics.length > 0
+      ? deduped.filter((v) => v.topics.some((t) => topics.includes(t)))
+      : deduped;
+
+  return {
+    videos: filtered.slice(0, limit),
+    sources: {
+      peertube: peerTubeVideos.length,
+      youtube: youTubeVideos.length,
+    },
+    cursor: filtered.length > limit ? (filtered[limit - 1]?.id ?? null) : null,
+    hasMore: filtered.length > limit,
+  };
+}

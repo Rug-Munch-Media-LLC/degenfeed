@@ -14,6 +14,80 @@ import { ErrorBoundary } from '@degenfeed/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ShortVideoCard } from '../../components/ShortVideoCard';
 
+// ─── Inline types for the shorts API response ────────────────────────────
+
+interface ShortVideoItem {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  videoUrl: string;
+  duration: number;
+  authorName: string;
+  authorAvatar?: string;
+  views: number;
+  likes: number;
+  source: 'peertube' | 'youtube' | 'twitter' | 'tiktok_rss' | 'direct';
+  sourceUrl: string;
+  topics: string[];
+  publishedAt: number;
+  vertical: boolean;
+  qualityScore: number;
+  sourceLabel: string;
+}
+
+interface ShortsResponse {
+  videos: ShortVideoItem[];
+  sources: {
+    peertube: number;
+    youtube: number;
+  };
+  cursor: string | null;
+  hasMore: boolean;
+}
+
+// ─── Adapter: ShortVideoItem → UnifiedPost-like shape ───────────────────
+
+function shortToPostShape(video: ShortVideoItem, idx: number): UnifiedPost {
+  const id = `short:${video.source}:${video.id}`;
+  return {
+    id,
+    protocol: video.source === 'youtube' ? 'youtube' : 'peertube',
+    author: {
+      id: `${video.source}:${video.authorName.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      primary: { protocol: video.source === 'youtube' ? 'youtube' : 'peertube', id: video.authorName },
+      handles: {} as Record<string, string | null>,
+      displayName: video.authorName,
+      bio: '',
+      avatarUrl: video.authorAvatar ?? '',
+      verified: [],
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: {},
+    },
+    text: video.title,
+    html: undefined,
+    embeds: [
+      { kind: 'video', url: video.videoUrl, meta: { thumbnail: video.thumbnailUrl, duration: video.duration } },
+      { kind: 'link', url: video.sourceUrl },
+    ],
+    createdAt: video.publishedAt,
+    metrics: { likes: video.likes, reposts: 0, replies: 0, quotes: 0, views: video.views },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: { likes: video.likes, reposts: 0, replies: 0, quotes: 0 },
+    },
+    raw: video,
+    niches: video.topics,
+    dfUri: `df://shorts/${video.source}/${idx}`,
+    contentType: 'video',
+    tipCount: 0,
+  };
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────
 
 const PRELOAD_AHEAD = 1;
@@ -25,11 +99,15 @@ const LOAD_MORE_LIMIT = 10;
 // ─── Custom fetch hook ────────────────────────────────────────────────────
 
 interface FetchState {
-  posts: UnifiedPost[];
+  posts: ShortVideoItem[];
   loading: boolean;
   loadingMore: boolean;
   error: string | null;
   hasMore: boolean;
+  sourceCounts: {
+    peertube: number;
+    youtube: number;
+  };
 }
 
 function useShortFeed(): FetchState & { loadMore: () => void; refresh: () => void } {
@@ -39,9 +117,17 @@ function useShortFeed(): FetchState & { loadMore: () => void; refresh: () => voi
     loadingMore: false,
     error: null,
     hasMore: true,
+    sourceCounts: { peertube: 0, youtube: 0 },
   });
-  const loadedRef = useRef(0);
+  const cursorRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Read topic filter from URL params or use defaults
+  const [topicFilter, setTopicFilter] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const params = new URLSearchParams(window.location.search);
+    const topics = params.get('topics');
+    return topics ? topics.split(',').filter(Boolean) : [];
+  });
 
   const fetchVideos = useCallback(async (append = false) => {
     abortRef.current?.abort();
@@ -55,31 +141,30 @@ function useShortFeed(): FetchState & { loadMore: () => void; refresh: () => voi
 
     try {
       const params = new URLSearchParams({
-        type: 'video',
-        sort: 'new',
         limit: String(append ? LOAD_MORE_LIMIT : INITIAL_LIMIT),
       });
-      if (append) params.set('offset', String(loadedRef.current));
+      if (append && cursorRef.current) params.set('cursor', cursorRef.current);
+      if (topicFilter.length > 0) params.set('topics', topicFilter.join(','));
 
-      const res = await fetch(`/api/feed/home?${params.toString()}`, {
+      const res = await fetch(`/api/shorts?${params.toString()}`, {
         credentials: 'include',
         signal: controller.signal,
         cache: 'no-store',
         headers: { 'cache-control': 'no-store' },
       });
 
-      if (!res.ok) throw new Error(`Feed returned ${res.status}`);
-      const data = (await res.json()) as { data?: UnifiedPost[]; meta?: { total?: number } };
-      const fetched = data.data ?? [];
-      const total = data.meta?.total ?? 0;
-      loadedRef.current += fetched.length;
+      if (!res.ok) throw new Error(`Shorts feed returned ${res.status}`);
+      const data = (await res.json()) as ShortsResponse;
+      const fetched = data.videos ?? [];
+      cursorRef.current = data.cursor;
 
       setState((prev) => ({
         posts: append ? [...prev.posts, ...fetched] : fetched,
         loading: false,
         loadingMore: false,
         error: null,
-        hasMore: total > loadedRef.current || fetched.length === LOAD_MORE_LIMIT,
+        hasMore: data.hasMore,
+        sourceCounts: data.sources,
       }));
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
@@ -87,10 +172,10 @@ function useShortFeed(): FetchState & { loadMore: () => void; refresh: () => voi
         ...prev,
         loading: false,
         loadingMore: false,
-        error: err instanceof Error ? err.message : 'Failed to load videos',
+        error: err instanceof Error ? err.message : 'Failed to load shorts',
       }));
     }
-  }, []);
+  }, [topicFilter]);
 
   const loadMore = useCallback(() => {
     if (state.loadingMore || !state.hasMore) return;
@@ -113,7 +198,7 @@ function useShortFeed(): FetchState & { loadMore: () => void; refresh: () => voi
 // ─── Page Component ───────────────────────────────────────────────────────
 
 export default function ShortsPage() {
-  const { posts, loading, loadingMore, error, hasMore, loadMore, refresh } = useShortFeed();
+  const { posts, loading, loadingMore, error, hasMore, loadMore, refresh, sourceCounts } = useShortFeed();
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const isTransitioning = useRef(false);
@@ -435,7 +520,8 @@ export default function ShortsPage() {
 
         {/* ── Video feed with snap scrolling ── */}
         {posts.length > 0 &&
-          posts.map((post, idx) => {
+          posts.map((video, idx) => {
+            const post = shortToPostShape(video, idx);
             const isCurrent = idx === currentIndex;
             const isNearby =
               idx === currentIndex ||
@@ -445,7 +531,7 @@ export default function ShortsPage() {
 
             return (
               <div
-                key={post.id}
+                key={video.id}
                 data-video-index={idx}
                 className="relative h-screen w-full snap-start snap-always"
                 aria-current={isCurrent ? 'true' : undefined}
@@ -528,6 +614,41 @@ export default function ShortsPage() {
           </div>
         )}
 
+        {/* ── Topic filter chips ── */}
+        {posts.length > 0 && (
+          <div className="pointer-events-none fixed inset-x-0 top-12 z-50 flex items-center justify-center gap-1.5 px-4">
+            <div className="pointer-events-auto flex max-w-full gap-1.5 overflow-x-auto scrollbar-none">
+              {['defi', 'nft', 'trading', 'bitcoin', 'memecoin', 'ai'].map((topic) => {
+                const active = topicFilter.includes(topic);
+                return (
+                  <button
+                    key={topic}
+                    type="button"
+                    onClick={() => {
+                      const next = active
+                        ? topicFilter.filter((t) => t !== topic)
+                        : [...topicFilter, topic];
+                      setTopicFilter(next);
+                      // Update URL without navigation
+                      const u = new URL(window.location.href);
+                      if (next.length > 0) u.searchParams.set('topics', next.join(','));
+                      else u.searchParams.delete('topics');
+                      window.history.replaceState({}, '', u.toString());
+                    }}
+                    className={`whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-medium transition-all ${
+                      active
+                        ? 'border-degen-500/40 bg-degen-500/15 text-degen-400'
+                        : 'border-white/10 bg-black/40 text-gray-500 hover:border-white/20 hover:text-gray-300'
+                    }`}
+                  >
+                    {topic}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── Persistent UI chrome (fixed, not scrollable) ── */}
         <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between px-4 pt-4">
           <a
@@ -547,10 +668,21 @@ export default function ShortsPage() {
             <span className="hidden sm:inline">Feed</span>
           </a>
 
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto flex items-center gap-2">
             <span className="text-[13px] font-bold tracking-wide text-white/70 drop-shadow-lg">
               <span className="text-degen-400">◆</span> Shorts
             </span>
+            {/* Source badges */}
+            {sourceCounts.peertube > 0 && (
+              <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] font-medium text-purple-400">
+                PeerTube {sourceCounts.peertube}
+              </span>
+            )}
+            {sourceCounts.youtube > 0 && (
+              <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-[10px] font-medium text-red-400">
+                YouTube {sourceCounts.youtube}
+              </span>
+            )}
           </div>
 
           {/* Index indicator */}
