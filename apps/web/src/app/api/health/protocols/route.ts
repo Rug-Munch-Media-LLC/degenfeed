@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 export const revalidate = 300; // 5 minutes
 
+// TODO: Wire to worker backend
 interface ProtocolHealth {
   id: string;
   name: string;

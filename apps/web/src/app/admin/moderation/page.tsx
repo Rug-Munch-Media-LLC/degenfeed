@@ -371,7 +371,7 @@ export default function AdminModerationPage() {
           className="rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-1.5 text-xs text-[var(--color-fg)] focus:border-degen-500 focus:outline-none"
         >
           <option value="">All Protocols</option>
-          {['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'threads', 'reddit', 'rss'].map(
+          {['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'].map(
             (p) => (
               <option key={p} value={p}>
                 {PROTOCOL_ICONS[p] || ''} {p}

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { runHealthCheck, cullLowQualitySources, getStats } from '../../../../lib/source-engine';
+import { runHealthCheck, cullLowQualitySources, getStats } from '../../../../../lib/source-engine';
 
 export const runtime = 'nodejs';
 

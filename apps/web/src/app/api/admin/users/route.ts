@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+// TODO: Wire to worker backend
 const HANDLES = [
   'alice_web3',
   'bob_nft',

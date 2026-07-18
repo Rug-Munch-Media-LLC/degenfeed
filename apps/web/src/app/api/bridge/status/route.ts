@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    // TODO: Wire to worker backend
     const bridges = [
       { from: 'nostr', to: 'farcaster', active: true, latency: 1200 },
       { from: 'farcaster', to: 'nostr', active: true, latency: 1500 },

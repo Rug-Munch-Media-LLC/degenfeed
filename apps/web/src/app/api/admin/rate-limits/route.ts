@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+// TODO: Wire to worker backend
 const RATE_LIMITS = [
   { endpoint: '/api/feed/*', limit: 100, window: '1 min', current: 42, status: 'ok' as const },
   { endpoint: '/api/publish', limit: 10, window: '1 min', current: 3, status: 'ok' as const },

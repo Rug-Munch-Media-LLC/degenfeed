@@ -65,7 +65,7 @@ const SECTION_LABELS: Record<Section, { label: string; icon: string; desc: strin
   },
 };
 
-const PROTOCOLS: Protocol[] = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'threads'];
+const PROTOCOLS: Protocol[] = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
 const NOTIFICATION_TYPES: NotificationType[] = ['likes', 'reposts', 'replies', 'follows', 'tips'];
 
 /* ─── Collapsible Section ────────────────────────────────────── */

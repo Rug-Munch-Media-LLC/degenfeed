@@ -15,6 +15,7 @@
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
 import { type Env, noCacheJsonResponse } from '../index';
+import { checkPremiumStatus } from '../premium';
 
 // ─── Constants ──────────────────────────────────────────────────────
 
@@ -79,6 +80,11 @@ interface AnalyticsResponse {
   };
   lastUpdated: number;
   isMock: boolean;
+  premium: {
+    tier: string;
+    csvExport: boolean;
+    lookbackDays: number;
+  };
 }
 
 interface TopPost {
@@ -429,6 +435,15 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
     });
   }
 
+  // ── Premium tier determines lookback window ──────────────────────
+  // Free users:   7-day lookback
+  // Pro+:         90-day lookback with CSV export flag
+  const premium = await checkPremiumStatus(wallet, env);
+  const isPremium = !!premium;
+  const LOOKBACK_DAYS = isPremium ? 90 : 7;
+  const LOOKBACK_MS = LOOKBACK_DAYS * 24 * 60 * 60 * 1000;
+  const csvExport = isPremium;
+
   const cacheKey = `analytics:${wallet}`;
   const refreshLockKey = `analytics:refresh:${wallet}`;
 
@@ -550,9 +565,8 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
       ? await searchMeiliPosts(searchQueries, connectedNames, env.MEILI_SEARCH_KEY)
       : [];
 
-  // Aggregate by day (last 30 days) and weekday
+  // Aggregate by day (lookback window) and weekday
   const now = Date.now();
-  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
   const dayBuckets: Record<string, number> = {};
   const weekdayBuckets = [0, 0, 0, 0, 0, 0, 0]; // Sun=0...Sat=6
 
@@ -577,7 +591,7 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
 
     // Day bucketing
     const createdAt = post.createdAt;
-    if (createdAt && createdAt > now - THIRTY_DAYS_MS) {
+    if (createdAt && createdAt > now - LOOKBACK_MS) {
       const isoKey = new Date(createdAt).toISOString().slice(0, 10);
       dayBuckets[isoKey] = (dayBuckets[isoKey] || 0) + 1;
 
@@ -586,10 +600,10 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
     }
   }
 
-  // Build day arrays for last 30 days
+  // Build day arrays for lookback window
   const dayData: number[] = [];
   const dayLabelOutput: string[] = [];
-  for (let i = 29; i >= 0; i--) {
+  for (let i = LOOKBACK_DAYS - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const isoKey = d.toISOString().slice(0, 10);
@@ -615,11 +629,11 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
   }));
 
   // ── 4. Aggregate tip data from KV notifications ──────────────
-  const tipData = await aggregateTips(env, wallet);
+  const tipData = await aggregateTips(env, wallet, LOOKBACK_MS);
   const { tips, topTipPosts } = tipData;
 
   // ── 5. Load growth history from KV cache (or generate) ──────
-  const growthData = await loadGrowthHistory(env, wallet, totalFollowers);
+  const growthData = await loadGrowthHistory(env, wallet, totalFollowers, LOOKBACK_DAYS);
 
   // ── 6. Engagement rate ──────────────────────────────────────
   const totalEngagements = totalLikes + totalReposts + totalReplies;
@@ -683,6 +697,11 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
     },
     lastUpdated: Date.now(),
     isMock: connectedProtocols.length === 0,
+    premium: {
+      tier: premium?.tier ?? 'free',
+      csvExport,
+      lookbackDays: LOOKBACK_DAYS,
+    },
   };
 
   // Cache for 2 minutes
@@ -697,7 +716,18 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
   // ── 9. Write daily growth snapshot ─────────────────────────
   void writeDailyGrowthSnapshot(env, wallet, totalFollowers, tips.totalUsd, meiliPosts.length);
 
-  return noCacheJsonResponse(response);
+  // Attach premium header when feature is gated
+  const resp = noCacheJsonResponse(response);
+  if (!isPremium) {
+    const headers = new Headers(resp.headers);
+    headers.set('X-Premium-Required', 'Pro');
+    return new Response(resp.body, {
+      status: resp.status,
+      statusText: resp.statusText,
+      headers,
+    });
+  }
+  return resp;
 }
 
 // ─── Tip aggregation from KV notifications ────────────────────────
@@ -705,6 +735,7 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
 async function aggregateTips(
   env: Env,
   wallet: string,
+  lookbackMs: number,
 ): Promise<{
   tips: {
     totalUsd: number;
@@ -722,7 +753,6 @@ async function aggregateTips(
   topTipPosts: TopPost[];
 }> {
   const now = Date.now();
-  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
   // Fetch tip notifications from KV
   const notifications: TipNotification[] = [];
@@ -814,8 +844,8 @@ async function aggregateTips(
     const proto = tip.sourceProtocol ?? tip.protocol ?? 'unknown';
     byProtocol[proto] = (byProtocol[proto] ?? 0) + usdValue;
 
-    // Daily buckets (last 30 days only)
-    if (tip.createdAt > now - THIRTY_DAYS) {
+    // Daily buckets (lookback window only)
+    if (tip.createdAt > now - lookbackMs) {
       const dayKey = new Date(tip.createdAt).toISOString().slice(0, 10);
       dailyBuckets[dayKey] = (dailyBuckets[dayKey] ?? 0) + usdValue;
     }
@@ -825,10 +855,11 @@ async function aggregateTips(
     tippers[tipperName] = (tippers[tipperName] ?? 0) + usdValue;
   }
 
-  // Build daily tip history (30 days)
+  // Build daily tip history (lookback window)
+  const tipDays = Math.floor(lookbackMs / (24 * 60 * 60 * 1000));
   const historyLabels: string[] = [];
   const history30d: number[] = [];
-  for (let i = 29; i >= 0; i--) {
+  for (let i = tipDays - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const isoKey = d.toISOString().slice(0, 10);
@@ -866,8 +897,9 @@ async function loadGrowthHistory(
   env: Env,
   wallet: string,
   totalFollowers: number,
+  lookbackDays: number,
 ): Promise<{ growth: number[]; labels: string[] }> {
-  const labels = generateDateLabels(29);
+  const labels = generateDateLabels(lookbackDays - 1);
   const growthKey = `analytics:growth:${wallet}`;
 
   // Load existing history from KV
@@ -881,14 +913,14 @@ async function loadGrowthHistory(
     /* no history */
   }
 
-  // Append today's total and trim to 30 entries
+  // Append today's total and trim to lookback window
   history.push(totalFollowers);
-  if (history.length > 30) {
-    history = history.slice(-30);
+  if (history.length > lookbackDays) {
+    history = history.slice(-lookbackDays);
   }
 
-  // Backfill if needed — ensure we have exactly 30 entries
-  while (history.length < 30) {
+  // Backfill if needed — ensure we have exactly lookbackDays entries
+  while (history.length < lookbackDays) {
     if (history.length === 0) {
       history.push(totalFollowers > 0 ? totalFollowers : 0);
     } else {
@@ -896,16 +928,17 @@ async function loadGrowthHistory(
     }
   }
 
-  // Persist
+  // Persist with TTL matching lookback (min 30, max 90 days)
+  const ttlDays = Math.max(30, Math.min(lookbackDays, 90));
   try {
-    await env.CACHE?.put(growthKey, JSON.stringify(history), { expirationTtl: 86400 * 30 });
+    await env.CACHE?.put(growthKey, JSON.stringify(history), { expirationTtl: 86400 * ttlDays });
   } catch {
     /* ignore */
   }
 
-  // Use the last 30 labels (most recent)
-  const recentLabels = labels.slice(-30);
-  const recentGrowth = history.slice(-30);
+  // Use last lookbackDays labels (most recent)
+  const recentLabels = labels.slice(-lookbackDays);
+  const recentGrowth = history.slice(-lookbackDays);
 
   return { growth: recentGrowth, labels: recentLabels };
 }

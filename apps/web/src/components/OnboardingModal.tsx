@@ -66,10 +66,10 @@ const PROTOCOLS: Protocol[] = [
   },
   {
     id: 'threads',
-    label: 'Threads',
+    label: 'Threads (Experimental)',
     color: '#888888',
     icon: '⊞',
-    description: "Meta's microblog. Millions daily.",
+    description: "Meta's microblog · Experimental · HTML scraping",
   },
   {
     id: 'reddit',

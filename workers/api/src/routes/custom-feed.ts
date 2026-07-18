@@ -19,6 +19,7 @@
 import type { CustomFeed, FeedRecipe } from '@degenfeed/types';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
+import { requirePremiumTier } from '../premium';
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -188,6 +189,14 @@ export async function handleCustomFeedCreate(request: Request, env: Env): Promis
     }
     if (!body.config || !validateRecipe(body.config)) {
       return jsonResponse({ error: 'Valid feed recipe config is required (sources, topics)' }, 400);
+    }
+
+    // ── Premium gate: free users limited to 2 feeds, Pro+ unlimited ──
+    const existingIds = await getUserFeedIds(env, session.address);
+    const gate = await requirePremiumTier(session.address, env, 'pro');
+    if (gate && existingIds.length >= 2) {
+      // Free user at limit — block with premium upgrade prompt
+      return gate;
     }
 
     const id = generateId();

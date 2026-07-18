@@ -203,7 +203,7 @@ export default function TrendingPage() {
         url.searchParams.set('trending', String(filter.windowHours));
         url.searchParams.set(
           'protocols',
-          'nostr,farcaster,lens,bluesky,mastodon,threads,reddit,rss',
+          'nostr,farcaster,lens,bluesky,mastodon,reddit,rss',
         );
         const res = await retryFetch(url.toString(), {
           fetchOptions: {

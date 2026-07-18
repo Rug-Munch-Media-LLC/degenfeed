@@ -479,7 +479,7 @@ data = response.json()
               [
                 'protocols',
                 'all',
-                'Comma-separated: nostr,farcaster,lens,bluesky,mastodon,lemmy,reddit,rss,threads',
+                'Comma-separated: nostr,farcaster,lens,bluesky,mastodon,lemmy,reddit,rss (threads requires explicit opt-in; experimental)',
               ],
               ['sort', 'scored', 'scored | hot | new | top'],
               ['limit', '50', '1-200 posts per page'],

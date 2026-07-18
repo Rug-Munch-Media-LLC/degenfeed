@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+// TODO: Wire to worker backend
 const PROTOCOLS = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
 const REASONS = ['spam', 'harassment', 'scam', 'nsfw', 'other'];
 

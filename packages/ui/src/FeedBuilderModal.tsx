@@ -11,7 +11,7 @@ const SOURCES = [
   { id: 'lens', label: 'Lens', emoji: '🌿' },
   { id: 'bluesky', label: 'Bluesky', emoji: '🦋' },
   { id: 'mastodon', label: 'Mastodon', emoji: '🐘' },
-  { id: 'threads', label: 'Threads', emoji: '🧵' },
+  { id: 'threads', label: 'Threads (Experimental)', emoji: '🧵' },
   { id: 'reddit', label: 'Reddit', emoji: '🔴' },
   { id: 'rss', label: 'RSS', emoji: '📰' },
   { id: 'lemmy', label: 'Lemmy', emoji: '🌲' },

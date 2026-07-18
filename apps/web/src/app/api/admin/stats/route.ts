@@ -3,6 +3,7 @@ import { getStats, getPendingSources, getNewThisWeekSources, shouldRunDiscovery 
 
 export const runtime = 'nodejs';
 
+// TODO: Wire to worker backend
 const NOW = Date.now();
 
 const DEFAULT_STATS = {

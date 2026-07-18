@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+// TODO: Wire to worker backend
 import { MOCK_COMMUNITIES_LB } from '../../_mock-data';
 
 export const dynamic = 'force-dynamic';

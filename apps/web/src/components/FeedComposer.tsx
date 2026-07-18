@@ -13,7 +13,7 @@ const TARGETS = [
   { id: 'farcaster', label: 'Farcaster', charLimit: 320 },
   { id: 'lens', label: 'Lens', charLimit: 5000 },
   { id: 'bluesky', label: 'Bluesky', charLimit: 300 },
-  { id: 'threads', label: 'Threads', charLimit: 500 },
+  { id: 'threads', label: 'Threads (Experimental)', charLimit: 500 },
   { id: 'mastodon', label: 'Mastodon', charLimit: 5000 },
 ];
 

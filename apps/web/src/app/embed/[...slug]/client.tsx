@@ -21,7 +21,7 @@ function getProtocolColor(p: string): string {
     lens: '#abfe2c',
     bluesky: '#1185fe',
     mastodon: '#6364ff',
-    threads: '#888888',
+    threads: '#666666',
     reddit: '#ff4500',
     rss: '#ffa500',
   };

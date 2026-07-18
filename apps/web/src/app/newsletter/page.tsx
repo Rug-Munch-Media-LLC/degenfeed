@@ -352,7 +352,7 @@ function protocolEmoji(p: string): string {
     lens: '🌿',
     bluesky: '🦋',
     mastodon: '🐘',
-    threads: '🧵',
+    threads: '🧵 (experimental)',
     rss: '📡',
   };
   return map[p] ?? '●';

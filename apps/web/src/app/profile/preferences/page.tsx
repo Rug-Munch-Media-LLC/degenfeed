@@ -16,7 +16,6 @@ const PROTOCOLS: Protocol[] = [
   'lens',
   'bluesky',
   'mastodon',
-  'threads',
   'rss',
 ];
 

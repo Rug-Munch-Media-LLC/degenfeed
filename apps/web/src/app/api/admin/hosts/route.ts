@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+// TODO: Wire to worker backend
 const NOW = Math.floor(Date.now() / 1000);
 const DAY = 86400;
 

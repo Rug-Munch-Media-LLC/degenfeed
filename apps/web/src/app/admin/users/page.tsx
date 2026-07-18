@@ -109,7 +109,7 @@ const DISPLAY_NAMES = [
   'Token Tom',
 ];
 
-const PROTOCOLS_USER = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'threads', 'reddit'];
+const PROTOCOLS_USER = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit'];
 
 const MOCK_USERS: AdminUser[] = Array.from({ length: 45 }, (_, i) => ({
   id: `user-${i + 1}`,
@@ -344,7 +344,7 @@ export default function AdminUsersPage() {
           className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2.5 text-xs text-[var(--color-fg)] focus:border-degen-500 focus:outline-none"
         >
           <option value="all">All Protocols</option>
-          {['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'threads', 'reddit'].map((p) => (
+          {['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit'].map((p) => (
             <option key={p} value={p}>
               {PROTOCOL_ICONS[p]} {p}
             </option>

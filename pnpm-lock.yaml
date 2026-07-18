@@ -84,6 +84,9 @@ importers:
       '@degenfeed/nostr-sdk':
         specifier: workspace:*
         version: link:../../packages/nostr-sdk
+      '@degenfeed/peertube-provider':
+        specifier: workspace:*
+        version: link:../../packages/peertube-provider
       '@degenfeed/ranking':
         specifier: workspace:*
         version: link:../../packages/ranking
