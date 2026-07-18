@@ -171,7 +171,16 @@ interface FeedMeta {
   notices?: string[];
   trending?: { topic: string; count: number; score: number }[];
   fetchedAt?: number;
+  presetName?: string;
+  presetLabel?: string;
 }
+
+const PRESET_NAMES = ['quality', 'balanced', 'everything'] as const;
+const PRESET_LABELS: Record<string, string> = {
+  quality: 'Quality',
+  balanced: 'Balanced',
+  everything: 'Everything',
+};
 
 function SectionContent({ section }: { section: string }) {
   const { signedInProtocols, engage, openSignIn, openCompose, openComposeReply } = useAuth();
@@ -183,14 +192,19 @@ function SectionContent({ section }: { section: string }) {
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
   const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activePreset, setActivePreset] = useState<string>('balanced');
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
   const { notifications, unreadCount, fetchNotifications, markRead } =
     useNotifications(hasSignedIn);
 
+  // Derive protocol from section id for protocol-specific pages
+  const PROTOCOL_SECTIONS = new Set(['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit']);
+  const sectionProtocol = PROTOCOL_SECTIONS.has(section) ? section : null;
+
   // Stable fetch function shared by the main loader and the poller.
   // Returns the raw API response so the caller can destructure both posts
-  // and metadata (notices, errors, trending).
-  const fetchFeed = useCallback(async (): Promise<{
+  // and metadata (notices, errors, trending, preset).
+  const fetchFeed = useCallback(async (presetOverride?: string): Promise<{
     data: UnifiedPost[];
     meta?: FeedMeta;
   }> => {
@@ -200,12 +214,18 @@ function SectionContent({ section }: { section: string }) {
     if (currentMeta?.params) {
       for (const [k, v] of Object.entries(currentMeta.params)) url.searchParams.set(k, v);
     }
+    // Pass the active preset (or override) to the API
+    url.searchParams.set('preset', presetOverride ?? activePreset);
     let res = await fetch(url.toString(), {
       credentials: 'include',
       cache: 'no-store',
       headers: { 'cache-control': 'no-store' },
     });
     let body = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
+    // Sync preset from response meta
+    if (body.meta?.presetName && !presetOverride) {
+      setActivePreset(body.meta.presetName);
+    }
     if (!body.data?.length && section === 'all') {
       const rssUrl = new URL('/api/feed/rss', window.location.origin);
       rssUrl.searchParams.set('source', 'reddit');
@@ -253,7 +273,7 @@ function SectionContent({ section }: { section: string }) {
     return () => {
       cancelled = true;
     };
-  }, [fetchFeed, refreshKey]);
+  }, [fetchFeed, refreshKey, activePreset]);
 
   const displayName = meta?.label ?? section;
   const color = meta?.color ?? '#666';
@@ -305,6 +325,53 @@ function SectionContent({ section }: { section: string }) {
             >
               {displayName}
             </span>
+            {/* ── Preset selector ── */}
+            <div className="relative flex items-center gap-1">
+              <select
+                value={activePreset}
+                onChange={async (e) => {
+                  const newPreset = e.target.value;
+                  setActivePreset(newPreset);
+                  // Save preset to KV if signed in
+                  if (hasSignedIn) {
+                    try {
+                      await fetch('/api/presets', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({
+                          presetName: newPreset,
+                          protocol: sectionProtocol,
+                        }),
+                      });
+                    } catch {
+                      /* non-critical */
+                    }
+                  }
+                  // Refetch with the new preset
+                  const result = await fetchFeed(newPreset);
+                  setPosts(result.data);
+                  setFeedMeta(result.meta ?? {});
+                  setState(result.data.length ? 'loaded' : 'empty');
+                }}
+                className="rounded-md border border-[var(--color-border)] bg-[var(--color-muted)] px-2 py-1 text-[11px] text-gray-400 focus:outline-none focus:ring-1 focus:ring-degen-500"
+                aria-label="Quality preset"
+              >
+                {PRESET_NAMES.map((name) => (
+                  <option key={name} value={name}>
+                    {PRESET_LABELS[name] ?? name}
+                  </option>
+                ))}
+              </select>
+              {activePreset !== 'balanced' && (
+                <span
+                  className="rounded-full px-1.5 py-0.5 text-[10px] font-medium text-degen-400"
+                  style={{ backgroundColor: '#22c55e22' }}
+                >
+                  {PRESET_LABELS[activePreset] ?? activePreset}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {hasSignedIn && (

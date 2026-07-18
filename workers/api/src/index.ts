@@ -92,6 +92,9 @@ export interface Env {
   /** KV namespace for content permanence proofs */
   PERMANENCE?: KVNamespace;
 
+  /** KV namespace for custom feed storage */
+  CUSTOM_FEEDS?: KVNamespace;
+
   // ─── Postiz cross-posting ───────────────────────────────────────────
   /** Postiz API base URL (e.g. "http://postiz:3000" or "https://api.postiz.com") */
   POSTIZ_BASE_URL?: string;

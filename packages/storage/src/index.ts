@@ -47,6 +47,21 @@ export {
   unmuteIdentity,
   unmuteWord,
 } from './muting';
+export {
+  addMutedWord,
+  blockCommunity,
+  getBlockedCommunities,
+  getMuteConfig,
+  getMutedCommunities,
+  isCommunityBlocked,
+  isCommunityMuted,
+  muteCommunity,
+  muteUser,
+  removeMutedWord,
+  unblockCommunity,
+  unmuteCommunity,
+  unmuteUser,
+} from './moderation';
 export { getDefaultPreferences, getPreferences, savePreferences } from './preferences';
 export type { ActiveSession } from './session';
 export {
@@ -65,13 +80,16 @@ export {
   saveSubscription,
 } from './subscription';
 export type {
+  FeedLayout,
   LayoutDensity,
   MonetizationPreferences,
+  StoredBlockedCommunity,
   StoredBlockedUser,
   StoredCachedPost,
   StoredDraft,
   StoredFollow,
   StoredIdentity,
+  StoredMutedCommunity,
   StoredMutedIdentity,
   StoredMutedWord,
   SubscriptionRecord,

@@ -9,10 +9,19 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { FeedComposer } from '../../components/FeedComposer';
+import { FeedLayoutSwitcher } from '../../components/FeedLayoutSwitcher';
 import { FeedSidebar } from '../../components/FeedSidebar';
 import { useToast } from '../../components/Toast';
-import { useLayoutDensity } from '../../hooks/useLayoutDensity';
+import { useFeedLayout } from '../../hooks/useFeedLayout';
 import { useNotifications } from '../../hooks/useNotifications';
+import {
+  FeedTuner,
+  type TopicDef,
+  TOPICS,
+  getDefaultWeights,
+  encodeTopicWeights,
+  countTunedTopics,
+} from '../../components/FeedTuner';
 
 const TipModal = dynamic(
   () => import('../../components/TipModal').then((m) => ({ default: m.TipModal })),
@@ -100,13 +109,94 @@ export default function FeedPage() {
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const { notifications, unreadCount, fetchNotifications, markRead } =
     useNotifications(hasSignedIn);
-  const { density, toggleDensity, isCompact } = useLayoutDensity();
+  const { layout, setLayout, isCompact } = useFeedLayout();
+
+  // ── Topic weights ──────────────────────────────────────────────
+  const [topicWeights, setTopicWeights] = useState<Record<string, number>>(getDefaultWeights());
+  const [showTuner, setShowTuner] = useState(false);
+  const tuneTopicWeightsDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const persistTopicWeights = useCallback((weights: Record<string, number>) => {
+    if (tuneTopicWeightsDebounce.current) clearTimeout(tuneTopicWeightsDebounce.current);
+    tuneTopicWeightsDebounce.current = setTimeout(() => {
+      void fetch('/api/preferences', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ topicWeights: weights }),
+      }).catch(() => {});
+    }, 2000);
+  }, []);
+
+  const handleTunerWeightsChange = useCallback(
+    (weights: Record<string, number>) => {
+      setTopicWeights(weights);
+      // Real-time preview: don't persist yet, just update state for next feed fetch
+    },
+    [],
+  );
+
+  const handleTunerApply = useCallback(
+    (weights: Record<string, number>) => {
+      setTopicWeights(weights);
+      persistTopicWeights(weights);
+      setShowTuner(false);
+    },
+    [persistTopicWeights],
+  );
+
+  const handleTunerReset = useCallback(() => {
+    const defaults = getDefaultWeights();
+    setTopicWeights(defaults);
+    persistTopicWeights(defaults);
+  }, [persistTopicWeights]);
+
+  /** Quick-tune: boost a topic by +5 (capped at 100) */
+  const handleShowMoreLikeThis = useCallback(
+    (topic: string) => {
+      const topicId = TOPICS.find(
+        (t) => t.id === topic || t.label.toLowerCase() === topic.toLowerCase(),
+      )?.id;
+      if (!topicId) return;
+      setTopicWeights((prev) => {
+        const next = { ...prev, [topicId]: Math.min(100, (prev[topicId] ?? 50) + 5) };
+        persistTopicWeights(next);
+        return next;
+      });
+      window.dispatchEvent(
+        new CustomEvent('df-toast', {
+          detail: { kind: 'success', message: `Boosting "${topic}" topics` },
+        }),
+      );
+    },
+    [persistTopicWeights],
+  );
+
+  /** Quick-tune: demote a topic by -5 (capped at 0) */
+  const handleShowLessLikeThis = useCallback(
+    (topic: string) => {
+      const topicId = TOPICS.find(
+        (t) => t.id === topic || t.label.toLowerCase() === topic.toLowerCase(),
+      )?.id;
+      if (!topicId) return;
+      setTopicWeights((prev) => {
+        const next = { ...prev, [topicId]: Math.max(0, (prev[topicId] ?? 50) - 5) };
+        persistTopicWeights(next);
+        return next;
+      });
+      window.dispatchEvent(
+        new CustomEvent('df-toast', {
+          detail: { kind: 'info', message: `Reducing "${topic}" topics` },
+        }),
+      );
+    },
+    [persistTopicWeights],
+  );
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
-        // Parallel: fetch preferences + feed simultaneously instead of waterfall
         const [prefsRes] = await Promise.all([
           fetch('/api/preferences', { credentials: 'include' }),
         ]);
@@ -120,6 +210,7 @@ export default function FeedPage() {
           showOriginalContent?: boolean;
           minEngagement?: number;
           maxPerNiche?: number;
+          topicWeights?: Record<string, number>;
         };
         if (typeof data.hideLowQuality === 'boolean') setHideLowQuality(data.hideLowQuality);
         if (typeof data.hideLowQualityThreshold === 'number') {
@@ -132,6 +223,10 @@ export default function FeedPage() {
           setShowOriginalContent(data.showOriginalContent);
         if (typeof data.minEngagement === 'number') setMinEngagement(data.minEngagement);
         if (typeof data.maxPerNiche === 'number') setMaxPerNiche(data.maxPerNiche);
+        // Load topic weights
+        if (data.topicWeights && typeof data.topicWeights === 'object') {
+          setTopicWeights((prev) => ({ ...prev, ...data.topicWeights }));
+        }
       } catch {
         /* ignore — user has no session yet */
       }
@@ -244,6 +339,8 @@ export default function FeedPage() {
         if (recencyWeight !== 1) url.searchParams.set('recencyWeight', String(recencyWeight));
         if (engagementWeight !== 1)
           url.searchParams.set('engagementWeight', String(engagementWeight));
+        const tw = encodeTopicWeights(topicWeights);
+        if (tw) url.searchParams.set('topic_weights', tw);
         const res = await fetch(url.toString(), {
           credentials: 'include',
           cache: 'no-store',
@@ -293,6 +390,7 @@ export default function FeedPage() {
       recencyWeight,
       engagementWeight,
       protocolFilter,
+      topicWeights,
     ],
   );
 
@@ -576,6 +674,22 @@ export default function FeedPage() {
                   </p>
                 </div>
               </div>
+                <div className="flex items-center gap-2">
+                  {/* ── Tune Feed button ── */}
+                  <button
+                    type="button"
+                    onClick={() => setShowTuner(true)}
+                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+                    aria-label="Tune your feed"
+                    title="Tune your feed — control topic visibility"
+                  >
+                    <span className="text-sm">🎚️</span>
+                    {countTunedTopics(topicWeights) > 0 && (
+                      <span className="hidden sm:inline text-degen-400">
+                        {countTunedTopics(topicWeights)} tuned
+                      </span>
+                    )}
+                  </button>
               {hasSignedIn && (
                 <div className="flex items-center gap-2">
                   <NotificationBell
@@ -584,15 +698,7 @@ export default function FeedPage() {
                     onFetch={fetchNotifications}
                     onMarkRead={markRead}
                   />
-                  <button
-                    type="button"
-                    onClick={toggleDensity}
-                    className="rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
-                    aria-label={`Switch to ${isCompact ? 'comfortable' : 'compact'} layout`}
-                    title={`${isCompact ? 'Comfortable' : 'Compact'} layout — ${isCompact ? 'more spacing' : 'more content per screen'}`}
-                  >
-                    {isCompact ? '⊞' : '⊟'}
-                  </button>
+                  <FeedLayoutSwitcher current={layout} onChange={setLayout} />
                   <button
                     type="button"
                     onClick={signOut}
@@ -602,6 +708,7 @@ export default function FeedPage() {
                   </button>
                 </div>
               )}
+            </div>
             </div>
 
             {/* Tabs */}
@@ -1089,6 +1196,17 @@ export default function FeedPage() {
             publicationId={
               tipPost.protocol === 'lens' ? (tipPost.raw as { id?: string })?.id : undefined
             }
+          />
+        )}
+
+        {/* ── FeedTuner modal ── */}
+        {showTuner && (
+          <FeedTuner
+            weights={topicWeights}
+            onWeightsChange={handleTunerWeightsChange}
+            onApply={handleTunerApply}
+            onReset={handleTunerReset}
+            onClose={() => setShowTuner(false)}
           />
         )}
       </div>

@@ -95,7 +95,26 @@ export interface StoredMutedWord {
   mutedAt: number;
 }
 
-export type LayoutDensity = 'comfortable' | 'compact';
+export interface StoredMutedCommunity {
+  communityId: string;  // e.g. "lemmy:memes@lemmy.world" or community actorId
+  communityName: string;
+  instance?: string;
+  mutedBy: string;
+  mutedAt: number;
+}
+
+export interface StoredBlockedCommunity {
+  communityId: string;
+  communityName: string;
+  instance?: string;
+  blockedBy: string;
+  blockedAt: number;
+}
+
+export type FeedLayout = 'compact' | 'comfortable' | 'media-grid' | 'reader';
+
+/** @deprecated Use FeedLayout instead */
+export type LayoutDensity = FeedLayout;
 
 export interface UserPreferences {
   identityId: string;
@@ -111,7 +130,9 @@ export interface UserPreferences {
   recencyWeight: number;
   engagementWeight: number;
   diversityBoost: boolean;
-  layoutDensity: LayoutDensity;
+  feedLayout: FeedLayout;
+  /** Per-protocol quality preset selections (e.g. { farcaster: 'quality', nostr: 'balanced' }) */
+  protocolPresets?: Record<string, string>;
 }
 
 export type SubscriptionTier = 'free' | 'pro' | 'creator';

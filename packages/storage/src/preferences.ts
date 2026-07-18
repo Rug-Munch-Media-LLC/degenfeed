@@ -34,7 +34,8 @@ export async function getDefaultPreferences(identityId: string): Promise<UserPre
     recencyWeight: 1,
     engagementWeight: 1,
     diversityBoost: true,
-    layoutDensity: 'comfortable',
+    feedLayout: 'comfortable',
+    protocolPresets: {},
   } satisfies UserPreferences;
 }
 

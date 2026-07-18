@@ -1,7 +1,7 @@
 import { type IDBPDatabase, openDB } from 'idb';
 
 const DB_NAME = 'degenfeed';
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 
 export let dbPromise: Promise<IDBPDatabase<unknown>> | null = null;
 
@@ -51,6 +51,18 @@ export async function getDb(): Promise<IDBPDatabase<unknown>> {
         }
         if (!db.objectStoreNames.contains('blocked')) {
           const store = db.createObjectStore('blocked', { keyPath: ['targetId', 'blockedBy'] });
+          store.createIndex('blockedBy', 'blockedBy');
+        }
+        if (!db.objectStoreNames.contains('muted-communities')) {
+          const store = db.createObjectStore('muted-communities', {
+            keyPath: ['communityId', 'mutedBy'],
+          });
+          store.createIndex('mutedBy', 'mutedBy');
+        }
+        if (!db.objectStoreNames.contains('blocked-communities')) {
+          const store = db.createObjectStore('blocked-communities', {
+            keyPath: ['communityId', 'blockedBy'],
+          });
           store.createIndex('blockedBy', 'blockedBy');
         }
         if (!db.objectStoreNames.contains('scheduled')) {

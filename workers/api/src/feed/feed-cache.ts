@@ -174,6 +174,8 @@ export async function writeCachedHealth(env: Env, key: string, body: CachedHealt
 // from KV via the session cookie. Unauthenticated users get an
 // empty context.
 
+import type { PresetName } from '@degenfeed/feed-core';
+
 export interface StoredUserPreferences {
   preferredNiches: string[];
   preferredPlatforms: Protocol[];
@@ -192,12 +194,16 @@ export interface StoredUserPreferences {
   maxPerNiche?: number;
   /** Whether to interleave protocols. */
   interleaveProtocols?: boolean;
+  /** Active quality preset name. */
+  presetName?: PresetName;
 }
 
 export interface UserRankingContext {
   followed: Set<string>;
   mutedAuthors: Set<string>;
   mutedWords: Set<string>;
+  mutedCommunities: Set<string>;
+  blockedCommunities: Set<string>;
   preferences: StoredUserPreferences | null;
 }
 
@@ -209,6 +215,8 @@ export async function loadUserRankingContext(
     followed: new Set(),
     mutedAuthors: new Set(),
     mutedWords: new Set(),
+    mutedCommunities: new Set(),
+    blockedCommunities: new Set(),
     preferences: null,
   };
   const cookie = request.headers.get('cookie');
@@ -227,15 +235,20 @@ export async function loadUserRankingContext(
   if (!payload) return empty;
   // Load user-specific KV entries
   try {
-    const [followsRaw, mutedAuthorsRaw, mutedWordsRaw, prefsRaw] = await Promise.all([
-      env.CACHE?.get(`user:follows:${payload.address}`),
-      env.CACHE?.get(`user:muted_authors:${payload.address}`),
-      env.CACHE?.get(`user:muted_words:${payload.address}`),
-      env.CACHE?.get(`user:prefs:${payload.address}`),
-    ]);
+    const [followsRaw, mutedAuthorsRaw, mutedWordsRaw, mutedCommunitiesRaw, blockedCommunitiesRaw, prefsRaw] =
+      await Promise.all([
+        env.CACHE?.get(`user:follows:${payload.address}`),
+        env.CACHE?.get(`user:muted_authors:${payload.address}`),
+        env.CACHE?.get(`user:muted_words:${payload.address}`),
+        env.CACHE?.get(`user:muted_communities:${payload.address}`),
+        env.CACHE?.get(`user:blocked_communities:${payload.address}`),
+        env.CACHE?.get(`user:prefs:${payload.address}`),
+      ]);
     const followed = new Set<string>(followsRaw ? JSON.parse(followsRaw) : []);
     const mutedAuthors = new Set<string>(mutedAuthorsRaw ? JSON.parse(mutedAuthorsRaw) : []);
     const mutedWords = new Set<string>(mutedWordsRaw ? JSON.parse(mutedWordsRaw) : []);
+    const mutedCommunities = new Set<string>(mutedCommunitiesRaw ? JSON.parse(mutedCommunitiesRaw) : []);
+    const blockedCommunities = new Set<string>(blockedCommunitiesRaw ? JSON.parse(blockedCommunitiesRaw) : []);
     const preferences = prefsRaw ? (JSON.parse(prefsRaw) as StoredUserPreferences) : null;
     if (preferences && typeof preferences.hideLowQuality !== 'boolean') {
       preferences.hideLowQuality = false;
@@ -259,7 +272,7 @@ export async function loadUserRankingContext(
     if (preferences && typeof preferences.interleaveProtocols !== 'boolean') {
       preferences.interleaveProtocols = true;
     }
-    return { followed, mutedAuthors, mutedWords, preferences };
+    return { followed, mutedAuthors, mutedWords, mutedCommunities, blockedCommunities, preferences };
   } catch (err) {
     console.warn('[feed] loadUserRankingContext failed:', err instanceof Error ? err.message : err);
     return empty;

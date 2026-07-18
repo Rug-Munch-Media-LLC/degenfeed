@@ -17,6 +17,8 @@ export interface LemmyVotingProps {
   upvotes: number;
   /** Total downvotes */
   downvotes: number;
+  /** Comment count for inline display */
+  comments?: number;
   /** Current user vote state */
   userVote?: 'up' | 'down' | null;
   /** Called when the user votes */
@@ -35,6 +37,7 @@ export const LemmyVoting = memo(function LemmyVoting({
   score,
   upvotes,
   downvotes,
+  comments,
   userVote: externalVote,
   onVote,
   compact = true,
@@ -153,7 +156,7 @@ export const LemmyVoting = memo(function LemmyVoting({
             />
           </svg>
           <span className="tabular-nums" title="Comments">
-            {formatCount(upvotes)} {/* using upvotes as placeholder, actual from post.metrics.replies */} 
+            {formatCount(comments ?? upvotes)}
           </span>
         </button>
       </div>

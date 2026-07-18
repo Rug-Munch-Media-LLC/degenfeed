@@ -4,16 +4,27 @@ import { RealtimeStatusDot } from '@degenfeed/realtime';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { useLayoutDensity } from '../hooks/useLayoutDensity';
+import { useFeedLayout } from '../hooks/useFeedLayout';
 import { OnboardingProvider } from '../hooks/useOnboarding';
 import { AddToHomeScreenToast } from './AddToHomeScreenToast';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
+import { FeedLayoutSwitcher } from './FeedLayoutSwitcher';
 import { InstallPrompt } from './InstallPrompt';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { OnboardingModal } from './OnboardingModal';
 import { SearchOverlay } from './SearchOverlay';
 import { useToast } from './Toast';
+
+// ─── Protocol nav items ──────────────────────────────────────────────────
+
+const PROTOCOL_NAV = [
+  { href: '/farcaster', label: 'Farcaster', color: '#8a63d2', icon: '◈' },
+  { href: '/lens', label: 'Lens', color: '#abfe2c', icon: '◎' },
+  { href: '/bluesky', label: 'Bluesky', color: '#1185fe', icon: '☁' },
+  { href: '/nostr', label: 'Nostr', color: '#8e30eb', icon: '☰' },
+  { href: '/mastodon', label: 'Mastodon', color: '#6364ff', icon: 'M' },
+];
 
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
 
@@ -25,6 +36,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/feed', label: 'Feed' },
   { href: '/shorts', label: '\u{1F4F1} Shorts' },
+  { href: '/feeds', label: '\u{1F4CB} Feeds' },
   { href: '/trending', label: 'Trending' },
   { href: '/leaderboard', label: '\u{1F3C6} Leaderboard' },
   { href: '/spaces', label: 'Spaces' },
@@ -116,7 +128,10 @@ function Logo() {
         height={32}
         className="h-8 w-8 rounded-lg logo-glow transition-shadow group-hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
       />
-      <span className="shell-logo-text text-lg font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+      <span
+        className="shell-logo-text text-lg font-bold tracking-tight"
+        style={{ color: 'var(--color-fg)' }}
+      >
         DegenFeed
       </span>
     </a>
@@ -145,13 +160,70 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   );
 }
 
+const PROTOCOL_PATHS = new Set(PROTOCOL_NAV.map((p) => p.href));
+
+function ProtocolSubNav() {
+  const pathname = usePathname();
+  // Only show on desktop
+  const isProtocolPage = PROTOCOL_PATHS.has(pathname);
+
+  return (
+    <div
+      className="border-b transition-all"
+      style={{
+        borderColor: 'var(--color-glass-border)',
+        backgroundColor: isProtocolPage ? 'var(--color-glass-bg)' : 'transparent',
+      }}
+    >
+      <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-4 py-2 scrollbar-none">
+        <span className="mr-1 shrink-0 text-[11px] font-medium uppercase tracking-wider text-gray-500">
+          Networks
+        </span>
+        {PROTOCOL_NAV.map((p) => {
+          const active = pathname === p.href;
+          return (
+            <a
+              key={p.href}
+              href={p.href}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                active
+                  ? 'text-[var(--color-fg)] shadow-sm'
+                  : 'text-gray-500 hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]'
+              }`}
+              style={
+                active
+                  ? {
+                      backgroundColor: `${p.color}22`,
+                      color: p.color,
+                      boxShadow: `0 0 12px ${p.color}22`,
+                    }
+                  : undefined
+              }
+              aria-current={active ? 'page' : undefined}
+            >
+              <span aria-hidden="true" className="text-xs">
+                {p.icon}
+              </span>
+              <span>{p.label}</span>
+            </a>
+          );
+        })}
+        <span className="ml-auto hidden shrink-0 text-[10px] text-gray-600 sm:inline">
+          Protocol-dedicated feeds
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   const { ready, signedInProtocols, openSignIn, openCompose } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const { density, toggleDensity, isCompact } = useLayoutDensity();
+  const { layout, setLayout, cycleLayout, isCompact, isMediaGrid, isReader, layoutLabel } =
+    useFeedLayout();
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
   const { showToast } = useToast();
 
@@ -184,6 +256,12 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Ctrl+Shift+D: Toggle dark mode
+      // Ctrl+Shift+L: Cycle through feed layouts
+      if (e.key === 'L' && e.ctrlKey && e.shiftKey) {
+        e.preventDefault();
+        cycleLayout();
+        return;
+      }
       if (e.key === 'D' && e.ctrlKey && e.shiftKey) {
         e.preventDefault();
         setTheme((prev) => {
@@ -273,15 +351,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             >
               {theme === 'dark' ? '☀' : '☾'}
             </button>
-            <button
-              type="button"
-              onClick={toggleDensity}
-              className="rounded-lg px-2 py-2 text-sm text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
-              aria-label={`Switch to ${isCompact ? 'comfortable' : 'compact'} layout`}
-              title={`${isCompact ? 'Comfortable' : 'Compact'} layout — more content per screen`}
-            >
-              {isCompact ? '⊞' : '⊟'}
-            </button>
+            <FeedLayoutSwitcher current={layout} onChange={setLayout} />
             {!ready ? (
               <div className="skeleton h-9 w-24" />
             ) : hasSignedIn ? (
@@ -379,9 +449,23 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             </div>
           </div>
         )}
+        {/* Protocol sub-nav = hidden on mobile, visible in header */}
+        <div
+          className="hidden border-t md:block"
+          style={{ borderColor: 'var(--color-glass-border)' }}
+        >
+          <ProtocolSubNav />
+        </div>
       </header>
 
-      <main id="main" className="main-content relative z-10 flex-1 pt-16 pb-20 lg:pb-0 animate-page-enter">
+      <main
+        id="main"
+        className="main-content relative z-10 flex-1 pt-16 md:pt-[108px] pb-20 lg:pb-0 animate-page-enter"
+      >
+        {/* Protocol sub-nav — visible on mobile only (desktop shows it in header) */}
+        <div className="md:hidden">
+          <ProtocolSubNav />
+        </div>
         <OnboardingProvider>
           {children}
           <OnboardingModal />

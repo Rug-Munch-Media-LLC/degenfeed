@@ -1,121 +1,106 @@
 /**
- * Feed presets — save and load named feed configurations.
+ * /api/presets — Protocol quality preset storage (KV-backed)
  *
- * GET  /api/feed/presets — list saved presets (reads from KV or cookie)
- * POST /api/feed/presets — save a new preset
- * DELETE /api/feed/presets?id=... — delete a preset
+ * Stores per-protocol preset selections in KV at
+ * `user:preset:{wallet}:{protocol}` so they persist across sessions.
+ *
+ * Auth: requires a valid session cookie (`__Host-dfid`).
+ *
+ * GET  /api/presets              → all presets for this user
+ * GET  /api/presets?protocol=X   → preset for one protocol
+ * POST /api/presets              → save preset for a protocol
  */
 
-import { type Env, jsonResponse } from '../index';
+import { PRESET_NAMES, presetKvKey, type PresetName } from '@degenfeed/feed-core';
+import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { validateBodySize } from '../sanitize';
+import { requireSession } from '../session';
 
-interface FeedPreset {
-  id: string;
-  name: string;
-  protocols?: string;
-  niches?: string;
-  category?: string;
-  sort?: string;
-  type?: string;
-  createdAt: number;
+export interface StoredPresetEntry {
+  presetName: PresetName;
+  updatedAt: number;
+}
+
+function isValidPresetName(name: unknown): name is PresetName {
+  return PRESET_NAMES.includes(name as PresetName);
 }
 
 export async function handleFeedPresets(request: Request, env: Env): Promise<Response> {
-  const url = new URL(request.url);
-  const cookieHeader = request.headers.get('cookie') ?? '';
-  const presetsKey = 'feed:presets:v1';
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
-  // GET — list presets
+  const wallet = session.address.toLowerCase();
+
   if (request.method === 'GET') {
-    const presets: FeedPreset[] = [];
+    const url = new URL(request.url);
+    const protocol = url.searchParams.get('protocol');
+
     try {
-      const cookieMatch = cookieHeader
-        .split(';')
-        .map((s) => s.trim())
-        .find((s) => s.startsWith('df_presets='));
-      if (cookieMatch) {
-        const parsed = JSON.parse(
-          decodeURIComponent(cookieMatch.slice('df_presets='.length)),
-        ) as FeedPreset[];
-        presets.push(...parsed);
+      if (protocol) {
+        // Return preset for a specific protocol
+        const raw = await env.CACHE?.get(presetKvKey(wallet, protocol));
+        if (raw) {
+          return noCacheJsonResponse(JSON.parse(raw) as StoredPresetEntry);
+        }
+        // Default: quality preset for known protocols
+        return noCacheJsonResponse({
+          presetName: 'quality' as PresetName,
+          updatedAt: 0,
+        } satisfies StoredPresetEntry);
       }
-      if (env.CACHE) {
-        const stored = await env.CACHE.get(presetsKey);
-        if (stored) {
-          const kvPresets = JSON.parse(stored) as FeedPreset[];
-          for (const p of kvPresets) {
-            if (!presets.find((x) => x.id === p.id)) presets.push(p);
+
+      // Return ALL presets for this user
+      // Scan for `user:preset:{wallet}:` prefix keys
+      const allPresets: Record<string, StoredPresetEntry> = {};
+      if (env.CACHE?.list) {
+        const prefix = `user:preset:${wallet}:`;
+        const listing = await env.CACHE.list({ prefix });
+        for (const key of listing.keys) {
+          const raw = await env.CACHE.get(key.name);
+          if (raw) {
+            const protocolName = key.name.replace(prefix, '');
+            allPresets[protocolName] = JSON.parse(raw) as StoredPresetEntry;
           }
         }
       }
+      return noCacheJsonResponse(allPresets);
     } catch (err) {
       console.warn('[presets] GET failed:', err instanceof Error ? err.message : err);
-    }
-
-    return jsonResponse({ data: presets, meta: { total: presets.length } });
-  }
-
-  // POST — save a preset
-  if (request.method === 'POST') {
-    try {
-      const body = (await request.json()) as {
-        name?: string;
-        protocols?: string;
-        niches?: string;
-        category?: string;
-        sort?: string;
-        type?: string;
-      };
-      if (!body.name) return jsonResponse({ error: 'name required' }, 400);
-
-      const preset: FeedPreset = {
-        id: `preset-${Date.now()}`,
-        name: body.name.slice(0, 50),
-        protocols: body.protocols,
-        niches: body.niches,
-        category: body.category,
-        sort: body.sort,
-        type: body.type,
-        createdAt: Date.now(),
-      };
-
-      // Store in KV if available, always return via Set-Cookie
-      if (env.CACHE) {
-        try {
-          const existing = await env.CACHE.get(presetsKey);
-          const all = existing ? (JSON.parse(existing) as FeedPreset[]) : [];
-          all.push(preset);
-          await env.CACHE.put(presetsKey, JSON.stringify(all.slice(-20)), {
-            expirationTtl: 90 * 86400,
-          });
-        } catch (err) {
-          console.warn('[presets] POST KV save failed:', err instanceof Error ? err.message : err);
-        }
-      }
-
-      return jsonResponse({ ok: true, preset });
-    } catch (err) {
-      console.warn('[presets] POST parse failed:', err instanceof Error ? err.message : err);
-      return jsonResponse({ error: 'Invalid request' }, 400);
+      return jsonResponse({ error: 'Failed to read presets' }, 500);
     }
   }
 
-  // DELETE — remove a preset
-  if (request.method === 'DELETE') {
-    const id = url.searchParams.get('id');
-    if (!id) return jsonResponse({ error: 'id required' }, 400);
-    if (env.CACHE) {
-      try {
-        const existing = await env.CACHE.get(presetsKey);
-        if (existing) {
-          const all = (JSON.parse(existing) as FeedPreset[]).filter((p) => p.id !== id);
-          await env.CACHE.put(presetsKey, JSON.stringify(all), { expirationTtl: 90 * 86400 });
-        }
-      } catch (err) {
-        console.warn('[presets] DELETE KV failed:', err instanceof Error ? err.message : err);
-      }
-    }
-    return jsonResponse({ ok: true });
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
   }
 
-  return jsonResponse({ error: 'Method not allowed' }, 405);
+  const bodySizeCheck = validateBodySize(request, 1024);
+  if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
+
+  let body: { presetName?: unknown; protocol?: string };
+  try {
+    body = (await request.json()) as { presetName?: unknown; protocol?: string };
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!isValidPresetName(body.presetName)) {
+    return jsonResponse({ error: `Invalid preset name. Must be one of: ${PRESET_NAMES.join(', ')}` }, 400);
+  }
+
+  const protocol = body.protocol ?? 'unified';
+
+  try {
+    const entry: StoredPresetEntry = {
+      presetName: body.presetName,
+      updatedAt: Date.now(),
+    };
+    await env.CACHE?.put(presetKvKey(wallet, protocol), JSON.stringify(entry), {
+      expirationTtl: 60 * 60 * 24 * 400, // 400 days
+    });
+    return noCacheJsonResponse({ ok: true, preset: entry });
+  } catch (err) {
+    console.warn('[presets] POST failed:', err instanceof Error ? err.message : err);
+    return jsonResponse({ error: 'Failed to save preset' }, 500);
+  }
 }

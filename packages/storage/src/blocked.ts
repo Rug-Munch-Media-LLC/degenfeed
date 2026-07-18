@@ -77,6 +77,50 @@ export async function syncBlockedFromServer(): Promise<void> {
     for (const entry of data.muted || []) {
       await muteIdentity(entry.targetId, entry.targetHandle || '', entry.mutedBy ?? 'self');
     }
+
+    // Merge server muted words into local IndexedDB
+    const { muteWord } = await import('./muting');
+    for (const entry of data.mutedWords || []) {
+      try {
+        await muteWord(entry.word, 'self');
+      } catch {
+        /* already exists */
+      }
+    }
+
+    // Merge server muted communities into local IndexedDB
+    for (const entry of data.mutedCommunities || []) {
+      const existing = await db.get('muted-communities', [
+        entry.communityId,
+        'self',
+      ]);
+      if (!existing) {
+        await db.put('muted-communities', {
+          communityId: entry.communityId,
+          communityName: entry.communityName || '',
+          instance: entry.instance || '',
+          mutedBy: 'self',
+          mutedAt: entry.mutedAt || Date.now(),
+        } satisfies import('./types').StoredMutedCommunity);
+      }
+    }
+
+    // Merge server blocked communities into local IndexedDB
+    for (const entry of data.blockedCommunities || []) {
+      const existing = await db.get('blocked-communities', [
+        entry.communityId,
+        'self',
+      ]);
+      if (!existing) {
+        await db.put('blocked-communities', {
+          communityId: entry.communityId,
+          communityName: entry.communityName || '',
+          instance: entry.instance || '',
+          blockedBy: 'self',
+          blockedAt: entry.blockedAt || Date.now(),
+        } satisfies import('./types').StoredBlockedCommunity);
+      }
+    }
   } catch {
     /* offline — use local only */
   }
