@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { retryFetch } from '../../lib/retryFetch';
 
 // ─── Types (local mirror since types package may not have digest types yet) ──
 
@@ -269,7 +270,9 @@ export default function DigestPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/digest/today', { credentials: 'include' });
+      const res = await retryFetch('/api/digest/today', {
+        fetchOptions: { credentials: 'include' },
+      });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error((body as Record<string, string>).error ?? `HTTP ${res.status}`);

@@ -8,10 +8,13 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
+import { retryFetch } from '../../lib/retryFetch';
+import { getCached, setCache } from '../../lib/fetchWithCache';
 import { FeedComposer } from '../../components/FeedComposer';
 import { FeedLayoutSwitcher } from '../../components/FeedLayoutSwitcher';
 import { FeedSidebar } from '../../components/FeedSidebar';
 import { useToast } from '../../components/Toast';
+import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
 import { useFeedLayout } from '../../hooks/useFeedLayout';
 import { useNotifications } from '../../hooks/useNotifications';
 import {
@@ -22,6 +25,7 @@ import {
   encodeTopicWeights,
   countTunedTopics,
 } from '../../components/FeedTuner';
+import { PostCardPrefetcher } from '../../components/PostCardPrefetcher';
 
 const TipModal = dynamic(
   () => import('../../components/TipModal').then((m) => ({ default: m.TipModal })),
@@ -341,10 +345,12 @@ export default function FeedPage() {
           url.searchParams.set('engagementWeight', String(engagementWeight));
         const tw = encodeTopicWeights(topicWeights);
         if (tw) url.searchParams.set('topic_weights', tw);
-        const res = await fetch(url.toString(), {
-          credentials: 'include',
-          cache: 'no-store',
-          headers: { 'cache-control': 'no-store' },
+        const res = await retryFetch(url.toString(), {
+          fetchOptions: {
+            credentials: 'include',
+            cache: 'no-store',
+            headers: { 'cache-control': 'no-store' },
+          },
         });
         if (!res.ok) throw new Error(`Feed returned ${res.status}`);
         const data = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
@@ -371,10 +377,22 @@ export default function FeedPage() {
         setPosts(feed);
         setFeedMeta(data.meta || {});
         setState(feed.length ? 'loaded' : 'empty');
+        if (!checkOnly && feed.length > 0) {
+          announce(`${feed.length} posts loaded`, 'polite');
+        }
       } catch (err) {
         if (!checkOnly) {
-          setError(err instanceof Error ? err.message : 'Failed');
-          setState('error');
+          // Graceful degradation: show cached feed on failure
+          const cached = getCached<{ posts: UnifiedPost[]; meta?: FeedMeta }>('feed_' + activeTab);
+          if (cached && cached.posts.length > 0) {
+            setPosts(cached.posts);
+            setFeedMeta(cached.meta ?? {});
+            setState('loaded');
+            setError('Couldn\'t load feed. Showing cached version.');
+          } else {
+            setError(err instanceof Error ? err.message : 'Failed');
+            setState('error');
+          }
         }
       }
     },
@@ -462,6 +480,7 @@ export default function FeedPage() {
   );
 
   const { showToast } = useToast();
+  const { announce } = useAnnouncer();
   const router = useRouter();
   const handlePostClick = useCallback(
     (id: string) => {
@@ -712,10 +731,12 @@ export default function FeedPage() {
             </div>
 
             {/* Tabs */}
-            <div className="feed-header-tabs flex">
+            <div className="feed-header-tabs flex" role="tablist" aria-label="Feed tabs">
               <button
                 type="button"
                 onClick={() => setActiveTab('for-you')}
+                role="tab"
+                aria-selected={activeTab === 'for-you'}
                 className={`relative flex-1 py-3 text-sm font-medium transition-colors ${
                   activeTab === 'for-you' ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
                 }`}
@@ -728,6 +749,8 @@ export default function FeedPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('following')}
+                role="tab"
+                aria-selected={activeTab === 'following'}
                 className={`relative flex-1 py-3 text-sm font-medium transition-colors ${
                   activeTab === 'following' ? 'text-[var(--color-fg)]' : 'text-gray-500 hover:text-gray-300'
                 }`}
@@ -806,13 +829,14 @@ export default function FeedPage() {
               <button
                 type="button"
                 onClick={toggleHideLowQuality}
+                role="switch"
+                aria-checked={hideLowQuality}
                 className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium transition-colors ${
                   hideLowQuality
                     ? 'bg-degen-500/15 text-degen-400'
                     : 'text-gray-500 hover:text-gray-300'
                 }`}
                 title="Hide posts with low ranking scores"
-                aria-pressed={hideLowQuality}
               >
                 <svg
                   width="10"

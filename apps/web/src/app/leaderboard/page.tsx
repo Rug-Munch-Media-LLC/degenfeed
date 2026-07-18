@@ -3,6 +3,8 @@
 import { ErrorBoundary, LeaderboardCard, type LeaderboardCardEntry } from '@degenfeed/ui';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { retryFetch } from '../../lib/retryFetch';
+import { getCached, setCache } from '../../lib/fetchWithCache';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -334,28 +336,43 @@ export default function LeaderboardPage() {
       });
 
       if (activeTab === 'creators') {
-        const res = await fetch(`/api/leaderboard/creators?${params}`);
+        const res = await retryFetch(`/api/leaderboard/creators?${params}`);
         if (!res.ok) throw new Error(`Failed to fetch creators: ${res.status}`);
         const data = (await res.json()) as LeaderboardResponse;
         setCreatorsData(data);
+        setCache('leaderboard_creators', data);
       } else if (activeTab === 'tippers') {
-        const res = await fetch(`/api/leaderboard/tippers?${params}`);
+        const res = await retryFetch(`/api/leaderboard/tippers?${params}`);
         if (!res.ok) throw new Error(`Failed to fetch tippers: ${res.status}`);
         const data = (await res.json()) as LeaderboardResponse;
         setTippersData(data);
+        setCache('leaderboard_tippers', data);
       } else if (activeTab === 'trending') {
-        const res = await fetch(`/api/leaderboard/trending?${params}`);
+        const res = await retryFetch(`/api/leaderboard/trending?${params}`);
         if (!res.ok) throw new Error(`Failed to fetch trending: ${res.status}`);
         const data = (await res.json()) as TrendingResponse;
         setTrendingData(data);
+        setCache('leaderboard_trending', data);
       } else if (activeTab === 'communities') {
-        const res = await fetch(`/api/leaderboard/communities?${params}`);
+        const res = await retryFetch(`/api/leaderboard/communities?${params}`);
         if (!res.ok) throw new Error(`Failed to fetch communities: ${res.status}`);
         const data = (await res.json()) as CommunitiesResponse;
         setCommunitiesData(data);
+        setCache('leaderboard_communities', data);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
+      // Graceful degradation: show cached on failure
+      const cacheKey = `leaderboard_${activeTab}`;
+      const cached = getCached<LeaderboardResponse | TrendingResponse | CommunitiesResponse>(cacheKey);
+      if (cached) {
+        if (activeTab === 'creators') setCreatorsData(cached as LeaderboardResponse);
+        else if (activeTab === 'tippers') setTippersData(cached as LeaderboardResponse);
+        else if (activeTab === 'trending') setTrendingData(cached as TrendingResponse);
+        else if (activeTab === 'communities') setCommunitiesData(cached as CommunitiesResponse);
+        setError('Showing cached leaderboard');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
+      }
     } finally {
       setLoading(false);
     }

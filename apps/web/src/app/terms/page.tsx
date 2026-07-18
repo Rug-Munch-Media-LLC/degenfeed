@@ -6,6 +6,25 @@ export const metadata: Metadata = {
   title: 'Terms of Service',
   description:
     'Terms of Service for DegenFeed, operated by Rug Munch Media LLC, a Wyoming limited liability company.',
+  openGraph: {
+    title: 'Terms of Service — DegenFeed',
+    description: 'Terms of Service for DegenFeed.',
+    url: 'https://app.degenfeed.xyz/terms',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed Terms of Service',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Terms of Service — DegenFeed',
+    description: 'Terms of Service for DegenFeed.',
+  },
+  alternates: { canonical: 'https://app.degenfeed.xyz/terms' },
 };
 
 export default function TermsPage() {

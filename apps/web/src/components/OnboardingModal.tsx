@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { useToast } from './Toast';
+import { resetTour } from './GuidedTour';
 
 /* ── Types ───────────────────────────────────────────────── */
 
@@ -101,27 +102,27 @@ const INTERESTS = [
 /* ── Step components ─────────────────────────────────────── */
 
 function StepDots({ current, total }: { current: number; total: number }) {
+  const percent = Math.round(((current + 1) / total) * 100);
   return (
-    <div
-      className="flex items-center gap-2"
-      role="progressbar"
-      aria-valuenow={current + 1}
-      aria-valuemin={1}
-      aria-valuemax={total}
-      aria-label={`Step ${current + 1} of ${total}`}
-    >
-      {Array.from({ length: total }, (_, i) => (
-        <span
-          key={`step-dot-${total}-${i}`}
-          className={`h-1.5 rounded-full transition-all duration-500 ${
-            i === current
-              ? 'w-6 bg-degen-400 shadow-[0_0_8px_rgba(0,255,65,0.5)]'
-              : i < current
-                ? 'w-1.5 bg-degen-500/40'
-                : 'w-1.5 bg-white/10'
-          }`}
+    <div className="flex flex-col items-end gap-1">
+      {/* Labeled progress */}
+      <span className="font-mono text-[10px] font-medium tracking-wider text-degen-400/80">
+        Step {current + 1} of {total} — {percent}%
+      </span>
+      {/* Progress bar */}
+      <div
+        className="h-1 w-24 overflow-hidden rounded-full bg-white/5"
+        role="progressbar"
+        aria-valuenow={current + 1}
+        aria-valuemin={1}
+        aria-valuemax={total}
+        aria-label={`Step ${current + 1} of ${total}`}
+      >
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-degen-500 to-degen-400 transition-all duration-500 ease-out"
+          style={{ width: `${percent}%` }}
         />
-      ))}
+      </div>
     </div>
   );
 }
@@ -275,7 +276,9 @@ export function OnboardingModal() {
       }
     }
     complete();
-    showToast('success', 'Welcome to DegenFeed! Your feed is ready.');
+    // Reset guided tour so it triggers after onboarding
+    resetTour();
+    showToast('success', 'Welcome to DegenFeed! Your feed is ready. Look for the guided tour.');
     router.push('/feed');
   }, [selectedInterests, selectedProtocols, complete, showToast, router]);
 
@@ -354,16 +357,14 @@ export function OnboardingModal() {
             </div>
             <div className="flex items-center gap-3">
               <StepDots current={step} total={totalSteps} />
-              {step > 0 && (
-                <button
-                  onClick={close}
-                  className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-white/40 transition-colors hover:bg-white/5 hover:text-white/70"
-                  type="button"
-                  aria-label="Close onboarding"
-                >
-                  Skip
-                </button>
-              )}
+              <button
+                onClick={close}
+                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-white/40 transition-colors hover:bg-white/5 hover:text-white/70"
+                type="button"
+                aria-label="Skip for now"
+              >
+                {step === 0 ? 'Browse anonymously' : 'Skip for now'}
+              </button>
             </div>
           </div>
 
@@ -417,7 +418,7 @@ export function OnboardingModal() {
                   <div className="mb-6 text-center">
                     <h2 className="mb-1 text-xl font-bold text-white">Choose your networks</h2>
                     <p className="text-sm text-white/50">
-                      Select the protocols to show in your unified feed
+                      Select protocols to include in your unified feed
                     </p>
                   </div>
                   <div className="grid gap-2.5 sm:grid-cols-2">
@@ -438,41 +439,22 @@ export function OnboardingModal() {
                             onChange={() => toggleProtocol(p.id)}
                             className="peer sr-only"
                           />
-                          {/* Selection indicator */}
+                          {/* Selection indicator — more visual */}
                           <div
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition-all ${
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg transition-all ${
                               selected
-                                ? 'border-degen-500 bg-degen-500 shadow-[0_0_8px_rgba(0,255,65,0.3)]'
-                                : 'border-white/[0.08] bg-white/[0.02]'
+                                ? 'shadow-[0_0_12px_rgba(0,255,65,0.15)]'
+                                : 'border border-white/[0.06]'
                             }`}
+                            style={{
+                              backgroundColor: selected ? `${p.color}22` : 'rgba(255,255,255,0.02)',
+                              color: p.color,
+                            }}
                           >
-                            {selected ? (
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 16 16"
-                                fill="none"
-                                aria-hidden="true"
-                              >
-                                <path
-                                  d="M13 4L6.5 12L3 8.5"
-                                  stroke="black"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            ) : null}
+                            {p.icon}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span
-                                className="text-base"
-                                style={{ color: p.color }}
-                                aria-hidden="true"
-                              >
-                                {p.icon}
-                              </span>
                               <span
                                 className={`text-sm font-semibold transition-colors ${
                                   selected
@@ -482,15 +464,53 @@ export function OnboardingModal() {
                               >
                                 {p.label}
                               </span>
+                              {selected && (
+                                <span className="rounded-full bg-degen-500/15 px-1.5 py-0.5 text-[9px] font-medium text-degen-400">
+                                  Added
+                                </span>
+                              )}
                             </div>
                             <p className="mt-0.5 text-xs text-white/40">{p.description}</p>
+                            {/* Show protocol-specific hint */}
+                            <p className="mt-1 text-[10px] text-white/20">
+                              {p.id === 'nostr' && 'Relay-based · 5M+ events'}
+                              {p.id === 'farcaster' && 'On-chain hubs · 800K+ users'}
+                              {p.id === 'lens' && 'Polygon native · 500K+ profiles'}
+                              {p.id === 'bluesky' && 'AT Protocol · 30M+ users'}
+                              {p.id === 'mastodon' && 'ActivityPub · 15M+ accounts'}
+                              {p.id === 'threads' && "Meta's microblog · Millions daily"}
+                              {p.id === 'reddit' && 'Crypto subreddits · 8M+ daily'}
+                              {p.id === 'rss' && '400+ feeds · 150+ sources'}
+                            </p>
                           </div>
                         </label>
                       );
                     })}
                   </div>
-                  <p className="mt-4 text-center text-xs text-white/30">
-                    Select any combination. You can change this later in Settings.
+
+                  {/* Live preview: what they'll see */}
+                  {selectedProtocols.length > 0 && (
+                    <div className="mt-4 rounded-xl border border-degen-500/15 bg-degen-500/[0.03] px-4 py-3">
+                      <p className="mb-1.5 text-xs font-medium text-degen-400/80">You&apos;ll see content from:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedProtocols.map((id) => {
+                          const p = PROTOCOLS.find((pr) => pr.id === id);
+                          return p ? (
+                            <span
+                              key={p.id}
+                              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                              style={{ backgroundColor: `${p.color}18`, color: p.color }}
+                            >
+                              {p.icon} {p.label}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="mt-3 text-center text-xs text-white/30">
+                    You can change this later in Profile &gt; Settings.
                   </p>
                 </div>
               )}
@@ -658,7 +678,20 @@ export function OnboardingModal() {
                     </div>
                   </div>
 
-                  <p className="mt-6 text-xs text-white/30">
+                  {/* Guided tour hint */}
+                  <div className="mx-auto mt-4 max-w-sm rounded-xl border border-degen-500/15 bg-degen-500/[0.03] px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-degen-400">◆</span>
+                      <p className="text-xs text-degen-400/80 font-medium">
+                        Look for the guided tour on the next page!
+                      </p>
+                    </div>
+                    <p className="mt-1 text-[11px] text-white/30 text-left">
+                      We&apos;ll walk you through the feed, filters, posting, and tips.
+                    </p>
+                  </div>
+
+                  <p className="mt-4 text-xs text-white/30">
                     You can customize everything later from Profile &gt; Settings.
                   </p>
                 </div>
@@ -681,16 +714,6 @@ export function OnboardingModal() {
               </button>
 
               <div className="flex items-center gap-3">
-                {!isLast && (
-                  <button
-                    onClick={close}
-                    className="rounded-lg px-3 py-2 text-xs font-medium text-white/30 transition-colors hover:text-white/60"
-                    type="button"
-                  >
-                    {step === 0 ? 'Browse anonymously' : 'Skip'}
-                  </button>
-                )}
-
                 {isLast ? (
                   <button
                     onClick={handleComplete}

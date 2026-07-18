@@ -4,6 +4,28 @@ export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: 'About — DegenFeed',
+  description:
+    'DegenFeed is an open-source multi-protocol social aggregator for web3. See posts from Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS in one unified feed.',
+  openGraph: {
+    title: 'About DegenFeed',
+    description:
+      'The open-source multi-protocol social aggregator. One feed for Nostr, Farcaster, Lens, Bluesky, Mastodon, and more.',
+    url: 'https://app.degenfeed.xyz/about',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'About DegenFeed',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'About DegenFeed',
+    description: 'The open-source multi-protocol social aggregator.',
+  },
+  alternates: { canonical: 'https://app.degenfeed.xyz/about' },
 };
 
 export default function AboutPage() {

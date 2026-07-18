@@ -1,29 +1,73 @@
-/* ── DegenFeed Service Worker ────────────────────────────────
- *  Cache-first for static assets, stale-while-revalidate for
- *  navigation & API calls, network-only for POST.
- *  Offline fallback page when no cached response exists.
+/* ── DegenFeed Service Worker v3 ───────────────────────────────
+ *  Features:
+ *    - Navigation preload for instant back/forward navigations
+ *    - Precached critical shell pages at install time
+ *    - Cache-first for static assets (images, fonts, CSS, JS)
+ *    - Stale-while-revalidate for API responses
+ *    - Network-first for dynamic pages (feed, notifications)
+ *    - Cache versioning with automatic old-cache cleanup
+ *    - Offline fallback page
+ *    - Background periodic refresh of cached API data
  *  ────────────────────────────────────────────────────────── */
 
 const CACHE = {
-  static: 'degenfeed-static-v2',
-  page: 'degenfeed-pages-v2',
-  api: 'degenfeed-api-v2',
-  font: 'degenfeed-fonts-v2',
+  static: 'degenfeed-static-v3',
+  page: 'degenfeed-pages-v3',
+  api: 'degenfeed-api-v3',
+  font: 'degenfeed-fonts-v3',
+  image: 'degenfeed-images-v3',
 };
 
-const STATIC_URLS = ['/', '/home', '/feed', '/news', '/status', '/discover', '/offline'];
+/* ── Critical shell pages to precache at install time ─────── */
+const PRECACHE_URLS = [
+  '/',
+  '/home',
+  '/feed',
+  '/discover',
+  '/trending',
+  '/shorts',
+  '/notifications',
+  '/messages',
+  '/search',
+  '/news',
+  '/status',
+  '/offline',
+];
 
-const ASSET_EXT = /\.(js|css|woff2?|png|jpg|jpeg|gif|svg|ico|webp|avif)$/;
+const ASSET_EXT = /\.(js|css|woff2?|ttf|otf|png|jpg|jpeg|gif|svg|ico|webp|avif)$/;
 const API_PATTERN = /^\/api\//;
 
-/* ── Install ───────────────────────────────────────────────── */
+/* ── Navigation Preload ──────────────────────────────────── */
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    (async () => {
+      // Enable navigation preload
+      if (self.registration.navigationPreload) {
+        await self.registration.navigationPreload.enable();
+      }
+
+      // Prune old cache versions
+      const keys = await caches.keys();
+      const valid = new Set(Object.values(CACHE));
+      await Promise.all(
+        keys
+          .filter((k) => !valid.has(k))
+          .map((k) => caches.delete(k)),
+      );
+
+      await self.clients.claim();
+    })(),
+  );
+});
+
+/* ── Install — precache critical pages ──────────────────── */
 self.addEventListener('install', (e) => {
   e.waitUntil(
     (async () => {
-      const cache = await caches.open(CACHE.static);
-      // Best-effort pre-cache — ignore individual failures
+      const cache = await caches.open(CACHE.page);
+      // Best-effort pre-cache — don't fail install if one URL is down
       await Promise.allSettled(
-        STATIC_URLS.map((url) =>
+        PRECACHE_URLS.map((url) =>
           cache.add(url).catch(() => {}),
         ),
       );
@@ -32,57 +76,42 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-/* ── Activate — prune old caches ──────────────────────────── */
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    (async () => {
-      const keys = await caches.keys();
-      const valid = new Set(Object.values(CACHE));
-      await Promise.all(keys.filter((k) => !valid.has(k)).map((k) => caches.delete(k)));
-      await self.clients.claim();
-    })(),
-  );
-});
-
-/* ── Fetch — strategy router ──────────────────────────────── */
+/* ── Fetch — strategy router ────────────────────────────── */
 self.addEventListener('fetch', (e) => {
-  // Only GET
-  if (e.request.method !== 'GET') return;
-
   const url = new URL(e.request.url);
 
-  // Same-origin only for caching; passthrough for cross-origin (CDN, etc.)
+  // Cross-origin: cache images/fonts on first load
   if (url.origin !== self.location.origin) {
-    // Still cache cross-origin fonts & images on first load
     if (ASSET_EXT.test(url.pathname)) {
+      e.respondWith(cacheFirst(e.request, CACHE.image));
+    }
+    return;
+  }
+
+  // Same-origin strategies
+  if (e.request.method !== 'GET') return;
+
+  // Static assets: cache-first
+  if (ASSET_EXT.test(url.pathname)) {
+    if (url.pathname.match(/\.(woff2?|ttf|otf)$/)) {
+      e.respondWith(cacheFirst(e.request, CACHE.font));
+    } else if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|webp|avif)$/)) {
+      e.respondWith(cacheFirst(e.request, CACHE.image));
+    } else {
       e.respondWith(cacheFirst(e.request, CACHE.static));
     }
     return;
   }
 
-  // ---- Same-origin strategies ----
-
-  // Static assets: cache-first
-  if (ASSET_EXT.test(url.pathname)) {
-    e.respondWith(cacheFirst(e.request, CACHE.static));
-    return;
-  }
-
-  // Font files (woff2 etc. cached separately)
-  if (url.pathname.match(/\.(woff2?|ttf|otf)$/)) {
-    e.respondWith(cacheFirst(e.request, CACHE.font));
-    return;
-  }
-
-  // API calls: stale-while-revalidate
+  // API calls: stale-while-revalidate (show cached, update in background)
   if (API_PATTERN.test(url.pathname)) {
     e.respondWith(staleWhileRevalidate(e.request, CACHE.api));
     return;
   }
 
-  // Navigation & pages: stale-while-revalidate with offline fallback
+  // Navigation: use preload response if available, with network-first fallback
   if (e.request.mode === 'navigate') {
-    e.respondWith(navStrategy(e.request));
+    e.respondWith(navStrategy(e));
     return;
   }
 
@@ -90,9 +119,9 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(networkFirst(e.request, CACHE.page));
 });
 
-/* ── Cache strategies ──────────────────────────────────────── */
+/* ── Cache strategies ────────────────────────────────────── */
 
-/** Cache-first: return from cache, fetch in background. */
+/** Cache-first: return from cache immediately; update in background. */
 async function cacheFirst(request, cacheName) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -109,7 +138,10 @@ async function cacheFirst(request, cacheName) {
   }
 }
 
-/** Stale-while-revalidate: serve cache instantly, update in background. */
+/**
+ * Stale-while-revalidate: serve cached version instantly,
+ * then fetch the latest in the background for next time.
+ */
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
@@ -139,24 +171,42 @@ async function networkFirst(request, cacheName) {
   }
 }
 
-/** Navigation strategy: stale-while-revalidate, offline → /offline. */
-async function navStrategy(request) {
-  const cache = await caches.open(CACHE.page);
-  const cached = await cache.match(request);
+/**
+ * Navigation strategy: use preload response, network-first fallback.
+ *
+ * Navigation preload (`preloadResponse`) enables the browser to send
+ * a fetch in parallel with the service worker boot, cutting ~100ms
+ * off back/forward navigations.
+ */
+async function navStrategy(event) {
+  // Try the preloaded response first (fast path for back/forward)
+  if (event.preloadResponse) {
+    const preload = await event.preloadResponse;
+    if (preload) {
+      // Cache the preloaded response for future offline use
+      if (preload.ok) {
+        const clone = preload.clone();
+        caches.open(CACHE.page).then((c) => c.put(event.request, clone));
+      }
+      return preload;
+    }
+  }
 
-  const fetchPromise = fetch(request)
-    .then((res) => {
-      if (res.ok) cache.put(request, res.clone());
-      return res;
-    })
-    .catch(async () => {
-      return (await caches.match('/offline')) || new Response('Offline', { status: 503 });
-    });
-
-  return cached || (await fetchPromise);
+  // Fall back to network-first
+  try {
+    const res = await fetch(event.request);
+    if (res.ok) {
+      const clone = res.clone();
+      caches.open(CACHE.page).then((c) => c.put(event.request, clone));
+    }
+    return res;
+  } catch {
+    const cached = await caches.match(event.request);
+    return cached || (await caches.match('/offline')) || new Response('Offline', { status: 503 });
+  }
 }
 
-/* ── Push notifications ────────────────────────────────────── */
+/* ── Push notifications ──────────────────────────────────── */
 self.addEventListener('push', (e) => {
   const data = e.data?.json() || {};
   const options = {
@@ -175,31 +225,30 @@ self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   const url = e.notification.data?.url || '/';
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Focus an existing tab if one is open
-      for (const client of clientList) {
-        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-          client.focus();
-          client.navigate(url);
-          return;
+    clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+            client.focus();
+            client.navigate(url);
+            return;
+          }
         }
-      }
-      // Otherwise open a new window
-      return clients.openWindow(url);
-    }),
+        return clients.openWindow(url);
+      }),
   );
 });
 
-/* ── Periodic background sync (Chromium-based) ─────────────── */
+/* ── Periodic background sync (Chromium-based) ───────────── */
 self.addEventListener('periodicsync', (e) => {
   if (e.tag === 'degenfeed-refresh') {
     e.waitUntil(
       (async () => {
         const cache = await caches.open(CACHE.api);
         const keys = await cache.keys();
-        // Refresh the first 5 cached API responses
         await Promise.allSettled(
-          keys.slice(0, 5).map(async (req) => {
+          keys.slice(0, 10).map(async (req) => {
             try {
               const res = await fetch(req);
               if (res.ok) cache.put(req, res);

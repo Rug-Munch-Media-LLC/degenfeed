@@ -5,6 +5,7 @@ import { ComposePreview, getProtocolColor, getProtocolIcon } from '@degenfeed/ui
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { publishNoteToNostr } from '../lib/nostr';
+import { useAnnouncer } from './ScreenReaderAnnouncer';
 import { useToast } from './Toast';
 
 const TARGETS = [
@@ -37,6 +38,7 @@ export function FeedComposer({
   const [bridgeToNostr, setBridgeToNostr] = useState(false);
   const [posting, setPosting] = useState(false);
   const { showToast } = useToast();
+  const { announce } = useAnnouncer();
   const [avatar, setAvatar] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>();
   const [handle, setHandle] = useState<string>();
@@ -93,6 +95,7 @@ export function FeedComposer({
         .map((t) => TARGETS.find((x) => x.id === t)?.label || t);
       if (succeeded > 0) {
         showToast('success', `Posted to ${targetLabels.join(', ')}`);
+        announce(`Post published to ${targetLabels.join(', ')}`, 'polite');
       }
     } finally {
       setPosting(false);
@@ -155,6 +158,7 @@ export function FeedComposer({
             placeholder="What is happening?!"
             rows={1}
             className="w-full resize-none bg-transparent py-2 text-lg text-[var(--color-fg)] placeholder-gray-600 outline-none"
+            aria-label="Compose a new post"
           />
 
           <div className="mt-2 flex flex-wrap items-center gap-2">

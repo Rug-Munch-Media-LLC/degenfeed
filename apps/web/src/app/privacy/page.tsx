@@ -6,6 +6,25 @@ export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
     'Privacy policy for DegenFeed, operated by Rug Munch Media LLC. No tracking, no ads, no data sales.',
+  openGraph: {
+    title: 'Privacy Policy — DegenFeed',
+    description: 'Privacy policy for DegenFeed. No tracking, no ads, no data sales.',
+    url: 'https://app.degenfeed.xyz/privacy',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed Privacy Policy',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Privacy Policy — DegenFeed',
+    description: 'Privacy policy for DegenFeed.',
+  },
+  alternates: { canonical: 'https://app.degenfeed.xyz/privacy' },
 };
 
 export default function PrivacyPage() {

@@ -5,6 +5,7 @@ import Script from 'next/script';
 import './globals.css';
 import { AuthProvider } from '../components/AuthProvider';
 import { ErrorTracker } from '../components/ErrorTracker';
+import { GlobalErrorBoundary } from '../components/GlobalErrorBoundary';
 import { RealtimeClientProvider } from '../components/RealtimeClientProvider';
 import { Shell } from '../components/Shell';
 import { SolanaProvider } from '../components/SolanaProvider';
@@ -29,6 +30,7 @@ export const metadata: Metadata = {
     url: 'https://app.degenfeed.xyz',
     siteName: 'DegenFeed',
     type: 'website',
+    locale: 'en_US',
     images: [
       {
         url: '/og-image.png',
@@ -37,6 +39,13 @@ export const metadata: Metadata = {
         alt: 'DegenFeed — The social feed of web3',
       },
     ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed — The social feed of web3',
+    description:
+      'See every network. Zero sign-ups. Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one window.',
+    images: ['/og-image.png'],
   },
   robots: {
     index: true,
@@ -47,6 +56,10 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://app.degenfeed.xyz',
+  },
+  other: {
+    'google-site-verification': 'degenfeed-google-site-verification',
+    'theme-color': '#000000',
   },
 };
 
@@ -89,6 +102,35 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Windows PWA */}
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
+
+        {/* ── LCP: Preconnect to critical origins ── */}
+        <link rel="preconnect" href="https://cdn.degenfeed.xyz" />
+        <link rel="preconnect" href="https://community.degenfeed.xyz" />
+        <link rel="preconnect" href="https://video.degenfeed.xyz" />
+        <link rel="dns-prefetch" href="https://cdn.degenfeed.xyz" />
+        <link rel="dns-prefetch" href="https://community.degenfeed.xyz" />
+        <link rel="dns-prefetch" href="https://video.degenfeed.xyz" />
+        <link rel="dns-prefetch" href="https://pbs.twimg.com" />
+        <link rel="dns-prefetch" href="https://cdn.bsky.app" />
+
+        {/* ── LCP: Defer non-critical third-party scripts ── */}
+        <link rel="preload" href="/icon.svg" as="image" fetchPriority="high" />
+        <link rel="preload" href="/icon-192.png" as="image" fetchPriority="high" />
+
+        {/* ── Critical CSS inlining — above-the-fold styles ── */}
+        <style dangerouslySetInnerHTML={{
+          __html: [
+            'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:Inter,system-ui,sans-serif}',
+            '.dark body,html.dark body{--bg:#000;--fg:#e7e9ea}',
+            'html:not(.dark) body{--bg:#fff;--fg:#171717}',
+            '.shell-header{height:64px;position:fixed;top:0;left:0;right:0;z-index:50}',
+            '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px}',
+            '.skip-link:focus{top:0}',
+            '.main-content{padding-top:64px}',
+            '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}',
+          ].join(''),
+        }} />
+
         <ErrorTracker />
         <Script
           defer
@@ -110,9 +152,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               name: 'DegenFeed',
               url: 'https://app.degenfeed.xyz',
               description:
-                'Open-source multi-protocol social aggregator for web3. Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one feed.',
+                'The web3 social super app — every network, one feed. Aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS.',
               applicationCategory: 'SocialNetworkingApplication',
-              operatingSystem: 'Web',
+              operatingSystem: 'All',
               offers: {
                 '@type': 'Offer',
                 price: '0',
@@ -123,6 +165,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 name: 'Rug Munch Media LLC',
                 url: 'https://app.degenfeed.xyz',
               },
+              screenshot: {
+                '@type': 'ImageObject',
+                url: 'https://app.degenfeed.xyz/og-image.png',
+              },
+              featureList: [
+                'Multi-protocol feed aggregation',
+                'Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS',
+                'Cross-protocol search',
+                'Real-time notifications',
+                'Token and community pages',
+                'Premium subscriptions',
+              ],
             }),
           }}
         />
@@ -131,7 +185,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <ToastProvider>
               <AuthProvider>
                 <RealtimeClientProvider>
-                  <Shell>{children}</Shell>
+                  <GlobalErrorBoundary>
+                    <Shell>{children}</Shell>
+                  </GlobalErrorBoundary>
                 </RealtimeClientProvider>
               </AuthProvider>
             </ToastProvider>

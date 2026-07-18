@@ -1,6 +1,7 @@
 'use client';
 
 import { TrendingSidebar, type TrendingSidebarData } from '@degenfeed/ui';
+import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
 
@@ -68,13 +69,14 @@ export function FeedSidebar({
   return (
     <div className="space-y-4">
       {/* Search */}
-      <a
+      <Link
         href="/search"
+        prefetch={true}
         className="flex items-center gap-2 rounded-full border border-white/10 bg-[var(--color-card)] px-4 py-2.5 text-sm text-gray-400 backdrop-blur-xl transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)]"
       >
         <span className="text-lg text-degen-400">⌕</span>
         <span>Search posts, topics, tokens…</span>
-      </a>
+      </Link>
 
       {/* Wallet card */}
       {walletAddress ? (
@@ -176,12 +178,13 @@ export function FeedSidebar({
         <p className="text-xs text-gray-500">
           Follow creators across 8 protocols to build your timeline.
         </p>
-        <a
+        <Link
           href="/discover"
+          prefetch={true}
           className="mt-2 inline-block text-[11px] font-medium text-degen-400 hover:text-degen-300 transition-colors"
         >
           Discover people →
-        </a>
+        </Link>
       </div>
 
       {/* Premium CTA */}
@@ -190,9 +193,9 @@ export function FeedSidebar({
         <p className="mb-3 text-xs text-gray-400">
           Cross-posting, algorithm controls, analytics, and creator tools.
         </p>
-        <a href="/premium" className="btn-primary block text-center text-sm">
+        <Link href="/premium" prefetch={false} className="btn-primary block text-center text-sm">
           See plans
-        </a>
+        </Link>
       </div>
 
       <p className="px-2 text-[10px] text-gray-700">
