@@ -9,17 +9,17 @@
 
 import type { Protocol } from '@degenfeed/types';
 import { ErrorBoundary } from '@degenfeed/ui';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { useToast } from '../../components/Toast';
-import { usePremium } from '../../hooks/usePremium';
 import type { FontSize, NotificationType, Theme } from '../../hooks/usePreferences';
 import { usePreferences } from '../../hooks/usePreferences';
+import { usePremium } from '../../hooks/usePremium';
 
 /* ─── Types ──────────────────────────────────────────────────── */
 
-type Section = 'account' | 'appearance' | 'notifications' | 'privacy' | 'content' | 'api';
+type Section = 'account' | 'appearance' | 'notifications' | 'privacy' | 'content' | 'subscription' | 'api';
 
 const SECTION_LABELS: Record<Section, { label: string; icon: string; desc: string }> = {
   account: {
@@ -46,6 +46,11 @@ const SECTION_LABELS: Record<Section, { label: string; icon: string; desc: strin
     label: 'Content',
     icon: 'M4 6h16M4 10h16M4 14h16M4 18h16',
     desc: 'Default feed, muted words, muted & blocked users',
+  },
+  subscription: {
+    label: 'Subscription',
+    icon: 'M13 10V3L4 14h7v7l9-11h-7z',
+    desc: 'Plan, billing, and premium features',
   },
   api: {
     label: 'API & Developers',
@@ -368,6 +373,15 @@ export default function SettingsPage() {
 
   const [email, setEmail] = useState('');
   const [emailSaved, setEmailSaved] = useState(false);
+
+  // Toast feedback on save to server
+  useEffect(() => {
+    if (saveStatus === 'saved') {
+      showToast('success', 'Preferences saved');
+    } else if (saveStatus === 'error') {
+      showToast('error', 'Failed to save preferences');
+    }
+  }, [saveStatus, showToast]);
 
   const handleSaveEmail = useCallback(async () => {
     try {
@@ -751,9 +765,9 @@ export default function SettingsPage() {
 
           {/* ─────────── SUBSCRIPTION ─────────── */}
           <SettingsSection
-            section="api"
-            isOpen={openSections.includes('api')}
-            onToggle={() => toggleSection('api')}
+            section="subscription"
+            isOpen={openSections.includes('subscription')}
+            onToggle={() => toggleSection('subscription')}
           >
             {premiumLoading ? (
               <div className="flex items-center gap-3 py-2">
@@ -767,7 +781,9 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-degen-400 capitalize">{currentTier}</span>
+                      <span className="text-sm font-bold text-degen-400 capitalize">
+                        {currentTier}
+                      </span>
                       <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
                         Active
                       </span>
@@ -799,7 +815,8 @@ export default function SettingsPage() {
                 ) : (
                   <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 space-y-2">
                     <p className="text-xs text-red-400 font-medium">
-                      Are you sure? Your subscription stays active until the end of the billing period.
+                      Are you sure? Your subscription stays active until the end of the billing
+                      period.
                     </p>
                     <div className="flex gap-2">
                       <button
@@ -826,7 +843,8 @@ export default function SettingsPage() {
                 <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-3">
                   <div className="text-xs font-medium text-[var(--color-fg)] mb-1">Free Plan</div>
                   <p className="text-xs text-[var(--color-muted)] mb-2">
-                    Upgrade to Pro for unlimited feeds, analytics, scheduling, and cross-platform registration.
+                    Upgrade to Pro for unlimited feeds, analytics, scheduling, and cross-platform
+                    registration.
                   </p>
                   <button
                     type="button"
@@ -905,7 +923,7 @@ export default function SettingsPage() {
             >
               {saving ? (
                 <span className="flex items-center gap-2">
-                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   Saving...
                 </span>
               ) : (
@@ -917,10 +935,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Upgrade modal */}
-      <PremiumPaymentModal
-        open={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-      />
+      <PremiumPaymentModal open={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
     </ErrorBoundary>
   );
 }

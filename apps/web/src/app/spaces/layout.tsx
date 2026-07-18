@@ -48,11 +48,9 @@ export const metadata: Metadata = {
 export default function SpacesLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script
-        id="breadcrumb-spaces"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(spacesBreadcrumb) }}
-      />
+      <Script id="breadcrumb-spaces" type="application/ld+json">{
+        JSON.stringify(spacesBreadcrumb)
+      }</Script>
       {children}
     </>
   );

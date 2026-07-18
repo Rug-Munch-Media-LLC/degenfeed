@@ -16,46 +16,69 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 /* ─── IndexedDB helpers for muted/blocked ────────────────────── */
 
-async function idbAddMutedWord(word: string): Promise<void> {
+async function _idbAddMutedWord(word: string): Promise<void> {
   try {
     const db = await getDb();
     await db.put('muted-words', { word: word.toLowerCase(), mutedBy: 'self', mutedAt: Date.now() });
-  } catch { /* IndexedDB unavailable */ }
+  } catch {
+    /* IndexedDB unavailable */
+  }
 }
 
-async function idbRemoveMutedWord(word: string): Promise<void> {
+async function _idbRemoveMutedWord(word: string): Promise<void> {
   try {
     const db = await getDb();
     await db.delete('muted-words', [word.toLowerCase(), 'self']);
-  } catch { /* IndexedDB unavailable */ }
+  } catch {
+    /* IndexedDB unavailable */
+  }
 }
 
-async function idbAddMutedUser(userId: string): Promise<void> {
+async function _idbAddMutedUser(userId: string): Promise<void> {
   try {
     const db = await getDb();
-    await db.put('muted', { targetId: userId, targetHandle: '', mutedBy: 'self', mutedAt: Date.now() });
-  } catch { /* IndexedDB unavailable */ }
+    await db.put('muted', {
+      targetId: userId,
+      targetHandle: '',
+      mutedBy: 'self',
+      mutedAt: Date.now(),
+    });
+  } catch {
+    /* IndexedDB unavailable */
+  }
 }
 
-async function idbRemoveMutedUser(userId: string): Promise<void> {
+async function _idbRemoveMutedUser(userId: string): Promise<void> {
   try {
     const db = await getDb();
     await db.delete('muted', [userId, 'self']);
-  } catch { /* IndexedDB unavailable */ }
+  } catch {
+    /* IndexedDB unavailable */
+  }
 }
 
-async function idbAddBlockedUser(userId: string): Promise<void> {
+async function _idbAddBlockedUser(userId: string): Promise<void> {
   try {
     const db = await getDb();
-    await db.put('blocked', { targetId: userId, targetHandle: '', protocol: '', blockedBy: 'self', blockedAt: Date.now() });
-  } catch { /* IndexedDB unavailable */ }
+    await db.put('blocked', {
+      targetId: userId,
+      targetHandle: '',
+      protocol: '',
+      blockedBy: 'self',
+      blockedAt: Date.now(),
+    });
+  } catch {
+    /* IndexedDB unavailable */
+  }
 }
 
-async function idbRemoveBlockedUser(userId: string): Promise<void> {
+async function _idbRemoveBlockedUser(userId: string): Promise<void> {
   try {
     const db = await getDb();
     await db.delete('blocked', [userId, 'self']);
-  } catch { /* IndexedDB unavailable */ }
+  } catch {
+    /* IndexedDB unavailable */
+  }
 }
 
 /* ─── Types ──────────────────────────────────────────────────── */
@@ -201,7 +224,9 @@ export function usePreferences() {
 
   // Ref to capture latest prefs for async callbacks (avoids stale closures)
   const prefsRef = useRef(prefs);
-  useEffect(() => { prefsRef.current = prefs; }, [prefs]);
+  useEffect(() => {
+    prefsRef.current = prefs;
+  }, [prefs]);
 
   /**
    * Persist all preferences to the KV API server.
@@ -228,9 +253,9 @@ export function usePreferences() {
     } finally {
       setSaving(false);
     }
-  // Intentionally no deps — uses prefsRef.current for fresh state
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // Intentionally no deps — uses prefsRef.current for fresh state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saveStatus]);
 
   // Apply visual preferences on mount and when they change
   useEffect(() => {
@@ -275,28 +300,34 @@ export function usePreferences() {
     setLocal(LS_NOTIFICATIONS, notifications);
   }, []);
 
-  const toggleNotificationType = useCallback((protocol: Protocol, type: NotificationType) => {
-    setPrefs((p) => {
-      const updated = {
-        ...p.notifications,
-        [protocol]: {
-          ...p.notifications[protocol],
-          [type]: !p.notifications[protocol]?.[type],
-        },
-      };
-      setLocal(LS_NOTIFICATIONS, updated);
-      return { ...p, notifications: updated };
-    });
-    // Auto-save to server (no debounce needed — prefsRef ensures fresh state)
-    persistToServer();
-  }, [persistToServer]);
+  const toggleNotificationType = useCallback(
+    (protocol: Protocol, type: NotificationType) => {
+      setPrefs((p) => {
+        const updated = {
+          ...p.notifications,
+          [protocol]: {
+            ...p.notifications[protocol],
+            [type]: !p.notifications[protocol]?.[type],
+          },
+        };
+        setLocal(LS_NOTIFICATIONS, updated);
+        return { ...p, notifications: updated };
+      });
+      // Auto-save to server (no debounce needed — prefsRef ensures fresh state)
+      persistToServer();
+    },
+    [persistToServer],
+  );
 
-  const setPrivacy = useCallback((privacy: PrivacySettings) => {
-    setPrefs((p) => ({ ...p, privacy }));
-    setLocal(LS_PRIVACY, privacy);
-    // Auto-save to server
-    persistToServer();
-  }, [persistToServer]);
+  const setPrivacy = useCallback(
+    (privacy: PrivacySettings) => {
+      setPrefs((p) => ({ ...p, privacy }));
+      setLocal(LS_PRIVACY, privacy);
+      // Auto-save to server
+      persistToServer();
+    },
+    [persistToServer],
+  );
 
   const setContent = useCallback((content: ContentSettings) => {
     setPrefs((p) => ({ ...p, content }));
@@ -341,6 +372,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
+    await idbAddMutedWord(word).catch(() => {});
     try {
       await fetch('/api/preferences/muted-words', {
         method: 'POST',
@@ -359,6 +391,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
+    await idbRemoveMutedWord(word).catch(() => {});
     try {
       await fetch(`/api/preferences/muted-words?word=${encodeURIComponent(word)}`, {
         method: 'DELETE',
@@ -375,6 +408,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
+    await idbAddMutedUser(userId).catch(() => {});
     try {
       await fetch('/api/preferences/muted-users', {
         method: 'POST',
@@ -396,6 +430,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
+    await idbRemoveMutedUser(userId).catch(() => {});
     try {
       await fetch(`/api/preferences/muted-users?userId=${encodeURIComponent(userId)}`, {
         method: 'DELETE',
@@ -412,6 +447,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
+    await idbAddBlockedUser(userId).catch(() => {});
     try {
       await fetch('/api/preferences/blocked-users', {
         method: 'POST',
@@ -433,6 +469,7 @@ export function usePreferences() {
       setLocal(LS_CONTENT, updated);
       return { ...p, content: updated };
     });
+    await idbRemoveBlockedUser(userId).catch(() => {});
     try {
       await fetch(`/api/preferences/blocked-users?userId=${encodeURIComponent(userId)}`, {
         method: 'DELETE',

@@ -2,9 +2,9 @@
 
 import { useCallback, useState } from 'react';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
-import { usePremium, TIERS, type PremiumTier } from '../../hooks/usePremium';
+import { type PremiumTier, TIERS, usePremium } from '../../hooks/usePremium';
 
-/* ─── Feature comparison row ───────────────────────────────── */
+/* ─── Feature comparison helpers ───────────────────────────── */
 
 function Check() {
   return <span className="text-degen-400 font-bold">✓</span>;
@@ -25,20 +25,24 @@ function TierCard({
   isCurrent: boolean;
   onSubscribe: (tierId: PremiumTier) => void;
 }) {
+  const isPro = tier.popular;
+
   return (
     <div
-      className={`relative flex flex-col rounded-2xl border p-6 transition-all ${
-        tier.popular
-          ? 'border-degen-500/50 bg-gradient-to-b from-degen-500/10 to-transparent shadow-[0_0_30px_-6px_rgba(0,255,65,0.08)]'
+      className={`relative flex flex-col rounded-2xl border p-6 transition-all duration-300 ${
+        isPro
+          ? 'border-degen-500/60 bg-gradient-to-b from-degen-500/10 to-transparent shadow-[0_0_40px_-8px_rgba(0,255,65,0.18)] hover:shadow-[0_0_50px_-6px_rgba(0,255,65,0.28)]'
           : 'border-[var(--color-border)] bg-[var(--color-card)] hover:border-[var(--color-border)]'
       }`}
     >
+      {/* RECOMMENDED badge */}
       {tier.badge && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-degen-500 px-4 py-0.5 text-xs font-bold text-black shadow-lg">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-degen-500 px-4 py-0.5 text-xs font-bold text-black shadow-lg shadow-degen-500/30">
           {tier.badge}
         </div>
       )}
 
+      {/* Header */}
       <div className="mb-4">
         <h2 className="text-lg font-bold text-[var(--color-fg)]">{tier.name}</h2>
         <div className="mt-2 flex items-baseline gap-2">
@@ -48,18 +52,18 @@ function TierCard({
               <span className="text-xs text-[var(--color-muted)]">first month</span>
             </>
           ) : (
-            <span className="text-3xl font-bold text-degen-400">{tier.price}</span>
+            <span className="text-3xl font-bold text-[var(--color-fg)]">{tier.price}</span>
           )}
         </div>
         {tier.firstMonthPrice && (
           <p className="text-xs text-[var(--color-muted)] mt-0.5">
-            then <span className="text-[var(--color-fg)] font-semibold">{tier.price}</span> after
+            then <span className="text-[var(--color-fg)] font-semibold">{tier.price}</span>
           </p>
         )}
         <p className="mt-2 text-sm text-[var(--color-muted)]">{tier.description}</p>
       </div>
 
-      {/* Features list */}
+      {/* Features */}
       <ul className="mb-6 flex-1 space-y-2.5">
         {tier.features.map((f) => (
           <li key={f} className="flex items-start gap-2 text-sm text-[var(--color-fg)]/80">
@@ -85,13 +89,13 @@ function TierCard({
         <button
           type="button"
           onClick={() => onSubscribe(tier.id)}
-          className={`w-full rounded-xl py-3 text-sm font-bold transition-all ${
-            tier.popular
-              ? 'bg-degen-500 text-black hover:bg-degen-400 hover:shadow-[0_0_20px_rgba(0,255,65,0.3)]'
+          className={`w-full rounded-xl py-3 text-sm font-bold transition-all duration-200 ${
+            isPro
+              ? 'bg-degen-500 text-black hover:bg-degen-400 hover:shadow-[0_0_24px_rgba(0,255,65,0.35)]'
               : 'border-2 border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-fg)] hover:border-degen-500/30'
           }`}
         >
-          {tier.cta}
+          Subscribe
         </button>
       )}
 
@@ -99,7 +103,7 @@ function TierCard({
       {tier.firstMonthPrice && (
         <div className="mt-3 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
           <p className="text-[11px] text-amber-400 leading-relaxed">
-            💡 <strong>$10 first month</strong> covers the Farcaster ($5) registration fee + 30%
+            <strong>$10 first month</strong> covers the Farcaster ($5) registration fee + 30%
             platform fee. Standard <strong>{tier.price}</strong> after.
           </p>
         </div>
@@ -117,7 +121,7 @@ const COMPARISON_ROWS: Array<{ feature: string; free: boolean; pro: boolean; cre
   { feature: 'Wallet sign-in (ETH + SOL)', free: true, pro: true, creator: true },
   { feature: 'Basic tipping', free: true, pro: true, creator: true },
   { feature: 'Custom feeds', free: false, pro: true, creator: true },
-  { feature: 'Custom feeds (unlimited)', free: false, pro: true, creator: true },
+  { feature: 'Unlimited custom feeds', free: false, pro: true, creator: true },
   { feature: 'Cross-platform registration', free: false, pro: true, creator: true },
   { feature: 'Analytics dashboard', free: false, pro: true, creator: true },
   { feature: 'Post scheduling', free: false, pro: true, creator: true },
@@ -139,9 +143,13 @@ function ComparisonTable() {
             <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-muted)] uppercase tracking-wider">
               Feature
             </th>
-            <th className="px-4 py-3 text-center text-xs font-medium text-[var(--color-muted)]">Free</th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-[var(--color-muted)]">
+              Free
+            </th>
             <th className="px-4 py-3 text-center text-xs font-medium text-degen-400">Pro</th>
-            <th className="px-4 py-3 text-center text-xs font-medium text-[var(--color-muted)]">Creator</th>
+            <th className="px-4 py-3 text-center text-xs font-medium text-[var(--color-muted)]">
+              Creator
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -158,6 +166,31 @@ function ComparisonTable() {
     </div>
   );
 }
+
+/* ─── FAQ data ─────────────────────────────────────────────── */
+
+const FAQS = [
+  {
+    q: 'How do payments work?',
+    a: 'Payments are processed on-chain via Base (ETH/USDC) or Solana. Connect your wallet, sign a transaction, and you are upgraded instantly. No credit cards, no KYC.',
+  },
+  {
+    q: 'What does the first-month fee cover?',
+    a: 'For Pro ($10 first month), $5 covers the Farcaster on-chain registration (your own Farcaster ID on OP Mainnet). The rest covers platform fees and your first month. After month 1, it drops to $5/mo with no additional registration costs.',
+  },
+  {
+    q: 'Can I cancel anytime?',
+    a: 'Yes. Cancel from your Settings page. Your subscription stays active until the current billing period ends. No questions asked.',
+  },
+  {
+    q: 'Do I need premium to browse?',
+    a: 'No. Browsing DegenFeed is free forever. Premium unlocks power-user and creator tools while directly funding open-source development of the decentralized social web.',
+  },
+  {
+    q: 'What is x402 paywall?',
+    a: 'x402 is an open protocol for HTTP 402 Payment Required. Creator-tier users can paywall individual posts — readers pay per-view in USDC. Learn more at x402.org.',
+  },
+];
 
 /* ─── Page ─────────────────────────────────────────────────── */
 
@@ -178,13 +211,15 @@ export default function PremiumPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12 animate-page-enter">
       {/* ── Header ── */}
-      <div className="mb-8 text-center">
+      <div className="mb-10 text-center">
         <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-degen-500/10 border border-degen-500/20 px-4 py-1.5">
           <span className="text-sm">⚡</span>
-          <span className="text-xs font-medium text-degen-400">Powered by crypto — no fiat, no KYC</span>
+          <span className="text-xs font-medium text-degen-400">
+            Powered by crypto — no fiat, no KYC
+          </span>
         </div>
         <h1 className="text-3xl font-bold text-[var(--color-fg)] sm:text-4xl tracking-tight">
-          Support the open social graph
+          Choose Your Plan
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm text-[var(--color-muted)]">
           Upgrade with ETH, USDC, or SOL. Your subscription directly funds development of the
@@ -200,7 +235,7 @@ export default function PremiumPage() {
         )}
       </div>
 
-      {/* ── Tiers Grid ── */}
+      {/* ── 4-Tier Grid ── */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-12">
         {TIERS.map((tier) => (
           <TierCard
@@ -221,9 +256,10 @@ export default function PremiumPage() {
               Why is the first month $10?
             </h3>
             <p className="mt-1 text-sm text-[var(--color-muted)] leading-relaxed">
-              The first month of Pro includes the <strong>Farcaster on-chain registration fee ($5)</strong>{' '}
-              plus the 30% platform fee (~$3). After that it drops to <strong>$5/month</strong> with no
-              additional registration costs. You get a fully registered Farcaster account with your own
+              The first month of Pro includes the{' '}
+              <strong>Farcaster on-chain registration fee ($5)</strong> plus the 30% platform fee
+              (~$3). After that it drops to <strong>$5/month</strong> with no additional
+              registration costs. You get a fully registered Farcaster account with your own
               on-chain identity.
             </p>
           </div>
@@ -240,28 +276,7 @@ export default function PremiumPage() {
       <div className="mb-12">
         <h2 className="mb-4 text-lg font-bold text-[var(--color-fg)]">Frequently asked</h2>
         <div className="space-y-3">
-          {[
-            {
-              q: 'How do payments work?',
-              a: 'Payments are processed on-chain via Base (ETH/USDC) or Solana. Connect your wallet, sign a transaction, and you are upgraded instantly. No credit cards, no KYC.',
-            },
-            {
-              q: 'What does the first-month fee cover?',
-              a: 'For Pro ($10 first month), $5 covers the Farcaster on-chain registration (your own Farcaster ID on OP Mainnet). The rest covers platform fees and your first month. After month 1, it is $5/mo with no additional registration costs.',
-            },
-            {
-              q: 'Can I cancel anytime?',
-              a: 'Yes. Cancel from your Settings page. Your subscription stays active until the current billing period ends. No questions asked.',
-            },
-            {
-              q: 'Do I need premium to browse?',
-              a: 'No. Browsing DegenFeed is free forever. Premium unlocks power-user and creator tools while directly funding open-source development of the decentralized social web.',
-            },
-            {
-              q: 'What is x402 paywall?',
-              a: 'x402 is an open protocol for HTTP 402 Payment Required. Creator-tier users can paywall individual posts — readers pay per-view in USDC. Learn more at x402.org.',
-            },
-          ].map((faq) => (
+          {FAQS.map((faq) => (
             <details
               key={faq.q}
               className="group rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] transition-all open:border-degen-500/20"
@@ -275,7 +290,8 @@ export default function PremiumPage() {
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="shrink-0 text-[var(--color-muted)] transition-transform group-open:rotate-180"
+                  className="shrink-0 text-[var(--color-muted)] transition-transform duration-200 group-open:rotate-180"
+                  aria-hidden="true"
                 >
                   <path d="M6 9l6 6 6-6" />
                 </svg>
@@ -292,7 +308,12 @@ export default function PremiumPage() {
       <div className="text-center">
         <p className="text-xs text-[var(--color-muted)]">
           All paid features are open source and available in our{' '}
-          <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener noreferrer" className="text-degen-400 hover:underline">
+          <a
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-degen-400 hover:underline"
+          >
             self-hosted build
           </a>
           . No lock-in. Your data is always yours.

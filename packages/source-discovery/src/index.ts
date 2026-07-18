@@ -6,14 +6,21 @@
  * and returns candidates for auto-approval or manual review.
  */
 
+import type { DiscoveredSource } from './types';
 export type { DiscoveredSource, DiscoveryConfig, DiscoveryStatus, Platform } from './types';
 export { CRYPTO_KEYWORDS, DEFAULT_DISCOVERY_CONFIG, SEARCH_KEYWORDS } from './types';
 export { computeQualityScore, estimateRelevance, isBlocklisted } from './quality';
+import { discoverRedditSubreddits } from './reddit';
 export { discoverRedditSubreddits } from './reddit';
+import { discoverYouTubeChannels } from './youtube';
 export { discoverYouTubeChannels } from './youtube';
+import { discoverRSSFeeds } from './rss';
 export { discoverRSSFeeds } from './rss';
+import { discoverLemmyCommunities } from './lemmy';
 export { discoverLemmyCommunities } from './lemmy';
+import { discoverPeerTubeChannels } from './peertube';
 export { discoverPeerTubeChannels } from './peertube';
+import { discoverNewsletters } from './newsletter';
 export { discoverNewsletters } from './newsletter';
 
 /**

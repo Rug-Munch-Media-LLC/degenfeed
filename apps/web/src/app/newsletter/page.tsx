@@ -404,8 +404,7 @@ export default function NewsletterPage() {
                       <a
                         href={item.url}
                         target="_blank"
-                        rel="noopener noreferrer"
-                        rel="noopener noreferrer"
+                        
                         className="mt-1 inline-block text-[11px] text-degen-500 hover:underline"
                       >
                         Read more →
@@ -531,8 +530,7 @@ export default function NewsletterPage() {
                   <a
                     href="/api/feed/rss.xml"
                     target="_blank"
-                    rel="noopener noreferrer"
-                    rel="noopener noreferrer"
+                    
                     className="text-degen-500 hover:underline"
                   >
                     Full Feed (RSS 2.0)
@@ -542,8 +540,7 @@ export default function NewsletterPage() {
                   <a
                     href="/api/feed/rss.xml?format=atom"
                     target="_blank"
-                    rel="noopener noreferrer"
-                    rel="noopener noreferrer"
+                    
                     className="text-degen-500 hover:underline"
                   >
                     Full Feed (Atom 1.0)
@@ -553,8 +550,7 @@ export default function NewsletterPage() {
                   <a
                     href="/api/feed/rss.xml?category=bitcoin"
                     target="_blank"
-                    rel="noopener noreferrer"
-                    rel="noopener noreferrer"
+                    
                     className="text-degen-500 hover:underline"
                   >
                     Bitcoin Feed
@@ -564,8 +560,7 @@ export default function NewsletterPage() {
                   <a
                     href="/api/feed/rss.xml?category=defi"
                     target="_blank"
-                    rel="noopener noreferrer"
-                    rel="noopener noreferrer"
+                    
                     className="text-degen-500 hover:underline"
                   >
                     DeFi Feed

@@ -32,11 +32,9 @@ export const metadata: Metadata = {
 export default function MastodonTrendingPage() {
   return (
     <>
-      <Script
-        id="breadcrumb-mastodon-trending"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
-      />
+      <Script id="breadcrumb-mastodon-trending" type="application/ld+json">{
+        JSON.stringify(breadcrumb)
+      }</Script>
       <PerPlatformTrending protocol="mastodon" />
     </>
   );

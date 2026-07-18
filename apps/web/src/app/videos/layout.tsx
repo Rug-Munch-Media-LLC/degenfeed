@@ -49,11 +49,9 @@ export const metadata: Metadata = {
 export default function VideosLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script
-        id="breadcrumb-videos"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(videosBreadcrumb) }}
-      />
+      <Script id="breadcrumb-videos" type="application/ld+json">{
+        JSON.stringify(videosBreadcrumb)
+      }</Script>
       {children}
     </>
   );

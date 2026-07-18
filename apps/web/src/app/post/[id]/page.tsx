@@ -232,7 +232,8 @@ function PostCard({
       {embedData && (
         <a
           href={post.embeds.find((e) => e.kind === 'link')?.url || '#'}
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
+          rel="noopener noreferrer"
           className="mb-4 block overflow-hidden rounded-xl border border-[var(--color-glass-border)] transition-colors hover:border-degen-500/20"
         >
           {embedData.image && (

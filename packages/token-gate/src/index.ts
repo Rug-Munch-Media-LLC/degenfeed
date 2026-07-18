@@ -47,7 +47,7 @@ export const TYPE_LABELS: Record<TokenGateType, string> = {
 
 // ─── RPC Configuration ────────────────────────────────────────────────────
 
-const RPC_URLS: Record<string, string> = {
+const RPC_URLS: Record<TokenGateChain, string> = {
   ethereum: 'https://eth-mainnet.g.alchemy.com/v2/demo',
   base: 'https://base-mainnet.g.alchemy.com/v2/demo',
   polygon: 'https://polygon-mainnet.g.alchemy.com/v2/demo',

@@ -121,6 +121,12 @@ export interface Env {
   PREMIUM_WALLET_KEY?: string;
   /** Mastodon instance URL for account creation */
   MASTODON_INSTANCE_URL?: string;
+
+  // ─── Content permanence (Pinata IPFS) ────────────────────────────────
+  /** Pinata API key for IPFS pinning (Content Permanence API) */
+  PINATA_API_KEY?: string;
+  /** Pinata secret key for IPFS pinning (Content Permanence API) */
+  PINATA_SECRET_KEY?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

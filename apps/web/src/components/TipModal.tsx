@@ -719,8 +719,7 @@ export function TipModal({
                         <a
                           href={explorerUrlForMethod(selectedMethod ?? '', state.txHash)}
                           target="_blank"
-                          rel="noopener noreferrer"
-                          rel="noopener noreferrer"
+                          
                           className="flex-1 text-xs text-degen-500 hover:text-degen-400 break-all"
                         >
                           {isOnchain

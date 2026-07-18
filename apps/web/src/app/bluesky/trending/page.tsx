@@ -32,11 +32,9 @@ export const metadata: Metadata = {
 export default function BlueskyTrendingPage() {
   return (
     <>
-      <Script
-        id="breadcrumb-bluesky-trending"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
-      />
+      <Script id="breadcrumb-bluesky-trending" type="application/ld+json">{
+        JSON.stringify(breadcrumb)
+      }</Script>
       <PerPlatformTrending protocol="bluesky" />
     </>
   );

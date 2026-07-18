@@ -34,11 +34,9 @@ export const metadata: Metadata = {
 export default function LensPage() {
   return (
     <>
-      <Script
-        id="breadcrumb-lens"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(lensBreadcrumb) }}
-      />
+      <Script id="breadcrumb-lens" type="application/ld+json">{
+        JSON.stringify(lensBreadcrumb)
+      }</Script>
       <ProtocolFeedPage protocol="lens" />
     </>
   );

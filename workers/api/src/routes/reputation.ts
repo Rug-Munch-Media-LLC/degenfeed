@@ -183,9 +183,9 @@ export async function handleReputationGet(
 
   const score = await getScore(env, userId);
   const progress = nextLevelThreshold(score.level, score.total);
-  const tierLabel = TIER_LABELS[score.level];
-  const postLimit = TIER_POST_LIMITS[score.level];
-  const benefits = TIER_BENEFITS[score.level];
+  const tierLabel = TIER_LABELS[score.level]!;
+  const postLimit = TIER_POST_LIMITS[score.level]!;
+  const benefits = TIER_BENEFITS[score.level]!;
 
   return noCacheJsonResponse({
     ...score,
@@ -371,7 +371,7 @@ export async function handleReputationSlash(
     // Also slash earned
     delta -= Math.min(score.earned, 100); // flat penalty on ban
   } else {
-    delta = loseRule.baseAmount;
+    delta = loseRule!.baseAmount;
   }
 
   const { score: updated, event } = applyEvent(
@@ -509,7 +509,7 @@ export async function handleReputationStakeResolve(
     return jsonResponse({ error: 'No active stake found for this post' }, 404);
   }
 
-  const resolution = resolveStake(stakes[stakeIdx], body.outcome, body.engagementCount);
+  const resolution = resolveStake(stakes[stakeIdx]!, body.outcome, body.engagementCount);
   stakes[stakeIdx] = resolution.stake;
 
   // Save updated stakes

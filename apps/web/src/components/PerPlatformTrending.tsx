@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { retryFetch } from '../lib/retryFetch';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { retryFetch } from '../lib/retryFetch';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -185,8 +185,7 @@ export function PerPlatformTrending({ protocol }: Props) {
       });
       if (!res.ok) throw new Error(`API returned ${res.status}`);
       const json = (await res.json()) as PlatformTrendingData;
-      const hasData =
-        json.posts.length > 0 || json.topics.length > 0 || json.creators.length > 0;
+      const hasData = json.posts.length > 0 || json.topics.length > 0 || json.creators.length > 0;
       setData(json);
       setState(hasData ? 'loaded' : 'empty');
     } catch (err) {
@@ -221,9 +220,7 @@ export function PerPlatformTrending({ protocol }: Props) {
             🔥
           </span>
           <div>
-            <h1 className="text-2xl font-bold text-[var(--color-fg)]">
-              Trending {meta.name}
-            </h1>
+            <h1 className="text-2xl font-bold text-[var(--color-fg)]">Trending {meta.name}</h1>
             <p className="text-sm text-[var(--color-muted)]">
               What&apos;s trending on {meta.name} right now
             </p>
@@ -324,7 +321,8 @@ export function PerPlatformTrending({ protocol }: Props) {
               >
                 <span className="text-lg">📈</span>
                 Trending {meta.postNoun}s
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
                   style={{ backgroundColor: `${color}18`, color }}
                 >
                   Top {data.posts.length}
@@ -338,11 +336,13 @@ export function PerPlatformTrending({ protocol }: Props) {
                       key={post.id}
                       href={`/post/${encodeURIComponent(post.id)}`}
                       className="group relative overflow-hidden rounded-xl border p-4 transition-all duration-200 hover:shadow-lg"
-                      style={{
-                        borderColor: `${color}18`,
-                        backgroundColor: `${color}04`,
-                        '--tw-shadow-color': `${color}10`,
-                      } as React.CSSProperties}
+                      style={
+                        {
+                          borderColor: `${color}18`,
+                          backgroundColor: `${color}04`,
+                          '--tw-shadow-color': `${color}10`,
+                        } as React.CSSProperties
+                      }
                     >
                       {/* Rank badge */}
                       <span
@@ -371,7 +371,10 @@ export function PerPlatformTrending({ protocol }: Props) {
                       </p>
 
                       {/* Engagement bar */}
-                      <div className="mb-2 h-1 overflow-hidden rounded-full" style={{ backgroundColor: `${color}12` }}>
+                      <div
+                        className="mb-2 h-1 overflow-hidden rounded-full"
+                        style={{ backgroundColor: `${color}12` }}
+                      >
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
@@ -407,7 +410,12 @@ export function PerPlatformTrending({ protocol }: Props) {
                 style={{ color: 'var(--color-fg)' }}
               >
                 <span className="text-lg">🏷️</span>
-                Trending {protocol === 'nostr' ? 'Relays' : protocol === 'mastodon' ? 'Instances' : 'Channels'}
+                Trending{' '}
+                {protocol === 'nostr'
+                  ? 'Relays'
+                  : protocol === 'mastodon'
+                    ? 'Instances'
+                    : 'Channels'}
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {data.channels.slice(0, 6).map((ch) => (
@@ -433,9 +441,7 @@ export function PerPlatformTrending({ protocol }: Props) {
                       </p>
                     )}
                     <div className="flex items-center gap-3 text-[10px] text-[var(--color-muted)]">
-                      {ch.memberCount != null && (
-                        <span>{formatCount(ch.memberCount)} members</span>
-                      )}
+                      {ch.memberCount != null && <span>{formatCount(ch.memberCount)} members</span>}
                       {ch.postCount != null && <span>{formatCount(ch.postCount)} posts</span>}
                       {ch.engagementScore != null && (
                         <span className="font-semibold" style={{ color }}>
@@ -483,7 +489,10 @@ export function PerPlatformTrending({ protocol }: Props) {
                           {formatCount(topic.count)}
                         </span>
                       </div>
-                      <div className="h-1 w-32 overflow-hidden rounded-full" style={{ backgroundColor: `${color}12` }}>
+                      <div
+                        className="h-1 w-32 overflow-hidden rounded-full"
+                        style={{ backgroundColor: `${color}12` }}
+                      >
                         <div
                           className="h-full rounded-full"
                           style={{
@@ -541,9 +550,7 @@ export function PerPlatformTrending({ protocol }: Props) {
                           </span>
                           <span
                             className={`shrink-0 text-[10px] font-semibold ${
-                              creator.change >= 0
-                                ? 'text-green-500'
-                                : 'text-red-500'
+                              creator.change >= 0 ? 'text-green-500' : 'text-red-500'
                             }`}
                           >
                             {creator.change >= 0 ? '↑' : '↓'} {Math.abs(creator.change)}
@@ -560,7 +567,10 @@ export function PerPlatformTrending({ protocol }: Props) {
                         </div>
 
                         {/* Score bar */}
-                        <div className="mt-1.5 h-1 overflow-hidden rounded-full" style={{ backgroundColor: `${color}12` }}>
+                        <div
+                          className="mt-1.5 h-1 overflow-hidden rounded-full"
+                          style={{ backgroundColor: `${color}12` }}
+                        >
                           <div
                             className="h-full rounded-full"
                             style={{

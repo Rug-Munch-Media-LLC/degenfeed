@@ -9,8 +9,8 @@
  *   </PremiumGate>
  */
 
-import { useCallback, useState } from 'react';
-import { usePremium, type PremiumTier } from '../hooks/usePremium';
+import { useState } from 'react';
+import { type PremiumTier, usePremium } from '../hooks/usePremium';
 import { PremiumPaymentModal } from './PremiumPaymentModal';
 
 interface PremiumGateProps {
@@ -77,9 +77,7 @@ export function PremiumGate({
   return (
     <>
       <div className="relative group">
-        <div className="pointer-events-none select-none blur-sm opacity-40">
-          {children}
-        </div>
+        <div className="pointer-events-none select-none blur-sm opacity-40">{children}</div>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="rounded-2xl border border-degen-500/20 bg-[var(--color-card)]/95 backdrop-blur-sm p-5 text-center mx-4 max-w-xs shadow-xl">
             <div className="mb-2 text-2xl">{icon}</div>
@@ -89,9 +87,7 @@ export function PremiumGate({
             <p className="text-xs text-[var(--color-muted)] mb-3 leading-relaxed">
               {description ?? `Upgrade to ${tierNames[requiredTier]} to unlock ${feature}.`}
             </p>
-            <p className="text-[10px] text-amber-400 mb-3">
-              {tierPricing[requiredTier]}
-            </p>
+            <p className="text-[10px] text-amber-400 mb-3">{tierPricing[requiredTier]}</p>
             <button
               type="button"
               onClick={() => setShowModal(true)}

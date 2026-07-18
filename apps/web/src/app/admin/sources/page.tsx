@@ -225,9 +225,7 @@ export default function AdminSourcesPage() {
   }, []);
 
   const filteredPending =
-    platformFilter === 'all'
-      ? pending
-      : pending.filter((s) => s.platform === platformFilter);
+    platformFilter === 'all' ? pending : pending.filter((s) => s.platform === platformFilter);
 
   // ── Not admin → access denied ──
 
@@ -306,9 +304,16 @@ export default function AdminSourcesPage() {
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { label: 'Pending Review', count: pending.length, color: 'text-yellow-400' },
-          { label: 'Auto-Approved', count: pending.filter((s) => s.autoApproved).length, color: 'text-green-400' },
+          {
+            label: 'Auto-Approved',
+            count: pending.filter((s) => s.autoApproved).length,
+            color: 'text-green-400',
+          },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
+          <div
+            key={stat.label}
+            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4"
+          >
             <div className={`text-2xl font-bold ${stat.color}`}>{stat.count}</div>
             <div className="mt-1 text-xs text-[var(--color-muted)]">{stat.label}</div>
           </div>
@@ -318,20 +323,22 @@ export default function AdminSourcesPage() {
       {/* Platform filter + batch actions */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          {(['all', 'reddit', 'youtube', 'rss', 'lemmy', 'peertube', 'newsletter'] as const).map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPlatformFilter(p)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                platformFilter === p
-                  ? 'bg-degen-500/20 text-degen-400'
-                  : 'bg-[var(--color-card)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
-              }`}
-            >
-              {p === 'all' ? 'All' : PLATFORM_LABELS[p] ?? p}
-            </button>
-          ))}
+          {(['all', 'reddit', 'youtube', 'rss', 'lemmy', 'peertube', 'newsletter'] as const).map(
+            (p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPlatformFilter(p)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  platformFilter === p
+                    ? 'bg-degen-500/20 text-degen-400'
+                    : 'bg-[var(--color-card)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                }`}
+              >
+                {p === 'all' ? 'All' : (PLATFORM_LABELS[p] ?? p)}
+              </button>
+            ),
+          )}
         </div>
         {selectedIds.size > 0 && (
           <button

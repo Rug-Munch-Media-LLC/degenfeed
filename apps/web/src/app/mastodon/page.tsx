@@ -39,11 +39,9 @@ export const metadata: Metadata = {
 export default function MastodonPage() {
   return (
     <>
-      <Script
-        id="breadcrumb-mastodon"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(mastodonBreadcrumb) }}
-      />
+      <Script id="breadcrumb-mastodon" type="application/ld+json">{
+        JSON.stringify(mastodonBreadcrumb)
+      }</Script>
       <ProtocolFeedPage protocol="mastodon" />
     </>
   );

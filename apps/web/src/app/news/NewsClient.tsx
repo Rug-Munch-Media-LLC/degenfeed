@@ -128,8 +128,7 @@ function NewsCard({ post }: { post: UnifiedPost }) {
         <a
           href={url}
           target="_blank"
-          rel="noopener noreferrer"
-          rel="noopener noreferrer"
+          
           className="block aspect-video w-full overflow-hidden"
         >
           <Image
@@ -170,8 +169,7 @@ function NewsCard({ post }: { post: UnifiedPost }) {
         <a
           href={url}
           target="_blank"
-          rel="noopener noreferrer"
-          rel="noopener noreferrer"
+          
           className="mb-2 block text-sm font-semibold leading-snug text-[var(--color-fg)] transition-colors group-hover:text-degen-400 line-clamp-2"
         >
           {title}
@@ -344,8 +342,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
             <a
               href="/api/feed/rss.xml?category=news"
               target="_blank"
-              rel="noopener noreferrer"
-              rel="noopener noreferrer"
+              
               className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/30 hover:text-degen-400"
             >
               RSS

@@ -110,8 +110,7 @@ export default function DevelopersPage() {
             <a
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
               target="_blank"
-              rel="noopener noreferrer"
-              rel="noopener noreferrer"
+              
               className="rounded-lg border border-white/10 px-5 py-2.5 text-sm font-medium text-gray-500 transition-all hover:border-white/20 hover:text-gray-300"
             >
               Source code

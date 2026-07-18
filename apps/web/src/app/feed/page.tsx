@@ -695,50 +695,157 @@ export default function FeedPage() {
     setProtocolFilter((current) => (current === id ? null : id));
   }, []);
 
-  /* ── Pull-to-refresh ─────────────────────────────────────── */
+  /* ── Pull-to-refresh (spring animation) ─────────────────── */
   const PULL_THRESHOLD = 80;
+  const PULL_MAX = 140;
   const pullStartY = useRef(0);
   const [pullDistance, setPullDistance] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullReady, setPullReady] = useState(false);
+  const pullSpringRef = useRef<number | null>(null);
+  const pullRefreshCleanupRef = useRef<(() => void) | null>(null);
+  // Refs for latest values in touch handlers
+  const pullDistanceRef = useRef(0);
+  const isRefreshingRef = useRef(false);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     // Only activate pull-to-refresh when at the top of the page
-    if (window.scrollY <= 0) {
+    if (window.scrollY <= 0 && !isRefreshingRef.current) {
       pullStartY.current = e.touches[0]?.clientY ?? 0;
       setIsPulling(true);
+      setPullReady(false);
     }
   }, []);
 
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
       if (!isPulling) return;
+      if (isRefreshingRef.current) return;
       const currentY = e.touches[0]?.clientY ?? 0;
       const diff = currentY - pullStartY.current;
       if (diff <= 0) {
         setPullDistance(0);
+        pullDistanceRef.current = 0;
+        setPullReady(false);
         return;
       }
-      // Apply resistance: reduce the distance for a more natural feel
-      const resisted = Math.min(diff * 0.4, 120);
-      setPullDistance(resisted);
+      // Spring-like resistance: easy at first, harder as you pull
+      // Using diminishing returns curve for natural feel
+      const resisted = Math.min(
+        diff * 0.5 - Math.pow(Math.max(0, diff - 60), 2) * 0.003,
+        PULL_MAX,
+      );
+      const newVal = Math.max(0, resisted);
+      setPullDistance(newVal);
+      pullDistanceRef.current = newVal;
+      setPullReady(newVal >= PULL_THRESHOLD);
     },
     [isPulling],
   );
 
   const handleTouchEnd = useCallback(() => {
-    if (pullDistance >= PULL_THRESHOLD) {
+    const currentPull = pullDistanceRef.current;
+    const currentRefreshing = isRefreshingRef.current;
+
+    if (currentPull >= PULL_THRESHOLD && !currentRefreshing) {
+      // Haptic-style spring animation: snap to "refreshing" position with bounce
+      setIsRefreshing(true);
+      isRefreshingRef.current = true;
+
+      // Animate to full pull position with spring feel
+      if (pullSpringRef.current) cancelAnimationFrame(pullSpringRef.current);
+      setPullDistance(60);
+      pullDistanceRef.current = 60;
+
       // Trigger refresh
       setNewAvailable(false);
       fetchFeed(false);
-      window.dispatchEvent(
-        new CustomEvent('df-toast', {
-          detail: { kind: 'info', message: 'Feed refreshed' },
-        }),
-      );
+
+      // After refresh completes (or timeout), spring back with bounce
+      const refreshTimer = setTimeout(() => {
+        // Spring back to zero
+        let start = 60;
+        const springBack = () => {
+          start *= 0.85; // Damping factor
+          if (Math.abs(start) < 1) {
+            setPullDistance(0);
+            pullDistanceRef.current = 0;
+            setIsRefreshing(false);
+            isRefreshingRef.current = false;
+            setPullReady(false);
+            return;
+          }
+          setPullDistance(start);
+          pullDistanceRef.current = start;
+          pullSpringRef.current = requestAnimationFrame(springBack);
+        };
+        pullSpringRef.current = requestAnimationFrame(springBack);
+      }, 600); // Hold at refresh position briefly
+
+      // Safety timeout for refresh
+      const safetyTimer = setTimeout(() => {
+        setPullDistance(0);
+        pullDistanceRef.current = 0;
+        setIsRefreshing(false);
+        isRefreshingRef.current = false;
+        setPullReady(false);
+      }, 5000);
+
+      // Store cleanup
+      const rTimer = refreshTimer;
+      const sTimer = safetyTimer;
+      const cleanup = () => {
+        clearTimeout(rTimer);
+        clearTimeout(sTimer);
+      };
+      if (pullRefreshCleanupRef.current) pullRefreshCleanupRef.current();
+      pullRefreshCleanupRef.current = cleanup;
+
+      // Reset pulling state
+      setIsPulling(false);
+      setPullReady(false);
+      return;
     }
+
+    // Didn't reach threshold — spring back with bounce
+    if (currentPull > 0) {
+      let current = currentPull;
+      const springBack = () => {
+        current *= 0.82; // Spring damping
+        if (Math.abs(current) < 1) {
+          setPullDistance(0);
+          pullDistanceRef.current = 0;
+          return;
+        }
+        setPullDistance(current);
+        pullDistanceRef.current = current;
+        pullSpringRef.current = requestAnimationFrame(springBack);
+      };
+      pullSpringRef.current = requestAnimationFrame(springBack);
+    }
+
     setPullDistance(0);
+    pullDistanceRef.current = 0;
     setIsPulling(false);
-  }, [pullDistance, fetchFeed]);
+    setPullReady(false);
+  }, [fetchFeed]);
+
+  // Sync pullDistance to ref for use in touchEnd handler
+  useEffect(() => {
+    pullDistanceRef.current = pullDistance;
+  }, [pullDistance]);
+  useEffect(() => {
+    isRefreshingRef.current = isRefreshing;
+  }, [isRefreshing]);
+
+  // Cleanup pull-to-refresh timers on unmount
+  useEffect(() => {
+    return () => {
+      if (pullSpringRef.current) cancelAnimationFrame(pullSpringRef.current);
+      if (pullRefreshCleanupRef.current) pullRefreshCleanupRef.current();
+    };
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -1115,29 +1222,56 @@ export default function FeedPage() {
             )}
           </div>
 
-          {/* ── Pull-to-refresh indicator ── */}
-          {isPulling && pullDistance > 0 && (
+          {/* ── Pull-to-refresh indicator with spring animation ── */}
+          {(pullDistance > 0 || isRefreshing) && (
             <div
-              className="flex items-center justify-center gap-2 py-3 text-sm text-degen-400 transition-all"
+              className={`flex items-center justify-center gap-2 py-2.5 text-sm transition-all ${
+                isRefreshing ? 'ptr-indicator ptr-refreshing' : pullReady ? 'ptr-indicator ptr-ready' : 'ptr-indicator'
+              }`}
               style={{
-                opacity: Math.min(pullDistance / PULL_THRESHOLD, 1),
-                transform: `translateY(${Math.min(pullDistance - 20, 0)}px)`,
+                opacity: isRefreshing ? 1 : Math.min(pullDistance / PULL_THRESHOLD * 1.2, 1),
+                transform: isRefreshing
+                  ? 'translateY(0)'
+                  : `translateY(${Math.min(pullDistance * 0.3 - 10, 20)}px)`,
               }}
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                className={pullDistance >= PULL_THRESHOLD ? '' : 'animate-bounce'}
-                aria-hidden="true"
-              >
-                <path d="M12 5v14M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="text-xs font-medium">
-                {pullDistance >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}
+              {isRefreshing ? (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className="ptr-arrow"
+                  aria-hidden="true"
+                  style={{ animation: 'ptr-spin-refresh 0.8s linear infinite' }}
+                >
+                  <path d="M21 2v6h-6M3 12a9 9 0 0115-8.5L21 8M3 22v-6h6M21 12a9 9 0 01-15 8.5L3 16" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className={`ptr-arrow ${pullReady ? 'ptr-icon-active' : ''}`}
+                  aria-hidden="true"
+                  style={{
+                    transform: pullReady ? 'rotate(180deg)' : 'rotate(0deg)',
+                  }}
+                >
+                  <path d="M12 5v14M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+              <span className="text-xs font-medium select-none">
+                {isRefreshing
+                  ? 'Refreshing…'
+                  : pullReady
+                    ? 'Release to refresh'
+                    : 'Pull to refresh'}
               </span>
             </div>
           )}

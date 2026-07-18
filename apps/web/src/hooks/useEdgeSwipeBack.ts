@@ -5,11 +5,14 @@ import { useCallback, useEffect, useRef } from 'react';
 /**
  * Hook for swipe-from-left-edge-to-go-back gesture on mobile.
  * Only activates within 30px of the left edge of the viewport.
+ * Uses a longer swipe threshold on top-level pages to avoid conflicting
+ * with the drawer-open gesture.
  *
  * @param onBack  Callback when the back gesture is completed
  * @param enabled Enable/disable the gesture (default true)
+ * @param threshold Minimum px to trigger back (default 80, higher on top pages)
  */
-export function useEdgeSwipeBack(onBack?: () => void, enabled = true) {
+export function useEdgeSwipeBack(onBack?: () => void, enabled = true, threshold = 80) {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
@@ -31,13 +34,13 @@ export function useEdgeSwipeBack(onBack?: () => void, enabled = true) {
       const dx = endX - touchStart.current.x;
       const dy = endY - touchStart.current.y;
 
-      // Must be primarily horizontal and cover at least 60px
-      if (Math.abs(dx) > Math.abs(dy) && dx > 60) {
+      // Must be primarily horizontal and cover at least threshold px
+      if (Math.abs(dx) > Math.abs(dy) && dx > threshold) {
         onBack?.();
       }
       touchStart.current = null;
     },
-    [onBack],
+    [onBack, threshold],
   );
 
   useEffect(() => {

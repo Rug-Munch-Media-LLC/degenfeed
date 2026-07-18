@@ -55,11 +55,9 @@ export const metadata: Metadata = {
 export default function CommunitiesLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script
-        id="breadcrumb-communities"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(communitiesBreadcrumb) }}
-      />
+      <Script id="breadcrumb-communities" type="application/ld+json">{
+        JSON.stringify(communitiesBreadcrumb)
+      }</Script>
       {children}
     </>
   );
