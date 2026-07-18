@@ -20,15 +20,21 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   metadataBase: new URL('https://app.degenfeed.xyz'),
   title: {
-    default: 'DegenFeed — The social feed of web3',
+    default: 'DegenFeed — Web3 Social Media Aggregator | Nostr, Farcaster, Lens, Bluesky',
     template: '%s — DegenFeed',
   },
   description:
-    'See every network. Zero sign-ups. DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one window.',
+    'DegenFeed is the leading web3 social media platform and decentralized social network. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one unified feed. Cross-post, tip creators in crypto, and join web3 communities. The best blockchain social media app.',
+  keywords: [
+    'web3 social media', 'decentralized social network', 'crypto social platform',
+    'blockchain social media', 'nostr feed', 'farcaster feed', 'lens protocol',
+    'bluesky feed', 'mastodon feed', 'fediverse aggregator', 'crypto tipping',
+    'web3 social app', 'cross protocol social', 'open source social media',
+  ],
   openGraph: {
-    title: 'DegenFeed — The social feed of web3',
+    title: 'DegenFeed — Web3 Social Media Aggregator | Nostr, Farcaster, Lens, Bluesky',
     description:
-      'See every network. Zero sign-ups. Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one window.',
+      'DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post, tip creators, and join web3 communities. The best decentralized social network.',
     url: 'https://app.degenfeed.xyz',
     siteName: 'DegenFeed',
     type: 'website',
@@ -38,15 +44,15 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed — The social feed of web3',
+        alt: 'DegenFeed — Web3 social media aggregator connecting Nostr, Farcaster, Lens, Bluesky, Mastodon',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'DegenFeed — The social feed of web3',
+    title: 'DegenFeed — Web3 Social Media Aggregator',
     description:
-      'See every network. Zero sign-ups. Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one window.',
+      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one unified feed. Cross-post and tip creators in crypto.',
     images: ['/og-image.png'],
   },
   robots: {
@@ -119,19 +125,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preload" href="/icon.svg" as="image" fetchPriority="high" />
         <link rel="preload" href="/icon-192.png" as="image" fetchPriority="high" />
 
-        {/* ── Critical CSS inlining — above-the-fold styles ── */}
-        <style dangerouslySetInnerHTML={{
-          __html: [
-            'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:Inter,system-ui,sans-serif}',
-            '.dark body,html.dark body{--bg:#000;--fg:#e7e9ea}',
-            'html:not(.dark) body{--bg:#fff;--fg:#171717}',
-            '.shell-header{height:64px;position:fixed;top:0;left:0;right:0;z-index:50}',
-            '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px}',
-            '.skip-link:focus{top:0}',
-            '.main-content{padding-top:64px}',
-            '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}',
-          ].join(''),
-        }} />
+        {/* ── Critical CSS inlining — above-the-fold styles (<14KB) ── */}
+        <style data-critical="1">{[
+          'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}',
+          'html:not(.dark) body{--bg:#fff;--fg:#171717}',
+          '.shell-header{height:64px;position:fixed;top:0;left:0;right:0;z-index:50;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);background:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.08)}',
+          '.dark .shell-header{background:rgba(17,17,27,.7);border-bottom:1px solid rgba(255,255,255,.06)}',
+          '.shell-header-inner{display:flex;align-items:center;justify-content:space-between;height:64px;max-width:1280px;margin:0 auto;padding:0 16px}',
+          '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px;background:var(--color-accent,#16a34a);color:#000;font-weight:600}',
+          '.skip-link:focus{top:0}',
+          '.main-content{padding-top:64px;position:relative;z-index:10;flex:1}',
+          '.bottom-nav{position:fixed;inset-x:0;bottom:0;z-index:40;border-top:1px solid var(--color-border,#2f3336);background:var(--color-card,#0a0a0a);padding-bottom:env(safe-area-inset-bottom)}',
+          '@media(min-width:1024px){.bottom-nav{display:none}}',
+          '.aurora-bg{position:fixed;inset:0;pointer-events:none;z-index:0}',
+          '.noise-overlay{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.03}',
+          'img,video{max-width:100%;height:auto;vertical-align:middle}',
+          '@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}',
+        ].join('')}</style>
 
         <ErrorTracker />
         <Script
@@ -144,7 +154,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           id="sw-register"
           strategy="afterInteractive"
         >{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}</Script>
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data requires innerHTML */}
+        {/* JSON-LD structured data — tiny payload, no render impact */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -154,30 +164,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               name: 'DegenFeed',
               url: 'https://app.degenfeed.xyz',
               description:
-                'The web3 social super app — every network, one feed. Aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS.',
+                'DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post, tip creators in crypto, and join web3 communities.',
               applicationCategory: 'SocialNetworkingApplication',
               operatingSystem: 'All',
-              offers: {
-                '@type': 'Offer',
-                price: '0',
-                priceCurrency: 'USD',
-              },
-              author: {
-                '@type': 'Organization',
-                name: 'Rug Munch Media LLC',
-                url: 'https://app.degenfeed.xyz',
-              },
-              screenshot: {
-                '@type': 'ImageObject',
-                url: 'https://app.degenfeed.xyz/og-image.png',
-              },
+              offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+              author: { '@type': 'Organization', name: 'Rug Munch Media LLC', url: 'https://app.degenfeed.xyz' },
+              screenshot: { '@type': 'ImageObject', url: 'https://app.degenfeed.xyz/og-image.png' },
               featureList: [
                 'Multi-protocol feed aggregation',
                 'Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS',
-                'Cross-protocol search',
-                'Real-time notifications',
-                'Token and community pages',
-                'Premium subscriptions',
+                'Cross-protocol search', 'Real-time notifications',
+                'Token and community pages', 'Premium subscriptions',
               ],
             }),
           }}

@@ -1,30 +1,52 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
+
+const newsletterBreadcrumb = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
+    { '@type': 'ListItem', position: 2, name: 'Newsletter', item: 'https://app.degenfeed.xyz/newsletter' },
+  ],
+};
 
 export const metadata: Metadata = {
-  title: 'Newsletter',
+  title: 'Crypto Newsletter — Web3 Daily Digest & Blockchain News',
   description:
-    'Subscribe to the DegenFeed daily digest. Curated web3, crypto, and AI news from 8 protocols delivered to your inbox.',
+    'Subscribe to the DegenFeed crypto newsletter. Daily web3 news digest curated from Nostr, Farcaster, Lens, Bluesky, Mastodon, and more. The best blockchain newsletter for crypto content.',
+  keywords: [
+    'crypto newsletter', 'web3 newsletter', 'blockchain newsletter',
+    'defi newsletter', 'crypto daily digest', 'web3 news roundup',
+    'crypto email digest',
+  ],
   openGraph: {
-    title: 'Newsletter — DegenFeed',
-    description: 'Daily digest of curated web3, crypto, and AI news from 8 protocols.',
+    title: 'Crypto Newsletter — Web3 Daily Digest & Blockchain News | DegenFeed',
+    description:
+      'Subscribe to the DegenFeed crypto newsletter. Daily web3 news digest from 8 protocols.',
     url: 'https://app.degenfeed.xyz/newsletter',
     images: [
       {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed Newsletter',
+        alt: 'DegenFeed crypto newsletter — daily web3 digest and blockchain news',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Newsletter — DegenFeed',
-    description: 'Daily digest of curated web3, crypto, and AI news from 8 protocols.',
+    title: 'Crypto Newsletter — Web3 Daily Digest | DegenFeed',
+    description:
+      'Daily web3 news digest curated from Nostr, Farcaster, Lens, Bluesky, Mastodon.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/newsletter' },
 };
 
 export default function NewsletterLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <Script id="breadcrumb-newsletter" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(newsletterBreadcrumb) }} />
+      {children}
+    </>
+  );
 }

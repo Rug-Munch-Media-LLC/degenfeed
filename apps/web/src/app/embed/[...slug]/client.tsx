@@ -185,7 +185,7 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
               <div className="overflow-hidden rounded-xl">
                 <Image
                   src={image}
-                  alt=""
+                  alt="Post author avatar"
                   width={800}
                   height={400}
                   className="w-full object-cover"

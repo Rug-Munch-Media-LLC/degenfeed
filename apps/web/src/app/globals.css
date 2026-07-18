@@ -774,6 +774,56 @@
     animation: none !important;
     opacity: 0.2;
   }
+
+  /* New quality refinements */
+  .toast-enter,
+  .toast-exit,
+  .toast-progress-bar {
+    animation: none !important;
+  }
+
+  .modal-overlay-enter,
+  .modal-overlay-exit,
+  .modal-content-enter,
+  .modal-content-exit {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .dropdown-enter,
+  .dropdown-exit,
+  .tooltip-enter,
+  .tab-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .feed-item-enter {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .btn-spring:active {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .empty-state-icon {
+    animation: none !important;
+  }
+
+  .skeleton-shimmer,
+  .skeleton-feed-item .skeleton-shimmer {
+    animation: none !important;
+    opacity: 0.15;
+  }
+
+  .loading-retry,
+  .loading-timeout {
+    animation: none !important;
+  }
 }
 
 /* ── Image placeholder to prevent CLS ── (now after reduced motion)
@@ -873,6 +923,419 @@
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   will-change: background-position;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * TOAST ANIMATIONS — Slide-in from right, slide-out, progress bar
+ * ═══════════════════════════════════════════════════════════════ */
+
+@keyframes toast-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+}
+
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.toast-enter {
+  animation: toast-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-exit {
+  animation: toast-out-right 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.toast-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 0 0 0.75rem 0.75rem;
+  background: currentColor;
+  opacity: 0.25;
+  animation: toast-progress linear forwards;
+  pointer-events: none;
+}
+
+/* ── Toast swipe region ── */
+.toast-swipe-region {
+  touch-action: pan-y;
+  will-change: transform;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * MODAL TRANSITIONS — Scale + fade
+ * ═══════════════════════════════════════════════════════════════ */
+
+@keyframes modal-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes modal-content-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modal-content-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+}
+
+.modal-overlay-enter {
+  animation: modal-overlay-in 0.2s ease-out forwards;
+}
+.modal-overlay-exit {
+  animation: modal-overlay-out 0.15s ease-in forwards;
+}
+.modal-content-enter {
+  animation: modal-content-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.modal-content-exit {
+  animation: modal-content-out 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * DROPDOWN TRANSITIONS — Slide down + fade
+ * ═══════════════════════════════════════════════════════════════ */
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scaleY(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes dropdown-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scaleY(0.96);
+  }
+}
+
+.dropdown-enter {
+  animation: dropdown-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top center;
+}
+.dropdown-exit {
+  animation: dropdown-out 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  transform-origin: top center;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * TOOLTIP TRANSITIONS — Fade in + slight upward movement
+ * ═══════════════════════════════════════════════════════════════ */
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltip-enter {
+  animation: tooltip-in 0.15s ease-out forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * TAB SWITCH — Subtle slide
+ * ═══════════════════════════════════════════════════════════════ */
+
+@keyframes tab-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tab-enter {
+  animation: tab-slide-in 0.2s ease-out forwards;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * INFINITE SCROLL — Staggered fade-in for new items
+ * ═══════════════════════════════════════════════════════════════ */
+
+@keyframes feed-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feed-item-enter {
+  animation: feed-item-in 0.35s ease-out forwards;
+}
+.feed-item-enter:nth-child(1) { animation-delay: 0ms; }
+.feed-item-enter:nth-child(2) { animation-delay: 30ms; }
+.feed-item-enter:nth-child(3) { animation-delay: 60ms; }
+.feed-item-enter:nth-child(4) { animation-delay: 90ms; }
+.feed-item-enter:nth-child(5) { animation-delay: 120ms; }
+
+/* ═══════════════════════════════════════════════════════════════
+ * MICRO-INTERACTIONS — Button spring, toggle, checkbox, copy
+ * ═══════════════════════════════════════════════════════════════ */
+
+@keyframes btn-spring {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.96); }
+  70% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes checkbox-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  60% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes copy-flash {
+  0% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.btn-spring:active {
+  animation: btn-spring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.checkbox-pop:checked {
+  animation: checkbox-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.copy-flash {
+  animation: copy-flash 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Toggle switch ── */
+.toggle-track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 2.5rem;
+  height: 1.375rem;
+  border-radius: 9999px;
+  background: var(--color-muted);
+  transition: background 0.2s ease-out;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+.toggle-track[data-checked="true"] {
+  background: var(--color-accent);
+}
+.toggle-track:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.toggle-thumb {
+  position: absolute;
+  left: 2px;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 9999px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toggle-track[data-checked="true"] .toggle-thumb {
+  transform: translateX(1.125rem);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * EMPTY STATE — Gentle float animation
+ * ═══════════════════════════════════════════════════════════════ */
+
+@keyframes empty-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.empty-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  background: var(--color-accent-glow);
+  margin: 0 auto 1rem;
+  font-size: 1.75rem;
+  animation: empty-float 3s ease-in-out infinite;
+}
+
+.dark .empty-state-icon {
+  background: rgba(0, 255, 65, 0.08);
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.05);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * SKELETON — Enhanced shimmer with layout-matching variants
+ * ═══════════════════════════════════════════════════════════════ */
+
+.skeleton-feed-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--color-card);
+  border: 1px solid var(--color-glass-border);
+}
+
+.skeleton-feed-item .skeleton-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--color-muted) 30%, transparent);
+}
+
+.skeleton-feed-item .skeleton-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-feed-item .skeleton-line {
+  height: 0.75rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--color-muted) 30%, transparent);
+}
+
+.skeleton-feed-item .skeleton-line-sm {
+  width: 60%;
+}
+
+.skeleton-feed-item .skeleton-line-lg {
+  width: 90%;
+}
+
+.skeleton-feed-item .skeleton-line-xl {
+  width: 40%;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * STILL LOADING — Timeout indicator
+ * ═══════════════════════════════════════════════════════════════ */
+
+@keyframes loading-dot-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.loading-timeout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+.loading-timeout .loading-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-muted);
+}
+
+.loading-timeout .loading-dot:nth-child(2) {
+  animation: loading-dot-pulse 1.2s ease-in-out 0.2s infinite;
+}
+.loading-timeout .loading-dot:nth-child(3) {
+  animation: loading-dot-pulse 1.2s ease-in-out 0.4s infinite;
+}
+.loading-timeout .loading-dot:nth-child(4) {
+  animation: loading-dot-pulse 1.2s ease-in-out 0.6s infinite;
+}
+
+.loading-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--color-accent-glow);
+  color: var(--color-accent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 20%, transparent);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+}
+.loading-retry:hover {
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1267,27 +1730,6 @@
     radial-gradient(ellipse at 15% 20%, rgba(0, 255, 65, 0.08) 0%, transparent 50%),
     radial-gradient(ellipse at 85% 80%, rgba(0, 255, 65, 0.04) 0%, transparent 50%),
     radial-gradient(ellipse at 50% 50%, rgba(88, 28, 255, 0.03) 0%, transparent 60%);
-}
-
-/* ═══════════════════════════════════════════════════════════════
- * EMPTY STATE — Enhanced illustration styles
- * ═══════════════════════════════════════════════════════════════ */
-
-.empty-state-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 4rem;
-  height: 4rem;
-  border-radius: 9999px;
-  background: var(--color-accent-glow);
-  margin: 0 auto 1rem;
-  font-size: 1.75rem;
-}
-
-.dark .empty-state-icon {
-  background: rgba(0, 255, 65, 0.08);
-  box-shadow: 0 0 30px rgba(0, 255, 65, 0.05);
 }
 
 /* ═══════════════════════════════════════════════════════════════

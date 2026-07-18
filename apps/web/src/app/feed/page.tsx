@@ -8,8 +8,12 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
+import { PostContextMenu, useContextMenu } from '../../components/PostContextMenu';
 import { retryFetch } from '../../lib/retryFetch';
 import { getCached, setCache } from '../../lib/fetchWithCache';
+import { useSwipeTabs } from '../../hooks/useSwipeTabs';
+import { useFeedPosition } from '../../hooks/useFeedPosition';
+import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
 import { FeedComposer } from '../../components/FeedComposer';
 import { FeedLayoutSwitcher } from '../../components/FeedLayoutSwitcher';
 import { FeedSidebar } from '../../components/FeedSidebar';
@@ -114,6 +118,24 @@ export default function FeedPage() {
   const { notifications, unreadCount, fetchNotifications, markRead } =
     useNotifications(hasSignedIn);
   const { layout, setLayout, isCompact } = useFeedLayout();
+
+  // ── Feed position restore ("Resume where you left off")
+  const feedContainerRef = useRef<HTMLDivElement>(null);
+  useFeedPosition(feedContainerRef);
+
+  // ── Swipe between tabs on mobile
+  const swipeHandlers = useSwipeTabs(
+    () => setActiveTab('following'),
+    () => setActiveTab('for-you'),
+  );
+
+  // ── Edge swipe back gesture
+  useEdgeSwipeBack(() => {
+    window.history.back();
+  });
+
+  // ── Right-click context menu
+  const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
 
   // ── Topic weights ──────────────────────────────────────────────
   const [topicWeights, setTopicWeights] = useState<Record<string, number>>(getDefaultWeights());
@@ -617,9 +639,15 @@ export default function FeedPage() {
     <ErrorBoundary>
       <div
         className="mx-auto grid max-w-[1280px] grid-cols-1 gap-4 px-3 py-3 sm:px-4 lg:grid-cols-12"
-        onTouchStart={handleTouchStart}
+        onTouchStart={(e) => {
+          swipeHandlers.onTouchStart(e);
+          handleTouchStart(e);
+        }}
         onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        onTouchEnd={(e) => {
+          swipeHandlers.onTouchEnd(e);
+          handleTouchEnd();
+        }}
       >
         {/* Left rail — desktop only quick nav */}
         <aside className="hidden xl:col-span-3 xl:block">
@@ -1070,23 +1098,48 @@ export default function FeedPage() {
             })()}
 
           {/* Feed */}
-          <FeedList
-            state={state}
-            posts={posts}
-            error={error}
-            onPostClick={handlePostClick}
-            onEngage={handleEngage}
-            onTip={handleTip}
-            onRetry={fetchFeed}
-            onSignIn={openSignIn}
-            hasMore={hasMore}
-            onLoadMore={loadMore}
-            onReport={handleReport}
-            onCrossReplyOpen={handleCrossReplyOpen}
-            isAdmin={isAdmin}
-            onAdminRemove={handleAdminRemove}
-            onAdminBan={handleAdminBan}
-          />
+          <div>
+            <FeedList
+              state={state}
+              posts={posts}
+              error={error}
+              onPostClick={handlePostClick}
+              onEngage={handleEngage}
+              onTip={handleTip}
+              onRetry={fetchFeed}
+              onSignIn={openSignIn}
+              hasMore={hasMore}
+              onLoadMore={loadMore}
+              onReport={handleReport}
+              onCrossReplyOpen={handleCrossReplyOpen}
+              isAdmin={isAdmin}
+              onAdminRemove={handleAdminRemove}
+              onAdminBan={handleAdminBan}
+              onContextMenu={(e: React.MouseEvent, postId: string) => {
+                const url = `${window.location.origin}/post/${postId}`;
+                handleContextMenu(e, postId, url);
+              }}
+            />
+
+            {/* Right-click context menu */}
+            {contextMenu && (
+              <PostContextMenu
+                postId={contextMenu.postId}
+                postUrl={contextMenu.postUrl}
+                open={!!contextMenu}
+                position={contextMenu.position}
+                onClose={closeContextMenu}
+                onCopyLink={(id) => {
+                  const url = `${window.location.origin}/post/${id}`;
+                  navigator.clipboard.writeText(url).catch(() => {});
+                }}
+                onOpenNewTab={(id) => {
+                  window.open(`/post/${id}`, '_blank');
+                }}
+                onReport={handleReport}
+              />
+            )}
+          </div>
 
           {activeTab === 'following' && state === 'empty' && (
             <div className="border-b border-[var(--color-glass-border)] px-4 py-10 text-center">

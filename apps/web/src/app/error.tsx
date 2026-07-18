@@ -47,7 +47,7 @@ export default function RootError({
         <span aria-hidden="true">·</span>
         <a
           href="https://discord.gg/degenfeed"
-          target="_blank"
+          target="_blank" rel="noopener noreferrer"
           rel="noopener noreferrer"
           className="underline transition-colors hover:text-[var(--color-fg)]"
         >

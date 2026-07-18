@@ -229,7 +229,7 @@ function VideosSection({ videos }: { videos: PopularVideo[] }) {
             <a
               key={v.id}
               href={v.url}
-              target="_blank"
+              target="_blank" rel="noopener noreferrer"
               rel="noopener noreferrer"
               className="group flex gap-2.5 rounded-xl p-2 transition-colors hover:bg-white/5"
             >

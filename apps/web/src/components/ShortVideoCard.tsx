@@ -427,7 +427,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
               <p className="text-xs text-gray-500">Video unavailable</p>
               <a
                 href={post.embeds[0]?.url ?? '#'}
-                target="_blank"
+                target="_blank" rel="noopener noreferrer"
                 rel="noopener noreferrer"
                 className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
               >
@@ -735,7 +735,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       {isPeertube && (
         <a
           href={videoInfo?.platform === 'peertube' ? videoInfo.url : '#'}
-          target="_blank"
+          target="_blank" rel="noopener noreferrer"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
           className="absolute bottom-36 right-16 z-30 inline-flex items-center gap-1.5 rounded-full border border-degen-500/30 bg-degen-500/10 px-3 py-1.5 text-xs font-medium text-degen-400 backdrop-blur-sm transition-all hover:bg-degen-500/20 hover:shadow-[0_0_12px_rgba(0,255,65,0.2)]"

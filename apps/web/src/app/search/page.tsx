@@ -481,7 +481,7 @@ export default function SearchPage() {
               >
                 <a
                   href={getProfileUrl(identity)}
-                  target="_blank"
+                  target="_blank" rel="noopener noreferrer"
                   rel="noopener noreferrer"
                   className="shrink-0"
                 >
@@ -509,7 +509,7 @@ export default function SearchPage() {
                   <div className="flex items-center gap-2">
                     <a
                       href={getProfileUrl(identity)}
-                      target="_blank"
+                      target="_blank" rel="noopener noreferrer"
                       rel="noopener noreferrer"
                       className="truncate text-sm font-semibold text-[var(--color-fg)] hover:underline"
                     >
@@ -543,7 +543,7 @@ export default function SearchPage() {
                     )}
                     <a
                       href={getProfileUrl(identity)}
-                      target="_blank"
+                      target="_blank" rel="noopener noreferrer"
                       rel="noopener noreferrer"
                       className="ml-auto rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 transition-colors"
                     >
@@ -570,7 +570,7 @@ export default function SearchPage() {
               <a
                 key={community.id}
                 href={community.url}
-                target="_blank"
+                target="_blank" rel="noopener noreferrer"
                 rel="noopener noreferrer"
                 className="card-hover flex items-start gap-4 p-4 transition-colors"
               >
@@ -638,7 +638,7 @@ export default function SearchPage() {
               <a
                 key={video.id}
                 href={video.url}
-                target="_blank"
+                target="_blank" rel="noopener noreferrer"
                 rel="noopener noreferrer"
                 className="card-hover flex items-start gap-3 p-3 transition-colors"
               >
@@ -760,7 +760,7 @@ export default function SearchPage() {
                 {r.image && (
                   <Image
                     src={r.image}
-                    alt=""
+                    alt="Search result image"
                     width={64}
                     height={64}
                     className="h-16 w-16 shrink-0 rounded-lg object-cover"

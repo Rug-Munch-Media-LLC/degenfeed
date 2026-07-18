@@ -250,7 +250,7 @@ function PostRow({
         {post.image && (
           <Image
             src={post.image}
-            alt=""
+            alt={`Post image for topic ${params?.slug || 'crypto'}`}
             width={320}
             height={180}
             className="mt-2 max-h-32 w-full rounded-lg object-cover"

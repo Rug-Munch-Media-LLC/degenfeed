@@ -174,7 +174,7 @@ export function FAQClient() {
           or join the community on{' '}
           <a
             href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
-            target="_blank"
+            target="_blank" rel="noopener noreferrer"
             rel="noopener noreferrer"
             className="text-degen-400 underline"
           >

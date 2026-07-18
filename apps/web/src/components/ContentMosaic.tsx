@@ -43,7 +43,7 @@ function MosaicCard({
         <div className="relative h-32 w-full overflow-hidden sm:h-36">
           <Image
             src={firstMedia.url}
-            alt=""
+            alt="Featured post media"
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="288px"

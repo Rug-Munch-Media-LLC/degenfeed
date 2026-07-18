@@ -1,31 +1,55 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
+
+const breadcrumbStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
+    { '@type': 'ListItem', position: 2, name: 'Feed', item: 'https://app.degenfeed.xyz/feed' },
+  ],
+};
 
 export const metadata: Metadata = {
-  title: 'Feed',
+  title: 'Feed — Web3 Social Feed Aggregator',
   description:
-    'Your unified web3 social feed. Posts from Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS in reverse-chronological order.',
+    'Your personalized web3 content feed aggregated from Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS. AI-powered cross-protocol timeline. The best decentralized social feed for crypto and web3 content.',
+  keywords: [
+    'crypto news feed', 'web3 content aggregator', 'multi-protocol feed',
+    'nostr feed', 'farcaster feed', 'lens feed', 'bluesky feed', 'mastodon feed',
+    'unified social feed', 'cross protocol timeline',
+  ],
   openGraph: {
-    title: 'DegenFeed — Your Unified Feed',
+    title: 'DegenFeed — Your Unified Web3 Social Feed',
     description:
-      'Every social protocol, one feed. Browse Nostr, Farcaster, Lens, Bluesky, Mastodon, and more.',
+      'Browse Nostr, Farcaster, Lens, Bluesky, Mastodon, and more in one AI-powered web3 feed. Cross-protocol timeline for crypto content.',
     url: 'https://app.degenfeed.xyz/feed',
     images: [
       {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed Feed',
+        alt: 'DegenFeed web3 social feed aggregating Nostr, Farcaster, Lens, Bluesky, Mastodon',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'DegenFeed — Your Unified Feed',
-    description: 'Every social protocol, one feed.',
+    title: 'DegenFeed — Your Unified Web3 Feed',
+    description: 'Every social protocol, one feed. Aggregated Nostr, Farcaster, Lens, Bluesky, Mastodon.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/feed' },
 };
 
 export default function FeedLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <Script
+        id="breadcrumb-feed"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbStructuredData) }}
+      />
+      {children}
+    </>
+  );
 }

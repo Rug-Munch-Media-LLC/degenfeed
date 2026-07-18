@@ -152,7 +152,7 @@ function NostrForm({
           No NIP-07 extension detected. Install{' '}
           <a
             href="https://getalby.com"
-            target="_blank"
+            target="_blank" rel="noopener noreferrer"
             rel="noopener"
             className="text-degen-400 underline"
           >
@@ -161,7 +161,7 @@ function NostrForm({
           or{' '}
           <a
             href="https://github.com/fiatjaf/nos2x"
-            target="_blank"
+            target="_blank" rel="noopener noreferrer"
             rel="noopener"
             className="text-degen-400 underline"
           >
@@ -387,7 +387,7 @@ function BlueskyForm({
         </div>
         <a
           href="https://bsky.app/settings/app-passwords"
-          target="_blank"
+          target="_blank" rel="noopener noreferrer"
           rel="noopener"
           className="text-[10px] text-degen-400 hover:underline"
         >

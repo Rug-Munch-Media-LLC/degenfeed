@@ -139,7 +139,7 @@ export function FeedComposer({
           {avatar ? (
             <Image
               src={avatar}
-              alt=""
+              alt="Your avatar"
               width={40}
               height={40}
               className="h-full w-full object-cover"

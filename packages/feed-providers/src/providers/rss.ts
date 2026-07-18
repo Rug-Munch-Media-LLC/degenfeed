@@ -67,7 +67,9 @@ export type RssCategory =
   | 'startups'
   | 'video'
   | 'social'
-  | 'newsletter';
+  | 'newsletter'
+  | 'podcast'
+  | 'dao';
 
 export const RSS_CATEGORIES: Record<string, string> = {
   news: 'Breaking news, market coverage, industry updates',
@@ -84,6 +86,8 @@ export const RSS_CATEGORIES: Record<string, string> = {
   video: 'YouTube channels, video content, podcasts',
   social: 'Reddit, Lemmy, community discussions',
   newsletter: 'Curated newsletters from Substack, Medium, Paragraph, Mirror',
+  podcast: 'Crypto podcast episodes, interviews, panel discussions',
+  dao: 'DAO governance proposals, forum discussions, community votes',
 };
 
 // Compact helper for defining RSS feed configs
@@ -596,6 +600,57 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   // ═══════════════════════════════════════════════════════════════════
   cfg('https://aptosfoundation.org/rss',                        { tier: 4, weight: 0.7, category: 'development', tags: ['aptos', 'layer1', 'move'], authority: 1 }),
   cfg('https://blog.sui.io/feed',                               { tier: 4, weight: 0.7, category: 'development', tags: ['sui', 'layer1', 'move'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PODCASTS — Crypto (weight: 0.8, tier: 3)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://feeds.megaphone.fm/bankless',                    { tier: 3, weight: 0.8, category: 'podcast', tags: ['crypto', 'ethereum', 'defi', 'interview'], authority: 2 }),
+  cfg('https://feeds.megaphone.fm/unchained',                   { tier: 3, weight: 0.8, category: 'podcast', tags: ['crypto', 'bitcoin', 'interview', 'news'], authority: 2 }),
+  cfg('https://pomp.libsyn.com/rss',                            { tier: 3, weight: 0.8, category: 'podcast', tags: ['crypto', 'bitcoin', 'macro', 'interview'], authority: 2 }),
+  cfg('https://feeds.megaphone.fm/empire',                      { tier: 3, weight: 0.8, category: 'podcast', tags: ['crypto', 'blockchain', 'news', 'interview'], authority: 2 }),
+  cfg('https://0xresearch.libsyn.com/rss',                      { tier: 3, weight: 0.8, category: 'podcast', tags: ['crypto', 'research', 'markets'], authority: 2 }),
+  cfg('https://bellcurve.libsyn.com/rss',                       { tier: 3, weight: 0.8, category: 'podcast', tags: ['crypto', 'macro', 'defi', 'research'], authority: 2 }),
+  cfg('https://thedefiant.libsyn.com/rss',                      { tier: 3, weight: 0.8, category: 'podcast', tags: ['defi', 'crypto', 'interview'], authority: 2 }),
+  cfg('https://epicenter.libsyn.com/rss',                       { tier: 3, weight: 0.8, category: 'podcast', tags: ['crypto', 'blockchain', 'interview', 'tech'], authority: 2 }),
+  cfg('https://intotheether.libsyn.com/rss',                    { tier: 3, weight: 0.8, category: 'podcast', tags: ['ethereum', 'defi', 'ecosystem'], authority: 2 }),
+  cfg('https://thescoop.libsyn.com/rss',                        { tier: 3, weight: 0.8, category: 'podcast', tags: ['crypto', 'news', 'interview', 'markets'], authority: 2 }),
+  cfg('https://feeds.simplecast.com/onthebrink',                { tier: 3, weight: 0.8, category: 'podcast', tags: ['crypto', 'bitcoin', 'macro', 'investment'], authority: 2 }),
+  cfg('https://goodmorningcrypto.libsyn.com/rss',               { tier: 4, weight: 0.7, category: 'podcast', tags: ['crypto', 'news', 'daily'], authority: 1 }),
+  cfg('https://cryptoconversation.libsyn.com/rss',              { tier: 4, weight: 0.7, category: 'podcast', tags: ['crypto', 'bitcoin', 'interview'], authority: 1 }),
+  cfg('https://thebitcoinpodcast.libsyn.com/rss',               { tier: 4, weight: 0.7, category: 'podcast', tags: ['bitcoin', 'culture', 'interview'], authority: 1 }),
+  cfg('https://feeds.simplecast.com/whatbitcoindid',            { tier: 4, weight: 0.7, category: 'podcast', tags: ['bitcoin', 'interview', 'macro'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // RESEARCH PAPERS & Aggregators
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://eprint.iacr.org/rss',                            { tier: 2, weight: 0.9, category: 'research', tags: ['cryptography', 'academic', 'papers', 'security'], authority: 3 }),
+  cfg('https://blockchain.berkeley.edu/feed',                   { tier: 3, weight: 0.8, category: 'research', tags: ['blockchain', 'research', 'education'], authority: 2 }),
+  cfg('https://papers.ssrn.com/rss/sol3/papers.cfm',            { tier: 3, weight: 0.8, category: 'research', tags: ['academic', 'papers', 'finance', 'law'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DAO / GOVERNANCE Forums
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://gov.optimism.io/posts.rss',                      { tier: 3, weight: 0.8, category: 'dao', tags: ['optimism', 'governance', 'dao'], authority: 2 }),
+  cfg('https://forum.arbitrum.foundation/posts.rss',           { tier: 3, weight: 0.8, category: 'dao', tags: ['arbitrum', 'governance', 'dao'], authority: 2 }),
+  cfg('https://gov.uniswap.org/posts.rss',                      { tier: 3, weight: 0.8, category: 'dao', tags: ['uniswap', 'governance', 'dao'], authority: 2 }),
+  cfg('https://governance.aave.com/posts.rss',                  { tier: 3, weight: 0.8, category: 'dao', tags: ['aave', 'governance', 'dao'], authority: 2 }),
+  cfg('https://forum.sky.money/rss',                            { tier: 3, weight: 0.8, category: 'dao', tags: ['makerdao', 'governance', 'dao', 'stablecoin'], authority: 2 }),
+  cfg('https://discuss.ens.domains/posts.rss',                  { tier: 3, weight: 0.8, category: 'dao', tags: ['ens', 'governance', 'dao'], authority: 2 }),
+  cfg('https://gov.gitcoin.co/posts.rss',                       { tier: 3, weight: 0.8, category: 'dao', tags: ['gitcoin', 'governance', 'dao', 'public-goods'], authority: 2 }),
+  cfg('https://research.lido.fi/rss',                           { tier: 3, weight: 0.8, category: 'dao', tags: ['lido', 'governance', 'dao', 'staking'], authority: 2 }),
+  cfg('https://comp.xyz/rss',                                   { tier: 3, weight: 0.8, category: 'dao', tags: ['compound', 'governance', 'dao'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DEVELOPER / TECHNICAL — Web3 Dev Tools & SDKs
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://soliditylang.org/blog/rss',                      { tier: 4, weight: 0.6, category: 'development', tags: ['solidity', 'evm', 'smart-contracts'], authority: 1 }),
+  cfg('https://blog.ethers.io/rss',                             { tier: 4, weight: 0.6, category: 'development', tags: ['ethers', 'javascript', 'sdk'], authority: 1 }),
+  cfg('https://viem.sh/blog/rss',                               { tier: 4, weight: 0.6, category: 'development', tags: ['viem', 'ethereum', 'sdk', 'typescript'], authority: 1 }),
+  cfg('https://rainbowkit.com/blog/rss',                        { tier: 4, weight: 0.6, category: 'development', tags: ['rainbowkit', 'react', 'wallet', 'ui'], authority: 1 }),
+  cfg('https://wagmi.sh/blog/rss',                              { tier: 4, weight: 0.6, category: 'development', tags: ['wagmi', 'react', 'ethereum', 'hooks'], authority: 1 }),
+  cfg('https://thegraph.com/blog/rss',                          { tier: 4, weight: 0.6, category: 'development', tags: ['thegraph', 'subgraph', 'indexing'], authority: 1 }),
+  cfg('https://moralis.io/blog/feed',                           { tier: 4, weight: 0.6, category: 'development', tags: ['moralis', 'web3', 'api', 'sdk'], authority: 1 }),
+  cfg('https://www.alchemy.com/blog/rss',                       { tier: 4, weight: 0.6, category: 'development', tags: ['alchemy', 'web3', 'api', 'infrastructure'], authority: 1 }),
 ];
 
 export interface RssProviderOptions {
