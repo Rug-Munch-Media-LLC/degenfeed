@@ -157,6 +157,9 @@ export function ComposeModal({
   const [makePermanent, setMakePermanent] = useState(false);
   const [permanenceProof, setPermanenceProof] = useState<ContentProof | null>(null);
   const [storingPermanent, setStoringPermanent] = useState(false);
+  const [attachedImages, setAttachedImages] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Token gate state
@@ -293,6 +296,13 @@ export function ComposeModal({
         setShowSlashMenu(false);
         setShowSchedulePicker(true);
         textareaRef.current?.focus();
+        return;
+      }
+      if (cmd === 'image') {
+        // Remove /image from text, open file picker
+        setText(removeSlashLine());
+        setShowSlashMenu(false);
+        fileInputRef.current?.click();
         return;
       }
       insertSlashCommand(`/${cmd}`);
@@ -531,6 +541,30 @@ export function ComposeModal({
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
   const scheduleAvailable = hasSignedIn && !!onSchedule;
 
+  /** Handle image file selection */
+  const handleImageFile = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) return;
+      if (file.size > 10 * 1024 * 1024) return; // 10MB max
+      setUploadingImage(true);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const markdown = `![${file.name}](${dataUrl})`;
+        setText((prev) => `${prev}\n${markdown}\n`);
+        setAttachedImages((prev) => [...prev, dataUrl]);
+        setUploadingImage(false);
+      };
+      reader.onerror = () => setUploadingImage(false);
+      reader.readAsDataURL(file);
+      // Reset input so the same file can be picked again
+      e.target.value = '';
+    },
+    [],
+  );
+
   /** Format a Date for display, e.g. "Jul 18, 2026 at 3:00 PM" */
   const formatScheduleDate = (d: Date) => {
     return (
@@ -665,6 +699,50 @@ export function ComposeModal({
                 maxLength={MAX_CHARS}
                 aria-label="Post content"
               />
+
+              {/* Hidden file input for /image command */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageFile}
+                className="hidden"
+                aria-hidden="true"
+              />
+
+              {/* Image attachment previews */}
+              {attachedImages.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {attachedImages.map((img, i) => (
+                    <div key={i} className="relative group">
+                      <img
+                        src={img}
+                        alt={`Attachment ${i + 1}`}
+                        className="h-16 w-16 rounded-lg object-cover border border-[var(--color-border)]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAttachedImages((prev) => prev.filter((_, idx) => idx !== i));
+                          // Also remove the markdown from text
+                          setText((prev) =>
+                            prev.replace(new RegExp(`!\\[.*?\\]\\(${img.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)\\n?`), ''),
+                          );
+                        }}
+                        className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500/80 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label={`Remove image ${i + 1}`}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  {uploadingImage && (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)]">
+                      <span className="animate-spin text-xs">⏳</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Slash command menu */}
               {showSlashMenu && (

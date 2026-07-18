@@ -2,6 +2,8 @@ export const CHANNELS = {
   FEED_NEW: 'feed:new',
   FEED_UPDATE: 'feed:update',
   NOTIFICATIONS_NEW: 'notifications:new',
+  NOTIFICATIONS_MARK_ALL_READ: 'notifications:markAllRead',
+  NOTIFICATIONS_READ: 'notifications:read',
   DM_NEW: 'dm:new',
   DM_TYPING: 'dm:typing',
   SPACE_UPDATE: 'space:update',

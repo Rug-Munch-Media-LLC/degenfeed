@@ -1963,3 +1963,56 @@
     transition: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+ * MESSAGES / CHAT — Bubble colors, animations, compose bar
+ * ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Message bubble colors — light mode */
+  --color-msg-sent: rgba(22, 163, 74, 0.15);
+  --color-msg-received: rgba(255, 255, 255, 0.08);
+  --color-compose-bg: rgba(0, 0, 0, 0.02);
+}
+
+.dark {
+  --color-msg-sent: rgba(0, 255, 65, 0.12);
+  --color-msg-received: rgba(255, 255, 255, 0.06);
+  --color-compose-bg: rgba(255, 255, 255, 0.02);
+}
+
+/* ── Message enter animation ── */
+@keyframes message-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-message-enter {
+  animation: message-enter 0.2s ease-out both;
+}
+
+/* ── Typing indicator dots ── */
+@keyframes typing-dot {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.animate-typing-dot {
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+
+.typing-dot {
+  display: inline-block;
+}

@@ -232,18 +232,20 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       <OfflineBanner />
 
       {/* ══════════════════════════════════════════════════════════
-          DESKTOP: Three-column layout
+           DESKTOP: Three-column layout (skip sidebars on landing page)
       ══════════════════════════════════════════════════════════ */}
       <div className="mx-auto flex w-full max-w-[1280px] flex-1">
-        {/* ── Left Sidebar (desktop) ── */}
-        <div className="hidden lg:block sticky top-0 h-screen w-[275px] shrink-0 border-r border-[var(--color-glass-border)]">
-          <LeftSidebar />
-        </div>
+        {/* ── Left Sidebar (desktop, hide on landing page) ── */}
+        {pathname !== '/' && (
+          <div className="hidden lg:block sticky top-0 h-screen w-[275px] shrink-0 border-r border-[var(--color-glass-border)]">
+            <LeftSidebar />
+          </div>
+        )}
 
         {/* ── Center: Main content ── */}
         <main
           id="main"
-          className="relative z-10 min-h-screen w-full max-w-[600px] flex-1 border-r border-[var(--color-glass-border)] animate-page-enter"
+          className={`relative z-10 min-h-screen flex-1 animate-page-enter ${pathname === '/' ? 'w-full max-w-none' : 'w-full max-w-[600px] border-r border-[var(--color-glass-border)]'}`}
         >
           {/* Mobile top bar */}
           <MobileTopBar onMenuToggle={() => setMobileDrawerOpen(true)} />
@@ -261,12 +263,14 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           </OnboardingProvider>
         </main>
 
-        {/* ── Right Sidebar (desktop) ── */}
-        <div className="hidden xl:block w-[350px] shrink-0 overflow-y-auto px-6 py-4">
-          <div className="sticky top-0 space-y-4">
-            <RightSidebar />
+        {/* ── Right Sidebar (desktop, hide on landing page) ── */}
+        {pathname !== '/' && (
+          <div className="hidden xl:block w-[350px] shrink-0 overflow-y-auto px-6 py-4">
+            <div className="sticky top-0 space-y-4">
+              <RightSidebar />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Mobile bottom nav */}

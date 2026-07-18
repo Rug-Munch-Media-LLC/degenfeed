@@ -3,14 +3,16 @@
 /**
  * IdentityLinker — Cross-protocol identity linking UI.
  *
- * Shows the authenticated wallet + 6 social protocols with link status.
- * Guides the user through linking each protocol to their wallet.
+ * Shows the active wallet + 6 social protocols with link status.
+ * Protocols are linked under the currently active wallet.
+ * When switching wallets, the linked protocols update automatically.
  */
 
 import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
 import type { ProtocolId } from '@degenfeed/utils';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './AuthProvider';
+import { WalletSwitcher } from './WalletSwitcher';
 
 interface LinkedIdentity {
   protocol: ProtocolId;
@@ -52,11 +54,13 @@ const LINK_FIELDS: Record<ProtocolId, Array<{ key: string; label: string; placeh
 };
 
 export function IdentityLinker() {
-  const { walletAddress } = useAuth();
+  const { walletAddress, walletAddresses, walletMeta } = useAuth();
   const [linked, setLinked] = useState<LinkedIdentity[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<LinkFormState>({ open: null, values: {}, submitting: false });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const activeMeta = walletAddress ? walletMeta[walletAddress] : undefined;
 
   const fetchLinked = useCallback(async () => {
     if (!walletAddress) {
@@ -126,7 +130,11 @@ export function IdentityLinker() {
           method: 'POST',
           credentials: 'include',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ protocol, identity: payload }),
+          body: JSON.stringify({
+            protocol,
+            identity: payload,
+            walletAddress, // Link under the active wallet
+          }),
         });
 
         const data = (await res.json()) as { success?: boolean; error?: string };
@@ -144,14 +152,14 @@ export function IdentityLinker() {
         setForm((f) => ({ ...f, submitting: false }));
       }
     },
-    [form.values, fetchLinked],
+    [form.values, fetchLinked, walletAddress],
   );
 
   const handleUnlink = useCallback(
     async (protocol: ProtocolId) => {
       setMessage(null);
       try {
-        const res = await fetch(`/api/identity/link?protocol=${protocol}`, {
+        const res = await fetch(`/api/identity/link?protocol=${protocol}&wallet=${encodeURIComponent(walletAddress ?? '')}`, {
           method: 'DELETE',
           credentials: 'include',
         });
@@ -166,7 +174,7 @@ export function IdentityLinker() {
         setMessage({ type: 'error', text: String(err) });
       }
     },
-    [fetchLinked],
+    [fetchLinked, walletAddress],
   );
 
   if (!walletAddress) {
@@ -179,18 +187,40 @@ export function IdentityLinker() {
 
   return (
     <div className="space-y-3">
-      {/* Wallet display */}
+      {/* Wallet display with switcher */}
       <div className="flex items-center gap-3 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-sm font-mono text-degen-400">
-          {walletAddress.slice(0, 2).toUpperCase()}
+          {walletAddress.slice(2, 4).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-xs font-medium text-[var(--color-fg)]">Connected Wallet</div>
-          <code className="text-xs font-mono text-gray-500 truncate block">
-            {walletAddress.slice(0, 8)}...{walletAddress.slice(-6)}
-          </code>
+          <div className="mt-1">
+            <WalletSwitcher />
+          </div>
         </div>
+        {/* Chain badge */}
+        {activeMeta && (
+          <span
+            className={`inline-flex shrink-0 items-center rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${
+              activeMeta.chain === 'solana'
+                ? 'bg-purple-500/15 text-purple-400'
+                : 'bg-blue-500/15 text-blue-400'
+            }`}
+          >
+            {activeMeta.chain === 'solana' ? 'SOL' : 'ETH'}
+          </span>
+        )}
       </div>
+
+      {/* Wallet address display */}
+      {walletAddresses && walletAddresses.length > 1 && (
+        <div className="text-[11px] text-gray-500 text-center">
+          {walletAddresses.length} wallets connected ·{' '}
+          <span className="text-degen-400">
+            {walletAddress.slice(0, 8)}…{walletAddress.slice(-6)} active
+          </span>
+        </div>
+      )}
 
       {/* Protocol list */}
       <div className="space-y-2">
