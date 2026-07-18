@@ -8,4 +8,4 @@
  *   if (auth) return auth;
  */
 
-export { requireAdmin, requireSession } from '../_auth';
+export { requireAdmin, requireSession, withAdminHeaders } from '../_auth';

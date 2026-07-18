@@ -26,6 +26,13 @@ RUN pnpm rebuild
 
 # Stage 3: Builder — compile the Next.js app and all workspace deps
 FROM deps AS builder
+
+# Build args for NEXT_PUBLIC_* vars (inlined at build time by Next.js)
+ARG NEXT_PUBLIC_ADMIN_WALLETS
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_API_BASE
+ARG NEXT_PUBLIC_API_URL
+
 WORKDIR /app
 
 # node_modules (with pnpm symlinks) AND workspace package sources already

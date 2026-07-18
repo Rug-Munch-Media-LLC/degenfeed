@@ -171,8 +171,7 @@ class CapacitorPushService {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        // biome-ignore lint/suspicious/noExplicitAny: Uint8Array is the correct format for VAPID key
-        applicationServerKey: this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as any,
+        applicationServerKey: this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
 
       const token: PushToken = {

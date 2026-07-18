@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import worker from '../app';
 import type { Env } from '../index';
 import { createSession, parseSessionCookie, verifySessionCookie } from '../session';
+import { sessionWithCsrf } from './test-utils';
 
 const secret = 'test-secret-must-be-at-least-32-bytes';
 const env: Env = { AUTH_SECRET: secret };
@@ -107,17 +108,15 @@ describe('protected routes', () => {
   });
 
   it('allows POST /api/tip/create with a valid session', async () => {
-    const { setCookie } = await createSession('0xAbCd', 'ethereum', secret);
-    const cookieValue = parseSessionCookie(setCookie);
-    expect(cookieValue).toBeTruthy();
-    if (!cookieValue) throw new Error('missing cookie');
+    const { cookie, token } = await sessionWithCsrf(env);
 
     const req = new Request('http://localhost/api/tip/create', {
       method: 'POST',
       headers: {
         origin: 'https://app.degenfeed.xyz',
         'content-type': 'application/json',
-        cookie: `__Host-dfid=${cookieValue}`,
+        cookie,
+        'x-csrf-token': token,
       },
       body: JSON.stringify({
         recipient: '0x1234567890123456789012345678901234567890',

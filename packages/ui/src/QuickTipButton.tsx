@@ -18,7 +18,7 @@ const PROTOCOL_CURRENCY: Record<string, string> = {
   threads: 'eth',
 };
 
-interface QuickTipButtonProps {
+export interface QuickTipButtonProps {
   postId: string;
   authorAddress?: string; // ETH or SOL address
   tipAmounts?: number[]; // predefined amounts in USD

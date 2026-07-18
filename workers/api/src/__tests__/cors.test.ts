@@ -72,16 +72,16 @@ describe('CSRF origin check', () => {
     expect(res.status).toBe(403);
   });
 
-  it('GTS callback is now origin-protected (was CSRF-exempt before)', async () => {
-    // The callback previously bypassed origin checks via CSRF_EXEMPT_PATHS.
-    // It now requires (a) an allowed origin AND (b) a valid state nonce.
+  it('GTS callback requires a state nonce (CSRF skipped for /api/auth/*)', async () => {
+    // Auth paths skip the CSRF middleware (they use OAuth state nonces for
+    // CSRF protection). The handler rejects missing state at 400.
     const req = new Request('http://localhost/api/auth/gotosocial/callback', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ code: 'abc' }),
     });
     const res = await worker.fetch(req, env);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(400);
   });
 
   it('GTS callback accepts requests with an allowed origin', async () => {

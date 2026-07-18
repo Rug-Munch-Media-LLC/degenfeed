@@ -323,7 +323,7 @@ export async function scheduled(
   if (cron === '* * * * *') {
     const { executeScheduledPosts } = await import('./routes/scheduled-executor');
     await executeScheduledPosts(env).catch((err) =>
-      console.warn('[scheduled] scheduled post executor failed:', err),
+      log('warn', '[scheduled] scheduled post executor failed', err),
     );
     return; // No other work on the every-minute tick
   }
@@ -331,7 +331,7 @@ export async function scheduled(
   // ── Trending scraper — 30-min and daily ticks ──────────────────────
   const { scrapeTrendingContent } = await import('./routes/trending-scraper');
   await scrapeTrendingContent(env).catch((err) =>
-    console.warn('[scheduled] trending scrape failed:', err),
+    log('warn', '[scheduled] trending scrape failed', err),
   );
 
   // ── Daily digest — 14:00 UTC ──────────────────────────────────────
@@ -346,9 +346,9 @@ export async function scheduled(
       const { handleSourcesDiscover } = await import('./routes/source-discovery');
       const discoverReq = new Request('http://localhost/api/sources/discover?platform=all');
       await handleSourcesDiscover(discoverReq, env);
-      console.log('[scheduled] weekly source discovery complete');
+      log('info', '[scheduled] weekly source discovery complete');
     } catch (err) {
-      console.error('[scheduled] source discovery failed:', err);
+      log('error', '[scheduled] source discovery failed', err);
     }
 
     // Initialize health tracking for newly discovered sources
@@ -367,20 +367,18 @@ export async function scheduled(
           await initSourceHealth(env, source as Parameters<typeof initSourceHealth>[1]);
         }
       }
-      console.log('[scheduled] health tracking initialized for sources');
+      log('info', '[scheduled] health tracking initialized for sources');
     } catch (err) {
-      console.error('[scheduled] health init failed:', err);
+      log('error', '[scheduled] health init failed', err);
     }
 
     // Run health maintenance (stale detection + culling)
     try {
       const { runWeeklyHealthMaintenance } = await import('./routes/source-health');
       const result = await runWeeklyHealthMaintenance(env);
-      console.log(
-        `[scheduled] health maintenance: ${result.checked} checked, ${result.stale} stale, ${result.culled} culled`,
-      );
+      log('info', `[scheduled] health maintenance: ${result.checked} checked, ${result.stale} stale, ${result.culled} culled`);
     } catch (err) {
-      console.error('[scheduled] health maintenance failed:', err);
+      log('error', '[scheduled] health maintenance failed', err);
     }
 
     // Record KV last-run timestamp

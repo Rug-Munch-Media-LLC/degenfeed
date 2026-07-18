@@ -243,7 +243,7 @@ export default function DataPage() {
         ] = await Promise.all([
           getAllIdentities().catch(() => []),
           getBookmarks().catch(() => []),
-          getFollows().catch(() => []),
+          getFollows(identityId).catch(() => []),
           getMutedIdentities(identityId).catch(() => []),
           getMutedWords(identityId).catch(() => []),
           getBlockedUsers(identityId).catch(() => []),
@@ -276,20 +276,20 @@ export default function DataPage() {
   /* ─── Collect all user data from IndexedDB ────────────────── */
 
   const collectAllData = useCallback(async (): Promise<Record<string, unknown>> => {
-    const identityId = primaryIdentity?.id ?? '';
-    const [
-      identities,
-      bookmarks,
-      follows,
-      muted,
-      mutedWords,
-      blocked,
-      mutedCommunities,
-      blockedCommunities,
-    ] = await Promise.all([
-      getAllIdentities().catch(() => []),
-      getBookmarks().catch(() => []),
-      getFollows().catch(() => []),
+        const identityId = primaryIdentity?.id ?? '';
+        const [
+          identities,
+          bookmarks,
+          follows,
+          muted,
+          mutedWords,
+          blocked,
+          mutedCommunities,
+          blockedCommunities,
+        ] = await Promise.all([
+          getAllIdentities().catch(() => []),
+          getBookmarks().catch(() => []),
+          getFollows(identityId).catch(() => []),
       getMutedIdentities(identityId).catch(() => []),
       getMutedWords(identityId).catch(() => []),
       getBlockedUsers(identityId).catch(() => []),
@@ -442,7 +442,7 @@ export default function DataPage() {
         ] = await Promise.all([
           getAllIdentities().catch(() => []),
           getBookmarks().catch(() => []),
-          getFollows().catch(() => []),
+          getFollows(identityId).catch(() => []),
           getMutedIdentities(identityId).catch(() => []),
           getMutedWords(identityId).catch(() => []),
           getBlockedUsers(identityId).catch(() => []),
@@ -672,7 +672,7 @@ export default function DataPage() {
             data = await getBookmarks();
             break;
           case 'follows':
-            data = await getFollows();
+            data = await getFollows(identityId);
             break;
           case 'muted':
             data = await getMutedIdentities(identityId);
@@ -1193,10 +1193,10 @@ export default function DataPage() {
                         <button
                           type="button"
                           onClick={handleDeleteAccount}
-                          disabled={deleteState.status === 'deleting'}
+                          disabled={(deleteState.status as string) === 'deleting'}
                           className="flex-1 rounded-lg bg-red-500/20 px-4 py-2 text-xs font-bold text-red-400 hover:bg-red-500/30 transition-all disabled:opacity-50"
                         >
-                          {deleteState.status === 'deleting' ? (
+                          {(deleteState.status as string) === 'deleting' ? (
                             <span className="flex items-center justify-center gap-2">
                               <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
                               Deleting…

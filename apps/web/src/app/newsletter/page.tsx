@@ -516,16 +516,16 @@ function getCategoryStats() {
     let count = 0;
     switch (cat.id) {
       case 'crypto':
-        count = NEWSLETTERS_BY_TOPIC.crypto.length;
+        count = NEWSLETTERS_BY_TOPIC.crypto?.length ?? 0;
         break;
       case 'tech':
-        count = NEWSLETTERS_BY_TOPIC.tech.length;
+        count = NEWSLETTERS_BY_TOPIC.tech?.length ?? 0;
         break;
       case 'ai':
-        count = NEWSLETTERS_BY_TOPIC.ai.length;
+        count = NEWSLETTERS_BY_TOPIC.ai?.length ?? 0;
         break;
       case 'defi':
-        count = NEWSLETTERS_BY_TOPIC.defi.length;
+        count = NEWSLETTERS_BY_TOPIC.defi?.length ?? 0;
         break;
       case 'nft':
         count = 2;
@@ -537,10 +537,10 @@ function getCategoryStats() {
         count = 5;
         break;
       case 'startups':
-        count = NEWSLETTERS_BY_TOPIC.startups.length;
+        count = NEWSLETTERS_BY_TOPIC.startups?.length ?? 0;
         break;
       case 'science':
-        count = NEWSLETTERS_BY_TOPIC.science.length;
+        count = NEWSLETTERS_BY_TOPIC.science?.length ?? 0;
         break;
       default:
         count = 0;
@@ -716,7 +716,7 @@ export default function NewsletterPage() {
                 <div key={nl.name} className="card flex items-start gap-2.5 p-2.5">
                   <span
                     className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px]"
-                    style={{ backgroundColor: `${cat?.color}20` ?? '#1f2937' }}
+                    style={{ backgroundColor: cat?.color ? `${cat.color}20` : '#1f2937' }}
                   >
                     {cat?.icon ?? '📰'}
                   </span>
@@ -1091,8 +1091,9 @@ export default function NewsletterPage() {
                       className="rounded px-1.5 py-0.5 text-[8px] font-medium uppercase"
                       style={{
                         backgroundColor:
-                          `${NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color}15` ??
-                          '#1f2937',
+                          (NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color
+                            ? `${NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color}15`
+                            : '#1f2937'),
                         color:
                           NEWSLETTER_CATEGORIES.find((c) => c.id === nl.category)?.color ??
                           '#9ca3af',

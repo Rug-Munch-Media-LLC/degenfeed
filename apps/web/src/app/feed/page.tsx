@@ -702,6 +702,8 @@ export default function FeedPage() {
     [],
   );
 
+  const { announce } = useAnnouncer();
+
   const fetchFeed = useCallback(
     async (checkOnly = false) => {
       if (!checkOnly) setState('loading');
@@ -925,7 +927,6 @@ export default function FeedPage() {
   );
 
   const { showToast } = useToast();
-  const { announce } = useAnnouncer();
   const router = useRouter();
   const handlePostClick = useCallback(
     (id: string) => {

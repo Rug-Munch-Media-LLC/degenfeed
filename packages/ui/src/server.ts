@@ -31,7 +31,6 @@ export { BlueskyPostContext } from './BlueskyPostContext';
 export type { BlueskyPostContextProps } from './BlueskyPostContext';
 
 export { PermanenceBadge } from './PostCardMedia';
-export type { PermanenceBadgeProps } from './PostCardMedia';
 
 // ─── Types only (no runtime) ──────────────────────────────────────
 
@@ -109,7 +108,7 @@ export type {
 
 export type {
   ListSkeletonProps,
-} from './ListSkeleton';
+} from './LoadingSkeleton';
 
 export type {
   PeerTubeEmbedProps,
@@ -120,20 +119,10 @@ export type {
 } from './PostCard';
 
 export type {
-  FrameCardProps,
-  ImageGridProps,
-  LinkPreviewProps,
-  PostCardMediaProps,
-  VideoEmbedCardProps,
-} from './PostCardMedia';
-
-export type {
   PostCardEngagementProps,
 } from './PostCardEngagement';
 
-export type {
-  QuickTipButtonProps,
-} from './QuickTipButton';
+export type { QuickTipButtonProps } from './QuickTipButton';
 
 export type {
   ReportModalProps,
@@ -142,7 +131,7 @@ export type {
 export type {
   ReputationBadgeProgress,
   ReputationBadgeScore,
-  BloxReputationBadgeProps,
+  ReputationBadgeProps,
 } from './ReputationBadge';
 
 export type {

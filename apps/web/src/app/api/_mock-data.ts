@@ -783,8 +783,7 @@ export const MOCK_MY_FEEDS: CustomFeed[] = [
     creator: '0xuser',
     isPublic: true,
     config: {
-      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
-      sources: ['nostr', 'farcaster', 'lens'] as any,
+      sources: ['nostr', 'farcaster', 'lens'] as const,
       topics: { crypto: 100 },
       contentTypes: ['text'],
       minEngagement: 10,
@@ -802,8 +801,7 @@ export const MOCK_MY_FEEDS: CustomFeed[] = [
     creator: '0xuser',
     isPublic: true,
     config: {
-      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
-      sources: ['nostr', 'farcaster', 'lemmy'] as any,
+      sources: ['nostr', 'farcaster', 'lemmy'] as const,
       topics: { defi: 100 },
       contentTypes: ['text', 'link'],
       minEngagement: 20,
@@ -821,8 +819,7 @@ export const MOCK_MY_FEEDS: CustomFeed[] = [
     creator: '0xuser',
     isPublic: false,
     config: {
-      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
-      sources: ['nostr'] as any,
+      sources: ['nostr'] as const,
       topics: { research: 100 },
       contentTypes: ['text'],
       minEngagement: 0,
@@ -840,8 +837,7 @@ export const MOCK_MY_FEEDS: CustomFeed[] = [
     creator: '0xuser',
     isPublic: true,
     config: {
-      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
-      sources: ['peertube', 'youtube'] as any,
+      sources: ['peertube', 'youtube'] as const,
       topics: { crypto: 80, defi: 60 },
       contentTypes: ['video'],
       minEngagement: 50,
@@ -862,8 +858,7 @@ export const MOCK_PUBLIC_FEEDS: CustomFeed[] = [
     creator: '0xdegen',
     isPublic: true,
     config: {
-      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
-      sources: ['nostr', 'farcaster', 'lens', 'bluesky', 'reddit'] as any,
+      sources: ['nostr', 'farcaster', 'lens', 'bluesky', 'reddit'] as const,
       topics: { crypto: 100 },
       contentTypes: ['text', 'link', 'image'],
       minEngagement: 5,
@@ -881,8 +876,7 @@ export const MOCK_PUBLIC_FEEDS: CustomFeed[] = [
     creator: '0xsolana',
     isPublic: true,
     config: {
-      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
-      sources: ['nostr', 'farcaster', 'reddit'] as any,
+      sources: ['nostr', 'farcaster', 'reddit'] as const,
       topics: { solana: 100, defi: 80 },
       contentTypes: ['text', 'link', 'video'],
       minEngagement: 3,
@@ -900,8 +894,7 @@ export const MOCK_PUBLIC_FEEDS: CustomFeed[] = [
     creator: '0xnft',
     isPublic: true,
     config: {
-      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
-      sources: ['farcaster', 'bluesky', 'lens'] as any,
+      sources: ['farcaster', 'bluesky', 'lens'] as const,
       topics: { nft: 100, art: 80 },
       contentTypes: ['text', 'image'],
       minEngagement: 10,
@@ -919,8 +912,7 @@ export const MOCK_PUBLIC_FEEDS: CustomFeed[] = [
     creator: '0xai',
     isPublic: true,
     config: {
-      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
-      sources: ['nostr', 'farcaster', 'reddit', 'rss'] as any,
+      sources: ['nostr', 'farcaster', 'reddit', 'rss'] as const,
       topics: { ai: 100, crypto: 80 },
       contentTypes: ['text', 'link', 'video'],
       minEngagement: 5,
@@ -938,8 +930,7 @@ export const MOCK_PUBLIC_FEEDS: CustomFeed[] = [
     creator: '0xdefi',
     isPublic: true,
     config: {
-      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
-      sources: ['nostr', 'farcaster', 'lemmy'] as any,
+      sources: ['nostr', 'farcaster', 'lemmy'] as const,
       topics: { defi: 100, yield: 100 },
       contentTypes: ['text', 'link'],
       minEngagement: 0,

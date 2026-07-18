@@ -53,17 +53,22 @@ vi.mock('@degenfeed/bluesky-sdk', () => ({
 
 import worker from '../app';
 import type { Env } from '../index';
-import { createSession, parseSessionCookie } from '../session';
+import { sessionWithCsrf } from './test-utils';
 
-const secret = 'test-secret-must-be-at-least-32-bytes';
-const env: Env = { AUTH_SECRET: secret };
+const env: Env = { AUTH_SECRET: 'test-secret-must-be-at-least-32-bytes' };
 
-async function makeRequest(path: string, body: unknown, cookie?: string): Promise<Response> {
+async function makeRequest(
+  path: string,
+  body: unknown,
+  cookie?: string,
+  csrfToken?: string,
+): Promise<Response> {
   const headers: Record<string, string> = {
     origin: 'https://app.degenfeed.xyz',
     'content-type': 'application/json',
   };
   if (cookie) headers.cookie = cookie;
+  if (csrfToken) headers['x-csrf-token'] = csrfToken;
   return worker.fetch(
     new Request(`http://localhost${path}`, {
       method: 'POST',
@@ -72,13 +77,6 @@ async function makeRequest(path: string, body: unknown, cookie?: string): Promis
     }),
     env,
   );
-}
-
-async function sessionCookie(): Promise<string> {
-  const { setCookie } = await createSession('0xAbCd', 'ethereum', secret);
-  const value = parseSessionCookie(setCookie);
-  if (!value) throw new Error('missing cookie');
-  return `__Host-dfid=${value}`;
 }
 
 describe('POST /api/engage', () => {
@@ -93,7 +91,7 @@ describe('POST /api/engage', () => {
   });
 
   it('rejects invalid action', async () => {
-    const cookie = await sessionCookie();
+    const { cookie, token } = await sessionWithCsrf(env);
     const res = await makeRequest(
       '/api/engage',
       {
@@ -103,6 +101,7 @@ describe('POST /api/engage', () => {
         auth: { mastodon: 'token' },
       },
       cookie,
+      token,
     );
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error?: string };
@@ -110,7 +109,7 @@ describe('POST /api/engage', () => {
   });
 
   it('likes a mastodon post when auth token is present', async () => {
-    const cookie = await sessionCookie();
+    const { cookie, token } = await sessionWithCsrf(env);
     const res = await makeRequest(
       '/api/engage',
       {
@@ -120,6 +119,7 @@ describe('POST /api/engage', () => {
         auth: { mastodon: 'token' },
       },
       cookie,
+      token,
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as { success?: boolean };
@@ -127,7 +127,7 @@ describe('POST /api/engage', () => {
   });
 
   it('replies to a mastodon post', async () => {
-    const cookie = await sessionCookie();
+    const { cookie, token } = await sessionWithCsrf(env);
     const res = await makeRequest(
       '/api/engage',
       {
@@ -138,6 +138,7 @@ describe('POST /api/engage', () => {
         auth: { mastodon: 'token' },
       },
       cookie,
+      token,
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as { success?: boolean };
@@ -145,7 +146,7 @@ describe('POST /api/engage', () => {
   });
 
   it('returns no-account error for mastodon without token', async () => {
-    const cookie = await sessionCookie();
+    const { cookie, token } = await sessionWithCsrf(env);
     const res = await makeRequest(
       '/api/engage',
       {
@@ -155,6 +156,7 @@ describe('POST /api/engage', () => {
         auth: {},
       },
       cookie,
+      token,
     );
     expect(res.status).toBe(401);
     const body = (await res.json()) as { error?: string };
@@ -162,7 +164,7 @@ describe('POST /api/engage', () => {
   });
 
   it('publishes a nostr reaction when nsec is provided', async () => {
-    const cookie = await sessionCookie();
+    const { cookie, token } = await sessionWithCsrf(env);
     const res = await makeRequest(
       '/api/engage',
       {
@@ -173,13 +175,14 @@ describe('POST /api/engage', () => {
         auth: { nostr: 'nsechex' },
       },
       cookie,
+      token,
     );
     // Nostr server-side signing is deprecated — returns 410
     expect(res.status).toBe(410);
   });
 
   it('returns no-account error for nostr without nsec', async () => {
-    const cookie = await sessionCookie();
+    const { cookie, token } = await sessionWithCsrf(env);
     const res = await makeRequest(
       '/api/engage',
       {
@@ -189,6 +192,7 @@ describe('POST /api/engage', () => {
         auth: {},
       },
       cookie,
+      token,
     );
     expect(res.status).toBe(410);
     const body = (await res.json()) as { error?: string };
@@ -196,7 +200,7 @@ describe('POST /api/engage', () => {
   });
 
   it('returns no-account error for farcaster without signed message', async () => {
-    const cookie = await sessionCookie();
+    const { cookie, token } = await sessionWithCsrf(env);
     const res = await makeRequest(
       '/api/engage',
       {
@@ -206,6 +210,7 @@ describe('POST /api/engage', () => {
         auth: {},
       },
       cookie,
+      token,
     );
     expect(res.status).toBe(401);
     const body = (await res.json()) as { error?: string };
@@ -213,7 +218,7 @@ describe('POST /api/engage', () => {
   });
 
   it('returns no-account error for bluesky without jwt/did', async () => {
-    const cookie = await sessionCookie();
+    const { cookie, token } = await sessionWithCsrf(env);
     const res = await makeRequest(
       '/api/engage',
       {
@@ -223,6 +228,7 @@ describe('POST /api/engage', () => {
         auth: {},
       },
       cookie,
+      token,
     );
     expect(res.status).toBe(401);
     const body = (await res.json()) as { error?: string };
