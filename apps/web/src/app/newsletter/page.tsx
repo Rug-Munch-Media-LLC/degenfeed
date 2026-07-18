@@ -53,7 +53,7 @@ const NEWSLETTERS_BY_TOPIC: Record<string, { name: string; schedule: string }[]>
   ],
   bitcoin: [
     { name: 'Bitcoin Magazine Pro', schedule: 'weekly' },
-    { name: 'Satoshi\'s Journal', schedule: 'weekly' },
+    { name: "Satoshi's Journal", schedule: 'weekly' },
     { name: 'The Bitcoin Layer', schedule: 'weekly' },
     { name: 'Nik Bhatia', schedule: 'weekly' },
     { name: 'Pomp Letter', schedule: 'daily' },
@@ -225,12 +225,14 @@ export default function NewsletterPage() {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500 to-emerald-600 text-2xl shadow-[0_0_24px_rgba(34,197,94,0.3)]">
           ◆
         </div>
-        <h1 className="mb-2 text-4xl font-bold tracking-tight text-[var(--color-fg)]">DegenFeed Daily</h1>
+        <h1 className="mb-2 text-4xl font-bold tracking-tight text-[var(--color-fg)]">
+          DegenFeed Daily
+        </h1>
         <p className="mx-auto max-w-xl text-sm leading-relaxed text-gray-500">
           The best of web3, AI, and tech — aggregated from Nostr, Farcaster, Lens, Bluesky,
-          Mastodon, 319 RSS sources, and 55 curated newsletters from Substack, Medium,
-          Paragraph, and Mirror. Ranked by quality, recency, and diversity. Delivered to
-          your inbox every morning.
+          Mastodon, 319 RSS sources, and 55 curated newsletters from Substack, Medium, Paragraph,
+          and Mirror. Ranked by quality, recency, and diversity. Delivered to your inbox every
+          morning.
         </p>
       </div>
 
@@ -401,7 +403,8 @@ export default function NewsletterPage() {
                     {item.url && (
                       <a
                         href={item.url}
-                        target="_blank" rel="noopener noreferrer"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         rel="noopener noreferrer"
                         className="mt-1 inline-block text-[11px] text-degen-500 hover:underline"
                       >
@@ -493,30 +496,29 @@ export default function NewsletterPage() {
                 )}
               </h3>
               <div className="space-y-3 text-xs">
-                {(activeTopic === 'all' ? Object.entries(NEWSLETTERS_BY_TOPIC) : [[activeTopic, NEWSLETTERS_BY_TOPIC[activeTopic] ?? []]] as [string, { name: string; schedule: string }[]][]).map(
-                  ([topic, newsletters]) => (
-                    <div key={topic}>
-                      <p className="mb-1 font-medium text-gray-400">
-                        {NEWSLETTER_TOPICS.find((t) => t.id === topic)?.label ?? topic}
-                      </p>
-                      <ul className="space-y-1 text-gray-500">
-                        {newsletters.slice(0, activeTopic === 'all' ? 5 : 99).map((nl) => (
-                          <li key={nl.name}>
-                            ✦ {nl.name}{' '}
-                            <span className="text-gray-600">
-                              ({nl.schedule})
-                            </span>
-                          </li>
-                        ))}
-                        {activeTopic === 'all' && newsletters.length > 5 && (
-                          <li className="text-gray-600 italic">
-                            + {newsletters.length - 5} more...
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  ),
-                )}
+                {(activeTopic === 'all'
+                  ? Object.entries(NEWSLETTERS_BY_TOPIC)
+                  : ([[activeTopic, NEWSLETTERS_BY_TOPIC[activeTopic] ?? []]] as [
+                      string,
+                      { name: string; schedule: string }[],
+                    ][])
+                ).map(([topic, newsletters]) => (
+                  <div key={topic}>
+                    <p className="mb-1 font-medium text-gray-400">
+                      {NEWSLETTER_TOPICS.find((t) => t.id === topic)?.label ?? topic}
+                    </p>
+                    <ul className="space-y-1 text-gray-500">
+                      {newsletters.slice(0, activeTopic === 'all' ? 5 : 99).map((nl) => (
+                        <li key={nl.name}>
+                          ✦ {nl.name} <span className="text-gray-600">({nl.schedule})</span>
+                        </li>
+                      ))}
+                      {activeTopic === 'all' && newsletters.length > 5 && (
+                        <li className="text-gray-600 italic">+ {newsletters.length - 5} more...</li>
+                      )}
+                    </ul>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -528,7 +530,8 @@ export default function NewsletterPage() {
                 <li>
                   <a
                     href="/api/feed/rss.xml"
-                    target="_blank" rel="noopener noreferrer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     rel="noopener noreferrer"
                     className="text-degen-500 hover:underline"
                   >
@@ -538,7 +541,8 @@ export default function NewsletterPage() {
                 <li>
                   <a
                     href="/api/feed/rss.xml?format=atom"
-                    target="_blank" rel="noopener noreferrer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     rel="noopener noreferrer"
                     className="text-degen-500 hover:underline"
                   >
@@ -548,7 +552,8 @@ export default function NewsletterPage() {
                 <li>
                   <a
                     href="/api/feed/rss.xml?category=bitcoin"
-                    target="_blank" rel="noopener noreferrer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     rel="noopener noreferrer"
                     className="text-degen-500 hover:underline"
                   >
@@ -558,7 +563,8 @@ export default function NewsletterPage() {
                 <li>
                   <a
                     href="/api/feed/rss.xml?category=defi"
-                    target="_blank" rel="noopener noreferrer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     rel="noopener noreferrer"
                     className="text-degen-500 hover:underline"
                   >

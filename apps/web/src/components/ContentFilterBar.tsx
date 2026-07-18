@@ -31,10 +31,10 @@ export function ContentFilterBar({ active, onChange, color }: ContentFilterBarPr
     if (!sentinel) return;
 
     const observer = new IntersectionObserver(
-          ([entry]) => {
-            // When the sentinel is NOT intersecting (scrolled past it), bar is sticky
-            setIsSticky(!entry?.isIntersecting);
-          },
+      ([entry]) => {
+        // When the sentinel is NOT intersecting (scrolled past it), bar is sticky
+        setIsSticky(!entry?.isIntersecting);
+      },
       { threshold: 0, rootMargin: '-1px 0px 0px 0px' },
     );
 

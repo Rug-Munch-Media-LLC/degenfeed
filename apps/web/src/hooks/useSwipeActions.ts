@@ -47,21 +47,24 @@ export function useSwipeActions(
     setDirection(null);
   }, []);
 
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!touchStart.current) return;
-    const currentX = e.touches[0]?.clientX ?? 0;
-    const currentY = e.touches[0]?.clientY ?? 0;
-    const dx = currentX - touchStart.current.x;
-    const dy = currentY - touchStart.current.y;
+  const onTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchStart.current) return;
+      const currentX = e.touches[0]?.clientX ?? 0;
+      const currentY = e.touches[0]?.clientY ?? 0;
+      const dx = currentX - touchStart.current.x;
+      const dy = currentY - touchStart.current.y;
 
-    // Only horizontal swipes, ignore vertical scrolling
-    if (Math.abs(dx) > Math.abs(dy)) {
-      const pct = Math.min(Math.abs(dx) / threshold, 1);
-      setProgress(pct);
-      setDirection(dx > 0 ? 'right' : 'left');
-      lastDirection.current = dx > 0 ? 'right' : 'left';
-    }
-  }, [threshold]);
+      // Only horizontal swipes, ignore vertical scrolling
+      if (Math.abs(dx) > Math.abs(dy)) {
+        const pct = Math.min(Math.abs(dx) / threshold, 1);
+        setProgress(pct);
+        setDirection(dx > 0 ? 'right' : 'left');
+        lastDirection.current = dx > 0 ? 'right' : 'left';
+      }
+    },
+    [threshold],
+  );
 
   const onTouchEnd = useCallback(() => {
     if (lastDirection.current === 'left') {

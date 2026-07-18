@@ -24,11 +24,7 @@ function shortAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-export default function SubscriptionGuard({
-  creator,
-  children,
-  fallback,
-}: SubscriptionGuardProps) {
+export default function SubscriptionGuard({ creator, children, fallback }: SubscriptionGuardProps) {
   const [access, setAccess] = useState<AccessState>({ status: 'loading' });
   const cacheRef = useRef<{ creator: string; until: number } | null>(null);
 
@@ -117,9 +113,7 @@ export default function SubscriptionGuard({
         <div className="pointer-events-none select-none blur-sm">{children}</div>
         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
           <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 text-center backdrop-blur-sm">
-            <p className="mb-2 text-lg font-bold text-[var(--color-fg)]">
-              Sign in to view
-            </p>
+            <p className="mb-2 text-lg font-bold text-[var(--color-fg)]">Sign in to view</p>
             <p className="mb-4 text-sm text-[var(--color-muted)]">
               Connect your wallet to check access for this content
             </p>
@@ -138,9 +132,7 @@ export default function SubscriptionGuard({
       <div className="pointer-events-none select-none blur-sm">{children}</div>
       <div className="absolute inset-0 flex items-center justify-center bg-black/40">
         <div className="rounded-2xl border border-degen-500/30 bg-[var(--color-card)] p-6 text-center backdrop-blur-sm">
-          <p className="mb-2 text-lg font-bold text-[var(--color-fg)]">
-            Subscriber-only content
-          </p>
+          <p className="mb-2 text-lg font-bold text-[var(--color-fg)]">Subscriber-only content</p>
           <p className="mb-4 text-sm text-[var(--color-muted)]">
             Subscribe to {creatorShort} for exclusive access
           </p>

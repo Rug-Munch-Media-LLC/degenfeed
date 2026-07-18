@@ -162,7 +162,7 @@ interface FederatedVideoItem {
 async function fetchFederatedFeed(
   sort: string = 'trending',
   limit: number = 30,
-  signal?: AbortSignal,
+  _signal?: AbortSignal,
 ): Promise<YouTubeVideoCardItem[]> {
   try {
     const { getFederatedFeed } = await import('@degenfeed/peertube-provider');
@@ -313,7 +313,7 @@ export default function VideosPage() {
   const [peertubeExhausted, setPeertubeExhausted] = useState(false);
 
   // Federated tab — no pagination (cached server-side, single fetch)
-  const [federatedLoading, setFederatedLoading] = useState(false);
+  const [_federatedLoading, setFederatedLoading] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const loadingRef = useRef(false);
@@ -335,7 +335,8 @@ export default function VideosPage() {
         // ── Federated tab: single fetch, no pagination ──────────────
         if (activeTab === 'federated') {
           setFederatedLoading(true);
-          const sortParam = sort === 'trending' ? 'trending' : sort === 'recent' ? 'recent' : 'trending';
+          const sortParam =
+            sort === 'trending' ? 'trending' : sort === 'recent' ? 'recent' : 'trending';
           const federatedItems = await fetchFederatedFeed(sortParam, 50, controller.signal);
           if (controller.signal.aborted) return;
           setVideos(federatedItems);
@@ -405,7 +406,7 @@ export default function VideosPage() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps — youtubePage unused after removing currentYT
-    [activeCategory, peertubePage, youtubeExhausted, peertubeExhausted, videos],
+    [activeCategory, peertubePage, youtubeExhausted, peertubeExhausted, videos, sort, activeTab],
   );
 
   // ── Load on mount & filter change ──
@@ -418,7 +419,7 @@ export default function VideosPage() {
     setHasMore(true);
     loadVideos(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps — loadVideos intentionally omitted to prevent infinite loop on state reset
-  }, [activeTab, activeCategory]);
+  }, [loadVideos]);
 
   // ── Load more handler ──
   const handleLoadMore = useCallback(() => {
@@ -553,25 +554,27 @@ export default function VideosPage() {
         {!loading && videos.length > 0 && (
           <footer className="mt-8 text-center">
             <p className="text-[11px] text-[var(--color-muted)]">
-              Videos sourced from YouTube RSS feeds,
-              {' '}<a
+              Videos sourced from YouTube RSS feeds,{' '}
+              <a
                 href={`https://${PEERTUBE_INSTANCE}`}
-                target="_blank" rel="noopener noreferrer"
+                target="_blank"
+                rel="noopener noreferrer"
                 rel="noopener noreferrer"
                 className="text-degen-500 hover:text-degen-400 transition-colors underline underline-offset-2"
               >
                 {PEERTUBE_INSTANCE}
-              </a>,{' '}
-              and{' '}
+              </a>
+              , and{' '}
               <a
                 href="https://sepiasearch.org"
-                target="_blank" rel="noopener noreferrer"
+                target="_blank"
+                rel="noopener noreferrer"
                 rel="noopener noreferrer"
                 className="text-degen-500 hover:text-degen-400 transition-colors underline underline-offset-2"
               >
                 {FEDERATED_INSTANCE_COUNT} federated instances
-              </a>
-              {' '}— cached for 15 minutes
+              </a>{' '}
+              — cached for 15 minutes
             </p>
           </footer>
         )}

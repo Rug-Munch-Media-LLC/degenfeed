@@ -48,14 +48,17 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
-      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">2. What We Do NOT Collect</h2>
+      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
+        2. What We Do NOT Collect
+      </h2>
       <ul className="mb-4 list-inside list-disc space-y-1">
         <li>Your name, phone number, or physical address.</li>
         <li>IP addresses (Cloudflare may log them for DDoS protection; we do not store them).</li>
         <li>Browsing history outside DegenFeed.</li>
         <li>
           Cookies beyond the session cookie (
-          <code className="rounded bg-[var(--color-muted)] px-1 text-xs">__Host-dfid</code>) used for sign-in.
+          <code className="rounded bg-[var(--color-muted)] px-1 text-xs">__Host-dfid</code>) used
+          for sign-in.
         </li>
       </ul>
 
@@ -79,7 +82,9 @@ export default function PrivacyPage() {
         <li>All data is stored in Cloudflare KV. Deletion is immediate and permanent.</li>
       </ul>
 
-      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">5. GDPR Rights (EU/EEA Users)</h2>
+      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
+        5. GDPR Rights (EU/EEA Users)
+      </h2>
       <p className="mb-4">
         If you are in the EU or EEA, you have the right to access, rectify, delete, and port your
         data. To exercise these rights, contact{' '}
@@ -93,7 +98,9 @@ export default function PrivacyPage() {
         .
       </p>
 
-      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">6. CCPA Rights (California Users)</h2>
+      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
+        6. CCPA Rights (California Users)
+      </h2>
       <p className="mb-4">
         California residents have the right to know what personal data we collect, request deletion,
         and opt out of data sales. DegenFeed does not sell personal data. To exercise CCPA rights,

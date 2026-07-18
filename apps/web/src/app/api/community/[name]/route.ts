@@ -3,10 +3,7 @@ import { MOCK_COMMUNITIES } from '../../_mock-data';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ name: string }> },
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const community = MOCK_COMMUNITIES.find((c) => c.name === slug || c.name === name);

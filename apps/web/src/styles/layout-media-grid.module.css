@@ -5,6 +5,7 @@
  * Extracted from globals.css for dynamic loading
  * ═══════════════════════════════════════════════════════════════ */
 
+/* biome-ignore lint/correctness/noUnknownPseudoClass: CSS Modules :global() syntax */
 :global(.layout-media-grid) {
   /* ── Post cards: hide text, show media only ── */
   & .post-card {
@@ -60,7 +61,9 @@
     border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   & .post-card .image-grid > *:hover {

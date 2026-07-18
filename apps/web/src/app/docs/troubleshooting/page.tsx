@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 const issues = [
   {
@@ -11,35 +11,35 @@ const issues = [
       'Check your protocol connections: Settings → Connected Accounts. Make sure at least one protocol is connected.',
       'Try switching to a different sort mode. Click "Hot" or "New" instead of "Scored" — some sort modes may return fewer results with limited connections.',
       'Visit /status to check if any protocols are experiencing outages or degraded performance.',
-      'If you\'re using filters, clear them. URL params like ?category=xyz or ?protocols=nostr may narrow results too much.',
+      "If you're using filters, clear them. URL params like ?category=xyz or ?protocols=nostr may narrow results too much.",
       'Try the All Protocols feed at /home/all to see if any content loads.',
       'If nothing loads at all, check your internet connection and try refreshing. DegenFeed requires WebSocket access for real-time updates.',
     ],
   },
   {
-    title: 'Posts aren\'t publishing',
+    title: "Posts aren't publishing",
     summary: 'You hit Post but nothing appears on your connected protocols.',
     steps: [
-      'Verify your wallet is connected and the connection hasn\'t expired. Reconnect if needed.',
+      "Verify your wallet is connected and the connection hasn't expired. Reconnect if needed.",
       'Check that each target protocol\'s authentication is current. Go to Settings → Connected Accounts and look for any "Reconnect" warnings.',
       'Protocol-specific issues: Nostr requires a relay connection, Farcaster requires Hub access, Lens requires Polygon RPC, Bluesky requires a valid session.',
-      'Your post may exceed a protocol\'s character limit. Nostr supports ~64KB, but some relays cap at 500 chars. Bluesky has 300 char limit.',
+      "Your post may exceed a protocol's character limit. Nostr supports ~64KB, but some relays cap at 500 chars. Bluesky has 300 char limit.",
       'Check your browser console (F12) for CORS or signing errors.',
-      'If you\'re using a browser extension ad blocker, try disabling it for degenfeed.xyz — some block WebSocket connections.',
+      "If you're using a browser extension ad blocker, try disabling it for degenfeed.xyz — some block WebSocket connections.",
       'For urgent issues, email admin@rugmunch.io with the protocol and approximate time.',
     ],
   },
   {
-    title: 'Tips aren\'t going through',
-    summary: 'Tip transaction fails, never confirms, or the creator doesn\'t receive it.',
+    title: "Tips aren't going through",
+    summary: "Tip transaction fails, never confirms, or the creator doesn't receive it.",
     steps: [
       'Check your wallet balance. You need enough native token (ETH, SOL) for both the tip amount AND gas fees.',
       'For Ethereum tips: ensure you have enough ETH for gas. Gas prices fluctuate — try again when gas is lower.',
       'For Solana tips: check your SOL balance for rent+gas. Minimum ~0.005 SOL should cover most tips.',
-      'For USDC tips: ensure you\'ve approved the token spend (first-time users need to approve the contract).',
+      "For USDC tips: ensure you've approved the token spend (first-time users need to approve the contract).",
       'Nostr Lightning zaps require a connected Lightning wallet. Check your wallet has inbound capacity.',
-      'The creator must have a connected wallet to receive tips. If their wallet address isn\'t set, the tip button will show as unavailable.',
-      'If the transaction succeeds but the creator hasn\'t received it, check the transaction on a block explorer (Etherscan, Solscan). The tip goes directly on-chain — DegenFeed never intermediates.',
+      "The creator must have a connected wallet to receive tips. If their wallet address isn't set, the tip button will show as unavailable.",
+      "If the transaction succeeds but the creator hasn't received it, check the transaction on a block explorer (Etherscan, Solscan). The tip goes directly on-chain — DegenFeed never intermediates.",
     ],
   },
   {
@@ -55,13 +55,13 @@ const issues = [
     ],
   },
   {
-    title: 'I can\'t link my account',
-    summary: 'Protocol authorization fails, redirect loops, or the connection doesn\'t save.',
+    title: "I can't link my account",
+    summary: "Protocol authorization fails, redirect loops, or the connection doesn't save.",
     steps: [
       'Nostr: Make sure your browser extension (Alby, nos2x) is unlocked. Try re-installing the extension. If using nsec/npub, verify the key format (nsec1... or npub1...).',
-      'Farcaster: Ensure you\'re signing with the wallet that owns your Farcaster ID. The signer must match the registered Farcaster custody address.',
+      "Farcaster: Ensure you're signing with the wallet that owns your Farcaster ID. The signer must match the registered Farcaster custody address.",
       'Lens: Verify your Lens profile exists on Polygon. New profiles may take a few minutes to index. Use the Lens API checker at api-v2.lens.dev.',
-      'Bluesky: Create an app password in Bluesky Settings → App Passwords. Your main password won\'t work with third-party apps.',
+      "Bluesky: Create an app password in Bluesky Settings → App Passwords. Your main password won't work with third-party apps.",
       'Mastodon: Ensure your instance allows API access. Small or restricted instances may block OAuth apps. The app password approach works for most.',
       'If you get a redirect loop, clear your browser cookies and cache, then try again.',
       'Still stuck? Email admin@rugmunch.io with the protocol and a description of the error.',
@@ -81,7 +81,7 @@ const issues = [
     ],
   },
   {
-    title: 'Notifications aren\'t working',
+    title: "Notifications aren't working",
     summary: 'No push notifications, delayed notifications, or missing notification badges.',
     steps: [
       'Ensure you accepted the browser notification prompt when it first appeared. If you blocked it, reset in browser site settings.',
@@ -200,7 +200,13 @@ export default function TroubleshootingPage() {
       {/* Issues */}
       <div className="divide-y divide-[var(--color-glass-border)]">
         {issues.map((issue, i) => (
-          <AccordionItem key={issue.title} item={issue} index={i} openIndex={openIndex} toggle={toggle} />
+          <AccordionItem
+            key={issue.title}
+            item={issue}
+            index={i}
+            openIndex={openIndex}
+            toggle={toggle}
+          />
         ))}
       </div>
 
@@ -211,22 +217,13 @@ export default function TroubleshootingPage() {
           We&apos;re here to help. Reach out and we&apos;ll get back to you within 24 hours.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
-          <a
-            href="mailto:admin@rugmunch.io"
-            className="btn-secondary text-xs"
-          >
+          <a href="mailto:admin@rugmunch.io" className="btn-secondary text-xs">
             Email Support
           </a>
-          <Link
-            href="/faq"
-            className="btn-secondary text-xs"
-          >
+          <Link href="/faq" className="btn-secondary text-xs">
             Browse FAQ
           </Link>
-          <Link
-            href="/status"
-            className="btn-secondary text-xs"
-          >
+          <Link href="/status" className="btn-secondary text-xs">
             System Status
           </Link>
         </div>

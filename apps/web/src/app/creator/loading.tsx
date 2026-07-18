@@ -1,4 +1,10 @@
-import { Avatar, HeaderSkeleton, Line, MetricCardSkeleton, ListSkeleton } from '@/components/loading/PageSkeleton';
+import {
+  Avatar,
+  HeaderSkeleton,
+  Line,
+  ListSkeleton,
+  MetricCardSkeleton,
+} from '@/components/loading/PageSkeleton';
 
 export default function CreatorLoading() {
   return (
@@ -36,7 +42,10 @@ export default function CreatorLoading() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 flex gap-2 border-b pb-3" style={{ borderColor: 'var(--color-glass-border)' }}>
+      <div
+        className="mb-6 flex gap-2 border-b pb-3"
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         {['Content', 'Analytics', 'Monetization', 'Schedule'].map((t) => (
           <div
             key={t}

@@ -82,10 +82,7 @@ export function FormFieldSkeleton() {
 
 export function MetricCardSkeleton() {
   return (
-    <div
-      className="rounded-2xl border p-5"
-      style={{ borderColor: 'var(--color-glass-border)' }}
-    >
+    <div className="rounded-2xl border p-5" style={{ borderColor: 'var(--color-glass-border)' }}>
       <Line width="w-20" height="h-3" />
       <div className="mt-2 flex items-baseline gap-2">
         <SkeletonBlock className="h-8 w-16 rounded-lg" />
@@ -154,7 +151,9 @@ export function ContentShellSkeleton({
   return (
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 lg:grid-cols-12">
       <div className="lg:col-span-8 xl:col-span-9">{children}</div>
-      {sidebar && <aside className="hidden space-y-4 lg:col-span-4 xl:col-span-3 lg:block">{sidebar}</aside>}
+      {sidebar && (
+        <aside className="hidden space-y-4 lg:col-span-4 xl:col-span-3 lg:block">{sidebar}</aside>
+      )}
     </div>
   );
 }

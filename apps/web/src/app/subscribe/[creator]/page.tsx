@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useSolana } from '../../../components/SolanaProvider';
 import { useWeb3 } from '../../../components/Web3Provider';
-import { useSubscription, formatBenefit, type TierInfo } from '../../../hooks/useSubscription';
+import { formatBenefit, type TierInfo, useSubscription } from '../../../hooks/useSubscription';
 
 function shortenAddress(addr: string): string {
   if (addr.length < 10) return addr;
@@ -45,8 +45,18 @@ const METHOD_OPTIONS = [
 
 const DEFAULT_TIERS: TierInfo[] = [
   { id: 'supporter', name: 'Supporter', price: 5, benefits: ['badge', 'early_access'] },
-  { id: 'member', name: 'Member', price: 15, benefits: ['badge', 'early_access', 'exclusive_content', 'discord'] },
-  { id: 'patron', name: 'Patron', price: 50, benefits: ['badge', 'early_access', 'exclusive_content', 'discord', '1on1', 'voting'] },
+  {
+    id: 'member',
+    name: 'Member',
+    price: 15,
+    benefits: ['badge', 'early_access', 'exclusive_content', 'discord'],
+  },
+  {
+    id: 'patron',
+    name: 'Patron',
+    price: 50,
+    benefits: ['badge', 'early_access', 'exclusive_content', 'discord', '1on1', 'voting'],
+  },
 ];
 
 export default function SubscribePage() {
@@ -55,29 +65,42 @@ export default function SubscribePage() {
 
   const { walletAddress } = useAuth();
   const { account: evmAccount, isConnected: evmConnected, connect: connectWallet } = useWeb3();
-  const { account: solanaAccount, isConnected: solanaConnected, connect: connectSolana, signAndSendTransaction } = useSolana();
+  const {
+    account: solanaAccount,
+    isConnected: solanaConnected,
+    connect: connectSolana,
+    signAndSendTransaction,
+  } = useSolana();
   const { getCreatorTiers, subscribeToCreator, confirmSubscription } = useSubscription();
 
   const [tiers, setTiers] = useState<TierInfo[]>(DEFAULT_TIERS);
   const [loading, setLoading] = useState(true);
   const [subscribeState, setSubscribeState] = useState<SubscribeState>({ step: 'select' });
 
-  const connectedWallet = evmConnected ? evmAccount : solanaConnected ? solanaAccount : walletAddress;
+  const connectedWallet = evmConnected
+    ? evmAccount
+    : solanaConnected
+      ? solanaAccount
+      : walletAddress;
   const chain = evmConnected ? 'ethereum' : solanaConnected ? 'solana' : 'ethereum';
 
   useEffect(() => {
     let cancelled = false;
-    getCreatorTiers(creator).then((result) => {
-      if (!cancelled) {
-        if (result.tiers.length > 0) {
-          setTiers(result.tiers);
+    getCreatorTiers(creator)
+      .then((result) => {
+        if (!cancelled) {
+          if (result.tiers.length > 0) {
+            setTiers(result.tiers);
+          }
+          setLoading(false);
         }
-        setLoading(false);
-      }
-    }).catch(() => {
-      if (!cancelled) setLoading(false);
-    });
-    return () => { cancelled = true; };
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [creator, getCreatorTiers]);
 
   const handleSelectTier = useCallback(
@@ -116,13 +139,7 @@ export default function SubscribePage() {
 
       try {
         // Step 1: Create pending subscription
-        const subResult = await subscribeToCreator(
-          creator,
-          chain,
-          tier.id,
-          tier.price,
-          method,
-        );
+        const subResult = await subscribeToCreator(creator, chain, tier.id, tier.price, method);
 
         if (!subResult.success) {
           throw new Error(subResult.error ?? 'Failed to create pending subscription');
@@ -160,11 +177,7 @@ export default function SubscribePage() {
         setSubscribeState({ step: 'confirming', tier });
 
         // Step 3: Confirm subscription
-        const confirmResult = await confirmSubscription(
-          creator,
-          txHash,
-          subResult.nonce,
-        );
+        const confirmResult = await confirmSubscription(creator, txHash, subResult.nonce);
 
         if (!confirmResult.success) {
           throw new Error(confirmResult.error ?? 'Confirmation failed');
@@ -184,9 +197,15 @@ export default function SubscribePage() {
       }
     },
     [
-      creator, chain, evmAccount, solanaAccount,
-      connectWallet, connectSolana, signAndSendTransaction,
-      subscribeToCreator, confirmSubscription,
+      creator,
+      chain,
+      evmAccount,
+      solanaAccount,
+      connectWallet,
+      connectSolana,
+      signAndSendTransaction,
+      subscribeToCreator,
+      confirmSubscription,
     ],
   );
 
@@ -221,22 +240,14 @@ export default function SubscribePage() {
           Support this creator and unlock exclusive content
         </p>
         {walletAddress && (
-          <p className="mt-2 text-xs text-gray-600">
-            Connected: {shortenAddress(walletAddress)}
-          </p>
+          <p className="mt-2 text-xs text-gray-600">Connected: {shortenAddress(walletAddress)}</p>
         )}
       </div>
 
       {subscribeState.step === 'connect_wallet' && (
         <div className="mb-6 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-4 text-center">
-          <p className="mb-3 text-sm text-yellow-400">
-            Connect your wallet to subscribe
-          </p>
-          <button
-            onClick={handleConnectWallet}
-            className="btn-primary text-sm"
-            type="button"
-          >
+          <p className="mb-3 text-sm text-yellow-400">Connect your wallet to subscribe</p>
+          <button onClick={handleConnectWallet} className="btn-primary text-sm" type="button">
             Connect Wallet
           </button>
         </div>
@@ -286,7 +297,8 @@ export default function SubscribePage() {
           </h2>
           <div className="rounded-2xl border border-degen-500/20 bg-degen-500/5 p-4">
             <p className="mb-3 text-sm text-degen-400">
-              Subscribe to <strong>{subscribeState.tier.name}</strong> — ${subscribeState.tier.price}/mo
+              Subscribe to <strong>{subscribeState.tier.name}</strong> — $
+              {subscribeState.tier.price}/mo
             </p>
             <div className="space-y-2">
               {METHOD_OPTIONS.map((m) => (
@@ -319,9 +331,7 @@ export default function SubscribePage() {
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] py-12 text-center">
           <div className="mb-4 inline-block animate-spin text-3xl">⚡</div>
           <p className="text-sm text-gray-400">Sign the transaction in your wallet...</p>
-          <p className="mt-1 text-xs text-gray-600">
-            Approve the payment in your connected wallet
-          </p>
+          <p className="mt-1 text-xs text-gray-600">Approve the payment in your connected wallet</p>
         </div>
       )}
 
@@ -345,10 +355,7 @@ export default function SubscribePage() {
           <p className="mt-1 text-xs text-gray-500">
             Expires: {new Date(subscribeState.expiresAt).toLocaleDateString()}
           </p>
-          <Link
-            href="/profile"
-            className="btn-primary mt-6 inline-block text-sm"
-          >
+          <Link href="/profile" className="btn-primary mt-6 inline-block text-sm">
             Go to Profile
           </Link>
         </div>

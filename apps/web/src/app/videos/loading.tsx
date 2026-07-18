@@ -1,4 +1,4 @@
-import { AspectRatio, HeaderSkeleton, Line, Badge } from '@/components/loading/PageSkeleton';
+import { AspectRatio, Badge, HeaderSkeleton, Line } from '@/components/loading/PageSkeleton';
 
 export default function VideosLoading() {
   return (

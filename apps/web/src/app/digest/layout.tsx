@@ -6,7 +6,12 @@ const digestBreadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Daily Digest', item: 'https://app.degenfeed.xyz/digest' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Daily Digest',
+      item: 'https://app.degenfeed.xyz/digest',
+    },
   ],
 };
 
@@ -15,8 +20,12 @@ export const metadata: Metadata = {
   description:
     'Daily and weekly crypto digest of the best web3 social content. Curated blockchain news summary, trending posts, and top discussions across Nostr, Farcaster, Lens, Bluesky, Mastodon.',
   keywords: [
-    'crypto daily digest', 'web3 news summary', 'blockchain daily roundup',
-    'crypto curation', 'web3 daily brief', 'cross protocol digest',
+    'crypto daily digest',
+    'web3 news summary',
+    'blockchain daily roundup',
+    'crypto curation',
+    'web3 daily brief',
+    'cross protocol digest',
     'crypto newsletter',
   ],
   openGraph: {
@@ -45,7 +54,11 @@ export const metadata: Metadata = {
 export default function DigestLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-digest" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(digestBreadcrumb) }} />
+      <Script
+        id="breadcrumb-digest"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(digestBreadcrumb) }}
+      />
       {children}
     </>
   );

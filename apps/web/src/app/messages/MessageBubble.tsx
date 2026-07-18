@@ -47,7 +47,11 @@ export function MessageBubble({
         >
           {/* Encrypted indicator */}
           {encrypted && (
-            <span className="inline-flex items-center text-[9px] opacity-60" role="img" aria-label="Encrypted">
+            <span
+              className="inline-flex items-center text-[9px] opacity-60"
+              role="img"
+              aria-label="Encrypted"
+            >
               <svg width="8" height="8" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <rect
                   x="3"

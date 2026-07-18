@@ -74,7 +74,7 @@ export function ContextualTooltip({
       if (timerRef.current) clearTimeout(timerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, timeout]);
+  }, [visible, timeout, handleDismiss]);
 
   const handleDismiss = useCallback(() => {
     setDismissing(true);
@@ -102,11 +102,7 @@ export function ContextualTooltip({
   if (!visible) return null;
 
   const alignClass =
-    align === 'right'
-      ? 'left-0'
-      : align === 'center'
-        ? 'left-1/2 -translate-x-1/2'
-        : 'right-0';
+    align === 'right' ? 'left-0' : align === 'center' ? 'left-1/2 -translate-x-1/2' : 'right-0';
 
   return (
     <div

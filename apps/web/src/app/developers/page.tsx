@@ -23,13 +23,27 @@ function Badge({ children, color = 'gray' }: { children: React.ReactNode; color?
     gray: 'bg-[var(--color-muted)] text-gray-400 border-[var(--color-border)]/30',
   };
   return (
-    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-medium ${colors[color] ?? colors.gray}`}>
+    <span
+      className={`inline-flex items-center rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-medium ${colors[color] ?? colors.gray}`}
+    >
       {children}
     </span>
   );
 }
 
-function Card({ href, title, desc, badge, external = false }: { href: string; title: string; desc: string; badge?: string; external?: boolean }) {
+function Card({
+  href,
+  title,
+  desc,
+  badge,
+  external = false,
+}: {
+  href: string;
+  title: string;
+  desc: string;
+  badge?: string;
+  external?: boolean;
+}) {
   return (
     <Link
       href={href}
@@ -52,7 +66,9 @@ function Integration({ name, desc, badge }: { name: string; desc: string; badge:
     <div className="rounded-lg border border-white/[0.03] bg-white/[0.01] px-3 py-2.5">
       <div className="flex items-center gap-2">
         <span className="font-mono text-xs text-degen-400">{name}</span>
-        <Badge color={badge === 'Stable' ? 'green' : badge === 'Beta' ? 'yellow' : 'gray'}>{badge}</Badge>
+        <Badge color={badge === 'Stable' ? 'green' : badge === 'Beta' ? 'yellow' : 'gray'}>
+          {badge}
+        </Badge>
       </div>
       <p className="mt-1 text-xs text-gray-500">{desc}</p>
     </div>
@@ -74,20 +90,27 @@ export default function DevelopersPage() {
             Build on <span className="text-degen-400">DegenFeed</span>
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-400">
-            Aggregate 9 decentralized social networks into one ranked feed. The DegenFeed API
-            gives you access to Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, Lemmy,
-            and RSS — all through a single authenticated endpoint.
+            Aggregate 9 decentralized social networks into one ranked feed. The DegenFeed API gives
+            you access to Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, Lemmy, and RSS
+            — all through a single authenticated endpoint.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/api-docs" className="rounded-lg bg-degen-500 px-5 py-2.5 text-sm font-semibold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_20px_rgba(34,197,94,0.3)]">
+            <Link
+              href="/api-docs"
+              className="rounded-lg bg-degen-500 px-5 py-2.5 text-sm font-semibold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_20px_rgba(34,197,94,0.3)]"
+            >
               Read the API docs →
             </Link>
-            <Link href="/profile/settings/api" className="rounded-lg border border-white/20 px-5 py-2.5 text-sm font-medium text-gray-300 transition-all hover:border-degen-500/30 hover:text-degen-400">
+            <Link
+              href="/profile/settings/api"
+              className="rounded-lg border border-white/20 px-5 py-2.5 text-sm font-medium text-gray-300 transition-all hover:border-degen-500/30 hover:text-degen-400"
+            >
               Generate an API key
             </Link>
             <a
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
-              target="_blank" rel="noopener noreferrer"
+              target="_blank"
+              rel="noopener noreferrer"
               rel="noopener noreferrer"
               className="rounded-lg border border-white/10 px-5 py-2.5 text-sm font-medium text-gray-500 transition-all hover:border-white/20 hover:text-gray-300"
             >
@@ -104,9 +127,24 @@ export default function DevelopersPage() {
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Quick Start</h2>
         <p className="mt-1 text-sm text-gray-500">Get up and running in minutes.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card href="/api-docs#authentication" title="Get an API key" desc="Generate a scoped API key from your profile settings in one click." badge="5 min" />
-          <Card href="/api-docs#sdks" title="Try the API" desc="curl, JavaScript, and Python examples to make your first request." badge="curl" />
-          <Card href="/api-docs#endpoints" title="Browse endpoints" desc="Full reference for all v1 endpoints — feed, search, identity, tips, and more." badge="Reference" />
+          <Card
+            href="/api-docs#authentication"
+            title="Get an API key"
+            desc="Generate a scoped API key from your profile settings in one click."
+            badge="5 min"
+          />
+          <Card
+            href="/api-docs#sdks"
+            title="Try the API"
+            desc="curl, JavaScript, and Python examples to make your first request."
+            badge="curl"
+          />
+          <Card
+            href="/api-docs#endpoints"
+            title="Browse endpoints"
+            desc="Full reference for all v1 endpoints — feed, search, identity, tips, and more."
+            badge="Reference"
+          />
         </div>
       </section>
 
@@ -121,10 +159,15 @@ export default function DevelopersPage() {
               npm install @degenfeed/api-client
             </div>
             <p className="mt-2 text-xs text-gray-500">
-              Full-featured client with type safety, auto-pagination, and rate limit handling.
-              Works in Node.js 18+, browsers, and Cloudflare Workers.
+              Full-featured client with type safety, auto-pagination, and rate limit handling. Works
+              in Node.js 18+, browsers, and Cloudflare Workers.
             </p>
-            <Link href="/api-docs#javascript" className="mt-3 inline-block text-xs font-medium text-degen-400 hover:underline">View example →</Link>
+            <Link
+              href="/api-docs#javascript"
+              className="mt-3 inline-block text-xs font-medium text-degen-400 hover:underline"
+            >
+              View example →
+            </Link>
           </div>
           <div className="rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
             <h3 className="font-semibold text-[var(--color-fg)]">Python</h3>
@@ -135,7 +178,12 @@ export default function DevelopersPage() {
               Async-first Python client with httpx, Pydantic models, and full type annotations.
               Python 3.10+ required.
             </p>
-            <Link href="/api-docs#python" className="mt-3 inline-block text-xs font-medium text-degen-400 hover:underline">View example →</Link>
+            <Link
+              href="/api-docs#python"
+              className="mt-3 inline-block text-xs font-medium text-degen-400 hover:underline"
+            >
+              View example →
+            </Link>
           </div>
         </div>
       </section>
@@ -143,7 +191,9 @@ export default function DevelopersPage() {
       {/* Example Apps */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Example Apps</h2>
-        <p className="mt-1 text-sm text-gray-500">Open-source projects built on the DegenFeed API.</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Open-source projects built on the DegenFeed API.
+        </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <Card
             href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
@@ -172,18 +222,21 @@ export default function DevelopersPage() {
       {/* Webhooks */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Webhooks</h2>
-        <p className="mt-1 text-sm text-gray-500">Receive real-time events when new content is published.</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Receive real-time events when new content is published.
+        </p>
         <div className="mt-4 rounded-2xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
           <p className="text-sm leading-relaxed text-gray-400">
-            Webhooks let you subscribe to real-time events from the DegenFeed network.
-            When new posts match your filters, we send an HTTP POST to your endpoint
-            within seconds.
+            Webhooks let you subscribe to real-time events from the DegenFeed network. When new
+            posts match your filters, we send an HTTP POST to your endpoint within seconds.
           </p>
           <div className="mt-4 space-y-3">
             <div className="rounded-lg border border-white/[0.03] bg-white/[0.01] p-3">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs font-bold text-blue-400">POST</span>
-                <code className="font-mono text-xs text-gray-400">→ your-webhook-url.com/events</code>
+                <code className="font-mono text-xs text-gray-400">
+                  → your-webhook-url.com/events
+                </code>
               </div>
               <pre className="mt-2 overflow-x-auto font-mono text-[11px] text-gray-500">{`{
   "event": "post.new",
@@ -195,7 +248,9 @@ export default function DevelopersPage() {
           </div>
           <div className="mt-4">
             <Badge color="yellow">Coming soon</Badge>
-            <span className="ml-2 text-xs text-gray-500">Webhook subscriptions will be available in the developer dashboard.</span>
+            <span className="ml-2 text-xs text-gray-500">
+              Webhook subscriptions will be available in the developer dashboard.
+            </span>
           </div>
         </div>
       </section>
@@ -205,22 +260,60 @@ export default function DevelopersPage() {
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Protocol Integrations</h2>
         <p className="mt-1 text-sm text-gray-500">All 9 networks available through a single API.</p>
         <div className="mt-4 space-y-1">
-          <Integration name="Nostr" desc="Kind 1 text notes, reactions, reposts, long-form articles. Schnorr signatures." badge="Stable" />
-          <Integration name="Farcaster" desc="Ed25519-signed protobuf messages. Cast Add, Reactions, Replies, Frames." badge="Stable" />
-          <Integration name="Lens" desc="Polygon-based social graph via GraphQL v2. Profiles, publications, mirrors." badge="Stable" />
-          <Integration name="Bluesky" desc="AT Protocol XRPC methods. Full CRUD with DID-based identity." badge="Stable" />
-          <Integration name="Mastodon / ActivityPub" desc="GotoSocial REST API v1. Full Fediverse federation." badge="Stable" />
-          <Integration name="Lemmy" desc="REST API v3 for communities and posts. Fediverse communities." badge="Beta" />
-          <Integration name="Threads" desc="Meta ActivityPub integration with HTML parsing. Read-only." badge="Read-only" />
-          <Integration name="Reddit" desc="RSS + JSON API + community frontends. 91 default subreddits." badge="Stable" />
-          <Integration name="RSS / Atom" desc="550+ feeds: crypto, tech, AI, science, finance. Custom adapters." badge="Stable" />
+          <Integration
+            name="Nostr"
+            desc="Kind 1 text notes, reactions, reposts, long-form articles. Schnorr signatures."
+            badge="Stable"
+          />
+          <Integration
+            name="Farcaster"
+            desc="Ed25519-signed protobuf messages. Cast Add, Reactions, Replies, Frames."
+            badge="Stable"
+          />
+          <Integration
+            name="Lens"
+            desc="Polygon-based social graph via GraphQL v2. Profiles, publications, mirrors."
+            badge="Stable"
+          />
+          <Integration
+            name="Bluesky"
+            desc="AT Protocol XRPC methods. Full CRUD with DID-based identity."
+            badge="Stable"
+          />
+          <Integration
+            name="Mastodon / ActivityPub"
+            desc="GotoSocial REST API v1. Full Fediverse federation."
+            badge="Stable"
+          />
+          <Integration
+            name="Lemmy"
+            desc="REST API v3 for communities and posts. Fediverse communities."
+            badge="Beta"
+          />
+          <Integration
+            name="Threads"
+            desc="Meta ActivityPub integration with HTML parsing. Read-only."
+            badge="Read-only"
+          />
+          <Integration
+            name="Reddit"
+            desc="RSS + JSON API + community frontends. 91 default subreddits."
+            badge="Stable"
+          />
+          <Integration
+            name="RSS / Atom"
+            desc="550+ feeds: crypto, tech, AI, science, finance. Custom adapters."
+            badge="Stable"
+          />
         </div>
       </section>
 
       {/* Changelog */}
       <section className="mt-16">
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Changelog</h2>
-        <p className="mt-1 text-sm text-gray-500">Recent changes to the API and developer platform.</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Recent changes to the API and developer platform.
+        </p>
         <div className="mt-4 space-y-4">
           <div className="rounded-lg border border-white/[0.03] bg-white/[0.01] p-4">
             <div className="flex items-center gap-2">
@@ -228,10 +321,20 @@ export default function DevelopersPage() {
               <span className="text-xs text-gray-500">July 18, 2026</span>
             </div>
             <ul className="mt-2 space-y-1 text-sm text-gray-400 list-disc list-inside">
-              <li>Stable v1 API with <code className="rounded bg-[var(--color-muted)] px-1 font-mono text-xs">/v1/</code> prefix</li>
+              <li>
+                Stable v1 API with{' '}
+                <code className="rounded bg-[var(--color-muted)] px-1 font-mono text-xs">/v1/</code>{' '}
+                prefix
+              </li>
               <li>API key authentication with scoped permissions</li>
               <li>Tiered rate limiting (1,000 free / 10,000 premium req/hour)</li>
-              <li>Legacy <code className="rounded bg-[var(--color-muted)] px-1 font-mono text-xs">/api/*</code> routes deprecated — sunset November 1, 2026</li>
+              <li>
+                Legacy{' '}
+                <code className="rounded bg-[var(--color-muted)] px-1 font-mono text-xs">
+                  /api/*
+                </code>{' '}
+                routes deprecated — sunset November 1, 2026
+              </li>
               <li>Developer portal and API documentation</li>
               <li>JavaScript and Python SDK releases</li>
             </ul>
@@ -256,9 +359,22 @@ export default function DevelopersPage() {
         <h2 className="text-xl font-bold text-[var(--color-fg)]">Developer Community</h2>
         <p className="mt-1 text-sm text-gray-500">Connect with other builders.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <Card href="/c/developers" title="Community Chat" desc="Discussion, support, and show-and-tell in the DegenFeed developer community." />
-          <Card href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" external title="GitHub Issues" desc="Report bugs, request features, or contribute to the open-source codebase." />
-          <Card href="/newsletter" title="Dev Newsletter" desc="Monthly updates on API changes, new protocols, and SDK releases." />
+          <Card
+            href="/c/developers"
+            title="Community Chat"
+            desc="Discussion, support, and show-and-tell in the DegenFeed developer community."
+          />
+          <Card
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            external
+            title="GitHub Issues"
+            desc="Report bugs, request features, or contribute to the open-source codebase."
+          />
+          <Card
+            href="/newsletter"
+            title="Dev Newsletter"
+            desc="Monthly updates on API changes, new protocols, and SDK releases."
+          />
         </div>
       </section>
 
@@ -266,8 +382,18 @@ export default function DevelopersPage() {
         <p className="text-xs text-gray-600">
           DegenFeed is a product of <strong className="text-gray-500">Rug Munch Media LLC</strong>.
           MIT Licensed. Built on open protocols.{' '}
-          <Link href="/api-docs" className="text-degen-400 underline">API Documentation</Link> ·{' '}
-          <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener noreferrer" className="text-degen-400 underline">Source Code</a>
+          <Link href="/api-docs" className="text-degen-400 underline">
+            API Documentation
+          </Link>{' '}
+          ·{' '}
+          <a
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-degen-400 underline"
+          >
+            Source Code
+          </a>
         </p>
       </div>
     </div>

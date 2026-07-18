@@ -49,17 +49,20 @@ export default function AboutPage() {
 
       <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">3. Who Built This</h2>
       <p className="mb-4">
-        DegenFeed is a product of <strong className="text-[var(--color-fg)]">Rug Munch Media LLC</strong>, a
-        Wyoming limited liability company. Built by crypto native engineers who live and breathe
-        on-chain. This is not a VC- backed startup — it is an independent, self-funded project by
-        people who actually use the protocols they build for.
+        DegenFeed is a product of{' '}
+        <strong className="text-[var(--color-fg)]">Rug Munch Media LLC</strong>, a Wyoming limited
+        liability company. Built by crypto native engineers who live and breathe on-chain. This is
+        not a VC- backed startup — it is an independent, self-funded project by people who actually
+        use the protocols they build for.
       </p>
 
       <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">4. Open Source</h2>
       <p className="mb-4">
         DegenFeed is licensed under the{' '}
-        <strong className="text-[var(--color-fg)]">GNU Affero General Public License v3.0 (AGPL-3.0)</strong>.
-        Source code is available at{' '}
+        <strong className="text-[var(--color-fg)]">
+          GNU Affero General Public License v3.0 (AGPL-3.0)
+        </strong>
+        . Source code is available at{' '}
         <a
           href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
           className="text-degen-400 underline"

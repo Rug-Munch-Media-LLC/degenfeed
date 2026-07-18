@@ -1,6 +1,5 @@
 import {
   ContentShellSkeleton,
-  HeaderSkeleton,
   ListSkeleton,
   SidebarSkeleton,
 } from '@/components/loading/PageSkeleton';
@@ -9,7 +8,10 @@ export default function FeedLoading() {
   return (
     <ContentShellSkeleton sidebar={<SidebarSkeleton />}>
       {/* Tabs skeleton */}
-      <div className="mb-4 flex gap-4 border-b pb-3" style={{ borderColor: 'var(--color-glass-border)' }}>
+      <div
+        className="mb-4 flex gap-4 border-b pb-3"
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         {['For You', 'Following', 'Everything'].map((t) => (
           <div
             key={t}

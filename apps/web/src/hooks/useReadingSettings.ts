@@ -17,14 +17,18 @@ function getStored(): ReadingSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw) as ReadingSettings;
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return { fontSize: 'md', lineSpacing: 'comfortable' };
 }
 
 function store(settings: ReadingSettings): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 function subscribe(cb: () => void): () => void {

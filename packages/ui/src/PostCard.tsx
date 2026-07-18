@@ -603,7 +603,7 @@ export const PostCard = memo(function PostCard({
               post.author.avatarUrl ||
               'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23333%22/%3E%3Ctext x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22%3E%40%3C/text%3E%3C/svg%3E'
             }
-            alt={post.author.displayName}
+            alt={`Avatar of ${post.author.displayName}`}
             width={32}
             height={32}
             className="avatar h-8 w-8 rounded-full bg-[var(--color-muted)] object-cover"
@@ -964,7 +964,8 @@ export const PostCard = memo(function PostCard({
                     ? 'bg-degen-500/20 text-degen-400'
                     : 'border border-[var(--color-border)] text-gray-500 hover:border-degen-500/30 hover:text-degen-400'
                 }`}
-                aria-label={following ? 'Unfollow' : 'Follow'}
+                aria-label={following ? `Unfollow ${post.author.handles[post.protocol] ?? post.author.displayName}` : `Follow ${post.author.handles[post.protocol] ?? post.author.displayName}`}
+                aria-pressed={following}
                 title={following ? 'Unfollow' : 'Follow'}
               >
                 {following ? '✓ Following' : '+ Follow'}
@@ -977,7 +978,8 @@ export const PostCard = memo(function PostCard({
                     ? 'bg-red-500/20 text-red-400'
                     : 'border border-[var(--color-border)] text-gray-600 hover:border-red-500/30 hover:text-red-400'
                 }`}
-                aria-label={muted ? 'Unmute' : 'Mute'}
+                aria-label={muted ? `Unmute ${post.author.handles[post.protocol] ?? post.author.displayName}` : `Mute ${post.author.handles[post.protocol] ?? post.author.displayName}`}
+                aria-pressed={muted}
                 title={muted ? 'Unmute author' : 'Mute author'}
               >
                 {muted ? '🔇 Muted' : '🔇'}
@@ -1073,6 +1075,7 @@ export const PostCard = memo(function PostCard({
                 e.stopPropagation();
                 setShowFullText(true);
               }}
+              aria-label="Show more"
             >
               Show more
             </button>
@@ -1095,20 +1098,20 @@ export const PostCard = memo(function PostCard({
               const frames = post.embeds.filter((e) => e.kind === 'frame');
               return (
                 <>
-                  {images.length > 0 && <ImageGrid images={images} />}
+                  {images.length > 0 && <ImageGrid images={images} authorName={post.author.displayName} />}
                   {frames.map((embed) => (
-                    <FrameCard key={`frame-${embed.url}`} url={embed.url} />
+                    <FrameCard key={`frame-${embed.url}`} url={embed.url} authorName={post.author.displayName} />
                   ))}
                   {frames.length === 0 &&
                     post.protocol === 'farcaster' &&
                     links.length > 0 &&
-                    links[0]?.url && <FrameCard url={links[0].url} />}
+                    links[0]?.url && <FrameCard url={links[0].url} authorName={post.author.displayName} />}
                   {links.map((embed) => {
                     const linkVideoInfo = parseVideoUrl(embed.url);
                     if (linkVideoInfo) {
                       return <VideoEmbedCard key={`link-video-${embed.url}`} videoInfo={linkVideoInfo} />;
                     }
-                    return <LinkPreview key={`link-${embed.url}`} embed={embed} />;
+                    return <LinkPreview key={`link-${embed.url}`} embed={embed} authorName={post.author.displayName} />;
                   })}
                   {videos.map((embed) => {
                     const videoInfo = parseVideoUrl(embed.url);

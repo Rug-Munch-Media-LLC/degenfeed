@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 interface CodeBlockProps {
   children: string;
@@ -74,7 +74,9 @@ export function CodeTabs({ tabs }: CodeTabsProps) {
           </button>
         ))}
       </div>
-      {active && <CodeBlock lang={active.lang ?? tabLabelToLang(active.label)}>{active.code}</CodeBlock>}
+      {active && (
+        <CodeBlock lang={active.lang ?? tabLabelToLang(active.label)}>{active.code}</CodeBlock>
+      )}
     </div>
   );
 }

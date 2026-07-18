@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 const faqs = [
   {
     q: 'What is DegenFeed?',
-    a: 'DegenFeed is an open-source, multi-protocol social aggregator for web3. It pulls posts from Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified, ranked timeline. No account needed to browse — just open the app and see what\'s trending across every decentralized social network at once. Connect a wallet to post, tip, and engage across protocols.',
+    a: "DegenFeed is an open-source, multi-protocol social aggregator for web3. It pulls posts from Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified, ranked timeline. No account needed to browse — just open the app and see what's trending across every decentralized social network at once. Connect a wallet to post, tip, and engage across protocols.",
   },
   {
     q: 'How is DegenFeed different from Twitter/X?',
@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: 'How does tipping work?',
-    a: 'Tap the tip button on any post to send ETH, SOL, or USDC directly to the creator\'s wallet. DegenFeed uses on-chain transactions — no platform takes a cut. For Nostr posts, Lightning Network zaps are also supported via LNURL. To receive tips, connect a wallet with your account. Tips appear on your analytics dashboard and can be withdrawn at any time. Tipping is available to all users with a connected wallet.',
+    a: "Tap the tip button on any post to send ETH, SOL, or USDC directly to the creator's wallet. DegenFeed uses on-chain transactions — no platform takes a cut. For Nostr posts, Lightning Network zaps are also supported via LNURL. To receive tips, connect a wallet with your account. Tips appear on your analytics dashboard and can be withdrawn at any time. Tipping is available to all users with a connected wallet.",
   },
   {
     q: 'Is DegenFeed free?',
@@ -37,7 +37,7 @@ const faqs = [
   },
   {
     q: 'What is a df:// URI?',
-    a: 'A df:// URI is a DegenFeed universal resource identifier that can reference posts, profiles, communities, or spaces across any supported protocol. For example, df://post/nostr:note1abc... links to a specific Nostr note through DegenFeed\'s resolver. These URIs work anywhere you\'d paste a link — DegenFeed, other apps, or even Twitter/X. When someone opens a df:// link, DegenFeed resolves it to the canonical content regardless of which protocol it originated on.',
+    a: "A df:// URI is a DegenFeed universal resource identifier that can reference posts, profiles, communities, or spaces across any supported protocol. For example, df://post/nostr:note1abc... links to a specific Nostr note through DegenFeed's resolver. These URIs work anywhere you'd paste a link — DegenFeed, other apps, or even Twitter/X. When someone opens a df:// link, DegenFeed resolves it to the canonical content regardless of which protocol it originated on.",
   },
   {
     q: 'How do I create a community?',
@@ -57,7 +57,7 @@ const faqs = [
   },
   {
     q: 'Can I self-host DegenFeed?',
-    a: 'Yes. DegenFeed is AGPL-3.0 licensed and designed for easy self-hosting. Clone the repo, run pnpm install && pnpm dev, and you\'re running your own instance. The recommended deployment is Cloudflare Pages + Workers (free-tier eligible). You\'ll need two KV namespaces for caching and subscriptions. Full documentation is available at /docs including environment variables and deployment guides.',
+    a: "Yes. DegenFeed is AGPL-3.0 licensed and designed for easy self-hosting. Clone the repo, run pnpm install && pnpm dev, and you're running your own instance. The recommended deployment is Cloudflare Pages + Workers (free-tier eligible). You'll need two KV namespaces for caching and subscriptions. Full documentation is available at /docs including environment variables and deployment guides.",
   },
   {
     q: 'How do I get my content featured?',
@@ -93,8 +93,8 @@ export function FAQClient() {
           Frequently Asked Questions
         </h1>
         <p className="mt-2 text-sm text-gray-400">
-          Everything you need to know about DegenFeed. Can&apos;t find what you&apos;re looking
-          for? Email{' '}
+          Everything you need to know about DegenFeed. Can&apos;t find what you&apos;re looking for?
+          Email{' '}
           <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
             admin@rugmunch.io
           </a>
@@ -174,7 +174,8 @@ export function FAQClient() {
           or join the community on{' '}
           <a
             href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
-            target="_blank" rel="noopener noreferrer"
+            target="_blank"
+            rel="noopener noreferrer"
             rel="noopener noreferrer"
             className="text-degen-400 underline"
           >

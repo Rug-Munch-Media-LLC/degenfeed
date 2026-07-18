@@ -16,7 +16,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name must be 48 characters or fewer' }, { status: 400 });
     }
 
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 48);
 
     const community = {
       id: slug,

@@ -245,8 +245,12 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         {/* ── Center: Main content ── */}
         <main
           id="main"
+          aria-label="Main content"
+          tabIndex={-1}
           className={`relative z-10 min-h-screen flex-1 animate-page-enter ${pathname === '/' ? 'w-full max-w-none' : 'w-full max-w-[600px] border-r border-[var(--color-glass-border)]'}`}
         >
+          {/* Page announcements for screen readers */}
+          <div aria-live="polite" aria-atomic="true" className="sr-only" role="status" />
           {/* Mobile top bar */}
           <MobileTopBar onMenuToggle={() => setMobileDrawerOpen(true)} />
 

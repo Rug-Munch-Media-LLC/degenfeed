@@ -1,7 +1,7 @@
 'use client';
 
-import type { CrossProtocolCommunity } from '@degenfeed/utils';
 import { ErrorBoundary } from '@degenfeed/ui';
+import type { CrossProtocolCommunity } from '@degenfeed/utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -29,7 +29,10 @@ export default function CommunitiesPage() {
       try {
         const res = await fetch('/api/communities', { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as { data: CrossProtocolCommunity[]; meta: { total: number } };
+        const data = (await res.json()) as {
+          data: CrossProtocolCommunity[];
+          meta: { total: number };
+        };
         if (!cancelled) setCommunities(data.data ?? []);
       } catch {
         /* ignore */
@@ -76,10 +79,7 @@ export default function CommunitiesPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Link
-                href="/c/discover"
-                className="btn-secondary text-sm"
-              >
+              <Link href="/c/discover" className="btn-secondary text-sm">
                 🌐 Browse Fediverse
               </Link>
               <button
@@ -164,8 +164,12 @@ export default function CommunitiesPage() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-[var(--color-fg)] truncate">{community.displayName}</h3>
-                    <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{community.description}</p>
+                    <h3 className="font-semibold text-[var(--color-fg)] truncate">
+                      {community.displayName}
+                    </h3>
+                    <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">
+                      {community.description}
+                    </p>
                   </div>
                 </div>
 
@@ -239,7 +243,12 @@ function CreateCommunityModal({
           description: description.trim(),
         }),
       });
-      const data = (await res.json()) as { success?: boolean; community?: { name: string }; error?: string; slug?: string };
+      const data = (await res.json()) as {
+        success?: boolean;
+        community?: { name: string };
+        error?: string;
+        slug?: string;
+      };
       if (!res.ok) {
         setError(data.error ?? 'Failed to create community');
         return;
@@ -270,7 +279,9 @@ function CreateCommunityModal({
               required
               maxLength={48}
             />
-            <p className="mt-1 text-[10px] text-gray-600">URL-safe slug (letters, numbers, hyphens)</p>
+            <p className="mt-1 text-[10px] text-gray-600">
+              URL-safe slug (letters, numbers, hyphens)
+            </p>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-400">Display Name</label>

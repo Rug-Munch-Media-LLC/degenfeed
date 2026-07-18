@@ -23,7 +23,7 @@ interface SavedPosition {
  * @param enabled       Enable position saving (default true)
  */
 export function useFeedPosition(
-  containerRef: React.RefObject<HTMLElement | null>,
+  _containerRef: React.RefObject<HTMLElement | null>,
   enabled = true,
 ) {
   const restored = useRef(false);
@@ -53,10 +53,7 @@ export function useFeedPosition(
       const entry = JSON.parse(raw) as SavedPosition;
 
       // Only restore if same page and within expiry window
-      if (
-        entry.pathname === window.location.pathname &&
-        Date.now() - entry.timestamp < EXPIRY_MS
-      ) {
+      if (entry.pathname === window.location.pathname && Date.now() - entry.timestamp < EXPIRY_MS) {
         restored.current = true;
         // Use requestAnimationFrame to ensure DOM is ready
         requestAnimationFrame(() => {

@@ -3,8 +3,8 @@
 import { ErrorBoundary, LeaderboardCard, type LeaderboardCardEntry } from '@degenfeed/ui';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { retryFetch } from '../../lib/retryFetch';
 import { getCached, setCache } from '../../lib/fetchWithCache';
+import { retryFetch } from '../../lib/retryFetch';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -109,7 +109,10 @@ function LeaderboardSkeleton({ count = 10 }: { count?: number }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 animate-pulse">
+        <div
+          key={i}
+          className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 animate-pulse"
+        >
           <div className="h-9 w-9 rounded-xl bg-[var(--color-overlay)]" />
           <div className="h-10 w-10 rounded-full bg-[var(--color-overlay)]" />
           <div className="flex-1 space-y-2">
@@ -127,7 +130,10 @@ function TrendingSkeleton({ count = 5 }: { count?: number }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 animate-pulse">
+        <div
+          key={i}
+          className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 animate-pulse"
+        >
           <div className="mb-2 h-4 w-3/4 rounded bg-[var(--color-overlay)]" />
           <div className="mb-1 h-3 w-1/2 rounded bg-[var(--color-overlay)]" />
           <div className="h-3 w-1/4 rounded bg-[var(--color-overlay)]" />
@@ -141,7 +147,10 @@ function CommunitiesSkeleton({ count = 8 }: { count?: number }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 animate-pulse">
+        <div
+          key={i}
+          className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 animate-pulse"
+        >
           <div className="h-10 w-10 rounded-xl bg-[var(--color-overlay)]" />
           <div className="flex-1 space-y-2">
             <div className="h-4 w-40 rounded bg-[var(--color-overlay)]" />
@@ -195,9 +204,7 @@ function TrendingCard({ entry }: { entry: TrendingEntry }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex items-center gap-2">
-            <span className="text-xs font-bold text-[var(--color-muted)]">
-              #{entry.rank}
-            </span>
+            <span className="text-xs font-bold text-[var(--color-muted)]">#{entry.rank}</span>
             <span className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
               <PlatformIcon platform={entry.platform} />
               {entry.platform}
@@ -206,9 +213,7 @@ function TrendingCard({ entry }: { entry: TrendingEntry }) {
           <h3 className="text-sm font-semibold text-[var(--color-fg)] line-clamp-2">
             {entry.title}
           </h3>
-          <p className="mt-1 text-xs text-[var(--color-muted)]">
-            by {entry.authorName}
-          </p>
+          <p className="mt-1 text-xs text-[var(--color-muted)]">by {entry.authorName}</p>
         </div>
         <div className="shrink-0 text-right">
           <div className="text-sm font-bold text-degen-400">
@@ -257,7 +262,10 @@ function CommunityCard({ entry }: { entry: CommunityEntry }) {
           <span aria-hidden="true">·</span>
           <span>{formatNumber(entry.postCount)} posts</span>
           <span aria-hidden="true">·</span>
-          <span><PlatformIcon platform={entry.platform} />{entry.platform}</span>
+          <span>
+            <PlatformIcon platform={entry.platform} />
+            {entry.platform}
+          </span>
         </div>
       </div>
       <div className="shrink-0 text-right">
@@ -270,7 +278,11 @@ function CommunityCard({ entry }: { entry: CommunityEntry }) {
 
 // ── Tab Button ────────────────────────────────────────────────────────────
 
-function TabButton({ active, onClick, children }: {
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
@@ -290,7 +302,11 @@ function TabButton({ active, onClick, children }: {
   );
 }
 
-function FilterPill<T extends string>({ active, onClick, children }: {
+function FilterPill<_T extends string>({
+  active,
+  onClick,
+  children,
+}: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
@@ -363,7 +379,9 @@ export default function LeaderboardPage() {
     } catch (err) {
       // Graceful degradation: show cached on failure
       const cacheKey = `leaderboard_${activeTab}`;
-      const cached = getCached<LeaderboardResponse | TrendingResponse | CommunitiesResponse>(cacheKey);
+      const cached = getCached<LeaderboardResponse | TrendingResponse | CommunitiesResponse>(
+        cacheKey,
+      );
       if (cached) {
         if (activeTab === 'creators') setCreatorsData(cached as LeaderboardResponse);
         else if (activeTab === 'tippers') setTippersData(cached as LeaderboardResponse);
@@ -394,13 +412,14 @@ export default function LeaderboardPage() {
     };
   }, [fetchData]);
 
-  const currentData = activeTab === 'creators'
-    ? creatorsData
-    : activeTab === 'tippers'
-      ? tippersData
-      : activeTab === 'trending'
-        ? trendingData
-        : communitiesData;
+  const currentData =
+    activeTab === 'creators'
+      ? creatorsData
+      : activeTab === 'tippers'
+        ? tippersData
+        : activeTab === 'trending'
+          ? trendingData
+          : communitiesData;
 
   return (
     <ErrorBoundary>
@@ -442,11 +461,7 @@ export default function LeaderboardPage() {
               </span>
               <div className="flex flex-wrap gap-1">
                 {PERIODS.map((p) => (
-                  <FilterPill
-                    key={p.id}
-                    active={period === p.id}
-                    onClick={() => setPeriod(p.id)}
-                  >
+                  <FilterPill key={p.id} active={period === p.id} onClick={() => setPeriod(p.id)}>
                     {p.label}
                   </FilterPill>
                 ))}
@@ -460,11 +475,7 @@ export default function LeaderboardPage() {
             </span>
             <div className="flex flex-wrap gap-1">
               {PLATFORMS.map((p) => (
-                <FilterPill
-                  key={p.id}
-                  active={platform === p.id}
-                  onClick={() => setPlatform(p.id)}
-                >
+                <FilterPill key={p.id} active={platform === p.id} onClick={() => setPlatform(p.id)}>
                   {p.label}
                 </FilterPill>
               ))}
@@ -519,7 +530,8 @@ export default function LeaderboardPage() {
                 variant={activeTab === 'creators' ? 'creators' : 'tippers'}
               />
             ))}
-            {((activeTab === 'creators' ? creatorsData : tippersData)?.entries.length ?? 0) === 0 && (
+            {((activeTab === 'creators' ? creatorsData : tippersData)?.entries.length ?? 0) ===
+              0 && (
               <p className="rounded-2xl border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-muted)]">
                 No entries found for this period.
               </p>

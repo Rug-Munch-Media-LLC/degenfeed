@@ -67,7 +67,11 @@ const ANIM_STYLES = `
 
 function LiveDot({ className = '' }: { className?: string }) {
   return (
-    <span className={`relative flex h-2.5 w-2.5 items-center justify-center ${className}`} role="img" aria-label="Live">
+    <span
+      className={`relative flex h-2.5 w-2.5 items-center justify-center ${className}`}
+      role="img"
+      aria-label="Live"
+    >
       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
       <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
     </span>
@@ -93,7 +97,15 @@ function Waveform({ className = '' }: { className?: string }) {
   );
 }
 
-function AvatarImg({ src, name, className = '' }: { src?: string; name: string; className?: string }) {
+function AvatarImg({
+  src,
+  name,
+  className = '',
+}: {
+  src?: string;
+  name: string;
+  className?: string;
+}) {
   if (src) {
     return <img src={src} alt={name} className={`rounded-full object-cover ${className}`} />;
   }
@@ -133,21 +145,49 @@ function formatScheduledDate(iso: string): string {
   const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   if (d.toDateString() === now.toDateString()) return `Today at ${time}`;
   if (d.toDateString() === tomorrow.toDateString()) return `Tomorrow at ${time}`;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 function SpacesIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-500">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      className="text-degen-500"
+    >
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
       <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
       <circle cx="12" cy="12" r="2" fill="currentColor" />
-      <path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+      <path
+        d="M12 3v3M12 18v3M3 12h3M18 12h3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        opacity="0.4"
+      />
     </svg>
   );
 }
 
-function SectionHeader({ icon, title, count, accent }: { icon: React.ReactNode; title: string; count?: number; accent?: string }) {
+function SectionHeader({
+  icon,
+  title,
+  count,
+  accent,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  count?: number;
+  accent?: string;
+}) {
   return (
     <div className="mb-4 flex items-center gap-2">
       {icon}
@@ -158,7 +198,9 @@ function SectionHeader({ icon, title, count, accent }: { icon: React.ReactNode; 
         </span>
       )}
       {accent && (
-        <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-degen-500">{accent}</span>
+        <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-degen-500">
+          {accent}
+        </span>
       )}
     </div>
   );
@@ -175,12 +217,20 @@ function LiveSpaceCard({ space, onJoin }: { space: SpaceItem; onJoin: (id: strin
       {/* Host row */}
       <div className="mb-3 flex items-start justify-between">
         <div className="flex items-center gap-2.5">
-          <AvatarImg src={space.hostAvatarUrl} name={space.hostName} className="h-9 w-9 ring-2 ring-degen-500/20" />
+          <AvatarImg
+            src={space.hostAvatarUrl}
+            name={space.hostName}
+            className="h-9 w-9 ring-2 ring-degen-500/20"
+          />
           <div className="min-w-0">
-            <p className="truncate text-xs font-semibold text-[var(--color-fg)]">{space.hostName}</p>
+            <p className="truncate text-xs font-semibold text-[var(--color-fg)]">
+              {space.hostName}
+            </p>
             <div className="mt-0.5 flex items-center gap-1.5">
               <LiveDot />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">LIVE</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
+                LIVE
+              </span>
               <span className="text-[10px] text-gray-600">· {formatDuration(space.createdAt)}</span>
             </div>
           </div>
@@ -188,7 +238,9 @@ function LiveSpaceCard({ space, onJoin }: { space: SpaceItem; onJoin: (id: strin
       </div>
 
       {/* Topic */}
-      <h3 className="mb-3 line-clamp-2 text-sm font-bold leading-snug text-[var(--color-fg)]">{space.title}</h3>
+      <h3 className="mb-3 line-clamp-2 text-sm font-bold leading-snug text-[var(--color-fg)]">
+        {space.title}
+      </h3>
 
       {/* Waveform + listeners */}
       <div className="mb-3 flex items-center gap-2">
@@ -228,7 +280,13 @@ function LiveSpaceCard({ space, onJoin }: { space: SpaceItem; onJoin: (id: strin
 
 // ─── UpcomingSpaceCard ────────────────────────────────────────────
 
-function UpcomingSpaceCard({ space, onReminder }: { space: SpaceItem; onReminder: (id: string) => void }) {
+function UpcomingSpaceCard({
+  space,
+  onReminder,
+}: {
+  space: SpaceItem;
+  onReminder: (id: string) => void;
+}) {
   const [reminded, setReminded] = useState(false);
   return (
     <div className="flex flex-col rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5 transition-all duration-200 hover:border-[var(--color-border)] hover:bg-[var(--color-card-hover)]">
@@ -244,9 +302,18 @@ function UpcomingSpaceCard({ space, onReminder }: { space: SpaceItem; onReminder
 
       {/* Schedule */}
       <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-cyan-400">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-          <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
           <line x1="3" y1="10" x2="21" y2="10" />
         </svg>
         <span>{space.scheduledAt ? formatScheduledDate(space.scheduledAt) : 'TBD'}</span>
@@ -270,7 +337,10 @@ function UpcomingSpaceCard({ space, onReminder }: { space: SpaceItem; onReminder
 
       <button
         type="button"
-        onClick={() => { setReminded(true); onReminder(space.id); }}
+        onClick={() => {
+          setReminded(true);
+          onReminder(space.id);
+        }}
         disabled={reminded}
         className={`mt-auto w-full rounded-xl px-4 py-2.5 text-xs font-semibold transition-all duration-200 ${
           reminded
@@ -280,14 +350,30 @@ function UpcomingSpaceCard({ space, onReminder }: { space: SpaceItem; onReminder
       >
         {reminded ? (
           <span className="flex items-center justify-center gap-1.5">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
             Reminder Set
           </span>
         ) : (
           <span className="flex items-center justify-center gap-1.5">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
@@ -305,7 +391,11 @@ function PastSpaceCard({ space }: { space: SpaceItem }) {
   return (
     <div className="flex flex-col rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)]/50 p-5 opacity-70 transition-all duration-200 hover:border-[var(--color-border)] hover:opacity-100">
       <div className="mb-3 flex items-start gap-3">
-        <AvatarImg src={space.hostAvatarUrl} name={space.hostName} className="h-10 w-10 shrink-0 opacity-70" />
+        <AvatarImg
+          src={space.hostAvatarUrl}
+          name={space.hostName}
+          className="h-10 w-10 shrink-0 opacity-70"
+        />
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-bold text-[var(--color-fg)]">{space.title}</h3>
           <p className="mt-0.5 text-xs text-gray-500">
@@ -321,7 +411,15 @@ function PastSpaceCard({ space }: { space: SpaceItem }) {
           rel="noopener noreferrer"
           className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2.5 text-xs font-semibold text-[var(--color-fg)] transition-all hover:border-[var(--color-border)] hover:bg-[var(--color-muted)]/20"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden="true"
+          >
             <polygon points="5 3 19 12 5 21 5 3" />
           </svg>
           Listen to Recording
@@ -337,13 +435,22 @@ function PastSpaceCard({ space }: { space: SpaceItem }) {
 
 // ─── EmptyState ───────────────────────────────────────────────────
 
-function EmptyState({ icon, title, subtitle, action }: {
-  icon: string; title: string; subtitle: string;
+function EmptyState({
+  icon,
+  title,
+  subtitle,
+  action,
+}: {
+  icon: string;
+  title: string;
+  subtitle: string;
   action?: { label: string; onClick: () => void };
 }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-glass-border)] bg-[var(--color-card)]/30 px-4 py-12">
-      <span className="mb-4 text-3xl opacity-25" aria-hidden="true">{icon}</span>
+      <span className="mb-4 text-3xl opacity-25" aria-hidden="true">
+        {icon}
+      </span>
       <p className="text-sm font-semibold text-[var(--color-fg)]">{title}</p>
       <p className="mt-1 max-w-xs text-center text-xs text-gray-500">{subtitle}</p>
       {action && (
@@ -375,7 +482,10 @@ function LiveSkeleton() {
       <div className="mb-4 h-4 w-1/2 animate-pulse rounded bg-[var(--color-muted)]/15" />
       <div className="mb-4 flex gap-[2px]">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-3 w-[2px] animate-pulse rounded-full bg-[var(--color-muted)]/20" />
+          <div
+            key={i}
+            className="h-3 w-[2px] animate-pulse rounded-full bg-[var(--color-muted)]/20"
+          />
         ))}
       </div>
       <div className="h-10 w-full animate-pulse rounded-xl bg-[var(--color-muted)]/10" />
@@ -449,13 +559,20 @@ export default function SpacesPage() {
   useEffect(() => {
     fetchSpaces();
     pollRef.current = setInterval(fetchSpaces, 15000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, [fetchSpaces]);
 
   const handleJoin = useCallback(async (id: string) => {
     try {
-      await fetch(`/api/spaces/${id}/join`, { method: 'POST', headers: { 'content-type': 'application/json' } });
-    } catch { /* non-critical */ }
+      await fetch(`/api/spaces/${id}/join`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+      });
+    } catch {
+      /* non-critical */
+    }
     setActiveSpaceId(id);
   }, []);
 
@@ -473,7 +590,8 @@ export default function SpacesPage() {
 
   const handleBroadcast = useCallback(async (text: string, protocols: string[]) => {
     const res = await fetch('/api/publish', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ text, targets: protocols }),
     });
     if (!res.ok) {
@@ -508,18 +626,34 @@ export default function SpacesPage() {
               <SpacesIcon />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-[var(--color-fg)]">Audio Spaces</h1>
-              <p className="mt-0.5 text-xs text-gray-500">Live audio rooms across the open social graph</p>
+              <h1 className="text-lg font-bold tracking-tight text-[var(--color-fg)]">
+                Audio Spaces
+              </h1>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Live audio rooms across the open social graph
+              </p>
             </div>
           </div>
 
           <button
             type="button"
-            onClick={() => { if (hasSignedIn) setShowHostModal(true); else openSignIn(); }}
+            onClick={() => {
+              if (hasSignedIn) setShowHostModal(true);
+              else openSignIn();
+            }}
             className="inline-flex items-center gap-2 rounded-xl bg-degen-500 px-5 py-2.5 text-sm font-bold text-black transition-all duration-200 hover:bg-degen-400 hover:shadow-[0_0_20px_rgba(0,255,65,0.3)] active:scale-[0.97]"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             {hasSignedIn ? 'Start a Space' : 'Connect to Host'}
           </button>
@@ -531,13 +665,17 @@ export default function SpacesPage() {
             <section>
               <SectionHeader icon={<LiveDot />} title="Live Now" />
               <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
-                {Array.from({ length: 4 }).map((_, i) => <LiveSkeleton key={i} />)}
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <LiveSkeleton key={i} />
+                ))}
               </div>
             </section>
             <section>
               <SectionHeader icon={<span className="text-sm">📅</span>} title="Upcoming" />
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, i) => <GridSkeleton key={i} />)}
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <GridSkeleton key={i} />
+                ))}
               </div>
             </section>
           </div>
@@ -547,7 +685,9 @@ export default function SpacesPage() {
         {error && !loading && (
           <div className="mb-6 rounded-2xl border border-red-900/40 bg-red-950/20 px-5 py-4 backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              <span className="text-lg text-red-400" aria-hidden="true">⚠</span>
+              <span className="text-lg text-red-400" aria-hidden="true">
+                ⚠
+              </span>
               <p className="text-sm text-red-400">{error}</p>
               <button
                 type="button"
@@ -567,13 +707,17 @@ export default function SpacesPage() {
             <section>
               <div className="mb-4 flex items-center gap-2">
                 <LiveDot />
-                <h2 className="text-sm font-bold tracking-tight text-[var(--color-fg)]">Live Now</h2>
+                <h2 className="text-sm font-bold tracking-tight text-[var(--color-fg)]">
+                  Live Now
+                </h2>
                 {liveSpaces.length > 0 && (
                   <>
                     <span className="rounded-full bg-[var(--color-muted)]/10 px-2 py-0.5 text-[10px] font-medium text-gray-500">
                       {liveSpaces.length}
                     </span>
-                    <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-degen-500">LIVE</span>
+                    <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-degen-500">
+                      LIVE
+                    </span>
                   </>
                 )}
               </div>
@@ -583,7 +727,11 @@ export default function SpacesPage() {
                   icon="🎙️"
                   title="No live spaces right now"
                   subtitle="Start one or check back later. Live audio rooms appear here when hosts go live."
-                  action={hasSignedIn ? { label: 'Start a Space', onClick: () => setShowHostModal(true) } : undefined}
+                  action={
+                    hasSignedIn
+                      ? { label: 'Start a Space', onClick: () => setShowHostModal(true) }
+                      : undefined
+                  }
                 />
               ) : (
                 <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-none snap-x snap-mandatory">
@@ -598,9 +746,19 @@ export default function SpacesPage() {
             <section>
               <SectionHeader
                 icon={
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="text-cyan-400">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    aria-hidden="true"
+                    className="text-cyan-400"
+                  >
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
                     <line x1="3" y1="10" x2="21" y2="10" />
                   </svg>
                 }
@@ -612,7 +770,11 @@ export default function SpacesPage() {
                   icon="🗓️"
                   title="No upcoming spaces"
                   subtitle="Schedule one to get started."
-                  action={hasSignedIn ? { label: 'Schedule a Space', onClick: () => setShowHostModal(true) } : undefined}
+                  action={
+                    hasSignedIn
+                      ? { label: 'Schedule a Space', onClick: () => setShowHostModal(true) }
+                      : undefined
+                  }
                 />
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -627,7 +789,16 @@ export default function SpacesPage() {
             <section>
               <SectionHeader
                 icon={
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="text-gray-500">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    aria-hidden="true"
+                    className="text-gray-500"
+                  >
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
@@ -636,7 +807,11 @@ export default function SpacesPage() {
                 count={pastSpaces.length}
               />
               {pastSpaces.length === 0 ? (
-                <EmptyState icon="📼" title="No past spaces yet" subtitle="Recording playback will appear here once spaces end." />
+                <EmptyState
+                  icon="📼"
+                  title="No past spaces yet"
+                  subtitle="Recording playback will appear here once spaces end."
+                />
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {pastSpaces.map((space) => (

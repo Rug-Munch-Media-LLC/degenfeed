@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import { H2, H3 } from '../_components/doc-heading';
-import { Callout } from '../_components/doc-callout';
 import { Badge } from '../_components/doc-badge';
+import { Callout } from '../_components/doc-callout';
+import { CodeBlock } from '../_components/doc-code-block';
+import { H2, H3 } from '../_components/doc-heading';
 import { Step } from '../_components/doc-step';
-import { CodeBlock, CodeTabs } from '../_components/doc-code-block';
 
 export const revalidate = 86400;
 
@@ -26,11 +26,13 @@ export default function QuickstartPage() {
         <Badge color="green">Quickstart</Badge>
         <Badge>5 min read</Badge>
       </div>
-      <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">5-Minute Quickstart</h1>
+      <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">
+        5-Minute Quickstart
+      </h1>
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400">
-        Get up and running with DegenFeed in five minutes. By the end, you&rsquo;ll have your
-        wallet connected, a protocol linked, and you&rsquo;ll have made your first cross-protocol
-        post and tip.
+        Get up and running with DegenFeed in five minutes. By the end, you&rsquo;ll have your wallet
+        connected, a protocol linked, and you&rsquo;ll have made your first cross-protocol post and
+        tip.
       </p>
 
       {/* Step 1 */}
@@ -67,7 +69,9 @@ export default function QuickstartPage() {
             </li>
             <li className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full text-blue-500">
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="20" height="20" rx="4" /></svg>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="2" y="2" width="20" height="20" rx="4" />
+                </svg>
               </span>
               Rainbow
             </li>
@@ -85,7 +89,9 @@ export default function QuickstartPage() {
       </Callout>
 
       <div className="my-4 rounded-lg border border-dashed border-gray-700 bg-white/[0.01] p-6 text-center">
-        <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">Screenshot</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+          Screenshot
+        </div>
         <div className="mt-2 text-sm text-gray-500">
           The Connect Wallet button appears in the top-right corner of the header. Click it and
           approve the connection in your wallet extension.
@@ -95,8 +101,8 @@ export default function QuickstartPage() {
       {/* Step 2 */}
       <H2 id="link-protocol">Step 2: Link Your First Protocol</H2>
       <p className="text-sm leading-relaxed text-gray-400">
-        After connecting a wallet, link your social accounts to post and engage across protocols.
-        Go to <strong>Settings → Connected Accounts</strong> to get started.
+        After connecting a wallet, link your social accounts to post and engage across protocols. Go
+        to <strong>Settings → Connected Accounts</strong> to get started.
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -137,12 +143,21 @@ export default function QuickstartPage() {
       <H3 id="sort-modes">Sort Modes</H3>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {[
-          { mode: 'Scored', desc: 'Balanced ranking across all 7 factors. Default and recommended.' },
-          { mode: 'Hot', desc: 'Trending posts with recent engagement velocity. Best for real-time.' },
+          {
+            mode: 'Scored',
+            desc: 'Balanced ranking across all 7 factors. Default and recommended.',
+          },
+          {
+            mode: 'Hot',
+            desc: 'Trending posts with recent engagement velocity. Best for real-time.',
+          },
           { mode: 'New', desc: 'Chronological, most recent first. No ranking applied.' },
           { mode: 'Top', desc: 'Highest raw engagement across all time windows.' },
         ].map((s) => (
-          <div key={s.mode} className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3">
+          <div
+            key={s.mode}
+            className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3"
+          >
             <span className="font-mono text-xs font-bold text-degen-400">{s.mode}</span>
             <p className="mt-1 text-xs text-gray-500">{s.desc}</p>
           </div>
@@ -196,8 +211,14 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
       <ol className="mt-4 space-y-3">
         {[
           ['Click the Compose button', 'Located in the header bar. A pencil or + icon.'],
-          ['Write your content', 'Include text, images, links, and mentions. Up to protocol limits.'],
-          ['Select target protocols', 'Check which protocols to publish to. You can post to multiple at once.'],
+          [
+            'Write your content',
+            'Include text, images, links, and mentions. Up to protocol limits.',
+          ],
+          [
+            'Select target protocols',
+            'Check which protocols to publish to. You can post to multiple at once.',
+          ],
           ['Click Post', 'Your content is sent to each selected protocol simultaneously.'],
         ].map(([step, desc], i) => (
           <li key={step} className="flex gap-3 text-sm leading-relaxed text-gray-400">
@@ -213,13 +234,15 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
       </ol>
 
       <Callout type="warning">
-        Protocol-specific limits apply. Nostr supports large posts (~64KB) but some relays limit
-        to ~500 chars. Bluesky has a 300 character limit. DegenFeed will warn you if your post
-        exceeds a protocol&rsquo;s limit before publishing.
+        Protocol-specific limits apply. Nostr supports large posts (~64KB) but some relays limit to
+        ~500 chars. Bluesky has a 300 character limit. DegenFeed will warn you if your post exceeds
+        a protocol&rsquo;s limit before publishing.
       </Callout>
 
       <div className="mt-4 rounded-lg border border-dashed border-gray-700 bg-white/[0.01] p-6 text-center">
-        <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">Screenshot</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+          Screenshot
+        </div>
         <div className="mt-2 text-sm text-gray-500">
           The compose dialog shows protocol selector checkboxes, text area, and media upload.
         </div>
@@ -228,17 +251,26 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
       {/* Step 5 */}
       <H2 id="tip-creator">Step 5: Tip a Creator</H2>
       <p className="text-sm leading-relaxed text-gray-400">
-        Show appreciation for content you love by sending a crypto tip. DegenFeed supports tips
-        in ETH, SOL, USDC, and Lightning Network zaps.
+        Show appreciation for content you love by sending a crypto tip. DegenFeed supports tips in
+        ETH, SOL, USDC, and Lightning Network zaps.
       </p>
 
       <ol className="mt-4 space-y-3">
         {[
           ['Find a post you like', 'Scroll your feed and find content worth tipping.'],
           ['Click the tip button', 'Look for the tip icon on any post. It opens the tip dialog.'],
-          ['Choose your currency', 'Select ETH, SOL, or USDC. For Nostr posts, you can also zap via Lightning Network.'],
-          ['Enter the amount', 'Type the amount in your chosen currency. DegenFeed shows the USD equivalent.'],
-          ['Confirm in your wallet', 'Approve the transaction. The tip goes directly to the creator on-chain.'],
+          [
+            'Choose your currency',
+            'Select ETH, SOL, or USDC. For Nostr posts, you can also zap via Lightning Network.',
+          ],
+          [
+            'Enter the amount',
+            'Type the amount in your chosen currency. DegenFeed shows the USD equivalent.',
+          ],
+          [
+            'Confirm in your wallet',
+            'Approve the transaction. The tip goes directly to the creator on-chain.',
+          ],
         ].map(([step, desc], i) => (
           <li key={step} className="flex gap-3 text-sm leading-relaxed text-gray-400">
             <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-degen-500/10 text-xs font-bold text-degen-400">
@@ -277,7 +309,10 @@ curl "https://degenfeed.xyz/api/feed/home?protocols=nostr,farcaster&sort=new"`}<
 
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
         <p className="text-xs text-gray-600">
-          Questions? <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">admin@rugmunch.io</a>
+          Questions?{' '}
+          <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
+            admin@rugmunch.io
+          </a>
         </p>
       </div>
     </div>

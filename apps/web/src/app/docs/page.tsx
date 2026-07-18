@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Badge } from './_components/doc-badge';
-import { Callout } from './_components/doc-callout';
-import { H2 } from './_components/doc-heading';
 import { DocSearchClient } from './_components/doc-search-client';
 
 export const revalidate = 86400;
@@ -50,20 +48,59 @@ const quickStartCards = [
 ];
 
 const popularTopics = [
-  { title: 'Connecting Your Wallet', href: '/docs/quickstart#connect-wallet', desc: 'Solana & EVM wallet setup' },
-  { title: 'Cross-Protocol Posting', href: '/docs/user-guide#cross-protocol-posting', desc: 'Post to multiple networks at once' },
+  {
+    title: 'Connecting Your Wallet',
+    href: '/docs/quickstart#connect-wallet',
+    desc: 'Solana & EVM wallet setup',
+  },
+  {
+    title: 'Cross-Protocol Posting',
+    href: '/docs/user-guide#cross-protocol-posting',
+    desc: 'Post to multiple networks at once',
+  },
   { title: 'Ranking Algorithm', href: '/docs#ranking', desc: 'How posts are scored and ranked' },
-  { title: 'Nostr Integration', href: '/docs/protocols#nostr', desc: 'Relay connection, events, signing' },
-  { title: 'Authentication', href: '/docs/api#authentication', desc: 'API keys, rate limits, session auth' },
-  { title: 'Farcaster Frames', href: '/docs/user-guide#posting-engagement', desc: 'Interactive frame support' },
-  { title: 'Tipping Creators', href: '/docs/quickstart#tip-creator', desc: 'ETH, SOL, USDC, Lightning' },
+  {
+    title: 'Nostr Integration',
+    href: '/docs/protocols#nostr',
+    desc: 'Relay connection, events, signing',
+  },
+  {
+    title: 'Authentication',
+    href: '/docs/api#authentication',
+    desc: 'API keys, rate limits, session auth',
+  },
+  {
+    title: 'Farcaster Frames',
+    href: '/docs/user-guide#posting-engagement',
+    desc: 'Interactive frame support',
+  },
+  {
+    title: 'Tipping Creators',
+    href: '/docs/quickstart#tip-creator',
+    desc: 'ETH, SOL, USDC, Lightning',
+  },
   { title: 'Self-Hosting', href: '/docs#self-hosting', desc: 'Run your own DegenFeed instance' },
 ];
 
 const changelogItems = [
-  { version: 'v0.2.0', date: 'July 2026', label: 'Cross-protocol posting, tipping, Frames, Spaces', color: 'green' as const },
-  { version: 'v0.1.0', date: 'May 2026', label: 'Initial release: multi-protocol feed, 6 protocols', color: 'blue' as const },
-  { version: 'v0.0.1', date: 'April 2026', label: 'Alpha: Nostr-only prototype', color: 'gray' as const },
+  {
+    version: 'v0.2.0',
+    date: 'July 2026',
+    label: 'Cross-protocol posting, tipping, Frames, Spaces',
+    color: 'green' as const,
+  },
+  {
+    version: 'v0.1.0',
+    date: 'May 2026',
+    label: 'Initial release: multi-protocol feed, 6 protocols',
+    color: 'blue' as const,
+  },
+  {
+    version: 'v0.0.1',
+    date: 'April 2026',
+    label: 'Alpha: Nostr-only prototype',
+    color: 'gray' as const,
+  },
 ];
 
 export default function DocsLandingPage() {
@@ -151,15 +188,60 @@ export default function DocsLandingPage() {
         <h2 className="mb-4 text-lg font-semibold text-[var(--color-fg)]">All Documentation</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {[
-            { title: 'Quickstart', href: '/docs/quickstart', desc: '5-minute getting started guide', color: 'border-l-degen-500' },
-            { title: 'User Guide', href: '/docs/user-guide', desc: 'Wallet, posting, tipping, communities, settings', color: 'border-l-blue-500' },
-            { title: 'API Reference', href: '/docs/api', desc: 'All endpoints with code examples', color: 'border-l-purple-500' },
-            { title: 'Protocol Integration', href: '/docs/protocols', desc: 'Provider architecture and data sources', color: 'border-l-orange-500' },
-            { title: 'System Architecture', href: '/docs/architecture', desc: 'Data flow, KV schema, deployment', color: 'border-l-green-500' },
-            { title: 'Contributing Guide', href: '/docs/contributing', desc: 'Dev setup, code style, PR process', color: 'border-l-yellow-500' },
-            { title: 'Changelog', href: '/docs/changelog', desc: 'Release history and version notes', color: 'border-l-gray-500' },
-            { title: 'Troubleshooting', href: '/docs/troubleshooting', desc: 'Common issues and solutions', color: 'border-l-red-500' },
-            { title: 'Platform Comparison', href: '/docs/comparison', desc: 'DegenFeed vs X, Farcaster, Lens, Bluesky', color: 'border-l-indigo-500' },
+            {
+              title: 'Quickstart',
+              href: '/docs/quickstart',
+              desc: '5-minute getting started guide',
+              color: 'border-l-degen-500',
+            },
+            {
+              title: 'User Guide',
+              href: '/docs/user-guide',
+              desc: 'Wallet, posting, tipping, communities, settings',
+              color: 'border-l-blue-500',
+            },
+            {
+              title: 'API Reference',
+              href: '/docs/api',
+              desc: 'All endpoints with code examples',
+              color: 'border-l-purple-500',
+            },
+            {
+              title: 'Protocol Integration',
+              href: '/docs/protocols',
+              desc: 'Provider architecture and data sources',
+              color: 'border-l-orange-500',
+            },
+            {
+              title: 'System Architecture',
+              href: '/docs/architecture',
+              desc: 'Data flow, KV schema, deployment',
+              color: 'border-l-green-500',
+            },
+            {
+              title: 'Contributing Guide',
+              href: '/docs/contributing',
+              desc: 'Dev setup, code style, PR process',
+              color: 'border-l-yellow-500',
+            },
+            {
+              title: 'Changelog',
+              href: '/docs/changelog',
+              desc: 'Release history and version notes',
+              color: 'border-l-gray-500',
+            },
+            {
+              title: 'Troubleshooting',
+              href: '/docs/troubleshooting',
+              desc: 'Common issues and solutions',
+              color: 'border-l-red-500',
+            },
+            {
+              title: 'Platform Comparison',
+              href: '/docs/comparison',
+              desc: 'DegenFeed vs X, Farcaster, Lens, Bluesky',
+              color: 'border-l-indigo-500',
+            },
           ].map((doc) => (
             <Link
               key={doc.href}

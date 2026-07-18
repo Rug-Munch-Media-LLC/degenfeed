@@ -40,8 +40,7 @@ export function useVideoKeyboardNav(
       // Only handle when video or its container is focused
       const target = e.target as HTMLElement;
       const isVideoFocused =
-        target === videoRef.current ||
-        target.closest('[data-video-container]') !== null;
+        target === videoRef.current || target.closest('[data-video-container]') !== null;
 
       if (!isVideoFocused) return;
 

@@ -3,10 +3,7 @@ import { getMockFeed } from '../../../_mock-data';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ name: string }> },
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
   const feed = getMockFeed(name.toLowerCase());
 

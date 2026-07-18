@@ -18,11 +18,9 @@ import {
   FeedTuner,
   getDefaultWeights,
   TOPICS,
-  type TopicDef,
 } from '../../components/FeedTuner';
 import { GettingStartedChecklist } from '../../components/GettingStartedChecklist';
 import { GuidedTour } from '../../components/GuidedTour';
-import { PostCardPrefetcher } from '../../components/PostCardPrefetcher';
 import { PostContextMenu, useContextMenu } from '../../components/PostContextMenu';
 import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
 import { useToast } from '../../components/Toast';
@@ -31,7 +29,7 @@ import { useFeedLayout } from '../../hooks/useFeedLayout';
 import { useFeedPosition } from '../../hooks/useFeedPosition';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
-import { getCached, setCache } from '../../lib/fetchWithCache';
+import { getCached } from '../../lib/fetchWithCache';
 import { retryFetch } from '../../lib/retryFetch';
 
 const TipModal = dynamic(
@@ -179,7 +177,7 @@ export default function FeedPage() {
   }, [persistTopicWeights]);
 
   /** Quick-tune: boost a topic by +5 (capped at 100) */
-  const handleShowMoreLikeThis = useCallback(
+  const _handleShowMoreLikeThis = useCallback(
     (topic: string) => {
       const topicId = TOPICS.find(
         (t) => t.id === topic || t.label.toLowerCase() === topic.toLowerCase(),
@@ -200,7 +198,7 @@ export default function FeedPage() {
   );
 
   /** Quick-tune: demote a topic by -5 (capped at 0) */
-  const handleShowLessLikeThis = useCallback(
+  const _handleShowLessLikeThis = useCallback(
     (topic: string) => {
       const topicId = TOPICS.find(
         (t) => t.id === topic || t.label.toLowerCase() === topic.toLowerCase(),
@@ -406,7 +404,7 @@ export default function FeedPage() {
       } catch (err) {
         if (!checkOnly) {
           // Graceful degradation: show cached feed on failure
-          const cached = getCached<{ posts: UnifiedPost[]; meta?: FeedMeta }>('feed_' + activeTab);
+          const cached = getCached<{ posts: UnifiedPost[]; meta?: FeedMeta }>(`feed_${activeTab}`);
           if (cached && cached.posts.length > 0) {
             setPosts(cached.posts);
             setFeedMeta(cached.meta ?? {});
@@ -432,6 +430,7 @@ export default function FeedPage() {
       engagementWeight,
       protocolFilter,
       topicWeights,
+      announce,
     ],
   );
 
@@ -517,7 +516,7 @@ export default function FeedPage() {
       // In for-you mode, if user clicks anywhere, open explain panel for this post
       if (activeTab === 'for-you') {
         const post = posts.find((p) => p.id === id);
-        if (post && post.score) {
+        if (post?.score) {
           setExplainPost(post);
           return;
         }
@@ -1023,7 +1022,11 @@ export default function FeedPage() {
 
             {/* ── Feed Health section (collapsed by default) ── */}
             {state === 'loaded' && (
-              <FeedHealthSection perProtocol={feedMeta.perProtocol} total={feedMeta.total} fetchedAt={feedMeta.fetchedAt} />
+              <FeedHealthSection
+                perProtocol={feedMeta.perProtocol}
+                total={feedMeta.total}
+                fetchedAt={feedMeta.fetchedAt}
+              />
             )}
           </div>
 
@@ -1138,54 +1141,54 @@ export default function FeedPage() {
           <div className="relative">
             <div aria-live="polite" aria-label="Feed posts" role="feed">
               <FeedList
-              state={state}
-              posts={posts}
-              error={error}
-              onPostClick={handlePostClick}
-              onEngage={handleEngage}
-              onTip={handleTip}
-              onRetry={fetchFeed}
-              onSignIn={openSignIn}
-              hasMore={hasMore}
-              onLoadMore={loadMore}
-              onReport={handleReport}
-              onCrossReplyOpen={handleCrossReplyOpen}
-              isAdmin={isAdmin}
-              onAdminRemove={handleAdminRemove}
-              onAdminBan={handleAdminBan}
-              onWhyThisPost={handleWhyThisPost}
-              onContextMenu={(e: React.MouseEvent, postId: string) => {
-                const url = `${window.location.origin}/post/${postId}`;
-                handleContextMenu(e, postId, url);
-              }}
-            />
-
-            {/* Bookmark tooltip — appears near the first post's bookmark button */}
-            {hasSignedIn && (
-              <ContextualTooltip id="bookmark-posts" align="left" icon="🔖">
-                Bookmark posts to save them for later
-              </ContextualTooltip>
-            )}
-
-            {/* Right-click context menu */}
-            {contextMenu && (
-              <PostContextMenu
-                postId={contextMenu.postId}
-                postUrl={contextMenu.postUrl}
-                open={!!contextMenu}
-                position={contextMenu.position}
-                onClose={closeContextMenu}
-                onCopyLink={(id) => {
-                  const url = `${window.location.origin}/post/${id}`;
-                  navigator.clipboard.writeText(url).catch(() => {});
-                }}
-                onOpenNewTab={(id) => {
-                  window.open(`/post/${id}`, '_blank');
-                }}
+                state={state}
+                posts={posts}
+                error={error}
+                onPostClick={handlePostClick}
+                onEngage={handleEngage}
+                onTip={handleTip}
+                onRetry={fetchFeed}
+                onSignIn={openSignIn}
+                hasMore={hasMore}
+                onLoadMore={loadMore}
                 onReport={handleReport}
+                onCrossReplyOpen={handleCrossReplyOpen}
+                isAdmin={isAdmin}
+                onAdminRemove={handleAdminRemove}
+                onAdminBan={handleAdminBan}
+                onWhyThisPost={handleWhyThisPost}
+                onContextMenu={(e: React.MouseEvent, postId: string) => {
+                  const url = `${window.location.origin}/post/${postId}`;
+                  handleContextMenu(e, postId, url);
+                }}
               />
-            )}
-          </div>
+
+              {/* Bookmark tooltip — appears near the first post's bookmark button */}
+              {hasSignedIn && (
+                <ContextualTooltip id="bookmark-posts" align="left" icon="🔖">
+                  Bookmark posts to save them for later
+                </ContextualTooltip>
+              )}
+
+              {/* Right-click context menu */}
+              {contextMenu && (
+                <PostContextMenu
+                  postId={contextMenu.postId}
+                  postUrl={contextMenu.postUrl}
+                  open={!!contextMenu}
+                  position={contextMenu.position}
+                  onClose={closeContextMenu}
+                  onCopyLink={(id) => {
+                    const url = `${window.location.origin}/post/${id}`;
+                    navigator.clipboard.writeText(url).catch(() => {});
+                  }}
+                  onOpenNewTab={(id) => {
+                    window.open(`/post/${id}`, '_blank');
+                  }}
+                  onReport={handleReport}
+                />
+              )}
+            </div>
           </div>
 
           {activeTab === 'following' && state === 'empty' && (
@@ -1285,10 +1288,19 @@ function FeedHealthSection({
   const protocolBreakdown = useMemo(() => {
     if (!perProtocol || !total || total === 0) return [];
     const names: Record<string, string> = {
-      nostr: 'Nostr', farcaster: 'Farcaster', lens: 'Lens',
-      bluesky: 'Bluesky', mastodon: 'Mastodon', threads: 'Threads',
-      reddit: 'Reddit', rss: 'RSS', lemmy: 'Lemmy', peertube: 'PeerTube',
-      youtube: 'YouTube', ethereum: 'Ethereum', solana: 'Solana',
+      nostr: 'Nostr',
+      farcaster: 'Farcaster',
+      lens: 'Lens',
+      bluesky: 'Bluesky',
+      mastodon: 'Mastodon',
+      threads: 'Threads',
+      reddit: 'Reddit',
+      rss: 'RSS',
+      lemmy: 'Lemmy',
+      peertube: 'PeerTube',
+      youtube: 'YouTube',
+      ethereum: 'Ethereum',
+      solana: 'Solana',
     };
     return Object.entries(perProtocol)
       .filter(([, count]) => count > 0)
@@ -1304,7 +1316,11 @@ function FeedHealthSection({
   const composition = useMemo(() => {
     if (!total || total === 0) return { followed: 33, suggested: 40, explore: 27 };
     // Rough heuristic: we use this to show breakdown
-    return { followed: Math.round(total * 0.47), suggested: Math.round(total * 0.33), explore: Math.round(total * 0.2) };
+    return {
+      followed: Math.round(total * 0.47),
+      suggested: Math.round(total * 0.33),
+      explore: Math.round(total * 0.2),
+    };
   }, [total]);
 
   if (!perProtocol || !total || total === 0) return null;
@@ -1317,15 +1333,20 @@ function FeedHealthSection({
     >
       <summary className="flex cursor-pointer items-center justify-between px-4 py-2 text-[11px] text-gray-500 hover:text-gray-300 transition-colors select-none">
         <span className="flex items-center gap-1.5">
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-degen-400">
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+            className="shrink-0 text-degen-400"
+          >
             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
             <path d="M8 5v6M5 8h6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
           Feed Health
         </span>
-        <span className="text-[10px] text-degen-400">
-          {open ? 'Hide details' : 'Show details'}
-        </span>
+        <span className="text-[10px] text-degen-400">{open ? 'Hide details' : 'Show details'}</span>
       </summary>
       <div className="border-t border-[var(--color-glass-border)] px-4 py-3 text-xs space-y-3">
         {/* Quality summary */}
@@ -1335,9 +1356,13 @@ function FeedHealthSection({
           </span>
           <span className="text-gray-300">
             Your feed is healthy:{' '}
-            <strong className="text-emerald-400">{protocolBreakdown.length > 1 ? '85%' : '100%'}</strong>{' '}
+            <strong className="text-emerald-400">
+              {protocolBreakdown.length > 1 ? '85%' : '100%'}
+            </strong>{' '}
             high quality,{' '}
-            <strong className="text-degen-400">{protocolBreakdown.length > 1 ? '15%' : '0%'}</strong>{' '}
+            <strong className="text-degen-400">
+              {protocolBreakdown.length > 1 ? '15%' : '0%'}
+            </strong>{' '}
             discovery
           </span>
         </div>
@@ -1363,13 +1388,25 @@ function FeedHealthSection({
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             <span className="text-xs text-gray-400">
-              Followed (<strong className="text-degen-400">{((composition.followed / total) * 100).toFixed(0)}%</strong>)
+              Followed (
+              <strong className="text-degen-400">
+                {((composition.followed / total) * 100).toFixed(0)}%
+              </strong>
+              )
             </span>
             <span className="text-xs text-gray-400">
-              Suggested (<strong className="text-degen-400">{((composition.suggested / total) * 100).toFixed(0)}%</strong>)
+              Suggested (
+              <strong className="text-degen-400">
+                {((composition.suggested / total) * 100).toFixed(0)}%
+              </strong>
+              )
             </span>
             <span className="text-xs text-gray-400">
-              Explore (<strong className="text-degen-400">{((composition.explore / total) * 100).toFixed(0)}%</strong>)
+              Explore (
+              <strong className="text-degen-400">
+                {((composition.explore / total) * 100).toFixed(0)}%
+              </strong>
+              )
             </span>
           </div>
         </div>
@@ -1377,9 +1414,7 @@ function FeedHealthSection({
         {/* Total post count */}
         <p className="text-[10px] text-gray-600">
           {total} posts loaded · Last fetched{' '}
-          {fetchedAt
-            ? new Date(fetchedAt).toLocaleTimeString()
-            : 'just now'}
+          {fetchedAt ? new Date(fetchedAt).toLocaleTimeString() : 'just now'}
         </p>
       </div>
     </details>

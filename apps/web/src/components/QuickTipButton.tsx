@@ -72,7 +72,17 @@ export function QuickTipButton({
         setSending(false);
       }
     },
-    [account, connectWallet, createTip, recipientProtocol, recipientAuthorId, recipientDisplayName, publicationId, sending, onTipSent],
+    [
+      account,
+      connectWallet,
+      createTip,
+      recipientProtocol,
+      recipientAuthorId,
+      recipientDisplayName,
+      publicationId,
+      sending,
+      onTipSent,
+    ],
   );
 
   if (sent) {

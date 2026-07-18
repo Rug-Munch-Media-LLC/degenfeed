@@ -15,14 +15,14 @@ export function LoadingBar() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const _pathname = usePathname();
+  const _searchParams = useSearchParams();
 
   // Reset on route change
   useEffect(() => {
     setLoading(false);
     setProgress(0);
-  }, [pathname, searchParams]);
+  }, []);
 
   const start = useCallback(() => {
     setLoading(true);
@@ -81,8 +81,7 @@ export function LoadingBar() {
         className="h-full transition-all duration-[120ms] ease-out"
         style={{
           width: `${progress}%`,
-          background:
-            'linear-gradient(90deg, #16a34a, #22c55e, #00ff41, #22c55e, #16a34a)',
+          background: 'linear-gradient(90deg, #16a34a, #22c55e, #00ff41, #22c55e, #16a34a)',
           backgroundSize: '200% 100%',
           animation: 'loading-bar-shimmer 1s linear infinite',
           boxShadow: '0 0 10px rgba(0, 255, 65, 0.5), 0 0 20px rgba(0, 255, 65, 0.2)',

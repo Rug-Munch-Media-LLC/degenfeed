@@ -9,9 +9,13 @@ export const metadata: Metadata = {
   description:
     'Frequently asked questions about DegenFeed — the web3 social media platform. Learn about cross-protocol posting, crypto tipping, Nostr, Farcaster, Lens, Bluesky, communities, self-hosting, and more.',
   keywords: [
-    'web3 social media faq', 'decentralized social network questions',
-    'crypto tipping how to', 'nostr vs farcaster', 'what is web3 social',
-    'cross protocol posting guide', 'decentralized twitter alternative faq',
+    'web3 social media faq',
+    'decentralized social network questions',
+    'crypto tipping how to',
+    'nostr vs farcaster',
+    'what is web3 social',
+    'cross protocol posting guide',
+    'decentralized twitter alternative faq',
   ],
   alternates: { canonical: 'https://app.degenfeed.xyz/faq' },
   openGraph: {
@@ -77,7 +81,7 @@ const faqStructuredData = {
       name: 'How does crypto tipping work?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Tap the tip button on any post to send ETH, SOL, or USDC directly to the creator\'s wallet. DegenFeed uses on-chain transactions with zero platform fees. For Nostr posts, Lightning Network zaps are supported via LNURL. To receive tips, connect a wallet with your account.',
+        text: "Tap the tip button on any post to send ETH, SOL, or USDC directly to the creator's wallet. DegenFeed uses on-chain transactions with zero platform fees. For Nostr posts, Lightning Network zaps are supported via LNURL. To receive tips, connect a wallet with your account.",
       },
     },
     {
@@ -101,7 +105,7 @@ const faqStructuredData = {
       name: 'Can I self-host DegenFeed?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. DegenFeed is AGPL-3.0 licensed and designed for easy self-hosting. Clone the repo, run pnpm install && pnpm dev, and you\'re running your own instance. The recommended deployment is Cloudflare Pages + Workers (free-tier eligible). Full documentation is available.',
+        text: "Yes. DegenFeed is AGPL-3.0 licensed and designed for easy self-hosting. Clone the repo, run pnpm install && pnpm dev, and you're running your own instance. The recommended deployment is Cloudflare Pages + Workers (free-tier eligible). Full documentation is available.",
       },
     },
   ],

@@ -127,7 +127,8 @@ function NewsCard({ post }: { post: UnifiedPost }) {
       {imageEmbed && (
         <a
           href={url}
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
+          rel="noopener noreferrer"
           rel="noopener noreferrer"
           className="block aspect-video w-full overflow-hidden"
         >
@@ -168,7 +169,8 @@ function NewsCard({ post }: { post: UnifiedPost }) {
 
         <a
           href={url}
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
+          rel="noopener noreferrer"
           rel="noopener noreferrer"
           className="mb-2 block text-sm font-semibold leading-snug text-[var(--color-fg)] transition-colors group-hover:text-degen-400 line-clamp-2"
         >
@@ -320,7 +322,9 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
         <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex-1">
             <div className="mb-1 flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-[var(--color-fg)]">DegenFeed News</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-[var(--color-fg)]">
+                DegenFeed News
+              </h1>
               <span className="rounded-full bg-degen-500/10 px-2.5 py-0.5 text-[11px] font-medium text-degen-400 ring-1 ring-degen-500/20">
                 LIVE
               </span>
@@ -339,7 +343,8 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
             )}
             <a
               href="/api/feed/rss.xml?category=news"
-              target="_blank" rel="noopener noreferrer"
+              target="_blank"
+              rel="noopener noreferrer"
               rel="noopener noreferrer"
               className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-gray-400 transition-colors hover:border-degen-500/30 hover:text-degen-400"
             >

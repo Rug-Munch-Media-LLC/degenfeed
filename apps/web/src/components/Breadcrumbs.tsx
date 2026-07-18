@@ -35,10 +35,7 @@ export function Breadcrumbs({
       // Decode URL-encoded segments and capitalize
       const decoded = decodeURIComponent(part);
       const label =
-        overrides?.[part] ??
-        decoded
-          .replace(/[-_]/g, ' ')
-          .replace(/\b\w/g, (c) => c.toUpperCase());
+        overrides?.[part] ?? decoded.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
       crumbs.push({ label, href: current });
     }
 

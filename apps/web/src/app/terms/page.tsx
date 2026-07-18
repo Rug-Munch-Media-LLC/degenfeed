@@ -79,7 +79,9 @@ export default function TermsPage() {
         opinions — nothing on DegenFeed is financial advice.
       </p>
 
-      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">6. Limitation of Liability</h2>
+      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
+        6. Limitation of Liability
+      </h2>
       <p className="mb-4">
         To the fullest extent permitted by law, DegenFeed and its operators shall not be liable for
         any indirect, incidental, or consequential damages arising from your use of the service.

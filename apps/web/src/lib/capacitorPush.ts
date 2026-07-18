@@ -41,24 +41,19 @@ export type TokenHandler = (token: PushToken) => void;
 function isNative(): boolean {
   if (typeof window === 'undefined') return false;
   // Capacitor injects the `Capacitor` global at runtime on native devices
-  const cap = (window as unknown as Record<string, unknown>)['Capacitor'] as
+  const cap = (window as unknown as Record<string, unknown>).Capacitor as
     | { isNative?: boolean }
     | undefined;
   return !!cap?.isNative;
 }
 
 function isWebPushSupported(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window
-  );
+  return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
 }
 
 const VAPID_PUBLIC_KEY: string | undefined =
   typeof process !== 'undefined'
-    ? (process.env as Record<string, string | undefined>)
-        .NEXT_PUBLIC_VAPID_KEY
+    ? (process.env as Record<string, string | undefined>).NEXT_PUBLIC_VAPID_KEY
     : undefined;
 
 // ── Push service singleton ─────────────────────────────────────
@@ -98,9 +93,7 @@ class CapacitorPushService {
 
   private async registerNative(): Promise<PushToken | null> {
     try {
-      const { PushNotifications } = await import(
-        '@capacitor/push-notifications'
-      );
+      const { PushNotifications } = await import('@capacitor/push-notifications');
 
       // Request permission (iOS shows system dialog)
       const permResult = await PushNotifications.requestPermissions();
@@ -125,26 +118,20 @@ class CapacitorPushService {
       });
 
       // Listen for incoming notifications (foreground)
-      PushNotifications.addListener(
-        'pushNotificationReceived',
-        (event) => {
-          const payload = this.normalizeCapacitorPayload(event);
-          this.nativeHandlers.forEach((h) => h(payload));
-        },
-      );
+      PushNotifications.addListener('pushNotificationReceived', (event) => {
+        const payload = this.normalizeCapacitorPayload(event);
+        this.nativeHandlers.forEach((h) => h(payload));
+      });
 
       // Listen for notification tap (background → foreground)
-      PushNotifications.addListener(
-        'pushNotificationActionPerformed',
-        (event) => {
-          const payload = this.normalizeCapacitorPayload(event.notification);
-          // Navigate to the URL from the notification payload
-          if (payload.url) {
-            window.location.href = payload.url;
-          }
-          this.nativeHandlers.forEach((h) => h(payload));
-        },
-      );
+      PushNotifications.addListener('pushNotificationActionPerformed', (event) => {
+        const payload = this.normalizeCapacitorPayload(event.notification);
+        // Navigate to the URL from the notification payload
+        if (payload.url) {
+          window.location.href = payload.url;
+        }
+        this.nativeHandlers.forEach((h) => h(payload));
+      });
 
       // Register with APNs / FCM
       await PushNotifications.register();
@@ -176,9 +163,7 @@ class CapacitorPushService {
     }
 
     if (!VAPID_PUBLIC_KEY) {
-      console.warn(
-        '[CapPush] NEXT_PUBLIC_VAPID_KEY not set — cannot subscribe Web Push',
-      );
+      console.warn('[CapPush] NEXT_PUBLIC_VAPID_KEY not set — cannot subscribe Web Push');
       return null;
     }
 
@@ -239,9 +224,7 @@ class CapacitorPushService {
   }
 
   /** Send the current token to a server endpoint. */
-  async syncTokenToServer(
-    endpoint = '/api/push/register',
-  ): Promise<boolean> {
+  async syncTokenToServer(endpoint = '/api/push/register'): Promise<boolean> {
     if (!this.token) return false;
     try {
       const res = await fetch(endpoint, {
@@ -285,9 +268,11 @@ class CapacitorPushService {
   }
 
   /** Normalise Capacitor's notification shape into our PushPayload. */
-  private normalizeCapacitorPayload(
-    event: { title?: string; body?: string; data?: Record<string, unknown> },
-  ): PushPayload {
+  private normalizeCapacitorPayload(event: {
+    title?: string;
+    body?: string;
+    data?: Record<string, unknown>;
+  }): PushPayload {
     const data = event.data ?? {};
     return {
       title: event.title || (data.title as string | undefined),

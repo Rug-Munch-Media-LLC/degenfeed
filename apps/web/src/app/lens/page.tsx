@@ -16,8 +16,12 @@ export const metadata: Metadata = {
   description:
     'Browse the Lens Protocol timeline — publications, mirrors, and collects from the decentralized social graph on Polygon. Lens feed with cross-post to Nostr, Farcaster, Bluesky. The best Lens web app.',
   keywords: [
-    'lens protocol feed', 'lens web app', 'lens publications',
-    'lens protocol social', 'lens polygon social', 'decentralized social graph',
+    'lens protocol feed',
+    'lens web app',
+    'lens publications',
+    'lens protocol social',
+    'lens polygon social',
+    'decentralized social graph',
   ],
   openGraph: {
     title: 'Lens Protocol Feed — Browse Publications & Mirrors | DegenFeed',
@@ -30,7 +34,11 @@ export const metadata: Metadata = {
 export default function LensPage() {
   return (
     <>
-      <Script id="breadcrumb-lens" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(lensBreadcrumb) }} />
+      <Script
+        id="breadcrumb-lens"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(lensBreadcrumb) }}
+      />
       <ProtocolFeedPage protocol="lens" />
     </>
   );

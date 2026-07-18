@@ -111,11 +111,11 @@ export function FrameEmbed({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="img"
-        aria-label={title || 'Frame'}
+        aria-label={title ? `Farcaster Frame: ${title}` : 'Farcaster Frame'}
       >
         <Image
           src={frameImage}
-          alt={title || 'Frame'}
+          alt={title ? `Farcaster Frame: ${title}` : 'Farcaster Frame'}
           fill
           className="object-cover"
           sizes="(max-width: 600px) 100vw, 600px"

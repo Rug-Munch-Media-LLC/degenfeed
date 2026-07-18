@@ -49,7 +49,7 @@ const TOPIC_META: Record<string, { emoji: string; color: string; label: string }
 
 function getTopicMeta(topic: string): { emoji: string; color: string; label: string } {
   const key = topic.toLowerCase().replace(/[^a-z0-9]/g, '');
-  return TOPIC_META[key] ?? { emoji: '#' , color: '#888', label: topic };
+  return TOPIC_META[key] ?? { emoji: '#', color: '#888', label: topic };
 }
 
 function scoreToBarWidth(score: number, maxScore: number): string {
@@ -84,7 +84,12 @@ function TrendingSkeleton() {
 
 // ── Topic Card ────────────────────────────────────────────────────────────
 
-function TopicCard({ topic, count, score, isHighest }: {
+function TopicCard({
+  topic,
+  count,
+  score,
+  isHighest,
+}: {
   topic: TrendingTopic;
   count: number;
   score: number;
@@ -97,11 +102,13 @@ function TopicCard({ topic, count, score, isHighest }: {
     <Link
       href={`/home/${encodeURIComponent(topicSlug)}`}
       className="group relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-gradient-to-br from-[var(--color-card)] to-[var(--color-card)] p-5 backdrop-blur-xl transition-all duration-300 hover:border-[var(--color-border)] hover:shadow-[0_0_30px_-6px]"
-      style={{
-        borderColor: isHighest ? `${meta.color}30` : undefined,
-        '--tw-shadow-color': `${meta.color}15`,
-        boxShadow: isHighest ? `0 0 30px -6px ${meta.color}25` : undefined,
-      } as React.CSSProperties}
+      style={
+        {
+          borderColor: isHighest ? `${meta.color}30` : undefined,
+          '--tw-shadow-color': `${meta.color}15`,
+          boxShadow: isHighest ? `0 0 30px -6px ${meta.color}25` : undefined,
+        } as React.CSSProperties
+      }
     >
       {/* Accent line */}
       <span
@@ -123,9 +130,7 @@ function TopicCard({ topic, count, score, isHighest }: {
         <div className="min-w-0 flex-1">
           {/* Topic name + badge */}
           <div className="mb-1 flex items-center gap-2">
-            <h3 className="truncate text-base font-bold text-[var(--color-fg)]">
-              {topic.topic}
-            </h3>
+            <h3 className="truncate text-base font-bold text-[var(--color-fg)]">{topic.topic}</h3>
             <span
               className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
               style={{ backgroundColor: `${meta.color}18`, color: meta.color }}
@@ -137,10 +142,14 @@ function TopicCard({ topic, count, score, isHighest }: {
           {/* Stats row */}
           <div className="mb-2 flex items-center gap-4 text-xs text-[var(--color-muted)]">
             <span className="tabular-nums">
-              <span className="font-semibold text-[var(--color-muted)]">{count.toLocaleString()}</span> posts
+              <span className="font-semibold text-[var(--color-muted)]">
+                {count.toLocaleString()}
+              </span>{' '}
+              posts
             </span>
             <span className="tabular-nums">
-              <span className="font-semibold text-[var(--color-muted)]">{formatScore(score)}</span> score
+              <span className="font-semibold text-[var(--color-muted)]">{formatScore(score)}</span>{' '}
+              score
             </span>
             {isHighest && (
               <span className="flex items-center gap-1 font-semibold text-degen-400">
@@ -184,37 +193,43 @@ export default function TrendingPage() {
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
   const [error, setError] = useState<string>();
 
-  const fetchTrending = useCallback(async (filter: TimeFilter) => {
-    setState('loading');
-    setError(undefined);
-    try {
-      const url = new URL('/api/feed/home', window.location.origin);
-      url.searchParams.set('limit', '1');
-      url.searchParams.set('trending', String(filter.windowHours));
-      url.searchParams.set('protocols', 'nostr,farcaster,lens,bluesky,mastodon,threads,reddit,rss');
-      const res = await retryFetch(url.toString(), {
-        fetchOptions: {
-          credentials: 'include',
-          cache: 'no-store',
-          headers: { 'cache-control': 'no-store' },
-        },
-      });
-      if (!res.ok) throw new Error(`API returned ${res.status}`);
-      const data = (await res.json()) as { meta?: { trending?: TrendingTopic[] } };
-      const trending = data.meta?.trending ?? [];
-      setTopics(trending);
-      setState(trending.length > 0 ? 'loaded' : 'empty');
-    } catch (err) {
-      // Graceful degradation: show "Trending unavailable" instead of crashing
-      setError(err instanceof Error ? err.message : 'Failed to load trending topics');
-      setState('error');
-    } finally {
-      // Ensure we always exit loading state
-      if (state === 'loading') {
-        // Already handled by setState above
+  const fetchTrending = useCallback(
+    async (filter: TimeFilter) => {
+      setState('loading');
+      setError(undefined);
+      try {
+        const url = new URL('/api/feed/home', window.location.origin);
+        url.searchParams.set('limit', '1');
+        url.searchParams.set('trending', String(filter.windowHours));
+        url.searchParams.set(
+          'protocols',
+          'nostr,farcaster,lens,bluesky,mastodon,threads,reddit,rss',
+        );
+        const res = await retryFetch(url.toString(), {
+          fetchOptions: {
+            credentials: 'include',
+            cache: 'no-store',
+            headers: { 'cache-control': 'no-store' },
+          },
+        });
+        if (!res.ok) throw new Error(`API returned ${res.status}`);
+        const data = (await res.json()) as { meta?: { trending?: TrendingTopic[] } };
+        const trending = data.meta?.trending ?? [];
+        setTopics(trending);
+        setState(trending.length > 0 ? 'loaded' : 'empty');
+      } catch (err) {
+        // Graceful degradation: show "Trending unavailable" instead of crashing
+        setError(err instanceof Error ? err.message : 'Failed to load trending topics');
+        setState('error');
+      } finally {
+        // Ensure we always exit loading state
+        if (state === 'loading') {
+          // Already handled by setState above
+        }
       }
-    }
-  }, []);
+    },
+    [state],
+  );
 
   useEffect(() => {
     fetchTrending(activeFilter);
@@ -224,7 +239,7 @@ export default function TrendingPage() {
     setActiveFilter(filter);
   };
 
-  const maxScore = topics.length > 0 ? Math.max(...topics.map((t) => t.score)) : 0;
+  const _maxScore = topics.length > 0 ? Math.max(...topics.map((t) => t.score)) : 0;
 
   return (
     <ErrorBoundary>
@@ -308,7 +323,9 @@ export default function TrendingPage() {
         {/* Footer note */}
         {state === 'loaded' && topics.length > 0 && (
           <p className="mt-6 text-center text-xs text-[var(--color-muted)]">
-            Trending computed from {TIME_FILTERS.find((f) => f.id === activeFilter.id)?.label.toLowerCase()} activity across Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS.
+            Trending computed from{' '}
+            {TIME_FILTERS.find((f) => f.id === activeFilter.id)?.label.toLowerCase()} activity
+            across Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS.
           </p>
         )}
       </div>

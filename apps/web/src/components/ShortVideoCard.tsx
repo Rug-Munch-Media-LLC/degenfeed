@@ -15,14 +15,7 @@ import type { UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, VideoPlayer } from '@degenfeed/ui';
 import { formatTimeAgo, parseVideoUrl, type VideoInfo } from '@degenfeed/utils';
 import Image from 'next/image';
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -124,12 +117,14 @@ function HeartBurst({ visible }: { visible: boolean }) {
             viewBox="0 0 24 24"
             fill="#ff2d55"
             className="absolute drop-shadow-[0_0_12px_rgba(255,45,85,0.4)]"
-            style={{
-              animation: `shorts-heart-orbit 0.8s ease-out forwards`,
-              animationDelay: `${i * 0.05}s`,
-              transformOrigin: 'center',
-              '--angle': `${angle}deg`,
-            } as React.CSSProperties}
+            style={
+              {
+                animation: `shorts-heart-orbit 0.8s ease-out forwards`,
+                animationDelay: `${i * 0.05}s`,
+                transformOrigin: 'center',
+                '--angle': `${angle}deg`,
+              } as React.CSSProperties
+            }
             aria-hidden="true"
           >
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -142,24 +137,20 @@ function HeartBurst({ visible }: { visible: boolean }) {
 
 // ─── Video Info Panel ─────────────────────────────────────────────────────
 
-function VideoInfoPanel({
-  post,
-  visible,
-}: {
-  post: UnifiedPost;
-  visible: boolean;
-}) {
+function VideoInfoPanel({ post, visible }: { post: UnifiedPost; visible: boolean }) {
   const hashtags = useMemo(() => extractHashtags(post.text), [post.text]);
   const protocolColor = getProtocolColor(post.protocol);
 
   if (!visible) return null;
 
   return (
-    <div
+    <section
       className="absolute inset-x-0 bottom-0 z-40 max-h-[60vh] overflow-y-auto rounded-t-3xl border-t border-white/[0.06] bg-[#0a0a0a]/98 px-5 pb-8 pt-5 backdrop-blur-2xl"
       style={{ animation: 'shorts-panel-slide-up 0.35s cubic-bezier(0.32, 0.72, 0, 1)' }}
       onClick={(e) => e.stopPropagation()}
-      role="region"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') e.stopPropagation();
+      }}
       aria-label="Video information"
     >
       {/* Handle */}
@@ -167,9 +158,7 @@ function VideoInfoPanel({
 
       {/* Full description */}
       <h3 className="mb-1 text-sm font-bold text-white">Description</h3>
-      <p className="mb-4 text-sm leading-relaxed text-white/70 whitespace-pre-wrap">
-        {post.text}
-      </p>
+      <p className="mb-4 text-sm leading-relaxed text-white/70 whitespace-pre-wrap">{post.text}</p>
 
       {/* All hashtags */}
       {hashtags.length > 0 && (
@@ -239,7 +228,7 @@ function VideoInfoPanel({
           <p className="text-[10px] text-white/40">Shares</p>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -281,9 +270,8 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     return match?.[1] ?? null;
   }, [post.text, videoInfo]);
 
-  const youtubeId =
-    videoInfo?.platform === 'youtube' ? videoInfo.id : (textYoutubeId ?? undefined);
-  const isYoutube = !!youtubeId;
+  const youtubeId = videoInfo?.platform === 'youtube' ? videoInfo.id : (textYoutubeId ?? undefined);
+  const _isYoutube = !!youtubeId;
   const isDirect = videoInfo?.platform === 'direct';
   const isPeertube = videoInfo?.platform === 'peertube';
 
@@ -291,12 +279,30 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   const authorHandle = post.author.handles[post.protocol] ?? post.author.id.slice(0, 16);
   const protocolColor = getProtocolColor(post.protocol);
 
+  // ── Heart burst animation ─────────────────────────────────────────────
+  const showHeart = useCallback(() => {
+    setHeartVisible(true);
+    setTimeout(() => setHeartVisible(false), 900);
+  }, []);
+
+  // ── Overlay auto-hide after 3s ────────────────────────────────────────
+  const resetOverlayTimer = useCallback(() => {
+    setShowOverlay(true);
+    if (overlayTimer.current) clearTimeout(overlayTimer.current);
+    overlayTimer.current = setTimeout(() => {
+      if (!showInfoPanel) setShowOverlay(false);
+    }, 3000);
+  }, [showInfoPanel]);
+
   // ── Custom event listeners ────────────────────────────────────────────
   useEffect(() => {
     if (!isActive) return;
 
     const onMute = () => setMuted((prev) => !prev);
-    const onLike = () => { setLiked((prev) => !prev); showHeart(); };
+    const onLike = () => {
+      setLiked((prev) => !prev);
+      showHeart();
+    };
     const onBookmark = () => setBookmarked((prev) => !prev);
     const onOverlay = () => {
       setShowOverlay((prev) => !prev);
@@ -308,8 +314,12 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     };
     // Seek indicators are handled at the page level (toast).
     // VideoPlayer handles the actual seek internally.
-    const onSeekBack = () => { void 0; };
-    const onSeekForward = () => { void 0; };
+    const onSeekBack = () => {
+      void 0;
+    };
+    const onSeekForward = () => {
+      void 0;
+    };
     const onDoubleTapLike = () => {
       setLiked(true);
       showHeart();
@@ -342,22 +352,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     // listeners on every overlay toggle would be wasteful. The closure reads
     // showOverlay and resetOverlayTimer which are stable across renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isActive]);
-
-  // ── Heart burst animation ─────────────────────────────────────────────
-  const showHeart = useCallback(() => {
-    setHeartVisible(true);
-    setTimeout(() => setHeartVisible(false), 900);
-  }, []);
-
-  // ── Overlay auto-hide after 3s ────────────────────────────────────────
-  const resetOverlayTimer = useCallback(() => {
-    setShowOverlay(true);
-    if (overlayTimer.current) clearTimeout(overlayTimer.current);
-    overlayTimer.current = setTimeout(() => {
-      if (!showInfoPanel) setShowOverlay(false);
-    }, 3000);
-  }, [showInfoPanel]);
+  }, [isActive, showOverlay, showHeart, resetOverlayTimer, onPlayStateChange]);
 
   useEffect(() => {
     if (isActive) {
@@ -473,7 +468,9 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         if (!cancelled && data) setTipCount(data.count);
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isPeertube, videoInfo]);
 
   // ── Like ──
@@ -488,11 +485,19 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     try {
       const { addBookmark, removeBookmark } = await import('@degenfeed/storage');
       if (!bookmarked) {
-        await addBookmark(post.id, post.dfUri ?? '', post.protocol, post.text.slice(0, 60), post.author.displayName || '');
+        await addBookmark(
+          post.id,
+          post.dfUri ?? '',
+          post.protocol,
+          post.text.slice(0, 60),
+          post.author.displayName || '',
+        );
       } else {
         await removeBookmark(post.id);
       }
-    } catch { /* IndexedDB may be unavailable */ }
+    } catch {
+      /* IndexedDB may be unavailable */
+    }
     window.dispatchEvent(new CustomEvent('shorts-bookmark-current'));
   }, [bookmarked, post.id, post.dfUri, post.protocol, post.text, post.author.displayName]);
 
@@ -504,9 +509,11 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       await Share.share({ url, title: post.text.slice(0, 80) });
     } catch {
       await navigator.clipboard.writeText(url).catch(() => {});
-      window.dispatchEvent(new CustomEvent('df-toast', {
-        detail: { kind: 'success', message: 'Link copied!' },
-      }));
+      window.dispatchEvent(
+        new CustomEvent('df-toast', {
+          detail: { kind: 'success', message: 'Link copied!' },
+        }),
+      );
     }
   }, [post.id, post.text]);
 
@@ -575,7 +582,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       </div>
 
       {/* ── Video Player ── */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: role="presentation" with onKeyDown for Enter/Space */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive video overlay container with role="presentation" */}
       <div
         className="absolute inset-0 cursor-pointer"
         onClick={handleContainerClick}
@@ -636,7 +643,14 @@ export const ShortVideoCard = memo(function ShortVideoCard({
             )}
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-md">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="text-white/70" aria-hidden="true">
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="text-white/70"
+                  aria-hidden="true"
+                >
                   <path d="M8 5V19L19 12L8 5Z" />
                 </svg>
               </div>
@@ -688,12 +702,29 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       >
         {muted ? (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M23 9l-6 6M17 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M11 5L6 9H2v6h4l5 4V5z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M23 9l-6 6M17 9l6 6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
         ) : (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         )}
       </button>
@@ -701,7 +732,9 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       {/* ── Right-side action rail ── */}
       <div
         className={`absolute bottom-24 right-3 z-30 flex flex-col items-center gap-3 transition-all duration-300 sm:bottom-28 ${
-          showOverlay && !showInfoPanel ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
+          showOverlay && !showInfoPanel
+            ? 'opacity-100 translate-x-0'
+            : 'opacity-0 translate-x-4 pointer-events-none'
         }`}
       >
         {/* Avatar */}
@@ -725,19 +758,34 @@ export const ShortVideoCard = memo(function ShortVideoCard({
               </div>
             )}
           </a>
-          <span className="mt-0.5 h-0.5 w-4 rounded-full" style={{ backgroundColor: protocolColor }} />
+          <span
+            className="mt-0.5 h-0.5 w-4 rounded-full"
+            style={{ backgroundColor: protocolColor }}
+          />
         </div>
 
         {/* Like */}
         <ActionButton
           icon={
             liked ? (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             ) : (
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             )
           }
@@ -752,7 +800,13 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         <ActionButton
           icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           }
           label="Comment"
@@ -764,7 +818,13 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         <ActionButton
           icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           }
           label="Share"
@@ -775,7 +835,13 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         <ActionButton
           icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           }
           label="Tip"
@@ -789,7 +855,11 @@ export const ShortVideoCard = memo(function ShortVideoCard({
           icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
-                d={bookmarked ? 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z' : 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z'}
+                d={
+                  bookmarked
+                    ? 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z'
+                    : 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z'
+                }
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
@@ -808,7 +878,9 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       {/* ── Bottom info overlay ── */}
       <div
         className={`absolute bottom-0 left-0 right-0 z-30 px-4 pb-6 pt-20 transition-all duration-300 ${
-          showOverlay && !showInfoPanel ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+          showOverlay && !showInfoPanel
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-4 pointer-events-none'
         }`}
         onTouchStart={handleInfoTouchStart}
         onTouchEnd={handleInfoTouchEnd}
@@ -849,7 +921,10 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         <div className="mb-1">
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); setShowCaption((prev) => !prev); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowCaption((prev) => !prev);
+            }}
             className="block text-left"
             aria-expanded={showCaption}
             aria-label={showCaption ? 'Collapse caption' : 'Expand caption'}
@@ -877,8 +952,21 @@ export const ShortVideoCard = memo(function ShortVideoCard({
 
         {/* Sound / Music */}
         <div className="mt-1 flex items-center gap-1.5">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-white/50">
-            <path d="M9 18V5l12-2v13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+            className="text-white/50"
+          >
+            <path
+              d="M9 18V5l12-2v13"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
             <circle cx="6" cy="18" r="3" stroke="currentColor" strokeWidth="1.5" />
             <circle cx="18" cy="16" r="3" stroke="currentColor" strokeWidth="1.5" />
           </svg>
@@ -894,8 +982,21 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         {/* Swipe up hint */}
         {!showInfoPanel && (
           <div className="mt-3 flex items-center gap-1.5 opacity-40">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-white/50">
-              <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+              className="text-white/50"
+            >
+              <path
+                d="M12 5v14M5 12l7 7 7-7"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             <span className="text-[9px] text-white/40">Swipe up for details</span>
           </div>
@@ -909,12 +1010,27 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       {showInfoPanel && (
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); setShowInfoPanel(false); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowInfoPanel(false);
+          }}
           className="absolute right-4 top-16 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 backdrop-blur-md transition-colors hover:bg-white/10"
           aria-label="Close info panel"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white/70" aria-hidden="true">
-            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="text-white/70"
+            aria-hidden="true"
+          >
+            <path
+              d="M18 6L6 18M6 6l12 12"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
       )}
@@ -929,7 +1045,15 @@ export const ShortVideoCard = memo(function ShortVideoCard({
           className="absolute bottom-36 right-16 z-30 inline-flex items-center gap-1.5 rounded-full border border-degen-500/30 bg-degen-500/10 px-3 py-1.5 text-xs font-medium text-degen-400 backdrop-blur-sm transition-all hover:bg-degen-500/20 hover:shadow-[0_0_12px_rgba(0,255,65,0.2)]"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+            <rect
+              x="4"
+              y="4"
+              width="16"
+              height="16"
+              rx="3"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
             <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
           </svg>
           PeerTube

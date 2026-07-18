@@ -4,6 +4,7 @@
  * Extracted from globals.css for dynamic loading
  * ═══════════════════════════════════════════════════════════════ */
 
+/* biome-ignore lint/correctness/noUnknownPseudoClass: CSS Modules :global() syntax */
 :global(.layout-compact) {
   /* ── Shell / header ── */
   & .shell-header {

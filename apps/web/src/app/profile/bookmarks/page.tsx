@@ -206,7 +206,10 @@ export default function BookmarksPage() {
           >
             {syncing ? 'Syncing...' : 'Sync'}
           </button>
-          <Link href="/home" className="text-sm text-gray-500 hover:text-[var(--color-fg)] transition-colors">
+          <Link
+            href="/home"
+            className="text-sm text-gray-500 hover:text-[var(--color-fg)] transition-colors"
+          >
             &larr; Feed
           </Link>
         </div>

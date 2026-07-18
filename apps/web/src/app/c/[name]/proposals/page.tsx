@@ -1,8 +1,8 @@
 'use client';
 
-import type { CrossProtocolCommunity } from '@degenfeed/utils';
-import { ErrorBoundary, ProposalModal, VotingPanel } from '@degenfeed/ui';
 import type { ProposalData, VoteChoice, VoteResults } from '@degenfeed/ui';
+import { ErrorBoundary, ProposalModal, VotingPanel } from '@degenfeed/ui';
+import type { CrossProtocolCommunity } from '@degenfeed/utils';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -36,7 +36,7 @@ export default function ProposalsPage() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('active');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [isMember, setIsMember] = useState(false);
+  const [_isMember, _setIsMember] = useState(false);
 
   // Fetch community data
   useEffect(() => {
@@ -45,7 +45,9 @@ export default function ProposalsPage() {
 
     async function load() {
       try {
-        const res = await fetch(`/api/community/${encodeURIComponent(name)}`, { cache: 'no-store' });
+        const res = await fetch(`/api/community/${encodeURIComponent(name)}`, {
+          cache: 'no-store',
+        });
         if (!res.ok) {
           if (!cancelled) setError('Community not found');
           return;
@@ -214,51 +216,37 @@ export default function ProposalsPage() {
         )}
 
         {/* Active tab */}
-        {!loading && activeTab === 'active' && (
-          <>
-            {activeProposals.length === 0 ? (
-              <div className="py-12 text-center">
-                <div className="mb-3 text-3xl">🗳️</div>
-                <p className="text-gray-400">No active proposals</p>
-                <p className="mt-1 text-xs text-gray-600">
-                  Create one to start the discussion!
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {activeProposals.map((p) => (
-                  <ProposalCard
-                    key={p.id}
-                    proposal={p}
-                    communityName={name}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
+        {!loading &&
+          activeTab === 'active' &&
+          (activeProposals.length === 0 ? (
+            <div className="py-12 text-center">
+              <div className="mb-3 text-3xl">🗳️</div>
+              <p className="text-gray-400">No active proposals</p>
+              <p className="mt-1 text-xs text-gray-600">Create one to start the discussion!</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {activeProposals.map((p) => (
+                <ProposalCard key={p.id} proposal={p} communityName={name} />
+              ))}
+            </div>
+          ))}
 
         {/* Past tab */}
-        {!loading && activeTab === 'past' && (
-          <>
-            {pastProposals.length === 0 ? (
-              <div className="py-12 text-center">
-                <div className="mb-3 text-3xl">📜</div>
-                <p className="text-gray-400">No past proposals</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {pastProposals.map((p) => (
-                  <ProposalCard
-                    key={p.id}
-                    proposal={p}
-                    communityName={name}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
+        {!loading &&
+          activeTab === 'past' &&
+          (pastProposals.length === 0 ? (
+            <div className="py-12 text-center">
+              <div className="mb-3 text-3xl">📜</div>
+              <p className="text-gray-400">No past proposals</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pastProposals.map((p) => (
+                <ProposalCard key={p.id} proposal={p} communityName={name} />
+              ))}
+            </div>
+          ))}
 
         {/* Create modal */}
         {showCreateModal && (
@@ -319,9 +307,7 @@ function ProposalCard({
               {statusMeta.label}
             </span>
             {proposal.quorumPct !== undefined && (
-              <span className="text-[11px] text-gray-500">
-                {proposal.quorumPct}% quorum
-              </span>
+              <span className="text-[11px] text-gray-500">{proposal.quorumPct}% quorum</span>
             )}
           </div>
 
@@ -335,8 +321,7 @@ function ProposalCard({
 
           {/* Creator + time */}
           <p className="mt-1 text-xs text-gray-500">
-            by {proposal.creator.slice(0, 6)}...{proposal.creator.slice(-4)}{' '}
-            &middot;{' '}
+            by {proposal.creator.slice(0, 6)}...{proposal.creator.slice(-4)} &middot;{' '}
             {new Date(proposal.createdAt).toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',

@@ -1,4 +1,4 @@
-import { HeaderSkeleton, Line, Badge } from '@/components/loading/PageSkeleton';
+import { HeaderSkeleton, Line } from '@/components/loading/PageSkeleton';
 
 export default function PremiumLoading() {
   return (
@@ -16,7 +16,9 @@ export default function PremiumLoading() {
             className={`rounded-3xl border p-6 space-y-5 ${
               i === 1 ? 'scale-105 border-degen-500/30' : ''
             }`}
-            style={{ borderColor: i === 1 ? 'var(--color-glass-border)' : 'var(--color-glass-border)' }}
+            style={{
+              borderColor: i === 1 ? 'var(--color-glass-border)' : 'var(--color-glass-border)',
+            }}
           >
             <div className="space-y-2">
               <Line width="w-20" height="h-5" />

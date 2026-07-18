@@ -3,9 +3,9 @@
 import { addBookmark, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction } from '@degenfeed/types';
 import { ErrorBoundary, FeedList, NotificationBell, type UnifiedPost } from '@degenfeed/ui';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { useAuth } from '../../../components/AuthProvider';
 import { FeedPollerBanner } from '../../../components/FeedPollerBanner';
 
@@ -13,6 +13,7 @@ const TipModal = dynamic(
   () => import('../../../components/TipModal').then((m) => ({ default: m.TipModal })),
   { ssr: false, loading: () => null },
 );
+
 import { useFeedPoller } from '../../../hooks/useFeedPoller';
 import { useNotifications } from '../../../hooks/useNotifications';
 import { SECTIONS } from '../sections';
@@ -198,48 +199,60 @@ function SectionContent({ section }: { section: string }) {
     useNotifications(hasSignedIn);
 
   // Derive protocol from section id for protocol-specific pages
-  const PROTOCOL_SECTIONS = new Set(['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit']);
+  const PROTOCOL_SECTIONS = new Set([
+    'nostr',
+    'farcaster',
+    'lens',
+    'bluesky',
+    'mastodon',
+    'reddit',
+  ]);
   const sectionProtocol = PROTOCOL_SECTIONS.has(section) ? section : null;
 
   // Stable fetch function shared by the main loader and the poller.
   // Returns the raw API response so the caller can destructure both posts
   // and metadata (notices, errors, trending, preset).
-  const fetchFeed = useCallback(async (presetOverride?: string): Promise<{
-    data: UnifiedPost[];
-    meta?: FeedMeta;
-  }> => {
-    const currentMeta = SECTIONS.find((s) => s.id === section);
-    const url = new URL(currentMeta?.endpoint || '/api/feed/home', window.location.origin);
-    url.searchParams.set('limit', String(currentMeta?.limit || 25));
-    if (currentMeta?.params) {
-      for (const [k, v] of Object.entries(currentMeta.params)) url.searchParams.set(k, v);
-    }
-    // Pass the active preset (or override) to the API
-    url.searchParams.set('preset', presetOverride ?? activePreset);
-    let res = await fetch(url.toString(), {
-      credentials: 'include',
-      cache: 'no-store',
-      headers: { 'cache-control': 'no-store' },
-    });
-    let body = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
-    // Sync preset from response meta
-    if (body.meta?.presetName && !presetOverride) {
-      setActivePreset(body.meta.presetName);
-    }
-    if (!body.data?.length && section === 'all') {
-      const rssUrl = new URL('/api/feed/rss', window.location.origin);
-      rssUrl.searchParams.set('source', 'reddit');
-      rssUrl.searchParams.set('handle', 'CryptoCurrency');
-      rssUrl.searchParams.set('limit', '25');
-      res = await fetch(rssUrl.toString(), {
+  const fetchFeed = useCallback(
+    async (
+      presetOverride?: string,
+    ): Promise<{
+      data: UnifiedPost[];
+      meta?: FeedMeta;
+    }> => {
+      const currentMeta = SECTIONS.find((s) => s.id === section);
+      const url = new URL(currentMeta?.endpoint || '/api/feed/home', window.location.origin);
+      url.searchParams.set('limit', String(currentMeta?.limit || 25));
+      if (currentMeta?.params) {
+        for (const [k, v] of Object.entries(currentMeta.params)) url.searchParams.set(k, v);
+      }
+      // Pass the active preset (or override) to the API
+      url.searchParams.set('preset', presetOverride ?? activePreset);
+      let res = await fetch(url.toString(), {
         credentials: 'include',
         cache: 'no-store',
         headers: { 'cache-control': 'no-store' },
       });
-      body = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
-    }
-    return { data: body.data || [], meta: body.meta };
-  }, [section]);
+      let body = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
+      // Sync preset from response meta
+      if (body.meta?.presetName && !presetOverride) {
+        setActivePreset(body.meta.presetName);
+      }
+      if (!body.data?.length && section === 'all') {
+        const rssUrl = new URL('/api/feed/rss', window.location.origin);
+        rssUrl.searchParams.set('source', 'reddit');
+        rssUrl.searchParams.set('handle', 'CryptoCurrency');
+        rssUrl.searchParams.set('limit', '25');
+        res = await fetch(rssUrl.toString(), {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'cache-control': 'no-store' },
+        });
+        body = (await res.json()) as { data?: UnifiedPost[]; meta?: FeedMeta };
+      }
+      return { data: body.data || [], meta: body.meta };
+    },
+    [section, activePreset],
+  );
 
   // Poll for new posts in the background (only needs the data array)
   const { newPostCount, refresh: resetNewPosts } = useFeedPoller(
@@ -273,7 +286,7 @@ function SectionContent({ section }: { section: string }) {
     return () => {
       cancelled = true;
     };
-  }, [fetchFeed, refreshKey, activePreset]);
+  }, [fetchFeed, refreshKey]);
 
   const displayName = meta?.label ?? section;
   const color = meta?.color ?? '#666';
@@ -289,7 +302,14 @@ function SectionContent({ section }: { section: string }) {
 
     if ((action === 'bookmark' || action === 'unbookmark') && post.protocol !== 'mastodon') {
       try {
-        if (action === 'bookmark') await addBookmark(postId, post.dfUri ?? '', post.protocol, post.text.slice(0, 60), post.author.displayName || '');
+        if (action === 'bookmark')
+          await addBookmark(
+            postId,
+            post.dfUri ?? '',
+            post.protocol,
+            post.text.slice(0, 60),
+            post.author.displayName || '',
+          );
         else await removeBookmark(postId);
         return { ok: true };
       } catch (err) {

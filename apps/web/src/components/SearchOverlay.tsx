@@ -160,13 +160,33 @@ function SearchIcon({ loading }: { loading: boolean }) {
   if (loading) {
     return (
       <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+        />
       </svg>
     );
   }
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="11" cy="11" r="8" />
       <path d="M21 21l-4.35-4.35" />
     </svg>
@@ -201,14 +221,21 @@ function ResultAvatar({
   rounded?: 'full' | 'xl' | 'lg';
 }) {
   const color = getProtocolColor(protocol);
-  const roundClass = rounded === 'full' ? 'rounded-full' : rounded === 'xl' ? 'rounded-xl' : 'rounded-lg';
+  const roundClass =
+    rounded === 'full' ? 'rounded-full' : rounded === 'xl' ? 'rounded-xl' : 'rounded-lg';
   return (
     <div
       className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden text-xs font-bold ${roundClass}`}
       style={{ backgroundColor: `${color}22`, color }}
     >
       {url ? (
-        <Image src={url} alt="" width={size} height={size} className={`h-9 w-9 object-cover ${roundClass}`} />
+        <Image
+          src={url}
+          alt=""
+          width={size}
+          height={size}
+          className={`h-9 w-9 object-cover ${roundClass}`}
+        />
       ) : (
         fallback[0]?.toUpperCase() || '?'
       )}
@@ -273,7 +300,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   // Scroll selected item into view
   useEffect(() => {
     if (selectedIndex < 0 || !resultsContainerRef.current) return;
-    const el = resultsContainerRef.current.querySelector<HTMLElement>(`[data-result-idx="${selectedIndex}"]`);
+    const el = resultsContainerRef.current.querySelector<HTMLElement>(
+      `[data-result-idx="${selectedIndex}"]`,
+    );
     el?.scrollIntoView({ block: 'nearest' });
   }, [selectedIndex]);
 
@@ -332,14 +361,11 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   );
 
   // Save query to recent + navigate
-  const commitSearch = useCallback(
-    (q: string) => {
-      const trimmed = q.trim();
-      if (trimmed) saveRecentSearch(trimmed);
-      setRecentSearches(getRecentSearches());
-    },
-    [],
-  );
+  const commitSearch = useCallback((q: string) => {
+    const trimmed = q.trim();
+    if (trimmed) saveRecentSearch(trimmed);
+    setRecentSearches(getRecentSearches());
+  }, []);
 
   // Navigate to a specific result item
   const navigateToItem = useCallback(
@@ -424,7 +450,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     inputRef.current?.focus();
   }, []);
 
-  const hasAnyResults = identities.length > 0 || results.length > 0 || communities.length > 0 || videos.length > 0;
+  const hasAnyResults =
+    identities.length > 0 || results.length > 0 || communities.length > 0 || videos.length > 0;
 
   if (!open) return null;
 
@@ -471,7 +498,15 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center justify-center h-6 w-6 rounded-full text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:bg-[var(--color-card)] transition-colors"
               aria-label="Clear search"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -531,8 +566,14 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-fg)] hover:bg-[var(--color-overlay)] transition-colors text-left"
                 >
                   <svg
-                    width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    strokeWidth="2" strokeLinecap="round" className="shrink-0 text-[var(--color-muted)]"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    className="shrink-0 text-[var(--color-muted)]"
                   >
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
@@ -570,7 +611,17 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         {!searched && !loading && !query && !showRecent && !showTrending && (
           <div className="rounded-2xl bg-[var(--color-card)] shadow-lg shadow-black/10 py-12 text-center">
             <div className="mb-4 text-[var(--color-muted)] opacity-30">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mx-auto"
+              >
                 <circle cx="11" cy="11" r="8" />
                 <path d="M21 21l-4.35-4.35" />
               </svg>
@@ -632,7 +683,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 </div>
                 {identities.map((identity) => {
                   const globalIdx = flatItems.findIndex(
-                    (fi) => fi.type === 'identity' && (fi.data as IdentityResult).id === identity.id,
+                    (fi) =>
+                      fi.type === 'identity' && (fi.data as IdentityResult).id === identity.id,
                   );
                   return (
                     <button
@@ -773,7 +825,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 </div>
                 {communities.map((community) => {
                   const globalIdx = flatItems.findIndex(
-                    (fi) => fi.type === 'community' && (fi.data as CommunityResult).id === community.id,
+                    (fi) =>
+                      fi.type === 'community' && (fi.data as CommunityResult).id === community.id,
                   );
                   return (
                     <button
@@ -913,7 +966,15 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 className="sticky bottom-0 z-10 flex items-center justify-center gap-2 bg-[var(--color-card)]/95 backdrop-blur-sm px-4 py-3 text-xs font-medium text-degen-400 hover:bg-[var(--color-overlay)] transition-colors border-t border-[var(--color-border)]"
               >
                 View all results
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
                   <path d="M5 12h14" />
                   <path d="M12 5l7 7-7 7" />
                 </svg>

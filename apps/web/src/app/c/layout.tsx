@@ -6,7 +6,12 @@ const communitiesBreadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Communities', item: 'https://app.degenfeed.xyz/communities' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Communities',
+      item: 'https://app.degenfeed.xyz/communities',
+    },
   ],
 };
 
@@ -15,9 +20,14 @@ export const metadata: Metadata = {
   description:
     'Browse cross-protocol web3 communities across Nostr, Farcaster, Lemmy, Mastodon, Bluesky, and Lens. Discover decentralized communities, crypto groups, and token-gated collectives.',
   keywords: [
-    'web3 communities', 'lemmy communities', 'decentralized communities',
-    'crypto reddit alternative', 'federated communities', 'nostr communities',
-    'farcaster channels', 'cross protocol communities',
+    'web3 communities',
+    'lemmy communities',
+    'decentralized communities',
+    'crypto reddit alternative',
+    'federated communities',
+    'nostr communities',
+    'farcaster channels',
+    'cross protocol communities',
   ],
   openGraph: {
     title: 'Web3 Communities — Cross-Protocol Crypto Social Groups | DegenFeed',
@@ -45,7 +55,11 @@ export const metadata: Metadata = {
 export default function CommunitiesLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-communities" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(communitiesBreadcrumb) }} />
+      <Script
+        id="breadcrumb-communities"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(communitiesBreadcrumb) }}
+      />
       {children}
     </>
   );

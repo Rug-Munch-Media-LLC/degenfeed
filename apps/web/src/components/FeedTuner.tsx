@@ -96,13 +96,7 @@ interface FeedTunerProps {
   onClose: () => void;
 }
 
-export function FeedTuner({
-  weights,
-  onWeightsChange,
-  onApply,
-  onReset,
-  onClose,
-}: FeedTunerProps) {
+export function FeedTuner({ weights, onWeightsChange, onApply, onReset, onClose }: FeedTunerProps) {
   const [localWeights, setLocalWeights] = useState<Record<string, number>>(weights);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -141,9 +135,7 @@ export function FeedTuner({
         {/* ── Header ── */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
           <div>
-            <h2 className="text-base font-bold text-[var(--color-fg)]">
-              🎚️ Tune Your Feed
-            </h2>
+            <h2 className="text-base font-bold text-[var(--color-fg)]">🎚️ Tune Your Feed</h2>
             <p className="text-xs text-gray-500">
               Slide to control what you see more or less of
               {tunedCount > 0 && (
@@ -158,7 +150,12 @@ export function FeedTuner({
             aria-label="Close tuner"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M12 4L4 12M4 4l8 8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>

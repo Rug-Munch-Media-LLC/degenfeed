@@ -20,9 +20,7 @@ import { useEffect, useRef } from 'react';
  * ]);
  * ```
  */
-export function useViewportPrefetch(
-  links: { href: string; priority?: number }[],
-) {
+export function useViewportPrefetch(links: { href: string; priority?: number }[]) {
   const router = useRouter();
   const prefetchedRef = useRef<Set<string>>(new Set());
 
@@ -74,9 +72,7 @@ export function useViewportPrefetch(
     );
 
     // Find all internal <a> links and observe them
-    const anchors = document.querySelectorAll<HTMLAnchorElement>(
-      'a[href^="/"]:not([href^="//"])',
-    );
+    const anchors = document.querySelectorAll<HTMLAnchorElement>('a[href^="/"]:not([href^="//"])');
     for (const anchor of anchors) {
       // Only observe internal navigation links
       const href = anchor.getAttribute('href');
@@ -87,15 +83,17 @@ export function useViewportPrefetch(
 
     // Also observe new links added dynamically
     const mutationObserver = new MutationObserver(() => {
-      document.querySelectorAll<HTMLAnchorElement>(
-        'a[href^="/"]:not([href^="//"]):not([data-vp-observed])',
-      ).forEach((anchor) => {
-        const href = anchor.getAttribute('href');
-        if (href && href !== '#' && !href.startsWith('http') && !href.startsWith('//')) {
-          anchor.setAttribute('data-vp-observed', 'true');
-          observer.observe(anchor);
-        }
-      });
+      document
+        .querySelectorAll<HTMLAnchorElement>(
+          'a[href^="/"]:not([href^="//"]):not([data-vp-observed])',
+        )
+        .forEach((anchor) => {
+          const href = anchor.getAttribute('href');
+          if (href && href !== '#' && !href.startsWith('http') && !href.startsWith('//')) {
+            anchor.setAttribute('data-vp-observed', 'true');
+            observer.observe(anchor);
+          }
+        });
     });
 
     mutationObserver.observe(document.body, {

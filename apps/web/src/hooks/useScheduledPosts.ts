@@ -48,7 +48,7 @@ export function useScheduledPosts() {
     };
     const interval = setInterval(fn, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [publishNow, getDuePosts]);
 
   const schedulePost = useCallback((text: string, targets: string[], scheduledAt: Date) => {
     const post: ScheduledPost = {

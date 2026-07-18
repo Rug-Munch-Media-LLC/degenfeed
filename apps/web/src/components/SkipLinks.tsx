@@ -12,25 +12,13 @@
 export function SkipLinks() {
   return (
     <nav aria-label="Skip to content" className="skip-links-group">
-      <a
-        className="skip-link"
-        href="#main"
-        id="skip-to-content"
-      >
+      <a className="skip-link" href="#main" id="skip-to-content">
         Skip to content
       </a>
-      <a
-        className="skip-link"
-        href="#main-nav"
-        id="skip-to-navigation"
-      >
+      <a className="skip-link" href="#main-nav" id="skip-to-navigation">
         Skip to navigation
       </a>
-      <a
-        className="skip-link"
-        href="#search-input"
-        id="skip-to-search"
-      >
+      <a className="skip-link" href="#search-input" id="skip-to-search">
         Skip to search
       </a>
     </nav>

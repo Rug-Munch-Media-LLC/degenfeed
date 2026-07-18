@@ -1,4 +1,4 @@
-import { Avatar, HeaderSkeleton, Line, Badge } from '@/components/loading/PageSkeleton';
+import { Avatar, Badge, HeaderSkeleton, Line } from '@/components/loading/PageSkeleton';
 
 export default function NotificationsLoading() {
   return (

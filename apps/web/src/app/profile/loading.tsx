@@ -1,4 +1,4 @@
-import { Avatar, Badge, HeaderSkeleton, Line, MetricCardSkeleton, ListSkeleton } from '@/components/loading/PageSkeleton';
+import { Avatar, Line, ListSkeleton, MetricCardSkeleton } from '@/components/loading/PageSkeleton';
 
 export default function ProfileLoading() {
   return (
@@ -38,7 +38,10 @@ export default function ProfileLoading() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 flex gap-2 border-b pb-3" style={{ borderColor: 'var(--color-glass-border)' }}>
+      <div
+        className="mb-6 flex gap-2 border-b pb-3"
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         {['Posts', 'Replies', 'Likes', 'Bookmarks', 'Settings'].map((t) => (
           <div
             key={t}

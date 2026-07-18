@@ -19,7 +19,7 @@ export function WelcomeBackModal() {
   const [show, setShow] = useState(false);
   const [preview, setPreview] = useState<DigestPreview | null>(null);
   const [loading, setLoading] = useState(true);
-  const dismissedRef = useRef(false);
+  const _dismissedRef = useRef(false);
 
   const checkAndFetch = useCallback(async () => {
     try {
@@ -116,12 +116,8 @@ export function WelcomeBackModal() {
         {/* Content */}
         <div className="text-center mb-6">
           <div className="text-3xl mb-3">👋</div>
-          <h2 className="text-lg font-bold text-[var(--color-fg)]">
-            Welcome back!
-          </h2>
-          <p className="text-sm text-[var(--color-muted)] mt-1">
-            Here&apos;s what you missed
-          </p>
+          <h2 className="text-lg font-bold text-[var(--color-fg)]">Welcome back!</h2>
+          <p className="text-sm text-[var(--color-muted)] mt-1">Here&apos;s what you missed</p>
         </div>
 
         {/* Stats grid */}
@@ -133,15 +129,11 @@ export function WelcomeBackModal() {
             <div className="text-[10px] text-[var(--color-muted)] mt-0.5">New posts</div>
           </div>
           <div className="rounded-xl bg-[var(--color-muted-bg)] p-3 text-center">
-            <div className="text-xl font-bold text-[var(--color-fg)]">
-              {preview.followedPosts}
-            </div>
+            <div className="text-xl font-bold text-[var(--color-fg)]">{preview.followedPosts}</div>
             <div className="text-[10px] text-[var(--color-muted)] mt-0.5">From creators</div>
           </div>
           <div className="rounded-xl bg-[var(--color-muted-bg)] p-3 text-center">
-            <div className="text-xl font-bold text-[var(--color-fg)]">
-              {preview.trendingCount}
-            </div>
+            <div className="text-xl font-bold text-[var(--color-fg)]">{preview.trendingCount}</div>
             <div className="text-[10px] text-[var(--color-muted)] mt-0.5">Trending topics</div>
           </div>
         </div>

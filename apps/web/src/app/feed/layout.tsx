@@ -15,9 +15,16 @@ export const metadata: Metadata = {
   description:
     'Your personalized web3 content feed aggregated from Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS. AI-powered cross-protocol timeline. The best decentralized social feed for crypto and web3 content.',
   keywords: [
-    'crypto news feed', 'web3 content aggregator', 'multi-protocol feed',
-    'nostr feed', 'farcaster feed', 'lens feed', 'bluesky feed', 'mastodon feed',
-    'unified social feed', 'cross protocol timeline',
+    'crypto news feed',
+    'web3 content aggregator',
+    'multi-protocol feed',
+    'nostr feed',
+    'farcaster feed',
+    'lens feed',
+    'bluesky feed',
+    'mastodon feed',
+    'unified social feed',
+    'cross protocol timeline',
   ],
   openGraph: {
     title: 'DegenFeed — Your Unified Web3 Social Feed',
@@ -36,7 +43,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'DegenFeed — Your Unified Web3 Feed',
-    description: 'Every social protocol, one feed. Aggregated Nostr, Farcaster, Lens, Bluesky, Mastodon.',
+    description:
+      'Every social protocol, one feed. Aggregated Nostr, Farcaster, Lens, Bluesky, Mastodon.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/feed' },
 };

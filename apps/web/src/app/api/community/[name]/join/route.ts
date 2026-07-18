@@ -2,10 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(
-  _request: Request,
-  { params }: { params: Promise<{ name: string }> },
-) {
+export async function POST(_request: Request, { params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
 
   // Simulate join — always succeeds for demo

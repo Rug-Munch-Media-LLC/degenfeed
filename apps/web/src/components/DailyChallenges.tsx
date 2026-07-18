@@ -25,14 +25,21 @@ export function DailyChallenges() {
   const fetchChallenges = useCallback(async () => {
     try {
       const res = await fetch('/api/gamification/challenges/today', { credentials: 'include' });
-      if (!res.ok) { setLoading(false); return; }
+      if (!res.ok) {
+        setLoading(false);
+        return;
+      }
       const json = (await res.json()) as ChallengesState;
       setState(json);
-    } catch { /* */ }
+    } catch {
+      /* */
+    }
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchChallenges(); }, [fetchChallenges]);
+  useEffect(() => {
+    fetchChallenges();
+  }, [fetchChallenges]);
 
   if (loading || !state || state.challenges.length === 0) return null;
 
@@ -41,9 +48,7 @@ export function DailyChallenges() {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-[var(--color-fg)]">
-          🎯 Today&apos;s Challenges
-        </h3>
+        <h3 className="text-sm font-semibold text-[var(--color-fg)]">🎯 Today&apos;s Challenges</h3>
         {allDone && (
           <span className="text-[10px] font-medium text-degen-400 bg-degen-500/10 px-2 py-0.5 rounded-full">
             ✓ Complete
@@ -59,11 +64,15 @@ export function DailyChallenges() {
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm">{challenge.icon}</span>
-                  <span className={`text-xs font-medium ${challenge.completed ? 'text-degen-400 line-through' : 'text-[var(--color-fg)]'}`}>
+                  <span
+                    className={`text-xs font-medium ${challenge.completed ? 'text-degen-400 line-through' : 'text-[var(--color-fg)]'}`}
+                  >
                     {challenge.title}
                   </span>
                 </div>
-                <span className={`text-[10px] font-mono ${challenge.completed ? 'text-degen-400' : 'text-[var(--color-muted)]'}`}>
+                <span
+                  className={`text-[10px] font-mono ${challenge.completed ? 'text-degen-400' : 'text-[var(--color-muted)]'}`}
+                >
                   {challenge.progress}/{challenge.target}
                 </span>
               </div>

@@ -55,7 +55,10 @@ export default function HomePage() {
             style={{ borderColor: `${p.color}33` }}
           >
             <span className="text-3xl transition-transform group-hover:scale-110">{p.emoji}</span>
-            <span className="text-sm font-semibold text-[var(--color-fg)]" style={{ color: p.color }}>
+            <span
+              className="text-sm font-semibold text-[var(--color-fg)]"
+              style={{ color: p.color }}
+            >
               {p.label}
             </span>
             <span className="text-[10px] text-gray-600">{p.desc}</span>

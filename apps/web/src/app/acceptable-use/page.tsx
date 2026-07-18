@@ -33,7 +33,9 @@ export default function AcceptableUsePage() {
       <h1 className="mb-6 text-2xl font-bold text-[var(--color-fg)]">Acceptable Use Policy</h1>
       <p className="mb-4 text-gray-500">Last updated: July 2026</p>
 
-      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">1. No Illegal Activities</h2>
+      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
+        1. No Illegal Activities
+      </h2>
       <p className="mb-4">
         You may not use DegenFeed to engage in, promote, or facilitate any activity that violates
         local, state, federal, or international law. This includes but is not limited to money
@@ -64,7 +66,9 @@ export default function AcceptableUsePage() {
         interaction.
       </p>
 
-      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">5. No CSAM / Exploitation</h2>
+      <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
+        5. No CSAM / Exploitation
+      </h2>
       <p className="mb-4">
         Child sexual abuse material (CSAM) and any content that exploits minors is absolutely
         prohibited. We maintain a zero-tolerance policy. Any such content will be immediately

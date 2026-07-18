@@ -7,7 +7,12 @@ const nostrBreadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Nostr Feed', item: 'https://app.degenfeed.xyz/nostr' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Nostr Feed',
+      item: 'https://app.degenfeed.xyz/nostr',
+    },
   ],
 };
 
@@ -16,8 +21,14 @@ export const metadata: Metadata = {
   description:
     'Browse the Nostr timeline — notes, relays, and zapped content from the decentralized relay network. Nostr feed with cross-post to Farcaster, Lens, Bluesky, Mastodon. The best Nostr web client and Nostr feed aggregator.',
   keywords: [
-    'nostr feed', 'nostr web client', 'nostr notes', 'nostr relays',
-    'nostr kind 1', 'nostr zap', 'nostr nip 05', 'decentralized relay network',
+    'nostr feed',
+    'nostr web client',
+    'nostr notes',
+    'nostr relays',
+    'nostr kind 1',
+    'nostr zap',
+    'nostr nip 05',
+    'decentralized relay network',
   ],
   openGraph: {
     title: 'Nostr Feed — Browse Notes, Relays & Zaps | DegenFeed',
@@ -30,7 +41,11 @@ export const metadata: Metadata = {
 export default function NostrPage() {
   return (
     <>
-      <Script id="breadcrumb-nostr" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(nostrBreadcrumb) }} />
+      <Script
+        id="breadcrumb-nostr"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(nostrBreadcrumb) }}
+      />
       <ProtocolFeedPage protocol="nostr" />
     </>
   );

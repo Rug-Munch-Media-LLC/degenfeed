@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { H2, H3 } from '../_components/doc-heading';
-import { Callout } from '../_components/doc-callout';
 import { Badge } from '../_components/doc-badge';
+import { Callout } from '../_components/doc-callout';
 import { CodeBlock, CodeTabs } from '../_components/doc-code-block';
+import { H2, H3 } from '../_components/doc-heading';
 import { DocTable, MethodBadge } from '../_components/doc-table';
 
 export const revalidate = 86400;
@@ -20,20 +20,80 @@ export const metadata: Metadata = {
 };
 
 const feedEndpoints = [
-  { method: 'GET', path: '/api/feed/home', desc: 'Aggregated ranked feed across all protocols. Primary feed endpoint.', tryIt: '/home/all?sort=hot' },
-  { method: 'GET', path: '/api/feed/trending', desc: 'Trending posts by engagement velocity.', tryIt: '/home/all?sort=hot' },
-  { method: 'GET', path: '/api/feed/news', desc: 'Curated news feed from RSS, Mastodon, and Bluesky.', tryIt: '/news' },
-  { method: 'GET', path: '/api/feed/stream', desc: 'Server-Sent Events real-time feed.', tryIt: null },
-  { method: 'GET', path: '/api/feed/:protocol', desc: 'Per-protocol feed. Replace :protocol with nostr, farcaster, lens, bluesky, mastodon, lemmy, reddit, rss.', tryIt: '/home/nostr?sort=hot' },
-  { method: 'GET', path: '/api/feed/category/:cat', desc: 'Filter by niche: defi, nft, ai, bitcoin, ethereum, solana, security, macro.', tryIt: '/home/all?category=defi' },
-  { method: 'GET', path: '/api/feed/post/:id', desc: 'Single post by canonical ID. O(1) KV lookup.', tryIt: null },
-  { method: 'GET', path: '/api/feed/post/:id/replies', desc: 'Thread context for a post. Nostr, Farcaster, Mastodon, Bluesky.', tryIt: null },
-  { method: 'GET', path: '/api/feed/related', desc: 'Related posts by niche overlap + time proximity.', tryIt: null },
-  { method: 'GET', path: '/api/feed/communities', desc: 'Trending communities across Reddit, Lemmy, Farcaster.', tryIt: '/discover' },
-  { method: 'GET', path: '/api/feed/funding', desc: 'Crypto venture funding tracker.', tryIt: '/home/funding' },
+  {
+    method: 'GET',
+    path: '/api/feed/home',
+    desc: 'Aggregated ranked feed across all protocols. Primary feed endpoint.',
+    tryIt: '/home/all?sort=hot',
+  },
+  {
+    method: 'GET',
+    path: '/api/feed/trending',
+    desc: 'Trending posts by engagement velocity.',
+    tryIt: '/home/all?sort=hot',
+  },
+  {
+    method: 'GET',
+    path: '/api/feed/news',
+    desc: 'Curated news feed from RSS, Mastodon, and Bluesky.',
+    tryIt: '/news',
+  },
+  {
+    method: 'GET',
+    path: '/api/feed/stream',
+    desc: 'Server-Sent Events real-time feed.',
+    tryIt: null,
+  },
+  {
+    method: 'GET',
+    path: '/api/feed/:protocol',
+    desc: 'Per-protocol feed. Replace :protocol with nostr, farcaster, lens, bluesky, mastodon, lemmy, reddit, rss.',
+    tryIt: '/home/nostr?sort=hot',
+  },
+  {
+    method: 'GET',
+    path: '/api/feed/category/:cat',
+    desc: 'Filter by niche: defi, nft, ai, bitcoin, ethereum, solana, security, macro.',
+    tryIt: '/home/all?category=defi',
+  },
+  {
+    method: 'GET',
+    path: '/api/feed/post/:id',
+    desc: 'Single post by canonical ID. O(1) KV lookup.',
+    tryIt: null,
+  },
+  {
+    method: 'GET',
+    path: '/api/feed/post/:id/replies',
+    desc: 'Thread context for a post. Nostr, Farcaster, Mastodon, Bluesky.',
+    tryIt: null,
+  },
+  {
+    method: 'GET',
+    path: '/api/feed/related',
+    desc: 'Related posts by niche overlap + time proximity.',
+    tryIt: null,
+  },
+  {
+    method: 'GET',
+    path: '/api/feed/communities',
+    desc: 'Trending communities across Reddit, Lemmy, Farcaster.',
+    tryIt: '/discover',
+  },
+  {
+    method: 'GET',
+    path: '/api/feed/funding',
+    desc: 'Crypto venture funding tracker.',
+    tryIt: '/home/funding',
+  },
   { method: 'GET', path: '/api/feed/rss.xml', desc: 'RSS 2.0 feed of top posts.', tryIt: null },
   { method: 'GET', path: '/api/feed/atom.xml', desc: 'Atom 1.0 feed of top posts.', tryIt: null },
-  { method: 'GET', path: '/api/feed/health', desc: 'Protocol health: latency and uptime per provider.', tryIt: '/status' },
+  {
+    method: 'GET',
+    path: '/api/feed/health',
+    desc: 'Protocol health: latency and uptime per provider.',
+    tryIt: '/status',
+  },
 ];
 
 const engagementEndpoints = [
@@ -45,8 +105,16 @@ const engagementEndpoints = [
 ];
 
 const identityEndpoints = [
-  { method: 'POST', path: '/api/auth/wallet/nonce', desc: 'Request signing nonce for wallet auth.' },
-  { method: 'POST', path: '/api/auth/wallet/verify', desc: 'Verify wallet signature, issue session cookie.' },
+  {
+    method: 'POST',
+    path: '/api/auth/wallet/nonce',
+    desc: 'Request signing nonce for wallet auth.',
+  },
+  {
+    method: 'POST',
+    path: '/api/auth/wallet/verify',
+    desc: 'Verify wallet signature, issue session cookie.',
+  },
   { method: 'POST', path: '/api/auth/gotosocial/authorize', desc: 'Start GotoSocial OAuth2 flow.' },
   { method: 'GET', path: '/api/auth/gotosocial/callback', desc: 'OAuth2 callback handler.' },
   { method: 'GET', path: '/api/auth/session', desc: 'Verify session cookie.' },
@@ -56,14 +124,26 @@ const identityEndpoints = [
 ];
 
 const searchEndpoints = [
-  { method: 'GET', path: '/api/search', desc: 'Cross-protocol text search. Query: ?q=bitcoin&protocols=nostr,farcaster&limit=25' },
+  {
+    method: 'GET',
+    path: '/api/search',
+    desc: 'Cross-protocol text search. Query: ?q=bitcoin&protocols=nostr,farcaster&limit=25',
+  },
   { method: 'GET', path: '/api/search/identity', desc: 'Search identities across protocols.' },
 ];
 
 const otherEndpoints = [
   { method: 'GET', path: '/api/discover/people', desc: 'Who to follow — trending authors.' },
-  { method: 'GET', path: '/api/embed/resolve', desc: 'OpenGraph metadata for a URL. 24h KV cache.' },
-  { method: 'GET', path: '/api/frame/resolve', desc: 'Parse Farcaster Frame meta tags. 5min cache.' },
+  {
+    method: 'GET',
+    path: '/api/embed/resolve',
+    desc: 'OpenGraph metadata for a URL. 24h KV cache.',
+  },
+  {
+    method: 'GET',
+    path: '/api/frame/resolve',
+    desc: 'Parse Farcaster Frame meta tags. 5min cache.',
+  },
   { method: 'POST', path: '/api/frame/action', desc: 'Submit Farcaster Frame button action.' },
   { method: 'GET', path: '/v1/prices', desc: 'Crypto prices via CoinGecko. 60s cache.' },
   { method: 'POST', path: '/api/newsletter/subscribe', desc: 'Subscribe to daily digest.' },
@@ -74,15 +154,49 @@ const otherEndpoints = [
 ];
 
 const errorCodes = [
-  { status: 400, code: 'BAD_REQUEST', meaning: 'Invalid parameters', desc: 'Missing or malformed query parameters or request body.' },
-  { status: 401, code: 'UNAUTHORIZED', meaning: 'No valid session', desc: 'State-changing endpoint without valid authentication.' },
-  { status: 403, code: 'FORBIDDEN', meaning: 'Insufficient permissions', desc: 'Authenticated but not allowed for this action.' },
-  { status: 404, code: 'NOT_FOUND', meaning: 'Resource not found', desc: 'Post, profile, or endpoint does not exist.' },
-  { status: 429, code: 'RATE_LIMITED', meaning: 'Too many requests', desc: 'Rate limit exceeded. Retry after indicated time.' },
-  { status: 500, code: 'INTERNAL_ERROR', meaning: 'Server error', desc: 'Unexpected server error. Try again later.' },
+  {
+    status: 400,
+    code: 'BAD_REQUEST',
+    meaning: 'Invalid parameters',
+    desc: 'Missing or malformed query parameters or request body.',
+  },
+  {
+    status: 401,
+    code: 'UNAUTHORIZED',
+    meaning: 'No valid session',
+    desc: 'State-changing endpoint without valid authentication.',
+  },
+  {
+    status: 403,
+    code: 'FORBIDDEN',
+    meaning: 'Insufficient permissions',
+    desc: 'Authenticated but not allowed for this action.',
+  },
+  {
+    status: 404,
+    code: 'NOT_FOUND',
+    meaning: 'Resource not found',
+    desc: 'Post, profile, or endpoint does not exist.',
+  },
+  {
+    status: 429,
+    code: 'RATE_LIMITED',
+    meaning: 'Too many requests',
+    desc: 'Rate limit exceeded. Retry after indicated time.',
+  },
+  {
+    status: 500,
+    code: 'INTERNAL_ERROR',
+    meaning: 'Server error',
+    desc: 'Unexpected server error. Try again later.',
+  },
 ];
 
-function EndpointRow({ ep }: { ep: { method: string; path: string; desc: string; tryIt?: string | null } }) {
+function EndpointRow({
+  ep,
+}: {
+  ep: { method: string; path: string; desc: string; tryIt?: string | null };
+}) {
   return (
     <div className="group flex items-start gap-3 rounded-lg border border-white/[0.03] bg-white/[0.01] px-3 py-2.5 transition-colors hover:border-white/10">
       <span className="mt-0.5 flex-shrink-0">
@@ -149,9 +263,19 @@ export default function ApiPage() {
       </p>
 
       <ol className="mt-3 list-inside list-decimal space-y-2 text-sm text-gray-400">
-        <li>Request a nonce from <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs text-degen-400">POST /api/auth/wallet/nonce</code></li>
+        <li>
+          Request a nonce from{' '}
+          <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs text-degen-400">
+            POST /api/auth/wallet/nonce
+          </code>
+        </li>
         <li>Ask the user to sign the nonce with their wallet</li>
-        <li>Verify the signature at <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs text-degen-400">POST /api/auth/wallet/verify</code></li>
+        <li>
+          Verify the signature at{' '}
+          <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs text-degen-400">
+            POST /api/auth/wallet/verify
+          </code>
+        </li>
         <li>A session cookie is set. Include it in subsequent requests.</li>
       </ol>
 
@@ -242,7 +366,10 @@ curl -X POST https://degenfeed.xyz/api/auth/wallet/verify \\
           { level: 'Authenticated', limit: '120 req / 5s', note: 'With valid session cookie' },
           { level: 'API Key', limit: '300 req / 5s', note: 'Contact us for a key' },
         ].map((r) => (
-          <div key={r.level} className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
+          <div
+            key={r.level}
+            className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4"
+          >
             <div className="text-xs font-semibold text-[var(--color-fg)]">{r.level}</div>
             <div className="mt-1 font-mono text-lg font-bold text-degen-400">{r.limit}</div>
             <p className="mt-1 text-[11px] text-gray-500">{r.note}</p>
@@ -252,15 +379,24 @@ curl -X POST https://degenfeed.xyz/api/auth/wallet/verify \\
 
       <Callout type="info">
         The rate limiter fails open. A KV outage will never block legitimate traffic. Rate limit
-        headers are returned as <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">X-RateLimit-Remaining</code>
-        {' '}and <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">X-RateLimit-Reset</code>.
+        headers are returned as{' '}
+        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+          X-RateLimit-Remaining
+        </code>{' '}
+        and{' '}
+        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+          X-RateLimit-Reset
+        </code>
+        .
       </Callout>
 
       {/* Feed Endpoints */}
       <H2 id="feed-endpoints">Feed Endpoints</H2>
       <p className="text-sm leading-relaxed text-gray-400">
         Feed endpoints return paginated arrays of unified post objects. All support cursor-based
-        pagination via the <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">cursor</code> parameter.
+        pagination via the{' '}
+        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">cursor</code>{' '}
+        parameter.
       </p>
 
       <div className="mt-4 space-y-1">
@@ -340,10 +476,18 @@ data = response.json()
           </thead>
           <tbody className="text-gray-500">
             {[
-              ['protocols', 'all', 'Comma-separated: nostr,farcaster,lens,bluesky,mastodon,lemmy,reddit,rss,threads'],
+              [
+                'protocols',
+                'all',
+                'Comma-separated: nostr,farcaster,lens,bluesky,mastodon,lemmy,reddit,rss,threads',
+              ],
               ['sort', 'scored', 'scored | hot | new | top'],
               ['limit', '50', '1-200 posts per page'],
-              ['category', '', 'Filter by niche: defi, ai, bitcoin, ethereum, solana, security, macro'],
+              [
+                'category',
+                '',
+                'Filter by niche: defi, ai, bitcoin, ethereum, solana, security, macro',
+              ],
               ['type', '', 'Content type: video, article, image, thread, link, text'],
               ['cursor', '', 'Timestamp for cursor-based pagination'],
               ['direction', 'desc', 'asc | desc'],
@@ -439,8 +583,16 @@ curl "https://degenfeed.xyz/api/search/identity?q=vitalik"`}</CodeBlock>
 
       <DocTable
         columns={[
-          { header: 'Status', key: 'status', render: (v) => <span className="font-mono text-yellow-400">{String(v)}</span> },
-          { header: 'Code', key: 'code', render: (v) => <span className="font-mono text-degen-400">{String(v)}</span> },
+          {
+            header: 'Status',
+            key: 'status',
+            render: (v) => <span className="font-mono text-yellow-400">{String(v)}</span>,
+          },
+          {
+            header: 'Code',
+            key: 'code',
+            render: (v) => <span className="font-mono text-degen-400">{String(v)}</span>,
+          },
           { header: 'Meaning', key: 'meaning' },
           { header: 'Description', key: 'desc' },
         ]}
@@ -448,14 +600,19 @@ curl "https://degenfeed.xyz/api/search/identity?q=vitalik"`}</CodeBlock>
       />
 
       <Callout type="tip">
-        All errors include a <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">retryAfter</code> field
-        for 429 responses. Always retry with exponential backoff for 5xx errors.
+        All errors include a{' '}
+        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+          retryAfter
+        </code>{' '}
+        field for 429 responses. Always retry with exponential backoff for 5xx errors.
       </Callout>
 
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
         <p className="text-xs text-gray-600">
           Questions about the API?{' '}
-          <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">admin@rugmunch.io</a>
+          <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
+            admin@rugmunch.io
+          </a>
         </p>
       </div>
     </div>

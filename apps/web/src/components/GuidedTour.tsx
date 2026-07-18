@@ -55,7 +55,8 @@ const STEPS: TourStep[] = [
     placement: 'bottom',
   },
   {
-    targetSelector: 'button:has(svg):has(path[d*="Compose" i]), .btn-primary, button:has-text("Compose")',
+    targetSelector:
+      'button:has(svg):has(path[d*="Compose" i]), .btn-primary, button:has-text("Compose")',
     title: 'Cross-Protocol Posting',
     description:
       'Create a post and publish it to Nostr, Farcaster, Lens, Bluesky, Mastodon, and Threads all at once. Your message goes everywhere you choose, from a single click.',
@@ -228,7 +229,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tourState, currentStep]);
+  }, [tourState, handleSkip, handlePrev, handleNext]);
 
   // ── Navigation handlers ─────────────────────────────────────────────
   const handleNext = useCallback(() => {
@@ -270,7 +271,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
       };
     }
 
-    const gap = (step.offset ?? 16);
+    const gap = step.offset ?? 16;
     const scrollX = window.scrollX || window.pageXOffset;
     const scrollY = window.scrollY || window.pageYOffset;
 
@@ -340,7 +341,8 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
           className="fixed z-[81] pointer-events-none rounded-2xl"
           style={{
             ...spotlightStyle,
-            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(0, 255, 65, 0.6), 0 0 24px rgba(0, 255, 65, 0.3)',
+            boxShadow:
+              '0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(0, 255, 65, 0.6), 0 0 24px rgba(0, 255, 65, 0.3)',
             animation: 'guided-tour-pulse 2s ease-in-out infinite',
           }}
           aria-hidden="true"

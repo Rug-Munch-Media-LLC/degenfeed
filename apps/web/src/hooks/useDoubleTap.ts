@@ -10,10 +10,7 @@ import { useCallback, useRef } from 'react';
  * @param delay        Max ms between taps (default 300)
  * @returns handlers   Spread onto the target element
  */
-export function useDoubleTap(
-  onDoubleTap?: () => void,
-  delay = 300,
-) {
+export function useDoubleTap(onDoubleTap?: () => void, delay = 300) {
   const lastTap = useRef(0);
   const tapTimeout = useRef<ReturnType<typeof setTimeout>>();
 

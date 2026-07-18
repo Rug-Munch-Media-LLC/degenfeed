@@ -269,7 +269,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
-  }, [fetchFeed, config]);
+  }, [fetchFeed, config, fetchFeatured]);
 
   const handleRefresh = useCallback(() => {
     setNewPostCount(0);

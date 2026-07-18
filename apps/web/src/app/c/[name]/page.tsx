@@ -1,7 +1,7 @@
 'use client';
 
-import type { CrossProtocolCommunity } from '@degenfeed/utils';
 import { ErrorBoundary } from '@degenfeed/ui';
+import type { CrossProtocolCommunity } from '@degenfeed/utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -11,22 +11,20 @@ import { useToast } from '../../../components/Toast';
 
 type Tab = 'posts' | 'about' | 'members' | 'proposals';
 
-const PROTOCOL_META: Record<
-  string,
-  { label: string; color: string; emoji: string; url?: string }
-> = {
-  lemmy: { label: 'Lemmy', color: '#00b868', emoji: 'L', url: 'https://join-lemmy.org' },
-  nostr: { label: 'Nostr', color: '#8e30eb', emoji: '⚡' },
-  farcaster: {
-    label: 'Farcaster',
-    color: '#8a63d2',
-    emoji: '🟣',
-    url: 'https://farcaster.xyz',
-  },
-  mastodon: { label: 'Mastodon', color: '#6364ff', emoji: '🐘' },
-  bluesky: { label: 'Bluesky', color: '#1185fe', emoji: '🦋', url: 'https://bsky.app' },
-  lens: { label: 'Lens', color: '#abfe2c', emoji: '🌿', url: 'https://lens.xyz' },
-};
+const PROTOCOL_META: Record<string, { label: string; color: string; emoji: string; url?: string }> =
+  {
+    lemmy: { label: 'Lemmy', color: '#00b868', emoji: 'L', url: 'https://join-lemmy.org' },
+    nostr: { label: 'Nostr', color: '#8e30eb', emoji: '⚡' },
+    farcaster: {
+      label: 'Farcaster',
+      color: '#8a63d2',
+      emoji: '🟣',
+      url: 'https://farcaster.xyz',
+    },
+    mastodon: { label: 'Mastodon', color: '#6364ff', emoji: '🐘' },
+    bluesky: { label: 'Bluesky', color: '#1185fe', emoji: '🦋', url: 'https://bsky.app' },
+    lens: { label: 'Lens', color: '#abfe2c', emoji: '🌿', url: 'https://lens.xyz' },
+  };
 
 interface FeedItem {
   id: string;
@@ -121,7 +119,11 @@ export default function CommunityPage() {
         const protocols = community.protocols as Record<string, unknown>;
         return protocols[key] !== undefined;
       })
-      .map(([key, meta]) => ({ key, ...meta, data: (community.protocols as Record<string, unknown>)[key] }));
+      .map(([key, meta]) => ({
+        key,
+        ...meta,
+        data: (community.protocols as Record<string, unknown>)[key],
+      }));
   }, [community]);
 
   const formatDate = (ts: number) => {
@@ -217,11 +219,15 @@ export default function CommunityPage() {
               {/* Stats */}
               <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
                 <span>
-                  <strong className="text-[var(--color-fg)]">{community.memberCount.toLocaleString()}</strong>{' '}
+                  <strong className="text-[var(--color-fg)]">
+                    {community.memberCount.toLocaleString()}
+                  </strong>{' '}
                   members
                 </span>
                 <span>
-                  <strong className="text-[var(--color-fg)]">{community.postCount.toLocaleString()}</strong>{' '}
+                  <strong className="text-[var(--color-fg)]">
+                    {community.postCount.toLocaleString()}
+                  </strong>{' '}
                   posts
                 </span>
                 <span className="text-xs text-gray-600">
@@ -387,7 +393,9 @@ export default function CommunityPage() {
                             ? Object.entries(pd)
                                 .filter(
                                   ([k, v]) =>
-                                    k !== 'members' && typeof v === 'string' && String(v).length > 0,
+                                    k !== 'members' &&
+                                    typeof v === 'string' &&
+                                    String(v).length > 0,
                                 )
                                 .map(([k, v]) => `${k}: ${String(v)}`)
                                 .join(', ')
@@ -413,7 +421,9 @@ export default function CommunityPage() {
         {activeTab === 'members' && (
           <div className="card">
             <p className="text-sm text-gray-400">
-              <strong className="text-[var(--color-fg)]">{community.memberCount.toLocaleString()}</strong>{' '}
+              <strong className="text-[var(--color-fg)]">
+                {community.memberCount.toLocaleString()}
+              </strong>{' '}
               members
             </p>
             <p className="mt-2 text-xs text-gray-600">

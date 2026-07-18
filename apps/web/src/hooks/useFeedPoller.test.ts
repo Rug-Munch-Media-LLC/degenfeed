@@ -115,12 +115,16 @@ describe('useFeedPoller', () => {
     });
 
     // Poll 2 — discovers 'b'
-    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
     expect(result.current.newPostCount).toBe(1);
 
     // Poll 3 — 'b' is still in knownIds, but not in newPosts pending dedup
     // The hook adds 'c' as new, 'b' is already known
-    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
     expect(result.current.newPostCount).toBe(2); // b (from earlier) + c (new)
   });
 
@@ -138,7 +142,9 @@ describe('useFeedPoller', () => {
       return renderHook(() => useFeedPoller(fetchFn, 60_000, true));
     });
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
     expect(result.current.newPostCount).toBe(1);
 
     await act(async () => {
@@ -159,7 +165,9 @@ describe('useFeedPoller', () => {
       return renderHook(() => useFeedPoller(fetchFn, 60_000, true));
     });
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
 
     expect(result.current.lastPolledAt).not.toBeNull();
     expect(result.current.lastPolledAt!).toBeGreaterThanOrEqual(startTime);
@@ -186,7 +194,9 @@ describe('useFeedPoller', () => {
 
     // Advance past the interval — should NOT poll because paused
     const prevCount = fetchFn.mock.calls.length;
-    await act(async () => { await vi.advanceTimersByTimeAsync(120_000); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(120_000);
+    });
     expect(fetchFn).toHaveBeenCalledTimes(prevCount); // no new calls
   });
 
@@ -229,7 +239,9 @@ describe('useFeedPoller', () => {
       return renderHook(() => useFeedPoller(fetchFn, 60_000, true));
     });
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
     const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
 
     await act(async () => {
@@ -248,7 +260,9 @@ describe('useFeedPoller', () => {
       return renderHook(() => useFeedPoller(fetchFn, 60_000, true));
     });
 
-    await act(async () => { unmount(); });
+    await act(async () => {
+      unmount();
+    });
 
     expect(removeSpy).toHaveBeenCalledWith('visibilitychange', expect.any(Function));
     removeSpy.mockRestore();
@@ -293,14 +307,18 @@ describe('useFeedPoller', () => {
     });
 
     // Let the seed run (it will throw, but should be caught)
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
 
     // newPostCount should remain 0, lastPolledAt should not be set
     expect(result.current.newPostCount).toBe(0);
     expect(result.current.lastPolledAt).toBeNull();
 
     // Subsequent polls also should not crash
-    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
     expect(result.current.newPostCount).toBe(0);
   });
 
@@ -311,7 +329,9 @@ describe('useFeedPoller', () => {
       return renderHook(() => useFeedPoller(fetchFn, 60_000, true));
     });
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
 
     // null is not iterable, the for-of loop throws, but it's caught
     expect(result.current.newPostCount).toBe(0);
@@ -326,7 +346,9 @@ describe('useFeedPoller', () => {
       return renderHook(() => useFeedPoller(fetchFn, 60_000, true));
     });
 
-    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
 
     expect(result.current.newPostCount).toBe(0);
     expect(result.current.lastPolledAt).not.toBeNull();

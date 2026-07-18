@@ -54,14 +54,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // ── 2. Per-protocol home sections ───────────────────────────────────
   const protocolSections = [
-    'nostr', 'farcaster', 'lens', 'bluesky',
-    'mastodon', 'threads', 'reddit', 'rss', 'lemmy',
+    'nostr',
+    'farcaster',
+    'lens',
+    'bluesky',
+    'mastodon',
+    'threads',
+    'reddit',
+    'rss',
+    'lemmy',
   ];
 
   // ── 3. Niches (topic filter pages) ──────────────────────────────────
   const niches = [
-    'bitcoin', 'ethereum', 'solana', 'defi', 'ai',
-    'nft', 'security', 'macro', 'layer2',
+    'bitcoin',
+    'ethereum',
+    'solana',
+    'defi',
+    'ai',
+    'nft',
+    'security',
+    'macro',
+    'layer2',
   ];
 
   // ── 4. Dynamic data from the API ────────────────────────────────────

@@ -1,7 +1,7 @@
 'use client';
 
-import { savePreferences } from '@degenfeed/storage';
 import type { FeedLayout } from '@degenfeed/storage';
+import { savePreferences } from '@degenfeed/storage';
 import { useCallback, useEffect, useState } from 'react';
 
 const LAYOUT_STORAGE_KEY = 'df_layout';
@@ -67,32 +67,29 @@ export function useFeedLayout() {
     applyLayoutClass(initial);
   }, []);
 
-  const setLayout = useCallback(
-    async (next: FeedLayout) => {
-      setLayoutState(next);
-      applyLayoutClass(next);
-      try {
-        localStorage.setItem(LAYOUT_STORAGE_KEY, next);
-      } catch {
-        /* ignore */
-      }
-      // Fire-and-forget: sync to IndexedDB
-      try {
-        const { getPrimaryIdentity, getPreferences, getDefaultPreferences } = await import(
-          '@degenfeed/storage'
-        );
-        const primary = await getPrimaryIdentity();
-        const identityId = primary?.id ?? 'anon';
-        const existing = await getPreferences(identityId);
-        const defaults = await getDefaultPreferences(identityId);
-        const merged = { ...defaults, ...(existing ?? {}), feedLayout: next };
-        await savePreferences(merged);
-      } catch {
-        /* ignore — offline or no session */
-      }
-    },
-    [],
-  );
+  const setLayout = useCallback(async (next: FeedLayout) => {
+    setLayoutState(next);
+    applyLayoutClass(next);
+    try {
+      localStorage.setItem(LAYOUT_STORAGE_KEY, next);
+    } catch {
+      /* ignore */
+    }
+    // Fire-and-forget: sync to IndexedDB
+    try {
+      const { getPrimaryIdentity, getPreferences, getDefaultPreferences } = await import(
+        '@degenfeed/storage'
+      );
+      const primary = await getPrimaryIdentity();
+      const identityId = primary?.id ?? 'anon';
+      const existing = await getPreferences(identityId);
+      const defaults = await getDefaultPreferences(identityId);
+      const merged = { ...defaults, ...(existing ?? {}), feedLayout: next };
+      await savePreferences(merged);
+    } catch {
+      /* ignore — offline or no session */
+    }
+  }, []);
 
   const cycleLayout = useCallback(() => {
     const currentIndex = LAYOUT_CYCLE.indexOf(layout);

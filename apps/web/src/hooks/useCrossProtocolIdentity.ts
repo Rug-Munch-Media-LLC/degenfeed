@@ -36,10 +36,9 @@ export function useCrossProtocolIdentity(
     setError(null);
 
     try {
-      const res = await fetch(
-        `/api/identity/profile?wallet=${encodeURIComponent(walletAddress)}`,
-        { credentials: 'include' },
-      );
+      const res = await fetch(`/api/identity/profile?wallet=${encodeURIComponent(walletAddress)}`, {
+        credentials: 'include',
+      });
       if (!res.ok) {
         setError(`HTTP ${res.status}`);
         setLoading(false);
@@ -71,12 +70,18 @@ export function getLinkedProtocols(
 
   if (identity.nostr) protocols.push({ protocol: 'nostr', handle: identity.nostr.npub });
   if (identity.farcaster) {
-    protocols.push({ protocol: 'farcaster', handle: identity.farcaster.username || String(identity.farcaster.fid) });
+    protocols.push({
+      protocol: 'farcaster',
+      handle: identity.farcaster.username || String(identity.farcaster.fid),
+    });
   }
   if (identity.lens) protocols.push({ protocol: 'lens', handle: identity.lens.handle });
   if (identity.bluesky) protocols.push({ protocol: 'bluesky', handle: identity.bluesky.handle });
   if (identity.mastodon) {
-    protocols.push({ protocol: 'mastodon', handle: `${identity.mastodon.handle}@${identity.mastodon.instance}` });
+    protocols.push({
+      protocol: 'mastodon',
+      handle: `${identity.mastodon.handle}@${identity.mastodon.instance}`,
+    });
   }
   if (identity.reddit) protocols.push({ protocol: 'reddit', handle: identity.reddit.username });
 

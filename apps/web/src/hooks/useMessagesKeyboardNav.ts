@@ -36,9 +36,7 @@ export function useMessagesKeyboardNav(
       focusedIndex.current = index;
       const id = conversationIds[index];
       if (!id) return;
-      const el = listRef.current?.querySelector<HTMLElement>(
-        `[data-conversation-id="${id}"]`,
-      );
+      const el = listRef.current?.querySelector<HTMLElement>(`[data-conversation-id="${id}"]`);
       el?.focus();
       el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
@@ -50,11 +48,7 @@ export function useMessagesKeyboardNav(
 
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
-      if (
-        tag === 'INPUT' ||
-        tag === 'TEXTAREA' ||
-        (e.target as HTMLElement)?.isContentEditable
-      ) {
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) {
         return;
       }
 
