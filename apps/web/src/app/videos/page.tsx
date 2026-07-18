@@ -556,7 +556,7 @@ export default function VideosPage() {
               Videos sourced from YouTube RSS feeds,
               {' '}<a
                 href={`https://${PEERTUBE_INSTANCE}`}
-                target="_blank"
+                target="_blank" rel="noopener noreferrer"
                 rel="noopener noreferrer"
                 className="text-degen-500 hover:text-degen-400 transition-colors underline underline-offset-2"
               >
@@ -565,7 +565,7 @@ export default function VideosPage() {
               and{' '}
               <a
                 href="https://sepiasearch.org"
-                target="_blank"
+                target="_blank" rel="noopener noreferrer"
                 rel="noopener noreferrer"
                 className="text-degen-500 hover:text-degen-400 transition-colors underline underline-offset-2"
               >

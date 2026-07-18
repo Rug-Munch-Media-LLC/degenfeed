@@ -100,7 +100,7 @@ function DigestCard({ item }: { item: LocalDigestItem }) {
   return (
     <a
       href={item.url}
-      target="_blank"
+      target="_blank" rel="noopener noreferrer"
       rel="noopener noreferrer"
       className="block rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 hover:border-degen-400/40 transition-all hover:shadow-md hover:shadow-degen-500/5"
     >
@@ -109,7 +109,7 @@ function DigestCard({ item }: { item: LocalDigestItem }) {
           <div className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-[var(--color-muted-bg)]">
             <img
               src={item.image}
-              alt=""
+              alt={item.title || 'Digest article image'}
               className="w-full h-full object-cover"
               loading="lazy"
             />

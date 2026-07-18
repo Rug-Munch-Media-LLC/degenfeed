@@ -114,7 +114,7 @@ export function ProtocolSections({ protocol, color }: Props) {
                     // biome-ignore lint/performance/noImgElement: external avatar URLs are dynamic
                     <img
                       src={item.imageUrl}
-                      alt=""
+                      alt={`${item.label || 'Protocol'} icon`}
                       className="h-5 w-5 shrink-0 rounded-full object-cover"
                       loading="lazy"
                     />
@@ -142,7 +142,7 @@ export function ProtocolSections({ protocol, color }: Props) {
                   {item.url ? (
                     <a
                       href={item.url}
-                      target="_blank"
+                      target="_blank" rel="noopener noreferrer"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-[var(--color-muted)]/50"
                     >

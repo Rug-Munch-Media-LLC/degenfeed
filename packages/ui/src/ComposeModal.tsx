@@ -1141,7 +1141,7 @@ export function ComposeModal({
                   {permanenceProof.arweaveTxId && (
                     <a
                       href={`https://arweave.net/${permanenceProof.arweaveTxId}`}
-                      target="_blank"
+                      target="_blank" rel="noopener noreferrer"
                       rel="noopener noreferrer"
                       className="ml-1 underline hover:text-[var(--color-fg)]"
                       onClick={(e) => e.stopPropagation()}
@@ -1152,7 +1152,7 @@ export function ComposeModal({
                   {permanenceProof.ipfsCid && (
                     <a
                       href={`https://ipfs.io/ipfs/${permanenceProof.ipfsCid}`}
-                      target="_blank"
+                      target="_blank" rel="noopener noreferrer"
                       rel="noopener noreferrer"
                       className="ml-1 underline hover:text-[var(--color-fg)]"
                       onClick={(e) => e.stopPropagation()}

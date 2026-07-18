@@ -15,6 +15,7 @@ const TipModal = dynamic(
   { ssr: false, loading: () => null },
 );
 
+import { Breadcrumbs } from '../../../components/Breadcrumbs';
 import { sanitizeHtml } from '../../../lib/sanitize';
 
 // ─── Read time helper ─────────────────────────────────────────
@@ -195,14 +196,14 @@ function PostCard({
       {embedData && (
         <a
           href={post.embeds.find((e) => e.kind === 'link')?.url || '#'}
-          target="_blank"
+          target="_blank" rel="noopener noreferrer"
           rel="noopener noreferrer"
           className="mb-4 block overflow-hidden rounded-xl border border-[var(--color-glass-border)] transition-colors hover:border-degen-500/20"
         >
           {embedData.image && (
             <Image
               src={embedData.image}
-              alt=""
+              alt="Post image"
               width={800}
               height={400}
               className="w-full object-cover"
@@ -267,7 +268,7 @@ function PostCard({
             >
               <Image
                 src={img.url}
-                alt=""
+                alt="Post image"
                 width={800}
                 height={imageExpanded ? 1200 : 400}
                 className={`w-full object-cover transition-all ${imageExpanded ? '' : 'max-h-96'}`}
@@ -716,10 +717,12 @@ export default function PostPage({ params }: Props) {
         aria-valuemax={100}
         aria-label="Reading progress"
       />
-      <div
-        className="mx-auto max-w-2xl px-4 py-6"
-        ref={contentRef}
-        style={
+      <div className="mx-auto max-w-2xl px-4 py-6">
+        <Breadcrumbs className="mb-4 px-1" />
+
+        <div
+          ref={contentRef}
+          style={
           {
             '--reader-font-size': settings.fontSize === 'sm' ? '0.875rem' : settings.fontSize === 'lg' ? '1.125rem' : '1rem',
             '--reader-line-height': settings.lineSpacing === 'compact' ? '1.4' : settings.lineSpacing === 'relaxed' ? '1.8' : '1.6',

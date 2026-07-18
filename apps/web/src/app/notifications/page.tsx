@@ -166,7 +166,7 @@ function NotificationRow({
             {actorAvatar ? (
               <Image
                 src={actorAvatar}
-                alt=""
+                alt="Notification avatar"
                 width={20}
                 height={20}
                 className="-ml-1 mr-1 inline h-5 w-5 rounded-full object-cover align-middle"

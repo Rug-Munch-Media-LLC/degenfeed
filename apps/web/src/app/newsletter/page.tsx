@@ -401,7 +401,7 @@ export default function NewsletterPage() {
                     {item.url && (
                       <a
                         href={item.url}
-                        target="_blank"
+                        target="_blank" rel="noopener noreferrer"
                         rel="noopener noreferrer"
                         className="mt-1 inline-block text-[11px] text-degen-500 hover:underline"
                       >
@@ -528,7 +528,7 @@ export default function NewsletterPage() {
                 <li>
                   <a
                     href="/api/feed/rss.xml"
-                    target="_blank"
+                    target="_blank" rel="noopener noreferrer"
                     rel="noopener noreferrer"
                     className="text-degen-500 hover:underline"
                   >
@@ -538,7 +538,7 @@ export default function NewsletterPage() {
                 <li>
                   <a
                     href="/api/feed/rss.xml?format=atom"
-                    target="_blank"
+                    target="_blank" rel="noopener noreferrer"
                     rel="noopener noreferrer"
                     className="text-degen-500 hover:underline"
                   >
@@ -548,7 +548,7 @@ export default function NewsletterPage() {
                 <li>
                   <a
                     href="/api/feed/rss.xml?category=bitcoin"
-                    target="_blank"
+                    target="_blank" rel="noopener noreferrer"
                     rel="noopener noreferrer"
                     className="text-degen-500 hover:underline"
                   >
@@ -558,7 +558,7 @@ export default function NewsletterPage() {
                 <li>
                   <a
                     href="/api/feed/rss.xml?category=defi"
-                    target="_blank"
+                    target="_blank" rel="noopener noreferrer"
                     rel="noopener noreferrer"
                     className="text-degen-500 hover:underline"
                   >

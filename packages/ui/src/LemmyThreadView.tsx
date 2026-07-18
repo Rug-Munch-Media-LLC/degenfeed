@@ -488,7 +488,7 @@ const LinkPreview = memo(function LinkPreview({ url }: LinkPreviewProps) {
   return (
     <a
       href={url}
-      target="_blank"
+      target="_blank" rel="noopener noreferrer"
       rel="noopener noreferrer"
       className="mt-1.5 flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-xs transition-all hover:border-white/20 hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-degen-400/60 group"
       onClick={(e) => e.stopPropagation()}
@@ -814,7 +814,7 @@ const CommentNode = memo(function CommentNode({
       <div className="ml-6 mt-1">
         <a
           href={`https://lemmy.degenfeed.xyz/comment/${comment.id}`}
-          target="_blank"
+          target="_blank" rel="noopener noreferrer"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-degen-500 transition-colors hover:text-degen-400 hover:bg-degen-500/10 focus:outline-none focus:ring-2 focus:ring-degen-400/60"
         >
@@ -1253,7 +1253,7 @@ export const LemmyThreadView = memo(function LemmyThreadView({
       {/* ── Community header ── */}
       <a
         href={`https://${domainDisplay}/${communityName.startsWith('c/') ? communityName : `c/${communityName}`}`}
-        target="_blank"
+        target="_blank" rel="noopener noreferrer"
         rel="noopener noreferrer"
         className="flex items-center gap-2 border-b border-[var(--color-border)] px-4 py-2.5 transition-colors hover:bg-[var(--color-muted)]"
         onClick={(e) => e.stopPropagation()}
@@ -1361,7 +1361,7 @@ export const LemmyThreadView = memo(function LemmyThreadView({
       {/* ── "View on community" link ── */}
       <a
         href={`https://${domainDisplay}/${communityName.startsWith('c/') ? communityName : `c/${communityName}`}`}
-        target="_blank"
+        target="_blank" rel="noopener noreferrer"
         rel="noopener noreferrer"
         className="flex items-center justify-center border-t border-[var(--color-border)] px-4 py-2 text-xs text-degen-500 transition-colors hover:bg-[var(--color-muted)] hover:text-degen-400"
         onClick={(e) => e.stopPropagation()}

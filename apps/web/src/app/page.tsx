@@ -6,14 +6,19 @@ import './landing.css';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'DegenFeed — Every Network. One Feed.',
+  title: 'DegenFeed — Every Network. One Feed. Web3 Social Media Aggregator',
   description:
-    'The web3 social super app. Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube — all in one place. Open source, wallet-native, cross-protocol.',
+    'DegenFeed is the best web3 social media platform and decentralized social network. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube in one crypto social feed. Cross-post to multiple protocols, tip creators with crypto, and join decentralized communities. Open source, wallet-native, cross-protocol.',
+  keywords: [
+    'web3 social media', 'decentralized social network', 'crypto social platform',
+    'nostr feed', 'farcaster feed', 'lens protocol', 'bluesky feed',
+    'mastodon feed', 'crypto tipping', 'web3 social app', 'fediverse aggregator',
+  ],
   alternates: { canonical: 'https://app.degenfeed.xyz' },
   openGraph: {
-    title: 'DegenFeed — Every Network. One Feed.',
+    title: 'DegenFeed — Every Network. One Feed. Web3 Social Media Aggregator',
     description:
-      'The web3 social super app. Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube — all in one place. Cross-protocol, wallet-native, open source.',
+      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube in one crypto social feed. Cross-post, tip creators, join web3 communities. Open source.',
     siteName: 'DegenFeed',
     type: 'website',
     url: 'https://app.degenfeed.xyz',
@@ -22,7 +27,7 @@ export const metadata: Metadata = {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed — Every Network. One Feed.',
+        alt: 'DegenFeed — web3 social media aggregator connecting Nostr, Farcaster, Lens, Bluesky, Mastodon in one decentralized social network feed',
       },
     ],
   },
@@ -30,7 +35,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'DegenFeed — Every Network. One Feed.',
     description:
-      'The web3 social super app. Nostr, Farcaster, Lens, Bluesky, Mastodon — all in one place.',
+      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon in one web3 social feed. Cross-protocol, wallet-native, open source.',
     images: ['https://app.degenfeed.xyz/og-image.png'],
   },
 };
@@ -672,7 +677,7 @@ export default function HomePage() {
             ))}
             <a
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
-              target="_blank"
+              target="_blank" rel="noopener noreferrer"
               rel="noopener noreferrer"
               className="footer-link"
             >

@@ -228,7 +228,7 @@ export default function ProfilePage() {
                       {id.avatarUrl ? (
                         <Image
                           src={id.avatarUrl}
-                          alt=""
+                          alt={`${id.label || 'Protocol'} avatar`}
                           width={40}
                           height={40}
                           className="h-10 w-10 rounded-full object-cover"
@@ -380,7 +380,7 @@ export default function ProfilePage() {
                       <div className="flex items-center gap-4">
                         <Image
                           src={mastoId.avatarUrl || '/icon.svg'}
-                          alt=""
+                          alt={`${mastoId.displayName || 'Mastodon'} avatar`}
                           width={56}
                           height={56}
                           className="h-14 w-14 rounded-xl object-cover"
@@ -399,7 +399,7 @@ export default function ProfilePage() {
                       <div className="mt-3 flex items-center gap-3 text-xs text-gray-400">
                         <a
                           href={`https://social.degenfeed.xyz/@${mastoId.handle}`}
-                          target="_blank"
+                          target="_blank" rel="noopener noreferrer"
                           rel="noopener"
                           className="rounded-lg border border-white/10 px-3 py-1.5 transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)]"
                         >

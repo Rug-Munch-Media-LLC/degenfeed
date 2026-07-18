@@ -182,7 +182,7 @@ export const EmbedModal = memo(function EmbedModal({
                   <cite style={{ fontStyle: 'normal' }}>
                     <a
                       href={postUrl}
-                      target="_blank"
+                      target="_blank" rel="noopener noreferrer"
                       rel="noopener noreferrer"
                       style={{ color: 'var(--degen-500)', textDecoration: 'none' }}
                     >

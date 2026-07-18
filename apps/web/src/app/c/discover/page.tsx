@@ -103,7 +103,7 @@ function CommunityCard({ community }: { community: FederatedCommunity }) {
   return (
     <Link
       href={`https://${community.instance}/c/${community.name}`}
-      target="_blank"
+      target="_blank" rel="noopener noreferrer"
       rel="noopener"
       className="card group flex flex-col transition-all hover:border-degen-500/30 hover:shadow-[0_0_20px_rgba(0,255,65,0.05)]"
     >

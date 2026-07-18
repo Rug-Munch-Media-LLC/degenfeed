@@ -4,6 +4,7 @@ import { TrendingSidebar, type TrendingSidebarData } from '@degenfeed/ui';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
+import { RecentlyVisited } from './RecentlyVisited';
 
 interface FeedSidebarProps {
   trending?: { topic: string; count: number; score: number }[];
@@ -168,6 +169,9 @@ export function FeedSidebar({
           </button>
         )}
       </div>
+
+      {/* Recently visited */}
+      <RecentlyVisited />
 
       {/* What's Happening — SUPER Trending Sidebar */}
       <TrendingSidebar data={sidebarData} />

@@ -235,7 +235,7 @@ function TrendingPostCard({
       {post.image && (
         <Image
           src={post.image}
-          alt=""
+          alt={`Post image from ${post.author.displayName || 'DegenFeed'}`}
           width={240}
           height={135}
           className="w-full rounded-lg object-cover"

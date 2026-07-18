@@ -20,9 +20,12 @@ import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { OnboardingModal } from './OnboardingModal';
 import { WelcomeBackModal } from './WelcomeBackModal';
 import { ScrollToTop } from '@degenfeed/ui';
+import { QuickJumpFloating } from './QuickJumpFloating';
+import { RecentlyVisited } from './RecentlyVisited';
 import { SearchOverlay } from './SearchOverlay';
 import { ScreenReaderAnnouncerProvider } from './ScreenReaderAnnouncer';
 import { SkipLinks } from './SkipLinks';
+import { useRecentVisited } from '../hooks/useRecentVisited';
 import { useToast } from './Toast';
 
 // ─── Protocol nav items ──────────────────────────────────────────────────
@@ -238,6 +241,7 @@ function ProtocolSubNav() {
 
 export const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   const { ready, signedInProtocols, openSignIn, openCompose } = useAuth();
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -245,9 +249,20 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
   const { layout, setLayout, cycleLayout, isCompact, isMediaGrid, isReader, layoutLabel } =
     useFeedLayout();
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
-  const [helpOpen, setHelpOpen] = useState(false);
-  const helpRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
+  const { trackVisit } = useRecentVisited();
+
+  // Track visited pages
+  useEffect(() => {
+    if (!pathname || pathname === '/') return;
+    const label = pathname
+      .split('/')
+      .filter(Boolean)
+      .map((s) => decodeURIComponent(s).replace(/[-_]/g, ' '))
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(' > ');
+    trackVisit(pathname, label || 'Home');
+  }, [pathname, trackVisit]);
 
   // Listen for custom df-toast events (e.g., from PostCard share)
   useEffect(() => {
@@ -295,6 +310,13 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         });
         return;
       }
+      // Ctrl+K / Cmd+K: Open search
+      if ((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
+
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
         // Don't trigger if user is typing in an input
         if (
@@ -655,7 +677,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             No account required. Open source on{' '}
             <a
               href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
-              target="_blank"
+              target="_blank" rel="noopener noreferrer"
               rel="noopener noreferrer"
               className="underline transition-all hover:brightness-150"
               style={{ color: 'var(--color-muted)' }}
@@ -665,7 +687,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             ,{' '}
             <a
               href="https://gitlab.com/cryptorugmuncher/degenfeed-web"
-              target="_blank"
+              target="_blank" rel="noopener noreferrer"
               rel="noopener noreferrer"
               className="underline transition-all hover:brightness-150"
               style={{ color: 'var(--color-muted)' }}
@@ -675,7 +697,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             , and{' '}
             <a
               href="https://codeberg.org/cryptorugmunch/degenfeed-web"
-              target="_blank"
+              target="_blank" rel="noopener noreferrer"
               rel="noopener noreferrer"
               className="underline transition-all hover:brightness-150"
               style={{ color: 'var(--color-muted)' }}
@@ -687,6 +709,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         </div>
       </footer>
 
+      <QuickJumpFloating />
       <ScrollToTop />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <KeyboardShortcuts open={showShortcuts} onClose={() => setShowShortcuts(false)} />

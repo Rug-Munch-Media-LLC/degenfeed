@@ -279,7 +279,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                   <a
                     key={identity.id}
                     href={getProfileUrl(identity)}
-                    target="_blank"
+                    target="_blank" rel="noopener noreferrer"
                     rel="noopener noreferrer"
                     className={`card-hover flex items-center gap-3 transition-colors ${
                       activeTab === 'people' ? 'p-4' : 'p-3'
@@ -401,7 +401,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                     {r.image && (
                       <Image
                         src={r.image}
-                        alt=""
+                        alt="Search result image"
                         width={48}
                         height={48}
                         className="h-12 w-12 shrink-0 rounded-lg object-cover"

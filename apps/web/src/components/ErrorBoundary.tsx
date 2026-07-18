@@ -18,12 +18,21 @@ interface State {
   error: Error | null;
 }
 
+let _codeCounter = 0;
+function generateCode(): string {
+  _codeCounter += 1;
+  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `DF-${rand}`;
+}
+
 /**
  * Global error boundary component.
  * Wraps any part of the tree to catch rendering errors and show a fallback UI.
  * Logs errors to console and the `reportError` service.
  */
 export class ErrorBoundary extends Component<Props, State> {
+  private errorCode = 'DF-0000';
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -34,19 +43,25 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[ErrorBoundary]', error, errorInfo);
+    this.errorCode = generateCode();
+    console.error(`[ErrorBoundary ${this.errorCode}]`, error, errorInfo);
     reportError(error, {
-      tags: { source: 'error-boundary', componentStack: errorInfo.componentStack ?? '' },
+      tags: {
+        source: 'error-boundary',
+        code: this.errorCode,
+        componentStack: errorInfo.componentStack ?? '',
+      },
     });
     this.props.onError?.(error, errorInfo);
   }
 
-  handleReset = () => {
+  override handleReset = () => {
     this.setState({ hasError: false, error: null });
+    this.errorCode = generateCode();
     this.props.onReset?.();
   };
 
-  render() {
+  override render() {
     if (this.state.hasError && this.state.error) {
       if (typeof this.props.fallback === 'function') {
         return this.props.fallback(this.state.error, this.handleReset);
@@ -63,14 +78,25 @@ export class ErrorBoundary extends Component<Props, State> {
             </span>
           </div>
           <h2 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Something went wrong</h2>
-          <p className="mb-6 text-sm text-[var(--color-muted)]">
-            An unexpected error occurred. Please try again.
+          <p className="mb-2 text-sm text-[var(--color-muted)]">
+            Something hiccupped. Try refreshing or{' '}
+            <button
+              type="button"
+              onClick={this.handleReset}
+              className="underline decoration-dotted underline-offset-2 text-degen-400 hover:text-degen-300 transition-colors"
+            >
+              try again
+            </button>
+            .
+          </p>
+          <p className="mb-6 text-[10px] font-mono text-[var(--color-muted)] opacity-30">
+            {this.errorCode}
           </p>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={this.handleReset}
-              className="rounded-lg bg-degen-500/20 px-5 py-2.5 text-sm font-semibold text-degen-400 transition-colors hover:bg-degen-500/30"
+              className="rounded-lg bg-degen-500/20 px-5 py-2.5 text-sm font-semibold text-degen-400 transition-colors hover:bg-degen-500/30 active:scale-[0.97]"
             >
               Try Again
             </button>

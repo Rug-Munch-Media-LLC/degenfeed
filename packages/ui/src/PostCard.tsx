@@ -1083,7 +1083,7 @@ export const PostCard = memo(function PostCard({
                         <a
                           key={`video-${embed.url}`}
                           href={embed.url}
-                          target="_blank"
+                          target="_blank" rel="noopener noreferrer"
                           rel="noopener noreferrer"
                           className="mt-2 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] p-3 text-xs text-degen-500 hover:text-degen-400 transition-colors truncate"
                           onClick={(e) => e.stopPropagation()}
