@@ -228,6 +228,7 @@ function DigestError({ message, onRetry }: { message: string; onRetry: () => voi
       </h2>
       <p className="text-sm text-[var(--color-muted)] mb-6">{message}</p>
       <button
+        type="button"
         onClick={onRetry}
         className="px-4 py-2 bg-degen-500 text-black rounded-lg font-medium text-sm hover:bg-degen-400 transition-colors"
       >
@@ -310,6 +311,7 @@ export default function DigestPage() {
               Yesterday&apos;s Digest
             </Link>
             <button
+              type="button"
               onClick={shareDigest}
               className="px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:border-degen-400/40 transition-colors"
             >
@@ -332,6 +334,7 @@ export default function DigestPage() {
           <span className="inline-flex items-center gap-1">📰 {digest.meta.totalSections} sections</span>
           <span>·</span>
           <button
+            type="button"
             onClick={fetchDigest}
             className="text-degen-400 hover:text-degen-300 transition-colors"
           >

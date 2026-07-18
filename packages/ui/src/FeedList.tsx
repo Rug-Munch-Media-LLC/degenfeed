@@ -60,6 +60,8 @@ export interface FeedListProps {
   onAdminRemove?: (postId: string) => void;
   /** Called when an admin bans a user */
   onAdminBan?: (userId: string, protocol: string, handle?: string) => void;
+  /** Called when user clicks "Why am I seeing this?" in the three-dot menu */
+  onWhyThisPost?: (post: UnifiedPost) => void;
 }
 
 /* Replaced inline SkeletonCard with shared CardSkeleton from LoadingSkeleton */
@@ -131,6 +133,7 @@ export const FeedList = memo(function FeedList({
   isAdmin,
   onAdminRemove,
   onAdminBan,
+  onWhyThisPost,
 }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -337,6 +340,7 @@ export const FeedList = memo(function FeedList({
               isAdmin={isAdmin}
               onAdminRemove={onAdminRemove}
               onAdminBan={onAdminBan}
+              onWhyThisPost={onWhyThisPost}
             />
           </div>
         ))}

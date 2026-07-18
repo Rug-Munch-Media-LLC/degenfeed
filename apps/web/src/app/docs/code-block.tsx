@@ -6,8 +6,10 @@ export function CodeBlock({ children }: { children: string }) {
       <div className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-4 py-2">
         <span className="font-mono text-[10px] tracking-wider text-gray-500 uppercase">bash</span>
         <button
+          type="button"
           onClick={() => navigator.clipboard.writeText(children)}
           className="rounded px-2 py-0.5 text-[10px] text-gray-500 opacity-0 transition-opacity hover:text-[var(--color-fg)] group-hover:opacity-100"
+          aria-label="Copy code to clipboard"
         >
           Copy
         </button>

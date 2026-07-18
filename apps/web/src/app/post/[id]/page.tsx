@@ -7,6 +7,7 @@ import { formatTimeAgo } from '@degenfeed/utils';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useReadingSettings } from '../../../hooks/useReadingSettings';
 import { useAuth } from '../../../components/AuthProvider';
 
@@ -135,6 +136,41 @@ function PostCard({
     },
     [post.id, onEngage, liked, reposted],
   );
+
+  const handleShare = useCallback(async () => {
+    const url = window.location.href;
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `${post.author.displayName} on ${protocolLabel(post.protocol)}`,
+          text: post.text.slice(0, 200),
+          url,
+        });
+      } catch {
+        /* user cancelled or share failed */
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        /* clipboard write failed */
+      }
+    }
+  }, [post]);
+
+  const handleEmbed = useCallback(async () => {
+    const origin = window.location.origin;
+    const embedCode = [
+      `<iframe src="${origin}/embed/${encodeURIComponent(post.id)}"`,
+      ' width="550" height="400" frameborder="0"',
+      ' allowfullscreen></iframe>',
+    ].join('');
+    try {
+      await navigator.clipboard.writeText(embedCode);
+    } catch {
+      /* clipboard write failed */
+    }
+  }, [post]);
 
   return (
     <article className="card border border-[var(--color-glass-border)]">
@@ -298,12 +334,12 @@ function PostCard({
         {metrics.quotes > 0 && <span>{metrics.quotes} zaps</span>}
       </div>
 
-      <div className="flex items-center gap-2 border-t border-[var(--color-glass-border)] pt-3">
+      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1 sm:gap-2 border-t border-[var(--color-glass-border)] pt-3">
         <button
           type="button"
           onClick={() => handleAction('like')}
           disabled={engaging === 'like'}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${liked ? 'bg-degen-500/20 text-degen-400' : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+          className={`rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors flex-1 sm:flex-none ${liked ? 'bg-degen-500/20 text-degen-400' : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
         >
           {liked ? '♥' : '♡'} {metrics.likes}
         </button>
@@ -311,7 +347,7 @@ function PostCard({
           type="button"
           onClick={() => handleAction('repost')}
           disabled={engaging === 'repost'}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${reposted ? 'bg-green-500/20 text-green-400' : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+          className={`rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors flex-1 sm:flex-none ${reposted ? 'bg-green-500/20 text-green-400' : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
         >
           ↻ {metrics.reposts}
         </button>
@@ -319,16 +355,32 @@ function PostCard({
           type="button"
           onClick={() => handleAction(bookmarked ? 'unbookmark' : 'bookmark')}
           disabled={engaging === 'bookmark' || engaging === 'unbookmark'}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${bookmarked ? 'bg-yellow-500/20 text-yellow-400' : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+          className={`rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors flex-1 sm:flex-none ${bookmarked ? 'bg-yellow-500/20 text-yellow-400' : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
         >
           {bookmarked ? '★' : '☆'}
         </button>
         <button
           type="button"
           onClick={() => onTip(post)}
-          className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+          className="rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors flex-1 sm:flex-none"
         >
           Tip
+        </button>
+        <button
+          type="button"
+          onClick={handleShare}
+          className="rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors flex-1 sm:flex-none"
+          title="Share this post"
+        >
+          ↗
+        </button>
+        <button
+          type="button"
+          onClick={handleEmbed}
+          className="rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors flex-1 sm:flex-none"
+          title="Copy embed code"
+        >
+          &lt;/&gt;
         </button>
       </div>
     </article>
@@ -701,6 +753,13 @@ export default function PostPage({ params }: Props) {
       return acc;
     }, {});
 
+  // Breadcrumb override: show post preview instead of raw ID
+  const pathname = usePathname();
+  const lastSegment = pathname.split('/').filter(Boolean).pop() ?? '';
+  const breadcrumbOverrides = post?.text
+    ? { [lastSegment]: `${post.author.displayName}: ${post.text.slice(0, 48)}${post.text.length > 48 ? '…' : ''}` }
+    : undefined;
+
   // Reader controls
   const fontSizeLabel = { sm: 'S', md: 'M', lg: 'L' } as const;
   const lineSpacingLabel = { compact: 'Compact', comfortable: 'Comfy', relaxed: 'Relaxed' } as const;
@@ -718,7 +777,7 @@ export default function PostPage({ params }: Props) {
         aria-label="Reading progress"
       />
       <div className="mx-auto max-w-2xl px-4 py-6">
-        <Breadcrumbs className="mb-4 px-1" />
+        <Breadcrumbs className="mb-4 px-1" overrides={breadcrumbOverrides} />
 
         <div
           ref={contentRef}

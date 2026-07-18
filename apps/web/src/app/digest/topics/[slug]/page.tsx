@@ -152,6 +152,7 @@ export default function TopicDigestPage() {
             </div>
           </div>
           <button
+            type="button"
             onClick={toggleFollow}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               following

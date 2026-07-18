@@ -84,9 +84,9 @@ function SearchBar() {
 function TrendingCard() {
   return (
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden">
-      <h3 className="px-4 pt-3 pb-2 text-lg font-bold" style={{ color: 'var(--color-fg)' }}>
+      <h2 className="px-4 pt-3 pb-2 text-lg font-bold" style={{ color: 'var(--color-fg)' }}>
         Trending
-      </h3>
+      </h2>
       <div className="divide-y divide-[var(--color-glass-border)]">
         {TRENDING_TOPICS.slice(0, 5).map((topic) => (
           <Link
@@ -107,6 +107,7 @@ function TrendingCard() {
       <Link
         href="/trending"
         className="block px-4 py-3 text-sm text-degen-400 transition-colors hover:bg-[var(--color-overlay)] rounded-b-xl"
+        aria-label="View all trending topics"
       >
         Show more
       </Link>
@@ -119,9 +120,9 @@ function TrendingCard() {
 function WhoToFollowCard() {
   return (
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden">
-      <h3 className="px-4 pt-3 pb-2 text-lg font-bold" style={{ color: 'var(--color-fg)' }}>
+      <h2 className="px-4 pt-3 pb-2 text-lg font-bold" style={{ color: 'var(--color-fg)' }}>
         Who to follow
-      </h3>
+      </h2>
       <div className="divide-y divide-[var(--color-glass-border)]">
         {FOLLOW_SUGGESTIONS.map((person) => (
           <div
@@ -151,6 +152,7 @@ function WhoToFollowCard() {
       <Link
         href="/discover"
         className="block px-4 py-3 text-sm text-degen-400 transition-colors hover:bg-[var(--color-overlay)] rounded-b-xl"
+        aria-label="View more people to follow"
       >
         Show more
       </Link>
@@ -170,9 +172,9 @@ function PremiumCta() {
             fill="var(--color-accent)"
           />
         </svg>
-        <h3 className="text-base font-bold" style={{ color: 'var(--color-fg)' }}>
+        <h2 className="text-base font-bold" style={{ color: 'var(--color-fg)' }}>
           Premium
-        </h3>
+        </h2>
       </div>
       <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--color-muted)' }}>
         Unlock advanced features, cross-protocol analytics, and priority support.
