@@ -15,6 +15,7 @@
  */
 
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { requireSession } from '../session';
 import {
   discoverNewSources,
   type DiscoveredSource,
@@ -104,6 +105,26 @@ async function getExistingSources(env: Env): Promise<Record<string, string[]>> {
     peertube: approved.filter((s) => s.platform === 'peertube').map((s) => s.name.toLowerCase()),
     newsletter: approved.filter((s) => s.platform === 'newsletter').map((s) => s.url),
   };
+}
+
+// ─── Admin gating ──────────────────────────────────────────────────
+
+function isAdmin(env: Env, address: string): boolean {
+  if (!env.ADMIN_WALLETS) return false;
+  const admins = env.ADMIN_WALLETS.split(',').map((a) => a.trim().toLowerCase());
+  return admins.includes(address.toLowerCase());
+}
+
+async function requireAdmin(
+  request: Request,
+  env: Env,
+): Promise<{ address: string } | Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+  if (!isAdmin(env, session.address)) {
+    return jsonResponse({ error: 'Forbidden: admin access required' }, 403);
+  }
+  return { address: session.address };
 }
 
 // ─── Handlers ─────────────────────────────────────────────────────────
@@ -197,6 +218,9 @@ export async function handleSourcesPending(_request: Request, env: Env): Promise
  * Body: { id: string } or { ids: string[] }
  */
 export async function handleSourcesApprove(request: Request, env: Env): Promise<Response> {
+  const admin = await requireAdmin(request, env);
+  if (admin instanceof Response) return admin;
+
   try {
     const body = (await request.json()) as { id?: string; ids?: string[] };
     const approveIds = body.ids ?? (body.id ? [body.id] : []);
@@ -270,6 +294,9 @@ export async function handleSourcesApprove(request: Request, env: Env): Promise<
  * Body: { id: string } or { ids: string[] }
  */
 export async function handleSourcesReject(request: Request, env: Env): Promise<Response> {
+  const admin = await requireAdmin(request, env);
+  if (admin instanceof Response) return admin;
+
   try {
     const body = (await request.json()) as { id?: string; ids?: string[] };
     const rejectIds = body.ids ?? (body.id ? [body.id] : []);

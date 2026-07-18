@@ -135,7 +135,7 @@ function PlatformSignupForm({
       <button
         type="submit"
         disabled={loading || username.trim().length < 2}
-        className="shrink-0 rounded-lg bg-degen-500 px-3 py-2 text-xs font-bold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_12px_rgba(0,255,65,0.25)] disabled:opacity-40"
+        className="shrink-0 rounded-lg bg-degen-500 px-3 py-2 text-xs font-bold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_12px_var(--color-accent-glow)] disabled:opacity-40"
       >
         {loading ? (
           <span className="flex items-center gap-1.5">
@@ -163,7 +163,7 @@ export function CrossPlatformSignup({
   compact = false,
   onRegistrationComplete,
 }: CrossPlatformSignupProps) {
-  const { walletAddress, walletAddresses } = useAuth();
+  const { walletAddress } = useAuth();
   const { tier: currentTier, isPremium, loading: premiumLoading } = usePremium();
   const { showToast } = useToast();
 

@@ -38,18 +38,6 @@ export function useScheduledPosts() {
     loadAll().then(setScheduled);
   }, []);
 
-  // Stable refs — intentional mount-only effect
-  useEffect(() => {
-    const fn = async () => {
-      const due = await getDuePosts();
-      for (const post of due) {
-        publishNow(post.id);
-      }
-    };
-    const interval = setInterval(fn, 60000);
-    return () => clearInterval(interval);
-  }, [publishNow, getDuePosts]);
-
   const schedulePost = useCallback((text: string, targets: string[], scheduledAt: Date) => {
     const post: ScheduledPost = {
       id: crypto.randomUUID(),
@@ -89,6 +77,18 @@ export function useScheduledPosts() {
     const all = await loadAll();
     return all.filter((p) => new Date(p.scheduledAt) <= now);
   }, []);
+
+  // Stable refs — intentional mount-only effect
+  useEffect(() => {
+    const fn = async () => {
+      const due = await getDuePosts();
+      for (const post of due) {
+        publishNow(post.id);
+      }
+    };
+    const interval = setInterval(fn, 60000);
+    return () => clearInterval(interval);
+  }, [publishNow, getDuePosts]);
 
   return { scheduled, schedulePost, cancelSchedule, publishNow, getDuePosts } as const;
 }

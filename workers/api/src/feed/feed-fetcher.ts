@@ -67,6 +67,8 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   ponder: 3000,  // Ponder is slow — aggressive timeout
   ethereum: 8000, // On-chain data fetch
   solana: 8000,   // On-chain data fetch
+  kbin: 5000,     // Fediverse — moderate timeout
+  tildes: 5000,   // Link aggregator — moderate timeout
 };
 
 // ─── Per-provider fetch timer ────────────────────────────────────
@@ -231,7 +233,7 @@ class RssWithFallbackProvider implements FeedProvider {
         'https://thedefiant.io/feed',
         'https://newsletter.banklesshq.com/feed',
         'https://banklesshq.substack.com/feed',
-        'https://messari.io/feed',
+        'https://messari.substack.com/feed',
         'https://blog.chainalysis.com/feed/',
         // ── Tier 2 — High Quality Research / VC ──
         'https://www.paradigm.xyz/feed/atom',
@@ -256,7 +258,8 @@ class RssWithFallbackProvider implements FeedProvider {
         'https://rekt.news/feed.xml',
         'https://blog.trailofbits.com/feed/',
         'https://www.coincenter.org/feed/',
-        'https://cointelegraph.com/tags/regulation/feed',
+        // cointelegraph.com/tags/regulation/feed removed — tag RSS 404; decrypt/regulation is already listed
+
         'https://blog.openzeppelin.com/feed',
         // ── AI x Crypto ──
         'https://www.interconnects.ai/feed/',

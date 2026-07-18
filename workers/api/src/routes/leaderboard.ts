@@ -17,6 +17,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse } from '../index';
+import { requireSession } from '../session';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -221,7 +222,17 @@ function shuffleRank<T extends { rank: number; change: number }>(entries: T[]): 
   }));
 }
 
-export async function handleRefreshLeaderboards(env: Env): Promise<Response> {
+export async function handleRefreshLeaderboards(request: Request, env: Env): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  if (env.ADMIN_WALLETS) {
+    const admins = env.ADMIN_WALLETS.split(',').map((a) => a.trim().toLowerCase());
+    if (!admins.includes(session.address.toLowerCase())) {
+      return jsonResponse({ error: 'Forbidden: admin access required' }, 403);
+    }
+  }
+
   const now = new Date().toISOString();
   const periods: Period[] = ['daily', 'weekly', 'monthly', 'alltime'];
 

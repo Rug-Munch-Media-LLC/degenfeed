@@ -727,12 +727,18 @@ importers:
       '@degenfeed/ranking':
         specifier: workspace:*
         version: link:../../packages/ranking
+      '@degenfeed/reputation':
+        specifier: workspace:*
+        version: link:../../packages/reputation
       '@degenfeed/rss-sdk':
         specifier: workspace:*
         version: link:../../packages/rss-sdk
       '@degenfeed/shorts-provider':
         specifier: workspace:*
         version: link:../../packages/shorts-provider
+      '@degenfeed/source-discovery':
+        specifier: workspace:*
+        version: link:../../packages/source-discovery
       '@degenfeed/threads-sdk':
         specifier: workspace:*
         version: link:../../packages/threads-sdk

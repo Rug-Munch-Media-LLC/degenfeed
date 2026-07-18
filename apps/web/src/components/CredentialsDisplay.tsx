@@ -104,7 +104,7 @@ function CredentialFieldRow({
           <button
             type="button"
             onClick={() => setRevealed(!revealed)}
-            className="rounded-lg px-2 py-1 text-[10px] font-medium text-[var(--color-muted)] transition-colors hover:bg-white/[0.06] hover:text-[var(--color-fg)]"
+            className="rounded-lg px-2 py-1 text-[10px] font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
             aria-label={revealed ? 'Hide credential' : 'Show credential'}
           >
             {revealed ? '🙈 Hide' : '👁 Show'}
@@ -143,7 +143,7 @@ function RecommendedAppsSection({ apps }: { apps: RecommendedApp[] }) {
             href={app.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-full bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-[var(--color-fg)] transition-colors hover:bg-white/[0.08] hover:text-degen-400"
+            className="inline-flex items-center gap-1 rounded-full bg-[var(--color-overlay)] px-2.5 py-1 text-[10px] font-medium text-[var(--color-fg)] transition-colors hover:bg-[var(--color-card-hover)] hover:text-[var(--color-accent)]"
             title={app.description}
           >
             {app.name}
@@ -246,7 +246,7 @@ export function CredentialCard({ credential }: CredentialCardProps) {
         <button
           type="button"
           onClick={handleDownload}
-          className="shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-medium text-[var(--color-muted)] transition-colors hover:bg-white/[0.06] hover:text-[var(--color-fg)]"
+          className="shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
           aria-label="Download credentials"
         >
           ⬇ Download
@@ -312,7 +312,7 @@ export function CredentialsProgressBanner({
               cy="24"
               r="20"
               fill="none"
-              stroke="rgba(255,255,255,0.06)"
+              stroke="var(--color-glass-border)"
               strokeWidth="4"
             />
             <circle
@@ -320,7 +320,7 @@ export function CredentialsProgressBanner({
               cy="24"
               r="20"
               fill="none"
-              stroke="#00ff41"
+              stroke="var(--color-accent)"
               strokeWidth="4"
               strokeLinecap="round"
               strokeDasharray={`${(percent / 100) * 125.6} 125.6`}
@@ -347,7 +347,7 @@ export function CredentialsProgressBanner({
           <div
             key={i}
             className={`h-1 flex-1 rounded-full transition-colors ${
-              i < connectedCount ? 'bg-degen-500' : 'bg-white/[0.06]'
+              i < connectedCount ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-overlay)]'
             }`}
           />
         ))}
@@ -427,10 +427,20 @@ export function getRecommendedApps(platform: string): RecommendedApp[] {
 
 // ─── Build credential from registration result ────────────────────────────
 
-import type { PlatformRegistration } from '@degenfeed/crossplatform-register';
+// Re-using the local type instead of importing from @degenfeed/crossplatform-register
+// which isn't a direct dependency of apps/web. The shape matches PlatformAccount
+// from @degenfeed/ui.
+export interface RegistrationResultData {
+  platform: string;
+  status: 'pending' | 'created' | 'failed';
+  username?: string;
+  error?: string;
+  txHash?: string;
+  accountInfo?: Record<string, string>;
+}
 
 export function registrationToCredential(
-  reg: PlatformRegistration,
+  reg: RegistrationResultData,
 ): PlatformCredential | null {
   if (reg.status !== 'created' || !reg.accountInfo) return null;
 

@@ -361,7 +361,7 @@ const Controls = memo(function Controls({
   // ── Speed cycling ──
   const cycleSpeed = useCallback(() => {
     const idx = SPEED_OPTIONS.indexOf(playbackRate as (typeof SPEED_OPTIONS)[number]);
-    const next = SPEED_OPTIONS[(idx + 1) % SPEED_OPTIONS.length];
+    const next = SPEED_OPTIONS[(idx + 1) % SPEED_OPTIONS.length] ?? 1;
     onSpeedChange(next);
     showToast(`Speed: ${next}x`);
   }, [playbackRate, onSpeedChange]);
@@ -696,7 +696,7 @@ export const VideoPlayer = memo(function VideoPlayer({
   // ── Detect PiP support ──
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      setPipSupported(!!document.pictureInPictureEnabled);
+      pipSupportedRef.current = !!document.pictureInPictureEnabled;
     }
   }, []);
 
@@ -778,12 +778,12 @@ export const VideoPlayer = memo(function VideoPlayer({
   // ── Controls auto-hide timer ──
   const resetControlsTimer = useCallback(() => {
     setControlsVisible(true);
-    setTouchControlsDismissed(false);
+    touchControlsDismissedRef.current = false;
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
     if (playing) {
       controlsTimerRef.current = setTimeout(() => {
         setControlsVisible(false);
-        setTouchControlsDismissed(true);
+        touchControlsDismissedRef.current = true;
       }, CONTROLS_HIDE_DELAY);
     }
   }, [playing]);
@@ -1069,11 +1069,11 @@ export const VideoPlayer = memo(function VideoPlayer({
       // First tap — show/hide controls on mobile
       if (!playing && controlsVisible) {
         // Don't toggle when paused — let the play button handle it
-      } else if (!touchControlsDismissed) {
+      } else if (!touchControlsDismissedRef.current) {
         // Toggle controls visibility
         setControlsVisible((v) => !v);
         if (controlsVisible) {
-          setTouchControlsDismissed(true);
+          touchControlsDismissedRef.current = true;
         } else {
           resetControlsTimer();
         }
@@ -1097,7 +1097,7 @@ export const VideoPlayer = memo(function VideoPlayer({
         onSwipeDown?.();
       }
     },
-    [isVertical, onSwipeUp, onSwipeDown, playing, controlsVisible, touchControlsDismissed,
+    [isVertical, onSwipeUp, onSwipeDown, playing, controlsVisible,
      resetControlsTimer, handleSeek, currentTime, duration],
   );
 
@@ -1216,7 +1216,7 @@ export const VideoPlayer = memo(function VideoPlayer({
               className="h-full w-full object-cover"
               loading="lazy"
               decoding="async"
-              fetchpriority={userInitiated ? undefined : 'high'}
+              fetchPriority={userInitiated ? undefined : 'high'}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
             {title && (
@@ -1356,7 +1356,7 @@ export const VideoPlayer = memo(function VideoPlayer({
             fullscreenSupported={fullscreenSupported}
             isFullscreen={isFullscreen}
             visible={controlsVisible}
-            pipSupported={pipSupported}
+            pipSupported={pipSupportedRef.current}
             inPip={inPip}
             onPictureInPicture={handlePictureInPicture}
             playbackRate={playbackRate}

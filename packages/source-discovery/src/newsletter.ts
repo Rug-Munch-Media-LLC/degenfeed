@@ -40,7 +40,7 @@ const KNOWN_NEWSLETTERS: Array<{
   { name: 'Solana Beach', url: 'https://newsletter.solana.com/feed', platform: 'custom', category: 'development' },
   { name: 'The Tie', url: 'https://research.thetie.io/feed/', platform: 'ghost', category: 'research' },
   { name: 'Kaito Research', url: 'https://research.kaito.ai/feed.xml', platform: 'custom', category: 'research' },
-  { name: 'Messari Daily', url: 'https://messari.io/rss', platform: 'custom', category: 'research' },
+  { name: 'Messari Daily', url: 'https://messari.substack.com/feed', platform: 'substack', category: 'research' },
   { name: 'HackerNoon Crypto', url: 'https://hackernoon.com/tagged/cryptocurrency/feed', platform: 'custom', category: 'crypto' },
   { name: 'Crypto Briefing', url: 'https://cryptobriefing.com/feed/', platform: 'custom', category: 'news' },
   { name: 'BeInCrypto', url: 'https://beincrypto.com/feed/', platform: 'custom', category: 'news' },

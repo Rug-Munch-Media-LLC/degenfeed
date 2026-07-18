@@ -20,6 +20,7 @@
 
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { requireSession } from '../session';
 import {
   applyEarnMultipliers,
   applyEvent,
@@ -278,6 +279,9 @@ export async function handleReputationEarn(
   request: Request,
   env: Env,
 ): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   let body: { userId: string; kind: string; ref?: string; reason?: string };
   try {
     body = await request.json() as { userId: string; kind: string; ref?: string; reason?: string };
@@ -287,6 +291,10 @@ export async function handleReputationEarn(
 
   if (!body.userId || !body.kind) {
     return jsonResponse({ error: 'userId and kind are required' }, 400);
+  }
+
+  if (body.userId.toLowerCase() !== session.address.toLowerCase()) {
+    return jsonResponse({ error: 'userId does not match session' }, 403);
   }
 
   const rule = EARN_RULES.find((r) => r.kind === body.kind);
@@ -346,6 +354,9 @@ export async function handleReputationSlash(
   request: Request,
   env: Env,
 ): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   let body: { userId: string; kind: string; ref?: string; reason?: string };
   try {
     body = await request.json() as { userId: string; kind: string; ref?: string; reason?: string };
@@ -409,6 +420,9 @@ export async function handleReputationStake(
   request: Request,
   env: Env,
 ): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   let body: { userId: string; postId: string; amount: number };
   try {
     body = await request.json() as { userId: string; postId: string; amount: number };
@@ -472,6 +486,9 @@ export async function handleReputationStakeResolve(
   request: Request,
   env: Env,
 ): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
   let body: { userId: string; postId: string; outcome: 'return' | 'return-bonus' | 'slash'; engagementCount?: number };
   try {
     body = await request.json() as { userId: string; postId: string; outcome: 'return' | 'return-bonus' | 'slash'; engagementCount?: number };

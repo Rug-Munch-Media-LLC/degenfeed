@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { mockCustomFeeds, mockPublicFeeds } from '../_mock-data';
+import { MOCK_MY_FEEDS as mockCustomFeeds, MOCK_PUBLIC_FEEDS as mockPublicFeeds } from '../_mock-data';
 
 export const dynamic = 'force-dynamic';
 

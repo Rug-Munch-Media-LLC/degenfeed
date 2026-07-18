@@ -13,6 +13,7 @@
 import { translateContent } from '@degenfeed/utils';
 import type { Env } from '../index';
 import { jsonResponse, noCacheJsonResponse } from '../index';
+import { requireSession } from '../session';
 import { hasSuspiciousPayload, sanitizeString } from '../sanitize';
 
 // ─── Supported protocol keys for translation ────────────────────────
@@ -40,6 +41,9 @@ export async function handleTranslate(request: Request, env: Env): Promise<Respo
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed — use POST' }, 405);
   }
+
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
 
   let body: TranslateRequest;
   try {

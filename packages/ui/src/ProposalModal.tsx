@@ -135,7 +135,7 @@ export function ProposalModal({ communityName, onClose, onCreated }: ProposalMod
                   >
                     {label.split(' ')[0]}
                     <span className="block text-[10px] opacity-60">
-                      {label.split('(')[0].includes('(') ? label.split('(')[1]?.replace(')', '') : ''}
+                      {label.includes('(') ? label.split('(')[1]!.replace(')', '') : ''}
                     </span>
                   </button>
                 ),

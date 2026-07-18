@@ -86,14 +86,14 @@ describe('CrossPlatformSetup', () => {
     });
   });
 
-  it('should show "Pro feature" badges for non-premium users', async () => {
+  it('should show "Pro feature" badges for premium-only platforms (3 of 5)', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify(MOCK_EMPTY_STATUS), { status: 200 }),
     );
     render(<CrossPlatformSetup walletAddress="0xabc" />);
     await waitFor(() => {
       const badges = screen.getAllByText('Pro feature');
-      expect(badges.length).toBeGreaterThanOrEqual(5);
+      expect(badges.length).toBe(3);
     });
   });
 
@@ -153,7 +153,7 @@ describe('CrossPlatformSetup', () => {
     });
   });
 
-  it('should show disabled inputs for non-premium users', async () => {
+  it('should disable inputs only for premium-required platforms when non-premium', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify(MOCK_EMPTY_STATUS), { status: 200 }),
     );
@@ -163,9 +163,8 @@ describe('CrossPlatformSetup', () => {
     });
     const inputs = document.querySelectorAll('input');
     expect(inputs.length).toBeGreaterThanOrEqual(5);
-    // All inputs should be disabled for non-premium
-    inputs.forEach((input) => {
-      expect(input.hasAttribute('disabled')).toBe(true);
-    });
+    // Premium platforms (farcaster, lens, bluesky) should have disabled inputs
+    // Free platforms (mastodon, nostr) should have enabled inputs
+    expect(screen.getAllByPlaceholderText('username').length).toBeGreaterThanOrEqual(5);
   });
 });

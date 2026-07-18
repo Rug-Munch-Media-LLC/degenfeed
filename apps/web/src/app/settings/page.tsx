@@ -8,14 +8,12 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
-import type { PlatformAccount } from '@degenfeed/ui';
 import { CrossPlatformSetup, ErrorBoundary, type PlatformAccount, type RegisterPlatformStatusData } from '@degenfeed/ui';
 import {
   CredentialCard,
   CredentialSecurityNote,
   CredentialsProgressBanner,
   registrationToCredential,
-  getRecommendedApps,
 } from '../../components/CredentialsDisplay';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';

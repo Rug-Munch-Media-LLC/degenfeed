@@ -194,11 +194,16 @@ describe('loaded state', () => {
 // ─── Keyboard navigation ─────────────────────────────────────────────
 
 describe('keyboard navigation', () => {
+  /** Helper: get the FeedList-level article elements (with data-post-id) */
+  function getFeedArticles(container: HTMLElement): HTMLElement[] {
+    return Array.from(container.querySelectorAll<HTMLElement>('[data-post-id]'));
+  }
+
   it('should focus the next article on "j" key press', () => {
     const posts = [makePost('p1'), makePost('p2')];
     const { container } = renderFeedList({ state: 'loaded', posts });
 
-    const articles = container.querySelectorAll('[role="article"]');
+    const articles = getFeedArticles(container);
     expect(articles.length).toBe(2);
 
     // Focus the first article
@@ -214,7 +219,7 @@ describe('keyboard navigation', () => {
     const posts = [makePost('p1'), makePost('p2'), makePost('p3')];
     const { container } = renderFeedList({ state: 'loaded', posts });
 
-    const articles = container.querySelectorAll('[role="article"]');
+    const articles = getFeedArticles(container);
     // Focus the second article
     (articles[1] as HTMLElement).focus();
     expect(document.activeElement).toBe(articles[1]);
@@ -243,7 +248,7 @@ describe('keyboard navigation', () => {
   it('should not navigate past the last article', () => {
     const posts = [makePost('p1')];
     const { container } = renderFeedList({ state: 'loaded', posts });
-    const articles = container.querySelectorAll('[role="article"]');
+    const articles = getFeedArticles(container);
 
     (articles[0] as HTMLElement).focus();
 
@@ -255,7 +260,7 @@ describe('keyboard navigation', () => {
   it('should not navigate before the first article', () => {
     const posts = [makePost('p1'), makePost('p2')];
     const { container } = renderFeedList({ state: 'loaded', posts });
-    const articles = container.querySelectorAll('[role="article"]');
+    const articles = getFeedArticles(container);
 
     (articles[0] as HTMLElement).focus();
 

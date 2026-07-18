@@ -83,7 +83,6 @@ export function TokenChart({
       <a
         href={pair?.url ? `https://dexscreener.com/${pair.chainId}/${pair.pairAddress}` : undefined}
         target="_blank" rel="noopener noreferrer"
-        rel="noopener noreferrer"
         className="mt-2 inline-flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5 text-sm transition-colors hover:bg-muted/80"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}

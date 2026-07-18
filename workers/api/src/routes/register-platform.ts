@@ -15,24 +15,15 @@ import { requireSession } from '../session';
 
 // ─── POST /api/register-platform ──────────────────────────────────────
 
+const PREMIUM_PLATFORMS = new Set(['farcaster', 'lens', 'bluesky']);
+const FREE_PLATFORMS = new Set(['mastodon', 'nostr']);
+const VALID_PLATFORMS = new Set([...PREMIUM_PLATFORMS, ...FREE_PLATFORMS]);
+
 export async function handleRegisterPlatform(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
   const walletAddress = session.address;
-
-  // Check premium subscription
-  const tier = await checkPremiumStatus(walletAddress, env);
-  if (!tier) {
-    return jsonResponse(
-      {
-        error:
-          'Premium subscription required. Upgrade at /premium to unlock cross-platform registration.',
-        upgrade: true,
-      },
-      402,
-    );
-  }
 
   let body: {
     platform?: string;
@@ -54,11 +45,10 @@ export async function handleRegisterPlatform(request: Request, env: Env): Promis
     return jsonResponse({ error: 'Missing platform or username' }, 400);
   }
 
-  const validPlatforms = ['farcaster', 'lens', 'bluesky', 'mastodon', 'nostr'];
-  if (!validPlatforms.includes(platform)) {
+  if (!VALID_PLATFORMS.has(platform)) {
     return jsonResponse(
       {
-        error: `Unsupported platform: ${platform}. Supported: ${validPlatforms.join(', ')}`,
+        error: `Unsupported platform: ${platform}. Supported: ${[...VALID_PLATFORMS].join(', ')}`,
       },
       400,
     );
@@ -73,6 +63,21 @@ export async function handleRegisterPlatform(request: Request, env: Env): Promis
       },
       400,
     );
+  }
+
+  // Check premium subscription — only required for premium platforms
+  if (PREMIUM_PLATFORMS.has(platform)) {
+    const tier = await checkPremiumStatus(walletAddress, env);
+    if (!tier) {
+      return jsonResponse(
+        {
+          error:
+            'Premium subscription required. Upgrade at /premium to unlock cross-platform registration.',
+          upgrade: true,
+        },
+        402,
+      );
+    }
   }
 
   const result = await registerOnPlatform(platform, desiredUsername, walletAddress, {

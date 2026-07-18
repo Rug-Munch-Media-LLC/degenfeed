@@ -269,10 +269,19 @@ async function perProtocolPublishSingle(
       const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
       const signedMessage = body?.signedMessage || auth.farcaster_message;
       if (signedMessage) {
+        let messageBody: BodyInit = signedMessage;
+        const hex = signedMessage.startsWith('0x') ? signedMessage.slice(2) : signedMessage;
+        if (/^[0-9a-fA-F]+$/.test(hex) && hex.length % 2 === 0) {
+          const bytes = new Uint8Array(hex.length / 2);
+          for (let i = 0; i < bytes.length; i++) {
+            bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+          }
+          messageBody = bytes;
+        }
         const submitRes = await fetch(`${hubUrl}/v1/submitMessage`, {
           method: 'PUT',
           headers: { 'content-type': 'application/octet-stream' },
-          body: signedMessage,
+          body: messageBody,
         });
         if (submitRes.ok) {
           const submitData = (await submitRes.json()) as Record<string, unknown>;
@@ -321,31 +330,62 @@ async function perProtocolPublishSingle(
       };
     }
 
-    case 'bluesky':
-    case 'threads': {
-      const pdsUrl =
-        target === 'bluesky'
-          ? env.BSKY_PUBLIC_URL || 'https://public.api.bsky.app'
-          : env.THREADS_PDS_URL || 'https://public.threads.net';
-      const accessJwt = auth[`${target}_jwt`] || auth[`${target}_accessJwt`] || auth.accessJwt;
+    case 'bluesky': {
+      const pdsUrl = env.BSKY_SOCIAL_URL || 'https://bsky.social';
+      const accessJwt = auth.bluesky_jwt || auth.bluesky_accessJwt || auth.accessJwt;
       if (!accessJwt) {
-        return { error: `Not signed into ${target}` };
+        return { error: 'Not signed into Bluesky' };
       }
-      const repoDid = auth[`${target}_did`] || '';
+      const repoDid = auth.bluesky_did || '';
+      if (!repoDid) {
+        return { error: 'Bluesky DID missing — pass auth.bluesky_did' };
+      }
+      const record = {
+        $type: 'app.bsky.feed.post',
+        text,
+        createdAt: new Date().toISOString(),
+      };
       const recordRes = await fetch(`${pdsUrl}/xrpc/com.atproto.repo.createRecord`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${accessJwt}` },
         body: JSON.stringify({
           repo: repoDid,
           collection: 'app.bsky.feed.post',
-          record: { text, createdAt: new Date().toISOString() },
+          record,
         }),
       });
       if (recordRes.ok) {
         return { success: true };
       }
       const errText = await recordRes.text();
-      return { error: `${target} publish failed: ${errText.slice(0, 100)}` };
+      return { error: `Bluesky publish failed: ${errText.slice(0, 100)}` };
+    }
+
+    case 'threads': {
+      const accessToken = auth.threads_jwt || auth.threads_accessToken || auth.accessJwt;
+      if (!accessToken) {
+        return { error: 'Not signed into Threads' };
+      }
+      const threadsUserId = auth.threads_userId || auth.threads_did || '';
+      if (!threadsUserId) {
+        return { error: 'Threads user ID missing — pass auth.threads_userId' };
+      }
+      const threadsRes = await fetch(
+        `https://graph.threads.net/v1.0/${threadsUserId}/threads?access_token=${accessToken}`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            media_type: 'TEXT',
+          }),
+        },
+      );
+      if (threadsRes.ok) {
+        return { success: true };
+      }
+      const errText = await threadsRes.text();
+      return { error: `Threads publish failed: ${errText.slice(0, 100)}` };
     }
 
     case 'mastodon': {
@@ -394,6 +434,30 @@ async function perProtocolPublishSingle(
         error:
           'RSS is a read-only protocol. To publish RSS content, use the RSS-to-Nostr bridge.',
       };
+    }
+
+    case 'peertube': {
+      const instance = auth.peertube_instance || 'https://video.degenfeed.xyz';
+      const accessToken = auth.peertube || auth.authToken;
+      if (!accessToken) {
+        return { error: 'Not signed into PeerTube' };
+      }
+      const channelId = auth.peertube_channel || auth.peertube_channelId || 1;
+      const title = text.slice(0, 200);
+      await fetch(`${instance}/api/v1/videos/upload`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          channelId: Number(channelId),
+          name: title,
+          description: text,
+          privacy: 1, // Public
+        }),
+      });
+      return { success: true };
     }
 
     default:
