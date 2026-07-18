@@ -1,6 +1,5 @@
 'use client';
 
-// @ts-nocheck — React.Component method overrides conflict with strict noImplicitOverride
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 export interface ErrorBoundaryProps {
@@ -15,13 +14,13 @@ interface ErrorBoundaryState {
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false, error: null };
+  override state: ErrorBoundaryState = { hasError: false, error: null };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo): void {
+  override componentDidCatch(error: Error, info: ErrorInfo): void {
     this.props.onError?.(error, info);
     console.error('[DegenFeed ErrorBoundary]', error, info.componentStack);
   }
@@ -30,7 +29,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     this.setState({ hasError: false, error: null });
   };
 
-  render() {
+  override render() {
     if (this.state.hasError && this.state.error) {
       if (this.props.fallback) {
         return this.props.fallback(this.state.error);

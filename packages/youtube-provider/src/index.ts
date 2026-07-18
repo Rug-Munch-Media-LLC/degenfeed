@@ -10,7 +10,7 @@
 // ─── Local circuit breaker ───────────────────────────────────────────
 const __cbStore = new Map<string, { failures: number; openUntil: number }>();
 
-function __cbState(name: string, threshold = 3, cooldownMs = 60000): 'CLOSED' | 'OPEN' {
+function __cbState(name: string, _threshold = 3, _cooldownMs = 60000): 'CLOSED' | 'OPEN' {
   const cb = __cbStore.get(name);
   if (!cb) return 'CLOSED';
   if (cb.openUntil > Date.now()) return 'OPEN';
@@ -1234,98 +1234,110 @@ export async function fetchYouTubeFeed(
 
   if (channels.length === 0) return [];
 
-  // Apply override max age if provided
-  const effectiveMaxAgeDays = maxAgeDays ?? QUALITY_FILTERS.MAX_AGE_DAYS;
-  const nowMs = Date.now();
+  // Circuit breaker: skip if provider is failing repeatedly
+  if (__cbState('youtube') === 'OPEN') {
+    console.warn('[circuit-breaker] youtube: skipping fetch — circuit open');
+    return [];
+  }
 
-  // Fetch all channel feeds with concurrency limit
-  const concurrency = 4;
-  const results: RSSEntry[][] = [];
-  const queue = [...channels];
+  try {
+    // Apply override max age if provided
+    const effectiveMaxAgeDays = maxAgeDays ?? QUALITY_FILTERS.MAX_AGE_DAYS;
+    const nowMs = Date.now();
 
-  const workers = Array.from({ length: concurrency }, async () => {
-    while (queue.length > 0) {
-      const channel = queue.shift();
-      if (!channel) break;
-      const entries = await fetchChannelFeed(channel, signal);
-      if (entries.length > 0) {
-        // Apply quality filter per-channel
-        const filtered = disableQualityFilter
-          ? entries
-          : entries.filter((e) => !isLowQualityVideo(e, channel, nowMs, effectiveMaxAgeDays));
+    // Fetch all channel feeds with concurrency limit
+    const concurrency = 4;
+    const results: RSSEntry[][] = [];
+    const queue = [...channels];
 
-        if (filtered.length > 0) {
-          results.push(filtered);
+    const workers = Array.from({ length: concurrency }, async () => {
+      while (queue.length > 0) {
+        const channel = queue.shift();
+        if (!channel) break;
+        const entries = await fetchChannelFeed(channel, signal);
+        if (entries.length > 0) {
+          // Apply quality filter per-channel
+          const filtered = disableQualityFilter
+            ? entries
+            : entries.filter((e) => !isLowQualityVideo(e, channel, nowMs, effectiveMaxAgeDays));
+
+          if (filtered.length > 0) {
+            results.push(filtered);
+          }
         }
       }
+    });
+
+    await Promise.all(workers);
+
+    // Flatten and map to VideoItem
+    const allEntries = results.flat();
+
+    // Deduplicate by videoId
+    const seen = new Set<string>();
+    const items: YouTubeVideoItem[] = [];
+
+    for (const entry of allEntries) {
+      if (seen.has(entry.videoId)) continue;
+      seen.add(entry.videoId);
+
+      const publishedMs = new Date(entry.published).getTime();
+      const channelInfo = CHANNEL_BY_NAME[entry.channelName ?? ''];
+
+      items.push({
+        id: entry.videoId,
+        title: entry.title,
+        channelName: entry.channelName ?? 'Unknown',
+        channelUrl: `https://www.youtube.com/channel/${entry.channelId ?? ''}`,
+        thumbnailUrl:
+          entry.thumbnail ?? `https://img.youtube.com/vi/${entry.videoId}/maxresdefault.jpg`,
+        url: entry.link ?? `https://www.youtube.com/watch?v=${entry.videoId}`,
+        publishedAt: entry.published,
+        publishedMs,
+        duration: entry.duration !== undefined ? formatDuration(entry.duration) : undefined,
+        views: entry.views,
+        description: entry.description,
+        category: category ?? detectCategory(entry.title, entry.description),
+        channelCategory: channelInfo?.category,
+        channelSubcategory: channelInfo?.subcategory,
+        channelWeight: channelInfo?.weight,
+        niches: channelInfo?.niches,
+        source: 'youtube',
+      });
     }
-  });
 
-  await Promise.all(workers);
+    // Sort
+    if (sort === 'recent') {
+      items.sort((a, b) => b.publishedMs - a.publishedMs);
+    } else if (sort === 'popular') {
+      items.sort((a, b) => (b.views ?? 0) - (a.views ?? 0));
+    } else if (sort === 'trending') {
+      items.sort((a, b) => {
+        const scoreA = (a.views ?? 0) / Math.max(1, (Date.now() - a.publishedMs) / 3600000);
+        const scoreB = (b.views ?? 0) / Math.max(1, (Date.now() - b.publishedMs) / 3600000);
+        return scoreB - scoreA;
+      });
+    }
 
-  // Flatten and map to VideoItem
-  const allEntries = results.flat();
+    // Filter by category if specified
+    const filtered =
+      category && category !== 'all' ? items.filter((v) => v.category === category) : items;
 
-  // Deduplicate by videoId
-  const seen = new Set<string>();
-  const items: YouTubeVideoItem[] = [];
+    // If no category filter but we have channel categories, sort by weight descending
+    if (!category && !channelCategories) {
+      filtered.sort((a, b) => {
+        const weightDiff = (b.channelWeight ?? 0) - (a.channelWeight ?? 0);
+        if (weightDiff !== 0) return weightDiff;
+        return b.publishedMs - a.publishedMs;
+      });
+    }
 
-  for (const entry of allEntries) {
-    if (seen.has(entry.videoId)) continue;
-    seen.add(entry.videoId);
-
-    const publishedMs = new Date(entry.published).getTime();
-    const channelInfo = CHANNEL_BY_NAME[entry.channelName ?? ''];
-
-    items.push({
-      id: entry.videoId,
-      title: entry.title,
-      channelName: entry.channelName ?? 'Unknown',
-      channelUrl: `https://www.youtube.com/channel/${entry.channelId ?? ''}`,
-      thumbnailUrl:
-        entry.thumbnail ?? `https://img.youtube.com/vi/${entry.videoId}/maxresdefault.jpg`,
-      url: entry.link ?? `https://www.youtube.com/watch?v=${entry.videoId}`,
-      publishedAt: entry.published,
-      publishedMs,
-      duration: entry.duration !== undefined ? formatDuration(entry.duration) : undefined,
-      views: entry.views,
-      description: entry.description,
-      category: category ?? detectCategory(entry.title, entry.description),
-      channelCategory: channelInfo?.category,
-      channelSubcategory: channelInfo?.subcategory,
-      channelWeight: channelInfo?.weight,
-      niches: channelInfo?.niches,
-      source: 'youtube',
-    });
+    __cbSuccess('youtube');
+    return filtered.slice(0, limit);
+  } catch (err) {
+    __cbFail('youtube');
+    throw err;
   }
-
-  // Sort
-  if (sort === 'recent') {
-    items.sort((a, b) => b.publishedMs - a.publishedMs);
-  } else if (sort === 'popular') {
-    items.sort((a, b) => (b.views ?? 0) - (a.views ?? 0));
-  } else if (sort === 'trending') {
-    items.sort((a, b) => {
-      const scoreA = (a.views ?? 0) / Math.max(1, (Date.now() - a.publishedMs) / 3600000);
-      const scoreB = (b.views ?? 0) / Math.max(1, (Date.now() - b.publishedMs) / 3600000);
-      return scoreB - scoreA;
-    });
-  }
-
-  // Filter by category if specified
-  const filtered =
-    category && category !== 'all' ? items.filter((v) => v.category === category) : items;
-
-  // If no category filter but we have channel categories, sort by weight descending
-  if (!category && !channelCategories) {
-    filtered.sort((a, b) => {
-      const weightDiff = (b.channelWeight ?? 0) - (a.channelWeight ?? 0);
-      if (weightDiff !== 0) return weightDiff;
-      return b.publishedMs - a.publishedMs;
-    });
-  }
-
-  return filtered.slice(0, limit);
 }
 
 /**

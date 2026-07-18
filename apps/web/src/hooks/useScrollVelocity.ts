@@ -13,6 +13,10 @@ export interface ScrollVelocity {
   avgDwellMs: number;
   /** Reset counters (call when feed resets/explicitly) */
   reset: () => void;
+  /** Called when post enters viewport */
+  _onPostVisible: (postId: string) => void;
+  /** Called when post leaves viewport */
+  _onPostHidden: (postId: string) => void;
 }
 
 /**

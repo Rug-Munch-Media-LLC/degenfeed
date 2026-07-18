@@ -203,14 +203,23 @@ function useShortFeed(): FetchState & { loadMore: () => void; refresh: () => voi
     return () => abortRef.current?.abort();
   }, [fetchVideos]);
 
-  return { ...state, loadMore, refresh };
+  return { ...state, loadMore, refresh, topicFilter, _setTopicFilter };
 }
 
 // ─── Page Component ───────────────────────────────────────────────────────
 
 export default function ShortsPage() {
-  const { posts, loading, loadingMore, error, hasMore, loadMore, refresh, sourceCounts } =
-    useShortFeed();
+  const {
+    posts,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    loadMore,
+    refresh,
+    sourceCounts,
+    topicFilter,
+  } = useShortFeed();
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const isTransitioning = useRef(false);

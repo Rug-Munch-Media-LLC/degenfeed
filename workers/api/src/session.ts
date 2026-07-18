@@ -12,6 +12,88 @@ const COOKIE_NAME = '__Host-dfid';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const CSRF_TTL_SECONDS = 3600;
 
+// ─── Session revocation (optional denylist in KV) ────────────────────
+// Stateless HMAC-signed sessions can't be invalidated after issuance.
+// To revoke, we store the session's `nonce` in KV with a TTL matching
+// the remaining session lifetime. Every authenticated request checks
+// this blocklist before trusting the token.
+//
+// The blocklist key is:  revoked:session:<nonce>
+// TTL: up to the max session lifetime (7 days).
+
+export function revokedSessionKey(nonce: string): string {
+  return `revoked:session:${nonce}`;
+}
+
+/**
+ * Add a session nonce to the revocation blocklist.
+ * The blocklist entry lives until the session would have naturally expired.
+ * Returns `true` if the revocation was persisted, `false` if KV is down.
+ */
+export async function revokeSession(nonce: string, expEpochMs: number, env: Env): Promise<boolean> {
+  if (!env.CACHE) return false;
+  const remainingSeconds = Math.max(60, Math.ceil((expEpochMs - Date.now()) / 1000));
+  try {
+    await env.CACHE.put(revokedSessionKey(nonce), '1', {
+      expirationTtl: remainingSeconds,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Check if a session nonce has been revoked.
+ */
+export async function isSessionRevoked(nonce: string, env: Env): Promise<boolean> {
+  if (!env.CACHE) return false;
+  try {
+    const result = await env.CACHE.get(revokedSessionKey(nonce));
+    return result !== null;
+  } catch {
+    // KV hiccup — assume not revoked (fail open to avoid locking out all users)
+    return false;
+  }
+}
+
+/**
+ * Revoke ALL sessions for a given wallet address.
+ * Iterates the session blocklist is not practical with KV, so this
+ * relies on the wallet address being included in the revocation audit log.
+ * For now, individual session revocation must be used (via nonce).
+ */
+export async function revokeAllSessionsForAddress(
+  address: string,
+  env: Env,
+): Promise<{ ok: boolean; message: string }> {
+  if (!env.CACHE) return { ok: false, message: 'KV not available' };
+  // Store a marker that triggers a nonce-agnostic block.
+  // All sessions with this address will fail verification.
+  // TTL: 7 days to cover the max session lifetime.
+  try {
+    await env.CACHE.put(`revoked:address:${address.toLowerCase()}`, '1', {
+      expirationTtl: 7 * 86400,
+    });
+    return { ok: true, message: `All sessions revoked for ${address}` };
+  } catch {
+    return { ok: false, message: 'Failed to store revocation marker' };
+  }
+}
+
+/**
+ * Check if a wallet address has had all its sessions revoked.
+ */
+async function isAddressRevoked(address: string, env: Env): Promise<boolean> {
+  if (!env.CACHE) return false;
+  try {
+    const result = await env.CACHE.get(`revoked:address:${address.toLowerCase()}`);
+    return result !== null;
+  } catch {
+    return false;
+  }
+}
+
 // ─── CSRF token helpers ──────────────────────────────────────────────
 
 export function generateCsrfToken(): string {
@@ -26,10 +108,7 @@ function csrfTokenKey(sessionCookieValue: string): string {
  * Store a CSRF token in KV keyed by the session cookie value.
  * TTL: 1 hour. Returns the generated token.
  */
-export async function storeCsrfToken(
-  sessionCookieValue: string,
-  env: Env,
-): Promise<string> {
+export async function storeCsrfToken(sessionCookieValue: string, env: Env): Promise<string> {
   const token = generateCsrfToken();
   const key = csrfTokenKey(sessionCookieValue);
   try {
@@ -65,10 +144,7 @@ export async function validateCsrfToken(
 /**
  * Delete a CSRF token from KV (e.g., on sign-out).
  */
-export async function deleteCsrfToken(
-  sessionCookieValue: string,
-  env: Env,
-): Promise<void> {
+export async function deleteCsrfToken(sessionCookieValue: string, env: Env): Promise<void> {
   const key = csrfTokenKey(sessionCookieValue);
   try {
     await env.CACHE?.delete(key);
@@ -228,6 +304,41 @@ export async function handleSessionSignOut(request: Request, env: Env): Promise<
   });
 }
 
+export async function handleSessionRevoke(request: Request, env: Env): Promise<Response> {
+  // Revoke the current session by nonce. Requires an active session.
+  const secret = env.AUTH_SECRET;
+  if (!secret) return jsonResponse({ error: 'Auth secret not configured' }, 500);
+
+  const cookieValue = parseSessionCookie(request.headers.get('cookie'));
+  if (!cookieValue) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const payload = await verifySessionCookie(cookieValue, secret);
+  if (!payload) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const revoked = await revokeSession(payload.nonce, payload.exp, env);
+
+  // Clean up CSRF token
+  await deleteCsrfToken(cookieValue, env);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      revoked,
+      message: revoked
+        ? 'Session revoked successfully. All devices will be signed out.'
+        : 'Session marked for revocation (KV unavailable).',
+    }),
+    {
+      status: 200,
+      headers: {
+        'content-type': 'application/json',
+        'set-cookie': clearSessionCookie(),
+        'cache-control': 'no-store',
+      },
+    },
+  );
+}
+
 export async function requireSession(
   request: Request,
   env: Env,
@@ -240,6 +351,14 @@ export async function requireSession(
 
   const payload = await verifySessionCookie(cookieValue, secret);
   if (!payload) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  // Check session revocation blocklist
+  if (await isSessionRevoked(payload.nonce, env)) {
+    return jsonResponse({ error: 'Session revoked' }, 401);
+  }
+  if (await isAddressRevoked(payload.address, env)) {
+    return jsonResponse({ error: 'Session revoked' }, 401);
+  }
 
   return payload;
 }

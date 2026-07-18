@@ -26,7 +26,7 @@ export interface YouTubeVideoCardItem {
   views?: number;
   description?: string;
   category?: string;
-  source: 'youtube' | 'peertube';
+  source: 'youtube' | 'peertube' | 'federated';
 }
 
 export interface YouTubeVideoCardProps {

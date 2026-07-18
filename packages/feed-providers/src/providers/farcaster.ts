@@ -59,100 +59,178 @@ export class FarcasterProvider implements FeedProvider {
         const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         const fids = this.curatedFids;
         const hub = this.primaryUrl;
-      const userDataMap = new Map<
-        number,
-        { username?: string; displayName?: string; pfp?: string }
-      >();
+        const userDataMap = new Map<
+          number,
+          { username?: string; displayName?: string; pfp?: string }
+        >();
 
-      const results = await Promise.allSettled(
-        fids.slice(0, 8).map(async (fid) => {
-          try {
-            const [castData, userData] = await Promise.all([
-              withTimeout(
-                fetchJson<{
-                  messages?: Array<{
-                    data: {
-                      timestamp: number;
-                      castAddBody?: { text?: string; embedsDeprecated?: Array<{ url?: string }> };
-                    };
-                    hash: string;
-                  }>;
-                }>(buildUrl(hub, '/v1/castsByFid', { fid: String(fid), pageSize: '3' }), {
-                  headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
-                }),
-                Math.min(timeoutMs, 5000),
-                `farcaster:fid:${fid}`,
-              ),
-              withTimeout(
-                fetchJson<{
-                  messages?: Array<{
-                    data: { userDataBody: { type: string; value: string } };
-                  }>;
-                }>(buildUrl(hub, '/v1/userDataByFid', { fid: String(fid) }), {
-                  headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
-                }),
-                Math.min(timeoutMs, 4000),
-                `farcaster:user:${fid}`,
-              ).catch(() => null),
-            ]);
+        const results = await Promise.allSettled(
+          fids.slice(0, 8).map(async (fid) => {
+            try {
+              const [castData, userData] = await Promise.all([
+                withTimeout(
+                  fetchJson<{
+                    messages?: Array<{
+                      data: {
+                        timestamp: number;
+                        castAddBody?: { text?: string; embedsDeprecated?: Array<{ url?: string }> };
+                      };
+                      hash: string;
+                    }>;
+                  }>(buildUrl(hub, '/v1/castsByFid', { fid: String(fid), pageSize: '3' }), {
+                    headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
+                  }),
+                  Math.min(timeoutMs, 5000),
+                  `farcaster:fid:${fid}`,
+                ),
+                withTimeout(
+                  fetchJson<{
+                    messages?: Array<{
+                      data: { userDataBody: { type: string; value: string } };
+                    }>;
+                  }>(buildUrl(hub, '/v1/userDataByFid', { fid: String(fid) }), {
+                    headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
+                  }),
+                  Math.min(timeoutMs, 4000),
+                  `farcaster:user:${fid}`,
+                ).catch(() => null),
+              ]);
 
-            const ud: { username?: string; displayName?: string; pfp?: string } = {};
-            for (const msg of userData?.messages ?? []) {
-              const body = msg.data?.userDataBody;
-              if (!body) continue;
-              if (body.type === 'USER_DATA_TYPE_USERNAME') ud.username = body.value;
-              else if (body.type === 'USER_DATA_TYPE_DISPLAY') ud.displayName = body.value;
-              else if (body.type === 'USER_DATA_TYPE_PFP') ud.pfp = body.value;
+              const ud: { username?: string; displayName?: string; pfp?: string } = {};
+              for (const msg of userData?.messages ?? []) {
+                const body = msg.data?.userDataBody;
+                if (!body) continue;
+                if (body.type === 'USER_DATA_TYPE_USERNAME') ud.username = body.value;
+                else if (body.type === 'USER_DATA_TYPE_DISPLAY') ud.displayName = body.value;
+                else if (body.type === 'USER_DATA_TYPE_PFP') ud.pfp = body.value;
+              }
+              if (ud.username) userDataMap.set(fid, ud);
+
+              // Fetch reaction counts for each cast
+              const messages = castData.messages ?? [];
+              const reactionCounts = new Map<string, number>();
+              await Promise.allSettled(
+                messages.slice(0, 3).map(async (m) => {
+                  try {
+                    const reactions = await withTimeout(
+                      fetchJson<{
+                        messages?: Array<{ data: { reactionBody?: { type: string } } }>;
+                      }>(
+                        buildUrl(hub, '/v1/reactionsByCast', {
+                          hash: m.hash,
+                          reaction_type: '1', // like
+                          pageSize: '100',
+                        }),
+                        {
+                          headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
+                        },
+                      ),
+                      Math.min(timeoutMs, 3000),
+                      `farcaster:reactions:${m.hash.slice(0, 8)}`,
+                    );
+                    reactionCounts.set(m.hash, (reactions.messages ?? []).length);
+                  } catch {
+                    reactionCounts.set(m.hash, 0);
+                  }
+                }),
+              );
+
+              return messages.map((m) => {
+                const ts = (m.data.timestamp + 1609459200) * 1000;
+                const text = m.data.castAddBody?.text ?? '';
+                const handle = ud.username ? `${ud.username}` : `fid:${fid}`;
+                return buildUnifiedPost({
+                  protocol: 'farcaster',
+                  nativeId: m.hash,
+                  author: {
+                    id: `farcaster:${fid}`,
+                    primary: { protocol: 'farcaster', id: String(fid) },
+                    handles: {
+                      nostr: null,
+                      farcaster: handle,
+                      lens: null,
+                      bluesky: null,
+                      threads: null,
+                      rss: null,
+                      mastodon: null,
+                    },
+                    displayName: ud.displayName || ud.username || `FID ${fid}`,
+                    bio: '',
+                    avatarUrl: ud.pfp || '',
+                    verified: [],
+                    followerCount: 0,
+                    followingCount: 0,
+                    links: [],
+                    keys: { fid },
+                  },
+                  text,
+                  createdAt: Number.isNaN(ts) ? Date.now() : ts,
+                  metrics: {
+                    likes: reactionCounts.get(m.hash) ?? 0,
+                    reposts: 0,
+                    replies: 0,
+                    quotes: 0,
+                  },
+                  raw: m,
+                });
+              });
+            } catch {
+              return [];
             }
-            if (ud.username) userDataMap.set(fid, ud);
+          }),
+        );
 
-            // Fetch reaction counts for each cast
-            const messages = castData.messages ?? [];
-            const reactionCounts = new Map<string, number>();
-            await Promise.allSettled(
-              messages.slice(0, 3).map(async (m) => {
-                try {
-                  const reactions = await withTimeout(
-                    fetchJson<{ messages?: Array<{ data: { reactionBody?: { type: string } } }> }>(
-                      buildUrl(hub, '/v1/reactionsByCast', {
-                        hash: m.hash,
-                        reaction_type: '1', // like
-                        pageSize: '100',
-                      }),
-                      { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
-                    ),
-                    Math.min(timeoutMs, 3000),
-                    `farcaster:reactions:${m.hash.slice(0, 8)}`,
-                  );
-                  reactionCounts.set(m.hash, (reactions.messages ?? []).length);
-                } catch {
-                  reactionCounts.set(m.hash, 0);
-                }
-              }),
-            );
+        const all: UnifiedPost[] = [];
+        for (const r of results) if (r.status === 'fulfilled') all.push(...r.value);
 
-            return messages.map((m) => {
-              const ts = (m.data.timestamp + 1609459200) * 1000;
-              const text = m.data.castAddBody?.text ?? '';
-              const handle = ud.username ? `${ud.username}` : `fid:${fid}`;
-              return buildUnifiedPost({
+        // Parallel: trending search via public API
+        const searchResults: UnifiedPost[] = [];
+        try {
+          const searchData = await withTimeout(
+            fetchJson<{
+              result?: {
+                casts?: Array<{
+                  hash: string;
+                  fid?: number;
+                  text?: string;
+                  timestamp?: number;
+                  author?: {
+                    fid?: number;
+                    username?: string;
+                    displayName?: string;
+                    pfp?: { url?: string };
+                  };
+                }>;
+              };
+            }>(buildUrl(this.publicApiUrl, '/v2/cast-search', { q: 'crypto', limit: '10' }), {
+              headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
+            }),
+            Math.min(timeoutMs, 5000),
+            'farcaster:search',
+          );
+          for (const c of searchData?.result?.casts ?? []) {
+            const fid = c.fid ?? c.author?.fid;
+            const text = c.text;
+            if (!fid || !text || !c.hash) continue;
+            searchResults.push(
+              buildUnifiedPost({
                 protocol: 'farcaster',
-                nativeId: m.hash,
+                nativeId: c.hash,
                 author: {
                   id: `farcaster:${fid}`,
                   primary: { protocol: 'farcaster', id: String(fid) },
                   handles: {
                     nostr: null,
-                    farcaster: handle,
+                    farcaster: c.author?.username ?? null,
                     lens: null,
                     bluesky: null,
                     threads: null,
                     rss: null,
                     mastodon: null,
                   },
-                  displayName: ud.displayName || ud.username || `FID ${fid}`,
+                  displayName: c.author?.displayName || c.author?.username || `FID ${fid}`,
                   bio: '',
-                  avatarUrl: ud.pfp || '',
+                  avatarUrl: c.author?.pfp?.url || '',
                   verified: [],
                   followerCount: 0,
                   followingCount: 0,
@@ -160,97 +238,20 @@ export class FarcasterProvider implements FeedProvider {
                   keys: { fid },
                 },
                 text,
-                createdAt: Number.isNaN(ts) ? Date.now() : ts,
-                metrics: {
-                  likes: reactionCounts.get(m.hash) ?? 0,
-                  reposts: 0,
-                  replies: 0,
-                  quotes: 0,
-                },
-                raw: m,
-              });
-            });
-          } catch {
-            return [];
+                createdAt: c.timestamp ? c.timestamp * 1000 : Date.now(),
+                metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+                raw: c,
+              }),
+            );
           }
-        }),
-      );
-
-      const all: UnifiedPost[] = [];
-      for (const r of results) if (r.status === 'fulfilled') all.push(...r.value);
-
-      // Parallel: trending search via public API
-      const searchResults: UnifiedPost[] = [];
-      try {
-        const searchData = await withTimeout(
-          fetchJson<{
-            result?: {
-              casts?: Array<{
-                hash: string;
-                fid?: number;
-                text?: string;
-                timestamp?: number;
-                author?: {
-                  fid?: number;
-                  username?: string;
-                  displayName?: string;
-                  pfp?: { url?: string };
-                };
-              }>;
-            };
-          }>(buildUrl(this.publicApiUrl, '/v2/cast-search', { q: 'crypto', limit: '10' }), {
-            headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' },
-          }),
-          Math.min(timeoutMs, 5000),
-          'farcaster:search',
-        );
-        for (const c of searchData?.result?.casts ?? []) {
-          const fid = c.fid ?? c.author?.fid;
-          const text = c.text;
-          if (!fid || !text || !c.hash) continue;
-          searchResults.push(
-            buildUnifiedPost({
-              protocol: 'farcaster',
-              nativeId: c.hash,
-              author: {
-                id: `farcaster:${fid}`,
-                primary: { protocol: 'farcaster', id: String(fid) },
-                handles: {
-                  nostr: null,
-                  farcaster: c.author?.username ?? null,
-                  lens: null,
-                  bluesky: null,
-                  threads: null,
-                  rss: null,
-                  mastodon: null,
-                },
-                displayName: c.author?.displayName || c.author?.username || `FID ${fid}`,
-                bio: '',
-                avatarUrl: c.author?.pfp?.url || '',
-                verified: [],
-                followerCount: 0,
-                followingCount: 0,
-                links: [],
-                keys: { fid },
-              },
-              text,
-              createdAt: c.timestamp ? c.timestamp * 1000 : Date.now(),
-              metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-              raw: c,
-            }),
-          );
+        } catch {
+          /* search unavailable */
         }
-      } catch {
-        /* search unavailable */
-      }
 
-      const merged = [...all, ...searchResults];
-      return merged.length
-        ? { posts: merged.map(enrichPostNiches) }
-        : { posts: [], notice: 'Farcaster unavailable' };
-    } catch (e) {
-      return { posts: [], notice: e instanceof Error ? e.message : 'Farcaster unavailable' };
-    }
+        const merged = [...all, ...searchResults];
+        return merged.length
+          ? { posts: merged.map(enrichPostNiches) }
+          : { posts: [], notice: 'Farcaster unavailable' };
       });
     } catch (err) {
       if (err instanceof CircuitBreakerError) {

@@ -645,6 +645,10 @@ app.all('/api/auth/session', async (c) => {
   const { handleSessionVerify } = await import('./session');
   return handleSessionVerify(c.req.raw, c.env);
 });
+app.all('/api/auth/session/revoke', async (c) => {
+  const { handleSessionRevoke } = await import('./session');
+  return handleSessionRevoke(c.req.raw, c.env);
+});
 app.all('/api/auth/wallet/nonce', async (c) => handleWalletNonce(c.req.raw, c.env));
 app.all('/api/auth/wallet/verify', async (c) => handleWalletVerify(c.req.raw, c.env));
 
@@ -1395,6 +1399,10 @@ app.all('/v1/auth/reddit/callback', async (c) => handleRedditCallback(c.req.raw,
 app.all('/v1/auth/session', async (c) => {
   const { handleSessionVerify } = await import('./session');
   return handleSessionVerify(c.req.raw, c.env);
+});
+app.all('/v1/auth/session/revoke', async (c) => {
+  const { handleSessionRevoke } = await import('./session');
+  return handleSessionRevoke(c.req.raw, c.env);
 });
 app.all('/v1/auth/wallet/nonce', async (c) => handleWalletNonce(c.req.raw, c.env));
 app.all('/v1/auth/wallet/verify', async (c) => handleWalletVerify(c.req.raw, c.env));
