@@ -45,6 +45,47 @@ const KNOWN_NEWSLETTERS: Array<{
   { name: 'Crypto Briefing', url: 'https://cryptobriefing.com/feed/', platform: 'custom', category: 'news' },
   { name: 'BeInCrypto', url: 'https://beincrypto.com/feed/', platform: 'custom', category: 'news' },
   { name: 'CoinMarketCap Blog', url: 'https://blog.coinmarketcap.com/feed/', platform: 'custom', category: 'markets' },
+
+  // Crypto/Trading
+  { name: 'CoinTelegraph Newsletter', url: 'https://cointelegraph.com/rss', platform: 'custom', category: 'crypto' },
+  { name: 'CoinDesk Newsletter', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', platform: 'custom', category: 'crypto' },
+  { name: 'The Block Newsletter', url: 'https://www.theblock.co/rss', platform: 'custom', category: 'crypto' },
+  { name: 'Blockworks Daily', url: 'https://blockworks.co/feed', platform: 'custom', category: 'crypto' },
+  { name: 'Bankless Daily', url: 'https://newsletter.banklesshq.com/feed', platform: 'substack', category: 'defi' },
+  { name: 'Milk Road Daily', url: 'https://milkroad.com/feed/', platform: 'custom', category: 'crypto' },
+  { name: 'Token Dispatch', url: 'https://substack.com/@tokendispatch', platform: 'substack', category: 'crypto' },
+  { name: 'The Drop', url: 'https://thedefiant.io/newsletter/feed', platform: 'custom', category: 'defi' },
+  { name: 'Messari Daily Substack', url: 'https://messari.substack.com/feed', platform: 'substack', category: 'research' },
+
+  // Tech
+  { name: 'TLDR Tech', url: 'https://tldr.tech/feed', platform: 'custom', category: 'tech' },
+  { name: 'The Hustle', url: 'https://thehustle.co/feed', platform: 'custom', category: 'tech' },
+  { name: 'Benedict Evans', url: 'https://www.ben-evans.com/newsletter/feed', platform: 'ghost', category: 'tech' },
+  { name: 'Stratechery', url: 'https://stratechery.com/feed', platform: 'custom', category: 'tech' },
+  { name: 'Platformer', url: 'https://www.platformer.news/feed', platform: 'ghost', category: 'tech' },
+  { name: 'The Verge Newsletter', url: 'https://www.theverge.com/rss/index.xml', platform: 'custom', category: 'tech' },
+  { name: 'Ars Technica Newsletter', url: 'https://arstechnica.com/feed/', platform: 'custom', category: 'tech' },
+  { name: 'Wired Newsletter', url: 'https://www.wired.com/feed/rss', platform: 'custom', category: 'tech' },
+  { name: 'TechCrunch Daily', url: 'https://techcrunch.com/feed/', platform: 'custom', category: 'tech' },
+  { name: 'Hacker Newsletter', url: 'https://hackernewsletter.com/feed', platform: 'custom', category: 'tech' },
+  { name: 'Not Boring', url: 'https://notboring.substack.com/feed', platform: 'substack', category: 'startup' },
+  { name: 'Exponential View', url: 'https://www.exponentialview.co/feed', platform: 'custom', category: 'tech' },
+
+  // AI
+  { name: 'The Batch (Andrew Ng)', url: 'https://www.deeplearning.ai/the-batch/feed/', platform: 'custom', category: 'ai' },
+  { name: 'TLDR AI', url: 'https://tldrai.substack.com/feed', platform: 'substack', category: 'ai' },
+  { name: 'Import AI', url: 'https://importai.substack.com/feed', platform: 'substack', category: 'ai' },
+  { name: 'Supervised', url: 'https://supervised.news/feed', platform: 'custom', category: 'ai' },
+  { name: 'The Algorithmic Bridge', url: 'https://www.thealgorithmicbridge.com/feed', platform: 'custom', category: 'ai' },
+  { name: 'AI Supremacy', url: 'https://www.ai-supremacy.com/feed', platform: 'custom', category: 'ai' },
+  { name: 'Last Week in AI', url: 'https://lastweekin.ai/feed', platform: 'custom', category: 'ai' },
+  { name: 'The Neuron', url: 'https://www.theneurondaily.com/feed', platform: 'custom', category: 'ai' },
+  { name: "Ben's Bites", url: 'https://bensbites.co/feed', platform: 'custom', category: 'ai' },
+  { name: 'AI Tool Report', url: 'https://www.aitoolreport.com/feed', platform: 'custom', category: 'ai' },
+  { name: 'TheSequence', url: 'https://thesequence.substack.com/feed', platform: 'substack', category: 'ai' },
+
+  // Science
+  { name: 'Nature Briefing', url: 'https://www.nature.com/briefing/signup/feed', platform: 'custom', category: 'science' },
 ];
 
 /**

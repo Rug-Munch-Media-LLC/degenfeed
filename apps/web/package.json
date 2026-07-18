@@ -33,6 +33,7 @@
     "@degenfeed/farcaster-sdk": "workspace:*",
     "@degenfeed/feed-core": "workspace:*",
     "@degenfeed/identity": "workspace:*",
+    "@degenfeed/source-discovery": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/nostr-sdk": "workspace:*",
     "@degenfeed/ranking": "workspace:*",

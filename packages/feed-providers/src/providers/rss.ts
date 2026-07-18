@@ -527,6 +527,14 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://www.ben-evans.com/newsletter/feed',              { tier: 5, weight: 0.6, category: 'newsletter', tags: ['tech', 'strategy', 'analysis'], authority: 1, isPaid: true, schedule: 'weekly' }),
   cfg('https://notboring.substack.com/feed',                    { tier: 5, weight: 0.6, category: 'newsletter', tags: ['tech', 'business', 'crypto'], authority: 1, isPaid: true, schedule: 'weekly' }),
   cfg('https://www.exponentialview.co/feed',                    { tier: 5, weight: 0.6, category: 'newsletter', tags: ['tech', 'ai', 'future'], authority: 1, isPaid: true, schedule: 'weekly' }),
+  cfg('https://thehustle.co/feed',                              { tier: 3, weight: 0.7, category: 'newsletter', tags: ['tech', 'business', 'startup'], authority: 2, isPaid: false, schedule: 'daily' }),
+  cfg('https://hackernewsletter.com/feed',                      { tier: 4, weight: 0.6, category: 'newsletter', tags: ['tech', 'startup', 'developer'], authority: 1, isPaid: false, schedule: 'weekly' }),
+  cfg('https://stratechery.com/feed',                           { tier: 3, weight: 0.7, category: 'newsletter', tags: ['tech', 'strategy', 'analysis'], authority: 2, isPaid: true, schedule: 'daily' }),
+  cfg('https://www.platformer.news/feed',                       { tier: 3, weight: 0.7, category: 'newsletter', tags: ['tech', 'policy', 'social-media'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://www.theverge.com/rss/index.xml',                 { tier: 3, weight: 0.7, category: 'newsletter', tags: ['tech', 'gadgets', 'science', 'ai'], authority: 2, isPaid: false, schedule: 'daily' }),
+  cfg('https://arstechnica.com/feed/',                          { tier: 3, weight: 0.7, category: 'newsletter', tags: ['tech', 'science', 'security'], authority: 2, isPaid: false, schedule: 'daily' }),
+  cfg('https://www.wired.com/feed/rss',                         { tier: 3, weight: 0.7, category: 'newsletter', tags: ['tech', 'science', 'culture'], authority: 2, isPaid: true, schedule: 'daily' }),
+  cfg('https://techcrunch.com/feed/',                           { tier: 3, weight: 0.7, category: 'newsletter', tags: ['tech', 'startup', 'ai'], authority: 2, isPaid: false, schedule: 'daily' }),
 
   // ═══════════════════════════════════════════════════════════════════
   // AI / Tech / Science — General News
@@ -535,6 +543,10 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://lastweekin.ai/feed',                             { tier: 3, weight: 0.8, category: 'newsletter', tags: ['ai', 'newsletter', 'research'], authority: 2 }),
   cfg('https://www.ai-supremacy.com/feed',                      { tier: 3, weight: 0.8, category: 'newsletter', tags: ['ai', 'newsletter', 'analysis'], authority: 2 }),
   cfg('https://www.thealgorithmicbridge.com/feed',              { tier: 3, weight: 0.8, category: 'newsletter', tags: ['ai', 'newsletter', 'philosophy'], authority: 2 }),
+  cfg('https://www.deeplearning.ai/the-batch/feed/',            { tier: 2, weight: 0.9, category: 'newsletter', tags: ['ai', 'deep-learning', 'research'], authority: 2, isPaid: false, schedule: 'weekly' }),
+  cfg('https://bensbites.co/feed',                              { tier: 3, weight: 0.8, category: 'newsletter', tags: ['ai', 'daily', 'digest', 'tools'], authority: 2, isPaid: false, schedule: 'daily' }),
+  cfg('https://www.theneurondaily.com/feed',                    { tier: 3, weight: 0.8, category: 'newsletter', tags: ['ai', 'daily', 'tools', 'news'], authority: 2, isPaid: false, schedule: 'daily' }),
+  cfg('https://www.aitoolreport.com/feed',                      { tier: 3, weight: 0.8, category: 'newsletter', tags: ['ai', 'daily', 'tools', 'newsletter'], authority: 2, isPaid: false, schedule: 'daily' }),
   cfg('https://www.producthunt.com/feed',                       { tier: 4, weight: 0.8, category: 'tech', tags: ['startup', 'product', 'tech'], authority: 1 }),
   cfg('https://www.indiehackers.com/feed',                      { tier: 4, weight: 0.8, category: 'tech', tags: ['startup', 'indie', 'saas'], authority: 1 }),
   cfg('https://www.nature.com/nature.rss',                      { tier: 2, weight: 0.7, category: 'science', tags: ['science', 'research', 'nature'], authority: 3 }),

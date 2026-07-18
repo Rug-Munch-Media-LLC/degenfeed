@@ -18,7 +18,9 @@ export type Protocol =
   | 'ponder'
   | 'solana'
   | 'peertube'
-  | 'youtube';
+  | 'youtube'
+  | 'kbin'
+  | 'tildes';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */

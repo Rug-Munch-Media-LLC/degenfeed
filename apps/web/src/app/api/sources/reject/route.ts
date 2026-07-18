@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server';
+import { rejectSources } from '../../../../lib/source-engine';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as { id: string };
+  const body = (await request.json()) as { id?: string; ids?: string[] };
+  const ids = body.ids ?? (body.id ? [body.id] : []);
 
-  console.log(`[admin] Rejected source ${body.id}`);
+  if (ids.length === 0) {
+    return NextResponse.json({ error: 'No source IDs provided' }, { status: 400 });
+  }
 
-  return NextResponse.json({ ok: true, id: body.id });
+  const result = rejectSources(ids);
+
+  console.log(`[admin] Rejected ${result.rejected} source(s)`);
+
+  return NextResponse.json({ ok: true, rejected: result.rejected });
 }

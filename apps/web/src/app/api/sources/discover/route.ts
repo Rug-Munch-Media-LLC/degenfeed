@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { runDiscovery } from '../../../../lib/source-engine';
 
 export const runtime = 'nodejs';
 
@@ -6,16 +7,18 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const platform = url.searchParams.get('platform') || 'all';
 
-  const discovered = Math.floor(Math.random() * 20) + 5;
-  const autoApproved = Math.floor(discovered * 0.3);
-  const pendingReview = discovered - autoApproved;
+  const result = await runDiscovery(platform);
+
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: 500 });
+  }
 
   return NextResponse.json({
     success: true,
-    platform,
-    discovered,
-    autoApproved,
-    pendingReview,
-    sources: [],
+    platform: result.platform,
+    discovered: result.discovered,
+    autoApproved: result.autoApproved,
+    pendingReview: result.pendingReview,
+    sources: result.sources,
   });
 }

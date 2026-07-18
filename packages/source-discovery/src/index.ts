@@ -4,12 +4,39 @@
  * Discovers new sources across Reddit, YouTube, RSS feeds, Lemmy communities,
  * PeerTube channels, and newsletters. Scores each source with quality heuristics
  * and returns candidates for auto-approval or manual review.
+ *
+ * v2: Also provides source health scoring, trending detection, stale source
+ * detection, and discovery stats aggregation for the auto-discovery pipeline.
  */
 
 import type { DiscoveredSource } from './types';
-export type { DiscoveredSource, DiscoveryConfig, DiscoveryStatus, Platform } from './types';
-export { CRYPTO_KEYWORDS, DEFAULT_DISCOVERY_CONFIG, SEARCH_KEYWORDS } from './types';
-export { computeQualityScore, estimateRelevance, isBlocklisted } from './quality';
+export type {
+  DiscoveredSource,
+  DiscoveryConfig,
+  DiscoveryStatus,
+  Platform,
+  SourceHealth,
+  TrendingSource,
+  DiscoveryRun,
+  DiscoveryStats,
+  SourceLifecycle,
+} from './types';
+export {
+  CRYPTO_KEYWORDS,
+  DEFAULT_DISCOVERY_CONFIG,
+  SEARCH_KEYWORDS,
+} from './types';
+export {
+  computeQualityScore,
+  estimateRelevance,
+  isBlocklisted,
+  computeSourceHealthScore,
+  detectStaleSources,
+  computeTrendingScore,
+  buildTrendingSource,
+  getNewThisWeek,
+  aggregateStats,
+} from './quality';
 import { discoverRedditSubreddits } from './reddit';
 export { discoverRedditSubreddits } from './reddit';
 import { discoverYouTubeChannels } from './youtube';

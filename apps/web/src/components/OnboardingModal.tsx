@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { resetTour } from './GuidedTour';
+import { CrossPlatformSignup } from './CrossPlatformSignup';
 import { useToast } from './Toast';
 
 /* ── Types ───────────────────────────────────────────────── */
@@ -141,7 +142,7 @@ export function OnboardingModal() {
   const { showToast } = useToast();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   // Reset state when modal opens
   useEffect(() => {
@@ -312,6 +313,11 @@ export function OnboardingModal() {
       title: 'Follow popular accounts',
       subtitle: 'Get started with these suggested follows',
       illustration: '⊞',
+    },
+    {
+      title: 'Create your accounts',
+      subtitle: 'Get portable credentials for every platform',
+      illustration: '🔑',
     },
     {
       title: "You're all set!",
@@ -622,8 +628,25 @@ export function OnboardingModal() {
                 </div>
               )}
 
-              {/* ── Step 4: Done ── */}
+              {/* ── Step 4: Create accounts ── */}
               {step === 4 && (
+                <div>
+                  <div className="mb-4 text-center">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent text-3xl shadow-[0_0_20px_rgba(0,255,65,0.12)]">
+                      🔑
+                    </div>
+                    <h2 className="mb-1 text-xl font-bold text-white">Create your accounts</h2>
+                    <p className="mx-auto max-w-md text-sm text-white/50">
+                      Get portable credentials for every platform. Use them on any app — you own
+                      these accounts.
+                    </p>
+                  </div>
+                  <CrossPlatformSignup compact />
+                </div>
+              )}
+
+              {/* ── Step 5: Done ── */}
+              {step === 5 && (
                 <div className="text-center">
                   <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent shadow-[0_0_40px_rgba(0,255,65,0.15)]">
                     <span className="text-3xl drop-shadow-[0_0_12px_rgba(0,255,65,0.4)]">✦</span>
@@ -680,8 +703,23 @@ export function OnboardingModal() {
                     </div>
                   </div>
 
+                  {/* Security note */}
+                  <div className="mx-auto mt-4 max-w-sm rounded-xl border border-amber-500/10 bg-amber-500/[0.03] px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <span className="mt-0.5 text-sm" aria-hidden="true">🔒</span>
+                      <div>
+                        <p className="text-xs font-semibold text-white/80">
+                          Your credentials are encrypted and stored securely.
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-white/40 leading-relaxed">
+                          We never share them with third parties. You can revoke access at any time.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Guided tour hint */}
-                  <div className="mx-auto mt-4 max-w-sm rounded-xl border border-degen-500/15 bg-degen-500/[0.03] px-4 py-3">
+                  <div className="mx-auto mt-3 max-w-sm rounded-xl border border-degen-500/15 bg-degen-500/[0.03] px-4 py-3">
                     <div className="flex items-center gap-2">
                       <span className="text-degen-400">◆</span>
                       <p className="text-xs text-degen-400/80 font-medium">

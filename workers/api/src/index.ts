@@ -323,8 +323,9 @@ export async function scheduled(
     await handleCron(env);
   }
 
-  // Weekly source discovery on Sundays at 12:00 UTC
+  // Weekly source discovery + health maintenance on Sundays at 12:00 UTC
   if (cron === '0 12 * * 0') {
+    // Run discovery
     try {
       const { handleSourcesDiscover } = await import('./routes/source-discovery');
       const discoverReq = new Request('http://localhost/api/sources/discover?platform=all');
@@ -333,5 +334,32 @@ export async function scheduled(
     } catch (err) {
       console.error('[scheduled] source discovery failed:', err);
     }
+
+    // Initialize health tracking for newly discovered sources
+    try {
+      const { initSourceHealth, runWeeklyHealthMaintenance } = await import('./routes/source-health');
+      const allSourcesRaw = await env.CACHE?.get('discovered:sources:all');
+      if (allSourcesRaw) {
+        const allSources = JSON.parse(allSourcesRaw) as Array<{ id: string; platform: string; weeklyActivity: number; relevanceScore: number; score: number }>;
+        for (const source of allSources) {
+          await initSourceHealth(env, source as Parameters<typeof initSourceHealth>[1]);
+        }
+      }
+      console.log('[scheduled] health tracking initialized for sources');
+    } catch (err) {
+      console.error('[scheduled] health init failed:', err);
+    }
+
+    // Run health maintenance (stale detection + culling)
+    try {
+      const { runWeeklyHealthMaintenance } = await import('./routes/source-health');
+      const result = await runWeeklyHealthMaintenance(env);
+      console.log(`[scheduled] health maintenance: ${result.checked} checked, ${result.stale} stale, ${result.culled} culled`);
+    } catch (err) {
+      console.error('[scheduled] health maintenance failed:', err);
+    }
+
+    // Record KV last-run timestamp
+    await env.CACHE?.put('discovered:sources:discovery:last-run', String(Date.now()));
   }
 }

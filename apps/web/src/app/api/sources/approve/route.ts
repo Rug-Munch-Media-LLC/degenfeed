@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
+import { approveSources } from '../../../../lib/source-engine';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { id?: string; ids?: string[] };
+  const ids = body.ids ?? (body.id ? [body.id] : []);
 
-  const approved = body.ids?.length ? body.ids.length : body.id ? 1 : 0;
+  if (ids.length === 0) {
+    return NextResponse.json({ error: 'No source IDs provided' }, { status: 400 });
+  }
 
-  console.log(`[admin] Approved ${approved} source(s)`);
+  const result = approveSources(ids);
 
-  return NextResponse.json({ ok: true, approved });
+  console.log(`[admin] Approved ${result.approved} source(s)`);
+
+  return NextResponse.json({ ok: true, approved: result.approved, sources: result.sources });
 }
