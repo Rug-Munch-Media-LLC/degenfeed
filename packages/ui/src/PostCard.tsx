@@ -239,7 +239,7 @@ function PostCardComponent({
 
   const isSelf = post.author.id === 'self' || post.author.id.startsWith('self:');
   const raw: Record<string, unknown> | undefined = post.raw as Record<string, unknown> | undefined;
-  const relays: string[] = Array.isArray(raw?.relays) ? (raw.relays as string[]) : [];
+  const _relays: string[] = Array.isArray(raw?.relays) ? (raw.relays as string[]) : [];
 
   useEffect(() => {
     if (typeof window === 'undefined' || !post.author.id) return;
@@ -1431,7 +1431,7 @@ function PostCardComponent({
         {post.contentProof && <PermanenceBadge proof={post.contentProof} />}
 
         {post.protocol === 'lemmy' && <LemmyThreadView post={post} />}
-        {(post.protocol as string) === 'peertube' && (
+        {post.protocol === 'peertube' && (
           <PeerTubeEmbed
             url={
               post.embeds.find((e) => e.kind === 'video')?.url ??
@@ -1568,4 +1568,4 @@ function PostCardComponent({
   );
 }
 
-// export const PostCard = memo(PostCardComponent);
+export const PostCard = memo(PostCardComponent);

@@ -2,6 +2,35 @@
  * @degenfeed/peertube-provider
  *
  * PeerTube API client for the DegenFeed video feed.
+ */
+
+// ─── Local circuit breaker ───────────────────────────────────────────
+const __cbStore = new Map<string, { failures: number; openUntil: number }>();
+
+function __cbState(name: string, _threshold = 3, _cooldownMs = 60000): 'CLOSED' | 'OPEN' {
+  const cb = __cbStore.get(name);
+  if (!cb) return 'CLOSED';
+  if (cb.openUntil > Date.now()) return 'OPEN';
+  __cbStore.delete(name);
+  return 'CLOSED';
+}
+
+function __cbFail(name: string, threshold = 3, cooldownMs = 60000): void {
+  const now = Date.now();
+  const cb = __cbStore.get(name) ?? { failures: 0, openUntil: 0 };
+  cb.failures++;
+  if (cb.failures >= threshold) {
+    cb.openUntil = now + cooldownMs;
+    console.warn(`[circuit-breaker] ${name}: OPEN after ${cb.failures} failures`);
+  }
+  __cbStore.set(name, cb);
+}
+
+function __cbSuccess(name: string): void {
+  __cbStore.delete(name);
+}
+
+/**
  * Connects to the self-hosted instance at https://video.degenfeed.xyz
  *
  * PeerTube has a well-documented REST API (no auth required for read-only):
@@ -134,45 +163,57 @@ export interface PeerTubeFetchOptions {
 export async function fetchPeerTubeVideos(
   options: PeerTubeFetchOptions = {},
 ): Promise<PeerTubeVideoResponse> {
-  const {
-    baseUrl = PEERTUBE_INSTANCE,
-    limit = DEFAULT_PAGE_LIMIT,
-    sort = '-publishedAt',
-    categoryId,
-    language,
-    tags,
-    search,
-    start = 1,
-    isLive,
-    signal,
-  } = options;
-
-  const params = new URLSearchParams();
-  params.set('count', String(Math.min(limit, 100)));
-  params.set('sort', sort);
-  params.set('start', String((start - 1) * limit));
-
-  if (categoryId !== undefined) params.set('categoryOneOf', String(categoryId));
-  if (language) params.set('languageOneOf', language);
-  if (tags) params.set('tagsOneOf', tags);
-  if (search) params.set('search', search);
-  if (isLive !== undefined) params.set('isLive', String(isLive));
-
-  const url = `${baseUrl}/api/v1/videos?${params.toString()}`;
-
-  const response = await fetch(url, {
-    headers: {
-      accept: 'application/json',
-      'user-agent': 'DegenFeed/1.0',
-    },
-    signal,
-  });
-
-  if (!response.ok) {
-    throw new Error(`PeerTube API error: ${response.status} ${response.statusText} — ${url}`);
+  if (__cbState('peertube') === 'OPEN') {
+    console.warn('[circuit-breaker] peertube: skipping fetch — circuit open');
+    return { data: [], total: 0 };
   }
 
-  return response.json() as Promise<PeerTubeVideoResponse>;
+  try {
+    const {
+      baseUrl = PEERTUBE_INSTANCE,
+      limit = DEFAULT_PAGE_LIMIT,
+      sort = '-publishedAt',
+      categoryId,
+      language,
+      tags,
+      search,
+      start = 1,
+      isLive,
+      signal,
+    } = options;
+
+    const params = new URLSearchParams();
+    params.set('count', String(Math.min(limit, 100)));
+    params.set('sort', sort);
+    params.set('start', String((start - 1) * limit));
+
+    if (categoryId !== undefined) params.set('categoryOneOf', String(categoryId));
+    if (language) params.set('languageOneOf', language);
+    if (tags) params.set('tagsOneOf', tags);
+    if (search) params.set('search', search);
+    if (isLive !== undefined) params.set('isLive', String(isLive));
+
+    const url = `${baseUrl}/api/v1/videos?${params.toString()}`;
+
+    const response = await fetch(url, {
+      headers: {
+        accept: 'application/json',
+        'user-agent': 'DegenFeed/1.0',
+      },
+      signal,
+    });
+
+    if (!response.ok) {
+      __cbFail('peertube');
+      throw new Error(`PeerTube API error: ${response.status} ${response.statusText} — ${url}`);
+    }
+
+    __cbSuccess('peertube');
+    return response.json() as Promise<PeerTubeVideoResponse>;
+  } catch (err) {
+    __cbFail('peertube');
+    throw err;
+  }
 }
 
 /**

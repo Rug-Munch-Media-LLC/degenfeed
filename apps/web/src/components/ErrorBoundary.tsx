@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.errorCode = generateCode();
     console.error(`[ErrorBoundary ${this.errorCode}]`, error, errorInfo);
     reportError(error, {
@@ -55,7 +55,7 @@ export class ErrorBoundary extends Component<Props, State> {
     this.props.onError?.(error, errorInfo);
   }
 
-  override handleReset = () => {
+  handleReset = () => {
     this.setState({ hasError: false, error: null });
     this.errorCode = generateCode();
     this.props.onReset?.();

@@ -3,7 +3,7 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { type Env, jsonResponse, rateLimit } from '../index';
-import { createSession, storeCsrfToken } from '../session';
+import { createSession, generateCsrfToken, parseSessionCookie, storeCsrfToken } from '../session';
 
 const GTS_SCOPES = 'read write follow push';
 const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -248,8 +248,14 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
 
     const { setCookie, payload } = await createSession(body.address, body.chain, env.AUTH_SECRET);
 
-    // Generate and store CSRF token for the new session
-    const csrfToken = await storeCsrfToken(setCookie, env);
+    // Generate and store CSRF token for the new session.
+    // IMPORTANT: parse the cookie value from the Set-Cookie header so the KV key
+    // matches what validateCsrfToken looks up (the cookie value only, not the
+    // full header string).
+    const cookieValueForCsrf = parseSessionCookie(setCookie);
+    const csrfToken = cookieValueForCsrf
+      ? await storeCsrfToken(cookieValueForCsrf, env)
+      : generateCsrfToken();
 
     return new Response(
       JSON.stringify({
