@@ -26,19 +26,20 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [show, setShow] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
 
-  // Check localStorage on mount
+  // Check localStorage on mount — ONLY reads status, does NOT auto-show
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const done = localStorage.getItem(STORAGE_KEY) === 'true';
-    setHasCompleted(done);
-    if (!done) {
-      // Delay slightly so the page can settle before the modal slides in
-      const timer = setTimeout(() => setShow(true), 400);
-      return () => clearTimeout(timer);
+    try {
+      const done = localStorage.getItem(STORAGE_KEY) === 'true';
+      setHasCompleted(done);
+    } catch {
+      /* localStorage unavailable */
     }
+    // NOTE: Onboarding modal is NEVER shown on page load.
+    // It only opens after a successful sign-in via triggerOnboarding().
   }, []);
 
-  // Listen for custom event from AuthProvider (post-sign-in trigger)
+  // Listen for custom event from AuthProvider (post-sign-in trigger ONLY)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 

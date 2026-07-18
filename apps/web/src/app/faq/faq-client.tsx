@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     q: 'How is DegenFeed different from Twitter/X?',
-    a: 'DegenFeed is not a walled garden. It reads from 10+ open protocols and lets you post to multiple networks simultaneously. There are no ads, no algorithm manipulation, no data selling, and no pay-to-play visibility. The ranking algorithm is transparent — every post shows its score breakdown. DegenFeed is open source (AGPL-3.0), self-hostable, and governed by the community.',
+    a: 'DegenFeed is not a walled garden. It reads from 10 open protocols and lets you post to multiple networks simultaneously. There are no ads, no algorithm manipulation, no data selling, and no pay-to-play visibility. The ranking algorithm is transparent — every post shows its score breakdown. DegenFeed is open source (AGPL-3.0), self-hostable, and governed by the community.',
   },
   {
     q: 'What protocols does DegenFeed support?',

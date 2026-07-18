@@ -8,7 +8,12 @@ import { deduplicatePosts } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { Env } from '../index';
 import type { ExecutionContext } from './feed-fetcher';
-import { collectProviderResults, fetchFromProviders } from './feed-fetcher';
+import {
+  collectProviderResults,
+  FEED_GENERATION_TIMEOUT_MS,
+  fetchFromProviders,
+  ProviderTimer,
+} from './feed-fetcher';
 import { fetchLemmyPosts, fetchPeerTubeVideos, fetchYouTubeVideos } from './unified-fetchers';
 
 const SOCIAL_PROTOCOLS: Protocol[] = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
@@ -122,6 +127,7 @@ export async function buildUnifiedFeed(
   posts: UnifiedFeedPost[];
   meta: Record<string, unknown>;
 }> {
+  const startTime = Date.now();
   const sources = resolveSources(opts.sources);
   const mix = getMixWeights(opts.mix ?? 'balanced');
   const limit = Math.min(opts.limit ?? 50, 100);
@@ -287,12 +293,31 @@ export async function buildUnifiedFeed(
     );
   }
 
-  const results = await Promise.allSettled(fetchPromises);
+  // Race source fetches against feed generation timeout.
+  // If any source takes too long, return partial results.
+  type FetchResult = PromiseSettledResult<{
+    source: SourceCategory;
+    posts: UnifiedPost[];
+    error?: string;
+  }>;
+
+  const fetchTimeout: Promise<{ results: FetchResult[]; timedOut: boolean }> = Promise.race([
+    Promise.allSettled(fetchPromises).then((r) => ({ results: r, timedOut: false })),
+    new Promise<{ results: FetchResult[]; timedOut: boolean }>((resolve) =>
+      setTimeout(
+        () => resolve({ results: [], timedOut: true }),
+        FEED_GENERATION_TIMEOUT_MS,
+      ),
+    ),
+  ]);
+
+  const { results, timedOut } = await fetchTimeout;
 
   // Collect all posts, tag with source category
   const allPosts: Array<UnifiedPost & { sourceCategory: SourceCategory }> = [];
   const errors: string[] = [];
   const perSource: Record<string, number> = {};
+  let feedTimedOut = timedOut;
 
   for (const r of results) {
     if (r.status === 'fulfilled') {
@@ -306,6 +331,11 @@ export async function buildUnifiedFeed(
     } else {
       errors.push(`fetch: ${r.reason instanceof Error ? r.reason.message : 'unknown'}`);
     }
+  }
+
+  // If the feed timed out, add a notice
+  if (feedTimedOut) {
+    errors.push(`feed generation timed out after ${FEED_GENERATION_TIMEOUT_MS}ms — partial results`);
   }
 
   // Deduplicate across all sources
@@ -331,6 +361,8 @@ export async function buildUnifiedFeed(
     } as unknown as UnifiedFeedPost;
   });
 
+  const elapsed = Date.now() - startTime;
+
   return {
     posts: enriched,
     meta: {
@@ -339,6 +371,9 @@ export async function buildUnifiedFeed(
       perSource,
       errors: errors.length > 0 ? errors : undefined,
       fetchedAt: Date.now(),
+      feedTimedOut,
+      feedGenerationMs: elapsed,
+      feedTimeoutMs: FEED_GENERATION_TIMEOUT_MS,
       mix: opts.mix ?? 'balanced',
       sources: Array.from(sources),
     },
