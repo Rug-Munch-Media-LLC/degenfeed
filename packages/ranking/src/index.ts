@@ -20,6 +20,8 @@
  */
 import {
   BOOST_TERMS,
+  buildQualityAuthorProfile,
+  computeQualityScore,
   keywordRelevance,
   PLATFORM_TIER_WEIGHTS,
 } from '@degenfeed/feed-core';
@@ -257,10 +259,15 @@ export function scoreBreakdownV2(post: UnifiedPost, ctx: RankingContext): ScoreB
   const velocity = Math.max(baseVelocity, sigs.engagementVelocity * 0.4 + 0.6);
   if (velocity > 1.3) reasons.push('trending-now');
 
-  // ── Spam penalty ────────────────────────────────────────────────
-  const spam = (post as unknown as Record<string, unknown>).spamScore as number ?? 0;
-  if (spam >= 0.7) reasons.push('high-spam');
-  else if (spam >= 0.3) reasons.push('borderline-spam');
+  // ── Quality score (replaces simple spamScore) ───────────────────
+  const qualityScore = computeQualityScore(post, {
+    author: buildQualityAuthorProfile(post.author),
+    uniqueness: 10, // default — callers with recentPosts can override
+  });
+  const qualityNormalized = qualityScore / 100;
+  if (qualityScore < 20) reasons.push('low-quality');
+  else if (qualityScore < 50) reasons.push('medium-quality');
+  else if (qualityScore > 80) reasons.push('high-quality');
 
   const rw = prefs?.recencyWeight ?? 1;
   const ew = prefs?.engagementWeight ?? 1;
@@ -278,7 +285,7 @@ export function scoreBreakdownV2(post: UnifiedPost, ctx: RankingContext): ScoreB
   const total =
     baseScore *
     freshnessBoost(post.createdAt, ctx.now) *
-    Math.max(0.05, 1 - spam);
+    Math.max(0.05, qualityNormalized);
 
   if (isMuted) reasons.unshift('muted-penalty');
 

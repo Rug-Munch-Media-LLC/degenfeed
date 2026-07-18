@@ -97,6 +97,7 @@ import { handleUnifiedFeed } from './routes/feed-unified';
 import { handleFrameAction, handleFrameResolve } from './routes/frame';
 import { handleFundingFeed } from './routes/funding';
 import { handleProtocolsHealth, handleRelaysHealth } from './routes/health';
+import { handleProtocolSections } from './routes/protocol-sections';
 import {
   handleGetIdentityProfile,
   handleLinkIdentity,
@@ -370,6 +371,7 @@ app.get('/api/analytics', (c) => handleAnalytics(c.req.raw, c.env));
 
 // ─── API: Feed (specific routes before parameterized) ──────
 app.all('/api/feed/home', async (c) => handleHomeFeed(c.req.raw, c.env, c.executionCtx));
+app.get('/api/feed/protocol-sections', async (c) => handleProtocolSections(c.req.raw, c.env));
 app.all('/api/feed/for-you', async (c) => handleForYouFeed(c.req.raw, c.env, c.executionCtx));
 app.all('/api/feed/trending', async (c) => handleTrendingFeed(c.req.raw, c.env, c.executionCtx));
 app.all('/api/feed/health', async (c) => handleFeedHealth(c.req.raw, c.env));

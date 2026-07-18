@@ -1,8 +1,10 @@
 /**
- * feed-curator — Smarter feed algorithm components.
+ * feed-curator — Addictive feed algorithm components.
  *
- * Seen tracking, freshness bias, explore/exploit, engagement prediction,
- * scroll depth tracking, content variety enforcement.
+ * Seen tracking, freshness bias, dynamic explore/exploit, engagement prediction,
+ * scroll depth tracking, content variety enforcement, behavior profiles,
+ * session engagement tracking, content hooks, temporal patterns,
+ * dopamine loops, and velocity boosting.
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
@@ -47,7 +49,148 @@ export function filterSeenPosts(posts: UnifiedPost[], seen: Set<string>): Unifie
   return posts.filter((p) => !seen.has(p.id));
 }
 
-// ─── 2. FRESHNESS BIAS ───────────────────────────────────────────────
+// ─── 2. BEHAVIOR PROFILE ─────────────────────────────────────────────
+// Tracks user engagement patterns across sessions for personalization.
+
+const BEHAVIOR_KEY_PREFIX = 'user:behavior:';
+const BEHAVIOR_TTL = 60 * 60 * 24 * 30;
+const SCROLL_SPEED_WINDOW = 20;
+
+export interface BehaviorProfile {
+  scrollTimestamps: number[];
+  lingerPosts: Record<string, number>;
+  scrollSpeeds: number[];
+  preferredContentTypesInferred: Record<string, number>;
+  preferredNichesInferred: Record<string, number>;
+  streak: { count: number; lastVisitDate: string };
+  sessionStartedAt: number;
+  postsShown: number;
+  flowState: boolean;
+  tippedCreators: string[];
+  memberCommunities: string[];
+}
+
+export function emptyBehaviorProfile(): BehaviorProfile {
+  return {
+    scrollTimestamps: [],
+    lingerPosts: {},
+    scrollSpeeds: [],
+    preferredContentTypesInferred: {},
+    preferredNichesInferred: {},
+    streak: { count: 0, lastVisitDate: '' },
+    sessionStartedAt: Date.now(),
+    postsShown: 0,
+    flowState: false,
+    tippedCreators: [],
+    memberCommunities: [],
+  };
+}
+
+export async function loadBehaviorProfile(env: Env, wallet: string): Promise<BehaviorProfile> {
+  if (!env.CACHE || !wallet) return emptyBehaviorProfile();
+  try {
+    const raw = await env.CACHE.get(`${BEHAVIOR_KEY_PREFIX}${wallet.toLowerCase()}`);
+    if (!raw) return emptyBehaviorProfile();
+    const stored = JSON.parse(raw) as BehaviorProfile;
+    stored.sessionStartedAt = Date.now();
+    stored.postsShown = 0;
+    stored.flowState = false;
+    stored.scrollTimestamps = [];
+    return stored;
+  } catch {
+    return emptyBehaviorProfile();
+  }
+}
+
+export async function storeBehaviorProfile(
+  env: Env,
+  wallet: string,
+  profile: BehaviorProfile,
+): Promise<void> {
+  if (!env.CACHE || !wallet) return;
+  try {
+    const key = `${BEHAVIOR_KEY_PREFIX}${wallet.toLowerCase()}`;
+    const toStore = { ...profile, scrollTimestamps: [], scrollSpeeds: profile.scrollSpeeds.slice(-SCROLL_SPEED_WINDOW) };
+    await env.CACHE.put(key, JSON.stringify(toStore), { expirationTtl: BEHAVIOR_TTL });
+  } catch {
+    /* non-critical */
+  }
+}
+
+export function updateStreak(profile: BehaviorProfile): BehaviorProfile {
+  const today = new Date().toISOString().slice(0, 10);
+  if (profile.streak.lastVisitDate === today) return profile;
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (profile.streak.lastVisitDate === yesterday) {
+    profile.streak.count += 1;
+  } else {
+    profile.streak.count = 1;
+  }
+  profile.streak.lastVisitDate = today;
+  return profile;
+}
+
+export function recordScrollEvent(profile: BehaviorProfile, postId: string): {
+  avgSpeed: number;
+  speedTrend: 'accelerating' | 'steady' | 'slowing';
+  isBored: boolean;
+} {
+  const now = Date.now();
+  profile.scrollTimestamps.push(now);
+  profile.postsShown += 1;
+
+  if (profile.scrollTimestamps.length >= 2) {
+    const lastIdx = profile.scrollTimestamps.length - 1;
+    const t1 = profile.scrollTimestamps[lastIdx]!;
+    const t0 = profile.scrollTimestamps[lastIdx - 1]!;
+    const speed = t1 - t0;
+    profile.scrollSpeeds.push(speed);
+    if (profile.scrollSpeeds.length > SCROLL_SPEED_WINDOW) {
+      profile.scrollSpeeds.shift();
+    }
+  }
+
+  profile.flowState =
+    profile.scrollSpeeds.length >= 5 &&
+    profile.scrollSpeeds.slice(-5).every((s) => s < 3000);
+
+  const speeds = profile.scrollSpeeds;
+  const avgSpeed = speeds.length > 0 ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
+  let speedTrend: 'accelerating' | 'steady' | 'slowing' = 'steady';
+  let isBored = false;
+
+  if (speeds.length >= 8) {
+    const recent = speeds.slice(-4).reduce((a, b) => a + b, 0) / 4;
+    const older = speeds.slice(-8, -4).reduce((a, b) => a + b, 0) / 4;
+    if (recent > older * 1.3) {
+      speedTrend = 'slowing';
+      isBored = true;
+    } else if (recent < older * 0.7) {
+      speedTrend = 'accelerating';
+    }
+  }
+
+  return { avgSpeed, speedTrend, isBored };
+}
+
+export function recordLinger(profile: BehaviorProfile, postId: string, ms: number): void {
+  profile.lingerPosts[postId] = (profile.lingerPosts[postId] ?? 0) + ms;
+}
+
+export function inferPreferences(profile: BehaviorProfile, posts: UnifiedPost[]): void {
+  const lingeredIds = new Set(Object.keys(profile.lingerPosts).filter((k) => (profile.lingerPosts[k] ?? 0) > 2000));
+  for (const post of posts) {
+    if (!lingeredIds.has(post.id)) continue;
+    const type = post.contentType ?? 'text';
+    profile.preferredContentTypesInferred[type] = (profile.preferredContentTypesInferred[type] ?? 0) + 1;
+    for (const niche of post.niches) {
+      const lower = niche.toLowerCase();
+      profile.preferredNichesInferred[lower] = (profile.preferredNichesInferred[lower] ?? 0) + 1;
+    }
+  }
+}
+
+// ─── 3. FRESHNESS BIAS ───────────────────────────────────────────────
 
 export interface FreshnessBoost {
   post: UnifiedPost;
@@ -69,15 +212,41 @@ export function applyFreshnessBias(posts: UnifiedPost[], now: number): Freshness
   });
 }
 
-// ─── 3. EXPLORE vs EXPLOIT ──────────────────────────────────────────
+// ─── 4. EXPLORE vs EXPLOIT (DYNAMIC) ─────────────────────────────────
 
 export interface ExploreExploitSplit {
   exploit: UnifiedPost[];
   explore: UnifiedPost[];
 }
 
+export interface ExploreExploitRatio {
+  exploitPct: number;
+  explorePct: number;
+  exploreInterval: number;
+}
+
 /**
- * Splits posts into exploit (80%) and explore (20%) pools.
+ * Dynamic explore/exploit ratio based on session duration.
+ * Early session: exploit heavily (learn preferences).
+ * Mid session: introduce variety (prevent boredom).
+ * Late session: keep discovering (maximize novelty).
+ * Flow state (>30min): go back to exploit (they're hooked).
+ */
+export function getDynamicExploreExploitRatio(sessionDurationMs: number): ExploreExploitRatio {
+  if (sessionDurationMs < 5 * 60_000) {
+    return { exploitPct: 0.9, explorePct: 0.1, exploreInterval: 10 };
+  }
+  if (sessionDurationMs < 15 * 60_000) {
+    return { exploitPct: 0.7, explorePct: 0.3, exploreInterval: 3 };
+  }
+  if (sessionDurationMs < 30 * 60_000) {
+    return { exploitPct: 0.6, explorePct: 0.4, exploreInterval: 2 };
+  }
+  return { exploitPct: 0.8, explorePct: 0.2, exploreInterval: 5 };
+}
+
+/**
+ * Splits posts into exploit and explore pools.
  * Exploit = content from followed/interested sources matching user's niches.
  * Explore = high-engagement content from different topics/creators.
  */
@@ -85,13 +254,17 @@ export function splitExploreExploit(
   posts: UnifiedPost[],
   followed: Set<string>,
   preferredNiches: Set<string>,
+  inferredNiches?: Record<string, number>,
 ): ExploreExploitSplit {
   const exploit: UnifiedPost[] = [];
   const explore: UnifiedPost[] = [];
+  const inferredNicheSet = new Set(Object.keys(inferredNiches ?? {}));
 
   for (const post of posts) {
     const isFollowed = followed.has(post.author.id);
-    const nicheMatch = post.niches.some((n) => preferredNiches.has(n.toLowerCase()));
+    const nicheMatch = post.niches.some(
+      (n) => preferredNiches.has(n.toLowerCase()) || inferredNicheSet.has(n.toLowerCase()),
+    );
     const totalEngagement =
       (post.metrics.likes ?? 0) +
       (post.metrics.reposts ?? 0) +
@@ -109,7 +282,7 @@ export function splitExploreExploit(
 }
 
 /**
- * Interleaves explore posts every Nth position (default every 5th).
+ * Interleaves explore posts every Nth position.
  */
 export function interleaveExplore(
   exploitPosts: UnifiedPost[],
@@ -135,7 +308,7 @@ export function interleaveExplore(
   return result;
 }
 
-// ─── 4. ENGAGEMENT PREDICTION ───────────────────────────────────────
+// ─── 5. ENGAGEMENT PREDICTION ───────────────────────────────────────
 
 export interface EngagementPrediction {
   post: UnifiedPost;
@@ -187,7 +360,7 @@ export function predictEngagement(
   });
 }
 
-// ─── 5. SCROLL DEPTH TRACKING ───────────────────────────────────────
+// ─── 6. SCROLL DEPTH TRACKING ───────────────────────────────────────
 
 const SCROLL_KEY_PREFIX = 'user:scroll:';
 
@@ -267,7 +440,7 @@ export function adjustLimitFromScroll(profile: ScrollProfile, defaultLimit: numb
   return defaultLimit;
 }
 
-// ─── 6. CONTENT VARIETY ENFORCEMENT ──────────────────────────────────
+// ─── 7. CONTENT VARIETY ENFORCEMENT ──────────────────────────────────
 
 export interface VarietyLimits {
   maxPerCreator: number;
@@ -349,7 +522,232 @@ export function rotateContentTypes(posts: UnifiedPost[]): UnifiedPost[] {
   return result;
 }
 
-// ─── 7. CURATED FEED ORCHESTRATOR ────────────────────────────────────
+// ─── 8. TEMPORAL ENGAGEMENT PATTERNS ────────────────────────────────
+
+export type TimeSlot = 'morning' | 'midday' | 'afternoon' | 'evening' | 'night';
+
+export interface TemporalWeights {
+  slot: TimeSlot;
+  preferredNiches: string[];
+  preferredContentTypes: string[];
+  velocityMultiplier: number;
+}
+
+export function getTimeSlot(hour: number): TimeSlot {
+  if (hour >= 6 && hour < 10) return 'morning';
+  if (hour >= 10 && hour < 14) return 'midday';
+  if (hour >= 14 && hour < 18) return 'afternoon';
+  if (hour >= 18 && hour < 22) return 'evening';
+  return 'night';
+}
+
+const TEMPORAL_PATTERNS: Record<TimeSlot, TemporalWeights> = {
+  morning: {
+    slot: 'morning',
+    preferredNiches: ['news', 'market', 'macro', 'trading', 'analysis', 'crypto'],
+    preferredContentTypes: ['text', 'link', 'thread'],
+    velocityMultiplier: 1.2,
+  },
+  midday: {
+    slot: 'midday',
+    preferredNiches: ['analysis', 'defi', 'technical', 'development', 'research', 'tutorial'],
+    preferredContentTypes: ['text', 'thread', 'video'],
+    velocityMultiplier: 1.0,
+  },
+  afternoon: {
+    slot: 'afternoon',
+    preferredNiches: ['social', 'meme', 'community', 'nft', 'gaming', 'culture'],
+    preferredContentTypes: ['image', 'text', 'video'],
+    velocityMultiplier: 1.1,
+  },
+  evening: {
+    slot: 'evening',
+    preferredNiches: ['entertainment', 'video', 'spaces', 'podcast', 'live', 'music'],
+    preferredContentTypes: ['video', 'image', 'link'],
+    velocityMultiplier: 1.3,
+  },
+  night: {
+    slot: 'night',
+    preferredNiches: ['digest', 'summary', 'recap', 'longform', 'deep-dive'],
+    preferredContentTypes: ['text', 'thread'],
+    velocityMultiplier: 0.6,
+  },
+};
+
+export function getTemporalPatterns(now: number = Date.now()): TemporalWeights {
+  const hour = new Date(now).getHours();
+  return TEMPORAL_PATTERNS[getTimeSlot(hour)];
+}
+
+export function applyTemporalBoost(
+  post: UnifiedPost,
+  temporal: TemporalWeights,
+  baseScore: number,
+): number {
+  let score = baseScore;
+  const niches = post.niches.map((n) => n.toLowerCase());
+  for (const niche of temporal.preferredNiches) {
+    if (niches.includes(niche)) {
+      score += 1.5;
+      break;
+    }
+  }
+  const type = post.contentType ?? 'text';
+  if (temporal.preferredContentTypes.includes(type)) {
+    score += 0.5;
+  }
+  return score * temporal.velocityMultiplier;
+}
+
+// ─── 9. CONTENT HOOK OPTIMIZATION ────────────────────────────────────
+
+const HOOK_POSTS_COUNT = 3;
+const SURPRISE_INTERVAL = 7;
+
+/**
+ * Ensures the first N posts in a feed are high-engagement hooks
+ * with no experimentation. Sorts by total engagement + predicted score.
+ */
+export function ensureHookPosts(posts: UnifiedPost[]): UnifiedPost[] {
+  if (posts.length <= HOOK_POSTS_COUNT) return posts;
+  const hookCandidates = [...posts].sort((a, b) => {
+    const engA =
+      (a.metrics.likes ?? 0) + (a.metrics.reposts ?? 0) + (a.metrics.replies ?? 0) + (a.score?.total ?? 0);
+    const engB =
+      (b.metrics.likes ?? 0) + (b.metrics.reposts ?? 0) + (b.metrics.replies ?? 0) + (b.score?.total ?? 0);
+    return engB - engA;
+  });
+  const hooks = hookCandidates.slice(0, HOOK_POSTS_COUNT);
+  const hookIds = new Set(hooks.map((h) => h.id));
+  const rest = posts.filter((p) => !hookIds.has(p.id));
+  return [...hooks, ...rest];
+}
+
+/**
+ * Injects a "surprise" post from a completely different topic every Nth position.
+ */
+export function injectSurpriseContent(
+  posts: UnifiedPost[],
+  allAvailablePosts: UnifiedPost[],
+): UnifiedPost[] {
+  const result: UnifiedPost[] = [];
+  const seenNiches = new Set<string>();
+  const availablePool = allAvailablePosts.filter(
+    (p) => !posts.some((fp) => fp.id === p.id),
+  );
+
+  for (let i = 0; i < posts.length; i++) {
+    const post = posts[i];
+    if (post) {
+      result.push(post);
+      for (const niche of post.niches) seenNiches.add(niche.toLowerCase());
+    }
+
+    if ((i + 1) % SURPRISE_INTERVAL === 0 && availablePool.length > 0) {
+      const surprise = availablePool.find(
+        (p) => !p.niches.some((n) => seenNiches.has(n.toLowerCase())),
+      );
+      if (surprise) {
+        result.push(surprise);
+        const idx = availablePool.indexOf(surprise);
+        availablePool.splice(idx, 1);
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Staggered content type rotation: alternates text/image/video, then link/thread.
+ * More aggressive than the basic rotation for visual interest.
+ */
+export function alternateContentTypes(posts: UnifiedPost[]): UnifiedPost[] {
+  const VISUAL_TYPES = ['image', 'video'] as const;
+  const TEXT_TYPES = ['text', 'thread', 'link'] as const;
+  const byVisual = posts.filter((p) => (VISUAL_TYPES as readonly string[]).includes(p.contentType ?? 'text'));
+  const byText = posts.filter((p) => (TEXT_TYPES as readonly string[]).includes(p.contentType ?? 'text'));
+  const other = posts.filter(
+    (p) =>
+      !(VISUAL_TYPES as readonly string[]).includes(p.contentType ?? 'text') &&
+      !(TEXT_TYPES as readonly string[]).includes(p.contentType ?? 'text'),
+  );
+
+  const result: UnifiedPost[] = [];
+  let vi = 0, ti = 0, oi = 0;
+
+  while (vi < byVisual.length || ti < byText.length || oi < other.length) {
+    if (ti < byText.length) result.push(byText[ti++]!);
+    if (vi < byVisual.length) result.push(byVisual[vi++]!);
+    if (ti < byText.length) result.push(byText[ti++]!);
+    if (vi < byVisual.length) result.push(byVisual[vi++]!);
+    if (oi < other.length) result.push(other[oi++]!);
+  }
+
+  return result;
+}
+
+// ─── 10. DOPAMINE LOOP SIGNALS ──────────────────────────────────────
+
+export interface DopamineSignals {
+  caughtUp: boolean;
+  streakCount: number;
+  newSinceLastVisit: number;
+  postCount: number;
+}
+
+const CAUGHT_UP_THRESHOLD = 100;
+
+export function computeDopamineSignals(
+  postsShown: number,
+  streak: { count: number; lastVisitDate: string },
+  lastVisitTimestamp: number,
+  newestPostTimestamp: number,
+): DopamineSignals {
+  return {
+    caughtUp: postsShown >= CAUGHT_UP_THRESHOLD,
+    streakCount: streak.count,
+    newSinceLastVisit: lastVisitTimestamp > 0
+      ? Math.max(0, newestPostTimestamp > lastVisitTimestamp ? 1 : 0) // simplified; caller provides count
+      : 0,
+    postCount: postsShown,
+  };
+}
+
+// ─── 11. CONTENT VELOCITY BOOSTING ──────────────────────────────────
+
+export interface VelocityBoostInput {
+  post: UnifiedPost;
+  rapidEngagement: boolean;
+  tippedCreator: boolean;
+  memberCommunity: boolean;
+}
+
+export function applyVelocityBoost(input: VelocityBoostInput, baseScore: number): number {
+  let multiplier = 1.0;
+  const factors: string[] = [];
+  if (input.rapidEngagement) { multiplier *= 2.0; factors.push('rapid-engagement-2x'); }
+  if (input.tippedCreator) { multiplier *= 1.5; factors.push('tipped-creator-1.5x'); }
+  if (input.memberCommunity) { multiplier *= 1.3; factors.push('member-community-1.3x'); }
+  return baseScore * multiplier;
+}
+
+export function computeRapidEngagement(
+  post: UnifiedPost,
+  previousEngagement: Map<string, { likes: number; reposts: number; replies: number; at: number }>,
+): boolean {
+  const prev = previousEngagement.get(post.id);
+  if (!prev) return false;
+  const elapsedMs = Date.now() - prev.at;
+  if (elapsedMs > 15 * 60_000 || elapsedMs < 10_000) return false;
+  const prevTotal = prev.likes + prev.reposts + prev.replies;
+  const currTotal = post.metrics.likes + post.metrics.reposts + post.metrics.replies;
+  const delta = currTotal - prevTotal;
+  const rate = (delta / (elapsedMs / 60_000));
+  return rate > 2.0;
+}
+
+// ─── 12. CURATED FEED ORCHESTRATOR (ADDICTIVE EDITION) ──────────────
 
 export interface CuratedFeedOptions {
   wallet?: string;
@@ -359,6 +757,11 @@ export interface CuratedFeedOptions {
   preferredContentTypes: Set<string>;
   engagedCreators: Set<string>;
   scrollProfile?: ScrollProfile;
+  behaviorProfile?: BehaviorProfile;
+  lastVisitTimestamp?: number;
+  tippedCreators?: Set<string>;
+  memberCommunities?: Set<string>;
+  previousEngagement?: Map<string, { likes: number; reposts: number; replies: number; at: number }>;
 }
 
 export interface CuratedFeedResult {
@@ -371,6 +774,9 @@ export interface CuratedFeedResult {
     exploitCount: number;
     predictedEngagementAvg: number;
     adjustedLimit: number;
+    dopamine?: DopamineSignals;
+    temporal?: TimeSlot;
+    exploreRatio?: ExploreExploitRatio;
   };
 }
 
@@ -393,11 +799,28 @@ export function curateFeed(
   const biasedPosts = applyFreshnessBias(unseenPosts, now);
   const freshnessBoosts = biasedPosts.filter((b) => b.boost > 0).length;
 
-  // 3. Engagement prediction
+  // 3. Temporal patterns
+  const temporal = getTemporalPatterns(now);
+
+  // 4. Engagement prediction with temporal + velocity boosts
+  const inferredNiches = opts.behaviorProfile?.preferredNichesInferred ?? {};
   const predicted = predictEngagement(
     biasedPosts.map((b) => {
       const post = b.post;
-      const baseScore = (post.score?.total ?? 0) + b.boost;
+      let baseScore = (post.score?.total ?? 0) + b.boost;
+      baseScore = applyTemporalBoost(post, temporal, baseScore);
+      const rapidEngagement = opts.previousEngagement
+        ? computeRapidEngagement(post, opts.previousEngagement)
+        : false;
+      baseScore = applyVelocityBoost(
+        {
+          post,
+          rapidEngagement,
+          tippedCreator: opts.tippedCreators?.has(post.author.id) ?? false,
+          memberCommunity: opts.memberCommunities?.has(post.id) ?? false,
+        },
+        baseScore,
+      );
       return {
         ...post,
         score: post.score ? { ...post.score, total: baseScore } : undefined,
@@ -422,30 +845,60 @@ export function curateFeed(
       ? predicted.reduce((sum, p) => sum + p.predictedScore, 0) / predicted.length
       : 0;
 
-  // 4. Explore/exploit split
+  // 5. Dynamic explore/exploit ratio
+  const sessionDuration = opts.behaviorProfile
+    ? now - opts.behaviorProfile.sessionStartedAt
+    : 0;
+  const ratio = getDynamicExploreExploitRatio(sessionDuration);
+
   const { exploit, explore } = splitExploreExploit(
     sortedPosts,
     opts.followed,
     opts.preferredNiches,
+    inferredNiches,
   );
 
-  // Limit exploit to ~80% and explore to ~20%
-  const exploitTarget = Math.min(Math.max(1, Math.floor(adjustedLimit * 0.8)), exploit.length);
-  const exploreTarget = Math.min(Math.max(0, Math.floor(adjustedLimit * 0.2)), explore.length);
+  const exploitTarget = Math.min(
+    Math.max(1, Math.floor(adjustedLimit * ratio.exploitPct)),
+    exploit.length,
+  );
+  const exploreTarget = Math.min(
+    Math.max(0, Math.floor(adjustedLimit * ratio.explorePct)),
+    explore.length,
+  );
 
   const exploitLimited = exploit.slice(0, exploitTarget);
   const exploreLimited = explore.slice(0, exploreTarget);
 
-  // 5. Interleave: every 5th post is explore
-  const interleaved = interleaveExplore(exploitLimited, exploreLimited, 5);
+  // 6. Interleave with dynamic interval
+  const interleaved = interleaveExplore(exploitLimited, exploreLimited, ratio.exploreInterval);
 
-  // 6. Enforce content variety
-  const varied = enforceVariety(interleaved, { maxPerCreator: 2, maxPerTopic: 3 });
+  // 7. Content hooks: first 3 posts must be high-engagement
+  const hooked = ensureHookPosts(interleaved);
 
-  // 7. Rotate content types for visual variety
-  const rotated = rotateContentTypes(varied);
+  // 8. Inject surprise content every 7th post
+  const surprised = injectSurpriseContent(hooked, sortedPosts);
+
+  // 9. Enforce content variety
+  const varied = enforceVariety(surprised, { maxPerCreator: 2, maxPerTopic: 3 });
+
+  // 10. Alternate content types (text/image/video rhythm)
+  const alternated = alternateContentTypes(varied);
+
+  // 11. Apply visual rotation as final safety layer
+  const rotated = rotateContentTypes(alternated);
 
   const finalPosts = rotated.slice(0, adjustedLimit);
+
+  // 12. Dopamine signals
+  const postsShown = opts.behaviorProfile?.postsShown ?? 0;
+  const streak = opts.behaviorProfile?.streak ?? { count: 0, lastVisitDate: '' };
+  const dopamine = computeDopamineSignals(
+    postsShown,
+    streak,
+    opts.lastVisitTimestamp ?? 0,
+    finalPosts.length > 0 ? finalPosts[0]!.createdAt : 0,
+  );
 
   return {
     posts: finalPosts,
@@ -457,6 +910,9 @@ export function curateFeed(
       exploitCount: exploitLimited.length,
       predictedEngagementAvg: Math.round(predictedEngagementAvg * 100) / 100,
       adjustedLimit,
+      dopamine,
+      temporal: temporal.slot,
+      exploreRatio: ratio,
     },
   };
 }

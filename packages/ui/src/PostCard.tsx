@@ -139,6 +139,14 @@ function buildScoreTooltip(score: NonNullable<UnifiedPost['score']>): string {
   return lines.join('\n');
 }
 
+function buildQualityTooltip(quality: NonNullable<UnifiedPost['qualityScore']>): string {
+  const lines = [`Protocol quality: ${quality.score}/${quality.max}`];
+  if (quality.reasons.length > 0) {
+    lines.push(`Signals: ${quality.reasons.join(', ')}`);
+  }
+  return lines.join('\n');
+}
+
 // ─── Local state type (shared with PostCardEngagement) ────────────
 
 interface LocalState {
@@ -971,6 +979,34 @@ export const PostCard = memo(function PostCard({
                     ★ {Math.round(post.score.total * 10) / 10}
                   </span>
                 </>
+              )}
+              {post.qualityBadge === 'verified' && (
+                <span
+                  className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-400"
+                  title={
+                    post.qualityScore
+                      ? buildQualityTooltip(post.qualityScore)
+                      : 'High-quality post by protocol rules'
+                  }
+                >
+                  ⭐ Verified
+                </span>
+              )}
+              {(post.isHot || post.isTrending) && (
+                <span
+                  className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-orange-500/10 px-1.5 py-0.5 text-[10px] font-medium text-orange-400"
+                  title={post.isHot ? 'Rising engagement velocity' : 'High engagement'}
+                >
+                  🔥 Hot
+                </span>
+              )}
+              {post.qualityScore && post.qualityBadge !== 'verified' && (
+                <span
+                  className="inline-flex shrink-0 items-center rounded-full border border-[var(--color-border)] px-1.5 py-0.5 text-[10px] tabular-nums text-gray-500"
+                  title={buildQualityTooltip(post.qualityScore)}
+                >
+                  Q {post.qualityScore.score}/{post.qualityScore.max}
+                </span>
               )}
             </div>
           </div>

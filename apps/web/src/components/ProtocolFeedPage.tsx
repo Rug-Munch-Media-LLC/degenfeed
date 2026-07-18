@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { FeedPollerBanner } from './FeedPollerBanner';
+import { ProtocolSections } from './ProtocolSections';
 
 const TipModal = dynamic(() => import('./TipModal').then((m) => ({ default: m.TipModal })), {
   ssr: false,
@@ -34,6 +35,19 @@ export interface ProtocolFeedConfig {
   endpoint: string;
 }
 
+/**
+ * Ranking tabs shared by every protocol page. `quality` uses the
+ * per-protocol quality scoring rules on the worker (?sort=quality).
+ */
+function buildRankingTabs(qualityDescription: string) {
+  return [
+    { id: 'hot', label: '🔥 Hot', description: 'High engagement in the last 24 hours' },
+    { id: 'quality', label: '⭐ Quality', description: qualityDescription },
+    { id: 'new', label: 'New', description: 'Chronological — latest first' },
+    { id: 'trending', label: '📈 Trending', description: 'Rising engagement velocity right now' },
+  ];
+}
+
 export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
   farcaster: {
     id: 'farcaster',
@@ -46,11 +60,7 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
       { label: 'channels', value: '1,203' },
       { label: 'hub', value: 'nemes.farcaster.xyz' },
     ],
-    tabs: [
-      { id: 'casts', label: 'Casts', description: 'Latest casts from the network' },
-      { id: 'channels', label: 'Channels', description: 'Top channels and communities' },
-      { id: 'trending', label: 'Trending', description: 'Trending casts right now' },
-    ],
+    tabs: buildRankingTabs('Verified casters, conversation starters, frames — no $DEGEN tip spam'),
     feedParam: 'farcaster',
     postNoun: 'cast',
     endpoint: '/api/feed/home',
@@ -67,9 +77,8 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
       { label: 'network', value: 'Polygon' },
     ],
     tabs: [
-      { id: 'publications', label: 'Publications', description: 'Latest Lens posts' },
+      ...buildRankingTabs('Original publications from known creators, collected and discussed'),
       { id: 'mirrors', label: 'Mirrors', description: 'Mirrored publications' },
-      { id: 'collects', label: 'Collects', description: 'Most collected posts' },
     ],
     feedParam: 'lens',
     postNoun: 'publication',
@@ -86,11 +95,7 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
       { label: 'custom feeds', value: '1,845' },
       { label: 'PDS', value: 'bsky.social' },
     ],
-    tabs: [
-      { id: 'skeets', label: 'Skeets', description: 'Latest skeets from the network' },
-      { id: 'custom-feeds', label: 'Custom Feeds', description: 'Curated AT Protocol feeds' },
-      { id: 'trending', label: 'Trending', description: 'Trending content' },
-    ],
+    tabs: buildRankingTabs('Custom-domain handles, original skeets with media — no reply spam'),
     feedParam: 'bluesky',
     postNoun: 'skeet',
     endpoint: '/api/feed/home',
@@ -106,11 +111,7 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
       { label: 'relays active', value: '342' },
       { label: 'top relay', value: 'wss://relay.damus.io' },
     ],
-    tabs: [
-      { id: 'notes', label: 'Notes', description: 'Latest notes from the relays' },
-      { id: 'relays', label: 'Relays', description: 'Active relay connections' },
-      { id: 'zaps', label: 'Zaps', description: 'Tipped and zapped notes' },
-    ],
+    tabs: buildRankingTabs('NIP-05 verified authors, long-form notes seen on multiple relays'),
     feedParam: 'nostr',
     postNoun: 'note',
     endpoint: '/api/feed/home',
@@ -127,15 +128,17 @@ export const PROTOCOL_CONFIGS: Record<string, ProtocolFeedConfig> = {
       { label: 'active users', value: '1,847' },
     ],
     tabs: [
-      { id: 'toots', label: 'Toots', description: 'Latest toots from the fediverse' },
+      ...buildRankingTabs('Alt-texted media, proper CWs, real accounts on known instances'),
       { id: 'local', label: 'Local', description: 'From social.degenfeed.xyz' },
-      { id: 'federated', label: 'Federated', description: 'Across the fediverse' },
     ],
     feedParam: 'mastodon',
     postNoun: 'toot',
     endpoint: '/api/feed/home',
   },
 };
+
+/** Tabs whose id maps 1:1 onto the worker's ?sort= parameter. */
+const SORT_TAB_IDS = new Set(['hot', 'quality', 'new', 'trending']);
 
 // ─── Shared component ──────────────────────────────────────────────────────
 
@@ -156,7 +159,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
   const router = useRouter();
   const { engage, openComposeReply } = useAuth();
 
-  const [activeTab, setActiveTab] = useState(config?.tabs[0]?.id ?? 'notes');
+  const [activeTab, setActiveTab] = useState(config?.tabs[0]?.id ?? 'hot');
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
   const [error, setError] = useState<string>();
@@ -171,20 +174,17 @@ export function ProtocolFeedPage({ protocol }: Props) {
       const url = new URL(config.endpoint, window.location.origin);
       url.searchParams.set('limit', '25');
       url.searchParams.set('protocols', config.feedParam);
-      if (activeTab === 'trending' || activeTab === 'zaps' || activeTab === 'collects') {
-        url.searchParams.set('sort', 'trending');
-      }
-      if (activeTab === 'channels' || activeTab === 'relays' || activeTab === 'custom-feeds') {
-        url.searchParams.set('sort', 'hot');
+      if (SORT_TAB_IDS.has(activeTab)) {
+        // Hot / Quality / New / Trending map straight onto the worker sorts.
+        url.searchParams.set('sort', activeTab);
       }
       if (activeTab === 'local') {
         url.searchParams.set('instance', 'social.degenfeed.xyz');
-      }
-      if (activeTab === 'federated') {
         url.searchParams.set('sort', 'new');
       }
       if (activeTab === 'mirrors') {
         url.searchParams.set('type', 'repost');
+        url.searchParams.set('sort', 'hot');
       }
 
       const res = await fetch(url.toString(), {
@@ -353,6 +353,9 @@ export function ProtocolFeedPage({ protocol }: Props) {
             </div>
           </div>
         </div>
+
+        {/* ── Protocol-specific curated sections ── */}
+        <ProtocolSections protocol={config.id} color={config.color} />
 
         {/* ── Protocol tabs ── */}
         <div className="mb-4 flex gap-1 overflow-x-auto border-b border-[var(--color-glass-border)] pb-0">

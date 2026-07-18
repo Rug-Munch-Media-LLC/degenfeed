@@ -9,7 +9,13 @@ export {
 } from './providers/mastodon';
 export { DEFAULT_RELAYS, NostrProvider } from './providers/nostr';
 export { PonderProvider } from './providers/ponder';
-export { DEFAULT_SUBREDDITS, RedditProvider } from './providers/reddit';
+export {
+  CRYPTO_SUBREDDIT_CONFIGS,
+  DEFAULT_SUBREDDITS,
+  type RedditCategory,
+  RedditProvider,
+  type SubredditConfig,
+} from './providers/reddit';
 export type {
   RmiArticle,
   RmiDataBusProviderOptions,

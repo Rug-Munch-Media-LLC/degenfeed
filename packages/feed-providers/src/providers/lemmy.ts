@@ -12,12 +12,18 @@
  *   3. Return sorted by engagement with real metrics
  */
 
-import { enrichPostNiches } from '@degenfeed/feed-core';
+import { enrichPostNiches, LEMMY_COMMUNITY_NICHES, subscriberTier } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
 
+/**
+ * Priority-ordered list of Lemmy instances to query.
+ * Our self-hosted community.degenfeed.xyz comes first so we
+ * prioritize local content, then fall through to the fediverse.
+ */
 export const LEMMY_INSTANCES = [
+  'https://community.degenfeed.xyz',
   'https://lemmy.world',
   'https://lemmy.ml',
   'https://programming.dev',
@@ -27,6 +33,16 @@ export const LEMMY_INSTANCES = [
 ];
 
 const CURATED_COMMUNITIES: Array<{ community: string; niche: string }> = [
+  // DegenFeed local communities (self-hosted)
+  { community: 'crypto@community.degenfeed.xyz', niche: 'crypto' },
+  { community: 'defi@community.degenfeed.xyz', niche: 'defi' },
+  { community: 'nft@community.degenfeed.xyz', niche: 'nft' },
+  { community: 'tech@community.degenfeed.xyz', niche: 'tech' },
+  { community: 'trading@community.degenfeed.xyz', niche: 'trading' },
+  { community: 'memes@community.degenfeed.xyz', niche: 'memes' },
+  { community: 'news@community.degenfeed.xyz', niche: 'news' },
+  { community: 'governance@community.degenfeed.xyz', niche: 'governance' },
+  // Fediverse communities
   { community: 'cryptocurrency@lemmy.world', niche: 'crypto' },
   { community: 'bitcoin@lemmy.ml', niche: 'bitcoin' },
   { community: 'ethereum@lemmy.ml', niche: 'ethereum' },
@@ -129,10 +145,7 @@ export interface LemmyProviderOptions {
  * Converts a raw Lemmy API post into a UnifiedPost with proper
  * community context, dfUri, and all engagement metrics.
  */
-export function adaptLemmyPost(
-  raw: LemmyPostRaw,
-  instanceDomain: string,
-): UnifiedPost {
+export function adaptLemmyPost(raw: LemmyPostRaw, instanceDomain: string): UnifiedPost {
   const p = raw.post;
   const community = raw.community ?? p.community;
   const creator = raw.creator ?? p.creator;
@@ -143,12 +156,22 @@ export function adaptLemmyPost(
   const instance = instanceDomain.replace(/^https?:\/\//, '');
   const nativeId = `lemmy:${communityName}:${p.id}`;
 
+  // Map community to niche categories
+  const curatedEntry = CURATED_COMMUNITIES.find(
+    (c) => c.community.split('@')[0] === communityName || c.community === `${communityName}@${instance}`,
+  );
+  const curatedNiche = curatedEntry?.niche ?? 'crypto';
+
+  // Determine quality tier from raw counts (passed through from Lemmy API)
+  const rawCounts = (raw as unknown as Record<string, unknown>).counts as
+    | { subscribers?: number; users_active_month?: number }
+    | undefined;
+  const subs = rawCounts?.subscribers ?? 0;
+  const usersActiveMonth = rawCounts?.users_active_month ?? 0;
+  const qualityTier = subscriberTier(subs);
+
   // Determine content type
-  const contentType = p.url
-    ? 'link'
-    : p.body
-      ? 'article'
-      : 'text';
+  const contentType = p.url ? 'link' : p.body ? 'article' : 'text';
 
   // Build embeds
   const embeds: Array<{ kind: 'image' | 'video' | 'link'; url: string }> = [];
@@ -174,6 +197,10 @@ export function adaptLemmyPost(
       actorId: communityActorId,
       icon: community?.icon,
       instance,
+      subscriberCount: subs,
+      usersActiveMonth,
+      niche: curatedNiche,
+      qualityTier,
     },
     metrics: {
       likes: counts?.upvotes ?? p.upvotes ?? 0,
@@ -246,9 +273,7 @@ export class LemmyProvider implements FeedProvider {
               Math.min(timeoutMs, 5000),
               `lemmy:${community}`,
             );
-            return (data.posts ?? []).map((raw) =>
-              adaptLemmyPost(raw, instance),
-            );
+            return (data.posts ?? []).map((raw) => adaptLemmyPost(raw, instance));
           } catch {
             /* try next instance */
           }

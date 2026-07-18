@@ -9,533 +9,568 @@ import {
   withTimeout,
 } from '../utils';
 
-export const DEFAULT_CRYPTO_FEEDS = [
-  // ── Tier 1 — Major Crypto News ──────────────────────────────────
-  'https://cointelegraph.com/rss',
-  'https://decrypt.co/feed',
-  'https://www.coindesk.com/arc/outboundfeeds/rss/',
-  'https://www.theblock.co/rss',
-  'https://cryptoslate.com/feed/',
-  'https://beincrypto.com/feed/',
-  'https://bitcoinmagazine.com/.rss/full/',
-  'https://www.newsbtc.com/feed/',
-  'https://cryptopotato.com/feed/',
-  'https://ambcrypto.com/feed/',
-  'https://cryptobriefing.com/feed/',
-  'https://dailyhodl.com/feed/',
-  'https://zycrypto.com/feed/',
-  'https://bitcoinist.com/feed/',
-  'https://cryptonews.com/feed/',
-  'https://blockworks.co/feed',
-  'https://unchainedcrypto.com/feed/',
-  // ── Tier 2 — Premium Newsletters (Substack, Mirror, Paragraph, Ghost) ──
-  'https://newsletter.banklesshq.com/feed', // Bankless — daily crypto
-  'https://banklesshq.substack.com/feed', // Bankless (alt feed)
-  'https://thedefiant.io/feed', // The Defiant — DeFi news
-  'https://milkroad.substack.com/feed', // Milk Road — daily digest
-  'https://thedefiedge.substack.com/feed', // The DeFi Edge — research
-  'https://messari.substack.com/feed', // Messari — crypto research
-  'https://delphidigital.substack.com/feed', // Delphi Digital — macro crypto
-  'https://variant.fund/feed', // Variant Fund (Mirror variant)
-  'https://variantfund.substack.com/feed', // Variant (Substack)
-  'https://multicoin.capital/feed', // Multicoin Capital
-  'https://dune.com/blog/rss.xml', // Dune Analytics
-  'https://blog.chainalysis.com/feed/', // Chainalysis — on-chain intel
-  'https://nansen.substack.com/feed', // Nansen — on-chain analytics
-  'https://nansen.ai/feed/', // Nansen (alt)
-  'https://tokenterminal.com/feed', // Token Terminal
-  'https://paragraph.xyz/@bitcoin/feed', // Bitcoin on Paragraph
-  'https://paragraph.xyz/@crypto/feed', // Crypto on Paragraph
-  'https://mirror.xyz/dashboard/feed', // Mirror (global)
-  // ── Tier 3 — Protocol / Chain Blogs ──────────────────────────────
-  'https://blog.ethereum.org/feed.xml', // Ethereum Foundation
-  'https://solana.com/feed', // Solana
-  'https://polkadot.network/blog/feed/', // Polkadot
-  'https://blog.chain.link/feed/', // Chainlink
-  'https://a16zcrypto.com/feed/', // a16z Crypto
-  'https://vitalik.eth.limo/feed.xml', // Vitalik Buterin
-  'https://www.paradigm.xyz/feed/atom', // Paradigm (research)
-  'https://eips.ethereum.org/feed.xml', // Ethereum EIPs
-  'https://weekinethereumnews.com/feed', // Week in Ethereum News
-  'https://ethdaily.substack.com/feed', // ETH Daily
-  'https://l2beat.com/feed/', // L2Beat
-  'https://blog.arbitrum.io/feed.xml', // Arbitrum
-  'https://optimism.mirror.xyz/feed/atom', // Optimism (Mirror)
-  'https://base.mirror.xyz/feed/atom', // Base (Mirror)
-  'https://starknet.io/feed.xml', // StarkNet
-  'https://zksync.io/feed.xml', // zkSync
-  // ── Tier 4 — AI x Crypto / Tech ──────────────────────────────────
-  'https://www.interconnects.ai/feed/', // Interconnects (AI newsletter)
-  'https://thesequence.substack.com/feed', // The Sequence (AI/ML)
-  'https://jack-clark.net/feed/', // Import AI (Jack Clark / Anthropic)
-  'https://stratechery.com/feed/', // Stratechery (Ben Thompson)
-  'https://technically.substack.com/feed', // Technically (AI+economics)
-  'https://www.semiconductor-digest.com/feed/', // SemiEngineering
-  'https://techcrunch.com/feed/', // TechCrunch (general tech)
-  'https://www.theverge.com/rss/index.xml', // The Verge
-  'https://arstechnica.com/feed/', // Ars Technica
-  'https://blog.google/technology/ai/rss/', // Google AI Blog
-  'https://openai.com/blog/rss.xml', // OpenAI Blog
-  'https://www.deepmind.com/blog/rss.xml', // DeepMind
-  'https://ai.meta.com/blog/feed/', // Meta AI
-  'https://research.facebook.com/feed/', // Meta Research
-  'https://www.anthropic.com/feed/', // Anthropic
-  // ── AI/ML Research + Papers ────────────────────────────────────
-  'https://arxiv.org/rss/cs.AI', // arXiv — Artificial Intelligence
-  'https://arxiv.org/rss/cs.CL', // arXiv — Computation & Language (NLP)
-  'https://arxiv.org/rss/cs.CR', // arXiv — Cryptography & Security
-  'https://arxiv.org/rss/cs.LG', // arXiv — Machine Learning
-  'https://arxiv.org/rss/stat.ML', // arXiv — Machine Learning (Stats)
-  'https://arxiv.org/rss/q-fin.TR', // arXiv — Trading & Market Microstructure
-  'https://arxiv.org/rss/cs.CY', // arXiv — Computers & Society
-  // ── Hacker News + Dev Communities ──────────────────────────────
-  'https://hnrss.org/frontpage?points=20', // Hacker News (20+ points)
-  'https://hnrss.org/newest?points=10', // Hacker News new
-  'https://lobste.rs/rss', // Lobsters (curated tech)
-  'https://dev.to/feed', // Dev.to
-  'https://css-tricks.com/feed/', // CSS-Tricks
-  'https://www.smashingmagazine.com/feed/', // Smashing Magazine
-  'https://news.ycombinator.com/rss', // Hacker News (native RSS)
-  // ── Engineering / Dev Blogs ────────────────────────────────────
-  'https://blog.rust-lang.org/feed.xml', // Rust Blog
-  'https://go.dev/blog/feed.atom', // Go Blog
-  'https://nodejs.org/en/feed/blog.xml', // Node.js Blog
-  'https://deno.com/feed', // Deno Blog
-  'https://bun.sh/blog/rss.xml', // Bun Blog
-  'https://tailwindcss.com/feeds/feed.xml', // Tailwind CSS
-  'https://vercel.com/atom', // Vercel
-  'https://netflixtechblog.com/feed', // Netflix Tech Blog
-  'https://engineering.fb.com/feed/', // Meta Engineering
-  'https://github.blog/feed/', // GitHub Blog
-  'https://stackoverflow.blog/feed/', // Stack Overflow Blog
-  'https://blog.cloudflare.com/rss/', // Cloudflare Blog
-  'https://aws.amazon.com/blogs/aws/feed/', // AWS Blog
-  'https://martinfowler.com/feed.atom', // Martin Fowler
-  'https://blog.pragmaticengineer.com/feed.xml', // Pragmatic Engineer
-  'https://www.joelonsoftware.com/feed/', // Joel on Software
-  // ── Tech News / Analysis ───────────────────────────────────────
-  'https://www.wired.com/feed/rss', // Wired
-  'https://www.theinformation.com/feed', // The Information
-  'https://restofworld.org/feed/', // Rest of World (tech + global)
-  'https://www.protocol.com/feed', // Protocol
-  'https://www.platformer.news/feed', // Platformer (Casey Newton)
-  // ── Podcast RSS Feeds ──────────────────────────────────────────
-  'https://feeds.megaphone.fm/HS1319961881', // All-In Podcast
-  'https://feeds.simplecast.com/54nAGcIl', // Lex Fridman Podcast
-  'https://feeds.simplecast.com/wjQvYtdl', // Acquired
-  'https://feeds.megaphone.fm/recruitthebest', // My First Million
-  'https://feeds.transistor.fm/the-ai-report', // The AI Report
-  // ── Tier 5 — Research / Data ────────────────────────────────────
-  'https://messari.io/feed', // Messari
-  'https://insights.glassnode.com/feed/', // Glassnode
-  'https://blog.kaiko.com/feed', // Kaiko
-  'https://defillama.com/feed', // DeFi Llama
-  'https://www.coingecko.com/en/blog/rss', // CoinGecko
-  'https://coinmarketcap.com/feed/', // CoinMarketCap
-  'https://blog.coinbase.com/feed/', // Coinbase
-  'https://www.gemini.com/feed.xml', // Gemini
-  'https://blog.kraken.com/feed/', // Kraken
-  'https://blog.binance.com/feed/', // Binance
-  'https://www.galaxy.com/feed/', // Galaxy Digital
-  'https://www.vanryun.com/feed/', // VanEck
-  // ── Tier 6 — Security / Policy / Macro ──────────────────────────
-  'https://rekt.news/feed.xml', // Rekt News
-  'https://slowmist.medium.com/feed', // SlowMist (Medium)
-  'https://immunefi.medium.com/feed', // Immunefi (Medium)
-  'https://certik.medium.com/feed', // CertiK (Medium)
-  'https://blog.trailofbits.com/feed/', // Trail of Bits
-  'https://www.coincenter.org/feed/', // Coin Center (policy)
-  'https://cointelegraph.com/tags/regulation/feed', // Regulation tag
-  'https://www.sec.gov/news/pressreleases.rss', // SEC Press Releases
-  'https://www.federalreserve.gov/feeds/press.xml', // Federal Reserve
-  'https://www.imf.org/en/News/RSS', // IMF
-  // ── Tier 7 — Web3 / NFT / Gaming ────────────────────────────────
-  'https://opensea.io/blog/feed.xml', // OpenSea
-  'https://blog.decentraland.org/feed/', // Decentraland
-  'https://thetruthmatters.substack.com/feed', // Yuga Labs / BAYC news
-  'https://www.nftnow.com/feed/', // NFT Now
-  'https://axieinfinity.com/feed/', // Axie Infinity (gaming)
-  'https://godsunchained.com/feed/', // Gods Unchained
-  // ── Mastodon / Fediverse feeds ──────────────────────────────────
-  'https://social.degenfeed.xyz/@admin.rss',
-  // ── YouTube / Video ─────────────────────────────────────────────
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7-gGJFlRPPSK4hBbbST6YA', // Whiteboard Crypto
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC57i8xkdqJm42AsVr_jgpBQ', // The Coin Bureau Club
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC6nSFpj9HTCZ5t-N3Ra3-HA', // TechLead
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPvezykHz9Qd0VBLg', // Joma Tech
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC8butISFwT-Wl7EV0hUK0BQ', // freeCodeCamp
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA', // Computerphile
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCznv7Vf9nBdXFXz2L9n7bLQ', // Altcoin Daily
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCvJJ_dziViPnd-hmwjM8k0w', // CoinDesk TV
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsT0YIqwnpJCM-mx7-gSA4Q', // TEDx Talks
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA', // Veritasium
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCX6b17PVsYBQ0ip5gyeme-Q', // CrashCourse (tech/econ)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCqZQJzTlBvT5GpB1mqGzMxw', // Two Minute Papers (AI papers)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCAl9Ld79qaZxp9JzEOwd3aA', // Bankless
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCqK_GSMbpiV8spgD3ZGloSw', // Coin Bureau
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCcQ_2g7TDmI7Tpc4PqFFY_w', // Benjamin Cowen
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCVraXPw8VUQaGXAVBg-ZkyA', // DataDash
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC67TmGtqUPdHq9kFtnWZIKQ', // Into The Cryptoverse
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw', // 3Blue1Brown
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCr8UAVlECQNTpMEYfzt8nDQ', // Lex Fridman (AI/tech)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCznv7Vf9nBdXFXz2L9n7bLQ', // Finematics (DeFi)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCrKmtqq2k1DJz7SEqGdVG_A', // Ivan on Tech
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCC3fP7QBYlJ4f5RxCq7g6kw', // Crypto Banter
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCjemGQqVxmg4JUPhhDqKGQw', // BitBoy Crypto
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1CjAajqD4Mzq_FhzcAS1iA', // EllioTrades
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCjGQKQb1nWPDGXJGPbMDGXA', // Crypto Casey
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCwEFqN_0R3zMBq6E1cplVnQ', // Max Maher
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC2D1kG9TJd5L8Ipg0Lf38FQ', // JRNY Crypto
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCgp1stxfB8YQJik2qJ0JOyg', // Crypto Zombie
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCWKP7gn6sRJ2Fw3aKKxRGIA', // Sheldon Evans
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9CqMgm3A7p4Zn1PqGuZ06g', // Andrei Jikh
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCcjvB2XOoWTjbKtA5VCT9aw', // Meet Kevin
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsX3E_uK9RbyqGJXuqE0_ag', // CoinMarketCap
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC8oB7HqgqF9WjAmoRkHrbOg', // Crypto.com
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCbqwBs5VG5qF0Sm2UzRg2PQ', // LunarCrush
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCJhnGQeUxgjY2JHJnjnxUuA', // Messari
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7QGxNssSsPQDRb3Rf3UCFQ', // The Defiant
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCxK1qEkrbn1U9NCoC1mG1BQ', // Empire Podcast
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCepXJTPh_0SHzzQZ5o2H6Bg', // Unchained Podcast
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1ZmxGzXxKBd9q_FSYpBikA', // The Block
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsMGFpzgUMaXxjKVY8KgYNA', // Bankless Shows
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCL0XJbZlRZSGZeLQmLHZxRw', // Laura Shin (Unchained)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsK1oK2D1iYtGxxPHDaGgAA', // Scott Melker (Wolf of All Streets)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC4udlEvPqhDGD5qj1xw6bEA', // Peter McCormack (What Bitcoin Did)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsN9s6i3Xp1LJuPthv3LtEA', // Preston Pysh
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1aLUb4TlJsNTp7M0QZiPrA', // Robert Breedlove
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC4oKxVUYjAMRnG_Jyn4KsNg', // Natalie Brunell
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCOfb-MWr4hk7TO-M9V2w8oA', // Crypto Tips (Heidi)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCIgNWGYPmJbHjKQxB7F0DXA', // DataDash Shorts
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCI8gT3EnC_xlLrPvQF-t3Pg', // Graham Stephan
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7-GmEFHWsyGGXIDkjQ5Qrg', // The Cryptoviser
-  // ── Tech / Programming YouTube ──────────────────────────────
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPvezykHz9Qd0VBLg', // Fireship
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC2D1kG9TJd5L8Ipg0Lf38FQ', // Theo - t3.gg
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1CjAajqD4Mzq_FhzcAS1iA', // ThePrimeagen
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCZ9qFEC82qbsLsVRLpHU1Mw', // Jack Herrington
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCcZcW8ZO7jKmDYgpSgjkIIw', // Ben Awad
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCFbNIlppjAuEX4znoultaCQ', // Web Dev Simplified
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC29ju8bIPH5as8OGnQzwJyA', // Traversy Media
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA', // Computerphile
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCX6b17PVsYBQ0ip5gyeme-Q', // CrashCourse
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw', // 3Blue1Brown
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC8butISFwT-Wl7EV0hUK0BQ', // freeCodeCamp
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPvezykHz9Qd0VBLg', // Joma Tech (dup channel id fix)
-  // ── AI / ML YouTube ──────────────────────────────────────────
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew', // Yannic Kilcher
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCqZQJzTlBvT5GpB1mqGzMxw', // Two Minute Papers
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1KSUGdI_mDEhF3D8kXdJfQ', // AI Explained
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCbgXRMcKO1yFIodMGh3CbrQ', // Matt Wolfe
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCudyV83kDjeQHhYmRiZY28A', // Machine Learning Street Talk
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCXUPKb5X0HaLBzhEzK8kIGA', // Andrej Karpathy
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCWN3xxRkmTPmbKwht9FuE5A', // sentdex
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCBa659QWEk1AI4Tg--mrJ2A', // Robert Miles AI Safety
-  // ── Science / Engineering YouTube ────────────────────────────
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA', // Veritasium
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsXVk37bltHxD1rDPwtNM8Q', // Kurzgesagt
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC6107grRI4m0o2-emgoDnAA', // SmarterEveryDay
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCY1kMZp36IQSyNx_9h4mpCg', // Mark Rober
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCXgnow0F1bgBSHBhMTrEF4Q', // Real Engineering
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9RM2cVmymS0EekooMfRDYA', // Wendover Productions
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCH4BNI0-FOK2dMXoFtViWHw', // Be Smart
-  // ── Tech / Hardware / Reviews ─────────────────────────────────
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC0Y7bI8o8p3q1qN6a9rYTNg', // Dave2D
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCBJycsmduvYEL83R_U4JriQ', // MKBHD
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCXuqSBlHAE6Xw-yeJA0Tunw', // Linus Tech Tips
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UChIs72whgZI9w6d6DAhvS0Q', // Gamers Nexus
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCI8iQa1Gjo3g1qB_hYxRhXQ', // Hardware Unboxed
-  // ── Finance / Economics YouTube ───────────────────────────────
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCbKUvAU67W3BkSg7Ph5qFmw', // Patrick Boyle
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCbop4i8qPqnhUKrYnC5o_Wg', // The Plain Bagel
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCRoEaeVTHOyTm1XgZJOlUKg', // Economics Explained
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCKZwzGzYnUnEYYqicm2r5Xg', // Money & Macro
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC4K10PNjqgGLKa3rl5dBTVw', // ColdFusion
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCZThQqed5JPFRq2Z5YpBcJA', // New Money
-  // ── Startup / VC YouTube ──────────────────────────────────────
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCcefcZRL2oaA_uBNMYjGZ_g', // Y Combinator
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCkFcF1VzD0P3QyP_PBpA5Jw', // a16z
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCZ6xkNmStwFjN7G0xGqRGFQ', // Greylock
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC5ZBfQ7y7AHg0cJxKZLOdEg', // NFX
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCGwuxdEeCf0TIA2RbPOj-8g', // Stanford GSB
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCr8UAVlECQNTpMEYfzt8nDQ', // Lex Fridman
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7-GmEFHWsyGGXIDkjQ5Qrg', // The Cryptoviser
+// ── Feed Configuration Types ───────────────────────────────────────────
 
-  // ── Tier 8: Expanded Crypto Sources ──────────────────────────────
-  'https://www.coindesk.com/arc/outboundfeeds/rss/',
-  'https://www.dlnews.com/feed/',
-  'https://cryptonews.net/feed/',
-  'https://cryptonews.net/news/bitcoin/feed/',
-  'https://www.theblock.co/rss',
-  'https://blockworks.co/feed',
-  'https://www.ledgerinsights.com/feed/',
-  'https://cryptoslate.com/feed/',
-  'https://beincrypto.com/feed/',
-  'https://bitcoinmagazine.com/feed',
-  'https://news.bitcoin.com/feed/',
-  'https://www.newsbtc.com/feed/',
-  'https://cryptopotato.com/feed/',
-  'https://ambcrypto.com/feed/',
-  'https://cryptobriefing.com/feed/',
-  'https://dailyhodl.com/feed/',
-  'https://zycrypto.com/feed/',
-  'https://bitcoinist.com/feed/',
-  'https://cryptonews.com/feed/',
-  'https://cryptodaily.co.uk/feed/',
-  'https://www.cryptopolitan.com/feed/',
-  'https://coinjournal.net/feed/',
-  'https://www.fxstreet.com/cryptocurrencies/news/feed',
-  'https://cryptonewsbytes.com/feed/',
-  'https://www.blocktempo.com/feed/',
-  'https://cryptobasic.com/feed/',
-  'https://www.tronweekly.com/feed/',
-  'https://thecryptobasic.com/feed/',
-  'https://www.crypto-news-flash.com/feed/',
-  'https://memeburn.com/feed/',
-  // ── Tier 9: Research / VC / Institutional ────────────────────────
-  'https://www.paradigm.xyz/feed/atom',
-  'https://a16zcrypto.com/feed/',
-  'https://panteracapital.com/feed/',
-  'https://www.galaxy.com/insights/feed/',
-  'https://multicoin.capital/feed/',
-  'https://variant.fund/feed/',
-  'https://dragonfly.xyz/feed/',
-  'https://www.coinbase.com/blog/rss.xml',
-  'https://blog.kraken.com/feed/',
-  'https://blog.binance.com/feed/',
-  'https://www.gemini.com/feed.xml',
-  'https://blog.bitmex.com/feed/',
-  'https://blog.bitfinex.com/feed/',
-  'https://www.okx.com/feed',
-  'https://blog.bybit.com/feed/',
-  'https://www.ledger.com/blog.rss',
-  'https://trezor.io/blog/feed.xml',
-  'https://www.vanryun.com/feed/',
-  'https://www.21shares.com/feed/',
-  'https://grayscale.com/feed/',
-  'https://bitwiseinvestments.com/feed/',
-  'https://www.coinshares.com/feed/',
-  // ── Tier 10: AI / Tech — Major Outlets ────────────────────────────
-  'https://www.wired.com/feed/',
-  'https://www.wired.com/feed/category/ai/rss',
-  'https://venturebeat.com/feed/',
-  'https://venturebeat.com/category/ai/feed/',
-  'https://www.theinformation.com/feed/',
-  'https://techcrunch.com/feed/',
-  'https://techcrunch.com/category/artificial-intelligence/feed/',
-  'https://www.theverge.com/rss/index.xml',
-  'https://www.theverge.com/ai-artificial-intelligence/rss/index.xml',
-  'https://arstechnica.com/feed/',
-  'https://www.zdnet.com/news/rss.xml',
-  'https://www.cio.com/feed/',
-  'https://www.infoworld.com/feed/',
-  'https://www.protocol.com/feed/',
-  'https://www.engadget.com/rss.xml',
-  'https://gizmodo.com/rss',
-  'https://mashable.com/feed/',
-  'https://www.technologyreview.com/feed/',
-  'https://spectrum.ieee.org/feeds/feed.rss',
-  'https://www.quantamagazine.org/feed/',
-  'https://www.technologyreview.com/topic/artificial-intelligence/feed/',
-  // ── Tier 11: AI — Company Blogs ──────────────────────────────────
-  'https://openai.com/blog/rss.xml',
-  'https://www.anthropic.com/feed/',
-  'https://www.deepmind.com/blog/rss.xml',
-  'https://ai.meta.com/blog/feed/',
-  'https://blog.google/technology/ai/rss/',
-  'https://huggingface.co/blog/feed.xml',
-  'https://stability.ai/blog/feed',
-  'https://www.perplexity.ai/blog/rss.xml',
-  'https://cohere.com/blog/rss',
-  'https://www.midjourney.com/blog/feed',
-  'https://www.runwayml.com/blog/feed',
-  'https://replicate.com/blog/feed',
-  'https://www.pinecone.io/feed.xml',
-  'https://www.langchain.com/blog/rss',
-  'https://www.crewai.com/blog/rss',
-  'https://www.phidata.com/blog/rss',
-  'https://www.semianalysis.com/feed/',
-  'https://www.interconnects.ai/feed/',
-  'https://thesequence.substack.com/feed',
-  'https://jack-clark.net/feed/',
-  'https://stratechery.com/feed/',
-  'https://www.ben-evans.com/feed',
-  'https://blog.samaltman.com/feed/',
-  // ── Tier 12: YouTube — Crypto ────────────────────────────────────
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCAl9Ld79qaZxp9JzEOwd3aA',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCqK_GSMbpiV8spgD3ZGloSw',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCcQ_2g7TDmI7Tpc4PqFFY_w',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCVraXPw8VUQaGXAVBg-ZkyA',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC67TmGtqUPdHq9kFtnWZIKQ',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCUMwY9iS8oMyMDNqj5d3QOQ',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCfdXeRuPSg2OqRdQ7-3kXBg',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCZN0MpGhMiWyMB1RgE5tCXA',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCiUnrCUGCJGgaAXEOqGrR7Q',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UChvTZfiUYa0t4wKnA4JxKNQ',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCatVlK-imF7H9o0RDGOYWAg',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCCk0fxVxKfy9Zm9MP7U3ngA',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCZD7xXwjY5j1J_tN9JO9hKg',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCJSd2eOFLW3CCJ8by3UTGOA',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCTIwvkH03kRGU-1HDrDmXjA',
-  // ── Tier 13: YouTube — Tech/AI/Finance ──────────────────────────
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCr8UAVlECQNTpMEYfzt8nDQ',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCznv7Vf9nBdXFXz2L9n7bLQ',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC8butISFwT-Wl7EV0hUK0BQ',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCsT0YIqwnpJCM-mx7-gSA4Q',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCX6b17PVsYBQ0ip5gyeme-Q',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCqZQJzTlBvT5GpB1mqGzMxw',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCvJJ_dziViPnd-hmwjM8k0w',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCR1y0zqnR1xHAzA-hazj9Bg',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCXbxIhr6zQcT8Fd5Dk5SscA',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7IcJI8PUf5Z3zKxnZvTBog',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC0iwHRFpv2_fpojZgQhElEQ',
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCgHDngFV50KmbqF_6-K8XhA',
-  // ── Tier 14: Reddit — More Subreddits ────────────────────────────
-  'https://www.reddit.com/r/CryptoCurrency/.rss',
-  'https://www.reddit.com/r/Bitcoin/.rss',
-  'https://www.reddit.com/r/ethereum/.rss',
-  'https://www.reddit.com/r/solana/.rss',
-  'https://www.reddit.com/r/defi/.rss',
-  'https://www.reddit.com/r/ethfinance/.rss',
-  'https://www.reddit.com/r/ethdev/.rss',
-  'https://www.reddit.com/r/Chainlink/.rss',
-  'https://www.reddit.com/r/Polkadot/.rss',
-  'https://www.reddit.com/r/cosmosnetwork/.rss',
-  'https://www.reddit.com/r/Arbitrum/.rss',
-  'https://www.reddit.com/r/optimismCollective/.rss',
-  'https://www.reddit.com/r/Avax/.rss',
-  'https://www.reddit.com/r/Cardano/.rss',
-  'https://www.reddit.com/r/Monero/.rss',
-  'https://www.reddit.com/r/0xPolygon/.rss',
-  'https://www.reddit.com/r/ArtificialInteligence/.rss',
-  'https://www.reddit.com/r/MachineLearning/.rss',
-  'https://www.reddit.com/r/singularity/.rss',
-  'https://www.reddit.com/r/technology/.rss',
-  'https://www.reddit.com/r/programming/.rss',
-  'https://www.reddit.com/r/webdev/.rss',
-  'https://www.reddit.com/r/cybersecurity/.rss',
-  'https://www.reddit.com/r/netsec/.rss',
-  'https://www.reddit.com/r/hacking/.rss',
+export interface RssFeedConfig {
+  /** RSS/Atom feed URL */
+  url: string;
+  /** Authority tier 1-5 (1 = highest authority, e.g. CoinDesk; 5 = long-tail) */
+  tier: number;
+  /** Base weight 0.0-1.0 used in quality scoring */
+  weight: number;
+  /** Content category: news, analysis, research, development, markets, security, policy, tech, ai, video, social */
+  category: string;
+  /** Topic tags for filtering / discovery */
+  tags: string[];
+  /** Authority bonus (3 = Tier 1, 2 = Tier 2-3, 1 = Tier 4-5) */
+  authority: number;
+}
 
-  // ── Tier 15: Premium Newsletters (more Substack/Paragraph/Ghost) ──
-  'https://www.readthegeneralist.com/feed', // The Generalist
-  'https://www.notboring.co/feed', // Not Boring (Packy)
-  'https://lennysnewsletter.com/feed', // Lenny's Newsletter
-  'https://first1000.substack.com/feed', // First 1000 (Lenny)
-  'https://www.platformer.news/feed', // Platformer (Casey Newton)
-  'https://every.to/feed', // Every.to
-  'https://www.bigtechnology.com/feed', // Big Technology (Alex Kantrowitz)
-  'https://www.piratewires.com/feed', // Pirate Wires
-  'https://theankler.com/feed', // The Ankler (entertainment+biz)
-  'https://www.semaphore.substack.com/feed', // Semaphore (tech/biz)
-  'https://www.theredphone.xyz/feed', // The Red Phone (geopolitics)
-  'https://www.foreignaffairs.com/feed', // Foreign Affairs
-  'https://www.economist.com/feed', // The Economist
-  'https://www.ft.com/rss', // Financial Times
-  'https://www.wsj.com/feed', // Wall Street Journal
-  'https://www.nature.com/nature.rss', // Nature
-  'https://www.science.org/rss/current.xml', // Science
-  'https://www.cell.com/cell/current.rss', // Cell
-  'https://www.nejm.org/feed', // NEJM
-  'https://arxiv.org/rss/cs.AI', // arxiv CS.AI
-  'https://arxiv.org/rss/cs.CL', // arxiv CS.CL (NLP)
-  'https://arxiv.org/rss/cs.CR', // arxiv CS.CR (security)
-  'https://arxiv.org/rss/stat.ML', // arxiv stat.ML
-  'https://news.ycombinator.com/rss', // Hacker News
-  'https://lobste.rs/rss', // Lobsters (tech)
-  'https://www.producthunt.com/feed', // Product Hunt
-  'https://www.indiehackers.com/feed', // Indie Hackers
-  'https://cointelegraph.com/rss/tag/defi', // CoinTelegraph DeFi
-  'https://cointelegraph.com/rss/tag/regulation', // CoinTelegraph Regulation
-  'https://www.coindesk.com/arc/outboundfeeds/rss/', // CoinDesk
-  'https://www.theblock.co/rss', // The Block
-  'https://blockworks.co/feed', // Blockworks
-  'https://decrypt.co/feed', // Decrypt
-  'https://www.dlnews.com/feed/', // DL News
-  'https://unchainedcrypto.com/feed/', // Unchained
-  'https://thedefiant.io/feed', // The Defiant
-  'https://www.cryptopolitan.com/feed/', // Cryptopolitan
-  'https://coinjournal.net/feed/', // Coin Journal
-  'https://www.fxstreet.com/cryptocurrencies/news/feed', // FXStreet Crypto
-  // ── Mirror/Paragraph writers ─────────────────────────────────
-  'https://paragraph.xyz/@andrew/feed', // Andrew (Paragraph)
-  'https://paragraph.xyz/@divine/feed', // Divine (Paragraph)
-  'https://mirror.xyz/0x25B0/feed', // Mirror writer 1
-  'https://mirror.xyz/0xc0FFee/feed', // Mirror writer 2
-  // ── YouTube More ────────────────────────────────────────────
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCWN3xxRkmTPmbKwht9FuE5A', // Siraj Raval (AI)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC0rqucBdTuFTjJiefW5t-IQ', // Theo - t3.gg (tech)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCs_tLP3AiwYKwdUHpltJPuA', // GOTO Conferences (tech talks)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC9x0AN7BWHpCDHSm9NiJFJQ', // NetworkChuck (tech)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCmRtPmgnQ04CMUpSUqPfhxQ', // Fireship (code)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCYbK_tjZ2OrIZFBvU6CCMiA', // Ben Eater (CS)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCh9IsIpGx-RxGc2gzwx7E2A', // Traversy Media (webdev)
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC29ju8bIPH5as8OGnQzwJyA', // Web Dev Simplified
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCfzlCWGWYyIQ0aLC5w48gBQ', // Sentdex (Python/AI)
+export interface QualityScore {
+  /** Sum of all signal scores */
+  total: number;
+  signals: {
+    /** Source tier weight (0.6-1.0) */
+    weight: number;
+    /** Post freshness: <1h=3, <6h=2, <24h=1, >24h=0 */
+    freshness: number;
+    /** Content length: >500=2, >200=1, else 0 */
+    length: number;
+    /** Has image/video embed: 1 or 0 */
+    hasMedia: number;
+    /** Source authority bonus (3, 2, or 1) */
+    authority: number;
+  };
+}
 
-  // ── Reddit JSON hot posts (free, no auth) ───────────────────────
-  'https://old.reddit.com/r/CryptoCurrency/hot.rss?limit=25',
-  'https://old.reddit.com/r/Bitcoin/hot.rss?limit=25',
-  'https://old.reddit.com/r/ethereum/hot.rss?limit=25',
-  'https://old.reddit.com/r/solana/hot.rss?limit=25',
-  'https://old.reddit.com/r/defi/hot.rss?limit=25', // Our own Mastodon instance
-  'https://bitcoinops.org/en/feed.xml',
-  'https://lightning.engineering/rss/',
-  'https://unchainedcrypto.com/feed/',
-  'https://blockworks.co/feed',
-  'https://protos.com/feed/',
-  'https://thecryptotimes.com/feed/',
-  'https://cryptodaily.co.uk/feed/',
-  'https://coinjournal.net/feed/',
-  'https://www.trustnodes.com/feed',
-  'https://www.cryptopolitan.com/feed/',
-  'https://www.crypto-news-flash.com/feed/',
-  'https://www.livebitcoinnews.com/feed/',
-  'https://www.crypto-reporter.com/feed/',
-  'https://coinpedia.org/feed/',
-  'https://cryptoadventure.org/feed/',
-  'https://coincodex.com/blog/feed/',
-  // Substacks / creator newsletters
-  'https://bankless.substack.com/feed',
-  'https://thedefiedge.substack.com/feed',
-  'https://milkroad.substack.com/feed',
-  'https://ethdaily.substack.com/feed',
-  'https://nansen.substack.com/feed',
-  'https://weekinethereumnews.com/feed',
-  // Medium / publications
-  'https://medium.com/feed/immunefi',
-  'https://slowmist.medium.com/feed',
-  // Mirror / Paragraph creator feeds
-  'https://mirror.xyz/feed',
-  'https://paragraph.xyz/feed',
-  // ── Lemmy — Federated Reddit (ActivityPub) ────────────────────────
-  'https://lemmy.world/feeds/c/cryptocurrency.xml?sort=Hot',
-  'https://lemmy.ml/feeds/c/bitcoin.xml?sort=Hot',
-  'https://lemmy.world/feeds/c/technology.xml?sort=Hot',
-  'https://lemmy.ml/feeds/c/opensource.xml?sort=Hot',
-  'https://lemmy.world/feeds/c/privacy.xml?sort=Hot',
-  'https://lemmy.world/feeds/c/cybersecurity.xml?sort=Hot',
-  'https://lemmy.world/feeds/c/ai.xml?sort=Hot',
-  'https://lemmy.world/feeds/c/defi.xml?sort=Hot',
-  'https://lemmy.world/feeds/c/blockchain.xml?sort=Hot',
-  'https://lemmy.world/feeds/c/web3.xml?sort=Hot',
-  'https://lemmy.ml/feeds/c/ethereum.xml?sort=Hot',
-  'https://lemmy.world/feeds/c/solana.xml?sort=Hot',
-  'https://programming.dev/feeds/c/rust.xml?sort=Hot',
-  'https://programming.dev/feeds/c/python.xml?sort=Hot',
-  'https://lemmy.world/feeds/c/nostr.xml?sort=Hot',
-  // ── PeerTube — Federated Video (ActivityPub) ────────────────────
-  'https://tube.cryptoconomy.com/feeds/videos.xml',
-  'https://tilvids.com/feeds/videos.xml',
-  'https://diode.zone/feeds/videos.xml?sort=-publishedAt',
-  'https://video.ploud.fr/feeds/videos.xml?sort=-publishedAt',
+export type RssCategory =
+  | 'news'
+  | 'analysis'
+  | 'research'
+  | 'development'
+  | 'markets'
+  | 'security'
+  | 'policy'
+  | 'tech'
+  | 'ai'
+  | 'video'
+  | 'social';
+
+export const RSS_CATEGORIES: Record<string, string> = {
+  news: 'Breaking news, market coverage, industry updates',
+  analysis: 'Deep dives, on-chain analysis, market research',
+  research: 'Academic research, institutional reports, technical papers',
+  development: 'Protocol blogs, dev updates, EIPs, SDK releases',
+  markets: 'Price data, trading volumes, exchange flows, derivatives',
+  security: 'Hacks, exploits, audits, vulnerability disclosures',
+  policy: 'Regulation, compliance, legal, government policy',
+  tech: 'General technology, programming, engineering blogs',
+  ai: 'Artificial intelligence, machine learning, LLMs',
+  video: 'YouTube channels, video content, podcasts',
+  social: 'Reddit, Lemmy, community discussions',
+};
+
+// Compact helper for defining RSS feed configs
+function cfg(
+  url: string,
+  opts: {
+    tier?: number;
+    weight?: number;
+    category?: string;
+    tags?: string[];
+    authority?: number;
+  } = {},
+): RssFeedConfig {
+  return {
+    url,
+    tier: opts.tier ?? 3,
+    weight: opts.weight ?? 0.7,
+    category: opts.category ?? 'news',
+    tags: opts.tags ?? ['crypto'],
+    authority: opts.authority ?? 1,
+  };
+}
+
+export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 1 — Must Have Crypto News (weight: 1.0, authority: 3)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://cointelegraph.com/rss',                          { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'defi'], authority: 3 }),
+  cfg('https://decrypt.co/feed',                                { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'defi'], authority: 3 }),
+  cfg('https://www.coindesk.com/arc/outboundfeeds/rss/',        { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'policy'], authority: 3 }),
+  cfg('https://www.theblock.co/rss',                            { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'defi'], authority: 3 }),
+  cfg('https://blockworks.co/feed',                             { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'defi'], authority: 3 }),
+  cfg('https://thedefiant.io/feed',                             { tier: 1, weight: 1.0, category: 'news', tags: ['defi', 'crypto', 'ethereum'], authority: 3 }),
+  cfg('https://newsletter.banklesshq.com/feed',                 { tier: 1, weight: 1.0, category: 'analysis', tags: ['crypto', 'ethereum', 'defi'], authority: 3 }),
+  cfg('https://banklesshq.substack.com/feed',                   { tier: 1, weight: 1.0, category: 'analysis', tags: ['crypto', 'ethereum', 'defi'], authority: 3 }),
+  cfg('https://messari.io/feed',                                { tier: 1, weight: 1.0, category: 'research', tags: ['crypto', 'bitcoin', 'ethereum', 'onchain'], authority: 3 }),
+  cfg('https://blog.chainalysis.com/feed/',                     { tier: 1, weight: 1.0, category: 'research', tags: ['onchain', 'security', 'crypto'], authority: 3 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 2 — High Quality Research / VC (weight: 0.9, authority: 2)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://www.paradigm.xyz/feed/atom',                     { tier: 2, weight: 0.9, category: 'research', tags: ['ethereum', 'crypto', 'defi', 'layer2'], authority: 2 }),
+  cfg('https://a16zcrypto.com/feed/',                           { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'web3', 'defi', 'policy'], authority: 2 }),
+  cfg('https://blog.electriccapital.com/rss',                   { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'onchain', 'analytics'], authority: 2 }),
+  cfg('https://multicoin.capital/feed',                         { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'solana', 'defi'], authority: 2 }),
+  cfg('https://panteracapital.com/feed',                        { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'bitcoin', 'blockchain'], authority: 2 }),
+  cfg('https://framework.ventures/rss',                         { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'defi', 'gaming'], authority: 2 }),
+  cfg('https://members.delphidigital.io/feed',                  { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'macro', 'defi'], authority: 2 }),
+  cfg('https://www.galaxy.com/insights/feed/',                  { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'bitcoin', 'research'], authority: 2 }),
+  cfg('https://coinmetrics.io/feed',                            { tier: 2, weight: 0.9, category: 'markets', tags: ['bitcoin', 'ethereum', 'onchain', 'metrics'], authority: 2 }),
+  cfg('https://delphidigital.substack.com/feed',                { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'macro', 'defi'], authority: 2 }),
+  cfg('https://variant.fund/feed',                              { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'defi', 'web3'], authority: 2 }),
+  cfg('https://dune.com/blog/rss.xml',                          { tier: 2, weight: 0.9, category: 'analysis', tags: ['onchain', 'analytics', 'defi'], authority: 2 }),
+  cfg('https://nansen.substack.com/feed',                       { tier: 2, weight: 0.9, category: 'analysis', tags: ['onchain', 'ethereum', 'defi'], authority: 2 }),
+  cfg('https://tokenterminal.com/feed',                         { tier: 2, weight: 0.9, category: 'analysis', tags: ['crypto', 'defi', 'metrics'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 3 — Analysis & Data (weight: 0.8, authority: 2)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://blog.kaiko.com/feed',                            { tier: 3, weight: 0.8, category: 'markets', tags: ['crypto', 'markets', 'trading', 'data'], authority: 2 }),
+  cfg('https://insights.glassnode.com/feed/',                   { tier: 3, weight: 0.8, category: 'analysis', tags: ['bitcoin', 'ethereum', 'onchain'], authority: 2 }),
+  cfg('https://www.nansen.ai/research?format=rss',              { tier: 3, weight: 0.8, category: 'analysis', tags: ['ethereum', 'onchain', 'defi'], authority: 2 }),
+  cfg('https://www.artemis.xyz/blog/rss',                       { tier: 3, weight: 0.8, category: 'analysis', tags: ['crypto', 'defi', 'layer2', 'metrics'], authority: 2 }),
+  cfg('https://dappradar.com/blog/feed',                         { tier: 3, weight: 0.8, category: 'analysis', tags: ['defi', 'nft', 'gaming', 'dapps'], authority: 2 }),
+  cfg('https://defillama.com/feed',                              { tier: 3, weight: 0.8, category: 'analysis', tags: ['defi', 'tvl', 'crypto'], authority: 2 }),
+  cfg('https://tokenterminal.com/blog/rss',                     { tier: 3, weight: 0.8, category: 'analysis', tags: ['crypto', 'defi', 'metrics'], authority: 2 }),
+  cfg('https://messari.substack.com/feed',                      { tier: 3, weight: 0.8, category: 'analysis', tags: ['crypto', 'research'], authority: 2 }),
+  cfg('https://dune.com/blog/rss',                              { tier: 3, weight: 0.8, category: 'analysis', tags: ['onchain', 'analytics', 'defi'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 4 — News Aggregators (weight: 0.7, authority: 1)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://cryptoslate.com/feed/',                          { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum'], authority: 1 }),
+  cfg('https://cryptobriefing.com/feed/',                       { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin', 'defi'], authority: 1 }),
+  cfg('https://beincrypto.com/feed/',                           { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin', 'altcoin'], authority: 1 }),
+  cfg('https://coingape.com/feed/',                              { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin', 'altcoin'], authority: 1 }),
+  cfg('https://ambcrypto.com/feed/',                            { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin', 'altcoin'], authority: 1 }),
+  cfg('https://cryptopotato.com/feed/',                         { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin', 'altcoin'], authority: 1 }),
+  cfg('https://www.newsbtc.com/feed/',                          { tier: 4, weight: 0.7, category: 'news', tags: ['bitcoin', 'crypto'], authority: 1 }),
+  cfg('https://bitcoinmagazine.com/.rss/full/',                 { tier: 4, weight: 0.7, category: 'news', tags: ['bitcoin'], authority: 1 }),
+  cfg('https://u.today/rss',                                    { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum'], authority: 1 }),
+  cfg('https://dailyhodl.com/feed/',                            { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin', 'altcoin'], authority: 1 }),
+  cfg('https://zycrypto.com/feed/',                             { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'altcoin'], authority: 1 }),
+  cfg('https://bitcoinist.com/feed/',                           { tier: 4, weight: 0.7, category: 'news', tags: ['bitcoin', 'crypto'], authority: 1 }),
+  cfg('https://cryptonews.com/feed/',                           { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin'], authority: 1 }),
+  cfg('https://unchainedcrypto.com/feed/',                      { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin', 'defi'], authority: 1 }),
+  cfg('https://www.dlnews.com/feed/',                           { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'defi'], authority: 1 }),
+  cfg('https://protos.com/feed/',                               { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'bitcoin'], authority: 1 }),
+  cfg('https://www.ledgerinsights.com/feed/',                   { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'blockchain', 'enterprise'], authority: 1 }),
+  cfg('https://news.bitcoin.com/feed/',                         { tier: 4, weight: 0.7, category: 'news', tags: ['bitcoin', 'crypto'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TIER 5 — Developer / Protocol Blogs (weight: 0.6, authority: 1)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://blog.ethereum.org/feed.xml',                     { tier: 5, weight: 0.6, category: 'development', tags: ['ethereum', 'layer2', 'dev'], authority: 1 }),
+  cfg('https://solana.com/feed',                                { tier: 5, weight: 0.6, category: 'development', tags: ['solana', 'dev'], authority: 1 }),
+  cfg('https://blog.polygon.technology/feed',                   { tier: 5, weight: 0.6, category: 'development', tags: ['polygon', 'layer2', 'dev'], authority: 1 }),
+  cfg('https://blog.arbitrum.io/feed.xml',                      { tier: 5, weight: 0.6, category: 'development', tags: ['arbitrum', 'layer2', 'dev'], authority: 1 }),
+  cfg('https://optimism.mirror.xyz/feed/atom',                  { tier: 5, weight: 0.6, category: 'development', tags: ['optimism', 'layer2', 'dev'], authority: 1 }),
+  cfg('https://starkware.co/feed',                              { tier: 5, weight: 0.6, category: 'development', tags: ['starkware', 'layer2', 'zk', 'dev'], authority: 1 }),
+  cfg('https://www.zk.com/blog/rss',                            { tier: 5, weight: 0.6, category: 'development', tags: ['zk', 'zero-knowledge', 'dev'], authority: 1 }),
+  cfg('https://blog.eigenlayer.xyz/rss',                        { tier: 5, weight: 0.6, category: 'development', tags: ['eigenlayer', 'restaking', 'ethereum'], authority: 1 }),
+  cfg('https://blog.celestia.org/rss',                          { tier: 5, weight: 0.6, category: 'development', tags: ['celestia', 'modular', 'data-availability'], authority: 1 }),
+  cfg('https://polkadot.network/blog/feed/',                    { tier: 5, weight: 0.6, category: 'development', tags: ['polkadot', 'dev'], authority: 1 }),
+  cfg('https://blog.chain.link/feed/',                          { tier: 5, weight: 0.6, category: 'development', tags: ['chainlink', 'oracle', 'dev'], authority: 1 }),
+  cfg('https://starknet.io/feed.xml',                           { tier: 5, weight: 0.6, category: 'development', tags: ['starknet', 'layer2', 'dev'], authority: 1 }),
+  cfg('https://zksync.io/feed.xml',                             { tier: 5, weight: 0.6, category: 'development', tags: ['zksync', 'layer2', 'dev'], authority: 1 }),
+  cfg('https://eips.ethereum.org/feed.xml',                     { tier: 5, weight: 0.6, category: 'development', tags: ['ethereum', 'eips', 'standards'], authority: 1 }),
+  cfg('https://weekinethereumnews.com/feed',                    { tier: 5, weight: 0.6, category: 'development', tags: ['ethereum', 'newsletter'], authority: 1 }),
+  cfg('https://l2beat.com/feed/',                               { tier: 5, weight: 0.6, category: 'analysis', tags: ['layer2', 'ethereum', 'scaling'], authority: 1 }),
+  cfg('https://base.mirror.xyz/feed/atom',                      { tier: 5, weight: 0.6, category: 'development', tags: ['base', 'layer2', 'dev'], authority: 1 }),
+  cfg('https://bitcoinops.org/en/feed.xml',                     { tier: 5, weight: 0.6, category: 'development', tags: ['bitcoin', 'dev', 'protocol'], authority: 1 }),
+  cfg('https://lightning.engineering/rss/',                     { tier: 5, weight: 0.6, category: 'development', tags: ['bitcoin', 'lightning', 'dev'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Exchange / Institutional Blogs
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://blog.coinbase.com/feed/',                        { tier: 3, weight: 0.8, category: 'news', tags: ['coinbase', 'crypto', 'regulation'], authority: 2 }),
+  cfg('https://www.coinbase.com/blog/rss.xml',                  { tier: 3, weight: 0.8, category: 'news', tags: ['coinbase', 'crypto'], authority: 2 }),
+  cfg('https://blog.kraken.com/feed/',                          { tier: 3, weight: 0.8, category: 'news', tags: ['kraken', 'crypto', 'regulation'], authority: 2 }),
+  cfg('https://blog.binance.com/feed/',                         { tier: 3, weight: 0.8, category: 'news', tags: ['binance', 'crypto'], authority: 2 }),
+  cfg('https://www.gemini.com/feed.xml',                        { tier: 3, weight: 0.8, category: 'news', tags: ['gemini', 'crypto'], authority: 2 }),
+  cfg('https://www.galaxy.com/feed/',                           { tier: 3, weight: 0.8, category: 'research', tags: ['galaxy', 'crypto', 'research'], authority: 2 }),
+  cfg('https://blog.bitmex.com/feed/',                          { tier: 4, weight: 0.7, category: 'markets', tags: ['bitmex', 'trading', 'derivatives'], authority: 1 }),
+  cfg('https://blog.bitfinex.com/feed/',                        { tier: 4, weight: 0.7, category: 'markets', tags: ['bitfinex', 'trading'], authority: 1 }),
+  cfg('https://www.okx.com/feed',                               { tier: 4, weight: 0.7, category: 'markets', tags: ['okx', 'trading', 'crypto'], authority: 1 }),
+  cfg('https://blog.bybit.com/feed/',                           { tier: 4, weight: 0.7, category: 'markets', tags: ['bybit', 'trading'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Data & Research Platforms
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://www.coingecko.com/en/blog/rss',                  { tier: 3, weight: 0.8, category: 'markets', tags: ['crypto', 'prices', 'data'], authority: 2 }),
+  cfg('https://coinmarketcap.com/feed/',                        { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'prices'], authority: 1 }),
+  cfg('https://www.vanryun.com/feed/',                          { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'etf', 'macro'], authority: 1 }),
+  cfg('https://www.21shares.com/feed/',                         { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'etf', 'institutional'], authority: 1 }),
+  cfg('https://grayscale.com/feed/',                            { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'etf', 'bitcoin'], authority: 1 }),
+  cfg('https://bitwiseinvestments.com/feed/',                   { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'etf', 'bitcoin'], authority: 1 }),
+  cfg('https://www.coinshares.com/feed/',                       { tier: 4, weight: 0.7, category: 'markets', tags: ['crypto', 'etf', 'institutional'], authority: 1 }),
+  cfg('https://nansen.ai/feed/',                                { tier: 3, weight: 0.8, category: 'analysis', tags: ['onchain', 'ethereum', 'analytics'], authority: 2 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Security & Policy
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://rekt.news/feed.xml',                             { tier: 3, weight: 0.8, category: 'security', tags: ['security', 'hacks', 'exploits'], authority: 2 }),
+  cfg('https://blog.trailofbits.com/feed/',                     { tier: 3, weight: 0.8, category: 'security', tags: ['security', 'audit', 'research'], authority: 2 }),
+  cfg('https://www.coincenter.org/feed/',                       { tier: 3, weight: 0.8, category: 'policy', tags: ['policy', 'regulation', 'bitcoin'], authority: 2 }),
+  cfg('https://cointelegraph.com/tags/regulation/feed',         { tier: 3, weight: 0.8, category: 'policy', tags: ['regulation', 'policy'], authority: 2 }),
+  cfg('https://www.sec.gov/news/pressreleases.rss',             { tier: 4, weight: 0.7, category: 'policy', tags: ['sec', 'regulation', 'policy'], authority: 1 }),
+  cfg('https://www.federalreserve.gov/feeds/press.xml',         { tier: 4, weight: 0.7, category: 'policy', tags: ['fed', 'macro', 'policy'], authority: 1 }),
+  cfg('https://www.imf.org/en/News/RSS',                        { tier: 4, weight: 0.7, category: 'policy', tags: ['imf', 'macro', 'policy'], authority: 1 }),
+  cfg('https://slowmist.medium.com/feed',                       { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit'], authority: 1 }),
+  cfg('https://immunefi.medium.com/feed',                       { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'bounty', 'audit'], authority: 1 }),
+  cfg('https://certik.medium.com/feed',                         { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'audit'], authority: 1 }),
+  cfg('https://medium.com/feed/immunefi',                       { tier: 4, weight: 0.7, category: 'security', tags: ['security', 'bounty'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Web3 / NFT / Gaming
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://opensea.io/blog/feed.xml',                       { tier: 4, weight: 0.7, category: 'news', tags: ['nft', 'opensea', 'collectibles'], authority: 1 }),
+  cfg('https://blog.decentraland.org/feed/',                    { tier: 5, weight: 0.6, category: 'development', tags: ['metaverse', 'gaming', 'decentraland'], authority: 1 }),
+  cfg('https://www.nftnow.com/feed/',                           { tier: 4, weight: 0.7, category: 'news', tags: ['nft', 'art', 'collectibles'], authority: 1 }),
+  cfg('https://axieinfinity.com/feed/',                         { tier: 5, weight: 0.6, category: 'development', tags: ['gaming', 'axie', 'nft'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // VC / Investment Research
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://dragonfly.xyz/feed/',                            { tier: 3, weight: 0.8, category: 'research', tags: ['crypto', 'vc', 'defi'], authority: 2 }),
+  cfg('https://variantfund.substack.com/feed',                  { tier: 3, weight: 0.8, category: 'research', tags: ['crypto', 'defi', 'web3'], authority: 2 }),
+  cfg('https://www.ledger.com/blog.rss',                        { tier: 4, weight: 0.7, category: 'news', tags: ['hardware', 'security', 'crypto'], authority: 1 }),
+  cfg('https://trezor.io/blog/feed.xml',                        { tier: 4, weight: 0.7, category: 'news', tags: ['hardware', 'security', 'bitcoin'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Premium Newsletters (Substack / Mirror / Paragraph / Ghost)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://milkroad.substack.com/feed',                     { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'daily', 'digest'], authority: 1 }),
+  cfg('https://thedefiedge.substack.com/feed',                  { tier: 3, weight: 0.8, category: 'analysis', tags: ['defi', 'research'], authority: 2 }),
+  cfg('https://ethdaily.substack.com/feed',                     { tier: 4, weight: 0.7, category: 'news', tags: ['ethereum', 'daily'], authority: 1 }),
+  cfg('https://vitalik.eth.limo/feed.xml',                      { tier: 2, weight: 0.9, category: 'research', tags: ['ethereum', 'crypto', 'research'], authority: 2 }),
+  cfg('https://paragraph.xyz/@bitcoin/feed',                    { tier: 4, weight: 0.7, category: 'news', tags: ['bitcoin'], authority: 1 }),
+  cfg('https://paragraph.xyz/@crypto/feed',                     { tier: 4, weight: 0.7, category: 'news', tags: ['crypto'], authority: 1 }),
+  cfg('https://mirror.xyz/dashboard/feed',                      { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
+  cfg('https://paragraph.xyz/@andrew/feed',                     { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'opinion'], authority: 1 }),
+  cfg('https://paragraph.xyz/@divine/feed',                     { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'opinion'], authority: 1 }),
+  cfg('https://mirror.xyz/0x25B0/feed',                         { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
+  cfg('https://mirror.xyz/0xc0FFee/feed',                       { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
+  cfg('https://mirror.xyz/feed',                                { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
+  cfg('https://paragraph.xyz/feed',                             { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Long-tail Crypto News Outlets
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://cryptonews.net/feed/',                           { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
+  cfg('https://cryptonews.net/news/bitcoin/feed/',              { tier: 5, weight: 0.6, category: 'news', tags: ['bitcoin'], authority: 1 }),
+  cfg('https://cryptodaily.co.uk/feed/',                        { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
+  cfg('https://www.cryptopolitan.com/feed/',                    { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
+  cfg('https://coinjournal.net/feed/',                          { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
+  cfg('https://www.fxstreet.com/cryptocurrencies/news/feed',    { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'markets', 'forex'], authority: 1 }),
+  cfg('https://www.blocktempo.com/feed/',                       { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'asia'], authority: 1 }),
+  cfg('https://thecryptobasic.com/feed/',                       { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'bitcoin'], authority: 1 }),
+  cfg('https://www.crypto-news-flash.com/feed/',                { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
+  cfg('https://coinpedia.org/feed/',                            { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
+  cfg('https://www.trustnodes.com/feed',                        { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'ethereum'], authority: 1 }),
+  cfg('https://coincodex.com/blog/feed/',                       { tier: 5, weight: 0.6, category: 'markets', tags: ['crypto', 'data'], authority: 1 }),
+  cfg('https://www.livebitcoinnews.com/feed/',                  { tier: 5, weight: 0.6, category: 'news', tags: ['bitcoin'], authority: 1 }),
+  cfg('https://www.crypto-reporter.com/feed/',                  { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
+  cfg('https://cryptoadventure.org/feed/',                     { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
+  cfg('https://thecryptotimes.com/feed/',                       { tier: 5, weight: 0.6, category: 'news', tags: ['crypto'], authority: 1 }),
+  cfg('https://memeburn.com/feed/',                             { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'tech'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // AI x Crypto / Tech News
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://www.interconnects.ai/feed/',                     { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'research'], authority: 1 }),
+  cfg('https://thesequence.substack.com/feed',                  { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'ml', 'research'], authority: 1 }),
+  cfg('https://jack-clark.net/feed/',                           { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'research'], authority: 1 }),
+  cfg('https://stratechery.com/feed/',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'strategy', 'analysis'], authority: 1 }),
+  cfg('https://technically.substack.com/feed',                  { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'economics'], authority: 1 }),
+  cfg('https://www.semiconductor-digest.com/feed/',             { tier: 5, weight: 0.6, category: 'tech', tags: ['hardware', 'semiconductor', 'tech'], authority: 1 }),
+  cfg('https://techcrunch.com/feed/',                           { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'startup', 'crypto'], authority: 1 }),
+  cfg('https://www.theverge.com/rss/index.xml',                 { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'gadgets', 'science'], authority: 1 }),
+  cfg('https://arstechnica.com/feed/',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'science', 'security'], authority: 1 }),
+  cfg('https://www.wired.com/feed/rss',                         { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'science', 'culture'], authority: 1 }),
+  cfg('https://www.theinformation.com/feed',                    { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'business', 'analysis'], authority: 1 }),
+  cfg('https://restofworld.org/feed/',                          { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'global'], authority: 1 }),
+  cfg('https://www.protocol.com/feed',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'policy'], authority: 1 }),
+  cfg('https://www.platformer.news/feed',                       { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'policy', 'social'], authority: 1 }),
+  cfg('https://venturebeat.com/feed/',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'ai', 'gaming'], authority: 1 }),
+  cfg('https://www.technologyreview.com/feed/',                 { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'ai', 'science'], authority: 1 }),
+  cfg('https://www.zdnet.com/news/rss.xml',                     { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'security'], authority: 1 }),
+  cfg('https://spectrum.ieee.org/feeds/feed.rss',              { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'engineering', 'science'], authority: 1 }),
+  cfg('https://www.quantamagazine.org/feed/',                   { tier: 5, weight: 0.6, category: 'tech', tags: ['science', 'math', 'physics'], authority: 1 }),
+  cfg('https://www.wired.com/feed/category/ai/rss',             { tier: 4, weight: 0.7, category: 'ai', tags: ['ai'], authority: 1 }),
+  cfg('https://venturebeat.com/category/ai/feed/',              { tier: 4, weight: 0.7, category: 'ai', tags: ['ai'], authority: 1 }),
+  cfg('https://www.theverge.com/ai-artificial-intelligence/rss/index.xml', { tier: 4, weight: 0.7, category: 'ai', tags: ['ai'], authority: 1 }),
+  cfg('https://techcrunch.com/category/artificial-intelligence/feed/', { tier: 4, weight: 0.7, category: 'ai', tags: ['ai'], authority: 1 }),
+  cfg('https://www.technologyreview.com/topic/artificial-intelligence/feed/', { tier: 4, weight: 0.7, category: 'ai', tags: ['ai'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // AI Company Blogs
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://openai.com/blog/rss.xml',                        { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'openai', 'gpt'], authority: 1 }),
+  cfg('https://www.anthropic.com/feed/',                        { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'anthropic', 'claude'], authority: 1 }),
+  cfg('https://www.deepmind.com/blog/rss.xml',                  { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'deepmind', 'research'], authority: 1 }),
+  cfg('https://ai.meta.com/blog/feed/',                         { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'meta', 'research'], authority: 1 }),
+  cfg('https://blog.google/technology/ai/rss/',                 { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'google', 'research'], authority: 1 }),
+  cfg('https://huggingface.co/blog/feed.xml',                   { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'ml', 'opensource'], authority: 1 }),
+  cfg('https://stability.ai/blog/feed',                         { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'image', 'generative'], authority: 1 }),
+  cfg('https://www.perplexity.ai/blog/rss.xml',                 { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'search'], authority: 1 }),
+  cfg('https://cohere.com/blog/rss',                            { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'llm', 'nlp'], authority: 1 }),
+  cfg('https://replicate.com/blog/feed',                        { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'ml', 'deployment'], authority: 1 }),
+  cfg('https://www.pinecone.io/feed.xml',                       { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'vectors', 'database'], authority: 1 }),
+  cfg('https://www.semianalysis.com/feed/',                     { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'semiconductor', 'analysis'], authority: 1 }),
+  cfg('https://www.ben-evans.com/feed',                         { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'strategy', 'analysis'], authority: 1 }),
+  cfg('https://blog.samaltman.com/feed/',                       { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'ai', 'opinion'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Tech / Startup Newsletters
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://www.readthegeneralist.com/feed',                 { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'business'], authority: 1 }),
+  cfg('https://www.notboring.co/feed',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'business', 'crypto'], authority: 1 }),
+  cfg('https://lennysnewsletter.com/feed',                      { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'product', 'growth'], authority: 1 }),
+  cfg('https://every.to/feed',                                  { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'business', 'ideas'], authority: 1 }),
+  cfg('https://www.bigtechnology.com/feed',                     { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'policy', 'analysis'], authority: 1 }),
+  cfg('https://www.piratewires.com/feed',                       { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'culture', 'policy'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ARXIV Research Feeds
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://arxiv.org/rss/cs.AI',                            { tier: 4, weight: 0.7, category: 'research', tags: ['ai', 'research', 'papers'], authority: 1 }),
+  cfg('https://arxiv.org/rss/cs.CL',                            { tier: 4, weight: 0.7, category: 'research', tags: ['nlp', 'research', 'papers'], authority: 1 }),
+  cfg('https://arxiv.org/rss/cs.CR',                            { tier: 4, weight: 0.7, category: 'research', tags: ['security', 'crypto', 'papers'], authority: 1 }),
+  cfg('https://arxiv.org/rss/cs.LG',                            { tier: 4, weight: 0.7, category: 'research', tags: ['ml', 'research', 'papers'], authority: 1 }),
+  cfg('https://arxiv.org/rss/stat.ML',                          { tier: 4, weight: 0.7, category: 'research', tags: ['ml', 'statistics', 'papers'], authority: 1 }),
+  cfg('https://arxiv.org/rss/q-fin.TR',                         { tier: 4, weight: 0.7, category: 'research', tags: ['trading', 'markets', 'papers'], authority: 1 }),
+  cfg('https://arxiv.org/rss/cs.CY',                            { tier: 4, weight: 0.7, category: 'research', tags: ['tech', 'society', 'papers'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Developer / Engineering Blogs
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://hnrss.org/frontpage?points=20',                  { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'news', 'startup'], authority: 1 }),
+  cfg('https://hnrss.org/newest?points=10',                     { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'news'], authority: 1 }),
+  cfg('https://news.ycombinator.com/rss',                       { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'news', 'startup'], authority: 1 }),
+  cfg('https://lobste.rs/rss',                                  { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'programming'], authority: 1 }),
+  cfg('https://dev.to/feed',                                    { tier: 5, weight: 0.6, category: 'tech', tags: ['programming', 'webdev'], authority: 1 }),
+  cfg('https://blog.rust-lang.org/feed.xml',                    { tier: 5, weight: 0.6, category: 'development', tags: ['rust', 'programming', 'dev'], authority: 1 }),
+  cfg('https://go.dev/blog/feed.atom',                          { tier: 5, weight: 0.6, category: 'development', tags: ['golang', 'programming', 'dev'], authority: 1 }),
+  cfg('https://github.blog/feed/',                              { tier: 4, weight: 0.7, category: 'tech', tags: ['dev', 'github', 'programming'], authority: 1 }),
+  cfg('https://stackoverflow.blog/feed/',                       { tier: 5, weight: 0.6, category: 'tech', tags: ['programming', 'community'], authority: 1 }),
+  cfg('https://blog.cloudflare.com/rss/',                       { tier: 4, weight: 0.7, category: 'tech', tags: ['security', 'infrastructure', 'networking'], authority: 1 }),
+  cfg('https://blog.pragmaticengineer.com/feed.xml',            { tier: 4, weight: 0.7, category: 'tech', tags: ['engineering', 'career', 'tech'], authority: 1 }),
+  cfg('https://martinfowler.com/feed.atom',                     { tier: 5, weight: 0.6, category: 'tech', tags: ['architecture', 'programming'], authority: 1 }),
+  cfg('https://engineering.fb.com/feed/',                       { tier: 5, weight: 0.6, category: 'tech', tags: ['engineering', 'meta', 'infra'], authority: 1 }),
+  cfg('https://netflixtechblog.com/feed',                       { tier: 5, weight: 0.6, category: 'tech', tags: ['engineering', 'infra'], authority: 1 }),
+  cfg('https://aws.amazon.com/blogs/aws/feed/',                 { tier: 5, weight: 0.6, category: 'tech', tags: ['aws', 'cloud', 'devops'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Social: Reddit
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://www.reddit.com/r/CryptoCurrency/.rss',           { tier: 4, weight: 0.7, category: 'social', tags: ['crypto', 'discussion'], authority: 1 }),
+  cfg('https://www.reddit.com/r/Bitcoin/.rss',                  { tier: 4, weight: 0.7, category: 'social', tags: ['bitcoin'], authority: 1 }),
+  cfg('https://www.reddit.com/r/ethereum/.rss',                 { tier: 4, weight: 0.7, category: 'social', tags: ['ethereum'], authority: 1 }),
+  cfg('https://www.reddit.com/r/solana/.rss',                   { tier: 4, weight: 0.7, category: 'social', tags: ['solana'], authority: 1 }),
+  cfg('https://www.reddit.com/r/defi/.rss',                     { tier: 4, weight: 0.7, category: 'social', tags: ['defi'], authority: 1 }),
+  cfg('https://www.reddit.com/r/ethfinance/.rss',               { tier: 4, weight: 0.7, category: 'social', tags: ['ethereum', 'finance'], authority: 1 }),
+  cfg('https://www.reddit.com/r/ethdev/.rss',                   { tier: 4, weight: 0.7, category: 'social', tags: ['ethereum', 'dev'], authority: 1 }),
+  cfg('https://www.reddit.com/r/Chainlink/.rss',                { tier: 4, weight: 0.7, category: 'social', tags: ['chainlink'], authority: 1 }),
+  cfg('https://www.reddit.com/r/Polkadot/.rss',                 { tier: 4, weight: 0.7, category: 'social', tags: ['polkadot'], authority: 1 }),
+  cfg('https://www.reddit.com/r/cosmosnetwork/.rss',            { tier: 4, weight: 0.7, category: 'social', tags: ['cosmos'], authority: 1 }),
+  cfg('https://www.reddit.com/r/Arbitrum/.rss',                 { tier: 4, weight: 0.7, category: 'social', tags: ['arbitrum'], authority: 1 }),
+  cfg('https://www.reddit.com/r/optimismCollective/.rss',       { tier: 4, weight: 0.7, category: 'social', tags: ['optimism'], authority: 1 }),
+  cfg('https://www.reddit.com/r/Avax/.rss',                     { tier: 4, weight: 0.7, category: 'social', tags: ['avalanche'], authority: 1 }),
+  cfg('https://www.reddit.com/r/Cardano/.rss',                  { tier: 4, weight: 0.7, category: 'social', tags: ['cardano'], authority: 1 }),
+  cfg('https://www.reddit.com/r/Monero/.rss',                   { tier: 4, weight: 0.7, category: 'social', tags: ['monero'], authority: 1 }),
+  cfg('https://www.reddit.com/r/0xPolygon/.rss',                { tier: 4, weight: 0.7, category: 'social', tags: ['polygon'], authority: 1 }),
+  cfg('https://old.reddit.com/r/CryptoCurrency/hot.rss?limit=25', { tier: 4, weight: 0.7, category: 'social', tags: ['crypto', 'discussion'], authority: 1 }),
+  cfg('https://old.reddit.com/r/Bitcoin/hot.rss?limit=25',      { tier: 4, weight: 0.7, category: 'social', tags: ['bitcoin'], authority: 1 }),
+  cfg('https://old.reddit.com/r/ethereum/hot.rss?limit=25',     { tier: 4, weight: 0.7, category: 'social', tags: ['ethereum'], authority: 1 }),
+  cfg('https://old.reddit.com/r/solana/hot.rss?limit=25',       { tier: 4, weight: 0.7, category: 'social', tags: ['solana'], authority: 1 }),
+  cfg('https://old.reddit.com/r/defi/hot.rss?limit=25',         { tier: 4, weight: 0.7, category: 'social', tags: ['defi'], authority: 1 }),
+  cfg('https://www.reddit.com/r/ArtificialInteligence/.rss',    { tier: 5, weight: 0.6, category: 'social', tags: ['ai'], authority: 1 }),
+  cfg('https://www.reddit.com/r/MachineLearning/.rss',          { tier: 5, weight: 0.6, category: 'social', tags: ['ml', 'ai'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Mastodon / Fediverse / Social
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://social.degenfeed.xyz/@admin.rss',                { tier: 5, weight: 0.6, category: 'social', tags: ['crypto', 'fediverse'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Lemmy — Federated Communities
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://lemmy.world/feeds/c/cryptocurrency.xml?sort=Hot',{ tier: 5, weight: 0.6, category: 'social', tags: ['crypto'], authority: 1 }),
+  cfg('https://lemmy.ml/feeds/c/bitcoin.xml?sort=Hot',          { tier: 5, weight: 0.6, category: 'social', tags: ['bitcoin'], authority: 1 }),
+  cfg('https://lemmy.world/feeds/c/technology.xml?sort=Hot',    { tier: 5, weight: 0.6, category: 'social', tags: ['tech'], authority: 1 }),
+  cfg('https://lemmy.world/feeds/c/ai.xml?sort=Hot',            { tier: 5, weight: 0.6, category: 'social', tags: ['ai'], authority: 1 }),
+  cfg('https://lemmy.world/feeds/c/defi.xml?sort=Hot',          { tier: 5, weight: 0.6, category: 'social', tags: ['defi'], authority: 1 }),
+  cfg('https://lemmy.world/feeds/c/blockchain.xml?sort=Hot',    { tier: 5, weight: 0.6, category: 'social', tags: ['blockchain'], authority: 1 }),
+  cfg('https://lemmy.world/feeds/c/web3.xml?sort=Hot',          { tier: 5, weight: 0.6, category: 'social', tags: ['web3'], authority: 1 }),
+  cfg('https://lemmy.ml/feeds/c/ethereum.xml?sort=Hot',         { tier: 5, weight: 0.6, category: 'social', tags: ['ethereum'], authority: 1 }),
+  cfg('https://lemmy.world/feeds/c/solana.xml?sort=Hot',        { tier: 5, weight: 0.6, category: 'social', tags: ['solana'], authority: 1 }),
+  cfg('https://lemmy.world/feeds/c/cybersecurity.xml?sort=Hot', { tier: 5, weight: 0.6, category: 'social', tags: ['security'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PeerTube — Federated Video
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://tube.cryptoconomy.com/feeds/videos.xml',         { tier: 5, weight: 0.6, category: 'video', tags: ['crypto', 'video'], authority: 1 }),
+  cfg('https://tilvids.com/feeds/videos.xml',                   { tier: 5, weight: 0.6, category: 'video', tags: ['tech', 'education'], authority: 1 }),
+  cfg('https://diode.zone/feeds/videos.xml?sort=-publishedAt',  { tier: 5, weight: 0.6, category: 'video', tags: ['tech', 'video'], authority: 1 }),
+  cfg('https://video.ploud.fr/feeds/videos.xml?sort=-publishedAt', { tier: 5, weight: 0.6, category: 'video', tags: ['tech', 'video'], authority: 1 }),
 ];
 
 export interface RssProviderOptions {
-  feeds?: string[];
+  /** Feed URLs (plain strings) or fully configured RssFeedConfig objects */
+  feeds?: (string | RssFeedConfig)[];
+}
+
+// ── Quality Scoring ────────────────────────────────────────────────────
+
+function computeFreshnessScore(createdAt: number): number {
+  const ageMs = Date.now() - createdAt;
+  const ageHours = ageMs / (1000 * 60 * 60);
+  if (ageHours < 1) return 3;
+  if (ageHours < 6) return 2;
+  if (ageHours < 24) return 1;
+  return 0;
+}
+
+function computeLengthScore(text: string): number {
+  const len = text.length;
+  if (len > 500) return 2;
+  if (len > 200) return 1;
+  return 0;
+}
+
+export function computeQualityScore(post: UnifiedPost, config: RssFeedConfig): QualityScore {
+  const signals = {
+    weight: config.weight,
+    freshness: computeFreshnessScore(post.createdAt),
+    length: computeLengthScore(post.text),
+    hasMedia: post.embeds.length > 0 ? 1 : 0,
+    authority: config.authority,
+  };
+  const total = signals.weight + signals.freshness + signals.length + signals.hasMedia + signals.authority;
+  return { total, signals };
+}
+
+// ── Tier-Aware RSS Deduplication ────────────────────────────────────────
+
+interface ScoredRssPost {
+  post: UnifiedPost;
+  config: RssFeedConfig;
+  quality: QualityScore;
+}
+
+/**
+ * Title/text similarity using Jaccard index on normalized word sets.
+ */
+function jaccardTitleSimilarity(a: string, b: string): number {
+  const normA = a.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  const normB = b.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+  const setA = new Set(normA);
+  const setB = new Set(normB);
+  const intersection = new Set([...setA].filter((x) => setB.has(x)));
+  const union = new Set([...setA, ...setB]);
+  if (union.size === 0) return 0;
+  return intersection.size / union.size;
+}
+
+/**
+ * Deduplicate RSS posts with tier-aware strategy:
+ * - Same URL → keep highest-tier source
+ * - Same title (Jaccard > 0.7) → keep highest-tier source
+ * - Similar content (>70% Jaccard on full text) → keep earliest published
+ */
+export function deduplicateRssPosts(scored: ScoredRssPost[]): ScoredRssPost[] {
+  // Sort by tier (best first) AND createdAt (earliest first for content dedup)
+  const byTier = [...scored].sort((a, b) => a.config.tier - b.config.tier || a.post.createdAt - b.post.createdAt);
+
+  const seenUrls = new Set<string>();
+  const seenTitleFingerprints: { fingerprint: string; index: number }[] = [];
+  const seenContent: { words: Set<string>; index: number }[] = [];
+  const result: ScoredRssPost[] = [];
+
+  for (const entry of byTier) {
+    const p = entry.post;
+
+    // ── URL dedup ──
+    const url = p.embeds.find((e) => e.kind === 'link')?.url;
+    if (url) {
+      const normUrl = url.toLowerCase().replace(/\/+$/, '');
+      if (seenUrls.has(normUrl)) continue;
+      seenUrls.add(normUrl);
+    }
+
+    // ── Title Jaccard dedup (threshold: 0.7) ──
+    const titleText = p.text.slice(0, 120).toLowerCase().trim();
+    if (titleText.length > 15) {
+      let dup = false;
+      for (const existing of seenTitleFingerprints) {
+        if (jaccardTitleSimilarity(titleText, existing.fingerprint) >= 0.7) {
+          dup = true;
+          break;
+        }
+      }
+      if (dup) continue;
+      seenTitleFingerprints.push({ fingerprint: titleText, index: result.length });
+    }
+
+    // ── Content Jaccard dedup (>70% similarity, keep earliest) ──
+    const words = new Set(
+      p.text
+        .toLowerCase()
+        .replace(/https?:\/\/\S+/g, '')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter((w) => w.length > 3),
+    );
+    if (words.size >= 5) {
+      let contentDup = false;
+      for (const existing of seenContent) {
+        const intersection = new Set([...words].filter((x) => existing.words.has(x)));
+        const union = new Set([...words, ...existing.words]);
+        const similarity = intersection.size / union.size;
+        if (similarity >= 0.7) {
+          contentDup = true;
+          break;
+        }
+      }
+      if (contentDup) continue;
+      seenContent.push({ words, index: result.length });
+    }
+
+    result.push(entry);
+  }
+
+  return result;
+}
+
+// ── Feed Metadata Helpers ──────────────────────────────────────────────
+
+export function normalizeFeedInput(feed: string | RssFeedConfig): RssFeedConfig {
+  if (typeof feed === 'string') {
+    return {
+      url: feed,
+      tier: 3,
+      weight: 0.7,
+      category: 'news',
+      tags: ['crypto'],
+      authority: 1,
+    };
+  }
+  return feed;
+}
+
+export function getFeedsByCategory(category: string): RssFeedConfig[] {
+  return DEFAULT_CRYPTO_FEEDS.filter((f) => f.category === category);
+}
+
+export function getFeedCategories(): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const f of DEFAULT_CRYPTO_FEEDS) {
+    counts[f.category] = (counts[f.category] ?? 0) + 1;
+  }
+  return counts;
 }
 
 interface RssItem {
@@ -704,7 +739,8 @@ function parseAtom(xml: string): {
   return feed;
 }
 
-function feedToUnifiedPosts(feedUrl: string, feed: ReturnType<typeof parseRss>): UnifiedPost[] {
+function feedToUnifiedPosts(feedConfig: RssFeedConfig, feed: ReturnType<typeof parseRss>): ScoredRssPost[] {
+  const feedUrl = feedConfig.url;
   const author: UnifiedIdentity = {
     id: `rss:${feedUrl}`,
     primary: { protocol: 'rss', id: feedUrl },
@@ -727,7 +763,7 @@ function feedToUnifiedPosts(feedUrl: string, feed: ReturnType<typeof parseRss>):
     keys: {},
   };
 
-  return feed.items.map((item): UnifiedPost => {
+  return feed.items.map((item): ScoredRssPost => {
     const html = item.content || item.description || '';
     const text = stripHtml(html).slice(0, 1000) || item.title || '';
     const embeds: Embed[] = [];
@@ -743,7 +779,7 @@ function feedToUnifiedPosts(feedUrl: string, feed: ReturnType<typeof parseRss>):
 
     const niches = detectNiches(`${text} ${item.categories?.join(' ') ?? ''}`);
 
-    return {
+    const post: UnifiedPost = {
       id: `rss:${feedUrl}:${item.link?.replace(/[^a-zA-Z0-9_-]/g, '_') ?? Date.now()}`,
       protocol: 'rss',
       author,
@@ -758,41 +794,79 @@ function feedToUnifiedPosts(feedUrl: string, feed: ReturnType<typeof parseRss>):
         viewerBookmarked: false,
         raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
       },
-      raw: { item, feedUrl },
+      raw: { item, feedUrl, config: feedConfig },
       niches: [...new Set([...niches, ...(item.categories ?? []).map((c) => c.toLowerCase())])],
     };
+
+    const quality = computeQualityScore(post, feedConfig);
+
+    return { post, config: feedConfig, quality };
   });
 }
 
 export class RssProvider implements FeedProvider {
   readonly protocol: Protocol = 'rss';
-  private readonly feeds: string[];
+  private readonly feedConfigs: RssFeedConfig[];
 
   constructor(options: RssProviderOptions = {}) {
-    this.feeds = [...new Set(options.feeds ?? DEFAULT_CRYPTO_FEEDS)];
+    // Normalize both string[] and RssFeedConfig[] inputs
+    const raw = options.feeds ?? DEFAULT_CRYPTO_FEEDS;
+    const normalized = raw.map(normalizeFeedInput);
+    // Deduplicate by URL (keep first occurrence)
+    const seen = new Set<string>();
+    this.feedConfigs = normalized.filter((f) => {
+      const key = f.url.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  /** Returns the active feed configs (useful for introspection) */
+  getFeeds(): RssFeedConfig[] {
+    return this.feedConfigs;
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    if (this.feeds.length === 0) return { posts: [] };
+    if (this.feedConfigs.length === 0) return { posts: [] };
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const concurrency = opts.concurrency ?? 4;
-    const posts: UnifiedPost[] = [];
+    const scored: ScoredRssPost[] = [];
 
-    const results = await withConcurrencyLimit(this.feeds, concurrency, async (feedUrl) => {
-      try {
-        const xml = await withTimeout(
-          fetchRss(feedUrl, { headers: { 'user-agent': DEFAULT_USER_AGENT, ...opts.headers } }),
-          timeoutMs,
-          `rss:${feedUrl}`,
-        );
-        const feed = parseRss(xml);
-        return feedToUnifiedPosts(feedUrl, feed);
-      } catch {
-        return [] as UnifiedPost[];
-      }
+    const results = await withConcurrencyLimit(
+      this.feedConfigs,
+      concurrency,
+      async (feedConfig) => {
+        try {
+          const xml = await withTimeout(
+            fetchRss(feedConfig.url, {
+              headers: { 'user-agent': DEFAULT_USER_AGENT, ...opts.headers },
+            }),
+            timeoutMs,
+            `rss:${feedConfig.url}`,
+          );
+          const feed = parseRss(xml);
+          return feedToUnifiedPosts(feedConfig, feed);
+        } catch {
+          return [] as ScoredRssPost[];
+        }
+      },
+    );
+    for (const r of results) scored.push(...r);
+
+    // Apply tier-aware dedup
+    const deduped = deduplicateRssPosts(scored);
+
+    // Convert back to UnifiedPost[] with quality score stamped in raw
+    const posts: UnifiedPost[] = deduped.map((s) => {
+      const updated = { ...s.post };
+      updated.raw = { ...(typeof updated.raw === 'object' && updated.raw !== null ? updated.raw : {}), qualityScore: s.quality };
+      return updated;
     });
-    for (const r of results) posts.push(...r);
 
-    return { posts };
+    return {
+      posts,
+      notice: `RSS: ${deduped.length} posts from ${this.feedConfigs.length} feeds (${scored.length - deduped.length} deduped)`,
+    };
   }
 }

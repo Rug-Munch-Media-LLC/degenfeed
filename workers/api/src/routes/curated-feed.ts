@@ -15,6 +15,8 @@ import {
   DEFAULT_PROTOCOLS,
   enrichNostrEngagement,
   fetchFromProviders,
+  loadBehaviorProfile,
+  loadPreviousEngagement,
   loadScrollProfile,
   loadSeenPosts,
   loadUserRankingContext,
@@ -25,6 +27,8 @@ import {
   prepareBasePosts,
   recordScrollDepth,
   recordSeenPosts,
+  storeBehaviorProfile,
+  updateStreak,
   writePostsToKV,
 } from '../feed';
 import type { Env } from '../index';
@@ -73,6 +77,8 @@ export async function handleCuratedFeed(
   const seenPosts = wallet ? await loadSeenPosts(env, wallet) : new Set<string>();
   const scrollProfile = wallet ? await loadScrollProfile(env, wallet) : undefined;
   const engagedCreators = wallet ? await loadEngagedCreators(env, wallet) : new Set<string>();
+  const behaviorProfile = wallet ? await loadBehaviorProfile(env, wallet) : undefined;
+  if (behaviorProfile) updateStreak(behaviorProfile);
 
   // 2. Fetch from providers
   const notices: string[] = [];
@@ -133,6 +139,10 @@ export async function handleCuratedFeed(
   );
   const preferredContentTypes = new Set(params.get('contentTypes')?.split(',') ?? []);
 
+  const previousEngagement = wallet
+    ? await loadPreviousEngagement(env, relevant as UnifiedPost[])
+    : undefined;
+
   const curated = curateFeed(relevant as UnifiedPost[], seenPosts, {
     wallet: wallet ?? undefined,
     limit,
@@ -141,15 +151,20 @@ export async function handleCuratedFeed(
     preferredContentTypes,
     engagedCreators,
     scrollProfile,
+    behaviorProfile,
+    previousEngagement,
   });
 
-  // 6. Record seen posts (fire-and-forget, non-blocking)
+  // 6. Record seen posts and persist behavior profile (fire-and-forget)
   if (wallet && curated.posts.length > 0) {
     void recordSeenPosts(
       env,
       wallet,
       curated.posts.map((p) => p.id),
     );
+    if (behaviorProfile) {
+      void storeBehaviorProfile(env, wallet, behaviorProfile);
+    }
   }
 
   if (curated.posts.length === 0 && errors.length > 0) {
@@ -189,7 +204,7 @@ export async function handleCuratedFeed(
   const resp = cachedJsonResponse(responseBody, 200, 15);
   resp.headers.set(
     'X-DegenFeed-Debug',
-    `curated=true,seenFiltered=${curated.meta.seenFiltered},explore=${curated.meta.exploreCount},exploit=${curated.meta.exploitCount},freshness=${curated.meta.freshnessBoosts}`,
+    `curated=true,seenFiltered=${curated.meta.seenFiltered},explore=${curated.meta.exploreCount},exploit=${curated.meta.exploitCount},freshness=${curated.meta.freshnessBoosts},ratio=${curated.meta.exploreRatio?.exploitPct ?? 0.8}/${curated.meta.exploreRatio?.explorePct ?? 0.2},temporal=${curated.meta.temporal ?? 'unknown'},streak=${curated.meta.dopamine?.streakCount ?? 0}`,
   );
   return resp;
 }
