@@ -2,7 +2,8 @@
  * feed-categories — Category taxonomy, mapping, relevance scoring, and blend engine.
  *
  * Defines the user-facing category taxonomy (defi, nft, trading, ai, memecoin,
- * security, news, memes), maps each to feed-core niches + loose keyword signals,
+ * security, news, memes, bitcoin, ethereum, solana, layer2, stablecoin,
+ * regulation, gaming), maps each to feed-core niches + loose keyword signals,
  * scores post relevance to a category, and blends multi-category mixes.
  */
 
@@ -18,6 +19,13 @@ export const ALL_CATEGORIES = [
   'security',
   'news',
   'memes',
+  'bitcoin',
+  'ethereum',
+  'solana',
+  'layer2',
+  'stablecoin',
+  'regulation',
+  'gaming',
 ] as const;
 
 export type CategorySlug = (typeof ALL_CATEGORIES)[number];
@@ -117,6 +125,83 @@ export const CATEGORIES: Record<CategorySlug, CategoryDef> = {
     niches: ['memecoin', 'gaming'],
     keywords: [
       'meme', 'memes', 'funny', 'lol', 'humor', 'degen',
+    ],
+  },
+  bitcoin: {
+    slug: 'bitcoin',
+    label: 'Bitcoin',
+    emoji: '\uD83D\uDCB0',
+    niches: ['bitcoin', 'btc', 'macro', 'mining'],
+    keywords: [
+      'bitcoin', 'btc', 'satoshi', 'halving', 'blockchain', 'mining',
+      'hashrate', 'lightning network', 'ordinal', 'brc-20', 'rune',
+      'taproot', 'schnorr', 'btc etf', 'bitcoin etf',
+    ],
+  },
+  ethereum: {
+    slug: 'ethereum',
+    label: 'Ethereum',
+    emoji: '\uD83D\uDCE6',
+    niches: ['ethereum', 'evm', 'defi', 'layer2'],
+    keywords: [
+      'ethereum', 'eth', 'vitalik', 'eip', 'erc-20', 'erc-721',
+      'ethereum etf', 'ethereum upgrade', 'execution layer', 'consensus',
+      'danksharding', 'blob', 'cancun', 'dencun', 'prague',
+    ],
+  },
+  solana: {
+    slug: 'solana',
+    label: 'Solana',
+    emoji: '\u2600\uFE0F',
+    niches: ['solana', 'defi', 'memecoin', 'nft'],
+    keywords: [
+      'solana', 'sol', 'phantom', 'serum', 'jupiter', 'orca',
+      'raydium', 'pyth', 'mango', 'solana pay', 'spl', 'token-2022',
+      'blink', 'action',
+    ],
+  },
+  layer2: {
+    slug: 'layer2',
+    label: 'Layer 2',
+    emoji: '\u2699\uFE0F',
+    niches: ['layer2', 'ethereum', 'defi', 'tech'],
+    keywords: [
+      'layer 2', 'l2', 'rollup', 'optimistic', 'zk rollup', 'arbitrum',
+      'optimism', 'base', 'zksync', 'starknet', 'polygon', 'scroll',
+      'linea', 'taiko', 'blob', 'gas fee',
+    ],
+  },
+  stablecoin: {
+    slug: 'stablecoin',
+    label: 'Stablecoins',
+    emoji: '\uD83C\uDFE6',
+    niches: ['stablecoin', 'defi', 'regulation', 'macro'],
+    keywords: [
+      'stablecoin', 'usdt', 'usdc', 'dai', 'frax', 'lusd', 'terrausd',
+      'ust', 'stablecoin regulation', 'stablecoin bill', 'rwa',
+      'real world asset', 'yield bearing', 'synthetic dollar',
+    ],
+  },
+  regulation: {
+    slug: 'regulation',
+    label: 'Regulation',
+    emoji: '\u2696\uFE0F',
+    niches: ['regulation', 'news', 'macro', 'legal'],
+    keywords: [
+      'regulation', 'regulatory', 'sec', 'cftc', 'lawsuit', 'compliance',
+      'mica', 'kyc', 'aml', 'congress', 'senate', 'hearing', 'subpoena',
+      'doj', 'fincen', 'esma', 'fsa', 'biden', 'trump',
+    ],
+  },
+  gaming: {
+    slug: 'gaming',
+    label: 'Gaming',
+    emoji: '\uD83C\uDFAE',
+    niches: ['gaming', 'metaverse', 'nft', 'social'],
+    keywords: [
+      'gaming', 'game', 'web3 gaming', 'play to earn', 'p2e', 'immutable',
+      'gala', 'axie', 'illuvium', 'metaverse', 'mmo', 'rpg',
+      'onchain game', 'fren pet', 'telegram game', 'tap to earn',
     ],
   },
 };

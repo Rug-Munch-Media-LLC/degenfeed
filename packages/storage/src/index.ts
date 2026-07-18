@@ -20,7 +20,9 @@ export {
   syncBookmarkToServer,
   updateBookmarkTags,
 } from './bookmarks';
+export { clearCache, cachePost, getCachedPost } from './cache';
 export { getDb } from './db';
+export { deleteDraft, getDrafts, saveDraft } from './drafts';
 export { deleteFollow, getFollows, isFollowing, saveFollow } from './follows';
 export {
   deleteIdentity,
@@ -69,6 +71,8 @@ export {
   getSubscription,
   isCreator,
 } from './subscription';
+// StoredIdentity moved to @degenfeed/types to break circular dep between auth and storage
+export type { StoredIdentity } from '@degenfeed/types';
 export type {
   FeedLayout,
   LayoutDensity,
@@ -78,7 +82,6 @@ export type {
   StoredCachedPost,
   StoredDraft,
   StoredFollow,
-  StoredIdentity,
   StoredMutedCommunity,
   StoredMutedIdentity,
   StoredMutedWord,

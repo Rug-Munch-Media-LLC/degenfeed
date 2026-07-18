@@ -1,6 +1,6 @@
 // ─── @degenfeed/auth — barrel exports ──────────────────────────
 
-export type { ActiveSession, StoredIdentity } from '@degenfeed/storage';
+export type { ActiveSession, StoredIdentity } from '@degenfeed/types';
 export type { EncryptedBlob } from './crypto';
 export { decryptSecret, encryptSecret } from './crypto';
 export { buildIdentityRecord } from './persistence';

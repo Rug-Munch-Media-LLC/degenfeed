@@ -936,6 +936,22 @@
     opacity: 1 !important;
   }
 
+  .protocol-transition-overlay {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  .tab-content-enter,
+  .tab-content-exit {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+
   .btn-spring:active {
     animation: none !important;
     transform: none !important;
@@ -1254,8 +1270,33 @@
   }
 }
 
+@keyframes tab-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .tab-enter {
-  animation: tab-slide-in 0.2s ease-out forwards;
+  animation: tab-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tab-enter-left {
+  animation: tab-slide-in-left 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Feed content transition for tab switches ── */
+.tab-content-enter {
+  animation: tab-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tab-content-exit {
+  opacity: 0;
+  animation: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1703,7 +1744,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
- * UI POLISH — Page transition (crossfade)
+ * UI POLISH — Page transition (crossfade + protocol color)
  * ═══════════════════════════════════════════════════════════════ */
 
 .page-transition-enter {
@@ -1735,6 +1776,55 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+/* ── Protocol transition overlay (colored flash on route change) ── */
+
+@keyframes protocol-transition-flash {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  20% {
+    opacity: 0.6;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+.protocol-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  transform-origin: left center;
+  animation: protocol-transition-flash 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── View Transitions API support (Chrome 111+) ── */
+@keyframes view-transition-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes view-transition-fade-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-6px); }
+}
+
+::view-transition-old(root) {
+  animation: view-transition-fade-out 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+::view-transition-new(root) {
+  animation: view-transition-fade-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.05s;
 }
 
 /* ═══════════════════════════════════════════════════════════════

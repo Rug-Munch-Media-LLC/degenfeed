@@ -336,3 +336,45 @@ export interface Space {
   /** Whether the space supports tipping */
   tippingEnabled: boolean;
 }
+
+// ─── Storage-adjacent types (shared across auth/storage) ──────────
+
+/**
+ * Persisted identity record. Originally from @degenfeed/storage but moved
+ * here so @degenfeed/auth can use the type without a hard dep on storage.
+ */
+export interface StoredIdentity {
+  /** Canonical id: `${protocol}:${publicId}` */
+  id: string;
+  protocol: Protocol;
+  publicId: string;
+  handle: string;
+  displayName?: string;
+  avatarUrl?: string;
+  /** Timestamp of when this identity was first linked */
+  linkedAt: number;
+  /** Whether the identity has been verified (NIP-05, Farcaster verified) */
+  verified: boolean;
+  /** Encrypted secret key (AES-GCM ciphertext, base64) */
+  encryptedSecret: string | null;
+  /** Argon2id salt for key derivation (base64) */
+  salt: string;
+  /** AES-GCM initialization vector (base64) */
+  iv: string;
+  /** Whether this is the user's primary identity */
+  isPrimary: boolean;
+  /** Protocol-specific key material (encrypted) */
+  keys?: Record<string, string | null>;
+  /** Social links */
+  links?: Array<{ label: string; url: string }>;
+  /** Creation timestamp */
+  createdAt?: number;
+}
+
+/** In-memory active session holding a decrypted identity. */
+export interface ActiveSession {
+  identity: StoredIdentity;
+  /** Decrypted key material. NEVER written to disk. */
+  decryptedSecret: string | null;
+  unlockedAt: number;
+}

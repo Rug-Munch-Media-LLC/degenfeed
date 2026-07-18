@@ -21,13 +21,16 @@ import {
   CATEGORY_SLUGS,
   collectProviderResults,
   computeAllAuthorStats,
+  computeCategoryTrending,
   computeFreshnessMeta,
   computeTrending,
   deduplicateCrossProtocol,
   DEFAULT_PROTOCOLS,
+  deprioritizeStaleContent,
   enrichNostrEngagement,
   FEED_GENERATION_TIMEOUT_MS,
   fetchFromProviders,
+  getCategoryCounts,
   getFeedCache,
   loadUserRankingContext,
   predictEngagementBoost,
@@ -36,6 +39,7 @@ import {
   ProviderTimer,
   setFeedCache,
   updateFeedFreshness,
+  verifyDiversity,
   writePostsToKV,
 } from '../feed';
 import type { Env } from '../index';
@@ -118,22 +122,46 @@ export async function handleCategorySlugFeed(
     limit,
   });
 
+  // 4b. Deprioritize stale content
+  const now = Date.now();
+  const freshPosts = deprioritizeStaleContent(feed.posts, now);
+
   const categoryDef = CATEGORIES[categorySlug as keyof typeof CATEGORIES];
+
+  // Per-category trending
+  const catTrending = computeCategoryTrending(relevant, 5, 48);
+  const trendingCategory = catTrending[categorySlug as keyof typeof catTrending];
+
+  const categoryCounts = getCategoryCounts(freshPosts);
+  const diversityCheck = verifyDiversity(freshPosts);
 
   const elapsed = Date.now() - feedStartTime;
 
   return jsonResponse({
-    data: feed.posts,
+    data: freshPosts,
     meta: {
-      total: feed.posts.length,
+      total: freshPosts.length,
       limit,
       category: { slug: categorySlug, label: categoryDef.label, emoji: categoryDef.emoji },
       perProtocol,
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
-      fetchedAt: Date.now(),
+      fetchedAt: now,
       categoryMeta: feed.meta,
       feedGenerationMs: elapsed,
+      categoryCoverage: {
+        counts: categoryCounts,
+        uniqueCategories: diversityCheck.uniqueCategories,
+        dominantCategory: diversityCheck.dominantCategory,
+        dominantPct: diversityCheck.dominantPct,
+      },
+      trending: trendingCategory
+        ? {
+            topTopic: trendingCategory.topTopic,
+            trendingItems: trendingCategory.trending,
+            totalPosts: trendingCategory.totalPosts,
+          }
+        : undefined,
     },
   });
 }
