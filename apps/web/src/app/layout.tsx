@@ -61,7 +61,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={`${theme} ${inter.className}`} suppressHydrationWarning>
-      <body>
+      <body className="page-transition-enter">
         {/* ⚡ SSR-safe theme: sync localStorage before paint to prevent flash */}
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: inline script reads localStorage to prevent theme + density flash */}
         <script

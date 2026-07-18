@@ -22,7 +22,11 @@ import {
   isRelevantPost,
   isSpamPost,
 } from '@degenfeed/feed-core';
-import { RmiDataBusProvider, RssProvider } from '@degenfeed/feed-providers';
+import {
+  getNewsletterFeeds,
+  RmiDataBusProvider,
+  RssProvider,
+} from '@degenfeed/feed-providers';
 import { computeTrendingTopics, rankDiverse } from '@degenfeed/ranking';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, rmiUrl } from '@degenfeed/utils';
@@ -166,6 +170,31 @@ export async function gatherDigestPosts(
       }),
     );
     for (const r of results) {
+      if (r.status === 'fulfilled') all.push(...r.value);
+    }
+  }
+
+  // Newsletter-specific RSS feeds — top crypto + defi newsletters.
+  // These are fetched as a batch using the curated newsletter list.
+  {
+    const newsletterGroup = getNewsletterFeeds();
+    const newsletterUrls = [
+      ...newsletterGroup.topCrypto.slice(0, 6),
+      ...newsletterGroup.defiProtocol.slice(0, 4),
+      ...newsletterGroup.aiCrypto.slice(0, 3),
+    ].map((f) => f.url);
+    const nlResults = await Promise.allSettled(
+      newsletterUrls.map(async (url) => {
+        try {
+          const rss = new RssProvider({ feeds: [url] });
+          const r = await rss.fetchFeed({ timeoutMs: 3000 });
+          return r.posts;
+        } catch {
+          return [] as UnifiedPost[];
+        }
+      }),
+    );
+    for (const r of nlResults) {
       if (r.status === 'fulfilled') all.push(...r.value);
     }
   }

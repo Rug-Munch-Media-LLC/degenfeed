@@ -112,6 +112,7 @@ import {
   handleLeaderboardTrending,
   handleRefreshLeaderboards,
 } from './routes/leaderboard';
+import { handleLemmyDiscover } from './routes/lemmy-discover';
 import {
   handleLemmyTipCreate,
   handleLemmyTipLeaderboard,
@@ -141,6 +142,13 @@ import {
   handleNewsletterStatus,
   handleNewsletterSubscribe,
 } from './routes/newsletter';
+import {
+  handleDigestToday,
+  handleDigestYesterday,
+  handleDigestSubscribeEmail,
+  handleDigestUnsubscribeEmail,
+  handleDigestStatus,
+} from './routes/digest';
 import { handleNotifications } from './routes/notifications';
 import { handleNotify } from './routes/notify';
 import { handlePostOg } from './routes/og';
@@ -506,6 +514,9 @@ app.get('/api/tip/unified/stats', async (c) => handleUnifiedTipStats(c.req.raw, 
 app.get('/api/tip/unified/leaderboard', async (c) => handleUnifiedTipLeaderboard(c.req.raw, c.env));
 app.get('/api/tip/unified/activity', async (c) => handleUnifiedTipActivity(c.req.raw, c.env));
 
+// ─── API: Lemmy Discover ─────────────────────────────────────
+app.get('/api/lemmy/discover', async (c) => handleLemmyDiscover(c.req.raw, c.env));
+
 // ─── API: Lemmy Tips ─────────────────────────────────────────
 app.all('/api/lemmy/tip/leaderboard', async (c) => handleLemmyTipLeaderboard(c.req.raw, c.env));
 app.all('/api/lemmy/tip/stats', async (c) => handleLemmyTipStats(c.req.raw, c.env));
@@ -635,6 +646,13 @@ app.all('/api/newsletter/subscribe', async (c) => handleNewsletterSubscribe(c.re
 app.all('/api/newsletter/status', async (c) => handleNewsletterStatus(c.req.raw, c.env));
 app.all('/api/newsletter/digest', async (c) => handleNewsletterDigest(c.req.raw, c.env));
 app.all('/api/newsletter/digest/*', async (c) => handleNewsletterDigest(c.req.raw, c.env));
+
+// ─── API: Digest (Daily) ───────────────────────────────────
+app.all('/api/digest/today', async (c) => handleDigestToday(c.req.raw, c.env));
+app.all('/api/digest/yesterday', async (c) => handleDigestYesterday(c.req.raw, c.env));
+app.all('/api/digest/subscribe-email', async (c) => handleDigestSubscribeEmail(c.req.raw, c.env));
+app.all('/api/digest/unsubscribe-email', async (c) => handleDigestUnsubscribeEmail(c.req.raw, c.env));
+app.all('/api/digest/status', async (c) => handleDigestStatus(c.req.raw, c.env));
 
 // ─── API: Deploy ──────────────────────────────────────────
 import { handleDeployRequest, handleDeployStatus } from './routes/deploy';
@@ -913,6 +931,12 @@ app.all('/v1/push/subscribe', async (c) => handlePushSubscribe(c.req.raw, c.env)
 app.all('/v1/newsletter/subscribe', async (c) => handleNewsletterSubscribe(c.req.raw, c.env));
 app.all('/v1/newsletter/status', async (c) => handleNewsletterStatus(c.req.raw, c.env));
 app.all('/v1/newsletter/digest', async (c) => handleNewsletterDigest(c.req.raw, c.env));
+
+// ─── V1: Digest ──────────────────────────────────────────────
+app.all('/v1/digest/today', async (c) => handleDigestToday(c.req.raw, c.env));
+app.all('/v1/digest/yesterday', async (c) => handleDigestYesterday(c.req.raw, c.env));
+app.all('/v1/digest/subscribe-email', async (c) => handleDigestSubscribeEmail(c.req.raw, c.env));
+app.all('/v1/digest/unsubscribe-email', async (c) => handleDigestUnsubscribeEmail(c.req.raw, c.env));
 
 // ─── V1: API Key Management ────────────────────────────────
 

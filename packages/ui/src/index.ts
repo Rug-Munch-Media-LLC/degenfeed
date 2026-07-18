@@ -150,3 +150,4 @@ export type {
 export { VotingPanel } from './VotingPanel';
 export type { FeedBuilderModalProps } from './FeedBuilderModal';
 export { FeedBuilderModal } from './FeedBuilderModal';
+export { ScrollToTop } from './ScrollToTop';

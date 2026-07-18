@@ -1002,14 +1002,15 @@ export default function FeedPage() {
 
           {/* New posts pill */}
           {newAvailable && (
-            <button
-              type="button"
-              onClick={refreshNow}
-              className="sticky top-[152px] z-20 mx-4 my-2 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-full border border-degen-500/40 bg-degen-500/90 py-2 text-sm font-semibold text-black shadow-[0_0_24px_rgba(0,255,65,0.35)] backdrop-blur-xl transition-transform hover:bg-degen-400"
-            >
-              <span className="h-2 w-2 animate-pulse rounded-full bg-black" />
-              New posts available — click to refresh
-            </button>
+              <button
+                type="button"
+                onClick={refreshNow}
+                className="new-posts-pill"
+              >
+                <span className="pulse-dot" />
+                <span className="df-label">New posts available</span>
+                <span className="df-arrow">↑</span>
+              </button>
           )}
 
           {/* Notices */}

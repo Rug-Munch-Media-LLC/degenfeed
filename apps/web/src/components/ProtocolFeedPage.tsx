@@ -7,8 +7,13 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
+import { ContentFilterBar, type ContentType } from './ContentFilterBar';
+import { ContentMosaic } from './ContentMosaic';
+import { type DensityMode, DensityToggle } from './DensityToggle';
 import { FeedPollerBanner } from './FeedPollerBanner';
+import { ProtocolHero } from './ProtocolHero';
 import { ProtocolSections } from './ProtocolSections';
+import { QuickJumpSidebar } from './QuickJumpSidebar';
 
 const TipModal = dynamic(() => import('./TipModal').then((m) => ({ default: m.TipModal })), {
   ssr: false,
@@ -161,11 +166,15 @@ export function ProtocolFeedPage({ protocol }: Props) {
 
   const [activeTab, setActiveTab] = useState(config?.tabs[0]?.id ?? 'hot');
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
+  const [featuredPosts, setFeaturedPosts] = useState<UnifiedPost[]>([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
   const [error, setError] = useState<string>();
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
   const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
   const [newPostCount, setNewPostCount] = useState(0);
+  const [contentType, setContentType] = useState<ContentType>('all');
+  const [density, setDensity] = useState<DensityMode>('comfortable');
   const lastPostIdRef = useRef<string | null>(null);
 
   const fetchFeed = useCallback(async () => {
@@ -207,11 +216,36 @@ export function ProtocolFeedPage({ protocol }: Props) {
     }
   }, [config, activeTab]);
 
+  // Fetch featured posts for the mosaic
+  const fetchFeatured = useCallback(async () => {
+    setFeaturedLoading(true);
+    try {
+      const url = new URL(config.endpoint, window.location.origin);
+      url.searchParams.set('limit', '6');
+      url.searchParams.set('protocols', config.feedParam);
+      url.searchParams.set('sort', 'quality');
+      const res = await fetch(url.toString(), {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!res.ok) {
+        setFeaturedLoading(false);
+        return;
+      }
+      const data = (await res.json()) as { data?: UnifiedPost[] };
+      if (data.data?.length) setFeaturedPosts(data.data);
+    } catch {
+      // non-critical
+    }
+    setFeaturedLoading(false);
+  }, [config]);
+
   // Poll for new posts
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     void fetchFeed();
+    void fetchFeatured();
     pollIntervalRef.current = setInterval(async () => {
       try {
         const url = new URL(config.endpoint, window.location.origin);
@@ -300,147 +334,146 @@ export function ProtocolFeedPage({ protocol }: Props) {
 
   return (
     <ErrorBoundary>
-      <div className="mx-auto max-w-2xl px-4 py-4">
-        {/* ── Protocol identity bar ── */}
-        <div
-          className="relative mb-5 overflow-hidden rounded-2xl border p-5 transition-colors"
-          style={{
-            borderColor: `${config.color}33`,
-            background: `linear-gradient(135deg, ${config.color}15 0%, ${config.color}08 50%, transparent 100%)`,
-          }}
-        >
-          {/* Decorative glow */}
-          <div
-            className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-20 blur-3xl"
-            style={{ backgroundColor: config.color }}
-          />
+      <div className="mx-auto max-w-6xl px-4 py-4">
+        {/* ── Hero section (full width) ── */}
+        <ProtocolHero config={config} />
 
-          <div className="relative flex items-start gap-4">
-            <div
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl"
-              style={{
-                backgroundColor: `${config.color}22`,
-                color: config.color,
-                boxShadow: `0 0 20px ${config.color}33`,
-              }}
-            >
-              {config.icon}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-[var(--color-fg)]">{config.name}</h1>
-                <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-                  style={{ backgroundColor: `${config.color}22`, color: config.color }}
-                >
-                  {config.id}
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs text-gray-500">{config.description}</p>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                {config.stats.map((s) => (
-                  <div key={s.label} className="flex items-center gap-1">
-                    <span
-                      className="text-sm font-bold tabular-nums"
-                      style={{ color: config.color }}
-                    >
-                      {s.value}
-                    </span>
-                    <span className="text-[11px] text-gray-500">{s.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* ── Featured posts mosaic (full width) ── */}
+        <ContentMosaic
+          posts={featuredPosts}
+          color={config.color}
+          onPostClick={(id) => router.push(`/post/${encodeURIComponent(id)}`)}
+          loading={featuredLoading}
+        />
 
         {/* ── Protocol-specific curated sections ── */}
         <ProtocolSections protocol={config.id} color={config.color} />
 
-        {/* ── Protocol tabs ── */}
-        <div className="mb-4 flex gap-1 overflow-x-auto border-b border-[var(--color-glass-border)] pb-0">
-          {config.tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative whitespace-nowrap px-4 py-2.5 text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? 'text-[var(--color-fg)]'
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              {tab.label}
-              {activeTab === tab.id && (
-                <span
-                  className="absolute bottom-0 left-1/2 h-0.5 w-10 -translate-x-1/2 rounded-full"
-                  style={{ backgroundColor: config.color, boxShadow: `0 0 8px ${config.color}66` }}
-                />
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab description */}
-        {(() => {
-          const currentTab = config.tabs.find((t) => t.id === activeTab);
-          return currentTab?.description ? (
-            <p className="mb-4 text-xs text-gray-500">{currentTab.description}</p>
-          ) : null;
-        })()}
-
-        {/* ── Feed */}
-        <FeedPollerBanner count={newPostCount} onRefresh={handleRefresh} />
-
-        {feedMeta.notices && feedMeta.notices.length > 0 && (
-          <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-3 text-xs text-yellow-400">
-            {feedMeta.notices.map((n) => (
-              <div key={n}>{n}</div>
-            ))}
-          </div>
-        )}
-
-        <FeedList
-          state={state}
-          posts={posts}
-          error={error}
-          protocolLabel={config.name}
-          onPostClick={(id) => router.push(`/post/${encodeURIComponent(id)}`)}
-          onEngage={handleEngage}
-          onTip={(post) => setTipPost(post)}
-          onRetry={handleRetry}
-          onCrossReplyOpen={handleCrossReplyOpen}
-        />
-
-        {/* Protocol-specific empty state */}
-        {state === 'empty' && (
-          <div
-            className="mt-6 rounded-xl border py-10 text-center"
-            style={{ borderColor: `${config.color}22`, backgroundColor: `${config.color}05` }}
-          >
-            <div
-              className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-2xl"
-              style={{ backgroundColor: `${config.color}18`, color: config.color }}
-            >
-              {config.icon}
+        {/* ── Two-column layout: feed + sidebar ── */}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          {/* Left column — main feed */}
+          <div className="min-w-0 flex-1">
+            {/* Tab bar + density toggle */}
+            <div className="mb-4 flex items-center justify-between gap-3 overflow-x-auto border-b border-[var(--color-glass-border)] pb-0">
+              <div className="flex gap-1 overflow-x-auto scrollbar-none">
+                {config.tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative whitespace-nowrap px-4 py-2.5 text-sm font-medium transition-colors ${
+                      activeTab === tab.id
+                        ? 'text-[var(--color-fg)]'
+                        : 'text-gray-500 hover:text-gray-300'
+                    }`}
+                  >
+                    {tab.label}
+                    {activeTab === tab.id && (
+                      <span
+                        className="absolute bottom-0 left-1/2 h-0.5 w-10 -translate-x-1/2 rounded-full"
+                        style={{
+                          backgroundColor: config.color,
+                          boxShadow: `0 0 8px ${config.color}66`,
+                        }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="hidden shrink-0 sm:block">
+                <DensityToggle value={density} onChange={setDensity} color={config.color} />
+              </div>
             </div>
-            <h3 className="mb-1 text-base font-bold" style={{ color: config.color }}>
-              No {config.postNoun}s found
-            </h3>
-            <p className="mx-auto max-w-xs text-sm text-gray-500">
-              There are no {config.postNoun}s from {config.name} right now. This can happen when the
-              network is slow or the API is temporarily unavailable.
-            </p>
-            <button
-              type="button"
-              onClick={handleRetry}
-              className="mt-4 rounded-lg px-4 py-2 text-sm font-medium text-white transition-all"
-              style={{ backgroundColor: config.color }}
+
+            {/* Tab description */}
+            {(() => {
+              const currentTab = config.tabs.find((t) => t.id === activeTab);
+              return currentTab?.description ? (
+                <p className="mb-4 text-xs text-gray-500">{currentTab.description}</p>
+              ) : null;
+            })()}
+
+            {/* Content type filter bar */}
+            <ContentFilterBar active={contentType} onChange={setContentType} color={config.color} />
+
+            {/* Mobile density toggle */}
+            <div className="mb-3 flex sm:hidden">
+              <DensityToggle value={density} onChange={setDensity} color={config.color} />
+            </div>
+
+            {/* Quick jump — mobile dropdown */}
+            <QuickJumpSidebar color={config.color} activeTab={activeTab} onJump={setActiveTab} />
+
+            {/* ── Feed */}
+            <FeedPollerBanner count={newPostCount} onRefresh={handleRefresh} />
+
+            {feedMeta.notices && feedMeta.notices.length > 0 && (
+              <div className="mb-3 rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-3 text-xs text-yellow-400">
+                {feedMeta.notices.map((n) => (
+                  <div key={n}>{n}</div>
+                ))}
+              </div>
+            )}
+
+            {/* Density class applied to feed container */}
+            <div
+              className={
+                density === 'dense'
+                  ? 'feed-density-dense'
+                  : density === 'visual'
+                    ? 'feed-density-visual'
+                    : ''
+              }
             >
-              Retry
-            </button>
+              <FeedList
+                state={state}
+                posts={posts}
+                error={error}
+                protocolLabel={config.name}
+                onPostClick={(id) => router.push(`/post/${encodeURIComponent(id)}`)}
+                onEngage={handleEngage}
+                onTip={(post) => setTipPost(post)}
+                onRetry={handleRetry}
+                onCrossReplyOpen={handleCrossReplyOpen}
+              />
+            </div>
+
+            {/* Protocol-specific empty state */}
+            {state === 'empty' && (
+              <div
+                className="mt-6 rounded-xl border py-10 text-center"
+                style={{ borderColor: `${config.color}22`, backgroundColor: `${config.color}05` }}
+              >
+                <div
+                  className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-2xl"
+                  style={{ backgroundColor: `${config.color}18`, color: config.color }}
+                >
+                  {config.icon}
+                </div>
+                <h3 className="mb-1 text-base font-bold" style={{ color: config.color }}>
+                  No {config.postNoun}s found
+                </h3>
+                <p className="mx-auto max-w-xs text-sm text-gray-500">
+                  There are no {config.postNoun}s from {config.name} right now. This can happen when
+                  the network is slow or the API is temporarily unavailable.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="mt-4 rounded-lg px-4 py-2 text-sm font-medium text-white transition-all"
+                  style={{ backgroundColor: config.color }}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right column — Quick Jump sidebar (desktop only) */}
+          <div className="hidden w-44 shrink-0 lg:block">
+            <QuickJumpSidebar color={config.color} activeTab={activeTab} onJump={setActiveTab} />
+          </div>
+        </div>
 
         {tipPost && (
           <TipModal

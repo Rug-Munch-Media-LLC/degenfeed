@@ -75,19 +75,27 @@ export default function CommunitiesPage() {
                 Lens.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (!ready) {
-                  openSignIn();
-                  return;
-                }
-                setShowCreate(true);
-              }}
-              className="btn-primary text-sm"
-            >
-              + Create
-            </button>
+            <div className="flex gap-2">
+              <Link
+                href="/c/discover"
+                className="btn-secondary text-sm"
+              >
+                🌐 Browse Fediverse
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!ready) {
+                    openSignIn();
+                    return;
+                  }
+                  setShowCreate(true);
+                }}
+                className="btn-primary text-sm"
+              >
+                + Create
+              </button>
+            </div>
           </div>
 
           {/* Search */}

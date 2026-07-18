@@ -4,6 +4,7 @@ import { ErrorBoundary, getProtocolColor, getProtocolIcon } from '@degenfeed/ui'
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { CATEGORIES, CategoryCard } from '../../components/CategoryCard';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -113,14 +114,26 @@ function formatTime(ts: number): string {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120);
 }
 
 // ─── Section Skeleton ──────────────────────────────────────────────────────
 
-function SectionSkeleton({ count = 3, layout = 'col' }: { count?: number; layout?: 'col' | 'row' }) {
+function SectionSkeleton({
+  count = 3,
+  layout = 'col',
+}: {
+  count?: number;
+  layout?: 'col' | 'row';
+}) {
   return (
-    <div className={`grid gap-3 ${layout === 'row' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2'}`}>
+    <div
+      className={`grid gap-3 ${layout === 'row' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2'}`}
+    >
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="card animate-pulse h-24" />
       ))}
@@ -208,7 +221,8 @@ function TrendingPostCard({
         <span className="truncate text-xs font-semibold text-[var(--color-fg)]">
           {post.author.displayName}
         </span>
-        <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
+        <span
+          className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
           style={{ backgroundColor: `${protocolColor}18`, color: protocolColor }}
         >
           {post.protocol}
@@ -240,8 +254,12 @@ function TrendingPostCard({
 // ─── Community Card ────────────────────────────────────────────────────────
 
 function CommunityCard({ community }: { community: DiscoverCommunity }) {
-  const activityColor = community.activityLevel === 'high' ? '#22c55e' :
-    community.activityLevel === 'medium' ? '#eab308' : '#6b7280';
+  const activityColor =
+    community.activityLevel === 'high'
+      ? '#22c55e'
+      : community.activityLevel === 'medium'
+        ? '#eab308'
+        : '#6b7280';
 
   return (
     <Link
@@ -251,7 +269,9 @@ function CommunityCard({ community }: { community: DiscoverCommunity }) {
       <div
         className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl text-sm font-bold"
         style={{
-          backgroundColor: community.icon ? 'transparent' : `${getProtocolColor(community.protocols[0] ?? 'nostr')}22`,
+          backgroundColor: community.icon
+            ? 'transparent'
+            : `${getProtocolColor(community.protocols[0] ?? 'nostr')}22`,
         }}
       >
         {community.icon ? (
@@ -331,14 +351,15 @@ function PersonCard({ person }: { person: DiscoverPerson }) {
           </span>
           <span
             className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
-            style={{ backgroundColor: `${getProtocolColor(person.protocol)}18`, color: getProtocolColor(person.protocol) }}
+            style={{
+              backgroundColor: `${getProtocolColor(person.protocol)}18`,
+              color: getProtocolColor(person.protocol),
+            }}
           >
             {person.protocol}
           </span>
         </div>
-        <div className="truncate text-[10px] text-[var(--color-muted)]">
-          @{person.handle}
-        </div>
+        <div className="truncate text-[10px] text-[var(--color-muted)]">@{person.handle}</div>
         {person.topNiches.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-1">
             {person.topNiches.slice(0, 3).map((niche) => (
@@ -381,10 +402,7 @@ function TopicPill({ topic, count }: { topic: TrendingTopic; count: number }) {
 function SpaceCard({ space }: { space: FeaturedSpace }) {
   const isLive = space.status === 'live';
   return (
-    <Link
-      href="/spaces"
-      className="card-hover flex items-start gap-3 p-4 transition-colors"
-    >
+    <Link href="/spaces" className="card-hover flex items-start gap-3 p-4 transition-colors">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-degen-500/20 to-purple-500/20 text-sm">
         {isLive ? '\uD83D\uDCE2' : '\uD83D\uDD54'}
       </div>
@@ -430,22 +448,33 @@ function NewItemCard({
   href: string;
 }) {
   return (
-    <Link
-      href={href}
-      className="card-hover flex items-center gap-3 p-3 transition-colors"
-    >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg text-xs font-bold"
+    <Link href={href} className="card-hover flex items-center gap-3 p-3 transition-colors">
+      <div
+        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg text-xs font-bold"
         style={{ backgroundColor: `${type === 'community' ? '#6366f1' : '#22c55e'}22` }}
       >
         {icon ? (
-          <Image src={icon} alt={name} width={36} height={36} className="h-9 w-9 rounded-lg object-cover" />
-        ) : type === 'community' ? '\uD83C\uDFD8\uFE0F' : '\uD83D\uDC64'}
+          <Image
+            src={icon}
+            alt={name}
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-lg object-cover"
+          />
+        ) : type === 'community' ? (
+          '\uD83C\uDFD8\uFE0F'
+        ) : (
+          '\uD83D\uDC64'
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <span className="truncate text-xs font-semibold text-[var(--color-fg)]">{name}</span>
-        {subtitle && <div className="truncate text-[10px] text-[var(--color-muted)]">{subtitle}</div>}
+        {subtitle && (
+          <div className="truncate text-[10px] text-[var(--color-muted)]">{subtitle}</div>
+        )}
       </div>
-      <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
+      <span
+        className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
         style={{
           backgroundColor: type === 'community' ? '#6366f118' : '#22c55e18',
           color: type === 'community' ? '#6366f1' : '#22c55e',
@@ -471,31 +500,51 @@ export default function DiscoverPage() {
   const [trendingPeriod, setTrendingPeriod] = useState<string>('hour');
 
   // Per-section state management
-  const [trendingState, setTrendingState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
-  const [communitiesState, setCommunitiesState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
-  const [peopleState, setPeopleState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
-  const [topicsState, setTopicsState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
-  const [spacesState, setSpacesState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
+  const [trendingState, setTrendingState] = useState<'loading' | 'loaded' | 'empty' | 'error'>(
+    'loading',
+  );
+  const [communitiesState, setCommunitiesState] = useState<
+    'loading' | 'loaded' | 'empty' | 'error'
+  >('loading');
+  const [peopleState, setPeopleState] = useState<'loading' | 'loaded' | 'empty' | 'error'>(
+    'loading',
+  );
+  const [topicsState, setTopicsState] = useState<'loading' | 'loaded' | 'empty' | 'error'>(
+    'loading',
+  );
+  const [spacesState, setSpacesState] = useState<'loading' | 'loaded' | 'empty' | 'error'>(
+    'loading',
+  );
   const [newState, setNewState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
 
-  const fetchSection = useCallback(async <T,>(
-    url: string,
-    extractor: (data: T) => { items: unknown[]; total?: number },
-    setState: (s: 'loading' | 'loaded' | 'empty' | 'error') => void,
-    setData: (items: unknown[]) => void,
-  ) => {
-    try {
-      const res = await fetch(url);
-      if (!res.ok) { setState('error'); return; }
-      const raw = (await res.json()) as T;
-      const { items } = extractor(raw);
-      if (items.length === 0) { setState('empty'); setData([]); return; }
-      setData(items);
-      setState('loaded');
-    } catch {
-      setState('error');
-    }
-  }, []);
+  const fetchSection = useCallback(
+    async <T,>(
+      url: string,
+      extractor: (data: T) => { items: unknown[]; total?: number },
+      setState: (s: 'loading' | 'loaded' | 'empty' | 'error') => void,
+      setData: (items: unknown[]) => void,
+    ) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          setState('error');
+          return;
+        }
+        const raw = (await res.json()) as T;
+        const { items } = extractor(raw);
+        if (items.length === 0) {
+          setState('empty');
+          setData([]);
+          return;
+        }
+        setData(items);
+        setState('loaded');
+      } catch {
+        setState('error');
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -504,39 +553,70 @@ export default function DiscoverPage() {
       const fetches: Promise<void>[] = [
         fetchSection(
           `/api/discover/trending?period=${trendingPeriod}`,
-          (d: { data: TrendingPost[]; meta: { total: number } }) => ({ items: d.data, total: d.meta.total }),
+          (d: { data: TrendingPost[]; meta: { total: number } }) => ({
+            items: d.data,
+            total: d.meta.total,
+          }),
           setTrendingState,
-          (items) => { if (!cancelled) setTrendingPosts(items as TrendingPost[]); },
+          (items) => {
+            if (!cancelled) setTrendingPosts(items as TrendingPost[]);
+          },
         ),
         fetchSection(
           '/api/discover/communities',
-          (d: { data: DiscoverCommunity[]; meta: { total: number } }) => ({ items: d.data, total: d.meta.total }),
+          (d: { data: DiscoverCommunity[]; meta: { total: number } }) => ({
+            items: d.data,
+            total: d.meta.total,
+          }),
           setCommunitiesState,
-          (items) => { if (!cancelled) setCommunities(items as DiscoverCommunity[]); },
+          (items) => {
+            if (!cancelled) setCommunities(items as DiscoverCommunity[]);
+          },
         ),
         fetchSection(
           '/api/discover/people',
-          (d: { data: DiscoverPerson[]; meta: { total: number } }) => ({ items: d.data, total: d.meta.total }),
+          (d: { data: DiscoverPerson[]; meta: { total: number } }) => ({
+            items: d.data,
+            total: d.meta.total,
+          }),
           setPeopleState,
-          (items) => { if (!cancelled) setPeople(items as DiscoverPerson[]); },
+          (items) => {
+            if (!cancelled) setPeople(items as DiscoverPerson[]);
+          },
         ),
         fetchSection(
           '/api/discover/topics',
-          (d: { data: TrendingTopic[]; meta: { total: number } }) => ({ items: d.data, total: d.meta.total }),
+          (d: { data: TrendingTopic[]; meta: { total: number } }) => ({
+            items: d.data,
+            total: d.meta.total,
+          }),
           setTopicsState,
-          (items) => { if (!cancelled) setTopics(items as TrendingTopic[]); },
+          (items) => {
+            if (!cancelled) setTopics(items as TrendingTopic[]);
+          },
         ),
         fetchSection(
           '/api/discover/featured',
-          (d: { spaces: FeaturedSpace[]; trending: TrendingTopic[] }) => ({ items: d.spaces, total: d.spaces.length }),
+          (d: { spaces: FeaturedSpace[]; trending: TrendingTopic[] }) => ({
+            items: d.spaces,
+            total: d.spaces.length,
+          }),
           setSpacesState,
-          (items) => { if (!cancelled) setSpaces(items as FeaturedSpace[]); },
+          (items) => {
+            if (!cancelled) setSpaces(items as FeaturedSpace[]);
+          },
         ),
         (async () => {
           try {
             const res = await fetch('/api/discover/new');
-            if (!res.ok) { if (!cancelled) setNewState('error'); return; }
-            const data = (await res.json()) as { communities: DiscoverCommunity[]; people: DiscoverPerson[] };
+            if (!res.ok) {
+              if (!cancelled) setNewState('error');
+              return;
+            }
+            const data = (await res.json()) as {
+              communities: DiscoverCommunity[];
+              people: DiscoverPerson[];
+            };
             if (!cancelled) {
               const hasItems = data.communities.length > 0 || data.people.length > 0;
               setNewCommunities(data.communities || []);
@@ -553,14 +633,19 @@ export default function DiscoverPage() {
     }
 
     loadAll();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [fetchSection, trendingPeriod]);
 
   // Re-fetch trending when period changes
   useEffect(() => {
     fetchSection(
       `/api/discover/trending?period=${trendingPeriod}`,
-      (d: { data: TrendingPost[]; meta: { total: number } }) => ({ items: d.data, total: d.meta.total }),
+      (d: { data: TrendingPost[]; meta: { total: number } }) => ({
+        items: d.data,
+        total: d.meta.total,
+      }),
       setTrendingState,
       (items) => setTrendingPosts(items as TrendingPost[]),
     );
@@ -593,6 +678,26 @@ export default function DiscoverPage() {
         </div>
 
         <div className="space-y-10">
+          {/* ═══ 0. Browse by Category ═══ */}
+          <section>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{'\uD83D\uDCC1'}</span>
+                <div>
+                  <h2 className="text-base font-bold text-[var(--color-fg)]">Browse by Category</h2>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    Explore topics across the open social graph
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {CATEGORIES.slice(0, 6).map((cat) => (
+                <CategoryCard key={cat.id} {...cat} />
+              ))}
+            </div>
+          </section>
+
           {/* ═══ 1. Trending Now ═══ */}
           <section>
             <SectionHeader

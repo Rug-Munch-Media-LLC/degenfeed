@@ -316,57 +316,116 @@
 /* ── Animation Keyframes ─────────────────────────────────────────── */
 
 @keyframes btn-press {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.95); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes heart-pop {
-  0% { transform: scale(1); }
-  25% { transform: scale(1.3); }
-  50% { transform: scale(0.9); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.3);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes tip-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(0, 255, 65, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 255, 65, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 65, 0);
+  }
 }
 
 @keyframes slide-up {
-  from { transform: translateY(12px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes toast-in {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes compose-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.3); }
-  50% { box-shadow: 0 0 20px 4px rgba(0, 255, 65, 0.15); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(0, 255, 65, 0.15);
+  }
 }
 
 @keyframes tab-slide-left {
-  from { opacity: 0; transform: translateX(16px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes tab-slide-right {
-  from { opacity: 0; transform: translateX(-16px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* ── Transition Duration Tokens ─────────────────────────────────── */
@@ -380,12 +439,24 @@
 /* ── Animation Utility Classes ──────────────────────────────────── */
 
 @layer utilities {
-  .animate-btn-press { animation: btn-press 0.3s ease-out; }
-  .animate-heart-pop { animation: heart-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  .animate-tip-pulse { animation: tip-pulse 0.8s ease-out; }
-  .animate-slide-up { animation: slide-up 0.25s ease-out; }
-  .animate-toast-in { animation: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
-  .animate-page-enter { animation: page-enter 0.4s ease-out; }
+  .animate-btn-press {
+    animation: btn-press 0.3s ease-out;
+  }
+  .animate-heart-pop {
+    animation: heart-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .animate-tip-pulse {
+    animation: tip-pulse 0.8s ease-out;
+  }
+  .animate-slide-up {
+    animation: slide-up 0.25s ease-out;
+  }
+  .animate-toast-in {
+    animation: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .animate-page-enter {
+    animation: page-enter 0.4s ease-out;
+  }
   .animate-shimmer {
     background: linear-gradient(
       90deg,
@@ -399,8 +470,12 @@
   .animate-compose-pulse {
     animation: compose-pulse 2s ease-in-out infinite;
   }
-  .animate-tab-left { animation: tab-slide-left 0.25s ease-out; }
-  .animate-tab-right { animation: tab-slide-right 0.25s ease-out; }
+  .animate-tab-left {
+    animation: tab-slide-left 0.25s ease-out;
+  }
+  .animate-tab-right {
+    animation: tab-slide-right 0.25s ease-out;
+  }
 
   /* Stagger entrance — set --stagger-i on each child */
   .stagger-enter > * {
@@ -416,8 +491,9 @@
 
   /* Hover scale micro-interaction */
   .hover-lift {
-    transition: transform var(--duration-fast) ease-out,
-                box-shadow var(--duration-fast) ease-out;
+    transition:
+      transform var(--duration-fast) ease-out,
+      box-shadow var(--duration-fast) ease-out;
   }
   .hover-lift:hover {
     transform: translateY(-1px);
@@ -504,7 +580,7 @@
 }
 
 .image-placeholder::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
@@ -531,3 +607,523 @@
  * LAYOUT — Reader
  * Extracted to layout-reader.module.css for dynamic import.
  * ═══════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════
+ * UI POLISH — Reading experience / Font size + line spacing
+ * ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Font size scale */
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.0625rem;
+  --font-size-lg: 1.125rem;
+
+  /* Line spacing scale */
+  --line-spacing-compact: 1.4;
+  --line-spacing-comfortable: 1.6;
+  --line-spacing-relaxed: 1.8;
+
+  /* Active values (applied to content areas) */
+  --reader-font-size: var(--font-size-base);
+  --reader-line-height: var(--line-spacing-comfortable);
+
+  /* Reading progress bar */
+  --progress-bar-height: 3px;
+}
+
+/* Reader size classes */
+.reader-sm {
+  --reader-font-size: var(--font-size-sm);
+}
+.reader-md {
+  --reader-font-size: var(--font-size-md);
+}
+.reader-lg {
+  --reader-font-size: var(--font-size-lg);
+}
+
+.reader-compact {
+  --reader-line-height: var(--line-spacing-compact);
+}
+.reader-comfortable {
+  --reader-line-height: var(--line-spacing-comfortable);
+}
+.reader-relaxed {
+  --reader-line-height: var(--line-spacing-relaxed);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * UI POLISH — Reading progress bar
+ * ═══════════════════════════════════════════════════════════════ */
+
+.reading-progress {
+  position: fixed;
+  top: 64px; /* below shell header */
+  left: 0;
+  height: var(--progress-bar-height);
+  background: linear-gradient(90deg, var(--color-accent), #a855f7);
+  z-index: 49;
+  transition: width 100ms linear;
+  border-radius: 0 2px 2px 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * UI POLISH — Scroll-to-top button
+ * ═══════════════════════════════════════════════════════════════ */
+
+.scroll-to-top {
+  position: fixed;
+  bottom: 5rem;
+  right: 1.25rem;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  background: var(--color-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-glass-border);
+  color: var(--color-fg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease-out,
+    opacity var(--duration-fast) ease-out;
+  transform: translateY(0);
+  opacity: 0;
+  pointer-events: none;
+}
+.scroll-to-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.scroll-to-top:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-accent);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.35),
+    0 0 20px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+.scroll-to-top:active {
+  transform: scale(0.92);
+}
+.scroll-to-top .progress-ring {
+  position: absolute;
+  inset: 0;
+}
+.scroll-to-top .progress-ring circle {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+  transition: stroke-dashoffset 150ms linear;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * UI POLISH — New posts floating pill
+ * ═══════════════════════════════════════════════════════════════ */
+
+.new-posts-pill {
+  position: sticky;
+  top: 5rem;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 auto 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  color: #000;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--color-accent) 35%, transparent);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) ease-out,
+    opacity var(--duration-fast) ease-out;
+  border: none;
+}
+.new-posts-pill:hover {
+  transform: scale(1.03);
+}
+.new-posts-pill:active {
+  transform: scale(0.97);
+}
+.new-posts-pill .pulse-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: #000;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * UI POLISH — Button press micro-interaction
+ * ═══════════════════════════════════════════════════════════════ */
+
+.btn-press {
+  transition: transform var(--duration-fast) ease-out;
+}
+.btn-press:active {
+  transform: scale(0.95);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * UI POLISH — Content reveal animation (staggered fade-in)
+ * ═══════════════════════════════════════════════════════════════ */
+
+.reveal-enter {
+  opacity: 0;
+  animation: reveal-fade-in 0.4s ease-out forwards;
+}
+.reveal-enter:nth-child(1) {
+  animation-delay: 0ms;
+}
+.reveal-enter:nth-child(2) {
+  animation-delay: 60ms;
+}
+.reveal-enter:nth-child(3) {
+  animation-delay: 120ms;
+}
+.reveal-enter:nth-child(4) {
+  animation-delay: 180ms;
+}
+.reveal-enter:nth-child(5) {
+  animation-delay: 240ms;
+}
+.reveal-enter:nth-child(6) {
+  animation-delay: 300ms;
+}
+.reveal-enter:nth-child(7) {
+  animation-delay: 360ms;
+}
+.reveal-enter:nth-child(8) {
+  animation-delay: 420ms;
+}
+
+@keyframes reveal-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * UI POLISH — Page transition (crossfade)
+ * ═══════════════════════════════════════════════════════════════ */
+
+.page-transition-enter {
+  opacity: 0;
+  animation: page-fade-in 0.35s ease-out forwards;
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dark .page-transition-enter {
+  animation: page-fade-in-dark 0.35s ease-out forwards;
+}
+
+@keyframes page-fade-in-dark {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * UI POLISH — Pull-to-refresh spring indicator
+ * ═══════════════════════════════════════════════════════════════ */
+
+.ptr-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out;
+}
+.ptr-indicator .ptr-arrow {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.2s ease-out;
+}
+.ptr-indicator.ptr-ready .ptr-arrow {
+  transform: rotate(180deg);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * UI POLISH — Video mini-player
+ * ═══════════════════════════════════════════════════════════════ */
+
+.mini-player {
+  position: fixed;
+  bottom: 5rem;
+  right: 1.25rem;
+  z-index: 48;
+  width: 18rem;
+  height: 10rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--color-glass-border);
+  transition:
+    transform var(--duration-normal) ease-out,
+    opacity var(--duration-normal) ease-out;
+  cursor: grab;
+}
+.mini-player:active {
+  cursor: grabbing;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * UI POLISH — Autoplay countdown bar
+ * ═══════════════════════════════════════════════════════════════ */
+
+.autoplay-countdown {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: white;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 0.5rem;
+}
+.autoplay-countdown .countdown-bar {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.autoplay-countdown .countdown-bar .fill {
+  height: 100%;
+  background: var(--color-accent);
+  transition: width 1s linear;
+  border-radius: 1px;
+}
+.autoplay-countdown .cancel-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  transition:
+    color var(--duration-fast) ease-out,
+    background var(--duration-fast) ease-out;
+}
+.autoplay-countdown .cancel-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * DARK MODE REFINEMENTS — Better glass, contrast, depth
+ * ═══════════════════════════════════════════════════════════════ */
+
+.dark {
+  /* Improved glass card - more frosted, less heavy */
+  --color-glass-bg: rgba(17, 17, 27, 0.65);
+  --color-glass-border: rgba(255, 255, 255, 0.07);
+
+  /* Brighter text for better contrast */
+  --color-fg: #f0f2f5;
+  --color-muted: #8b8fa3;
+
+  /* Card with subtle glow */
+  --color-card: rgba(17, 17, 27, 0.75);
+  --color-card-hover: rgba(25, 25, 40, 0.85);
+
+  /* Accent glow refinement */
+  --color-accent-glow: rgba(0, 255, 65, 0.15);
+
+  /* Subtle border refinement */
+  --color-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Dark glass card with backdrop blur */
+.dark .card-glass-deep {
+  background: rgba(10, 10, 20, 0.5);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 4px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Feed header glass refinement */
+.dark .glass {
+  background: rgba(10, 10, 20, 0.75);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Bottom nav glass */
+.dark .bottom-nav {
+  background: rgba(10, 10, 20, 0.8);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Shell header glass */
+.dark .shell-header {
+  background: rgba(10, 10, 20, 0.75);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Aurora / mesh refinement for dark mode */
+.dark .aurora-bg {
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(0, 255, 65, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(0, 255, 65, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(88, 28, 255, 0.03) 0%, transparent 60%);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * EMPTY STATE — Enhanced illustration styles
+ * ═══════════════════════════════════════════════════════════════ */
+
+.empty-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  background: var(--color-accent-glow);
+  margin: 0 auto 1rem;
+  font-size: 1.75rem;
+}
+
+.dark .empty-state-icon {
+  background: rgba(0, 255, 65, 0.08);
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.05);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * CARD — Frosted glass card (used across the app)
+ * ═══════════════════════════════════════════════════════════════ */
+
+.frosted-card {
+  background: var(--color-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 1rem;
+  transition:
+    border-color var(--duration-fast) ease-out,
+    box-shadow var(--duration-fast) ease-out;
+}
+.frosted-card:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.dark .frosted-card {
+  background: rgba(17, 17, 27, 0.5);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dark .frosted-card:hover {
+  background: rgba(20, 20, 32, 0.6);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(0, 255, 65, 0.03);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * FEED DENSITY — Visual density modes for feed
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* Dense mode: compact cards, smaller text, tighter spacing */
+.feed-density-dense .feed-list-item {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+}
+.feed-density-dense .feed-list-item .text-base {
+  font-size: 0.8125rem !important;
+}
+.feed-density-dense .feed-list-item .gap-3 {
+  gap: 0.5rem !important;
+}
+.feed-density-dense .feed-list-item img,
+.feed-density-dense .feed-list-item .h-10 {
+  width: 2rem !important;
+  height: 2rem !important;
+}
+
+/* Visual mode: larger cards, more media emphasis */
+.feed-density-visual .feed-list-item {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+  margin-bottom: 0.75rem !important;
+  border-radius: 1rem !important;
+  border-width: 1px !important;
+  border-color: var(--color-glass-border) !important;
+  background-color: var(--color-card) !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+.feed-density-visual .feed-list-item:hover {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 4px 24px var(--color-accent-glow) !important;
+}
+.feed-density-visual .feed-list-item .text-base {
+  font-size: 0.9375rem !important;
+  line-height: 1.6 !important;
+}
+.feed-density-visual .feed-list-item img {
+  border-radius: 0.75rem !important;
+}
+
+/* Scrollbar hide utility */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
