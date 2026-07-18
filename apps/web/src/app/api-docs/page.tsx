@@ -141,7 +141,7 @@ const endpoints: Record<string, Endpoint[]> = {
     {
       method: 'GET',
       path: '/v1/feed/news',
-      desc: 'Curated news feed from 550+ RSS sources.',
+      desc: 'Curated news feed from 353+ RSS sources.',
       auth: 'read:feed',
     },
     {

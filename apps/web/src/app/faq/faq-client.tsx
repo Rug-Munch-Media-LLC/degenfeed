@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     q: 'What protocols does DegenFeed support?',
-    a: 'Nostr (kind 1 text notes, kind 7 reactions, NIP-05/07/46), Farcaster (casts, replies, reactions via Hub API), Lens (profiles, publications, mirrors via GraphQL v2), Bluesky (AT Protocol — posts, likes, reposts), Mastodon / ActivityPub (via GotoSocial instance + federated instances), Threads (read-only via HTML scraping), Reddit (RSS + JSON API), RSS / Atom (550+ sources including YouTube, PeerTube, Mirror.xyz, Substack, Medium, Hacker News), and Lemmy (federated communities via API v3).',
+    a: 'Nostr (kind 1 text notes, kind 7 reactions, NIP-05/07/46), Farcaster (casts, replies, reactions via Hub API), Lens (profiles, publications, mirrors via GraphQL v2), Bluesky (AT Protocol — posts, likes, reposts), Mastodon / ActivityPub (via GotoSocial instance + federated instances), Threads (read-only via HTML scraping), Reddit (RSS + JSON API), RSS / Atom (353+ sources including YouTube, PeerTube, Mirror.xyz, Substack, Medium, Hacker News), and Lemmy (federated communities via API v3).',
   },
   {
     q: 'How does cross-protocol posting work?',

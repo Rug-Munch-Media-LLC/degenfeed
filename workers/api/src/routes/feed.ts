@@ -53,6 +53,7 @@ import {
   updateFeedFreshness,
   updateLastSync,
   writePostsToKV,
+  applyCurationPipeline,
   type FeedType,
 } from '../feed';
 import { type Env, jsonResponse } from '../index';
@@ -267,18 +268,32 @@ async function generateAndCacheFeed(
     resolvedPreset,
   });
 
+  // 8b. Apply curation pipeline: freshness boost, protocol interleaving,
+  //     content type variety, and category rotation
+  const curationOpts = {
+    freshnessBoost: params.get('freshnessBoost') !== 'false',
+    interleaveProtocols: params.get('interleaveProtocols') !== 'false',
+    maxConsecutiveProtocols: Number(params.get('maxConsecutiveProtocols')) || 2,
+    contentTypeVariety: params.get('contentTypeVariety') !== 'false',
+    maxConsecutiveContentType: Number(params.get('maxConsecutiveContentType')) || 3,
+    categoryRotation: params.get('categoryRotation') !== 'false',
+    minCategories: Number(params.get('minCategories')) || 3,
+    now,
+  };
+  const curated = applyCurationPipeline(ranked, curationOpts);
+
   // 9. Smart refresh — catch up returning users
   let catchUp = null;
   if (userId) {
     const lastSync = await getLastSync(env, userId);
     if (shouldTriggerSmartRefresh(lastSync, now)) {
-      catchUp = buildCatchUpSummary(ranked, userCtx.followed, lastSync, now);
+      catchUp = buildCatchUpSummary(curated, userCtx.followed, lastSync, now);
     }
     void updateLastSync(env, userId);
   }
 
   // 10. Feed freshness tracking
-  const freshnessEntry = await updateFeedFreshness(env, feedType, ranked);
+  const freshnessEntry = await updateFeedFreshness(env, feedType, curated);
   const freshnessMeta = computeFreshnessMeta(freshnessEntry, now);
 
   // 11. Trending Now (best-effort)
@@ -300,7 +315,7 @@ async function generateAndCacheFeed(
     // non-critical
   }
 
-  if (ranked.length === 0 && errors.length > 0) {
+  if (curated.length === 0 && errors.length > 0) {
     return jsonResponse({
       data: [],
       meta: {
@@ -320,9 +335,9 @@ async function generateAndCacheFeed(
   // 12. Build response
   const feedElapsed = Date.now() - feedStartTime;
   const responseBody = {
-    data: ranked,
+    data: curated,
     meta: {
-      total: ranked.length,
+      total: curated.length,
       limit,
       perProtocol,
       errors: errors.length > 0 ? errors : undefined,
@@ -334,7 +349,7 @@ async function generateAndCacheFeed(
       sort,
       presetName,
       presetLabel: resolvedPreset.profile.label,
-      newSinceLastVisit: countNewSinceLastVisit(cookieHeader, ranked),
+      newSinceLastVisit: countNewSinceLastVisit(cookieHeader, curated),
       fetchedAt: now,
       freshness: {
         updatedLabel: freshnessMeta.updatedLabel,
@@ -405,7 +420,7 @@ async function generateAndCacheFeed(
 
   // Broadcast feed update via WebSocket
   void broadcastFeedUpdate(feedType, {
-    newPostCount: ranked.length,
+    newPostCount: curated.length,
     timestamp: now,
   });
 

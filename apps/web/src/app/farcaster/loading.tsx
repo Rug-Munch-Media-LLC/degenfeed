@@ -4,16 +4,50 @@ import {
   SidebarSkeleton,
 } from '@/components/loading/PageSkeleton';
 
+const FC_PURPLE = '#8a63d2';
+
 export default function FarcasterLoading() {
   return (
     <ContentShellSkeleton sidebar={<SidebarSkeleton />}>
-      <div className="mb-6 flex items-center gap-3">
-        <div className="h-10 w-10 animate-pulse rounded-xl" style={{ backgroundColor: 'var(--color-muted)', opacity: 0.3 }} />
-        <div className="h-6 w-36 animate-pulse rounded-lg" style={{ backgroundColor: 'var(--color-muted)', opacity: 0.3 }} />
+      {/* Protocol Hero Skeleton */}
+      <div
+        className="mb-6 overflow-hidden rounded-2xl border p-6"
+        style={{ borderColor: `${FC_PURPLE}33` }}
+      >
+        <div className="flex items-start gap-4">
+          <div
+            className="h-16 w-16 animate-pulse rounded-2xl"
+            style={{ backgroundColor: `${FC_PURPLE}33` }}
+          />
+          <div className="flex-1 space-y-2 pt-1">
+            <div
+              className="h-7 w-32 animate-pulse rounded-lg"
+              style={{ backgroundColor: `${FC_PURPLE}22` }}
+            />
+            <div
+              className="h-4 w-64 animate-pulse rounded-lg"
+              style={{ backgroundColor: 'var(--color-muted)', opacity: 0.25 }}
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex gap-6">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-5 w-24 animate-pulse rounded-lg"
+              style={{ backgroundColor: `${FC_PURPLE}22` }}
+            />
+          ))}
+        </div>
       </div>
+      {/* Tab Skeleton */}
       <div className="mb-6 flex gap-2">
-        {['Posts', 'Trending', 'Communities'].map((t) => (
-          <div key={t} className="h-8 w-20 animate-pulse rounded-lg" style={{ backgroundColor: 'var(--color-muted)', opacity: 0.25 }} />
+        {['🔥 Hot', '⭐ Quality', '✨ New', '📈 Trending'].map((t) => (
+          <div
+            key={t}
+            className="h-8 w-24 animate-pulse rounded-lg"
+            style={{ backgroundColor: `${FC_PURPLE}18` }}
+          />
         ))}
       </div>
       <ListSkeleton count={6} />

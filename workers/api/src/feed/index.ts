@@ -8,6 +8,7 @@ export * from './feed-cache';
 export * from './feed-cache-layer';
 export * from './feed-categories';
 export * from './content-dedup';
+export * from './feed-curation-rules';
 export * from './engagement-predictor';
 export * from './feed-curator';
 export * from './feed-enricher';

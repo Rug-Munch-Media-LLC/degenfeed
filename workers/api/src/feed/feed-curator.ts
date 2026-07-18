@@ -195,6 +195,7 @@ export function inferPreferences(profile: BehaviorProfile, posts: UnifiedPost[])
 export interface FreshnessBoost {
   post: UnifiedPost;
   boost: number;
+  multiplier: number;
 }
 
 export function applyFreshnessBias(posts: UnifiedPost[], now: number): FreshnessBoost[] {
@@ -202,13 +203,14 @@ export function applyFreshnessBias(posts: UnifiedPost[], now: number): Freshness
     const ageMs = now - post.createdAt;
     const ageHours = ageMs / 3600000;
     let boost = 0;
+    let multiplier = 1.0;
 
-    if (ageHours < 1) boost = 3;
-    else if (ageHours < 6) boost = 2;
-    else if (ageHours < 24) boost = 1;
-    else if (ageHours > 72) boost = -1;
+    if (ageHours < 1) { boost = 2; multiplier = 2.0; }
+    else if (ageHours < 6) { boost = 1; multiplier = 1.5; }
+    else if (ageHours < 24) { boost = 0.5; multiplier = 1.0; }
+    else if (ageHours > 72) { boost = -1; multiplier = 0.8; }
 
-    return { post, boost };
+    return { post, boost, multiplier };
   });
 }
 
@@ -802,12 +804,13 @@ export function curateFeed(
   // 3. Temporal patterns
   const temporal = getTemporalPatterns(now);
 
-  // 4. Engagement prediction with temporal + velocity boosts
+  // 4. Engagement prediction with temporal + velocity boosts + freshness multiplier
   const inferredNiches = opts.behaviorProfile?.preferredNichesInferred ?? {};
+  const biasedMap = new Map(biasedPosts.map((b) => [b.post.id, b]));
   const predicted = predictEngagement(
     biasedPosts.map((b) => {
       const post = b.post;
-      let baseScore = (post.score?.total ?? 0) + b.boost;
+      let baseScore = ((post.score?.total ?? 0) + b.boost) * b.multiplier;
       baseScore = applyTemporalBoost(post, temporal, baseScore);
       const rapidEngagement = opts.previousEngagement
         ? computeRapidEngagement(post, opts.previousEngagement)

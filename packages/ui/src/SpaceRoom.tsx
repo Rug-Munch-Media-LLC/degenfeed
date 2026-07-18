@@ -7,6 +7,7 @@
 
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolBadge';
 
@@ -185,7 +186,7 @@ function AudienceMember({ speaker, index }: { speaker: Speaker; index: number })
       <div className={`h-6 w-6 shrink-0 rounded-full bg-gradient-to-br p-[1.5px] ${gradient}`}>
         <div className="h-full w-full overflow-hidden rounded-full bg-[var(--color-bg)]">
           {speaker.avatarUrl ? (
-            <img src={speaker.avatarUrl} alt="" className="h-full w-full object-cover" />
+            <Image src={speaker.avatarUrl} alt="" width={24} height={24} className="h-full w-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-[8px] font-bold text-[var(--color-fg)]">
               {speaker.displayName[0]?.toUpperCase() || '?'}

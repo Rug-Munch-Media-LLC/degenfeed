@@ -328,7 +328,7 @@ export default function NewsClient({ initialPosts, initialMeta }: NewsClientProp
               </span>
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Curated intelligence from {sourceCount || '319+'} sources across RSS, Reddit, and
+              Curated intelligence from {sourceCount || '353+'} sources across RSS, Reddit, and
               Hacker News — ranked by quality, recency, and sentiment.
             </p>
           </div>

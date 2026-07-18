@@ -1,6 +1,7 @@
 'use client';
 
 import { ScrollToTop } from '@degenfeed/ui';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -14,14 +15,22 @@ import { InstallPrompt } from './InstallPrompt';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { LeftSidebar } from './LeftSidebar';
 import { OfflineBanner } from './OfflineBanner';
-import { OnboardingModal } from './OnboardingModal';
 import { QuickJumpFloating } from './QuickJumpFloating';
 import { RightSidebar } from './RightSidebar';
 import { ScreenReaderAnnouncerProvider } from './ScreenReaderAnnouncer';
 import { SearchOverlay } from './SearchOverlay';
 import { SkipLinks } from './SkipLinks';
 import { useToast } from './Toast';
-import { WelcomeBackModal } from './WelcomeBackModal';
+
+const OnboardingModal = dynamic(
+  () => import('./OnboardingModal').then((m) => ({ default: m.OnboardingModal })),
+  { ssr: false, loading: () => null },
+);
+
+const WelcomeBackModal = dynamic(
+  () => import('./WelcomeBackModal').then((m) => ({ default: m.WelcomeBackModal })),
+  { ssr: false, loading: () => null },
+);
 
 const _APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
 

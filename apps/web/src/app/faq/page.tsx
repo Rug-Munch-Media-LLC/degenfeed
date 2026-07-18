@@ -65,7 +65,7 @@ const faqStructuredData = {
       name: 'What protocols does DegenFeed support?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Nostr, Farcaster (casts via Hub API), Lens (profiles via GraphQL v2), Bluesky (AT Protocol), Mastodon/ActivityPub, Threads (read-only), Reddit (RSS + JSON API), RSS/Atom (550+ sources), and Lemmy (federated communities).',
+        text: 'Nostr, Farcaster (casts via Hub API), Lens (profiles via GraphQL v2), Bluesky (AT Protocol), Mastodon/ActivityPub, Threads (read-only), Reddit (RSS + JSON API), RSS/Atom (353+ sources), and Lemmy (federated communities).',
       },
     },
     {

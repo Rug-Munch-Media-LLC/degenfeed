@@ -32,6 +32,8 @@ export interface MixedVideoGridProps {
   sort: VideoSort;
   /** Called when a video is clicked to play */
   onPlay?: (video: YouTubeVideoCardItem) => void;
+  /** Called when user clicks tip button on a video */
+  onTip?: (video: YouTubeVideoCardItem) => void;
   /** Called when user scrolls near bottom (load more) */
   onLoadMore?: () => void;
   /** Loading state */
@@ -162,6 +164,7 @@ export const MixedVideoGrid = memo(function MixedVideoGrid({
   activeCategory,
   sort,
   onPlay,
+  onTip,
   onLoadMore,
   loading = false,
   hasMore = false,
@@ -233,6 +236,7 @@ export const MixedVideoGrid = memo(function MixedVideoGrid({
                 video={video}
                 showExtended
                 onPlay={onPlay}
+                onTip={onTip}
               />
             ))}
           </div>

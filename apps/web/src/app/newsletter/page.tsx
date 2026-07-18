@@ -230,7 +230,7 @@ export default function NewsletterPage() {
         </h1>
         <p className="mx-auto max-w-xl text-sm leading-relaxed text-gray-500">
           The best of web3, AI, and tech — aggregated from Nostr, Farcaster, Lens, Bluesky,
-          Mastodon, 319 RSS sources, and 55 curated newsletters from Substack, Medium, Paragraph,
+          Mastodon, 353 RSS sources, and 55 curated newsletters from Substack, Medium, Paragraph,
           and Mirror. Ranked by quality, recency, and diversity. Delivered to your inbox every
           morning.
         </p>
@@ -446,7 +446,7 @@ export default function NewsletterPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>
-                  <span>Curated RSS feeds (319 sources across 11 categories)</span>
+                  <span>Curated RSS feeds (353 sources across 11 categories)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>

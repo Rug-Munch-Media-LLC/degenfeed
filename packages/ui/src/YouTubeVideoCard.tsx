@@ -9,7 +9,7 @@
  * States: normal, hover (enlarged thumbnail), loading (skeleton).
  */
 
-import { memo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -37,6 +37,8 @@ export interface YouTubeVideoCardProps {
   onPlay?: (video: YouTubeVideoCardItem) => void;
   /** Optional "Watch on" link handler — default opens in new tab */
   onWatchOn?: (video: YouTubeVideoCardItem) => void;
+  /** Called when user clicks tip button */
+  onTip?: (video: YouTubeVideoCardItem) => void;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────
@@ -83,6 +85,7 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
   showExtended = false,
   onPlay,
   onWatchOn,
+  onTip,
 }: YouTubeVideoCardProps) {
   const [imgError, setImgError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -229,30 +232,46 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
         )}
       </div>
 
-      {/* ── "Watch on" link — always accessible at bottom ── */}
-      <button
-        type="button"
-        onClick={handleWatchOn}
-        className="flex items-center justify-center gap-1 border-t border-[var(--color-glass-border)] px-3 py-2 text-[10px] text-[var(--color-muted)] hover:text-degen-400 hover:bg-[var(--color-overlay)] transition-colors focus:outline-none"
-        aria-label={`Watch on ${isYouTube ? 'YouTube' : 'PeerTube'}`}
-      >
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 12 12"
-          fill="none"
-          aria-hidden="true"
+      {/* ── Bottom row: Tip + Watch on ── */}
+      <div className="mt-auto flex items-center border-t border-[var(--color-glass-border)] divide-x divide-[var(--color-glass-border)]">
+        {onTip && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTip(video);
+            }}
+            className="flex flex-1 items-center justify-center gap-1 px-2 py-2 text-[10px] text-[var(--color-muted)] hover:text-amber-400 hover:bg-amber-500/5 transition-colors focus:outline-none"
+            aria-label={`Tip ${video.channelName}`}
+          >
+            <span>⚡</span>
+            <span>Tip</span>
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={handleWatchOn}
+          className={`flex flex-1 items-center justify-center gap-1 px-2 py-2 text-[10px] text-[var(--color-muted)] hover:text-degen-400 hover:bg-[var(--color-overlay)] transition-colors focus:outline-none ${onTip ? '' : 'w-full'}`}
+          aria-label={`Watch on ${isYouTube ? 'YouTube' : 'PeerTube'}`}
         >
-          <path
-            d="M5 2H2V10H10V7M6 6L10 2M10 2H7M10 2V5"
-            stroke="currentColor"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        Watch on {isYouTube ? 'youtube.com' : 'video.degenfeed.xyz'}
-      </button>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M5 2H2V10H10V7M6 6L10 2M10 2H7M10 2V5"
+              stroke="currentColor"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Watch on {isYouTube ? 'youtube.com' : 'video.degenfeed.xyz'}
+        </button>
+      </div>
 
       {/* Full card click target (a11y: keyboard already handled by button) */}
       <button

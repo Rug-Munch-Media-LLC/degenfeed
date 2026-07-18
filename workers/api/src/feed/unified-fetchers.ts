@@ -87,7 +87,7 @@ const LEMMY_INSTANCE = 'https://community.degenfeed.xyz';
 export async function fetchLemmyPosts(
   section: string,
   cursor?: string,
-  limit = 20,
+  limit = 30,
 ): Promise<{ posts: UnifiedPost[]; nextCursor?: string }> {
   const sortMap: Record<string, string> = {
     hot: 'Hot',
@@ -182,7 +182,7 @@ interface PeerTubeApiResponse {
 
 const PEERTUBE_INSTANCE = 'https://video.degenfeed.xyz';
 
-export async function fetchPeerTubeVideos(limit = 15): Promise<UnifiedPost[]> {
+export async function fetchPeerTubeVideos(limit = 20): Promise<UnifiedPost[]> {
   const url = `${PEERTUBE_INSTANCE}/api/v1/videos?count=${limit}&sort=-publishedAt&nsfw=false`;
   const res = await fetch(url, {
     headers: { accept: 'application/json', 'user-agent': 'DegenFeed/1.0' },
@@ -242,13 +242,13 @@ const YOUTUBE_FEEDS = [
 ];
 
 export async function fetchYouTubeVideos(
-  limit = 10,
+  limit = 20,
 ): Promise<{ posts: UnifiedPost[]; errors: string[] }> {
   const errors: string[] = [];
   const allPosts: UnifiedPost[] = [];
 
   const results = await Promise.allSettled(
-    YOUTUBE_FEEDS.slice(0, 4).map(async (feedUrl) => {
+    YOUTUBE_FEEDS.map(async (feedUrl) => {
       const res = await fetch(feedUrl, {
         headers: { accept: 'application/rss+xml', 'user-agent': 'DegenFeed/1.0' },
       });

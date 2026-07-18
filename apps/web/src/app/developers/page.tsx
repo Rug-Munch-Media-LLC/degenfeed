@@ -301,7 +301,7 @@ export default function DevelopersPage() {
           />
           <Integration
             name="RSS / Atom"
-            desc="550+ feeds: crypto, tech, AI, science, finance. Custom adapters."
+            desc="353+ feeds: crypto, tech, AI, science, finance. Custom adapters."
             badge="Stable"
           />
         </div>

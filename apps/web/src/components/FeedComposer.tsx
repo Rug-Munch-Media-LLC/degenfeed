@@ -133,7 +133,7 @@ export function FeedComposer({
   }));
 
   return (
-    <div className="composer border-b border-white/10 px-4 py-3">
+    <div className="composer border-b border-[var(--color-border)] px-4 py-3">
       <div className="flex gap-3">
         <div className="composer-avatar h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-[var(--color-muted)]">
           {avatar ? (
@@ -145,7 +145,7 @@ export function FeedComposer({
               className="h-full w-full object-cover"
             />
           ) : (
-            <span className="flex h-full w-full items-center justify-center text-sm text-gray-500">
+            <span className="flex h-full w-full items-center justify-center text-sm text-[var(--color-muted)]">
               ?
             </span>
           )}
@@ -157,7 +157,7 @@ export function FeedComposer({
             onChange={handleTextChange}
             placeholder="What is happening?!"
             rows={1}
-            className="w-full resize-none bg-transparent py-2 text-lg text-[var(--color-fg)] placeholder-gray-600 outline-none"
+            className="w-full resize-none bg-transparent py-2 text-lg text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none"
             aria-label="Compose a new post"
           />
 
@@ -189,7 +189,7 @@ export function FeedComposer({
                       height="10"
                       viewBox="0 0 16 16"
                       fill="none"
-                      className="text-gray-500"
+                      className="text-[var(--color-muted)]"
                       aria-hidden="true"
                     >
                       <path
@@ -207,17 +207,17 @@ export function FeedComposer({
           </div>
 
           {selected.has('mastodon') && nostrPublicId && (
-            <label className="mt-2 flex items-center gap-2 text-xs text-gray-400">
+            <label className="mt-2 flex items-center gap-2 text-xs text-[var(--color-muted)]">
               <input
                 type="checkbox"
                 checked={bridgeToNostr}
                 onChange={(e) => setBridgeToNostr(e.target.checked)}
-                className="h-3 w-3 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
+                className="h-3 w-3 rounded border-[var(--color-border)] bg-[var(--color-card)] text-degen-500 focus:ring-degen-500"
               />
               <span>
                 Also cross-post to <span className="font-medium text-[var(--color-fg)]">Nostr</span>
               </span>
-              <span className="text-[10px] text-gray-600">
+              <span className="text-[10px] text-[var(--color-muted)]">
                 (signed locally with your Nostr key)
               </span>
             </label>
@@ -235,7 +235,7 @@ export function FeedComposer({
             <div className="flex items-center gap-3 text-xs">
               <span
                 className={
-                  overLimit ? 'text-red-400' : nearLimit ? 'text-yellow-400' : 'text-gray-500'
+                  overLimit ? 'text-red-400' : nearLimit ? 'text-yellow-400' : 'text-[var(--color-muted)]'
                 }
               >
                 {charCount}
