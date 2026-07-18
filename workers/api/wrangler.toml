@@ -166,6 +166,7 @@ ALLOWED_ORIGINS = "https://canary.degenfeed.xyz,http://localhost:3000"
 
 # Cron triggers — scheduled Worker invocations.
 # Daily digest fires at 14:00 UTC (9 AM Eastern).
+# Trending scraper fires every 30 minutes.
 # Remove the [triggers] block to disable; ideal cost is ~zero.
 [triggers]
-crons = ["0 14 * * *"]
+crons = ["*/30 * * * *", "0 14 * * *", "0 12 * * 0"]

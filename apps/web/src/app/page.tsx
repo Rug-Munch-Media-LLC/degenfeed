@@ -195,7 +195,7 @@ export default function HomePage() {
           </p>
 
           <div className="hero-ctas">
-            <Link href="/onboarding" className="cta-primary">
+            <Link href="/feed" className="cta-primary">
               Sign in with wallet
             </Link>
             <Link href="/feed" className="cta-secondary">
@@ -357,7 +357,7 @@ export default function HomePage() {
           </h2>
           <p className="cta-sub">No account needed. No surveillance. No platform fees.</p>
           <div className="hero-ctas">
-            <Link href="/onboarding" className="cta-primary cta-primary-lg">
+            <Link href="/feed" className="cta-primary cta-primary-lg">
               Sign in with wallet
             </Link>
             <Link href="/feed" className="cta-secondary">

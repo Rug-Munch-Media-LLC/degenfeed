@@ -5,6 +5,7 @@
  */
 
 export * from './feed-cache';
+export * from './feed-categories';
 export * from './feed-curator';
 export * from './feed-enricher';
 export * from './feed-fetcher';

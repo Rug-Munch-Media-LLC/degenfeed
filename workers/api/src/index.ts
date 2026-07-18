@@ -77,6 +77,8 @@ export interface Env {
   REPORTS?: KVNamespace;
   /** Comma-separated admin wallet addresses (lowercase) for moderation dashboard access */
   ADMIN_WALLETS?: string;
+  /** YouTube Data API v3 key for channel discovery */
+  YOUTUBE_API_KEY?: string;
   /** KV namespace for Audio Spaces data */
   SPACES?: KVNamespace;
 
@@ -105,6 +107,20 @@ export interface Env {
    * Example: '{"mastodon":"int-abc","bluesky":"int-def"}'
    */
   POSTIZ_INTEGRATIONS?: string;
+
+  // ─── Cross-platform registration ─────────────────────────────────────
+  /** KV namespace for storing platform account records */
+  PLATFORM_ACCOUNTS?: KVNamespace;
+  /** KV namespace for Bluesky invite code pool */
+  BLUESKY_INVITE_POOL?: KVNamespace;
+  /** Base chain (Farcaster) RPC URL */
+  BASE_RPC_URL?: string;
+  /** Polygon chain (Lens) RPC URL */
+  POLYGON_RPC_URL?: string;
+  /** Private key of the premium wallet for paying on-chain registration fees */
+  PREMIUM_WALLET_KEY?: string;
+  /** Mastodon instance URL for account creation */
+  MASTODON_INSTANCE_URL?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
@@ -274,12 +290,42 @@ function _validateOrigin(request: Request, path: string, env: Env): boolean {
 // ─── Cron handler ───────────────────────────────────────────────
 
 /**
- * Called by the CF Workers cron trigger (daily digest at 14:00 UTC).
+ * Called by the CF Workers cron trigger.
+ *
+ * Schedules:
+ *   every-30-min — trending content scraper
+ *   daily-14:00  — daily digest + trending refresh
+ *
+ * The controller.cron field tells us which cron matched.
  * Re-exported from app.ts for the wrangler entry point.
  */
 export async function scheduled(
-  _controller: { cron: string; scheduledTime: number; noRetry: () => void },
+  controller: { cron: string; scheduledTime: number; noRetry: () => void },
   env: Env,
 ): Promise<void> {
-  await handleCron(env);
+  const cron = controller.cron;
+
+  // Trending scraper runs on every cron tick (both 30-min and daily)
+  // The 30-min cron is purely for trending; daily cron also runs the digest.
+  const { scrapeTrendingContent } = await import('./routes/trending-scraper');
+  await scrapeTrendingContent(env).catch((err) =>
+    console.warn('[scheduled] trending scrape failed:', err),
+  );
+
+  // Full digest only on the daily 14:00 UTC trigger
+  if (cron === '0 14 * * *') {
+    await handleCron(env);
+  }
+
+  // Weekly source discovery on Sundays at 12:00 UTC
+  if (cron === '0 12 * * 0') {
+    try {
+      const { handleSourcesDiscover } = await import('./routes/source-discovery');
+      const discoverReq = new Request('http://localhost/api/sources/discover?platform=all');
+      await handleSourcesDiscover(discoverReq, env);
+      console.log('[scheduled] weekly source discovery complete');
+    } catch (err) {
+      console.error('[scheduled] source discovery failed:', err);
+    }
+  }
 }

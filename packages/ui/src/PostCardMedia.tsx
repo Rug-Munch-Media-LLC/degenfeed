@@ -59,7 +59,7 @@ function LinkPreview({ embed, authorName }: { embed: Embed; authorName?: string 
   return (
     <a
       href={embed.url}
-      target="_blank" rel="noopener noreferrer"
+      target="_blank"
       rel="noopener noreferrer"
       className="link-preview group mt-2 block overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:bg-[var(--color-muted)]"
       onClick={(e) => e.stopPropagation()}
@@ -213,7 +213,7 @@ function PermanenceBadge({ proof }: { proof: ContentProof }) {
               ? `https://ipfs.io/ipfs/${proof.ipfsCid}`
               : undefined
         }
-        target="_blank" rel="noopener noreferrer"
+        target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1 rounded-full bg-cyan-950/40 px-2 py-0.5 text-[10px] font-medium text-cyan-400 hover:bg-cyan-900/50 transition-colors"
         title={tooltip}
@@ -232,9 +232,9 @@ function PermanenceBadge({ proof }: { proof: ContentProof }) {
                 ? `https://etherscan.io/tx/${proof.onChainTxHash}`
                 : undefined
           }
-          target="_blank" rel="noopener noreferrer"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-full bg-amber-950/40 px-2 py-0.5 text-[10px] font-medium text-amber-400 hover:bg-amber-900/50 transition-colors"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 rounded-full bg-amber-950/40 px-2 py-0.5 text-[10px] font-medium text-amber-400 hover:bg-amber-900/50 transition-colors"
           title={`On-chain anchor on ${proof.onChainChainId === 8453 ? 'Base' : `Chain ${proof.onChainChainId}`}: ${proof.onChainTxHash.slice(0, 8)}...${proof.onChainTxHash.slice(-4)}`}
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}

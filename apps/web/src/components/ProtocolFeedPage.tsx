@@ -4,6 +4,7 @@ import { addBookmark, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, FeedList } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
@@ -379,6 +380,19 @@ export function ProtocolFeedPage({ protocol }: Props) {
                     )}
                   </button>
                 ))}
+                {/* ── Dedicated Trending page link ── */}
+                <Link
+                  href={`/${config.id}/trending`}
+                  className="relative whitespace-nowrap px-4 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-300"
+                >
+                  📈 Trending
+                  <span
+                    className="absolute bottom-0 left-1/2 h-0.5 w-10 -translate-x-1/2 rounded-full opacity-0 transition-opacity hover:opacity-60"
+                    style={{
+                      backgroundColor: config.color,
+                    }}
+                  />
+                </Link>
               </div>
               <div className="hidden shrink-0 sm:block">
                 <DensityToggle value={density} onChange={setDensity} color={config.color} />

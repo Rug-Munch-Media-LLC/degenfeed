@@ -559,7 +559,6 @@ export default function VideosPage() {
                 href={`https://${PEERTUBE_INSTANCE}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                rel="noopener noreferrer"
                 className="text-degen-500 hover:text-degen-400 transition-colors underline underline-offset-2"
               >
                 {PEERTUBE_INSTANCE}
@@ -568,7 +567,6 @@ export default function VideosPage() {
               <a
                 href="https://sepiasearch.org"
                 target="_blank"
-                rel="noopener noreferrer"
                 rel="noopener noreferrer"
                 className="text-degen-500 hover:text-degen-400 transition-colors underline underline-offset-2"
               >

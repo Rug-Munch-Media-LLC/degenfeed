@@ -1,4 +1,15 @@
 export type { ContentProof, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+export type {
+  CrossPlatformSetupProps,
+  PlatformAccount,
+  PlatformStatus,
+  RegisterPlatformStatusData,
+  RegistrationPlatform,
+  RegistrationStatus,
+} from './CrossPlatformSetup';
+export { CrossPlatformSetup } from './CrossPlatformSetup';
+export type { CrossPlatformCardProps } from './CrossPlatformCard';
+export { CrossPlatformCard } from './CrossPlatformCard';
 export type { BlueskyPostContextProps } from './BlueskyPostContext';
 export { BlueskyPostContext } from './BlueskyPostContext';
 export type {

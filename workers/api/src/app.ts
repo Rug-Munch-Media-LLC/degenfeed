@@ -20,7 +20,14 @@ import { apiKeyMiddleware, generateApiKey, storeApiKey, deleteApiKey, VALID_SCOP
 
 // ─── Route handlers ──────────────────────────────────────────
 
-import { handleAccountDelete, handleAccountExport } from './routes/account';
+import {
+  handleAccountDelete, handleAccountExport
+} from './routes/account';
+import {
+  handleRegisterPlatform,
+  handleRegisterPlatformStatus,
+  handleBlueskyPoolStats,
+} from './routes/register-platform';
 import { handleAnalytics } from './routes/analytics';
 import {
   handleGtSAuthorize,
@@ -86,13 +93,18 @@ import {
   handleGetTopics,
 } from './routes/for-you';
 import {
-  handleCategoryFeed,
   handleFeedHealth,
   handleHomeFeed,
   handleProviderFeed,
   handleRedditFeed,
   handleTrendingFeed,
 } from './routes/feed';
+import {
+  handleCategoryMixFeed,
+  handleCategorySlugFeed,
+  handleEverythingFeed,
+  handlePerProtocolCategoryFeed,
+} from './routes/feed-category';
 import { handleUnifiedFeed } from './routes/feed-unified';
 import { handleFrameAction, handleFrameResolve } from './routes/frame';
 import { handleFundingFeed } from './routes/funding';
@@ -198,6 +210,12 @@ import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
 import { handleSchedulePost } from './routes/scheduled';
 import { handleSearch, handleSearchIdentity, handleSearchIndex } from './routes/search';
+import {
+  handleSourcesApprove,
+  handleSourcesDiscover,
+  handleSourcesPending,
+  handleSourcesReject,
+} from './routes/source-discovery';
 import { handleShortsFeed } from './routes/shorts';
 import { handleStreamFeed } from './routes/stream';
 import {
@@ -429,7 +447,22 @@ app.all('/api/feed/scroll-depth', async (c) => handleScrollDepth(c.req.raw, c.en
 app.all('/api/feed/seen', async (c) => handleMarkSeen(c.req.raw, c.env));
 app.all('/api/feed/engagement-feedback', async (c) => handleEngagementFeedback(c.req.raw, c.env));
 app.all('/api/feed/category/:category', async (c) =>
-  handleCategoryFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx),
+  handleCategorySlugFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx),
+);
+app.all('/api/feed/mix', async (c) =>
+  handleCategoryMixFeed(c.req.raw, c.env, c.executionCtx),
+);
+app.all('/api/feed/everything', async (c) =>
+  handleEverythingFeed(c.req.raw, c.env, c.executionCtx),
+);
+app.all('/api/feed/per-protocol/:protocol/:category', async (c) =>
+  handlePerProtocolCategoryFeed(
+    c.req.raw,
+    c.env,
+    c.req.param('protocol'),
+    c.req.param('category'),
+    c.executionCtx,
+  ),
 );
 // Unified blended feed — interleaves all sources
 app.all('/api/feed/unified', async (c) => handleUnifiedFeed(c.req.raw, c.env));
@@ -630,6 +663,16 @@ app.all('/api/x402/verify', async (c) => handleX402Verify(c.req.raw, c.env));
 app.post('/api/token-gate/verify', async (c) => handleTokenGateVerify(c.req.raw, c.env));
 app.post('/api/token-gate/resolve', async (c) => handleTokenGateResolve(c.req.raw, c.env));
 
+// ─── API: Cross-Platform Registration ──────────────────────
+app.all('/api/register-platform', async (c) => withSession(c, () => handleRegisterPlatform(c.req.raw, c.env)));
+app.get('/api/register-platform/status', async (c) => handleRegisterPlatformStatus(c.req.raw, c.env));
+app.get('/api/register-platform/bluesky-pool', async (c) => handleBlueskyPoolStats(c.req.raw, c.env));
+
+// ─── V1: Cross-Platform Registration ─────────────────────
+app.post('/v1/register-platform', async (c) => withSession(c, () => handleRegisterPlatform(c.req.raw, c.env)));
+app.get('/v1/register-platform/status', async (c) => handleRegisterPlatformStatus(c.req.raw, c.env));
+app.get('/v1/register-platform/bluesky-pool', async (c) => handleBlueskyPoolStats(c.req.raw, c.env));
+
 // ─── API: Permanence (Arweave/IPFS) ───────────────────────
 app.post('/api/permanence/store', async (c) => withSession(c, () => handlePermanenceStore(c.req.raw, c.env)));
 app.get('/api/permanence/verify/:hash', async (c) =>
@@ -695,6 +738,17 @@ app.all('/api/deploy/status', async (c) => handleDeployStatus(c.req.raw, c.env))
 import { handleTrendingSidebar } from './routes/trending-sidebar';
 
 app.get('/api/trending/sidebar', async (c) => handleTrendingSidebar(c.req.raw, c.env));
+
+// ─── API: Trending Scraper & Aggregation ────────────────────
+import {
+  handleTrendingAggregated,
+  handleTrendingNow,
+  handleTrendingPerPlatform,
+} from './routes/trending';
+
+app.get('/api/trending/aggregated', async (c) => handleTrendingAggregated(c.req.raw, c.env));
+app.get('/api/trending/per-platform', async (c) => handleTrendingPerPlatform(c.req.raw, c.env));
+app.get('/api/trending/now', async (c) => handleTrendingNow(c.req.raw, c.env));
 
 // ─── API: Search ────────────────────────────────────────────
 app.all('/api/search/identity', async (c) => handleSearchIdentity(c.req.raw, c.env));
@@ -852,7 +906,22 @@ app.all('/v1/feed/scroll-depth', async (c) => handleScrollDepth(c.req.raw, c.env
 app.all('/v1/feed/seen', async (c) => handleMarkSeen(c.req.raw, c.env));
 app.all('/v1/feed/engagement-feedback', async (c) => handleEngagementFeedback(c.req.raw, c.env));
 app.all('/v1/feed/category/:category', async (c) =>
-  handleCategoryFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx),
+  handleCategorySlugFeed(c.req.raw, c.env, c.req.param('category'), c.executionCtx),
+);
+app.all('/v1/feed/mix', async (c) =>
+  handleCategoryMixFeed(c.req.raw, c.env, c.executionCtx),
+);
+app.all('/v1/feed/everything', async (c) =>
+  handleEverythingFeed(c.req.raw, c.env, c.executionCtx),
+);
+app.all('/v1/feed/per-protocol/:protocol/:category', async (c) =>
+  handlePerProtocolCategoryFeed(
+    c.req.raw,
+    c.env,
+    c.req.param('protocol'),
+    c.req.param('category'),
+    c.executionCtx,
+  ),
 );
 // V1 unified blended feed
 app.all('/v1/feed/unified', async (c) => handleUnifiedFeed(c.req.raw, c.env));
@@ -1195,6 +1264,12 @@ app.all('/v1/messages/:id', async (c) => {
   return jsonResponse({ error: 'Method not allowed' }, 405);
 });
 
+// ─── V1: Source Discovery ──────────────────────────────────
+app.get('/api/sources/discover', async (c) => handleSourcesDiscover(c.req.raw, c.env));
+app.get('/api/sources/pending', async (c) => handleSourcesPending(c.req.raw, c.env));
+app.post('/api/sources/approve', async (c) => handleSourcesApprove(c.req.raw, c.env));
+app.post('/api/sources/reject', async (c) => handleSourcesReject(c.req.raw, c.env));
+
 // ─── V1: Additional endpoints ─────────────────────────────
 app.all('/v1/translate', async (c) => handleTranslate(c.req.raw, c.env));
 app.all('/v1/push/send', async (c) => handlePushSend(c.req.raw, c.env));
@@ -1236,6 +1311,9 @@ app.get('/v1/preferences/topics', async (c) => handleGetTopics(c.req.raw, c.env)
 app.post('/v1/preferences/topics', async (c) => handleAdjustTopic(c.req.raw, c.env));
 app.post('/v1/preferences/topics/clear', async (c) => handleClearTopic(c.req.raw, c.env));
 app.get('/v1/trending/sidebar', async (c) => handleTrendingSidebar(c.req.raw, c.env));
+app.get('/v1/trending/aggregated', async (c) => handleTrendingAggregated(c.req.raw, c.env));
+app.get('/v1/trending/per-platform', async (c) => handleTrendingPerPlatform(c.req.raw, c.env));
+app.get('/v1/trending/now', async (c) => handleTrendingNow(c.req.raw, c.env));
 app.all('/v1/schedule', (c) => handleSchedulePost(c.req.raw, c.env));
 
 // ─── API: Leaderboard ────────────────────────────────────────

@@ -229,6 +229,46 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@26.1.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
 
+  packages/crossplatform-register:
+    dependencies:
+      '@degenfeed/bluesky-sdk':
+        specifier: workspace:*
+        version: link:../bluesky-sdk
+      '@degenfeed/farcaster-sdk':
+        specifier: workspace:*
+        version: link:../farcaster-sdk
+      '@degenfeed/identity':
+        specifier: workspace:*
+        version: link:../identity
+      '@degenfeed/lens-sdk':
+        specifier: workspace:*
+        version: link:../lens-sdk
+      '@degenfeed/mastodon-sdk':
+        specifier: workspace:*
+        version: link:../mastodon-sdk
+      '@degenfeed/nostr-sdk':
+        specifier: workspace:*
+        version: link:../nostr-sdk
+      '@degenfeed/types':
+        specifier: workspace:*
+        version: link:../types
+      '@noble/curves':
+        specifier: ^1.6.0
+        version: 1.9.7
+      '@noble/hashes':
+        specifier: ^1.5.0
+        version: 1.8.0
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.5.2
+        version: 2.5.2
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@26.1.0)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
+
   packages/farcaster-sdk:
     dependencies:
       '@degenfeed/feed-core':
@@ -463,6 +503,25 @@ importers:
       '@degenfeed/youtube-provider':
         specifier: workspace:*
         version: link:../youtube-provider
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.5.2
+        version: 2.5.2
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@26.1.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.3(@types/node@26.1.0)(jiti@1.21.7)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))
+
+  packages/source-discovery:
+    dependencies:
+      '@degenfeed/feed-core':
+        specifier: workspace:*
+        version: link:../feed-core
+      '@degenfeed/types':
+        specifier: workspace:*
+        version: link:../types
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.2
