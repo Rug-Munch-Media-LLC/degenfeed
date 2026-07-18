@@ -1,8 +1,326 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// ─── Topic configuration ──────────────────────────────────────────
+// ─── Feed Mix Configuration Types ─────────────────────────────
+
+export interface ProtocolWeight {
+  /** 0-100 weight for this protocol in the feed mix */
+  weight: number;
+  /** Min engagement threshold (0 = no filter) */
+  minEngagement: number;
+  /** Show only verified creators */
+  verifiedOnly: boolean;
+  /** Minimum content length (chars) */
+  minContentLength: number;
+}
+
+export interface ContentTypeWeights {
+  posts: number;
+  images: number;
+  videos: number;
+  links: number;
+  threads: number;
+}
+
+export interface FeedMixConfig {
+  protocols: Record<string, ProtocolWeight>;
+  contentTypes: ContentTypeWeights;
+  qualityThresholds: {
+    globalMinEngagement: number;
+    hideLowQuality: boolean;
+    hideThreshold: number;
+    verifiedOnly: boolean;
+    minContentLength: number;
+  };
+}
+
+export interface SavedMix {
+  id: string;
+  name: string;
+  description: string;
+  config: FeedMixConfig;
+}
+
+// ─── Defaults ─────────────────────────────────────────────────
+
+const DEFAULT_PROTOCOL_WEIGHT = 50;
+const DEFAULT_PROTOCOL_QUALITY: Omit<ProtocolWeight, 'weight'> = {
+  minEngagement: 0,
+  verifiedOnly: false,
+  minContentLength: 0,
+};
+
+export const PROTOCOLS = [
+  { id: 'nostr', label: 'Nostr', icon: '⚡', color: '#8e30eb' },
+  { id: 'farcaster', label: 'Farcaster', icon: '🟣', color: '#8a63d2' },
+  { id: 'lens', label: 'Lens', icon: '🌿', color: '#abfe2c' },
+  { id: 'bluesky', label: 'Bluesky', icon: '🦋', color: '#1185fe' },
+  { id: 'mastodon', label: 'Mastodon', icon: '🐘', color: '#6364ff' },
+  { id: 'reddit', label: 'Reddit', icon: '🔴', color: '#ff4500' },
+  { id: 'rss', label: 'RSS', icon: '📰', color: '#ffa500' },
+  { id: 'lemmy', label: 'Lemmy', icon: '🌲', color: '#22c55e' },
+  { id: 'youtube', label: 'YouTube', icon: '▶️', color: '#ff0000' },
+  { id: 'peertube', label: 'PeerTube', icon: '📺', color: '#f1680d' },
+] as const;
+
+export const CONTENT_TYPE_LABELS: Record<
+  keyof ContentTypeWeights,
+  { label: string; icon: string }
+> = {
+  posts: { label: 'Posts', icon: '📝' },
+  images: { label: 'Images', icon: '🖼️' },
+  videos: { label: 'Videos', icon: '🎬' },
+  links: { label: 'Links', icon: '🔗' },
+  threads: { label: 'Threads', icon: '🧵' },
+};
+
+export function getDefaultProtocols(): Record<string, ProtocolWeight> {
+  const p: Record<string, ProtocolWeight> = {};
+  for (const proto of PROTOCOLS) {
+    p[proto.id] = { weight: DEFAULT_PROTOCOL_WEIGHT, ...DEFAULT_PROTOCOL_QUALITY };
+  }
+  return p;
+}
+
+export function getDefaultFeedMixConfig(): FeedMixConfig {
+  return {
+    protocols: getDefaultProtocols(),
+    contentTypes: { posts: 50, images: 50, videos: 50, links: 50, threads: 50 },
+    qualityThresholds: {
+      globalMinEngagement: 0,
+      hideLowQuality: false,
+      hideThreshold: 1.0,
+      verifiedOnly: false,
+      minContentLength: 0,
+    },
+  };
+}
+
+// ─── Pre-built mixes ──────────────────────────────────────────
+
+export const PREBUILT_MIXES: SavedMix[] = [
+  {
+    id: 'defi-heavy',
+    name: 'DeFi Heavy',
+    description: 'Maximize DeFi content from Farcaster, Reddit, and RSS',
+    config: {
+      protocols: {
+        nostr: { weight: 40, ...DEFAULT_PROTOCOL_QUALITY },
+        farcaster: { weight: 80, ...DEFAULT_PROTOCOL_QUALITY },
+        lens: { weight: 50, ...DEFAULT_PROTOCOL_QUALITY },
+        bluesky: { weight: 40, ...DEFAULT_PROTOCOL_QUALITY },
+        mastodon: { weight: 30, ...DEFAULT_PROTOCOL_QUALITY },
+        reddit: { weight: 80, ...DEFAULT_PROTOCOL_QUALITY },
+        rss: { weight: 70, ...DEFAULT_PROTOCOL_QUALITY },
+        lemmy: { weight: 30, ...DEFAULT_PROTOCOL_QUALITY },
+        youtube: { weight: 50, ...DEFAULT_PROTOCOL_QUALITY },
+        peertube: { weight: 20, ...DEFAULT_PROTOCOL_QUALITY },
+      },
+      contentTypes: { posts: 70, images: 30, videos: 40, links: 60, threads: 50 },
+      qualityThresholds: {
+        globalMinEngagement: 5,
+        hideLowQuality: true,
+        hideThreshold: 1.5,
+        verifiedOnly: false,
+        minContentLength: 0,
+      },
+    },
+  },
+  {
+    id: 'nft-focus',
+    name: 'NFT Focus',
+    description: 'Visual-heavy feed from Lens, Twitter, and OpenSea RSS',
+    config: {
+      protocols: {
+        nostr: { weight: 40, ...DEFAULT_PROTOCOL_QUALITY },
+        farcaster: { weight: 60, ...DEFAULT_PROTOCOL_QUALITY },
+        lens: { weight: 80, ...DEFAULT_PROTOCOL_QUALITY },
+        bluesky: { weight: 50, ...DEFAULT_PROTOCOL_QUALITY },
+        mastodon: { weight: 30, ...DEFAULT_PROTOCOL_QUALITY },
+        reddit: { weight: 50, ...DEFAULT_PROTOCOL_QUALITY },
+        rss: { weight: 60, ...DEFAULT_PROTOCOL_QUALITY },
+        lemmy: { weight: 20, ...DEFAULT_PROTOCOL_QUALITY },
+        youtube: { weight: 30, ...DEFAULT_PROTOCOL_QUALITY },
+        peertube: { weight: 20, ...DEFAULT_PROTOCOL_QUALITY },
+      },
+      contentTypes: { posts: 50, images: 90, videos: 60, links: 40, threads: 30 },
+      qualityThresholds: {
+        globalMinEngagement: 3,
+        hideLowQuality: true,
+        hideThreshold: 1.0,
+        verifiedOnly: false,
+        minContentLength: 0,
+      },
+    },
+  },
+  {
+    id: 'trading-signals',
+    name: 'Trading Signals',
+    description: 'Fast-moving trading chatter, alpha calls, and market analysis',
+    config: {
+      protocols: {
+        nostr: { weight: 70, ...DEFAULT_PROTOCOL_QUALITY },
+        farcaster: { weight: 90, ...DEFAULT_PROTOCOL_QUALITY },
+        lens: { weight: 40, ...DEFAULT_PROTOCOL_QUALITY },
+        bluesky: { weight: 60, ...DEFAULT_PROTOCOL_QUALITY },
+        mastodon: { weight: 30, ...DEFAULT_PROTOCOL_QUALITY },
+        reddit: { weight: 70, ...DEFAULT_PROTOCOL_QUALITY },
+        rss: { weight: 30, ...DEFAULT_PROTOCOL_QUALITY },
+        lemmy: { weight: 20, ...DEFAULT_PROTOCOL_QUALITY },
+        youtube: { weight: 20, ...DEFAULT_PROTOCOL_QUALITY },
+        peertube: { weight: 10, ...DEFAULT_PROTOCOL_QUALITY },
+      },
+      contentTypes: { posts: 90, images: 50, videos: 30, links: 70, threads: 40 },
+      qualityThresholds: {
+        globalMinEngagement: 10,
+        hideLowQuality: true,
+        hideThreshold: 2.0,
+        verifiedOnly: false,
+        minContentLength: 10,
+      },
+    },
+  },
+  {
+    id: 'news-only',
+    name: 'News Only',
+    description: 'Long-form news, analysis, and newsletters only',
+    config: {
+      protocols: {
+        nostr: { weight: 30, ...DEFAULT_PROTOCOL_QUALITY },
+        farcaster: { weight: 40, ...DEFAULT_PROTOCOL_QUALITY },
+        lens: { weight: 20, ...DEFAULT_PROTOCOL_QUALITY },
+        bluesky: { weight: 40, ...DEFAULT_PROTOCOL_QUALITY },
+        mastodon: { weight: 30, ...DEFAULT_PROTOCOL_QUALITY },
+        reddit: { weight: 50, ...DEFAULT_PROTOCOL_QUALITY },
+        rss: { weight: 100, ...DEFAULT_PROTOCOL_QUALITY },
+        lemmy: { weight: 30, ...DEFAULT_PROTOCOL_QUALITY },
+        youtube: { weight: 30, ...DEFAULT_PROTOCOL_QUALITY },
+        peertube: { weight: 10, ...DEFAULT_PROTOCOL_QUALITY },
+      },
+      contentTypes: { posts: 80, images: 30, videos: 30, links: 90, threads: 60 },
+      qualityThresholds: {
+        globalMinEngagement: 5,
+        hideLowQuality: true,
+        hideThreshold: 1.0,
+        verifiedOnly: false,
+        minContentLength: 100,
+      },
+    },
+  },
+  {
+    id: 'balanced',
+    name: 'Balanced',
+    description: 'The default — even mix across all protocols and content types',
+    config: getDefaultFeedMixConfig(),
+  },
+];
+
+// ─── Mock preview posts ───────────────────────────────────────
+
+interface PreviewPost {
+  protocol: string;
+  protocolColor: string;
+  icon: string;
+  author: string;
+  content: string;
+  likes: number;
+}
+
+function generatePreviewPosts(config: FeedMixConfig): PreviewPost[] {
+  // Sort protocols by weight descending, pick top 3
+  const sorted = Object.entries(config.protocols)
+    .filter(([, pw]) => pw.weight > 20)
+    .sort(([, a], [, b]) => b.weight - a.weight);
+
+  const topProtocols = sorted.slice(0, 3).map(([id]) => id);
+  const meta = Object.fromEntries(PROTOCOLS.map((p) => [p.id, p]));
+
+  const samples: Record<string, PreviewPost> = {
+    nostr: {
+      protocol: 'Nostr',
+      protocolColor: '#8e30eb',
+      icon: '⚡',
+      author: 'PabloF7z',
+      content:
+        'Nostr relays now processing over 1M events/day. New relay discovery protocols are making the network more resilient than ever. Decentralization is working.',
+      likes: 89,
+    },
+    farcaster: {
+      protocol: 'Farcaster',
+      protocolColor: '#8a63d2',
+      icon: '🟣',
+      author: 'dwr.eth',
+      content:
+        'The on-chain economy is accelerating. DegenFeed is bringing together content from every protocol — this is what an open social graph looks like. LFG.',
+      likes: 142,
+    },
+    lens: {
+      protocol: 'Lens',
+      protocolColor: '#abfe2c',
+      icon: '🌿',
+      author: 'stani.lens',
+      content:
+        'Lens Protocol v2: gasless profiles, community moderation, and creator monetization. The next generation of decentralized social is here.',
+      likes: 567,
+    },
+    bluesky: {
+      protocol: 'Bluesky',
+      protocolColor: '#1185fe',
+      icon: '🦋',
+      author: 'alice.bsky.social',
+      content:
+        'AT Protocol federation model deep dive is live. TL;DR: much simpler than people think. Open repo, come build with us.',
+      likes: 234,
+    },
+    reddit: {
+      protocol: 'Reddit',
+      protocolColor: '#ff4500',
+      icon: '🔴',
+      author: 'u/crypto_maxi',
+      content:
+        "Daily discussion thread: BTC dominance rising as altcoins cool off. What's everyone buying during this dip?",
+      likes: 345,
+    },
+    rss: {
+      protocol: 'RSS',
+      protocolColor: '#ffa500',
+      icon: '📰',
+      author: 'CoinDesk',
+      content:
+        'Bitcoin ETF Inflows Surge Past $1B Weekly as Institutional Adoption Accelerates — BlackRock and Fidelity lead the charge with record-breaking volumes.',
+      likes: 123,
+    },
+    mastodon: {
+      protocol: 'Mastodon',
+      protocolColor: '#6364ff',
+      icon: '🐘',
+      author: 'mastodonuser',
+      content:
+        'Just migrated my DegenFeed identity to a new Mastodon instance. The cross-protocol identity linking made it seamless. This is the future of social.',
+      likes: 56,
+    },
+  };
+
+  return topProtocols.map((id) => {
+    const s = samples[id];
+    if (!s) {
+      const m = meta[id];
+      return {
+        protocol: m?.label ?? id,
+        protocolColor: m?.color ?? '#666',
+        icon: m?.icon ?? '•',
+        author: `${m?.label ?? id} user`,
+        content: 'Content from this protocol in your mix.',
+        likes: Math.floor(Math.random() * 100),
+      };
+    }
+    return s;
+  });
+}
+
+// ─── Topic configuration (existing) ───────────────────────────
+
 export interface TopicDef {
   id: string;
   label: string;
@@ -52,15 +370,67 @@ export function encodeTopicWeights(weights: Record<string, number>): string {
     .join(',');
 }
 
-// ─── Color helpers ─────────────────────────────────────────────────
+// ─── LocalStorage helpers ─────────────────────────────────────
+
+const LS_FEED_MIX = 'df_feed_mix_config';
+const LS_SAVED_MIXES = 'df_saved_mixes';
+
+export function loadFeedMixConfig(): FeedMixConfig {
+  if (typeof window === 'undefined') return getDefaultFeedMixConfig();
+  try {
+    const raw = localStorage.getItem(LS_FEED_MIX);
+    if (raw) {
+      const parsed = JSON.parse(raw) as FeedMixConfig;
+      // Merge with defaults to handle any missing fields
+      const defaults = getDefaultFeedMixConfig();
+      return {
+        protocols: { ...defaults.protocols, ...parsed.protocols },
+        contentTypes: { ...defaults.contentTypes, ...parsed.contentTypes },
+        qualityThresholds: { ...defaults.qualityThresholds, ...parsed.qualityThresholds },
+      };
+    }
+  } catch {
+    /* ignore */
+  }
+  return getDefaultFeedMixConfig();
+}
+
+export function saveFeedMixConfig(config: FeedMixConfig): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LS_FEED_MIX, JSON.stringify(config));
+  } catch {
+    /* quota */
+  }
+}
+
+export function loadSavedMixes(): SavedMix[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LS_SAVED_MIXES);
+    return raw ? (JSON.parse(raw) as SavedMix[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveSavedMixes(mixes: SavedMix[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LS_SAVED_MIXES, JSON.stringify(mixes));
+  } catch {
+    /* quota */
+  }
+}
+
+// ─── Color helpers ────────────────────────────────────────────
+
 function sliderGradient(weight: number): string {
   if (weight < 50) {
-    // Low end: transparent → red
     const pct = Math.abs(weight - 50) / 50;
     return `linear-gradient(to right, transparent, rgba(239, 68, 68, ${pct * 0.7}))`;
   }
   if (weight > 50) {
-    // High end: transparent → green
     const pct = (weight - 50) / 50;
     return `linear-gradient(to right, transparent, rgba(34, 197, 94, ${pct * 0.7}))`;
   }
@@ -68,49 +438,95 @@ function sliderGradient(weight: number): string {
 }
 
 function thumbColor(weight: number): string {
-  if (weight < 30) return '#ef4444'; // red
-  if (weight <= 70) return '#6b7280'; // gray
-  return '#22c55e'; // green
+  if (weight < 30) return '#ef4444';
+  if (weight <= 70) return '#6b7280';
+  return '#22c55e';
 }
 
-/** Returns the label text for the tuned state */
 function weightLabel(weight: number): string {
-  if (weight <= 20) return 'Show much less';
-  if (weight <= 40) return 'Show less';
+  if (weight <= 20) return 'Minimal';
+  if (weight <= 40) return 'Reduced';
   if (weight <= 60) return 'Default';
-  if (weight <= 80) return 'Show more';
-  return 'Show much more';
+  if (weight <= 80) return 'Boosted';
+  return 'Max';
 }
 
-// ─── FeedTuner component ──────────────────────────────────────────
+// ─── Tuner Section Types ──────────────────────────────────────
+
+type TunerTab = 'topics' | 'mix' | 'quality' | 'mixes';
+
+// ─── FeedTuner Props ──────────────────────────────────────────
+
 interface FeedTunerProps {
-  /** Current topic weights (keyed by topic id) */
   weights: Record<string, number>;
-  /** Called whenever a slider changes (debounced externally) */
   onWeightsChange: (weights: Record<string, number>) => void;
-  /** Called when "Apply" is clicked */
   onApply: (weights: Record<string, number>) => void;
-  /** Called when "Reset to defaults" is clicked */
   onReset: () => void;
-  /** Close handler */
   onClose: () => void;
+  /** Feed mix config for the mix builder tab */
+  feedMixConfig?: FeedMixConfig;
+  onFeedMixChange?: (config: FeedMixConfig) => void;
+  onFeedMixApply?: (config: FeedMixConfig) => void;
+  onFeedMixReset?: () => void;
+  /** Saved mixes */
+  savedMixes?: SavedMix[];
+  onSaveMix?: (mix: SavedMix) => void;
+  onLoadMix?: (mix: SavedMix) => void;
+  onDeleteMix?: (id: string) => void;
 }
 
-export function FeedTuner({ weights, onWeightsChange, onApply, onReset, onClose }: FeedTunerProps) {
+export function FeedTuner({
+  weights,
+  onWeightsChange,
+  onApply,
+  onReset,
+  onClose,
+  feedMixConfig: externalFeedMixConfig,
+  onFeedMixChange,
+  onFeedMixApply,
+  onFeedMixReset,
+  savedMixes: externalSavedMixes,
+  onSaveMix,
+  onLoadMix,
+  onDeleteMix,
+}: FeedTunerProps) {
+  const [activeTab, setActiveTab] = useState<TunerTab>('topics');
   const [localWeights, setLocalWeights] = useState<Record<string, number>>(weights);
+  const [localFeedMix, setLocalFeedMix] = useState<FeedMixConfig>(
+    () => externalFeedMixConfig ?? loadFeedMixConfig(),
+  );
+  const [localSavedMixes, setLocalSavedMixes] = useState<SavedMix[]>(
+    () => externalSavedMixes ?? loadSavedMixes(),
+  );
+  const [mixNameInput, setMixNameInput] = useState('');
+  const [mixSavedToast, setMixSavedToast] = useState(false);
+  const [mixCollapsed, setMixCollapsed] = useState(false);
+  const [qualityCollapsed, setQualityCollapsed] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Sync from parent when weights prop changes (e.g. after apply)
+  const previewPosts = useMemo(() => generatePreviewPosts(localFeedMix), [localFeedMix]);
+
+  // Sync from parent
   useEffect(() => {
     setLocalWeights(weights);
   }, [weights]);
+
+  useEffect(() => {
+    if (externalFeedMixConfig) setLocalFeedMix(externalFeedMixConfig);
+  }, [externalFeedMixConfig]);
+
+  useEffect(() => {
+    if (externalSavedMixes) setLocalSavedMixes(externalSavedMixes);
+  }, [externalSavedMixes]);
+
+  const tunedCount = countTunedTopics(localWeights);
+
+  // ─── Topic slider handlers ─────────────────────────────────
 
   const handleSlider = useCallback(
     (topicId: string, value: number) => {
       const next = { ...localWeights, [topicId]: value };
       setLocalWeights(next);
-
-      // Debounce: fire change upstream so preview can update
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
         onWeightsChange(next);
@@ -119,13 +535,128 @@ export function FeedTuner({ weights, onWeightsChange, onApply, onReset, onClose 
     [localWeights, onWeightsChange],
   );
 
-  const tunedCount = countTunedTopics(localWeights);
+  // ─── Protocol mix handler ──────────────────────────────────
+
+  const handleProtocolWeight = useCallback((protocolId: string, weight: number) => {
+    setLocalFeedMix((prev) => ({
+      ...prev,
+      protocols: {
+        ...prev.protocols,
+        [protocolId]: { ...prev.protocols[protocolId], weight },
+      },
+    }));
+  }, []);
+
+  // ─── Content type handler ──────────────────────────────────
+
+  const handleContentTypeWeight = useCallback((type: keyof ContentTypeWeights, value: number) => {
+    setLocalFeedMix((prev) => ({
+      ...prev,
+      contentTypes: { ...prev.contentTypes, [type]: value },
+    }));
+  }, []);
+
+  // ─── Quality threshold handlers ────────────────────────────
+
+  const handleProtocolQuality = useCallback(
+    (protocolId: string, field: keyof ProtocolWeight, value: number | boolean) => {
+      setLocalFeedMix((prev) => ({
+        ...prev,
+        protocols: {
+          ...prev.protocols,
+          [protocolId]: { ...prev.protocols[protocolId], [field]: value },
+        },
+      }));
+    },
+    [],
+  );
+
+  const handleGlobalQuality = useCallback(
+    (field: keyof FeedMixConfig['qualityThresholds'], value: number | boolean) => {
+      setLocalFeedMix((prev) => ({
+        ...prev,
+        qualityThresholds: { ...prev.qualityThresholds, [field]: value },
+      }));
+    },
+    [],
+  );
+
+  // ─── Save/Load mix ─────────────────────────────────────────
+
+  const handleSaveCurrentMix = useCallback(() => {
+    const name = mixNameInput.trim() || `Custom Mix ${localSavedMixes.length + 1}`;
+    const mix: SavedMix = {
+      id: `custom-${Date.now()}`,
+      name,
+      description: 'Your custom feed mix',
+      config: localFeedMix,
+    };
+    const updated = [...localSavedMixes, mix];
+    setLocalSavedMixes(updated);
+    saveSavedMixes(updated);
+    setMixNameInput('');
+    setMixSavedToast(true);
+    setTimeout(() => setMixSavedToast(false), 2500);
+    onSaveMix?.(mix);
+  }, [mixNameInput, localSavedMixes, localFeedMix, onSaveMix]);
+
+  const handleLoadMix = useCallback(
+    (mix: SavedMix) => {
+      setLocalFeedMix(mix.config);
+      saveFeedMixConfig(mix.config);
+      onLoadMix?.(mix);
+    },
+    [onLoadMix],
+  );
+
+  const handleDeleteMix = useCallback(
+    (id: string) => {
+      const updated = localSavedMixes.filter((m) => m.id !== id);
+      setLocalSavedMixes(updated);
+      saveSavedMixes(updated);
+      onDeleteMix?.(id);
+    },
+    [localSavedMixes, onDeleteMix],
+  );
+
+  // ─── Feed mix apply / reset ────────────────────────────────
+
+  const handleMixApply = useCallback(() => {
+    saveFeedMixConfig(localFeedMix);
+    onFeedMixApply?.(localFeedMix);
+  }, [localFeedMix, onFeedMixApply]);
+
+  const handleMixReset = useCallback(() => {
+    const defaults = getDefaultFeedMixConfig();
+    setLocalFeedMix(defaults);
+    saveFeedMixConfig(defaults);
+    onFeedMixReset?.();
+  }, [onFeedMixReset]);
+
+  // ─── Immediate mix persist ─────────────────────────────────
+
+  const persistMixImmediately = useCallback(
+    (config: FeedMixConfig) => {
+      saveFeedMixConfig(config);
+      onFeedMixChange?.(config);
+    },
+    [onFeedMixChange],
+  );
+
+  // ─── Tab navigation ────────────────────────────────────────
+
+  const tunerTabs: { id: TunerTab; label: string; icon: string }[] = [
+    { id: 'topics', label: 'Topics', icon: '🎚️' },
+    { id: 'mix', label: 'Feed Mix', icon: '🔀' },
+    { id: 'quality', label: 'Quality', icon: '🛡️' },
+    { id: 'mixes', label: 'Saved', icon: '💾' },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center">
       <div
         className="flex w-full max-w-lg flex-col rounded-t-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl sm:rounded-2xl"
-        style={{ maxHeight: '85vh' }}
+        style={{ maxHeight: '90vh' }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="dialog"
@@ -135,11 +666,11 @@ export function FeedTuner({ weights, onWeightsChange, onApply, onReset, onClose 
         {/* ── Header ── */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
           <div>
-            <h2 className="text-base font-bold text-[var(--color-fg)]">🎚️ Tune Your Feed</h2>
+            <h2 className="text-base font-bold text-[var(--color-fg)]">🎛️ Feed Controls</h2>
             <p className="text-xs text-gray-500">
-              Slide to control what you see more or less of
-              {tunedCount > 0 && (
-                <span className="ml-1.5 text-degen-400">· {tunedCount} topics tuned</span>
+              Fine-tune every aspect of your feed
+              {tunedCount > 0 && activeTab === 'topics' && (
+                <span className="ml-1.5 text-degen-400">· {tunedCount} tuned</span>
               )}
             </p>
           </div>
@@ -149,7 +680,7 @@ export function FeedTuner({ weights, onWeightsChange, onApply, onReset, onClose 
             className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close tuner"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path
                 d="M12 4L4 12M4 4l8 8"
                 stroke="currentColor"
@@ -160,69 +691,564 @@ export function FeedTuner({ weights, onWeightsChange, onApply, onReset, onClose 
           </button>
         </div>
 
-        {/* ── Sliders ── */}
-        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-1">
-          {TOPICS.map((topic) => {
-            const w = localWeights[topic.id] ?? DEFAULT_WEIGHT;
-            return (
-              <div key={topic.id} className="topic-slider-group py-2">
-                <div className="flex items-center justify-between mb-1">
-                  <label
-                    htmlFor={`tuner-${topic.id}`}
-                    className="flex items-center gap-2 text-sm font-medium text-[var(--color-fg)]"
-                  >
-                    <span style={{ color: topic.color }}>{topic.icon}</span>
-                    <span>{topic.label}</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-xs font-mono tabular-nums"
-                      style={{ color: thumbColor(w) }}
-                    >
-                      {w}
-                    </span>
-                    <span className="text-[10px] text-gray-500 w-20 text-right">
-                      {weightLabel(w)}
-                    </span>
+        {/* ── Sub-tabs ── */}
+        <div
+          className="flex border-b border-[var(--color-border)] px-5"
+          role="tablist"
+          aria-label="Tuner sections"
+        >
+          {tunerTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors border-b-2 ${
+                activeTab === tab.id
+                  ? 'border-degen-500 text-[var(--color-fg)]'
+                  : 'border-transparent text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* ── Scrollable content ── */}
+        <div className="flex-1 overflow-y-auto px-5 py-3" style={{ scrollbarWidth: 'thin' }}>
+          {/* ═══ TAB 1: TOPICS (original tuner) ═══ */}
+          {activeTab === 'topics' && (
+            <div className="space-y-1">
+              <p className="text-xs text-gray-500 mb-2">
+                Slide to control what topics you see more or less of
+              </p>
+              {TOPICS.map((topic) => {
+                const w = localWeights[topic.id] ?? DEFAULT_WEIGHT;
+                return (
+                  <div key={topic.id} className="topic-slider-group py-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <label
+                        htmlFor={`tuner-${topic.id}`}
+                        className="flex items-center gap-2 text-sm font-medium text-[var(--color-fg)]"
+                      >
+                        <span style={{ color: topic.color }}>{topic.icon}</span>
+                        <span>{topic.label}</span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="text-xs font-mono tabular-nums"
+                          style={{ color: thumbColor(w) }}
+                        >
+                          {w}
+                        </span>
+                        <span className="text-[10px] text-gray-500 w-16 text-right">
+                          {weightLabel(w)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <div
+                        className="absolute inset-0 rounded-full pointer-events-none"
+                        style={{ background: sliderGradient(w) }}
+                      />
+                      <input
+                        id={`tuner-${topic.id}`}
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={w}
+                        onChange={(e) => handleSlider(topic.id, Number(e.target.value))}
+                        className="tuner-slider relative w-full h-1.5 appearance-none rounded-full bg-gray-700 cursor-pointer accent-degen-500"
+                        aria-label={`${topic.label} weight`}
+                        style={
+                          {
+                            '--slider-thumb-color': thumbColor(w),
+                            accentColor: thumbColor(w),
+                          } as React.CSSProperties
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="relative">
-                  {/* Gradient track background */}
-                  <div
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{ background: sliderGradient(w) }}
-                  />
-                  <input
-                    id={`tuner-${topic.id}`}
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value={w}
-                    onChange={(e) => handleSlider(topic.id, Number(e.target.value))}
-                    className="tuner-slider relative w-full h-1.5 appearance-none rounded-full bg-gray-700 cursor-pointer accent-degen-500"
-                    aria-label={`${topic.label} weight`}
-                    style={
-                      {
-                        '--slider-thumb-color': thumbColor(w),
-                        accentColor: thumbColor(w),
-                      } as React.CSSProperties
-                    }
-                  />
+                );
+              })}
+            </div>
+          )}
+
+          {/* ═══ TAB 2: FEED MIX ═══ */}
+          {activeTab === 'mix' && (
+            <div className="space-y-5">
+              {/* Protocol sliders */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setMixCollapsed((c) => !c)}
+                  className="flex items-center justify-between w-full text-sm font-semibold text-[var(--color-fg)] mb-2"
+                >
+                  <span>Protocol Mix</span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                    className={`transition-transform ${mixCollapsed ? '-rotate-90' : ''}`}
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+                <p className="text-[10px] text-gray-500 mb-2">
+                  Set how much of your feed comes from each protocol (0-100%)
+                </p>
+                {!mixCollapsed && (
+                  <div className="space-y-2">
+                    {PROTOCOLS.map((proto) => {
+                      const pw = localFeedMix.protocols[proto.id] ?? {
+                        weight: DEFAULT_PROTOCOL_WEIGHT,
+                        ...DEFAULT_PROTOCOL_QUALITY,
+                      };
+                      return (
+                        <div key={proto.id} className="flex items-center gap-2">
+                          <span
+                            className="text-xs w-20 shrink-0 font-medium text-[var(--color-fg)]"
+                            style={{ color: proto.color }}
+                          >
+                            {proto.icon} {proto.label}
+                          </span>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="5"
+                            value={pw.weight}
+                            onChange={(e) => handleProtocolWeight(proto.id, Number(e.target.value))}
+                            className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                            aria-label={`${proto.label} mix weight`}
+                          />
+                          <span className="text-xs font-mono tabular-nums text-gray-400 w-8 text-right">
+                            {pw.weight}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-[var(--color-border)] pt-4">
+                {/* Content type mix */}
+                <p className="text-sm font-semibold text-[var(--color-fg)] mb-1">
+                  Content Type Mix
+                </p>
+                <p className="text-[10px] text-gray-500 mb-2">
+                  Control how much of each content type appears
+                </p>
+                <div className="space-y-2">
+                  {(
+                    Object.entries(CONTENT_TYPE_LABELS) as [
+                      keyof ContentTypeWeights,
+                      { label: string; icon: string },
+                    ][]
+                  ).map(([key, meta]) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <span className="text-xs w-24 shrink-0 font-medium text-[var(--color-fg)]">
+                        {meta.icon} {meta.label}
+                      </span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value={localFeedMix.contentTypes[key]}
+                        onChange={(e) => handleContentTypeWeight(key, Number(e.target.value))}
+                        className="flex-1 h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                        aria-label={`${meta.label} weight`}
+                      />
+                      <span className="text-xs font-mono tabular-nums text-gray-400 w-8 text-right">
+                        {localFeedMix.contentTypes[key]}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            );
-          })}
+            </div>
+          )}
+
+          {/* ═══ TAB 3: QUALITY THRESHOLDS ═══ */}
+          {activeTab === 'quality' && (
+            <div className="space-y-5">
+              {/* Global quality */}
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-fg)] mb-3">
+                  Global Quality Settings
+                </p>
+                <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/30 p-3">
+                  {/* Hide low quality */}
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-xs font-medium text-[var(--color-fg)]">
+                      Hide low-quality posts
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={localFeedMix.qualityThresholds.hideLowQuality}
+                      onChange={(e) => handleGlobalQuality('hideLowQuality', e.target.checked)}
+                      className="h-4 w-4 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
+                    />
+                  </label>
+
+                  {localFeedMix.qualityThresholds.hideLowQuality && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-400 w-16">Threshold</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="5"
+                        step="0.5"
+                        value={localFeedMix.qualityThresholds.hideThreshold}
+                        onChange={(e) =>
+                          handleGlobalQuality('hideThreshold', Number(e.target.value))
+                        }
+                        className="flex-1 h-1 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                      />
+                      <span className="text-[10px] font-mono text-gray-500 w-8 text-right">
+                        {localFeedMix.qualityThresholds.hideThreshold.toFixed(1)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Verified only */}
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-xs font-medium text-[var(--color-fg)]">
+                      Show only verified creators
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={localFeedMix.qualityThresholds.verifiedOnly}
+                      onChange={(e) => handleGlobalQuality('verifiedOnly', e.target.checked)}
+                      className="h-4 w-4 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
+                    />
+                  </label>
+
+                  {/* Global min engagement */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-[var(--color-fg)]">
+                        Minimum engagement
+                      </span>
+                      <span className="text-[10px] font-mono text-gray-500">
+                        {localFeedMix.qualityThresholds.globalMinEngagement}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      value={localFeedMix.qualityThresholds.globalMinEngagement}
+                      onChange={(e) =>
+                        handleGlobalQuality('globalMinEngagement', Number(e.target.value))
+                      }
+                      className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                    />
+                  </div>
+
+                  {/* Min content length */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-[var(--color-fg)]">
+                        Minimum content length
+                      </span>
+                      <span className="text-[10px] font-mono text-gray-500">
+                        {localFeedMix.qualityThresholds.minContentLength} chars
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="500"
+                      step="25"
+                      value={localFeedMix.qualityThresholds.minContentLength}
+                      onChange={(e) =>
+                        handleGlobalQuality('minContentLength', Number(e.target.value))
+                      }
+                      className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Per-protocol quality */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setQualityCollapsed((c) => !c)}
+                  className="flex items-center justify-between w-full text-sm font-semibold text-[var(--color-fg)] mb-2"
+                >
+                  <span>Per-Protocol Tuning</span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                    className={`transition-transform ${qualityCollapsed ? '-rotate-90' : ''}`}
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+                {!qualityCollapsed && (
+                  <div className="space-y-3">
+                    {PROTOCOLS.map((proto) => {
+                      const pw = localFeedMix.protocols[proto.id] ?? {
+                        weight: DEFAULT_PROTOCOL_WEIGHT,
+                        ...DEFAULT_PROTOCOL_QUALITY,
+                      };
+                      return (
+                        <details
+                          key={proto.id}
+                          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/20"
+                        >
+                          <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs font-medium text-[var(--color-fg)] hover:text-degen-400 transition-colors">
+                            <span style={{ color: proto.color }}>{proto.icon}</span>
+                            <span>{proto.label}</span>
+                            <span className="ml-auto text-[10px] text-gray-500">
+                              {pw.minEngagement > 0 || pw.verifiedOnly || pw.minContentLength > 0
+                                ? '✓ tuned'
+                                : 'default'}
+                            </span>
+                          </summary>
+                          <div className="px-3 pb-3 space-y-2.5 border-t border-[var(--color-border)] pt-2">
+                            {/* Min engagement */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-gray-400 w-20 shrink-0">
+                                Min engagement
+                              </span>
+                              <input
+                                type="range"
+                                min="0"
+                                max="50"
+                                step="5"
+                                value={pw.minEngagement}
+                                onChange={(e) =>
+                                  handleProtocolQuality(
+                                    proto.id,
+                                    'minEngagement',
+                                    Number(e.target.value),
+                                  )
+                                }
+                                className="flex-1 h-1 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                              />
+                              <span className="text-[10px] font-mono text-gray-500 w-6 text-right">
+                                {pw.minEngagement}
+                              </span>
+                            </div>
+
+                            {/* Min content length */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-gray-400 w-20 shrink-0">
+                                Min length
+                              </span>
+                              <input
+                                type="range"
+                                min="0"
+                                max="500"
+                                step="25"
+                                value={pw.minContentLength}
+                                onChange={(e) =>
+                                  handleProtocolQuality(
+                                    proto.id,
+                                    'minContentLength',
+                                    Number(e.target.value),
+                                  )
+                                }
+                                className="flex-1 h-1 cursor-pointer appearance-none rounded-full bg-gray-700 accent-degen-500"
+                              />
+                              <span className="text-[10px] font-mono text-gray-500 w-8 text-right">
+                                {pw.minContentLength}c
+                              </span>
+                            </div>
+
+                            {/* Verified only */}
+                            <label className="flex items-center justify-between cursor-pointer">
+                              <span className="text-[10px] text-gray-400">Verified only</span>
+                              <input
+                                type="checkbox"
+                                checked={pw.verifiedOnly}
+                                onChange={(e) =>
+                                  handleProtocolQuality(proto.id, 'verifiedOnly', e.target.checked)
+                                }
+                                className="h-3.5 w-3.5 rounded border-white/20 bg-[var(--color-muted)] text-degen-500 focus:ring-degen-500"
+                              />
+                            </label>
+                          </div>
+                        </details>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ═══ TAB 4: SAVED MIXES ═══ */}
+          {activeTab === 'mixes' && (
+            <div className="space-y-4">
+              {/* Save current mix */}
+              <div className="rounded-xl border border-degen-500/30 bg-degen-500/5 p-3">
+                <p className="text-xs font-semibold text-[var(--color-fg)] mb-2">
+                  Save Current Settings as Mix
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={mixNameInput}
+                    onChange={(e) => setMixNameInput(e.target.value)}
+                    placeholder="Mix name (e.g. 'Weekend Vibes')"
+                    maxLength={50}
+                    className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500/50 focus:outline-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSaveCurrentMix();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveCurrentMix}
+                    className="btn-primary text-xs whitespace-nowrap"
+                  >
+                    Save Mix
+                  </button>
+                </div>
+                {mixSavedToast && <p className="mt-1 text-[10px] text-degen-400">✓ Mix saved!</p>}
+              </div>
+
+              {/* Pre-built mixes */}
+              <div>
+                <p className="text-xs font-semibold text-[var(--color-fg)] mb-2">Pre-built Mixes</p>
+                <div className="space-y-1.5">
+                  {[
+                    ...PREBUILT_MIXES,
+                    ...localSavedMixes.filter((m) => !PREBUILT_MIXES.find((p) => p.id === m.id)),
+                  ].map((mix) => {
+                    const isPrebuilt = !!PREBUILT_MIXES.find((p) => p.id === mix.id);
+                    return (
+                      <div
+                        key={mix.id}
+                        className="flex items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)]/20 px-3 py-2.5"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-[var(--color-fg)] truncate">
+                            {mix.name}
+                            {isPrebuilt && (
+                              <span className="ml-1.5 text-[9px] uppercase tracking-wider text-degen-400">
+                                Built-in
+                              </span>
+                            )}
+                          </p>
+                          {mix.description && (
+                            <p className="text-[10px] text-gray-500 truncate">{mix.description}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleLoadMix(mix)}
+                            className="rounded-lg px-2.5 py-1 text-[10px] font-medium text-degen-400 hover:bg-degen-500/10 transition-colors"
+                          >
+                            Load
+                          </button>
+                          {!isPrebuilt && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMix(mix.id)}
+                              className="rounded-lg p-1 text-gray-500 hover:text-red-400 transition-colors"
+                              aria-label={`Delete ${mix.name}`}
+                            >
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {localSavedMixes.length === 0 && (
+                    <p className="text-xs text-gray-500 italic py-2">
+                      No custom mixes saved yet. Configure a mix above and save it!
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ═══ FEED PREVIEW (shown at bottom of content area) ═══ */}
+        <div className="border-t border-[var(--color-border)] px-5 py-3">
+          <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-2">
+            Preview with current settings
+          </p>
+          <div className="space-y-2">
+            {previewPosts.map((post) => (
+              <div
+                key={post.protocol}
+                className="flex items-start gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)]/20 p-2.5"
+              >
+                <div
+                  className="h-6 w-6 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold"
+                  style={{ backgroundColor: `${post.protocolColor}22`, color: post.protocolColor }}
+                >
+                  {post.author.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[10px] font-medium text-[var(--color-fg)] truncate">
+                      {post.author}
+                    </span>
+                    <span
+                      className="text-[8px] px-1 py-0.5 rounded-full font-medium"
+                      style={{
+                        backgroundColor: `${post.protocolColor}18`,
+                        color: post.protocolColor,
+                      }}
+                    >
+                      {post.icon} {post.protocol}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-gray-400 line-clamp-2">{post.content}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[9px] text-gray-500">❤️ {post.likes}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ── Footer ── */}
         <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] px-5 py-4">
           <button
             type="button"
-            onClick={onReset}
+            onClick={activeTab === 'topics' ? onReset : handleMixReset}
             className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-xs font-medium text-gray-400 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           >
-            Reset to defaults
+            {activeTab === 'topics' ? 'Reset topics' : 'Reset mix'}
           </button>
           <div className="flex items-center gap-2">
             <button
@@ -234,7 +1260,13 @@ export function FeedTuner({ weights, onWeightsChange, onApply, onReset, onClose 
             </button>
             <button
               type="button"
-              onClick={() => onApply(localWeights)}
+              onClick={() => {
+                if (activeTab === 'topics') {
+                  onApply(localWeights);
+                } else {
+                  handleMixApply();
+                }
+              }}
               className="btn-primary text-sm"
             >
               Apply

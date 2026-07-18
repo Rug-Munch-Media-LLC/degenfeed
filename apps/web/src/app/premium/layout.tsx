@@ -1,26 +1,38 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Premium',
+  title: 'DegenFeed Premium — Cross-Platform Registration, Advanced Analytics',
   description:
-    'Unlock advanced filtering, custom feeds, noise reduction, analytics, and cross-posting. $5/mo Pro, $15/mo Creator.',
+    'Unlock cross-platform posting, advanced filtering, custom feeds, noise reduction, analytics, and more. Pro $5/mo, Creator $15/mo, Enterprise $50/mo.',
+  keywords: [
+    'DegenFeed Premium',
+    'cross-platform registration',
+    'Farcaster registration',
+    'Bluesky invite codes',
+    'analytics',
+    'social media aggregator',
+    'pro plan',
+    'creator tools',
+  ],
   openGraph: {
-    title: 'Premium — DegenFeed',
-    description: 'Unlock Pro ($5/mo) or Creator ($15/mo) for advanced DegenFeed features.',
+    title: 'DegenFeed Premium — Cross-Platform Registration, Advanced Analytics',
+    description:
+      'First month $10 for Pro. Unlock cross-platform posting, advanced analytics, and creator monetization.',
     url: 'https://app.degenfeed.xyz/premium',
     images: [
       {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed Premium',
+        alt: 'DegenFeed Premium Plans',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Premium — DegenFeed',
-    description: 'Unlock Pro ($5/mo) or Creator ($15/mo) for advanced DegenFeed features.',
+    title: 'DegenFeed Premium — Cross-Platform Registration, Advanced Analytics',
+    description:
+      'First month $10 for Pro. Unlock cross-platform posting, advanced analytics, and creator monetization.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/premium' },
 };

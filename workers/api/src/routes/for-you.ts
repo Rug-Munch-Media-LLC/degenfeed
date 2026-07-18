@@ -24,17 +24,29 @@ import {
   applyUserFilters,
   cachedJsonResponse,
   collectProviderResults,
+  computeAllAuthorStats,
+  computeFreshnessMeta,
+  computeTrending,
+  deduplicateCrossProtocol,
   FEED_GENERATION_TIMEOUT_MS,
   feedCacheKey,
   fetchFromProviders,
   getCachedFeed,
   getCircuitStatus,
+  getFeedCache,
+  getLastSync,
+  buildCatchUpSummary,
   loadUserRankingContext,
+  predictEngagementBoost,
   prefersEnglish,
   prepareBasePosts,
   ProviderTimer,
   scoreAndRank,
   setCachedFeed,
+  setFeedCache,
+  shouldTriggerSmartRefresh,
+  updateFeedFreshness,
+  updateLastSync,
   writePostsToKV,
 } from '../feed';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
@@ -96,12 +108,12 @@ async function sessionAddress(
 
 // ─── For You feed handler ──────────────────────────────────────────
 
-export async function handleForYouFeed(
+async function generateForYouFeed(
   request: Request,
   env: Env,
-  execCtx?: ExecCtx,
+  execCtx: ExecCtx | undefined,
+  userId: string | null,
 ): Promise<Response> {
-  // 1. Parse request params
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
@@ -109,23 +121,14 @@ export async function handleForYouFeed(
   const cursor = Number(params.get('cursor')) || 0;
   const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
   const cookieHeader = request.headers.get('cookie') ?? '';
+  const now = Date.now();
 
-  // 2. Load user profile + ranking context
   const userCtx = await loadUserRankingContext(request, env);
   const address = await sessionAddress(request, env);
   const behaviorProfile = address ? await readBehavior(env, address) : null;
   const isOnboarding = !behaviorProfile || isOnboardingMode(behaviorProfile);
 
-  // 3. Feed pipeline: fetch → enrich → score
   const feedStartTime = Date.now();
-  const cacheKey = feedCacheKey(requestedProtocols, category, 'for-you');
-  if (!cursor) {
-    const cached = await getCachedFeed(env, cacheKey);
-    if (cached) {
-      return cachedJsonResponse(cached);
-    }
-  }
-
   const notices: string[] = [];
   const timer = new ProviderTimer();
   const fetchResults = await Promise.race([
@@ -144,10 +147,16 @@ export async function handleForYouFeed(
   });
   const { posts: allPosts, errors, perProtocol } = collectProviderResults(fetchResults);
 
+  // Cross-protocol dedup
+  const dedupResult = deduplicateCrossProtocol(allPosts);
+  const deduped = prepareBasePosts(dedupResult.posts, {
+    category,
+    type: params.get('type') || '',
+  });
+  void writePostsToKV(env, deduped);
+
   const allowNonCrypto =
     params.get('allowNonCrypto') === 'true' || userCtx.preferences?.allowNonCrypto === true;
-  const deduped = prepareBasePosts(allPosts, { category, type: params.get('type') || '' });
-  void writePostsToKV(env, deduped);
   const relevant = applyUserFilters(deduped, {
     mutedAuthors: userCtx.mutedAuthors,
     mutedWords: userCtx.mutedWords,
@@ -157,6 +166,26 @@ export async function handleForYouFeed(
       request.headers.get('accept-language') || '',
     ),
   });
+
+  // Engagement prediction boost
+  const authorStats = computeAllAuthorStats(relevant);
+  const computedTrendingSet = new Set<string>();
+  const trending = await computeTrending(relevant, Number(params.get('trending')) || 24);
+  for (const t of trending) {
+    computedTrendingSet.add(t.topic.toLowerCase());
+  }
+
+  const predictionBoosts = new Map<string, number>();
+  for (const post of relevant) {
+    const stats = authorStats.get(post.author.id);
+    const pred = predictEngagementBoost({
+      post,
+      authorStats: stats,
+      trendingTopics: computedTrendingSet,
+      now,
+    });
+    predictionBoosts.set(post.id, pred.boost);
+  }
 
   const mergedPrefs = mergePreferences(null, userCtx.preferences, null);
   const { ranked, topOfHour, nextCursor, debug } = await scoreAndRank(env, relevant, {
@@ -183,40 +212,51 @@ export async function handleForYouFeed(
       (userCtx.preferences?.interleaveProtocols ?? true),
   });
 
-  // 4. Apply personalization if we have a learned profile
+  // Personalization
   let finalRanked: UnifiedPost[] = ranked;
   let boostApplied = false;
   let personalizationReasons: string[] = [];
 
   if (!isOnboarding && behaviorProfile) {
-    const personalized: Array<UnifiedPost & { _boost: number; _reasons: string[] }> = ranked.map((post) => {
-      const { boost, reasons } = personalizeScore(post, behaviorProfile);
-      const mergedReasons = [...(post.score?.reasons ?? []), ...reasons];
-      return {
-        ...post,
-        score: post.score ? { ...post.score, reasons: mergedReasons } : undefined,
-        _boost: boost,
-        _reasons: reasons,
-      };
-    });
-
-    // Re-rank by base score + personalization boost
+    const personalized: Array<UnifiedPost & { _boost: number; _reasons: string[] }> = ranked.map(
+      (post) => {
+        const { boost, reasons } = personalizeScore(post, behaviorProfile);
+        const mergedReasons = [...(post.score?.reasons ?? []), ...reasons];
+        return {
+          ...post,
+          score: post.score ? { ...post.score, reasons: mergedReasons } : undefined,
+          _boost: boost,
+          _reasons: reasons,
+        };
+      },
+    );
     personalized.sort((a, b) => {
       const baseA = a.score?.total ?? 0;
       const baseB = b.score?.total ?? 0;
       return baseB + b._boost - (baseA + a._boost);
     });
-
     boostApplied = true;
     for (const post of personalized.slice(0, 3)) {
       personalizationReasons.push(...post._reasons);
     }
-
-    // Strip internal fields
     finalRanked = personalized.map(({ _boost, _reasons, ...clean }) => clean);
   }
 
-  // 5. Build response
+  // Smart refresh
+  let catchUp = null;
+  if (userId) {
+    const lastSync = await getLastSync(env, userId);
+    if (shouldTriggerSmartRefresh(lastSync, now)) {
+      catchUp = buildCatchUpSummary(finalRanked, userCtx.followed, lastSync, now);
+    }
+    void updateLastSync(env, userId);
+  }
+
+  // Freshness
+  const freshnessEntry = await updateFeedFreshness(env, 'for-you', finalRanked);
+  const freshnessMeta = computeFreshnessMeta(freshnessEntry, now);
+
+  const feedElapsed = Date.now() - feedStartTime;
   const responseBody = {
     data: finalRanked,
     meta: {
@@ -228,7 +268,25 @@ export async function handleForYouFeed(
       topOfHour,
       nextCursor,
       sort: 'for-you',
-      fetchedAt: Date.now(),
+      fetchedAt: now,
+      freshness: {
+        updatedLabel: freshnessMeta.updatedLabel,
+        updatedSecondsAgo: freshnessMeta.updatedSecondsAgo,
+      },
+      dedup: {
+        crossProtocol: dedupResult.crossProtocol,
+        urlDedup: dedupResult.urlDedup,
+        totalRemoved: dedupResult.deduped,
+      },
+      catchUp: catchUp && catchUp.triggered
+        ? {
+            triggered: true,
+            awayMinutes: catchUp.awayMinutes,
+            totalNewPosts: catchUp.totalNewPosts,
+            topPostIds: catchUp.topPosts.map((p) => p.id),
+            trendingSince: catchUp.trendingSince,
+          }
+        : undefined,
       personalization: {
         hasProfile: !!behaviorProfile,
         boostApplied,
@@ -238,16 +296,19 @@ export async function handleForYouFeed(
     },
   };
 
-  if (!cursor) void setCachedFeed(env, cacheKey, responseBody);
+  if (!cursor) void setFeedCache(env, userId, 'for-you', responseBody, responseBody.meta);
   const resp = cachedJsonResponse(responseBody);
 
-  const feedElapsed = Date.now() - feedStartTime;
   const circuitStatus = await getCircuitStatus(env, requestedProtocols);
   const circuitParts = Object.entries(circuitStatus).map(([p, s]) => `${p}=${s}`);
   const debugParts = [
     `feed-generation=${(feedElapsed / 1000).toFixed(1)}s`,
     `timeout=${(FEED_GENERATION_TIMEOUT_MS / 1000).toFixed(0)}s`,
     `personalized=${boostApplied},onboarding=${isOnboarding},profile=${!!behaviorProfile}`,
+    `dedup=cross=${dedupResult.crossProtocol},url=${dedupResult.urlDedup}`,
+    `engagement-prediction=${predictionBoosts.size > 0 ? 'active' : 'inactive'}`,
+    `freshness=${freshnessMeta.updatedLabel}`,
+    catchUp?.triggered ? `catchup=${catchUp.awayMinutes}m,${catchUp.totalNewPosts}new` : '',
   ];
   if (timer.getResults().length > 0) {
     debugParts.push(`timings=${timer.toDebugString()}`);
@@ -255,8 +316,47 @@ export async function handleForYouFeed(
   if (circuitParts.length > 0) {
     debugParts.push(`circuits=${circuitParts.join(',')}`);
   }
-  resp.headers.set('X-DegenFeed-Debug', debugParts.join(' | '));
+  resp.headers.set('X-DegenFeed-Debug', debugParts.filter(Boolean).join(' | '));
   return resp;
+}
+
+export async function handleForYouFeed(
+  request: Request,
+  env: Env,
+  execCtx?: ExecCtx,
+): Promise<Response> {
+  const params = new URL(request.url).searchParams;
+  const userId = await sessionAddress(request, env);
+
+  // SWR cache: return stale immediately, generate fresh in background
+  if (!params.get('cursor')) {
+    const cacheResult = await getFeedCache(env, userId, 'for-you');
+    if (cacheResult.type === 'hit' && cacheResult.entry) {
+      const resp = cachedJsonResponse(cacheResult.entry, 200, 30);
+      resp.headers.set(
+        'X-DegenFeed-Debug',
+        `cache=hit,cachedAt=${new Date(cacheResult.entry.cachedAt).toISOString()}`,
+      );
+      return resp;
+    }
+    if (cacheResult.type === 'stale' && cacheResult.entry) {
+      if (execCtx?.waitUntil) {
+        execCtx.waitUntil(
+          generateForYouFeed(request, env, execCtx, userId).catch(() => {}),
+        );
+      } else {
+        void generateForYouFeed(request, env, execCtx, userId);
+      }
+      const resp = cachedJsonResponse(cacheResult.entry, 200, 30);
+      resp.headers.set(
+        'X-DegenFeed-Debug',
+        `cache=stale(swr),cachedAt=${new Date(cacheResult.entry.cachedAt).toISOString()},background=refresh`,
+      );
+      return resp;
+    }
+  }
+
+  return generateForYouFeed(request, env, execCtx, userId);
 }
 
 // ─── Topic preference management endpoints ─────────────────────────

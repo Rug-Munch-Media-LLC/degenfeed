@@ -76,7 +76,9 @@ function generateId(): string {
   crypto.getRandomValues(bytes);
   let id = '';
   for (let i = 0; i < 16; i++) {
-    id += bytes[i].toString(36).padStart(2, '0');
+    const byte = bytes[i];
+    if (byte === undefined) continue;
+    id += byte.toString(36).padStart(2, '0');
   }
   return `prop_${id.slice(0, 16)}`;
 }
@@ -252,8 +254,8 @@ export async function handleProposalCreate(
     description,
     creator: wallet,
     createdAt: now,
-    votingPeriod,
-    endsAt: now + votingPeriod,
+    votingPeriod: votingPeriod ?? VOTING_PERIODS['7d']!,
+    endsAt: now + (votingPeriod ?? VOTING_PERIODS['7d']!),
     status: 'active',
     targetUser,
   };
@@ -331,9 +333,12 @@ export async function handleProposalVote(
   // Check for existing vote — allow changing vote
   const existingIdx = voteRecord.votes.findIndex((v) => v.voter === wallet);
   if (existingIdx !== -1) {
-    const oldChoice = voteRecord.votes[existingIdx].choice;
-    voteRecord.totals[oldChoice] = Math.max(0, voteRecord.totals[oldChoice] - 1);
-    voteRecord.votes.splice(existingIdx, 1);
+    const oldVote = voteRecord.votes[existingIdx];
+    if (oldVote) {
+      const oldChoice = oldVote.choice;
+      voteRecord.totals[oldChoice] = Math.max(0, voteRecord.totals[oldChoice] - 1);
+      voteRecord.votes.splice(existingIdx, 1);
+    }
   }
 
   // Record new vote

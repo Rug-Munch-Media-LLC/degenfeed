@@ -12,11 +12,18 @@ import { ContextualTooltip } from '../../components/ContextualTooltip';
 import { FeedComposer } from '../../components/FeedComposer';
 import { FeedLayoutSwitcher } from '../../components/FeedLayoutSwitcher';
 import { FeedSidebar } from '../../components/FeedSidebar';
+import type { FeedMixConfig, SavedMix } from '../../components/FeedTuner';
 import {
   countTunedTopics,
   encodeTopicWeights,
   FeedTuner,
+  getDefaultFeedMixConfig,
   getDefaultWeights,
+  loadFeedMixConfig,
+  loadSavedMixes,
+  PREBUILT_MIXES,
+  saveFeedMixConfig,
+  saveSavedMixes,
   TOPICS,
 } from '../../components/FeedTuner';
 import { GettingStartedChecklist } from '../../components/GettingStartedChecklist';
@@ -40,7 +47,7 @@ const TipModal = dynamic(
   },
 );
 
-type Tab = 'for-you' | 'following';
+type Tab = 'for-you' | 'following' | 'custom-mix';
 
 interface FeedMeta {
   total?: number;
@@ -144,6 +151,16 @@ export default function FeedPage() {
   const [showTuner, setShowTuner] = useState(false);
   const tuneTopicWeightsDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  // ── Feed Mix Config ────────────────────────────────────────────
+  const [feedMixConfig, setFeedMixConfig] = useState<FeedMixConfig>(() => {
+    if (typeof window === 'undefined') return getDefaultFeedMixConfig();
+    return loadFeedMixConfig();
+  });
+  const [savedMixes, setSavedMixes] = useState<SavedMix[]>(() => {
+    if (typeof window === 'undefined') return [];
+    return loadSavedMixes();
+  });
+
   const persistTopicWeights = useCallback((weights: Record<string, number>) => {
     if (tuneTopicWeightsDebounce.current) clearTimeout(tuneTopicWeightsDebounce.current);
     tuneTopicWeightsDebounce.current = setTimeout(() => {
@@ -175,6 +192,74 @@ export default function FeedPage() {
     setTopicWeights(defaults);
     persistTopicWeights(defaults);
   }, [persistTopicWeights]);
+
+  // ── Feed mix handlers ──────────────────────────────────────────
+  const handleFeedMixChange = useCallback((config: FeedMixConfig) => {
+    setFeedMixConfig(config);
+  }, []);
+
+  const handleFeedMixApply = useCallback(
+    (config: FeedMixConfig) => {
+      setFeedMixConfig(config);
+      saveFeedMixConfig(config);
+      // Also persist to server
+      persistPrefs({ feedMixConfig: config });
+    },
+    [persistPrefs],
+  );
+
+  const handleFeedMixReset = useCallback(() => {
+    const defaults = getDefaultFeedMixConfig();
+    setFeedMixConfig(defaults);
+    saveFeedMixConfig(defaults);
+    persistPrefs({ feedMixConfig: defaults });
+  }, [persistPrefs]);
+
+  const handleSaveMix = useCallback(
+    (mix: SavedMix) => {
+      setSavedMixes((prev) => {
+        const updated = [...prev, mix];
+        saveSavedMixes(updated);
+        persistPrefs({ savedMixes: updated });
+        return updated;
+      });
+    },
+    [persistPrefs],
+  );
+
+  const handleLoadMix = useCallback(
+    (mix: SavedMix) => {
+      setFeedMixConfig(mix.config);
+      saveFeedMixConfig(mix.config);
+      persistPrefs({ feedMixConfig: mix.config });
+    },
+    [persistPrefs],
+  );
+
+  const handleDeleteMix = useCallback(
+    (id: string) => {
+      setSavedMixes((prev) => {
+        const updated = prev.filter((m) => m.id !== id);
+        saveSavedMixes(updated);
+        persistPrefs({ savedMixes: updated });
+        return updated;
+      });
+    },
+    [persistPrefs],
+  );
+
+  /** Load a pre-built mix */
+  const applyPrebuiltMix = useCallback(
+    (mixId: string) => {
+      const mix = PREBUILT_MIXES.find((m) => m.id === mixId);
+      if (!mix) return;
+      setFeedMixConfig(mix.config);
+      saveFeedMixConfig(mix.config);
+      persistPrefs({ feedMixConfig: mix.config });
+      setShowTuner(true);
+    },
+    [persistPrefs],
+  );
 
   /** Quick-tune: boost a topic by +5 (capped at 100) */
   const _handleShowMoreLikeThis = useCallback(
@@ -236,6 +321,8 @@ export default function FeedPage() {
           minEngagement?: number;
           maxPerNiche?: number;
           topicWeights?: Record<string, number>;
+          feedMixConfig?: FeedMixConfig;
+          savedMixes?: SavedMix[];
         };
         if (typeof data.hideLowQuality === 'boolean') setHideLowQuality(data.hideLowQuality);
         if (typeof data.hideLowQualityThreshold === 'number') {
@@ -251,6 +338,13 @@ export default function FeedPage() {
         // Load topic weights
         if (data.topicWeights && typeof data.topicWeights === 'object') {
           setTopicWeights((prev) => ({ ...prev, ...data.topicWeights }));
+        }
+        // Load feed mix config
+        if (data.feedMixConfig && typeof data.feedMixConfig === 'object') {
+          setFeedMixConfig(data.feedMixConfig);
+        }
+        if (data.savedMixes && Array.isArray(data.savedMixes)) {
+          setSavedMixes(data.savedMixes);
         }
       } catch {
         /* ignore — user has no session yet */
@@ -651,7 +745,7 @@ export default function FeedPage() {
       {/* Guided tour — auto-detects if tour should show based on localStorage */}
       <GuidedTour />
       <div
-        className="mx-auto grid max-w-[1280px] grid-cols-1 gap-4 px-3 py-3 sm:px-4 lg:grid-cols-12"
+        className="mx-auto flex w-full flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-start"
         onTouchStart={(e) => {
           swipeHandlers.onTouchStart(e);
           handleTouchStart(e);
@@ -662,63 +756,8 @@ export default function FeedPage() {
           handleTouchEnd();
         }}
       >
-        {/* Left rail — desktop only quick nav */}
-        <aside className="hidden xl:col-span-3 xl:block">
-          <div className="sticky top-20 space-y-3">
-            <div className="rounded-2xl border border-white/10 bg-[var(--color-card)] p-4 backdrop-blur-xl">
-              <div className="mb-3 flex items-center gap-2">
-                <Image
-                  src="/icon.svg"
-                  alt="DegenFeed"
-                  width={36}
-                  height={36}
-                  className="h-9 w-9 rounded-xl shadow-[0_0_18px_rgba(0,255,65,0.25)]"
-                />
-                <div>
-                  <p className="text-sm font-semibold text-[var(--color-fg)]">DegenFeed</p>
-                  <p className="text-[10px] uppercase tracking-widest text-gray-500">
-                    Open social graph
-                  </p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-400">
-                One window. Every protocol. Zero accounts to browse.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-1">
-                {Object.entries(PROTOCOL_META).map(([id, m]) => (
-                  <span
-                    key={id}
-                    className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-                    style={{ backgroundColor: `${m.color}22`, color: m.color }}
-                    title={`${m.label} live`}
-                  >
-                    {m.emoji} {m.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {!hasSignedIn && (
-              <div className="rounded-2xl border border-degen-500/30 bg-degen-500/5 p-4 backdrop-blur-xl">
-                <p className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
-                  Sign in to post & engage
-                </p>
-                <p className="mb-3 text-xs text-gray-400">
-                  Browse without an account. Sign in with one click to like, reply, and cross-post.
-                </p>
-                <button type="button" onClick={openSignIn} className="btn-primary w-full text-sm">
-                  Connect Wallet
-                </button>
-                <p className="mt-2 text-center text-[10px] text-gray-600">
-                  ETH · SOL · or your existing social handle
-                </p>
-              </div>
-            )}
-          </div>
-        </aside>
-
         {/* Main timeline */}
-        <main className="main-feed lg:col-span-8 xl:col-span-6">
+        <main className="main-feed min-w-0 flex-1">
           <div className="feed-header sticky top-16 z-30 border-b border-[var(--color-glass-border)] glass">
             <div className="flex items-center justify-between gap-2 px-4 py-3">
               <div className="flex items-center gap-3">
@@ -734,7 +773,11 @@ export default function FeedPage() {
                     DegenFeed
                   </h1>
                   <p className="text-[10px] text-gray-500">
-                    {activeTab === 'for-you' ? 'Your unified timeline' : 'Posts you follow'}
+                    {activeTab === 'for-you'
+                      ? 'Your unified timeline'
+                      : activeTab === 'custom-mix'
+                        ? 'Your custom mix'
+                        : 'Posts you follow'}
                   </p>
                 </div>
               </div>
@@ -818,6 +861,27 @@ export default function FeedPage() {
                 <ContextualTooltip id="ai-for-you" align="center" icon="🤖">
                   Try the AI-powered For You feed instead
                 </ContextualTooltip>
+              </div>
+              <div className="relative flex-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('custom-mix');
+                    setShowTuner(true);
+                  }}
+                  role="tab"
+                  aria-selected={activeTab === 'custom-mix'}
+                  className={`w-full py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'custom-mix'
+                      ? 'text-[var(--color-fg)]'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  Custom Mix
+                  {activeTab === 'custom-mix' && (
+                    <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -1019,6 +1083,27 @@ export default function FeedPage() {
                 Hover ★ on any post for ranking breakdown
               </span>
             </div>
+
+            {/* ── Custom Mix: Pre-built mix quick pick ── */}
+            {activeTab === 'custom-mix' && (
+              <div className="border-t border-[var(--color-glass-border)] px-4 py-2.5">
+                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-2">
+                  Quick Pick a Mix
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {PREBUILT_MIXES.map((mix) => (
+                    <button
+                      key={mix.id}
+                      type="button"
+                      onClick={() => applyPrebuiltMix(mix.id)}
+                      className="rounded-full border border-degen-500/20 bg-degen-500/5 px-3 py-1 text-xs font-medium text-degen-400 hover:bg-degen-500/15 transition-colors"
+                    >
+                      {mix.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* ── Feed Health section (collapsed by default) ── */}
             {state === 'loaded' && (
@@ -1228,8 +1313,8 @@ export default function FeedPage() {
           )}
         </main>
 
-        {/* Right sidebar */}
-        <aside className="sidebar hidden lg:col-span-4 lg:block xl:col-span-3">
+        {/* Right sidebar — visible at lg+ (Shell's RightSidebar is suppressed for /feed) */}
+        <aside className="sidebar hidden w-72 shrink-0 lg:block">
           <div
             className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto"
             style={{ scrollbarWidth: 'thin' }}
@@ -1264,6 +1349,14 @@ export default function FeedPage() {
             onApply={handleTunerApply}
             onReset={handleTunerReset}
             onClose={() => setShowTuner(false)}
+            feedMixConfig={feedMixConfig}
+            onFeedMixChange={handleFeedMixChange}
+            onFeedMixApply={handleFeedMixApply}
+            onFeedMixReset={handleFeedMixReset}
+            savedMixes={savedMixes}
+            onSaveMix={handleSaveMix}
+            onLoadMix={handleLoadMix}
+            onDeleteMix={handleDeleteMix}
           />
         )}
       </div>

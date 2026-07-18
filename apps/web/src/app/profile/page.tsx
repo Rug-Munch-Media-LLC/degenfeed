@@ -1,13 +1,19 @@
 'use client';
 
 import type { StoredIdentity } from '@degenfeed/storage';
-import type { ReputationBadgeProgress, ReputationBadgeScore } from '@degenfeed/ui';
-import { ErrorBoundary, ReputationBadge } from '@degenfeed/ui';
+import type { PlatformAccount, ReputationBadgeProgress, ReputationBadgeScore } from '@degenfeed/ui';
+import {
+  CrossPlatformCard,
+  CrossPlatformSetup,
+  ErrorBoundary,
+  ReputationBadge,
+} from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { EditProfileModal } from '../../components/EditProfileModal';
 import { IdentityLinker } from '../../components/IdentityLinker';
+import { useToast } from '../../components/Toast';
 import { useWeb3 } from '../../components/Web3Provider';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { type SubscriptionStatus, useSubscription } from '../../hooks/useSubscription';
@@ -380,6 +386,35 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState<string | null>(null);
+  const [showCrossPlatformSetup, setShowCrossPlatformSetup] = useState(false);
+  const [crossPlatformKey, setCrossPlatformKey] = useState(0);
+  const { showToast } = useToast();
+
+  const PLATFORM_LABELS: Record<string, string> = useMemo(
+    () => ({
+      farcaster: 'Farcaster',
+      lens: 'Lens',
+      bluesky: 'Bluesky',
+      mastodon: 'Mastodon',
+      nostr: 'Nostr',
+    }),
+    [],
+  );
+
+  const handleRegistered = useCallback(
+    (result: PlatformAccount) => {
+      const label = PLATFORM_LABELS[result.platform] || result.platform;
+      const atUsername = result.username ? `@${result.username}` : '';
+      showToast('success', `✓ Created ${atUsername} on ${label}`);
+      // Increment key to force CrossPlatformCard/Settings to refetch status
+      setCrossPlatformKey((k) => k + 1);
+    },
+    [PLATFORM_LABELS, showToast],
+  );
+
+  const handleOpenSetup = useCallback(() => {
+    setShowCrossPlatformSetup(true);
+  }, []);
 
   const identities = useMemo(() => {
     const list: ResolvedIdentity[] = [];
@@ -633,14 +668,27 @@ export default function ProfilePage() {
             </div>
 
             {/* ════════════════════════════════════════════════════
-               PROTOCOL BADGES
+                PROTOCOL BADGES
             ════════════════════════════════════════════════════ */}
             <div className="mb-6">
               <ProtocolBadgesRow identities={identities} />
             </div>
 
             {/* ════════════════════════════════════════════════════
-               ACTION BUTTONS
+                CROSS-PLATFORM SETUP (Full)
+            ════════════════════════════════════════════════════ */}
+            {showCrossPlatformSetup && (
+              <div className="mb-6" id="cross-platform-setup">
+                <CrossPlatformSetup
+                  key={crossPlatformKey}
+                  walletAddress={walletAddress ?? ''}
+                  onRegistered={handleRegistered}
+                />
+              </div>
+            )}
+
+            {/* ════════════════════════════════════════════════════
+                ACTION BUTTONS
             ════════════════════════════════════════════════════ */}
             <div className="mb-6 flex justify-center gap-3">
               <button
@@ -889,7 +937,18 @@ export default function ProfilePage() {
             </div>
 
             {/* ════════════════════════════════════════════════════
-               LINKS
+                CROSS-PLATFORM CARD (Compact Summary)
+            ════════════════════════════════════════════════════ */}
+            <div className="mb-8">
+              <CrossPlatformCard
+                key={crossPlatformKey}
+                walletAddress={walletAddress ?? ''}
+                onOpenSetup={handleOpenSetup}
+              />
+            </div>
+
+            {/* ════════════════════════════════════════════════════
+                LINKS
             ════════════════════════════════════════════════════ */}
             <div className="grid gap-3 sm:grid-cols-2">
               <a href="/profile/bookmarks" className="card-hover flex items-center gap-3">

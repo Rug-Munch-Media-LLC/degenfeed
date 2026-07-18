@@ -6,9 +6,11 @@
  * GET  /api/register-platform/bluesky-pool — Get Bluesky invite pool stats (admin)
  */
 
-import { registerOnPlatform, getPlatformAccounts } from '@degenfeed/crossplatform-register';
+import { getPlatformAccounts, registerOnPlatform } from '@degenfeed/crossplatform-register';
 import { getInvitePoolStats } from '@degenfeed/crossplatform-register/bluesky-invite-pool';
-import { type Env, jsonResponse, noCacheJsonResponse, log } from '../index';
+import type { CrossProtocolIdentity } from '@degenfeed/utils';
+import { identityKey } from '@degenfeed/utils';
+import { type Env, jsonResponse, log, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
 
 // ─── POST /api/register-platform ──────────────────────────────────────
@@ -23,7 +25,11 @@ export async function handleRegisterPlatform(request: Request, env: Env): Promis
   const tier = await checkPremiumStatus(walletAddress, env);
   if (!tier) {
     return jsonResponse(
-      { error: 'Premium subscription required. Upgrade at /premium to unlock cross-platform registration.', upgrade: true },
+      {
+        error:
+          'Premium subscription required. Upgrade at /premium to unlock cross-platform registration.',
+        upgrade: true,
+      },
       402,
     );
   }
@@ -50,16 +56,23 @@ export async function handleRegisterPlatform(request: Request, env: Env): Promis
 
   const validPlatforms = ['farcaster', 'lens', 'bluesky', 'mastodon', 'nostr'];
   if (!validPlatforms.includes(platform)) {
-    return jsonResponse({
-      error: `Unsupported platform: ${platform}. Supported: ${validPlatforms.join(', ')}`,
-    }, 400);
+    return jsonResponse(
+      {
+        error: `Unsupported platform: ${platform}. Supported: ${validPlatforms.join(', ')}`,
+      },
+      400,
+    );
   }
 
   // Validate username format
   if (!/^[a-zA-Z0-9_\-.]{2,30}$/.test(desiredUsername)) {
-    return jsonResponse({
-      error: 'Username must be 2-30 characters and contain only letters, numbers, underscores, hyphens, and dots',
-    }, 400);
+    return jsonResponse(
+      {
+        error:
+          'Username must be 2-30 characters and contain only letters, numbers, underscores, hyphens, and dots',
+      },
+      400,
+    );
   }
 
   const result = await registerOnPlatform(platform, desiredUsername, walletAddress, {
@@ -71,6 +84,38 @@ export async function handleRegisterPlatform(request: Request, env: Env): Promis
     blueskyInvitePool: env.BLUESKY_INVITE_POOL,
     mastodonInstanceUrl: env.MASTODON_INSTANCE_URL || 'https://social.degenfeed.xyz',
   });
+
+  // Auto-link identity on successful registration
+  if (result.status === 'created' && result.accountInfo) {
+    const identityPayload = buildIdentityLinkPayload(platform, result.accountInfo);
+    if (identityPayload) {
+      try {
+        const identKey = identityKey(walletAddress);
+        let existing: CrossProtocolIdentity | null = null;
+        const raw = await env.IDENTITIES?.get(identKey);
+        if (raw) existing = JSON.parse(raw) as CrossProtocolIdentity;
+
+        const now = Date.now();
+        const updated: CrossProtocolIdentity = {
+          ...(existing || { walletAddress, linkedAt: now, lastVerified: now }),
+          [platform]: { ...identityPayload, verified: platform === 'farcaster' }, // Farcaster registration is on-chain verified
+          lastVerified: now,
+        };
+
+        await env.IDENTITIES?.put(identKey, JSON.stringify(updated));
+        log('info', 'Identity auto-linked after registration', {
+          platform,
+          wallet: walletAddress.slice(0, 8),
+        });
+      } catch (linkErr) {
+        log('warn', 'Failed to auto-link identity after registration', {
+          platform,
+          error: linkErr instanceof Error ? linkErr.message : String(linkErr),
+        });
+        // Non-fatal — registration succeeded even if linking fails
+      }
+    }
+  }
 
   log('info', 'Platform registration attempt', {
     platform,
@@ -131,12 +176,49 @@ export async function handleBlueskyPoolStats(_request: Request, env: Env): Promi
   return jsonResponse({ data: stats });
 }
 
+// ─── Identity link payload builder ────────────────────────────────────
+
+function buildIdentityLinkPayload(
+  platform: string,
+  accountInfo: Record<string, string>,
+): Record<string, unknown> | null {
+  switch (platform) {
+    case 'farcaster': {
+      const fid = Number(accountInfo.fid);
+      if (!fid || !accountInfo.username) return null;
+      return {
+        fid,
+        username: accountInfo.username,
+        custodyAddress: accountInfo.recoveryAddress || '',
+      };
+    }
+    case 'lens': {
+      if (!accountInfo.profileId && !accountInfo.handle) return null;
+      return { profileId: accountInfo.profileId || '', handle: accountInfo.handle || '' };
+    }
+    case 'bluesky': {
+      if (!accountInfo.did && !accountInfo.handle) return null;
+      return { did: accountInfo.did || '', handle: accountInfo.handle || '' };
+    }
+    case 'mastodon': {
+      if (!accountInfo.username && !accountInfo.accountId) return null;
+      return {
+        handle: accountInfo.username || accountInfo.accountId || '',
+        instance: accountInfo.instance || 'social.degenfeed.xyz',
+      };
+    }
+    case 'nostr': {
+      if (!accountInfo.npub) return null;
+      return { npub: accountInfo.npub, relays: [] };
+    }
+    default:
+      return null;
+  }
+}
+
 // ─── Premium check helper ──────────────────────────────────────────────
 
-async function checkPremiumStatus(
-  walletAddress: string,
-  env: Env,
-): Promise<string | null> {
+async function checkPremiumStatus(walletAddress: string, env: Env): Promise<string | null> {
   // Check SUBSCRIPTIONS KV first
   if (env.SUBSCRIPTIONS) {
     try {

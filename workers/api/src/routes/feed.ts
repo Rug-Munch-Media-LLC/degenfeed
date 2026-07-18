@@ -1,8 +1,9 @@
 /**
  * Feed routes — thin orchestrator over the feed pipeline layers.
  *
- * Pipeline: fetch (providers + circuit breakers) → enrich (dedup,
- * spam, mutes, language) → score (ranking v2 + velocity) → cache (KV).
+ * Pipeline: fetch (providers + circuit breakers) → dedup (cross-protocol)
+ * → enrich (spam, mutes, language) → score (ranking v2 + velocity +
+ * engagement prediction) → cache (KV, SWR, per-user).
  * Layer implementations live in src/feed/; auxiliary routes (reddit,
  * single provider, health) live in ./feed-misc.
  */
@@ -17,10 +18,16 @@ import {
 } from '@degenfeed/feed-core';
 import {
   applyUserFilters,
+  broadcastFeedUpdate,
+  buildCatchUpSummary,
   cachedJsonResponse,
   collectProviderResults,
+  computeAllAuthorStats,
+  computeFreshnessMeta,
+  computeNewPostsSince,
   computeTrending,
   countNewSinceLastVisit,
+  deduplicateCrossProtocol,
   DEFAULT_PROTOCOLS,
   enrichNostrEngagement,
   FEED_GENERATION_TIMEOUT_MS,
@@ -28,18 +35,28 @@ import {
   fetchFromProviders,
   getCachedFeed,
   getCircuitStatus,
+  getFeedCache,
+  getLastSync,
+  invalidateFeedCache,
   loadUserRankingContext,
   mergePreferences,
   parseCookiePrefs,
   parsePrefsFromQuery,
+  predictEngagementBoost,
   prefersEnglish,
   prepareBasePosts,
   ProviderTimer,
   scoreAndRank,
   setCachedFeed,
+  setFeedCache,
+  shouldTriggerSmartRefresh,
+  updateFeedFreshness,
+  updateLastSync,
   writePostsToKV,
+  type FeedType,
 } from '../feed';
 import { type Env, jsonResponse } from '../index';
+import { verifySessionCookie } from '../session';
 import type { StoredPresetEntry } from './presets';
 
 // Backward-compatible re-exports for stream.ts, newsletter.ts, app.ts, and tests.
@@ -48,37 +65,106 @@ export { handleFeedHealth, handleProviderFeed, handleRedditFeed } from './feed-m
 
 type ExecCtx = { waitUntil: (p: Promise<unknown>) => void };
 
-export async function handleHomeFeed(
+async function resolveUserId(request: Request, env: Env): Promise<string | null> {
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const match = cookieHeader
+    .split(';')
+    .map((s) => s.trim())
+    .find((s) => s.startsWith('__Host-dfid='));
+  if (!match || !env.AUTH_SECRET) return null;
+  const cookieValue = match.slice('__Host-dfid='.length);
+  try {
+    const payload = await verifySessionCookie(cookieValue, env.AUTH_SECRET);
+    return payload?.address ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function handleCachedFeed(
   request: Request,
   env: Env,
-  execCtx?: ExecCtx,
+  execCtx: ExecCtx | undefined,
+  feedType: FeedType,
 ): Promise<Response> {
   const feedStartTime = Date.now();
-
-  // 1. Parse request
   const params = new URL(request.url).searchParams;
-  const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
-  const limit = Math.min(Number(params.get('limit')) || 50, 200);
-  const category = params.get('category')?.toLowerCase() ?? '';
-  const sort = params.get('sort') || 'scored'; // scored | hot | new | top | quality | trending
-  const cursor = Number(params.get('cursor')) || 0;
-  const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
-  const cookieHeader = request.headers.get('cookie') ?? '';
+  const now = Date.now();
+  const userId = await resolveUserId(request, env);
 
-  // 2. Feed-level cache: skip all provider fetches on a fresh hit.
-  const cacheKey = feedCacheKey(requestedProtocols, category, sort);
-  if (!cursor) {
-    const cached = await getCachedFeed(env, cacheKey);
-    if (cached) return jsonResponse(cached);
+  const isTrending = feedType === 'trending';
+  const isEverything = feedType === 'everything';
+
+  // 1. Check per-user cache (SWR pattern)
+  if (!params.get('cursor')) {
+    const cacheResult = await getFeedCache(env, userId, feedType);
+    if (cacheResult.type === 'hit' && cacheResult.entry) {
+      const resp = cachedJsonResponse(
+        cacheResult.entry,
+        200,
+        isTrending ? 15 : 30,
+      );
+      resp.headers.set(
+        'X-DegenFeed-Debug',
+        `cache=hit,cachedAt=${new Date(cacheResult.entry.cachedAt).toISOString()},feed-generation=${((now - feedStartTime) / 1000).toFixed(3)}s`,
+      );
+      return resp;
+    }
+    if (cacheResult.type === 'stale' && cacheResult.entry) {
+      // Return stale immediately, refresh in background
+      if (execCtx?.waitUntil) {
+        execCtx.waitUntil(
+          generateAndCacheFeed(request, env, execCtx, feedType, userId).catch(() => {}),
+        );
+      } else {
+        void generateAndCacheFeed(request, env, execCtx, feedType, userId);
+      }
+      const resp = cachedJsonResponse(
+        cacheResult.entry,
+        200,
+        isTrending ? 15 : 30,
+      );
+      resp.headers.set(
+        'X-DegenFeed-Debug',
+        `cache=stale(swr),cachedAt=${new Date(cacheResult.entry.cachedAt).toISOString()},background=refresh,feed-generation=${((now - feedStartTime) / 1000).toFixed(3)}s`,
+      );
+      return resp;
+    }
   }
 
-  // 3. Fetch from providers with per-provider timeouts + circuit breakers + timer.
+  // 2. Miss: generate fresh feed
+  return generateAndCacheFeed(request, env, execCtx, feedType, userId);
+}
+
+async function generateAndCacheFeed(
+  request: Request,
+  env: Env,
+  execCtx: ExecCtx | undefined,
+  feedType: FeedType,
+  userId: string | null,
+): Promise<Response> {
+  const feedStartTime = Date.now();
+  const params = new URL(request.url).searchParams;
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const now = Date.now();
+
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const category = params.get('category')?.toLowerCase() ?? '';
+  const sort = params.get('sort') || 'scored';
+  const cursor = Number(params.get('cursor')) || 0;
+  const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
+
+  // Resolve protocols
+  const protocolsParam = params.get('protocols');
+  const requestedProtocols = protocolsParam
+    ? parseProtocols(protocolsParam, DEFAULT_PROTOCOLS)
+    : DEFAULT_PROTOCOLS;
+
+  // 3. Fetch from providers
   const notices: string[] = [];
   const timer = new ProviderTimer();
   const results = await Promise.race([
     fetchFromProviders(env, requestedProtocols, limit, notices, execCtx, timer),
-    // Feed generation timeout: if providers take too long, return empty results
-    // so the response is snappy. The timeout is generous — 8s for all providers.
     new Promise<never>((_, reject) =>
       setTimeout(
         () => reject(new Error(`feed generation timeout after ${FEED_GENERATION_TIMEOUT_MS}ms`)),
@@ -93,9 +179,15 @@ export async function handleHomeFeed(
   });
   const { posts: allPosts, errors, perProtocol } = collectProviderResults(results);
 
-  // 4. Enrich: dedup + category/type filters, then per-user filters.
-  const deduped = prepareBasePosts(allPosts, { category, type: params.get('type') || '' });
+  // 4. Cross-protocol content deduplication
+  const dedupResult = deduplicateCrossProtocol(allPosts);
+  const deduped = prepareBasePosts(dedupResult.posts, {
+    category,
+    type: params.get('type') || '',
+  });
   void writePostsToKV(env, deduped);
+
+  // 5. Per-user filtering
   const userCtx = await loadUserRankingContext(request, env);
   const allowNonCrypto =
     params.get('allowNonCrypto') === 'true' || userCtx.preferences?.allowNonCrypto === true;
@@ -112,59 +204,43 @@ export async function handleHomeFeed(
   });
   await enrichNostrEngagement(relevant);
 
-  // 5a. Resolve quality preset from KV (query param > KV stored > default).
-  const presetParam = params.get('preset');
-  const protocolsParam = params.get('protocols');
+  // 6. Engagement prediction for ranking boost
+  const authorStats = computeAllAuthorStats(relevant);
+  const trendingSet = new Set<string>();
+  const computedTrending = await computeTrending(relevant, Number(params.get('trending')) || 24);
+  for (const t of computedTrending) {
+    trendingSet.add(t.topic.toLowerCase());
+  }
+
+  const predictedBoosts = new Map<string, number>();
+  for (const post of relevant) {
+    const stats = authorStats.get(post.author.id);
+    const prediction = predictEngagementBoost({
+      post,
+      authorStats: stats,
+      trendingTopics: trendingSet,
+      now,
+    });
+    predictedBoosts.set(post.id, prediction.boost);
+  }
+
+  // 7. Quality preset
   const activeProtocol = protocolsParam?.split(',')?.filter(Boolean)?.[0] ?? null;
   let presetName: PresetName = 'balanced';
+  const presetParam = params.get('preset');
   if (presetParam && (PRESET_NAMES as readonly string[]).includes(presetParam)) {
     presetName = presetParam as PresetName;
   } else if (userCtx.preferences?.presetName) {
     presetName = userCtx.preferences.presetName;
-  } else if (activeProtocol) {
-    // Try to load per-protocol preset from KV
-    try {
-      const wallet = request.headers.get('cookie')
-        ?.split(';')
-        .map((s) => s.trim())
-        .find((s) => s.startsWith('__Host-dfid='))
-        ?.slice('__Host-dfid='.length);
-      if (wallet && env.CACHE) {
-        const { verifySessionCookie } = await import('../session');
-        const payload = await verifySessionCookie(wallet, env.AUTH_SECRET ?? '');
-        if (payload?.address) {
-          const raw = await env.CACHE.get(presetKvKey(payload.address, activeProtocol));
-          if (raw) {
-            const stored = JSON.parse(raw) as StoredPresetEntry;
-            if ((PRESET_NAMES as readonly string[]).includes(stored.presetName)) {
-              presetName = stored.presetName as PresetName;
-            }
-          }
-        }
-      }
-    } catch {
-      // Non-critical — default to balanced
-    }
   }
   const resolvedPreset = resolvePreset(presetName, activeProtocol ?? undefined);
 
-  // 5b. Score and rank with merged preferences (query > stored > cookie).
+  // 8. Score and rank
   const mergedPrefs = mergePreferences(
     parsePrefsFromQuery(params),
     userCtx.preferences,
     parseCookiePrefs(cookieHeader),
   );
-  const queryThreshold = Number(params.get('hideLowQualityThreshold'));
-  const showOriginalContent =
-    params.get('showOriginalContent') === 'true' ||
-    userCtx.preferences?.showOriginalContent === true;
-  const minEngagement = Number(params.get('minEngagement')) ||
-    (userCtx.preferences?.minEngagement ?? 0);
-  const maxPerNiche = Number(params.get('maxPerNiche')) ||
-    (userCtx.preferences?.maxPerNiche ?? 5);
-  const interleaveProtocols = params.get('interleaveProtocols') !== 'false' &&
-    (userCtx.preferences?.interleaveProtocols ?? true);
-
   const { ranked, topOfHour, nextCursor, debug } = await scoreAndRank(env, relevant, {
     prefs: mergedPrefs,
     followed: userCtx.followed,
@@ -176,71 +252,72 @@ export async function handleHomeFeed(
     hideLowQuality:
       params.get('hideLowQuality') === 'true' || userCtx.preferences?.hideLowQuality === true,
     hideLowQualityThreshold:
-      Number.isFinite(queryThreshold) && queryThreshold > 0
-        ? queryThreshold
-        : (userCtx.preferences?.hideLowQualityThreshold ?? 1.0),
-    showOriginalContent,
-    minEngagement,
-    maxPerNiche,
-    interleaveProtocols,
+      Number(params.get('hideLowQualityThreshold')) ||
+      userCtx.preferences?.hideLowQualityThreshold ||
+      1.0,
+    showOriginalContent:
+      params.get('showOriginalContent') === 'true' ||
+      userCtx.preferences?.showOriginalContent === true,
+    minEngagement: Number(params.get('minEngagement')) || userCtx.preferences?.minEngagement || 0,
+    maxPerNiche: Number(params.get('maxPerNiche')) || userCtx.preferences?.maxPerNiche || 5,
+    interleaveProtocols:
+      params.get('interleaveProtocols') !== 'false' &&
+      (userCtx.preferences?.interleaveProtocols ?? true),
     presetName,
     resolvedPreset,
   });
-  const trending = await computeTrending(relevant, Number(params.get('trending')) || 24);
 
-  // Load "Trending Now" from the trending scraper cache (best-effort)
-  let trendingNow: Array<{
-    id: string;
-    title: string;
-    url: string;
-    platform: string;
-    authorName: string;
-    score: number;
-    thumbnailUrl?: string;
-  }> = [];
+  // 9. Smart refresh — catch up returning users
+  let catchUp = null;
+  if (userId) {
+    const lastSync = await getLastSync(env, userId);
+    if (shouldTriggerSmartRefresh(lastSync, now)) {
+      catchUp = buildCatchUpSummary(ranked, userCtx.followed, lastSync, now);
+    }
+    void updateLastSync(env, userId);
+  }
+
+  // 10. Feed freshness tracking
+  const freshnessEntry = await updateFeedFreshness(env, feedType, ranked);
+  const freshnessMeta = computeFreshnessMeta(freshnessEntry, now);
+
+  // 11. Trending Now (best-effort)
+  let trendingNow: Array<Record<string, unknown>> = [];
   try {
     const raw = await env.CACHE?.get(TRENDING_CACHE_KEY);
     if (raw) {
-      const data = JSON.parse(raw) as { platforms: Record<string, { items: Array<Record<string, unknown>> }> };
+      const data = JSON.parse(raw) as {
+        platforms: Record<string, { items: Array<Record<string, unknown>> }>;
+      };
       const items: Array<Record<string, unknown>> = [];
       for (const p of Object.values(data.platforms)) {
         if (p.items) items.push(...p.items);
       }
       items.sort((a, b) => Number(b.score ?? 0) - Number(a.score ?? 0));
-      trendingNow = items.slice(0, 5).map((item) => ({
-        id: String(item.id ?? ''),
-        title: String(item.title ?? ''),
-        url: String(item.url ?? ''),
-        platform: String(item.platform ?? ''),
-        authorName: String(item.authorName ?? ''),
-        score: Number(item.score) || 0,
-        thumbnailUrl: item.thumbnailUrl ? String(item.thumbnailUrl) : undefined,
-      }));
+      trendingNow = items.slice(0, 5);
     }
   } catch {
-    // Non-critical — trending now is best-effort enrichment
+    // non-critical
   }
 
   if (ranked.length === 0 && errors.length > 0) {
-    return jsonResponse(
-      {
-        data: [],
-        meta: {
-          total: 0,
-          limit,
-          perProtocol,
-          errors,
-          notices,
-          fetchedAt: Date.now(),
-          note:
-            relevant.length === 0 ? 'No relevant posts found' : 'All sources failed or filtered',
-        },
+    return jsonResponse({
+      data: [],
+      meta: {
+        total: 0,
+        limit,
+        perProtocol,
+        errors,
+        notices,
+        fetchedAt: now,
+        freshness: freshnessMeta,
+        note:
+          relevant.length === 0 ? 'No relevant posts found' : 'All sources failed or filtered',
       },
-      200,
-    );
+    });
   }
 
-  // 6. Respond and cache.
+  // 12. Build response
   const feedElapsed = Date.now() - feedStartTime;
   const responseBody = {
     data: ranked,
@@ -250,7 +327,7 @@ export async function handleHomeFeed(
       perProtocol,
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
-      trending,
+      trending: computedTrending,
       trendingNow: trendingNow.length > 0 ? trendingNow : undefined,
       topOfHour,
       nextCursor,
@@ -258,23 +335,58 @@ export async function handleHomeFeed(
       presetName,
       presetLabel: resolvedPreset.profile.label,
       newSinceLastVisit: countNewSinceLastVisit(cookieHeader, ranked),
-      fetchedAt: Date.now(),
+      fetchedAt: now,
+      freshness: {
+        updatedLabel: freshnessMeta.updatedLabel,
+        updatedSecondsAgo: freshnessMeta.updatedSecondsAgo,
+      },
+      dedup: {
+        crossProtocol: dedupResult.crossProtocol,
+        urlDedup: dedupResult.urlDedup,
+        totalRemoved: dedupResult.deduped,
+      },
+      catchUp: catchUp && catchUp.triggered
+        ? {
+            triggered: true,
+            awayMinutes: catchUp.awayMinutes,
+            totalNewPosts: catchUp.totalNewPosts,
+            topPostIds: catchUp.topPosts.map((p) => p.id),
+            trendingSince: catchUp.trendingSince,
+          }
+        : undefined,
     },
   };
-  if (!cursor) await setCachedFeed(env, cacheKey, responseBody);
-  const resp = cachedJsonResponse(responseBody);
 
-  // Build enhanced debug header with circuit status, timing, slow providers
-  const circuitStatus = await getCircuitStatus(env, requestedProtocols);
-  const circuitParts = Object.entries(circuitStatus).map(
-    ([p, s]) => `${p}=${s}`,
+  // 13. Cache the result
+  if (!cursor) {
+    void setFeedCache(env, userId, feedType, responseBody, responseBody.meta);
+  }
+  // Legacy cache for backward compat
+  if (!cursor) {
+    const legacyKey = feedCacheKey(requestedProtocols, category, sort);
+    await setCachedFeed(env, legacyKey, responseBody);
+  }
+
+  const resp = cachedJsonResponse(
+    responseBody,
+    200,
+    feedType === 'trending' ? 15 : 30,
   );
+
+  // Debug header
+  const circuitStatus = await getCircuitStatus(env, requestedProtocols);
+  const circuitParts = Object.entries(circuitStatus).map(([p, s]) => `${p}=${s}`);
   const slowProviderParts = timer.getSlowProviders().map(
     (t) => `${t.protocol}=${t.durationMs}ms`,
   );
   const debugParts = [
     `feed-generation=${(feedElapsed / 1000).toFixed(1)}s`,
     `timeout=${(FEED_GENERATION_TIMEOUT_MS / 1000).toFixed(0)}s`,
+    `cache=miss`,
+    `dedup=cross=${dedupResult.crossProtocol},url=${dedupResult.urlDedup}`,
+    `engagement-prediction=${predictedBoosts.size > 0 ? 'active' : 'inactive'}`,
+    `freshness=${freshnessMeta.updatedLabel}`,
+    catchUp?.triggered ? `catchup=${catchUp.awayMinutes}m,${catchUp.totalNewPosts}new` : '',
   ];
   if (timer.getResults().length > 0) {
     debugParts.push(`timings=${timer.toDebugString()}`);
@@ -289,8 +401,23 @@ export async function handleHomeFeed(
     `spam=${debug.avgSpam.toFixed(2)},quality=${debug.avgQuality.toFixed(0)},reputation=${debug.avgReputation.toFixed(0)},velocity=${debug.avgVelocity.toFixed(0)}`,
   );
 
-  resp.headers.set('X-DegenFeed-Debug', debugParts.join(' | '));
+  resp.headers.set('X-DegenFeed-Debug', debugParts.filter(Boolean).join(' | '));
+
+  // Broadcast feed update via WebSocket
+  void broadcastFeedUpdate(feedType, {
+    newPostCount: ranked.length,
+    timestamp: now,
+  });
+
   return resp;
+}
+
+export async function handleHomeFeed(
+  request: Request,
+  env: Env,
+  execCtx?: ExecCtx,
+): Promise<Response> {
+  return handleCachedFeed(request, env, execCtx, 'home');
 }
 
 export async function handleTrendingFeed(
@@ -300,7 +427,7 @@ export async function handleTrendingFeed(
 ): Promise<Response> {
   const url = new URL(request.url);
   url.searchParams.set('protocols', DEFAULT_PROTOCOLS.join(','));
-  return handleHomeFeed(new Request(url.toString()), env, execCtx);
+  return handleCachedFeed(new Request(url.toString()), env, execCtx, 'trending');
 }
 
 export async function handleCategoryFeed(
@@ -311,5 +438,19 @@ export async function handleCategoryFeed(
 ): Promise<Response> {
   const url = new URL(request.url);
   url.searchParams.set('category', category);
-  return handleHomeFeed(new Request(url.toString()), env, execCtx);
+  return handleCachedFeed(new Request(url.toString()), env, execCtx, 'home');
+}
+
+// ─── Cache management endpoints ────────────────────────────────────
+
+export async function handleFeedCacheInvalidate(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const userId = await resolveUserId(request, env);
+  const params = new URL(request.url).searchParams;
+  const feedType = (params.get('type') ?? undefined) as FeedType | undefined;
+
+  await invalidateFeedCache(env, userId, feedType);
+  return jsonResponse({ ok: true, userId, feedType, invalidatedAt: Date.now() });
 }

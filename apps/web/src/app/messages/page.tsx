@@ -103,7 +103,7 @@ export default function MessagesPage() {
   // ── Render ──────────────────────────────────────────────
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-4rem)] flex-col">
+    <div className="mx-auto flex h-[calc(100dvh-8rem)] flex-col lg:h-[calc(100dvh-4rem)]">
       {/* ── Header ────────────────────────────────────────── */}
       <header className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-glass-bg)] px-4 py-2.5 shrink-0">
         <div className="flex items-center gap-3">
@@ -244,7 +244,7 @@ export default function MessagesPage() {
         <div className="flex flex-1 overflow-hidden">
           {/* ── Left: Conversation list ────────────────────────── */}
           <aside
-            className={`w-full shrink-0 border-r border-[var(--color-border)] sm:w-[300px] lg:w-[320px] ${
+            className={`w-full shrink-0 border-r border-[var(--color-border)] sm:w-[300px] ${
               selectedConvId && !showCompose ? 'hidden sm:flex sm:flex-col' : 'flex flex-col'
             }`}
           >
