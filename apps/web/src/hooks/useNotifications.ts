@@ -197,6 +197,23 @@ export function useNotifications(enabled: boolean) {
   }, []);
 
   const markAllRead = useCallback(() => {
+    // POST to backend to persist the mark-all-read state
+    void (async () => {
+      try {
+        await retryFetch('/api/notifications/mark-all-read', {
+          maxRetries: 1,
+          fetchOptions: {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({}),
+          },
+        });
+      } catch {
+        // Non-critical — local state update happens regardless
+      }
+    })();
+    // Update local state immediately for responsiveness
     setReadIds((prev) => {
       const next = new Set(prev);
       for (const n of notifications) next.add(n.id);

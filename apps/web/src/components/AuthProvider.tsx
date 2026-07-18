@@ -51,6 +51,16 @@ import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
 import { engageNostr, publishNoteToNostr, signBridgeReplyNote } from '../lib/nostr';
+import {
+  addStoredWallet,
+  clearStoredWallets,
+  getActiveWalletIndex,
+  getStoredWallets,
+  removeStoredWallet,
+  saveStoredWallets,
+  setActiveWalletIndex,
+  type StoredWalletMeta,
+} from '../lib/walletStorage';
 import { useToast } from './Toast';
 import { triggerOnboarding } from '../hooks/useOnboarding';
 
@@ -64,7 +74,16 @@ export interface ComposeReplyContext {
 export interface AuthContextValue {
   signedInProtocols: Record<string, boolean>;
   tokens: Record<string, string>;
+  /** Active wallet address (backward-compat: first wallet in the list) */
   walletAddress?: string;
+  /** All connected wallet addresses */
+  walletAddresses: string[];
+  /** Index of the currently active wallet */
+  activeWalletIndex: number;
+  /** Number of connected wallets */
+  walletCount: number;
+  /** Metadata for each connected wallet */
+  walletMeta: Record<string, StoredWalletMeta>;
   primaryIdentity?: StoredIdentity;
   linkedIdentities: StoredIdentity[];
   isWalletOnly: boolean;
@@ -75,6 +94,12 @@ export interface AuthContextValue {
   /** Open the composer in cross-protocol reply mode for the given parent post. */
   openComposeReply: (ctx: ComposeReplyContext) => void;
   signOut: () => Promise<void>;
+  /** Switch to a different connected wallet by index */
+  switchWallet: (index: number) => void;
+  /** Connect a new wallet without disconnecting the current one */
+  addWallet: () => Promise<void>;
+  /** Remove a wallet from the connected list */
+  removeWallet: (index: number) => void;
   publish: (
     text: string,
     targets: string[],
@@ -114,7 +139,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [primaryIdentity, setPrimaryIdentity] = useState<StoredIdentity | undefined>(undefined);
   const [signedInProtocols, setSignedInProtocols] = useState<Record<string, boolean>>({});
   const [tokens, setTokens] = useState<Record<string, string>>({});
-  const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
+  // ── Multi-wallet state ──────────────────────────────────────────
+  const [walletAddresses, setWalletAddresses] = useState<string[]>([]);
+  const [activeWalletIndex, setActiveWalletIndexState] = useState<number>(0);
+  const [walletMeta, setWalletMeta] = useState<Record<string, StoredWalletMeta>>({});
+  // ── Legacy single-wallet derived state ──────────────────────────
+  const walletAddress = walletAddresses[activeWalletIndex] ?? undefined;
+  // ──
   const [linkGtsUrl, setLinkGtsUrl] = useState<string | null>(null);
   const [nostrPublicId, setNostrPublicId] = useState<string | undefined>(undefined);
   // App starts READY immediately — no blocking init.
@@ -138,6 +169,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { signInWithSolana, signingIn: solanaSigningIn } = useSolanaSignIn();
   const { showToast } = useToast();
 
+  // ── Wallet persistence helpers ──────────────────────────────────
+
+  /** Load wallet list from localStorage and merge with any stored identities */
+  const loadWallets = useCallback(() => {
+    const stored = getStoredWallets();
+    const addresses = stored.map((m) => m.address);
+    const meta: Record<string, StoredWalletMeta> = {};
+    for (const m of stored) meta[m.address] = m;
+    setWalletMeta(meta);
+    setWalletAddresses(addresses);
+    const idx = getActiveWalletIndex();
+    setActiveWalletIndexState(idx < addresses.length ? idx : 0);
+  }, []);
+
   const refresh = useCallback(async () => {
     const all = await getAllIdentities();
     const primary = await getPrimaryIdentity();
@@ -155,12 +200,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSignedInProtocols(protocols);
     setTokens(toks);
 
-    const wallet = all.find((i) => i.protocol === 'ethereum' || i.protocol === 'solana');
-    setWalletAddress(wallet?.publicId ?? (isConnected ? (wagmiAddress ?? undefined) : undefined));
+    // Load persisted wallet list first
+    loadWallets();
+
+    // Merge any wallet identities from storage that aren't in our wallet list
+    const walletIdentities = all.filter(
+      (i) => i.protocol === 'ethereum' || i.protocol === 'solana',
+    );
+    for (const wi of walletIdentities) {
+      const addr = wi.publicId;
+      const stored = getStoredWallets();
+      if (!stored.some((w) => w.address === addr)) {
+        const newMeta: StoredWalletMeta = {
+          address: addr,
+          chain: wi.protocol === 'ethereum' ? 'ethereum' : 'solana',
+          walletName: null,
+          chainId: null,
+          addedAt: wi.linkedAt ?? Date.now(),
+        };
+        addStoredWallet(newMeta);
+      }
+    }
+
+    // If we still have no wallets but wagmi is connected, add that
+    const stored = getStoredWallets();
+    if (stored.length === 0 && isConnected && wagmiAddress) {
+      addStoredWallet({
+        address: wagmiAddress.toLowerCase(),
+        chain: 'ethereum',
+        walletName: null,
+        chainId: null,
+        addedAt: Date.now(),
+      });
+    }
+
+    // Re-load after mutations
+    loadWallets();
 
     const nostrId = all.find((i) => i.protocol === 'nostr');
     setNostrPublicId(nostrId?.publicId);
-  }, [isConnected, wagmiAddress]);
+  }, [isConnected, wagmiAddress, loadWallets]);
 
   // Deferred background init: loads stored identities + session silently.
   // Does NOT block ready state — the app is usable immediately.
@@ -176,7 +255,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!cancelled && res.ok) {
           const data = (await res.json()) as { address?: string };
           if (data.address) {
-            setWalletAddress((prev) => prev ?? data.address.toLowerCase());
+            const addr = data.address.toLowerCase();
+            const stored = getStoredWallets();
+            if (!stored.some((w) => w.address === addr)) {
+              addStoredWallet({
+                address: addr,
+                chain: 'ethereum',
+                walletName: null,
+                chainId: null,
+                addedAt: Date.now(),
+              });
+              loadWallets();
+            }
           }
         }
       } catch {
@@ -189,7 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [refresh]);
+  }, [refresh, loadWallets]);
 
   useEffect(() => {
     if (!ready) return;
@@ -238,6 +328,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const session = await signInWithEthereum();
           if (session) {
             setLinkGtsUrl(session.gtsAuthorizeUrl ?? null);
+            // Add to wallet list
+            const addr = session.address.toLowerCase();
+            const meta: StoredWalletMeta = {
+              address: addr,
+              chain: 'ethereum',
+              walletName: null,
+              chainId: session.chainId ?? null,
+              addedAt: Date.now(),
+            };
+            const updated = addStoredWallet(meta);
+            setWalletMeta((prev) => ({ ...prev, [addr]: meta }));
+            setWalletAddresses(updated.map((w) => w.address));
+            setActiveWalletIndexState(updated.length - 1);
+            setActiveWalletIndex(updated.length - 1);
             await refresh();
             triggerOnboarding();
             setShowSignIn(false);
@@ -255,6 +359,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const session = await signInWithSolana();
             if (session) {
               setLinkGtsUrl(session.gtsAuthorizeUrl ?? null);
+              // Add to wallet list
+              const addr = session.address.toLowerCase();
+              const meta: StoredWalletMeta = {
+                address: addr,
+                chain: 'solana',
+                walletName: null,
+                chainId: session.chainId ?? null,
+                addedAt: Date.now(),
+              };
+              const updated = addStoredWallet(meta);
+              setWalletMeta((prev) => ({ ...prev, [addr]: meta }));
+              setWalletAddresses(updated.map((w) => w.address));
+              setActiveWalletIndexState(updated.length - 1);
+              setActiveWalletIndex(updated.length - 1);
               await refresh();
               triggerOnboarding();
               setShowSignIn(false);
@@ -360,14 +478,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify({ text, targets, auth: tokens, lensCollect: opts?.lensCollect }),
         });
         const data = await res.json();
-        return data.results ?? {};
+        const results: Record<string, { ok: boolean; error?: string }> = data.results ?? {};
+
+        // Show toast with per-protocol results
+        const ok = targets.filter((t) => results[t]?.ok);
+        const failed = targets.filter((t) => !results[t]?.ok);
+        if (ok.length > 0 && failed.length === 0) {
+          showToast('success', `Posted to ${ok.length} network${ok.length > 1 ? 's' : ''} \u2705`);
+        } else if (ok.length > 0 && failed.length > 0) {
+          const failedLabels = failed
+            .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
+            .join(', ');
+          showToast(
+            'warning',
+            `Posted to ${ok.length} network${ok.length > 1 ? 's' : ''}, ${failed.length} failed (${failedLabels})`,
+          );
+        } else {
+          const firstError = failed[0] ? results[failed[0]]?.error : '';
+          showToast('error', `Publish failed: ${firstError || 'All networks returned errors'}`);
+        }
+
+        return results;
       } catch (_err) {
         const results: Record<string, { ok: boolean; error?: string }> = {};
         for (const t of targets) results[t] = { ok: false, error: 'Network error' };
         return results;
       }
     },
-    [tokens],
+    [tokens, showToast],
   );
 
   const handleCrossReply = useCallback(
@@ -660,11 +798,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+    clearStoredWallets();
     setIdentities([]);
     setPrimaryIdentity(undefined);
     setSignedInProtocols({});
     setTokens({});
-    setWalletAddress(undefined);
+    setWalletAddresses([]);
+    setActiveWalletIndexState(0);
+    setWalletMeta({});
     setLinkGtsUrl(null);
     showToast('success', 'Signed out');
   }, [identities, showToast]);
@@ -685,6 +826,98 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  // ── Multi-wallet actions ──────────────────────────────────────
+
+  const switchWallet = useCallback(
+    (index: number) => {
+      const stored = getStoredWallets();
+      if (index < 0 || index >= stored.length) return;
+      setActiveWalletIndexState(index);
+      setActiveWalletIndex(index);
+    },
+    [],
+  );
+
+  const addWallet = useCallback(async () => {
+    // Connect a NEW wallet via the Web3 provider (without disconnecting current).
+    // We call connect() which prompts the browser wallet to switch accounts.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const provider = (typeof window !== 'undefined' ? (window as any).ethereum : null) as any;
+      if (!provider) {
+        showToast('error', 'No Ethereum wallet detected');
+        return;
+      }
+      // Request accounts — the wallet may prompt the user to select an account.
+      // If they select a new/different account, it gets added to our list.
+      const accounts = (await provider.request({
+        method: 'eth_requestAccounts',
+      })) as string[];
+      const newAddress = accounts[0]?.toLowerCase();
+      if (!newAddress) {
+        showToast('error', 'No account selected');
+        return;
+      }
+
+      const stored = getStoredWallets();
+      if (stored.some((w) => w.address === newAddress)) {
+        // Already connected — just switch to it
+        const existingIdx = stored.findIndex((w) => w.address === newAddress);
+        switchWallet(existingIdx);
+        showToast('success', 'Switched to wallet');
+        return;
+      }
+
+      const meta: StoredWalletMeta = {
+        address: newAddress,
+        chain: 'ethereum',
+        walletName: null,
+        chainId: null,
+        addedAt: Date.now(),
+      };
+      const updated = addStoredWallet(meta);
+      setWalletMeta((prev) => ({ ...prev, [newAddress]: meta }));
+      setWalletAddresses(updated.map((w) => w.address));
+      setActiveWalletIndexState(updated.length - 1);
+      setActiveWalletIndex(updated.length - 1);
+      showToast('success', 'Wallet added');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to add wallet';
+      showToast('error', message);
+    }
+  }, [switchWallet, showToast]);
+
+  const removeWallet = useCallback(
+    (index: number) => {
+      const stored = getStoredWallets();
+      if (index < 0 || index >= stored.length) return;
+      const removed = stored[index];
+      const updated = removeStoredWallet(removed.address);
+      setWalletMeta((prev) => {
+        const next = { ...prev };
+        delete next[removed.address];
+        return next;
+      });
+      setWalletAddresses(updated.map((w) => w.address));
+
+      // Adjust active wallet index
+      if (updated.length === 0) {
+        setActiveWalletIndexState(0);
+        setActiveWalletIndex(0);
+      } else if (index >= updated.length) {
+        setActiveWalletIndexState(updated.length - 1);
+        setActiveWalletIndex(updated.length - 1);
+      } else if (index === activeWalletIndex) {
+        // Active wallet was removed — keep index at same position (it shifted)
+        // No change needed
+      } else if (index < activeWalletIndex) {
+        setActiveWalletIndexState(activeWalletIndex - 1);
+        setActiveWalletIndex(activeWalletIndex - 1);
+      }
+    },
+    [activeWalletIndex],
+  );
+
   const linkedIdentities = useMemo(
     () => identities.filter((i) => i.id !== primaryIdentity?.id),
     [identities, primaryIdentity],
@@ -697,6 +930,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       linkedIdentities.length === 0
     );
   }, [primaryIdentity, linkedIdentities]);
+
+  const walletCount = walletAddresses.length;
 
   const openSignIn = useCallback(() => setShowSignIn(true), []);
   const openCompose = useCallback(() => {
@@ -713,6 +948,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signedInProtocols,
       tokens,
       walletAddress,
+      walletAddresses,
+      activeWalletIndex,
+      walletCount,
+      walletMeta,
       primaryIdentity,
       linkedIdentities,
       isWalletOnly,
@@ -728,11 +967,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ready,
       setPrimaryIdentity: handleSetPrimary,
       unlinkIdentity: handleUnlink,
+      switchWallet,
+      addWallet,
+      removeWallet,
     }),
     [
       signedInProtocols,
       tokens,
       walletAddress,
+      walletAddresses,
+      activeWalletIndex,
+      walletCount,
+      walletMeta,
       primaryIdentity,
       linkedIdentities,
       isWalletOnly,
@@ -748,6 +994,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ready,
       handleSetPrimary,
       handleUnlink,
+      switchWallet,
+      addWallet,
+      removeWallet,
     ],
   );
 

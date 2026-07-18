@@ -7,7 +7,7 @@ import { AuthProvider } from '../components/AuthProvider';
 import { ErrorTracker } from '../components/ErrorTracker';
 import { GlobalErrorBoundary } from '../components/GlobalErrorBoundary';
 import { RealtimeClientProvider } from '../components/RealtimeClientProvider';
-import { Shell } from '../components/Shell';
+import { ConditionalShell } from '../components/ConditionalShell';
 import { SolanaProvider } from '../components/SolanaProvider';
 import { ToastProvider } from '../components/Toast';
 import { Web3Provider } from '../components/Web3Provider';
@@ -185,7 +185,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <AuthProvider>
                 <RealtimeClientProvider>
                   <GlobalErrorBoundary>
-                    <Shell>{children}</Shell>
+                    <ConditionalShell>{children}</ConditionalShell>
                   </GlobalErrorBoundary>
                 </RealtimeClientProvider>
               </AuthProvider>

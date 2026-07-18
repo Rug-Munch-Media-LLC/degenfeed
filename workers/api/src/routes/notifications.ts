@@ -27,6 +27,60 @@ function detectProtocol(n: Notification): string {
   return n.protocol || 'unknown';
 }
 
+/* ─── Notification preferences (type toggles per protocol) ──── */
+
+interface NotificationTypePref {
+  likes: boolean;
+  reposts: boolean;
+  replies: boolean;
+  follows: boolean;
+  mentions: boolean;
+}
+
+type NotificationProtocolPrefs = Partial<Record<string, boolean | NotificationTypePref>>;
+
+const TYPE_TO_PREF_KEY: Record<string, 'likes' | 'reposts' | 'replies' | 'follows' | 'mentions'> = {
+  like: 'likes',
+  repost: 'reposts',
+  mirror: 'reposts',
+  reply: 'replies',
+  follow: 'follows',
+  mention: 'mentions',
+};
+
+function typeEnabled(n: Notification, prefs: NotificationProtocolPrefs): boolean {
+  // Tips have their own boolean toggle
+  if (n.type === 'tip') {
+    const tipPref = prefs.tip;
+    return tipPref === undefined || tipPref === true;
+  }
+  // Collects are not in the preferences UI — always show
+  if (n.type === 'collect' || n.type === 'mirror') return true;
+  // Look up protocol-level prefs (e.g. nostr, farcaster, lens, bluesky, mastodon)
+  const protocolPref = prefs[n.protocol];
+  if (protocolPref === undefined || protocolPref === true) return true; // default: enabled
+  if (typeof protocolPref === 'boolean') return protocolPref;
+  // Per-type toggle within the protocol
+  const prefKey = TYPE_TO_PREF_KEY[n.type];
+  if (!prefKey) return true;
+  const typePref = (protocolPref as NotificationTypePref)[prefKey];
+  return typePref === undefined || typePref;
+}
+
+async function loadNotifPrefs(env: Env, userId: string): Promise<NotificationProtocolPrefs | null> {
+  if (!env.CACHE) return null;
+  try {
+    const key = `user:prefs:${userId.toLowerCase()}`;
+    const raw = await env.CACHE.get(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { notifications?: NotificationProtocolPrefs };
+    return parsed.notifications ?? null;
+  } catch (err) {
+    console.warn('[notifications] loadNotifPrefs failed:', err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
 /**
  * Fetch KV-backed notifications (tips, app-internal follows, etc.)
  * stored under `notifications:{recipient}` by other handlers.
@@ -621,8 +675,12 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
     if (readIds.has(n.id)) n.read = true;
   }
 
+  // Apply notification preference filters (per-protocol type toggles)
+  const userPrefs = await loadNotifPrefs(env, userId);
+  const prefsFiltered = userPrefs ? deduped.filter((n) => typeEnabled(n, userPrefs)) : deduped;
+
   // Add sourceProtocol to every notification for unified inbox display
-  const unified = deduped.map((n) => ({
+  const unified = prefsFiltered.map((n) => ({
     ...n,
     sourceProtocol: n.sourceProtocol || detectProtocol(n),
   }));
@@ -669,6 +727,13 @@ export async function handleMarkAllRead(request: Request, env: Env): Promise<Res
 
     // Also clear the individual read IDs to save space
     await env.CACHE.delete(`notif:read:${userId}`);
+
+    // Broadcast the mark-all-read event so connected clients update badges
+    broadcastToUser(userId, 'notifications:markAllRead', { markedAt: Date.now() });
+    broadcastToAll('notifications:read', {
+      userId,
+      timestamp: Date.now(),
+    });
 
     return jsonResponse({ success: true, markedAt: Date.now() });
   } catch (err) {

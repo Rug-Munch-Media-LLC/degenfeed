@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface NavItem {
   href: string;
@@ -67,22 +68,13 @@ export function BottomNav() {
   const pathname = usePathname() ?? '/';
   const { ready, signedInProtocols, openSignIn } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
-  const [notifCount, setNotifCount] = useState(0);
+  const { unreadCount: notifCount } = useNotifications(hasSignedIn);
   const [dmCount, setDmCount] = useState(0);
+  const dmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Only poll for notifications if signed in
+  // Poll DM unread count separately (no useDmCount hook exists yet)
   useEffect(() => {
     if (!hasSignedIn) return;
-    let interval: ReturnType<typeof setInterval>;
-    const poll = async () => {
-      try {
-        const res = await fetch('/api/notifications', { credentials: 'include' });
-        if (!res.ok) return;
-        const data = (await res.json()) as { notifications?: Array<{ read: boolean }> };
-        const unread = (data.notifications ?? []).filter((n) => !n.read).length;
-        setNotifCount(unread);
-      } catch {}
-    };
     const pollDm = async () => {
       try {
         const res = await fetch('/api/messages/conversations', { credentials: 'include' });
@@ -94,14 +86,12 @@ export function BottomNav() {
         setDmCount(total);
       } catch {}
     };
-    poll();
     pollDm();
-    interval = setInterval(() => {
-      poll();
-      pollDm();
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [hasSignedIn]);
+    dmIntervalRef.current = setInterval(pollDm, 60000);
+    return () => {
+      if (dmIntervalRef.current) clearInterval(dmIntervalRef.current);
+    };
+  }, [hasSignedIn, setDmCount]);
 
   // Determine signed-in state
   const signedIn = ready && hasSignedIn;
