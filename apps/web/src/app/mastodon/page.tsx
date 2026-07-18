@@ -7,7 +7,12 @@ const mastodonBreadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Mastodon Feed', item: 'https://app.degenfeed.xyz/mastodon' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Mastodon Feed',
+      item: 'https://app.degenfeed.xyz/mastodon',
+    },
   ],
 };
 
@@ -16,8 +21,12 @@ export const metadata: Metadata = {
   description:
     'Browse the Mastodon timeline — toots, local posts, and federated content from the fediverse. Mastodon feed with cross-post to Nostr, Farcaster, Lens, Bluesky. The best Mastodon web client and ActivityPub feed aggregator.',
   keywords: [
-    'mastodon feed', 'mastodon web client', 'fediverse social',
-    'mastodon toots', 'activitypub feed', 'fediverse aggregator',
+    'mastodon feed',
+    'mastodon web client',
+    'fediverse social',
+    'mastodon toots',
+    'activitypub feed',
+    'fediverse aggregator',
   ],
   openGraph: {
     title: 'Mastodon Feed — Browse Fediverse Toots & ActivityPub | DegenFeed',
@@ -30,7 +39,11 @@ export const metadata: Metadata = {
 export default function MastodonPage() {
   return (
     <>
-      <Script id="breadcrumb-mastodon" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(mastodonBreadcrumb) }} />
+      <Script
+        id="breadcrumb-mastodon"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(mastodonBreadcrumb) }}
+      />
       <ProtocolFeedPage protocol="mastodon" />
     </>
   );

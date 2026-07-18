@@ -32,7 +32,9 @@ const CATEGORIES = [
 
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   });
 }
 
@@ -59,12 +61,15 @@ export default function AchievementsPage() {
     }
   }, []);
 
-  useEffect(() => { fetchAchievements(); }, [fetchAchievements]);
+  useEffect(() => {
+    fetchAchievements();
+  }, [fetchAchievements]);
 
-  const filteredAchievements = data?.achievements.filter((a) => {
-    if (activeCategory === 'all') return true;
-    return a.category === activeCategory;
-  }) ?? [];
+  const filteredAchievements =
+    data?.achievements.filter((a) => {
+      if (activeCategory === 'all') return true;
+      return a.category === activeCategory;
+    }) ?? [];
 
   if (loading) {
     return (
@@ -114,9 +119,7 @@ export default function AchievementsPage() {
         {/* Progress card */}
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-[var(--color-fg)]">
-              Progress
-            </span>
+            <span className="text-sm font-semibold text-[var(--color-fg)]">Progress</span>
             <span className="text-sm text-degen-400 font-bold">
               {data?.unlockedCount ?? 0}/{data?.totalCount ?? 12}
             </span>
@@ -170,9 +173,11 @@ export default function AchievementsPage() {
                   <span className="text-[10px] text-degen-400 font-medium">✓ Unlocked</span>
                 )}
               </div>
-              <h3 className={`text-sm font-semibold mb-0.5 ${
-                achievement.unlocked ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)]'
-              }`}>
+              <h3
+                className={`text-sm font-semibold mb-0.5 ${
+                  achievement.unlocked ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)]'
+                }`}
+              >
                 {achievement.title}
               </h3>
               <p className="text-[11px] text-[var(--color-muted)] mb-2">

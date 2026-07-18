@@ -145,7 +145,9 @@ export default function SubscriptionsPage() {
                       >
                         {shortenAddress(sub.creator)}
                       </Link>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${colorClass}`}>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${colorClass}`}
+                      >
                         {tierLabel}
                       </span>
                     </div>
@@ -174,7 +176,8 @@ export default function SubscriptionsPage() {
         {/* Info footer */}
         {!loading && subscriptions.length > 0 && (
           <div className="mt-6 text-center text-[10px] text-gray-700">
-            Subscriptions are active for 30 days from confirmation. Renew before expiry to keep your benefits.
+            Subscriptions are active for 30 days from confirmation. Renew before expiry to keep your
+            benefits.
           </div>
         )}
       </div>

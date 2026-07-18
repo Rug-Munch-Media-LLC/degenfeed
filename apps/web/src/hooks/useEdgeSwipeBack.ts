@@ -9,10 +9,7 @@ import { useCallback, useEffect, useRef } from 'react';
  * @param onBack  Callback when the back gesture is completed
  * @param enabled Enable/disable the gesture (default true)
  */
-export function useEdgeSwipeBack(
-  onBack?: () => void,
-  enabled = true,
-) {
+export function useEdgeSwipeBack(onBack?: () => void, enabled = true) {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {

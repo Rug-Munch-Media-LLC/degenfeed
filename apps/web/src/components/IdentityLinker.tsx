@@ -8,8 +8,8 @@
  * When switching wallets, the linked protocols update automatically.
  */
 
-import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
 import type { ProtocolId } from '@degenfeed/utils';
+import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { WalletSwitcher } from './WalletSwitcher';
@@ -26,7 +26,10 @@ interface LinkFormState {
   submitting: boolean;
 }
 
-const LINK_FIELDS: Record<ProtocolId, Array<{ key: string; label: string; placeholder: string }>> = {
+const LINK_FIELDS: Record<
+  ProtocolId,
+  Array<{ key: string; label: string; placeholder: string }>
+> = {
   nostr: [
     { key: 'npub', label: 'Nostr npub', placeholder: 'npub1...' },
     { key: 'relays', label: 'Relays (comma-separated)', placeholder: 'wss://relay.damus.io' },
@@ -48,15 +51,13 @@ const LINK_FIELDS: Record<ProtocolId, Array<{ key: string; label: string; placeh
     { key: 'handle', label: 'Handle', placeholder: '@alice' },
     { key: 'instance', label: 'Instance', placeholder: 'social.degenfeed.xyz' },
   ],
-  reddit: [
-    { key: 'username', label: 'Reddit Username', placeholder: 'u/alice' },
-  ],
+  reddit: [{ key: 'username', label: 'Reddit Username', placeholder: 'u/alice' }],
 };
 
 export function IdentityLinker() {
   const { walletAddress, walletAddresses, walletMeta } = useAuth();
   const [linked, setLinked] = useState<LinkedIdentity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [form, setForm] = useState<LinkFormState>({ open: null, values: {}, submitting: false });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -88,12 +89,42 @@ export function IdentityLinker() {
         return;
       }
       const ids: LinkedIdentity[] = [];
-      if (data.data.nostr) ids.push({ protocol: 'nostr', handle: data.data.nostr.npub, verified: data.data.nostr.verified });
-      if (data.data.farcaster) ids.push({ protocol: 'farcaster', handle: data.data.farcaster.username || String(data.data.farcaster.fid), verified: data.data.farcaster.verified });
-      if (data.data.lens) ids.push({ protocol: 'lens', handle: data.data.lens.handle, verified: data.data.lens.verified });
-      if (data.data.bluesky) ids.push({ protocol: 'bluesky', handle: data.data.bluesky.handle, verified: data.data.bluesky.verified });
-      if (data.data.mastodon) ids.push({ protocol: 'mastodon', handle: `${data.data.mastodon.handle}@${data.data.mastodon.instance}`, verified: data.data.mastodon.verified });
-      if (data.data.reddit) ids.push({ protocol: 'reddit', handle: data.data.reddit.username, verified: data.data.reddit.verified });
+      if (data.data.nostr)
+        ids.push({
+          protocol: 'nostr',
+          handle: data.data.nostr.npub,
+          verified: data.data.nostr.verified,
+        });
+      if (data.data.farcaster)
+        ids.push({
+          protocol: 'farcaster',
+          handle: data.data.farcaster.username || String(data.data.farcaster.fid),
+          verified: data.data.farcaster.verified,
+        });
+      if (data.data.lens)
+        ids.push({
+          protocol: 'lens',
+          handle: data.data.lens.handle,
+          verified: data.data.lens.verified,
+        });
+      if (data.data.bluesky)
+        ids.push({
+          protocol: 'bluesky',
+          handle: data.data.bluesky.handle,
+          verified: data.data.bluesky.verified,
+        });
+      if (data.data.mastodon)
+        ids.push({
+          protocol: 'mastodon',
+          handle: `${data.data.mastodon.handle}@${data.data.mastodon.instance}`,
+          verified: data.data.mastodon.verified,
+        });
+      if (data.data.reddit)
+        ids.push({
+          protocol: 'reddit',
+          handle: data.data.reddit.username,
+          verified: data.data.reddit.verified,
+        });
       setLinked(ids);
     } catch {
       // ignore
@@ -107,7 +138,8 @@ export function IdentityLinker() {
   }, [fetchLinked]);
 
   const isLinked = (protocol: ProtocolId) => linked.some((l) => l.protocol === protocol);
-  const getLinkedHandle = (protocol: ProtocolId) => linked.find((l) => l.protocol === protocol)?.handle;
+  const getLinkedHandle = (protocol: ProtocolId) =>
+    linked.find((l) => l.protocol === protocol)?.handle;
 
   const handleLink = useCallback(
     async (protocol: ProtocolId) => {
@@ -123,7 +155,10 @@ export function IdentityLinker() {
         if (protocol === 'farcaster' && payload.fid) payload.fid = Number(payload.fid);
         // Split relays string into array
         if (protocol === 'nostr' && payload.relays) {
-          payload.relays = String(payload.relays).split(',').map((s) => s.trim()).filter(Boolean);
+          payload.relays = String(payload.relays)
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
         }
 
         const res = await fetch('/api/identity/link', {
@@ -143,7 +178,10 @@ export function IdentityLinker() {
           return;
         }
 
-        setMessage({ type: 'success', text: `${PROTOCOL_ID_REGISTRY[protocol].displayName} linked!` });
+        setMessage({
+          type: 'success',
+          text: `${PROTOCOL_ID_REGISTRY[protocol].displayName} linked!`,
+        });
         setForm((f) => ({ ...f, open: null, values: { ...f.values, [protocol]: {} } }));
         await fetchLinked();
       } catch (err) {
@@ -159,16 +197,22 @@ export function IdentityLinker() {
     async (protocol: ProtocolId) => {
       setMessage(null);
       try {
-        const res = await fetch(`/api/identity/link?protocol=${protocol}&wallet=${encodeURIComponent(walletAddress ?? '')}`, {
-          method: 'DELETE',
-          credentials: 'include',
-        });
+        const res = await fetch(
+          `/api/identity/link?protocol=${protocol}&wallet=${encodeURIComponent(walletAddress ?? '')}`,
+          {
+            method: 'DELETE',
+            credentials: 'include',
+          },
+        );
         const data = (await res.json()) as { success?: boolean; error?: string };
         if (!res.ok || !data.success) {
           setMessage({ type: 'error', text: data.error || 'Failed to unlink' });
           return;
         }
-        setMessage({ type: 'success', text: `${PROTOCOL_ID_REGISTRY[protocol].displayName} unlinked.` });
+        setMessage({
+          type: 'success',
+          text: `${PROTOCOL_ID_REGISTRY[protocol].displayName} unlinked.`,
+        });
         await fetchLinked();
       } catch (err) {
         setMessage({ type: 'error', text: String(err) });
@@ -224,107 +268,115 @@ export function IdentityLinker() {
 
       {/* Protocol list */}
       <div className="space-y-2">
-        {(Object.entries(PROTOCOL_ID_REGISTRY) as [ProtocolId, typeof PROTOCOL_ID_REGISTRY[ProtocolId]][]).map(
-          ([protocol, meta]) => {
-            const linkedHandle = getLinkedHandle(protocol);
-            const linked = isLinked(protocol);
-            const formOpen = form.open === protocol;
+        {(
+          Object.entries(PROTOCOL_ID_REGISTRY) as [
+            ProtocolId,
+            (typeof PROTOCOL_ID_REGISTRY)[ProtocolId],
+          ][]
+        ).map(([protocol, meta]) => {
+          const linkedHandle = getLinkedHandle(protocol);
+          const linked = isLinked(protocol);
+          const formOpen = form.open === protocol;
 
-            return (
-              <div key={protocol} className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden">
+          return (
+            <div
+              key={protocol}
+              className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden"
+            >
+              <div
+                className={`flex items-center gap-3 px-4 py-3 transition-colors ${!formOpen ? 'hover:bg-white/[0.03]' : ''}`}
+              >
                 <div
-                  className={`flex items-center gap-3 px-4 py-3 transition-colors ${!formOpen ? 'hover:bg-white/[0.03]' : ''}`}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base"
+                  style={{ backgroundColor: `${meta.color}22` }}
                 >
-                  <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base"
-                    style={{ backgroundColor: `${meta.color}22` }}
-                  >
-                    <span style={{ color: meta.color }}>{meta.icon}</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-[var(--color-fg)]">{meta.displayName}</span>
-                      {linked && (
-                        <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
-                          ✓ Linked
-                        </span>
-                      )}
-                    </div>
-                    {linkedHandle ? (
-                      <div className="text-xs text-gray-500 truncate">{linkedHandle}</div>
-                    ) : (
-                      <div className="text-xs text-gray-600">Not linked</div>
+                  <span style={{ color: meta.color }}>{meta.icon}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-[var(--color-fg)]">
+                      {meta.displayName}
+                    </span>
+                    {linked && (
+                      <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
+                        ✓ Linked
+                      </span>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (linked) {
-                        handleUnlink(protocol);
-                      } else {
-                        setForm((f) => ({
-                          ...f,
-                          open: f.open === protocol ? null : protocol,
-                          values: { ...f.values, [protocol]: f.values[protocol] || {} },
-                        }));
-                      }
-                    }}
-                    className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                      linked
-                        ? 'border border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/20'
-                        : 'border border-degen-500/30 bg-degen-500/10 text-degen-400 hover:bg-degen-500/20'
-                    }`}
-                  >
-                    {linked ? 'Unlink' : 'Link'}
-                  </button>
+                  {linkedHandle ? (
+                    <div className="text-xs text-gray-500 truncate">{linkedHandle}</div>
+                  ) : (
+                    <div className="text-xs text-gray-600">Not linked</div>
+                  )}
                 </div>
-
-                {/* Link form */}
-                {formOpen && !linked && (
-                  <div className="border-t border-[var(--color-glass-border)] px-4 py-3 space-y-3">
-                    {LINK_FIELDS[protocol].map((field) => (
-                      <div key={field.key}>
-                        <label className="mb-1 block text-xs text-gray-500">{field.label}</label>
-                        <input
-                          type="text"
-                          value={form.values[protocol]?.[field.key] || ''}
-                          onChange={(e) =>
-                            setForm((f) => ({
-                              ...f,
-                              values: {
-                                ...f.values,
-                                [protocol]: { ...f.values[protocol], [field.key]: e.target.value },
-                              },
-                            }))
-                          }
-                          placeholder={field.placeholder}
-                          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500 focus:outline-none"
-                        />
-                      </div>
-                    ))}
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => handleLink(protocol)}
-                        disabled={form.submitting}
-                        className="btn-primary flex-1 text-xs"
-                      >
-                        {form.submitting ? 'Linking...' : `Link ${meta.displayName}`}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setForm((f) => ({ ...f, open: null }))}
-                        className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)] transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (linked) {
+                      handleUnlink(protocol);
+                    } else {
+                      setForm((f) => ({
+                        ...f,
+                        open: f.open === protocol ? null : protocol,
+                        values: { ...f.values, [protocol]: f.values[protocol] || {} },
+                      }));
+                    }
+                  }}
+                  className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    linked
+                      ? 'border border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                      : 'border border-degen-500/30 bg-degen-500/10 text-degen-400 hover:bg-degen-500/20'
+                  }`}
+                >
+                  {linked ? 'Unlink' : 'Link'}
+                </button>
               </div>
-            );
-          },
-        )}
+
+              {/* Link form */}
+              {formOpen && !linked && (
+                <div className="border-t border-[var(--color-glass-border)] px-4 py-3 space-y-3">
+                  {LINK_FIELDS[protocol].map((field) => (
+                    <div key={field.key}>
+                      <label className="mb-1 block text-xs text-gray-500">{field.label}</label>
+                      <input
+                        type="text"
+                        value={form.values[protocol]?.[field.key] || ''}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            values: {
+                              ...f.values,
+                              [protocol]: { ...f.values[protocol], [field.key]: e.target.value },
+                            },
+                          }))
+                        }
+                        placeholder={field.placeholder}
+                        className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-gray-600 focus:border-degen-500 focus:outline-none"
+                      />
+                    </div>
+                  ))}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleLink(protocol)}
+                      disabled={form.submitting}
+                      className="btn-primary flex-1 text-xs"
+                    >
+                      {form.submitting ? 'Linking...' : `Link ${meta.displayName}`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, open: null }))}
+                      className="rounded-lg bg-[var(--color-muted)] px-3 py-2 text-xs text-gray-400 hover:text-[var(--color-fg)] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Status message */}

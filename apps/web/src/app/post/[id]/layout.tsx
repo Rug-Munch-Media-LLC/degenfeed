@@ -20,7 +20,14 @@ export async function generateMetadata({ params }: PostLayoutProps): Promise<Met
       type: 'article',
       siteName: 'DegenFeed',
       url: `https://app.degenfeed.xyz/post/${encodeURIComponent(id)}`,
-      images: [{ url: 'https://app.degenfeed.xyz/og-image.png', width: 1200, height: 630, alt: 'DegenFeed' }],
+      images: [
+        {
+          url: 'https://app.degenfeed.xyz/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: 'DegenFeed',
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
@@ -32,7 +39,7 @@ export async function generateMetadata({ params }: PostLayoutProps): Promise<Met
 
   // Try to fetch post data for richer preview
   try {
-    const apiUrl = new URL('https://app.degenfeed.xyz/api/feed/post/' + encodeURIComponent(id));
+    const apiUrl = new URL(`https://app.degenfeed.xyz/api/feed/post/${encodeURIComponent(id)}`);
     apiUrl.searchParams.set('format', 'og');
     const res = await fetch(apiUrl.toString(), {
       signal: AbortSignal.timeout(3000),
@@ -41,12 +48,22 @@ export async function generateMetadata({ params }: PostLayoutProps): Promise<Met
     if (res.ok) {
       // The OG endpoint returns HTML with meta tags — we prefer the JSON API
       const jsonRes = await fetch(
-        'https://app.degenfeed.xyz/api/feed/post/' + encodeURIComponent(id),
-        { signal: AbortSignal.timeout(3000), headers: { 'user-agent': 'DegenFeed/1.0 (OGPreview)' } },
+        `https://app.degenfeed.xyz/api/feed/post/${encodeURIComponent(id)}`,
+        {
+          signal: AbortSignal.timeout(3000),
+          headers: { 'user-agent': 'DegenFeed/1.0 (OGPreview)' },
+        },
       );
       if (jsonRes.ok) {
         const body = (await jsonRes.json()) as {
-          data?: { text?: string; author?: { displayName?: string; avatarUrl?: string }; protocol?: string; embeds?: Array<{ kind: string; url: string }>; metrics?: { likes: number; reposts: number; replies: number }; createdAt?: number };
+          data?: {
+            text?: string;
+            author?: { displayName?: string; avatarUrl?: string };
+            protocol?: string;
+            embeds?: Array<{ kind: string; url: string }>;
+            metrics?: { likes: number; reposts: number; replies: number };
+            createdAt?: number;
+          };
         };
         const post = body.data;
         if (post) {

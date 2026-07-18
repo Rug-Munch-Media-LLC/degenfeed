@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { H2, H3 } from '../_components/doc-heading';
-import { Callout } from '../_components/doc-callout';
 import { Badge } from '../_components/doc-badge';
+import { Callout } from '../_components/doc-callout';
 import { CodeBlock } from '../_components/doc-code-block';
+import { H2, H3 } from '../_components/doc-heading';
 
 export const revalidate = 86400;
 
@@ -44,18 +44,20 @@ export default function ArchitecturePage() {
         <Badge>Architecture</Badge>
         <Badge color="blue">System Design</Badge>
       </div>
-      <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">System Architecture</h1>
+      <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">
+        System Architecture
+      </h1>
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400">
-        DegenFeed is built on a modern edge computing stack. The frontend runs on Next.js (Cloudflare
-        Pages), the API on Cloudflare Workers, and caching on Cloudflare KV. This architecture
-        provides global low-latency access with zero server management.
+        DegenFeed is built on a modern edge computing stack. The frontend runs on Next.js
+        (Cloudflare Pages), the API on Cloudflare Workers, and caching on Cloudflare KV. This
+        architecture provides global low-latency access with zero server management.
       </p>
 
       {/* Overview Diagram */}
       <H2 id="overview">Architecture Overview</H2>
       <div className="my-6 overflow-x-auto rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-6">
         <pre className="font-mono text-xs leading-relaxed text-gray-400">
-{`┌──────────────────────────────────────────────────────────────────────────┐
+          {`┌──────────────────────────────────────────────────────────────────────────┐
 │                              Users                                       │
 │                 Browser (Desktop/PWA) / API Clients                       │
 └─────────────────────────────┬────────────────────────────────────────────┘
@@ -95,7 +97,8 @@ export default function ArchitecturePage() {
   │  Relay Pool  │   │  Hub (gRPC)  │   │  Lens / Bluesky  │
   │  (10 relays) │   │  + REST      │   │  / Mastodon      │
   └──────────────┘   └──────────────┘   └──────────────────┘
-`}</pre>
+`}
+        </pre>
       </div>
 
       {/* Request Lifecycle */}
@@ -152,7 +155,10 @@ export default function ArchitecturePage() {
             desc: 'The frontend receives ranked posts via JSON responses. Client-side IndexedDB caches feed data for offline support. SSE (Server-Sent Events) enables real-time updates for the stream endpoint.',
           },
         ].map((phase) => (
-          <div key={phase.title} className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
+          <div
+            key={phase.title}
+            className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4"
+          >
             <div className="text-sm font-semibold text-[var(--color-fg)]">{phase.title}</div>
             <p className="mt-2 text-xs leading-relaxed text-gray-500">{phase.desc}</p>
           </div>
@@ -184,13 +190,30 @@ export default function ArchitecturePage() {
             <h3 className="mb-3 font-semibold text-[var(--color-fg)]">Tech Stack</h3>
             <div className="flex flex-wrap gap-1.5">
               {[
-                'TypeScript 5', 'Next.js 15', 'React 19', 'Cloudflare Workers',
-                'Cloudflare Pages', 'Cloudflare KV', 'pnpm 11', 'Turborepo 2',
-                'Biome', 'Tailwind CSS', 'GotoSocial 0.22', 'Wagmi',
-                'Solana Web3.js', 'viem', 'Noble Curves', 'Noble Hashes',
-                'IDB', 'Vitest', 'Wrangler',
+                'TypeScript 5',
+                'Next.js 15',
+                'React 19',
+                'Cloudflare Workers',
+                'Cloudflare Pages',
+                'Cloudflare KV',
+                'pnpm 11',
+                'Turborepo 2',
+                'Biome',
+                'Tailwind CSS',
+                'GotoSocial 0.22',
+                'Wagmi',
+                'Solana Web3.js',
+                'viem',
+                'Noble Curves',
+                'Noble Hashes',
+                'IDB',
+                'Vitest',
+                'Wrangler',
               ].map((t) => (
-                <span key={t} className="rounded-md bg-[var(--color-muted)]/30 px-2 py-1 text-[11px] text-gray-500">
+                <span
+                  key={t}
+                  className="rounded-md bg-[var(--color-muted)]/30 px-2 py-1 text-[11px] text-gray-500"
+                >
                   {t}
                 </span>
               ))}
@@ -236,8 +259,8 @@ export default function ArchitecturePage() {
       </div>
 
       <Callout type="info">
-        KV reads average 5-15ms globally. Writes are eventually consistent (typically &lt;1s).
-        The circuit breaker pattern ensures transient KV failures don&rsquo;t block feed delivery.
+        KV reads average 5-15ms globally. Writes are eventually consistent (typically &lt;1s). The
+        circuit breaker pattern ensures transient KV failures don&rsquo;t block feed delivery.
       </Callout>
 
       {/* Deduplication */}
@@ -261,7 +284,10 @@ export default function ArchitecturePage() {
           'Embed-only dedup — same media URLs',
           'Image URL fingerprint — normalized CDN URLs',
         ].map((l) => (
-          <div key={l} className="rounded-lg border border-white/[0.03] bg-white/[0.01] px-3 py-1.5 text-[11px] text-gray-500">
+          <div
+            key={l}
+            className="rounded-lg border border-white/[0.03] bg-white/[0.01] px-3 py-1.5 text-[11px] text-gray-500"
+          >
             {l}
           </div>
         ))}
@@ -271,8 +297,11 @@ export default function ArchitecturePage() {
       <H2 id="deployment">Deployment Architecture</H2>
       <p className="text-sm leading-relaxed text-gray-400">
         DegenFeed deploys to Cloudflare&rsquo;s edge network. The frontend uses Cloudflare Pages
-        (via <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">@cloudflare/next-on-pages</code>)
-        and the API runs as a Cloudflare Worker.
+        (via{' '}
+        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+          @cloudflare/next-on-pages
+        </code>
+        ) and the API runs as a Cloudflare Worker.
       </p>
 
       <CodeBlock lang="bash">{`# Build and deploy frontend
@@ -287,15 +316,24 @@ pnpm run deploy`}</CodeBlock>
 
       <H3 id="ci-cd">CI/CD Pipeline</H3>
       <ul className="mt-3 list-inside list-disc space-y-1.5 text-sm text-gray-400">
-        <li><strong className="text-gray-300">Push to main:</strong> TypeScript check → Biome lint → Vitest unit tests → Playwright E2E tests → build → deploy</li>
-        <li><strong className="text-gray-300">PR preview:</strong> Automatic Cloudflare Pages preview deployment for every PR</li>
-        <li><strong className="text-gray-300">Rollback:</strong> Cloudflare Pages supports instant rollback to any previous deployment</li>
+        <li>
+          <strong className="text-gray-300">Push to main:</strong> TypeScript check → Biome lint →
+          Vitest unit tests → Playwright E2E tests → build → deploy
+        </li>
+        <li>
+          <strong className="text-gray-300">PR preview:</strong> Automatic Cloudflare Pages preview
+          deployment for every PR
+        </li>
+        <li>
+          <strong className="text-gray-300">Rollback:</strong> Cloudflare Pages supports instant
+          rollback to any previous deployment
+        </li>
       </ul>
 
       <Callout type="tip">
-        The free tier handles 100K requests/day across Pages and Workers. DegenFeed uses roughly
-        5ms CPU per cached request and ~50ms for a full cache-miss, well within the 10M CPU-ms
-        free tier limit at moderate scale.
+        The free tier handles 100K requests/day across Pages and Workers. DegenFeed uses roughly 5ms
+        CPU per cached request and ~50ms for a full cache-miss, well within the 10M CPU-ms free tier
+        limit at moderate scale.
       </Callout>
 
       {/* Ranking */}
@@ -314,18 +352,48 @@ pnpm run deploy`}</CodeBlock>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {[
-          { factor: 'Recency (2.4)', desc: '12-hour half-life exponential decay. Posts decay to 50% score after 12 hours.' },
-          { factor: 'Engagement (3.5)', desc: 'log(1 + likes + 2x reposts + 3x replies + 4x quotes). Log scaling prevents viral domination.' },
-          { factor: 'Relevance (1.8)', desc: 'keywordRelevance x nicheRelevance x platformRelevance. 200+ crypto terms + 60 tech/AI terms.' },
-          { factor: 'Quality (1.4)', desc: 'sourceQuality (followerCount-based) + followed-author boost (+1.2).' },
-          { factor: 'Diversity (1.0)', desc: 'Penalizes repeat authors. -0.2 per extra post after 3, capped at -0.8.' },
-          { factor: 'Source (0.8)', desc: 'Protocol tier weight. Nostr/Farcaster/Lens/Lemmy = 1.0, Threads = 0.7, RSS = 0.6.' },
-          { factor: 'Velocity (1.2)', desc: 'Engagement rate-of-change vs previous snapshot. Trending-now posts get up to 3x boost.' },
-          { factor: 'Freshness', desc: 'Multiplier for very recent content: 2.0x for &lt;15min, 1.5x for &lt;1h, 1.2x for &lt;2h.' },
+          {
+            factor: 'Recency (2.4)',
+            desc: '12-hour half-life exponential decay. Posts decay to 50% score after 12 hours.',
+          },
+          {
+            factor: 'Engagement (3.5)',
+            desc: 'log(1 + likes + 2x reposts + 3x replies + 4x quotes). Log scaling prevents viral domination.',
+          },
+          {
+            factor: 'Relevance (1.8)',
+            desc: 'keywordRelevance x nicheRelevance x platformRelevance. 200+ crypto terms + 60 tech/AI terms.',
+          },
+          {
+            factor: 'Quality (1.4)',
+            desc: 'sourceQuality (followerCount-based) + followed-author boost (+1.2).',
+          },
+          {
+            factor: 'Diversity (1.0)',
+            desc: 'Penalizes repeat authors. -0.2 per extra post after 3, capped at -0.8.',
+          },
+          {
+            factor: 'Source (0.8)',
+            desc: 'Protocol tier weight. Nostr/Farcaster/Lens/Lemmy = 1.0, Threads = 0.7, RSS = 0.6.',
+          },
+          {
+            factor: 'Velocity (1.2)',
+            desc: 'Engagement rate-of-change vs previous snapshot. Trending-now posts get up to 3x boost.',
+          },
+          {
+            factor: 'Freshness',
+            desc: 'Multiplier for very recent content: 2.0x for &lt;15min, 1.5x for &lt;1h, 1.2x for &lt;2h.',
+          },
           { factor: 'Media', desc: '1.2x multiplier for posts with image or video embeds.' },
-          { factor: 'Content quality', desc: 'Penalty for low-effort posts: single-word (0.3x), emoji-spam (0.2x), all-caps (0.3x).' },
+          {
+            factor: 'Content quality',
+            desc: 'Penalty for low-effort posts: single-word (0.3x), emoji-spam (0.2x), all-caps (0.3x).',
+          },
         ].map((r) => (
-          <div key={r.factor} className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3">
+          <div
+            key={r.factor}
+            className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3"
+          >
             <div className="text-sm font-semibold text-[var(--color-fg)]">{r.factor}</div>
             <p className="mt-1 text-xs text-gray-500">{r.desc}</p>
           </div>
@@ -334,14 +402,17 @@ pnpm run deploy`}</CodeBlock>
 
       <Callout type="tip">
         Users can customize ranking weights via persistent preferences (KV storage) or anonymous
-        cookie preferences. Set <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">?sort=new</code>{' '}
+        cookie preferences. Set{' '}
+        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">?sort=new</code>{' '}
         to bypass ranking entirely and see chronological order.
       </Callout>
 
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
         <p className="text-xs text-gray-600">
           Architecture questions?{' '}
-          <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">admin@rugmunch.io</a>
+          <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
+            admin@rugmunch.io
+          </a>
         </p>
       </div>
     </div>

@@ -11,7 +11,9 @@ export default function SearchError({
     <div className="mx-auto max-w-2xl px-4 py-20 text-center">
       <div className="mb-4 text-4xl text-[var(--color-muted)]">⚠</div>
       <h2 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">Search Error</h2>
-      <p className="mb-6 text-sm text-[var(--color-muted)]">{error.message || 'Something went wrong'}</p>
+      <p className="mb-6 text-sm text-[var(--color-muted)]">
+        {error.message || 'Something went wrong'}
+      </p>
       <button
         type="button"
         onClick={reset}

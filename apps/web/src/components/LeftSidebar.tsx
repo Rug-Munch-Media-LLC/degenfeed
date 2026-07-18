@@ -1,16 +1,15 @@
 'use client';
 
+import type { ProtocolId } from '@degenfeed/utils';
+import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
-import type { ProtocolId } from '@degenfeed/utils';
+import { getLinkedProtocols, useCrossProtocolIdentity } from '../hooks/useCrossProtocolIdentity';
+import { useNotifications } from '../hooks/useNotifications';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
-import { useNotifications } from '../hooks/useNotifications';
-import { WalletSwitcher } from './WalletSwitcher';
-import { useCrossProtocolIdentity, getLinkedProtocols } from '../hooks/useCrossProtocolIdentity';
 
 /* ─── Nav items ────────────────────────────────────────────── */
 
@@ -355,6 +354,7 @@ function WalletUserCard({
         className="sidebar-user-card w-full text-left"
         aria-haspopup="menu"
         aria-expanded={dropdownOpen}
+        aria-label="Open wallet menu"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-sm font-mono font-bold text-degen-400">
           {walletAddress.slice(2, 4).toUpperCase()}
@@ -366,9 +366,7 @@ function WalletUserCard({
             </span>
             <span
               className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-                isEth
-                  ? 'bg-blue-500/15 text-blue-400'
-                  : 'bg-purple-500/15 text-purple-400'
+                isEth ? 'bg-blue-500/15 text-blue-400' : 'bg-purple-500/15 text-purple-400'
               }`}
             >
               {isEth ? 'ETH' : 'SOL'}
@@ -409,9 +407,7 @@ function WalletUserCard({
             <div className="flex items-center gap-2 mb-1">
               <span
                 className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-                  isEth
-                    ? 'bg-blue-500/15 text-blue-400'
-                    : 'bg-purple-500/15 text-purple-400'
+                  isEth ? 'bg-blue-500/15 text-blue-400' : 'bg-purple-500/15 text-purple-400'
                 }`}
               >
                 {isEth ? 'ETH' : 'SOL'}
@@ -451,9 +447,7 @@ function WalletUserCard({
                   type="button"
                   onClick={() => handleSwitch(idx)}
                   className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors ${
-                    isActive
-                      ? 'bg-degen-500/10'
-                      : 'hover:bg-white/[0.04]'
+                    isActive ? 'bg-degen-500/10' : 'hover:bg-white/[0.04]'
                   }`}
                   role="menuitem"
                 >
@@ -470,7 +464,9 @@ function WalletUserCard({
                         {addr.slice(0, 6)}…{addr.slice(-4)}
                       </code>
                       {isActive && (
-                        <span className="shrink-0 text-[9px] font-bold text-degen-400">· Active</span>
+                        <span className="shrink-0 text-[9px] font-bold text-degen-400">
+                          · Active
+                        </span>
                       )}
                     </div>
                   </div>
@@ -495,7 +491,15 @@ function WalletUserCard({
               className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-degen-400 transition-colors hover:bg-degen-500/10"
               role="menuitem"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -507,7 +511,15 @@ function WalletUserCard({
               className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10"
               role="menuitem"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
                 <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
@@ -583,7 +595,10 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
               <span className="sidebar-nav-icon">{iconFor(item.href, active)}</span>
               <span className="sidebar-nav-label">{item.label}</span>
               {item.label === 'Notifications' && unreadCount > 0 && (
-                <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-degen-500 px-1.5 text-[11px] font-bold text-black">
+                <span
+                  className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-degen-500 px-1.5 text-[11px] font-bold text-black"
+                  aria-label={`${unreadCount} unread notifications`}
+                >
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -598,6 +613,7 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
             onClick={() => setMoreOpen((v) => !v)}
             className={`sidebar-nav-item w-full ${moreOpen ? 'sidebar-nav-active' : ''}`}
             aria-expanded={moreOpen}
+            aria-label="Toggle more menu"
           >
             <span className="sidebar-nav-icon">
               <MoreIcon />
@@ -654,6 +670,7 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
               openCompose();
             }}
             className="sidebar-compose-btn"
+            aria-label="Create new post"
           >
             <span className="hidden lg:inline">Post</span>
             <span className="lg:hidden">
@@ -669,6 +686,7 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
               openSignIn();
             }}
             className="sidebar-compose-btn sidebar-signin-btn"
+            aria-label="Sign in to DegenFeed"
           >
             <span className="hidden lg:inline">Sign In</span>
             <span className="lg:hidden">

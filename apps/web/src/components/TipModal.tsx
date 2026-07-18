@@ -5,8 +5,8 @@ import { tipOnChain } from '@degenfeed/web3';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TipPostContext } from '../hooks/useTip';
-import { useAnnouncer } from './ScreenReaderAnnouncer';
 import { useTip } from '../hooks/useTip';
+import { useAnnouncer } from './ScreenReaderAnnouncer';
 import { useSolana } from './SolanaProvider';
 import { useWeb3 } from './Web3Provider';
 
@@ -365,6 +365,7 @@ export function TipModal({
     publicationId,
     postContext,
     recipientDisplayName,
+    announce,
   ]);
 
   const quickAmounts =
@@ -717,7 +718,8 @@ export function TipModal({
                       <div className="flex items-center gap-2">
                         <a
                           href={explorerUrlForMethod(selectedMethod ?? '', state.txHash)}
-                          target="_blank" rel="noopener noreferrer"
+                          target="_blank"
+                          rel="noopener noreferrer"
                           rel="noopener noreferrer"
                           className="flex-1 text-xs text-degen-500 hover:text-degen-400 break-all"
                         >

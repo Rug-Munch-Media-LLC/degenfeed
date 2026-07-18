@@ -1,19 +1,18 @@
 'use client';
 
+import { CHANNELS, useRealtime } from '@degenfeed/realtime';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useAnnouncer } from '../../../components/ScreenReaderAnnouncer';
-import { retryFetchJson } from '../../../lib/retryFetch';
-import { getCached, setCache } from '../../../lib/fetchWithCache';
-import { ChatView } from '../ChatView';
-import { useRealtime } from '@degenfeed/realtime';
-import { CHANNELS } from '@degenfeed/realtime';
 import {
-  getOtherParticipant,
   type ConversationListItem,
+  getOtherParticipant,
   type Message,
 } from '../../../hooks/useMessages';
+import { getCached } from '../../../lib/fetchWithCache';
+import { retryFetchJson } from '../../../lib/retryFetch';
+import { ChatView } from '../ChatView';
 
 /* ─── Page ──────────────────────────────────────────────────── */
 
@@ -57,9 +56,7 @@ export default function ConversationPage() {
           retryFetchJson<{ messages: Message[] }>(
             `/api/messages/${encodeURIComponent(conversationId)}`,
           ),
-          retryFetchJson<{ conversations: ConversationListItem[] }>(
-            '/api/messages/conversations',
-          ),
+          retryFetchJson<{ conversations: ConversationListItem[] }>('/api/messages/conversations'),
         ]);
 
         setMessages(msgData.messages ?? []);

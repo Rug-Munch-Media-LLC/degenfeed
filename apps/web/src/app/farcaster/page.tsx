@@ -7,7 +7,12 @@ const farcasterBreadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Farcaster Feed', item: 'https://app.degenfeed.xyz/farcaster' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Farcaster Feed',
+      item: 'https://app.degenfeed.xyz/farcaster',
+    },
   ],
 };
 
@@ -16,8 +21,12 @@ export const metadata: Metadata = {
   description:
     'Browse the Farcaster timeline — casts, channels, frames, and trending content from the on-chain social network. Farcaster feed with cross-post to Nostr, Lens, Bluesky. The best Farcaster web client.',
   keywords: [
-    'farcaster feed', 'farcaster web client', 'farcaster casts',
-    'farcaster channels', 'farcaster frames', 'farcaster hub',
+    'farcaster feed',
+    'farcaster web client',
+    'farcaster casts',
+    'farcaster channels',
+    'farcaster frames',
+    'farcaster hub',
     'onchain social network',
   ],
   openGraph: {
@@ -31,7 +40,11 @@ export const metadata: Metadata = {
 export default function FarcasterPage() {
   return (
     <>
-      <Script id="breadcrumb-farcaster" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(farcasterBreadcrumb) }} />
+      <Script
+        id="breadcrumb-farcaster"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(farcasterBreadcrumb) }}
+      />
       <ProtocolFeedPage protocol="farcaster" />
     </>
   );

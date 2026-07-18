@@ -1,7 +1,7 @@
 'use client';
 
-import { ErrorBoundary, TokenChart } from '@degenfeed/ui';
 import type { UnifiedPost } from '@degenfeed/types';
+import { ErrorBoundary, TokenChart } from '@degenfeed/ui';
 import { formatTimeAgo, shortenAddress } from '@degenfeed/utils';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -35,8 +35,9 @@ export default function TokenPage({ params }: Props) {
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [error, setError] = useState<string>();
 
-  const isAddress = (s: string) => /^0x[a-fA-F0-9]{40}$/.test(s) || /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
-  const chain = id && id.startsWith('0x') ? 'ethereum' : 'solana';
+  const isAddress = (s: string) =>
+    /^0x[a-fA-F0-9]{40}$/.test(s) || /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
+  const chain = id?.startsWith('0x') ? 'ethereum' : 'solana';
 
   useEffect(() => {
     params.then((p) => setId(decodeURIComponent(p.id)));
@@ -63,11 +64,7 @@ export default function TokenPage({ params }: Props) {
     void fetchPosts();
   }, [fetchPosts]);
 
-  const displayName = id
-    ? isAddress(id)
-      ? shortenAddress(id)
-      : `$${id.toUpperCase()}`
-    : '';
+  const displayName = id ? (isAddress(id) ? shortenAddress(id) : `$${id.toUpperCase()}`) : '';
 
   return (
     <ErrorBoundary>
@@ -101,7 +98,10 @@ export default function TokenPage({ params }: Props) {
           {state === 'loading' && (
             <div className="space-y-1">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse border-b border-[var(--color-border)] px-4 py-3">
+                <div
+                  key={i}
+                  className="animate-pulse border-b border-[var(--color-border)] px-4 py-3"
+                >
                   <div className="mb-2 h-3 w-32 rounded bg-[var(--color-card)]" />
                   <div className="mb-1 h-3 w-full rounded bg-[var(--color-card)]" />
                   <div className="h-3 w-3/4 rounded bg-[var(--color-card)]" />

@@ -15,8 +15,12 @@ export const metadata: Metadata = {
   description:
     'Crypto and web3 video content aggregated from YouTube RSS feeds, PeerTube, and federated instances. Tutorials, interviews, live streams, and crypto deep dives. The best web3 video platform and decentralized video aggregator.',
   keywords: [
-    'web3 video platform', 'peertube crypto', 'crypto youtube alternative',
-    'decentralized video', 'crypto video feed', 'web3 video aggregator',
+    'web3 video platform',
+    'peertube crypto',
+    'crypto youtube alternative',
+    'decentralized video',
+    'crypto video feed',
+    'web3 video aggregator',
     'federated video',
   ],
   openGraph: {
@@ -45,7 +49,11 @@ export const metadata: Metadata = {
 export default function VideosLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-videos" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(videosBreadcrumb) }} />
+      <Script
+        id="breadcrumb-videos"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(videosBreadcrumb) }}
+      />
       {children}
     </>
   );

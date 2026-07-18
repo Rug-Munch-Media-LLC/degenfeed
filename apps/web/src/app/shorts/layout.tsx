@@ -15,13 +15,16 @@ export const metadata: Metadata = {
   description:
     'Full-screen vertical short-form crypto video feed. Swipe through web3, blockchain, and degen short videos with TikTok-style navigation. The best crypto short video platform.',
   keywords: [
-    'crypto shorts', 'web3 short videos', 'crypto tiktok alternative',
-    'blockchain short form content', 'crypto video feed', 'web3 vertical video',
+    'crypto shorts',
+    'web3 short videos',
+    'crypto tiktok alternative',
+    'blockchain short form content',
+    'crypto video feed',
+    'web3 vertical video',
   ],
   openGraph: {
     title: 'Shorts — Crypto Short Videos & Web3 Vertical Feed | DegenFeed',
-    description:
-      'Full-screen vertical short-form crypto video feed. Swipe through web3 shorts.',
+    description: 'Full-screen vertical short-form crypto video feed. Swipe through web3 shorts.',
     url: 'https://app.degenfeed.xyz/shorts',
     images: [
       {
@@ -35,8 +38,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Shorts — Crypto Short Videos | DegenFeed',
-    description:
-      'Full-screen vertical short-form crypto video feed. Swipe through web3 shorts.',
+    description: 'Full-screen vertical short-form crypto video feed. Swipe through web3 shorts.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/shorts' },
 };
@@ -44,7 +46,11 @@ export const metadata: Metadata = {
 export default function ShortsLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-shorts" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(shortsBreadcrumb) }} />
+      <Script
+        id="breadcrumb-shorts"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(shortsBreadcrumb) }}
+      />
       {children}
     </>
   );

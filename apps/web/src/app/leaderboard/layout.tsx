@@ -6,7 +6,12 @@ const leaderboardBreadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Leaderboard', item: 'https://app.degenfeed.xyz/leaderboard' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Leaderboard',
+      item: 'https://app.degenfeed.xyz/leaderboard',
+    },
   ],
 };
 
@@ -15,8 +20,12 @@ export const metadata: Metadata = {
   description:
     'Top crypto creators, web3 content, and communities across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more. Ranked by engagement, crypto tips, and cross-protocol reach.',
   keywords: [
-    'crypto creator rankings', 'web3 leaderboard', 'top crypto creators',
-    'web3 content rankings', 'crypto social analytics', 'cross protocol analytics',
+    'crypto creator rankings',
+    'web3 leaderboard',
+    'top crypto creators',
+    'web3 content rankings',
+    'crypto social analytics',
+    'cross protocol analytics',
   ],
   openGraph: {
     title: 'Leaderboard — Top Crypto Creators & Web3 Rankings | DegenFeed',
@@ -35,8 +44,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Leaderboard — Top Crypto Creators | DegenFeed',
-    description:
-      'Top crypto creators ranked by engagement, tips, and cross-protocol reach.',
+    description: 'Top crypto creators ranked by engagement, tips, and cross-protocol reach.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/leaderboard' },
 };
@@ -44,7 +52,11 @@ export const metadata: Metadata = {
 export default function LeaderboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-leaderboard" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(leaderboardBreadcrumb) }} />
+      <Script
+        id="breadcrumb-leaderboard"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(leaderboardBreadcrumb) }}
+      />
       {children}
     </>
   );

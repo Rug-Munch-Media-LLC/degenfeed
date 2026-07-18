@@ -15,8 +15,8 @@ import { LoadingBar } from '../components/LoadingBar';
  */
 
 // ── Transition timing ───────────────────────────────────────────
-const FADE_IN_DURATION = 200;   // ms — matching CSS
-const MIN_LOADING_MS = 300;      // ms — minimum loading bar display
+const FADE_IN_DURATION = 200; // ms — matching CSS
+const MIN_LOADING_MS = 300; // ms — minimum loading bar display
 
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -58,7 +58,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
       clearTimeout(fadeTimer);
       window.removeEventListener('df-content-ready', onContentReady);
     };
-  }, [key]);
+  }, []);
 
   return (
     <>

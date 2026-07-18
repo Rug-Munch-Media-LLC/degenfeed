@@ -143,13 +143,10 @@ export function useContextMenu() {
     position: { x: number; y: number };
   } | null>(null);
 
-  const handleContextMenu = useCallback(
-    (e: React.MouseEvent, postId: string, postUrl?: string) => {
-      e.preventDefault();
-      setContextMenu({ postId, position: { x: e.clientX, y: e.clientY }, postUrl });
-    },
-    [],
-  );
+  const handleContextMenu = useCallback((e: React.MouseEvent, postId: string, postUrl?: string) => {
+    e.preventDefault();
+    setContextMenu({ postId, position: { x: e.clientX, y: e.clientY }, postUrl });
+  }, []);
 
   const closeContextMenu = useCallback(() => {
     setContextMenu(null);

@@ -32,7 +32,7 @@
   background: var(--landing-bg);
   color: var(--landing-fg);
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* ── Skip to App ──────────────────────────────────────────── */
@@ -51,7 +51,9 @@
   color: #000;
   background: #00ff41;
   text-decoration: none;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
 }
 
 .skip-to-app:hover {
@@ -81,8 +83,13 @@
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 /* ── Shared ───────────────────────────────────────────────── */
@@ -157,7 +164,9 @@
   background: #00ff41;
   text-decoration: none;
   border: none;
-  transition: background 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s;
 }
 
 .cta-primary:hover {
@@ -192,7 +201,9 @@
   background: transparent;
   border: 1px solid var(--landing-border, #2f3336);
   text-decoration: none;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .cta-secondary:hover {
@@ -443,7 +454,7 @@
 }
 
 .col-degen {
-  color: #00ff41 !important;
+  color: #00ff41;
 }
 
 /* ── Final CTA ────────────────────────────────────────────── */

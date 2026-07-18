@@ -8,7 +8,6 @@
  */
 
 import { ErrorBoundary } from '@degenfeed/ui';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -77,19 +76,27 @@ function formatCount(n: number): string {
 
 function qualityColor(tier: string): string {
   switch (tier) {
-    case 'vibrant': return '#22c55e';
-    case 'high': return '#3b82f6';
-    case 'medium': return '#eab308';
-    default: return '#6b7280';
+    case 'vibrant':
+      return '#22c55e';
+    case 'high':
+      return '#3b82f6';
+    case 'medium':
+      return '#eab308';
+    default:
+      return '#6b7280';
   }
 }
 
 function qualityLabel(tier: string): string {
   switch (tier) {
-    case 'vibrant': return '🔥 Vibrant';
-    case 'high': return '● Active';
-    case 'medium': return '○ Growing';
-    default: return '○ Quiet';
+    case 'vibrant':
+      return '🔥 Vibrant';
+    case 'high':
+      return '● Active';
+    case 'medium':
+      return '○ Growing';
+    default:
+      return '○ Quiet';
   }
 }
 
@@ -98,12 +105,13 @@ function qualityLabel(tier: string): string {
 function CommunityCard({ community }: { community: FederatedCommunity }) {
   const qColor = qualityColor(community.qualityTier);
   const isLocal = community.isLocal;
-  const instanceShort = community.instance.replace(/\.(xyz|com|org|ml|ee|dev)$/, '');
+  const _instanceShort = community.instance.replace(/\.(xyz|com|org|ml|ee|dev)$/, '');
 
   return (
     <Link
       href={`https://${community.instance}/c/${community.name}`}
-      target="_blank" rel="noopener noreferrer"
+      target="_blank"
+      rel="noopener noreferrer"
       rel="noopener"
       className="card group flex flex-col transition-all hover:border-degen-500/30 hover:shadow-[0_0_20px_rgba(0,255,65,0.05)]"
     >
@@ -123,9 +131,7 @@ function CommunityCard({ community }: { community: FederatedCommunity }) {
             {/* Federation badge */}
             <span
               className={`inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-medium ${
-                isLocal
-                  ? 'bg-degen-500/15 text-degen-400'
-                  : 'bg-blue-500/15 text-blue-400'
+                isLocal ? 'bg-degen-500/15 text-degen-400' : 'bg-blue-500/15 text-blue-400'
               }`}
             >
               {isLocal ? '🏠 Local' : '🌐 Federated'}
@@ -147,15 +153,21 @@ function CommunityCard({ community }: { community: FederatedCommunity }) {
       {/* Stats row */}
       <div className="mt-auto flex items-center gap-4 border-t border-white/[0.04] px-4 py-2.5 text-[11px] text-gray-500">
         <span className="flex items-center gap-1">
-          <span className="font-semibold text-[var(--color-fg)]">{formatCount(community.subscribers)}</span>
+          <span className="font-semibold text-[var(--color-fg)]">
+            {formatCount(community.subscribers)}
+          </span>
           subs
         </span>
         <span className="flex items-center gap-1">
-          <span className="font-semibold text-[var(--color-fg)]">{formatCount(community.usersActiveMonth)}</span>
+          <span className="font-semibold text-[var(--color-fg)]">
+            {formatCount(community.usersActiveMonth)}
+          </span>
           /mo
         </span>
         <span className="flex items-center gap-1">
-          <span className="font-semibold text-[var(--color-fg)]">{formatCount(community.posts)}</span>
+          <span className="font-semibold text-[var(--color-fg)]">
+            {formatCount(community.posts)}
+          </span>
           posts
         </span>
         <span className="ml-auto flex items-center gap-1" style={{ color: qColor }}>
@@ -239,7 +251,7 @@ export default function BrowseCommunitiesPage() {
         setLoading(false);
         return;
       }
-      const data = await res.json() as { data: FederatedCommunity[]; meta: DiscoverMeta };
+      const data = (await res.json()) as { data: FederatedCommunity[]; meta: DiscoverMeta };
       setCommunities(data.data ?? []);
       setMeta(data.meta ?? null);
     } catch (err) {
@@ -274,7 +286,8 @@ export default function BrowseCommunitiesPage() {
             <div>
               <h1 className="text-2xl font-bold text-[var(--color-fg)]">Browse Communities</h1>
               <p className="text-sm text-[var(--color-muted)]">
-                Discover {meta ? `${meta.total} communities` : 'communities'} across the Lemmy fediverse
+                Discover {meta ? `${meta.total} communities` : 'communities'} across the Lemmy
+                fediverse
               </p>
             </div>
           </div>
@@ -327,7 +340,7 @@ export default function BrowseCommunitiesPage() {
           <div className="flex flex-wrap gap-1.5">
             {CATEGORIES.map((cat) => {
               const isActive = category === cat.id;
-              const count = cat.id ? categoryCount[cat.id] ?? 0 : communities.length;
+              const count = cat.id ? (categoryCount[cat.id] ?? 0) : communities.length;
               return (
                 <button
                   key={cat.id}

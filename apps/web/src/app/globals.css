@@ -8,9 +8,9 @@
 
 :root {
   /* ── Font families ── */
-  --font-heading: 'Sora', 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-heading: "Sora", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
   /* ── Heading sizes (h1-h6) ── */
   --text-h1: 2rem;
@@ -35,24 +35,24 @@
   --tracking-body: 0;
 
   /* ── Spacing scale (4px base grid) ── */
-  --space-xs: 0.25rem;   /* 4px */
-  --space-sm: 0.5rem;    /* 8px */
-  --space-md: 1rem;      /* 16px */
-  --space-lg: 1.5rem;    /* 24px */
-  --space-xl: 2rem;      /* 32px */
-  --space-2xl: 3rem;     /* 48px */
+  --space-xs: 0.25rem; /* 4px */
+  --space-sm: 0.5rem; /* 8px */
+  --space-md: 1rem; /* 16px */
+  --space-lg: 1.5rem; /* 24px */
+  --space-xl: 2rem; /* 32px */
+  --space-2xl: 3rem; /* 48px */
 
   /* ── Gap scale ── */
-  --gap-xs: 0.25rem;     /* 4px */
-  --gap-sm: 0.5rem;      /* 8px */
-  --gap-md: 1rem;        /* 16px */
+  --gap-xs: 0.25rem; /* 4px */
+  --gap-sm: 0.5rem; /* 8px */
+  --gap-md: 1rem; /* 16px */
 
   /* ── Border radius ── */
-  --radius-sm: 0.25rem;  /* 4px */
-  --radius-md: 0.5rem;   /* 8px */
-  --radius-lg: 0.75rem;  /* 12px */
-  --radius-xl: 1rem;     /* 16px */
-  --radius-2xl: 1.5rem;  /* 24px */
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.5rem; /* 8px */
+  --radius-lg: 0.75rem; /* 12px */
+  --radius-xl: 1rem; /* 16px */
+  --radius-2xl: 1.5rem; /* 24px */
   --radius-full: 9999px;
 
   /* ── Button height min touch target ── */
@@ -178,21 +178,50 @@
   }
 
   /* ── Heading hierarchy ── */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
     letter-spacing: var(--tracking-heading);
     font-weight: 700;
     color: var(--color-fg);
   }
-  h1 { font-size: var(--text-h1); line-height: var(--leading-h1); }
-  h2 { font-size: var(--text-h2); line-height: var(--leading-h2); }
-  h3 { font-size: var(--text-h3); line-height: var(--leading-h3); }
-  h4 { font-size: var(--text-h4); line-height: var(--leading-h4); }
-  h5 { font-size: var(--text-h5); line-height: var(--leading-h4); }
-  h6 { font-size: var(--text-h6); line-height: var(--leading-h4); }
+  h1 {
+    font-size: var(--text-h1);
+    line-height: var(--leading-h1);
+  }
+  h2 {
+    font-size: var(--text-h2);
+    line-height: var(--leading-h2);
+  }
+  h3 {
+    font-size: var(--text-h3);
+    line-height: var(--leading-h3);
+  }
+  h4 {
+    font-size: var(--text-h4);
+    line-height: var(--leading-h4);
+  }
+  h5 {
+    font-size: var(--text-h5);
+    line-height: var(--leading-h4);
+  }
+  h6 {
+    font-size: var(--text-h6);
+    line-height: var(--leading-h4);
+  }
 
   /* ── Body text defaults ── */
-  p, li, blockquote, figcaption, td, th, label {
+  p,
+  li,
+  blockquote,
+  figcaption,
+  td,
+  th,
+  label {
     line-height: var(--leading-body);
   }
 
@@ -349,7 +378,9 @@
   }
   .input:focus {
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 1px var(--color-accent), 0 0 16px var(--color-accent-glow);
+    box-shadow:
+      0 0 0 1px var(--color-accent),
+      0 0 16px var(--color-accent-glow);
   }
   .glass {
     background: var(--color-glass-bg);
@@ -991,13 +1022,21 @@
  * ═══════════════════════════════════════════════════════════════ */
 
 @keyframes modal-overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modal-overlay-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes modal-content-in {
@@ -1126,34 +1165,69 @@
 .feed-item-enter {
   animation: feed-item-in 0.35s ease-out forwards;
 }
-.feed-item-enter:nth-child(1) { animation-delay: 0ms; }
-.feed-item-enter:nth-child(2) { animation-delay: 30ms; }
-.feed-item-enter:nth-child(3) { animation-delay: 60ms; }
-.feed-item-enter:nth-child(4) { animation-delay: 90ms; }
-.feed-item-enter:nth-child(5) { animation-delay: 120ms; }
+.feed-item-enter:nth-child(1) {
+  animation-delay: 0ms;
+}
+.feed-item-enter:nth-child(2) {
+  animation-delay: 30ms;
+}
+.feed-item-enter:nth-child(3) {
+  animation-delay: 60ms;
+}
+.feed-item-enter:nth-child(4) {
+  animation-delay: 90ms;
+}
+.feed-item-enter:nth-child(5) {
+  animation-delay: 120ms;
+}
 
 /* ═══════════════════════════════════════════════════════════════
  * MICRO-INTERACTIONS — Button spring, toggle, checkbox, copy
  * ═══════════════════════════════════════════════════════════════ */
 
 @keyframes btn-spring {
-  0% { transform: scale(1); }
-  40% { transform: scale(0.96); }
-  70% { transform: scale(1.02); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.96);
+  }
+  70% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes checkbox-pop {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.3); }
-  60% { transform: scale(0.9); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.3);
+  }
+  60% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes copy-flash {
-  0% { opacity: 0; transform: scale(0.5); }
-  50% { opacity: 1; transform: scale(1.15); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .btn-spring:active {
@@ -1198,7 +1272,7 @@
   height: 1.125rem;
   border-radius: 9999px;
   background: white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .toggle-track[data-checked="true"] .toggle-thumb {
@@ -1210,7 +1284,8 @@
  * ═══════════════════════════════════════════════════════════════ */
 
 @keyframes empty-float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -1288,8 +1363,13 @@
  * ═══════════════════════════════════════════════════════════════ */
 
 @keyframes loading-dot-pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .loading-timeout {
@@ -1999,7 +2079,9 @@
 
 /* ── Typing indicator dots ── */
 @keyframes typing-dot {
-  0%, 60%, 100% {
+  0%,
+  60%,
+  100% {
     opacity: 0.3;
     transform: translateY(0);
   }

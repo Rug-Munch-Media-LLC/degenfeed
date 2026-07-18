@@ -5,6 +5,7 @@
  * Extracted from globals.css for dynamic loading
  * ═══════════════════════════════════════════════════════════════ */
 
+/* biome-ignore lint/correctness/noUnknownPseudoClass: CSS Modules :global() syntax */
 :global(.layout-reader) {
   /* ── Post cards: clean reading cards ── */
   & .post-card {

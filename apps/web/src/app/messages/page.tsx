@@ -208,7 +208,7 @@ export default function MessagesPage() {
                   );
                 })}
               </div>
-            </div>
+            </fieldset>
 
             {/* Recipient input */}
             <div className="space-y-1.5">

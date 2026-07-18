@@ -44,9 +44,7 @@ export function useFeedKeyboardNav(
       focusedIndex.current = index;
       const id = postIds[index];
       if (!id) return;
-      const el = containerRef.current?.querySelector<HTMLElement>(
-        `[data-post-id="${id}"]`,
-      );
+      const el = containerRef.current?.querySelector<HTMLElement>(`[data-post-id="${id}"]`);
       el?.focus();
       // Scroll into view if needed
       el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -75,11 +73,7 @@ export function useFeedKeyboardNav(
     const handler = (e: KeyboardEvent) => {
       // Don't trigger inside inputs/textareas/contenteditable
       const tag = (e.target as HTMLElement)?.tagName;
-      if (
-        tag === 'INPUT' ||
-        tag === 'TEXTAREA' ||
-        (e.target as HTMLElement)?.isContentEditable
-      ) {
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) {
         return;
       }
 
@@ -143,7 +137,7 @@ export function useFeedKeyboardNav(
   // Reset focused index when post list changes
   useEffect(() => {
     focusedIndex.current = -1;
-  }, [postIds.length]);
+  }, []);
 
   return {
     focusedIndex,

@@ -47,6 +47,7 @@ const ComposeModal = dynamic(
 );
 
 import { useWeb3 } from '../components/Web3Provider';
+import { triggerOnboarding } from '../hooks/useOnboarding';
 import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
@@ -57,12 +58,10 @@ import {
   getActiveWalletIndex,
   getStoredWallets,
   removeStoredWallet,
-  saveStoredWallets,
-  setActiveWalletIndex,
   type StoredWalletMeta,
+  setActiveWalletIndex,
 } from '../lib/walletStorage';
 import { useToast } from './Toast';
-import { triggerOnboarding } from '../hooks/useOnboarding';
 
 /** Cross-protocol reply context passed to ComposeModal. */
 export interface ComposeReplyContext {
@@ -486,9 +485,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (ok.length > 0 && failed.length === 0) {
           showToast('success', `Posted to ${ok.length} network${ok.length > 1 ? 's' : ''} \u2705`);
         } else if (ok.length > 0 && failed.length > 0) {
-          const failedLabels = failed
-            .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
-            .join(', ');
+          const failedLabels = failed.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(', ');
           showToast(
             'warning',
             `Posted to ${ok.length} network${ok.length > 1 ? 's' : ''}, ${failed.length} failed (${failedLabels})`,
@@ -828,15 +825,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Multi-wallet actions ──────────────────────────────────────
 
-  const switchWallet = useCallback(
-    (index: number) => {
-      const stored = getStoredWallets();
-      if (index < 0 || index >= stored.length) return;
-      setActiveWalletIndexState(index);
-      setActiveWalletIndex(index);
-    },
-    [],
-  );
+  const switchWallet = useCallback((index: number) => {
+    const stored = getStoredWallets();
+    if (index < 0 || index >= stored.length) return;
+    setActiveWalletIndexState(index);
+    setActiveWalletIndex(index);
+  }, []);
 
   const addWallet = useCallback(async () => {
     // Connect a NEW wallet via the Web3 provider (without disconnecting current).

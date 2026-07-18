@@ -26,11 +26,7 @@ export default function RootError({
         An unexpected error occurred. Our team has been notified.
       </p>
       <div className="flex flex-col items-center gap-3 sm:flex-row">
-        <button
-          type="button"
-          onClick={reset}
-          className="btn-primary"
-        >
+        <button type="button" onClick={reset} className="btn-primary">
           Try Again
         </button>
         <Link
@@ -47,7 +43,8 @@ export default function RootError({
         <span aria-hidden="true">·</span>
         <a
           href="https://discord.gg/degenfeed"
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
+          rel="noopener noreferrer"
           rel="noopener noreferrer"
           className="underline transition-colors hover:text-[var(--color-fg)]"
         >

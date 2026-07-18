@@ -148,7 +148,7 @@ export default function ShortsPage() {
 
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [posts.length]);
+  }, [currentIndex]);
 
   // ── Preloading & unloading ──────────────────────────────────────────────
   useEffect(() => {
@@ -159,7 +159,10 @@ export default function ShortsPage() {
     // Keep previous index for smooth backward transition
     if (currentIndex > 0) nextBatch.add(currentIndex - 1);
 
-    const timer = setTimeout(() => setPrerenderedVideos(nextBatch), currentIndex > 0 ? UNLOAD_BEHIND_MS : 0);
+    const timer = setTimeout(
+      () => setPrerenderedVideos(nextBatch),
+      currentIndex > 0 ? UNLOAD_BEHIND_MS : 0,
+    );
     return () => clearTimeout(timer);
   }, [currentIndex, posts.length]);
 
@@ -216,16 +219,17 @@ export default function ShortsPage() {
       // Swipe threshold
       if (absY > 50 && !isTransitioning.current) {
         isTransitioning.current = true;
-        const newIndex = deltaY < 0
-          ? Math.min(posts.length - 1, currentIndex + 1)
-          : Math.max(0, currentIndex - 1);
+        const newIndex =
+          deltaY < 0 ? Math.min(posts.length - 1, currentIndex + 1) : Math.max(0, currentIndex - 1);
         if (newIndex !== currentIndex) {
           // Use native scroll-snap for the transition
           const target = document.querySelector(`[data-video-index="${newIndex}"]`);
           target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           setCurrentIndex(newIndex);
         }
-        setTimeout(() => { isTransitioning.current = false; }, 400);
+        setTimeout(() => {
+          isTransitioning.current = false;
+        }, 400);
       }
     },
     [currentIndex, posts.length],
@@ -278,9 +282,11 @@ export default function ShortsPage() {
         case 'f':
         case 'F':
           e.preventDefault();
-          void document.fullscreenElement
-            ? document.exitFullscreen()
-            : document.documentElement.requestFullscreen();
+          if (document.fullscreenElement) {
+            void document.exitFullscreen();
+          } else {
+            void document.documentElement.requestFullscreen();
+          }
           break;
         case 'm':
         case 'M':
@@ -367,12 +373,22 @@ export default function ShortsPage() {
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center gap-4 bg-black px-6">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 9v4M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-red-400" />
+                <path
+                  d="M12 9v4M12 17h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  className="text-red-400"
+                />
               </svg>
             </div>
             <p className="text-sm text-gray-400">Couldn&apos;t load shorts</p>
             <p className="max-w-xs text-center text-xs text-gray-600">{error}</p>
-            <button type="button" onClick={refresh} className="rounded-lg bg-degen-500 px-5 py-2 text-xs font-semibold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_12px_rgba(0,255,65,0.25)]">
+            <button
+              type="button"
+              onClick={refresh}
+              className="rounded-lg bg-degen-500 px-5 py-2 text-xs font-semibold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_12px_rgba(0,255,65,0.25)]"
+            >
               Try again
             </button>
           </div>
@@ -382,16 +398,36 @@ export default function ShortsPage() {
         {!loading && !error && posts.length === 0 && (
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center gap-4 bg-black px-6">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border border-degen-500/30 bg-degen-500/10">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-400">
-                <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="text-degen-400"
+              >
+                <rect
+                  x="4"
+                  y="4"
+                  width="16"
+                  height="16"
+                  rx="3"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
                 <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
               </svg>
             </div>
             <p className="text-sm text-gray-400">No shorts yet</p>
             <p className="max-w-xs text-center text-xs text-gray-600">
-              No shorts available. Check back later — they appear here as they&apos;re discovered from YouTube, PeerTube, and other protocols.
+              No shorts available. Check back later — they appear here as they&apos;re discovered
+              from YouTube, PeerTube, and other protocols.
             </p>
-            <button type="button" onClick={refresh} className="rounded-lg border border-white/10 bg-white/5 px-5 py-2 text-xs font-medium text-gray-400 transition-colors hover:bg-white/10 hover:text-white">
+            <button
+              type="button"
+              onClick={refresh}
+              className="rounded-lg border border-white/10 bg-white/5 px-5 py-2 text-xs font-medium text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+            >
               Refresh
             </button>
           </div>
@@ -448,14 +484,33 @@ export default function ShortsPage() {
         {!hasMore && posts.length > 0 && (
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center gap-3 bg-black px-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-full border border-degen-500/20 bg-degen-500/5">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-400/60">
-                <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="text-degen-400/60"
+              >
+                <rect
+                  x="4"
+                  y="4"
+                  width="16"
+                  height="16"
+                  rx="3"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
                 <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
               </svg>
             </div>
             <p className="text-sm font-medium text-gray-400">You&apos;re all caught up</p>
             <p className="text-xs text-gray-600">More shorts coming soon</p>
-            <button type="button" onClick={refresh} className="rounded-lg border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-gray-400 transition-colors hover:bg-white/10 hover:text-white">
+            <button
+              type="button"
+              onClick={refresh}
+              className="rounded-lg border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+            >
               Refresh
             </button>
           </div>
@@ -481,7 +536,13 @@ export default function ShortsPage() {
             aria-label="Back to feed"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M15 18l-6-6 6-6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             <span className="hidden sm:inline">Feed</span>
           </a>

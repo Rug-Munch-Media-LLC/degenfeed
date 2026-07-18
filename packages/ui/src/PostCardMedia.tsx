@@ -49,7 +49,7 @@ function FrameCard({ url }: { url: string }) {
 
 // ─── Link Preview ──────────────────────────────────────────────────
 
-function LinkPreview({ embed }: { embed: Embed }) {
+function LinkPreview({ embed, authorName }: { embed: Embed; authorName?: string }) {
   const meta = embed.meta as { title?: string; description?: string; image?: string } | undefined;
   const title = meta?.title;
   const description = meta?.description;
@@ -69,7 +69,7 @@ function LinkPreview({ embed }: { embed: Embed }) {
         <div className="relative aspect-video w-full overflow-hidden">
           <Image
             src={image}
-            alt={title || ''}
+            alt={authorName && title ? `Preview image for ${title}` : title || (authorName ? `Link preview in post by ${authorName}` : 'Link preview')}
             fill
             sizes="(max-width: 640px) 100vw, 600px"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -122,13 +122,15 @@ function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
 
 // ─── Image Grid ────────────────────────────────────────────────────
 
-function ImageGrid({ images }: { images: string[] }) {
+function ImageGrid({ images, authorName }: { images: string[]; authorName?: string }) {
+  const altText = authorName ? `Image in post by ${authorName}` : 'Post image';
+
   if (images.length === 1) {
     return (
-      <div className="image-grid mt-2 max-h-80 overflow-hidden rounded-xl">
+      <div className="image-grid mt-2 max-h-80 overflow-hidden rounded-xl" role="group" aria-label="Post images">
         <Image
           src={images[0]!}
-          alt=""
+          alt={altText}
           width={200}
           height={200}
           className="h-full w-full object-cover"
@@ -140,12 +142,12 @@ function ImageGrid({ images }: { images: string[] }) {
   }
   if (images.length === 2) {
     return (
-      <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
+      <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl" role="group" aria-label="Post images">
         {images.map((url) => (
           <Image
             key={url}
             src={url}
-            alt=""
+            alt={altText}
             width={200}
             height={200}
             className="aspect-square w-full object-cover"
@@ -157,12 +159,12 @@ function ImageGrid({ images }: { images: string[] }) {
     );
   }
   return (
-    <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl">
+    <div className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl" role="group" aria-label="Post images">
       {images.slice(0, 4).map((url, idx) => (
         <div key={url} className="relative aspect-square">
           <Image
             src={url}
-            alt=""
+            alt={altText}
             width={200}
             height={200}
             className="h-full w-full object-cover"

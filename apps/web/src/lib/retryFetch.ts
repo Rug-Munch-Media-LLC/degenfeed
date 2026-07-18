@@ -18,10 +18,7 @@ export interface RetryOptions {
 
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504]);
 
-export async function retryFetch(
-  url: string,
-  options: RetryOptions = {},
-): Promise<Response> {
+export async function retryFetch(url: string, options: RetryOptions = {}): Promise<Response> {
   const { maxRetries = 3, baseDelayMs = 300, maxDelayMs = 10_000, fetchOptions } = options;
 
   let lastError: Error | null = null;
@@ -55,10 +52,7 @@ export async function retryFetch(
     }
 
     if (attempt < maxRetries) {
-      const delay = Math.min(
-        baseDelayMs * Math.pow(2, attempt) + Math.random() * baseDelayMs,
-        maxDelayMs,
-      );
+      const delay = Math.min(baseDelayMs * 2 ** attempt + Math.random() * baseDelayMs, maxDelayMs);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
@@ -69,10 +63,7 @@ export async function retryFetch(
 /**
  * Convenience wrapper for JSON requests with retry.
  */
-export async function retryFetchJson<T>(
-  url: string,
-  options: RetryOptions = {},
-): Promise<T> {
+export async function retryFetchJson<T>(url: string, options: RetryOptions = {}): Promise<T> {
   const res = await retryFetch(url, {
     ...options,
     fetchOptions: {

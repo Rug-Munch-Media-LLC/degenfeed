@@ -6,10 +6,10 @@ import { ErrorBoundary, getProtocolColor } from '@degenfeed/ui';
 import { formatTimeAgo } from '@degenfeed/utils';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useReadingSettings } from '../../../hooks/useReadingSettings';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
+import { useReadingSettings } from '../../../hooks/useReadingSettings';
 
 const TipModal = dynamic(
   () => import('../../../components/TipModal').then((m) => ({ default: m.TipModal })),
@@ -233,7 +233,6 @@ function PostCard({
         <a
           href={post.embeds.find((e) => e.kind === 'link')?.url || '#'}
           target="_blank" rel="noopener noreferrer"
-          rel="noopener noreferrer"
           className="mb-4 block overflow-hidden rounded-xl border border-[var(--color-glass-border)] transition-colors hover:border-degen-500/20"
         >
           {embedData.image && (
@@ -460,16 +459,19 @@ function buildThreadTree(replies: ThreadReply[], rootUri: string, mode: ThreadSo
 function ThreadReplyCard({
   node,
   opAuthorId,
+  parentProtocol,
   depth = 0,
 }: {
   node: ThreadNode;
   opAuthorId?: string;
+  parentProtocol?: string;
   depth?: number;
 }) {
   const { reply, children } = node;
   const color = getProtocolColor(reply.protocol);
   const isOp = !!opAuthorId && reply.author.id === opAuthorId;
   const bridgeSource = reply.bridgeFrom ?? reply.protocol;
+  const isCrossProtocol = parentProtocol != null && reply.protocol !== parentProtocol;
   return (
     <div className={depth > 0 ? 'mt-2' : ''}>
       <div
@@ -495,26 +497,19 @@ function ThreadReplyCard({
           >
             {protocolLabel(reply.protocol)}
           </span>
-          {reply.bridged && (
+          {isCrossProtocol && (
             <span
-              className="text-[9px] text-degen-400"
-              title={`Replied from ${protocolLabel(bridgeSource)} via DegenFeed bridge`}
+              className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-medium text-degen-400"
+              style={{ backgroundColor: '#a855f718' }}
+              title={`Replied from ${bridgeSource !== reply.protocol ? protocolLabel(bridgeSource) : protocolLabel(reply.protocol)} via DegenFeed bridge`}
             >
-              ↔ bridged
-            </span>
-          )}
-          {!reply.bridged && reply.viaCrossPost && (
-            <span
-              className="text-[9px] text-gray-500"
-              title={`Reply on the ${protocolLabel(reply.protocol)} cross-post of this thread`}
-            >
-              ↔ cross-post
+              ↔ {protocolLabel(bridgeSource !== reply.protocol ? bridgeSource : reply.protocol)}
             </span>
           )}
           <span className="text-[10px] text-gray-600">{formatTimeAgo(reply.createdAt)} ago</span>
         </div>
-        {reply.bridged && (
-          <p className="mb-1.5 text-[10px] italic text-gray-500">
+        {isCrossProtocol && (
+          <p className="mb-1.5 text-[10px] italic text-degen-400/80">
             ↔ Replied from {protocolLabel(bridgeSource)} via DegenFeed bridge
           </p>
         )}
@@ -534,6 +529,7 @@ function ThreadReplyCard({
               key={child.reply.id}
               node={child}
               opAuthorId={opAuthorId}
+              parentProtocol={parentProtocol}
               depth={depth + 1}
             />
           ))}
@@ -543,11 +539,26 @@ function ThreadReplyCard({
   );
 }
 
-function formatReplyBreakdown(byProtocol: Record<string, number>): string {
-  return Object.entries(byProtocol)
-    .sort((a, b) => b[1] - a[1])
-    .map(([p, n]) => `${n} ${n === 1 ? 'reply' : 'replies'} on ${protocolLabel(p)}`)
-    .join(', ');
+/** Render inline colored protocol pills for reply breakdown. */
+function ProtocolReplyPills({ byProtocol }: { byProtocol: Record<string, number> }) {
+  const entries = Object.entries(byProtocol).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {entries.map(([p, n]) => {
+        const color = getProtocolColor(p);
+        return (
+          <span
+            key={p}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
+            style={{ backgroundColor: `${color}18`, color }}
+          >
+            {protocolLabel(p)} {n}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 interface Props {
@@ -757,12 +768,18 @@ export default function PostPage({ params }: Props) {
   const pathname = usePathname();
   const lastSegment = pathname.split('/').filter(Boolean).pop() ?? '';
   const breadcrumbOverrides = post?.text
-    ? { [lastSegment]: `${post.author.displayName}: ${post.text.slice(0, 48)}${post.text.length > 48 ? '…' : ''}` }
+    ? {
+        [lastSegment]: `${post.author.displayName}: ${post.text.slice(0, 48)}${post.text.length > 48 ? '…' : ''}`,
+      }
     : undefined;
 
   // Reader controls
   const fontSizeLabel = { sm: 'S', md: 'M', lg: 'L' } as const;
-  const lineSpacingLabel = { compact: 'Compact', comfortable: 'Comfy', relaxed: 'Relaxed' } as const;
+  const lineSpacingLabel = {
+    compact: 'Compact',
+    comfortable: 'Comfy',
+    relaxed: 'Relaxed',
+  } as const;
 
   return (
     <ErrorBoundary>
@@ -782,255 +799,290 @@ export default function PostPage({ params }: Props) {
         <div
           ref={contentRef}
           style={
-          {
-            '--reader-font-size': settings.fontSize === 'sm' ? '0.875rem' : settings.fontSize === 'lg' ? '1.125rem' : '1rem',
-            '--reader-line-height': settings.lineSpacing === 'compact' ? '1.4' : settings.lineSpacing === 'relaxed' ? '1.8' : '1.6',
-          } as React.CSSProperties
-        }
-      >
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <a
-            href="/feed"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-[var(--color-fg)]"
-          >
-            &larr; Back to feed
-          </a>
-          {/* Reader controls */}
-          <div className="relative flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setShowReaderControls(!showReaderControls)}
-              className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
-              aria-label="Reader settings"
-              title="Text size & spacing"
+            {
+              '--reader-font-size':
+                settings.fontSize === 'sm'
+                  ? '0.875rem'
+                  : settings.fontSize === 'lg'
+                    ? '1.125rem'
+                    : '1rem',
+              '--reader-line-height':
+                settings.lineSpacing === 'compact'
+                  ? '1.4'
+                  : settings.lineSpacing === 'relaxed'
+                    ? '1.8'
+                    : '1.6',
+            } as React.CSSProperties
+          }
+        >
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <a
+              href="/feed"
+              className="inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-[var(--color-fg)]"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M6 4v16" /><path d="M18 4v16" /><path d="M4 20h16" />
-                <path d="M10 8h4" /><path d="M9 12h6" /><path d="M11 16h2" />
-              </svg>
-            </button>
-            {showReaderControls && (
-              <div className="absolute right-0 top-full mt-1 z-50 rounded-xl border border-white/10 bg-[var(--color-card)] p-3 shadow-2xl backdrop-blur-xl min-w-[200px]">
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Font Size</p>
-                <div className="flex gap-1 mb-3">
-                  {(['sm', 'md', 'lg'] as const).map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setFontSize(size)}
-                      className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
-                        settings.fontSize === size
-                          ? 'bg-degen-500/20 text-degen-400'
-                          : 'text-gray-500 hover:bg-[var(--color-muted)]'
-                      }`}
-                    >
-                      {fontSizeLabel[size]}
-                    </button>
-                  ))}
-                </div>
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Line Spacing</p>
-                <div className="flex gap-1">
-                  {(['compact', 'comfortable', 'relaxed'] as const).map((spacing) => (
-                    <button
-                      key={spacing}
-                      type="button"
-                      onClick={() => setLineSpacing(spacing)}
-                      className={`flex-1 rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors ${
-                        settings.lineSpacing === spacing
-                          ? 'bg-degen-500/20 text-degen-400'
-                          : 'text-gray-500 hover:bg-[var(--color-muted)]'
-                      }`}
-                    >
-                      {lineSpacingLabel[spacing]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {state === 'loading' && (
-          <div className="card animate-pulse p-6">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-[var(--color-muted)]" />
-              <div className="flex-1">
-                <div className="mb-1 h-4 w-32 rounded bg-[var(--color-muted)]" />
-                <div className="h-3 w-20 rounded bg-[var(--color-muted)]" />
-              </div>
-            </div>
-            <div className="mb-3 h-4 w-full rounded bg-[var(--color-muted)]" />
-            <div className="mb-3 h-4 w-3/4 rounded bg-[var(--color-muted)]" />
-            <div className="h-4 w-1/2 rounded bg-[var(--color-muted)]" />
-          </div>
-        )}
-
-        {state === 'error' && (
-          <div className="card border-red-900/30 bg-red-950/20 py-12 text-center">
-            <p className="text-red-300">{error || 'Post not found'}</p>
-            <a href="/home" className="btn-primary mt-4 inline-block text-sm">
-              Back to feed
+              &larr; Back to feed
             </a>
-          </div>
-        )}
-
-        {post && (
-          <>
-            <PostCard post={post} onEngage={handleEngage} onTip={setTipPost} />
-
-            {signedIn.length > 0 ? (
-              <div className="card mt-4 border border-[var(--color-glass-border)] bg-white/[0.02]">
-                <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--color-glass-border)] px-4 py-2.5">
-                  <span className="mr-1 text-[11px] text-gray-500">Reply as:</span>
-                  {signedIn.map((p) => {
-                    const active = (replyProtocol ?? post.protocol) === p;
-                    const color = getProtocolColor(p);
-                    return (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setReplyProtocol(p)}
-                        className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                          active
-                            ? ''
-                            : 'border-[var(--color-glass-border)] text-gray-500 hover:text-[var(--color-fg)]'
-                        }`}
-                        style={
-                          active
-                            ? { backgroundColor: `${color}22`, color, borderColor: `${color}66` }
-                            : undefined
-                        }
-                      >
-                        {protocolLabel(p)}
-                        {p !== post.protocol && ' ↔'}
-                      </button>
-                    );
-                  })}
-                </div>
-                {replyProtocol && replyProtocol !== post.protocol && (
-                  <p className="px-4 pt-2 text-[11px] text-degen-400">
-                    ↔ Bridging your reply from {protocolLabel(replyProtocol)} to this{' '}
-                    {protocolLabel(post.protocol)} post
+            {/* Reader controls */}
+            <div className="relative flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setShowReaderControls(!showReaderControls)}
+                className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+                aria-label="Reader settings"
+                title="Text size & spacing"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <path d="M6 4v16" />
+                  <path d="M18 4v16" />
+                  <path d="M4 20h16" />
+                  <path d="M10 8h4" />
+                  <path d="M9 12h6" />
+                  <path d="M11 16h2" />
+                </svg>
+              </button>
+              {showReaderControls && (
+                <div className="absolute right-0 top-full mt-1 z-50 rounded-xl border border-white/10 bg-[var(--color-card)] p-3 shadow-2xl backdrop-blur-xl min-w-[200px]">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Font Size
                   </p>
-                )}
-                <textarea
-                  ref={textareaRef}
-                  value={replyText}
-                  onChange={(e) => {
-                    setReplyText(e.target.value);
-                    e.target.style.height = 'auto';
-                    e.target.style.height = `${Math.min(e.target.scrollHeight, 240)}px`;
-                  }}
-                  placeholder="Write a reply..."
-                  rows={3}
-                  className="w-full resize-none bg-transparent p-4 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none"
-                />
-                {replyError && <p className="px-4 pb-1 text-xs text-red-400">{replyError}</p>}
-                <div className="flex items-center justify-between border-t border-[var(--color-glass-border)] px-4 py-3">
-                  <span
-                    className={`text-xs ${
-                      replyText.length > 500
-                        ? 'text-red-400'
-                        : replyText.length > 400
-                          ? 'text-yellow-400'
-                          : 'text-gray-500'
-                    }`}
-                  >
-                    {replyText.length}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleReply}
-                    disabled={!replyText.trim() || replying}
-                    className="btn-primary px-4 text-sm disabled:opacity-50"
-                  >
-                    {replying ? 'Replying…' : 'Reply'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="card mt-4 border border-[var(--color-glass-border)] bg-white/[0.02] py-6 text-center">
-                <p className="text-sm text-gray-500">
-                  <button
-                    type="button"
-                    onClick={openSignIn}
-                    className="text-degen-400 hover:text-degen-300 transition-colors underline"
-                  >
-                    Sign in
-                  </button>{' '}
-                  to reply to this post
-                </p>
-              </div>
-            )}
-
-            {replies.length > 0 && (
-              <section className="mt-6">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <h2 className="font-semibold text-[var(--color-fg)] text-sm">
-                      {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
-                      {(thread?.protocols.length ?? 0) > 1 && (
-                        <span className="ml-1.5 text-degen-400">
-                          across {thread?.protocols.length} protocols
-                        </span>
-                      )}
-                    </h2>
-                    <p className="mt-0.5 text-[11px] text-gray-500">
-                      {formatReplyBreakdown(byProtocol)}
-                      {(thread?.bridgeCount ?? 0) > 0 && (
-                        <span className="ml-1.5 text-degen-400">
-                          · ↔ {thread?.bridgeCount} bridged
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex gap-1">
-                    {(
-                      [
-                        ['chrono', 'Chronological'],
-                        ['top', 'Top'],
-                        ['protocol', 'By Protocol'],
-                      ] as [ThreadSort, string][]
-                    ).map(([mode, label]) => (
+                  <div className="flex gap-1 mb-3">
+                    {(['sm', 'md', 'lg'] as const).map((size) => (
                       <button
-                        key={mode}
+                        key={size}
                         type="button"
-                        onClick={() => setSortMode(mode)}
-                        className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                          sortMode === mode
+                        onClick={() => setFontSize(size)}
+                        className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
+                          settings.fontSize === size
                             ? 'bg-degen-500/20 text-degen-400'
-                            : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                            : 'text-gray-500 hover:bg-[var(--color-muted)]'
                         }`}
                       >
-                        {label}
+                        {fontSizeLabel[size]}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Line Spacing
+                  </p>
+                  <div className="flex gap-1">
+                    {(['compact', 'comfortable', 'relaxed'] as const).map((spacing) => (
+                      <button
+                        key={spacing}
+                        type="button"
+                        onClick={() => setLineSpacing(spacing)}
+                        className={`flex-1 rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors ${
+                          settings.lineSpacing === spacing
+                            ? 'bg-degen-500/20 text-degen-400'
+                            : 'text-gray-500 hover:bg-[var(--color-muted)]'
+                        }`}
+                      >
+                        {lineSpacingLabel[spacing]}
                       </button>
                     ))}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  {threadTree.map((node) => (
-                    <ThreadReplyCard key={node.reply.id} node={node} opAuthorId={post.author.id} />
-                  ))}
-                </div>
-              </section>
-            )}
-          </>
-        )}
+              )}
+            </div>
+          </div>
 
-        {tipPost && (
-          <TipModal
-            open={!!tipPost}
-            onClose={() => setTipPost(null)}
-            recipientProtocol={tipPost.protocol}
-            recipientAuthorId={tipPost.author.id}
-            recipientDisplayName={
-              tipPost.author.displayName || tipPost.author.handles[tipPost.protocol] || ''
-            }
-            postContext={{ protocol: tipPost.protocol, authorId: tipPost.author.id }}
-          />
-        )}
+          {state === 'loading' && (
+            <div className="card animate-pulse p-6">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-[var(--color-muted)]" />
+                <div className="flex-1">
+                  <div className="mb-1 h-4 w-32 rounded bg-[var(--color-muted)]" />
+                  <div className="h-3 w-20 rounded bg-[var(--color-muted)]" />
+                </div>
+              </div>
+              <div className="mb-3 h-4 w-full rounded bg-[var(--color-muted)]" />
+              <div className="mb-3 h-4 w-3/4 rounded bg-[var(--color-muted)]" />
+              <div className="h-4 w-1/2 rounded bg-[var(--color-muted)]" />
+            </div>
+          )}
+
+          {state === 'error' && (
+            <div className="card border-red-900/30 bg-red-950/20 py-12 text-center">
+              <p className="text-red-300">{error || 'Post not found'}</p>
+              <a href="/home" className="btn-primary mt-4 inline-block text-sm">
+                Back to feed
+              </a>
+            </div>
+          )}
+
+          {post && (
+            <>
+              <PostCard post={post} onEngage={handleEngage} onTip={setTipPost} />
+
+              {signedIn.length > 0 ? (
+                <div className="card mt-4 border border-[var(--color-glass-border)] bg-white/[0.02]">
+                  <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--color-glass-border)] px-4 py-2.5">
+                    <span className="mr-1 text-[11px] text-gray-500">Reply as:</span>
+                    {signedIn.map((p) => {
+                      const active = (replyProtocol ?? post.protocol) === p;
+                      const color = getProtocolColor(p);
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setReplyProtocol(p)}
+                          className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                            active
+                              ? ''
+                              : 'border-[var(--color-glass-border)] text-gray-500 hover:text-[var(--color-fg)]'
+                          }`}
+                          style={
+                            active
+                              ? { backgroundColor: `${color}22`, color, borderColor: `${color}66` }
+                              : undefined
+                          }
+                        >
+                          {protocolLabel(p)}
+                          {p !== post.protocol && ' ↔'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {replyProtocol && replyProtocol !== post.protocol && (
+                    <p className="px-4 pt-2 text-[11px] text-degen-400">
+                      ↔ Bridging your reply from {protocolLabel(replyProtocol)} to this{' '}
+                      {protocolLabel(post.protocol)} post
+                    </p>
+                  )}
+                  <textarea
+                    ref={textareaRef}
+                    value={replyText}
+                    onChange={(e) => {
+                      setReplyText(e.target.value);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = `${Math.min(e.target.scrollHeight, 240)}px`;
+                    }}
+                    placeholder="Post your reply"
+                    rows={3}
+                    className="w-full resize-none bg-transparent p-4 text-sm text-[var(--color-fg)] placeholder-gray-600 outline-none"
+                  />
+                  {replyError && <p className="px-4 pb-1 text-xs text-red-400">{replyError}</p>}
+                  <div className="flex items-center justify-between border-t border-[var(--color-glass-border)] px-4 py-3">
+                    <span
+                      className={`text-xs ${
+                        replyText.length > 500
+                          ? 'text-red-400'
+                          : replyText.length > 400
+                            ? 'text-yellow-400'
+                            : 'text-gray-500'
+                      }`}
+                    >
+                      {replyText.length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleReply}
+                      disabled={!replyText.trim() || replying}
+                      className="btn-primary px-4 text-sm disabled:opacity-50"
+                    >
+                      {replying ? 'Replying…' : 'Reply'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="card mt-4 border border-[var(--color-glass-border)] bg-white/[0.02] py-6 text-center">
+                  <p className="text-sm text-gray-500">
+                    <button
+                      type="button"
+                      onClick={openSignIn}
+                      className="text-degen-400 hover:text-degen-300 transition-colors underline"
+                    >
+                      Sign in
+                    </button>{' '}
+                    to reply to this post
+                  </p>
+                </div>
+              )}
+
+              <section className="mt-6">
+                {replies.length > 0 ? (
+                  <>
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h2 className="font-semibold text-[var(--color-fg)] text-sm">
+                          {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+                          {(thread?.protocols.length ?? 0) > 1 && (
+                            <span className="ml-1.5 text-degen-400">
+                              across {thread?.protocols.length} protocols
+                            </span>
+                          )}
+                        </h2>
+                        <ProtocolReplyPills byProtocol={byProtocol} />
+                      </div>
+                      <div className="flex gap-1">
+                        {(
+                          [
+                            ['chrono', 'Chronological'],
+                            ['top', 'Top'],
+                            ['protocol', 'By Protocol'],
+                          ] as [ThreadSort, string][]
+                        ).map(([mode, label]) => (
+                          <button
+                            key={mode}
+                            type="button"
+                            onClick={() => setSortMode(mode)}
+                            className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                              sortMode === mode
+                                ? 'bg-degen-500/20 text-degen-400'
+                                : 'text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {threadTree.map((node) => (
+                        <ThreadReplyCard
+                          key={node.reply.id}
+                          node={node}
+                          opAuthorId={post.author.id}
+                          parentProtocol={post.protocol}
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  state === 'loaded' && (
+                    <div className="card border border-[var(--color-glass-border)] bg-white/[0.02] py-12 text-center">
+                      <p className="text-sm text-[var(--color-muted)]">No replies yet</p>
+                      <p className="mt-1 text-xs text-gray-600">
+                        Be the first to join the conversation
+                      </p>
+                    </div>
+                  )
+                )}
+              </section>
+            </>
+          )}
+
+          {tipPost && (
+            <TipModal
+              open={!!tipPost}
+              onClose={() => setTipPost(null)}
+              recipientProtocol={tipPost.protocol}
+              recipientAuthorId={tipPost.author.id}
+              recipientDisplayName={
+                tipPost.author.displayName || tipPost.author.handles[tipPost.protocol] || ''
+              }
+              postContext={{ protocol: tipPost.protocol, authorId: tipPost.author.id }}
+            />
+          )}
+        </div>
       </div>
-    </div>
     </ErrorBoundary>
   );
 }

@@ -121,7 +121,8 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                 e.stopPropagation();
                 void onPerform(localState.engagement.viewerLiked ? 'unlike' : 'like');
               }}
-              aria-label={`${localState.metrics.likes} likes`}
+              aria-label="Like post"
+              aria-pressed={localState.engagement.viewerLiked}
             >
               <span
                 className={`inline-block ${animatingLike ? 'animate-heart-pop' : ''}`}
@@ -132,7 +133,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
               >
                 {localState.engagement.viewerLiked ? '❤' : '♡'}
               </span>{' '}
-              {formatCount(localState.metrics.likes)}
+              <span aria-label={`${localState.metrics.likes} likes`}>{formatCount(localState.metrics.likes)}</span>
             </button>
             <button
               type="button"
@@ -141,9 +142,10 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                 e.stopPropagation();
                 void onPerform(localState.engagement.viewerReposted ? 'unrepost' : 'repost');
               }}
-              aria-label={`${localState.metrics.reposts} reposts`}
+              aria-label="Repost post"
+              aria-pressed={localState.engagement.viewerReposted}
             >
-              ↻ {formatCount(localState.metrics.reposts)}
+              ↻ <span aria-label={`${localState.metrics.reposts} reposts`}>{formatCount(localState.metrics.reposts)}</span>
             </button>
             <button
               type="button"
@@ -152,9 +154,9 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                 e.stopPropagation();
                 onSetShowReply(!showReply);
               }}
-              aria-label={`${localState.metrics.replies} replies`}
+              aria-label="Reply to post"
             >
-              ↩ {formatCount(localState.metrics.replies)}
+              ↩ <span aria-label={`${localState.metrics.replies} replies`}>{formatCount(localState.metrics.replies)}</span>
             </button>
             {onCrossReplyOpen && (
               <button
@@ -177,7 +179,8 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                 e.stopPropagation();
                 void onPerform(localState.engagement.viewerBookmarked ? 'unbookmark' : 'bookmark');
               }}
-              aria-label={localState.engagement.viewerBookmarked ? 'Bookmarked' : 'Bookmark'}
+              aria-label="Bookmark post"
+              aria-pressed={localState.engagement.viewerBookmarked}
             >
               {localState.engagement.viewerBookmarked ? '🔖' : '📑'}
             </button>
@@ -190,7 +193,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
             e.stopPropagation();
             void onShare();
           }}
-          aria-label="Share"
+          aria-label="Share post"
         >
           ↗ Share
         </button>
@@ -224,6 +227,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
               e.stopPropagation();
               onTip(post);
             }}
+            aria-label={`${post.metrics.quotes} zaps for post`}
             title={`${post.metrics.quotes} zaps`}
           >
             ⚡{post.metrics.quotes}

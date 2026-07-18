@@ -15,10 +15,7 @@ import { useEffect, useMemo, useRef } from 'react';
  * }, 100);
  * ```
  */
-export function useDebounce<T extends (...args: unknown[]) => void>(
-  fn: T,
-  delay: number,
-): T {
+export function useDebounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fnRef = useRef(fn);
   fnRef.current = fn;
@@ -45,10 +42,7 @@ export function useDebounce<T extends (...args: unknown[]) => void>(
  * Unlike debounce, it fires immediately and then at most once
  * per `limit` ms.
  */
-export function useThrottle<T extends (...args: unknown[]) => void>(
-  fn: T,
-  limit: number,
-): T {
+export function useThrottle<T extends (...args: unknown[]) => void>(fn: T, limit: number): T {
   const inThrottleRef = useRef(false);
   const fnRef = useRef(fn);
   fnRef.current = fn;
@@ -80,11 +74,7 @@ export function useThrottle<T extends (...args: unknown[]) => void>(
  * }, [largeData]);
  * ```
  */
-export function useIdleCallback(
-  fn: () => void,
-  deps: unknown[],
-  timeout = 50,
-) {
+export function useIdleCallback(fn: () => void, deps: unknown[], timeout = 50) {
   useEffect(() => {
     if (typeof requestIdleCallback !== 'undefined') {
       const id = requestIdleCallback(() => fn(), { timeout });

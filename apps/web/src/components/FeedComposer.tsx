@@ -100,7 +100,7 @@ export function FeedComposer({
     } finally {
       setPosting(false);
     }
-  }, [text, posting, selected, onPost, bridgeToNostr, nostrPublicId]);
+  }, [text, posting, selected, onPost, bridgeToNostr, nostrPublicId, showToast, announce]);
 
   const toggleTarget = useCallback(
     (id: string) => {

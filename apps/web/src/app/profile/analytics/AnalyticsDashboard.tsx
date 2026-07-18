@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useWeb3 } from '../../../components/Web3Provider';
-import { retryFetch } from '../../../lib/retryFetch';
 import { getCached, setCache } from '../../../lib/fetchWithCache';
+import { retryFetch } from '../../../lib/retryFetch';
 
 /* ── Types ── */
 

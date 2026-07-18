@@ -15,8 +15,12 @@ export const metadata: Metadata = {
   description:
     'Join live audio rooms and spaces across Nostr, Farcaster, and the fediverse. Host web3 conversations, connect with the crypto community, and discover decentralized social audio.',
   keywords: [
-    'web3 audio rooms', 'crypto social spaces', 'decentralized audio',
-    'nostr spaces', 'farcaster audio', 'fediverse live audio',
+    'web3 audio rooms',
+    'crypto social spaces',
+    'decentralized audio',
+    'nostr spaces',
+    'farcaster audio',
+    'fediverse live audio',
     'crypto voice chat',
   ],
   openGraph: {
@@ -36,8 +40,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Spaces — Web3 Audio | DegenFeed',
-    description:
-      'Live audio rooms across Nostr, Farcaster, and the fediverse.',
+    description: 'Live audio rooms across Nostr, Farcaster, and the fediverse.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/spaces' },
 };
@@ -45,7 +48,11 @@ export const metadata: Metadata = {
 export default function SpacesLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-spaces" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(spacesBreadcrumb) }} />
+      <Script
+        id="breadcrumb-spaces"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(spacesBreadcrumb) }}
+      />
       {children}
     </>
   );

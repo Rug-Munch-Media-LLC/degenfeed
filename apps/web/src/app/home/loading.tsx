@@ -22,7 +22,10 @@ export default function HomeLoading() {
       </div>
 
       {/* Section tabs */}
-      <div className="mb-6 flex gap-2 border-b pb-3" style={{ borderColor: 'var(--color-glass-border)' }}>
+      <div
+        className="mb-6 flex gap-2 border-b pb-3"
+        style={{ borderColor: 'var(--color-glass-border)' }}
+      >
         {['For You', 'Following', 'Trending', 'Latest'].map((t) => (
           <div
             key={t}

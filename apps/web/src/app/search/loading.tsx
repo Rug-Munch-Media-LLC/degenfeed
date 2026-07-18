@@ -1,4 +1,4 @@
-import { Avatar, HeaderSkeleton, Line, Badge, CardSkeleton } from '@/components/loading/PageSkeleton';
+import { Avatar, Badge, Line } from '@/components/loading/PageSkeleton';
 
 export default function SearchLoading() {
   return (

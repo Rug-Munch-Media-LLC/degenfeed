@@ -468,7 +468,7 @@ export default function SettingsPage() {
             <div>
               <span className="mb-1.5 block text-xs font-medium text-[var(--color-fg)]">
                 Connected Protocols
-              </label>
+              </span>
               <div className="flex flex-wrap gap-2">
                 {PROTOCOLS.map((p) => {
                   const linked = connectedProtocols.includes(p);

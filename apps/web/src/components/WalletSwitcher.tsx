@@ -1,10 +1,10 @@
 'use client';
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { useAuth } from './AuthProvider';
-import { useCrossProtocolIdentity, getLinkedProtocols } from '../hooks/useCrossProtocolIdentity';
-import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
 import type { ProtocolId } from '@degenfeed/utils';
+import { PROTOCOL_ID_REGISTRY } from '@degenfeed/utils';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { getLinkedProtocols, useCrossProtocolIdentity } from '../hooks/useCrossProtocolIdentity';
+import { useAuth } from './AuthProvider';
 
 // ─── Chain badge ──────────────────────────────────────────────
 
@@ -13,9 +13,7 @@ function ChainBadge({ chain }: { chain: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-        isEth
-          ? 'bg-blue-500/15 text-blue-400'
-          : 'bg-purple-500/15 text-purple-400'
+        isEth ? 'bg-blue-500/15 text-blue-400' : 'bg-purple-500/15 text-purple-400'
       }`}
     >
       {isEth ? (
@@ -82,18 +80,14 @@ function WalletEntry({
       type="button"
       onClick={() => onSwitch(index)}
       className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
-        isActive
-          ? 'bg-degen-500/10 ring-1 ring-degen-500/30'
-          : 'hover:bg-white/[0.04]'
+        isActive ? 'bg-degen-500/10 ring-1 ring-degen-500/30' : 'hover:bg-white/[0.04]'
       }`}
       aria-current={isActive ? 'true' : undefined}
     >
       {/* Wallet avatar */}
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-mono font-bold ${
-          isActive
-            ? 'bg-degen-500/20 text-degen-400'
-            : 'bg-white/5 text-gray-400'
+          isActive ? 'bg-degen-500/20 text-degen-400' : 'bg-white/5 text-gray-400'
         }`}
       >
         {address.slice(2, 4).toUpperCase()}
@@ -121,9 +115,7 @@ function WalletEntry({
           </code>
           <ChainBadge chain={meta.chain} />
           {linkedProtocols.length > 0 && (
-            <span className="text-[10px] text-gray-600">
-              {linkedProtocols.length} linked
-            </span>
+            <span className="text-[10px] text-gray-600">{linkedProtocols.length} linked</span>
           )}
         </div>
         {linkedProtocols.length > 0 && (
@@ -149,7 +141,15 @@ function WalletEntry({
           className="shrink-0 rounded-full p-1 text-gray-600 opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
           aria-label={`Remove wallet ${truncateAddress(address)}`}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            aria-hidden="true"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -279,12 +279,8 @@ export const WalletSwitcher = memo(function WalletSwitcher({
         >
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-xs font-semibold text-[var(--color-fg)]">
-              Wallets
-            </span>
-            <span className="text-[10px] text-gray-500">
-              {walletCount} connected
-            </span>
+            <span className="text-xs font-semibold text-[var(--color-fg)]">Wallets</span>
+            <span className="text-[10px] text-gray-500">{walletCount} connected</span>
           </div>
 
           {/* Wallet list */}

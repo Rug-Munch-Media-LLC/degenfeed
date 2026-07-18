@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import { H2, H3 } from '../_components/doc-heading';
-import { Callout } from '../_components/doc-callout';
 import { Badge } from '../_components/doc-badge';
+import { Callout } from '../_components/doc-callout';
+import { H2 } from '../_components/doc-heading';
 
 export const revalidate = 86400;
 
@@ -12,7 +12,8 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://app.degenfeed.xyz/docs/changelog' },
   openGraph: {
     title: 'DegenFeed Changelog',
-    description: 'Complete release history for the open-source multi-protocol web3 social aggregator.',
+    description:
+      'Complete release history for the open-source multi-protocol web3 social aggregator.',
   },
 };
 
@@ -170,8 +171,8 @@ export default function ChangelogPage() {
       </p>
 
       <Callout type="info">
-        DegenFeed follows semantic versioning. Breaking changes are noted in each release.
-        Subscribe to the newsletter to get release announcements delivered to your inbox.
+        DegenFeed follows semantic versioning. Breaking changes are noted in each release. Subscribe
+        to the newsletter to get release announcements delivered to your inbox.
       </Callout>
 
       <div className="mt-10 space-y-10">
@@ -215,7 +216,9 @@ export default function ChangelogPage() {
                 </div>
                 <ul className="space-y-1">
                   {version.breaking.map((b) => (
-                    <li key={b} className="text-sm text-red-300">{b}</li>
+                    <li key={b} className="text-sm text-red-300">
+                      {b}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -232,8 +235,8 @@ export default function ChangelogPage() {
         <H2 id="whats-next">What&rsquo;s Next</H2>
         <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-6">
           <p className="text-sm text-gray-400">
-            We&rsquo;re actively developing the next major release. Here&rsquo;s what&rsquo;s on
-            the roadmap:
+            We&rsquo;re actively developing the next major release. Here&rsquo;s what&rsquo;s on the
+            roadmap:
           </p>
           <ul className="mt-4 space-y-2">
             {[
@@ -258,7 +261,9 @@ export default function ChangelogPage() {
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
         <p className="text-xs text-gray-600">
           Want to contribute to a future release?{' '}
-          <a href="/docs/contributing" className="text-degen-400 underline">Check the contributing guide</a>
+          <a href="/docs/contributing" className="text-degen-400 underline">
+            Check the contributing guide
+          </a>
         </p>
       </div>
     </div>

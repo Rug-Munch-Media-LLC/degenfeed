@@ -8,7 +8,12 @@ const discoverBreadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Discover', item: 'https://app.degenfeed.xyz/discover' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Discover',
+      item: 'https://app.degenfeed.xyz/discover',
+    },
   ],
 };
 
@@ -17,8 +22,12 @@ export const metadata: Metadata = {
   description:
     'Discover trending crypto posts, web3 communities, and creators across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more. The best crypto content discovery platform and decentralized social media aggregator.',
   keywords: [
-    'crypto content discovery', 'web3 trending posts', 'discover crypto communities',
-    'web3 social discovery', 'trending crypto content', 'cross protocol discovery',
+    'crypto content discovery',
+    'web3 trending posts',
+    'discover crypto communities',
+    'web3 social discovery',
+    'trending crypto content',
+    'cross protocol discovery',
   ],
   openGraph: {
     title: 'Discover — Web3 Content Discovery & Trending Crypto Posts | DegenFeed',
@@ -46,7 +55,11 @@ export const metadata: Metadata = {
 export default function DiscoverLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-discover" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(discoverBreadcrumb) }} />
+      <Script
+        id="breadcrumb-discover"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(discoverBreadcrumb) }}
+      />
       {children}
     </>
   );

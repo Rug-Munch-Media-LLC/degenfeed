@@ -19,6 +19,7 @@ import {
 import {
   checkDiversity,
   computeTrendingTopics,
+  freshnessBoost,
   interleaveByProtocol,
   type RankingContext,
   rankDiverse,
@@ -539,6 +540,17 @@ export async function scoreAndRank(
           }
         : undefined,
       qualityBadge: protocolQuality?.badge ?? null,
+      feedDebug: {
+        spamScore: spam,
+        qualityScore: qScore / 100, // Normalize 0–100 → 0–1 for the UI
+        authorReputation: breakdown.reputation,
+        topicMatch: Math.min(breakdown.relevance / 3, 1),
+        velocity: breakdown.velocity,
+        freshness: freshnessBoost(p.createdAt, now),
+        sourceProtocol: p.protocol,
+        isFollowed: opts.followed.has(p.author.id),
+        isMutedOrBlocked: false, // Muted/blocked posts are filtered before scoring
+      },
     };
   });
 

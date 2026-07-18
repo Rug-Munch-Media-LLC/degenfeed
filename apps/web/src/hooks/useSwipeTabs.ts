@@ -11,11 +11,7 @@ import { useCallback, useRef } from 'react';
  * @param threshold    Minimum px distance to trigger (default 50)
  * @returns handlers   Spread onto the tabs container element
  */
-export function useSwipeTabs(
-  onSwipeLeft?: () => void,
-  onSwipeRight?: () => void,
-  threshold = 50,
-) {
+export function useSwipeTabs(onSwipeLeft?: () => void, onSwipeRight?: () => void, threshold = 50) {
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {

@@ -4,8 +4,8 @@ import type { StoredIdentity } from '@degenfeed/storage';
 import { getAllIdentities } from '@degenfeed/storage';
 import type { Notification } from '@degenfeed/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { retryFetch } from '../lib/retryFetch';
 import { getCached, setCache } from '../lib/fetchWithCache';
+import { retryFetch } from '../lib/retryFetch';
 
 const READ_KEY = 'degenfeed_notifications_read';
 const POLL_MS = 60000;
@@ -95,7 +95,9 @@ export function useNotifications(enabled: boolean) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
-  const [notificationPrefs, setNotificationPrefs] = useState<NotificationProtocolPrefs | null>(null);
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationProtocolPrefs | null>(
+    null,
+  );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -109,7 +111,11 @@ export function useNotifications(enabled: boolean) {
       const identities = await getAllIdentities();
       const auth = buildAuth(identities);
       const hasAny =
-        auth.nostr_pubkey || auth.mastodon || auth.bluesky?.accessJwt || auth.farcaster?.fid || auth.lens;
+        auth.nostr_pubkey ||
+        auth.mastodon ||
+        auth.bluesky?.accessJwt ||
+        auth.farcaster?.fid ||
+        auth.lens;
       if (!hasAny) {
         setNotifications([]);
         return;

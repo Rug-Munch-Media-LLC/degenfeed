@@ -26,19 +26,82 @@ interface TopicDigest {
 
 // ─── Topic Metadata ─────────────────────────────────────────────────────────
 
-const TOPIC_META: Record<string, { label: string; emoji: string; color: string; description: string }> = {
-  bitcoin: { label: 'Bitcoin', emoji: '₿', color: '#f7931a', description: 'Bitcoin, BTC, mining, layer 2s, and the broader Bitcoin ecosystem.' },
-  ethereum: { label: 'Ethereum', emoji: '⟠', color: '#627eea', description: 'Ethereum, L2s, rollups, staking, and the EVM ecosystem.' },
-  solana: { label: 'Solana', emoji: '◎', color: '#9945ff', description: 'Solana, validator ecosystem, DePIN, and high-performance blockchain.' },
-  defi: { label: 'DeFi', emoji: '🏦', color: '#10b981', description: 'Lending, borrowing, DEXs, yield farming, and decentralized finance protocols.' },
-  nft: { label: 'NFTs', emoji: '🖼️', color: '#ec4899', description: 'Digital collectibles, art, music, and NFT marketplace trends.' },
-  ai: { label: 'AI', emoji: '🤖', color: '#8b5cf6', description: 'Artificial intelligence, machine learning, LLMs, AI agents, and crypto AI.' },
-  memecoin: { label: 'Memes', emoji: '🐸', color: '#22c55e', description: 'Meme coins, community tokens, and viral crypto culture.' },
-  regulation: { label: 'Regulation', emoji: '⚖️', color: '#f59e0b', description: 'Crypto regulation, SEC, MiCA, policy developments, and compliance.' },
-  macro: { label: 'Macro', emoji: '📊', color: '#3b82f6', description: 'Macroeconomic trends, Fed policy, inflation, and global markets.' },
-  security: { label: 'Security', emoji: '🛡️', color: '#ef4444', description: 'Smart contract security, audits, hacks, and exploit analysis.' },
-  layer2: { label: 'Layer 2', emoji: '⚡', color: '#a855f7', description: 'Layer 2 scaling, rollups, sidechains, and interoperability.' },
-  trading: { label: 'Trading', emoji: '📈', color: '#06b6d4', description: 'Trading strategies, TA, market analysis, and trading bots.' },
+const TOPIC_META: Record<
+  string,
+  { label: string; emoji: string; color: string; description: string }
+> = {
+  bitcoin: {
+    label: 'Bitcoin',
+    emoji: '₿',
+    color: '#f7931a',
+    description: 'Bitcoin, BTC, mining, layer 2s, and the broader Bitcoin ecosystem.',
+  },
+  ethereum: {
+    label: 'Ethereum',
+    emoji: '⟠',
+    color: '#627eea',
+    description: 'Ethereum, L2s, rollups, staking, and the EVM ecosystem.',
+  },
+  solana: {
+    label: 'Solana',
+    emoji: '◎',
+    color: '#9945ff',
+    description: 'Solana, validator ecosystem, DePIN, and high-performance blockchain.',
+  },
+  defi: {
+    label: 'DeFi',
+    emoji: '🏦',
+    color: '#10b981',
+    description: 'Lending, borrowing, DEXs, yield farming, and decentralized finance protocols.',
+  },
+  nft: {
+    label: 'NFTs',
+    emoji: '🖼️',
+    color: '#ec4899',
+    description: 'Digital collectibles, art, music, and NFT marketplace trends.',
+  },
+  ai: {
+    label: 'AI',
+    emoji: '🤖',
+    color: '#8b5cf6',
+    description: 'Artificial intelligence, machine learning, LLMs, AI agents, and crypto AI.',
+  },
+  memecoin: {
+    label: 'Memes',
+    emoji: '🐸',
+    color: '#22c55e',
+    description: 'Meme coins, community tokens, and viral crypto culture.',
+  },
+  regulation: {
+    label: 'Regulation',
+    emoji: '⚖️',
+    color: '#f59e0b',
+    description: 'Crypto regulation, SEC, MiCA, policy developments, and compliance.',
+  },
+  macro: {
+    label: 'Macro',
+    emoji: '📊',
+    color: '#3b82f6',
+    description: 'Macroeconomic trends, Fed policy, inflation, and global markets.',
+  },
+  security: {
+    label: 'Security',
+    emoji: '🛡️',
+    color: '#ef4444',
+    description: 'Smart contract security, audits, hacks, and exploit analysis.',
+  },
+  layer2: {
+    label: 'Layer 2',
+    emoji: '⚡',
+    color: '#a855f7',
+    description: 'Layer 2 scaling, rollups, sidechains, and interoperability.',
+  },
+  trading: {
+    label: 'Trading',
+    emoji: '📈',
+    color: '#06b6d4',
+    description: 'Trading strategies, TA, market analysis, and trading bots.',
+  },
 };
 
 const TOPIC_NICHES = Object.keys(TOPIC_META);
@@ -56,7 +119,7 @@ function formatTime(ts: number): string {
 
 export default function TopicDigestPage() {
   const params = useParams();
-  const router = useRouter();
+  const _router = useRouter();
   const slug = (params?.slug as string)?.toLowerCase() ?? '';
   const meta = TOPIC_META[slug];
 
@@ -77,7 +140,8 @@ export default function TopicDigestPage() {
       setDigest({
         topic: slug,
         posts,
-        videoCount: posts.filter((p) => p.protocol === 'youtube' || p.protocol === 'peertube').length,
+        videoCount: posts.filter((p) => p.protocol === 'youtube' || p.protocol === 'peertube')
+          .length,
         communityCount: Math.min(posts.length, 5),
         newsletterCount: Math.min(posts.length, 3),
       });
@@ -103,9 +167,7 @@ export default function TopicDigestPage() {
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          preferredNiches: following
-            ? { [slug]: false }
-            : { [slug]: true },
+          preferredNiches: following ? { [slug]: false } : { [slug]: true },
         }),
       });
     } catch {
@@ -168,7 +230,9 @@ export default function TopicDigestPage() {
       {/* Stats bar */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 text-center">
-          <div className="text-lg font-bold text-[var(--color-fg)]">{digest?.posts.length ?? 0}</div>
+          <div className="text-lg font-bold text-[var(--color-fg)]">
+            {digest?.posts.length ?? 0}
+          </div>
           <div className="text-[10px] text-[var(--color-muted)]">Posts today</div>
         </div>
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 text-center">
@@ -176,7 +240,9 @@ export default function TopicDigestPage() {
           <div className="text-[10px] text-[var(--color-muted)]">Videos</div>
         </div>
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 text-center">
-          <div className="text-lg font-bold text-[var(--color-fg)]">{digest?.communityCount ?? 0}</div>
+          <div className="text-lg font-bold text-[var(--color-fg)]">
+            {digest?.communityCount ?? 0}
+          </div>
           <div className="text-[10px] text-[var(--color-muted)]">Discussions</div>
         </div>
       </div>

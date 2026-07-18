@@ -10,8 +10,7 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://app.degenfeed.xyz/docs/comparison' },
   openGraph: {
     title: 'DegenFeed vs Other Platforms',
-    description:
-      'Feature comparison: DegenFeed vs X (Twitter), Farcaster, Lens, and Bluesky.',
+    description: 'Feature comparison: DegenFeed vs X (Twitter), Farcaster, Lens, and Bluesky.',
     url: 'https://app.degenfeed.xyz/docs/comparison',
     images: [
       {
@@ -37,13 +36,7 @@ function Dash() {
   return <span className="text-gray-600">—</span>;
 }
 
-function Section({
-  id,
-  children,
-}: {
-  id: string;
-  children: React.ReactNode;
-}) {
+function Section({ id, children }: { id: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-20">
       {children}
@@ -88,15 +81,36 @@ interface FeatureRow {
 const features: FeatureRow[] = [
   { feature: 'Multi-protocol feed', df: true, x: false, fc: false, lens: false, bsky: false },
   { feature: 'Cross-protocol posting', df: true, x: false, fc: false, lens: false, bsky: false },
-  { feature: 'No account required to browse', df: true, x: false, fc: false, lens: false, bsky: false },
+  {
+    feature: 'No account required to browse',
+    df: true,
+    x: false,
+    fc: false,
+    lens: false,
+    bsky: false,
+  },
   { feature: 'Open source', df: true, x: false, fc: true, lens: true, bsky: true },
   { feature: 'Self-hostable', df: true, x: false, fc: false, lens: false, bsky: false },
   { feature: 'No ads', df: true, x: false, fc: true, lens: true, bsky: true },
   { feature: 'Crypto tipping', df: true, x: false, fc: false, lens: 'Collects', bsky: false },
-  { feature: 'AI-powered feed ranking', df: true, x: false, fc: false, lens: 'ML explore', bsky: false },
+  {
+    feature: 'AI-powered feed ranking',
+    df: true,
+    x: false,
+    fc: false,
+    lens: 'ML explore',
+    bsky: false,
+  },
   { feature: 'Custom feeds & filters', df: true, x: false, fc: false, lens: false, bsky: 'Feeds' },
   { feature: 'Post scheduling', df: true, x: 'Schedule', fc: false, lens: false, bsky: false },
-  { feature: 'Communities', df: true, x: false, fc: 'Channels', lens: false, bsky: 'Starter packs' },
+  {
+    feature: 'Communities',
+    df: true,
+    x: false,
+    fc: 'Channels',
+    lens: false,
+    bsky: 'Starter packs',
+  },
   { feature: 'Live audio Spaces', df: true, x: false, fc: false, lens: false, bsky: false },
   { feature: 'Cross-protocol DMs', df: true, x: false, fc: false, lens: false, bsky: false },
   { feature: 'Analytics dashboard', df: true, x: 'Premium', fc: false, lens: false, bsky: false },
@@ -105,7 +119,14 @@ const features: FeatureRow[] = [
   { feature: 'RSS / external feeds', df: true, x: false, fc: false, lens: false, bsky: false },
   { feature: 'ActivityPub federation', df: true, x: false, fc: false, lens: false, bsky: 'Bridge' },
   { feature: 'Transparent algorithm', df: true, x: false, fc: false, lens: false, bsky: false },
-  { feature: 'PWA with push notifications', df: true, x: false, fc: false, lens: false, bsky: true },
+  {
+    feature: 'PWA with push notifications',
+    df: true,
+    x: false,
+    fc: false,
+    lens: false,
+    bsky: true,
+  },
 ];
 
 function FeatureTable() {
@@ -141,7 +162,15 @@ function FeatureTable() {
           {features.map((row) => {
             const cells = cols.map((c) => {
               const val = row[c.key];
-              return typeof val === 'boolean' ? (val ? <Check /> : <Dash />) : <span className="text-xs text-gray-400">{val}</span>;
+              return typeof val === 'boolean' ? (
+                val ? (
+                  <Check />
+                ) : (
+                  <Dash />
+                )
+              ) : (
+                <span className="text-xs text-gray-400">{val}</span>
+              );
             });
             return (
               <tr
@@ -198,19 +227,32 @@ export default function ComparisonPage() {
             <ul className="space-y-2 text-sm text-gray-400">
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">Multi-protocol, not single-platform.</strong> One app to read and post across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more.</span>
+                <span>
+                  <strong className="text-gray-300">Multi-protocol, not single-platform.</strong>{' '}
+                  One app to read and post across Nostr, Farcaster, Lens, Bluesky, Mastodon, and
+                  more.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">Web3-native.</strong> Wallet sign-in, crypto tipping, on-chain identity. No credit card required.</span>
+                <span>
+                  <strong className="text-gray-300">Web3-native.</strong> Wallet sign-in, crypto
+                  tipping, on-chain identity. No credit card required.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">No ads.</strong> DegenFeed is subscription-funded. Your attention is not the product.</span>
+                <span>
+                  <strong className="text-gray-300">No ads.</strong> DegenFeed is
+                  subscription-funded. Your attention is not the product.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">Open source.</strong> AGPL-3.0 licensed. Self-host your own instance.</span>
+                <span>
+                  <strong className="text-gray-300">Open source.</strong> AGPL-3.0 licensed.
+                  Self-host your own instance.
+                </span>
               </li>
             </ul>
           </div>
@@ -245,24 +287,38 @@ export default function ComparisonPage() {
             <ul className="space-y-2 text-sm text-gray-400">
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">Multi-chain, not just Optimism.</strong> DegenFeed works with Solana, EVM chains, and more.</span>
+                <span>
+                  <strong className="text-gray-300">Multi-chain, not just Optimism.</strong>{' '}
+                  DegenFeed works with Solana, EVM chains, and more.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">AI-powered ranking.</strong> Transparent 7-factor scoring vs Farcaster&apos;s chronological or simple trending.</span>
+                <span>
+                  <strong className="text-gray-300">AI-powered ranking.</strong> Transparent
+                  7-factor scoring vs Farcaster&apos;s chronological or simple trending.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">Own your infrastructure.</strong> Self-host DegenFeed. Farcaster requires running a Hub or relying on public Hubs.</span>
+                <span>
+                  <strong className="text-gray-300">Own your infrastructure.</strong> Self-host
+                  DegenFeed. Farcaster requires running a Hub or relying on public Hubs.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">More protocols.</strong> DegenFeed reads 10 protocols including RSS, Reddit, and Threads — not just Farcaster.</span>
+                <span>
+                  <strong className="text-gray-300">More protocols.</strong> DegenFeed reads 10
+                  protocols including RSS, Reddit, and Threads — not just Farcaster.
+                </span>
               </li>
             </ul>
           </div>
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
-            <h3 className="mb-1 font-semibold text-[var(--color-fg)]">What Farcaster still does better</h3>
+            <h3 className="mb-1 font-semibold text-[var(--color-fg)]">
+              What Farcaster still does better
+            </h3>
             <ul className="space-y-2 text-sm text-gray-400">
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
@@ -292,24 +348,38 @@ export default function ComparisonPage() {
             <ul className="space-y-2 text-sm text-gray-400">
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">Cross-protocol bridging.</strong> Post to Lens AND Nostr AND Farcaster simultaneously. Lens is protocol-locked.</span>
+                <span>
+                  <strong className="text-gray-300">Cross-protocol bridging.</strong> Post to Lens
+                  AND Nostr AND Farcaster simultaneously. Lens is protocol-locked.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">YouTube/PeerTube integration.</strong> DegenFeed pulls video from RSS and YouTube channels into your feed.</span>
+                <span>
+                  <strong className="text-gray-300">YouTube/PeerTube integration.</strong> DegenFeed
+                  pulls video from RSS and YouTube channels into your feed.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">No gas fees for basic actions.</strong> Lens requires MATIC for some on-chain operations.</span>
+                <span>
+                  <strong className="text-gray-300">No gas fees for basic actions.</strong> Lens
+                  requires MATIC for some on-chain operations.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">Better discovery.</strong> AI-ranked feed with trending categories vs Lens&apos;s timeline.</span>
+                <span>
+                  <strong className="text-gray-300">Better discovery.</strong> AI-ranked feed with
+                  trending categories vs Lens&apos;s timeline.
+                </span>
               </li>
             </ul>
           </div>
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
-            <h3 className="mb-1 font-semibold text-[var(--color-fg)]">What Lens still does better</h3>
+            <h3 className="mb-1 font-semibold text-[var(--color-fg)]">
+              What Lens still does better
+            </h3>
             <ul className="space-y-2 text-sm text-gray-400">
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>
@@ -339,24 +409,38 @@ export default function ComparisonPage() {
             <ul className="space-y-2 text-sm text-gray-400">
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">More protocols.</strong> DegenFeed supports 10 protocols. Bluesky is one protocol (AT Protocol) with bridges.</span>
+                <span>
+                  <strong className="text-gray-300">More protocols.</strong> DegenFeed supports 10
+                  protocols. Bluesky is one protocol (AT Protocol) with bridges.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">Crypto tipping.</strong> Send ETH, SOL, or USDC with on-chain transactions. Bluesky has no native payments.</span>
+                <span>
+                  <strong className="text-gray-300">Crypto tipping.</strong> Send ETH, SOL, or USDC
+                  with on-chain transactions. Bluesky has no native payments.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">Communities & DAOs.</strong> Create communities with governance features. Bluesky has Starter Packs but no group spaces.</span>
+                <span>
+                  <strong className="text-gray-300">Communities & DAOs.</strong> Create communities
+                  with governance features. Bluesky has Starter Packs but no group spaces.
+                </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-degen-400">◆</span>
-                <span><strong className="text-gray-300">Fediverse integration.</strong> Full ActivityPub federation via GotoSocial. Bluesky bridges are one-directional.</span>
+                <span>
+                  <strong className="text-gray-300">Fediverse integration.</strong> Full ActivityPub
+                  federation via GotoSocial. Bluesky bridges are one-directional.
+                </span>
               </li>
             </ul>
           </div>
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
-            <h3 className="mb-1 font-semibold text-[var(--color-fg)]">What Bluesky still does better</h3>
+            <h3 className="mb-1 font-semibold text-[var(--color-fg)]">
+              What Bluesky still does better
+            </h3>
             <ul className="space-y-2 text-sm text-gray-400">
               <li className="flex gap-2">
                 <span className="mt-0.5 flex-shrink-0 text-gray-600">○</span>

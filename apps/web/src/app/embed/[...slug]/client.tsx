@@ -9,9 +9,9 @@ interface EmbedPageClientProps {
   dfUri: string;
 }
 
-function truncate(s: string, max: number): string {
+function _truncate(s: string, max: number): string {
   if (s.length <= max) return s;
-  return s.slice(0, max).replace(/\s+\S*$/, '') + '…';
+  return `${s.slice(0, max).replace(/\s+\S*$/, '')}…`;
 }
 
 function getProtocolColor(p: string): string {
@@ -65,9 +65,7 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
     };
   }, [dfUri]);
 
-  const postUrl = post
-    ? `/post/${encodeURIComponent(post.id)}`
-    : '';
+  const postUrl = post ? `/post/${encodeURIComponent(post.id)}` : '';
 
   const handleCopyLink = useCallback(() => {
     if (!postUrl) return;
@@ -92,9 +90,7 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
         <div className="max-w-md text-center">
           <div className="mb-4 text-4xl">📭</div>
           <h1 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">Post not found</h1>
-          <p className="mb-6 text-sm text-gray-500">
-            {error || 'This post could not be loaded.'}
-          </p>
+          <p className="mb-6 text-sm text-gray-500">{error || 'This post could not be loaded.'}</p>
           <a
             href="/"
             className="inline-flex items-center gap-2 rounded-lg bg-degen-500 px-4 py-2 text-sm font-semibold text-black hover:bg-degen-400 transition-colors"
@@ -154,7 +150,9 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="truncate text-sm font-semibold text-[var(--color-fg)]">{author}</span>
+                  <span className="truncate text-sm font-semibold text-[var(--color-fg)]">
+                    {author}
+                  </span>
                   <span
                     className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
                     style={{
@@ -165,9 +163,7 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
                     {protocolLabel}
                   </span>
                 </div>
-                {handle && (
-                  <span className="text-xs text-gray-500">@{handle}</span>
-                )}
+                {handle && <span className="text-xs text-gray-500">@{handle}</span>}
               </div>
             </div>
           </div>
@@ -246,10 +242,7 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
 
       {/* Minimal footer */}
       <footer className="border-t border-[var(--color-glass-border)] py-4 text-center">
-        <a
-          href="/"
-          className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
-        >
+        <a href="/" className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
           Powered by DegenFeed — The social feed of web3
         </a>
       </footer>

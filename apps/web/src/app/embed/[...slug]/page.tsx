@@ -27,14 +27,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // Try to fetch post data for richer preview
   try {
-    const apiUrl = new URL('https://app.degenfeed.xyz/api/content/' + encodeURIComponent(dfUri));
+    const apiUrl = new URL(`https://app.degenfeed.xyz/api/content/${encodeURIComponent(dfUri)}`);
     const res = await fetch(apiUrl.toString(), {
       signal: AbortSignal.timeout(3000),
       headers: { 'user-agent': 'DegenFeed/1.0 (EmbedPage)' },
     });
     if (res.ok) {
       const body = (await res.json()) as {
-        data?: { text?: string; author?: { displayName?: string }; protocol?: string; embeds?: Array<{ kind: string; url: string }> };
+        data?: {
+          text?: string;
+          author?: { displayName?: string };
+          protocol?: string;
+          embeds?: Array<{ kind: string; url: string }>;
+        };
       };
       const post = body.data;
       if (post) {

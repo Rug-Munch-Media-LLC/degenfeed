@@ -15,7 +15,8 @@ export const metadata: Metadata = {
     'Curated crypto, web3, and AI news from RSS feeds, Mastodon, Bluesky, and Reddit. No paywalls.',
   openGraph: {
     title: 'News — DegenFeed',
-    description: 'Curated crypto and web3 news from RSS, Mastodon, Bluesky, and Reddit. No paywalls.',
+    description:
+      'Curated crypto and web3 news from RSS, Mastodon, Bluesky, and Reddit. No paywalls.',
     url: 'https://app.degenfeed.xyz/news',
     images: [
       {

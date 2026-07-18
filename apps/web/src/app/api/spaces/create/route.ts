@@ -10,8 +10,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
-    const id = Array.from({ length: 16 }, () =>
-      'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random() * 36)],
+    const id = Array.from(
+      { length: 16 },
+      () => 'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random() * 36)],
     ).join('');
 
     const space = {
@@ -23,11 +24,22 @@ export async function POST(request: Request) {
       hostAvatarUrl: body.hostAvatarUrl,
       coHosts: body.coHosts || [],
       protocols: body.protocols || [],
-      status: body.scheduledAt && new Date(body.scheduledAt).getTime() > Date.now() ? 'scheduled' as const : 'live' as const,
+      status:
+        body.scheduledAt && new Date(body.scheduledAt).getTime() > Date.now()
+          ? ('scheduled' as const)
+          : ('live' as const),
       createdAt: Date.now(),
       scheduledAt: body.scheduledAt,
       listeners: 1,
-      speakers: [{ id: body.hostId || 'anon', displayName: body.hostName || 'Host', isHost: true, isCoHost: false, speaking: false }],
+      speakers: [
+        {
+          id: body.hostId || 'anon',
+          displayName: body.hostName || 'Host',
+          isHost: true,
+          isCoHost: false,
+          speaking: false,
+        },
+      ],
       reactions: [],
       tippingEnabled: body.tippingEnabled ?? true,
     };

@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { H2, H3 } from '../_components/doc-heading';
-import { Callout } from '../_components/doc-callout';
 import { Badge } from '../_components/doc-badge';
+import { Callout } from '../_components/doc-callout';
 import { CodeBlock } from '../_components/doc-code-block';
+import { H2, H3 } from '../_components/doc-heading';
 
 export const revalidate = 86400;
 
@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://app.degenfeed.xyz/docs/contributing' },
   openGraph: {
     title: 'Contributing to DegenFeed',
-    description: 'Guide for contributors to DegenFeed — the open-source multi-protocol web3 social aggregator.',
+    description:
+      'Guide for contributors to DegenFeed — the open-source multi-protocol web3 social aggregator.',
   },
 };
 
@@ -25,7 +26,9 @@ export default function ContributingPage() {
         <Badge color="purple">Contributing</Badge>
         <Badge>Open Source</Badge>
       </div>
-      <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">Contributing to DegenFeed</h1>
+      <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)]">
+        Contributing to DegenFeed
+      </h1>
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-gray-400">
         DegenFeed is MIT licensed and open to contributions from the community. Whether you&rsquo;re
         fixing a bug, adding a feature, improving documentation, or integrating a new protocol,
@@ -42,10 +45,26 @@ export default function ContributingPage() {
 
       <H3 id="prerequisites">Prerequisites</H3>
       <ul className="mt-3 list-inside list-disc space-y-1.5 text-sm text-gray-400">
-        <li><strong className="text-gray-300">Node.js</strong> 20.x or later</li>
-        <li><strong className="text-gray-300">pnpm</strong> 11.x (<code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">npm install -g pnpm</code>)</li>
-        <li><strong className="text-gray-300">Git</strong> 2.x</li>
-        <li><strong className="text-gray-300">Wrangler CLI</strong> (<code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">npm install -g wrangler</code>)</li>
+        <li>
+          <strong className="text-gray-300">Node.js</strong> 20.x or later
+        </li>
+        <li>
+          <strong className="text-gray-300">pnpm</strong> 11.x (
+          <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+            npm install -g pnpm
+          </code>
+          )
+        </li>
+        <li>
+          <strong className="text-gray-300">Git</strong> 2.x
+        </li>
+        <li>
+          <strong className="text-gray-300">Wrangler CLI</strong> (
+          <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+            npm install -g wrangler
+          </code>
+          )
+        </li>
       </ul>
 
       <H3 id="clone-and-install">Clone and Install</H3>
@@ -64,16 +83,23 @@ cp .env.example .env
 pnpm dev`}</CodeBlock>
 
       <p className="text-sm leading-relaxed text-gray-400">
-        The <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">pnpm dev</code> command starts
-        both the Next.js frontend and the API worker in development mode. Open{' '}
-        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">http://localhost:3000</code> in your browser.
+        The{' '}
+        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">pnpm dev</code>{' '}
+        command starts both the Next.js frontend and the API worker in development mode. Open{' '}
+        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+          http://localhost:3000
+        </code>{' '}
+        in your browser.
       </p>
 
       <H3 id="environment-variables">Environment Variables</H3>
       <p className="text-sm leading-relaxed text-gray-400">
-        Copy <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">.env.example</code> to{' '}
-        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">.env</code> and configure the
-        following:
+        Copy{' '}
+        <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+          .env.example
+        </code>{' '}
+        to <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">.env</code>{' '}
+        and configure the following:
       </p>
 
       <div className="mt-3 overflow-x-auto">
@@ -87,7 +113,11 @@ pnpm dev`}</CodeBlock>
           </thead>
           <tbody className="text-gray-500">
             {[
-              ['AUTH_SECRET', 'Yes', 'HMAC-SHA256 session signing secret. Generate: openssl rand -hex 32'],
+              [
+                'AUTH_SECRET',
+                'Yes',
+                'HMAC-SHA256 session signing secret. Generate: openssl rand -hex 32',
+              ],
               ['ALLOWED_ORIGINS', 'Yes', 'Comma-separated CORS origins'],
               ['RELAY_URLS', 'No', 'Comma-separated Nostr relay URLs'],
               ['FARCASTER_HUB_URL', 'No', 'Farcaster Hub HTTP endpoint'],
@@ -181,14 +211,35 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {[
-          { title: 'TypeScript', desc: 'Strict mode. No implicit any. Prefer types over interfaces for objects.' },
-          { title: 'Formatting', desc: 'Biome handles all formatting. No Prettier. No manual formatting debates.' },
-          { title: 'Imports', desc: 'Named exports only. No default exports. Use workspace imports for monorepo packages.' },
-          { title: 'Components', desc: 'Functional components with hooks. Server components by default in Next.js App Router.' },
-          { title: 'Styling', desc: 'Tailwind CSS with CSS variables for theme. No CSS-in-JS. No inline styles.' },
-          { title: 'Patterns', desc: 'Follow existing patterns. Each package has a consistent structure. Read the codebase first.' },
+          {
+            title: 'TypeScript',
+            desc: 'Strict mode. No implicit any. Prefer types over interfaces for objects.',
+          },
+          {
+            title: 'Formatting',
+            desc: 'Biome handles all formatting. No Prettier. No manual formatting debates.',
+          },
+          {
+            title: 'Imports',
+            desc: 'Named exports only. No default exports. Use workspace imports for monorepo packages.',
+          },
+          {
+            title: 'Components',
+            desc: 'Functional components with hooks. Server components by default in Next.js App Router.',
+          },
+          {
+            title: 'Styling',
+            desc: 'Tailwind CSS with CSS variables for theme. No CSS-in-JS. No inline styles.',
+          },
+          {
+            title: 'Patterns',
+            desc: 'Follow existing patterns. Each package has a consistent structure. Read the codebase first.',
+          },
         ].map((rule) => (
-          <div key={rule.title} className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3">
+          <div
+            key={rule.title}
+            className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3"
+          >
             <div className="text-sm font-semibold text-[var(--color-fg)]">{rule.title}</div>
             <p className="mt-1 text-xs text-gray-500">{rule.desc}</p>
           </div>
@@ -222,7 +273,10 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
             desc: 'Screenshot comparison tests. Run for UI and component changes.',
           },
         ].map((t) => (
-          <div key={t.title} className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
+          <div
+            key={t.title}
+            className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4"
+          >
             <div className="text-sm font-semibold text-[var(--color-fg)]">{t.title}</div>
             <div className="mt-1 flex items-center gap-2">
               <Badge color="blue">{t.tool}</Badge>
@@ -235,8 +289,22 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
 
       <H3 id="writing-tests">Writing Tests</H3>
       <ul className="mt-3 list-inside list-disc space-y-1.5 text-sm text-gray-400">
-        <li>Place tests next to the file they test: <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">component.tsx</code> → <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">component.test.tsx</code></li>
-        <li>Use descriptive test names: <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">should return ranked posts sorted by score</code></li>
+        <li>
+          Place tests next to the file they test:{' '}
+          <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+            component.tsx
+          </code>{' '}
+          →{' '}
+          <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+            component.test.tsx
+          </code>
+        </li>
+        <li>
+          Use descriptive test names:{' '}
+          <code className="rounded bg-[var(--color-muted)]/30 px-1 font-mono text-xs">
+            should return ranked posts sorted by score
+          </code>
+        </li>
         <li>Mock external API calls. Don&rsquo;t hit real protocol endpoints in tests.</li>
         <li>Test edge cases: empty responses, rate limits, network errors.</li>
         <li>Aim for 80%+ coverage on new code.</li>
@@ -249,10 +317,22 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
         {[
           ['Create a branch', 'Branch from main. Use the naming convention above.'],
           ['Make your changes', 'Write code, tests, and documentation. Run all pre-commit checks.'],
-          ['Push and open a PR', 'Push your branch and create a Pull Request on Forgejo (or GitLab mirror).'],
-          ['Describe your changes', 'Include a clear description of what your PR does, why, and how to test it.'],
-          ['Wait for review', 'A maintainer will review your PR. They may request changes or clarifications.'],
-          ['Address feedback', 'Make requested changes. Push additional commits. Keep the conversation constructive.'],
+          [
+            'Push and open a PR',
+            'Push your branch and create a Pull Request on Forgejo (or GitLab mirror).',
+          ],
+          [
+            'Describe your changes',
+            'Include a clear description of what your PR does, why, and how to test it.',
+          ],
+          [
+            'Wait for review',
+            'A maintainer will review your PR. They may request changes or clarifications.',
+          ],
+          [
+            'Address feedback',
+            'Make requested changes. Push additional commits. Keep the conversation constructive.',
+          ],
           ['Merge', 'Your PR will be squash-merged into main. Celebrate your contribution!'],
         ].map(([step, desc], i) => (
           <li key={step} className="flex gap-3 text-sm leading-relaxed text-gray-400">
@@ -281,15 +361,29 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
       <H2 id="code-of-conduct">Code of Conduct</H2>
       <div className="mt-4 rounded-xl border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
         <ul className="space-y-2 text-sm text-gray-400">
-          <li><strong className="text-gray-300">Be respectful.</strong> Disagreement is fine, personal attacks are not.</li>
-          <li><strong className="text-gray-300">Be constructive.</strong> Critique code, not people. Suggest improvements.</li>
-          <li><strong className="text-gray-300">Be welcoming.</strong> We welcome contributors of all experience levels.</li>
-          <li><strong className="text-gray-300">Be patient.</strong> Maintainers review PRs in their free time. We&rsquo;ll get to yours.</li>
+          <li>
+            <strong className="text-gray-300">Be respectful.</strong> Disagreement is fine, personal
+            attacks are not.
+          </li>
+          <li>
+            <strong className="text-gray-300">Be constructive.</strong> Critique code, not people.
+            Suggest improvements.
+          </li>
+          <li>
+            <strong className="text-gray-300">Be welcoming.</strong> We welcome contributors of all
+            experience levels.
+          </li>
+          <li>
+            <strong className="text-gray-300">Be patient.</strong> Maintainers review PRs in their
+            free time. We&rsquo;ll get to yours.
+          </li>
         </ul>
       </div>
 
       <div className="mt-12 rounded-xl border border-[var(--color-glass-border)] bg-degen-500/[0.02] p-6 text-center">
-        <h2 className="mb-2 text-base font-semibold text-[var(--color-fg)]">Ready to contribute?</h2>
+        <h2 className="mb-2 text-base font-semibold text-[var(--color-fg)]">
+          Ready to contribute?
+        </h2>
         <p className="mb-4 text-sm text-gray-400">
           Clone the repo and start coding. We&rsquo;re excited to see what you build.
         </p>

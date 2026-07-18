@@ -135,7 +135,11 @@ export function useSubscription() {
   const getSubscriptionStatus = useCallback(
     async (
       creator: string,
-    ): Promise<{ active: boolean; subscription?: SubscriptionStatus['subscription']; daysRemaining?: number }> => {
+    ): Promise<{
+      active: boolean;
+      subscription?: SubscriptionStatus['subscription'];
+      daysRemaining?: number;
+    }> => {
       try {
         const res = await fetcher<SubscriptionStatus>(
           `/api/subscription/status?creator=${encodeURIComponent(creator)}`,

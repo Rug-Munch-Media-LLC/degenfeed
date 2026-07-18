@@ -1,11 +1,11 @@
 'use client';
 
 import type { CustomFeed, FeedRecipe, UnifiedPost } from '@degenfeed/types';
-import { EmptyState, ErrorBoundary, FeedBuilderModal, FeedList } from '@degenfeed/ui';
+import { ErrorBoundary, FeedList } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 
 const FeedBuilderModalDynamic = dynamic(
@@ -16,15 +16,31 @@ const FeedBuilderModalDynamic = dynamic(
 // ─── Constants ────────────────────────────────────────────────
 
 const SOURCE_EMOJIS: Record<string, string> = {
-  nostr: '⚡', farcaster: '🟣', lens: '🌿', bluesky: '🦋',
-  mastodon: '🐘', threads: '🧵', reddit: '🔴', rss: '📰',
-  lemmy: '🌲', peertube: '📺', youtube: '▶️',
+  nostr: '⚡',
+  farcaster: '🟣',
+  lens: '🌿',
+  bluesky: '🦋',
+  mastodon: '🐘',
+  threads: '🧵',
+  reddit: '🔴',
+  rss: '📰',
+  lemmy: '🌲',
+  peertube: '📺',
+  youtube: '▶️',
 };
 
 const SOURCE_LABELS: Record<string, string> = {
-  nostr: 'Nostr', farcaster: 'Farcaster', lens: 'Lens', bluesky: 'Bluesky',
-  mastodon: 'Mastodon', threads: 'Threads', reddit: 'Reddit', rss: 'RSS',
-  lemmy: 'Lemmy', peertube: 'PeerTube', youtube: 'YouTube',
+  nostr: 'Nostr',
+  farcaster: 'Farcaster',
+  lens: 'Lens',
+  bluesky: 'Bluesky',
+  mastodon: 'Mastodon',
+  threads: 'Threads',
+  reddit: 'Reddit',
+  rss: 'RSS',
+  lemmy: 'Lemmy',
+  peertube: 'PeerTube',
+  youtube: 'YouTube',
 };
 
 function toast(kind: 'success' | 'error' | 'info', message: string) {
@@ -83,7 +99,11 @@ export default function FeedDetailPage() {
     setLoading(true);
     try {
       const res = await fetch(`/api/custom-feeds/${id}`, { credentials: 'include' });
-      if (res.status === 404) { setNotFound(true); setLoading(false); return; }
+      if (res.status === 404) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
       if (!res.ok) throw new Error('Failed to load feed');
       const data = (await res.json()) as { feed: CustomFeed; subscriberCount?: number };
       setFeed(data.feed);
@@ -131,7 +151,7 @@ export default function FeedDetailPage() {
       .then((r) => r.json() as Promise<{ feeds?: CustomFeed[] }>)
       .then((data) => {
         // Simple check: if feed is in user's list, they're subscribed
-        const myIds = new Set((data.feeds || []).map((f) => f.id));
+        const _myIds = new Set((data.feeds || []).map((f) => f.id));
         // Actually, we can't easily check subscription vs ownership from list.
         // For now just show subscribe button for non-creators.
       })
@@ -143,7 +163,12 @@ export default function FeedDetailPage() {
   }, []);
 
   const handleSave = useCallback(
-    async (updates: { name: string; description: string; isPublic: boolean; config: FeedRecipe }) => {
+    async (updates: {
+      name: string;
+      description: string;
+      isPublic: boolean;
+      config: FeedRecipe;
+    }) => {
       if (!feed) return { ok: false, error: 'No feed' };
       const res = await fetch(`/api/custom-feeds/${feed.id}`, {
         method: 'PUT',
@@ -151,7 +176,7 @@ export default function FeedDetailPage() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(updates),
       });
-      const data = await res.json() as { ok?: boolean; feed?: CustomFeed; error?: string };
+      const data = (await res.json()) as { ok?: boolean; feed?: CustomFeed; error?: string };
       if (data.ok && data.feed) {
         setFeed(data.feed);
         toast('success', 'Feed updated');
@@ -168,7 +193,9 @@ export default function FeedDetailPage() {
     if (!deleteConfirmRef.current) {
       deleteConfirmRef.current = true;
       toast('info', 'Click delete again to confirm');
-      setTimeout(() => { deleteConfirmRef.current = false; }, 3000);
+      setTimeout(() => {
+        deleteConfirmRef.current = false;
+      }, 3000);
       return;
     }
     try {
@@ -185,7 +212,10 @@ export default function FeedDetailPage() {
   }, [feed, router]);
 
   const handleSubscribe = useCallback(async () => {
-    if (!hasSignedIn) { openSignIn(); return; }
+    if (!hasSignedIn) {
+      openSignIn();
+      return;
+    }
     if (!feed) return;
     try {
       const res = await fetch(`/api/custom-feeds/${feed.id}/subscribe`, {
@@ -193,12 +223,15 @@ export default function FeedDetailPage() {
         credentials: 'include',
       });
       if (!res.ok) {
-        const data = await res.json() as { error?: string };
-        if (res.status === 409) { toast('info', 'Already subscribed'); return; }
+        const data = (await res.json()) as { error?: string };
+        if (res.status === 409) {
+          toast('info', 'Already subscribed');
+          return;
+        }
         toast('error', data.error || 'Failed');
         return;
       }
-      const data = await res.json() as { subscribers?: number };
+      const data = (await res.json()) as { subscribers?: number };
       toast('success', 'Subscribed!');
       setSubscribed(true);
       if (data.subscribers !== undefined) setSubscriberCount(data.subscribers);
@@ -229,7 +262,9 @@ export default function FeedDetailPage() {
         <div className="rounded-2xl border border-white/10 bg-[var(--color-card)] p-8 text-center backdrop-blur-xl">
           <p className="text-3xl mb-3">🔍</p>
           <h1 className="text-lg font-bold text-[var(--color-fg)] mb-1">Feed not found</h1>
-          <p className="text-sm text-gray-400 mb-4">This custom feed doesn&apos;t exist or has been deleted.</p>
+          <p className="text-sm text-gray-400 mb-4">
+            This custom feed doesn&apos;t exist or has been deleted.
+          </p>
           <Link href="/feeds" className="btn-primary text-sm inline-block">
             Back to Feeds
           </Link>
@@ -247,7 +282,13 @@ export default function FeedDetailPage() {
           className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300 transition-colors mb-4"
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-            <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M10 12L6 8l4-4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           Back to Feeds
         </Link>
@@ -257,17 +298,23 @@ export default function FeedDetailPage() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <h1 className="text-xl font-bold text-[var(--color-fg)]">{feed.name}</h1>
-              {feed.description && (
-                <p className="mt-1 text-sm text-gray-400">{feed.description}</p>
-              )}
+              {feed.description && <p className="mt-1 text-sm text-gray-400">{feed.description}</p>}
               <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
-                <span>by {feed.creator.slice(0, 6)}...{feed.creator.slice(-4)}</span>
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${feed.isPublic ? 'bg-degen-500/10 text-degen-400' : 'bg-white/10 text-gray-400'}`}>
+                <span>
+                  by {feed.creator.slice(0, 6)}...{feed.creator.slice(-4)}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${feed.isPublic ? 'bg-degen-500/10 text-degen-400' : 'bg-white/10 text-gray-400'}`}
+                >
                   {feed.isPublic ? '🌍 Public' : '🔒 Private'}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                    <path d="M1 8s2-4 7-4 7 4 7 4-2 4-7 4-7-4-7-4z" stroke="currentColor" strokeWidth="1.2" />
+                    <path
+                      d="M1 8s2-4 7-4 7 4 7 4-2 4-7 4-7-4-7-4z"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                    />
                     <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.2" />
                   </svg>
                   {subscriberCount} subscriber{subscriberCount !== 1 ? 's' : ''}
@@ -294,18 +341,20 @@ export default function FeedDetailPage() {
                     Delete
                   </button>
                 </>
-              ) : feed.isPublic && (
-                <button
-                  type="button"
-                  onClick={handleSubscribe}
-                  className={`rounded-full px-4 py-2 text-xs font-medium transition-colors ${
-                    subscribed
-                      ? 'bg-degen-500/15 text-degen-400 border border-degen-500/30'
-                      : 'bg-degen-500 text-black hover:bg-degen-400'
-                  }`}
-                >
-                  {subscribed ? 'Subscribed ✓' : 'Subscribe'}
-                </button>
+              ) : (
+                feed.isPublic && (
+                  <button
+                    type="button"
+                    onClick={handleSubscribe}
+                    className={`rounded-full px-4 py-2 text-xs font-medium transition-colors ${
+                      subscribed
+                        ? 'bg-degen-500/15 text-degen-400 border border-degen-500/30'
+                        : 'bg-degen-500 text-black hover:bg-degen-400'
+                    }`}
+                  >
+                    {subscribed ? 'Subscribed ✓' : 'Subscribe'}
+                  </button>
+                )
               )}
             </div>
           </div>
@@ -336,7 +385,10 @@ export default function FeedDetailPage() {
                     .filter(([, w]) => w > 0)
                     .sort(([, a], [, b]) => b - a)
                     .map(([t, w]) => (
-                      <span key={t} className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2.5 py-1 text-xs text-degen-400">
+                      <span
+                        key={t}
+                        className="inline-flex items-center gap-1 rounded-full bg-degen-500/10 px-2.5 py-1 text-xs text-degen-400"
+                      >
                         {t} <span className="text-gray-500">({w})</span>
                       </span>
                     ))}
@@ -347,10 +399,15 @@ export default function FeedDetailPage() {
             {/* Filters summary */}
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
               <span>Content: {feed.config.contentTypes.join(', ')}</span>
-              {feed.config.minEngagement > 0 && <span>Min engagement: {feed.config.minEngagement}</span>}
+              {feed.config.minEngagement > 0 && (
+                <span>Min engagement: {feed.config.minEngagement}</span>
+              )}
               {feed.config.language && <span>Language: {feed.config.language}</span>}
               {feed.config.excludeWords.length > 0 && (
-                <span>Excluded: {feed.config.excludeWords.slice(0, 2).join(', ')}{feed.config.excludeWords.length > 2 ? '...' : ''}</span>
+                <span>
+                  Excluded: {feed.config.excludeWords.slice(0, 2).join(', ')}
+                  {feed.config.excludeWords.length > 2 ? '...' : ''}
+                </span>
               )}
             </div>
           </div>
@@ -376,7 +433,12 @@ export default function FeedDetailPage() {
             open={modalOpen}
             onClose={closeModal}
             onSave={handleSave}
-            initial={{ name: feed.name, description: feed.description, isPublic: feed.isPublic, config: feed.config }}
+            initial={{
+              name: feed.name,
+              description: feed.description,
+              isPublic: feed.isPublic,
+              config: feed.config,
+            }}
           />
         )}
       </div>

@@ -89,25 +89,22 @@ export default function PreferencesPage() {
     void fetchLearnedTopics();
   }, [fetchLearnedTopics]);
 
-  const adjustTopic = useCallback(
-    async (topic: string, delta: number) => {
-      try {
-        const res = await fetch('/api/preferences/topics', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ topic, delta }),
-        });
-        if (res.ok) {
-          const data = (await res.json()) as { topics: LearnedTopic[] };
-          setLearnedTopics(data.topics ?? []);
-        }
-      } catch {
-        /* ignore */
+  const adjustTopic = useCallback(async (topic: string, delta: number) => {
+    try {
+      const res = await fetch('/api/preferences/topics', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ topic, delta }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { topics: LearnedTopic[] };
+        setLearnedTopics(data.topics ?? []);
       }
-    },
-    [],
-  );
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const clearTopic = useCallback(async (topic: string) => {
     try {
@@ -276,7 +273,12 @@ export default function PreferencesPage() {
                     title="Forget this topic"
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                      <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      <path
+                        d="M4 4l8 8M12 4l-8 8"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -290,7 +292,8 @@ export default function PreferencesPage() {
       <div className="card mb-4">
         <h2 className="mb-3 text-sm font-semibold text-degen-400">Protocol Quality</h2>
         <p className="mb-3 text-xs text-gray-500">
-          Each protocol has smart quality defaults. Choose a preset or stick with the smart defaults.
+          Each protocol has smart quality defaults. Choose a preset or stick with the smart
+          defaults.
         </p>
         {PROTOCOLS.map((p) => {
           const currentPreset = prefs.protocolPresets?.[p] ?? 'quality';
@@ -349,7 +352,9 @@ export default function PreferencesPage() {
                 <div className="h-2 w-6 rounded bg-blue-400/30" />
               </div>
             </div>
-            <div className="mt-2 text-[10px] text-gray-500">Relaxed spacing. More breathing room.</div>
+            <div className="mt-2 text-[10px] text-gray-500">
+              Relaxed spacing. More breathing room.
+            </div>
           </button>
 
           {/* Compact */}
@@ -379,11 +384,14 @@ export default function PreferencesPage() {
                 <div className="h-1.5 w-5 rounded bg-blue-400/30" />
               </div>
             </div>
-            <div className="mt-2 text-[10px] text-gray-500">Twitter-like density. More content per screen.</div>
+            <div className="mt-2 text-[10px] text-gray-500">
+              Twitter-like density. More content per screen.
+            </div>
           </button>
         </div>
         <p className="mt-3 text-xs text-gray-500">
-          Also available: <strong>Media Grid</strong> (images/videos only) and <strong>Reader</strong> (full article view). Press Ctrl+Shift+L to cycle layouts.
+          Also available: <strong>Media Grid</strong> (images/videos only) and{' '}
+          <strong>Reader</strong> (full article view). Press Ctrl+Shift+L to cycle layouts.
         </p>
       </div>
 

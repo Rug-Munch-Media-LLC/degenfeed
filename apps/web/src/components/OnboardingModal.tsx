@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOnboarding } from '../hooks/useOnboarding';
-import { useToast } from './Toast';
 import { resetTour } from './GuidedTour';
+import { useToast } from './Toast';
 
 /* ── Types ───────────────────────────────────────────────── */
 
@@ -491,7 +491,9 @@ export function OnboardingModal() {
                   {/* Live preview: what they'll see */}
                   {selectedProtocols.length > 0 && (
                     <div className="mt-4 rounded-xl border border-degen-500/15 bg-degen-500/[0.03] px-4 py-3">
-                      <p className="mb-1.5 text-xs font-medium text-degen-400/80">You&apos;ll see content from:</p>
+                      <p className="mb-1.5 text-xs font-medium text-degen-400/80">
+                        You&apos;ll see content from:
+                      </p>
                       <div className="flex flex-wrap gap-1.5">
                         {selectedProtocols.map((id) => {
                           const p = PROTOCOLS.find((pr) => pr.id === id);

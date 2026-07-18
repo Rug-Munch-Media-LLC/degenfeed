@@ -35,9 +35,7 @@ export function RecentlyVisited() {
               <span className="text-xs text-gray-500" aria-hidden="true">
                 ·
               </span>
-              <span className="truncate">
-                {page.label}
-              </span>
+              <span className="truncate">{page.label}</span>
               <span className="ml-auto text-[10px] text-gray-600">
                 {formatRelativeTime(page.timestamp)}
               </span>

@@ -10,8 +10,53 @@
  * - Content settings → KV API
  */
 
+import { getDb } from '@degenfeed/storage';
 import type { Protocol } from '@degenfeed/types';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+/* ─── IndexedDB helpers for muted/blocked ────────────────────── */
+
+async function idbAddMutedWord(word: string): Promise<void> {
+  try {
+    const db = await getDb();
+    await db.put('muted-words', { word: word.toLowerCase(), mutedBy: 'self', mutedAt: Date.now() });
+  } catch { /* IndexedDB unavailable */ }
+}
+
+async function idbRemoveMutedWord(word: string): Promise<void> {
+  try {
+    const db = await getDb();
+    await db.delete('muted-words', [word.toLowerCase(), 'self']);
+  } catch { /* IndexedDB unavailable */ }
+}
+
+async function idbAddMutedUser(userId: string): Promise<void> {
+  try {
+    const db = await getDb();
+    await db.put('muted', { targetId: userId, targetHandle: '', mutedBy: 'self', mutedAt: Date.now() });
+  } catch { /* IndexedDB unavailable */ }
+}
+
+async function idbRemoveMutedUser(userId: string): Promise<void> {
+  try {
+    const db = await getDb();
+    await db.delete('muted', [userId, 'self']);
+  } catch { /* IndexedDB unavailable */ }
+}
+
+async function idbAddBlockedUser(userId: string): Promise<void> {
+  try {
+    const db = await getDb();
+    await db.put('blocked', { targetId: userId, targetHandle: '', protocol: '', blockedBy: 'self', blockedAt: Date.now() });
+  } catch { /* IndexedDB unavailable */ }
+}
+
+async function idbRemoveBlockedUser(userId: string): Promise<void> {
+  try {
+    const db = await getDb();
+    await db.delete('blocked', [userId, 'self']);
+  } catch { /* IndexedDB unavailable */ }
+}
 
 /* ─── Types ──────────────────────────────────────────────────── */
 
@@ -154,6 +199,39 @@ export function usePreferences() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
+  // Ref to capture latest prefs for async callbacks (avoids stale closures)
+  const prefsRef = useRef(prefs);
+  useEffect(() => { prefsRef.current = prefs; }, [prefs]);
+
+  /**
+   * Persist all preferences to the KV API server.
+   * Uses prefsRef to get the latest state — safe to call right after a setPrefs.
+   */
+  const persistToServer = useCallback(async () => {
+    const current = prefsRef.current;
+    if (saveStatus === 'saving') return; // avoid duplicate saves
+    setSaving(true);
+    setSaveStatus('saving');
+    try {
+      const res = await fetch('/api/preferences', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(current),
+      });
+      if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } finally {
+      setSaving(false);
+    }
+  // Intentionally no deps — uses prefsRef.current for fresh state
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Apply visual preferences on mount and when they change
   useEffect(() => {
     applyTheme(prefs.theme);
@@ -209,12 +287,16 @@ export function usePreferences() {
       setLocal(LS_NOTIFICATIONS, updated);
       return { ...p, notifications: updated };
     });
-  }, []);
+    // Auto-save to server (no debounce needed — prefsRef ensures fresh state)
+    persistToServer();
+  }, [persistToServer]);
 
   const setPrivacy = useCallback((privacy: PrivacySettings) => {
     setPrefs((p) => ({ ...p, privacy }));
     setLocal(LS_PRIVACY, privacy);
-  }, []);
+    // Auto-save to server
+    persistToServer();
+  }, [persistToServer]);
 
   const setContent = useCallback((content: ContentSettings) => {
     setPrefs((p) => ({ ...p, content }));

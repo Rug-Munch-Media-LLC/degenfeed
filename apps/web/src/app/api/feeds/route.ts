@@ -12,8 +12,5 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  return NextResponse.json(
-    { ok: true, feed: { id: 'new-feed', ...body } },
-    { status: 201 },
-  );
+  return NextResponse.json({ ok: true, feed: { id: 'new-feed', ...body } }, { status: 201 });
 }

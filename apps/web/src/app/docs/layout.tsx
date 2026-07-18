@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { DocSearch } from './_components/doc-search';
 import { EditPage } from './_components/doc-edit-page';
+import { DocSearch } from './_components/doc-search';
 
 interface DocSection {
   id: string;
@@ -37,7 +37,8 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Determine active section from pathname
-  const activeSection = pathname === '/docs' ? 'home' : pathname.replace('/docs/', '').split('/')[0];
+  const activeSection =
+    pathname === '/docs' ? 'home' : pathname.replace('/docs/', '').split('/')[0];
 
   return (
     <div className="flex min-h-screen">
@@ -184,7 +185,7 @@ function DocRightSidebar() {
       if (el) observer.observe(el);
     }
     return () => observer.disconnect();
-  }, [pathname]);
+  }, []);
 
   // Only show TOC on sub-pages (not the main docs landing page)
   const showToc = pathname !== '/docs' && items.length > 0;

@@ -19,13 +19,17 @@ export function SocialProofBar() {
       if (!res.ok) return;
       const json = (await res.json()) as SocialProofData;
       setData(json);
-    } catch { /* */ }
+    } catch {
+      /* */
+    }
   }, []);
 
   useEffect(() => {
     fetchProof();
     intervalRef.current = setInterval(fetchProof, 30000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [fetchProof]);
 
   if (!data) return null;
@@ -98,9 +102,5 @@ export function NewPostsSinceVisit({ count }: { count: number }) {
 /** "Joined by X others today" on community cards */
 export function JoinedTodayBadge({ count }: { count: number }) {
   if (count === 0) return null;
-  return (
-    <span className="text-[10px] text-degen-400">
-      +{count} joined today
-    </span>
-  );
+  return <span className="text-[10px] text-degen-400">+{count} joined today</span>;
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import type { CustomFeed } from '@degenfeed/types';
-import { FeedBuilderModal } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,15 +14,31 @@ const FeedBuilderModalDynamic = dynamic(
 // ─── Constants ────────────────────────────────────────────────
 
 const SOURCE_EMOJIS: Record<string, string> = {
-  nostr: '⚡', farcaster: '🟣', lens: '🌿', bluesky: '🦋',
-  mastodon: '🐘', threads: '🧵', reddit: '🔴', rss: '📰',
-  lemmy: '🌲', peertube: '📺', youtube: '▶️',
+  nostr: '⚡',
+  farcaster: '🟣',
+  lens: '🌿',
+  bluesky: '🦋',
+  mastodon: '🐘',
+  threads: '🧵',
+  reddit: '🔴',
+  rss: '📰',
+  lemmy: '🌲',
+  peertube: '📺',
+  youtube: '▶️',
 };
 
 const SOURCE_LABELS: Record<string, string> = {
-  nostr: 'Nostr', farcaster: 'Farcaster', lens: 'Lens', bluesky: 'Bluesky',
-  mastodon: 'Mastodon', threads: 'Threads', reddit: 'Reddit', rss: 'RSS',
-  lemmy: 'Lemmy', peertube: 'PeerTube', youtube: 'YouTube',
+  nostr: 'Nostr',
+  farcaster: 'Farcaster',
+  lens: 'Lens',
+  bluesky: 'Bluesky',
+  mastodon: 'Mastodon',
+  threads: 'Threads',
+  reddit: 'Reddit',
+  rss: 'RSS',
+  lemmy: 'Lemmy',
+  peertube: 'PeerTube',
+  youtube: 'YouTube',
 };
 
 type Tab = 'my-feeds' | 'public';
@@ -34,7 +49,11 @@ function toast(kind: 'success' | 'error' | 'info', message: string) {
 
 // ─── Feed Card ────────────────────────────────────────────────
 
-function FeedCard({ feed, onTogglePin, onDelete }: {
+function FeedCard({
+  feed,
+  onTogglePin,
+  onDelete,
+}: {
   feed: CustomFeed;
   onTogglePin: (id: string) => void;
   onDelete: (id: string) => void;
@@ -47,22 +66,31 @@ function FeedCard({ feed, onTogglePin, onDelete }: {
           <p className="mt-1 text-xs text-[var(--color-muted)]">{feed.description}</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {feed.sources?.map((src) => (
-              <span key={src} className="inline-flex items-center gap-1 rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[10px] text-gray-500">
+              <span
+                key={src}
+                className="inline-flex items-center gap-1 rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[10px] text-gray-500"
+              >
                 {SOURCE_EMOJIS[src] || '📡'} {SOURCE_LABELS[src] || src}
               </span>
             ))}
             {feed.isPinned && (
-              <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">Pinned</span>
+              <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
+                Pinned
+              </span>
             )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button type="button" onClick={() => onTogglePin(feed.id)}
+          <button
+            type="button"
+            onClick={() => onTogglePin(feed.id)}
             className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[11px] font-medium text-gray-400 hover:text-[var(--color-fg)] transition-colors"
           >
             {feed.isPinned ? 'Unpin' : 'Pin'}
           </button>
-          <button type="button" onClick={() => onDelete(feed.id)}
+          <button
+            type="button"
+            onClick={() => onDelete(feed.id)}
             className="rounded-lg border border-red-900/50 px-3 py-1.5 text-[11px] font-medium text-red-400 hover:bg-red-950/30 transition-colors"
           >
             Delete
@@ -77,21 +105,29 @@ function FeedCard({ feed, onTogglePin, onDelete }: {
 
 function PublicFeedCard({ feed }: { feed: CustomFeed }) {
   return (
-    <Link href={`/feeds/${feed.id}`} className="block rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-5 backdrop-blur-xl transition-all hover:border-degen-500/30 hover:shadow-[0_0_20px_-8px_rgba(34,197,94,0.1)]">
+    <Link
+      href={`/feeds/${feed.id}`}
+      className="block rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-5 backdrop-blur-xl transition-all hover:border-degen-500/30 hover:shadow-[0_0_20px_-8px_rgba(34,197,94,0.1)]"
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-[var(--color-fg)]">{feed.title}</h3>
           <p className="mt-1 text-xs text-[var(--color-muted)]">{feed.description}</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {feed.sources?.map((src) => (
-              <span key={src} className="inline-flex items-center gap-1 rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[10px] text-gray-500">
+              <span
+                key={src}
+                className="inline-flex items-center gap-1 rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[10px] text-gray-500"
+              >
                 {SOURCE_EMOJIS[src] || '📡'} {SOURCE_LABELS[src] || src}
               </span>
             ))}
             <span className="text-[10px] text-gray-600">by {feed.authorId?.slice(0, 8)}</span>
           </div>
         </div>
-        <span className="shrink-0 text-[var(--color-muted)] transition-transform group-hover:translate-x-1">→</span>
+        <span className="shrink-0 text-[var(--color-muted)] transition-transform group-hover:translate-x-1">
+          →
+        </span>
       </div>
     </Link>
   );
@@ -118,37 +154,54 @@ export default function FeedsPage() {
       ]);
       if (myRes.ok) setFeeds((await myRes.json()).feeds ?? []);
       if (publicRes.ok) setPublicFeeds((await publicRes.json()).feeds ?? []);
-    } catch { /* ignore */ }
-    finally { setLoading(false); }
+    } catch {
+      /* ignore */
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     fetchFeeds();
     pollRef.current = setInterval(fetchFeeds, 30_000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, [fetchFeeds]);
 
-  const handleTogglePin = useCallback(async (id: string) => {
-    const feed = feeds.find((f) => f.id === id);
-    if (!feed) return;
-    try {
-      const res = await fetch(`/api/feeds/${id}`, {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ isPinned: !feed.isPinned }),
-      });
-      if (res.ok) toast('success', feed.isPinned ? 'Unpinned' : 'Pinned');
-      fetchFeeds();
-    } catch { toast('error', 'Failed to update feed'); }
-  }, [feeds, fetchFeeds]);
+  const handleTogglePin = useCallback(
+    async (id: string) => {
+      const feed = feeds.find((f) => f.id === id);
+      if (!feed) return;
+      try {
+        const res = await fetch(`/api/feeds/${id}`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ isPinned: !feed.isPinned }),
+        });
+        if (res.ok) toast('success', feed.isPinned ? 'Unpinned' : 'Pinned');
+        fetchFeeds();
+      } catch {
+        toast('error', 'Failed to update feed');
+      }
+    },
+    [feeds, fetchFeeds],
+  );
 
-  const handleDelete = useCallback(async (id: string) => {
-    try {
-      const res = await fetch(`/api/feeds/${id}`, { method: 'DELETE' });
-      if (res.ok) { toast('success', 'Feed deleted'); fetchFeeds(); }
-      else toast('error', 'Failed to delete');
-    } catch { toast('error', 'Failed to delete'); }
-  }, [fetchFeeds]);
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        const res = await fetch(`/api/feeds/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          toast('success', 'Feed deleted');
+          fetchFeeds();
+        } else toast('error', 'Failed to delete');
+      } catch {
+        toast('error', 'Failed to delete');
+      }
+    },
+    [fetchFeeds],
+  );
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
@@ -160,7 +213,9 @@ export default function FeedsPage() {
             Build and manage your own curated feeds
           </p>
         </div>
-        <button type="button" onClick={() => hasSignedIn ? setShowBuilder(true) : openSignIn()}
+        <button
+          type="button"
+          onClick={() => (hasSignedIn ? setShowBuilder(true) : openSignIn())}
           className="rounded-xl bg-degen-500 px-5 py-2.5 text-sm font-semibold text-black hover:bg-degen-400 transition-colors"
         >
           + New Feed
@@ -170,7 +225,10 @@ export default function FeedsPage() {
       {/* Tabs */}
       <div className="mb-6 flex gap-2">
         {(['my-feeds', 'public'] as Tab[]).map((t) => (
-          <button key={t} type="button" onClick={() => setTab(t)}
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
               tab === t
                 ? 'bg-degen-500/15 text-degen-400 shadow-[0_0_12px_-4px_rgba(34,197,94,0.3)]'
@@ -193,7 +251,9 @@ export default function FeedsPage() {
         feeds.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--color-border)] py-16 text-center">
             <p className="text-sm text-[var(--color-muted)]">No custom feeds yet.</p>
-            <button type="button" onClick={() => setShowBuilder(true)}
+            <button
+              type="button"
+              onClick={() => setShowBuilder(true)}
               className="mt-3 text-sm font-medium text-degen-400 hover:text-degen-300"
             >
               Create your first feed →
@@ -201,12 +261,26 @@ export default function FeedsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {feeds.filter((f) => f.isPinned).map((feed) => (
-              <FeedCard key={feed.id} feed={feed} onTogglePin={handleTogglePin} onDelete={handleDelete} />
-            ))}
-            {feeds.filter((f) => !f.isPinned).map((feed) => (
-              <FeedCard key={feed.id} feed={feed} onTogglePin={handleTogglePin} onDelete={handleDelete} />
-            ))}
+            {feeds
+              .filter((f) => f.isPinned)
+              .map((feed) => (
+                <FeedCard
+                  key={feed.id}
+                  feed={feed}
+                  onTogglePin={handleTogglePin}
+                  onDelete={handleDelete}
+                />
+              ))}
+            {feeds
+              .filter((f) => !f.isPinned)
+              .map((feed) => (
+                <FeedCard
+                  key={feed.id}
+                  feed={feed}
+                  onTogglePin={handleTogglePin}
+                  onDelete={handleDelete}
+                />
+              ))}
           </div>
         )
       ) : (
@@ -227,7 +301,10 @@ export default function FeedsPage() {
           open={showBuilder}
           onClose={() => setShowBuilder(false)}
           signedInProtocols={signedInProtocols}
-          onCreated={() => { setShowBuilder(false); fetchFeeds(); }}
+          onCreated={() => {
+            setShowBuilder(false);
+            fetchFeeds();
+          }}
         />
       )}
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
-import { useAuth } from '../../../components/AuthProvider';
 import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../../../components/AuthProvider';
 
 // ─── Types ────────────────────────────────────────────────────────────
 
@@ -41,10 +41,11 @@ interface StatsResponse {
 
 // ─── Admin wallets (hardcoded for now; also checked server-side) ──────
 // In production, this should be set via NEXT_PUBLIC_ADMIN_WALLETS env var.
-const ADMIN_WALLETS_RAW =
-  process.env.NEXT_PUBLIC_ADMIN_WALLETS || '';
+const ADMIN_WALLETS_RAW = process.env.NEXT_PUBLIC_ADMIN_WALLETS || '';
 const ADMIN_WALLETS = new Set(
-  ADMIN_WALLETS_RAW.split(',').map((a) => a.trim().toLowerCase()).filter(Boolean),
+  ADMIN_WALLETS_RAW.split(',')
+    .map((a) => a.trim().toLowerCase())
+    .filter(Boolean),
 );
 
 const REASON_LABELS: Record<string, string> = {
@@ -108,8 +109,7 @@ export default function AdminModerationPage() {
   const [banReason, setBanReason] = useState('');
   const [banning, setBanning] = useState(false);
 
-  const isAdmin =
-    walletAddress && ADMIN_WALLETS.has(walletAddress.toLowerCase());
+  const isAdmin = walletAddress && ADMIN_WALLETS.has(walletAddress.toLowerCase());
 
   const showToast_ = useCallback((message: string, kind: 'success' | 'error' = 'success') => {
     setToast({ message, kind });
@@ -235,7 +235,8 @@ export default function AdminModerationPage() {
           <br />
           {walletAddress ? (
             <>
-              Connected wallet: <code className="text-degen-400">{shortenAddress(walletAddress)}</code>
+              Connected wallet:{' '}
+              <code className="text-degen-400">{shortenAddress(walletAddress)}</code>
             </>
           ) : (
             'Please connect your wallet first.'
@@ -298,7 +299,13 @@ export default function AdminModerationPage() {
             label="Resolution Rate"
             value={`${stats.stats.resolutionRate}%`}
             subtitle={`${stats.stats.resolved} resolved · ${stats.stats.dismissed} dismissed`}
-            accent={stats.stats.resolutionRate > 80 ? 'green' : stats.stats.resolutionRate > 50 ? 'yellow' : 'red'}
+            accent={
+              stats.stats.resolutionRate > 80
+                ? 'green'
+                : stats.stats.resolutionRate > 50
+                  ? 'yellow'
+                  : 'red'
+            }
           />
           <StatCard
             label="Active Bans"
@@ -460,9 +467,7 @@ export default function AdminModerationPage() {
                   >
                     {REASON_LABELS[report.reason] || report.reason}
                   </span>
-                  <span className="text-[10px] text-gray-600">
-                    {formatTime(report.reportedAt)}
-                  </span>
+                  <span className="text-[10px] text-gray-600">{formatTime(report.reportedAt)}</span>
                 </div>
 
                 <p className="mb-1 text-xs text-gray-500">
@@ -477,9 +482,7 @@ export default function AdminModerationPage() {
                 <p className="mb-1 text-xs text-gray-500">
                   Post:{' '}
                   <span className="font-mono text-gray-400">
-                    {report.postId.length > 40
-                      ? `${report.postId.slice(0, 40)}…`
-                      : report.postId}
+                    {report.postId.length > 40 ? `${report.postId.slice(0, 40)}…` : report.postId}
                   </span>
                 </p>
 
@@ -569,7 +572,8 @@ export default function AdminModerationPage() {
               {showBanModal.postAuthorHandle && (
                 <>
                   {' '}
-                  Handle: <span className="font-mono text-red-400">{showBanModal.postAuthorHandle}</span>
+                  Handle:{' '}
+                  <span className="font-mono text-red-400">{showBanModal.postAuthorHandle}</span>
                 </>
               )}
             </p>
@@ -632,7 +636,9 @@ function StatCard({
     yellow: 'border-yellow-500/20 text-yellow-400',
     red: 'border-red-500/20 text-red-400',
   };
-  const valueClass = accent ? accentColors[accent] ?? 'text-[var(--color-fg)]' : 'text-[var(--color-fg)]';
+  const valueClass = accent
+    ? (accentColors[accent] ?? 'text-[var(--color-fg)]')
+    : 'text-[var(--color-fg)]';
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">

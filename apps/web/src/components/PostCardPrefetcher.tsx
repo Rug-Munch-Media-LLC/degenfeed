@@ -96,12 +96,14 @@ export function PostCardPrefetcher({ containerRef }: PostCardPrefetcherProps) {
 
     // Observe new cards added dynamically (mutation observer)
     const mutationObserver = new MutationObserver(() => {
-      container.querySelectorAll<HTMLElement>(
-        '[data-post-id]:not([data-dfp-observed]),[data-href]:not([data-dfp-observed])',
-      ).forEach((card) => {
-        card.setAttribute('data-dfp-observed', 'true');
-        observer.observe(card);
-      });
+      container
+        .querySelectorAll<HTMLElement>(
+          '[data-post-id]:not([data-dfp-observed]),[data-href]:not([data-dfp-observed])',
+        )
+        .forEach((card) => {
+          card.setAttribute('data-dfp-observed', 'true');
+          observer.observe(card);
+        });
     });
 
     mutationObserver.observe(container, { childList: true, subtree: true });
@@ -117,7 +119,7 @@ export function PostCardPrefetcher({ containerRef }: PostCardPrefetcherProps) {
       container.removeEventListener('mouseout', onMouseOut);
       if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
     };
-  }, [router, containerRef]);
+  }, [containerRef, prefetch]);
 
   return null;
 }

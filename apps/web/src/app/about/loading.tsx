@@ -1,4 +1,4 @@
-import { HeaderSkeleton, Line, Avatar } from '@/components/loading/PageSkeleton';
+import { Avatar, HeaderSkeleton, Line } from '@/components/loading/PageSkeleton';
 
 export default function AboutLoading() {
   return (

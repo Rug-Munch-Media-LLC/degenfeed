@@ -127,7 +127,7 @@ function SummaryBanner({
 }) {
   const allUp = summary.down === 0 && summary.degraded === 0;
   const hasDown = summary.down > 0;
-  const hasDegraded = summary.degraded > 0;
+  const _hasDegraded = summary.degraded > 0;
 
   let bgClass: string;
   let icon: string;
@@ -159,9 +159,7 @@ function SummaryBanner({
           </div>
           <div className="text-sm text-[var(--color-muted)]">
             {label}
-            {checkedAt > 0 && (
-              <span className="ml-2">&middot; {timeAgo(checkedAt)}</span>
-            )}
+            {checkedAt > 0 && <span className="ml-2">&middot; {timeAgo(checkedAt)}</span>}
           </div>
         </div>
       </div>
@@ -169,9 +167,7 @@ function SummaryBanner({
         {summary.degraded > 0 && (
           <span className="text-yellow-400">&bull; {summary.degraded} degraded</span>
         )}
-        {summary.down > 0 && (
-          <span className="text-red-400">&bull; {summary.down} down</span>
-        )}
+        {summary.down > 0 && <span className="text-red-400">&bull; {summary.down} down</span>}
       </div>
     </div>
   );
@@ -187,11 +183,7 @@ function timeAgo(ts: number): string {
   return `${h}h ago`;
 }
 
-export function StatusClient({
-  initialData,
-}: {
-  initialData: ProtocolsHealthResponse | null;
-}) {
+export function StatusClient({ initialData }: { initialData: ProtocolsHealthResponse | null }) {
   const [data, setData] = useState<ProtocolsHealthResponse | null>(initialData);
   const [loading, setLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -268,9 +260,7 @@ export function StatusClient({
                   <span className="text-lg" aria-hidden="true">
                     {meta.icon}
                   </span>
-                  <span className="text-sm font-semibold text-[var(--color-fg)]">
-                    {meta.label}
-                  </span>
+                  <span className="text-sm font-semibold text-[var(--color-fg)]">{meta.label}</span>
                 </div>
                 <StatusBadge status={status} />
               </div>
@@ -306,10 +296,7 @@ export function StatusClient({
 
               {/* Error message */}
               {h?.error && (
-                <div
-                  className="mt-1 truncate text-[10px] text-red-400"
-                  title={h.error}
-                >
+                <div className="mt-1 truncate text-[10px] text-red-400" title={h.error}>
                   {h.error}
                 </div>
               )}

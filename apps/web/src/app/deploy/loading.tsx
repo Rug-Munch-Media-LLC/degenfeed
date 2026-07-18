@@ -1,4 +1,4 @@
-import { HeaderSkeleton, FormFieldSkeleton, Line } from '@/components/loading/PageSkeleton';
+import { FormFieldSkeleton, HeaderSkeleton, Line } from '@/components/loading/PageSkeleton';
 
 export default function DeployLoading() {
   return (
@@ -52,7 +52,10 @@ export default function DeployLoading() {
         <FormFieldSkeleton />
 
         {/* Toggle row */}
-        <div className="flex items-center justify-between rounded-xl border p-4" style={{ borderColor: 'var(--color-glass-border)' }}>
+        <div
+          className="flex items-center justify-between rounded-xl border p-4"
+          style={{ borderColor: 'var(--color-glass-border)' }}
+        >
           <div className="space-y-1">
             <Line width="w-36" height="h-4" />
             <Line width="w-48" height="h-3" />
@@ -64,7 +67,10 @@ export default function DeployLoading() {
         </div>
 
         {/* Cost estimate */}
-        <div className="rounded-xl p-4 space-y-2" style={{ backgroundColor: 'var(--color-muted)', opacity: 0.1 }}>
+        <div
+          className="rounded-xl p-4 space-y-2"
+          style={{ backgroundColor: 'var(--color-muted)', opacity: 0.1 }}
+        >
           <div className="flex items-center justify-between">
             <Line width="w-24" height="h-4" />
             <Line width="w-16" height="h-4" />

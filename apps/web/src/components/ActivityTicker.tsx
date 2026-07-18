@@ -45,7 +45,9 @@ export function ActivityTicker() {
       if (!res.ok) return;
       const json = (await res.json()) as { activities: ActivityEvent[] };
       setActivities(json.activities ?? []);
-    } catch { /* */ }
+    } catch {
+      /* */
+    }
   }, []);
 
   useEffect(() => {
@@ -53,7 +55,9 @@ export function ActivityTicker() {
     intervalRef.current = setInterval(() => {
       if (!paused) fetchActivities();
     }, 15000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [fetchActivities, paused]);
 
   if (activities.length === 0) return null;
@@ -78,17 +82,13 @@ export function ActivityTicker() {
           >
             <span>{ACTIVITY_ICONS[a.type] ?? '•'}</span>
             <span className="truncate">
-              <span className="font-medium text-[var(--color-fg)]">
-                {a.actor.slice(0, 6)}...
-              </span>
-              {' '}{ACTIVITY_LABELS[a.type] ?? a.type}
+              <span className="font-medium text-[var(--color-fg)]">{a.actor.slice(0, 6)}...</span>{' '}
+              {ACTIVITY_LABELS[a.type] ?? a.type}
               {a.target ? (
                 <span className="text-[var(--color-muted)]"> {a.target.slice(0, 20)}</span>
               ) : null}
             </span>
-            <span className="ml-auto shrink-0 text-[10px] text-gray-500">
-              {timeAgo(a.at)}
-            </span>
+            <span className="ml-auto shrink-0 text-[10px] text-gray-500">{timeAgo(a.at)}</span>
           </div>
         ))}
       </div>

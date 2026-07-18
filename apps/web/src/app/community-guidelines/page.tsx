@@ -56,7 +56,9 @@ export default function CommunityGuidelinesPage() {
           </p>
         </li>
         <li>
-          <h2 className="inline text-lg font-semibold text-[var(--color-fg)]">No Financial Scams</h2>
+          <h2 className="inline text-lg font-semibold text-[var(--color-fg)]">
+            No Financial Scams
+          </h2>
           <p className="mt-1 ml-5">
             No pump-and-dump coordination, rug pulls, fake ICOs, phishing links, wallet drainers, or
             any scheme designed to steal money or tokens. Share alpha, not scams.
@@ -79,7 +81,9 @@ export default function CommunityGuidelinesPage() {
           </p>
         </li>
         <li>
-          <h2 className="inline text-lg font-semibold text-[var(--color-fg)]">Disclose AI Content</h2>
+          <h2 className="inline text-lg font-semibold text-[var(--color-fg)]">
+            Disclose AI Content
+          </h2>
           <p className="mt-1 ml-5">
             Mark AI-generated or AI-assisted posts clearly. Be honest about what you created versus
             what a model generated. No deepfakes used for impersonation or deception.
@@ -104,7 +108,9 @@ export default function CommunityGuidelinesPage() {
           </p>
         </li>
         <li>
-          <h2 className="inline text-lg font-semibold text-[var(--color-fg)]">No Illegal Activities</h2>
+          <h2 className="inline text-lg font-semibold text-[var(--color-fg)]">
+            No Illegal Activities
+          </h2>
           <p className="mt-1 ml-5">
             Comply with all applicable laws. This includes laws in your jurisdiction, the United
             States (where our servers are located), and the jurisdictions of federated instances you
@@ -112,14 +118,18 @@ export default function CommunityGuidelinesPage() {
           </p>
         </li>
         <li>
-          <h2 className="inline text-lg font-semibold text-[var(--color-fg)]">Mark Adult Content</h2>
+          <h2 className="inline text-lg font-semibold text-[var(--color-fg)]">
+            Mark Adult Content
+          </h2>
           <p className="mt-1 ml-5">
             Use content warnings for NSFW material. Unmarked adult content will be removed. Illegal
             content will be reported. Keep the instance safe for all users.
           </p>
         </li>
         <li>
-          <h2 className="inline text-lg font-semibold text-[var(--color-fg)]">Be a Good Fediverse Citizen</h2>
+          <h2 className="inline text-lg font-semibold text-[var(--color-fg)]">
+            Be a Good Fediverse Citizen
+          </h2>
           <p className="mt-1 ml-5">
             Do not harass users on other instances, do not exploit federation to bypass blocks or
             bans, and do not use the instance as a launchpad for cross-instance spam campaigns.

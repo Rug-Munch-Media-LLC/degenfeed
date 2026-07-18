@@ -17,17 +17,24 @@ export function StreakFlame() {
   const fetchStreak = useCallback(async () => {
     try {
       const res = await fetch('/api/gamification/streak', { credentials: 'include' });
-      if (!res.ok) { setLoading(false); return; }
+      if (!res.ok) {
+        setLoading(false);
+        return;
+      }
       const json = (await res.json()) as StreakData;
       setData(json);
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => {
     fetchStreak();
     intervalRef.current = setInterval(fetchStreak, 60000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [fetchStreak]);
 
   if (loading || !data || data.streak < 1) return null;
@@ -35,10 +42,7 @@ export function StreakFlame() {
   const milestoneColors = getMilestoneColor(data.streak);
 
   return (
-    <div
-      className="group relative"
-      title={`${data.streak}-day streak! Max: ${data.maxStreak}`}
-    >
+    <div className="group relative" title={`${data.streak}-day streak! Max: ${data.maxStreak}`}>
       <span
         className={`inline-flex cursor-default items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-bold transition-all hover:scale-105 ${milestoneColors.bg} ${milestoneColors.text}`}
       >
@@ -65,7 +69,15 @@ export function StreakFlame() {
   );
 }
 
-function MilestoneRow({ label, achieved, tier }: { label: string; achieved: boolean; tier: string }) {
+function MilestoneRow({
+  label,
+  achieved,
+  tier,
+}: {
+  label: string;
+  achieved: boolean;
+  tier: string;
+}) {
   const colors: Record<string, string> = {
     bronze: achieved ? 'text-amber-500' : 'text-gray-600',
     silver: achieved ? 'text-gray-300' : 'text-gray-600',
@@ -74,9 +86,7 @@ function MilestoneRow({ label, achieved, tier }: { label: string; achieved: bool
   };
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className={achieved ? 'text-degen-400' : 'text-gray-600'}>
-        {achieved ? '◆' : '◇'}
-      </span>
+      <span className={achieved ? 'text-degen-400' : 'text-gray-600'}>{achieved ? '◆' : '◇'}</span>
       <span className={colors[tier] ?? 'text-gray-500'}>{label}</span>
     </div>
   );

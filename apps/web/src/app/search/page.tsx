@@ -57,6 +57,7 @@ interface FederatedSearchResponse {
   identities?: IdentityResult[];
   communities?: CommunityResult[];
   videos?: VideoResult[];
+  meta?: { total: number; limit: number };
 }
 
 type SearchTab = 'top' | 'latest' | 'people' | 'communities' | 'videos';
@@ -136,6 +137,45 @@ function Skeleton({ count = 3 }: { count?: number }) {
   );
 }
 
+// ─── LoadMoreButton ─────────────────────────────────────────
+
+function LoadMoreButton({
+  loading,
+  hasMore,
+  onClick,
+}: {
+  loading: boolean;
+  hasMore: boolean;
+  onClick: () => void;
+}) {
+  if (!hasMore && !loading) {
+    return (
+      <div className="py-8 text-center">
+        <span className="text-xs text-[var(--color-muted)]">No more results</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex justify-center py-8">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={loading}
+        className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-6 py-2.5 text-sm font-medium text-[var(--color-fg)] transition-colors hover:border-degen-500/30 hover:text-degen-400 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {loading ? (
+          <>
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            Loading…
+          </>
+        ) : (
+          'Load More'
+        )}
+      </button>
+    </div>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────
 
 export default function SearchPage() {
@@ -154,6 +194,9 @@ export default function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [protocolFilter, setProtocolFilter] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const loadCountRef = useRef(1);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Scroll to top on mount
@@ -173,7 +216,7 @@ export default function SearchPage() {
   );
 
   const doSearch = useCallback(
-    async (q: string) => {
+    async (q: string, append: boolean = false) => {
       if (q.length < 2) {
         setPosts([]);
         setIdentities([]);
@@ -182,15 +225,23 @@ export default function SearchPage() {
         setSearched(false);
         return;
       }
-      setLoading(true);
+
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        loadCountRef.current = 1;
+        setHasMore(true);
+      }
       setSearched(true);
       setError(null);
 
       try {
         const protocolsParam = protocolFilter ? `&protocols=${protocolFilter}` : '';
+        const limit = Math.min(loadCountRef.current * 50, 100);
 
         const res = await retryFetch(
-          `/api/search?q=${encodeURIComponent(q)}&limit=50${protocolsParam}`,
+          `/api/search?q=${encodeURIComponent(q)}&limit=${limit}${protocolsParam}`,
           {
             maxRetries: 2,
             fetchOptions: { credentials: 'include' },
@@ -201,21 +252,74 @@ export default function SearchPage() {
           ? ((await res.json()) as FederatedSearchResponse)
           : {};
 
-        setPosts(data.data ?? []);
-        setIdentities(data.identities ?? []);
-        setCommunities(data.communities ?? []);
-        setVideos(data.videos ?? []);
+        const newPosts = data.data ?? [];
+        const newIdentities = data.identities ?? [];
+        const newCommunities = data.communities ?? [];
+        const newVideos = data.videos ?? [];
+
+        if (append) {
+          // Deduplicate by ID when appending using functional updaters
+          setPosts((prev) => {
+            const existing = new Set(prev.map((p) => p.id));
+            return [...prev, ...newPosts.filter((p) => !existing.has(p.id))];
+          });
+          setIdentities((prev) => {
+            const existing = new Set(prev.map((i) => i.id));
+            return [...prev, ...newIdentities.filter((i) => !existing.has(i.id))];
+          });
+          setCommunities((prev) => {
+            const existing = new Set(prev.map((c) => c.id));
+            return [...prev, ...newCommunities.filter((c) => !existing.has(c.id))];
+          });
+          setVideos((prev) => {
+            const existing = new Set(prev.map((v) => v.id));
+            return [...prev, ...newVideos.filter((v) => !existing.has(v.id))];
+          });
+
+          // Check if we got zero new results — exhausted
+          const totalResults =
+            newPosts.length + newIdentities.length + newCommunities.length + newVideos.length;
+          if (totalResults === 0) {
+            setHasMore(false);
+          }
+          // Backend limit caps at 100, so at most one load-more
+          setHasMore(false);
+          loadCountRef.current += 1;
+        } else {
+          setPosts(newPosts);
+          setIdentities(newIdentities);
+          setCommunities(newCommunities);
+          setVideos(newVideos);
+          loadCountRef.current = 2; // next load-more will fetch with limit=100
+          // If total results are sparse, may already be exhausted
+          const totalResults =
+            newPosts.length + newIdentities.length + newCommunities.length + newVideos.length;
+          if (totalResults < 50) {
+            setHasMore(false);
+          }
+        }
       } catch (err) {
-        setPosts([]);
-        setIdentities([]);
-        setCommunities([]);
-        setVideos([]);
+        if (!append) {
+          setPosts([]);
+          setIdentities([]);
+          setCommunities([]);
+          setVideos([]);
+        }
         setError(err instanceof Error ? err.message : 'Search unavailable');
       }
-      setLoading(false);
+      if (append) {
+        setLoadingMore(false);
+      } else {
+        setLoading(false);
+      }
     },
     [protocolFilter],
   );
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    doSearch(query, true);
+  }, [query, loadingMore, hasMore, doSearch]);
 
   // Initial search on mount if query param present
   useEffect(() => {
@@ -259,9 +363,8 @@ export default function SearchPage() {
     protocolFilter && tab !== 'people' ? posts.filter((p) => p.protocol === protocolFilter) : posts;
 
   const showAll = tab === 'top' || tab === 'latest';
-  const sortedPosts = tab === 'latest'
-    ? [...filteredPosts].sort((a, b) => b.createdAt - a.createdAt)
-    : filteredPosts;
+  const sortedPosts =
+    tab === 'latest' ? [...filteredPosts].sort((a, b) => b.createdAt - a.createdAt) : filteredPosts;
   const visiblePosts = showAll ? sortedPosts : [];
   const visibleIdentities = showAll || tab === 'people' ? identities : [];
   const visibleCommunities = showAll || tab === 'communities' ? communities : [];
@@ -398,7 +501,7 @@ export default function SearchPage() {
       {/* ═══ People Results ═══ */}
       {visibleIdentities.length > 0 && (
         <div className="mb-8">
-          {tab === 'all' && (
+          {showAll && (
             <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
               People
             </h2>
@@ -411,7 +514,7 @@ export default function SearchPage() {
               >
                 <a
                   href={getProfileUrl(identity)}
-                  target="_blank" rel="noopener noreferrer"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="shrink-0"
                 >
@@ -439,7 +542,7 @@ export default function SearchPage() {
                   <div className="flex items-center gap-2">
                     <a
                       href={getProfileUrl(identity)}
-                      target="_blank" rel="noopener noreferrer"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="truncate text-sm font-semibold text-[var(--color-fg)] hover:underline"
                     >
@@ -473,7 +576,7 @@ export default function SearchPage() {
                     )}
                     <a
                       href={getProfileUrl(identity)}
-                      target="_blank" rel="noopener noreferrer"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="ml-auto rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-xs text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 transition-colors"
                     >
@@ -490,7 +593,7 @@ export default function SearchPage() {
       {/* ═══ Community Results ═══ */}
       {visibleCommunities.length > 0 && (
         <div className="mb-8">
-          {tab === 'all' && (
+          {showAll && (
             <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
               Communities
             </h2>
@@ -500,7 +603,7 @@ export default function SearchPage() {
               <a
                 key={community.id}
                 href={community.url}
-                target="_blank" rel="noopener noreferrer"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="card-hover flex items-start gap-4 p-4 transition-colors"
               >
@@ -558,7 +661,7 @@ export default function SearchPage() {
       {/* ═══ Video Results ═══ */}
       {visibleVideos.length > 0 && (
         <div className="mb-8">
-          {tab === 'all' && (
+          {showAll && (
             <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
               Videos
             </h2>
@@ -568,7 +671,7 @@ export default function SearchPage() {
               <a
                 key={video.id}
                 href={video.url}
-                target="_blank" rel="noopener noreferrer"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="card-hover flex items-start gap-3 p-3 transition-colors"
               >
@@ -621,7 +724,7 @@ export default function SearchPage() {
       {/* ═══ Post Results ═══ */}
       {visiblePosts.length > 0 && (
         <div>
-          {tab === 'all' && visibleIdentities.length > 0 && (
+          {showAll && visibleIdentities.length > 0 && (
             <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
               Posts
             </h2>
@@ -702,6 +805,17 @@ export default function SearchPage() {
           </div>
         </div>
       )}
+
+      {/* Load More */}
+      {searched &&
+        !loading &&
+        !error &&
+        (visiblePosts.length > 0 ||
+          visibleIdentities.length > 0 ||
+          visibleCommunities.length > 0 ||
+          visibleVideos.length > 0) && (
+          <LoadMoreButton loading={loadingMore} hasMore={hasMore} onClick={loadMore} />
+        )}
     </div>
   );
 }

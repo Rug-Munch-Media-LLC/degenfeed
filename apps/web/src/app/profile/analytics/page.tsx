@@ -7,8 +7,7 @@ export const metadata: Metadata = {
     'Cross-protocol creator analytics: reach, tips, followers, and top-performing content across Nostr, Farcaster, Lens, Bluesky, and Mastodon.',
   openGraph: {
     title: 'Creator Analytics — DegenFeed',
-    description:
-      'Cross-protocol creator analytics for reach, tips, followers, and top content.',
+    description: 'Cross-protocol creator analytics for reach, tips, followers, and top content.',
     url: 'https://app.degenfeed.xyz/profile/analytics',
     images: [
       {

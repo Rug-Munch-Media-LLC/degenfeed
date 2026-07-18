@@ -92,7 +92,7 @@ export function QuickTipButton({
             ? 'bg-green-500/20 text-green-400 animate-tip-pulse'
             : 'hover:bg-primary/10 text-muted-foreground hover:text-primary'
         }`}
-        aria-label={`Tip ${authorAddress || 'author'}`}
+        aria-label="Tip author"
       >
         {tipping ? (
           <span className="animate-spin">⚡</span>

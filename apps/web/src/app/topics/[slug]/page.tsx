@@ -34,106 +34,91 @@ const TOPIC_META: Record<
     emoji: '\u20BF',
     color: '#f7931a',
     label: 'Bitcoin',
-    description:
-      'Bitcoin: the original cryptocurrency. News, analysis, and discussion about BTC.',
+    description: 'Bitcoin: the original cryptocurrency. News, analysis, and discussion about BTC.',
   },
   ethereum: {
     emoji: '\u039E',
     color: '#627eea',
     label: 'Ethereum',
-    description:
-      'Ethereum ecosystem: L2s, DeFi, NFTs, and smart contracts.',
+    description: 'Ethereum ecosystem: L2s, DeFi, NFTs, and smart contracts.',
   },
   solana: {
     emoji: '\u25C9',
     color: '#14f195',
     label: 'Solana',
-    description:
-      'Solana: high-performance blockchain for scalable dApps.',
+    description: 'Solana: high-performance blockchain for scalable dApps.',
   },
   defi: {
     emoji: '\uD83D\uDCCA',
     color: '#6366f1',
     label: 'DeFi',
-    description:
-      'Decentralized finance: lending, DEXs, yield, and liquidity.',
+    description: 'Decentralized finance: lending, DEXs, yield, and liquidity.',
   },
   nft: {
     emoji: '\uD83D\uDDBC',
     color: '#ec4899',
     label: 'NFT',
-    description:
-      'Non-fungible tokens: digital art, collectibles, and culture.',
+    description: 'Non-fungible tokens: digital art, collectibles, and culture.',
   },
   ai: {
     emoji: '\uD83E\uDD16',
     color: '#06b6d4',
     label: 'AI',
-    description:
-      'Artificial intelligence: LLMs, agents, and crypto AI.',
+    description: 'Artificial intelligence: LLMs, agents, and crypto AI.',
   },
   regulation: {
     emoji: '\u2696\uFE0F',
     color: '#ef4444',
     label: 'Regulation',
-    description:
-      'Crypto regulation: SEC, CFTC, policy, and compliance.',
+    description: 'Crypto regulation: SEC, CFTC, policy, and compliance.',
   },
   security: {
     emoji: '\uD83D\uDD12',
     color: '#dc2626',
     label: 'Security',
-    description:
-      'Crypto security: audits, hacks, and best practices.',
+    description: 'Crypto security: audits, hacks, and best practices.',
   },
   memes: {
     emoji: '\uD83D\uDE02',
     color: '#f59e0b',
     label: 'Memes',
-    description:
-      'Crypto memes, degen culture, and viral content.',
+    description: 'Crypto memes, degen culture, and viral content.',
   },
   privacy: {
     emoji: '\uD83D\uDC41\uFE0F',
     color: '#a855f7',
     label: 'Privacy',
-    description:
-      'Privacy coins, zero-knowledge proofs, and anonymous tech.',
+    description: 'Privacy coins, zero-knowledge proofs, and anonymous tech.',
   },
   gaming: {
     emoji: '\uD83C\uDFAE',
     color: '#22d3ee',
     label: 'Gaming',
-    description:
-      'Web3 gaming, GameFi, and metaverse.',
+    description: 'Web3 gaming, GameFi, and metaverse.',
   },
   layer2: {
     emoji: '\u26D3\uFE0F',
     color: '#8b5cf6',
     label: 'Layer 2',
-    description:
-      'Layer 2 scaling: rollups, sidechains, and state channels.',
+    description: 'Layer 2 scaling: rollups, sidechains, and state channels.',
   },
   crypto: {
     emoji: '\u20BF',
     color: '#f59e0b',
     label: 'Crypto',
-    description:
-      'General cryptocurrency news, analysis, and discussion.',
+    description: 'General cryptocurrency news, analysis, and discussion.',
   },
   macro: {
     emoji: '\uD83D\uDCC8',
     color: '#10b981',
     label: 'Macro',
-    description:
-      'Macroeconomic trends, Fed policy, and global markets.',
+    description: 'Macroeconomic trends, Fed policy, and global markets.',
   },
   stablecoin: {
     emoji: '\uD83D\uDCB5',
     color: '#22c55e',
     label: 'Stablecoin',
-    description:
-      'Stablecoins: USDC, USDT, DAI, and algorithmic stablecoins.',
+    description: 'Stablecoins: USDC, USDT, DAI, and algorithmic stablecoins.',
   },
 };
 
@@ -172,7 +157,11 @@ function formatTime(ts: number): string {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 200);
 }
 
 function getDefaultMeta(slug: string): {
@@ -191,13 +180,7 @@ function getDefaultMeta(slug: string): {
 
 // ─── Post Row ──────────────────────────────────────────────────────────────
 
-function PostRow({
-  post,
-  onClick,
-}: {
-  post: UnifiedPost;
-  onClick: (id: string) => void;
-}) {
+function PostRow({ post, onClick }: { post: UnifiedPost; onClick: (id: string) => void }) {
   const protocolColor = getProtocolColor(post.protocol);
   return (
     <button
@@ -227,9 +210,7 @@ function PostRow({
             {post.author.displayName}
           </span>
           {post.author.handle && (
-            <span className="truncate text-[var(--color-muted)]">
-              @{post.author.handle}
-            </span>
+            <span className="truncate text-[var(--color-muted)]">@{post.author.handle}</span>
           )}
           <span
             className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
@@ -240,9 +221,7 @@ function PostRow({
           >
             {post.protocol}
           </span>
-          <span className="ml-auto text-[var(--color-muted)]">
-            {formatTime(post.createdAt)}
-          </span>
+          <span className="ml-auto text-[var(--color-muted)]">{formatTime(post.createdAt)}</span>
         </div>
         <p className="mt-1 line-clamp-3 text-sm text-[var(--color-muted)]">
           {stripHtml(post.text)}
@@ -359,9 +338,7 @@ export default function TopicPage() {
                   type="button"
                   onClick={toggleFollow}
                   className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-                    followed
-                      ? 'bg-[var(--color-overlay)] text-[var(--color-muted)]'
-                      : 'text-white'
+                    followed ? 'bg-[var(--color-overlay)] text-[var(--color-muted)]' : 'text-white'
                   }`}
                   style={{
                     backgroundColor: followed ? undefined : meta.color,
@@ -426,11 +403,7 @@ export default function TopicPage() {
           {state === 'error' && (
             <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-8 text-center">
               <p className="mb-2 text-sm text-red-400">{error || 'Failed to load posts'}</p>
-              <button
-                type="button"
-                onClick={fetchPosts}
-                className="btn-primary text-sm"
-              >
+              <button type="button" onClick={fetchPosts} className="btn-primary text-sm">
                 Try Again
               </button>
             </div>
@@ -439,9 +412,7 @@ export default function TopicPage() {
           {state === 'empty' && (
             <div className="card py-12 text-center">
               <span className="mb-3 block text-3xl">{meta.emoji}</span>
-              <p className="text-sm text-[var(--color-muted)]">
-                No posts about {meta.label} yet.
-              </p>
+              <p className="text-sm text-[var(--color-muted)]">No posts about {meta.label} yet.</p>
               <p className="mt-1 text-xs text-[var(--color-muted)]">
                 Be the first to post about {meta.label} across the open social graph.
               </p>

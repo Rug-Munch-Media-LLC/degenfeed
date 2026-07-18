@@ -41,7 +41,10 @@ export default function MessagesLoading() {
         style={{ borderColor: 'var(--color-glass-border)' }}
       >
         {/* Chat header */}
-        <div className="flex items-center gap-3 border-b p-4" style={{ borderColor: 'var(--color-glass-border)' }}>
+        <div
+          className="flex items-center gap-3 border-b p-4"
+          style={{ borderColor: 'var(--color-glass-border)' }}
+        >
           <Avatar />
           <div className="flex-1 space-y-1">
             <Line width="w-32" height="h-4" />
@@ -74,7 +77,10 @@ export default function MessagesLoading() {
         </div>
 
         {/* Input area */}
-        <div className="flex items-center gap-3 border-t p-4" style={{ borderColor: 'var(--color-glass-border)' }}>
+        <div
+          className="flex items-center gap-3 border-t p-4"
+          style={{ borderColor: 'var(--color-glass-border)' }}
+        >
           <div
             className="h-10 flex-1 animate-pulse rounded-xl"
             style={{ backgroundColor: 'var(--color-muted)', opacity: 0.3 }}

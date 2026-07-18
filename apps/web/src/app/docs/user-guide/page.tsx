@@ -91,7 +91,13 @@ function H3({ id, children }: { id: string; children: React.ReactNode }) {
   );
 }
 
-function Callout({ type, children }: { type: 'info' | 'warning' | 'tip'; children: React.ReactNode }) {
+function Callout({
+  type,
+  children,
+}: {
+  type: 'info' | 'warning' | 'tip';
+  children: React.ReactNode;
+}) {
   const styles: Record<string, { border: string; bg: string; icon: string }> = {
     info: { border: 'border-blue-500/20', bg: 'bg-blue-500/5', icon: 'ℹ' },
     warning: { border: 'border-yellow-500/20', bg: 'bg-yellow-500/5', icon: '⚠' },
@@ -109,7 +115,15 @@ function Callout({ type, children }: { type: 'info' | 'warning' | 'tip'; childre
   );
 }
 
-function Step({ number, label, children }: { number: string; label: string; children: React.ReactNode }) {
+function Step({
+  number,
+  label,
+  children,
+}: {
+  number: string;
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex gap-4 rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-4">
       <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-degen-500/10 text-xs font-bold text-degen-400">
@@ -176,8 +190,12 @@ export default function UserGuidePage() {
         After connecting a wallet, link your social accounts to post and engage across protocols:
       </p>
       <ol className="mt-3 list-inside list-decimal space-y-2 text-sm text-gray-400">
-        <li>Go to <strong>Settings → Connected Accounts</strong></li>
-        <li>Click <strong>Connect</strong> for each protocol you want to link</li>
+        <li>
+          Go to <strong>Settings → Connected Accounts</strong>
+        </li>
+        <li>
+          Click <strong>Connect</strong> for each protocol you want to link
+        </li>
         <li>Follow the protocol-specific authorization flow</li>
       </ol>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -201,19 +219,13 @@ export default function UserGuidePage() {
       </div>
 
       <H3 id="first-post">First Post</H3>
-      <p className="text-sm leading-relaxed text-gray-400">
-        Ready to post? Here&apos;s how:
-      </p>
+      <p className="text-sm leading-relaxed text-gray-400">Ready to post? Here&apos;s how:</p>
       <ol className="mt-3 list-inside list-decimal space-y-2 text-sm text-gray-400">
         <li>
           Click the <strong>Compose</strong> button in the header
         </li>
-        <li>
-          Write your post. You can include images, links, and mentions
-        </li>
-        <li>
-          Select which protocols to publish to (Nostr, Farcaster, Lens, Bluesky, Mastodon)
-        </li>
+        <li>Write your post. You can include images, links, and mentions</li>
+        <li>Select which protocols to publish to (Nostr, Farcaster, Lens, Bluesky, Mastodon)</li>
         <li>
           Click <strong>Post</strong> — your content is sent to each selected protocol
           simultaneously
@@ -238,8 +250,8 @@ export default function UserGuidePage() {
       </p>
       <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-gray-400">
         <li>
-          <strong className="text-gray-300">Scored (default):</strong> Balanced ranking across all
-          7 factors
+          <strong className="text-gray-300">Scored (default):</strong> Balanced ranking across all 7
+          factors
         </li>
         <li>
           <strong className="text-gray-300">Hot:</strong> Trending posts with recent engagement
@@ -324,8 +336,8 @@ export default function UserGuidePage() {
       <p className="text-sm leading-relaxed text-gray-400">
         Engage with any post using the action bar: like (❤️), reply (💬), repost/quote (🔄), or
         bookmark (🔖). Each action is sent to the original protocol — a like on a Nostr post becomes
-        a kind 7 reaction, a like on a Farcaster cast becomes a Farcaster reaction. Your
-        engagement profile is unified across protocols.
+        a kind 7 reaction, a like on a Farcaster cast becomes a Farcaster reaction. Your engagement
+        profile is unified across protocols.
       </p>
 
       {/* ═══════════════════════════════════════════════════════
@@ -336,9 +348,8 @@ export default function UserGuidePage() {
       <H3 id="how-to-tip">How to Tip</H3>
       <p className="text-sm leading-relaxed text-gray-400">
         Click the tip button (⚡) on any post to open the tip dialog. Select your currency (ETH,
-        SOL, or USDC) and amount. Confirm the transaction in your wallet — the tip goes directly
-        to the creator&apos;s wallet on-chain. For Nostr posts, you can also zap via Lightning
-        Network.
+        SOL, or USDC) and amount. Confirm the transaction in your wallet — the tip goes directly to
+        the creator&apos;s wallet on-chain. For Nostr posts, you can also zap via Lightning Network.
       </p>
 
       <H3 id="how-to-receive">How to Receive Tips</H3>
@@ -370,10 +381,10 @@ export default function UserGuidePage() {
 
       <H3 id="dao-voting">DAO Voting</H3>
       <p className="text-sm leading-relaxed text-gray-400">
-        Communities can enable DAO governance for decentralized decision-making. Proposals can
-        cover rule changes, moderator appointments, treasury spending, and community direction.
-        Voting power can be based on reputation, token holdings, or a custom formula set by the
-        community creator.
+        Communities can enable DAO governance for decentralized decision-making. Proposals can cover
+        rule changes, moderator appointments, treasury spending, and community direction. Voting
+        power can be based on reputation, token holdings, or a custom formula set by the community
+        creator.
       </p>
 
       <H3 id="proposals">Proposals</H3>
@@ -409,16 +420,16 @@ export default function UserGuidePage() {
 
       <H3 id="hosting-spaces">Hosting a Space</H3>
       <p className="text-sm leading-relaxed text-gray-400">
-        Spaces are live audio rooms where you can host discussions. Click Spaces → Host a Space,
-        set a title and description, choose whether it&apos;s public or invite-only, and go live.
-        You can invite speakers, moderate the chat, and record sessions for later playback.
+        Spaces are live audio rooms where you can host discussions. Click Spaces → Host a Space, set
+        a title and description, choose whether it&apos;s public or invite-only, and go live. You
+        can invite speakers, moderate the chat, and record sessions for later playback.
       </p>
 
       <H3 id="joining-spaces">Joining a Space</H3>
       <p className="text-sm leading-relaxed text-gray-400">
         Browse upcoming and live Spaces from the Spaces page. Tap Join to enter as a listener. You
-        can raise your hand to speak, react with emoji, and chat alongside the audio. Spaces work
-        on desktop and mobile (PWA).
+        can raise your hand to speak, react with emoji, and chat alongside the audio. Spaces work on
+        desktop and mobile (PWA).
       </p>
 
       {/* ═══════════════════════════════════════════════════════
@@ -428,9 +439,9 @@ export default function UserGuidePage() {
 
       <H3 id="dashboard">Your Dashboard</H3>
       <p className="text-sm leading-relaxed text-gray-400">
-        Creator Studio shows your cross-protocol analytics: total reach, engagement rate, top
-        posts, follower growth, and tip revenue. Data is broken down by protocol so you can see
-        which networks perform best for your content.
+        Creator Studio shows your cross-protocol analytics: total reach, engagement rate, top posts,
+        follower growth, and tip revenue. Data is broken down by protocol so you can see which
+        networks perform best for your content.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-3">
@@ -467,8 +478,8 @@ export default function UserGuidePage() {
       <H3 id="preferences">Preferences</H3>
       <p className="text-sm leading-relaxed text-gray-400">
         Customize your experience in Settings → Preferences: theme (dark/light), feed density
-        (compact/visual), font size (SM/MD/LG), line spacing (compact/comfortable/relaxed),
-        language filter, and content type defaults.
+        (compact/visual), font size (SM/MD/LG), line spacing (compact/comfortable/relaxed), language
+        filter, and content type defaults.
       </p>
 
       <H3 id="privacy-settings">Privacy</H3>
@@ -508,7 +519,10 @@ export default function UserGuidePage() {
             </Link>
           </div>
           <p className="text-xs text-gray-600">
-            Need help? <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">admin@rugmunch.io</a>
+            Need help?{' '}
+            <a href="mailto:admin@rugmunch.io" className="text-degen-400 underline">
+              admin@rugmunch.io
+            </a>
           </p>
         </div>
       </div>

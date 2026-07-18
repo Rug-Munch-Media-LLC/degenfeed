@@ -265,7 +265,7 @@ export function GettingStartedChecklist({
           </div>
 
           {/* ── Checklist items ── */}
-          <ul className="space-y-2" role="list">
+          <ul className="space-y-2">
             {statuses.map((item) => (
               <li key={item.id}>
                 <a
@@ -289,10 +289,20 @@ export function GettingStartedChecklist({
                         ? 'border-degen-500 bg-degen-500 shadow-[0_0_6px_rgba(0,255,65,0.3)]'
                         : 'border-white/20 group-hover:border-white/40'
                     }`}
-                    aria-label={item.done ? `Mark "${item.label}" as incomplete` : `Mark "${item.label}" as complete`}
+                    aria-label={
+                      item.done
+                        ? `Mark "${item.label}" as incomplete`
+                        : `Mark "${item.label}" as complete`
+                    }
                   >
                     {item.done ? (
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        aria-hidden="true"
+                      >
                         <path
                           d="M10 3L4.5 9L2 6.5"
                           stroke="black"

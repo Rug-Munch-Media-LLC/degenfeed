@@ -6,7 +6,12 @@ const newsletterBreadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Newsletter', item: 'https://app.degenfeed.xyz/newsletter' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Newsletter',
+      item: 'https://app.degenfeed.xyz/newsletter',
+    },
   ],
 };
 
@@ -15,8 +20,12 @@ export const metadata: Metadata = {
   description:
     'Subscribe to the DegenFeed crypto newsletter. Daily web3 news digest curated from Nostr, Farcaster, Lens, Bluesky, Mastodon, and more. The best blockchain newsletter for crypto content.',
   keywords: [
-    'crypto newsletter', 'web3 newsletter', 'blockchain newsletter',
-    'defi newsletter', 'crypto daily digest', 'web3 news roundup',
+    'crypto newsletter',
+    'web3 newsletter',
+    'blockchain newsletter',
+    'defi newsletter',
+    'crypto daily digest',
+    'web3 news roundup',
     'crypto email digest',
   ],
   openGraph: {
@@ -36,8 +45,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Crypto Newsletter — Web3 Daily Digest | DegenFeed',
-    description:
-      'Daily web3 news digest curated from Nostr, Farcaster, Lens, Bluesky, Mastodon.',
+    description: 'Daily web3 news digest curated from Nostr, Farcaster, Lens, Bluesky, Mastodon.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/newsletter' },
 };
@@ -45,7 +53,11 @@ export const metadata: Metadata = {
 export default function NewsletterLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-newsletter" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(newsletterBreadcrumb) }} />
+      <Script
+        id="breadcrumb-newsletter"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(newsletterBreadcrumb) }}
+      />
       {children}
     </>
   );

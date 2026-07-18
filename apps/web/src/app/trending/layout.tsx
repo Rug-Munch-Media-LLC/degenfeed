@@ -8,7 +8,12 @@ const trendingBreadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Trending', item: 'https://app.degenfeed.xyz/trending' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Trending',
+      item: 'https://app.degenfeed.xyz/trending',
+    },
   ],
 };
 
@@ -17,8 +22,12 @@ export const metadata: Metadata = {
   description:
     'Trending crypto topics across Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS. See what the web3 social graph is talking about right now. Real-time blockchain social media trends.',
   keywords: [
-    'crypto trending topics', 'web3 social trends', 'blockchain trending',
-    'crypto hashtags', 'web3 viral content', 'cross protocol trending',
+    'crypto trending topics',
+    'web3 social trends',
+    'blockchain trending',
+    'crypto hashtags',
+    'web3 viral content',
+    'cross protocol trending',
   ],
   openGraph: {
     title: 'Trending — Web3 Trending Topics & Crypto Social Trends | DegenFeed',
@@ -46,7 +55,11 @@ export const metadata: Metadata = {
 export default function TrendingLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script id="breadcrumb-trending" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(trendingBreadcrumb) }} />
+      <Script
+        id="breadcrumb-trending"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(trendingBreadcrumb) }}
+      />
       {children}
     </>
   );

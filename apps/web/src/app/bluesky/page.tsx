@@ -7,7 +7,12 @@ const blueskyBreadcrumb = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
-    { '@type': 'ListItem', position: 2, name: 'Bluesky Feed', item: 'https://app.degenfeed.xyz/bluesky' },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Bluesky Feed',
+      item: 'https://app.degenfeed.xyz/bluesky',
+    },
   ],
 };
 
@@ -16,8 +21,12 @@ export const metadata: Metadata = {
   description:
     'Browse the Bluesky timeline — skeets, custom feeds, and trending content from the AT Protocol. Bluesky feed with cross-post to Nostr, Farcaster, Lens, Mastodon. The best Bluesky web client.',
   keywords: [
-    'bluesky feed', 'bluesky web client', 'bluesky skeets',
-    'at protocol feed', 'bluesky custom feeds', 'bluesky aggregator',
+    'bluesky feed',
+    'bluesky web client',
+    'bluesky skeets',
+    'at protocol feed',
+    'bluesky custom feeds',
+    'bluesky aggregator',
   ],
   openGraph: {
     title: 'Bluesky Feed — Browse AT Protocol Skeets & Custom Feeds | DegenFeed',
@@ -30,7 +39,11 @@ export const metadata: Metadata = {
 export default function BlueskyPage() {
   return (
     <>
-      <Script id="breadcrumb-bluesky" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(blueskyBreadcrumb) }} />
+      <Script
+        id="breadcrumb-bluesky"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blueskyBreadcrumb) }}
+      />
       <ProtocolFeedPage protocol="bluesky" />
     </>
   );

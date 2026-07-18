@@ -7,8 +7,8 @@
  */
 
 import { render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, useAuth } from './AuthProvider';
 
 // ─── Mock external dependencies ──────────────────────────────────────
@@ -39,8 +39,7 @@ vi.mock('@degenfeed/auth', () => ({
 vi.mock('@degenfeed/ui', () => ({
   ComposeModal: ({ open }: { open: boolean }) =>
     open ? <div data-testid="compose-modal" /> : null,
-  SignInModal: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="signin-modal" /> : null,
+  SignInModal: ({ open }: { open: boolean }) => (open ? <div data-testid="signin-modal" /> : null),
   ErrorBoundary: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
@@ -101,7 +100,9 @@ interface StubIdentity {
   keys?: Record<string, string>;
 }
 
-function makeIdentity(overrides: Partial<StubIdentity> & { id: string; protocol: string }): StubIdentity {
+function makeIdentity(
+  overrides: Partial<StubIdentity> & { id: string; protocol: string },
+): StubIdentity {
   return {
     publicId: overrides.id,
     handle: `@${overrides.id}`,
@@ -175,13 +176,21 @@ describe('AuthProvider', () => {
   });
 
   it('should load identities and mark ready after mount', async () => {
-    const nostrIdent = makeIdentity({ id: 'npub1abc', protocol: 'nostr', keys: { accessToken: 'tok1' } });
+    const nostrIdent = makeIdentity({
+      id: 'npub1abc',
+      protocol: 'nostr',
+      keys: { accessToken: 'tok1' },
+    });
     mockStorageIdentities([nostrIdent]);
 
     let captured: ReturnType<typeof useAuth> | undefined;
     render(
       <AuthProvider>
-        <TestConsumer onReady={(v) => { captured = v; }} />
+        <TestConsumer
+          onReady={(v) => {
+            captured = v;
+          }}
+        />
       </AuthProvider>,
     );
 
@@ -190,9 +199,9 @@ describe('AuthProvider', () => {
     expect(readyEl.textContent).toBe('true');
 
     expect(captured).toBeDefined();
-    expect(captured!.walletAddress).toBe('npub1abc');
-    expect(captured!.signedInProtocols).toEqual({ nostr: true });
-    expect(captured!.primaryIdentity?.handle).toBe('@npub1abc');
+    expect(captured?.walletAddress).toBe('npub1abc');
+    expect(captured?.signedInProtocols).toEqual({ nostr: true });
+    expect(captured?.primaryIdentity?.handle).toBe('@npub1abc');
   });
 
   it('should map multiple identities to signedInProtocols', async () => {

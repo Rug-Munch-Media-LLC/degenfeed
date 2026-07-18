@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { useAuth } from './AuthProvider';
 import { useNotifications } from '../hooks/useNotifications';
+import { useAuth } from './AuthProvider';
 
 interface NavItem {
   href: string;
@@ -47,6 +47,7 @@ const AUTH_NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '🏠', priority: true },
   { href: '/search', label: 'Search', icon: '🔍', priority: true },
   { href: '/trending', label: 'Trending', icon: '🔥', priority: true },
+  { href: '/shorts', label: 'Shorts', icon: '📱', priority: true },
   { href: '/news', label: 'News', icon: '📰', priority: true },
   { href: '/messages', label: 'Messages', icon: '💬', priority: true, requiresAuth: true },
   { href: '/notifications', label: 'Notifs', icon: '🔔', priority: true, requiresAuth: true },
@@ -58,6 +59,7 @@ const GUEST_NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '🏠', priority: true },
   { href: '/search', label: 'Search', icon: '🔍', priority: true },
   { href: '/trending', label: 'Trending', icon: '🔥', priority: true },
+  { href: '/shorts', label: 'Shorts', icon: '📱', priority: true },
   { href: '/news', label: 'News', icon: '📰', priority: true },
   { href: '/spaces', label: 'Spaces', icon: '🔊', priority: false },
   { href: '/leaderboard', label: 'Top', icon: '🏆', priority: false },
@@ -91,7 +93,7 @@ export function BottomNav() {
     return () => {
       if (dmIntervalRef.current) clearInterval(dmIntervalRef.current);
     };
-  }, [hasSignedIn, setDmCount]);
+  }, [hasSignedIn]);
 
   // Determine signed-in state
   const signedIn = ready && hasSignedIn;
@@ -127,12 +129,18 @@ export function BottomNav() {
                 }}
               />
               {signedIn && dmCount > 0 && item.href === '/messages' && (
-                <span className="absolute top-0 right-1/2 translate-x-[14px] bg-degen-500 text-black text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm">
+                <span
+                  className="absolute top-0 right-1/2 translate-x-[14px] bg-degen-500 text-black text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm"
+                  aria-label={`${dmCount} unread messages`}
+                >
                   {dmCount > 9 ? '9+' : dmCount}
                 </span>
               )}
               {signedIn && notifCount > 0 && item.href === '/notifications' && (
-                <span className="absolute top-0 right-1/2 translate-x-[14px] bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm">
+                <span
+                  className="absolute top-0 right-1/2 translate-x-[14px] bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm"
+                  aria-label={`${notifCount} unread notifications`}
+                >
                   {notifCount > 9 ? '9+' : notifCount}
                 </span>
               )}

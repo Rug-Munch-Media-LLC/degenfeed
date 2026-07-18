@@ -1,4 +1,4 @@
-import { HeaderSkeleton, Badge, Line, ListSkeleton } from '@/components/loading/PageSkeleton';
+import { Badge, HeaderSkeleton, Line, ListSkeleton } from '@/components/loading/PageSkeleton';
 
 export default function TrendingLoading() {
   return (
