@@ -188,47 +188,55 @@ const SUGGESTIONS: Record<
 };
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const protocolsParam = url.searchParams.get('protocols');
+  try {
+    const url = new URL(request.url);
+    const protocolsParam = url.searchParams.get('protocols');
 
-  let protocols: string[];
-  if (protocolsParam) {
-    protocols = protocolsParam.split(',').filter((p) => p in SUGGESTIONS);
-  } else {
-    protocols = Object.keys(SUGGESTIONS);
-  }
-
-  // Gather up to 5 accounts, prioritizing selected protocols
-  const suggestions: Array<{
-    id: string;
-    name: string;
-    handle: string;
-    avatar: string;
-    bio: string;
-    protocol: string;
-  }> = [];
-  const perProtocolLimit = Math.max(1, Math.floor(8 / protocols.length));
-
-  for (const proto of protocols) {
-    const accounts = SUGGESTIONS[proto] ?? [];
-    for (const account of accounts.slice(0, perProtocolLimit)) {
-      suggestions.push({ ...account, protocol: proto });
+    let protocols: string[];
+    if (protocolsParam) {
+      protocols = protocolsParam.split(',').filter((p) => p in SUGGESTIONS);
+    } else {
+      protocols = Object.keys(SUGGESTIONS);
     }
-  }
 
-  // Fill remaining slots with overflow from any protocol
-  if (suggestions.length < 5) {
+    // Gather up to 5 accounts, prioritizing selected protocols
+    const suggestions: Array<{
+      id: string;
+      name: string;
+      handle: string;
+      avatar: string;
+      bio: string;
+      protocol: string;
+    }> = [];
+    const perProtocolLimit = Math.max(1, Math.floor(8 / protocols.length));
+
     for (const proto of protocols) {
-      if (suggestions.length >= 5) break;
-      const overflow = (SUGGESTIONS[proto] ?? []).slice(perProtocolLimit);
-      for (const account of overflow) {
+      const accounts = SUGGESTIONS[proto] ?? [];
+      for (const account of accounts.slice(0, perProtocolLimit)) {
+        suggestions.push({ ...account, protocol: proto });
+      }
+    }
+
+    // Fill remaining slots with overflow from any protocol
+    if (suggestions.length < 5) {
+      for (const proto of protocols) {
         if (suggestions.length >= 5) break;
-        if (!suggestions.find((s) => s.id === account.id)) {
-          suggestions.push({ ...account, protocol: proto });
+        const overflow = (SUGGESTIONS[proto] ?? []).slice(perProtocolLimit);
+        for (const account of overflow) {
+          if (suggestions.length >= 5) break;
+          if (!suggestions.find((s) => s.id === account.id)) {
+            suggestions.push({ ...account, protocol: proto });
+          }
         }
       }
     }
-  }
 
-  return NextResponse.json({ suggestions, total: suggestions.length });
+    return NextResponse.json({
+      data: suggestions,
+      meta: { total: suggestions.length, protocols },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return NextResponse.json({ error: message, status: 500 }, { status: 500 });
+  }
 }

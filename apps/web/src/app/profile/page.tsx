@@ -1003,7 +1003,7 @@ export default function ProfilePage() {
                 <span className="ml-auto text-xs text-[var(--color-muted)]">→</span>
               </a>
               <a href="/settings" className="card-hover flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-500/10 text-gray-400">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-overlay)] text-[var(--color-muted)]">
                   <svg
                     width="18"
                     height="18"

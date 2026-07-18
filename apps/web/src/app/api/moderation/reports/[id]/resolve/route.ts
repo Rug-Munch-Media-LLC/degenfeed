@@ -1,0 +1,11 @@
+import { NextResponse } from 'next/server';
+
+export const runtime = 'nodejs';
+
+export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  console.log(`[moderation] Report ${id} resolved`);
+
+  return NextResponse.json({ ok: true, id, status: 'resolved' });
+}

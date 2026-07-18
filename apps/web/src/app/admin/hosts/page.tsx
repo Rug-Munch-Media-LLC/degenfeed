@@ -15,8 +15,22 @@ interface ServerInfo {
   memory: { total: number; used: number; usagePercent: number };
   disk: { total: number; used: number; usagePercent: number };
   network: { rxBytes: number; txBytes: number; uptime: number };
-  services: { name: string; status: 'running' | 'stopped' | 'error'; port?: number; cpu?: number; memory?: number }[];
-  containers: { name: string; image: string; status: 'running' | 'stopped' | 'restarting'; ports?: string; uptime?: number; cpu?: number; memory?: number }[];
+  services: {
+    name: string;
+    status: 'running' | 'stopped' | 'error';
+    port?: number;
+    cpu?: number;
+    memory?: number;
+  }[];
+  containers: {
+    name: string;
+    image: string;
+    status: 'running' | 'stopped' | 'restarting';
+    ports?: string;
+    uptime?: number;
+    cpu?: number;
+    memory?: number;
+  }[];
   lastSeen: number;
   os: string;
   kernel: string;
@@ -48,11 +62,42 @@ const DEFAULT_SERVERS: ServerInfo[] = [
       { name: 'PostgreSQL', status: 'running', port: 5432, cpu: 3.5, memory: 2048 },
     ],
     containers: [
-      { name: 'degenfeed-api', image: 'degenfeed/api:latest', status: 'running', ports: '3000', cpu: 5.2, memory: 256 },
-      { name: 'feed-worker', image: 'degenfeed/worker:latest', status: 'running', cpu: 18.3, memory: 512 },
-      { name: 'tip-indexer', image: 'degenfeed/tip-indexer:latest', status: 'running', cpu: 1.4, memory: 128 },
-      { name: 'postgres-15', image: 'postgres:15-alpine', status: 'running', cpu: 2.8, memory: 1024 },
-      { name: 'redis-stack', image: 'redis/redis-stack:latest', status: 'running', cpu: 0.6, memory: 64 },
+      {
+        name: 'degenfeed-api',
+        image: 'degenfeed/api:latest',
+        status: 'running',
+        ports: '3000',
+        cpu: 5.2,
+        memory: 256,
+      },
+      {
+        name: 'feed-worker',
+        image: 'degenfeed/worker:latest',
+        status: 'running',
+        cpu: 18.3,
+        memory: 512,
+      },
+      {
+        name: 'tip-indexer',
+        image: 'degenfeed/tip-indexer:latest',
+        status: 'running',
+        cpu: 1.4,
+        memory: 128,
+      },
+      {
+        name: 'postgres-15',
+        image: 'postgres:15-alpine',
+        status: 'running',
+        cpu: 2.8,
+        memory: 1024,
+      },
+      {
+        name: 'redis-stack',
+        image: 'redis/redis-stack:latest',
+        status: 'running',
+        cpu: 0.6,
+        memory: 64,
+      },
     ],
     lastSeen: Date.now(),
     os: 'Ubuntu 24.04 LTS',
@@ -77,11 +122,45 @@ const DEFAULT_SERVERS: ServerInfo[] = [
       { name: 'Prometheus', status: 'running', port: 9090, cpu: 1.8, memory: 384 },
     ],
     containers: [
-      { name: 'searxng', image: 'searxng/searxng:latest', status: 'running', ports: '8089', cpu: 3.1, memory: 192 },
-      { name: 'n8n-workflow', image: 'n8nio/n8n:latest', status: 'running', ports: '5678', cpu: 5.4, memory: 512 },
-      { name: 'grafana', image: 'grafana/grafana:latest', status: 'running', ports: '3000', cpu: 2.2, memory: 256 },
-      { name: 'prometheus', image: 'prom/prometheus:latest', status: 'running', ports: '9090', cpu: 1.5, memory: 384 },
-      { name: 'node-exporter', image: 'prom/node-exporter:latest', status: 'running', cpu: 0.3, memory: 16 },
+      {
+        name: 'searxng',
+        image: 'searxng/searxng:latest',
+        status: 'running',
+        ports: '8089',
+        cpu: 3.1,
+        memory: 192,
+      },
+      {
+        name: 'n8n-workflow',
+        image: 'n8nio/n8n:latest',
+        status: 'running',
+        ports: '5678',
+        cpu: 5.4,
+        memory: 512,
+      },
+      {
+        name: 'grafana',
+        image: 'grafana/grafana:latest',
+        status: 'running',
+        ports: '3000',
+        cpu: 2.2,
+        memory: 256,
+      },
+      {
+        name: 'prometheus',
+        image: 'prom/prometheus:latest',
+        status: 'running',
+        ports: '9090',
+        cpu: 1.5,
+        memory: 384,
+      },
+      {
+        name: 'node-exporter',
+        image: 'prom/node-exporter:latest',
+        status: 'running',
+        cpu: 0.3,
+        memory: 16,
+      },
     ],
     lastSeen: Date.now(),
     os: 'Ubuntu 24.04 LTS',
@@ -113,7 +192,7 @@ function formatGB(mb: number): string {
 export default function AdminHostsPage() {
   const [servers, setServers] = useState<ServerInfo[]>(DEFAULT_SERVERS);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; kind: 'success' | 'error' } | null>(null);
 
@@ -138,21 +217,24 @@ export default function AdminHostsPage() {
     fetchHosts().finally(() => setLoading(false));
   }, [fetchHosts]);
 
-  const handleRestartService = useCallback(async (serverId: string, serviceName: string) => {
-    try {
-      const res = await fetch(`/api/admin/hosts/${serverId}/services/${serviceName}/restart`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        showToast(`Restarting ${serviceName} on ${serverId}…`);
-      } else {
-        showToast(`Failed to restart ${serviceName}`, 'error');
+  const handleRestartService = useCallback(
+    async (serverId: string, serviceName: string) => {
+      try {
+        const res = await fetch(`/api/admin/hosts/${serverId}/services/${serviceName}/restart`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (res.ok) {
+          showToast(`Restarting ${serviceName} on ${serverId}…`);
+        } else {
+          showToast(`Failed to restart ${serviceName}`, 'error');
+        }
+      } catch {
+        showToast('Network error restarting service', 'error');
       }
-    } catch {
-      showToast('Network error restarting service', 'error');
-    }
-  }, [showToast]);
+    },
+    [showToast],
+  );
 
   if (loading) {
     return (
@@ -165,7 +247,15 @@ export default function AdminHostsPage() {
     );
   }
 
-  const activeServer = servers.find((s) => s.id === selectedServer) || servers[0];
+  const defaultServer = servers[0];
+  const activeServer = servers.find((s) => s.id === selectedServer) || defaultServer;
+  if (!activeServer) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-6 text-center">
+        <p className="text-sm text-gray-500">No server data available.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -200,14 +290,16 @@ export default function AdminHostsPage() {
             className={`rounded-xl px-5 py-3 text-left transition-colors ${
               activeServer.id === s.id
                 ? 'border border-degen-500/30 bg-degen-500/10'
-                : 'border border-[var(--color-border)] bg-[var(--color-card)] hover:border-gray-600'
+                : 'border border-[var(--color-border)] bg-[var(--color-card)] hover:border-[var(--color-border)]'
             }`}
           >
             <div className="flex items-center gap-2">
-              <div className={`h-2.5 w-2.5 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)] ${s.containers.every(c => c.status === 'running') ? 'bg-green-500' : 'bg-yellow-500'}`} />
+              <div
+                className={`h-2.5 w-2.5 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)] ${s.containers.every((c) => c.status === 'running') ? 'bg-green-500' : 'bg-yellow-500'}`}
+              />
               <span className="text-sm font-semibold text-[var(--color-fg)]">{s.name}</span>
             </div>
-            <p className="mt-0.5 text-[10px] text-gray-500">{s.hostname}</p>
+            <p className="mt-0.5 text-[10px] text-[var(--color-muted)]">{s.hostname}</p>
           </button>
         ))}
       </div>
@@ -221,19 +313,37 @@ export default function AdminHostsPage() {
               label="CPU"
               usage={activeServer.cpu.usage}
               detail={`${activeServer.cpu.cores} cores · ${activeServer.cpu.model}`}
-              color={activeServer.cpu.usage > 80 ? 'red' : activeServer.cpu.usage > 60 ? 'yellow' : 'green'}
+              color={
+                activeServer.cpu.usage > 80
+                  ? 'red'
+                  : activeServer.cpu.usage > 60
+                    ? 'yellow'
+                    : 'green'
+              }
             />
             <ResourceCard
               label="RAM"
               usage={activeServer.memory.usagePercent}
               detail={`${formatGB(activeServer.memory.used)} / ${formatGB(activeServer.memory.total)}`}
-              color={activeServer.memory.usagePercent > 80 ? 'red' : activeServer.memory.usagePercent > 60 ? 'yellow' : 'green'}
+              color={
+                activeServer.memory.usagePercent > 80
+                  ? 'red'
+                  : activeServer.memory.usagePercent > 60
+                    ? 'yellow'
+                    : 'green'
+              }
             />
             <ResourceCard
               label="Disk"
               usage={activeServer.disk.usagePercent}
               detail={`${activeServer.disk.used} GB / ${activeServer.disk.total} GB`}
-              color={activeServer.disk.usagePercent > 80 ? 'red' : activeServer.disk.usagePercent > 60 ? 'yellow' : 'green'}
+              color={
+                activeServer.disk.usagePercent > 80
+                  ? 'red'
+                  : activeServer.disk.usagePercent > 60
+                    ? 'yellow'
+                    : 'green'
+              }
             />
           </div>
 
@@ -245,7 +355,10 @@ export default function AdminHostsPage() {
             <InfoBadge label="Uptime" value={formatDuration(activeServer.network.uptime)} />
             <InfoBadge label="Network RX" value={formatBytes(activeServer.network.rxBytes)} />
             <InfoBadge label="Network TX" value={formatBytes(activeServer.network.txBytes)} />
-            <InfoBadge label="Temperature" value={activeServer.cpu.temperature ? `${activeServer.cpu.temperature}°C` : 'N/A'} />
+            <InfoBadge
+              label="Temperature"
+              value={activeServer.cpu.temperature ? `${activeServer.cpu.temperature}°C` : 'N/A'}
+            />
             <InfoBadge label="IP" value={activeServer.ip} />
           </div>
 
@@ -256,32 +369,58 @@ export default function AdminHostsPage() {
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
                   <tr>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Service</th>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Port</th>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">CPU</th>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Memory</th>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Status</th>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Actions</th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Service
+                    </th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Port
+                    </th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      CPU
+                    </th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Memory
+                    </th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Status
+                    </th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border)]">
                   {activeServer.services.map((svc) => (
                     <tr key={svc.name} className="bg-[var(--color-card)]">
                       <td className="px-4 py-3 font-medium text-[var(--color-fg)]">{svc.name}</td>
-                      <td className="px-4 py-3 text-gray-400 font-mono text-xs">{svc.port || '—'}</td>
-                      <td className="px-4 py-3 text-gray-400">{svc.cpu != null ? `${svc.cpu}%` : '—'}</td>
-                      <td className="px-4 py-3 text-gray-400">{svc.memory ? formatGB(svc.memory) : '—'}</td>
+                      <td className="px-4 py-3 text-[var(--color-muted)] font-mono text-xs">
+                        {svc.port || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--color-muted)]">
+                        {svc.cpu != null ? `${svc.cpu}%` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--color-muted)]">
+                        {svc.memory ? formatGB(svc.memory) : '—'}
+                      </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                          svc.status === 'running'
-                            ? 'bg-green-500/15 text-green-400'
-                            : svc.status === 'error'
-                              ? 'bg-red-500/15 text-red-400'
-                              : 'bg-gray-500/15 text-gray-400'
-                        }`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${
-                            svc.status === 'running' ? 'bg-green-500' : svc.status === 'error' ? 'bg-red-500' : 'bg-gray-500'
-                          }`} />
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            svc.status === 'running'
+                              ? 'bg-green-500/15 text-green-400'
+                              : svc.status === 'error'
+                                ? 'bg-red-500/15 text-red-400'
+                                : 'bg-[var(--color-overlay)] text-[var(--color-muted)]'
+                          }`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              svc.status === 'running'
+                                ? 'bg-green-500'
+                                : svc.status === 'error'
+                                  ? 'bg-red-500'
+                                  : 'bg-[var(--color-muted)]'
+                            }`}
+                          />
                           {svc.status}
                         </span>
                       </td>
@@ -289,7 +428,7 @@ export default function AdminHostsPage() {
                         <button
                           type="button"
                           onClick={() => handleRestartService(activeServer.id, svc.name)}
-                          className="rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-[10px] text-gray-400 transition-colors hover:bg-[var(--color-muted)]"
+                          className="rounded-lg border border-[var(--color-border)] px-2.5 py-1 text-[10px] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-muted)]"
                         >
                           ↻ Restart
                         </button>
@@ -308,33 +447,61 @@ export default function AdminHostsPage() {
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
                   <tr>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Name</th>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Image</th>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Ports</th>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">CPU</th>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Memory</th>
-                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Status</th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Name
+                    </th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Image
+                    </th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Ports
+                    </th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      CPU
+                    </th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Memory
+                    </th>
+                    <th className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border)]">
                   {activeServer.containers.map((ct) => (
                     <tr key={ct.name} className="bg-[var(--color-card)]">
                       <td className="px-4 py-3 font-medium text-[var(--color-fg)]">{ct.name}</td>
-                      <td className="px-4 py-3 font-mono text-[10px] text-gray-400">{ct.image}</td>
-                      <td className="px-4 py-3 text-gray-400 font-mono text-xs">{ct.ports || '—'}</td>
-                      <td className="px-4 py-3 text-gray-400">{ct.cpu != null ? `${ct.cpu}%` : '—'}</td>
-                      <td className="px-4 py-3 text-gray-400">{ct.memory ? `${ct.memory} MB` : '—'}</td>
+                      <td className="px-4 py-3 font-mono text-[10px] text-[var(--color-muted)]">
+                        {ct.image}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--color-muted)] font-mono text-xs">
+                        {ct.ports || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--color-muted)]">
+                        {ct.cpu != null ? `${ct.cpu}%` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--color-muted)]">
+                        {ct.memory ? `${ct.memory} MB` : '—'}
+                      </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                          ct.status === 'running'
-                            ? 'bg-green-500/15 text-green-400'
-                            : ct.status === 'restarting'
-                              ? 'bg-yellow-500/15 text-yellow-400'
-                              : 'bg-gray-500/15 text-gray-400'
-                        }`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${
-                            ct.status === 'running' ? 'bg-green-500' : ct.status === 'restarting' ? 'bg-yellow-500' : 'bg-gray-500'
-                          }`} />
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            ct.status === 'running'
+                              ? 'bg-green-500/15 text-green-400'
+                              : ct.status === 'restarting'
+                                ? 'bg-yellow-500/15 text-yellow-400'
+                                : 'bg-[var(--color-overlay)] text-[var(--color-muted)]'
+                          }`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              ct.status === 'running'
+                                ? 'bg-green-500'
+                                : ct.status === 'restarting'
+                                  ? 'bg-yellow-500'
+                                  : 'bg-[var(--color-muted)]'
+                            }`}
+                          />
                           {ct.status}
                         </span>
                       </td>
@@ -359,7 +526,12 @@ export default function AdminHostsPage() {
 
 // ─── Sub-components ───────────────────────────────────────────────────
 
-function ResourceCard({ label, usage, detail, color }: {
+function ResourceCard({
+  label,
+  usage,
+  detail,
+  color,
+}: {
   label: string;
   usage: number;
   detail: string;
@@ -390,7 +562,9 @@ function ResourceCard({ label, usage, detail, color }: {
 function InfoBadge({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">{label}</p>
+      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+        {label}
+      </p>
       <p className="text-xs font-medium text-[var(--color-fg)] truncate">{value}</p>
     </div>
   );

@@ -64,7 +64,7 @@ function EmptyState({ icon, title, subtitle }: { icon: string; title: string; su
     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] py-16">
       <span className="mb-3 text-3xl opacity-30">{icon}</span>
       <p className="text-sm font-medium text-[var(--color-muted)]">{title}</p>
-      <p className="mt-1 text-xs text-gray-600">{subtitle}</p>
+      <p className="mt-1 text-xs text-[var(--color-muted)]">{subtitle}</p>
     </div>
   );
 }
@@ -76,7 +76,7 @@ function WordChip({ word, onRemove }: { word: string; onRemove: (w: string) => v
       <button
         type="button"
         onClick={() => onRemove(word)}
-        className="text-gray-500 hover:text-red-400 transition-colors"
+        className="text-[var(--color-muted)] hover:text-red-400 transition-colors"
         aria-label={`Remove ${word}`}
       >
         ×
@@ -236,7 +236,7 @@ export default function MutedSettingsPage() {
             className={`pb-3 pt-2 px-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
                 ? 'border-degen-500 text-[var(--color-fg)]'
-                : 'border-transparent text-gray-500 hover:text-[var(--color-fg)]'
+                : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-fg)]'
             }`}
           >
             {tab.label}
@@ -303,18 +303,18 @@ export default function MutedSettingsPage() {
               >
                 <div>
                   <p className="text-sm font-medium text-[var(--color-fg)]">{u.targetHandle}</p>
-                  <p className="text-xs text-gray-500">
+<p className="text-xs text-[var(--color-muted)]">
                     {PROTOCOL_ICONS[u.protocol] || ''} {protocolLabel(u.protocol)} · Muted{' '}
                     {formatDate(u.mutedAt)}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => unmuteUser(u.targetId)}
-                  className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-[var(--color-fg)] transition-colors"
-                >
-                  Unmute
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => unmuteUser(u.targetId)}
+                    className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+                  >
+                    Unmute
+                  </button>
               </div>
             ))}
           </div>
@@ -337,12 +337,12 @@ export default function MutedSettingsPage() {
               >
                 <div>
                   <p className="text-sm font-medium text-[var(--color-fg)]">{c.communityName}</p>
-                  {c.instance && <p className="text-xs text-gray-500">{c.instance}</p>}
+                  {c.instance && <p className="text-xs text-[var(--color-muted)]">{c.instance}</p>}
                 </div>
                 <button
                   type="button"
                   onClick={() => unmuteCommunity(c.communityId)}
-                  className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-[var(--color-fg)] transition-colors"
+                  className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 >
                   Unmute
                 </button>
@@ -363,7 +363,7 @@ export default function MutedSettingsPage() {
           <div className="space-y-4">
             {config.blockedUsers.length > 0 && (
               <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   Blocked Users
                 </h3>
                 <div className="space-y-2">
@@ -378,7 +378,7 @@ export default function MutedSettingsPage() {
                       <button
                         type="button"
                         onClick={() => unblockUser(u.blockedTargetId)}
-                        className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-red-400 transition-colors"
+                        className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:text-red-400 transition-colors"
                       >
                         Unblock
                       </button>
@@ -389,7 +389,7 @@ export default function MutedSettingsPage() {
             )}
             {config.blockedCommunities.length > 0 && (
               <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                   Blocked Communities
                 </h3>
                 <div className="space-y-2">
@@ -402,12 +402,12 @@ export default function MutedSettingsPage() {
                         <p className="text-sm font-medium text-[var(--color-fg)]">
                           {c.communityName}
                         </p>
-                        {c.instance && <p className="text-xs text-gray-500">{c.instance}</p>}
+                        {c.instance && <p className="text-xs text-[var(--color-muted)]">{c.instance}</p>}
                       </div>
                       <button
                         type="button"
                         onClick={() => unblockCommunity(c.communityId)}
-                        className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-red-400 transition-colors"
+                        className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:text-red-400 transition-colors"
                       >
                         Unblock
                       </button>
@@ -420,10 +420,10 @@ export default function MutedSettingsPage() {
         ))}
 
       <div className="mt-8 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)] mb-1">
           About Muting & Blocking
         </h3>
-        <p className="text-xs text-gray-500 leading-relaxed">
+        <p className="text-xs text-[var(--color-muted)] leading-relaxed">
           Muted words hide posts containing those terms. Muted users and communities collapse their
           content. Blocking prevents all interaction. These settings sync across all protocols where
           supported.

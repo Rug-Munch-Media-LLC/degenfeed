@@ -7,7 +7,6 @@
  * scores post relevance to a category, and blends multi-category mixes.
  */
 
-import { deduplicatePosts } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 
 export const ALL_CATEGORIES = [
@@ -331,8 +330,43 @@ export interface CategoryFeedResult {
 }
 
 /**
+ * Category fallback map: thin/empty categories fall back to related
+ * categories so users never see "no posts" on a category page.
+ *
+ * Added 2026-07-18: ensures every category has fallback content.
+ */
+const CATEGORY_FALLBACKS: Record<CategorySlug, CategorySlug[]> = {
+  defi: ['ethereum', 'layer2', 'stablecoin'],
+  nft: ['gaming', 'memes', 'news'],
+  trading: ['bitcoin', 'ethereum', 'news'],
+  ai: ['news', 'trading'],
+  memecoin: ['memes', 'trading', 'news'],
+  security: ['news', 'ethereum', 'defi'],
+  news: ['bitcoin', 'ethereum', 'defi'],
+  memes: ['memecoin', 'nft', 'gaming'],
+  bitcoin: ['news', 'ethereum', 'trading'],
+  ethereum: ['defi', 'layer2', 'news'],
+  solana: ['defi', 'memecoin', 'news'],
+  layer2: ['ethereum', 'defi', 'news'],
+  stablecoin: ['defi', 'ethereum', 'news'],
+  regulation: ['news', 'bitcoin', 'defi'],
+  gaming: ['nft', 'news', 'memes'],
+};
+
+/**
+ * Minimum posts needed from the primary category before the feed stops
+ * looking at fallback categories. When primary yields fewer than this,
+ * fallback categories are blended in.
+ */
+export const CATEGORY_FALLBACK_MIN_POSTS = 5;
+
+/**
  * Filters and ranks posts for a single category feed.
  * Applies relevance threshold, author diversity cap, and protocol diversity.
+ *
+ * When the primary category has fewer than CATEGORY_FALLBACK_MIN_POSTS
+ * posts, falls back to related categories to ensure the feed is never empty.
+ * Fallback posts get a reduced score penalty (-0.1) so they appear lower.
  */
 export function buildCategoryFeed(
   posts: UnifiedPost[],
@@ -350,6 +384,25 @@ export function buildCategoryFeed(
     const catScore = scores.get(opts.category) ?? 0;
     if (catScore >= minScore) {
       scored.push({ ...p, categoryScore: catScore });
+    }
+  }
+
+  // If the primary category has very few posts, fall back to related categories
+  if (scored.length < CATEGORY_FALLBACK_MIN_POSTS) {
+    const fallbackCats = CATEGORY_FALLBACKS[opts.category] ?? [];
+    const seenIds = new Set<string>(scored.map((p) => p.id));
+    for (const fallbackCat of fallbackCats) {
+      for (const p of posts) {
+        if (seenIds.has(p.id)) continue;
+        const scores = scoreCategoryRelevance(p);
+        const fbScore = scores.get(fallbackCat) ?? 0;
+        if (fbScore >= minScore) {
+          // Apply a small penalty to fallback posts so primary-category posts rank higher
+          scored.push({ ...p, categoryScore: Math.max(fbScore - 0.1, 0.05) });
+          seenIds.add(p.id);
+        }
+      }
+      if (scored.length >= limit) break;
     }
   }
 

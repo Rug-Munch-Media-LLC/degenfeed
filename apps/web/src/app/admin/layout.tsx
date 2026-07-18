@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 
 // ─── Nav config ─────────────────────────────────────────────────────────
@@ -15,9 +15,7 @@ interface NavSection {
 const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Overview',
-    items: [
-      { href: '/admin', icon: '📊', label: 'Dashboard' },
-    ],
+    items: [{ href: '/admin', icon: '📊', label: 'Dashboard' }],
   },
   {
     label: 'Content',
@@ -71,9 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="text-center">
           <div className="mb-6 text-6xl">🔒</div>
           <h1 className="mb-4 text-3xl font-bold text-[var(--color-fg)]">Admin Access Required</h1>
-          <p className="mb-2 text-gray-400">
-            You need an admin wallet to access this area.
-          </p>
+          <p className="mb-2 text-gray-400">You need an admin wallet to access this area.</p>
           {walletAddress && (
             <p className="mb-6 text-sm text-gray-500">
               Connected: <code className="text-degen-400">{shortAddr(walletAddress)}</code>
@@ -186,7 +182,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             className="rounded-lg p-2 text-gray-400 hover:bg-[var(--color-muted)] transition-colors"
             aria-label="Open sidebar"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <title>Menu</title>
               <line x1="3" y1="6" x2="21" y2="6" />
               <line x1="3" y1="12" x2="21" y2="12" />
               <line x1="3" y1="18" x2="21" y2="18" />
@@ -197,9 +204,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page content */}
-        <main className="flex-1">
-          {children}
-        </main>
+        <main className="flex-1">{children}</main>
       </div>
     </div>
   );

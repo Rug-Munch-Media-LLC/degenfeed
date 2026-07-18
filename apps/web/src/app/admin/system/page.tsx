@@ -36,21 +36,111 @@ interface SystemConfig {
 // ─── Default data ─────────────────────────────────────────────────────
 
 const DEFAULT_FLAGS: FeatureFlag[] = [
-  { key: 'cross_protocol_posting', label: 'Cross-Protocol Posting', description: 'Allow posting to multiple protocols simultaneously', enabled: true, category: 'content' },
-  { key: 'tip_system', label: 'Tip System', description: 'Enable crypto tipping on content', enabled: true, category: 'social' },
-  { key: 'community_creation', label: 'Community Creation', description: 'Allow users to create communities', enabled: true, category: 'social' },
-  { key: 'short_videos', label: 'Short Videos', description: 'Enable the shorts/tik-tok style video feed', enabled: true, category: 'content' },
-  { key: 'spaces_live_audio', label: 'Spaces Live Audio', description: 'Live audio rooms feature', enabled: true, category: 'social' },
-  { key: 'trending_algorithms_v2', label: 'Trending Algorithms V2', description: 'New ML-based trending algorithm', enabled: false, category: 'experimental' },
-  { key: 'content_moderation_ai', label: 'AI Content Moderation', description: 'Auto-flag content using AI classifiers', enabled: true, category: 'content' },
-  { key: 'feed_caching', label: 'Feed Caching', description: 'Cache aggregated feeds for faster loading', enabled: true, category: 'performance' },
-  { key: 'real_time_updates', label: 'Real-Time Updates', description: 'WebSocket-based real-time feed updates', enabled: true, category: 'performance' },
-  { key: 'analytics_tracking', label: 'Analytics Tracking', description: 'Collect usage analytics (privacy-first)', enabled: true, category: 'infrastructure' },
-  { key: 'recommendation_engine', label: 'Recommendation Engine', description: 'Personalized content recommendations', enabled: false, category: 'experimental' },
-  { key: 'nft_integration', label: 'NFT Integration', description: 'NFT display and verification on profiles', enabled: false, category: 'experimental' },
-  { key: 'pwa_offline_mode', label: 'PWA Offline Mode', description: 'Offline reading with service worker cache', enabled: true, category: 'performance' },
-  { key: 'email_notifications', label: 'Email Notifications', description: 'Send email digests and alerts', enabled: false, category: 'infrastructure' },
-  { key: 'federation_outgoing', label: 'Outgoing Federation', description: 'Push content to external protocols', enabled: true, category: 'content' },
+  {
+    key: 'cross_protocol_posting',
+    label: 'Cross-Protocol Posting',
+    description: 'Allow posting to multiple protocols simultaneously',
+    enabled: true,
+    category: 'content',
+  },
+  {
+    key: 'tip_system',
+    label: 'Tip System',
+    description: 'Enable crypto tipping on content',
+    enabled: true,
+    category: 'social',
+  },
+  {
+    key: 'community_creation',
+    label: 'Community Creation',
+    description: 'Allow users to create communities',
+    enabled: true,
+    category: 'social',
+  },
+  {
+    key: 'short_videos',
+    label: 'Short Videos',
+    description: 'Enable the shorts/tik-tok style video feed',
+    enabled: true,
+    category: 'content',
+  },
+  {
+    key: 'spaces_live_audio',
+    label: 'Spaces Live Audio',
+    description: 'Live audio rooms feature',
+    enabled: true,
+    category: 'social',
+  },
+  {
+    key: 'trending_algorithms_v2',
+    label: 'Trending Algorithms V2',
+    description: 'New ML-based trending algorithm',
+    enabled: false,
+    category: 'experimental',
+  },
+  {
+    key: 'content_moderation_ai',
+    label: 'AI Content Moderation',
+    description: 'Auto-flag content using AI classifiers',
+    enabled: true,
+    category: 'content',
+  },
+  {
+    key: 'feed_caching',
+    label: 'Feed Caching',
+    description: 'Cache aggregated feeds for faster loading',
+    enabled: true,
+    category: 'performance',
+  },
+  {
+    key: 'real_time_updates',
+    label: 'Real-Time Updates',
+    description: 'WebSocket-based real-time feed updates',
+    enabled: true,
+    category: 'performance',
+  },
+  {
+    key: 'analytics_tracking',
+    label: 'Analytics Tracking',
+    description: 'Collect usage analytics (privacy-first)',
+    enabled: true,
+    category: 'infrastructure',
+  },
+  {
+    key: 'recommendation_engine',
+    label: 'Recommendation Engine',
+    description: 'Personalized content recommendations',
+    enabled: false,
+    category: 'experimental',
+  },
+  {
+    key: 'nft_integration',
+    label: 'NFT Integration',
+    description: 'NFT display and verification on profiles',
+    enabled: false,
+    category: 'experimental',
+  },
+  {
+    key: 'pwa_offline_mode',
+    label: 'PWA Offline Mode',
+    description: 'Offline reading with service worker cache',
+    enabled: true,
+    category: 'performance',
+  },
+  {
+    key: 'email_notifications',
+    label: 'Email Notifications',
+    description: 'Send email digests and alerts',
+    enabled: false,
+    category: 'infrastructure',
+  },
+  {
+    key: 'federation_outgoing',
+    label: 'Outgoing Federation',
+    description: 'Push content to external protocols',
+    enabled: true,
+    category: 'content',
+  },
 ];
 
 const DEFAULT_RATE_LIMITS: RateLimit[] = [
@@ -99,15 +189,15 @@ export default function AdminSystemPage() {
         fetch('/api/admin/config', { credentials: 'include' }),
       ]);
       if (flagsRes.ok) {
-        const d = await flagsRes.json() as { flags: FeatureFlag[] };
+        const d = (await flagsRes.json()) as { flags: FeatureFlag[] };
         if (d.flags) setFlags(d.flags);
       }
       if (limitsRes.ok) {
-        const d = await limitsRes.json() as { limits: RateLimit[] };
+        const d = (await limitsRes.json()) as { limits: RateLimit[] };
         if (d.limits) setRateLimits(d.limits);
       }
       if (configRes.ok) {
-        const d = await configRes.json() as SystemConfig;
+        const d = (await configRes.json()) as SystemConfig;
         if (d.apiVersion) setConfig(d);
       }
     } catch {
@@ -119,31 +209,34 @@ export default function AdminSystemPage() {
     fetchSystem().finally(() => setLoading(false));
   }, [fetchSystem]);
 
-  const handleToggleFlag = useCallback(async (key: string, newValue: boolean) => {
-    setTogglingFlag(key);
-    // Optimistic update
-    setFlags((prev) => prev.map((f) => (f.key === key ? { ...f, enabled: newValue } : f)));
-    try {
-      const res = await fetch(`/api/admin/flags/${key}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ enabled: newValue }),
-      });
-      if (res.ok) {
-        showToast(`Flag "${key}" ${newValue ? 'enabled' : 'disabled'}`);
-      } else {
-        // Rollback
+  const handleToggleFlag = useCallback(
+    async (key: string, newValue: boolean) => {
+      setTogglingFlag(key);
+      // Optimistic update
+      setFlags((prev) => prev.map((f) => (f.key === key ? { ...f, enabled: newValue } : f)));
+      try {
+        const res = await fetch(`/api/admin/flags/${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ enabled: newValue }),
+        });
+        if (res.ok) {
+          showToast(`Flag "${key}" ${newValue ? 'enabled' : 'disabled'}`);
+        } else {
+          // Rollback
+          setFlags((prev) => prev.map((f) => (f.key === key ? { ...f, enabled: !newValue } : f)));
+          showToast(`Failed to toggle "${key}"`, 'error');
+        }
+      } catch {
         setFlags((prev) => prev.map((f) => (f.key === key ? { ...f, enabled: !newValue } : f)));
-        showToast(`Failed to toggle "${key}"`, 'error');
+        showToast('Network error', 'error');
+      } finally {
+        setTogglingFlag(null);
       }
-    } catch {
-      setFlags((prev) => prev.map((f) => (f.key === key ? { ...f, enabled: !newValue } : f)));
-      showToast('Network error', 'error');
-    } finally {
-      setTogglingFlag(null);
-    }
-  }, [showToast]);
+    },
+    [showToast],
+  );
 
   const handleMaintenanceToggle = useCallback(async () => {
     const newVal = !config.maintenanceMode;
@@ -203,18 +296,22 @@ export default function AdminSystemPage() {
           <span>·</span>
           <span>build {config.buildVersion}</span>
           <span>·</span>
-          <span className={config.environment === 'production' ? 'text-degen-400' : 'text-yellow-400'}>
+          <span
+            className={config.environment === 'production' ? 'text-degen-400' : 'text-yellow-400'}
+          >
             {config.environment}
           </span>
         </div>
       </div>
 
       {/* Maintenance mode banner */}
-      <div className={`mb-6 rounded-xl border px-5 py-4 ${
-        config.maintenanceMode
-          ? 'border-yellow-500/30 bg-yellow-900/20'
-          : 'border-[var(--color-border)] bg-[var(--color-card)]'
-      }`}>
+      <div
+        className={`mb-6 rounded-xl border px-5 py-4 ${
+          config.maintenanceMode
+            ? 'border-yellow-500/30 bg-yellow-900/20'
+            : 'border-[var(--color-border)] bg-[var(--color-card)]'
+        }`}
+      >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-[var(--color-fg)]">
@@ -242,11 +339,13 @@ export default function AdminSystemPage() {
 
       {/* Tabs */}
       <div className="mb-6 flex gap-2">
-        {([
-          { key: 'flags', label: '🚩 Feature Flags' },
-          { key: 'limits', label: '⏱ Rate Limits' },
-          { key: 'config', label: '⚙️ Global Config' },
-        ] as const).map((tab) => (
+        {(
+          [
+            { key: 'flags', label: '🚩 Feature Flags' },
+            { key: 'limits', label: '⏱ Rate Limits' },
+            { key: 'config', label: '⚙️ Global Config' },
+          ] as const
+        ).map((tab) => (
           <button
             key={tab.key}
             type="button"
@@ -271,33 +370,35 @@ export default function AdminSystemPage() {
                 {cat}
               </h3>
               <div className="space-y-2">
-                {flags.filter((f) => f.category === cat).map((flag) => (
-                  <div
-                    key={flag.key}
-                    className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-5 py-4"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-[var(--color-fg)]">{flag.label}</p>
-                        <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-gray-500">
-                          {flag.key}
-                        </code>
-                      </div>
-                      <p className="mt-0.5 text-xs text-gray-500">{flag.description}</p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={flag.enabled}
-                      disabled={togglingFlag === flag.key}
-                      className={`toggle-track shrink-0 ml-4 ${togglingFlag === flag.key ? 'opacity-50' : ''}`}
-                      data-checked={flag.enabled}
-                      onClick={() => handleToggleFlag(flag.key, !flag.enabled)}
+                {flags
+                  .filter((f) => f.category === cat)
+                  .map((flag) => (
+                    <div
+                      key={flag.key}
+                      className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-5 py-4"
                     >
-                      <span className="toggle-thumb" />
-                    </button>
-                  </div>
-                ))}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-[var(--color-fg)]">{flag.label}</p>
+                          <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-gray-500">
+                            {flag.key}
+                          </code>
+                        </div>
+                        <p className="mt-0.5 text-xs text-gray-500">{flag.description}</p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={flag.enabled}
+                        disabled={togglingFlag === flag.key}
+                        className={`toggle-track shrink-0 ml-4 ${togglingFlag === flag.key ? 'opacity-50' : ''}`}
+                        data-checked={flag.enabled}
+                        onClick={() => handleToggleFlag(flag.key, !flag.enabled)}
+                      >
+                        <span className="toggle-thumb" />
+                      </button>
+                    </div>
+                  ))}
               </div>
             </div>
           ))}
@@ -317,12 +418,24 @@ export default function AdminSystemPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Endpoint</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Limit</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Window</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Current</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Usage</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Endpoint
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Limit
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Window
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Current
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Usage
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border)]">
@@ -330,7 +443,9 @@ export default function AdminSystemPage() {
                   const usagePct = (rl.current / rl.limit) * 100;
                   return (
                     <tr key={rl.endpoint} className="bg-[var(--color-card)]">
-                      <td className="px-4 py-3 font-mono text-xs text-[var(--color-fg)]">{rl.endpoint}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-[var(--color-fg)]">
+                        {rl.endpoint}
+                      </td>
                       <td className="px-4 py-3 text-gray-400">{rl.limit}</td>
                       <td className="px-4 py-3 text-gray-400">{rl.window}</td>
                       <td className="px-4 py-3 text-gray-400">{rl.current}</td>
@@ -339,7 +454,11 @@ export default function AdminSystemPage() {
                           <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[var(--color-muted)]">
                             <div
                               className={`h-full rounded-full ${
-                                usagePct > 80 ? 'bg-red-500' : usagePct > 60 ? 'bg-yellow-500' : 'bg-degen-500'
+                                usagePct > 80
+                                  ? 'bg-red-500'
+                                  : usagePct > 60
+                                    ? 'bg-yellow-500'
+                                    : 'bg-degen-500'
                               }`}
                               style={{ width: `${Math.min(usagePct, 100)}%` }}
                             />
@@ -348,16 +467,24 @@ export default function AdminSystemPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                          rl.status === 'ok'
-                            ? 'bg-green-500/15 text-green-400'
-                            : rl.status === 'near_limit'
-                              ? 'bg-yellow-500/15 text-yellow-400'
-                              : 'bg-red-500/15 text-red-400'
-                        }`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${
-                            rl.status === 'ok' ? 'bg-green-500' : rl.status === 'near_limit' ? 'bg-yellow-500' : 'bg-red-500'
-                          }`} />
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            rl.status === 'ok'
+                              ? 'bg-green-500/15 text-green-400'
+                              : rl.status === 'near_limit'
+                                ? 'bg-yellow-500/15 text-yellow-400'
+                                : 'bg-red-500/15 text-red-400'
+                          }`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              rl.status === 'ok'
+                                ? 'bg-green-500'
+                                : rl.status === 'near_limit'
+                                  ? 'bg-yellow-500'
+                                  : 'bg-red-500'
+                            }`}
+                          />
                           {rl.status.replace(/_/g, ' ')}
                         </span>
                       </td>
@@ -391,13 +518,17 @@ export default function AdminSystemPage() {
               label="Allow New Registrations"
               description="Enable sign-ups for new users"
               enabled={config.allowNewRegistrations}
-              onToggle={() => setConfig((p) => ({ ...p, allowNewRegistrations: !p.allowNewRegistrations }))}
+              onToggle={() =>
+                setConfig((p) => ({ ...p, allowNewRegistrations: !p.allowNewRegistrations }))
+              }
             />
             <ConfigToggleRow
               label="Require Email Verification"
               description="New users must verify email before posting"
               enabled={config.requireEmailVerification}
-              onToggle={() => setConfig((p) => ({ ...p, requireEmailVerification: !p.requireEmailVerification }))}
+              onToggle={() =>
+                setConfig((p) => ({ ...p, requireEmailVerification: !p.requireEmailVerification }))
+              }
             />
             <ConfigToggleRow
               label="Cache Enabled"
@@ -417,14 +548,23 @@ export default function AdminSystemPage() {
 function ConfigCard({ label, value, accent }: { label: string; value: string; accent?: 'green' }) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">{label}</p>
-      <p className={`text-sm font-medium ${accent === 'green' ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}>{value}</p>
+      <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+        {label}
+      </p>
+      <p
+        className={`text-sm font-medium ${accent === 'green' ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
 
 function ConfigToggleRow({
-  label, description, enabled, onToggle,
+  label,
+  description,
+  enabled,
+  onToggle,
 }: {
   label: string;
   description: string;

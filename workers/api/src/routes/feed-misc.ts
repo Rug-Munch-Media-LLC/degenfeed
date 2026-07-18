@@ -23,7 +23,7 @@ import { type Env, jsonResponse } from '../index';
 export async function handleRedditFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const subreddit = params.get('subreddit');
-  const limit = Math.min(Number(params.get('limit')) || 25, 100);
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
   const cacheKey = `reddit:v1:${subreddit || 'all'}:${limit}`;
   const cached = await readJsonCache<unknown>(env, cacheKey, 'reddit cache read');
   if (cached) return jsonResponse(cached);
@@ -66,7 +66,7 @@ export async function handleProviderFeed(
   }
   const protocol = provider as Protocol;
   const params = new URL(request.url).searchParams;
-  const limit = Math.min(Number(params.get('limit')) || 25, 100);
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
 
   try {
     const feedProvider = getProvider(protocol, env);

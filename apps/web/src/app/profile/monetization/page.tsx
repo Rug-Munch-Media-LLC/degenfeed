@@ -148,7 +148,7 @@ export default function MonetizationPage() {
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/profile"
-          className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-700 hover:text-[var(--color-fg)] transition-colors"
+          className="rounded-lg bg-[var(--color-muted)] px-3 py-1.5 text-xs text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
         >
           ← Back
         </Link>

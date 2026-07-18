@@ -16,66 +16,81 @@ function getSessionId(request: NextRequest): string {
 }
 
 export async function GET(request: NextRequest) {
-  const sessionId = getSessionId(request);
-  const prefs = preferencesStore.get(sessionId) ?? {};
-  return NextResponse.json(prefs);
+  try {
+    const sessionId = getSessionId(request);
+    const prefs = preferencesStore.get(sessionId) ?? {};
+    return NextResponse.json({ data: prefs });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return NextResponse.json({ error: message, status: 500 }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const body = (await request.json()) as Record<string, unknown>;
-  const sessionId = getSessionId(request);
-  const existing = preferencesStore.get(sessionId) ?? {};
-  preferencesStore.set(sessionId, { ...existing, ...body });
+  try {
+    const body = (await request.json()) as Record<string, unknown>;
+    const sessionId = getSessionId(request);
+    const existing = preferencesStore.get(sessionId) ?? {};
+    preferencesStore.set(sessionId, { ...existing, ...body });
 
-  const response = NextResponse.json({ ok: true });
+    const response = NextResponse.json({ data: { ok: true } });
 
-  // Handle theme cookie if present
-  if (typeof body.theme === 'string') {
-    response.cookies.set('df_theme', body.theme, {
+    // Handle theme cookie if present
+    if (typeof body.theme === 'string') {
+      response.cookies.set('df_theme', body.theme, {
+        path: '/',
+        maxAge: 31536000,
+        sameSite: 'lax',
+        secure: true,
+        httpOnly: false,
+      });
+    }
+
+    // Set session cookie
+    response.cookies.set('df_session', sessionId, {
       path: '/',
       maxAge: 31536000,
       sameSite: 'lax',
       secure: true,
-      httpOnly: false,
+      httpOnly: true,
     });
+
+    return response;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Invalid request body';
+    return NextResponse.json({ error: message, status: 400 }, { status: 400 });
   }
-
-  // Set session cookie
-  response.cookies.set('df_session', sessionId, {
-    path: '/',
-    maxAge: 31536000,
-    sameSite: 'lax',
-    secure: true,
-    httpOnly: true,
-  });
-
-  return response;
 }
 
 export async function PUT(request: NextRequest) {
-  const body = (await request.json()) as Record<string, unknown>;
-  const sessionId = getSessionId(request);
-  preferencesStore.set(sessionId, body as Record<string, unknown>);
+  try {
+    const body = (await request.json()) as Record<string, unknown>;
+    const sessionId = getSessionId(request);
+    preferencesStore.set(sessionId, body as Record<string, unknown>);
 
-  const response = NextResponse.json({ ok: true });
+    const response = NextResponse.json({ data: { ok: true } });
 
-  if (typeof (body as Record<string, unknown>).theme === 'string') {
-    response.cookies.set('df_theme', (body as Record<string, unknown>).theme as string, {
+    if (typeof (body as Record<string, unknown>).theme === 'string') {
+      response.cookies.set('df_theme', (body as Record<string, unknown>).theme as string, {
+        path: '/',
+        maxAge: 31536000,
+        sameSite: 'lax',
+        secure: true,
+        httpOnly: false,
+      });
+    }
+
+    response.cookies.set('df_session', sessionId, {
       path: '/',
       maxAge: 31536000,
       sameSite: 'lax',
       secure: true,
-      httpOnly: false,
+      httpOnly: true,
     });
+
+    return response;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Invalid request body';
+    return NextResponse.json({ error: message, status: 400 }, { status: 400 });
   }
-
-  response.cookies.set('df_session', sessionId, {
-    path: '/',
-    maxAge: 31536000,
-    sameSite: 'lax',
-    secure: true,
-    httpOnly: true,
-  });
-
-  return response;
 }

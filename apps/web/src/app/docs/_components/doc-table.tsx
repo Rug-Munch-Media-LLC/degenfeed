@@ -53,7 +53,7 @@ export function MethodBadge({ method }: { method: string }) {
   };
   return (
     <span
-      className={`inline-block rounded px-1.5 py-0.5 font-mono text-[10px] font-bold ${colors[method] ?? 'bg-gray-900/30 text-gray-400'}`}
+      className={`inline-block rounded px-1.5 py-0.5 font-mono text-[10px] font-bold ${colors[method] ?? 'bg-black/30 text-[var(--color-muted)]'}`}
     >
       {method}
     </span>

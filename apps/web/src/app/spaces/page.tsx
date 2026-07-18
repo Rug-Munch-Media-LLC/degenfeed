@@ -2,8 +2,15 @@
 
 import { getProtocolColor, getProtocolIcon, HostSpaceModal, SpaceRoom } from '@degenfeed/ui';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
+import { QuickTipButton } from '../../components/QuickTipButton';
+
+const TipModal = dynamic(
+  () => import('../../components/TipModal').then((m) => ({ default: m.TipModal })),
+  { ssr: false, loading: () => null },
+);
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -219,7 +226,15 @@ function SectionHeader({
 
 // ─── LiveSpaceCard ────────────────────────────────────────────────
 
-function LiveSpaceCard({ space, onJoin }: { space: SpaceItem; onJoin: (id: string) => void }) {
+function LiveSpaceCard({
+  space,
+  onJoin,
+  onTip,
+}: {
+  space: SpaceItem;
+  onJoin: (id: string) => void;
+  onTip: (space: SpaceItem) => void;
+}) {
   return (
     <div
       className="group relative flex w-[300px] shrink-0 snap-start flex-col rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5 transition-all duration-300 hover:border-degen-500/40 hover:shadow-[0_0_24px_rgba(0,255,65,0.06)]"
@@ -253,10 +268,20 @@ function LiveSpaceCard({ space, onJoin }: { space: SpaceItem; onJoin: (id: strin
         {space.title}
       </h3>
 
-      {/* Waveform + listeners */}
+      {/* Waveform + listeners + tip */}
       <div className="mb-3 flex items-center gap-2">
         <Waveform className="h-4" />
         <span className="text-[11px] font-medium text-gray-500">{space.listeners} listening</span>
+        {space.tippingEnabled && (
+          <span className="ml-auto">
+            <QuickTipButton
+              recipientProtocol={space.protocols[0] ?? 'ethereum'}
+              recipientAuthorId={space.hostId}
+              recipientDisplayName={space.hostName}
+              subtle
+            />
+          </span>
+        )}
       </div>
 
       {/* Protocols */}
@@ -294,9 +319,11 @@ function LiveSpaceCard({ space, onJoin }: { space: SpaceItem; onJoin: (id: strin
 function UpcomingSpaceCard({
   space,
   onReminder,
+  onTip,
 }: {
   space: SpaceItem;
   onReminder: (id: string) => void;
+  onTip: (space: SpaceItem) => void;
 }) {
   const [reminded, setReminded] = useState(false);
   return (
@@ -328,6 +355,16 @@ function UpcomingSpaceCard({
           <line x1="3" y1="10" x2="21" y2="10" />
         </svg>
         <span>{space.scheduledAt ? formatScheduledDate(space.scheduledAt) : 'TBD'}</span>
+        {space.tippingEnabled && (
+          <span className="ml-auto">
+            <QuickTipButton
+              recipientProtocol={space.protocols[0] ?? 'ethereum'}
+              recipientAuthorId={space.hostId}
+              recipientDisplayName={space.hostName}
+              subtle
+            />
+          </span>
+        )}
       </div>
 
       {/* Protocols */}
@@ -533,6 +570,7 @@ export default function SpacesPage() {
   const [error, setError] = useState<string | null>(null);
   const [showHostModal, setShowHostModal] = useState(false);
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
+  const [tipSpace, setTipSpace] = useState<SpaceItem | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>(null);
 
   const activeSpace = useMemo(

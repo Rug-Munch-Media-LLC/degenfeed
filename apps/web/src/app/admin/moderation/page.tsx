@@ -565,6 +565,7 @@ export default function AdminModerationPage() {
             className="mx-4 w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
+            role="none"
           >
             <h2 className="mb-4 text-lg font-bold text-[var(--color-fg)]">Ban User</h2>
             <p className="mb-4 text-sm text-gray-400">

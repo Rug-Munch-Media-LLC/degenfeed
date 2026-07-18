@@ -3,8 +3,16 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function POST(_request: Request, { params }: { params: Promise<{ name: string }> }) {
-  const { name } = await params;
+  try {
+    const { name } = await params;
 
-  // Simulate join — always succeeds for demo
-  return NextResponse.json({ success: true, memberCount: Math.floor(Math.random() * 100) + 1 });
+    // Simulate join — always succeeds for demo
+    return NextResponse.json({
+      data: { success: true, memberCount: Math.floor(Math.random() * 100) + 1 },
+      meta: { community: name },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return NextResponse.json({ error: message, status: 500 }, { status: 500 });
+  }
 }

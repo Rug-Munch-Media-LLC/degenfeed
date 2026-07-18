@@ -51,23 +51,62 @@ function formatCount(n: number): string {
 }
 
 const PROTOCOL_ICONS: Record<string, string> = {
-  nostr: '⚡', farcaster: '🟣', lens: '🌿', bluesky: '🦋', mastodon: '🐘', threads: '🧵', reddit: '🔴', rss: '📡',
+  nostr: '⚡',
+  farcaster: '🟣',
+  lens: '🌿',
+  bluesky: '🦋',
+  mastodon: '🐘',
+  threads: '🧵',
+  reddit: '🔴',
+  rss: '📡',
 };
 
 // ─── Mock data ────────────────────────────────────────────────────────
 
 const HANDLES = [
-  'alice_web3', 'bob_nft', 'crypto_kyle', 'defi_dan', 'metaverse_mary',
-  'rug_police', 'degendad', 'solana_sam', 'eth_maxi', 'nofear_frank',
-  'dao_voter', 'yield_farmer', 'airdrop_hunter', 'punk_rock', 'based_builder',
-  'wizard_of_web3', 'hodl_queen', 'chain_link', 'blockchain_bill', 'token_tom',
+  'alice_web3',
+  'bob_nft',
+  'crypto_kyle',
+  'defi_dan',
+  'metaverse_mary',
+  'rug_police',
+  'degendad',
+  'solana_sam',
+  'eth_maxi',
+  'nofear_frank',
+  'dao_voter',
+  'yield_farmer',
+  'airdrop_hunter',
+  'punk_rock',
+  'based_builder',
+  'wizard_of_web3',
+  'hodl_queen',
+  'chain_link',
+  'blockchain_bill',
+  'token_tom',
 ];
 
 const DISPLAY_NAMES = [
-  'Alice Web3', 'Bob NFT', 'Crypto Kyle', 'DeFi Dan', 'Metaverse Mary', 
-  'Rug Police', 'DegenDad', 'Solana Sam', 'ETH Maxi', 'NoFear Frank',
-  'DAO Voter', 'Yield Farmer', 'Airdrop Hunter', 'Punk Rock', 'Based Builder',
-  'Wizard of Web3', 'HODL Queen', 'Chain Link', 'Blockchain Bill', 'Token Tom',
+  'Alice Web3',
+  'Bob NFT',
+  'Crypto Kyle',
+  'DeFi Dan',
+  'Metaverse Mary',
+  'Rug Police',
+  'DegenDad',
+  'Solana Sam',
+  'ETH Maxi',
+  'NoFear Frank',
+  'DAO Voter',
+  'Yield Farmer',
+  'Airdrop Hunter',
+  'Punk Rock',
+  'Based Builder',
+  'Wizard of Web3',
+  'HODL Queen',
+  'Chain Link',
+  'Blockchain Bill',
+  'Token Tom',
 ];
 
 const PROTOCOLS_USER = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'threads', 'reddit'];
@@ -83,7 +122,13 @@ const MOCK_USERS: AdminUser[] = Array.from({ length: 45 }, (_, i) => ({
   postCount: Math.floor(Math.random() * 500),
   tipCount: Math.floor(Math.random() * 50),
   reputation: Math.random(),
-  status: (i === 0 ? 'suspended' : i === 1 ? 'banned' : i === 2 ? 'warned' : 'active') as AdminUser['status'],
+  status: (i === 0
+    ? 'suspended'
+    : i === 1
+      ? 'banned'
+      : i === 2
+        ? 'warned'
+        : 'active') as AdminUser['status'],
   flags: i % 7 === 0 ? ['high_report_count'] : [],
 }));
 
@@ -92,7 +137,7 @@ const MOCK_USERS: AdminUser[] = Array.from({ length: 45 }, (_, i) => ({
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [protocolFilter, setProtocolFilter] = useState<string>('all');
@@ -101,7 +146,9 @@ export default function AdminUsersPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [banReason, setBanReason] = useState('');
   type UserAction = 'ban' | 'suspend' | 'warn';
-  const [confirmAction, setConfirmAction] = useState<{ userId: string; action: UserAction } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ userId: string; action: UserAction } | null>(
+    null,
+  );
   const [toast, setToast] = useState<{ message: string; kind: 'success' | 'error' } | null>(null);
 
   const showToast = useCallback((message: string, kind: 'success' | 'error' = 'success') => {
@@ -132,7 +179,10 @@ export default function AdminUsersPage() {
     if (search) {
       const q = search.toLowerCase();
       filtered = filtered.filter(
-        (u) => u.handle.toLowerCase().includes(q) || u.displayName.toLowerCase().includes(q) || u.walletAddress.toLowerCase().includes(q),
+        (u) =>
+          u.handle.toLowerCase().includes(q) ||
+          u.displayName.toLowerCase().includes(q) ||
+          u.walletAddress.toLowerCase().includes(q),
       );
     }
     if (statusFilter !== 'all') filtered = filtered.filter((u) => u.status === statusFilter);
@@ -144,35 +194,52 @@ export default function AdminUsersPage() {
     fetchUsers().finally(() => setLoading(false));
   }, [fetchUsers]);
 
-  const handleUserAction = useCallback(async (userId: string, action: 'ban' | 'suspend' | 'warn') => {
-    if (action === 'ban' && !banReason.trim()) return;
-    setActionLoading(userId);
-    try {
-      const res = await fetch(`/api/admin/users/${userId}/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ reason: banReason.trim() || `${action} by admin` }),
-      });
-      if (res.ok) {
-        const statusMap: Record<string, AdminUser['status']> = { ban: 'banned', suspend: 'suspended', warn: 'warned' };
-        showToast(`User ${action}ed successfully`);
-        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status: statusMap[action] ?? u.status } : u)));
-        if (selectedUser?.id === userId) {
-          const statusMap: Record<string, AdminUser['status']> = { ban: 'banned', suspend: 'suspended', warn: 'warned' };
-          setSelectedUser((prev) => prev ? { ...prev, status: statusMap[action] ?? prev.status } : null);
+  const handleUserAction = useCallback(
+    async (userId: string, action: 'ban' | 'suspend' | 'warn') => {
+      if (action === 'ban' && !banReason.trim()) return;
+      setActionLoading(userId);
+      try {
+        const res = await fetch(`/api/admin/users/${userId}/${action}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ reason: banReason.trim() || `${action} by admin` }),
+        });
+        if (res.ok) {
+          const statusMap: Record<string, AdminUser['status']> = {
+            ban: 'banned',
+            suspend: 'suspended',
+            warn: 'warned',
+          };
+          showToast(`User ${action}ed successfully`);
+          setUsers((prev) =>
+            prev.map((u) =>
+              u.id === userId ? { ...u, status: statusMap[action] ?? u.status } : u,
+            ),
+          );
+          if (selectedUser?.id === userId) {
+            const statusMap: Record<string, AdminUser['status']> = {
+              ban: 'banned',
+              suspend: 'suspended',
+              warn: 'warned',
+            };
+            setSelectedUser((prev) =>
+              prev ? { ...prev, status: statusMap[action] ?? prev.status } : null,
+            );
+          }
+          setConfirmAction(null);
+          setBanReason('');
+        } else {
+          showToast(`Failed to ${action} user`, 'error');
         }
-        setConfirmAction(null);
-        setBanReason('');
-      } else {
-        showToast(`Failed to ${action} user`, 'error');
+      } catch {
+        showToast('Network error', 'error');
+      } finally {
+        setActionLoading(null);
       }
-    } catch {
-      showToast('Network error', 'error');
-    } finally {
-      setActionLoading(null);
-    }
-  }, [banReason, showToast, selectedUser]);
+    },
+    [banReason, showToast, selectedUser],
+  );
 
   const statusCounts = useMemo(() => {
     const counts = { active: 0, suspended: 0, banned: 0, warned: 0 };
@@ -220,10 +287,13 @@ export default function AdminUsersPage() {
           <div
             key={key}
             className={`rounded-xl border px-4 py-2 ${
-              key === 'active' ? 'border-green-500/20 bg-green-500/5' :
-              key === 'banned' ? 'border-red-500/20 bg-red-500/5' :
-              key === 'suspended' ? 'border-yellow-500/20 bg-yellow-500/5' :
-              'border-orange-500/20 bg-orange-500/5'
+              key === 'active'
+                ? 'border-green-500/20 bg-green-500/5'
+                : key === 'banned'
+                  ? 'border-red-500/20 bg-red-500/5'
+                  : key === 'suspended'
+                    ? 'border-yellow-500/20 bg-yellow-500/5'
+                    : 'border-orange-500/20 bg-orange-500/5'
             }`}
           >
             <span className="text-xs font-medium capitalize text-[var(--color-fg)]">{key}</span>
@@ -238,16 +308,24 @@ export default function AdminUsersPage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search by handle, name, or wallet…"
             className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2.5 pl-9 text-sm text-[var(--color-fg)] placeholder-gray-500 focus:border-degen-500 focus:outline-none"
           />
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">🔍</span>
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+            🔍
+          </span>
         </div>
 
         <select
           value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
           className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2.5 text-xs text-[var(--color-fg)] focus:border-degen-500 focus:outline-none"
         >
           <option value="all">All Status</option>
@@ -259,12 +337,17 @@ export default function AdminUsersPage() {
 
         <select
           value={protocolFilter}
-          onChange={(e) => { setProtocolFilter(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setProtocolFilter(e.target.value);
+            setPage(1);
+          }}
           className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2.5 text-xs text-[var(--color-fg)] focus:border-degen-500 focus:outline-none"
         >
           <option value="all">All Protocols</option>
           {['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'threads', 'reddit'].map((p) => (
-            <option key={p} value={p}>{PROTOCOL_ICONS[p]} {p}</option>
+            <option key={p} value={p}>
+              {PROTOCOL_ICONS[p]} {p}
+            </option>
           ))}
         </select>
 
@@ -290,14 +373,30 @@ export default function AdminUsersPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
               <tr>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">User</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Protocol</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Posts</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Tips</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Rep</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Status</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Last Active</th>
-                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Actions</th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  User
+                </th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  Protocol
+                </th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  Posts
+                </th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  Tips
+                </th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  Rep
+                </th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  Last Active
+                </th>
+                <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
@@ -320,16 +419,24 @@ export default function AdminUsersPage() {
                           {user.displayName.charAt(0)}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-[var(--color-fg)]">{user.displayName}</p>
+                          <p className="text-sm font-medium text-[var(--color-fg)]">
+                            {user.displayName}
+                          </p>
                           <p className="text-[10px] text-gray-500">@{user.handle}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs">{PROTOCOL_ICONS[user.protocol] || ''} {user.protocol}</span>
+                      <span className="text-xs">
+                        {PROTOCOL_ICONS[user.protocol] || ''} {user.protocol}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">{formatCount(user.postCount)}</td>
-                    <td className="px-4 py-3 text-xs text-gray-400">{formatCount(user.tipCount)}</td>
+                    <td className="px-4 py-3 text-xs text-gray-400">
+                      {formatCount(user.postCount)}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-400">
+                      {formatCount(user.tipCount)}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="h-1.5 w-12 overflow-hidden rounded-full bg-[var(--color-muted)]">
@@ -338,7 +445,9 @@ export default function AdminUsersPage() {
                             style={{ width: `${user.reputation * 100}%` }}
                           />
                         </div>
-                        <span className="text-[10px] text-gray-500">{(user.reputation * 100).toFixed(0)}%</span>
+                        <span className="text-[10px] text-gray-500">
+                          {(user.reputation * 100).toFixed(0)}%
+                        </span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -356,13 +465,24 @@ export default function AdminUsersPage() {
                         {user.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[10px] text-gray-500">{formatTime(user.lastActive)}</td>
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-4 py-3 text-[10px] text-gray-500">
+                      {formatTime(user.lastActive)}
+                    </td>
+                    <td
+                      className="px-4 py-3"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') e.stopPropagation();
+                      }}
+                    >
                       <div className="flex items-center gap-1.5">
                         {user.status !== 'banned' && (
                           <button
                             type="button"
-                            onClick={() => { setConfirmAction({ userId: user.id, action: 'ban' }); setSelectedUser(user); }}
+                            onClick={() => {
+                              setConfirmAction({ userId: user.id, action: 'ban' });
+                              setSelectedUser(user);
+                            }}
                             className="rounded-lg border border-red-500/30 px-2 py-1 text-[10px] text-red-400 transition-colors hover:bg-red-500/10"
                           >
                             Ban
@@ -371,7 +491,10 @@ export default function AdminUsersPage() {
                         {user.status === 'active' && (
                           <button
                             type="button"
-                            onClick={() => { setConfirmAction({ userId: user.id, action: 'suspend' }); setSelectedUser(user); }}
+                            onClick={() => {
+                              setConfirmAction({ userId: user.id, action: 'suspend' });
+                              setSelectedUser(user);
+                            }}
                             className="rounded-lg border border-yellow-500/30 px-2 py-1 text-[10px] text-yellow-400 transition-colors hover:bg-yellow-500/10"
                           >
                             Suspend
@@ -419,8 +542,12 @@ export default function AdminUsersPage() {
       {selectedUser && (
         <section
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-          onClick={() => { if (!actionLoading) setSelectedUser(null); }}
-          onKeyDown={(e) => { if (e.key === 'Escape' && !actionLoading) setSelectedUser(null); }}
+          onClick={() => {
+            if (!actionLoading) setSelectedUser(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && !actionLoading) setSelectedUser(null);
+          }}
           role="dialog"
           aria-modal="true"
           aria-label="User details"
@@ -428,6 +555,8 @@ export default function AdminUsersPage() {
           <div
             className="w-full max-w-lg rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            role="none"
           >
             <div className="mb-6 flex items-start justify-between">
               <div className="flex items-center gap-4">
@@ -435,7 +564,9 @@ export default function AdminUsersPage() {
                   {selectedUser.displayName.charAt(0)}
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-[var(--color-fg)]">{selectedUser.displayName}</h2>
+                  <h2 className="text-lg font-bold text-[var(--color-fg)]">
+                    {selectedUser.displayName}
+                  </h2>
                   <p className="text-sm text-gray-500">@{selectedUser.handle}</p>
                 </div>
               </div>
@@ -451,18 +582,28 @@ export default function AdminUsersPage() {
 
             <div className="mb-6 grid grid-cols-2 gap-4">
               <DetailItem label="Status" value={selectedUser.status} />
-              <DetailItem label="Protocol" value={`${PROTOCOL_ICONS[selectedUser.protocol] || ''} ${selectedUser.protocol}`} />
-              <DetailItem label="Wallet" value={`${selectedUser.walletAddress.slice(0, 10)}…${selectedUser.walletAddress.slice(-6)}`} />
+              <DetailItem
+                label="Protocol"
+                value={`${PROTOCOL_ICONS[selectedUser.protocol] || ''} ${selectedUser.protocol}`}
+              />
+              <DetailItem
+                label="Wallet"
+                value={`${selectedUser.walletAddress.slice(0, 10)}…${selectedUser.walletAddress.slice(-6)}`}
+              />
               <DetailItem label="Posts" value={formatCount(selectedUser.postCount)} />
               <DetailItem label="Tips Given" value={formatCount(selectedUser.tipCount)} />
-              <DetailItem label="Reputation" value={`${(selectedUser.reputation * 100).toFixed(0)}%`} />
+              <DetailItem
+                label="Reputation"
+                value={`${(selectedUser.reputation * 100).toFixed(0)}%`}
+              />
               <DetailItem label="Joined" value={formatTime(selectedUser.joinedAt)} />
               <DetailItem label="Last Active" value={formatTime(selectedUser.lastActive)} />
             </div>
 
             {selectedUser.banReason && (
               <div className="mb-4 rounded-xl bg-red-500/10 px-4 py-3 text-xs text-red-400">
-                <span className="font-semibold">Ban reason: </span>{selectedUser.banReason}
+                <span className="font-semibold">Ban reason: </span>
+                {selectedUser.banReason}
               </div>
             )}
 
@@ -503,8 +644,12 @@ export default function AdminUsersPage() {
       {confirmAction && (
         <section
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-          onClick={() => { if (!actionLoading) setConfirmAction(null); }}
-          onKeyDown={(e) => { if (e.key === 'Escape' && !actionLoading) setConfirmAction(null); }}
+          onClick={() => {
+            if (!actionLoading) setConfirmAction(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && !actionLoading) setConfirmAction(null);
+          }}
           role="dialog"
           aria-modal="true"
           aria-label={`Confirm ${confirmAction.action}`}
@@ -512,6 +657,8 @@ export default function AdminUsersPage() {
           <div
             className="mx-4 w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            role="none"
           >
             <h2 className="mb-2 text-lg font-bold text-[var(--color-fg)] capitalize">
               {confirmAction.action} User
@@ -522,7 +669,10 @@ export default function AdminUsersPage() {
               {confirmAction.action === 'ban' && ' This action is irreversible.'}
             </p>
             <div className="mb-4">
-              <label htmlFor="action-reason" className="mb-1 block text-xs font-medium text-gray-400">
+              <label
+                htmlFor="action-reason"
+                className="mb-1 block text-xs font-medium text-gray-400"
+              >
                 Reason
               </label>
               <textarea
@@ -537,7 +687,10 @@ export default function AdminUsersPage() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => { setConfirmAction(null); setBanReason(''); }}
+                onClick={() => {
+                  setConfirmAction(null);
+                  setBanReason('');
+                }}
                 disabled={Boolean(actionLoading)}
                 className="flex-1 rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm text-gray-400 transition-colors hover:bg-[var(--color-muted)] disabled:opacity-40"
               >
@@ -549,7 +702,9 @@ export default function AdminUsersPage() {
                 disabled={actionLoading === confirmAction.userId || !banReason.trim()}
                 className="flex-1 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {actionLoading === confirmAction.userId ? 'Processing…' : `Confirm ${confirmAction.action}`}
+                {actionLoading === confirmAction.userId
+                  ? 'Processing…'
+                  : `Confirm ${confirmAction.action}`}
               </button>
             </div>
           </div>
