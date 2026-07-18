@@ -14,7 +14,7 @@ export function Callout({
   type?: keyof typeof styles;
   children: ReactNode;
 }) {
-  const s = styles[type] ?? styles.info;
+  const s = (styles[type] ?? styles.info)!;
   return (
     <div className={`my-4 rounded-lg border ${s.border} ${s.bg} p-4`}>
       <div className="flex gap-3">

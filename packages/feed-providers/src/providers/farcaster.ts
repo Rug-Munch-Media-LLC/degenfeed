@@ -11,7 +11,12 @@
  * post crypto/web3 content.
  */
 
-import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
+import {
+  buildUnifiedPost,
+  CircuitBreaker,
+  CircuitBreakerError,
+  enrichPostNiches,
+} from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
@@ -40,6 +45,7 @@ export class FarcasterProvider implements FeedProvider {
   private readonly primaryUrl: string;
   private readonly publicApiUrl: string;
   private readonly curatedFids: number[];
+  private readonly breaker = new CircuitBreaker('farcaster');
 
   constructor(options: FarcasterProviderOptions = {}) {
     this.primaryUrl = options.hubUrl || DEFAULT_HUB_URL;
@@ -48,11 +54,11 @@ export class FarcasterProvider implements FeedProvider {
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const fids = this.curatedFids;
-    const hub = this.primaryUrl;
-
     try {
+      return await this.breaker.execute(async () => {
+        const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+        const fids = this.curatedFids;
+        const hub = this.primaryUrl;
       const userDataMap = new Map<
         number,
         { username?: string; displayName?: string; pfp?: string }
@@ -244,6 +250,13 @@ export class FarcasterProvider implements FeedProvider {
         : { posts: [], notice: 'Farcaster unavailable' };
     } catch (e) {
       return { posts: [], notice: e instanceof Error ? e.message : 'Farcaster unavailable' };
+    }
+      });
+    } catch (err) {
+      if (err instanceof CircuitBreakerError) {
+        return { posts: [], notice: 'Farcaster: circuit breaker open — temporarily unavailable' };
+      }
+      return { posts: [], notice: 'Farcaster unavailable' };
     }
   }
 

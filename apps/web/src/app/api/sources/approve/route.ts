@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { log } from '@/lib/log';
 // TODO: Wire to worker backend
 import { approveSources } from '../../../../lib/source-engine';
 
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
 
   const result = approveSources(ids);
 
-  console.log(`[admin] Approved ${result.approved} source(s)`);
+  log('info', `[admin] Approved ${result.approved} source(s)`);
 
   return NextResponse.json({ ok: true, approved: result.approved, sources: result.sources });
 }

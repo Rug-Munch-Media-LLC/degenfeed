@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { log } from '@/lib/log';
 import { requireAdmin } from '../_auth';
 
 export const runtime = 'nodejs';
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'key is required' }, { status: 400 });
     }
 
-    console.log(`[admin] Config "${body.key}" = ${JSON.stringify(body.value)}`);
+    log('info', `[admin] Config "${body.key}" updated`, { value: body.value });
 
     return NextResponse.json({ ok: true, key: body.key, value: body.value });
   } catch {

@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { log } from '@/lib/log';
 import { requireAdmin } from '../../../../_auth';
 // TODO: Wire to worker backend
 export const runtime = 'nodejs';
@@ -17,7 +18,7 @@ export async function POST(
     return NextResponse.json({ error: `Invalid action: ${action}` }, { status: 400 });
   }
 
-  console.log(`[admin] Spam ${id}: ${action}`);
+  log('info', `[admin] Spam ${id}: ${action}`);
 
   return NextResponse.json({ ok: true, id, action });
 }

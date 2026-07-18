@@ -224,7 +224,9 @@ export default function ProposalsPage() {
             <div className="py-12 text-center">
               <div className="mb-3 text-3xl">🗳️</div>
               <p className="text-[var(--color-muted)]">No active proposals</p>
-              <p className="mt-1 text-xs text-[var(--color-muted)]">Create one to start the discussion!</p>
+              <p className="mt-1 text-xs text-[var(--color-muted)]">
+                Create one to start the discussion!
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -273,7 +275,7 @@ function ProposalCard({
   communityName: string;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const typeMeta = TYPE_LABELS[proposal.type] ?? TYPE_LABELS.text;
+  const typeMeta = (TYPE_LABELS[proposal.type] ?? TYPE_LABELS.text)!;
 
   const statusColors: Record<string, { label: string; color: string }> = {
     active: { label: 'Active', color: '#22c55e' },
@@ -282,7 +284,7 @@ function ProposalCard({
     cancelled: { label: 'Cancelled', color: '#6b7280' },
   };
 
-  const statusMeta = statusColors[proposal.status] ?? statusColors.cancelled;
+  const statusMeta = (statusColors[proposal.status] ?? statusColors.cancelled)!;
   const totalVotes = proposal.voteTotals
     ? proposal.voteTotals.for + proposal.voteTotals.against + proposal.voteTotals.abstain
     : 0;

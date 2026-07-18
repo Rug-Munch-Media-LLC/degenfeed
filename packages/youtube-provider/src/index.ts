@@ -7,6 +7,31 @@
  * Falls back to the YouTube Data API if RSS is unavailable (not implemented yet).
  */
 
+// ─── Local circuit breaker ───────────────────────────────────────────
+const __cbStore = new Map<string, { failures: number; openUntil: number }>();
+
+function __cbState(name: string, threshold = 3, cooldownMs = 60000): 'CLOSED' | 'OPEN' {
+  const cb = __cbStore.get(name);
+  if (!cb) return 'CLOSED';
+  if (cb.openUntil > Date.now()) return 'OPEN';
+  __cbStore.delete(name);
+  return 'CLOSED';
+}
+
+function __cbFail(name: string, threshold = 3, cooldownMs = 60000): void {
+  const now = Date.now();
+  const cb = __cbStore.get(name) ?? { failures: 0, openUntil: 0 };
+  cb.failures++;
+  if (cb.failures >= threshold) {
+    cb.openUntil = now + cooldownMs;
+    console.warn(`[circuit-breaker] ${name}: OPEN after ${cb.failures} failures`);
+  }
+  __cbStore.set(name, cb);
+}
+
+function __cbSuccess(name: string): void {
+  __cbStore.delete(name);
+}
 // ─── Types ───────────────────────────────────────────────────────────
 
 export type ChannelCategory =
@@ -1126,7 +1151,10 @@ async function fetchChannelFeed(
     });
 
     if (!response.ok) {
-      console.warn(`[youtube-provider] HTTP ${response.status} for ${channel.name}`);
+      console.warn(`[youtube-provider] HTTP ${response.status} for ${channel.name}`, {
+        status: response.status,
+        channel: channel.name,
+      });
       return [];
     }
 
@@ -1138,7 +1166,10 @@ async function fetchChannelFeed(
     if (err instanceof DOMException && err.name === 'AbortError') {
       return [];
     }
-    console.warn(`[youtube-provider] Failed to fetch ${channel.name}:`, err);
+    console.warn(
+      `[youtube-provider] Failed to fetch ${channel.name}`,
+      err instanceof Error ? err.message : String(err),
+    );
     return [];
   }
 }

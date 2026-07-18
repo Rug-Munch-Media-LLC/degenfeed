@@ -106,23 +106,44 @@ export const TIP_CONTRACT_ABI = [
  * Contract compiled and ready. NOT YET DEPLOYED.
  * Foundry (forge 1.7.1) is available on the deploy server.
  *
- * To deploy:
- *   1. Export deployer key:   export PRIVATE_KEY=0x...
- *   2. Export RPC URL:        export BASE_RPC=https://mainnet.base.org
- *   3. Fund deployer wallet with ~0.01 ETH on target L2
- *   4. Run:                  forge create --rpc-url $BASE_RPC --private-key $PRIVATE_KEY \
- *                              packages/tip-contract/src/DegenFeedTips.sol:DegenFeedTips
- *   5. Copy the returned address below
- *   6. Verify: forge verify-contract <address> packages/tip-contract/src/DegenFeedTips.sol:DegenFeedTips \
- *                --chain-id 8453 --etherscan-api-key $EXPLORER_API_KEY
+ * ⚠️ DEPLOYMENT PREFLIGHT
+ * ────────────────────────
+ * Before deploying, ensure:
+ *   1. Deployer wallet has ~0.01 ETH on target L2 (not L1)
+ *   2. A Basescan / Arbiscan / Optimistic Etherscan API key is available for verification
+ *   3. The .env file in the monorepo root has the required keys
  *
- * For automated multi-chain deploy, use: pnpm deploy:tip-contract --all
- * That script requires: PRIVATE_KEY, EXPLORER_API_KEY env vars set.
+ *   Required .env vars:
+ *     PRIVATE_KEY=0x...     # Deployer wallet private key (no 0x prefix also accepted)
+ *     BASE_RPC_URL=...       # RPC URL for Base (testnet or mainnet)
+ *     EXPLORER_API_KEY=...   # Etherscan-style API key for contract verification
  *
- * Recommended deploy order: Base → Optimism → Arbitrum
+ * TO DEPLOY (single contract — Base)
+ * ───────────────────────────────────
+ *   cd packages/tip-contract
+ *   forge create \
+ *     --rpc-url "$BASE_RPC_URL" \
+ *     --private-key "$PRIVATE_KEY" \
+ *     src/DegenFeedTips.sol:DegenFeedTips
+ *
+ *   Then verify:
+ *     forge verify-contract <DEPLOYED_ADDRESS> \
+ *       src/DegenFeedTips.sol:DegenFeedTips \
+ *       --chain-id 8453 \
+ *       --etherscan-api-key "$EXPLORER_API_KEY"
+ *
+ *   Finally, copy <DEPLOYED_ADDRESS> into TIP_CONTRACT_ADDRESSES.base below.
+ *
+ * TO DEPLOY (all chains — Base → Optimism → Arbitrum)
+ * ──────────────────────────────────────────────────────
+ *   pnpm deploy:tip-contract --all
+ *   (requires: PRIVATE_KEY, EXPLORER_API_KEY env vars)
+ *
+ * RECOMMENDED ORDER: Base → Optimism → Arbitrum
+ * See DEPLOY-CONTRACT.md for full walkthrough.
  */
 export const TIP_CONTRACT_ADDRESSES: Record<string, `0x${string}`> = {
-  base: '0x0000000000000000000000000000000000000000', // ⚠️ NOT DEPLOYED — run: forge create --rpc-url $BASE_RPC ...
+  base: '0x0000000000000000000000000000000000000000', // ⚠️ NOT DEPLOYED — run: forge create --rpc-url "$BASE_RPC_URL" ...
   optimism: '0x0000000000000000000000000000000000000000', // ⚠️ NOT DEPLOYED
   arbitrum: '0x0000000000000000000000000000000000000000', // ⚠️ NOT DEPLOYED
 };

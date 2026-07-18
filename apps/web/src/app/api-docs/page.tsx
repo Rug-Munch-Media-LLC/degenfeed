@@ -678,7 +678,7 @@ export default function ApiDocsPage() {
           <H3 id={`section-${section}`}>{sectionLabels[section]}</H3>
           <div className="space-y-1">
             {endpoints[section]
-              .filter((ep) => ep)
+              ?.filter((ep) => ep)
               .map((ep) => (
                 <EndpointRow key={`${ep.method}-${ep.path}`} ep={ep} />
               ))}
@@ -686,7 +686,7 @@ export default function ApiDocsPage() {
 
           {/* Show detail for endpoints with examples */}
           {endpoints[section]
-            .filter(
+            ?.filter(
               (ep) =>
                 ep.exampleReq || ep.exampleRes || (ep.queryParams && ep.queryParams.length > 0),
             )

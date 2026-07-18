@@ -125,7 +125,7 @@ export async function connectNostrConnect(opts: Nip46ConnectOptions): Promise<{
           });
         }
       } catch (err) {
-        console.error('[nip46] Error handling message:', err);
+        console.error('[nip46] Error handling message:', err instanceof Error ? err.message : err);
       }
     };
 

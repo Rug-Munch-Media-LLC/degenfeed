@@ -443,8 +443,8 @@ export default function AdminSourcesPage() {
           </span>
           {stats.runHistory.length > 0 && (
             <span className="text-xs text-[var(--color-muted)]">
-              — {stats.runHistory.length} total runs, last: {stats.runHistory[0].platform} (
-              {stats.runHistory[0].discovered} found)
+              — {stats.runHistory.length} total runs, last: {stats.runHistory[0]?.platform} (
+              {stats.runHistory[0]?.discovered} found)
             </span>
           )}
         </div>

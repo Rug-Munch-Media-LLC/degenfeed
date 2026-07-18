@@ -13,7 +13,12 @@
  *   4. discoverCommunities() for community browsing across the fediverse
  */
 
-import { enrichPostNiches, subscriberTier } from '@degenfeed/feed-core';
+import {
+  CircuitBreaker,
+  CircuitBreakerError,
+  enrichPostNiches,
+  subscriberTier,
+} from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
@@ -499,6 +504,7 @@ export class LemmyProvider implements FeedProvider {
   readonly protocol: Protocol = 'lemmy';
   private readonly instances: string[];
   private readonly communities: Array<{ community: string; niche: string }>;
+  private readonly breaker = new CircuitBreaker('lemmy');
 
   constructor(options: LemmyProviderOptions = {}) {
     this.instances = options.instances ?? LEMMY_INSTANCES;
@@ -506,52 +512,61 @@ export class LemmyProvider implements FeedProvider {
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const allPosts: UnifiedPost[] = [];
+    try {
+      return await this.breaker.execute(async () => {
+        const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+        const allPosts: UnifiedPost[] = [];
 
-    // Increased community limit from 25→30 and per-community from 10→15 (2026-07-18)
-    const communityBatches = this.communities.slice(0, 30);
-    const results = await Promise.allSettled(
-      communityBatches.map(async ({ community }) => {
-        const parts = community.split('@');
-        const communityName = parts[0] ?? community;
-        const expectedInstance = parts[1] ? `https://${parts[1]}` : null;
+        // Increased community limit from 25→30 and per-community from 10→15 (2026-07-18)
+        const communityBatches = this.communities.slice(0, 30);
+        const results = await Promise.allSettled(
+          communityBatches.map(async ({ community }) => {
+            const parts = community.split('@');
+            const communityName = parts[0] ?? community;
+            const expectedInstance = parts[1] ? `https://${parts[1]}` : null;
 
-        const tryInstances = expectedInstance
-          ? [expectedInstance, ...this.instances.filter((i) => i !== expectedInstance)]
-          : this.instances;
+            const tryInstances = expectedInstance
+              ? [expectedInstance, ...this.instances.filter((i) => i !== expectedInstance)]
+              : this.instances;
 
-        for (const instance of tryInstances) {
-          try {
-            const data = await withTimeout(
-              fetchJson<LemmyPostListResponse>(
-                buildUrl(instance, '/api/v3/post/list', {
-                  community_name: communityName,
-                  sort: 'Hot',
-                  limit: '15',
-                }),
-                { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
-              ),
-              Math.min(timeoutMs, 5000),
-              `lemmy:${community}`,
-            );
-            return (data.posts ?? []).map((raw) => adaptLemmyPost(raw, instance));
-          } catch {
-            /* try next instance */
-          }
+            for (const instance of tryInstances) {
+              try {
+                const data = await withTimeout(
+                  fetchJson<LemmyPostListResponse>(
+                    buildUrl(instance, '/api/v3/post/list', {
+                      community_name: communityName,
+                      sort: 'Hot',
+                      limit: '15',
+                    }),
+                    { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
+                  ),
+                  Math.min(timeoutMs, 5000),
+                  `lemmy:${community}`,
+                );
+                return (data.posts ?? []).map((raw) => adaptLemmyPost(raw, instance));
+              } catch {
+                /* try next instance */
+              }
+            }
+            return [];
+          }),
+        );
+
+        for (const r of results) {
+          if (r.status === 'fulfilled') allPosts.push(...r.value);
         }
-        return [];
-      }),
-    );
 
-    for (const r of results) {
-      if (r.status === 'fulfilled') allPosts.push(...r.value);
-    }
-
-    if (allPosts.length === 0) {
+        if (allPosts.length === 0) {
+          return { posts: [], notice: 'Lemmy unavailable' };
+        }
+        return { posts: allPosts.map(enrichPostNiches) };
+      });
+    } catch (err) {
+      if (err instanceof CircuitBreakerError) {
+        return { posts: [], notice: 'Lemmy: circuit breaker open — temporarily unavailable' };
+      }
       return { posts: [], notice: 'Lemmy unavailable' };
     }
-    return { posts: allPosts.map(enrichPostNiches) };
   }
 
   async healthCheck(opts: FetchOptions = {}): Promise<HealthResult> {

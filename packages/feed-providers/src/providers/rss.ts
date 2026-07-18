@@ -1,4 +1,4 @@
-import { detectNiches } from '@degenfeed/feed-core';
+import { CircuitBreaker, CircuitBreakerError, detectNiches } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions } from '../types';
 import {
@@ -3388,6 +3388,7 @@ function feedToUnifiedPosts(
 export class RssProvider implements FeedProvider {
   readonly protocol: Protocol = 'rss';
   private readonly feedConfigs: RssFeedConfig[];
+  private readonly breaker = new CircuitBreaker('rss');
 
   constructor(options: RssProviderOptions = {}) {
     // Normalize both string[] and RssFeedConfig[] inputs
@@ -3410,47 +3411,56 @@ export class RssProvider implements FeedProvider {
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     if (this.feedConfigs.length === 0) return { posts: [] };
-    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const concurrency = opts.concurrency ?? 4;
-    const scored: ScoredRssPost[] = [];
+    try {
+      return await this.breaker.execute(async () => {
+        const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+        const concurrency = opts.concurrency ?? 4;
+        const scored: ScoredRssPost[] = [];
 
-    const results = await withConcurrencyLimit(
-      this.feedConfigs,
-      concurrency,
-      async (feedConfig) => {
-        try {
-          const xml = await withTimeout(
-            fetchRss(feedConfig.url, {
-              headers: { 'user-agent': DEFAULT_USER_AGENT, ...opts.headers },
-            }),
-            timeoutMs,
-            `rss:${feedConfig.url}`,
-          );
-          const feed = parseRss(xml);
-          return feedToUnifiedPosts(feedConfig, feed);
-        } catch {
-          return [] as ScoredRssPost[];
-        }
-      },
-    );
-    for (const r of results) scored.push(...r);
+        const results = await withConcurrencyLimit(
+          this.feedConfigs,
+          concurrency,
+          async (feedConfig) => {
+            try {
+              const xml = await withTimeout(
+                fetchRss(feedConfig.url, {
+                  headers: { 'user-agent': DEFAULT_USER_AGENT, ...opts.headers },
+                }),
+                timeoutMs,
+                `rss:${feedConfig.url}`,
+              );
+              const feed = parseRss(xml);
+              return feedToUnifiedPosts(feedConfig, feed);
+            } catch {
+              return [] as ScoredRssPost[];
+            }
+          },
+        );
+        for (const r of results) scored.push(...r);
 
-    // Apply tier-aware dedup
-    const deduped = deduplicateRssPosts(scored);
+        // Apply tier-aware dedup
+        const deduped = deduplicateRssPosts(scored);
 
-    // Convert back to UnifiedPost[] with quality score stamped in raw
-    const posts: UnifiedPost[] = deduped.map((s) => {
-      const updated = { ...s.post };
-      updated.raw = {
-        ...(typeof updated.raw === 'object' && updated.raw !== null ? updated.raw : {}),
-        qualityScore: s.quality,
-      };
-      return updated;
-    });
+        // Convert back to UnifiedPost[] with quality score stamped in raw
+        const posts: UnifiedPost[] = deduped.map((s) => {
+          const updated = { ...s.post };
+          updated.raw = {
+            ...(typeof updated.raw === 'object' && updated.raw !== null ? updated.raw : {}),
+            qualityScore: s.quality,
+          };
+          return updated;
+        });
 
-    return {
-      posts,
-      notice: `RSS: ${deduped.length} posts from ${this.feedConfigs.length} feeds (${scored.length - deduped.length} deduped)`,
-    };
+        return {
+          posts,
+          notice: `RSS: ${deduped.length} posts from ${this.feedConfigs.length} feeds (${scored.length - deduped.length} deduped)`,
+        };
+      });
+    } catch (err) {
+      if (err instanceof CircuitBreakerError) {
+        return { posts: [], notice: 'RSS: circuit breaker open — temporarily unavailable' };
+      }
+      return { posts: [], notice: 'RSS feed unavailable' };
+    }
   }
 }

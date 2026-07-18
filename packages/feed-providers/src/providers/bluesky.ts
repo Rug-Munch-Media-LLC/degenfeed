@@ -1,4 +1,9 @@
-import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
+import {
+  buildUnifiedPost,
+  CircuitBreaker,
+  CircuitBreakerError,
+  enrichPostNiches,
+} from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
 import {
@@ -191,6 +196,7 @@ export class BlueskyProvider implements FeedProvider {
   private readonly fallbackUrl: string;
   private readonly accessJwt?: string;
   private readonly curatedActors: string[];
+  private readonly breaker = new CircuitBreaker('bluesky');
 
   constructor(options: BlueskyProviderOptions = {}) {
     this.primaryUrl = options.baseUrl || BSKY_PUBLIC_URL;
@@ -200,71 +206,72 @@ export class BlueskyProvider implements FeedProvider {
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const limit = 50;
-
     try {
-      const posts = await withRetry(async () => {
-        const all: BskyPostView[] = [];
+      return await this.breaker.execute(async () => {
+        const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+        const limit = 50;
+        const posts = await withRetry(async () => {
+          const all: BskyPostView[] = [];
 
-        // Primary strategy: search crypto terms in parallel. We bound
-        // concurrency so a slow relay doesn't multiply latency.
-        const queries = CRYPTO_SEARCH_QUERIES.slice(0, 4);
-        const searchResults = await withConcurrencyLimit(
-          queries,
-          Math.min(2, queries.length),
-          async (q) => {
-            try {
-              return await withTimeout(
-                searchPosts(
-                  this.primaryUrl,
-                  q,
-                  Math.max(5, Math.ceil(limit / queries.length)),
-                  this.accessJwt,
-                ),
-                timeoutMs,
-                `bluesky:search:${q}`,
-              );
-            } catch {
-              return [];
-            }
-          },
-        );
-        for (const r of searchResults) all.push(...r);
+          // Primary strategy: search crypto terms in parallel. We bound
+          // concurrency so a slow relay doesn't multiply latency.
+          const queries = CRYPTO_SEARCH_QUERIES.slice(0, 4);
+          const searchResults = await withConcurrencyLimit(
+            queries,
+            Math.min(2, queries.length),
+            async (q) => {
+              try {
+                return await withTimeout(
+                  searchPosts(
+                    this.primaryUrl,
+                    q,
+                    Math.max(5, Math.ceil(limit / queries.length)),
+                    this.accessJwt,
+                  ),
+                  timeoutMs,
+                  `bluesky:search:${q}`,
+                );
+              } catch {
+                return [];
+              }
+            },
+          );
+          for (const r of searchResults) all.push(...r);
 
-        // Fallback: curated crypto actors (only if searches were thin)
-        if (all.length < limit / 2) {
-          const actors = this.curatedActors.slice(0, 8);
-          const actorResults = await withConcurrencyLimit(actors, 3, async (actor) => {
-            try {
-              return await withTimeout(
-                fetchAuthorFeed(
-                  this.primaryUrl,
-                  actor,
-                  Math.max(3, Math.ceil(limit / actors.length)),
-                  this.accessJwt,
-                ),
-                timeoutMs,
-                `bluesky:${actor}`,
-              );
-            } catch {
-              return [];
-            }
-          });
-          for (const r of actorResults) all.push(...r);
-        }
+          // Fallback: curated crypto actors (only if searches were thin)
+          if (all.length < limit / 2) {
+            const actors = this.curatedActors.slice(0, 8);
+            const actorResults = await withConcurrencyLimit(actors, 3, async (actor) => {
+              try {
+                return await withTimeout(
+                  fetchAuthorFeed(
+                    this.primaryUrl,
+                    actor,
+                    Math.max(3, Math.ceil(limit / actors.length)),
+                    this.accessJwt,
+                  ),
+                  timeoutMs,
+                  `bluesky:${actor}`,
+                );
+              } catch {
+                return [];
+              }
+            });
+            for (const r of actorResults) all.push(...r);
+          }
 
-        return all;
+          return all;
+        });
+
+        return {
+          posts: posts.map((p) => enrichPostNiches(postToUnifiedPost(p))),
+        };
       });
-
-      return {
-        posts: posts.map((p) => enrichPostNiches(postToUnifiedPost(p))),
-      };
     } catch (err) {
-      return {
-        posts: [],
-        notice: err instanceof Error ? err.message : 'Bluesky feed unavailable',
-      };
+      if (err instanceof CircuitBreakerError) {
+        return { posts: [], notice: 'Bluesky: circuit breaker open — temporarily unavailable' };
+      }
+      return { posts: [], notice: 'Bluesky feed unavailable' };
     }
   }
 

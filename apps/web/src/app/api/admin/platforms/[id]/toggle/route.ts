@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { log } from '@/lib/log';
 import { requireAdmin } from '../../../_auth';
 
 export const runtime = 'nodejs';
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
   const body = (await request.json()) as { enabled: boolean };
 
-  console.log(`[admin] Platform "${id}" toggled to ${body.enabled}`);
+  log('info', `[admin] Platform "${id}" toggled`, { enabled: body.enabled });
 
   return NextResponse.json({ ok: true, platform: id, enabled: body.enabled });
 }

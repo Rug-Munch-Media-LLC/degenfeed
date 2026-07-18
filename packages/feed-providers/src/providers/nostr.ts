@@ -1,4 +1,10 @@
-import { buildUnifiedPost, enrichPostNiches, extractEmbeds } from '@degenfeed/feed-core';
+import {
+  buildUnifiedPost,
+  CircuitBreaker,
+  CircuitBreakerError,
+  enrichPostNiches,
+  extractEmbeds,
+} from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { isNostrEvent } from '../schemas';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
@@ -248,51 +254,62 @@ export class NostrProvider implements FeedProvider {
   readonly protocol: Protocol = 'nostr';
   private readonly relays: string[];
 
+  private readonly breaker = new CircuitBreaker('nostr');
+
   constructor(options: NostrProviderOptions = {}) {
     this.relays = options.relays ?? DEFAULT_RELAYS;
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
-    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const limit = 25;
+    try {
+      return await this.breaker.execute(async () => {
+        const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+        const limit = 25;
 
-    const [notes, articles] = await Promise.all([
-      this.fetchNotes(timeoutMs, limit),
-      this.fetchLongForm(timeoutMs, Math.ceil(limit / 4)),
-    ]);
+        const [notes, articles] = await Promise.all([
+          this.fetchNotes(timeoutMs, limit),
+          this.fetchLongForm(timeoutMs, Math.ceil(limit / 4)),
+        ]);
 
-    const allEvents: NostrEvent[] = [...notes, ...articles];
-    if (allEvents.length > 0) {
-      const seen = new Set<string>();
-      const unique = allEvents
-        .sort((a, b) => b.created_at - a.created_at)
-        .filter((e) => {
-          if (seen.has(e.id)) return false;
-          seen.add(e.id);
-          return true;
-        })
-        .slice(0, limit);
+        const allEvents: NostrEvent[] = [...notes, ...articles];
+        if (allEvents.length > 0) {
+          const seen = new Set<string>();
+          const unique = allEvents
+            .sort((a, b) => b.created_at - a.created_at)
+            .filter((e) => {
+              if (seen.has(e.id)) return false;
+              seen.add(e.id);
+              return true;
+            })
+            .slice(0, limit);
 
-      const posts = unique.map((e) => enrichPostNiches(eventToUnifiedPost(e)));
+          const posts = unique.map((e) => enrichPostNiches(eventToUnifiedPost(e)));
 
-      // Resolve profiles: fetch kind 0 metadata for unique pubkeys
-      const pubkeys = [...new Set(unique.map((e) => e.pubkey))];
-      const profiles = await this.resolveProfiles(pubkeys, timeoutMs);
+          // Resolve profiles: fetch kind 0 metadata for unique pubkeys
+          const pubkeys = [...new Set(unique.map((e) => e.pubkey))];
+          const profiles = await this.resolveProfiles(pubkeys, timeoutMs);
 
-      for (const post of posts) {
-        const pk = post.author.keys?.nostrPubkey as string;
-        const profile = pk ? profiles.get(pk) : undefined;
-        if (profile) {
-          post.author.displayName = profile.displayName || post.author.displayName;
-          post.author.avatarUrl = profile.avatarUrl || post.author.avatarUrl;
-          post.author.bio = profile.bio || post.author.bio;
-          if (profile.nip05) post.author.handles.nostr = profile.nip05;
+          for (const post of posts) {
+            const pk = post.author.keys?.nostrPubkey as string;
+            const profile = pk ? profiles.get(pk) : undefined;
+            if (profile) {
+              post.author.displayName = profile.displayName || post.author.displayName;
+              post.author.avatarUrl = profile.avatarUrl || post.author.avatarUrl;
+              post.author.bio = profile.bio || post.author.bio;
+              if (profile.nip05) post.author.handles.nostr = profile.nip05;
+            }
+          }
+
+          return { posts };
         }
+        return { posts: [], notice: 'Nostr feed unavailable' };
+      });
+    } catch (err) {
+      if (err instanceof CircuitBreakerError) {
+        return { posts: [], notice: 'Nostr: circuit breaker open — temporarily unavailable' };
       }
-
-      return { posts };
+      return { posts: [], notice: 'Nostr feed unavailable' };
     }
-    return { posts: [], notice: 'Nostr feed unavailable' };
   }
 
   private async resolveProfiles(
