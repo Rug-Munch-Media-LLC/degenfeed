@@ -6,24 +6,6 @@
 
 /* biome-ignore lint/correctness/noUnknownPseudoClass: CSS Modules :global() syntax */
 :global(.layout-compact) {
-  /* ── Shell / header ── */
-  & .shell-header {
-    height: 48px;
-  }
-
-  & .shell-header-inner {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  & .shell-logo {
-    transform: scale(0.85);
-  }
-
-  & .shell-logo-text {
-    display: none;
-  }
-
   /* ── Main feed area ── */
   & .main-feed {
     max-width: 598px;
@@ -314,14 +296,6 @@
   }
 
   /* ── Footer ── */
-  & .shell-footer {
-    padding: 12px 0;
-  }
-
-  & .shell-footer .footer-links {
-    font-size: 12px;
-    gap: 4px;
-  }
 
   /* ── Bottom nav ── */
   & .bottom-nav {

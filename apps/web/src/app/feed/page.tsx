@@ -1199,8 +1199,8 @@ export default function FeedPage() {
         }}
       >
         {/* Main timeline */}
-        <main className="main-feed min-w-0 flex-1">
-          <div className="feed-header sticky top-16 z-30 border-b border-[var(--color-glass-border)] glass">
+        <div className="main-feed min-w-0 flex-1">
+          <div className="feed-header sticky top-14 lg:top-0 z-30 border-b border-[var(--color-glass-border)] glass">
             <div className="flex items-center justify-between gap-2 px-4 py-3">
               <div className="flex items-center gap-3">
                 <Image
@@ -1932,7 +1932,7 @@ export default function FeedPage() {
               </button>
             </div>
           )}
-        </main>
+        </div>
 
         {/* Right sidebar — visible at lg+ (Shell's RightSidebar is suppressed for /feed) */}
         <aside className="hidden w-[350px] shrink-0 lg:block">

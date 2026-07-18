@@ -104,7 +104,6 @@ function GridSkeleton({ count = 6 }: { count?: number }) {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: count }).map((_, i) => (
         <div
-          {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
           key={i}
           className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden animate-pulse"
           aria-hidden="true"

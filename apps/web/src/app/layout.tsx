@@ -92,7 +92,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
-  const theme = cookieStore.get('df-theme')?.value || 'dark';
+  const theme = cookieStore.get('df_theme')?.value || 'dark';
 
   return (
     <html
@@ -152,14 +152,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {[
             'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}',
             'html:not(.dark) body{--bg:#fff;--fg:#171717}',
-            '.shell-header{height:64px;position:fixed;top:0;left:0;right:0;z-index:50;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);background:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.08)}',
-            '.dark .shell-header{background:rgba(17,17,27,.7);border-bottom:1px solid rgba(255,255,255,.06)}',
-            '.shell-header-inner{display:flex;align-items:center;justify-content:space-between;height:64px;max-width:1280px;margin:0 auto;padding:0 16px}',
             '.skip-link{position:absolute;top:-100%;left:0;z-index:100;padding:8px 16px;background:var(--color-accent,#16a34a);color:#000;font-weight:600}',
             '.skip-link:focus{top:0}',
-            '.main-content{padding-top:64px;position:relative;z-index:10;flex:1}',
-            '.bottom-nav{position:fixed;inset-x:0;bottom:0;z-index:40;border-top:1px solid var(--color-border,#2f3336);background:var(--color-card,#0a0a0a);padding-bottom:env(safe-area-inset-bottom)}',
-            '@media(min-width:1024px){.bottom-nav{display:none}}',
             '.aurora-bg{position:fixed;inset:0;pointer-events:none;z-index:0}',
             '.noise-overlay{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.03}',
             'img,video{max-width:100%;height:auto;vertical-align:middle}',

@@ -714,7 +714,6 @@ export function ComposeModal({
               {attachedImages.length > 0 && (
                 <div className="mb-2 flex flex-wrap gap-2">
                   {attachedImages.map((img, i) => (
-                    {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
                     <div key={i} className="relative group">
                       <img
                         src={img}
@@ -775,7 +774,6 @@ export function ComposeModal({
 
               {/* Schedule date/time picker */}
               {showSchedulePicker && scheduleAvailable && (
-                {/* biome-ignore lint/a11y/noLabelWithoutControl: adjacent input provides context */}
                 <div className="mb-3 rounded-lg border border-cyan-900/50 bg-cyan-950/30 p-3">
                   <label className="flex items-center gap-2 text-sm text-cyan-300">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
