@@ -212,7 +212,6 @@ export const FeedWhyCard = memo(function FeedWhyCard({ post, onClose }: FeedWhyC
             Also contributing
           </p>
           {secondarySignals.slice(0, 5).map((_s, _i) => (
-            {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
             <div key={i} className="flex items-start gap-2">
               <span className="mt-0.5 shrink-0 text-xs text-[var(--color-muted)]">{s.icon}</span>
               <span className="text-xs text-[var(--color-muted)]">{s.text}</span>
@@ -236,87 +235,78 @@ export const FeedWhyCard = memo(function FeedWhyCard({ post, onClose }: FeedWhyC
             </>
           )}
         </div>
-</div>
+      </div>
 
-{
-  /* Source + quality */
-}
-<div className="mb-3 grid grid-cols-2 gap-2 text-xs">
-  <div className="rounded-lg bg-[var(--color-muted)] p-2">
-    <span className="block text-[10px] text-[var(--color-muted)]">Source</span>
-    <span className="font-medium text-[var(--color-muted)]">
-      {feedDebug
-        ? `${protocolLabel(feedDebug.sourceProtocol)} via DegenFeed bridge`
-        : protocolLabel(post.protocol)}
-    </span>
-  </div>
-  <div className="rounded-lg bg-[var(--color-muted)] p-2">
-    <span className="block text-[10px] text-[var(--color-muted)]">Quality</span>
-    <span className="font-medium text-[var(--color-muted)]">
-      {qualityScore !== null ? `${(qualityScore * 100).toFixed(0)}/100` : 'N/A'}
-    </span>
-  </div>
-</div>;
-
-{
-  /* Score breakdown (if available) */
-}
-{
-  score && (
-    <details className="group mb-3">
-      <summary className="cursor-pointer text-[10px] font-medium text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors">
-        <span className="inline-flex items-center gap-1">
-          <svg
-            width="8"
-            height="8"
-            viewBox="0 0 16 16"
-            fill="none"
-            className="transition-transform group-open:rotate-90"
-            aria-hidden="true"
-          >
-            <path
-              d="M6 4l4 4-4 4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Algorithm score breakdown
-        </span>
-      </summary>
-      <div className="mt-2 space-y-1">
-        <ScoreBar label="Recency" value={score.recency} max={2} color="bg-blue-500" />
-        <ScoreBar label="Engagement" value={score.engagement} max={5} color="bg-orange-500" />
-        <ScoreBar label="Relevance" value={score.relevance} max={3} color="bg-green-500" />
-        <ScoreBar label="Quality" value={score.quality} max={3} color="bg-purple-500" />
-        <ScoreBar label="Velocity" value={score.velocity} max={3} color="bg-yellow-500" />
-        <ScoreBar label="Source" value={score.source} max={2} color="bg-gray-500" />
-        <div className="flex items-center justify-between pt-1 text-[10px] font-semibold text-degen-400">
-          <span>Total score</span>
-          <span>{score.total.toFixed(1)}</span>
+      {/* Source + quality */}
+      <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-lg bg-[var(--color-muted)] p-2">
+          <span className="block text-[10px] text-[var(--color-muted)]">Source</span>
+          <span className="font-medium text-[var(--color-muted)]">
+            {feedDebug
+              ? `${protocolLabel(feedDebug.sourceProtocol)} via DegenFeed bridge`
+              : protocolLabel(post.protocol)}
+          </span>
+        </div>
+        <div className="rounded-lg bg-[var(--color-muted)] p-2">
+          <span className="block text-[10px] text-[var(--color-muted)]">Quality</span>
+          <span className="font-medium text-[var(--color-muted)]">
+            {_qualityScore !== null ? `${(_qualityScore * 100).toFixed(0)}/100` : 'N/A'}
+          </span>
         </div>
       </div>
-    </details>
-  );
-}
 
-{
-  /* Manage feed link */
-}
-<a
-  href="/settings"
-  onClick={(e) => {
-    e.preventDefault();
-    window.location.href = '/settings';
-  }}
-  className="mt-2 block text-center text-xs text-degen-500 hover:text-degen-400 underline decoration-dotted transition-colors"
->
-  Manage your feed preferences →
-</a>;
-</div>
-  )
-})
+      {/* Score breakdown (if available) */}
+      {score && (
+        <details className="group mb-3">
+          <summary className="cursor-pointer text-[10px] font-medium text-[var(--color-muted)] hover:text-[var(--color-muted)] transition-colors">
+            <span className="inline-flex items-center gap-1">
+              <svg
+                width="8"
+                height="8"
+                viewBox="0 0 16 16"
+                fill="none"
+                className="transition-transform group-open:rotate-90"
+                aria-hidden="true"
+              >
+                <path
+                  d="M6 4l4 4-4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Algorithm score breakdown
+            </span>
+          </summary>
+          <div className="mt-2 space-y-1">
+            <ScoreBar label="Recency" value={score.recency} max={2} color="bg-blue-500" />
+            <ScoreBar label="Engagement" value={score.engagement} max={5} color="bg-orange-500" />
+            <ScoreBar label="Relevance" value={score.relevance} max={3} color="bg-green-500" />
+            <ScoreBar label="Quality" value={score.quality} max={3} color="bg-purple-500" />
+            <ScoreBar label="Velocity" value={score.velocity} max={3} color="bg-yellow-500" />
+            <ScoreBar label="Source" value={score.source} max={2} color="bg-gray-500" />
+            <div className="flex items-center justify-between pt-1 text-[10px] font-semibold text-degen-400">
+              <span>Total score</span>
+              <span>{score.total.toFixed(1)}</span>
+            </div>
+          </div>
+        </details>
+    )}
+
+      <a
+        href="/settings"
+        onClick={(e) => {
+          e.preventDefault();
+          window.location.href = '/settings';
+        }}
+        className="mt-2 block text-center text-xs text-degen-500 hover:text-degen-400 underline decoration-dotted transition-colors"
+      >
+        Manage your feed preferences →
+      </a>
+    </div>
+  );
+});
 
 // ─── Tiny score bar sub-component ─────────────────────────────────
 

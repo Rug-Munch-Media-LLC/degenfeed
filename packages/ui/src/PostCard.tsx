@@ -190,7 +190,6 @@ export function PostCardSkeleton({ count = 1 }: PostCardSkeletonProps) {
     <output className="block w-full" aria-label="Loading posts">
       {Array.from({ length: count }).map((_, i) => (
         <div
-          {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
           key={`${uid}-skel-${i}`}
           className="post-card border-b border-[var(--color-border)] px-4 py-3"
           style={{ animationDelay: `${i * 0.05}s` }}

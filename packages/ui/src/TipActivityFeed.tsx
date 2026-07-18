@@ -97,7 +97,6 @@ export function TipActivityFeed({
     return (
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, _i) => (
-          {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
           <div key={i} className="h-10 animate-pulse rounded-lg bg-[var(--color-muted)]" />
         ))}
       </div>

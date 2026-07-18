@@ -39,6 +39,7 @@ const nextConfig = {
   transpilePackages: [
     '@degenfeed/types',
     '@degenfeed/feed-core',
+    '@degenfeed/feed-providers',
     '@degenfeed/ranking',
     '@degenfeed/nostr-sdk',
     '@degenfeed/storage',

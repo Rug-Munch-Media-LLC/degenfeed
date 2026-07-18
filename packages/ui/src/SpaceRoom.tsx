@@ -541,7 +541,6 @@ export function SpaceRoom({
                 <>
                   {space.reactions.slice(-10).map((r, i) => (
                     <div
-                      {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
                       key={`${r.createdAt}-${i}`}
                       className="flex items-center gap-2 rounded-lg bg-[var(--color-muted)]/10 px-3 py-1.5"
                     >
@@ -553,7 +552,7 @@ export function SpaceRoom({
                   ))}
                   {reactions.map((r, i) => (
                     <div
-                      {/* biome-ignore lint/suspicious/noArrayIndexKey: static list */}
+                      // biome-ignore lint/suspicious/noArrayIndexKey: static list
                       key={`live-${r.createdAt}-${i}`}
                       className="flex items-center gap-2 rounded-lg bg-degen-500/10 px-3 py-1.5 animate-slide-up"
                     >

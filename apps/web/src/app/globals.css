@@ -2018,29 +2018,7 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * MOBILE REFINEMENTS — Better spacing at 390px
- * ═══════════════════════════════════════════════════════════════ */
 
-@media (max-width: 480px) {
-  .shell-header-inner {
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-  }
-
-  .main-content {
-    padding-top: 3.5rem !important;
-  }
-
-  .shell-logo-text {
-    font-size: 1rem !important;
-  }
-
-  .shell-logo img {
-    width: 1.5rem !important;
-    height: 1.5rem !important;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════════
  * DARK MODE REFINEMENTS — Premium contrast, depth, glass
@@ -2096,14 +2074,6 @@
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-top-color: rgba(47, 51, 54, 0.8);
-}
-
-/* Shell header glass */
-.dark .shell-header {
-  background: rgba(22, 24, 28, 0.75);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border-bottom: 1px solid rgba(47, 51, 54, 0.8);
 }
 
 /* Aurora / mesh refinement for dark mode */
@@ -2323,27 +2293,6 @@
 .sidebar-user-card:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
-}
-
-/* ═══════════════════════════════════════════════════════════════
- * MAIN CONTENT — Max-width for Twitter-style feed
- * ═══════════════════════════════════════════════════════════════ */
-
-.main-content-wrapper {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-/* ── Reduced motion overrides for sidebar ── */
-@media (prefers-reduced-motion: reduce) {
-  .sidebar-compose-btn:active {
-    transform: none !important;
-  }
-  .sidebar-nav-item,
-  .sidebar-user-card {
-    transition: none !important;
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
