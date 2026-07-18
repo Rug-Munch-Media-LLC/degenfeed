@@ -7,6 +7,7 @@
  * single provider, health) live in ./feed-misc.
  */
 
+import { TRENDING_CACHE_KEY } from './trending-scraper';
 import { parseProtocols } from '@degenfeed/utils';
 import {
   PRESET_NAMES,
@@ -187,6 +188,39 @@ export async function handleHomeFeed(
   });
   const trending = await computeTrending(relevant, Number(params.get('trending')) || 24);
 
+  // Load "Trending Now" from the trending scraper cache (best-effort)
+  let trendingNow: Array<{
+    id: string;
+    title: string;
+    url: string;
+    platform: string;
+    authorName: string;
+    score: number;
+    thumbnailUrl?: string;
+  }> = [];
+  try {
+    const raw = await env.CACHE?.get(TRENDING_CACHE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw) as { platforms: Record<string, { items: Array<Record<string, unknown>> }> };
+      const items: Array<Record<string, unknown>> = [];
+      for (const p of Object.values(data.platforms)) {
+        if (p.items) items.push(...p.items);
+      }
+      items.sort((a, b) => Number(b.score ?? 0) - Number(a.score ?? 0));
+      trendingNow = items.slice(0, 5).map((item) => ({
+        id: String(item.id ?? ''),
+        title: String(item.title ?? ''),
+        url: String(item.url ?? ''),
+        platform: String(item.platform ?? ''),
+        authorName: String(item.authorName ?? ''),
+        score: Number(item.score) || 0,
+        thumbnailUrl: item.thumbnailUrl ? String(item.thumbnailUrl) : undefined,
+      }));
+    }
+  } catch {
+    // Non-critical — trending now is best-effort enrichment
+  }
+
   if (ranked.length === 0 && errors.length > 0) {
     return jsonResponse(
       {
@@ -217,6 +251,7 @@ export async function handleHomeFeed(
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
       trending,
+      trendingNow: trendingNow.length > 0 ? trendingNow : undefined,
       topOfHour,
       nextCursor,
       sort,

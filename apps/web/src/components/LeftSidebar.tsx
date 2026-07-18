@@ -246,11 +246,11 @@ function ComposeIcon() {
 
 const NAV_ITEMS: SidebarItem[] = [
   { href: '/feed', label: 'Home', icon: null },
-  { href: '/explore', label: 'Explore', icon: null },
+  { href: '/search', label: 'Search', icon: null },
   { href: '/notifications', label: 'Notifications', icon: null, requiresAuth: true },
   { href: '/messages', label: 'Messages', icon: null, requiresAuth: true },
   { href: '/digest', label: 'Digest', icon: null },
-  { href: '/bookmarks', label: 'Bookmarks', icon: null, requiresAuth: true },
+  { href: '/profile/bookmarks', label: 'Bookmarks', icon: null, requiresAuth: true },
   { href: '/c', label: 'Communities', icon: null },
   { href: '/trending', label: 'Trending', icon: null },
 ];
@@ -275,7 +275,7 @@ function iconFor(href: string, active: boolean): React.ReactNode {
   switch (href) {
     case '/feed':
       return <HomeIcon active={active} />;
-    case '/explore':
+    case '/search':
       return <ExploreIcon active={active} />;
     case '/notifications':
       return <NotifIcon active={active} />;
@@ -283,7 +283,7 @@ function iconFor(href: string, active: boolean): React.ReactNode {
       return <MsgIcon active={active} />;
     case '/digest':
       return <DigestIcon active={active} />;
-    case '/bookmarks':
+    case '/profile/bookmarks':
       return <BookmarkIcon active={active} />;
     case '/c':
       return <CommunitiesIcon active={active} />;

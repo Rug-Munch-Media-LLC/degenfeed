@@ -1,22 +1,33 @@
 /**
- * Scheduled cron handler — fires daily at 14:00 UTC via wrangler.toml [triggers].
+ * Scheduled cron handler — fires via wrangler.toml [triggers].
  *
- * When triggered:
+ * Cron schedules:
+ *   every-30-min — Trending content scraper
+ *   daily-14:00  — Daily digest email + trending refresh
+ *
+ * The dispatcher in index.ts checks the cron trigger and routes here.
+ *
+ * Daily digest:
  *   1. Builds the multi-protocol daily digest (Nostr→Bluesky→Mastodon→RSS).
  *   2. Pulls all newsletter subscribers from KV.
- *   3. Sends the digest via Postmark transactional email (or logs a summary
- *      if POSTMARK_SERVER_TOKEN is not configured yet).
+ *   3. Sends the digest via Postmark email (or logs summary).
+ *   4. Also refreshes trending content.
  *
- * To enable real email delivery:
- *   wrangler secret put POSTMARK_SERVER_TOKEN
- *
- * The digest HTML is built by the existing newsletter pipeline (handleNewsletterDigest).
+ * Trending-only tick:
+ *   1. Scrapes all platforms for trending content.
+ *   2. Caches in KV for 1 hour.
  */
 
 import type { Protocol } from '@degenfeed/types';
 import type { Env } from '../index';
+import { scrapeTrendingContent } from './trending-scraper';
 
 export async function handleCron(env: Env): Promise<Response> {
+  // Fire-and-forget trending scraper refresh on every cron tick
+  scrapeTrendingContent(env).catch((err) =>
+    console.warn('[cron] trending scrape failed:', err),
+  );
+
   const start = Date.now();
   const digestNiche = 'crypto,bitcoin,ethereum,defi,nft';
   const digestProtocols: Protocol[] = [

@@ -23,7 +23,9 @@
       "@degenfeed/identity": ["../../packages/identity/src"],
       "@degenfeed/auth": ["../../packages/auth/src"],
       "@degenfeed/storage": ["../../packages/storage/src"],
-      "@degenfeed/ui": ["../../packages/ui/src"]
+      "@degenfeed/ui": ["../../packages/ui/src"],
+      "@degenfeed/youtube-provider": ["../../packages/youtube-provider/src"],
+      "@degenfeed/feed-providers": ["../../packages/feed-providers/src"]
     }
   },
   "include": ["src"],
