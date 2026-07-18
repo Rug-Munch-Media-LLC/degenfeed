@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useWeb3 } from '../../../components/Web3Provider';
+import { retryFetch } from '../../../lib/retryFetch';
+import { getCached, setCache } from '../../../lib/fetchWithCache';
 
 /* ── Types ── */
 
@@ -663,13 +665,26 @@ export default function AnalyticsDashboard() {
         if (forceRefresh) params.set('refresh', 'true');
         const qs = params.toString();
         const workerBase = process.env.NEXT_PUBLIC_WORKER_API_URL || 'https://api.degenfeed.xyz';
-        const res = await fetch(`${workerBase}/api/analytics${qs ? `?${qs}` : ''}`);
+        const res = await retryFetch(`${workerBase}/api/analytics${qs ? `?${qs}` : ''}`, {
+          maxRetries: 2,
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as AnalyticsData;
-        if (mountedRef.current) setData(json);
+        if (mountedRef.current) {
+          setData(json);
+          setCache('analytics', json);
+        }
       } catch (e) {
-        if (mountedRef.current)
-          setError(e instanceof Error ? e.message : 'Failed to load analytics');
+        if (mountedRef.current) {
+          // Graceful degradation: show last known analytics
+          const cached = getCached<AnalyticsData>('analytics');
+          if (cached) {
+            setData(cached);
+            setError('Showing last known analytics (offline)');
+          } else {
+            setError(e instanceof Error ? e.message : 'Failed to load analytics');
+          }
+        }
       } finally {
         if (mountedRef.current) {
           setLoading(false);

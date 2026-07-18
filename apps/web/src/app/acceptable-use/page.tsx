@@ -4,6 +4,27 @@ export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: 'Acceptable Use Policy — DegenFeed',
+  description:
+    'Acceptable Use Policy for DegenFeed. Rules for using the open-source multi-protocol social aggregator.',
+  openGraph: {
+    title: 'Acceptable Use Policy — DegenFeed',
+    description: 'Acceptable Use Policy for DegenFeed.',
+    url: 'https://app.degenfeed.xyz/acceptable-use',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed Acceptable Use Policy',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Acceptable Use Policy — DegenFeed',
+    description: 'Acceptable Use Policy for DegenFeed.',
+  },
+  alternates: { canonical: 'https://app.degenfeed.xyz/acceptable-use' },
 };
 
 export default function AcceptableUsePage() {

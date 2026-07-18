@@ -4,6 +4,7 @@ import { getProtocolColor, getProtocolIcon } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { retryFetch } from '../../lib/retryFetch';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -207,10 +208,11 @@ export default function SearchPage() {
       try {
         const protocolsParam = protocolFilter ? `&protocols=${protocolFilter}` : '';
 
-        const res = await fetch(
+        const res = await retryFetch(
           `/api/search?q=${encodeURIComponent(q)}&limit=50${protocolsParam}`,
           {
-            credentials: 'include',
+            maxRetries: 2,
+            fetchOptions: { credentials: 'include' },
           },
         );
 
@@ -227,7 +229,7 @@ export default function SearchPage() {
         setIdentities([]);
         setCommunities([]);
         setVideos([]);
-        setError(err instanceof Error ? err.message : 'Search failed');
+        setError(err instanceof Error ? err.message : 'Search unavailable');
       }
       setLoading(false);
     },

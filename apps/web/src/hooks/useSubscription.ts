@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { retryFetch } from '../lib/retryFetch';
 
 export interface TierInfo {
   id: string;
@@ -36,7 +37,10 @@ export function formatBenefit(key: string): string {
 }
 
 async function fetcher<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, { credentials: 'include', ...options });
+  const res = await retryFetch(url, {
+    maxRetries: 2,
+    fetchOptions: { credentials: 'include', ...options },
+  });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(body.error ?? `Request failed: ${res.status}`);

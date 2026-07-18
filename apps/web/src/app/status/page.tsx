@@ -18,6 +18,25 @@ export const metadata: Metadata = {
   title: 'Status — DegenFeed',
   description:
     'Live protocol health for Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS, Lemmy, and Ponder.',
+  openGraph: {
+    title: 'Status — DegenFeed',
+    description: 'Live protocol health dashboard for all supported social protocols.',
+    url: 'https://app.degenfeed.xyz/status',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed Status',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Status — DegenFeed',
+    description: 'Live protocol health dashboard.',
+  },
+  alternates: { canonical: 'https://app.degenfeed.xyz/status' },
 };
 
 export interface ProtocolStatus {

@@ -6,9 +6,20 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/auth/', '/profile/', '/health'],
+        disallow: [
+          '/api/',
+          '/admin/',
+          '/messages/',
+          '/settings/',
+          '/profile/',
+          '/creator/',
+          '/auth/',
+          '/health',
+          '/notifications/',
+          '/offline',
+        ],
       },
     ],
-    sitemap: 'https://degenfeed.xyz/sitemap.xml',
+    sitemap: 'https://app.degenfeed.xyz/sitemap.xml',
   };
 }

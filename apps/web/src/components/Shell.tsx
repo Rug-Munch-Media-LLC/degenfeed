@@ -2,11 +2,13 @@
 
 import { RealtimeStatusDot } from '@degenfeed/realtime';
 import Image from 'next/image';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useFeedLayout } from '../hooks/useFeedLayout';
 import { OnboardingProvider } from '../hooks/useOnboarding';
 import { AddToHomeScreenToast } from './AddToHomeScreenToast';
+import { OfflineBanner } from './OfflineBanner';
 import { useAuth } from './AuthProvider';
 import { BottomNav } from './BottomNav';
 import { FeedLayoutSwitcher } from './FeedLayoutSwitcher';
@@ -16,6 +18,8 @@ import { OnboardingModal } from './OnboardingModal';
 import { WelcomeBackModal } from './WelcomeBackModal';
 import { ScrollToTop } from '@degenfeed/ui';
 import { SearchOverlay } from './SearchOverlay';
+import { ScreenReaderAnnouncerProvider } from './ScreenReaderAnnouncer';
+import { SkipLinks } from './SkipLinks';
 import { useToast } from './Toast';
 
 // ─── Protocol nav items ──────────────────────────────────────────────────
@@ -107,8 +111,9 @@ function StatusHealthDot() {
   }, [fetchStatus]);
 
   return (
-    <a
+    <Link
       href="/status"
+      prefetch={false}
       className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
       title={title}
       aria-label={`Protocol health: ${title}`}
@@ -117,13 +122,13 @@ function StatusHealthDot() {
         {dot}
       </span>
       <span className="hidden sm:inline">Status</span>
-    </a>
+    </Link>
   );
 }
 
 function Logo() {
   return (
-    <a href="/" className="shell-logo flex items-center gap-2 group">
+    <Link href="/" className="shell-logo flex items-center gap-2 group" prefetch={true}>
       <Image
         src="/icon.svg"
         alt="DegenFeed"
@@ -137,7 +142,7 @@ function Logo() {
       >
         DegenFeed
       </span>
-    </a>
+    </Link>
   );
 }
 
@@ -145,10 +150,18 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   const pathname = usePathname();
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
+  // Priority prefetch for above-the-fold routes
+  const priorityRoutes = new Set([
+    '/feed', '/discover', '/trending', '/shorts',
+    '/notifications', '/messages', '/search', '/home',
+  ]);
+  const shouldPrefetch = priorityRoutes.has(item.href);
+
   return (
-    <a
+    <Link
       href={item.href}
       onClick={onClick}
+      prefetch={shouldPrefetch}
       className={`relative rounded-lg px-3 py-2 text-sm font-medium transition-all ${
         active
           ? 'text-[var(--color-fg)]'
@@ -159,7 +172,7 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
       {active && (
         <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-degen-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
       )}
-    </a>
+    </Link>
   );
 }
 
@@ -185,9 +198,10 @@ function ProtocolSubNav() {
         {PROTOCOL_NAV.map((p) => {
           const active = pathname === p.href;
           return (
-            <a
+            <Link
               key={p.href}
               href={p.href}
+              prefetch={true}
               className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
                 active
                   ? 'text-[var(--color-fg)] shadow-sm'
@@ -208,7 +222,7 @@ function ProtocolSubNav() {
                 {p.icon}
               </span>
               <span>{p.label}</span>
-            </a>
+            </Link>
           );
         })}
         <span className="ml-auto hidden shrink-0 text-[10px] text-gray-600 sm:inline">
@@ -228,6 +242,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
   const { layout, setLayout, cycleLayout, isCompact, isMediaGrid, isReader, layoutLabel } =
     useFeedLayout();
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const helpRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
 
   // Listen for custom df-toast events (e.g., from PostCard share)
@@ -288,11 +304,27 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         e.preventDefault();
         setShowShortcuts(true);
       }
-      if (e.key === 'Escape') setShowShortcuts(false);
+      if (e.key === 'Escape') {
+        setShowShortcuts(false);
+        setHelpOpen(false);
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // Close help dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (helpRef.current && !helpRef.current.contains(e.target as Node)) {
+        setHelpOpen(false);
+      }
+    };
+    if (helpOpen) {
+      document.addEventListener('mousedown', handler);
+      return () => document.removeEventListener('mousedown', handler);
+    }
+  }, [helpOpen]);
 
   const closeMobile = () => setMobileOpen(false);
 
@@ -304,15 +336,13 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       <div className="aurora-bg" />
       <div className="noise-overlay" />
 
-      <a className="skip-link" href="#main">
-        Skip to content
-      </a>
+      <SkipLinks />
 
       <header className="shell-header fixed top-0 left-0 right-0 z-50 border-b glass">
         <div className="shell-header-inner mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Logo />
 
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary" id="main-nav">
             {NAV.map((item) => (
               <NavLink key={item.href} item={item} />
             ))}
@@ -326,18 +356,82 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
               onClick={() => setSearchOpen(true)}
               className="rounded-lg px-3 py-2 text-sm text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
               aria-label="Search"
+              id="search-input"
             >
               ⌕
             </button>
-            <button
-              type="button"
-              onClick={() => setShowShortcuts(true)}
-              className="rounded-lg px-2 py-2 text-sm font-bold text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
-              aria-label="Keyboard shortcuts"
-              title="Keyboard shortcuts"
-            >
-              ?
-            </button>
+            {/* Help dropdown */}
+            <div ref={helpRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setHelpOpen((v) => !v)}
+                className="rounded-lg px-2.5 py-2 text-sm text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+                aria-label="Help"
+                title="Help & documentation"
+                aria-expanded={helpOpen}
+              >
+                Help
+              </button>
+              {helpOpen && (
+                <div className="absolute right-0 top-full mt-1 w-52 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-2 shadow-xl animate-slide-up z-50">
+                  <div className="mb-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                    Resources
+                  </div>
+                  <Link
+                    href="/faq"
+                    onClick={() => setHelpOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+                  >
+                    <span className="w-4 text-center text-[11px]">?</span>
+                    FAQ
+                  </Link>
+                  <Link
+                    href="/docs/user-guide"
+                    onClick={() => setHelpOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+                  >
+                    <span className="w-4 text-center text-[11px]">📖</span>
+                    User Guide
+                  </Link>
+                  <Link
+                    href="/docs/comparison"
+                    onClick={() => setHelpOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+                  >
+                    <span className="w-4 text-center text-[11px]">⚖</span>
+                    Platform Comparison
+                  </Link>
+                  <Link
+                    href="/docs/troubleshooting"
+                    onClick={() => setHelpOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+                  >
+                    <span className="w-4 text-center text-[11px]">🔧</span>
+                    Troubleshooting
+                  </Link>
+                  <Link
+                    href="/status"
+                    onClick={() => setHelpOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+                  >
+                    <span className="w-4 text-center text-[11px]">◆</span>
+                    System Status
+                  </Link>
+                  <div className="my-1 border-t border-[var(--color-glass-border)]" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHelpOpen(false);
+                      setShowShortcuts(true);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-gray-400 transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+                  >
+                    <span className="w-4 text-center font-bold text-[11px]">⌘</span>
+                    Keyboard Shortcuts
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               type="button"
               onClick={() =>
@@ -363,12 +457,13 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
               </button>
             ) : (
               <div className="flex items-center gap-2">
-                <a
+                <Link
                   href="/api/auth/gotosocial/register"
+                  prefetch={false}
                   className="rounded-lg border border-degen-500/30 bg-degen-500/10 px-3 py-1.5 text-xs font-semibold text-degen-400 transition-all hover:bg-degen-500/20 hover:shadow-[0_0_12px_rgba(34,197,94,0.3)]"
                 >
                   Get @degenfeed.xyz
-                </a>
+                </Link>
                 <button type="button" onClick={openSignIn} className="btn-primary text-sm">
                   Connect Wallet
                 </button>
@@ -461,6 +556,9 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         </div>
       </header>
 
+      {/* Offline banner — shows when navigator.onLine is false */}
+      <OfflineBanner />
+
       <main
         id="main"
         className="main-content relative z-10 flex-1 pt-16 md:pt-[108px] pb-20 lg:pb-0 animate-page-enter"
@@ -470,9 +568,11 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           <ProtocolSubNav />
         </div>
         <OnboardingProvider>
-          {children}
-          <OnboardingModal />
-          <WelcomeBackModal />
+          <ScreenReaderAnnouncerProvider>
+            {children}
+            <OnboardingModal />
+            <WelcomeBackModal />
+          </ScreenReaderAnnouncerProvider>
         </OnboardingProvider>
       </main>
 
@@ -490,52 +590,53 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             </span>
           </div>
           <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--color-muted)' }}>
-            <a href="/feed" className="transition-colors hover:text-[var(--color-fg)]">
+            <Link href="/feed" prefetch={true} className="transition-colors hover:text-[var(--color-fg)]">
               Feed
-            </a>
-            <a href="/shorts" className="transition-colors hover:text-[var(--color-fg)]">
+            </Link>
+            <Link href="/shorts" prefetch={true} className="transition-colors hover:text-[var(--color-fg)]">
               Shorts
-            </a>
-            <a href="/c" className="transition-colors hover:text-[var(--color-fg)]">
+            </Link>
+            <Link href="/c" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
               Communities
-            </a>
-            <a href="/messages" className="transition-colors hover:text-[var(--color-fg)]">
+            </Link>
+            <Link href="/messages" prefetch={true} className="transition-colors hover:text-[var(--color-fg)]">
               Messages
-            </a>
-            <a href="/news" className="transition-colors hover:text-[var(--color-fg)]">
+            </Link>
+            <Link href="/news" prefetch={true} className="transition-colors hover:text-[var(--color-fg)]">
               News
-            </a>
-            <a href="/docs" className="transition-colors hover:text-[var(--color-fg)]">
+            </Link>
+            <Link href="/docs" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
               Docs
-            </a>
-            <a href="/developers" className="transition-colors hover:text-[var(--color-fg)]">
+            </Link>
+            <Link href="/developers" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
               Developers
-            </a>
-            <a href="/premium" className="transition-colors hover:text-[var(--color-fg)]">
+            </Link>
+            <Link href="/premium" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
               Premium
-            </a>
-            <a href="/creator" className="transition-colors hover:text-[var(--color-fg)]">
+            </Link>
+            <Link href="/creator" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
               Creator Studio
-            </a>
-            <a href="/profile" className="transition-colors hover:text-[var(--color-fg)]">
+            </Link>
+            <Link href="/profile" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
               Profile
-            </a>
+            </Link>
           </div>
           <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-muted)' }}>
-            <a href="/privacy" className="transition-colors hover:text-[var(--color-fg)]">
+            <Link href="/privacy" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
               Privacy
-            </a>
-            <a href="/terms" className="transition-colors hover:text-[var(--color-fg)]">
+            </Link>
+            <Link href="/terms" prefetch={false} className="transition-colors hover:text-[var(--color-fg)]">
               Terms
-            </a>
-            <a
+            </Link>
+            <Link
               href="/status"
+              prefetch={false}
               className="inline-flex items-center gap-1.5 transition-colors hover:text-[var(--color-fg)]"
               title="Protocol health"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-degen-500 shadow-[0_0_4px_rgba(34,197,94,0.5)]" />
               <span>Status</span>
-            </a>
+            </Link>
           </div>
           <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
             v{APP_VERSION} — © {new Date().getFullYear()} DegenFeed — a Rug Munch Media LLC product.

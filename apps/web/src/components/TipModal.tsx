@@ -5,6 +5,7 @@ import { tipOnChain } from '@degenfeed/web3';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { TipPostContext } from '../hooks/useTip';
+import { useAnnouncer } from './ScreenReaderAnnouncer';
 import { useTip } from '../hooks/useTip';
 import { useSolana } from './SolanaProvider';
 import { useWeb3 } from './Web3Provider';
@@ -110,6 +111,7 @@ export function TipModal({
     onClose();
   }, [onClose]);
 
+  const { announce } = useAnnouncer();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   // Focus trap
@@ -178,6 +180,7 @@ export function TipModal({
         window.dispatchEvent(
           new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
         );
+        announce(`Tip sent to ${recipientDisplayName}`, 'polite');
         return;
       }
 
@@ -232,6 +235,7 @@ export function TipModal({
         window.dispatchEvent(
           new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
         );
+        announce(`Tip sent to ${recipientDisplayName}`, 'polite');
         return;
       }
 
@@ -259,6 +263,7 @@ export function TipModal({
         window.dispatchEvent(
           new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
         );
+        announce(`Tip sent to ${recipientDisplayName}`, 'polite');
         return;
       }
 
@@ -272,6 +277,7 @@ export function TipModal({
         window.dispatchEvent(
           new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
         );
+        announce(`Tip sent to ${recipientDisplayName}`, 'polite');
         return;
       }
 
@@ -320,6 +326,7 @@ export function TipModal({
         window.dispatchEvent(
           new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
         );
+        announce(`Tip sent to ${recipientDisplayName}`, 'polite');
         return;
       }
 
@@ -336,6 +343,7 @@ export function TipModal({
       window.dispatchEvent(
         new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
       );
+      announce(`Tip sent to ${recipientDisplayName}`, 'polite');
     } catch (err) {
       setOnchainPending(false);
       setTipStatus('failed', undefined, err instanceof Error ? err.message : String(err));

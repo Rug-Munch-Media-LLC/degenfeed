@@ -6,6 +6,25 @@ export const metadata: Metadata = {
   title: 'Legal Notice — DegenFeed',
   description:
     'Legal notice and company information for DegenFeed, operated by Rug Munch Media LLC.',
+  openGraph: {
+    title: 'Legal Notice — DegenFeed',
+    description: 'Legal notice and company information for DegenFeed.',
+    url: 'https://app.degenfeed.xyz/legal',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed Legal Notice',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Legal Notice — DegenFeed',
+    description: 'Legal notice and company information for DegenFeed.',
+  },
+  alternates: { canonical: 'https://app.degenfeed.xyz/legal' },
 };
 
 export default function LegalPage() {

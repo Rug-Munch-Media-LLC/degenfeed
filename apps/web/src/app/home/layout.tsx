@@ -4,6 +4,25 @@ export const metadata: Metadata = {
   title: 'Home',
   description:
     'Browse DegenFeed by protocol or topic. Explore Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS feeds.',
+  openGraph: {
+    title: 'DegenFeed — Browse by Protocol',
+    description: 'Explore posts by protocol or topic across the open social web.',
+    url: 'https://app.degenfeed.xyz/home',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed Home',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed — Browse by Protocol',
+    description: 'Explore posts by protocol or topic across the open social web.',
+  },
+  alternates: { canonical: 'https://app.degenfeed.xyz/home' },
 };
 
 export default function HomeLayout({ children }: { children: React.ReactNode }) {

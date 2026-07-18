@@ -4,6 +4,8 @@ import type { StoredIdentity } from '@degenfeed/storage';
 import { getAllIdentities } from '@degenfeed/storage';
 import type { Notification } from '@degenfeed/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { retryFetch } from '../lib/retryFetch';
+import { getCached, setCache } from '../lib/fetchWithCache';
 
 const READ_KEY = 'degenfeed_notifications_read';
 const POLL_MS = 60000;
@@ -112,15 +114,19 @@ export function useNotifications(enabled: boolean) {
         setNotifications([]);
         return;
       }
-      const res = await fetch('/api/notifications', {
-        method: 'POST',
-        credentials: 'include',
-        cache: 'no-store',
-        headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
-        body: JSON.stringify({ auth }),
+      const res = await retryFetch('/api/notifications', {
+        fetchOptions: {
+          method: 'POST',
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+          body: JSON.stringify({ auth }),
+        },
       });
       const data = (await res.json()) as { notifications?: Notification[] };
       const fetched = data.notifications || [];
+      // Cache notifications for offline use
+      setCache('notifications', fetched);
       const currentRead = loadReadIds();
       setNotifications(
         fetched.map((n) => ({
@@ -129,35 +135,51 @@ export function useNotifications(enabled: boolean) {
         })),
       );
     } catch {
-      /* ignore */
+      // Graceful degradation: show cached notifications on failure
+      const cached = getCached<Notification[]>('notifications');
+      if (cached && notifications.length === 0) {
+        const currentRead = loadReadIds();
+        setNotifications(
+          cached.map((n) => ({
+            ...n,
+            read: n.read || currentRead.has(n.id),
+          })),
+        );
+      }
     } finally {
       setLoading(false);
     }
-  }, [enabled]);
+  }, [enabled, notifications.length]);
 
   const fetchNotificationPrefs = useCallback(async () => {
     try {
-      const res = await fetch('/api/preferences', {
-        credentials: 'include',
-        cache: 'no-store',
+      const res = await retryFetch('/api/preferences', {
+        maxRetries: 2,
+        fetchOptions: {
+          credentials: 'include',
+          cache: 'no-store',
+        },
       });
       if (!res.ok) return;
       const data = (await res.json()) as { notifications?: NotificationProtocolPrefs };
       if (data.notifications) setNotificationPrefs(data.notifications);
     } catch {
-      /* ignore */
+      /* ignore — non-critical preferences */
     }
   }, []);
 
   const saveNotificationPrefs = useCallback(async (prefs: NotificationProtocolPrefs) => {
     setNotificationPrefs(prefs);
     try {
-      await fetch('/api/preferences', {
-        method: 'POST',
-        credentials: 'include',
-        cache: 'no-store',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ notifications: prefs }),
+      await retryFetch('/api/preferences', {
+        maxRetries: 2,
+        fetchOptions: {
+          method: 'POST',
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ notifications: prefs }),
+        },
       });
     } catch {
       /* ignore */

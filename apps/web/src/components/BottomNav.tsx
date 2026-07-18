@@ -8,21 +8,27 @@ interface NavItem {
   href: string;
   label: string;
   icon: string;
+  priority: boolean;
 }
 
+const PRIORITY = new Set([
+  '/home/all', '/search', '/shorts', '/trending',
+  '/feed', '/notifications', '/messages',
+]);
+
 const NAV: NavItem[] = [
-  { href: '/home/all', label: 'Feed', icon: '🏠' },
-  { href: '/shorts', label: 'Shorts', icon: '📱' },
-  { href: '/feeds', label: 'Feeds', icon: '📋' },
-  { href: '/digest', label: 'Digest', icon: '📋' },
-  { href: '/search', label: 'Search', icon: '🔍' },
-  { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
-  { href: '/c', label: 'Communities', icon: '🌐' },
-  { href: '/spaces', label: 'Spaces', icon: '🔊' },
-  { href: '/trending', label: 'Trending', icon: '🔥' },
-  { href: '/news', label: 'News', icon: '📰' },
-  { href: '/messages', label: 'Messages', icon: '💬' },
-  { href: '/notifications', label: 'Notifications', icon: '🔔' },
+  { href: '/home/all', label: 'Feed', icon: '🏠', priority: true },
+  { href: '/shorts', label: 'Shorts', icon: '📱', priority: true },
+  { href: '/feeds', label: 'Feeds', icon: '📋', priority: false },
+  { href: '/digest', label: 'Digest', icon: '📋', priority: false },
+  { href: '/search', label: 'Search', icon: '🔍', priority: true },
+  { href: '/leaderboard', label: 'Leaderboard', icon: '🏆', priority: false },
+  { href: '/c', label: 'Communities', icon: '🌐', priority: false },
+  { href: '/spaces', label: 'Spaces', icon: '🔊', priority: false },
+  { href: '/trending', label: 'Trending', icon: '🔥', priority: true },
+  { href: '/news', label: 'News', icon: '📰', priority: true },
+  { href: '/messages', label: 'Messages', icon: '💬', priority: true },
+  { href: '/notifications', label: 'Notifications', icon: '🔔', priority: true },
 ];
 
 export function BottomNav() {
@@ -75,6 +81,7 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={item.priority}
               className={`flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors ${active ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
               aria-current={active ? 'page' : undefined}
             >

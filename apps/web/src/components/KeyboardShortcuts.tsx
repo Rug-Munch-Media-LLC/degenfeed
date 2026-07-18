@@ -35,11 +35,35 @@ const GROUPS: ShortcutGroup[] = [
     title: 'Feed',
     icon: '≡',
     shortcuts: [
+      { keys: ['j', '↓'], desc: 'Focus next post' },
+      { keys: ['k', '↑'], desc: 'Focus previous post' },
+      { keys: ['Enter'], desc: 'Open focused post' },
+      { keys: ['l'], desc: 'Like / unlike focused post' },
+      { keys: ['r'], desc: 'Reply to focused post' },
+      { keys: ['t'], desc: 'Tip focused post' },
+      { keys: ['b'], desc: 'Bookmark focused post' },
       { keys: ['1', '2', '3', '4', '5'], desc: 'Switch feed tabs' },
-      { keys: ['r'], desc: 'Refresh feed' },
-      { keys: ['l'], desc: 'Like / unlike post' },
-      { keys: ['t'], desc: 'Repost' },
       { keys: ['c'], desc: 'Compose new post' },
+    ],
+  },
+  {
+    title: 'Video Player',
+    icon: '▶',
+    shortcuts: [
+      { keys: ['Space'], desc: 'Play / pause' },
+      { keys: ['←', '→'], desc: 'Seek backward / forward 10s' },
+      { keys: ['↑', '↓'], desc: 'Volume up / down' },
+      { keys: ['F'], desc: 'Toggle fullscreen' },
+      { keys: ['M'], desc: 'Toggle mute' },
+    ],
+  },
+  {
+    title: 'Messages',
+    icon: '💬',
+    shortcuts: [
+      { keys: ['↓', '↑'], desc: 'Navigate conversations' },
+      { keys: ['Enter'], desc: 'Open conversation' },
+      { keys: ['Esc'], desc: 'Close conversation' },
     ],
   },
   {

@@ -175,6 +175,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             onChange={(e) => handleChange(e.target.value)}
             placeholder="Search posts, people, topics, tokens..."
             className="input h-12 pl-12 pr-12 text-base"
+            role="searchbox"
+            aria-label="Search posts, people, topics, and tokens"
+            autoComplete="off"
           />
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-muted)]">
             {loading ? '⟳' : '⌕'}

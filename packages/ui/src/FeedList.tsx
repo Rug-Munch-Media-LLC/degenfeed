@@ -191,27 +191,72 @@ export const FeedList = memo(function FeedList({
     onPostClick?.(postId);
   };
 
-  // Keyboard navigation
+  // Keyboard navigation — j/k posts, Enter to open, l/r/t/b for actions
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      const articles = containerRef.current?.querySelectorAll('article');
-      if (!articles?.length) return;
-      const focused = document.activeElement;
-      const idx = Array.from(articles).indexOf(focused as HTMLElement);
+      if ((e.target as HTMLElement)?.isContentEditable) return;
 
-      if (e.key === 'j' && idx < articles.length - 1) {
+      const postEls = containerRef.current?.querySelectorAll<HTMLElement>('[data-post-id]');
+      if (!postEls?.length) return;
+      const focused = document.activeElement;
+      const idx = Array.from(postEls).indexOf(focused as HTMLElement);
+
+      if ((e.key === 'j' || e.key === 'ArrowDown') && idx < postEls.length - 1) {
         e.preventDefault();
-        (articles[idx + 1] as HTMLElement)?.focus({ preventScroll: false });
+        const next = postEls[idx + 1];
+        if (next) {
+          next.focus({ preventScroll: false });
+          next.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       }
-      if (e.key === 'k' && idx > 0) {
+      if ((e.key === 'k' || e.key === 'ArrowUp') && idx > 0) {
         e.preventDefault();
-        (articles[idx - 1] as HTMLElement)?.focus({ preventScroll: false });
+        const prev = postEls[idx - 1];
+        if (prev) {
+          prev.focus({ preventScroll: false });
+          prev.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+      if (e.key === 'l' && idx >= 0) {
+        const postId = postEls[idx]?.getAttribute('data-post-id');
+        if (postId) {
+          e.preventDefault();
+          onEngage?.('like', postId);
+        }
+      }
+      if (e.key === 'r' && idx >= 0) {
+        const postId = postEls[idx]?.getAttribute('data-post-id');
+        if (postId) {
+          e.preventDefault();
+          onCrossReplyOpen?.(filteredPosts.find((p) => p.id === postId) ?? filteredPosts[0]);
+        }
+      }
+      if (e.key === 't' && idx >= 0) {
+        const postId = postEls[idx]?.getAttribute('data-post-id');
+        if (postId) {
+          e.preventDefault();
+          onTip?.(filteredPosts.find((p) => p.id === postId) ?? filteredPosts[0]);
+        }
+      }
+      if (e.key === 'b' && idx >= 0) {
+        const postId = postEls[idx]?.getAttribute('data-post-id');
+        if (postId) {
+          e.preventDefault();
+          onEngage?.('bookmark', postId);
+        }
+      }
+      if (e.key === 'Enter' && idx >= 0) {
+        const postId = postEls[idx]?.getAttribute('data-post-id');
+        if (postId) {
+          e.preventDefault();
+          handlePostClick(postId);
+        }
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [onEngage, onTip, onCrossReplyOpen, filteredPosts]);
 
   // Pull-to-refresh
   useEffect(() => {
@@ -269,6 +314,11 @@ export const FeedList = memo(function FeedList({
         {filteredPosts.map((post, i) => (
           <div
             key={post.id}
+            id={`post-${post.id}`}
+            data-post-id={post.id}
+            tabIndex={-1}
+            role="article"
+            aria-label={`Post by ${post.author.displayName || 'unknown'}`}
             style={
               {
                 contentVisibility: 'auto',

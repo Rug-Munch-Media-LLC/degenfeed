@@ -4,6 +4,27 @@ export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: 'Community Guidelines — DegenFeed',
+  description:
+    'Community guidelines for DegenFeed and the social.degenfeed.xyz Mastodon instance. Be respectful, no harassment, no spam.',
+  openGraph: {
+    title: 'Community Guidelines — DegenFeed',
+    description: 'Community guidelines for DegenFeed. Be respectful, no harassment.',
+    url: 'https://app.degenfeed.xyz/community-guidelines',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed Community Guidelines',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Community Guidelines — DegenFeed',
+    description: 'Community guidelines for DegenFeed.',
+  },
+  alternates: { canonical: 'https://app.degenfeed.xyz/community-guidelines' },
 };
 
 export default function CommunityGuidelinesPage() {

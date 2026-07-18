@@ -13,6 +13,25 @@ export const metadata: Metadata = {
   title: 'News',
   description:
     'Curated crypto, web3, and AI news from RSS feeds, Mastodon, Bluesky, and Reddit. No paywalls.',
+  openGraph: {
+    title: 'News — DegenFeed',
+    description: 'Curated crypto and web3 news from RSS, Mastodon, Bluesky, and Reddit. No paywalls.',
+    url: 'https://app.degenfeed.xyz/news',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed News',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'News — DegenFeed',
+    description: 'Curated crypto and web3 news from RSS, Mastodon, Bluesky, and Reddit.',
+  },
+  alternates: { canonical: 'https://app.degenfeed.xyz/news' },
 };
 
 interface NewsApiResponse {

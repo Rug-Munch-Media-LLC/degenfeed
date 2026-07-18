@@ -3,6 +3,7 @@
 import { ErrorBoundary } from '@degenfeed/ui';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { retryFetch } from '../../lib/retryFetch';
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -191,10 +192,12 @@ export default function TrendingPage() {
       url.searchParams.set('limit', '1');
       url.searchParams.set('trending', String(filter.windowHours));
       url.searchParams.set('protocols', 'nostr,farcaster,lens,bluesky,mastodon,threads,reddit,rss');
-      const res = await fetch(url.toString(), {
-        credentials: 'include',
-        cache: 'no-store',
-        headers: { 'cache-control': 'no-store' },
+      const res = await retryFetch(url.toString(), {
+        fetchOptions: {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'cache-control': 'no-store' },
+        },
       });
       if (!res.ok) throw new Error(`API returned ${res.status}`);
       const data = (await res.json()) as { meta?: { trending?: TrendingTopic[] } };
@@ -202,8 +205,14 @@ export default function TrendingPage() {
       setTopics(trending);
       setState(trending.length > 0 ? 'loaded' : 'empty');
     } catch (err) {
+      // Graceful degradation: show "Trending unavailable" instead of crashing
       setError(err instanceof Error ? err.message : 'Failed to load trending topics');
       setState('error');
+    } finally {
+      // Ensure we always exit loading state
+      if (state === 'loading') {
+        // Already handled by setState above
+      }
     }
   }, []);
 

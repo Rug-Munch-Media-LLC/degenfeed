@@ -2,7 +2,10 @@
 
 import { getProtocolColor, getProtocolLabel, ListSkeleton } from '@degenfeed/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
 import { useAuth } from '../../components/AuthProvider';
+import { retryFetch } from '../../lib/retryFetch';
+import { getCached, setCache } from '../../lib/fetchWithCache';
 
 interface Message {
   id: string;
@@ -76,6 +79,7 @@ function getOtherParticipant(participants: string[]): string {
 export default function MessagesPage() {
   const { ready, signedInProtocols, tokens } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
+  const convListRef = useRef<HTMLDivElement>(null);
 
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
@@ -89,6 +93,7 @@ export default function MessagesPage() {
   const [sendToId, setSendToId] = useState('');
   const [showCompose, setShowCompose] = useState(false);
 
+  const { announce } = useAnnouncer();
   const msgEndRef = useRef<HTMLDivElement>(null);
   const composeRef = useRef<HTMLTextAreaElement>(null);
 
@@ -96,27 +101,36 @@ export default function MessagesPage() {
   const fetchConversations = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/messages/conversations', { credentials: 'include' });
+      const res = await retryFetch('/api/messages/conversations', {
+        fetchOptions: { credentials: 'include' },
+      });
       if (res.ok) {
         const data = (await res.json()) as { conversations: ConversationListItem[] };
-        setConversations(data.conversations ?? []);
-        const total = (data.conversations ?? []).reduce((s, c) => s + (c.unreadCount ?? 0), 0);
+        const convs = data.conversations ?? [];
+        setConversations(convs);
+        setCache('messages_conversations', convs);
+        const total = convs.reduce((s, c) => s + (c.unreadCount ?? 0), 0);
         setUnreadTotal(total);
       }
     } catch {
-      /* ignore */
+      // Graceful degradation: show cached conversations
+      const cached = getCached<ConversationListItem[]>('messages_conversations');
+      if (cached && conversations.length === 0) {
+        setConversations(cached);
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [conversations.length]);
 
   // ── Fetch messages for selected conversation ────────────────
   const fetchMessages = useCallback(
     async (convId: string) => {
       setMsgLoading(true);
       try {
-        const res = await fetch(`/api/messages/${encodeURIComponent(convId)}`, {
-          credentials: 'include',
+        const res = await retryFetch(`/api/messages/${encodeURIComponent(convId)}`, {
+          maxRetries: 2,
+          fetchOptions: { credentials: 'include' },
         });
         if (res.ok) {
           const data = (await res.json()) as { messages: Message[] };
@@ -130,6 +144,61 @@ export default function MessagesPage() {
     },
     [],
   );
+
+  // Keyboard navigation for conversation list
+  const [focusedConvIndex, setFocusedConvIndex] = useState(-1);
+
+  const focusConvByIndex = useCallback((index: number) => {
+    if (index < 0 || index >= conversations.length) return;
+    setFocusedConvIndex(index);
+    const convId = conversations[index]?.conversationId;
+    if (!convId) return;
+    const el = convListRef.current?.querySelector<HTMLElement>(
+      `[data-conversation-id="${convId}"]`,
+    );
+    el?.focus();
+    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [conversations]);
+
+  useEffect(() => {
+    if (!hasSignedIn || selectedConvId) return;
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return;
+
+      switch (e.key) {
+        case 'ArrowDown':
+        case 'j': {
+          e.preventDefault();
+          focusConvByIndex(focusedConvIndex + 1);
+          break;
+        }
+        case 'ArrowUp':
+        case 'k': {
+          if (focusedConvIndex <= 0) return;
+          e.preventDefault();
+          focusConvByIndex(focusedConvIndex - 1);
+          break;
+        }
+        case 'Enter': {
+          if (focusedConvIndex < 0) return;
+          e.preventDefault();
+          const conv = conversations[focusedConvIndex];
+          if (conv) handleConvClick(conv);
+          break;
+        }
+        case 'Escape': {
+          if (selectedConvId) {
+            setSelectedConvId(null);
+            setShowCompose(false);
+          }
+          break;
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [hasSignedIn, selectedConvId, focusedConvIndex, conversations, focusConvByIndex, handleConvClick]);
 
   useEffect(() => {
     if (hasSignedIn) {
@@ -183,6 +252,7 @@ export default function MessagesPage() {
             setComposeText('');
             setSendToId('');
             setShowCompose(false);
+            announce('Message sent', 'polite');
             // Refresh conversations and messages
             await fetchConversations();
             if (selectedConvId) {
