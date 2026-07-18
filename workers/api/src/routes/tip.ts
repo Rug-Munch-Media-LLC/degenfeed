@@ -837,7 +837,7 @@ export async function handleTipFrameTx(request: Request, _env: Env): Promise<Res
     const valueHex = `0x${BigInt(Math.floor(Number.parseFloat(amount) * 1e18)).toString(16)}`;
 
     return jsonResponse({
-      chainId: 'eip155:1',
+      chainId: 'eip155:8453',
       method: 'eth_sendTransaction',
       params: {
         to,
