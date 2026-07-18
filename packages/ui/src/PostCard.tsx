@@ -349,6 +349,8 @@ export const PostCard = memo(function PostCard({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isSelf = post.author.id === 'self' || post.author.id.startsWith('self:');
+  const raw: Record<string, unknown> | undefined = post.raw as Record<string, unknown> | undefined;
+  const relays: string[] = Array.isArray(raw?.relays) ? (raw.relays as string[]) : [];
 
   useEffect(() => {
     if (typeof window === 'undefined' || !post.author.id) return;
@@ -1545,33 +1547,29 @@ export const PostCard = memo(function PostCard({
               ''
             }
             title={
-              (post.raw as Record<string, unknown> | undefined)?.videoTitle as string | undefined
+              raw?.videoTitle as string | undefined
             }
             channelName={
-              (post.raw as Record<string, unknown> | undefined)?.channelName as string | undefined
+              raw?.channelName as string | undefined
             }
           />
         )}
-        {post.protocol === 'nostr' ? (
-          <NostrRelayBadge
-            relays={((post.raw as Record<string, unknown> | undefined)?.relays as string[]) ?? []}
-          />
-        ) : null}
+        {post.protocol === 'nostr' ? <span>Nostr</span> : null}
         {post.protocol === 'mastodon' && (
           <MastodonInstanceContext
             instance={
-              ((post.raw as Record<string, unknown> | undefined)?.instance as string) ??
+              (raw?.instance as string) ??
               'mastodon.social'
             }
             federatedFrom={
-              (post.raw as Record<string, unknown> | undefined)?.federatedFrom as string | undefined
+              raw?.federatedFrom as string | undefined
             }
           />
         )}
         {post.protocol === 'lens' && <LensPublicationBadge post={post} />}
         {post.protocol === 'bluesky' && <BlueskyPostContext post={post} />}
         {post.protocol === 'threads' &&
-          (post.raw as Record<string, unknown> | undefined)?._viaActivityPub && (
+          raw?._viaActivityPub && (
             <span
               className="mb-2 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-medium"
               style={{
