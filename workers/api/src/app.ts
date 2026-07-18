@@ -39,7 +39,14 @@ import {
   handleWarpcastAuthorize,
   handleWarpcastCallback,
 } from './routes/auth';
-import { handleBillingCheckout, handleBillingStatus, handleBillingVerify } from './routes/billing';
+import {
+  handleBillingCancel,
+  handleBillingCheckout,
+  handleBillingMyStatus,
+  handleBillingStatus,
+  handleBillingSubscribe,
+  handleBillingVerify,
+} from './routes/billing';
 import { handleBlinkTip } from './routes/blink';
 import { handleCommunities } from './routes/communities';
 import {
@@ -620,6 +627,16 @@ app.all('/api/blink/tip', async (c) => handleBlinkTip(c.req.raw, c.env));
 app.all('/api/billing/checkout', async (c) => handleBillingCheckout(c.req.raw, c.env));
 app.all('/api/billing/verify', async (c) => handleBillingVerify(c.req.raw, c.env));
 app.all('/api/billing/status', async (c) => handleBillingStatus(c.req.raw, c.env));
+// Session-gated billing endpoints
+app.post('/api/billing/subscribe', async (c) =>
+  withSession(c, () => handleBillingSubscribe(c.req.raw, c.env)),
+);
+app.post('/api/billing/cancel', async (c) =>
+  withSession(c, () => handleBillingCancel(c.req.raw, c.env)),
+);
+app.get('/api/billing/my-status', async (c) =>
+  withSession(c, () => handleBillingMyStatus(c.req.raw, c.env)),
+);
 
 // ─── API: Subscription ──────────────────────────────────────
 // Static routes before parameterized

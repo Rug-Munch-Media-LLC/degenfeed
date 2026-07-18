@@ -10,12 +10,14 @@ import {
 } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { useAuth } from '../../components/AuthProvider';
 import { EditProfileModal } from '../../components/EditProfileModal';
 import { IdentityLinker } from '../../components/IdentityLinker';
 import { useToast } from '../../components/Toast';
 import { useWeb3 } from '../../components/Web3Provider';
 import { useOnboarding } from '../../hooks/useOnboarding';
+import { usePremium } from '../../hooks/usePremium';
 import { type SubscriptionStatus, useSubscription } from '../../hooks/useSubscription';
 
 export const dynamic = 'force-dynamic';
@@ -388,7 +390,9 @@ export default function ProfilePage() {
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState<string | null>(null);
   const [showCrossPlatformSetup, setShowCrossPlatformSetup] = useState(false);
   const [crossPlatformKey, setCrossPlatformKey] = useState(0);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { showToast } = useToast();
+  const { refresh: refreshPremium } = usePremium();
 
   const PLATFORM_LABELS: Record<string, string> = useMemo(
     () => ({
@@ -683,6 +687,7 @@ export default function ProfilePage() {
                   key={crossPlatformKey}
                   walletAddress={walletAddress ?? ''}
                   onRegistered={handleRegistered}
+                  onUpgrade={() => setShowUpgradeModal(true)}
                 />
               </div>
             )}
@@ -944,6 +949,7 @@ export default function ProfilePage() {
                 key={crossPlatformKey}
                 walletAddress={walletAddress ?? ''}
                 onOpenSetup={handleOpenSetup}
+                onUpgrade={() => setShowUpgradeModal(true)}
               />
             </div>
 
@@ -1118,6 +1124,16 @@ export default function ProfilePage() {
 
         {/* ── Edit Profile Modal ── */}
         <EditProfileModal open={showEditModal} onClose={() => setShowEditModal(false)} />
+
+        {/* ── Premium Upgrade Modal ── */}
+        <PremiumPaymentModal
+          open={showUpgradeModal}
+          onClose={() => {
+            setShowUpgradeModal(false);
+            refreshPremium();
+          }}
+          onSuccess={refreshPremium}
+        />
       </div>
     </ErrorBoundary>
   );

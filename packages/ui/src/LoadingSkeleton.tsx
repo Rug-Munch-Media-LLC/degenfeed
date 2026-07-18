@@ -43,26 +43,41 @@ export const CardSkeleton: FC<CardSkeletonProps> = memo(function CardSkeleton({
           className="border-b border-[var(--color-glass-border)] px-4 py-3"
         >
           {avatar && (
-            <div className="mb-3 flex items-center gap-3">
-              <Pulse className="h-10 w-10 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <Pulse className="h-3 w-32" />
-                <Pulse className="h-2.5 w-20" />
+            <div className="mb-2 flex items-center gap-3">
+              {/* Avatar — matches PostCard's h-8 w-8 exactly to prevent layout shift */}
+              <Pulse className="h-8 w-8 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1">
+                {/* Display name line */}
+                <Pulse className="mb-1.5 h-3.5 w-32" />
+                {/* Handle + dot + timestamp row — mirrors PostCard's author-handle div */}
+                <div className="flex items-center gap-1.5">
+                  <Pulse className="h-2.5 w-16" />
+                  <div className="h-1 w-1 rounded-full bg-gray-600" />
+                  <Pulse className="h-2.5 w-12" />
+                </div>
               </div>
             </div>
           )}
-          <div className={avatar ? 'space-y-2' : 'space-y-2 pt-1'}>
-            {Array.from({ length: lines }).map((_, j) => (
-              <Pulse
-                key={`line-${j}`}
-                className={`h-3 ${j === lines - 1 ? 'w-3/4' : j === 0 ? 'w-full' : 'w-11/12'}`}
-              />
+          {/* Content lines — same spacing as PostCard's content-text mb-3 */}
+          {!avatar && <div className="pt-1" />}
+          {Array.from({ length: lines }).map((_, j) => (
+            <Pulse
+              key={`line-${j}`}
+              className={`mb-2 h-3 ${j === lines - 1 ? 'w-3/4' : j === 0 ? 'w-full' : 'w-11/12'}`}
+            />
+          ))}
+          {/* Action button bar — mirrors PostCardEngagement layout (♡ count, ↻ count, ↩ count, 📑, ↗ Share) */}
+          <div className="actions mt-3 flex items-center gap-4">
+            {[0, 1, 2, 3].map((k) => (
+              <div key={k} className="flex items-center gap-1">
+                <Pulse className="h-3.5 w-3.5 rounded-full" />
+                <Pulse className="h-2.5 w-6" />
+              </div>
             ))}
-          </div>
-          <div className="mt-3 flex gap-4">
-            <Pulse className="h-3 w-12" />
-            <Pulse className="h-3 w-12" />
-            <Pulse className="h-3 w-12" />
+            <div className="ml-auto flex items-center gap-1">
+              <Pulse className="h-3.5 w-3.5 rounded-full" />
+              <Pulse className="h-2.5 w-8" />
+            </div>
           </div>
         </div>
       ))}

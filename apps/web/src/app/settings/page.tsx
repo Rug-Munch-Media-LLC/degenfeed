@@ -8,7 +8,8 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
-import { ErrorBoundary } from '@degenfeed/ui';
+import type { PlatformAccount } from '@degenfeed/ui';
+import { CrossPlatformSetup, ErrorBoundary } from '@degenfeed/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
@@ -340,10 +341,21 @@ export default function SettingsPage() {
     removeBlockedUser,
   } = usePreferences();
 
-  const { tier: currentTier, isPremium, expiresAt, loading: premiumLoading } = usePremium();
+  const { tier: currentTier, isPremium, expiresAt, loading: premiumLoading, refresh: refreshPremium } = usePremium();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [crossPlatformKey, setCrossPlatformKey] = useState(0);
+
+  const handleCrossPlatformRegistered = useCallback(
+    (result: PlatformAccount) => {
+      const label = result.platform.charAt(0).toUpperCase() + result.platform.slice(1);
+      const atUsername = result.username ? `@${result.username}` : '';
+      showToast('success', `✓ Created ${atUsername} on ${label}`);
+      setCrossPlatformKey((k) => k + 1);
+    },
+    [showToast],
+  );
 
   const handleCancelSubscription = useCallback(async () => {
     setCancelling(true);
@@ -352,15 +364,20 @@ export default function SettingsPage() {
         method: 'POST',
         credentials: 'include',
       });
-      if (!res.ok) throw new Error('Cancel failed');
+      if (!res.ok) {
+        const errData = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(errData?.error ?? 'Cancel failed');
+      }
       showToast('success', 'Subscription cancelled. Access continues until period end.');
       setShowCancelConfirm(false);
-    } catch {
-      showToast('error', 'Failed to cancel subscription');
+      // Refresh premium status so UI reflects the change
+      await refreshPremium();
+    } catch (err) {
+      showToast('error', err instanceof Error ? err.message : 'Failed to cancel subscription');
     } finally {
       setCancelling(false);
     }
-  }, [showToast]);
+  }, [showToast, refreshPremium]);
 
   const [openSections, setOpenSections] = useState<Section[]>(['appearance']);
   const [_mutedWordInput, _setMutedWordInput] = useState('');
@@ -837,6 +854,24 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* ── Cross-Platform Accounts ── */}
+                <div className="border-t border-[var(--color-glass-border)] pt-4">
+                  <h4 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">
+                    Cross-Platform Accounts
+                  </h4>
+                  <p className="mb-3 text-xs text-[var(--color-muted)]">
+                    Create accounts on Farcaster, Lens, Bluesky, Mastodon, and Nostr — all from one
+                    place.
+                  </p>
+                  <CrossPlatformSetup
+                    key={crossPlatformKey}
+                    walletAddress={walletAddress ?? ''}
+                    isPremium={isPremium}
+                    onRegistered={handleCrossPlatformRegistered}
+                    onUpgrade={() => setShowUpgradeModal(true)}
+                  />
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
@@ -853,6 +888,20 @@ export default function SettingsPage() {
                   >
                     Upgrade to Pro — $10 first month
                   </button>
+                </div>
+
+                {/* ── Cross-Platform Preview (shows upgrade prompt) ── */}
+                <div className="border-t border-[var(--color-glass-border)] pt-4">
+                  <h4 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">
+                    Cross-Platform Accounts
+                  </h4>
+                  <CrossPlatformSetup
+                    key={crossPlatformKey}
+                    walletAddress={walletAddress ?? ''}
+                    isPremium={isPremium}
+                    onRegistered={handleCrossPlatformRegistered}
+                    onUpgrade={() => setShowUpgradeModal(true)}
+                  />
                 </div>
               </div>
             )}
@@ -935,7 +984,14 @@ export default function SettingsPage() {
       </div>
 
       {/* Upgrade modal */}
-      <PremiumPaymentModal open={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+      <PremiumPaymentModal
+        open={showUpgradeModal}
+        onClose={() => {
+          setShowUpgradeModal(false);
+          refreshPremium();
+        }}
+        onSuccess={refreshPremium}
+      />
     </ErrorBoundary>
   );
 }

@@ -594,6 +594,7 @@ export const PostCard = memo(function PostCard({
           }
         }}
         aria-label={`Post by ${post.author.displayName}`}
+        tabIndex={0}
         style={{ transitionDuration: 'var(--duration-fast)' }}
       >
         {/* Author row */}
@@ -673,7 +674,7 @@ export const PostCard = memo(function PostCard({
                       e.stopPropagation();
                       setShowMenu((v) => !v);
                     }}
-                    className="rounded-lg p-1 text-gray-500 hover:bg-[var(--color-muted)] hover:text-gray-300 transition-colors"
+                    className="rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-500 hover:bg-[var(--color-muted)] hover:text-gray-300 transition-colors"
                     aria-label="More actions"
                     aria-haspopup="true"
                     aria-expanded={showMenu}
@@ -684,6 +685,7 @@ export const PostCard = memo(function PostCard({
                       viewBox="0 0 16 16"
                       fill="currentColor"
                       aria-hidden="true"
+                      className="shrink-0"
                     >
                       <circle cx="8" cy="3" r="1.5" />
                       <circle cx="8" cy="8" r="1.5" />
@@ -701,7 +703,7 @@ export const PostCard = memo(function PostCard({
                         type="button"
                         role="menuitem"
                         onClick={handleEmbed}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-blue-400">
                           <path d="M4 2v12M12 2v12M2 4h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -718,7 +720,7 @@ export const PostCard = memo(function PostCard({
                             setShowMenu(false);
                             onWhyThisPost(post);
                           }}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-degen-400 hover:bg-degen-500/10 transition-colors"
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-degen-400 hover:bg-degen-500/10 transition-colors"
                         >
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
                             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
@@ -732,7 +734,7 @@ export const PostCard = memo(function PostCard({
                         type="button"
                         role="menuitem"
                         onClick={handleFlagAsSpam}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-orange-400">
                           <path d="M4 2v12M4 2l8 3-8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -749,7 +751,7 @@ export const PostCard = memo(function PostCard({
                             setShowMenu(false);
                             onShowMoreLikeThis(post.niches[0] ?? 'crypto');
                           }}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-green-400 hover:bg-green-500/10 transition-colors"
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-green-400 hover:bg-green-500/10 transition-colors"
                         >
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
                             <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -766,7 +768,7 @@ export const PostCard = memo(function PostCard({
                             setShowMenu(false);
                             onShowLessLikeThis(post.niches[0] ?? 'crypto');
                           }}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-orange-400 hover:bg-orange-500/10 transition-colors"
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-orange-400 hover:bg-orange-500/10 transition-colors"
                         >
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
                             <path d="M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -779,7 +781,7 @@ export const PostCard = memo(function PostCard({
                         type="button"
                         role="menuitem"
                         onClick={handleReport}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-yellow-500">
                           <path d="M8 1L16 15H0L8 1Z" fill="currentColor" opacity="0.8" />
@@ -792,7 +794,7 @@ export const PostCard = memo(function PostCard({
                           type="button"
                           role="menuitem"
                           onClick={handleAdminRemove}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                         >
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
                             <path d="M2 4h12M5 4V2h6v2M3 4l1 10h8l1-10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -805,7 +807,7 @@ export const PostCard = memo(function PostCard({
                           type="button"
                           role="menuitem"
                           onClick={handleAdminBan}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-orange-400 hover:bg-orange-500/10 transition-colors"
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-orange-400 hover:bg-orange-500/10 transition-colors"
                         >
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
                             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
@@ -823,7 +825,7 @@ export const PostCard = memo(function PostCard({
                           e.stopPropagation();
                           setShowTranslateMenu((v) => !v);
                         }}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-blue-400">
                           <path d="M2 2h6l1 2H3L2 2zm2 4h4l1 2H5l-1-2zm3 4h2l3 6H8l-1-2-1 2H4l3-6z" fill="currentColor" />
@@ -866,7 +868,7 @@ export const PostCard = memo(function PostCard({
                           type="button"
                           role="menuitem"
                           onClick={handleMuteCommunity}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                         >
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-purple-400">
                             <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
@@ -885,7 +887,7 @@ export const PostCard = memo(function PostCard({
                           e.stopPropagation();
                           setShowMuteWordMenu((v) => !v);
                         }}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-orange-400">
                           <path d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -931,7 +933,7 @@ export const PostCard = memo(function PostCard({
                         type="button"
                         role="menuitem"
                         onClick={handleBlock}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-red-400">
                           <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
@@ -943,7 +945,7 @@ export const PostCard = memo(function PostCard({
                         type="button"
                         role="menuitem"
                         onClick={handleMuteFromMenu}
-                        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-gray-300 hover:bg-[var(--color-muted)] transition-colors"
                       >
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-gray-400">
                           <path d="M12 10a4 4 0 0 0 0-8M8 14a6 6 0 0 1-6-6M8 14a6 6 0 0 0 6-6M8 14V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -1038,7 +1040,7 @@ export const PostCard = memo(function PostCard({
               {/* Hover-only high-quality badge */}
               {(post.feedDebug?.qualityScore ?? (post.score?.quality ?? 0) / 3) > 0.7 && (
                 <span
-                  className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="relative z-10 inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"
                   title="This post was rated as high quality by the content quality filter"
                 >
                   ⚡ High Quality
@@ -1120,7 +1122,7 @@ export const PostCard = memo(function PostCard({
                         <a
                           key={`video-${embed.url}`}
                           href={embed.url}
-                          target="_blank" rel="noopener noreferrer"
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="mt-2 block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] p-3 text-xs text-degen-500 hover:text-degen-400 transition-colors truncate"
                           onClick={(e) => e.stopPropagation()}

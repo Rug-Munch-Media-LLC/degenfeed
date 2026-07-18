@@ -1380,6 +1380,45 @@ export default function FeedPage() {
                   const url = `${window.location.origin}/post/${postId}`;
                   handleContextMenu(e, postId, url);
                 }}
+                emptySlot={
+                  state === 'empty' && activeTab === 'for-you' ? (
+                    <div className="border-b border-[var(--color-glass-border)] px-4 py-16 text-center">
+                      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-degen-500/10">
+                        <span className="text-3xl text-degen-400">✦</span>
+                      </div>
+                      <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
+                        Your feed is quiet
+                      </h3>
+                      <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">
+                        Follow topics you care about to personalize your feed. Like, repost, or bookmark posts to help us learn your interests.
+                      </p>
+                      {!hasSignedIn && (
+                        <button type="button" onClick={openSignIn} className="btn-primary text-sm">
+                          Connect Wallet to get started
+                        </button>
+                      )}
+                    </div>
+                  ) : state === 'empty' && activeTab === 'custom-mix' ? (
+                    <div className="border-b border-[var(--color-glass-border)] px-4 py-16 text-center">
+                      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-degen-500/10">
+                        <span className="text-3xl text-degen-400">🎚️</span>
+                      </div>
+                      <h3 className="mb-2 text-lg font-semibold text-[var(--color-fg)]">
+                        No posts in this mix yet
+                      </h3>
+                      <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">
+                        Create a custom mix to combine your favorite topics. Use the Tuner above to select topics and adjust their weights.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowTuner(true)}
+                        className="btn-primary text-sm"
+                      >
+                        Open Feed Tuner
+                      </button>
+                    </div>
+                  ) : undefined
+                }
               />
 
               {/* Bookmark tooltip — appears near the first post's bookmark button */}
