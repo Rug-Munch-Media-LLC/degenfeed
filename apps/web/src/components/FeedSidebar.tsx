@@ -29,7 +29,7 @@ const NETWORK_HINTS: Record<string, string> = {
   mastodon: 'Fediverse (GotoSocial)',
   threads: 'Meta AT Protocol',
   reddit: 'Crypto subreddits',
-  rss: '30+ news sources',
+  rss: '319+ news sources',
 };
 
 export function FeedSidebar({

@@ -1,24 +1,18 @@
 import type { Metadata } from 'next';
-import { Sora } from 'next/font/google';
 import Link from 'next/link';
 import './landing.css';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'DegenFeed — Every Network. One Feed. Web3 Social Media Aggregator',
+  title: 'DegenFeed — Every Network. One Feed.',
   description:
-    'DegenFeed is the best web3 social media platform and decentralized social network. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube in one crypto social feed. Cross-post to multiple protocols, tip creators with crypto, and join decentralized communities. Open source, wallet-native, cross-protocol.',
-  keywords: [
-    'web3 social media', 'decentralized social network', 'crypto social platform',
-    'nostr feed', 'farcaster feed', 'lens protocol', 'bluesky feed',
-    'mastodon feed', 'crypto tipping', 'web3 social app', 'fediverse aggregator',
-  ],
+    'See what\'s happening in web3 right now. DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, and RSS into one unified feed. Cross-protocol, wallet-native, open source.',
   alternates: { canonical: 'https://app.degenfeed.xyz' },
   openGraph: {
-    title: 'DegenFeed — Every Network. One Feed. Web3 Social Media Aggregator',
+    title: 'DegenFeed — Every Network. One Feed.',
     description:
-      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube in one crypto social feed. Cross-post, tip creators, join web3 communities. Open source.',
+      'See what\'s happening in web3 right now. Aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS — all in one place.',
     siteName: 'DegenFeed',
     type: 'website',
     url: 'https://app.degenfeed.xyz',
@@ -27,7 +21,7 @@ export const metadata: Metadata = {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed — web3 social media aggregator connecting Nostr, Farcaster, Lens, Bluesky, Mastodon in one decentralized social network feed',
+        alt: 'DegenFeed — web3 social aggregator',
       },
     ],
   },
@@ -35,659 +29,289 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'DegenFeed — Every Network. One Feed.',
     description:
-      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon in one web3 social feed. Cross-protocol, wallet-native, open source.',
+      'See what\'s happening in web3 right now. Nostr, Farcaster, Lens, Bluesky, Mastodon — all in one place.',
     images: ['https://app.degenfeed.xyz/og-image.png'],
   },
 };
 
-const sora = Sora({ subsets: ['latin'], display: 'swap', variable: '--font-sora' });
-
-/* ─── Data ─────────────────────────────────────────────────────────── */
-
-interface ProtocolIcon {
-  icon: string;
-  label: string;
-  x: string;
-  y: string;
-  duration: number;
-  delay: number;
-  size: number;
-  opacity: number;
-}
-
-const protocolIcons: ProtocolIcon[] = [
-  { icon: '☰', label: 'Nostr', x: '8%', y: '15%', duration: 22, delay: 0, size: 28, opacity: 0.35 },
-  {
-    icon: '◈',
-    label: 'Farcaster',
-    x: '85%',
-    y: '20%',
-    duration: 26,
-    delay: 1.2,
-    size: 32,
-    opacity: 0.3,
-  },
-  {
-    icon: '◎',
-    label: 'Lens',
-    x: '15%',
-    y: '60%',
-    duration: 20,
-    delay: 0.6,
-    size: 26,
-    opacity: 0.3,
-  },
-  {
-    icon: '☁',
-    label: 'Bluesky',
-    x: '75%',
-    y: '55%',
-    duration: 24,
-    delay: 2.1,
-    size: 30,
-    opacity: 0.35,
-  },
-  {
-    icon: 'M',
-    label: 'Mastodon',
-    x: '5%',
-    y: '38%',
-    duration: 28,
-    delay: 0.3,
-    size: 22,
-    opacity: 0.25,
-  },
-  {
-    icon: 'L',
-    label: 'Lemmy',
-    x: '90%',
-    y: '70%',
-    duration: 18,
-    delay: 1.8,
-    size: 24,
-    opacity: 0.25,
-  },
-  {
-    icon: 'R',
-    label: 'Reddit',
-    x: '12%',
-    y: '80%',
-    duration: 30,
-    delay: 0.9,
-    size: 26,
-    opacity: 0.2,
-  },
-  {
-    icon: '▶',
-    label: 'PeerTube',
-    x: '82%',
-    y: '8%',
-    duration: 21,
-    delay: 2.5,
-    size: 20,
-    opacity: 0.2,
-  },
-  {
-    icon: '♯',
-    label: 'Threads',
-    x: '92%',
-    y: '40%',
-    duration: 25,
-    delay: 1.5,
-    size: 22,
-    opacity: 0.2,
-  },
-  { icon: 'A', label: 'RSS', x: '20%', y: '5%', duration: 19, delay: 3.0, size: 18, opacity: 0.2 },
-  {
-    icon: '📡',
-    label: 'Bluesky',
-    x: '60%',
-    y: '78%',
-    duration: 27,
-    delay: 0.4,
-    size: 24,
-    opacity: 0.2,
-  },
-  {
-    icon: '📻',
-    label: 'Nostr',
-    x: '45%',
-    y: '88%',
-    duration: 23,
-    delay: 1.1,
-    size: 20,
-    opacity: 0.15,
-  },
-];
+/* ─── Feature data ───────────────────────────────────────── */
 
 interface Feature {
-  emoji: string;
   title: string;
   desc: string;
-  gradient: string;
 }
 
 const features: Feature[] = [
   {
-    emoji: '🌐',
-    title: 'Cross-Protocol',
-    desc: 'Post once, publish everywhere. Bridge replies across Nostr, Farcaster, Lens, Bluesky, and Mastodon — all from one composer.',
-    gradient: 'from-emerald-400 via-green-400 to-teal-400',
+    title: 'Every Network, One Feed',
+    desc: 'See content from Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, and more in one unified timeline.',
   },
   {
-    emoji: '🤖',
-    title: 'AI-Powered Feed',
-    desc: 'Personalized content from 10+ networks. Smart curation learns what you care about, cuts through the noise.',
-    gradient: 'from-violet-400 via-purple-400 to-fuchsia-400',
+    title: 'Post Once, Publish Everywhere',
+    desc: 'Our cross-protocol composer sends your post to every network you choose. Replies from any network show up in one thread.',
   },
   {
-    emoji: '⚡',
-    title: 'Multi-Currency Tips',
-    desc: 'Tip in ETH, SOL, USDC, or Lightning. Unified leaderboard shows top creators across every protocol.',
-    gradient: 'from-amber-400 via-yellow-400 to-orange-400',
+    title: 'Tip Creators in Crypto',
+    desc: 'Send tips in ETH, SOL, USDC, or Lightning. 0% platform fees. Unified leaderboard across every protocol.',
   },
   {
-    emoji: '🍋',
-    title: 'Own Your Communities',
-    desc: 'Lemmy, PeerTube, Mastodon. Self-host or join federated instances. You control the infrastructure.',
-    gradient: 'from-lime-400 via-green-400 to-emerald-400',
-  },
-  {
-    emoji: '📊',
-    title: 'Creator Analytics',
-    desc: 'Cross-protocol stats that actually make sense. Know your reach, engagement, and growth everywhere at once.',
-    gradient: 'from-sky-400 via-blue-400 to-indigo-400',
-  },
-  {
-    emoji: '🔒',
-    title: 'Web3 Native',
-    desc: 'Wallet auth. Token-gated content. On-chain permanence. No email, no password, no surveillance.',
-    gradient: 'from-rose-400 via-pink-400 to-fuchsia-400',
-  },
-  {
-    emoji: '💬',
-    title: 'Unified DMs',
-    desc: 'Message across Nostr, Farcaster, Lens, and Mastodon from one inbox. Encrypted where available.',
-    gradient: 'from-cyan-400 via-teal-400 to-emerald-400',
-  },
-  {
-    emoji: '🎙️',
-    title: 'Audio Spaces',
-    desc: 'Live rooms with real-time reactions. Cross-protocol broadcast to all your networks simultaneously.',
-    gradient: 'from-orange-400 via-amber-400 to-yellow-400',
-  },
-  {
-    emoji: '📰',
-    title: 'Daily Digest',
-    desc: 'Personalized newsletter of what you missed. Curated from every protocol, delivered to your inbox or feed.',
-    gradient: 'from-red-400 via-rose-400 to-pink-400',
+    title: 'Your Communities, Your Rules',
+    desc: 'Create and govern communities with on-chain voting. Self-host or federate — you own the infrastructure.',
   },
 ];
 
-interface Step {
-  num: string;
-  title: string;
-  desc: string;
+/* ─── Comparison data ────────────────────────────────────── */
+
+interface ComparisonRow {
+  feature: string;
+  degenfeed: string;
+  twitter: string;
+  farcaster: string;
+  lens: string;
+}
+
+const comparisons: ComparisonRow[] = [
+  { feature: 'Multi-protocol feed', degenfeed: '✓', twitter: '—', farcaster: '—', lens: '—' },
+  { feature: 'Cross-protocol replies', degenfeed: '✓', twitter: '—', farcaster: '—', lens: '—' },
+  { feature: 'Wallet-native auth', degenfeed: '✓', twitter: '—', farcaster: '✓', lens: '✓' },
+  { feature: 'Crypto tipping', degenfeed: '✓', twitter: '—', farcaster: 'Zaps only', lens: '—' },
+  { feature: 'Open source', degenfeed: '✓', twitter: '—', farcaster: 'Partial', lens: 'Partial' },
+  { feature: 'Self-hostable', degenfeed: '✓', twitter: '—', farcaster: '—', lens: '—' },
+  { feature: 'No account required', degenfeed: '✓', twitter: '—', farcaster: '—', lens: '—' },
+  { feature: '0% platform fees', degenfeed: '✓', twitter: '—', farcaster: '—', lens: '—' },
+];
+
+/* ─── Mock posts for preview ─────────────────────────────── */
+
+interface MockPost {
+  protocol: string;
+  protocolColor: string;
   icon: string;
-}
-
-const steps: Step[] = [
-  {
-    num: '01',
-    title: 'Connect Your Wallet',
-    desc: 'One wallet, all networks. Sign in with your existing Ethereum, Solana, or Nostr key.',
-    icon: '🔑',
-  },
-  {
-    num: '02',
-    title: 'Choose Your Protocols',
-    desc: 'Toggle the networks you care about. Nostr, Farcaster, Lens, Bluesky — pick any combo.',
-    icon: '🎛️',
-  },
-  {
-    num: '03',
-    title: 'Enjoy Your Feed',
-    desc: 'Everything in one place. Cross-protocol replies, unified DMs, and AI curation.',
-    icon: '✨',
-  },
-];
-
-interface Testimonial {
-  quote: string;
   author: string;
-  role: string;
+  handle: string;
+  time: string;
+  content: string;
+  likes: string;
+  replies: string;
 }
 
-const testimonials: Testimonial[] = [
+const mockPosts: MockPost[] = [
   {
-    quote:
-      'Finally, one app for all my web3 social. No more tab juggling between Farcaster and Lens.',
-    author: '@degen_trader',
-    role: 'Crypto Twitter User',
+    protocol: 'Farcaster',
+    protocolColor: '#8a63d2',
+    icon: '◈',
+    author: 'dwr.eth',
+    handle: '@dwr',
+    time: '12m',
+    content: 'The on-chain economy is moving faster than ever. We\'re seeing more daily active users on Farcaster than last month, and the quality of conversation keeps getting better. LFG.',
+    likes: '142',
+    replies: '23',
   },
   {
-    quote:
-      'The cross-protocol replies are magic. I post on Nostr and the replies from Farcaster show up in the same thread.',
-    author: '@farcaster_builder',
-    role: 'Farcaster Builder',
+    protocol: 'Nostr',
+    protocolColor: '#8b5cf6',
+    icon: '☰',
+    author: 'PabloF7z',
+    handle: 'npub1...4x7p',
+    time: '34m',
+    content: 'Nostr relays are now processing over 1M events per day. The decentralized relay landscape is diversifying — new relays launching weekly with different fee models and moderation policies.',
+    likes: '89',
+    replies: '15',
   },
   {
-    quote: 'I can see my Lemmy community alongside my Nostr feed. It just works.',
-    author: '@community_creator',
-    role: 'Community Creator',
+    protocol: 'Bluesky',
+    protocolColor: '#1185fe',
+    icon: '☁',
+    author: 'alice.bsky.social',
+    handle: '@alice.bsky',
+    time: '1h',
+    content: 'Just published a deep dive on the AT Protocol\'s new federation model. TL;DR: much simpler than people think. The repo is open — come build with us.',
+    likes: '234',
+    replies: '41',
+  },
+  {
+    protocol: 'Lens',
+    protocolColor: '#abfe2c',
+    icon: '◎',
+    author: 'stani.lens',
+    handle: '@stani',
+    time: '2h',
+    content: 'Lens Protocol v2 is live on Polygon. Key upgrades: gasless profiles, community moderation tools, and improved creator monetization. Thanks to everyone who tested on testnet.',
+    likes: '567',
+    replies: '78',
   },
 ];
 
-const statRows: Array<{ value: string; label: string }[]> = [
-  [
-    { value: '10+', label: 'Protocols' },
-    { value: '242', label: 'RSS Sources' },
-    { value: '55', label: 'Reddit Communities' },
-    { value: '46', label: 'YouTube Channels' },
-    { value: '35', label: 'Newsletters' },
-  ],
-  [
-    { value: '2M+', label: 'PeerTube Videos' },
-    { value: '80+', label: 'Lemmy Communities' },
-    { value: '15', label: 'Fediverse Instances' },
-  ],
-];
-
-const footerLinks: { href: string; label: string }[] = [
-  { href: '/about', label: 'About' },
-  { href: '/faq', label: 'FAQ' },
-  { href: '/docs', label: 'Docs' },
-  { href: '/api-docs', label: 'API' },
-  { href: '/status', label: 'Status' },
-  { href: '/privacy', label: 'Privacy' },
-  { href: '/terms', label: 'Terms' },
-  { href: '/developers', label: 'Developers' },
-];
-
-/* ─── Component ────────────────────────────────────────────────────── */
+/* ─── ══════════════════════════════════════════════════════
+   PAGE
+   ══════════════════════════════════════════════════════ */
 
 export default function HomePage() {
   return (
-    <div className={`${sora.variable} landing-page`}>
+    <div className="landing-page">
       {/* ── Skip to app ── */}
       <a href="/feed" className="skip-to-app">
         <span className="skip-dot" />
-        Skip to App
-        <span className="skip-arrow" aria-hidden="true">
-          →
-        </span>
+        Browse Feed
+        <span className="skip-arrow" aria-hidden="true">→</span>
       </a>
 
-      {/* ── Floating background mesh ── */}
-      <div className="hero-mesh" aria-hidden="true" />
-      <div className="hero-glow" aria-hidden="true" />
-
-      {/* ══════════════════════════════════════════════════════════
-          HERO
-      ══════════════════════════════════════════════════════════ */}
-      <section className="hero-section" id="hero" aria-label="Hero">
-        {/* Floating protocol icons */}
-        <div className="float-icons-container" aria-hidden="true">
-          {protocolIcons.map((p) => (
-            <span
-              key={p.label + p.x + p.y}
-              className="float-icon"
-              style={{
-                left: p.x,
-                top: p.y,
-                fontSize: `${p.size}px`,
-                opacity: p.opacity,
-                animationDuration: `${p.duration}s`,
-                animationDelay: `${p.delay}s`,
-              }}
-              aria-hidden="true"
-            >
-              {p.icon}
-            </span>
-          ))}
-        </div>
-
+      {/* ══════════════ HERO ══════════════ */}
+      <section className="hero-section" aria-label="Hero">
         <div className="hero-content">
-          {/* Eyebrow */}
-          <div className="hero-eyebrow">
-            <span className="eyebrow-dot" />
-            The web3 social super app
+          {/* Logo */}
+          <div className="hero-logo">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <rect width="40" height="40" rx="10" fill="#00ff41" />
+              <text x="20" y="27" textAnchor="middle" fill="#000000" fontSize="22" fontWeight="800" fontFamily="system-ui">
+                D
+              </text>
+            </svg>
           </div>
 
-          {/* Headline */}
-          <h1 className="hero-headline">
-            <span className="hero-headline-line">Every Network.</span>{' '}
-            <span className="hero-headline-accent">One Feed.</span>
-          </h1>
+          <h1 className="hero-headline">See what&apos;s happening<br />in web3 right now.</h1>
 
-          {/* Subheadline */}
           <p className="hero-sub">
-            Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube — all in one place.
-            <br className="hidden sm:inline" /> Cross-protocol replies. Wallet-native. Open source.
-            Free forever.
+            DegenFeed brings every network together. Nostr, Farcaster, Lens, Bluesky,
+            Mastodon — all in one place. No account needed. Free forever.
           </p>
 
-          {/* CTAs */}
           <div className="hero-ctas">
             <Link href="/onboarding" className="cta-primary">
-              Get Started
-              <svg
-                className="cta-arrow"
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M3 8h10M9 4l4 4-4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              Sign in with wallet
             </Link>
-            <Link href="/discover" className="cta-secondary">
-              Explore
-              <svg
-                className="cta-arrow"
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M3 8h10M9 4l4 4-4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+            <Link href="/feed" className="cta-secondary">
+              Browse without signing in
             </Link>
           </div>
 
-          {/* Protocol quick badges */}
-          <div className="hero-badges">
-            {[
-              'Nostr',
-              'Farcaster',
-              'Lens',
-              'Bluesky',
-              'Mastodon',
-              'Lemmy',
-              'PeerTube',
-              'Reddit',
-              'RSS',
-            ].map((p) => (
-              <span key={p} className="proto-badge">
-                {p}
-              </span>
-            ))}
-          </div>
+          <p className="hero-stats">
+            10 protocols &middot; 319 RSS sources &middot; 137 Reddit communities &middot; 68 YouTube channels &middot; 2M+ PeerTube videos
+          </p>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          STATS BAR
-      ══════════════════════════════════════════════════════════ */}
-      <section className="stats-section" aria-label="Stats">
-        <div className="stats-container">
-          {statRows[0]?.map((stat) => (
-            <div key={stat.label} className="stat-item">
-              <span className="stat-value">{stat.value}</span>
-              <span className="stat-label">{stat.label}</span>
-            </div>
-          ))}
-        </div>
-        <div className="stats-container stats-secondary">
-          {statRows[1]?.map((stat) => (
-            <div key={stat.label} className="stat-item">
-              <span className="stat-value">{stat.value}</span>
-              <span className="stat-label">{stat.label}</span>
-            </div>
-          ))}
-          <div className="stat-item">
-            <span className="stat-value text-degen-400">0%</span>
-            <span className="stat-label">Platform Fees on Tips</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M12 2L2 7l10 5 10-5-10-5z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M2 17l10 5 10-5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M2 12l10 5 10-5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <span className="stat-label">Open Source</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M5 12h14M12 5l-7 7 7 7"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <span className="stat-label">Self-Hostable</span>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════
-          FEATURES GRID 3x3
-      ══════════════════════════════════════════════════════════ */}
+      {/* ══════════════ FEATURES ══════════════ */}
       <section className="features-section" id="features" aria-labelledby="features-heading">
-        <div className="section-label">
-          <span className="label-dot" />
-          Features
-        </div>
-        <h2 id="features-heading" className="section-heading">
-          Everything you need.
-          <br />
-          <span className="text-degen-400">Nothing you don&apos;t.</span>
-        </h2>
+        <h2 id="features-heading" className="section-heading">Everything in one place.</h2>
 
         <div className="features-grid">
-          {features.map((f, i) => (
-            <article
-              key={f.title}
-              className="feature-card"
-              style={{ '--i': i } as React.CSSProperties}
-            >
-              <div className={`feature-icon-wrap bg-gradient-to-br ${f.gradient}`}>
-                <span className="feature-emoji" aria-hidden="true">
-                  {f.emoji}
-                </span>
-              </div>
+          {features.map((f) => (
+            <article key={f.title} className="feature-card">
               <h3 className="feature-title">{f.title}</h3>
               <p className="feature-desc">{f.desc}</p>
-              <div className="feature-shimmer" aria-hidden="true" />
             </article>
           ))}
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          HOW IT WORKS — 3 steps
-      ══════════════════════════════════════════════════════════ */}
-      <section className="steps-section" id="how-it-works" aria-labelledby="steps-heading">
-        <div className="section-label">
-          <span className="label-dot" />
-          How It Works
-        </div>
-        <h2 id="steps-heading" className="section-heading">
-          Three steps to <span className="text-degen-400">everything.</span>
-        </h2>
+      {/* ══════════════ PREVIEW ══════════════ */}
+      <section className="preview-section" id="preview" aria-labelledby="preview-heading">
+        <h2 id="preview-heading" className="section-heading">What you&apos;ll see.</h2>
+        <p className="preview-sub">
+          Posts from Nostr, Farcaster, Lens, Bluesky, Mastodon in one timeline.
+        </p>
 
-        <div className="steps-container">
-          {/* Connecting line (desktop) */}
-          <div className="steps-line" aria-hidden="true" />
-
-          {steps.map((step, i) => (
-            <div key={step.num} className="step-card" style={{ '--i': i } as React.CSSProperties}>
-              <div className="step-number-wrap">
-                <span className="step-number">{step.num}</span>
-                <div className="step-icon-wrap">
-                  <span className="step-icon" aria-hidden="true">
-                    {step.icon}
-                  </span>
+        <div className="preview-feed">
+          {mockPosts.map((post) => (
+            <article key={post.handle + post.time} className="preview-post">
+              <div className="preview-post-header">
+                <div className="preview-post-avatar" style={{ backgroundColor: `${post.protocolColor}22`, color: post.protocolColor }}>
+                  {post.author.charAt(0).toUpperCase()}
                 </div>
+                <div className="preview-post-meta">
+                  <span className="preview-post-author">{post.author}</span>
+                  <span className="preview-post-handle">{post.handle} &middot; {post.time}</span>
+                </div>
+                <span
+                  className="preview-post-badge"
+                  style={{ backgroundColor: `${post.protocolColor}18`, color: post.protocolColor, borderColor: `${post.protocolColor}30` }}
+                >
+                  {post.icon} {post.protocol}
+                </span>
               </div>
-              <div className="step-content">
-                <h3 className="step-title">{step.title}</h3>
-                <p className="step-desc">{step.desc}</p>
+              <p className="preview-post-content">{post.content}</p>
+              <div className="preview-post-actions">
+                <span className="preview-post-action">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  {post.replies}
+                </span>
+                <span className="preview-post-action">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                  {post.likes}
+                </span>
+                <span className="preview-post-action">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </span>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          TESTIMONIALS
-      ══════════════════════════════════════════════════════════ */}
-      <section
-        className="testimonials-section"
-        id="testimonials"
-        aria-labelledby="testimonials-heading"
-      >
-        <div className="section-label">
-          <span className="label-dot" />
-          Community Love
-        </div>
-        <h2 id="testimonials-heading" className="section-heading">
-          What people <span className="text-degen-400">are saying</span>
-        </h2>
+      {/* ══════════════ COMPARISON ══════════════ */}
+      <section className="comparison-section" id="compare" aria-labelledby="compare-heading">
+        <h2 id="compare-heading" className="section-heading">What makes DegenFeed different.</h2>
 
-        <div className="testimonials-grid">
-          {testimonials.map((t, i) => (
-            <figure
-              key={t.author}
-              className="testimonial-card"
-              style={{ '--i': i } as React.CSSProperties}
-            >
-              {/* Floating quote mark */}
-              <div className="testimonial-quote-mark" aria-hidden="true">
-                <svg width="40" height="32" viewBox="0 0 40 32" fill="none" aria-hidden="true">
-                  <path
-                    d="M12 16c-2.2 0-4-.8-5.4-2.4C5.2 12 4.4 10 4.4 7.6c0-2.4.8-4.4 2.4-6C8.4 0 10.4-.8 12.8-.8c2.4 0 4.4.8 6 2.4 1.6 1.6 2.4 3.6 2.4 6 0 2.8-.8 5.2-2.4 7.2L12 16zm-8 16l5.6-10.4H12L6.4 32H4zm20-16c-2.2 0-4-.8-5.4-2.4-1.4-1.6-2.2-3.6-2.2-6 0-2.4.8-4.4 2.4-6C20 0 22-.8 24.4-.8c2.4 0 4.4.8 6 2.4 1.6 1.6 2.4 3.6 2.4 6 0 2.8-.8 5.2-2.4 7.2L24 16zm-8 16l5.6-10.4H24L18.4 32H16z"
-                    fill="currentColor"
-                    opacity="0.15"
-                  />
-                </svg>
-              </div>
-              <blockquote className="testimonial-quote">&ldquo;{t.quote}&rdquo;</blockquote>
-              <figcaption className="testimonial-author">
-                <div className="testimonial-avatar" aria-hidden="true">
-                  {t.author.charAt(1).toUpperCase()}
-                </div>
-                <div>
-                  <div className="testimonial-name">{t.author}</div>
-                  <div className="testimonial-role">{t.role}</div>
-                </div>
-              </figcaption>
-            </figure>
-          ))}
+        <div className="comparison-table-wrap">
+          <table className="comparison-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th className="col-degen">DegenFeed</th>
+                <th>Twitter/X</th>
+                <th>Farcaster</th>
+                <th>Lens</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comparisons.map((row) => (
+                <tr key={row.feature}>
+                  <td className="comp-feature">{row.feature}</td>
+                  <td className="comp-value col-degen">{row.degenfeed}</td>
+                  <td className="comp-value">{row.twitter}</td>
+                  <td className="comp-value">{row.farcaster}</td>
+                  <td className="comp-value">{row.lens}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          FINAL CTA
-      ══════════════════════════════════════════════════════════ */}
+      {/* ══════════════ FINAL CTA ══════════════ */}
       <section className="cta-section" aria-labelledby="cta-heading">
-        <div className="cta-glow" aria-hidden="true" />
         <div className="cta-inner">
-          <h2 id="cta-heading" className="cta-heading">
-            Ready to experience the
-            <br />
-            <span className="text-degen-400">future of social media?</span>
-          </h2>
+          <h2 id="cta-heading" className="cta-heading">Ready to join?</h2>
           <p className="cta-sub">
-            Join thousands of users already browsing every network from one place.
-            <br className="hidden sm:inline" /> No account needed. No surveillance. Free forever.
+            No account needed. No surveillance. No platform fees.
           </p>
           <div className="hero-ctas">
             <Link href="/onboarding" className="cta-primary cta-primary-lg">
-              Get Started
-              <svg
-                className="cta-arrow"
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M3 8h10M9 4l4 4-4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              Sign in with wallet
             </Link>
             <Link href="/feed" className="cta-secondary">
-              Browse Feed
-              <svg
-                className="cta-arrow"
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M3 8h10M9 4l4 4-4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              Browse without signing in
             </Link>
           </div>
 
-          {/* Footer links */}
           <nav className="cta-footer-nav" aria-label="Footer">
-            {footerLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="footer-link">
-                {link.label}
-              </Link>
-            ))}
-            <a
-              href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
-              target="_blank" rel="noopener noreferrer"
-              rel="noopener noreferrer"
-              className="footer-link"
-            >
+            <Link href="/about" className="footer-link">About</Link>
+            <Link href="/faq" className="footer-link">FAQ</Link>
+            <Link href="/docs" className="footer-link">Docs</Link>
+            <Link href="/api-docs" className="footer-link">API</Link>
+            <Link href="/status" className="footer-link">Status</Link>
+            <Link href="/privacy" className="footer-link">Privacy</Link>
+            <Link href="/terms" className="footer-link">Terms</Link>
+            <Link href="/developers" className="footer-link">Developers</Link>
+            <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener noreferrer" className="footer-link">
               Source
             </a>
           </nav>
 
           <p className="cta-copyright">
-            © {new Date().getFullYear()} DegenFeed — a Rug Munch Media LLC product. No account
-            required. Open source. MIT license.
+            &copy; {new Date().getFullYear()} DegenFeed &mdash; a Rug Munch Media LLC product.
+            No account required. Open source. Free forever.
           </p>
         </div>
       </section>

@@ -131,27 +131,11 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     account,
   ]);
 
-  // Legacy initial check (for backward compat with direct window.ethereum access)
-  useEffect(() => {
-    const check = async () => {
-      if (walletConnect.isConnected) return; // already handled above
-      const provider = typeof window !== 'undefined' ? window.ethereum : null;
-      if (!provider) return;
-      try {
-        const accounts = (await provider.request({ method: 'eth_accounts' })) as string[];
-        if (accounts?.[0]) {
-          setAccount(accounts[0].toLowerCase());
-          const id = await provider.request({ method: 'eth_chainId' });
-          setChainId(Number.parseInt(id as string, 16));
-          setConnector('injected');
-          setWalletName(detectWalletNameFromProvider());
-        }
-      } catch {
-        /* ignore */
-      }
-    };
-    check();
-  }, [walletConnect.isConnected, detectWalletNameFromProvider]);
+  // REMOVED: Legacy eth_accounts auto-check on mount.
+  // This previously called provider.request({ method: 'eth_accounts' }) which,
+  // on some wallets (Rabby, Rainbow), triggers a permission prompt.
+  // Wallet detection is now fully lazy — only connects on user click.
+  // The useWalletConnect hook detects available wallets without prompting.
 
   // Legacy event listeners (backward compat — also handled in useWalletConnect)
   useEffect(() => {

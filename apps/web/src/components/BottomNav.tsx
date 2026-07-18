@@ -3,17 +3,24 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useAuth } from './AuthProvider';
 
 interface NavItem {
   href: string;
   label: string;
   icon: string;
   priority: boolean;
+  requiresAuth?: boolean;
 }
 
-const PRIORITY = new Set([
-  '/home/all', '/search', '/shorts', '/trending',
-  '/feed', '/notifications', '/messages',
+const _PRIORITY = new Set([
+  '/home/all',
+  '/search',
+  '/shorts',
+  '/trending',
+  '/feed',
+  '/notifications',
+  '/messages',
 ]);
 
 /**
@@ -32,29 +39,40 @@ const ICONS: Record<string, string> = {
   '📰': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>',
   '💬': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
   '🔔': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+  '🔒': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
 };
 
-const NAV: NavItem[] = [
+const AUTH_NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: '🏠', priority: true },
-  { href: '/shorts', label: 'Shorts', icon: '📱', priority: true },
-  { href: '/feeds', label: 'Feeds', icon: '📋', priority: false },
-  { href: '/digest', label: 'Digest', icon: '📋', priority: false },
   { href: '/search', label: 'Search', icon: '🔍', priority: true },
-  { href: '/leaderboard', label: 'Leaderboard', icon: '🏆', priority: false },
-  { href: '/c', label: 'Communities', icon: '🌐', priority: false },
-  { href: '/spaces', label: 'Spaces', icon: '🔊', priority: false },
   { href: '/trending', label: 'Trending', icon: '🔥', priority: true },
   { href: '/news', label: 'News', icon: '📰', priority: true },
-  { href: '/messages', label: 'Messages', icon: '💬', priority: true },
-  { href: '/notifications', label: 'Notifications', icon: '🔔', priority: true },
+  { href: '/messages', label: 'Messages', icon: '💬', priority: true, requiresAuth: true },
+  { href: '/notifications', label: 'Notifs', icon: '🔔', priority: true, requiresAuth: true },
+  { href: '/spaces', label: 'Spaces', icon: '🔊', priority: false },
+  { href: '/leaderboard', label: 'Top', icon: '🏆', priority: false },
+];
+
+const GUEST_NAV: NavItem[] = [
+  { href: '/home/all', label: 'Feed', icon: '🏠', priority: true },
+  { href: '/search', label: 'Search', icon: '🔍', priority: true },
+  { href: '/trending', label: 'Trending', icon: '🔥', priority: true },
+  { href: '/news', label: 'News', icon: '📰', priority: true },
+  { href: '/spaces', label: 'Spaces', icon: '🔊', priority: false },
+  { href: '/leaderboard', label: 'Top', icon: '🏆', priority: false },
+  { href: '/discover', label: 'Discover', icon: '🌐', priority: false },
 ];
 
 export function BottomNav() {
   const pathname = usePathname() ?? '/';
+  const { ready, signedInProtocols, openSignIn } = useAuth();
+  const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const [notifCount, setNotifCount] = useState(0);
   const [dmCount, setDmCount] = useState(0);
 
+  // Only poll for notifications if signed in
   useEffect(() => {
+    if (!hasSignedIn) return;
     let interval: ReturnType<typeof setInterval>;
     const poll = async () => {
       try {
@@ -83,15 +101,18 @@ export function BottomNav() {
       pollDm();
     }, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [hasSignedIn]);
+
+  // Determine signed-in state
+  const signedIn = ready && hasSignedIn;
 
   return (
     <nav
       aria-label="Mobile"
       className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-glass-bg)] backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <div className="grid grid-cols-11">
-        {NAV.map((item) => {
+      <div className="flex justify-around px-1">
+        {(signedIn ? AUTH_NAV : GUEST_NAV).map((item) => {
           const active =
             pathname === item.href ||
             (item.href !== '/home/all' && pathname.startsWith(`${item.href}/`));
@@ -100,30 +121,32 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               prefetch={item.priority}
-              className={`relative flex flex-col items-center justify-center gap-1 py-1 text-[10px] font-medium transition-colors min-h-[3.5rem] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-[-2px] ${active ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+              className={`relative flex flex-col items-center justify-center gap-0 py-1 text-[9px] font-medium transition-colors min-h-[3rem] min-w-[2.5rem] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-[-2px] ${active ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
               aria-current={active ? 'page' : undefined}
+              title={item.requiresAuth && !signedIn ? 'Sign in to access Messages' : item.label}
             >
               <span
-                className={`relative flex h-9 w-12 items-center justify-center rounded-xl transition-all ${
-                  active
-                    ? 'bg-degen-500/15 shadow-[0_0_12px_rgba(0,255,65,0.1)]'
-                    : ''
+                className={`relative flex h-8 w-8 items-center justify-center rounded-xl transition-all ${
+                  active ? 'bg-degen-500/15 shadow-[0_0_12px_rgba(0,255,65,0.1)]' : ''
                 }`}
                 dangerouslySetInnerHTML={{
-                  __html: ICONS[item.icon] ?? item.icon,
+                  __html:
+                    !signedIn && item.requiresAuth
+                      ? (ICONS['🔒'] ?? item.icon)
+                      : (ICONS[item.icon] ?? item.icon),
                 }}
               />
-              {dmCount > 0 && item.href === '/messages' && (
-                <span className="absolute top-0 right-1/2 translate-x-[18px] bg-degen-500 text-black text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm">
+              {signedIn && dmCount > 0 && item.href === '/messages' && (
+                <span className="absolute top-0 right-1/2 translate-x-[14px] bg-degen-500 text-black text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm">
                   {dmCount > 9 ? '9+' : dmCount}
                 </span>
               )}
-              {notifCount > 0 && item.href === '/notifications' && (
-                <span className="absolute top-0 right-1/2 translate-x-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm">
+              {signedIn && notifCount > 0 && item.href === '/notifications' && (
+                <span className="absolute top-0 right-1/2 translate-x-[14px] bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm">
                   {notifCount > 9 ? '9+' : notifCount}
                 </span>
               )}
-              <span className="leading-none truncate max-w-[4rem]">{item.label}</span>
+              <span className="leading-tight truncate max-w-[3rem] text-[9px]">{item.label}</span>
             </Link>
           );
         })}

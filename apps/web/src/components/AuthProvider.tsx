@@ -117,7 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [walletAddress, setWalletAddress] = useState<string | undefined>(undefined);
   const [linkGtsUrl, setLinkGtsUrl] = useState<string | null>(null);
   const [nostrPublicId, setNostrPublicId] = useState<string | undefined>(undefined);
-  const [ready, setReady] = useState(false);
+  // App starts READY immediately — no blocking init.
+  // Auth is purely lazy: wallet detection, session fetch, and identity
+  // loading happen in the background without blocking the UI.
+  const [ready] = useState(true);
   const [showSignIn, setShowSignIn] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
   const [composeReplyContext, setComposeReplyContext] = useState<ComposeReplyContext | undefined>(
@@ -159,25 +162,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setNostrPublicId(nostrId?.publicId);
   }, [isConnected, wagmiAddress]);
 
+  // Deferred background init: loads stored identities + session silently.
+  // Does NOT block ready state — the app is usable immediately.
   useEffect(() => {
+    let cancelled = false;
     const init = async () => {
-      let serverAddress: string | undefined;
+      // Load stored identities from IndexedDB (silent, no prompt).
+      await refresh().catch(() => {});
+
+      // Try to restore server session (also silent).
       try {
         const res = await fetch('/api/auth/session', { credentials: 'include' });
-        if (res.ok) {
+        if (!cancelled && res.ok) {
           const data = (await res.json()) as { address?: string };
-          serverAddress = data.address;
+          if (data.address) {
+            setWalletAddress((prev) => prev ?? data.address.toLowerCase());
+          }
         }
       } catch {
-        /* session endpoint may be unavailable — continue without server session */
+        /* session endpoint unavailable — continue without server session */
       }
-      await refresh().catch(() => {});
-      if (serverAddress) {
-        setWalletAddress((prev) => prev ?? serverAddress?.toLowerCase());
-      }
-      setReady(true);
     };
-    init();
+    // Delay init slightly so the page renders first — no flash.
+    const timer = setTimeout(init, 100);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [refresh]);
 
   useEffect(() => {

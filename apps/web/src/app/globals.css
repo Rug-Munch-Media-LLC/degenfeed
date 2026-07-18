@@ -1815,3 +1815,151 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+ * LEFT SIDEBAR — Twitter-style navigation
+ * ═══════════════════════════════════════════════════════════════ */
+
+.left-sidebar {
+  background-color: var(--color-bg);
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  margin: 0 0.25rem;
+  border-radius: 9999px;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  color: var(--color-fg);
+  text-decoration: none;
+  transition: background-color 150ms ease-out;
+}
+
+.sidebar-nav-item:hover {
+  background-color: var(--color-overlay);
+}
+
+.sidebar-nav-item:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.sidebar-nav-active {
+  font-weight: 700;
+}
+
+.sidebar-nav-item-sm {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.sidebar-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+}
+
+.sidebar-nav-icon-sm {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.sidebar-nav-label {
+  line-height: 1.2;
+}
+
+.sidebar-compose-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 9999px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #000;
+  background: var(--color-accent, #00ff41);
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    box-shadow 150ms ease-out,
+    transform 150ms ease-out;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent, #00ff41) 20%, transparent);
+}
+
+.sidebar-compose-btn:hover {
+  background: #00e63a;
+  box-shadow: 0 0 30px color-mix(in srgb, var(--color-accent, #00ff41) 30%, transparent);
+}
+
+.sidebar-compose-btn:active {
+  transform: scale(0.97);
+}
+
+.sidebar-compose-btn:focus-visible {
+  outline: 2px solid var(--color-fg);
+  outline-offset: 2px;
+}
+
+.sidebar-signin-btn {
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  color: var(--color-accent);
+  box-shadow: none;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.sidebar-signin-btn:hover {
+  background: color-mix(in srgb, var(--color-accent) 25%, transparent);
+  box-shadow: none;
+}
+
+.sidebar-user-card {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: background-color 150ms ease-out;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.sidebar-user-card:hover {
+  background-color: var(--color-overlay);
+}
+
+.sidebar-user-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * MAIN CONTENT — Max-width for Twitter-style feed
+ * ═══════════════════════════════════════════════════════════════ */
+
+.main-content-wrapper {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── Reduced motion overrides for sidebar ── */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-compose-btn:active {
+    transform: none !important;
+  }
+  .sidebar-nav-item,
+  .sidebar-user-card {
+    transition: none !important;
+  }
+}

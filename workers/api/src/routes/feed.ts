@@ -22,15 +22,18 @@ import {
   countNewSinceLastVisit,
   DEFAULT_PROTOCOLS,
   enrichNostrEngagement,
+  FEED_GENERATION_TIMEOUT_MS,
   feedCacheKey,
   fetchFromProviders,
   getCachedFeed,
+  getCircuitStatus,
   loadUserRankingContext,
   mergePreferences,
   parseCookiePrefs,
   parsePrefsFromQuery,
   prefersEnglish,
   prepareBasePosts,
+  ProviderTimer,
   scoreAndRank,
   setCachedFeed,
   writePostsToKV,
@@ -49,6 +52,8 @@ export async function handleHomeFeed(
   env: Env,
   execCtx?: ExecCtx,
 ): Promise<Response> {
+  const feedStartTime = Date.now();
+
   // 1. Parse request
   const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
@@ -66,9 +71,25 @@ export async function handleHomeFeed(
     if (cached) return jsonResponse(cached);
   }
 
-  // 3. Fetch from providers (circuit breakers + provider cache inside).
+  // 3. Fetch from providers with per-provider timeouts + circuit breakers + timer.
   const notices: string[] = [];
-  const results = await fetchFromProviders(env, requestedProtocols, limit, notices, execCtx);
+  const timer = new ProviderTimer();
+  const results = await Promise.race([
+    fetchFromProviders(env, requestedProtocols, limit, notices, execCtx, timer),
+    // Feed generation timeout: if providers take too long, return empty results
+    // so the response is snappy. The timeout is generous — 8s for all providers.
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`feed generation timeout after ${FEED_GENERATION_TIMEOUT_MS}ms`)),
+        FEED_GENERATION_TIMEOUT_MS,
+      ),
+    ),
+  ]).catch((err: unknown) => {
+    const msg = err instanceof Error ? err.message : 'feed generation timed out';
+    notices.push(msg);
+    console.warn('[feed]', msg);
+    return [] as Awaited<ReturnType<typeof fetchFromProviders>>;
+  });
   const { posts: allPosts, errors, perProtocol } = collectProviderResults(results);
 
   // 4. Enrich: dedup + category/type filters, then per-user filters.
@@ -186,6 +207,7 @@ export async function handleHomeFeed(
   }
 
   // 6. Respond and cache.
+  const feedElapsed = Date.now() - feedStartTime;
   const responseBody = {
     data: ranked,
     meta: {
@@ -206,10 +228,33 @@ export async function handleHomeFeed(
   };
   if (!cursor) await setCachedFeed(env, cacheKey, responseBody);
   const resp = cachedJsonResponse(responseBody);
-  resp.headers.set(
-    'X-DegenFeed-Debug',
+
+  // Build enhanced debug header with circuit status, timing, slow providers
+  const circuitStatus = await getCircuitStatus(env, requestedProtocols);
+  const circuitParts = Object.entries(circuitStatus).map(
+    ([p, s]) => `${p}=${s}`,
+  );
+  const slowProviderParts = timer.getSlowProviders().map(
+    (t) => `${t.protocol}=${t.durationMs}ms`,
+  );
+  const debugParts = [
+    `feed-generation=${(feedElapsed / 1000).toFixed(1)}s`,
+    `timeout=${(FEED_GENERATION_TIMEOUT_MS / 1000).toFixed(0)}s`,
+  ];
+  if (timer.getResults().length > 0) {
+    debugParts.push(`timings=${timer.toDebugString()}`);
+  }
+  if (circuitParts.length > 0) {
+    debugParts.push(`circuits=${circuitParts.join(',')}`);
+  }
+  if (slowProviderParts.length > 0) {
+    debugParts.push(`slow=${slowProviderParts.join(',')}`);
+  }
+  debugParts.push(
     `spam=${debug.avgSpam.toFixed(2)},quality=${debug.avgQuality.toFixed(0)},reputation=${debug.avgReputation.toFixed(0)},velocity=${debug.avgVelocity.toFixed(0)}`,
   );
+
+  resp.headers.set('X-DegenFeed-Debug', debugParts.join(' | '));
   return resp;
 }
 

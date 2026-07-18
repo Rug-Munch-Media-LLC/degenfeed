@@ -14,7 +14,9 @@ import {
   curateFeed,
   DEFAULT_PROTOCOLS,
   enrichNostrEngagement,
+  FEED_GENERATION_TIMEOUT_MS,
   fetchFromProviders,
+  getCircuitStatus,
   loadBehaviorProfile,
   loadPreviousEngagement,
   loadScrollProfile,
@@ -25,6 +27,7 @@ import {
   parsePrefsFromQuery,
   prefersEnglish,
   prepareBasePosts,
+  ProviderTimer,
   recordScrollDepth,
   recordSeenPosts,
   storeBehaviorProfile,
@@ -80,10 +83,25 @@ export async function handleCuratedFeed(
   const behaviorProfile = wallet ? await loadBehaviorProfile(env, wallet) : undefined;
   if (behaviorProfile) updateStreak(behaviorProfile);
 
-  // 2. Fetch from providers
+  // 2. Fetch from providers with timeout + circuit tracking
+  const feedStartTime = Date.now();
   const notices: string[] = [];
-  const results = await fetchFromProviders(env, requestedProtocols, limit, notices, execCtx);
-  const { posts: allPosts, errors, perProtocol } = collectProviderResults(results);
+  const timer = new ProviderTimer();
+  const fetchResults = await Promise.race([
+    fetchFromProviders(env, requestedProtocols, limit, notices, execCtx, timer),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`feed generation timeout after ${FEED_GENERATION_TIMEOUT_MS}ms`)),
+        FEED_GENERATION_TIMEOUT_MS,
+      ),
+    ),
+  ]).catch((err: unknown) => {
+    const msg = err instanceof Error ? err.message : 'feed generation timed out';
+    notices.push(msg);
+    console.warn('[curated]', msg);
+    return [] as Awaited<ReturnType<typeof fetchFromProviders>>;
+  });
+  const { posts: allPosts, errors, perProtocol } = collectProviderResults(fetchResults);
 
   // 3. Enrich
   const deduped = prepareBasePosts(allPosts, { category, type: params.get('type') || '' });
@@ -202,10 +220,23 @@ export async function handleCuratedFeed(
   };
 
   const resp = cachedJsonResponse(responseBody, 200, 15);
-  resp.headers.set(
-    'X-DegenFeed-Debug',
+
+  // Enhanced debug header with timing and circuit info
+  const feedElapsed = Date.now() - feedStartTime;
+  const circuitStatus = await getCircuitStatus(env, requestedProtocols);
+  const circuitParts = Object.entries(circuitStatus).map(([p, s]) => `${p}=${s}`);
+  const debugParts = [
+    `feed-generation=${(feedElapsed / 1000).toFixed(1)}s`,
+    `timeout=${(FEED_GENERATION_TIMEOUT_MS / 1000).toFixed(0)}s`,
     `curated=true,seenFiltered=${curated.meta.seenFiltered},explore=${curated.meta.exploreCount},exploit=${curated.meta.exploitCount},freshness=${curated.meta.freshnessBoosts},ratio=${curated.meta.exploreRatio?.exploitPct ?? 0.8}/${curated.meta.exploreRatio?.explorePct ?? 0.2},temporal=${curated.meta.temporal ?? 'unknown'},streak=${curated.meta.dopamine?.streakCount ?? 0}`,
-  );
+  ];
+  if (timer.getResults().length > 0) {
+    debugParts.push(`timings=${timer.toDebugString()}`);
+  }
+  if (circuitParts.length > 0) {
+    debugParts.push(`circuits=${circuitParts.join(',')}`);
+  }
+  resp.headers.set('X-DegenFeed-Debug', debugParts.join(' | '));
   return resp;
 }
 

@@ -24,12 +24,15 @@ import {
   applyUserFilters,
   cachedJsonResponse,
   collectProviderResults,
+  FEED_GENERATION_TIMEOUT_MS,
   feedCacheKey,
   fetchFromProviders,
   getCachedFeed,
+  getCircuitStatus,
   loadUserRankingContext,
   prefersEnglish,
   prepareBasePosts,
+  ProviderTimer,
   scoreAndRank,
   setCachedFeed,
   writePostsToKV,
@@ -114,6 +117,7 @@ export async function handleForYouFeed(
   const isOnboarding = !behaviorProfile || isOnboardingMode(behaviorProfile);
 
   // 3. Feed pipeline: fetch → enrich → score
+  const feedStartTime = Date.now();
   const cacheKey = feedCacheKey(requestedProtocols, category, 'for-you');
   if (!cursor) {
     const cached = await getCachedFeed(env, cacheKey);
@@ -123,8 +127,22 @@ export async function handleForYouFeed(
   }
 
   const notices: string[] = [];
-  const results = await fetchFromProviders(env, requestedProtocols, limit, notices, execCtx);
-  const { posts: allPosts, errors, perProtocol } = collectProviderResults(results);
+  const timer = new ProviderTimer();
+  const fetchResults = await Promise.race([
+    fetchFromProviders(env, requestedProtocols, limit, notices, execCtx, timer),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`feed generation timeout after ${FEED_GENERATION_TIMEOUT_MS}ms`)),
+        FEED_GENERATION_TIMEOUT_MS,
+      ),
+    ),
+  ]).catch((err: unknown) => {
+    const msg = err instanceof Error ? err.message : 'feed generation timed out';
+    notices.push(msg);
+    console.warn('[for-you]', msg);
+    return [] as Awaited<ReturnType<typeof fetchFromProviders>>;
+  });
+  const { posts: allPosts, errors, perProtocol } = collectProviderResults(fetchResults);
 
   const allowNonCrypto =
     params.get('allowNonCrypto') === 'true' || userCtx.preferences?.allowNonCrypto === true;
@@ -222,10 +240,22 @@ export async function handleForYouFeed(
 
   if (!cursor) void setCachedFeed(env, cacheKey, responseBody);
   const resp = cachedJsonResponse(responseBody);
-  resp.headers.set(
-    'X-DegenFeed-Debug',
+
+  const feedElapsed = Date.now() - feedStartTime;
+  const circuitStatus = await getCircuitStatus(env, requestedProtocols);
+  const circuitParts = Object.entries(circuitStatus).map(([p, s]) => `${p}=${s}`);
+  const debugParts = [
+    `feed-generation=${(feedElapsed / 1000).toFixed(1)}s`,
+    `timeout=${(FEED_GENERATION_TIMEOUT_MS / 1000).toFixed(0)}s`,
     `personalized=${boostApplied},onboarding=${isOnboarding},profile=${!!behaviorProfile}`,
-  );
+  ];
+  if (timer.getResults().length > 0) {
+    debugParts.push(`timings=${timer.toDebugString()}`);
+  }
+  if (circuitParts.length > 0) {
+    debugParts.push(`circuits=${circuitParts.join(',')}`);
+  }
+  resp.headers.set('X-DegenFeed-Debug', debugParts.join(' | '));
   return resp;
 }
 
