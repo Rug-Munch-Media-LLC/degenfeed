@@ -65,6 +65,18 @@ export interface VideoPlayerProps {
   onEnded?: () => void;
   onError?: (message: string) => void;
 
+  // ── Autoplay / queue ──
+  /** Called when the autoplay countdown ends (for next video) */
+  onAutoPlayNext?: () => void;
+  /** Whether there are more videos in the queue */
+  hasNext?: boolean;
+
+  // ── Mini player ──
+  /** Enable mini-player mode (floating PiP-style) */
+  miniPlayer?: boolean;
+  /** Called when user closes the mini player */
+  onMiniPlayerClose?: () => void;
+
   // ── Metadata display ──
   showMetadata?: boolean;
   channelName?: string;
@@ -119,6 +131,12 @@ interface ControlsProps {
   onFullscreen: () => void;
   fullscreenSupported: boolean;
   visible: boolean;
+  pipSupported: boolean;
+  onPictureInPicture: () => void;
+  playbackRate: number;
+  onSpeedChange: (speed: number) => void;
+  showSpeedMenu: boolean;
+  setShowSpeedMenu: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const Controls = memo(function Controls({
@@ -135,6 +153,12 @@ const Controls = memo(function Controls({
   onFullscreen,
   fullscreenSupported,
   visible,
+  pipSupported,
+  onPictureInPicture,
+  playbackRate,
+  onSpeedChange,
+  showSpeedMenu,
+  setShowSpeedMenu,
 }: ControlsProps) {
   const progressRef = useRef<HTMLDivElement>(null);
   const seekProgress = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -324,6 +348,49 @@ const Controls = memo(function Controls({
             />
           </div>
 
+          {/* Speed control */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowSpeedMenu((v) => !v)}
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-degen-400/60 text-[11px] font-bold text-white/80"
+              aria-label="Playback speed"
+            >
+              {playbackRate}x
+            </button>
+            {showSpeedMenu && (
+              <div className="absolute bottom-full right-0 mb-1 rounded-lg bg-black/90 backdrop-blur-md border border-white/10 py-1 shadow-xl">
+                {[0.5, 1, 1.5, 2].map((speed) => (
+                  <button
+                    key={speed}
+                    type="button"
+                    onClick={() => onSpeedChange(speed)}
+                    className={`block w-full px-4 py-1.5 text-xs text-left transition-colors hover:bg-white/10 ${
+                      playbackRate === speed ? 'text-degen-400 font-bold' : 'text-white/70'
+                    }`}
+                  >
+                    {speed}x
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Picture-in-Picture */}
+          {pipSupported && (
+            <button
+              type="button"
+              onClick={onPictureInPicture}
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-degen-400/60"
+              aria-label="Picture in Picture"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="2" y="3" width="20" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <rect x="11" y="11" width="10" height="8" rx="1" fill="currentColor" opacity="0.5" />
+              </svg>
+            </button>
+          )}
+
           {/* Fullscreen */}
           {fullscreenSupported && (
             <button
@@ -368,6 +435,10 @@ export const VideoPlayer = memo(function VideoPlayer({
   showMetadata = true,
   channelName,
   views,
+  onAutoPlayNext,
+  hasNext,
+  miniPlayer,
+  onMiniPlayerClose,
 }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -389,6 +460,11 @@ export const VideoPlayer = memo(function VideoPlayer({
   const [reducedMotion, setReducedMotion] = useState(false);
   const [isVertical, setIsVertical] = useState(aspectRatio === '9:16');
   const [showPlayOverlay, setShowPlayOverlay] = useState(true);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [pipSupported, setPipSupported] = useState(false);
+  const [autoPlayCountdown, setAutoPlayCountdown] = useState<number | null>(null);
+  const autoPlayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fullscreenSupported = typeof document !== 'undefined' && document.fullscreenEnabled;
 
@@ -401,6 +477,38 @@ export const VideoPlayer = memo(function VideoPlayer({
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
+
+  // ── Detect PiP support ──
+  useEffect(() => {
+    if (typeof document !== 'undefined' && document.pictureInPictureEnabled) {
+      setPipSupported(true);
+    }
+  }, []);
+
+  // ── Autoplay countdown for next video ──
+  const clearAutoPlayTimer = useCallback(() => {
+    if (autoPlayTimerRef.current) {
+      clearInterval(autoPlayTimerRef.current);
+      autoPlayTimerRef.current = null;
+    }
+    setAutoPlayCountdown(null);
+  }, []);
+
+  const startAutoPlayCountdown = useCallback(() => {
+    if (!onAutoPlayNext || !hasNext) return;
+    const seconds = 5;
+    setAutoPlayCountdown(seconds);
+    let remaining = seconds;
+    autoPlayTimerRef.current = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearAutoPlayTimer();
+        onAutoPlayNext();
+      } else {
+        setAutoPlayCountdown(remaining);
+      }
+    }, 1000);
+  }, [onAutoPlayNext, hasNext, clearAutoPlayTimer]);
 
   // ── IntersectionObserver: auto-pause when out of view ──
   useEffect(() => {
@@ -475,7 +583,11 @@ export const VideoPlayer = memo(function VideoPlayer({
     setShowPlayOverlay(true);
     setControlsVisible(true);
     onEndedCb?.();
-  }, [onEndedCb]);
+    // Start autoplay countdown for next video
+    if (onAutoPlayNext && hasNext) {
+      startAutoPlayCountdown();
+    }
+  }, [onEndedCb, startAutoPlayCountdown, onAutoPlayNext, hasNext]);
 
   const handleTimeUpdate = useCallback(() => {
     const video = videoRef.current;
@@ -654,6 +766,28 @@ export const VideoPlayer = memo(function VideoPlayer({
       volume,
     ],
   );
+
+  const handlePictureInPicture = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else {
+        await video.requestPictureInPicture();
+      }
+    } catch {
+      // PiP may not be available or was denied
+    }
+  }, []);
+
+  const handleSpeedChange = useCallback((speed: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.playbackRate = speed;
+    setPlaybackRate(speed);
+    setShowSpeedMenu(false);
+  }, []);
 
   // ── Swipe gesture for short-form vertical videos ──
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -889,6 +1023,19 @@ export const VideoPlayer = memo(function VideoPlayer({
         </>
       )}
 
+      {/* ── Autoplay countdown overlay ── */}
+      {autoPlayCountdown != null && (
+        <div className="absolute bottom-16 left-1/2 z-20 -translate-x-1/2 autoplay-countdown">
+          <span>Next in {autoPlayCountdown}s</span>
+          <div className="countdown-bar">
+            <div className="fill" style={{ width: `${(autoPlayCountdown / 5) * 100}%` }} />
+          </div>
+          <button type="button" className="cancel-btn" onClick={clearAutoPlayTimer}>
+            Cancel
+          </button>
+        </div>
+      )}
+
       {/* ── Controls overlay (hidden during pre-play) ── */}
       {userInitiated && !isYouTube && !error && (
         <Controls
@@ -905,6 +1052,12 @@ export const VideoPlayer = memo(function VideoPlayer({
           onFullscreen={handleFullscreen}
           fullscreenSupported={fullscreenSupported}
           visible={controlsVisible}
+          pipSupported={pipSupported}
+          onPictureInPicture={handlePictureInPicture}
+          playbackRate={playbackRate}
+          onSpeedChange={handleSpeedChange}
+          showSpeedMenu={showSpeedMenu}
+          setShowSpeedMenu={setShowSpeedMenu}
         />
       )}
 

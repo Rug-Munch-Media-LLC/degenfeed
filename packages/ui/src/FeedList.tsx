@@ -265,7 +265,7 @@ export const FeedList = memo(function FeedList({
       role="feed"
       aria-label={protocolLabel ? `${protocolLabel} feed` : 'Feed'}
     >
-      <div className="stagger-enter" style={{ '--stagger-delay': '50ms' } as React.CSSProperties}>
+      <div className="reveal-enter" key={filteredPosts.map((p) => p.id).join('')}>
         {filteredPosts.map((post, i) => (
           <div
             key={post.id}

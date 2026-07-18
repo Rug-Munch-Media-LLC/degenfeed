@@ -27,6 +27,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 const PEERTUBE_INSTANCE = 'video.degenfeed.xyz';
 const YOUTUBE_FEED_LIMIT = 30;
 const PEERTUBE_API_LIMIT = 20;
+const FEDERATED_INSTANCE_COUNT = 15; // From @degenfeed/peertube-provider/federated — kept in sync manually
 
 // ─── PeerTube API types ────────────────────────────────────────────────
 
@@ -134,6 +135,57 @@ function formatDuration(seconds?: number): string {
   if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   if (m > 0) return `${m}:${String(s).padStart(2, '0')}`;
   return `0:${String(s).padStart(2, '0')}`;
+}
+
+// ─── Fetch Federated PeerTube feed ───────────────────────────────────────
+// Searches across multiple PeerTube instances for crypto/tech content.
+
+interface FederatedVideoItem {
+  id: string;
+  title: string;
+  url: string;
+  instanceUrl: string;
+  instanceName: string;
+  channelName: string;
+  channelUrl: string | null;
+  thumbnailUrl: string | null;
+  publishedAt: string;
+  publishedMs: number;
+  views: number;
+  likes: number;
+  duration: number;
+  description: string;
+  tags: string[];
+  source: string;
+}
+
+async function fetchFederatedFeed(
+  sort: string = 'trending',
+  limit: number = 30,
+  signal?: AbortSignal,
+): Promise<YouTubeVideoCardItem[]> {
+  try {
+    const { getFederatedFeed } = await import('@degenfeed/peertube-provider/federated');
+    const result = await getFederatedFeed({ sort, limit });
+    return result.items.map((v) => ({
+      id: `federated-${v.id}`,
+      title: v.title,
+      channelName: `${v.channelName} (@${v.source})`,
+      channelUrl: v.channelUrl ?? v.instanceUrl,
+      thumbnailUrl: v.thumbnailUrl ?? `https://${v.source}/static/thumbnails/${v.id}.jpg`,
+      url: v.url,
+      publishedAt: v.publishedAt,
+      publishedMs: v.publishedMs,
+      duration: formatDuration(v.duration),
+      views: v.views,
+      description: v.description,
+      category: detectCategory(v.title, v.description),
+      source: 'federated' as const,
+    }));
+  } catch (err) {
+    console.warn('[videos] Federated provider not available', err);
+    return [];
+  }
 }
 
 // ─── Fetch YouTube feed (RSS-based) ─────────────────────────────────────
@@ -260,6 +312,9 @@ export default function VideosPage() {
   const [youtubeExhausted, setYoutubeExhausted] = useState(false);
   const [peertubeExhausted, setPeertubeExhausted] = useState(false);
 
+  // Federated tab — no pagination (cached server-side, single fetch)
+  const [federatedLoading, setFederatedLoading] = useState(false);
+
   const abortRef = useRef<AbortController | null>(null);
   const loadingRef = useRef(false);
 
@@ -277,10 +332,21 @@ export default function VideosPage() {
       abortRef.current = controller;
 
       try {
+        // ── Federated tab: single fetch, no pagination ──────────────
+        if (activeTab === 'federated') {
+          setFederatedLoading(true);
+          const sortParam = sort === 'trending' ? 'trending' : sort === 'recent' ? 'recent' : 'trending';
+          const federatedItems = await fetchFederatedFeed(sortParam, 50, controller.signal);
+          if (controller.signal.aborted) return;
+          setVideos(federatedItems);
+          setHasMore(false);
+          return;
+        }
+
         const category = activeCategory === 'all' ? undefined : activeCategory;
         const currentPT = append ? peertubePage : 1;
 
-        // Fetch both sources in parallel
+        // Fetch YouTube + local PeerTube in parallel
         const [ytItems, ptResult] = await Promise.all([
           !youtubeExhausted || !append
             ? fetchYouTubeFeed(category, YOUTUBE_FEED_LIMIT, controller.signal)
@@ -389,6 +455,7 @@ export default function VideosPage() {
     setPeertubePage(1);
     setYoutubeExhausted(false);
     setPeertubeExhausted(false);
+    setFederatedLoading(false);
     setVideos([]);
     setHasMore(true);
     loadVideos(false);
@@ -486,16 +553,25 @@ export default function VideosPage() {
         {!loading && videos.length > 0 && (
           <footer className="mt-8 text-center">
             <p className="text-[11px] text-[var(--color-muted)]">
-              Videos sourced from YouTube RSS feeds and{' '}
-              <a
+              Videos sourced from YouTube RSS feeds,
+              {' '}<a
                 href={`https://${PEERTUBE_INSTANCE}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-degen-500 hover:text-degen-400 transition-colors underline underline-offset-2"
               >
                 {PEERTUBE_INSTANCE}
-              </a>{' '}
-              — updates every 15 minutes
+              </a>,{' '}
+              and{' '}
+              <a
+                href="https://sepiasearch.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-degen-500 hover:text-degen-400 transition-colors underline underline-offset-2"
+              >
+                {FEDERATED_INSTANCE_COUNT} federated instances
+              </a>
+              {' '}— cached for 15 minutes
             </p>
           </footer>
         )}

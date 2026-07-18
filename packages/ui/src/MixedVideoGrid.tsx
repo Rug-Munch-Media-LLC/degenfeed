@@ -18,7 +18,7 @@ import { YouTubeVideoCard, type YouTubeVideoCardItem } from './YouTubeVideoCard'
 // ─── Types ───────────────────────────────────────────────────────────────
 
 export type VideoSort = 'recent' | 'popular' | 'trending';
-export type VideoTab = 'all' | 'youtube' | 'peertube' | 'shorts' | 'live';
+export type VideoTab = 'all' | 'youtube' | 'peertube' | 'federated' | 'shorts' | 'live';
 export type VideoCategory = 'all' | 'crypto' | 'defi' | 'nft' | 'tutorial' | 'news' | 'entertainment';
 
 export interface MixedVideoGridProps {
@@ -48,6 +48,7 @@ const TABS: { id: VideoTab; label: string }[] = [
   { id: 'all', label: 'All Videos' },
   { id: 'youtube', label: 'YouTube' },
   { id: 'peertube', label: 'PeerTube' },
+  { id: 'federated', label: 'Federated' },
   { id: 'shorts', label: 'Shorts' },
   { id: 'live', label: 'Live' },
 ];
@@ -144,7 +145,9 @@ function EmptyState({ tab, category }: { tab: VideoTab; category: VideoCategory 
             ? 'No live streams right now.'
             : tab === 'peertube'
               ? 'No PeerTube videos match the current filters.'
-              : 'Try adjusting the filters or check back later.'}
+              : tab === 'federated'
+                ? 'No federated videos found. The fediverse might be sleepy — try again later.'
+                : 'Try adjusting the filters or check back later.'}
         {category !== 'all' && ` Category: ${category}.`}
       </p>
     </div>
@@ -177,7 +180,8 @@ export const MixedVideoGrid = memo(function MixedVideoGrid({
   const tabFiltered = videos.filter((v) => {
     if (activeTab === 'all') return true;
     if (activeTab === 'youtube') return v.source === 'youtube' && !/#shorts/.test(v.url);
-    if (activeTab === 'peertube') return v.source === 'peertube';
+    if (activeTab === 'peertube') return v.source === 'peertube' || v.source === 'federated';
+    if (activeTab === 'federated') return v.source === 'federated';
     if (activeTab === 'shorts') return v.source === 'youtube' && /#shorts/.test(v.url);
     if (activeTab === 'live') return false; // Live detection would need API data
     return true;

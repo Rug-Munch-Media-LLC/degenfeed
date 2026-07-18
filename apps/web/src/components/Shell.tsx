@@ -13,6 +13,8 @@ import { FeedLayoutSwitcher } from './FeedLayoutSwitcher';
 import { InstallPrompt } from './InstallPrompt';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { OnboardingModal } from './OnboardingModal';
+import { WelcomeBackModal } from './WelcomeBackModal';
+import { ScrollToTop } from '@degenfeed/ui';
 import { SearchOverlay } from './SearchOverlay';
 import { useToast } from './Toast';
 
@@ -37,6 +39,7 @@ const NAV: NavItem[] = [
   { href: '/feed', label: 'Feed' },
   { href: '/shorts', label: '\u{1F4F1} Shorts' },
   { href: '/feeds', label: '\u{1F4CB} Feeds' },
+  { href: '/digest', label: '\u{1F4CB} Digest' },
   { href: '/trending', label: 'Trending' },
   { href: '/leaderboard', label: '\u{1F3C6} Leaderboard' },
   { href: '/spaces', label: 'Spaces' },
@@ -469,6 +472,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         <OnboardingProvider>
           {children}
           <OnboardingModal />
+          <WelcomeBackModal />
         </OnboardingProvider>
       </main>
 
@@ -570,6 +574,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         </div>
       </footer>
 
+      <ScrollToTop />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <KeyboardShortcuts open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <InstallPrompt />

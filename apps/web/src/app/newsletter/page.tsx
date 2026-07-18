@@ -153,7 +153,8 @@ export default function NewsletterPage() {
         <h1 className="mb-2 text-4xl font-bold tracking-tight text-[var(--color-fg)]">DegenFeed Daily</h1>
         <p className="mx-auto max-w-xl text-sm leading-relaxed text-gray-500">
           The best of web3, AI, and tech — aggregated from Nostr, Farcaster, Lens, Bluesky,
-          Mastodon, and 200+ RSS sources. Ranked by quality, recency, and diversity. Delivered to
+          Mastodon, 200+ RSS sources, and 28+ curated newsletters from Substack, Medium,
+          Paragraph, and Mirror. Ranked by quality, recency, and diversity. Delivered to
           your inbox every morning.
         </p>
       </div>
@@ -368,7 +369,11 @@ export default function NewsletterPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>
-                  <span>Curated RSS and protocol feeds (50+ sources)</span>
+                  <span>Curated RSS feeds (242+ sources across 11 categories)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 text-degen-400">◆</span>
+                  <span>Premium newsletter content from 28+ top Substacks</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-degen-400">◆</span>
@@ -379,6 +384,50 @@ export default function NewsletterPage() {
                   <span>One-click unsubscribe</span>
                 </li>
               </ul>
+            </div>
+
+            <div className="card">
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
+                Newsletter Sources
+              </h3>
+              <div className="space-y-3 text-xs">
+                <div>
+                  <p className="mb-1 font-medium text-gray-400">Top Crypto</p>
+                  <ul className="space-y-1 text-gray-500">
+                    <li>✦ Bankless (daily)</li>
+                    <li>✦ Milk Road (daily)</li>
+                    <li>✦ Messari Unqualified (weekly)</li>
+                    <li>✦ 0xResearch (daily)</li>
+                    <li>✦ Pomp Letter (daily)</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="mb-1 font-medium text-gray-400">DeFi &amp; Protocol</p>
+                  <ul className="space-y-1 text-gray-500">
+                    <li>✦ DeFi Weekly</li>
+                    <li>✦ Week in Ethereum</li>
+                    <li>✦ Token Terminal</li>
+                    <li>✦ EigenLayer Blog</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="mb-1 font-medium text-gray-400">AI x Crypto</p>
+                  <ul className="space-y-1 text-gray-500">
+                    <li>✦ Supervised</li>
+                    <li>✦ TLDR AI</li>
+                    <li>✦ Import AI</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="mb-1 font-medium text-gray-400">Web3 Publishing</p>
+                  <ul className="space-y-1 text-gray-500">
+                    <li>✦ Mirror Development</li>
+                    <li>✦ Paragraph Blog</li>
+                    <li>✦ CoinMonks (Medium)</li>
+                    <li>✦ HackerNoon (Medium)</li>
+                  </ul>
+                </div>
+              </div>
             </div>
 
             <div className="card">

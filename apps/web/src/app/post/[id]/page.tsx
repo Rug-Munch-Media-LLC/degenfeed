@@ -7,6 +7,7 @@ import { formatTimeAgo } from '@degenfeed/utils';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useReadingSettings } from '../../../hooks/useReadingSettings';
 import { useAuth } from '../../../components/AuthProvider';
 
 const TipModal = dynamic(
@@ -15,6 +16,16 @@ const TipModal = dynamic(
 );
 
 import { sanitizeHtml } from '../../../lib/sanitize';
+
+// ─── Read time helper ─────────────────────────────────────────
+
+const WORDS_PER_MINUTE = 200;
+
+function estimateReadTime(text: string): string {
+  const words = text.trim().split(/\s+/).length;
+  const minutes = Math.max(1, Math.ceil(words / WORDS_PER_MINUTE));
+  return `${minutes} min read`;
+}
 
 export const revalidate = 3600;
 
@@ -151,19 +162,31 @@ function PostCard({
           <div className="flex items-center gap-2 text-[11px] text-gray-600">
             <span>{formatTimeAgo(post.createdAt)} ago</span>
             {post.parentId && <span>· reply</span>}
+            {post.text.length > 50 && <span>· {estimateReadTime(post.text)}</span>}
           </div>
         </div>
       </div>
 
       <div className="mb-4">
-        <p className="text-sm leading-relaxed text-gray-200 whitespace-pre-wrap break-words">
+        <p
+          className="whitespace-pre-wrap break-words text-[var(--color-fg)]"
+          style={{
+            fontSize: 'var(--reader-font-size, 1rem)',
+            lineHeight: 'var(--reader-line-height, 1.6)',
+          }}
+        >
           {post.text}
         </p>
         {post.html && (
           <div
             // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized via DOMPurify
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.html) }}
-            className="mt-2 text-sm leading-relaxed text-gray-400"
+            className="mt-2"
+            style={{
+              fontSize: 'var(--reader-font-size, 1rem)',
+              lineHeight: 'var(--reader-line-height, 1.6)',
+              color: 'var(--color-muted)',
+            }}
           />
         )}
       </div>
@@ -487,6 +510,11 @@ export default function PostPage({ params }: Props) {
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [error, setError] = useState<string>();
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [showReaderControls, setShowReaderControls] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const scrollPosKey = `df_scroll_pos_${id ?? ''}`;
+  const { settings, setFontSize, setLineSpacing } = useReadingSettings();
   const { engage, crossReply, signedInProtocols, openSignIn } = useAuth();
   const [replyText, setReplyText] = useState('');
   const [replying, setReplying] = useState(false);
@@ -528,6 +556,37 @@ export default function PostPage({ params }: Props) {
       cancelled = true;
     };
   }, [id]);
+
+  // Restore scroll position on load
+  useEffect(() => {
+    if (state !== 'loaded') return;
+    const saved = sessionStorage.getItem(scrollPosKey);
+    if (saved) {
+      const top = Number(saved);
+      if (top > 0) {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top, behavior: 'instant' as ScrollBehavior });
+        });
+      }
+    }
+  }, [state, scrollPosKey]);
+
+  // Track scroll progress + save position
+  useEffect(() => {
+    if (state !== 'loaded') return;
+    const handler = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+      setScrollProgress(progress);
+      // Debounced save
+      sessionStorage.setItem(scrollPosKey, String(scrollTop));
+    };
+    window.addEventListener('scroll', handler, { passive: true });
+    // Initial call
+    handler();
+    return () => window.removeEventListener('scroll', handler);
+  }, [state, scrollPosKey]);
 
   const loadThread = useCallback(async () => {
     if (!id) return;
@@ -641,15 +700,93 @@ export default function PostPage({ params }: Props) {
       return acc;
     }, {});
 
+  // Reader controls
+  const fontSizeLabel = { sm: 'S', md: 'M', lg: 'L' } as const;
+  const lineSpacingLabel = { compact: 'Compact', comfortable: 'Comfy', relaxed: 'Relaxed' } as const;
+
   return (
     <ErrorBoundary>
-      <div className="mx-auto max-w-2xl px-4 py-6">
-        <a
-          href="/feed"
-          className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-[var(--color-fg)]"
-        >
-          &larr; Back to feed
-        </a>
+      {/* Reading progress bar */}
+      <div
+        className="reading-progress"
+        style={{ width: `${scrollProgress * 100}%` }}
+        role="progressbar"
+        aria-valuenow={Math.round(scrollProgress * 100)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Reading progress"
+      />
+      <div
+        className="mx-auto max-w-2xl px-4 py-6"
+        ref={contentRef}
+        style={
+          {
+            '--reader-font-size': settings.fontSize === 'sm' ? '0.875rem' : settings.fontSize === 'lg' ? '1.125rem' : '1rem',
+            '--reader-line-height': settings.lineSpacing === 'compact' ? '1.4' : settings.lineSpacing === 'relaxed' ? '1.8' : '1.6',
+          } as React.CSSProperties
+        }
+      >
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <a
+            href="/feed"
+            className="inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-[var(--color-fg)]"
+          >
+            &larr; Back to feed
+          </a>
+          {/* Reader controls */}
+          <div className="relative flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setShowReaderControls(!showReaderControls)}
+              className="rounded-lg p-1.5 text-gray-500 hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+              aria-label="Reader settings"
+              title="Text size & spacing"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M6 4v16" /><path d="M18 4v16" /><path d="M4 20h16" />
+                <path d="M10 8h4" /><path d="M9 12h6" /><path d="M11 16h2" />
+              </svg>
+            </button>
+            {showReaderControls && (
+              <div className="absolute right-0 top-full mt-1 z-50 rounded-xl border border-white/10 bg-[var(--color-card)] p-3 shadow-2xl backdrop-blur-xl min-w-[200px]">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Font Size</p>
+                <div className="flex gap-1 mb-3">
+                  {(['sm', 'md', 'lg'] as const).map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setFontSize(size)}
+                      className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
+                        settings.fontSize === size
+                          ? 'bg-degen-500/20 text-degen-400'
+                          : 'text-gray-500 hover:bg-[var(--color-muted)]'
+                      }`}
+                    >
+                      {fontSizeLabel[size]}
+                    </button>
+                  ))}
+                </div>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Line Spacing</p>
+                <div className="flex gap-1">
+                  {(['compact', 'comfortable', 'relaxed'] as const).map((spacing) => (
+                    <button
+                      key={spacing}
+                      type="button"
+                      onClick={() => setLineSpacing(spacing)}
+                      className={`flex-1 rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors ${
+                        settings.lineSpacing === spacing
+                          ? 'bg-degen-500/20 text-degen-400'
+                          : 'text-gray-500 hover:bg-[var(--color-muted)]'
+                      }`}
+                    >
+                      {lineSpacingLabel[spacing]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {state === 'loading' && (
           <div className="card animate-pulse p-6">

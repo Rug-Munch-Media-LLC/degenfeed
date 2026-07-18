@@ -36,22 +36,22 @@ export const EmptyState: FC<EmptyStateProps> = memo(function EmptyState({
   return (
     <div
       className={`flex flex-col items-center justify-center text-center ${
-        compact ? 'px-4 py-8' : 'px-4 py-16'
-      }`}
+        compact ? 'px-4 py-8' : 'px-4 py-16 sm:py-20'
+      } ${compact ? '' : 'frosted-card mx-4 my-6'}`}
       role="status"
     >
       {iconElement ? (
-        <div className="mb-4" aria-hidden="true">
+        <div className="empty-state-icon" aria-hidden="true">
           {iconElement}
         </div>
       ) : icon ? (
-        <span className="mb-4 block text-4xl opacity-30" aria-hidden="true">
-          {icon}
-        </span>
+        <div className="empty-state-icon" aria-hidden="true">
+          <span className="text-2xl">{icon}</span>
+        </div>
       ) : null}
-      <h3 className="mb-1 text-base font-semibold text-[var(--color-fg)]">{title}</h3>
+      <h3 className="mb-1.5 text-base font-semibold text-[var(--color-fg)]">{title}</h3>
       {description && (
-        <p className="mx-auto mb-6 max-w-sm text-sm text-[var(--color-muted)]">{description}</p>
+        <p className="mx-auto mb-6 max-w-xs text-sm text-[var(--color-muted)] leading-relaxed">{description}</p>
       )}
       {action && <div className="flex flex-wrap items-center justify-center gap-3">{action}</div>}
       {secondaryAction && (

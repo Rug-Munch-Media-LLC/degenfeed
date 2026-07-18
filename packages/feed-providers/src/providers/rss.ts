@@ -18,12 +18,16 @@ export interface RssFeedConfig {
   tier: number;
   /** Base weight 0.0-1.0 used in quality scoring */
   weight: number;
-  /** Content category: news, analysis, research, development, markets, security, policy, tech, ai, video, social */
+  /** Content category: news, analysis, research, development, markets, security, policy, tech, ai, video, social, newsletter */
   category: string;
   /** Topic tags for filtering / discovery */
   tags: string[];
   /** Authority bonus (3 = Tier 1, 2 = Tier 2-3, 1 = Tier 4-5) */
   authority: number;
+  /** Newsletter-specific: has a paid subscription tier (quality signal) */
+  isPaid?: boolean;
+  /** Newsletter-specific: publishing schedule for consistency scoring */
+  schedule?: 'daily' | 'weekly' | 'monthly' | 'irregular';
 }
 
 export interface QualityScore {
@@ -40,6 +44,12 @@ export interface QualityScore {
     hasMedia: number;
     /** Source authority bonus (3, 2, or 1) */
     authority: number;
+    /** Newsletter-specific: paid tier bonus (2 if isPaid, else 0) */
+    newsletterPaid: number;
+    /** Newsletter-specific: deep content bonus (2 if >2000 chars, 1 if >1000) */
+    newsletterDepth: number;
+    /** Newsletter-specific: schedule consistency bonus (1 if daily/weekly, else 0) */
+    newsletterConsistency: number;
   };
 }
 
@@ -53,8 +63,11 @@ export type RssCategory =
   | 'policy'
   | 'tech'
   | 'ai'
+  | 'science'
+  | 'startups'
   | 'video'
-  | 'social';
+  | 'social'
+  | 'newsletter';
 
 export const RSS_CATEGORIES: Record<string, string> = {
   news: 'Breaking news, market coverage, industry updates',
@@ -66,8 +79,11 @@ export const RSS_CATEGORIES: Record<string, string> = {
   policy: 'Regulation, compliance, legal, government policy',
   tech: 'General technology, programming, engineering blogs',
   ai: 'Artificial intelligence, machine learning, LLMs',
+  science: 'Scientific research, discoveries, academic papers',
+  startups: 'Startup and VC news, product launches, founder stories',
   video: 'YouTube channels, video content, podcasts',
   social: 'Reddit, Lemmy, community discussions',
+  newsletter: 'Curated newsletters from Substack, Medium, Paragraph, Mirror',
 };
 
 // Compact helper for defining RSS feed configs
@@ -79,6 +95,8 @@ function cfg(
     category?: string;
     tags?: string[];
     authority?: number;
+    isPaid?: boolean;
+    schedule?: 'daily' | 'weekly' | 'monthly' | 'irregular';
   } = {},
 ): RssFeedConfig {
   return {
@@ -88,6 +106,8 @@ function cfg(
     category: opts.category ?? 'news',
     tags: opts.tags ?? ['crypto'],
     authority: opts.authority ?? 1,
+    ...(opts.isPaid !== undefined ? { isPaid: opts.isPaid } : {}),
+    ...(opts.schedule !== undefined ? { schedule: opts.schedule } : {}),
   };
 }
 
@@ -101,8 +121,8 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://www.theblock.co/rss',                            { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'defi'], authority: 3 }),
   cfg('https://blockworks.co/feed',                             { tier: 1, weight: 1.0, category: 'news', tags: ['crypto', 'bitcoin', 'ethereum', 'defi'], authority: 3 }),
   cfg('https://thedefiant.io/feed',                             { tier: 1, weight: 1.0, category: 'news', tags: ['defi', 'crypto', 'ethereum'], authority: 3 }),
-  cfg('https://newsletter.banklesshq.com/feed',                 { tier: 1, weight: 1.0, category: 'analysis', tags: ['crypto', 'ethereum', 'defi'], authority: 3 }),
-  cfg('https://banklesshq.substack.com/feed',                   { tier: 1, weight: 1.0, category: 'analysis', tags: ['crypto', 'ethereum', 'defi'], authority: 3 }),
+  cfg('https://newsletter.banklesshq.com/feed',                 { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'ethereum', 'defi'], authority: 3, isPaid: true, schedule: 'daily' }),
+  cfg('https://banklesshq.substack.com/feed',                   { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'ethereum', 'defi'], authority: 3, isPaid: true, schedule: 'daily' }),
   cfg('https://messari.io/feed',                                { tier: 1, weight: 1.0, category: 'research', tags: ['crypto', 'bitcoin', 'ethereum', 'onchain'], authority: 3 }),
   cfg('https://blog.chainalysis.com/feed/',                     { tier: 1, weight: 1.0, category: 'research', tags: ['onchain', 'security', 'crypto'], authority: 3 }),
 
@@ -118,7 +138,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://members.delphidigital.io/feed',                  { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'macro', 'defi'], authority: 2 }),
   cfg('https://www.galaxy.com/insights/feed/',                  { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'bitcoin', 'research'], authority: 2 }),
   cfg('https://coinmetrics.io/feed',                            { tier: 2, weight: 0.9, category: 'markets', tags: ['bitcoin', 'ethereum', 'onchain', 'metrics'], authority: 2 }),
-  cfg('https://delphidigital.substack.com/feed',                { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'macro', 'defi'], authority: 2 }),
+  cfg('https://delphidigital.substack.com/feed',                { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'macro', 'defi', 'research'], authority: 3, isPaid: true, schedule: 'weekly' }),
   cfg('https://variant.fund/feed',                              { tier: 2, weight: 0.9, category: 'research', tags: ['crypto', 'defi', 'web3'], authority: 2 }),
   cfg('https://dune.com/blog/rss.xml',                          { tier: 2, weight: 0.9, category: 'analysis', tags: ['onchain', 'analytics', 'defi'], authority: 2 }),
   cfg('https://nansen.substack.com/feed',                       { tier: 2, weight: 0.9, category: 'analysis', tags: ['onchain', 'ethereum', 'defi'], authority: 2 }),
@@ -134,7 +154,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://dappradar.com/blog/feed',                         { tier: 3, weight: 0.8, category: 'analysis', tags: ['defi', 'nft', 'gaming', 'dapps'], authority: 2 }),
   cfg('https://defillama.com/feed',                              { tier: 3, weight: 0.8, category: 'analysis', tags: ['defi', 'tvl', 'crypto'], authority: 2 }),
   cfg('https://tokenterminal.com/blog/rss',                     { tier: 3, weight: 0.8, category: 'analysis', tags: ['crypto', 'defi', 'metrics'], authority: 2 }),
-  cfg('https://messari.substack.com/feed',                      { tier: 3, weight: 0.8, category: 'analysis', tags: ['crypto', 'research'], authority: 2 }),
+  cfg('https://messari.substack.com/feed',                      { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'research', 'onchain'], authority: 3, isPaid: true, schedule: 'weekly' }),
   cfg('https://dune.com/blog/rss',                              { tier: 3, weight: 0.8, category: 'analysis', tags: ['onchain', 'analytics', 'defi'], authority: 2 }),
 
   // ═══════════════════════════════════════════════════════════════════
@@ -169,7 +189,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://optimism.mirror.xyz/feed/atom',                  { tier: 5, weight: 0.6, category: 'development', tags: ['optimism', 'layer2', 'dev'], authority: 1 }),
   cfg('https://starkware.co/feed',                              { tier: 5, weight: 0.6, category: 'development', tags: ['starkware', 'layer2', 'zk', 'dev'], authority: 1 }),
   cfg('https://www.zk.com/blog/rss',                            { tier: 5, weight: 0.6, category: 'development', tags: ['zk', 'zero-knowledge', 'dev'], authority: 1 }),
-  cfg('https://blog.eigenlayer.xyz/rss',                        { tier: 5, weight: 0.6, category: 'development', tags: ['eigenlayer', 'restaking', 'ethereum'], authority: 1 }),
+  cfg('https://blog.eigenlayer.xyz/rss',                        { tier: 2, weight: 0.9, category: 'newsletter', tags: ['eigenlayer', 'restaking', 'ethereum'], authority: 2, isPaid: false, schedule: 'weekly' }),
   cfg('https://blog.celestia.org/rss',                          { tier: 5, weight: 0.6, category: 'development', tags: ['celestia', 'modular', 'data-availability'], authority: 1 }),
   cfg('https://polkadot.network/blog/feed/',                    { tier: 5, weight: 0.6, category: 'development', tags: ['polkadot', 'dev'], authority: 1 }),
   cfg('https://blog.chain.link/feed/',                          { tier: 5, weight: 0.6, category: 'development', tags: ['chainlink', 'oracle', 'dev'], authority: 1 }),
@@ -242,7 +262,7 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   // ═══════════════════════════════════════════════════════════════════
   // Premium Newsletters (Substack / Mirror / Paragraph / Ghost)
   // ═══════════════════════════════════════════════════════════════════
-  cfg('https://milkroad.substack.com/feed',                     { tier: 4, weight: 0.7, category: 'news', tags: ['crypto', 'daily', 'digest'], authority: 1 }),
+  cfg('https://milkroad.substack.com/feed',                     { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'daily', 'digest'], authority: 3, isPaid: true, schedule: 'daily' }),
   cfg('https://thedefiedge.substack.com/feed',                  { tier: 3, weight: 0.8, category: 'analysis', tags: ['defi', 'research'], authority: 2 }),
   cfg('https://ethdaily.substack.com/feed',                     { tier: 4, weight: 0.7, category: 'news', tags: ['ethereum', 'daily'], authority: 1 }),
   cfg('https://vitalik.eth.limo/feed.xml',                      { tier: 2, weight: 0.9, category: 'research', tags: ['ethereum', 'crypto', 'research'], authority: 2 }),
@@ -253,8 +273,8 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://paragraph.xyz/@divine/feed',                     { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'opinion'], authority: 1 }),
   cfg('https://mirror.xyz/0x25B0/feed',                         { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
   cfg('https://mirror.xyz/0xc0FFee/feed',                       { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
-  cfg('https://mirror.xyz/feed',                                { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
-  cfg('https://paragraph.xyz/feed',                             { tier: 5, weight: 0.6, category: 'news', tags: ['crypto', 'web3'], authority: 1 }),
+  cfg('https://mirror.xyz/feed',                                { tier: 3, weight: 0.8, category: 'newsletter', tags: ['web3', 'crypto', 'mirror'], authority: 2, isPaid: false, schedule: 'irregular' }),
+  cfg('https://paragraph.xyz/feed',                             { tier: 5, weight: 0.6, category: 'newsletter', tags: ['crypto', 'web3', 'publishing'], authority: 1, isPaid: false, schedule: 'irregular' }),
 
   // ═══════════════════════════════════════════════════════════════════
   // Long-tail Crypto News Outlets
@@ -286,35 +306,35 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://stratechery.com/feed/',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'strategy', 'analysis'], authority: 1 }),
   cfg('https://technically.substack.com/feed',                  { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'economics'], authority: 1 }),
   cfg('https://www.semiconductor-digest.com/feed/',             { tier: 5, weight: 0.6, category: 'tech', tags: ['hardware', 'semiconductor', 'tech'], authority: 1 }),
-  cfg('https://techcrunch.com/feed/',                           { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'startup', 'crypto'], authority: 1 }),
-  cfg('https://www.theverge.com/rss/index.xml',                 { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'gadgets', 'science'], authority: 1 }),
-  cfg('https://arstechnica.com/feed/',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'science', 'security'], authority: 1 }),
-  cfg('https://www.wired.com/feed/rss',                         { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'science', 'culture'], authority: 1 }),
+  cfg('https://techcrunch.com/feed/',                           { tier: 3, weight: 0.8, category: 'tech', tags: ['tech', 'startup', 'ai'], authority: 2 }),
+  cfg('https://www.theverge.com/rss/index.xml',                 { tier: 3, weight: 0.8, category: 'tech', tags: ['tech', 'gadgets', 'science', 'ai'], authority: 2 }),
+  cfg('https://arstechnica.com/feed/',                          { tier: 3, weight: 0.8, category: 'tech', tags: ['tech', 'science', 'security', 'ai'], authority: 2 }),
+  cfg('https://www.wired.com/feed/rss',                         { tier: 3, weight: 0.8, category: 'tech', tags: ['tech', 'science', 'culture', 'ai'], authority: 2 }),
   cfg('https://www.theinformation.com/feed',                    { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'business', 'analysis'], authority: 1 }),
   cfg('https://restofworld.org/feed/',                          { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'global'], authority: 1 }),
   cfg('https://www.protocol.com/feed',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'policy'], authority: 1 }),
   cfg('https://www.platformer.news/feed',                       { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'policy', 'social'], authority: 1 }),
-  cfg('https://venturebeat.com/feed/',                          { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'ai', 'gaming'], authority: 1 }),
-  cfg('https://www.technologyreview.com/feed/',                 { tier: 4, weight: 0.7, category: 'tech', tags: ['tech', 'ai', 'science'], authority: 1 }),
+  cfg('https://venturebeat.com/feed/',                          { tier: 3, weight: 0.8, category: 'tech', tags: ['tech', 'ai', 'gaming', 'startup'], authority: 2 }),
+  cfg('https://www.technologyreview.com/feed/',                 { tier: 2, weight: 1.0, category: 'tech', tags: ['tech', 'ai', 'science', 'innovation'], authority: 3 }),
   cfg('https://www.zdnet.com/news/rss.xml',                     { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'security'], authority: 1 }),
   cfg('https://spectrum.ieee.org/feeds/feed.rss',              { tier: 5, weight: 0.6, category: 'tech', tags: ['tech', 'engineering', 'science'], authority: 1 }),
-  cfg('https://www.quantamagazine.org/feed/',                   { tier: 5, weight: 0.6, category: 'tech', tags: ['science', 'math', 'physics'], authority: 1 }),
-  cfg('https://www.wired.com/feed/category/ai/rss',             { tier: 4, weight: 0.7, category: 'ai', tags: ['ai'], authority: 1 }),
-  cfg('https://venturebeat.com/category/ai/feed/',              { tier: 4, weight: 0.7, category: 'ai', tags: ['ai'], authority: 1 }),
-  cfg('https://www.theverge.com/ai-artificial-intelligence/rss/index.xml', { tier: 4, weight: 0.7, category: 'ai', tags: ['ai'], authority: 1 }),
-  cfg('https://techcrunch.com/category/artificial-intelligence/feed/', { tier: 4, weight: 0.7, category: 'ai', tags: ['ai'], authority: 1 }),
-  cfg('https://www.technologyreview.com/topic/artificial-intelligence/feed/', { tier: 4, weight: 0.7, category: 'ai', tags: ['ai'], authority: 1 }),
+  cfg('https://www.quantamagazine.org/feed/',                   { tier: 4, weight: 0.7, category: 'science', tags: ['science', 'math', 'physics', 'research'], authority: 2 }),
+  cfg('https://www.wired.com/feed/category/ai/rss',             { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'tech', 'culture'], authority: 3 }),
+  cfg('https://venturebeat.com/category/ai/feed/',              { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'ml', 'startup'], authority: 3 }),
+  cfg('https://www.theverge.com/ai-artificial-intelligence/rss/index.xml', { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'artificial-intelligence', 'tech'], authority: 3 }),
+  cfg('https://techcrunch.com/category/artificial-intelligence/feed/', { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'startup', 'tech'], authority: 3 }),
+  cfg('https://www.technologyreview.com/topic/artificial-intelligence/feed/', { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'ml', 'research'], authority: 3 }),
 
   // ═══════════════════════════════════════════════════════════════════
   // AI Company Blogs
   // ═══════════════════════════════════════════════════════════════════
-  cfg('https://openai.com/blog/rss.xml',                        { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'openai', 'gpt'], authority: 1 }),
-  cfg('https://www.anthropic.com/feed/',                        { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'anthropic', 'claude'], authority: 1 }),
-  cfg('https://www.deepmind.com/blog/rss.xml',                  { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'deepmind', 'research'], authority: 1 }),
+  cfg('https://openai.com/blog/rss.xml',                        { tier: 2, weight: 0.9, category: 'ai', tags: ['ai', 'openai', 'gpt', 'research'], authority: 3 }),
+  cfg('https://www.anthropic.com/feed/',                        { tier: 2, weight: 0.9, category: 'ai', tags: ['ai', 'anthropic', 'claude', 'research'], authority: 3 }),
+  cfg('https://deepmind.google/blog/rss.xml',                   { tier: 2, weight: 0.9, category: 'ai', tags: ['ai', 'deepmind', 'google', 'research'], authority: 3 }),
   cfg('https://ai.meta.com/blog/feed/',                         { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'meta', 'research'], authority: 1 }),
   cfg('https://blog.google/technology/ai/rss/',                 { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'google', 'research'], authority: 1 }),
-  cfg('https://huggingface.co/blog/feed.xml',                   { tier: 4, weight: 0.7, category: 'ai', tags: ['ai', 'ml', 'opensource'], authority: 1 }),
-  cfg('https://stability.ai/blog/feed',                         { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'image', 'generative'], authority: 1 }),
+  cfg('https://huggingface.co/blog/feed.xml',                   { tier: 2, weight: 0.9, category: 'ai', tags: ['ai', 'ml', 'opensource', 'research'], authority: 3 }),
+  cfg('https://stability.ai/blog/feed',                         { tier: 2, weight: 0.9, category: 'ai', tags: ['ai', 'image', 'generative', 'research'], authority: 3 }),
   cfg('https://www.perplexity.ai/blog/rss.xml',                 { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'search'], authority: 1 }),
   cfg('https://cohere.com/blog/rss',                            { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'llm', 'nlp'], authority: 1 }),
   cfg('https://replicate.com/blog/feed',                        { tier: 5, weight: 0.6, category: 'ai', tags: ['ai', 'ml', 'deployment'], authority: 1 }),
@@ -416,6 +436,67 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
   cfg('https://tilvids.com/feeds/videos.xml',                   { tier: 5, weight: 0.6, category: 'video', tags: ['tech', 'education'], authority: 1 }),
   cfg('https://diode.zone/feeds/videos.xml?sort=-publishedAt',  { tier: 5, weight: 0.6, category: 'video', tags: ['tech', 'video'], authority: 1 }),
   cfg('https://video.ploud.fr/feeds/videos.xml?sort=-publishedAt', { tier: 5, weight: 0.6, category: 'video', tags: ['tech', 'video'], authority: 1 }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — Substack (weight: 1.0, tier: 1)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://pomp.substack.com/feed',                         { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'bitcoin', 'macro'], authority: 3, isPaid: true, schedule: 'daily' }),
+  cfg('https://panteracapital.substack.com/feed',               { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'bitcoin', 'blockchain'], authority: 3, isPaid: true, schedule: 'weekly' }),
+  cfg('https://unchainedcrypto.substack.com/feed',              { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'bitcoin', 'interviews'], authority: 3, isPaid: false, schedule: 'weekly' }),
+  cfg('https://0xresearch.substack.com/feed',                   { tier: 1, weight: 1.0, category: 'newsletter', tags: ['crypto', 'research', 'defi'], authority: 3, isPaid: true, schedule: 'daily' }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — DeFi / Protocol (weight: 0.9, tier: 2)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://defiweekly.substack.com/feed',                   { tier: 2, weight: 0.9, category: 'newsletter', tags: ['defi', 'decentralized-finance', 'crypto'], authority: 2, isPaid: false, schedule: 'weekly' }),
+  cfg('https://thedefiant.substack.com/feed',                   { tier: 2, weight: 0.9, category: 'newsletter', tags: ['defi', 'crypto', 'ethereum'], authority: 2, isPaid: true, schedule: 'daily' }),
+  cfg('https://weekinethereum.substack.com/feed',               { tier: 2, weight: 0.9, category: 'newsletter', tags: ['ethereum', 'layer2', 'dev'], authority: 2, isPaid: false, schedule: 'weekly' }),
+  cfg('https://tokenterminal.substack.com/feed',                { tier: 2, weight: 0.9, category: 'newsletter', tags: ['crypto', 'defi', 'metrics'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://dunedigest.substack.com/feed',                   { tier: 2, weight: 0.9, category: 'newsletter', tags: ['onchain', 'analytics', 'defi'], authority: 2, isPaid: false, schedule: 'weekly' }),
+  // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — AI x Crypto (weight: 0.9, tier: 2)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://supervised.news/feed',                           { tier: 2, weight: 0.9, category: 'newsletter', tags: ['ai', 'crypto', 'research'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://theaireport.substack.com/feed',                  { tier: 2, weight: 0.9, category: 'newsletter', tags: ['ai', 'ml', 'llm'], authority: 2, isPaid: true, schedule: 'weekly' }),
+  cfg('https://tldrai.substack.com/feed',                       { tier: 2, weight: 0.9, category: 'newsletter', tags: ['ai', 'ml', 'llm', 'digest'], authority: 2, isPaid: false, schedule: 'weekly' }),
+  cfg('https://importai.substack.com/feed',                     { tier: 2, weight: 0.9, category: 'newsletter', tags: ['ai', 'research', 'ml'], authority: 2, isPaid: false, schedule: 'weekly' }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — Web3 Publishing (Paragraph + Mirror) (weight: 0.8, tier: 3)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://dev.mirror.xyz/feed',                            { tier: 3, weight: 0.8, category: 'newsletter', tags: ['web3', 'dev', 'mirror'], authority: 2, isPaid: false, schedule: 'irregular' }),
+  cfg('https://blog.paragraph.xyz/feed',                        { tier: 3, weight: 0.8, category: 'newsletter', tags: ['web3', 'publishing', 'paragraph'], authority: 2, isPaid: false, schedule: 'irregular' }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — Medium Publications (weight: 0.7, tier: 4)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://medium.com/feed/coinmonks',                      { tier: 4, weight: 0.7, category: 'newsletter', tags: ['crypto', 'blockchain', 'defi'], authority: 1, isPaid: false, schedule: 'daily' }),
+  cfg('https://medium.com/feed/the-capital',                    { tier: 4, weight: 0.7, category: 'newsletter', tags: ['crypto', 'finance', 'investing'], authority: 1, isPaid: false, schedule: 'daily' }),
+  cfg('https://medium.com/feed/cryptostars',                    { tier: 4, weight: 0.7, category: 'newsletter', tags: ['crypto', 'blockchain', 'altcoin'], authority: 1, isPaid: false, schedule: 'daily' }),
+  cfg('https://medium.com/feed/hackernoon',                     { tier: 4, weight: 0.7, category: 'newsletter', tags: ['tech', 'startup', 'programming'], authority: 1, isPaid: false, schedule: 'daily' }),
+  cfg('https://medium.com/feed/towards-data-science',           { tier: 4, weight: 0.7, category: 'newsletter', tags: ['data-science', 'ml', 'ai', 'python'], authority: 1, isPaid: false, schedule: 'daily' }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NEWSLETTERS — Tech / Startup (weight: 0.6, tier: 5)
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://tldr.tech/feed',                                 { tier: 5, weight: 0.6, category: 'newsletter', tags: ['tech', 'productivity', 'dev'], authority: 1, isPaid: false, schedule: 'daily' }),
+  cfg('https://www.ben-evans.com/newsletter/feed',              { tier: 5, weight: 0.6, category: 'newsletter', tags: ['tech', 'strategy', 'analysis'], authority: 1, isPaid: true, schedule: 'weekly' }),
+  cfg('https://notboring.substack.com/feed',                    { tier: 5, weight: 0.6, category: 'newsletter', tags: ['tech', 'business', 'crypto'], authority: 1, isPaid: true, schedule: 'weekly' }),
+  cfg('https://www.exponentialview.co/feed',                    { tier: 5, weight: 0.6, category: 'newsletter', tags: ['tech', 'ai', 'future'], authority: 1, isPaid: true, schedule: 'weekly' }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // AI / Tech / Science — General News
+  // ═══════════════════════════════════════════════════════════════════
+  cfg('https://arstechnica.com/ai/feed',                        { tier: 2, weight: 1.0, category: 'ai', tags: ['ai', 'tech', 'science'], authority: 3 }),
+  cfg('https://lastweekin.ai/feed',                             { tier: 3, weight: 0.8, category: 'newsletter', tags: ['ai', 'newsletter', 'research'], authority: 2 }),
+  cfg('https://www.ai-supremacy.com/feed',                      { tier: 3, weight: 0.8, category: 'newsletter', tags: ['ai', 'newsletter', 'analysis'], authority: 2 }),
+  cfg('https://www.thealgorithmicbridge.com/feed',              { tier: 3, weight: 0.8, category: 'newsletter', tags: ['ai', 'newsletter', 'philosophy'], authority: 2 }),
+  cfg('https://www.producthunt.com/feed',                       { tier: 4, weight: 0.8, category: 'tech', tags: ['startup', 'product', 'tech'], authority: 1 }),
+  cfg('https://www.indiehackers.com/feed',                      { tier: 4, weight: 0.8, category: 'tech', tags: ['startup', 'indie', 'saas'], authority: 1 }),
+  cfg('https://www.nature.com/nature.rss',                      { tier: 2, weight: 0.7, category: 'science', tags: ['science', 'research', 'nature'], authority: 3 }),
+  cfg('https://www.sciencedaily.com/rss/all.xml',               { tier: 3, weight: 0.7, category: 'science', tags: ['science', 'research', 'discovery'], authority: 2 }),
+  cfg('https://www.newscientist.com/feed',                      { tier: 3, weight: 0.7, category: 'science', tags: ['science', 'tech', 'innovation'], authority: 2 }),
+  cfg('https://phys.org/rss-feed',                              { tier: 3, weight: 0.7, category: 'science', tags: ['science', 'physics', 'space'], authority: 2 }),
 ];
 
 export interface RssProviderOptions {
@@ -442,14 +523,40 @@ function computeLengthScore(text: string): number {
 }
 
 export function computeQualityScore(post: UnifiedPost, config: RssFeedConfig): QualityScore {
+  // Newsletter-specific: paid tier bonus
+  const newsletterPaid = config.isPaid ? 2 : 0;
+
+  // Newsletter-specific: longer content = deeper analysis
+  let newsletterDepth = 0;
+  if (config.category === 'newsletter' && post.text.length > 2000) {
+    newsletterDepth = 2;
+  } else if (config.category === 'newsletter' && post.text.length > 1000) {
+    newsletterDepth = 1;
+  }
+
+  // Newsletter-specific: schedule consistency
+  const newsletterConsistency =
+    config.schedule === 'daily' || config.schedule === 'weekly' ? 1 : 0;
+
   const signals = {
     weight: config.weight,
     freshness: computeFreshnessScore(post.createdAt),
     length: computeLengthScore(post.text),
     hasMedia: post.embeds.length > 0 ? 1 : 0,
     authority: config.authority,
+    newsletterPaid,
+    newsletterDepth,
+    newsletterConsistency,
   };
-  const total = signals.weight + signals.freshness + signals.length + signals.hasMedia + signals.authority;
+  const total =
+    signals.weight +
+    signals.freshness +
+    signals.length +
+    signals.hasMedia +
+    signals.authority +
+    signals.newsletterPaid +
+    signals.newsletterDepth +
+    signals.newsletterConsistency;
   return { total, signals };
 }
 
@@ -571,6 +678,26 @@ export function getFeedCategories(): Record<string, number> {
     counts[f.category] = (counts[f.category] ?? 0) + 1;
   }
   return counts;
+}
+
+/** Returns all newsletter feeds grouped by type */
+export function getNewsletterFeeds(): {
+  topCrypto: RssFeedConfig[];
+  defiProtocol: RssFeedConfig[];
+  aiCrypto: RssFeedConfig[];
+  web3Publishing: RssFeedConfig[];
+  medium: RssFeedConfig[];
+  techStartup: RssFeedConfig[];
+} {
+  const all = DEFAULT_CRYPTO_FEEDS.filter((f) => f.category === 'newsletter');
+  return {
+    topCrypto: all.filter((f) => f.tier === 1),
+    defiProtocol: all.filter((f) => f.tags.includes('defi') && f.tier <= 2),
+    aiCrypto: all.filter((f) => f.tags.includes('ai')),
+    web3Publishing: all.filter((f) => f.tags.includes('web3') || f.tags.includes('mirror') || f.tags.includes('paragraph')),
+    medium: all.filter((f) => f.url.includes('medium.com')),
+    techStartup: all.filter((f) => f.tier >= 5),
+  };
 }
 
 interface RssItem {
