@@ -128,7 +128,7 @@ export async function handleSourcesDiscover(request: Request, env: Env): Promise
       sources = await discoverNewSources(existing, env.YOUTUBE_API_KEY);
     } else {
       // Single-platform discovery
-      const { default: platformModule } = await importDiscoveryModule(platform);
+      const platformModule = await importDiscoveryModule(platform);
       if (!platformModule) {
         return jsonResponse({ error: `Unknown platform: ${platform}` }, 400);
       }

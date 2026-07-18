@@ -20,14 +20,22 @@ import {
   CATEGORIES,
   CATEGORY_SLUGS,
   collectProviderResults,
+  computeAllAuthorStats,
+  computeFreshnessMeta,
+  computeTrending,
+  deduplicateCrossProtocol,
   DEFAULT_PROTOCOLS,
   enrichNostrEngagement,
   FEED_GENERATION_TIMEOUT_MS,
   fetchFromProviders,
+  getFeedCache,
   loadUserRankingContext,
+  predictEngagementBoost,
   prefersEnglish,
   prepareBasePosts,
   ProviderTimer,
+  setFeedCache,
+  updateFeedFreshness,
   writePostsToKV,
 } from '../feed';
 import type { Env } from '../index';
@@ -352,9 +360,45 @@ export async function handleEverythingFeed(
   execCtx?: ExecCtx,
 ): Promise<Response> {
   const params = new URL(request.url).searchParams;
+  const now = Date.now();
+
+  // SWR cache: serve stale immediately
+  if (!params.get('cursor')) {
+    const cacheResult = await getFeedCache(env, null, 'everything');
+    if (cacheResult.type === 'hit' && cacheResult.entry) {
+      const resp = new Response(JSON.stringify(cacheResult.entry), {
+        headers: { 'content-type': 'application/json', 'cache-control': 'public, s-maxage=45, stale-while-revalidate=90' },
+      });
+      resp.headers.set('X-DegenFeed-Debug', `cache=hit,feed-generation=0.001s`);
+      return resp;
+    }
+    if (cacheResult.type === 'stale' && cacheResult.entry) {
+      if (execCtx?.waitUntil) {
+        execCtx.waitUntil(generateEverythingFeed(request, env, execCtx).catch(() => {}));
+      } else {
+        void generateEverythingFeed(request, env, execCtx);
+      }
+      const resp = new Response(JSON.stringify(cacheResult.entry), {
+        headers: { 'content-type': 'application/json', 'cache-control': 'public, s-maxage=45, stale-while-revalidate=90' },
+      });
+      resp.headers.set('X-DegenFeed-Debug', `cache=stale(swr),background=refresh,feed-generation=0.002s`);
+      return resp;
+    }
+  }
+
+  return generateEverythingFeed(request, env, execCtx);
+}
+
+async function generateEverythingFeed(
+  request: Request,
+  env: Env,
+  execCtx?: ExecCtx,
+): Promise<Response> {
+  const params = new URL(request.url).searchParams;
   const requestedProtocols = parseProtocols(params.get('protocols'), DEFAULT_PROTOCOLS);
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
   const cookieHeader = request.headers.get('cookie') ?? '';
+  const now = Date.now();
 
   const feedStartTime = Date.now();
 
@@ -380,9 +424,12 @@ export async function handleEverythingFeed(
   });
   const { posts: allPosts, errors, perProtocol } = collectProviderResults(fetchResults);
 
-  // 3. Enrich
-  const deduped = prepareBasePosts(allPosts, {});
+  // 3. Cross-protocol dedup
+  const dedupResult = deduplicateCrossProtocol(allPosts);
+  const deduped = prepareBasePosts(dedupResult.posts, {});
   void writePostsToKV(env, deduped);
+
+  // 4. Filter
   const allowNonCrypto =
     params.get('allowNonCrypto') === 'true' || userCtx.preferences?.allowNonCrypto === true;
   const relevant = applyUserFilters(deduped, {
@@ -398,7 +445,24 @@ export async function handleEverythingFeed(
   });
   await enrichNostrEngagement(relevant);
 
-  // 4. Build everything blend
+  // 5. Engagement prediction boost
+  const authorStats = computeAllAuthorStats(relevant);
+  const trending = await computeTrending(relevant, Number(params.get('trending')) || 24);
+  const trendingSet = new Set(trending.map((t) => t.topic.toLowerCase()));
+  for (const post of relevant) {
+    const stats = authorStats.get(post.author.id);
+    const pred = predictEngagementBoost({
+      post,
+      authorStats: stats,
+      trendingTopics: trendingSet,
+      now,
+    });
+    if (post.score) {
+      post.score.total = (post.score.total ?? 0) * pred.boost;
+    }
+  }
+
+  // 6. Build everything blend
   const userNiches = userCtx.preferences?.preferredNiches ?? [];
   const blended = buildEverythingBlend(relevant, {
     userNiches,
@@ -406,9 +470,13 @@ export async function handleEverythingFeed(
     limit,
   });
 
+  // 7. Freshness
+  const freshnessEntry = await updateFeedFreshness(env, 'everything', blended);
+  const freshnessMeta = computeFreshnessMeta(freshnessEntry, now);
+
   const elapsed = Date.now() - feedStartTime;
 
-  return jsonResponse({
+  const responseBody = {
     data: blended,
     meta: {
       total: blended.length,
@@ -421,8 +489,22 @@ export async function handleEverythingFeed(
       perProtocol,
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
-      fetchedAt: Date.now(),
+      fetchedAt: now,
       feedGenerationMs: elapsed,
+      freshness: {
+        updatedLabel: freshnessMeta.updatedLabel,
+        updatedSecondsAgo: freshnessMeta.updatedSecondsAgo,
+      },
+      dedup: {
+        crossProtocol: dedupResult.crossProtocol,
+        urlDedup: dedupResult.urlDedup,
+        totalRemoved: dedupResult.deduped,
+      },
     },
-  });
+  };
+
+  // Cache
+  void setFeedCache(env, null, 'everything', responseBody, responseBody.meta);
+
+  return jsonResponse(responseBody);
 }

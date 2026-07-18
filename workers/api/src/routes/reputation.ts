@@ -158,6 +158,7 @@ function parseUserId(url: string, prefix: string): string | null {
   const parts = url.split(prefix);
   if (parts.length < 2) return null;
   const after = parts[1];
+  if (!after) return null;
   // Strip trailing slash or sub-path
   const slash = after.indexOf('/');
   return slash > 0 ? after.slice(0, slash) : after;

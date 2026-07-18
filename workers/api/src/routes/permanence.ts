@@ -84,11 +84,13 @@ async function storeOnArweave(
 
 // ─── Store on IPFS ───────────────────────────────────────────────────
 
-async function storeOnIPFS(content: string): Promise<string | null> {
+async function storeOnIPFS(
+  content: string,
+  env: Env,
+): Promise<string | null> {
   // Try Pinata first
-  const pinataKey = typeof process !== 'undefined' ? process.env.PINATA_API_KEY : undefined;
-  const pinataSecret =
-    typeof process !== 'undefined' ? process.env.PINATA_SECRET_KEY : undefined;
+  const pinataKey = env.PINATA_API_KEY;
+  const pinataSecret = env.PINATA_SECRET_KEY;
 
   if (pinataKey && pinataSecret) {
     try {
@@ -189,7 +191,7 @@ export async function handlePermanenceStore(request: Request, env: Env): Promise
   // Upload to Arweave and IPFS in parallel
   const [arweaveTxId, ipfsCid] = await Promise.all([
     storeOnArweave(content, body.tags).catch(() => null),
-    storeOnIPFS(content).catch(() => null),
+    storeOnIPFS(content, env).catch(() => null),
   ]);
 
   const permanent = !!arweaveTxId || !!ipfsCid;

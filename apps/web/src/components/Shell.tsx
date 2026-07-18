@@ -247,7 +247,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           id="main"
           aria-label="Main content"
           tabIndex={-1}
-          className={`relative z-10 min-h-screen flex-1 animate-page-enter ${pathname === '/' ? 'w-full max-w-none' : 'w-full max-w-[600px] border-r border-[var(--color-glass-border)]'}`}
+          className={`relative z-10 min-h-screen flex-1 animate-page-enter ${pathname === '/' ? 'w-full max-w-none' : 'w-full min-w-0 border-r border-[var(--color-glass-border)]'}`}
         >
           {/* Page announcements for screen readers */}
           <div aria-live="polite" aria-atomic="true" className="sr-only" role="status" />
@@ -267,8 +267,8 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           </OnboardingProvider>
         </main>
 
-        {/* ── Right Sidebar (desktop, hide on landing page) ── */}
-        {pathname !== '/' && (
+        {/* ── Right Sidebar (desktop, hide on landing page, feed, and protocol pages) ── */}
+        {pathname !== '/' && !pathname.startsWith('/feed') && !['/farcaster', '/lens', '/bluesky', '/nostr', '/mastodon'].some(p => pathname === p || pathname.startsWith(p + '/')) && (
           <div className="hidden xl:block w-[350px] shrink-0 overflow-y-auto px-6 py-4">
             <div className="sticky top-0 space-y-4">
               <RightSidebar />

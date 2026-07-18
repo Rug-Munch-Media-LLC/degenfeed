@@ -11,7 +11,9 @@ import type { Protocol } from '@degenfeed/types';
 import { ErrorBoundary } from '@degenfeed/ui';
 import { useCallback, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
+import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { useToast } from '../../components/Toast';
+import { usePremium } from '../../hooks/usePremium';
 import type { FontSize, NotificationType, Theme } from '../../hooks/usePreferences';
 import { usePreferences } from '../../hooks/usePreferences';
 
@@ -332,6 +334,28 @@ export default function SettingsPage() {
     addBlockedUser,
     removeBlockedUser,
   } = usePreferences();
+
+  const { tier: currentTier, isPremium, expiresAt, loading: premiumLoading } = usePremium();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancelSubscription = useCallback(async () => {
+    setCancelling(true);
+    try {
+      const res = await fetch('/api/billing/cancel', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Cancel failed');
+      showToast('success', 'Subscription cancelled. Access continues until period end.');
+      setShowCancelConfirm(false);
+    } catch {
+      showToast('error', 'Failed to cancel subscription');
+    } finally {
+      setCancelling(false);
+    }
+  }, [showToast]);
 
   const [openSections, setOpenSections] = useState<Section[]>(['appearance']);
   const [_mutedWordInput, _setMutedWordInput] = useState('');
@@ -725,6 +749,97 @@ export default function SettingsPage() {
             </div>
           </SettingsSection>
 
+          {/* ─────────── SUBSCRIPTION ─────────── */}
+          <SettingsSection
+            section="api"
+            isOpen={openSections.includes('api')}
+            onToggle={() => toggleSection('api')}
+          >
+            {premiumLoading ? (
+              <div className="flex items-center gap-3 py-2">
+                <div className="h-4 w-24 animate-pulse rounded bg-[var(--color-overlay)]" />
+              </div>
+            ) : isPremium ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 rounded-xl border border-degen-500/20 bg-degen-500/5 px-4 py-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/20 text-lg">
+                    ⚡
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-degen-400 capitalize">{currentTier}</span>
+                      <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
+                        Active
+                      </span>
+                    </div>
+                    {expiresAt && (
+                      <p className="text-xs text-[var(--color-muted)] mt-0.5">
+                        Renews {new Date(expiresAt).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowUpgradeModal(true)}
+                    className="btn-primary text-xs"
+                  >
+                    Change plan
+                  </button>
+                </div>
+
+                {/* Cancel confirmation */}
+                {!showCancelConfirm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowCancelConfirm(true)}
+                    className="w-full rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    Cancel subscription
+                  </button>
+                ) : (
+                  <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 space-y-2">
+                    <p className="text-xs text-red-400 font-medium">
+                      Are you sure? Your subscription stays active until the end of the billing period.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCancelSubscription}
+                        disabled={cancelling}
+                        className="flex-1 rounded-lg bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                      >
+                        {cancelling ? 'Cancelling…' : 'Yes, cancel'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowCancelConfirm(false)}
+                        className="flex-1 rounded-lg bg-[var(--color-overlay)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+                      >
+                        Keep subscription
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-3">
+                  <div className="text-xs font-medium text-[var(--color-fg)] mb-1">Free Plan</div>
+                  <p className="text-xs text-[var(--color-muted)] mb-2">
+                    Upgrade to Pro for unlimited feeds, analytics, scheduling, and cross-platform registration.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowUpgradeModal(true)}
+                    className="btn-primary text-xs"
+                  >
+                    Upgrade to Pro — $10 first month
+                  </button>
+                </div>
+              </div>
+            )}
+          </SettingsSection>
+
           {/* ─────────── API ─────────── */}
           <SettingsSection
             section="api"
@@ -773,7 +888,7 @@ export default function SettingsPage() {
         </section>
 
         {/* ─── Sticky Save Footer ─── */}
-        <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--color-glass-border)] bg-[var(--color-card)]/95 backdrop-blur-xl px-4 py-3 sm:static sm:mt-6 sm:border-0 sm:bg-transparent sm:backdrop-blur-none sm:px-0 sm:py-0">
+        <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--color-glass-border)] bg-[var(--color-card)]/95 backdrop-blur-xl px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:static sm:mt-6 sm:border-0 sm:bg-transparent sm:backdrop-blur-none sm:px-0 sm:py-0 lg:pb-3">
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
             <div className="text-xs text-[var(--color-muted)]">
               {saveStatus === 'saved' && (
@@ -800,6 +915,12 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Upgrade modal */}
+      <PremiumPaymentModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+      />
     </ErrorBoundary>
   );
 }

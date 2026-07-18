@@ -153,6 +153,7 @@ const mockPosts: MockPost[] = [
 export default function HomePage() {
   return (
     <div className="landing-page">
+      <div className="mx-auto max-w-[1200px]">
       {/* ── Skip to app ── */}
       <a href="/feed" className="skip-to-app">
         <span className="skip-dot" />
@@ -205,7 +206,7 @@ export default function HomePage() {
 
           <p className="hero-stats">
             10 protocols &middot; 319 RSS sources &middot; 137 Reddit communities &middot; 68
-            YouTube channels &middot; 2M+ PeerTube videos
+            YouTube channels &middot; 55K PeerTube videos
           </p>
         </div>
       </section>
@@ -406,6 +407,7 @@ export default function HomePage() {
           </p>
         </div>
       </section>
+      </div>{/* end max-w-[1200px] */}
     </div>
   );
 }

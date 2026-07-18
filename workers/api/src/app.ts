@@ -98,6 +98,7 @@ import {
   handleProviderFeed,
   handleRedditFeed,
   handleTrendingFeed,
+  handleFeedCacheInvalidate,
 } from './routes/feed';
 import {
   handleCategoryMixFeed,
@@ -1329,6 +1330,14 @@ app.post('/api/leaderboard/refresh', async (c) => handleRefreshLeaderboards(c.en
 for (const [from, to] of Object.entries(STATIC_REDIRECTS)) {
   app.all(from, (_c) => new Response(null, { status: 302, headers: { location: to } }));
 }
+
+// ─── Feed cache management ─────────────────────────────────
+app.post('/api/feed/cache/invalidate', async (c) =>
+  handleFeedCacheInvalidate(c.req.raw, c.env),
+);
+app.post('/v1/feed/cache/invalidate', async (c) =>
+  handleFeedCacheInvalidate(c.req.raw, c.env),
+);
 
 // ─── Catch-all: return API info ─────────────────────────────
 app.all('*', (c) => {
