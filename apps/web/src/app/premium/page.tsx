@@ -195,7 +195,7 @@ const FAQS = [
 /* ─── Page ─────────────────────────────────────────────────── */
 
 export default function PremiumPage() {
-  const { tier: currentTier, loading } = usePremium();
+  const { tier: currentTier, loading, refresh: refreshPremium } = usePremium();
   const [showModal, setShowModal] = useState(false);
   const [subscribeTier, setSubscribeTier] = useState<PremiumTier | null>(null);
 
@@ -326,7 +326,9 @@ export default function PremiumPage() {
         onClose={() => {
           setShowModal(false);
           setSubscribeTier(null);
+          refreshPremium();
         }}
+        onSuccess={refreshPremium}
         initialTier={subscribeTier ?? undefined}
       />
     </div>

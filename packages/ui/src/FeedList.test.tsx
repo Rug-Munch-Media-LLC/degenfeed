@@ -73,13 +73,13 @@ afterEach(() => {
 describe('loading state', () => {
   it('should render 5 skeleton cards when state is "loading"', () => {
     const { container } = renderFeedList({ state: 'loading', posts: [] });
-    const skeletons = container.querySelectorAll('.animate-pulse');
+    const skeletons = container.querySelectorAll('.skeleton-shimmer');
     expect(skeletons.length).toBeGreaterThanOrEqual(5);
   });
 
-  it('should set aria-label to "Loading feed"', () => {
+  it('should set aria-label to "Loading content"', () => {
     renderFeedList({ state: 'loading' });
-    const output = screen.getByLabelText('Loading feed');
+    const output = screen.getByLabelText('Loading content');
     expect(output).toBeDefined();
   });
 
@@ -87,7 +87,7 @@ describe('loading state', () => {
     const posts = [makePost('p1'), makePost('p2')];
     const { container } = renderFeedList({ state: 'loading', posts });
     // Should still show skeletons, not post cards
-    const skeletons = container.querySelectorAll('.animate-pulse');
+    const skeletons = container.querySelectorAll('.skeleton-shimmer');
     expect(skeletons.length).toBeGreaterThan(0);
   });
 });
@@ -198,7 +198,7 @@ describe('keyboard navigation', () => {
     const posts = [makePost('p1'), makePost('p2')];
     const { container } = renderFeedList({ state: 'loaded', posts });
 
-    const articles = container.querySelectorAll('article');
+    const articles = container.querySelectorAll('[role="article"]');
     expect(articles.length).toBe(2);
 
     // Focus the first article
@@ -214,7 +214,7 @@ describe('keyboard navigation', () => {
     const posts = [makePost('p1'), makePost('p2'), makePost('p3')];
     const { container } = renderFeedList({ state: 'loaded', posts });
 
-    const articles = container.querySelectorAll('article');
+    const articles = container.querySelectorAll('[role="article"]');
     // Focus the second article
     (articles[1] as HTMLElement).focus();
     expect(document.activeElement).toBe(articles[1]);
@@ -243,7 +243,7 @@ describe('keyboard navigation', () => {
   it('should not navigate past the last article', () => {
     const posts = [makePost('p1')];
     const { container } = renderFeedList({ state: 'loaded', posts });
-    const articles = container.querySelectorAll('article');
+    const articles = container.querySelectorAll('[role="article"]');
 
     (articles[0] as HTMLElement).focus();
 
@@ -255,7 +255,7 @@ describe('keyboard navigation', () => {
   it('should not navigate before the first article', () => {
     const posts = [makePost('p1'), makePost('p2')];
     const { container } = renderFeedList({ state: 'loaded', posts });
-    const articles = container.querySelectorAll('article');
+    const articles = container.querySelectorAll('[role="article"]');
 
     (articles[0] as HTMLElement).focus();
 

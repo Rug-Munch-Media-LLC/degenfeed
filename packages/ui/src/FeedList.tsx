@@ -12,7 +12,7 @@
  */
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { type EngageHandler, PostCard } from './PostCard';
 import { CardSkeleton } from './LoadingSkeleton';
 
@@ -62,6 +62,11 @@ export interface FeedListProps {
   onAdminBan?: (userId: string, protocol: string, handle?: string) => void;
   /** Called when user clicks "Why am I seeing this?" in the three-dot menu */
   onWhyThisPost?: (post: UnifiedPost) => void;
+  /**
+   * Optional slot replacing the default EmptyState when state is 'empty'.
+   * Lets the parent page render tab-specific empty messaging (for-you, following, custom-mix).
+   */
+  emptySlot?: ReactNode;
 }
 
 /* Replaced inline SkeletonCard with shared CardSkeleton from LoadingSkeleton */
@@ -134,6 +139,7 @@ export const FeedList = memo(function FeedList({
   onAdminRemove,
   onAdminBan,
   onWhyThisPost,
+  emptySlot,
 }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -261,26 +267,7 @@ export const FeedList = memo(function FeedList({
     return () => window.removeEventListener('keydown', handler);
   }, [onEngage, onTip, onCrossReplyOpen, filteredPosts]);
 
-  // Pull-to-refresh
-  useEffect(() => {
-    let startY = 0;
-    const el = containerRef.current;
-    if (!el) return;
-    const onTouchStart = (e: TouchEvent) => {
-      startY = e.touches[0]?.clientY ?? 0;
-    };
-    const onTouchEnd = (e: TouchEvent) => {
-      const endY = e.changedTouches[0]?.clientY ?? 0;
-      if (endY - startY > 80 && window.scrollY < 10 && onRetry) onRetry();
-    };
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchend', onTouchEnd, { passive: true });
-    return () => {
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchend', onTouchEnd);
-    };
-  }, [onRetry]);
-
+  // Infinite scroll via IntersectionObserver
   useEffect(() => {
     if (!hasMore || !onLoadMore) return;
     const sentinel = sentinelRef.current;
@@ -304,6 +291,7 @@ export const FeedList = memo(function FeedList({
   }
 
   if (state === 'empty' || filteredPosts.length === 0) {
+    if (emptySlot) return <>{emptySlot}</>;
     return <EmptyState protocolLabel={protocolLabel} onSignIn={onSignIn} />;
   }
 

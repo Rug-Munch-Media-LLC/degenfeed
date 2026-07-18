@@ -48,6 +48,8 @@ export interface CrossPlatformSetupProps {
   onAccountsLoaded?: (accounts: PlatformAccount[]) => void;
   /** Callback after successful registration */
   onRegistered?: (result: PlatformAccount) => void;
+  /** Callback when the "Upgrade" button is clicked (instead of navigating to /premium) */
+  onUpgrade?: () => void;
   /** Custom API base URL */
   apiBase?: string;
 }
@@ -105,6 +107,7 @@ export function CrossPlatformSetup({
   isPremium: propIsPremium,
   onAccountsLoaded,
   onRegistered,
+  onUpgrade,
   apiBase = '',
 }: CrossPlatformSetupProps) {
   const [accounts, setAccounts] = useState<PlatformAccount[]>([]);
@@ -402,12 +405,22 @@ export function CrossPlatformSetup({
                 Create accounts on all platforms with one click. We cover gas fees.
               </p>
             </div>
-            <a
-              href="/premium"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 px-4 py-2 text-sm font-medium transition-colors"
-            >
-              Upgrade
-            </a>
+            {onUpgrade ? (
+              <button
+                type="button"
+                onClick={onUpgrade}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Upgrade
+              </button>
+            ) : (
+              <a
+                href="/premium"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30 px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Upgrade
+              </a>
+            )}
           </div>
         </div>
       )}

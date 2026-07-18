@@ -21,6 +21,8 @@ export interface CrossPlatformCardProps {
   apiBase?: string;
   /** Callback when the "Setup" button is clicked */
   onOpenSetup?: () => void;
+  /** Callback when the "Upgrade to Pro" button is clicked (instead of navigating) */
+  onUpgrade?: () => void;
 }
 
 interface PlatformStatusEntry {
@@ -45,6 +47,7 @@ export function CrossPlatformCard({
   isPremium: propIsPremium,
   apiBase = '',
   onOpenSetup,
+  onUpgrade,
 }: CrossPlatformCardProps) {
   const [connectedCount, setConnectedCount] = useState(0);
   const [totalPlatforms] = useState(5);
@@ -172,7 +175,7 @@ export function CrossPlatformCard({
       {/* ── CTA ── */}
       <button
         type="button"
-        onClick={onOpenSetup}
+        onClick={isPremium ? onOpenSetup : (onUpgrade ?? onOpenSetup)}
         className={`w-full rounded-lg py-2 text-xs font-medium transition-colors ${
           isPremium
             ? 'bg-degen-500/15 text-degen-400 hover:bg-degen-500/25 border border-degen-500/30'

@@ -169,7 +169,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
                 aria-label="Reply from another protocol"
                 title="Reply from another protocol via the DegenFeed bridge"
               >
-                ⇄
+                ⇄ <span className="hidden sm:inline">Bridge</span>
               </button>
             )}
             <button
@@ -200,7 +200,7 @@ export const PostCardEngagement = memo(function PostCardEngagement({
         {post.dfUri && (
           <button
             type="button"
-            className="flex items-center gap-1 font-mono text-[10px] transition-colors hover:text-degen-400"
+            className="flex items-center gap-1 font-mono text-xs transition-colors hover:text-degen-400"
             onClick={(e) => {
               e.stopPropagation();
               void navigator.clipboard.writeText(post.dfUri as string);

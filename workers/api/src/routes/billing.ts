@@ -1,5 +1,6 @@
-import { type Env, jsonResponse } from '../index';
-import { isValidSolanaAddress, sanitizeString } from '../sanitize';
+import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { isValidEvmAddress, isValidSolanaAddress, sanitizeString } from '../sanitize';
+import { requireSession } from '../session';
 
 export type SubscriptionTier = 'pro' | 'creator';
 
@@ -11,10 +12,30 @@ interface SubscriptionRecord {
   txSignature?: string;
 }
 
+/** Platform premium subscription record stored in KV under `premium:${address}` */
+export interface PlatformPremiumRecord {
+  tier: SubscriptionTier;
+  identityId: string;
+  expiresAt: number;
+  startedAt: number;
+  status: 'active' | 'cancelled';
+  firstMonthPromo: boolean;
+  nextBillingAmount: number; // in cents
+  paymentMethod: string;
+  txHash?: string;
+}
+
 const TIER_PRICES: Record<SubscriptionTier, number> = {
   pro: 5,
   creator: 15,
 };
+
+const TIER_PRICES_CENTS: Record<SubscriptionTier, number> = {
+  pro: 500,
+  creator: 1500,
+};
+
+const PREMIUM_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 function buildBlinkUrl(origin: string, tier: SubscriptionTier): string {
   return `${origin}/api/billing/checkout?tier=${tier}`;
@@ -167,4 +188,187 @@ export function isPremiumTier(tier?: string): boolean {
 
 export function isCreatorTier(tier?: string): boolean {
   return tier === 'creator';
+}
+
+// ─── KV key helpers ────────────────────────────────────────────────────
+
+function premiumKey(address: string): string {
+  return `premium:${address.toLowerCase()}`;
+}
+
+// ─── NEW: POST /api/billing/subscribe — Create platform subscription ───
+
+export async function handleBillingSubscribe(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  let body: { tier?: string; paymentMethod?: string; firstMonth?: boolean } = {};
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const tier = sanitizeString(body.tier, 16) as SubscriptionTier;
+  if (!tier || !(tier in TIER_PRICES)) {
+    return jsonResponse({ error: 'Invalid tier. Use pro or creator.' }, 400);
+  }
+
+  const paymentMethod = sanitizeString(body.paymentMethod, 32) || 'eth-base';
+  const firstMonth = Boolean(body.firstMonth);
+
+  const address = session.address.toLowerCase();
+  const identityId = session.chain
+    ? `${session.chain}:${address}`
+    : `evm:${address}`;
+  const now = Date.now();
+  const expiresAt = now + PREMIUM_TTL_MS;
+  const txHash = `sim_${now}_${address.slice(0, 8)}`;
+
+  // Check for existing active subscription
+  try {
+    const existingRaw = await env.SUBSCRIPTIONS?.get(premiumKey(address));
+    if (existingRaw) {
+      const existing = JSON.parse(existingRaw) as PlatformPremiumRecord;
+      if (existing.status === 'active' && existing.expiresAt > now) {
+        // Extend by one period rather than error
+        // (existing.expiresAt already > now, so add to that)
+        const record: PlatformPremiumRecord = {
+          ...existing,
+          expiresAt: existing.expiresAt + PREMIUM_TTL_MS,
+          status: 'active',
+          firstMonthPromo: firstMonth,
+          paymentMethod,
+          txHash,
+        };
+        await env.SUBSCRIPTIONS?.put(premiumKey(address), JSON.stringify(record));
+        return noCacheJsonResponse({
+          success: true,
+          tier,
+          expiresAt: record.expiresAt,
+          txHash,
+          status: 'active',
+        });
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  const amountCents = firstMonth && tier === 'pro' ? 1000 : TIER_PRICES_CENTS[tier];
+
+  const record: PlatformPremiumRecord = {
+    tier,
+    identityId,
+    expiresAt,
+    startedAt: now,
+    status: 'active',
+    firstMonthPromo: firstMonth && tier === 'pro',
+    nextBillingAmount: amountCents,
+    paymentMethod,
+    txHash,
+  };
+
+  try {
+    await env.SUBSCRIPTIONS?.put(premiumKey(address), JSON.stringify(record), {
+      expirationTtl: Math.ceil(PREMIUM_TTL_MS / 1000) + 86400, // 31 days
+    });
+  } catch {
+    return jsonResponse({ error: 'Storage unavailable' }, 500);
+  }
+
+  return noCacheJsonResponse({
+    success: true,
+    tier,
+    expiresAt,
+    txHash,
+    status: 'active',
+  });
+}
+
+// ─── NEW: POST /api/billing/cancel — Cancel platform subscription ──────
+
+export async function handleBillingCancel(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const address = session.address.toLowerCase();
+  const key = premiumKey(address);
+
+  let record: PlatformPremiumRecord | null = null;
+  try {
+    const raw = await env.SUBSCRIPTIONS?.get(key);
+    if (raw) record = JSON.parse(raw) as PlatformPremiumRecord;
+  } catch {
+    /* ignore */
+  }
+
+  if (!record) {
+    return jsonResponse({ error: 'No active subscription found' }, 404);
+  }
+
+  if (record.status === 'cancelled') {
+    return jsonResponse({ error: 'Subscription already cancelled' }, 409);
+  }
+
+  record.status = 'cancelled';
+
+  try {
+    await env.SUBSCRIPTIONS?.put(key, JSON.stringify(record));
+  } catch {
+    return jsonResponse({ error: 'Storage unavailable' }, 500);
+  }
+
+  return noCacheJsonResponse({ success: true, status: 'cancelled' });
+}
+
+// ─── NEW: GET /api/billing/my-status — Get current user's premium status ─
+
+export async function handleBillingMyStatus(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const session = await requireSession(request, env);
+  if (session instanceof Response) return session;
+
+  const address = session.address.toLowerCase();
+  const key = premiumKey(address);
+
+  let record: PlatformPremiumRecord | null = null;
+  try {
+    const raw = await env.SUBSCRIPTIONS?.get(key);
+    if (raw) record = JSON.parse(raw) as PlatformPremiumRecord;
+  } catch {
+    /* ignore */
+  }
+
+  if (!record || record.status !== 'active' || record.expiresAt <= Date.now()) {
+    return jsonResponse({
+      tier: 'free',
+      isPremium: false,
+      expiresAt: null,
+      firstMonthPromo: false,
+      nextBillingAmount: null,
+      daysRemaining: null,
+    });
+  }
+
+  const daysRemaining = Math.ceil(
+    (record.expiresAt - Date.now()) / (1000 * 60 * 60 * 24),
+  );
+
+  return jsonResponse({
+    tier: record.tier,
+    isPremium: true,
+    expiresAt: new Date(record.expiresAt).toISOString(),
+    firstMonthPromo: record.firstMonthPromo,
+    nextBillingAmount: record.nextBillingAmount,
+    daysRemaining,
+  });
 }

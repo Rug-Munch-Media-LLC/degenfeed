@@ -2,6 +2,7 @@ import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  root: '.',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -9,7 +10,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: 'node',
     include: [
       'apps/*/src/**/*.{test,spec}.{ts,tsx}',
       'packages/*/src/**/*.{test,spec}.{ts,tsx}',

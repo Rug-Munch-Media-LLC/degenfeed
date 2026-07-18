@@ -117,7 +117,7 @@ export const TIERS: TierConfig[] = [
 
 // ─── Hook ─────────────────────────────────────────────────────────────────
 
-export function usePremium(): PremiumStatus {
+export function usePremium(): PremiumStatus & { refresh: () => Promise<void> } {
   const { walletAddress } = useAuth();
   const [status, setStatus] = useState<PremiumStatus>({
     tier: 'free',
@@ -137,7 +137,7 @@ export function usePremium(): PremiumStatus {
     }
 
     try {
-      const res = await fetch('/api/subscription/my', {
+      const res = await fetch('/api/billing/my-status', {
         credentials: 'include',
         cache: 'no-store',
       });
@@ -188,5 +188,5 @@ export function usePremium(): PremiumStatus {
     fetchStatus();
   }, [fetchStatus]);
 
-  return status;
+  return { ...status, refresh: fetchStatus };
 }

@@ -387,9 +387,11 @@ interface PremiumPaymentModalProps {
   open: boolean;
   onClose: () => void;
   initialTier?: PremiumTier;
+  /** Called when payment succeeds and subscription is active */
+  onSuccess?: () => void;
 }
 
-export function PremiumPaymentModal({ open, onClose, initialTier }: PremiumPaymentModalProps) {
+export function PremiumPaymentModal({ open, onClose, initialTier, onSuccess }: PremiumPaymentModalProps) {
   const { walletAddress } = useAuth();
   const { showToast } = useToast();
 
@@ -502,9 +504,14 @@ export function PremiumPaymentModal({ open, onClose, initialTier }: PremiumPayme
   }, [selectedTier, paymentMethod, showToast]);
 
   const handleClose = useCallback(() => {
+    const wasSuccessful = step === 'success';
     reset();
     onClose();
-  }, [reset, onClose]);
+    if (wasSuccessful) {
+      // Give parent a chance to refresh premium status after successful payment
+      onSuccess?.();
+    }
+  }, [reset, onClose, step, onSuccess]);
 
   if (!open) return null;
 

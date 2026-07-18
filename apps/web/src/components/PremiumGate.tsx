@@ -33,7 +33,7 @@ export function PremiumGate({
   children,
   icon = '⭐',
 }: PremiumGateProps) {
-  const { tier, loading } = usePremium();
+  const { tier, loading, refresh } = usePremium();
   const [showModal, setShowModal] = useState(false);
 
   const tierRank: Record<PremiumTier, number> = {
@@ -101,7 +101,12 @@ export function PremiumGate({
 
       <PremiumPaymentModal
         open={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          // Refresh premium status after modal closes (in case payment succeeded)
+          refresh();
+        }}
+        onSuccess={refresh}
         initialTier={requiredTier}
       />
     </>
