@@ -92,6 +92,80 @@ const PROTOCOLS: ProtocolOption[] = [
   },
 ];
 
+const OAUTH_PROTOCOLS: ProtocolOption[] = [
+  {
+    id: 'google',
+    label: 'Google',
+    color: '#4285f4',
+    icon: 'G',
+    description: 'Sign in with your Google account',
+    method: 'oauth',
+    authUrl: '/api/auth/google/authorize',
+  },
+  {
+    id: 'github',
+    label: 'GitHub',
+    color: '#6cc644',
+    icon: '🐙',
+    description: 'Sign in with your GitHub account',
+    method: 'oauth',
+    authUrl: '/api/auth/github/authorize',
+  },
+  {
+    id: 'discord',
+    label: 'Discord',
+    color: '#5865f2',
+    icon: '🎮',
+    description: 'Sign in with your Discord account',
+    method: 'oauth',
+    authUrl: '/api/auth/discord/authorize',
+  },
+  {
+    id: 'twitter',
+    label: 'Twitter / X',
+    color: '#1da1f2',
+    icon: '𝕏',
+    description: 'Sign in with your Twitter account',
+    method: 'oauth',
+    authUrl: '/api/auth/twitter/authorize',
+  },
+  {
+    id: 'telegram',
+    label: 'Telegram',
+    color: '#26a5e4',
+    icon: '✈',
+    description: 'Sign in with Telegram',
+    method: 'oauth',
+    authUrl: '/api/auth/telegram/authorize',
+  },
+  {
+    id: 'reddit',
+    label: 'Reddit',
+    color: '#ff4500',
+    icon: '🔴',
+    description: 'Sign in with your Reddit account',
+    method: 'oauth',
+    authUrl: '/api/auth/reddit/authorize',
+  },
+  {
+    id: 'threads',
+    label: 'Threads',
+    color: '#000000',
+    icon: '🧵',
+    description: 'Sign in with your Threads account',
+    method: 'oauth',
+    authUrl: '/api/auth/threads/authorize',
+  },
+  {
+    id: 'email',
+    label: 'Email',
+    color: '#22c55e',
+    icon: '✉',
+    description: 'Sign in with email and password',
+    method: 'password',
+  },
+];
+
 function NostrForm({
   onSignIn,
   onBack,
@@ -578,9 +652,187 @@ function ProtocolForm({
       return <BlueskyForm {...props} />;
     case 'mastodon':
       return <MastodonForm {...props} />;
+    case 'email':
+      return <EmailForm {...props} />;
+    case 'google':
+    case 'github':
+    case 'discord':
+    case 'twitter':
+    case 'telegram':
+    case 'reddit':
+    case 'threads':
+      return <OAuthProtocolForm protocol={protocol} onBack={onBack} />;
     default:
       return <p className="text-sm text-[var(--color-muted)]">Unknown protocol</p>;
   }
+}
+
+function EmailForm({
+  onSignIn,
+  onBack,
+}: {
+  onSignIn: (creds: Record<string, string>) => void;
+  onBack: () => void;
+}) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isNewUser, setIsNewUser] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async () => {
+    setError('');
+    if (!email.trim() || !password.trim()) {
+      setError('Email and password are required');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    if (isNewUser) {
+      onSignIn({ email: email.trim(), password, displayName: displayName.trim(), method: 'register' });
+    } else {
+      onSignIn({ email: email.trim(), password, method: 'signin' });
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      {isNewUser && (
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Display Name (optional)</span>
+          <input
+            type="text"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="Your display name"
+            className="input w-full"
+            maxLength={64}
+          />
+        </label>
+      )}
+      <label className="block">
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Email</span>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="input w-full"
+          autoComplete="email"
+        />
+      </label>
+      <label className="block">
+        <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Password</span>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={isNewUser ? 'At least 8 characters' : 'Your password'}
+          className="input w-full"
+          autoComplete={isNewUser ? 'new-password' : 'current-password'}
+        />
+      </label>
+      {error && <p className="text-xs text-red-400">{error}</p>}
+      <button type="button" onClick={handleSubmit} className="btn-primary w-full">
+        {isNewUser ? 'Create Account' : 'Sign In'}
+      </button>
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={() => setIsNewUser((v) => !v)}
+          className="text-xs text-degen-400 hover:underline"
+        >
+          {isNewUser ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={onBack}
+        className="w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)]"
+      >
+        ← Back
+      </button>
+    </div>
+  );
+}
+
+function OAuthProtocolForm({
+  protocol,
+  onBack,
+}: {
+  protocol: ProtocolOption;
+  onBack: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleOAuthLogin = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const endpoint = protocol.authUrl;
+      if (!endpoint) throw new Error('No auth URL configured');
+
+      const res = await fetch(endpoint, { credentials: 'include' });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || `${protocol.label} sign-in is not available right now.`);
+      }
+
+      const data = (await res.json()) as { authorizeUrl?: string; message?: string };
+      if (!data.authorizeUrl) {
+        throw new Error('No authorization URL received');
+      }
+
+      window.location.href = data.authorizeUrl;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start sign-in');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-[var(--color-muted)]">
+        You will be redirected to {protocol.label} to authorize DegenFeed. No password is shared with us.
+      </p>
+      <button
+        type="button"
+        onClick={handleOAuthLogin}
+        disabled={loading}
+        className="btn-primary flex w-full items-center justify-center gap-2"
+        style={loading ? undefined : { borderColor: `${protocol.color}40`, background: `${protocol.color}15`, color: protocol.color }}
+      >
+        {loading ? (
+          <>
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            Connecting...
+          </>
+        ) : (
+          <>
+            <span>{protocol.icon}</span>
+            Sign in with {protocol.label}
+          </>
+        )}
+      </button>
+      {error && <p className="text-xs text-red-400">{error}</p>}
+      <button
+        type="button"
+        onClick={onBack}
+        className="w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-muted)]"
+      >
+        ← Back
+      </button>
+      <p className="text-center text-[10px] text-gray-600">
+        By signing in, you agree to our{' '}
+        <a href="/terms" className="text-degen-500 hover:underline">Terms</a> and{' '}
+        <a href="/privacy" className="text-degen-500 hover:underline">Privacy Policy</a>.
+      </p>
+    </div>
+  );
 }
 
 function WalletSection({
@@ -802,6 +1054,41 @@ export const SignInModal = memo(function SignInModal({
             </div>
 
             <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[var(--color-border)]" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-[var(--color-card)] px-3 text-xs text-gray-600">
+                  or sign in with
+                </span>
+              </div>
+            </div>
+
+            <div className="mb-4 space-y-1.5">
+              {OAUTH_PROTOCOLS.map((proto) => (
+                <button
+                  key={proto.id}
+                  onClick={() => handleProtocolClick(proto)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-left transition-all hover:border-gray-600 hover:bg-[var(--color-muted)] group"
+                  type="button"
+                >
+                  <span
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold"
+                    style={{ backgroundColor: `${proto.color}18`, color: proto.color }}
+                  >
+                    {proto.icon}
+                  </span>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-[var(--color-fg)] group-hover:text-degen-400 transition-colors">
+                      {proto.label}
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-600">→</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="relative mb-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-[var(--color-border)]" />
               </div>

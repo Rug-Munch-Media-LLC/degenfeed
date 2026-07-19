@@ -36,6 +36,21 @@ const FOLLOW_SUGGESTIONS: FollowSuggestion[] = [
   { handle: '@preethi', name: 'Preethi K.', protocol: 'Lens' },
 ];
 
+/* ─── Live now ─────────────────────────────────────────────── */
+
+interface LiveSpace {
+  name: string;
+  host: string;
+  listeners: string;
+  color: string;
+}
+
+const LIVE_SPACES: LiveSpace[] = [
+  { name: 'Crypto AMA with Vitalik', host: '@vitalik.eth', listeners: '2.3K', color: '#8b5cf6' },
+  { name: 'Solana Ecosystem Call', host: '@solana', listeners: '1.8K', color: '#00ff41' },
+  { name: 'DeFi Deep Dive', host: '@defi_dad', listeners: '892', color: '#3b82f6' },
+];
+
 /* ─── Footer links ─────────────────────────────────────────── */
 
 const FOOTER_LINKS = [
@@ -160,6 +175,62 @@ function WhoToFollowCard() {
   );
 }
 
+/* ─── Live now card ────────────────────────────────────────── */
+
+function LiveNowCard() {
+  return (
+    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] overflow-hidden">
+      <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-degen-500 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-degen-500" />
+        </span>
+        <h2 className="text-lg font-bold" style={{ color: 'var(--color-fg)' }}>
+          Live now
+        </h2>
+      </div>
+      <div className="divide-y divide-[var(--color-glass-border)]">
+        {LIVE_SPACES.map((space) => (
+          <Link
+            key={space.name}
+            href="/spaces"
+            className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-[var(--color-overlay)]"
+          >
+            <div
+              className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm"
+              style={{ backgroundColor: `${space.color}18`, color: space.color }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" strokeWidth="1.5" />
+                <line x1="8" y1="23" x2="16" y2="23" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold truncate" style={{ color: 'var(--color-fg)' }}>
+                {space.name}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
+                <span className="truncate">{space.host}</span>
+                <span className="shrink-0">·</span>
+                <span className="shrink-0">{space.listeners} listening</span>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+      <Link
+        href="/spaces"
+        className="block px-4 py-3 text-sm text-degen-400 transition-colors hover:bg-[var(--color-overlay)] rounded-b-xl"
+        aria-label="View all live spaces"
+      >
+        View all spaces
+      </Link>
+    </div>
+  );
+}
+
 /* ─── Premium CTA ──────────────────────────────────────────── */
 
 function PremiumCta() {
@@ -185,13 +256,7 @@ function PremiumCta() {
       >
         Learn More
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path
-            d="M6 4l4 4-4 4"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </Link>
     </div>
@@ -229,6 +294,7 @@ export const RightSidebar = memo(function RightSidebar() {
       </div>
       <TrendingCard />
       <WhoToFollowCard />
+      <LiveNowCard />
       <PremiumCta />
       <SidebarFooter />
     </aside>

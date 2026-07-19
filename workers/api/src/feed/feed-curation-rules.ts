@@ -52,8 +52,11 @@ export interface FreshnessMultiplier {
 
 /**
  * Apply freshness multipliers to a list of posts.
- * Posts from the last hour get 2x boost, last 6 hours get 1.5x.
+ * Posts from the last hour get +20% boost (1.2x), last 6 hours get +10% (1.1x).
  * Older posts are unchanged (1x).
+ *
+ * This is a moderate boost — enough to surface fresh content without
+ * overwhelming the ranking with recency-only signals.
  */
 export function applyFreshnessMultiplier(
   posts: UnifiedPost[],
@@ -64,8 +67,8 @@ export function applyFreshnessMultiplier(
     const ageHours = ageMs / 3600000;
     let multiplier = 1.0;
 
-    if (ageHours < 1) multiplier = 2.0;
-    else if (ageHours < 6) multiplier = 1.5;
+    if (ageHours < 1) multiplier = 1.2; // +20% for fresh content
+    else if (ageHours < 6) multiplier = 1.1; // +10% for recent content
 
     return { post, multiplier };
   });
@@ -412,8 +415,8 @@ export function applyCurationPipeline(
     const ageHours = ageMs / 3600000;
     let freshness = 1.0;
     if (opts.freshnessBoost !== false) {
-      if (ageHours < 1) freshness = 2.0;
-      else if (ageHours < 6) freshness = 1.5;
+      if (ageHours < 1) freshness = 1.2; // +20% for fresh content
+      else if (ageHours < 6) freshness = 1.1; // +10% for recent content
     }
     scored.set(p.id, { total: getScore(p) * freshness, freshness });
   }

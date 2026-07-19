@@ -119,7 +119,7 @@ export function withAdminHeaders(init?: ResponseInit): ResponseInit {
 export async function requireSession(request: Request): Promise<NextResponse | null> {
   const secret = process.env.AUTH_SECRET;
   if (!secret) {
-    log('error', '[auth] AUTH_SECRET not configured');
+    console.error('[auth] AUTH_SECRET not configured');
     return NextResponse.json({ error: 'Auth not configured' }, { status: 500 });
   }
   const payload = await verifySessionCookie(request.headers.get('cookie'), secret);
@@ -140,7 +140,7 @@ export async function requireSession(request: Request): Promise<NextResponse | n
 export async function requireAdmin(request: Request): Promise<NextResponse | null> {
   const secret = process.env.AUTH_SECRET;
   if (!secret) {
-    log('error', '[auth] AUTH_SECRET not configured');
+    console.error('[auth] AUTH_SECRET not configured');
     return NextResponse.json({ error: 'Auth not configured' }, { status: 500 });
   }
   const payload = await verifySessionCookie(request.headers.get('cookie'), secret);
@@ -154,7 +154,7 @@ export async function requireAdmin(request: Request): Promise<NextResponse | nul
     .filter(Boolean);
 
   if (adminWallets.length === 0) {
-    log('error', '[auth] ADMIN_WALLETS not configured');
+    console.error('[auth] ADMIN_WALLETS not configured');
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   if (!adminWallets.includes(payload.address.toLowerCase())) {

@@ -648,10 +648,11 @@ export default function ProfilePage() {
                 {joinDate && (
                   <p className="mt-1 text-xs text-[var(--color-muted)]">Joined {joinDate}</p>
                 )}
-                {/* Bio placeholder */}
-                <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-muted)]">
-                  Building the cross-protocol social hub 🚀
-                </p>
+                {primaryIdentity?.bio && (
+                  <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-muted)]">
+                    {primaryIdentity.bio}
+                  </p>
+                )}
               </div>
 
               {/* Reputation Level Badge */}

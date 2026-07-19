@@ -10,6 +10,7 @@
 import { isEnglishPost } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
 import { deduplicateCrossProtocol } from './content-dedup';
+import { hasNsfwContent, hasSpamSignals } from '../ranking/ranking-weights';
 
 type SourceCategory = 'social' | 'lemmy' | 'peertube' | 'youtube' | 'mastodon' | 'rss' | 'reddit';
 
@@ -173,6 +174,63 @@ export function applyLanguageFilter(
   return {
     posts: passed,
     meta: { passed: passed.length, filtered: posts.length - passed.length, preferEnglish: true },
+  };
+}
+
+// ─── 3b. NSFW / Spam content filter ──────────────────────────────
+
+export interface NsfwFilterResult {
+  passed: number;
+  filtered: number;
+  nsfwFiltered: number;
+  spamFiltered: number;
+}
+
+/**
+ * Filters out posts containing NSFW or spam content.
+ * Uses keyword-based detection from ranking-weights.
+ */
+export function applyNsfwSpamFilter(
+  posts: UnifiedPost[],
+): { posts: UnifiedPost[]; meta: NsfwFilterResult } {
+  let nsfwFiltered = 0;
+  let spamFiltered = 0;
+
+  const passed = posts.filter((p) => {
+    const text = p.text || '';
+
+    // Check NSFW content
+    if (hasNsfwContent(text)) {
+      nsfwFiltered++;
+      return false;
+    }
+
+    // Check spam signals
+    if (hasSpamSignals(text)) {
+      spamFiltered++;
+      return false;
+    }
+
+    // Also check embed descriptions/meta for NSFW
+    for (const embed of p.embeds) {
+      const metaText = [embed.meta?.title, embed.meta?.description].filter(Boolean).join(' ');
+      if (hasNsfwContent(metaText)) {
+        nsfwFiltered++;
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  return {
+    posts: passed,
+    meta: {
+      passed: passed.length,
+      filtered: nsfwFiltered + spamFiltered,
+      nsfwFiltered,
+      spamFiltered,
+    },
   };
 }
 
@@ -465,6 +523,8 @@ export interface QualityPipelineOptions {
   engagementFloorAgeHours?: number;
   /** Prefer English content. Default true. */
   preferEnglish?: boolean;
+  /** Whether to filter NSFW/spam content. Default true. */
+  filterNsfwSpam?: boolean;
   /** Whether to deduplicate cross-protocol content. Default true. */
   crossProtocolDedup?: boolean;
   /** Freshness scoring config. Null = skip freshness scoring. */
@@ -481,6 +541,7 @@ export interface QualityPipelineResult {
     quality: QualityGateResult;
     engagement: EngagementFloorResult;
     language: LanguageFilterResult;
+    nsfw: NsfwFilterResult;
     dedup: CrossProtocolDedupResult;
     freshness: FreshnessScoringResult | null;
     diversity: SourceDiversityResult;
@@ -492,8 +553,8 @@ export interface QualityPipelineResult {
 
 /**
  * Full quality pipeline. Order:
- * quality gate → engagement floor → language filter → dedup
- * → freshness → diversity → output.
+ * quality gate → engagement floor → language filter → NSFW/spam filter
+ * → dedup → freshness → diversity → output.
  *
  * Each gate reports its metrics in the meta object for observability.
  */
@@ -522,6 +583,16 @@ export function applyQualityPipeline(
   // 3. Language filter
   const language = applyLanguageFilter(output, opts.preferEnglish ?? true);
   output = language.posts;
+
+  // 3b. NSFW + spam filter (added v3.1 — content-based filtering)
+  const nsfw =
+    opts.filterNsfwSpam !== false
+      ? applyNsfwSpamFilter(output)
+      : {
+          posts: output,
+          meta: { passed: output.length, filtered: 0, nsfwFiltered: 0, spamFiltered: 0 },
+        };
+  output = nsfw.posts;
 
   // 4. Cross-protocol dedup
   const dedup =
@@ -561,6 +632,7 @@ export function applyQualityPipeline(
       quality: quality.meta,
       engagement: engagement.meta,
       language: language.meta,
+      nsfw: nsfw.meta,
       dedup: dedup.meta,
       freshness,
       diversity: diversity.meta,

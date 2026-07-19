@@ -1,4 +1,10 @@
 import { type Env, getGtsConfig, jsonResponse, rateLimit } from '../index';
+import {
+  consumeState as consumeOAuthState,
+  generateOAuthState,
+  REDDIT_STATE_PREFIX,
+  storeState as storeOAuthState,
+} from './oauth-state';
 import { validateBodySize } from '../sanitize';
 
 const STATE_KEY_PREFIX = 'gts:state:';
@@ -6,32 +12,15 @@ const STATE_TTL_SECONDS = 600;
 const THREADS_STATE_PREFIX = 'threads:state:';
 
 function generateState(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return generateOAuthState();
 }
 
 async function storeState(env: Env, state: string, prefix = STATE_KEY_PREFIX): Promise<void> {
-  if (!env.CACHE) return;
-  try {
-    await env.CACHE.put(prefix + state, '1', {
-      expirationTtl: STATE_TTL_SECONDS,
-    });
-  } catch (err) {
-    console.warn('[auth] storeState failed:', err instanceof Error ? err.message : err);
-  }
+  await storeOAuthState(env, state, prefix);
 }
 
 async function consumeState(env: Env, state: string, prefix = STATE_KEY_PREFIX): Promise<boolean> {
-  if (!env.CACHE) return true;
-  try {
-    const existing = await env.CACHE.get(prefix + state);
-    if (!existing) return false;
-    await env.CACHE.delete(prefix + state);
-    return true;
-  } catch (err) {
-    console.warn('[auth] consumeState failed:', err instanceof Error ? err.message : err);
-    return false;
-  }
+  return consumeOAuthState(env, state, prefix);
 }
 
 /**
@@ -476,7 +465,7 @@ export async function handleRedditCallback(request: Request, env: Env): Promise<
     if (!body.code) return jsonResponse({ error: 'Missing authorization code' }, 400);
 
     if (env.CACHE && body.state) {
-      const stateValid = await consumeState(env, body.state, 'reddit:state:');
+      const stateValid = await consumeState(env, body.state, REDDIT_STATE_PREFIX);
       if (!stateValid) return jsonResponse({ error: 'Invalid or expired state' }, 400);
     }
 

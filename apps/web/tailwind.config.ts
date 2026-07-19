@@ -28,9 +28,26 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'translateY(16px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        'heart-pop': {
+          '0%': { transform: 'scale(1)' },
+          '25%': { transform: 'scale(1.3)' },
+          '50%': { transform: 'scale(0.9)' },
+          '100%': { transform: 'scale(1)' },
+        },
       },
       animation: {
         'slide-up': 'slide-up 0.3s ease-out',
+        'fade-in': 'fade-in 0.3s ease-out',
+        shimmer: 'shimmer 1.5s ease-in-out infinite',
+        'heart-pop': 'heart-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
       },
     },
   },

@@ -78,12 +78,9 @@ export function LoadingBar() {
       aria-label="Page loading"
     >
       <div
-        className="h-full transition-all duration-[120ms] ease-out"
+        className="h-full animate-loading-bar"
         style={{
           width: `${progress}%`,
-          background: 'linear-gradient(90deg, #16a34a, #22c55e, #00ff41, #22c55e, #16a34a)',
-          backgroundSize: '200% 100%',
-          animation: 'loading-bar-shimmer 1s linear infinite',
           boxShadow: '0 0 10px rgba(0, 255, 65, 0.5), 0 0 20px rgba(0, 255, 65, 0.2)',
         }}
       />

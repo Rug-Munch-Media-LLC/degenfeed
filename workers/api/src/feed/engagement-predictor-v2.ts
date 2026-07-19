@@ -17,7 +17,18 @@
  * 7. Social proof — who the user follows also engaged with this
  * 8. Diversity bonus — injects novel content proportional to session depth
  * 9. Completion probability — predicted completion rate based on post length + user patterns
+ * 10. Recency — post freshness (added v2.1 — weighted at 40% of total prediction)
+ *
+ * Explicit weight target: recency (40%), engagement (30%), relevance (20%), diversity (10%)
+ *
+ * v2.1 changes:
+ * - Recency is now the highest-weighted single factor (40%)
+ * - Engagement signals (social proof, creator affinity) = 30%
+ * - Relevance signals (content similarity, topic match) = 20%
+ * - Diversity signals (diversity bonus, post type) = 10%
  */
+
+import { computeRecencyScore } from '../ranking/ranking-weights';
 
 import type { UnifiedPost } from '@degenfeed/types';
 import type { BehaviorProfile } from './feed-curator';
@@ -73,17 +84,31 @@ function _decayWeight(value: number, ageMs: number, halfLifeMs: number): number 
   return value * Math.exp(-ageMs / halfLifeMs);
 }
 
-// ─── Factor weights (tunable) ─────────────────────────────────────
+// ─── Factor weights (tunable) v2.1 — recency(40%) + engagement(30%) + relevance(20%) + diversity(10%)
+//
+// Recency group (40%): recency + timing
+// Engagement group (30%): creatorAffinity + socialProof
+// Relevance group (20%): contentSimilarity + topicMatch
+// Diversity group (10%): postType + diversityBonus
 
 const WEIGHTS = {
-  contentSimilarity: 0.25,
-  creatorAffinity: 0.2,
-  topicMatch: 0.18,
-  timing: 0.08,
-  postType: 0.1,
-  socialProof: 0.12,
-  diversityBonus: 0.07,
-};
+  /** Recency: how fresh the post is — 25% */
+  recency: 0.25,
+  /** Timing: optimal time-of-day boost — 15% */
+  timing: 0.15,
+  /** Content similarity: matches previously engaged posts — 10% */
+  contentSimilarity: 0.10,
+  /** Topic match: niche overlap with user preferences — 10% */
+  topicMatch: 0.10,
+  /** Creator affinity: user follows or engages with this creator — 15% */
+  creatorAffinity: 0.15,
+  /** Social proof / popularity: global engagement signal — 15% */
+  socialProof: 0.15,
+  /** Post type preference: image/video/text — 5% */
+  postType: 0.05,
+  /** Diversity bonus: injects novel content — 5% */
+  diversityBonus: 0.05,
+} as const;
 
 export function predictEngagementV2(
   input: EngagementPredictionV2Input,
@@ -92,6 +117,23 @@ export function predictEngagementV2(
   const factors: PreditionFactor[] = [];
   const algorithmReasons: string[] = [];
   const contentTypes = post.contentType ?? 'text';
+
+  // ─── 0. Recency score (NEW v2.1 — highest weight at 40%) ────
+  const recencyScore = computeRecencyScore(post.createdAt, now);
+  let recencyBoostApplied = false;
+  if (recencyScore >= 0.8) {
+    algorithmReasons.push('Fresh content — posted within the last hour');
+    recencyBoostApplied = true;
+  } else if (recencyScore >= 0.5) {
+    algorithmReasons.push('Recent — posted today');
+    recencyBoostApplied = true;
+  }
+  factors.push({
+    name: 'recency',
+    score: recencyScore,
+    weight: WEIGHTS.recency,
+    description: `Recency score: ${(recencyScore * 100).toFixed(0)}%`,
+  });
 
   // ─── 1. Content similarity ─────────────────────────────────────
   // How similar is this post's niches to what the user engaged with?
@@ -265,14 +307,24 @@ export function predictEngagementV2(
   // Later in session → more diversity
   const diversityBonus = scrollContext === 'late' ? 0.3 : scrollContext === 'mid' ? 0.2 : 0.05;
 
-  // ─── Combine ───────────────────────────────────────────────────
+  // ─── Combine — v2.1 formula: recency(40%) + engagement(30%) + relevance(20%) + diversity(10%)
+  //
+  // Recency = recencyScore + timingScore (40% target)
+  // Engagement = creatorAffinity + popularity/socialProof (30% target)
+  // Relevance = contentSimilarity + topicMatch (20% target)
+  // Diversity = postType + diversityBonus (10% target)
   const weightedScore =
-    contentSimilarityScore * WEIGHTS.contentSimilarity +
-    Math.max(0, creatorAffinityScore) * WEIGHTS.creatorAffinity +
-    topicMatchScore * WEIGHTS.topicMatch +
+    // Recency group (target 40%)
+    recencyScore * WEIGHTS.recency +
     timingScore * WEIGHTS.timing +
-    postTypeScore * WEIGHTS.postType +
+    // Engagement group (target 30%)
+    Math.max(0, creatorAffinityScore) * WEIGHTS.creatorAffinity +
     popularityScore * WEIGHTS.socialProof +
+    // Relevance group (target 20%)
+    contentSimilarityScore * WEIGHTS.contentSimilarity +
+    topicMatchScore * WEIGHTS.topicMatch +
+    // Diversity group (target 10%)
+    postTypeScore * WEIGHTS.postType +
     diversityBonus * WEIGHTS.diversityBonus;
 
   // Respect "not interested" feedback — if all topics are demoted, score should be near 0

@@ -173,14 +173,7 @@ export default function AdminDashboardPage() {
   }, [fetchDashboard]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
-          <p className="mt-4 text-sm text-[var(--color-muted)]">Loading dashboard…</p>
-        </div>
-      </div>
-    );
+    return <AdminDashboardSkeleton />;
   }
 
   return (
@@ -427,6 +420,55 @@ function Gauge({
           className={`h-full rounded-full transition-all duration-500 ${color}`}
           style={{ width: `${pct}%` }}
         />
+      </div>
+    </div>
+  );
+}
+
+function AdminDashboardSkeleton() {
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 animate-pulse">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <div className="h-8 w-48 skeleton rounded-lg" />
+          <div className="mt-2 h-4 w-64 skeleton rounded-lg" />
+        </div>
+        <div className="h-10 w-24 skeleton rounded-xl" />
+      </div>
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
+            <div className="h-3 w-16 skeleton rounded mb-2" />
+            <div className="h-6 w-20 skeleton rounded mb-1" />
+            <div className="h-3 w-24 skeleton rounded" />
+          </div>
+        ))}
+      </div>
+      <div className="mb-8 grid gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
+          <div className="h-4 w-32 skeleton rounded mb-4" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-2.5 w-2.5 skeleton rounded-full" />
+                <div className="h-4 w-28 skeleton rounded" />
+              </div>
+              <div className="h-4 w-20 skeleton rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
+          <div className="h-4 w-28 skeleton rounded mb-4" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="mb-3 flex items-start gap-3">
+              <div className="h-6 w-6 skeleton rounded-full" />
+              <div className="flex-1">
+                <div className="h-3 w-48 skeleton rounded mb-1" />
+                <div className="h-3 w-16 skeleton rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

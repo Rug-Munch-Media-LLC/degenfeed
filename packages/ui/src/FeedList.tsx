@@ -626,8 +626,6 @@ export const FeedList = memo(function FeedList({
               className={isNew ? 'feed-item-enter' : ''}
               style={
                 {
-                  contentVisibility: 'auto',
-                  containIntrinsicSize: '0 200px',
                   '--stagger-i': i,
                 } as React.CSSProperties
               }

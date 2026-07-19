@@ -368,6 +368,61 @@ export default function DigestPage() {
         return <SectionCard key={section.type} section={section} />;
       })}
 
+      {/* Email newsletter signup */}
+      <div className="mt-10 rounded-2xl border border-degen-500/20 bg-gradient-to-br from-degen-500/5 to-transparent p-6 text-center">
+        <div className="mb-3 text-2xl">📬</div>
+        <h3 className="text-base font-bold text-[var(--color-fg)] mb-1">
+          Get the DegenFeed Daily Digest
+        </h3>
+        <p className="text-xs text-[var(--color-muted)] mb-4 max-w-md mx-auto">
+          Receive a curated daily email with the top crypto stories, trending topics, and community
+          highlights — no spam, unsubscribe anytime.
+        </p>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const form = e.currentTarget;
+            const formData = new FormData(form);
+            const email = formData.get('email') as string;
+            if (!email) return;
+            try {
+              const res = await fetch('/api/digest/subscribe-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+              });
+              if (res.ok) {
+                const btn = form.querySelector('button');
+                if (btn) {
+                  btn.textContent = 'Subscribed! ✓';
+                  btn.disabled = true;
+                }
+                const input = form.querySelector('input');
+                if (input) input.value = '';
+              }
+            } catch {
+              /* ignore */
+            }
+          }}
+          className="mx-auto flex max-w-sm gap-2"
+        >
+          <input
+            type="email"
+            name="email"
+            placeholder="your@email.com"
+            required
+            className="input flex-1 h-10 px-3 text-sm"
+            aria-label="Email for daily digest"
+          />
+          <button
+            type="submit"
+            className="rounded-lg bg-degen-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-degen-400"
+          >
+            Subscribe
+          </button>
+        </form>
+      </div>
+
       {/* Footer */}
       <div className="mt-12 pt-6 border-t border-[var(--color-border)] text-center">
         <p className="text-xs text-[var(--color-muted)] mb-3">
@@ -381,12 +436,16 @@ export default function DigestPage() {
           <Link href="/settings" className="text-degen-400 hover:text-degen-300">
             Preferences
           </Link>
-          <Link
-            href={`/api/digest/subscribe-email`}
+          <button
+            type="button"
+            onClick={() => {
+              const emailSection = document.getElementById('digest-email-section');
+              if (emailSection) emailSection.scrollIntoView({ behavior: 'smooth' });
+            }}
             className="text-degen-400 hover:text-degen-300"
           >
             📧 Email Digest
-          </Link>
+          </button>
         </div>
       </div>
     </div>

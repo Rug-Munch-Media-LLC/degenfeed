@@ -199,6 +199,56 @@ export default function SearchPage() {
   const [hasMore, setHasMore] = useState(true);
   const loadCountRef = useRef(1);
   const inputRef = useRef<HTMLInputElement>(null);
+  // ── Recent & trending searches ──
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [trendingSearches] = useState<string[]>([
+    'bitcoin',
+    'ethereum',
+    'solana',
+    'defi',
+    'nft',
+    'ai',
+    'memecoin',
+    'layer2',
+  ]);
+  const MAX_RECENT_SEARCHES = 8;
+
+  // Load recent searches from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('df_recent_searches');
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        setRecentSearches(parsed.slice(0, MAX_RECENT_SEARCHES));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // Save recent search
+  const saveRecentSearch = useCallback((q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed || trimmed.length < 2) return;
+    setRecentSearches((prev) => {
+      const updated = [trimmed, ...prev.filter((s) => s !== trimmed)].slice(0, MAX_RECENT_SEARCHES);
+      try {
+        localStorage.setItem('df_recent_searches', JSON.stringify(updated));
+      } catch {
+        /* quota */
+      }
+      return updated;
+    });
+  }, []);
+
+  const clearRecentSearches = useCallback(() => {
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem('df_recent_searches');
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -225,6 +275,10 @@ export default function SearchPage() {
         setVideos([]);
         setSearched(false);
         return;
+      }
+      // Save to recent searches (only on initial search, not append)
+      if (!append) {
+        saveRecentSearch(q);
       }
 
       if (append) {
@@ -410,6 +464,67 @@ export default function SearchPage() {
           </span>
         </div>
       </div>
+
+      {/* Recent searches + trending searches (shown when no query is active) */}
+      {!searched && query.length < 2 && (
+        <div className="mb-4 space-y-4">
+          {recentSearches.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted)]">
+                  Recent Searches
+                </h2>
+                <button
+                  type="button"
+                  onClick={clearRecentSearches}
+                  className="text-[10px] text-[var(--color-muted)] hover:text-red-400 transition-colors"
+                >
+                  Clear all
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {recentSearches.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => {
+                      setQuery(q);
+                      updateUrl(q);
+                      doSearch(q);
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-medium text-[var(--color-fg)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
+                  >
+                    <span className="text-[10px] text-[var(--color-muted)]">⌕</span>
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            <h2 className="text-xs font-medium uppercase tracking-wider text-[var(--color-muted)] mb-2">
+              Trending Searches
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {trendingSearches.map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => {
+                    setQuery(q);
+                    updateUrl(q);
+                    doSearch(q);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-medium text-[var(--color-fg)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
+                >
+                  <span className="text-[10px]">🔥</span>
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Protocol filter pills */}
       {searched && !loading && (

@@ -65,13 +65,12 @@ interface DedupResult {
 }
 
 export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
-  const contentHashes = new Map<string, { post: UnifiedPost; score: number }>();
-  const urlToPost = new Map<string, { post: UnifiedPost; score: number }>();
+  const contentHashes = new Map<string, { post: UnifiedPost; score: number; protocols: Set<string> }>();
+  const urlToPost = new Map<string, { post: UnifiedPost; score: number; protocols: Set<string> }>();
   let crossProtocol = 0;
   let urlDedup = 0;
 
-  const keep = new Set<UnifiedPost>();
-  const _processed = new Map<string, UnifiedPost>();
+  const keep = new Map<string, UnifiedPost>();
 
   for (const post of posts) {
     const score = engagementScore(post);
@@ -83,11 +82,23 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
     // Cross-protocol content hash matching
     if (hash && contentHashes.has(hash)) {
       const existing = contentHashes.get(hash)!;
+      existing.protocols.add(post.protocol);
       if (existing.post.protocol !== post.protocol) crossProtocol++;
       if (score > existing.score) {
-        contentHashes.set(hash, { post, score });
-        keep.delete(existing.post);
-        keep.add(post);
+        // Merge cross-protocol sources from old winner to new
+        const mergedProtocols = new Set([...existing.protocols, post.protocol]);
+        contentHashes.set(hash, { post, score, protocols: mergedProtocols });
+        keep.delete(existing.post.id);
+        keep.set(post.id, post);
+      } else {
+        // Add this post's protocol to the winner's multi-protocol set
+        const existingEntry = keep.get(existing.post.id);
+        if (existingEntry) {
+          (existingEntry as unknown as Record<string, unknown>).crossProtocolSources = [
+            ...(existingEntry as unknown as Record<string, string[]>).crossProtocolSources ?? [],
+            post.protocol,
+          ];
+        }
       }
       shouldKeep = false;
     }
@@ -96,35 +107,61 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
     for (const url of urls) {
       if (urlToPost.has(url)) {
         const existing = urlToPost.get(url)!;
+        existing.protocols.add(post.protocol);
         if (score > existing.score) {
           // Replace existing with higher-engagement version
           for (const [u, entry] of urlToPost) {
             if (entry.post === existing.post) {
-              urlToPost.set(u, { post, score });
+              urlToPost.set(u, { post, score, protocols: existing.protocols });
             }
           }
-          keep.delete(existing.post);
-          keep.add(post);
+          keep.delete(existing.post.id);
+          keep.set(post.id, post);
           urlDedup++;
+        } else {
+          // Add to existing winner's cross-protocol sources
+          const existingEntry = keep.get(existing.post.id);
+          if (existingEntry) {
+            const sources = new Set([
+              ...((existingEntry as unknown as Record<string, string[]>).crossProtocolSources ?? []),
+              post.protocol,
+            ]);
+            (existingEntry as unknown as Record<string, string[]>).crossProtocolSources = [...sources];
+          }
         }
         if (!shouldKeep) break;
         shouldKeep = false;
       } else {
-        urlToPost.set(url, { post, score });
+        urlToPost.set(url, { post, score, protocols: new Set([post.protocol]) });
       }
     }
 
     if (shouldKeep && hash) {
-      contentHashes.set(hash, { post, score });
-      keep.add(post);
+      contentHashes.set(hash, { post, score, protocols: new Set([post.protocol]) });
+      keep.set(post.id, post);
     } else if (shouldKeep) {
-      keep.add(post);
+      keep.set(post.id, post);
     }
   }
 
   const deduped = posts.length - keep.size;
+  // Add crossProtocolSources to posts that were cross-protocol merged
+  const result = [...keep.values()].map((post) => {
+    const hash = contentHash(post);
+    if (hash && contentHashes.has(hash)) {
+      const entry = contentHashes.get(hash)!;
+      if (entry.protocols.size > 1) {
+        return {
+          ...post,
+          crossProtocolSources: [...entry.protocols].filter((p) => p !== post.protocol),
+        } as UnifiedPost & { crossProtocolSources?: string[] };
+      }
+    }
+    return post;
+  });
+
   return {
-    posts: [...keep],
+    posts: result,
     deduped,
     crossProtocol,
     urlDedup,

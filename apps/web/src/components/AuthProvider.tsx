@@ -152,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     publishNow,
   } = useScheduledPosts();
 
-  const { account: wagmiAddress, isConnected, availableWallets } = useWeb3();
+  const { account: wagmiAddress, isConnected, availableWallets, chainId: evmChainId } = useWeb3();
   const { signInWithEthereum, signingIn: walletSigningIn } = useWalletSignIn();
   const { signInWithSolana, signingIn: solanaSigningIn } = useSolanaSignIn();
   const { showToast } = useToast();
@@ -241,20 +241,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const res = await fetch('/api/auth/session', { credentials: 'include' });
         if (!cancelled && res.ok) {
-          const data = (await res.json()) as { address?: string };
+          const data = (await res.json()) as {
+            address?: string;
+            chain?: 'ethereum' | 'solana';
+          };
           if (data.address) {
+            const sessionChain = data.chain ?? 'ethereum';
             const addr = data.address.toLowerCase();
             const stored = getStoredWallets();
             if (!stored.some((w) => w.address === addr)) {
               addStoredWallet({
                 address: addr,
-                chain: 'ethereum',
+                chain: sessionChain,
                 walletName: null,
-                chainId: null,
+                chainId: sessionChain === 'ethereum' ? 1 : null,
                 addedAt: Date.now(),
               });
               loadWallets();
             }
+            // Ensure signedInProtocols reflects the server session even
+            // when IndexedDB identities are not yet loaded or available.
+            setSignedInProtocols((prev) => {
+              if (prev[sessionChain]) return prev;
+              return { ...prev, [sessionChain]: true };
+            });
           }
         }
       } catch {
@@ -281,33 +291,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const pending = JSON.parse(raw) as {
           protocol: string;
           accessToken: string;
-          profile?: { id?: string; acct?: string; displayName?: string; avatar?: string };
+          profile?: {
+            id?: string;
+            username?: string;
+            email?: string;
+            acct?: string;
+            displayName?: string;
+            avatar?: string;
+            provider?: string;
+          };
         };
-        if (pending.protocol !== 'mastodon' || !pending.accessToken || !pending.profile?.id) return;
+        if (!pending.accessToken) return;
 
+        const protocol = pending.protocol;
         const profile = pending.profile;
-        const handle = profile.acct?.includes('@')
-          ? profile.acct
-          : `${profile.acct}@social.degenfeed.xyz`;
+        const effectiveProtocol = profile?.provider || protocol;
+        const publicId = String(profile?.id || profile?.email || profile?.username || 'unknown');
+
+        let handle = '';
+        let displayName = '';
+        if (protocol === 'mastodon' || protocol === 'gotosocial') {
+          handle = profile?.acct?.includes('@') ? profile.acct : `${profile?.acct}@social.degenfeed.xyz`;
+          displayName = profile?.displayName || profile?.username || '';
+        } else if (effectiveProtocol === 'google' || effectiveProtocol === 'email') {
+          handle = profile?.email || '';
+          displayName = profile?.displayName || profile?.email?.split('@')[0] || '';
+        } else if (effectiveProtocol === 'github') {
+          handle = profile?.username || `@${profile?.username}` || '';
+          displayName = profile?.displayName || profile?.username || '';
+        } else if (effectiveProtocol === 'discord') {
+          handle = profile?.username || '';
+          displayName = profile?.displayName || profile?.username || '';
+        } else if (effectiveProtocol === 'twitter') {
+          handle = `@${profile?.username}` || '';
+          displayName = profile?.displayName || profile?.username || '';
+        } else if (effectiveProtocol === 'telegram') {
+          handle = profile?.username ? `@${profile?.username}` : `tg:${profile?.id}`;
+          displayName = profile?.displayName || profile?.username || '';
+        } else if (effectiveProtocol === 'reddit') {
+          handle = profile?.username ? `u/${profile?.username}` : '';
+          displayName = profile?.displayName || profile?.username || '';
+        } else if (effectiveProtocol === 'threads') {
+          handle = profile?.username || '';
+          displayName = profile?.displayName || profile?.username || '';
+        } else {
+          handle = profile?.username || profile?.email || publicId;
+          displayName = profile?.displayName || profile?.username || '';
+        }
+
         const record = await buildIdentityRecord({
-          protocol: 'mastodon',
-          publicId: String(profile.id),
-          handle,
-          displayName: profile.displayName,
-          avatarUrl: profile.avatar,
+          protocol: effectiveProtocol,
+          publicId,
+          handle: handle || publicId,
+          displayName: displayName || handle || publicId,
+          avatarUrl: profile?.avatar,
           secret: pending.accessToken,
           keys: { accessToken: pending.accessToken },
           isPrimary: false,
         });
         await saveIdentity(record);
         await refresh();
+        showToast('success', `Connected to ${effectiveProtocol}!`);
+        triggerOnboarding();
       } catch {
         /* ignore */
       }
     };
 
     processPending();
-  }, [ready, refresh]);
+  }, [ready, refresh, showToast]);
 
   const handleSignIn = useCallback(
     async (protocol: string, credentials?: string | Record<string, string>) => {
@@ -322,7 +374,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               address: addr,
               chain: 'ethereum',
               walletName: null,
-              chainId: session.chain ?? null,
+              chainId: evmChainId ?? 1,
               addedAt: Date.now(),
             };
             const updated = addStoredWallet(meta);
@@ -353,7 +405,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 address: addr,
                 chain: 'solana',
                 walletName: null,
-                chainId: session.chain ?? null,
+                chainId: null,
                 addedAt: Date.now(),
               };
               const updated = addStoredWallet(meta);
@@ -437,6 +489,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await signInWithGtS(instance, accessToken);
             break;
           }
+          case 'google':
+          case 'github':
+          case 'discord':
+          case 'twitter':
+          case 'telegram':
+          case 'threads':
+          case 'reddit': {
+            // OAuth providers handled via redirect in SignInModal
+            // The callback page stores the result in localStorage
+            return;
+          }
+          case 'email': {
+            const emailMethod = creds.method as string;
+            if (emailMethod === 'register') {
+              const resp = await fetch('/api/auth/email/register', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                  email: creds.email,
+                  password: creds.password,
+                  displayName: creds.displayName,
+                }),
+              });
+              const data = (await resp.json()) as { success?: boolean; message?: string; error?: string; requiresVerification?: boolean };
+              if (!resp.ok) throw new Error(data.error || 'Registration failed');
+              showToast('success', data.message || 'Check your email to verify your account.');
+              if (data.requiresVerification) {
+                setShowSignIn(false);
+                return;
+              }
+              // Fall through to sign in after registration
+            }
+            const resp = await fetch('/api/auth/email/signin', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ email: creds.email, password: creds.password }),
+            });
+            const data = (await resp.json()) as { success?: boolean; user?: { id?: string; email?: string; displayName?: string }; error?: string };
+            if (!resp.ok) throw new Error(data.error || 'Sign-in failed');
+            const record = await buildIdentityRecord({
+              protocol: 'email',
+              publicId: data.user?.id || creds.email as string,
+              handle: data.user?.displayName || (creds.email as string).split('@')[0] || 'user',
+              displayName: data.user?.displayName || (creds.email as string).split('@')[0] || 'user',
+              secret: null,
+              keys: { email: creds.email as string },
+              isPrimary: false,
+            });
+            await saveIdentity(record);
+            await refresh();
+            triggerOnboarding();
+            setShowSignIn(false);
+            showToast('success', `Welcome, ${data.user?.displayName || 'user'}!`);
+            return;
+          }
           default:
             throw new Error(`Unknown protocol: ${protocol}`);
         }
@@ -481,7 +590,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setActiveWalletIndexState(0);
     setWalletMeta({});
     setLinkGtsUrl(null);
-    showToast('success', 'Signed out');
+    showToast('success', 'See you soon! 👋');
+    // Redirect to landing page after a short delay
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1200);
   }, [identities, showToast]);
 
   const handleSetPrimary = useCallback(
@@ -569,7 +682,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (index: number) => {
       const stored = getStoredWallets();
       if (index < 0 || index >= stored.length) return;
-      const removed = stored[index];
+      const removed = stored[index]!;
       const updated = removeStoredWallet(removed.address);
       setWalletMeta((prev) => {
         const next = { ...prev };

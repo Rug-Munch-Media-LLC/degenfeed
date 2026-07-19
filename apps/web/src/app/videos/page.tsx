@@ -4,11 +4,9 @@
  * @degenfeed/web — /videos
  *
  * Full YouTube + PeerTube integration with tabs, category filters, sort,
- * and infinite-scroll grid. Sources both from the @degenfeed/youtube-provider
- * (YouTube RSS feeds) and the PeerTube API (from video.degenfeed.xyz).
+ * and infinite-scroll grid. Theater mode, PiP, and quality selector.
  *
- * Aesthetic direction: dark cyberpunk with neon-green accents. The grid uses
- * a 3-column bento layout (desktop) with staggered card reveals on load.
+ * Aesthetic direction: dark cyberpunk with neon-green accents.
  */
 
 import {
@@ -28,18 +26,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 const PEERTUBE_INSTANCE = 'video.degenfeed.xyz';
 const YOUTUBE_FEED_LIMIT = 30;
 const PEERTUBE_API_LIMIT = 20;
-const FEDERATED_INSTANCE_COUNT = 15; // From @degenfeed/peertube-provider/federated — kept in sync manually
+const FEDERATED_INSTANCE_COUNT = 15;
 
-// ─── PeerTube API types ────────────────────────────────────────────────
+// ─── PeerTube API types ─────────────────────────────────────────────────
 
 interface PeerTubeApiVideo {
   uuid: string;
   name: string;
   thumbnailPath: string;
-  channel: {
-    displayName: string;
-    name: string;
-  };
+  channel: { displayName: string; name: string };
   publishedAt: string;
   views: number;
   duration?: number;
@@ -111,8 +106,6 @@ function detectCategory(title: string, description?: string): string {
 }
 
 function peerTubeCategoryToId(category: number): string {
-  // PeerTube category IDs: 1=Music, 2=Films, 3=Comics, 4=Books, 5=Tech, etc.
-  // Map to our categories
   const map: Record<number, string> = {
     1: 'entertainment',
     2: 'entertainment',
@@ -138,28 +131,7 @@ function formatDuration(seconds?: number): string {
   return `0:${String(s).padStart(2, '0')}`;
 }
 
-// ─── Fetch Federated PeerTube feed ───────────────────────────────────────
-// Searches across multiple PeerTube instances for crypto/tech content.
-
-// biome-ignore lint/correctness/noUnusedVariables: keep for documentation
-interface FederatedVideoItem {
-  id: string;
-  title: string;
-  url: string;
-  instanceUrl: string;
-  instanceName: string;
-  channelName: string;
-  channelUrl: string | null;
-  thumbnailUrl: string | null;
-  publishedAt: string;
-  publishedMs: number;
-  views: number;
-  likes: number;
-  duration: number;
-  description: string;
-  tags: string[];
-  source: string;
-}
+// ─── Fetch Federated PeerTube feed ──────────────────────────────────────
 
 async function fetchFederatedFeed(
   sort: string = 'trending',
@@ -190,7 +162,7 @@ async function fetchFederatedFeed(
   }
 }
 
-// ─── Fetch YouTube feed (RSS-based) ─────────────────────────────────────
+// ─── Fetch YouTube feed ─────────────────────────────────────────────────
 
 async function fetchYouTubeFeed(
   category?: string,
@@ -198,7 +170,6 @@ async function fetchYouTubeFeed(
   signal?: AbortSignal,
 ): Promise<YouTubeVideoCardItem[]> {
   try {
-    // Dynamic import to avoid bundling issues if package isn't installed
     const { fetchYouTubeFeed: fetchYT } = await import('@degenfeed/youtube-provider');
     const items = await fetchYT({
       category: category === 'all' ? undefined : category,
@@ -206,19 +177,13 @@ async function fetchYouTubeFeed(
       signal,
       sort: 'recent',
     });
-    return items.map((item) => ({
-      ...item,
-      source: 'youtube' as const,
-    }));
+    return items.map((item) => ({ ...item, source: 'youtube' as const }));
   } catch (err) {
     console.warn('[videos] YouTube provider not available, falling back to RSS proxy', err);
     return fetchYouTubeFeedFallback(category, limit, signal);
   }
 }
 
-/**
- * Fallback: proxy YouTube RSS through a Cloudflare worker or direct fetch.
- */
 async function fetchYouTubeFeedFallback(
   _category?: string,
   _limit = 20,
@@ -251,22 +216,11 @@ async function fetchPeerTubeFeed(
       count: String(limit),
       sort: '-publishedAt',
     });
-
-    if (category && category !== 'all') {
-      // PeerTube category ID for crypto topic
-      params.set('categoryOneOf', '10');
-    }
-
+    if (category && category !== 'all') params.set('categoryOneOf', '10');
     const url = `https://${PEERTUBE_INSTANCE}/api/v1/videos?${params.toString()}`;
-    const response = await fetch(url, {
-      signal,
-      headers: { Accept: 'application/json' },
-    });
-
+    const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
     if (!response.ok) return { items: [], total: 0 };
-
     const data = (await response.json()) as PeerTubeApiResponse;
-
     const items: YouTubeVideoCardItem[] = (data.data ?? []).map((v) => ({
       id: v.uuid,
       title: v.name,
@@ -286,7 +240,6 @@ async function fetchPeerTubeFeed(
         : detectCategory(v.name, v.description),
       source: 'peertube' as const,
     }));
-
     return { items, total: data.total };
   } catch {
     return { items: [], total: 0 };
@@ -296,13 +249,16 @@ async function fetchPeerTubeFeed(
 // ─── Page Components ────────────────────────────────────────────────────
 
 export default function VideosPage() {
-  // ── State ──
   const [videos, setVideos] = useState<YouTubeVideoCardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [tipVideo, setTipVideo] = useState<YouTubeVideoCardItem | null>(null);
+  const [theaterMode, setTheaterMode] = useState(false);
+  const [pipSupported, setPipSupported] = useState(true);
+  const [qualityMenu, setQualityMenu] = useState(false);
+  const [selectedQuality, setSelectedQuality] = useState('Auto');
 
   // Filters
   const [activeTab, setActiveTab] = useState<VideoTab>('all');
@@ -314,12 +270,14 @@ export default function VideosPage() {
   const [peertubePage, setPeertubePage] = useState(1);
   const [youtubeExhausted, setYoutubeExhausted] = useState(false);
   const [peertubeExhausted, setPeertubeExhausted] = useState(false);
-
-  // Federated tab — no pagination (cached server-side, single fetch)
   const [_federatedLoading, setFederatedLoading] = useState(false);
-
   const abortRef = useRef<AbortController | null>(null);
   const loadingRef = useRef(false);
+
+  // Detect PiP support on mount
+  useEffect(() => {
+    setPipSupported(!!document.pictureInPictureEnabled);
+  }, []);
 
   // ── Load data ──
   const loadVideos = useCallback(
@@ -328,14 +286,11 @@ export default function VideosPage() {
       loadingRef.current = true;
       setLoading(true);
       setError(null);
-
-      // Abort previous request
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
 
       try {
-        // ── Federated tab: single fetch, no pagination ──────────────
         if (activeTab === 'federated') {
           setFederatedLoading(true);
           const sortParam =
@@ -350,7 +305,6 @@ export default function VideosPage() {
         const category = activeCategory === 'all' ? undefined : activeCategory;
         const currentPT = append ? peertubePage : 1;
 
-        // Fetch YouTube + local PeerTube in parallel
         const [ytItems, ptResult] = await Promise.all([
           !youtubeExhausted || !append
             ? fetchYouTubeFeed(category, YOUTUBE_FEED_LIMIT, controller.signal)
@@ -365,11 +319,9 @@ export default function VideosPage() {
 
         if (controller.signal.aborted) return;
 
-        // Interleave YouTube + PeerTube for mixed view
         let combined: YouTubeVideoCardItem[];
 
         if (append) {
-          // Append to existing list
           const existing = new Set(videos.map((v) => `${v.source}-${v.id}`));
           const newItems = [
             ...ytItems.filter((i) => !existing.has(`${i.source}-${i.id}`)),
@@ -379,14 +331,11 @@ export default function VideosPage() {
           setYoutubePage((p) => p + (ytItems.length > 0 ? 1 : 0));
           setPeertubePage((p) => p + (ptResult.items.length > 0 ? 1 : 0));
         } else {
-          // Fresh load — interleave
           const maxLen = Math.max(ytItems.length, ptResult.items.length);
           const interleaved: YouTubeVideoCardItem[] = [];
           for (let i = 0; i < maxLen; i++) {
-            const ytItem = ytItems[i];
-            const ptItem = ptResult.items[i];
-            if (ytItem) interleaved.push(ytItem);
-            if (ptItem) interleaved.push(ptItem);
+            if (ytItems[i]) interleaved.push(ytItems[i]);
+            if (ptResult.items[i]) interleaved.push(ptResult.items[i]);
           }
           combined = interleaved;
         }
@@ -395,7 +344,6 @@ export default function VideosPage() {
         setHasMore(
           ytItems.length >= YOUTUBE_FEED_LIMIT || ptResult.items.length >= PEERTUBE_API_LIMIT,
         );
-
         if (ytItems.length < YOUTUBE_FEED_LIMIT) setYoutubeExhausted(true);
         if (ptResult.items.length < PEERTUBE_API_LIMIT) setPeertubeExhausted(true);
       } catch (err) {
@@ -408,11 +356,9 @@ export default function VideosPage() {
         loadingRef.current = false;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps — youtubePage unused after removing currentYT
     [activeCategory, peertubePage, youtubeExhausted, peertubeExhausted, videos, sort, activeTab],
   );
 
-  // ── Load on mount & filter change ──
   useEffect(() => {
     setYoutubePage(1);
     setPeertubePage(1);
@@ -421,24 +367,17 @@ export default function VideosPage() {
     setVideos([]);
     setHasMore(true);
     loadVideos(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps — loadVideos intentionally omitted to prevent infinite loop on state reset
   }, [loadVideos]);
 
-  // ── Load more handler ──
   const handleLoadMore = useCallback(() => {
-    if (!loading && hasMore) {
-      loadVideos(true);
-    }
+    if (!loading && hasMore) loadVideos(true);
   }, [loading, hasMore, loadVideos]);
 
-  // ── Sort handler (client-side reorder) ──
   const sortedVideos = useMemo(() => {
     const sorted = [...videos];
-    if (sort === 'recent') {
-      sorted.sort((a, b) => b.publishedMs - a.publishedMs);
-    } else if (sort === 'popular') {
-      sorted.sort((a, b) => (b.views ?? 0) - (a.views ?? 0));
-    } else if (sort === 'trending') {
+    if (sort === 'recent') sorted.sort((a, b) => b.publishedMs - a.publishedMs);
+    else if (sort === 'popular') sorted.sort((a, b) => (b.views ?? 0) - (a.views ?? 0));
+    else if (sort === 'trending') {
       sorted.sort((a, b) => {
         const scoreA = (a.views ?? 0) / Math.max(1, (Date.now() - a.publishedMs) / 3600000);
         const scoreB = (b.views ?? 0) / Math.max(1, (Date.now() - b.publishedMs) / 3600000);
@@ -448,17 +387,13 @@ export default function VideosPage() {
     return sorted;
   }, [videos, sort]);
 
-  // ── Play handler ──
   const handlePlay = useCallback((video: YouTubeVideoCardItem) => {
     window.open(video.url, '_blank', 'noopener noreferrer');
   }, []);
 
-  // ── Tip handler ──
   const handleTip = useCallback((video: YouTubeVideoCardItem) => {
-    if (video.source === 'peertube') {
-      setTipVideo(video);
-    } else {
-      // YouTube tips — copy URL and show toast as fallback
+    if (video.source === 'peertube') setTipVideo(video);
+    else {
       window.dispatchEvent(
         new CustomEvent('df-toast', {
           detail: { kind: 'info', message: `Tip ${video.channelName} on YouTube` },
@@ -468,7 +403,6 @@ export default function VideosPage() {
     }
   }, []);
 
-  // ── Refresh handler ──
   const handleRefresh = useCallback(() => {
     setYoutubePage(1);
     setPeertubePage(1);
@@ -480,11 +414,42 @@ export default function VideosPage() {
     loadVideos(false);
   }, [loadVideos]);
 
+  const toggleTheater = useCallback(() => {
+    setTheaterMode((prev) => !prev);
+    window.dispatchEvent(
+      new CustomEvent('df-toast', {
+        detail: { kind: 'info', message: theaterMode ? 'Theater mode off' : 'Theater mode on' },
+      }),
+    );
+  }, [theaterMode]);
+
+  const togglePiP = useCallback(async () => {
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else {
+        // Find the first video element on the page
+        const video = document.querySelector('video');
+        if (video) await video.requestPictureInPicture();
+      }
+    } catch {
+      window.dispatchEvent(
+        new CustomEvent('df-toast', {
+          detail: { kind: 'error', message: 'Picture-in-picture not available' },
+        }),
+      );
+    }
+  }, []);
+
+  const qualities = ['Auto', '1080p', '720p', '480p', '360p'];
+
   return (
     <ErrorBoundary>
-      <div className="mx-auto max-w-7xl px-4 py-6">
+      <div
+        className={`mx-auto transition-all duration-300 ${theaterMode ? 'max-w-full px-0' : 'max-w-7xl px-4'} py-6`}
+      >
         {/* ── Header ── */}
-        <header className="mb-6">
+        <header className={`mb-6 ${theaterMode ? 'px-4' : ''}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">
@@ -495,56 +460,154 @@ export default function VideosPage() {
                 YouTube crypto channels, PeerTube federated video, and more — all in one feed.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={loading}
-              className="rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:border-degen-500/30 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-degen-500/40"
-              aria-label="Refresh videos"
-            >
-              {loading ? (
-                <span className="flex items-center gap-1.5">
-                  <div className="h-3 w-3 rounded-full border-2 border-degen-500/30 border-t-degen-500 animate-spin" />
-                  Loading
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d="M1 4V10H7"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M3.51 15a9 9 0 102.13-9.36L1 10"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+
+            {/* Player controls row */}
+            <div className="hidden items-center gap-2 sm:flex">
+              {/* Theater mode */}
+              <button
+                type="button"
+                onClick={toggleTheater}
+                className={`rounded-lg border px-3 py-2 text-xs transition-all ${
+                  theaterMode
+                    ? 'border-degen-500/30 bg-degen-500/10 text-degen-400'
+                    : 'border-[var(--color-glass-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                }`}
+                aria-label="Toggle theater mode"
+                title={theaterMode ? 'Exit theater mode' : 'Enter theater mode'}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <path d="M8 21h8M12 17v4" />
+                </svg>
+              </button>
+
+              {/* Picture-in-Picture */}
+              {pipSupported && (
+                <button
+                  type="button"
+                  onClick={togglePiP}
+                  className="rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs text-[var(--color-muted)] transition-all hover:text-[var(--color-fg)]"
+                  aria-label="Toggle picture-in-picture"
+                  title="Picture-in-picture"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                    <rect
+                      x="11"
+                      y="9"
+                      width="8"
+                      height="5"
+                      rx="1"
+                      fill="currentColor"
+                      opacity="0.3"
                     />
                   </svg>
-                  Refresh
-                </span>
+                </button>
               )}
-            </button>
+
+              {/* Quality selector */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setQualityMenu((prev) => !prev)}
+                  className="rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs text-[var(--color-muted)] transition-all hover:text-[var(--color-fg)]"
+                  aria-label="Select video quality"
+                >
+                  {selectedQuality}
+                </button>
+                {qualityMenu && (
+                  <div className="absolute right-0 top-full z-50 mt-1 w-24 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl">
+                    {qualities.map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => {
+                          setSelectedQuality(q);
+                          setQualityMenu(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-xs transition-colors hover:bg-[var(--color-muted)]/10 ${
+                          selectedQuality === q
+                            ? 'text-degen-400 bg-degen-500/10'
+                            : 'text-[var(--color-muted)]'
+                        }`}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Refresh */}
+              <button
+                type="button"
+                onClick={handleRefresh}
+                disabled={loading}
+                className="rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-2 text-xs text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:border-degen-500/30 transition-colors disabled:opacity-50"
+                aria-label="Refresh videos"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-1.5">
+                    <div className="h-3 w-3 rounded-full border-2 border-degen-500/30 border-t-degen-500 animate-spin" />
+                    Loading
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M1 4V10H7"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M3.51 15a9 9 0 102.13-9.36L1 10"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Refresh
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </header>
 
         {/* ── Filter Bar ── */}
-        <VideoFilterBar
-          activeTab={activeTab}
-          activeCategory={activeCategory}
-          sort={sort}
-          onTabChange={setActiveTab}
-          onCategoryChange={setActiveCategory}
-          onSortChange={setSort}
-        />
+        <div className={theaterMode ? 'px-4' : ''}>
+          <VideoFilterBar
+            activeTab={activeTab}
+            activeCategory={activeCategory}
+            sort={sort}
+            onTabChange={setActiveTab}
+            onCategoryChange={setActiveCategory}
+            onSortChange={setSort}
+          />
+        </div>
 
         {/* ── Stats Line ── */}
         {!initialLoad && !loading && videos.length > 0 && (
-          <p className="mb-3 text-xs text-[var(--color-muted)]">
+          <p className={`mb-3 text-xs text-[var(--color-muted)] ${theaterMode ? 'px-4' : ''}`}>
             <span className="tabular-nums">{videos.length}</span> videos loaded
             {activeCategory !== 'all' && (
               <>
@@ -569,6 +632,26 @@ export default function VideosPage() {
           error={error}
         />
 
+        {/* ── Theater mode hint ── */}
+        {theaterMode && videos.length > 0 && (
+          <div className="mx-auto mt-4 flex max-w-3xl items-center justify-center gap-4 px-4">
+            <button
+              type="button"
+              onClick={() => setTheaterMode(false)}
+              className="rounded-lg border border-[var(--color-glass-border)] px-4 py-2 text-xs text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
+            >
+              Exit Theater Mode
+            </button>
+            <span className="text-[10px] text-[var(--color-muted)]">
+              Press{' '}
+              <kbd className="rounded border border-[var(--color-glass-border)] px-1 font-mono text-[10px]">
+                F
+              </kbd>{' '}
+              for fullscreen
+            </span>
+          </div>
+        )}
+
         {/* ── PeerTube Tip Overlay ── */}
         {tipVideo && tipVideo.source === 'peertube' && (
           <div className="fixed bottom-6 right-6 z-50">
@@ -590,9 +673,9 @@ export default function VideosPage() {
           </div>
         )}
 
-        {/* ── Footer note ── */}
+        {/* ── Footer ── */}
         {!loading && videos.length > 0 && (
-          <footer className="mt-8 text-center">
+          <footer className={`mt-8 text-center ${theaterMode ? 'px-4' : ''}`}>
             <p className="text-[11px] text-[var(--color-muted)]">
               Videos sourced from YouTube RSS feeds,{' '}
               <a

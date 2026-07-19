@@ -45,6 +45,27 @@ import {
   handleWarpcastCallback,
 } from './routes/auth';
 import {
+  handleDiscordAuthorize,
+  handleDiscordCallback,
+  handleGitHubAuthorize,
+  handleGitHubCallback,
+  handleGoogleAuthorize,
+  handleGoogleCallback,
+  handleRedditAuthorize,
+  handleTelegramAuthorize,
+  handleTelegramCallback,
+  handleTwitterAuthorize,
+  handleTwitterCallback,
+} from './routes/oauth-providers';
+import {
+  handleEmailRegister,
+  handleEmailSignIn,
+  handleEmailStatus,
+  handleEmailVerify,
+  handlePasswordResetConfirm,
+  handlePasswordResetRequest,
+} from './routes/email-auth';
+import {
   handleBillingCancel,
   handleBillingCheckout,
   handleBillingMyStatus,
@@ -640,7 +661,18 @@ app.all('/api/auth/threads/authorize', async (c) => handleThreadsAuthorize(c.req
 app.all('/api/auth/threads/callback', async (c) => handleThreadsCallback(c.req.raw, c.env));
 app.all('/api/auth/warpcast/authorize', async (c) => handleWarpcastAuthorize(c.req.raw, c.env));
 app.all('/api/auth/warpcast/callback', async (c) => handleWarpcastCallback(c.req.raw, c.env));
+app.all('/api/auth/reddit/authorize', async (c) => handleRedditAuthorize(c.req.raw, c.env));
 app.all('/api/auth/reddit/callback', async (c) => handleRedditCallback(c.req.raw, c.env));
+app.all('/api/auth/google/authorize', async (c) => handleGoogleAuthorize(c.req.raw, c.env));
+app.all('/api/auth/google/callback', async (c) => handleGoogleCallback(c.req.raw, c.env));
+app.all('/api/auth/github/authorize', async (c) => handleGitHubAuthorize(c.req.raw, c.env));
+app.all('/api/auth/github/callback', async (c) => handleGitHubCallback(c.req.raw, c.env));
+app.all('/api/auth/discord/authorize', async (c) => handleDiscordAuthorize(c.req.raw, c.env));
+app.all('/api/auth/discord/callback', async (c) => handleDiscordCallback(c.req.raw, c.env));
+app.all('/api/auth/twitter/authorize', async (c) => handleTwitterAuthorize(c.req.raw, c.env));
+app.all('/api/auth/twitter/callback', async (c) => handleTwitterCallback(c.req.raw, c.env));
+app.all('/api/auth/telegram/authorize', async (c) => handleTelegramAuthorize(c.req.raw, c.env));
+app.all('/api/auth/telegram/callback', async (c) => handleTelegramCallback(c.req.raw, c.env));
 app.all('/api/auth/session', async (c) => {
   const { handleSessionVerify } = await import('./session');
   return handleSessionVerify(c.req.raw, c.env);
@@ -651,6 +683,14 @@ app.all('/api/auth/session/revoke', async (c) => {
 });
 app.all('/api/auth/wallet/nonce', async (c) => handleWalletNonce(c.req.raw, c.env));
 app.all('/api/auth/wallet/verify', async (c) => handleWalletVerify(c.req.raw, c.env));
+
+// ─── API: Email Auth ───────────────────────────────────
+app.all('/api/auth/email/register', async (c) => handleEmailRegister(c.req.raw, c.env));
+app.all('/api/auth/email/signin', async (c) => handleEmailSignIn(c.req.raw, c.env));
+app.all('/api/auth/email/verify', async (c) => handleEmailVerify(c.req.raw, c.env));
+app.all('/api/auth/email/status', async (c) => handleEmailStatus(c.req.raw, c.env));
+app.all('/api/auth/email/password-reset', async (c) => handlePasswordResetRequest(c.req.raw, c.env));
+app.all('/api/auth/email/password-reset/confirm', async (c) => handlePasswordResetConfirm(c.req.raw, c.env));
 
 // ─── API: Custom Feeds (session-gated) ──────────────────────
 // Static routes before parameterized routes
@@ -1395,7 +1435,18 @@ app.all('/v1/auth/threads/authorize', async (c) => handleThreadsAuthorize(c.req.
 app.all('/v1/auth/threads/callback', async (c) => handleThreadsCallback(c.req.raw, c.env));
 app.all('/v1/auth/warpcast/authorize', async (c) => handleWarpcastAuthorize(c.req.raw, c.env));
 app.all('/v1/auth/warpcast/callback', async (c) => handleWarpcastCallback(c.req.raw, c.env));
+app.all('/v1/auth/reddit/authorize', async (c) => handleRedditAuthorize(c.req.raw, c.env));
 app.all('/v1/auth/reddit/callback', async (c) => handleRedditCallback(c.req.raw, c.env));
+app.all('/v1/auth/google/authorize', async (c) => handleGoogleAuthorize(c.req.raw, c.env));
+app.all('/v1/auth/google/callback', async (c) => handleGoogleCallback(c.req.raw, c.env));
+app.all('/v1/auth/github/authorize', async (c) => handleGitHubAuthorize(c.req.raw, c.env));
+app.all('/v1/auth/github/callback', async (c) => handleGitHubCallback(c.req.raw, c.env));
+app.all('/v1/auth/discord/authorize', async (c) => handleDiscordAuthorize(c.req.raw, c.env));
+app.all('/v1/auth/discord/callback', async (c) => handleDiscordCallback(c.req.raw, c.env));
+app.all('/v1/auth/twitter/authorize', async (c) => handleTwitterAuthorize(c.req.raw, c.env));
+app.all('/v1/auth/twitter/callback', async (c) => handleTwitterCallback(c.req.raw, c.env));
+app.all('/v1/auth/telegram/authorize', async (c) => handleTelegramAuthorize(c.req.raw, c.env));
+app.all('/v1/auth/telegram/callback', async (c) => handleTelegramCallback(c.req.raw, c.env));
 app.all('/v1/auth/session', async (c) => {
   const { handleSessionVerify } = await import('./session');
   return handleSessionVerify(c.req.raw, c.env);
@@ -1406,6 +1457,14 @@ app.all('/v1/auth/session/revoke', async (c) => {
 });
 app.all('/v1/auth/wallet/nonce', async (c) => handleWalletNonce(c.req.raw, c.env));
 app.all('/v1/auth/wallet/verify', async (c) => handleWalletVerify(c.req.raw, c.env));
+
+// ─── V1: Email Auth ───────────────────────────────────
+app.all('/v1/auth/email/register', async (c) => handleEmailRegister(c.req.raw, c.env));
+app.all('/v1/auth/email/signin', async (c) => handleEmailSignIn(c.req.raw, c.env));
+app.all('/v1/auth/email/verify', async (c) => handleEmailVerify(c.req.raw, c.env));
+app.all('/v1/auth/email/status', async (c) => handleEmailStatus(c.req.raw, c.env));
+app.all('/v1/auth/email/password-reset', async (c) => handlePasswordResetRequest(c.req.raw, c.env));
+app.all('/v1/auth/email/password-reset/confirm', async (c) => handlePasswordResetConfirm(c.req.raw, c.env));
 
 // ─── V1: Bookmarks ────────────────────────────────────────
 app.get('/v1/bookmarks', async (c) => handleBookmarkList(c.req.raw, c.env));

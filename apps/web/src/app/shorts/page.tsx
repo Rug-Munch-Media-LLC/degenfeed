@@ -229,6 +229,8 @@ export default function ShortsPage() {
   const lastTapTime = useRef(0);
   const [showToast, setShowToast] = useState<string | null>(null);
   const [prerenderedVideos, setPrerenderedVideos] = useState<Set<number>>(new Set());
+  const [pullDismissing, setPullDismissing] = useState(false);
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Snap-scroll detection via IntersectionObserver ─────────────────────
   useEffect(() => {
@@ -279,7 +281,7 @@ export default function ShortsPage() {
     }
   }, [currentIndex, posts.length, hasMore, loadMore, loadingMore]);
 
-  // ── Touch handlers for swipe ───────────────────────────────────────────
+  // ── Touch handlers for swipe + pull-to-dismiss ─────────────────────────
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     if (!touch) return;
@@ -288,8 +290,34 @@ export default function ShortsPage() {
     touchStartTime.current = Date.now();
   }, []);
 
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      const deltaY = touch.clientY - touchStartY.current;
+      // Pull-down visual feedback — only from first video
+      if (deltaY > 80 && currentIndex === 0) {
+        const progress = Math.min(deltaY / 300, 1);
+        const container = containerRef.current;
+        if (container) {
+          container.style.transform = `translateY(${deltaY * 0.3}px)`;
+          container.style.opacity = String(1 - progress * 0.5);
+          container.style.transition = 'none';
+        }
+      }
+    },
+    [currentIndex],
+  );
+
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
+      const container = containerRef.current;
+      if (container) {
+        container.style.transform = '';
+        container.style.opacity = '';
+        container.style.transition = '';
+      }
+
       const changedTouch = e.changedTouches[0];
       if (!changedTouch) return;
       const deltaY = changedTouch.clientY - touchStartY.current;
@@ -297,6 +325,12 @@ export default function ShortsPage() {
       const absY = Math.abs(deltaY);
       const absX = Math.abs(deltaX);
       const elapsed = Date.now() - touchStartTime.current;
+
+      // Pull down to dismiss (from first video, large downward swipe)
+      if (deltaY > 150 && currentIndex === 0) {
+        window.dispatchEvent(new CustomEvent('shorts-dismiss-current'));
+        return;
+      }
 
       // Ignore horizontal swipes (volume scrub on videos)
       if (absX > absY) return;
@@ -328,7 +362,6 @@ export default function ShortsPage() {
         const newIndex =
           deltaY < 0 ? Math.min(posts.length - 1, currentIndex + 1) : Math.max(0, currentIndex - 1);
         if (newIndex !== currentIndex) {
-          // Use native scroll-snap for the transition
           const target = document.querySelector(`[data-video-index="${newIndex}"]`);
           target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           setCurrentIndex(newIndex);
@@ -352,6 +385,35 @@ export default function ShortsPage() {
       lastTapTime.current = now;
     }
   }, []);
+
+  // ── Auto-advance timer (30s inactivity → next video) ─────────────────
+  useEffect(() => {
+    if (posts.length === 0 || currentIndex >= posts.length - 1) return;
+    const timer = setTimeout(() => {
+      const next = Math.min(posts.length - 1, currentIndex + 1);
+      const target = document.querySelector(`[data-video-index="${next}"]`);
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setCurrentIndex(next);
+    }, 30000);
+    return () => clearTimeout(timer);
+  }, [currentIndex, posts.length]);
+
+  // ── Pull-to-dismiss animation ─────────────────────────────────────────
+  useEffect(() => {
+    if (!pullDismissing) return;
+    const container = containerRef.current;
+    if (!container) return;
+    container.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+    container.style.transform = 'translateY(100%)';
+    container.style.opacity = '0';
+    return () => {
+      if (container) {
+        container.style.transition = '';
+        container.style.transform = '';
+        container.style.opacity = '';
+      }
+    };
+  }, [pullDismissing]);
 
   // ── Keyboard navigation ────────────────────────────────────────────────
   useEffect(() => {
@@ -433,17 +495,27 @@ export default function ShortsPage() {
     const onTip = () => setShowToast('⚡ Tip');
     const onSeekBack = () => setShowToast('⏪');
     const onSeekForward = () => setShowToast('⏩');
+    const onDismiss = () => {
+      setPullDismissing(true);
+      setShowToast('⬇️');
+      setTimeout(() => {
+        setPullDismissing(false);
+        window.location.href = '/feed';
+      }, 300);
+    };
     window.addEventListener('shorts-like-current', onLike);
     window.addEventListener('shorts-bookmark-current', onBookmark);
     window.addEventListener('shorts-tip-current', onTip);
     window.addEventListener('shorts-seek-back', onSeekBack);
     window.addEventListener('shorts-seek-forward', onSeekForward);
+    window.addEventListener('shorts-dismiss-current', onDismiss);
     return () => {
       window.removeEventListener('shorts-like-current', onLike);
       window.removeEventListener('shorts-bookmark-current', onBookmark);
       window.removeEventListener('shorts-tip-current', onTip);
       window.removeEventListener('shorts-seek-back', onSeekBack);
       window.removeEventListener('shorts-seek-forward', onSeekForward);
+      window.removeEventListener('shorts-dismiss-current', onDismiss);
     };
   }, []);
 
@@ -456,6 +528,7 @@ export default function ShortsPage() {
         className="fixed inset-0 z-40 overflow-y-scroll snap-y snap-mandatory overscroll-none"
         style={{ backgroundColor: '#000', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         aria-label="Shorts video feed"
       >
