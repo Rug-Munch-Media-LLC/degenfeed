@@ -54,13 +54,32 @@ function reducer(state: ProfileWizardState, action: Action): ProfileWizardState 
 }
 
 const NICHES = [
-  'crypto', 'bitcoin', 'ethereum', 'solana', 'defi', 'nft', 'ai',
-  'regulation', 'security', 'macro', 'stablecoin', 'etf', 'layer2',
-  'memecoin', 'onchain', 'gaming', 'social', 'privacy',
+  'crypto',
+  'bitcoin',
+  'ethereum',
+  'solana',
+  'defi',
+  'nft',
+  'ai',
+  'regulation',
+  'security',
+  'macro',
+  'stablecoin',
+  'etf',
+  'layer2',
+  'memecoin',
+  'onchain',
+  'gaming',
+  'social',
+  'privacy',
 ];
 
 interface ProfileSetupWizardProps {
-  onComplete: (profile: { displayName: string; avatar: string | null; interests: string[] }) => void;
+  onComplete: (profile: {
+    displayName: string;
+    avatar: string | null;
+    interests: string[];
+  }) => void;
   onClose: () => void;
 }
 
@@ -68,24 +87,21 @@ export function ProfileSetupWizard({ onComplete, onClose }: ProfileSetupWizardPr
   const [state, dispatch] = useReducer(reducer, INITIAL);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  const handleAvatarUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      if (file.size > 5 * 1024 * 1024) {
-        dispatch({ type: 'SET_ERROR', error: 'Image must be under 5MB' });
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        setAvatarPreview(dataUrl);
-        dispatch({ type: 'SET_AVATAR', avatar: dataUrl });
-      };
-      reader.readAsDataURL(file);
-    },
-    [],
-  );
+  const handleAvatarUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      dispatch({ type: 'SET_ERROR', error: 'Image must be under 5MB' });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setAvatarPreview(dataUrl);
+      dispatch({ type: 'SET_AVATAR', avatar: dataUrl });
+    };
+    reader.readAsDataURL(file);
+  }, []);
 
   const handleSave = useCallback(async () => {
     dispatch({ type: 'SET_SAVING', saving: true });
@@ -114,7 +130,8 @@ export function ProfileSetupWizard({ onComplete, onClose }: ProfileSetupWizardPr
     } catch (err) {
       dispatch({
         type: 'SET_ERROR',
-        error: err instanceof Error ? err.message : 'Failed to save. You can update later in Settings.',
+        error:
+          err instanceof Error ? err.message : 'Failed to save. You can update later in Settings.',
       });
     } finally {
       dispatch({ type: 'SET_SAVING', saving: false });
@@ -138,7 +155,9 @@ export function ProfileSetupWizard({ onComplete, onClose }: ProfileSetupWizardPr
     <section
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
       onClick={onClose}
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
       aria-modal="true"
       aria-label="Set up your profile"
       role="dialog"
@@ -161,7 +180,11 @@ export function ProfileSetupWizard({ onComplete, onClose }: ProfileSetupWizardPr
               >
                 {s < state.step ? '✓' : s}
               </div>
-              {s < 3 && <div className={`h-0.5 w-6 transition-all ${s < state.step ? 'bg-degen-500' : 'bg-[var(--color-muted)]'}`} />}
+              {s < 3 && (
+                <div
+                  className={`h-0.5 w-6 transition-all ${s < state.step ? 'bg-degen-500' : 'bg-[var(--color-muted)]'}`}
+                />
+              )}
             </div>
           ))}
         </div>
@@ -170,19 +193,30 @@ export function ProfileSetupWizard({ onComplete, onClose }: ProfileSetupWizardPr
         {state.step === 1 && (
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-[var(--color-fg)]">Choose your avatar</h2>
-            <p className="text-sm text-[var(--color-muted)]">Upload a profile picture or skip for now.</p>
+            <p className="text-sm text-[var(--color-muted)]">
+              Upload a profile picture or skip for now.
+            </p>
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-[var(--color-border)] bg-[var(--color-muted)]">
                   {avatarPreview ? (
-                    <img src={avatarPreview} alt="Avatar preview" className="h-full w-full object-cover" />
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar preview"
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <span className="text-3xl text-[var(--color-muted)]">👤</span>
                   )}
                 </div>
                 <label className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-degen-500 text-xs font-bold text-black hover:bg-degen-400 transition-colors">
                   +
-                  <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
                 </label>
               </div>
               {avatarPreview && (
@@ -205,11 +239,15 @@ export function ProfileSetupWizard({ onComplete, onClose }: ProfileSetupWizardPr
         {state.step === 2 && (
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-[var(--color-fg)]">What should we call you?</h2>
-            <p className="text-sm text-[var(--color-muted)]">This is how others will see you on DegenFeed.</p>
+            <p className="text-sm text-[var(--color-muted)]">
+              This is how others will see you on DegenFeed.
+            </p>
             <input
               type="text"
               value={state.displayName}
-              onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'displayName', value: e.target.value })}
+              onChange={(e) =>
+                dispatch({ type: 'SET_FIELD', field: 'displayName', value: e.target.value })
+              }
               placeholder="Your display name"
               className="input w-full text-base"
               maxLength={64}

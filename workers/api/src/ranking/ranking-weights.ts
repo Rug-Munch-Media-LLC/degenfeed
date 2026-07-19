@@ -120,8 +120,7 @@ export function computeEngagementScore(
   replies: number,
   quotes: number = 0,
 ): number {
-  const weighted =
-    likes * 1 + reposts * 3 + replies * 5 + quotes * 3;
+  const weighted = likes * 1 + reposts * 3 + replies * 5 + quotes * 3;
   // Log scale: 0→0, 10→0.5, 100→0.8, 1000→0.95, 10000→1.0
   return Math.min(1.0, Math.log10(1 + weighted) / 4);
 }
@@ -193,7 +192,7 @@ export function computeDiversityScore(
  */
 export function isCryptoContent(niches: string[], text: string): boolean {
   const lowerText = text.toLowerCase();
-  let nicheMatches = niches.filter((n) => CRYPTO_NICHES.has(n.toLowerCase())).length;
+  const nicheMatches = niches.filter((n) => CRYPTO_NICHES.has(n.toLowerCase())).length;
 
   if (nicheMatches >= CRYPTO_NICHE_THRESHOLD) return true;
 

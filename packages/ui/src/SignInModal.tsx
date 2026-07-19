@@ -692,7 +692,12 @@ function EmailForm({
     }
 
     if (isNewUser) {
-      onSignIn({ email: email.trim(), password, displayName: displayName.trim(), method: 'register' });
+      onSignIn({
+        email: email.trim(),
+        password,
+        displayName: displayName.trim(),
+        method: 'register',
+      });
     } else {
       onSignIn({ email: email.trim(), password, method: 'signin' });
     }
@@ -702,7 +707,9 @@ function EmailForm({
     <div className="space-y-3">
       {isNewUser && (
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">Display Name (optional)</span>
+          <span className="mb-1 block text-xs font-medium text-[var(--color-muted)]">
+            Display Name (optional)
+          </span>
           <input
             type="text"
             value={displayName}
@@ -759,13 +766,7 @@ function EmailForm({
   );
 }
 
-function OAuthProtocolForm({
-  protocol,
-  onBack,
-}: {
-  protocol: ProtocolOption;
-  onBack: () => void;
-}) {
+function OAuthProtocolForm({ protocol, onBack }: { protocol: ProtocolOption; onBack: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -797,14 +798,23 @@ function OAuthProtocolForm({
   return (
     <div className="space-y-3">
       <p className="text-sm text-[var(--color-muted)]">
-        You will be redirected to {protocol.label} to authorize DegenFeed. No password is shared with us.
+        You will be redirected to {protocol.label} to authorize DegenFeed. No password is shared
+        with us.
       </p>
       <button
         type="button"
         onClick={handleOAuthLogin}
         disabled={loading}
         className="btn-primary flex w-full items-center justify-center gap-2"
-        style={loading ? undefined : { borderColor: `${protocol.color}40`, background: `${protocol.color}15`, color: protocol.color }}
+        style={
+          loading
+            ? undefined
+            : {
+                borderColor: `${protocol.color}40`,
+                background: `${protocol.color}15`,
+                color: protocol.color,
+              }
+        }
       >
         {loading ? (
           <>
@@ -828,8 +838,14 @@ function OAuthProtocolForm({
       </button>
       <p className="text-center text-[10px] text-gray-600">
         By signing in, you agree to our{' '}
-        <a href="/terms" className="text-degen-500 hover:underline">Terms</a> and{' '}
-        <a href="/privacy" className="text-degen-500 hover:underline">Privacy Policy</a>.
+        <a href="/terms" className="text-degen-500 hover:underline">
+          Terms
+        </a>{' '}
+        and{' '}
+        <a href="/privacy" className="text-degen-500 hover:underline">
+          Privacy Policy
+        </a>
+        .
       </p>
     </div>
   );

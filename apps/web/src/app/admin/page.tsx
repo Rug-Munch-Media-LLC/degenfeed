@@ -437,7 +437,10 @@ function AdminDashboardSkeleton() {
       </div>
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
+          <div
+            key={i}
+            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3"
+          >
             <div className="h-3 w-16 skeleton rounded mb-2" />
             <div className="h-6 w-20 skeleton rounded mb-1" />
             <div className="h-3 w-24 skeleton rounded" />

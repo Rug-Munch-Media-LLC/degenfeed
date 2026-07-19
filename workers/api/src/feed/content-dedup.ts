@@ -65,7 +65,10 @@ interface DedupResult {
 }
 
 export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
-  const contentHashes = new Map<string, { post: UnifiedPost; score: number; protocols: Set<string> }>();
+  const contentHashes = new Map<
+    string,
+    { post: UnifiedPost; score: number; protocols: Set<string> }
+  >();
   const urlToPost = new Map<string, { post: UnifiedPost; score: number; protocols: Set<string> }>();
   let crossProtocol = 0;
   let urlDedup = 0;
@@ -95,7 +98,7 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
         const existingEntry = keep.get(existing.post.id);
         if (existingEntry) {
           (existingEntry as unknown as Record<string, unknown>).crossProtocolSources = [
-            ...(existingEntry as unknown as Record<string, string[]>).crossProtocolSources ?? [],
+            ...((existingEntry as unknown as Record<string, string[]>).crossProtocolSources ?? []),
             post.protocol,
           ];
         }
@@ -123,10 +126,13 @@ export function deduplicateCrossProtocol(posts: UnifiedPost[]): DedupResult {
           const existingEntry = keep.get(existing.post.id);
           if (existingEntry) {
             const sources = new Set([
-              ...((existingEntry as unknown as Record<string, string[]>).crossProtocolSources ?? []),
+              ...((existingEntry as unknown as Record<string, string[]>).crossProtocolSources ??
+                []),
               post.protocol,
             ]);
-            (existingEntry as unknown as Record<string, string[]>).crossProtocolSources = [...sources];
+            (existingEntry as unknown as Record<string, string[]>).crossProtocolSources = [
+              ...sources,
+            ];
           }
         }
         if (!shouldKeep) break;

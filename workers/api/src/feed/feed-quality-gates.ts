@@ -9,8 +9,8 @@
 
 import { isEnglishPost } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
-import { deduplicateCrossProtocol } from './content-dedup';
 import { hasNsfwContent, hasSpamSignals } from '../ranking/ranking-weights';
+import { deduplicateCrossProtocol } from './content-dedup';
 
 type SourceCategory = 'social' | 'lemmy' | 'peertube' | 'youtube' | 'mastodon' | 'rss' | 'reddit';
 
@@ -190,9 +190,10 @@ export interface NsfwFilterResult {
  * Filters out posts containing NSFW or spam content.
  * Uses keyword-based detection from ranking-weights.
  */
-export function applyNsfwSpamFilter(
-  posts: UnifiedPost[],
-): { posts: UnifiedPost[]; meta: NsfwFilterResult } {
+export function applyNsfwSpamFilter(posts: UnifiedPost[]): {
+  posts: UnifiedPost[];
+  meta: NsfwFilterResult;
+} {
   let nsfwFiltered = 0;
   let spamFiltered = 0;
 

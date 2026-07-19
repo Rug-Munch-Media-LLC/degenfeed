@@ -1,15 +1,15 @@
-import { type Env, getGtsConfig, jsonResponse, rateLimit } from '../index';
+import { type Env, getGtsConfig, jsonResponse, rateLimit } from "../index";
+import { validateBodySize } from "../sanitize";
 import {
   consumeState as consumeOAuthState,
   generateOAuthState,
   REDDIT_STATE_PREFIX,
   storeState as storeOAuthState,
-} from './oauth-state';
-import { validateBodySize } from '../sanitize';
+} from "./oauth-state";
 
-const STATE_KEY_PREFIX = 'gts:state:';
+const STATE_KEY_PREFIX = "gts:state:";
 const STATE_TTL_SECONDS = 600;
-const THREADS_STATE_PREFIX = 'threads:state:';
+const THREADS_STATE_PREFIX = "threads:state:";
 
 function generateState(): string {
   return generateOAuthState();
@@ -32,27 +32,27 @@ async function consumeState(env: Env, state: string, prefix = STATE_KEY_PREFIX):
  */
 export async function handleGtSAuthorize(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const rawRedirect = url.searchParams.get('redirect');
+  const rawRedirect = url.searchParams.get("redirect");
   const allowedRedirects = [
     getGtsConfig(env).redirectUri,
-    'https://degenfeed.xyz/auth/callback',
-    'https://app.degenfeed.xyz/auth/callback',
+    "https://degenfeed.xyz/auth/callback",
+    "https://app.degenfeed.xyz/auth/callback",
   ];
   const redirect =
     rawRedirect && allowedRedirects.some((r) => rawRedirect.startsWith(r))
       ? rawRedirect
       : getGtsConfig(env).redirectUri;
-  const devMode = env.ALLOW_DEV_OAUTH === 'true' && url.searchParams.get('dev') === 'true';
+  const devMode = env.ALLOW_DEV_OAUTH === "true" && url.searchParams.get("dev") === "true";
 
   const ip =
-    request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
-  const rl = await rateLimit(env, ip, 'oauth:gts-authorize', 10, 60000);
+    request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+  const rl = await rateLimit(env, ip, "oauth:gts-authorize", 10, 60000);
   if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
+    return new Response(JSON.stringify({ error: "Rate limit", retryAfterMs: rl.retryAfter }), {
       status: 429,
       headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+        "content-type": "application/json",
+        "retry-after": String(Math.ceil(rl.retryAfter / 1000)),
       },
     });
   }
@@ -62,8 +62,8 @@ export async function handleGtSAuthorize(request: Request, env: Env): Promise<Re
 
   const params = new URLSearchParams({
     client_id: getGtsConfig(env).clientId,
-    redirect_uri: devMode ? 'urn:ietf:wg:oauth:2.0:oob' : redirect,
-    response_type: 'code',
+    redirect_uri: devMode ? "urn:ietf:wg:oauth:2.0:oob" : redirect,
+    response_type: "code",
     scope: getGtsConfig(env).scopes,
     state,
   });
@@ -97,23 +97,23 @@ export async function handleGtSCallback(request: Request, env: Env): Promise<Res
       redirect_uri?: string;
     };
     if (!body.code) {
-      return jsonResponse({ error: 'Missing authorization code' }, 400);
+      return jsonResponse({ error: "Missing authorization code" }, 400);
     }
     if (!body.state) {
-      return jsonResponse({ error: 'Missing state nonce' }, 400);
+      return jsonResponse({ error: "Missing state nonce" }, 400);
     }
 
     const stateValid = await consumeState(env, body.state);
     if (!stateValid) {
-      return jsonResponse({ error: 'Invalid or expired state' }, 400);
+      return jsonResponse({ error: "Invalid or expired state" }, 400);
     }
 
     const redirectUri = body.redirect_uri || getGtsConfig(env).redirectUri;
     const tokenRes = await fetch(`${getGtsConfig(env).apiBase}/oauth/token`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        grant_type: 'authorization_code',
+        grant_type: "authorization_code",
         client_id: getGtsConfig(env).clientId,
         client_secret: getGtsConfig(env).clientSecret,
         redirect_uri: redirectUri,
@@ -124,7 +124,7 @@ export async function handleGtSCallback(request: Request, env: Env): Promise<Res
 
     if (!tokenRes.ok) {
       const errText = await tokenRes.text();
-      return jsonResponse({ error: 'Token exchange failed', detail: errText }, 400);
+      return jsonResponse({ error: "Token exchange failed", detail: errText }, 400);
     }
 
     const tokenData = (await tokenRes.json()) as Record<string, unknown>;
@@ -155,8 +155,8 @@ export async function handleGtSCallback(request: Request, env: Env): Promise<Res
         : null,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Callback error';
-    console.error('[auth] handleGtSCallback failed:', err instanceof Error ? err.message : err);
+    const message = err instanceof Error ? err.message : "Callback error";
+    console.error("[auth] handleGtSCallback failed:", err instanceof Error ? err.message : err);
     return jsonResponse({ error: message }, 500);
   }
 }
@@ -168,18 +168,18 @@ export async function handleGtSCallback(request: Request, env: Env): Promise<Res
  */
 export async function handleGtSRegister(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const redirect = url.searchParams.get('redirect') || getGtsConfig(env).redirectUri;
-  const devMode = url.searchParams.get('dev') === 'true';
+  const redirect = url.searchParams.get("redirect") || getGtsConfig(env).redirectUri;
+  const devMode = url.searchParams.get("dev") === "true";
 
   const ip =
-    request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
-  const rl = await rateLimit(env, ip, 'oauth:gts-register', 10, 60000);
+    request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+  const rl = await rateLimit(env, ip, "oauth:gts-register", 10, 60000);
   if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
+    return new Response(JSON.stringify({ error: "Rate limit", retryAfterMs: rl.retryAfter }), {
       status: 429,
       headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+        "content-type": "application/json",
+        "retry-after": String(Math.ceil(rl.retryAfter / 1000)),
       },
     });
   }
@@ -189,11 +189,11 @@ export async function handleGtSRegister(request: Request, env: Env): Promise<Res
 
   const params = new URLSearchParams({
     client_id: getGtsConfig(env).clientId,
-    redirect_uri: devMode ? 'urn:ietf:wg:oauth:2.0:oob' : redirect,
-    response_type: 'code',
+    redirect_uri: devMode ? "urn:ietf:wg:oauth:2.0:oob" : redirect,
+    response_type: "code",
     scope: getGtsConfig(env).scopes,
     state,
-    sign_up: 'true',
+    sign_up: "true",
   });
   const authorizeUrl = devMode
     ? `http://127.0.0.1:8082/oauth/authorize?${params.toString()}`
@@ -202,7 +202,7 @@ export async function handleGtSRegister(request: Request, env: Env): Promise<Res
   return jsonResponse({
     success: true,
     message:
-      'Redirect user to the authorize URL. They will be prompted to sign up if they do not have an account.',
+      "Redirect user to the authorize URL. They will be prompted to sign up if they do not have an account.",
     authorizeUrl,
     state,
     instanceUrl: getGtsConfig(env).instanceUrl,
@@ -218,21 +218,21 @@ export async function handleGtSRegister(request: Request, env: Env): Promise<Res
 export async function handleThreadsAuthorize(request: Request, env: Env): Promise<Response> {
   const appId = env.THREADS_APP_ID;
   if (!appId) {
-    return jsonResponse({ error: 'Threads auth not configured (THREADS_APP_ID)' }, 501);
+    return jsonResponse({ error: "Threads auth not configured (THREADS_APP_ID)" }, 501);
   }
 
   const url = new URL(request.url);
   const redirectUri = `https://${url.hostname}/auth/callback/threads`;
 
   const ip =
-    request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
-  const rl = await rateLimit(env, ip, 'oauth:threads-authorize', 10, 60000);
+    request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+  const rl = await rateLimit(env, ip, "oauth:threads-authorize", 10, 60000);
   if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
+    return new Response(JSON.stringify({ error: "Rate limit", retryAfterMs: rl.retryAfter }), {
       status: 429,
       headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+        "content-type": "application/json",
+        "retry-after": String(Math.ceil(rl.retryAfter / 1000)),
       },
     });
   }
@@ -245,8 +245,8 @@ export async function handleThreadsAuthorize(request: Request, env: Env): Promis
     new URLSearchParams({
       client_id: appId,
       redirect_uri: redirectUri,
-      response_type: 'code',
-      scope: 'threads_basic,threads_content_publish',
+      response_type: "code",
+      scope: "threads_basic,threads_content_publish",
       state,
     }).toString();
 
@@ -267,16 +267,16 @@ export async function handleThreadsCallback(request: Request, env: Env): Promise
   const appId = env.THREADS_APP_ID;
   const appSecret = env.THREADS_APP_SECRET;
   if (!appId || !appSecret) {
-    return jsonResponse({ error: 'Threads auth not configured' }, 501);
+    return jsonResponse({ error: "Threads auth not configured" }, 501);
   }
 
   try {
     const body = (await request.json()) as { code?: string; state?: string };
-    if (!body.code) return jsonResponse({ error: 'Missing authorization code' }, 400);
-    if (!body.state) return jsonResponse({ error: 'Missing state nonce' }, 400);
+    if (!body.code) return jsonResponse({ error: "Missing authorization code" }, 400);
+    if (!body.state) return jsonResponse({ error: "Missing state nonce" }, 400);
 
     const stateValid = await consumeState(env, body.state, THREADS_STATE_PREFIX);
-    if (!stateValid) return jsonResponse({ error: 'Invalid or expired state' }, 400);
+    if (!stateValid) return jsonResponse({ error: "Invalid or expired state" }, 400);
 
     const url = new URL(request.url);
     const redirectUri = `https://${url.hostname}/auth/callback/threads`;
@@ -288,7 +288,7 @@ export async function handleThreadsCallback(request: Request, env: Env): Promise
           client_secret: appSecret,
           redirect_uri: redirectUri,
           code: body.code,
-          grant_type: 'authorization_code',
+          grant_type: "authorization_code",
         }).toString(),
     );
     if (!res.ok) {
@@ -302,13 +302,13 @@ export async function handleThreadsCallback(request: Request, env: Env): Promise
       error?: { message?: string };
     };
     if (data.error?.message || !data.access_token) {
-      return jsonResponse({ error: data.error?.message ?? 'No access token' }, 400);
+      return jsonResponse({ error: data.error?.message ?? "No access token" }, 400);
     }
 
     const shortLivedToken = data.access_token;
-    const userId = data.user_id ?? '';
+    const userId = data.user_id ?? "";
 
-    let username = '';
+    let username = "";
     let name: string | undefined;
     let avatar: string | undefined;
 
@@ -323,20 +323,20 @@ export async function handleThreadsCallback(request: Request, env: Env): Promise
           name?: string;
           profile_picture_url?: string;
         };
-        username = profile.username ?? '';
+        username = profile.username ?? "";
         name = profile.name;
         avatar = profile.profile_picture_url;
       }
     } catch (err) {
       console.warn(
-        '[auth] Threads profile fetch failed:',
+        "[auth] Threads profile fetch failed:",
         err instanceof Error ? err.message : err,
       );
     }
 
     return jsonResponse({ userId, username, name, avatar, accessToken: shortLivedToken });
   } catch (err) {
-    console.error('[auth] handleThreadsCallback failed:', err instanceof Error ? err.message : err);
+    console.error("[auth] handleThreadsCallback failed:", err instanceof Error ? err.message : err);
     return jsonResponse({ error: (err as Error).message }, 500);
   }
 }
@@ -350,24 +350,24 @@ export async function handleThreadsCallback(request: Request, env: Env): Promise
 export async function handleWarpcastAuthorize(request: Request, env: Env): Promise<Response> {
   const appId = env.FARCASTER_CLIENT_ID;
   if (!appId) {
-    return jsonResponse({ error: 'Warpcast auth not configured (FARCASTER_CLIENT_ID)' }, 501);
+    return jsonResponse({ error: "Warpcast auth not configured (FARCASTER_CLIENT_ID)" }, 501);
   }
 
   const ip =
-    request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
-  const rl = await rateLimit(env, ip, 'oauth:warpcast-authorize', 10, 60000);
+    request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+  const rl = await rateLimit(env, ip, "oauth:warpcast-authorize", 10, 60000);
   if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Rate limit', retryAfterMs: rl.retryAfter }), {
+    return new Response(JSON.stringify({ error: "Rate limit", retryAfterMs: rl.retryAfter }), {
       status: 429,
       headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+        "content-type": "application/json",
+        "retry-after": String(Math.ceil(rl.retryAfter / 1000)),
       },
     });
   }
 
   const state = generateState();
-  await storeState(env, state, 'warpcast:state:');
+  await storeState(env, state, "warpcast:state:");
 
   const url = new URL(request.url);
   const redirectUri = `https://${url.hostname}/auth/callback/warpcast`;
@@ -377,8 +377,8 @@ export async function handleWarpcastAuthorize(request: Request, env: Env): Promi
     new URLSearchParams({
       client_id: appId,
       redirect_uri: redirectUri,
-      response_type: 'code',
-      scope: 'read write',
+      response_type: "code",
+      scope: "read write",
       state,
     }).toString();
 
@@ -397,15 +397,15 @@ export async function handleWarpcastCallback(request: Request, env: Env): Promis
     if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
 
     const body = (await request.json()) as { code?: string; state?: string };
-    if (!body.code) return jsonResponse({ error: 'Missing authorization code' }, 400);
-    if (!body.state) return jsonResponse({ error: 'Missing state nonce' }, 400);
+    if (!body.code) return jsonResponse({ error: "Missing authorization code" }, 400);
+    if (!body.state) return jsonResponse({ error: "Missing state nonce" }, 400);
 
-    const stateValid = await consumeState(env, body.state, 'warpcast:state:');
-    if (!stateValid) return jsonResponse({ error: 'Invalid or expired state' }, 400);
+    const stateValid = await consumeState(env, body.state, "warpcast:state:");
+    if (!stateValid) return jsonResponse({ error: "Invalid or expired state" }, 400);
 
-    const res = await fetch('https://auth.farcaster.xyz/v1/auth/token', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
+    const res = await fetch("https://auth.farcaster.xyz/v1/auth/token", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ code: body.code }),
     });
     if (!res.ok) {
@@ -421,7 +421,7 @@ export async function handleWarpcastCallback(request: Request, env: Env): Promis
       user?: { fid?: number; username?: string; display_name?: string; pfp_url?: string };
     };
     if (!data.access_token) {
-      return jsonResponse({ error: 'No access token returned' }, 400);
+      return jsonResponse({ error: "No access token returned" }, 400);
     }
 
     return jsonResponse({
@@ -433,7 +433,7 @@ export async function handleWarpcastCallback(request: Request, env: Env): Promis
     });
   } catch (err) {
     console.error(
-      '[auth] handleWarpcastCallback failed:',
+      "[auth] handleWarpcastCallback failed:",
       err instanceof Error ? err.message : err,
     );
     return jsonResponse({ error: (err as Error).message }, 500);
@@ -455,32 +455,31 @@ export async function handleRedditCallback(request: Request, env: Env): Promise<
   const appSecret = env.REDDIT_CLIENT_SECRET;
   if (!appId || !appSecret) {
     return jsonResponse(
-      { error: 'Reddit auth not configured (REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET)' },
+      { error: "Reddit auth not configured (REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET)" },
       501,
     );
   }
 
   try {
     const body = (await request.json()) as { code?: string; redirect_uri?: string; state?: string };
-    if (!body.code) return jsonResponse({ error: 'Missing authorization code' }, 400);
+    if (!body.code) return jsonResponse({ error: "Missing authorization code" }, 400);
 
-    if (env.CACHE && body.state) {
-      const stateValid = await consumeState(env, body.state, REDDIT_STATE_PREFIX);
-      if (!stateValid) return jsonResponse({ error: 'Invalid or expired state' }, 400);
-    }
+    if (!body.state) return jsonResponse({ error: "Missing state nonce" }, 400);
+    const stateValid = await consumeState(env, body.state, REDDIT_STATE_PREFIX);
+    if (!stateValid) return jsonResponse({ error: "Invalid or expired state" }, 400);
 
     const redirectUri =
       body.redirect_uri || `https://${new URL(request.url).hostname}/auth/callback/reddit`;
     const auth = btoa(`${appId}:${appSecret}`);
 
-    const res = await fetch('https://www.reddit.com/api/v1/access_token', {
-      method: 'POST',
+    const res = await fetch("https://www.reddit.com/api/v1/access_token", {
+      method: "POST",
       headers: {
         authorization: `Basic ${auth}`,
-        'content-type': 'application/x-www-form-urlencoded',
+        "content-type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        grant_type: 'authorization_code',
+        grant_type: "authorization_code",
         code: body.code,
         redirect_uri: redirectUri,
       }).toString(),
@@ -497,22 +496,22 @@ export async function handleRedditCallback(request: Request, env: Env): Promise<
       scope?: string;
     };
     if (!data.access_token) {
-      return jsonResponse({ error: 'No access token returned' }, 400);
+      return jsonResponse({ error: "No access token returned" }, 400);
     }
 
-    let username = '';
+    let username = "";
     let avatar: string | undefined;
     try {
-      const profileRes = await fetch('https://oauth.reddit.com/api/v1/me', {
-        headers: { authorization: `Bearer ${data.access_token}`, 'user-agent': 'degenfeed/1.0' },
+      const profileRes = await fetch("https://oauth.reddit.com/api/v1/me", {
+        headers: { authorization: `Bearer ${data.access_token}`, "user-agent": "degenfeed/1.0" },
       });
       if (profileRes.ok) {
         const profile = (await profileRes.json()) as { name?: string; icon_img?: string };
-        username = profile.name ?? '';
+        username = profile.name ?? "";
         avatar = profile.icon_img;
       }
     } catch (err) {
-      console.warn('[auth] Reddit profile fetch failed:', err instanceof Error ? err.message : err);
+      console.warn("[auth] Reddit profile fetch failed:", err instanceof Error ? err.message : err);
     }
 
     return jsonResponse({
@@ -524,7 +523,7 @@ export async function handleRedditCallback(request: Request, env: Env): Promise<
       avatar,
     });
   } catch (err) {
-    console.error('[auth] handleRedditCallback failed:', err instanceof Error ? err.message : err);
+    console.error("[auth] handleRedditCallback failed:", err instanceof Error ? err.message : err);
     return jsonResponse({ error: (err as Error).message }, 500);
   }
 }

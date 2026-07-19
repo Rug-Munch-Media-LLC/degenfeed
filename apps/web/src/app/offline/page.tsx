@@ -12,9 +12,7 @@ export default function Offline() {
             📡
           </span>
         </div>
-        <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">
-          You&rsquo;re offline
-        </h1>
+        <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">You&rsquo;re offline</h1>
         <p className="mb-6 max-w-xs text-sm text-[var(--color-muted)]">
           Your connection dropped. Some features may be unavailable until you reconnect.
         </p>
@@ -26,10 +24,7 @@ export default function Offline() {
           >
             Try again
           </button>
-          <a
-            href="/home"
-            className="btn-secondary text-sm"
-          >
+          <a href="/home" className="btn-secondary text-sm">
             Back to home
           </a>
         </div>

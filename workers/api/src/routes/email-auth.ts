@@ -1,9 +1,9 @@
-import { type Env, jsonResponse, rateLimit } from '../index';
-import { validateBodySize } from '../sanitize';
+import { type Env, jsonResponse, rateLimit } from "../index";
+import { validateBodySize } from "../sanitize";
 
-const EMAIL_PREFIX = 'email:';
-const PW_RESET_PREFIX = 'pwreset:';
-const VERIFY_PREFIX = 'verify:';
+const EMAIL_PREFIX = "email:";
+const PW_RESET_PREFIX = "pwreset:";
+const VERIFY_PREFIX = "verify:";
 const PW_RESET_TTL = 3600;
 const VERIFY_TTL = 86400;
 
@@ -12,45 +12,45 @@ const VERIFY_TTL = 86400;
 async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     new TextEncoder().encode(password),
-    'PBKDF2',
+    "PBKDF2",
     false,
-    ['deriveBits'],
+    ["deriveBits"],
   );
   const hash = await crypto.subtle.deriveBits(
     {
-      name: 'PBKDF2',
+      name: "PBKDF2",
       salt,
       iterations: 600_000,
-      hash: 'SHA-512',
+      hash: "SHA-512",
     },
     key,
     384,
   );
-  const saltHex = Array.from(salt, (b) => b.toString(16).padStart(2, '0')).join('');
-  const hashHex = Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join('');
+  const saltHex = Array.from(salt, (b) => b.toString(16).padStart(2, "0")).join("");
+  const hashHex = Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("");
   return `v1:${saltHex}:${hashHex}`;
 }
 
 async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const parts = stored.split(':');
-  if (parts.length !== 3 || parts[0] !== 'v1') return false;
+  const parts = stored.split(":");
+  if (parts.length !== 3 || parts[0] !== "v1") return false;
   const saltHex = parts[1]!;
   const salt = new Uint8Array(saltHex.match(/.{2}/g)!.map((b) => parseInt(b, 16)));
   const key = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     new TextEncoder().encode(password),
-    'PBKDF2',
+    "PBKDF2",
     false,
-    ['deriveBits'],
+    ["deriveBits"],
   );
   const hash = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: 600_000, hash: 'SHA-512' },
+    { name: "PBKDF2", salt, iterations: 600_000, hash: "SHA-512" },
     key,
     384,
   );
-  const hashHex = Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("");
   return hashHex === parts[2];
 }
 
@@ -64,14 +64,14 @@ async function checkRateLimit(
   windowMs = 60_000,
 ): Promise<Response | null> {
   const ip =
-    request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
+    request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
   const rl = await rateLimit(env, ip, key, maxReqs, windowMs);
   if (!rl.allowed) {
-    return new Response(JSON.stringify({ error: 'Too many attempts. Please try again later.' }), {
+    return new Response(JSON.stringify({ error: "Too many attempts. Please try again later." }), {
       status: 429,
       headers: {
-        'content-type': 'application/json',
-        'retry-after': String(Math.ceil(rl.retryAfter / 1000)),
+        "content-type": "application/json",
+        "retry-after": String(Math.ceil(rl.retryAfter / 1000)),
       },
     });
   }
@@ -89,7 +89,7 @@ function isValidEmail(email: string): boolean {
 // ─── Register ──────────────────────────────────────────────────────
 
 export async function handleEmailRegister(request: Request, env: Env): Promise<Response> {
-  const rlResponse = await checkRateLimit(request, env, 'email:register');
+  const rlResponse = await checkRateLimit(request, env, "email:register");
   if (rlResponse) return rlResponse;
 
   const bodySizeCheck = validateBodySize(request, 8 * 1024);
@@ -103,19 +103,19 @@ export async function handleEmailRegister(request: Request, env: Env): Promise<R
     };
 
     if (!body.email || !body.password) {
-      return jsonResponse({ error: 'Email and password are required' }, 400);
+      return jsonResponse({ error: "Email and password are required" }, 400);
     }
 
     const email = normalizeEmail(body.email);
     if (!isValidEmail(email)) {
-      return jsonResponse({ error: 'Please enter a valid email address' }, 400);
+      return jsonResponse({ error: "Please enter a valid email address" }, 400);
     }
 
     if (body.password.length < 8) {
-      return jsonResponse({ error: 'Password must be at least 8 characters long' }, 400);
+      return jsonResponse({ error: "Password must be at least 8 characters long" }, 400);
     }
     if (body.password.length > 128) {
-      return jsonResponse({ error: 'Password must be less than 128 characters' }, 400);
+      return jsonResponse({ error: "Password must be less than 128 characters" }, 400);
     }
 
     // Check if email already registered
@@ -124,7 +124,10 @@ export async function handleEmailRegister(request: Request, env: Env): Promise<R
       if (existing) {
         // Don't reveal whether the email exists, but note: user-facing UX
         // should check with GET /api/auth/email/status first
-        return jsonResponse({ error: 'This email is already registered. Please sign in instead.' }, 409);
+        return jsonResponse(
+          { error: "This email is already registered. Please sign in instead." },
+          409,
+        );
       }
     }
 
@@ -135,7 +138,7 @@ export async function handleEmailRegister(request: Request, env: Env): Promise<R
     const userRecord = JSON.stringify({
       id: userId,
       email,
-      displayName: body.displayName || email.split('@')[0] || 'user',
+      displayName: body.displayName || email.split("@")[0] || "user",
       passwordHash,
       emailVerified: false,
       emailToken,
@@ -151,18 +154,18 @@ export async function handleEmailRegister(request: Request, env: Env): Promise<R
     if (env.POSTMARK_SERVER_TOKEN && env.CACHE) {
       try {
         const verifyUrl = `https://${new URL(request.url).hostname}/api/auth/email/verify?token=${emailToken}`;
-        await fetch('https://api.postmarkapp.com/email', {
-          method: 'POST',
+        await fetch("https://api.postmarkapp.com/email", {
+          method: "POST",
           headers: {
-            'content-type': 'application/json',
-            'x-postmark-server-token': env.POSTMARK_SERVER_TOKEN,
+            "content-type": "application/json",
+            "x-postmark-server-token": env.POSTMARK_SERVER_TOKEN,
           },
           body: JSON.stringify({
-            From: 'noreply@degenfeed.xyz',
+            From: "noreply@degenfeed.xyz",
             To: email,
-            Subject: 'Verify your DegenFeed account',
+            Subject: "Verify your DegenFeed account",
             HtmlBody: `<p>Welcome to DegenFeed!</p><p>Click the link below to verify your email:</p><p><a href="${verifyUrl}">${verifyUrl}</a></p>`,
-            MessageStream: 'outbound',
+            MessageStream: "outbound",
           }),
         });
       } catch {
@@ -172,7 +175,7 @@ export async function handleEmailRegister(request: Request, env: Env): Promise<R
 
     return jsonResponse({
       success: true,
-      message: 'Account created. Please check your email to verify your account.',
+      message: "Account created. Please check your email to verify your account.",
       requiresVerification: true,
     });
   } catch (err) {
@@ -183,7 +186,7 @@ export async function handleEmailRegister(request: Request, env: Env): Promise<R
 // ─── Sign In ───────────────────────────────────────────────────────
 
 export async function handleEmailSignIn(request: Request, env: Env): Promise<Response> {
-  const rlResponse = await checkRateLimit(request, env, 'email:signin');
+  const rlResponse = await checkRateLimit(request, env, "email:signin");
   if (rlResponse) return rlResponse;
 
   const bodySizeCheck = validateBodySize(request, 8 * 1024);
@@ -193,21 +196,21 @@ export async function handleEmailSignIn(request: Request, env: Env): Promise<Res
     const body = (await request.json()) as { email?: string; password?: string };
 
     if (!body.email || !body.password) {
-      return jsonResponse({ error: 'Email and password are required' }, 400);
+      return jsonResponse({ error: "Email and password are required" }, 400);
     }
 
     const email = normalizeEmail(body.email);
     if (!isValidEmail(email)) {
-      return jsonResponse({ error: 'Invalid email or password' }, 401);
+      return jsonResponse({ error: "Invalid email or password" }, 401);
     }
 
     if (!env.CACHE) {
-      return jsonResponse({ error: 'Email auth not available. Connect a wallet to sign in.' }, 501);
+      return jsonResponse({ error: "Email auth not available. Connect a wallet to sign in." }, 501);
     }
 
     const raw = await env.CACHE.get(`${EMAIL_PREFIX}${email}`);
     if (!raw) {
-      return jsonResponse({ error: 'Invalid email or password' }, 401);
+      return jsonResponse({ error: "Invalid email or password" }, 401);
     }
 
     const userRecord = JSON.parse(raw) as {
@@ -219,12 +222,12 @@ export async function handleEmailSignIn(request: Request, env: Env): Promise<Res
     };
 
     if (!userRecord.passwordHash) {
-      return jsonResponse({ error: 'This account uses a different sign-in method.' }, 401);
+      return jsonResponse({ error: "This account uses a different sign-in method." }, 401);
     }
 
     const valid = await verifyPassword(body.password, userRecord.passwordHash);
     if (!valid) {
-      return jsonResponse({ error: 'Invalid email or password' }, 401);
+      return jsonResponse({ error: "Invalid email or password" }, 401);
     }
 
     return jsonResponse({
@@ -245,24 +248,27 @@ export async function handleEmailSignIn(request: Request, env: Env): Promise<Res
 
 export async function handleEmailVerify(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const token = url.searchParams.get('token');
+  const token = url.searchParams.get("token");
 
   if (!token) {
-    return jsonResponse({ error: 'Missing verification token' }, 400);
+    return jsonResponse({ error: "Missing verification token" }, 400);
   }
 
   if (!env.CACHE) {
-    return jsonResponse({ error: 'Email verification not available' }, 501);
+    return jsonResponse({ error: "Email verification not available" }, 501);
   }
 
   const email = await env.CACHE.get(`${VERIFY_PREFIX}${token}`);
   if (!email) {
-    return jsonResponse({ error: 'Invalid or expired verification token. Please request a new one.' }, 400);
+    return jsonResponse(
+      { error: "Invalid or expired verification token. Please request a new one." },
+      400,
+    );
   }
 
   const raw = await env.CACHE.get(`${EMAIL_PREFIX}${email}`);
   if (!raw) {
-    return jsonResponse({ error: 'Account not found' }, 404);
+    return jsonResponse({ error: "Account not found" }, 404);
   }
 
   const userRecord = JSON.parse(raw) as {
@@ -275,14 +281,14 @@ export async function handleEmailVerify(request: Request, env: Env): Promise<Res
 
   return jsonResponse({
     success: true,
-    message: 'Email verified successfully! You can now sign in.',
+    message: "Email verified successfully! You can now sign in.",
   });
 }
 
 // ─── Password Reset Request ────────────────────────────────────────
 
 export async function handlePasswordResetRequest(request: Request, env: Env): Promise<Response> {
-  const rlResponse = await checkRateLimit(request, env, 'email:pw-reset-request', 3, 300_000);
+  const rlResponse = await checkRateLimit(request, env, "email:pw-reset-request", 3, 300_000);
   if (rlResponse) return rlResponse;
 
   const bodySizeCheck = validateBodySize(request, 4 * 1024);
@@ -291,23 +297,29 @@ export async function handlePasswordResetRequest(request: Request, env: Env): Pr
   try {
     const body = (await request.json()) as { email?: string };
     if (!body.email) {
-      return jsonResponse({ error: 'Email is required' }, 400);
+      return jsonResponse({ error: "Email is required" }, 400);
     }
 
     const email = normalizeEmail(body.email);
     if (!isValidEmail(email)) {
       // Don't reveal if email exists — still return success
-      return jsonResponse({ success: true, message: 'If that email is registered, a reset link has been sent.' });
+      return jsonResponse({
+        success: true,
+        message: "If that email is registered, a reset link has been sent.",
+      });
     }
 
     if (!env.CACHE) {
-      return jsonResponse({ error: 'Password reset not available' }, 501);
+      return jsonResponse({ error: "Password reset not available" }, 501);
     }
 
     const raw = await env.CACHE.get(`${EMAIL_PREFIX}${email}`);
     if (!raw) {
       // Don't reveal if email exists
-      return jsonResponse({ success: true, message: 'If that email is registered, a reset link has been sent.' });
+      return jsonResponse({
+        success: true,
+        message: "If that email is registered, a reset link has been sent.",
+      });
     }
 
     const resetToken = crypto.randomUUID();
@@ -317,18 +329,18 @@ export async function handlePasswordResetRequest(request: Request, env: Env): Pr
     if (env.POSTMARK_SERVER_TOKEN) {
       try {
         const resetUrl = `https://${new URL(request.url).hostname}/auth/reset-password?token=${resetToken}`;
-        await fetch('https://api.postmarkapp.com/email', {
-          method: 'POST',
+        await fetch("https://api.postmarkapp.com/email", {
+          method: "POST",
           headers: {
-            'content-type': 'application/json',
-            'x-postmark-server-token': env.POSTMARK_SERVER_TOKEN,
+            "content-type": "application/json",
+            "x-postmark-server-token": env.POSTMARK_SERVER_TOKEN,
           },
           body: JSON.stringify({
-            From: 'noreply@degenfeed.xyz',
+            From: "noreply@degenfeed.xyz",
             To: email,
-            Subject: 'Reset your DegenFeed password',
+            Subject: "Reset your DegenFeed password",
             HtmlBody: `<p>Click the link below to reset your password:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>This link expires in 1 hour.</p>`,
-            MessageStream: 'outbound',
+            MessageStream: "outbound",
           }),
         });
       } catch {
@@ -338,7 +350,7 @@ export async function handlePasswordResetRequest(request: Request, env: Env): Pr
 
     return jsonResponse({
       success: true,
-      message: 'If that email is registered, a reset link has been sent.',
+      message: "If that email is registered, a reset link has been sent.",
     });
   } catch (err) {
     return jsonResponse({ error: (err as Error).message }, 500);
@@ -348,7 +360,7 @@ export async function handlePasswordResetRequest(request: Request, env: Env): Pr
 // ─── Password Reset Confirm ────────────────────────────────────────
 
 export async function handlePasswordResetConfirm(request: Request, env: Env): Promise<Response> {
-  const rlResponse = await checkRateLimit(request, env, 'email:pw-reset-confirm', 3, 60_000);
+  const rlResponse = await checkRateLimit(request, env, "email:pw-reset-confirm", 3, 60_000);
   if (rlResponse) return rlResponse;
 
   const bodySizeCheck = validateBodySize(request, 8 * 1024);
@@ -358,25 +370,28 @@ export async function handlePasswordResetConfirm(request: Request, env: Env): Pr
     const body = (await request.json()) as { token?: string; password?: string };
 
     if (!body.token || !body.password) {
-      return jsonResponse({ error: 'Token and new password are required' }, 400);
+      return jsonResponse({ error: "Token and new password are required" }, 400);
     }
 
     if (body.password.length < 8) {
-      return jsonResponse({ error: 'Password must be at least 8 characters long' }, 400);
+      return jsonResponse({ error: "Password must be at least 8 characters long" }, 400);
     }
 
     if (!env.CACHE) {
-      return jsonResponse({ error: 'Password reset not available' }, 501);
+      return jsonResponse({ error: "Password reset not available" }, 501);
     }
 
     const email = await env.CACHE.get(`${PW_RESET_PREFIX}${body.token}`);
     if (!email) {
-      return jsonResponse({ error: 'Invalid or expired reset token. Please request a new one.' }, 400);
+      return jsonResponse(
+        { error: "Invalid or expired reset token. Please request a new one." },
+        400,
+      );
     }
 
     const raw = await env.CACHE.get(`${EMAIL_PREFIX}${email}`);
     if (!raw) {
-      return jsonResponse({ error: 'Account not found' }, 404);
+      return jsonResponse({ error: "Account not found" }, 404);
     }
 
     const userRecord = JSON.parse(raw) as { passwordHash?: string };
@@ -386,7 +401,7 @@ export async function handlePasswordResetConfirm(request: Request, env: Env): Pr
 
     return jsonResponse({
       success: true,
-      message: 'Password reset successfully! You can now sign in with your new password.',
+      message: "Password reset successfully! You can now sign in with your new password.",
     });
   } catch (err) {
     return jsonResponse({ error: (err as Error).message }, 500);
@@ -396,13 +411,13 @@ export async function handlePasswordResetConfirm(request: Request, env: Env): Pr
 // ─── Email Status Check ────────────────────────────────────────────
 
 export async function handleEmailStatus(request: Request, env: Env): Promise<Response> {
-  const rlResponse = await checkRateLimit(request, env, 'email:status', 20, 60_000);
+  const rlResponse = await checkRateLimit(request, env, "email:status", 3, 60_000);
   if (rlResponse) return rlResponse;
 
   const url = new URL(request.url);
-  const emailParam = url.searchParams.get('email');
+  const emailParam = url.searchParams.get("email");
   if (!emailParam) {
-    return jsonResponse({ error: 'Email is required' }, 400);
+    return jsonResponse({ error: "Email is required" }, 400);
   }
 
   const email = normalizeEmail(emailParam);

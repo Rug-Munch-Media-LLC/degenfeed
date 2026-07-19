@@ -35,10 +35,7 @@ const nextConfig = {
   },
 
   // ── Monorepo transpilation ──
-  transpilePackages: [
-    '@degenfeed/types',
-    '@degenfeed/ui',
-  ],
+  transpilePackages: ['@degenfeed/types', '@degenfeed/ui'],
 
   // ── Headers for caching & security ──
   async headers() {
@@ -75,13 +72,28 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+          {
+            key: 'Content-Security-Policy',
+            value:
+              "default-src 'self'; "
+              + "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+              + "style-src 'self' 'unsafe-inline'; "
+              + "img-src 'self' data: https: blob:; "
+              + "connect-src 'self' https: wss:; "
+              + "frame-src 'self' https:; "
+              + "font-src 'self'; "
+              + "object-src 'none'; "
+              + "base-uri 'self'; "
+              + "form-action 'self'",
+          },
         ],
       },
     ];
   },
 
-  typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true }, // TODO: Remove by 2026-08-01 — 67 TS errors across 29 files to fix
+  eslint: { ignoreDuringBuilds: true },    // TODO: Remove by 2026-08-01
 };
 
 export default nextConfig;

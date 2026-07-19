@@ -19,7 +19,17 @@ function HomeIcon({ active }: { active: boolean }) {
       <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
     </svg>
   ) : (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
     </svg>
   );
@@ -27,7 +37,17 @@ function HomeIcon({ active }: { active: boolean }) {
 
 function TrendingIcon({ active }: { active: boolean }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
       <polyline points="17 6 23 6 23 12" />
     </svg>
@@ -36,7 +56,17 @@ function TrendingIcon({ active }: { active: boolean }) {
 
 function SpacesIcon({ active }: { active: boolean }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
       <path d="M19 10v2a7 7 0 01-14 0v-2" />
       <line x1="12" y1="19" x2="12" y2="23" />
@@ -47,7 +77,17 @@ function SpacesIcon({ active }: { active: boolean }) {
 
 function VideosIcon({ active }: { active: boolean }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <polygon points="23 7 16 12 23 17 23 7" />
       <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
     </svg>
@@ -56,7 +96,17 @@ function VideosIcon({ active }: { active: boolean }) {
 
 function MsgIcon({ active }: { active: boolean }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
     </svg>
   );
@@ -69,7 +119,17 @@ function NotifIcon({ active }: { active: boolean }) {
       <path d="M15 19a3 3 0 11-6 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ) : (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
       <path d="M13.73 21a2 2 0 01-3.46 0" />
     </svg>
@@ -82,7 +142,17 @@ function ProfileIcon({ active }: { active: boolean }) {
       <path d="M12 12c3.314 0 6-2.686 6-6s-2.686-6-6-6-6 2.686-6 6 2.686 6 6 6zm0 2c-4.418 0-8 2.686-8 6v2h16v-2c0-3.314-3.582-6-8-6z" />
     </svg>
   ) : (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="8" r="4" />
       <path d="M20 21a8 8 0 00-16 0" />
     </svg>
@@ -91,7 +161,17 @@ function ProfileIcon({ active }: { active: boolean }) {
 
 function SettingsIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
     </svg>
@@ -100,7 +180,17 @@ function SettingsIcon() {
 
 function MoreIcon() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="1" />
       <circle cx="12" cy="5" r="1" />
       <circle cx="12" cy="19" r="1" />
@@ -110,7 +200,17 @@ function MoreIcon() {
 
 function ComposeIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
@@ -239,8 +339,12 @@ function WalletUserCard({
           <>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold truncate" style={{ color: 'var(--color-fg)' }}>
-                  {activeMeta?.walletName ?? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`}
+                <span
+                  className="text-sm font-semibold truncate"
+                  style={{ color: 'var(--color-fg)' }}
+                >
+                  {activeMeta?.walletName ??
+                    `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`}
                 </span>
                 <span
                   className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
@@ -257,7 +361,15 @@ function WalletUserCard({
               </div>
             </div>
             <span className="text-[var(--color-muted)]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
                 <circle cx="12" cy="12" r="1" />
                 <circle cx="12" cy="5" r="1" />
                 <circle cx="12" cy="19" r="1" />
@@ -337,7 +449,9 @@ function WalletUserCard({
                         {addr.slice(0, 6)}…{addr.slice(-4)}
                       </code>
                       {isActive && (
-                        <span className="shrink-0 text-[9px] font-bold text-degen-400">· Active</span>
+                        <span className="shrink-0 text-[9px] font-bold text-degen-400">
+                          · Active
+                        </span>
                       )}
                     </div>
                   </div>
@@ -362,7 +476,15 @@ function WalletUserCard({
               className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-degen-400 transition-colors hover:bg-degen-500/10"
               role="menuitem"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -374,7 +496,15 @@ function WalletUserCard({
               className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10"
               role="menuitem"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
                 <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
@@ -439,7 +569,9 @@ export const LeftSidebar = memo(function LeftSidebar({
 
   const isActive = (href: string) => {
     if (href === '/feed')
-      return pathname === '/feed' || pathname === '/home/all' || pathname === '/home' || pathname === '/';
+      return (
+        pathname === '/feed' || pathname === '/home/all' || pathname === '/home' || pathname === '/'
+      );
     if (href === '/c') return pathname === '/c' || pathname.startsWith('/c/');
     if (href === '/profile') return pathname === '/profile' || pathname.startsWith('/profile/');
     if (href === '/settings') return pathname === '/settings' || pathname.startsWith('/settings/');
@@ -538,7 +670,13 @@ export const LeftSidebar = memo(function LeftSidebar({
                   className={`ml-auto transition-transform ${moreOpen ? 'rotate-180' : ''}`}
                   aria-hidden="true"
                 >
-                  <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M4 6l4 4 4-4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </>
             )}
@@ -595,7 +733,17 @@ export const LeftSidebar = memo(function LeftSidebar({
             title={collapsed ? 'Sign in' : undefined}
           >
             {collapsed ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
                 <polyline points="10 17 15 12 10 7" />
                 <line x1="15" y1="12" x2="3" y2="12" />
@@ -615,9 +763,13 @@ export const LeftSidebar = memo(function LeftSidebar({
       )}
 
       {/* Profile / Wallet at bottom */}
-      <div className={`border-t border-[var(--color-glass-border)] ${collapsed ? 'px-1 py-2' : 'px-2 py-2'}`}>
+      <div
+        className={`border-t border-[var(--color-glass-border)] ${collapsed ? 'px-1 py-2' : 'px-2 py-2'}`}
+      >
         {!ready ? (
-          <div className={`skeleton rounded-full ${collapsed ? 'h-10 w-10 mx-auto' : 'h-12 w-full'}`} />
+          <div
+            className={`skeleton rounded-full ${collapsed ? 'h-10 w-10 mx-auto' : 'h-12 w-full'}`}
+          />
         ) : hasSignedIn && walletAddress ? (
           <WalletUserCard walletAddress={walletAddress} onSignOut={signOut} collapsed={collapsed} />
         ) : (
@@ -631,15 +783,29 @@ export const LeftSidebar = memo(function LeftSidebar({
             title={collapsed ? 'Sign in' : undefined}
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/10 text-sm font-bold text-degen-400">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>Sign In</div>
-                <div className="text-xs" style={{ color: 'var(--color-muted)' }}>Connect wallet</div>
+                <div className="text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
+                  Sign In
+                </div>
+                <div className="text-xs" style={{ color: 'var(--color-muted)' }}>
+                  Connect wallet
+                </div>
               </div>
             )}
           </button>
