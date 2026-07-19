@@ -163,6 +163,16 @@ import {
   handleResolveIdentity,
   handleUnlinkIdentity,
 } from './routes/identity';
+import {
+  handleCreateAtproto,
+  handleLinkAtproto,
+  handleLinkTelegram,
+  handleLinkZora,
+  handleResolveDid,
+  handleResolveWallet,
+  handleResolveZora,
+  handleStatus as handleIdentityExtensionsStatus,
+} from './routes/identity-extensions';
 import { handleLandingCss, handleLandingHtml, handleLandingJs } from './routes/landing';
 import {
   handleLeaderboardCommunities,
@@ -830,8 +840,6 @@ app.all('/api/messages/:id', async (c) => {
 });
 
 // ─── API: Identity ───────────────────────────────────────────
-
-// ─── API: Identity ───────────────────────────────────────────
 app.all('/api/identity/resolve', async (c) => handleResolveIdentity(c.req.raw, c.env));
 app.get('/api/identity/profile', async (c) => {
   // /api/identity/profile?wallet=0x... returns cross-protocol linked identities
@@ -845,6 +853,32 @@ app.post('/api/identity/link', async (c) =>
 );
 app.delete('/api/identity/link', async (c) =>
   withSession(c, () => handleUnlinkIdentity(c.req.raw, c.env)),
+);
+
+// ─── API: Identity Extensions (AT Protocol, Zora, Telegram) ──
+app.post('/api/identity/extensions/link/atproto', async (c) =>
+  withSession(c, () => handleLinkAtproto(c.req.raw, c.env)),
+);
+app.post('/api/identity/extensions/create/atproto', async (c) =>
+  withSession(c, () => handleCreateAtproto(c.req.raw, c.env)),
+);
+app.post('/api/identity/extensions/link/zora', async (c) =>
+  withSession(c, () => handleLinkZora(c.req.raw, c.env)),
+);
+app.get('/api/identity/extensions/resolve/zora', async (c) =>
+  handleResolveZora(c.req.raw, c.env),
+);
+app.post('/api/identity/extensions/link/telegram', async (c) =>
+  withSession(c, () => handleLinkTelegram(c.req.raw, c.env)),
+);
+app.get('/api/identity/extensions/resolve/did', async (c) =>
+  handleResolveDid(c.req.raw, c.env),
+);
+app.get('/api/identity/extensions/resolve/wallet', async (c) =>
+  handleResolveWallet(c.req.raw, c.env),
+);
+app.get('/api/identity/extensions/status', async (c) =>
+  handleIdentityExtensionsStatus(c.req.raw, c.env),
 );
 
 // ─── API: Blink ─────────────────────────────────────────────

@@ -40,6 +40,30 @@ export interface CrossProtocolIdentity {
     verified: boolean;
     manualLinking?: boolean;
   };
+  /** AT Protocol generic identity (PDS-managed) */
+  atproto?: {
+    did: string;
+    handle: string;
+    pdsUrl: string;
+    verified: boolean;
+    autoCreated: boolean;
+    manualLinking?: boolean;
+  };
+  /** Zora / Base creator coin identity */
+  zora?: {
+    coinAddress: string;
+    network: string;
+    verified: boolean;
+    manualLinking?: boolean;
+  };
+  /** Telegram identity */
+  telegram?: {
+    userId: string;
+    username?: string;
+    chatId?: string;
+    verified: boolean;
+    manualLinking?: boolean;
+  };
   /** When the wallet first linked any identity */
   linkedAt: number;
   /** When any linked identity was last re-verified */
@@ -123,6 +147,24 @@ export const PROTOCOL_ID_REGISTRY: Record<
     icon: '📺',
     color: '#f2690d',
     resolveEndpoint: '/api/identity/resolve?protocol=peertube',
+  },
+  atproto: {
+    displayName: 'AT Protocol / Bluesky',
+    icon: '🦋',
+    color: '#0085ff',
+    resolveEndpoint: '/api/identity/resolve?protocol=atproto',
+  },
+  zora: {
+    displayName: 'Zora / Base',
+    icon: '◆',
+    color: '#0052FF',
+    resolveEndpoint: '/api/identity/resolve?protocol=zora',
+  },
+  telegram: {
+    displayName: 'Telegram',
+    icon: '✈',
+    color: '#0088cc',
+    resolveEndpoint: '/api/identity/resolve?protocol=telegram',
   },
 };
 

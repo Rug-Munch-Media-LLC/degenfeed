@@ -67,7 +67,7 @@ function parseCookie(cookieHeader: string | null): string | null {
  * Parse and verify the session cookie.
  * Returns the session payload or null on any failure.
  */
-async function verifySessionCookie(
+export async function verifySessionCookie(
   cookieHeader: string | null,
   secret: string,
 ): Promise<SessionPayload | null> {
@@ -127,6 +127,19 @@ export async function requireSession(request: Request): Promise<NextResponse | n
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   return null; // allowed
+}
+
+/**
+ * Verify session and return the payload instead of just null/Response.
+ * Returns the SessionPayload on success, or null on failure.
+ */
+export async function getSessionFromRequest(request: Request): Promise<SessionPayload | null> {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) {
+    console.error('[auth] AUTH_SECRET not configured');
+    return null;
+  }
+  return verifySessionCookie(request.headers.get('cookie'), secret);
 }
 
 /**

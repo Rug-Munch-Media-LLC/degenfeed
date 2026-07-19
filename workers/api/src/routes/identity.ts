@@ -84,6 +84,9 @@ export async function handleLinkIdentity(request: Request, env: Env): Promise<Re
     'threads',
     'rss',
     'peertube',
+    'atproto',
+    'zora',
+    'telegram',
   ];
   if (!validProtocols.includes(body.protocol)) {
     return jsonResponse({ error: `Unsupported protocol: ${body.protocol}` }, 400);
@@ -147,6 +150,9 @@ export async function handleUnlinkIdentity(request: Request, env: Env): Promise<
     'threads',
     'rss',
     'peertube',
+    'atproto',
+    'zora',
+    'telegram',
   ];
   if (!validProtocols.includes(protocol)) {
     return jsonResponse({ error: `Unsupported protocol: ${protocol}` }, 400);
@@ -238,6 +244,20 @@ interface PeerTubeIdentityInput {
   channelId?: string;
   instance?: string;
 }
+interface AtprotoIdentityInput {
+  did?: string;
+  handle?: string;
+  pdsUrl?: string;
+}
+interface ZoraIdentityInput {
+  coinAddress?: string;
+  network?: string;
+}
+interface TelegramIdentityInput {
+  userId?: string;
+  username?: string;
+  chatId?: string;
+}
 
 function validateProtocolIdentity(
   protocol: string,
@@ -253,6 +273,9 @@ function validateProtocolIdentity(
   | ThreadsIdentityInput
   | RssIdentityInput
   | PeerTubeIdentityInput
+  | AtprotoIdentityInput
+  | ZoraIdentityInput
+  | TelegramIdentityInput
   | null {
   // Extract optional manualLinking flag from all inputs
   const manualLinking = Boolean(data.manualLinking);
@@ -336,6 +359,36 @@ function validateProtocolIdentity(
         username,
         channelId,
         instance: instance || 'video.degenfeed.xyz',
+        ...(manualLinking ? { manualLinking: true } : {}),
+      };
+    }
+    case 'atproto': {
+      const did = String(data.did || '');
+      const handle = String(data.handle || '');
+      if (!did && !handle) return null;
+      return {
+        did,
+        handle,
+        pdsUrl: String(data.pdsUrl || 'https://pds.degenfeed.xyz'),
+        ...(manualLinking ? { manualLinking: true } : {}),
+      };
+    }
+    case 'zora': {
+      const coinAddress = String(data.coinAddress || '');
+      if (!coinAddress) return null;
+      return {
+        coinAddress,
+        network: String(data.network || 'base'),
+        ...(manualLinking ? { manualLinking: true } : {}),
+      };
+    }
+    case 'telegram': {
+      const userId = String(data.userId || '');
+      if (!userId) return null;
+      return {
+        userId,
+        username: String(data.username || ''),
+        chatId: String(data.chatId || ''),
         ...(manualLinking ? { manualLinking: true } : {}),
       };
     }
