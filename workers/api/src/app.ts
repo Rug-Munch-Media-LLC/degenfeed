@@ -45,27 +45,6 @@ import {
   handleWarpcastCallback,
 } from './routes/auth';
 import {
-  handleDiscordAuthorize,
-  handleDiscordCallback,
-  handleGitHubAuthorize,
-  handleGitHubCallback,
-  handleGoogleAuthorize,
-  handleGoogleCallback,
-  handleRedditAuthorize,
-  handleTelegramAuthorize,
-  handleTelegramCallback,
-  handleTwitterAuthorize,
-  handleTwitterCallback,
-} from './routes/oauth-providers';
-import {
-  handleEmailRegister,
-  handleEmailSignIn,
-  handleEmailStatus,
-  handleEmailVerify,
-  handlePasswordResetConfirm,
-  handlePasswordResetRequest,
-} from './routes/email-auth';
-import {
   handleBillingCancel,
   handleBillingCheckout,
   handleBillingMyStatus,
@@ -121,6 +100,14 @@ import {
   handleDiscoverTopics,
   handleDiscoverTrending,
 } from './routes/discover';
+import {
+  handleEmailRegister,
+  handleEmailSignIn,
+  handleEmailStatus,
+  handleEmailVerify,
+  handlePasswordResetConfirm,
+  handlePasswordResetRequest,
+} from './routes/email-auth';
 import { handleEmbedPost, handleEmbedResolve } from './routes/embed';
 import { handleEngage } from './routes/engage';
 import { handleFarcasterFeed } from './routes/farcaster-feed';
@@ -221,6 +208,19 @@ import {
 } from './routes/newsletter';
 import { handleMarkAllRead, handleNotifications } from './routes/notifications';
 import { handleNotify } from './routes/notify';
+import {
+  handleDiscordAuthorize,
+  handleDiscordCallback,
+  handleGitHubAuthorize,
+  handleGitHubCallback,
+  handleGoogleAuthorize,
+  handleGoogleCallback,
+  handleRedditAuthorize,
+  handleTelegramAuthorize,
+  handleTelegramCallback,
+  handleTwitterAuthorize,
+  handleTwitterCallback,
+} from './routes/oauth-providers';
 import { handlePostOg } from './routes/og';
 import {
   handlePeerTubeLeaderboard,
@@ -689,8 +689,12 @@ app.all('/api/auth/email/register', async (c) => handleEmailRegister(c.req.raw, 
 app.all('/api/auth/email/signin', async (c) => handleEmailSignIn(c.req.raw, c.env));
 app.all('/api/auth/email/verify', async (c) => handleEmailVerify(c.req.raw, c.env));
 app.all('/api/auth/email/status', async (c) => handleEmailStatus(c.req.raw, c.env));
-app.all('/api/auth/email/password-reset', async (c) => handlePasswordResetRequest(c.req.raw, c.env));
-app.all('/api/auth/email/password-reset/confirm', async (c) => handlePasswordResetConfirm(c.req.raw, c.env));
+app.all('/api/auth/email/password-reset', async (c) =>
+  handlePasswordResetRequest(c.req.raw, c.env),
+);
+app.all('/api/auth/email/password-reset/confirm', async (c) =>
+  handlePasswordResetConfirm(c.req.raw, c.env),
+);
 
 // ─── API: Custom Feeds (session-gated) ──────────────────────
 // Static routes before parameterized routes
@@ -1464,7 +1468,9 @@ app.all('/v1/auth/email/signin', async (c) => handleEmailSignIn(c.req.raw, c.env
 app.all('/v1/auth/email/verify', async (c) => handleEmailVerify(c.req.raw, c.env));
 app.all('/v1/auth/email/status', async (c) => handleEmailStatus(c.req.raw, c.env));
 app.all('/v1/auth/email/password-reset', async (c) => handlePasswordResetRequest(c.req.raw, c.env));
-app.all('/v1/auth/email/password-reset/confirm', async (c) => handlePasswordResetConfirm(c.req.raw, c.env));
+app.all('/v1/auth/email/password-reset/confirm', async (c) =>
+  handlePasswordResetConfirm(c.req.raw, c.env),
+);
 
 // ─── V1: Bookmarks ────────────────────────────────────────
 app.get('/v1/bookmarks', async (c) => handleBookmarkList(c.req.raw, c.env));

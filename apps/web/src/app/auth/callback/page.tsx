@@ -70,7 +70,13 @@ const PROVIDER_CONFIG: Record<string, { name: string; endpoint: string; icon: st
 
 interface CallbackResult {
   accessToken?: string;
-  profile?: { id?: string; username?: string; displayName?: string; avatar?: string; [key: string]: unknown };
+  profile?: {
+    id?: string;
+    username?: string;
+    displayName?: string;
+    avatar?: string;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
@@ -98,11 +104,18 @@ async function exchangeCode(
     const err = (await res.json().catch(() => ({ error: `Server returned ${res.status}` }))) as {
       error?: string;
     };
-    return { ok: false, error: err.error || `Authentication server returned an error (${res.status}). Please try again.` };
+    return {
+      ok: false,
+      error:
+        err.error || `Authentication server returned an error (${res.status}). Please try again.`,
+    };
   } catch (err) {
     return {
       ok: false,
-      error: err instanceof Error ? `Cannot reach auth server: ${err.message}` : 'Network error. Check your connection and try again.',
+      error:
+        err instanceof Error
+          ? `Cannot reach auth server: ${err.message}`
+          : 'Network error. Check your connection and try again.',
     };
   }
 }
@@ -111,7 +124,9 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
   const params = await searchParams;
 
   // Determine provider from URL or provider param
-  const url = new URL(typeof window !== 'undefined' ? window.location.href : 'https://degenfeed.xyz');
+  const url = new URL(
+    typeof window !== 'undefined' ? window.location.href : 'https://degenfeed.xyz',
+  );
   const pathParts = url.pathname.split('/');
   const providerFromPath = pathParts[pathParts.length - 1] || params.provider || 'gotosocial';
   const provider = PROVIDER_CONFIG[providerFromPath] ?? PROVIDER_CONFIG['gotosocial']!;
@@ -121,7 +136,10 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
   // ── Error from OAuth provider ──
   if (params.error) {
     return (
-      <ErrorView provider={provider} message={`${provider.name} declined authorization: ${params.error}`} />
+      <ErrorView
+        provider={provider}
+        message={`${provider.name} declined authorization: ${params.error}`}
+      />
     );
   }
 
@@ -173,10 +191,18 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
   }
 
   // ── Exchange failed ──
-  return <ErrorView provider={provider} message={result.error ?? 'Failed to complete authentication.'} />;
+  return (
+    <ErrorView provider={provider} message={result.error ?? 'Failed to complete authentication.'} />
+  );
 }
 
-function ErrorView({ provider, message }: { provider: (typeof PROVIDER_CONFIG)[string]; message: string }) {
+function ErrorView({
+  provider,
+  message,
+}: {
+  provider: (typeof PROVIDER_CONFIG)[string];
+  message: string;
+}) {
   return (
     <html lang="en">
       <body>

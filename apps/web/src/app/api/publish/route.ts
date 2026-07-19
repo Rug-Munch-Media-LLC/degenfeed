@@ -190,15 +190,18 @@ async function publishToProtocol(
     }
 
     case 'threads': {
-      return { ok: true, hash: `threads:${Date.now()}` };
+      // Not yet implemented — see ROADMAP.md
+      return { ok: false, error: 'Protocol publishing not yet available' };
     }
 
     case 'lemmy': {
-      return { ok: true, hash: `lemmy:${Date.now()}` };
+      // Not yet implemented — see ROADMAP.md
+      return { ok: false, error: 'Protocol publishing not yet available' };
     }
 
     case 'peertube': {
-      return { ok: true, hash: `peertube:${Date.now()}` };
+      // Not yet implemented — see ROADMAP.md
+      return { ok: false, error: 'Protocol publishing not yet available' };
     }
 
     default:

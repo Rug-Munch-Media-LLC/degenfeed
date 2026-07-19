@@ -44,7 +44,11 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ ok: true });
+    // Not yet implemented — see ROADMAP.md
+    return NextResponse.json(
+      { error: 'Tip settings not yet available', status: 501 },
+      { status: 501 },
+    );
   } catch (_error) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }

@@ -16,26 +16,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name must be 48 characters or fewer' }, { status: 400 });
     }
 
-    const slug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 48);
-
-    const community = {
-      id: slug,
-      name: slug,
-      displayName: displayName || name,
-      description,
-      createdAt: Date.now(),
-      creator: { walletAddress: '0xuser...0000', identities: {} },
-      protocols: {},
-      memberCount: 1,
-      postCount: 0,
-      tags: [],
-    };
-
-    return NextResponse.json({ success: true, community }, { status: 201 });
+    // Not yet implemented — see ROADMAP.md
+    return NextResponse.json(
+      { error: 'Community creation not yet available', status: 501 },
+      { status: 501 },
+    );
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }

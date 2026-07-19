@@ -1266,7 +1266,11 @@ export default function FeedPage() {
             </div>
 
             {/* Tabs — Home / For You / Trending / News / Custom Mix */}
-            <div className="feed-header-tabs flex overflow-x-auto scrollbar-none" role="tablist" aria-label="Feed tabs">
+            <div
+              className="feed-header-tabs flex overflow-x-auto scrollbar-none"
+              role="tablist"
+              aria-label="Feed tabs"
+            >
               <div className="relative shrink-0">
                 <button
                   type="button"
@@ -1944,14 +1948,14 @@ export default function FeedPage() {
                 <div className="flex items-center gap-3 px-4 py-8 select-none">
                   <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
                   <div className="flex flex-col items-center gap-1">
-                    <span className="text-lg" aria-hidden="true">🌅</span>
+                    <span className="text-lg" aria-hidden="true">
+                      🌅
+                    </span>
                     <span className="text-xs font-medium text-[var(--color-muted)]">
                       You&apos;re all caught up!
                     </span>
                     <span className="text-[10px] text-[var(--color-muted)]">
-                      {posts.length > 0
-                        ? `Showing ${posts.length} posts`
-                        : ''}
+                      {posts.length > 0 ? `Showing ${posts.length} posts` : ''}
                     </span>
                   </div>
                   <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />

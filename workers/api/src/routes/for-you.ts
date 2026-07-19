@@ -85,14 +85,14 @@ import {
   type UserBehaviorProfile,
 } from '@degenfeed/feed-core';
 import {
-  computeRecencyScore,
-  computeEngagementScore,
-  computeRelevanceScore,
-  isCryptoContent,
-  FRESH_CONTENT_BOOST,
-  FRESH_CONTENT_WINDOW_MS,
   BOREDOM_BREAKER_INTERVAL,
   BOREDOM_BREAKER_QUALITY_FLOOR,
+  computeEngagementScore,
+  computeRecencyScore,
+  computeRelevanceScore,
+  FRESH_CONTENT_BOOST,
+  FRESH_CONTENT_WINDOW_MS,
+  isCryptoContent,
 } from '../ranking/ranking-weights';
 
 function behaviorKey(address: string): string {
@@ -369,27 +369,24 @@ async function generateForYouFeed(
         //    recency(40%) + engagement(30%) + relevance(20%) + diversity(10%)
         //    Combined with v2 prediction + dwell + feedback signals
         const recencyComponent = computeRecencyScore(post.createdAt, now) * 0.4;
-        const engagementComponent = computeEngagementScore(
-          post.metrics.likes,
-          post.metrics.reposts,
-          post.metrics.replies,
-          post.metrics.quotes ?? 0,
-        ) * 0.3;
-        const relevanceComponent = computeRelevanceScore(
-          post.niches,
-          userNiches,
-          userCtx.followed,
-          post.author.id,
-        ) * 0.2;
+        const engagementComponent =
+          computeEngagementScore(
+            post.metrics.likes,
+            post.metrics.reposts,
+            post.metrics.replies,
+            post.metrics.quotes ?? 0,
+          ) * 0.3;
+        const relevanceComponent =
+          computeRelevanceScore(post.niches, userNiches, userCtx.followed, post.author.id) * 0.2;
         // Diversity component from v2 prediction's diversity bonus
-        const diversityComponent = (v2Pred.normalizedScore * 0.1);
+        const diversityComponent = v2Pred.normalizedScore * 0.1;
 
         // Combine: explicit weights(60%) + v2 prediction(20%) + dwell(10%) + feedback(10%)
         const combinedBoost =
           (recencyComponent + engagementComponent + relevanceComponent + diversityComponent) * 0.6 +
-          v2Pred.normalizedScore * 0.20 +
-          (dwellResult.multiplier - 1.0) * 0.10 +
-          (feedbackResult.multiplier - 1.0) * 0.10;
+          v2Pred.normalizedScore * 0.2 +
+          (dwellResult.multiplier - 1.0) * 0.1 +
+          (feedbackResult.multiplier - 1.0) * 0.1;
 
         // Collect algorithm reasons
         const reasons = [

@@ -28,9 +28,8 @@
  * - Diversity signals (diversity bonus, post type) = 10%
  */
 
-import { computeRecencyScore } from '../ranking/ranking-weights';
-
 import type { UnifiedPost } from '@degenfeed/types';
+import { computeRecencyScore } from '../ranking/ranking-weights';
 import type { BehaviorProfile } from './feed-curator';
 
 export interface EngagementPredictionV2Input {
@@ -97,9 +96,9 @@ const WEIGHTS = {
   /** Timing: optimal time-of-day boost — 15% */
   timing: 0.15,
   /** Content similarity: matches previously engaged posts — 10% */
-  contentSimilarity: 0.10,
+  contentSimilarity: 0.1,
   /** Topic match: niche overlap with user preferences — 10% */
-  topicMatch: 0.10,
+  topicMatch: 0.1,
   /** Creator affinity: user follows or engages with this creator — 15% */
   creatorAffinity: 0.15,
   /** Social proof / popularity: global engagement signal — 15% */

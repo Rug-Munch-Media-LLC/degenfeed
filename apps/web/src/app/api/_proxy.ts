@@ -20,6 +20,23 @@ function resolveWorkerUrl(): string {
 }
 
 /**
+ * Extract auth/session headers from the incoming request to forward to the worker.
+ * The worker needs these to identify the authenticated user.
+ */
+function forwardHeaders(request: Request): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const cookie = request.headers.get('cookie');
+  if (cookie) headers['Cookie'] = cookie;
+  const auth = request.headers.get('authorization');
+  if (auth) headers['Authorization'] = auth;
+  const csrf = request.headers.get('x-csrf-token');
+  if (csrf) headers['X-CSRF-Token'] = csrf;
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  if (forwardedFor) headers['X-Forwarded-For'] = forwardedFor;
+  return headers;
+}
+
+/**
  * Proxy a GET request to the worker backend.
  * Preserves query parameters from the incoming request.
  */
@@ -28,7 +45,7 @@ export async function proxyGet(workerPath: string, request: Request): Promise<Re
   const url = new URL(request.url);
   const target = `${base}${workerPath}${url.search}`;
 
-  const res = await fetch(target);
+  const res = await fetch(target, { headers: forwardHeaders(request) });
   const body = await res.text();
 
   return new Response(body, {
@@ -50,7 +67,7 @@ export async function proxyPost(workerPath: string, request: Request): Promise<R
 
   const res = await fetch(`${base}${workerPath}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...forwardHeaders(request) },
     body,
   });
 

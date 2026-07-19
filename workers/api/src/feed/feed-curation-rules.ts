@@ -67,7 +67,8 @@ export function applyFreshnessMultiplier(
     const ageHours = ageMs / 3600000;
     let multiplier = 1.0;
 
-    if (ageHours < 1) multiplier = 1.2; // +20% for fresh content
+    if (ageHours < 1)
+      multiplier = 1.2; // +20% for fresh content
     else if (ageHours < 6) multiplier = 1.1; // +10% for recent content
 
     return { post, multiplier };
@@ -415,7 +416,8 @@ export function applyCurationPipeline(
     const ageHours = ageMs / 3600000;
     let freshness = 1.0;
     if (opts.freshnessBoost !== false) {
-      if (ageHours < 1) freshness = 1.2; // +20% for fresh content
+      if (ageHours < 1)
+        freshness = 1.2; // +20% for fresh content
       else if (ageHours < 6) freshness = 1.1; // +10% for recent content
     }
     scored.set(p.id, { total: getScore(p) * freshness, freshness });

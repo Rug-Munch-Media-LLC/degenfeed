@@ -547,9 +547,13 @@ export default function DiscoverPage() {
   );
 
   const [popularThisHour, setPopularThisHour] = useState<TrendingPost[]>([]);
-  const [popularThisHourState, setPopularThisHourState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
+  const [popularThisHourState, setPopularThisHourState] = useState<
+    'loading' | 'loaded' | 'empty' | 'error'
+  >('loading');
   const [recommendedPosts, setRecommendedPosts] = useState<TrendingPost[]>([]);
-  const [recommendedState, setRecommendedState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
+  const [recommendedState, setRecommendedState] = useState<
+    'loading' | 'loaded' | 'empty' | 'error'
+  >('loading');
 
   useEffect(() => {
     let cancelled = false;

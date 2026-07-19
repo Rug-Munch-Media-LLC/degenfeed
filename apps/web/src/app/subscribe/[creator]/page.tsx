@@ -219,7 +219,10 @@ export default function SubscribePage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6">
+            <div
+              key={i}
+              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6"
+            >
               <div className="h-5 w-24 skeleton rounded mb-3" />
               <div className="h-8 w-20 skeleton rounded mb-4" />
               <div className="space-y-2">
@@ -257,7 +260,9 @@ export default function SubscribePage() {
           Support this creator and unlock exclusive content
         </p>
         {walletAddress && (
-          <p className="mt-2 text-xs text-[var(--color-muted)]">Connected: {shortenAddress(walletAddress)}</p>
+          <p className="mt-2 text-xs text-[var(--color-muted)]">
+            Connected: {shortenAddress(walletAddress)}
+          </p>
         )}
       </div>
 
@@ -353,7 +358,9 @@ export default function SubscribePage() {
           <p className="text-sm text-[var(--color-muted)]">
             Sign the transaction in your wallet...
           </p>
-          <p className="mt-1 text-xs text-[var(--color-muted)]">Approve the payment in your connected wallet</p>
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
+            Approve the payment in your connected wallet
+          </p>
         </div>
       )}
 

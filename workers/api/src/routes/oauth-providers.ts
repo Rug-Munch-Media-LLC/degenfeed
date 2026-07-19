@@ -2,14 +2,14 @@ import { type Env, jsonResponse, rateLimit } from '../index';
 import { validateBodySize } from '../sanitize';
 import {
   consumeState,
-  generateOAuthState,
-  GOOGLE_STATE_PREFIX,
-  GITHUB_STATE_PREFIX,
   DISCORD_STATE_PREFIX,
-  TWITTER_STATE_PREFIX,
-  TELEGRAM_STATE_PREFIX,
+  GITHUB_STATE_PREFIX,
+  GOOGLE_STATE_PREFIX,
+  generateOAuthState,
   REDDIT_STATE_PREFIX,
   storeState,
+  TELEGRAM_STATE_PREFIX,
+  TWITTER_STATE_PREFIX,
 } from './oauth-state';
 
 // ─── Rate limit helper ─────────────────────────────────────────────
@@ -194,8 +194,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
 
   const clientId = env.GITHUB_CLIENT_ID;
   const clientSecret = env.GITHUB_CLIENT_SECRET;
-  if (!clientId || !clientSecret)
-    return jsonResponse({ error: 'GitHub auth not configured' }, 501);
+  if (!clientId || !clientSecret) return jsonResponse({ error: 'GitHub auth not configured' }, 501);
 
   try {
     const body = (await request.json()) as { code?: string; state?: string };
@@ -607,10 +606,7 @@ export async function handleTelegramCallback(request: Request, env: Env): Promis
       .map(([k, v]) => `${k}=${v}`)
       .join('\n');
 
-    const secretKey = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(botToken),
-    );
+    const secretKey = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(botToken));
     const key = await crypto.subtle.importKey(
       'raw',
       secretKey,

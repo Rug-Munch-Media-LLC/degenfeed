@@ -386,7 +386,10 @@ export async function scheduled(
     try {
       const { runWeeklyHealthMaintenance } = await import('./routes/source-health');
       const result = await runWeeklyHealthMaintenance(env);
-      log('info', `[scheduled] health maintenance: ${result.checked} checked, ${result.stale} stale, ${result.culled} culled`);
+      log(
+        'info',
+        `[scheduled] health maintenance: ${result.checked} checked, ${result.stale} stale, ${result.culled} culled`,
+      );
     } catch (err) {
       log('error', '[scheduled] health maintenance failed', err);
     }

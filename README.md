@@ -8,44 +8,70 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org)
 [![Cloudflare](https://img.shields.io/badge/deployed%20on-Cloudflare-F38020?logo=cloudflare)](https://cloudflare.com)
 
+**Status:** 🟢 Live at [app.degenfeed.xyz](https://app.degenfeed.xyz)
+**Docs:** [docs.degenfeed.xyz](https://docs.degenfeed.xyz)
 **Repo:** git.rugmunch.io/RugMunchMedia/degenfeed-web
-**Status:** Active development
-**Note:** This repo is the Next.js social-aggregator client for Nostr, Farcaster, Lens, and Bluesky. It is NOT the deployed Mastodon instance at degenfeed.xyz.
 
-## What this repo is
-A web client that aggregates open social protocols into a single feed and composer.
-Planned stack: Next.js 14 App Router, React 19, Tailwind, Radix, Zustand, TanStack Query.
+## What is DegenFeed?
 
-## What this repo is NOT
-- The deployed DegenFeed Mastodon server runs at /srv/degenfeed/ container degenfeed-web on port 4002
-- A backend API. Protocol adapters live in packages/.
+A multi-protocol social aggregator that unifies open social feeds into a single timeline with cross-platform posting and tipping. Built with **Next.js 16** (App Router), **Hono** on Cloudflare Workers, and deployed at [app.degenfeed.xyz](https://app.degenfeed.xyz).
 
-## Status
-- Landing page is served by the Cloudflare Worker from `workers/api/src/routes/landing.ts` at degenfeed.xyz
-- apps/web is scaffolding; not deployed
-- This repo currently has no health endpoint because apps/web is not running
+### Integrated Protocols (10+)
 
-## Quick start when apps/web exists
-npm install
-npm run dev
+| Protocol | Feed | Post | Tip |
+|----------|------|------|-----|
+| Nostr | ✅ | ✅ | ✅ |
+| Farcaster / Warpcast | ✅ | ✅ | ✅ |
+| Bluesky (AT Protocol) | ✅ | ✅ | ✅ |
+| Mastodon / GotoSocial | ✅ | ✅ | ✅ |
+| Threads (Instagram) | ✅ | ✅ | — |
+| Twitter / X | ✅ | — | — |
+| Reddit | ✅ | — | — |
+| RSS / Atom | ✅ | — | — |
+| PeerTube | ✅ | ✅ | ✅ |
+| Lemmy | ✅ | — | ✅ |
+| YouTube | ✅ | — | — |
 
-## Deployed Mastodon separate
-ssh netcup
-cd /srv/degenfeed/
-docker compose ps
+### What's Inside
 
-## Current issues
-- No PRODUCT/ARCHITECTURE/ROADMAP/TODO docs now added
-- No pre-commit config
-- No Makefile
-- Repo README conflated this client with the Mastodon deployment
+- **87 SSR pages** across the Next.js app (feed, profiles, threads, discover, settings, admin)
+- **500+ API routes** (Hono on Cloudflare Workers) serving `/api/*` and `/v1/*` — feeds, auth, tipping, moderation, search, notifications, billing, spaces, gamification, and more
+- **25+ packages** — protocol SDKs (nostr-sdk, farcaster-sdk, bluesky-sdk, mastodon-sdk, threads-sdk, lens-sdk, rss-sdk, peertube-provider), feed-core, ranking, identity, web3, reputation, storage, realtime, tip-contract (Solidity)
+- **Cross-platform tipping** — Lightning Network, EVM (Base/Optimism/Arbitrum), Solana
+- **Self-hostable** — [Docker Compose](docker-compose.yml) for the full stack
+
+### Architecture
+
+```
+apps/web         — Next.js 16 frontend (Cloudflare Pages)
+workers/api      — Hono API server (Cloudflare Workers) + Node.js fallback
+packages/        — 25+ shared packages (SDKs, feed pipeline, ranking, identity, web3, storage)
+docs/            — VitePress documentation site
+mobile/          — Capacitor mobile shell (iOS + Android)
+```
+
+## Quick Start
+
+```bash
+pnpm install
+
+# Copy and fill in environment variables
+cp apps/web/.env.example apps/web/.env.local
+
+# Start development
+pnpm dev
+```
+
+For the full stack (API + database), see [docker-compose.yml](docker-compose.yml).
+
+## Documentation
+
+- [docs.degenfeed.xyz](https://docs.degenfeed.xyz) — full reference
+- [ARCHITECTURE.md](ARCHITECTURE.md) — packages and protocol adapters
+- [DEPLOYMENT.md](DEPLOYMENT.md) — Cloudflare Pages + Workers deploy guide
+- [PRODUCT.md](PRODUCT.md) — charter and goals
+- [ROADMAP.md](ROADMAP.md) — next 90 days
 
 ## Standards
-This repo follows Rug Munch Media standards:
-https://git.rugmunch.io/RugMunchMedia/standards
 
-## Docs
-- PRODUCT.md — charter
-- ARCHITECTURE.md — packages and protocol adapters
-- ROADMAP.md — next 90 days
-- TODO.md — current tasks
+This repo follows [Rug Munch Media standards](https://git.rugmunch.io/RugMunchMedia/standards).

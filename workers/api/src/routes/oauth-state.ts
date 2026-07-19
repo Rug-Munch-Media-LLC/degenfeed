@@ -1,4 +1,4 @@
-import { type Env } from '../index';
+import type { Env } from '../index';
 
 export const GOOGLE_STATE_PREFIX = 'google:state:';
 export const GITHUB_STATE_PREFIX = 'github:state:';
@@ -13,11 +13,7 @@ export function generateOAuthState(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export async function storeState(
-  env: Env,
-  state: string,
-  prefix: string,
-): Promise<void> {
+export async function storeState(env: Env, state: string, prefix: string): Promise<void> {
   if (!env.CACHE) return;
   try {
     await env.CACHE.put(prefix + state, '1', { expirationTtl: STATE_TTL_SECONDS });
@@ -26,12 +22,11 @@ export async function storeState(
   }
 }
 
-export async function consumeState(
-  env: Env,
-  state: string,
-  prefix: string,
-): Promise<boolean> {
-  if (!env.CACHE) return true;
+export async function consumeState(env: Env, state: string, prefix: string): Promise<boolean> {
+  if (!env.CACHE) {
+    console.warn('[oauth-state] KV/CACHE unavailable — CSRF validation denied');
+    return false;
+  }
   try {
     const existing = await env.CACHE.get(prefix + state);
     if (!existing) return false;

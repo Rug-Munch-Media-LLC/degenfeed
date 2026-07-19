@@ -311,7 +311,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let handle = '';
         let displayName = '';
         if (protocol === 'mastodon' || protocol === 'gotosocial') {
-          handle = profile?.acct?.includes('@') ? profile.acct : `${profile?.acct}@social.degenfeed.xyz`;
+          handle = profile?.acct?.includes('@')
+            ? profile.acct
+            : `${profile?.acct}@social.degenfeed.xyz`;
           displayName = profile?.displayName || profile?.username || '';
         } else if (effectiveProtocol === 'google' || effectiveProtocol === 'email') {
           handle = profile?.email || '';
@@ -513,7 +515,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   displayName: creds.displayName,
                 }),
               });
-              const data = (await resp.json()) as { success?: boolean; message?: string; error?: string; requiresVerification?: boolean };
+              const data = (await resp.json()) as {
+                success?: boolean;
+                message?: string;
+                error?: string;
+                requiresVerification?: boolean;
+              };
               if (!resp.ok) throw new Error(data.error || 'Registration failed');
               showToast('success', data.message || 'Check your email to verify your account.');
               if (data.requiresVerification) {
@@ -528,13 +535,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               headers: { 'content-type': 'application/json' },
               body: JSON.stringify({ email: creds.email, password: creds.password }),
             });
-            const data = (await resp.json()) as { success?: boolean; user?: { id?: string; email?: string; displayName?: string }; error?: string };
+            const data = (await resp.json()) as {
+              success?: boolean;
+              user?: { id?: string; email?: string; displayName?: string };
+              error?: string;
+            };
             if (!resp.ok) throw new Error(data.error || 'Sign-in failed');
             const record = await buildIdentityRecord({
               protocol: 'email',
-              publicId: data.user?.id || creds.email as string,
+              publicId: data.user?.id || (creds.email as string),
               handle: data.user?.displayName || (creds.email as string).split('@')[0] || 'user',
-              displayName: data.user?.displayName || (creds.email as string).split('@')[0] || 'user',
+              displayName:
+                data.user?.displayName || (creds.email as string).split('@')[0] || 'user',
               secret: null,
               keys: { email: creds.email as string },
               isPrimary: false,

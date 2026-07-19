@@ -200,7 +200,13 @@ function LiveNowCard() {
               className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm"
               style={{ backgroundColor: `${space.color}18`, color: space.color }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
                 <path d="M19 10v2a7 7 0 01-14 0v-2" />
                 <line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" strokeWidth="1.5" />
@@ -256,7 +262,13 @@ function PremiumCta() {
       >
         Learn More
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M6 4l4 4-4 4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </Link>
     </div>
