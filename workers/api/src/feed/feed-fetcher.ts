@@ -60,6 +60,9 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   mastodon: 6000,
   reddit: 5000,
   lemmy: 5000,
+  atproto: 8000,
+  zora: 8000,
+  telegram: 5000,
   peertube: 5000,
   rss: 3000, // RSS is slow — aggressive timeout
   threads: 2000, // Threads is scraping — aggressive timeout (experimental)

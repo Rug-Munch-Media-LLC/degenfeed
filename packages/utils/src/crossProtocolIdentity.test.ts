@@ -42,6 +42,9 @@ describe('PROTOCOL_ID_REGISTRY', () => {
       'lemmy',
       'rss',
       'peertube',
+      'atproto',
+      'zora',
+      'telegram',
     ];
     for (const p of protocols) {
       const key = p as keyof typeof PROTOCOL_ID_REGISTRY;
@@ -78,5 +81,20 @@ describe('PROTOCOL_ID_REGISTRY', () => {
   it('should have RSS and PeerTube in the registry', () => {
     expect(PROTOCOL_ID_REGISTRY.rss.displayName).toBe('RSS');
     expect(PROTOCOL_ID_REGISTRY.peertube.displayName).toBe('PeerTube');
+  });
+
+  it('should have AT Protocol with correct color', () => {
+    expect(PROTOCOL_ID_REGISTRY.atproto.displayName).toBe('AT Protocol / Bluesky');
+    expect(PROTOCOL_ID_REGISTRY.atproto.color).toBe('#0085ff');
+  });
+
+  it('should have Zora with correct color', () => {
+    expect(PROTOCOL_ID_REGISTRY.zora.displayName).toBe('Zora / Base');
+    expect(PROTOCOL_ID_REGISTRY.zora.color).toBe('#0052FF');
+  });
+
+  it('should have Telegram with correct color', () => {
+    expect(PROTOCOL_ID_REGISTRY.telegram.displayName).toBe('Telegram');
+    expect(PROTOCOL_ID_REGISTRY.telegram.color).toBe('#0088cc');
   });
 });

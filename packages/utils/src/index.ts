@@ -72,6 +72,9 @@ const VALID_PROTOCOLS: Protocol[] = [
   'lemmy',
   'peertube',
   'youtube',
+  'atproto',
+  'zora',
+  'telegram',
 ];
 
 export function parseProtocols(
@@ -157,6 +160,9 @@ export const PROTOCOL_COLORS: Record<string, string> = {
   solana: '#9945ff',
   peertube: '#f1680d',
   youtube: '#ff0000',
+  atproto: '#0085ff',
+  zora: '#0052FF',
+  telegram: '#0088cc',
 };
 
 export const PROTOCOL_EMOJI: Record<string, string> = {
@@ -173,6 +179,9 @@ export const PROTOCOL_EMOJI: Record<string, string> = {
   solana: '◎',
   peertube: '📹',
   youtube: '▶️',
+  atproto: '🦋',
+  zora: '◆',
+  telegram: '✈',
 };
 
 export function getProtocolColor(p: string): string {

@@ -6,7 +6,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./formatter": "./src/atproto-formatter.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

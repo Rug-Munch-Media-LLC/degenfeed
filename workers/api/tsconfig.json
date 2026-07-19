@@ -20,6 +20,7 @@
       "@degenfeed/mastodon-sdk": ["packages/mastodon-sdk/src"],
       "@degenfeed/rss-sdk": ["packages/rss-sdk/src"],
       "@degenfeed/identity": ["packages/identity/src"],
+      "@degenfeed/identity-hub": ["packages/identity-hub/src"],
       "@degenfeed/auth": ["packages/auth/src"],
       "@degenfeed/storage": ["packages/storage/src"],
       "@degenfeed/ui": ["packages/ui/src"],

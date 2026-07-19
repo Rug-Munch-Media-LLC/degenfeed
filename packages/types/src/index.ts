@@ -20,7 +20,10 @@ export type Protocol =
   | 'peertube'
   | 'youtube'
   | 'kbin'
-  | 'tildes';
+  | 'tildes'
+  | 'atproto'
+  | 'zora'
+  | 'telegram';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */
@@ -48,6 +51,12 @@ export interface UnifiedIdentity {
     threadsDid?: string;
     /** RSS source URL (e.g. blog feed URL) */
     rssUrl?: string;
+    /** AT Protocol DID (e.g. did:plc:abc123) */
+    atprotoDid?: string;
+    /** Zora creator coin contract address */
+    zoraCoinAddress?: string;
+    /** Telegram user ID */
+    telegramUserId?: string;
   };
 }
 

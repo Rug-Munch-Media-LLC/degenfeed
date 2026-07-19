@@ -19,6 +19,7 @@
     "@degenfeed/feed-core": "workspace:*",
     "@degenfeed/feed-providers": "workspace:*",
     "@degenfeed/identity": "workspace:*",
+    "@degenfeed/identity-hub": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",
     "@degenfeed/mastodon-sdk": "workspace:*",
     "@degenfeed/nostr-sdk": "workspace:*",

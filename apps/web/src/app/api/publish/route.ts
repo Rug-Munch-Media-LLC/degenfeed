@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { proxyGet } from '../_proxy';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
@@ -13,12 +14,42 @@ const VALID_TARGETS = [
   'peertube',
 ];
 
+const FREE_TIER_MAX_PROTOCOLS = 3;
+
+/**
+ * Check premium status by calling the worker's billing API.
+ * Defaults to free tier if the API is unreachable.
+ */
+async function checkUserPremium(request: Request): Promise<{
+  isPremium: boolean;
+  tier: string;
+}> {
+  try {
+    const billingRes = await proxyGet('/api/billing/my-status', request);
+    if (!billingRes.ok) {
+      return { isPremium: false, tier: 'free' };
+    }
+    const data = (await billingRes.json()) as { tier?: string; isPremium?: boolean };
+    return {
+      isPremium: data.isPremium ?? false,
+      tier: data.tier ?? 'free',
+    };
+  } catch {
+    // Worker unreachable — default to free (conservative)
+    // TODO: Integrate Stripe subscription check as a fallback
+    return { isPremium: false, tier: 'free' };
+  }
+}
+
 /**
  * POST /api/publish
  * Publish a cross-protocol post to multiple targets.
  *
  * For Nostr, the client signs the event locally and sends the signed event.
  * For other protocols, auth tokens are included and passed to the protocol SDK.
+ *
+ * Free tier users are limited to 3 protocols per post.
+ * Premium users can post to all protocols.
  */
 export async function POST(request: Request) {
   try {
@@ -39,6 +70,23 @@ export async function POST(request: Request) {
       );
     }
 
+    // ── Premium tier check ──────────────────────────────────────
+    const { isPremium, tier } = await checkUserPremium(request);
+
+    if (!isPremium && targets.length > FREE_TIER_MAX_PROTOCOLS) {
+      return NextResponse.json(
+        {
+          error: 'Free tier limited to 3 protocols. Upgrade to post to all protocols.',
+          upgrade_url: '/settings#subscription',
+          protocols_used: targets.length,
+          tier: 'free',
+          remaining_free_slots: 0,
+          status: 402,
+        },
+        { status: 402 },
+      );
+    }
+
     const results: Record<string, { ok: boolean; error?: string; hash?: string }> = {};
 
     // Attempt actual publish per target
@@ -51,7 +99,16 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ results });
+    return NextResponse.json({
+      results,
+      meta: {
+        protocols_used: targets.length,
+        tier,
+        remaining_free_slots: isPremium
+          ? 'unlimited'
+          : Math.max(0, FREE_TIER_MAX_PROTOCOLS - targets.length),
+      },
+    });
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
