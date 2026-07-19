@@ -1,0 +1,24 @@
+[package]
+name = "degenfeed-creator-token"
+version = "0.1.0"
+description = "Solana SPL creator token program — bonding curve, fees, vesting, graduation"
+edition = "2021"
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+anchor-lang = { version = "0.30.1", features = ["init-if-needed"] }
+anchor-spl = { version = "0.30.1", features = ["token"] }
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1

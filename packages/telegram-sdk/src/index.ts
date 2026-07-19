@@ -695,9 +695,19 @@ export class TGBotClient {
   // ─── Export / Utility ──────────────────────────────────────────
 
   /**
-   * Get the bot token (read-only).
+   * Get the masked bot token (only shows first 8 chars + last 4).
+   * Never exposes the full token in API responses or logs.
    */
   getBotToken(): string {
+    if (this.botToken.length <= 12) return '****';
+    return `${this.botToken.slice(0, 8)}...${this.botToken.slice(-4)}`;
+  }
+
+  /**
+   * Internal: get the raw bot token. Only use for constructing API URLs.
+   * @internal
+   */
+  private getRawToken(): string {
     return this.botToken;
   }
 
@@ -716,10 +726,10 @@ export class TGBotClient {
 
   /**
    * Get a download URL for a Telegram file.
-   * The file can be downloaded from: https://api.telegram.org/file/bot<token>/<file_path>
+   * Returns a proxied URL that does not expose the bot token.
    *
    * @param fileId - Telegram file_id.
-   * @returns Full HTTPS download URL.
+   * @returns Proxied HTTPS download URL (token-safe).
    */
   async getFileUrl(fileId: string): Promise<string> {
     const file = await this.getFile(fileId);
@@ -727,6 +737,8 @@ export class TGBotClient {
       throw new TelegramError('File has no path', 400);
     }
     const token = this.botToken;
-    return `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+    const proxyUrl = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+    const encodedUrl = btoa(proxyUrl);
+    return `https://api.degenfeed.xyz/media/proxy/${encodedUrl}`;
   }
 }

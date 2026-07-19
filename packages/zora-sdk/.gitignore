@@ -1,0 +1,9 @@
+# Foundry
+out/
+cache/
+lib/
+
+# TypeScript
+dist/
+node_modules/
+*.tsbuildinfo

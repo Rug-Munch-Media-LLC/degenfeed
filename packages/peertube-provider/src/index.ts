@@ -61,6 +61,17 @@ import type { Protocol } from '@degenfeed/types';
 // ─── Re-exports ──────────────────────────────────────────────────────
 
 export { getFederatedFeed } from './federated';
+export type {
+  ChatFetchResult,
+  ChatMessage,
+  PeerTubeLiveStreamConfig,
+  StreamCreateOptions,
+  StreamCreateResult,
+  StreamRecording,
+  StreamStatus,
+  StreamUpdateOptions,
+} from './livestream';
+export { PeerTubeLiveError, PeerTubeLiveStream } from './livestream';
 
 // ─── Constants ───────────────────────────────────────────────────────
 

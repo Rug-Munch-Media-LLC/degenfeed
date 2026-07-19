@@ -20,7 +20,9 @@
 import { identityKey } from '@degenfeed/utils';
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
+import { requireSession, parseSessionCookie, validateCsrfToken } from '../session';
+import { checkIdentityLinkRateLimit } from '../lib/community-store';
+import { sealForWallet } from '../lib/crypto-seal';
 
 // ─── AT Protocol ────────────────────────────────────────────────
 
@@ -35,6 +37,18 @@ import { requireSession } from '../session';
 export async function handleLinkAtproto(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
+
+  const cookieVal = parseSessionCookie(request.headers.get('cookie'));
+  const csrfToken = request.headers.get('X-CSRF-Token');
+  if (cookieVal) {
+    const csrfOk = await validateCsrfToken(cookieVal, csrfToken, env);
+    if (!csrfOk) return jsonResponse({ error: 'Invalid CSRF token' }, 403);
+  }
+
+  const canLink = await checkIdentityLinkRateLimit(env, session.address);
+  if (!canLink) {
+    return jsonResponse({ error: 'Rate limited. Max 10 identity links per hour.' }, 429);
+  }
 
   const walletAddress = session.address;
 
@@ -100,6 +114,16 @@ export async function handleLinkAtproto(request: Request, env: Env): Promise<Res
     lastVerified: now,
   };
 
+  // Encrypt and store PDS password if provided
+  if (body.password) {
+    try {
+      const encryptedPwd = await sealForWallet(env, body.password, walletAddress, 'atproto-password');
+      (updated.atproto as Record<string, unknown>).encryptedPassword = encryptedPwd;
+    } catch {
+      // encryption failure is non-fatal
+    }
+  }
+
   try {
     await env.IDENTITIES?.put(key, JSON.stringify(updated));
   } catch (err) {
@@ -122,6 +146,18 @@ export async function handleLinkAtproto(request: Request, env: Env): Promise<Res
 export async function handleCreateAtproto(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
+
+  const cookieVal = parseSessionCookie(request.headers.get('cookie'));
+  const csrfToken = request.headers.get('X-CSRF-Token');
+  if (cookieVal) {
+    const csrfOk = await validateCsrfToken(cookieVal, csrfToken, env);
+    if (!csrfOk) return jsonResponse({ error: 'Invalid CSRF token' }, 403);
+  }
+
+  const canLink = await checkIdentityLinkRateLimit(env, session.address);
+  if (!canLink) {
+    return jsonResponse({ error: 'Rate limited. Max 10 identity links per hour.' }, 429);
+  }
 
   const walletAddress = session.address;
 
@@ -169,6 +205,16 @@ export async function handleCreateAtproto(request: Request, env: Env): Promise<R
       refreshJwt?: string;
     };
 
+    // Encrypt JWT tokens before storing in KV
+    let encryptedAccessJwt: string | undefined;
+    let encryptedRefreshJwt: string | undefined;
+    if (data.accessJwt) {
+      encryptedAccessJwt = await sealForWallet(env, data.accessJwt, walletAddress, 'atproto-access');
+    }
+    if (data.refreshJwt) {
+      encryptedRefreshJwt = await sealForWallet(env, data.refreshJwt, walletAddress, 'atproto-refresh');
+    }
+
     // Store the created identity
     const key = identityKey(walletAddress);
     let existing: CrossProtocolIdentity | null = null;
@@ -188,7 +234,9 @@ export async function handleCreateAtproto(request: Request, env: Env): Promise<R
         pdsUrl,
         verified: true,
         autoCreated: true,
-      },
+        ...(encryptedAccessJwt ? { encryptedAccessJwt } : {}),
+        ...(encryptedRefreshJwt ? { encryptedRefreshJwt } : {}),
+      } as Record<string, unknown> as CrossProtocolIdentity['atproto'],
       lastVerified: now,
     };
 
@@ -217,6 +265,18 @@ export async function handleCreateAtproto(request: Request, env: Env): Promise<R
 export async function handleLinkZora(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
+
+  const cookieVal = parseSessionCookie(request.headers.get('cookie'));
+  const csrfToken = request.headers.get('X-CSRF-Token');
+  if (cookieVal) {
+    const csrfOk = await validateCsrfToken(cookieVal, csrfToken, env);
+    if (!csrfOk) return jsonResponse({ error: 'Invalid CSRF token' }, 403);
+  }
+
+  const canLink = await checkIdentityLinkRateLimit(env, session.address);
+  if (!canLink) {
+    return jsonResponse({ error: 'Rate limited. Max 10 identity links per hour.' }, 429);
+  }
 
   const walletAddress = session.address;
 
@@ -331,6 +391,18 @@ export async function handleResolveZora(request: Request, env: Env): Promise<Res
 export async function handleLinkTelegram(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
+
+  const cookieVal = parseSessionCookie(request.headers.get('cookie'));
+  const csrfToken = request.headers.get('X-CSRF-Token');
+  if (cookieVal) {
+    const csrfOk = await validateCsrfToken(cookieVal, csrfToken, env);
+    if (!csrfOk) return jsonResponse({ error: 'Invalid CSRF token' }, 403);
+  }
+
+  const canLink = await checkIdentityLinkRateLimit(env, session.address);
+  if (!canLink) {
+    return jsonResponse({ error: 'Rate limited. Max 10 identity links per hour.' }, 429);
+  }
 
   const walletAddress = session.address;
 

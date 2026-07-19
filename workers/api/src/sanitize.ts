@@ -1,4 +1,16 @@
-const SUSPICIOUS_PATTERNS = [/<script/i, /javascript:/i];
+const SUSPICIOUS_PATTERNS = [
+  /<script/i,
+  /javascript:/i,
+  /on\w+\s*=/i,
+  /<img[^>]+onerror/i,
+  /<svg[^>]+onload/i,
+  /data:text\/html/i,
+  /<iframe/i,
+  /<object/i,
+  /<embed/i,
+  /expression\s*\(/i,
+  /vbscript:/i,
+];
 
 export const ALLOWED_PROTOCOLS = new Set([
   'nostr',
@@ -69,6 +81,35 @@ const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 export function isValidSolanaAddress(value: string): boolean {
   return SOLANA_ADDRESS_RE.test(value);
+}
+
+const COIN_NAME_RE = /^[a-zA-Z0-9][a-zA-Z0-9\s\-_]{0,30}[a-zA-Z0-9]$|^[a-zA-Z0-9]$/;
+
+export function isValidCoinName(value: string): boolean {
+  return value.length >= 1 && value.length <= 32 && COIN_NAME_RE.test(value);
+}
+
+const COIN_SYMBOL_RE = /^[A-Z0-9_]{1,10}$/;
+
+export function isValidCoinSymbol(value: string): boolean {
+  return COIN_SYMBOL_RE.test(value);
+}
+
+const COMMENT_TEXT_RE = /^[^<>]{1,500}$/;
+
+export function sanitizeCommentText(text: string): string {
+  let cleaned = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  cleaned = cleaned.replace(/<[^>]*>/g, '');
+  cleaned = cleaned.replace(/javascript:/gi, '');
+  cleaned = cleaned.replace(/on\w+\s*=/gi, '');
+  cleaned = cleaned.substring(0, 500).trim();
+  return cleaned;
+}
+
+const STREAM_TITLE_RE = /^[^\x00-\x1f\x7f]{1,100}$/;
+
+export function sanitizeStreamTitle(title: string): string {
+  return title.replace(/<[^>]*>/g, '').substring(0, 100).trim();
 }
 
 // ─── SSRF-hardened URL fetching ────────────────────────────────────

@@ -6,7 +6,8 @@ import {
   sanitizeString,
   sanitizeStringArray,
 } from '../sanitize';
-import { requireSession } from '../session';
+import { requireSession, parseSessionCookie, validateCsrfToken } from '../session';
+import { checkPublishRateLimit } from '../lib/community-store';
 
 // ─── RSS-to-Nostr bridge ─────────────────────────────────────────────
 // (unchanged — see bottom of file)
@@ -68,6 +69,18 @@ export async function handlePublish(request: Request, env: Env): Promise<Respons
       // Extract session to check premium
       const session = await requireSession(request, env);
       if (session instanceof Response) return session;
+
+      const cookieVal = parseSessionCookie(request.headers.get('cookie'));
+      const csrfToken = request.headers.get('X-CSRF-Token');
+      if (cookieVal) {
+        const csrfOk = await validateCsrfToken(cookieVal, csrfToken, env);
+        if (!csrfOk) return jsonResponse({ error: 'Invalid CSRF token' }, 403);
+      }
+
+      const canPublish = await checkPublishRateLimit(env, session.address);
+      if (!canPublish) {
+        return jsonResponse({ error: 'Rate limited. Max 30 publishes per minute.' }, 429);
+      }
 
       const gate = await requirePremiumTier(session.address, env, 'pro');
       if (gate) return gate;

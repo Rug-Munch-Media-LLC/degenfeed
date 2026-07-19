@@ -308,6 +308,9 @@ import {
   handleTipSettingsPost,
 } from './routes/tip';
 import { handleTokenGateResolve, handleTokenGateVerify } from './routes/token-gate';
+import tokenCommunity from './routes/token-community';
+import peertubeStreams from './routes/peertube-streams';
+import { handleTokenWebSocket, handleTokenSSE } from './routes/token-websocket';
 import { handleTranslate } from './routes/translate';
 import {
   handleUnifiedTipActivity,
@@ -943,6 +946,23 @@ app.all('/api/x402/verify', async (c) => handleX402Verify(c.req.raw, c.env));
 // ─── API: Token Gate ─────────────────────────────────────────
 app.post('/api/token-gate/verify', async (c) => handleTokenGateVerify(c.req.raw, c.env));
 app.post('/api/token-gate/resolve', async (c) => handleTokenGateResolve(c.req.raw, c.env));
+
+// ─── API: Token Community (engagement layer) ────────────────
+app.route('/api/token', tokenCommunity);
+
+// ─── API: PeerTube Livestreams (creator token streaming) ───
+app.route('/api/token', peertubeStreams);
+
+// ─── WebSocket: Token real-time updates ────────────────────
+app.get('/ws/token/:address', async (c) => {
+  // SSE fallback: check for text/event-stream Accept header
+  const accept = c.req.header('accept');
+  if (accept?.includes('text/event-stream')) {
+    return handleTokenSSE(c.req.raw, c.env);
+  }
+  // WebSocket upgrade
+  return handleTokenWebSocket(c.req.raw, c.env);
+});
 
 // ─── API: Cross-Platform Registration ──────────────────────
 app.all('/api/register-platform', async (c) =>

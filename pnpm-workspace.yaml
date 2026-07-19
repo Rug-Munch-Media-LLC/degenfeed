@@ -10,6 +10,7 @@ allowBuilds:
   '@bundled-es-modules/glob': set this to true or false
   '@reown/appkit': true
   '@stellar/stellar-sdk': true
+  bigint-buffer: true
   blake-hash: true
   bufferutil: true
   esbuild: true
@@ -27,4 +28,3 @@ minimumReleaseAgeExclude:
 overrides:
   ws: ^8.21.1
   undici: '>=6.27.0'
-

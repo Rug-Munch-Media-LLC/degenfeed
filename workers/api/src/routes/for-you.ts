@@ -466,7 +466,7 @@ async function generateForYouFeed(
     const unseenPool = finalRanked.filter((post) => {
       const cat = ensureCategory(post);
       const count = seenCategories.get(cat) ?? 0;
-      const qualityScore = post.score?.qualityScore ?? 0;
+      const qualityScore = post.score?.quality ?? 0;
       // Only take posts from underrepresented categories with decent quality
       return count <= 2 && qualityScore > BOREDOM_BREAKER_QUALITY_FLOOR * 100;
     });

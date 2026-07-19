@@ -87,6 +87,16 @@ export interface Env {
   REPORTS?: KVNamespace;
   /** Comma-separated admin wallet addresses (lowercase) for moderation dashboard access */
   ADMIN_WALLETS?: string;
+  /** PeerTube instance URL for livestreams (default: https://video.degenfeed.xyz) */
+  PEERTUBE_INSTANCE_URL?: string;
+  /** PeerTube OAuth2 client ID for API authentication */
+  PEERTUBE_CLIENT_ID?: string;
+  /** PeerTube OAuth2 client secret for API authentication */
+  PEERTUBE_CLIENT_SECRET?: string;
+  /** Nostr private key hex for publishing live event kind 30311 */
+  NOSTR_PRIVATE_KEY?: string;
+  /** Bluesky DID for AT Protocol posting */
+  BSKY_DID?: string;
   /** YouTube Data API v3 key for channel discovery */
   YOUTUBE_API_KEY?: string;
   /** KV namespace for Audio Spaces data */
@@ -94,6 +104,9 @@ export interface Env {
 
   /** KV namespace for API key storage (v1 public API) */
   API_KEYS?: KVNamespace;
+
+  /** KV namespace for token community content — comments, streams, badges, milestones */
+  CONTENT_STORE?: KVNamespace;
 
   /** KV namespace for DAO governance data (proposals, votes) */
   GOVERNANCE?: KVNamespace;
