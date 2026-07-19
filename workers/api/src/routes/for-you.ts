@@ -1,18 +1,22 @@
 /**
- * /api/feed/for-you — TikTok-style recommendation engine v3
+ * /api/feed/for-you — TikTok-style recommendation engine v3.1
  *
  * Research synthesis:
  *   TikTok: watch time, completion rate, shares, profile visits, "not interested"
  *   Twitter/X: engagement prediction, author diversity, topic authority, recency
  *   Instagram: interests, relationship, timeliness, frequency, following, usage
  *
- * V3 pipeline:
- *   1. Cold start: new users → high-engagement content across all categories
- *   2. Dwell time: KV-tracked view duration → boosts similar content
- *   3. Feedback: "Show less/more like this" → topic/creator weight adjustment
- *   4. Engagement prediction v2: 9-factor model with dwell + feedback signals
- *   5. Creator diversity: max 3 per creator per page, rotation enforced
- *   6. Algorithm transparency: each post gets a human-readable "why" reason
+ * V3.1 improvements:
+ *   1. Explicit ranking weights: recency(40%) + engagement(30%) + relevance(20%) + diversity(10%)
+ *   2. Fresh content boost: posts <1hr old get +20% score
+ *   3. Boredom breaker: every 15 posts, injects a high-quality post from unfamiliar category
+ *   4. Niche detection: crypto/defi posts rank higher for crypto-interested users
+ *   5. Cold start: new users → high-engagement content across all categories
+ *   6. Dwell time: KV-tracked view duration → boosts similar content
+ *   7. Feedback: "Show less/more like this" → topic/creator weight adjustment
+ *   8. Engagement prediction v2: 9-factor model with dwell + feedback signals
+ *   9. Creator diversity: max 3 per creator per page, rotation enforced
+ *   10. Algorithm transparency: each post gets a human-readable "why" reason
  *
  * Also provides topic preference management + dwell recording + feedback endpoints.
  */
@@ -80,6 +84,16 @@ import {
   personalizeScore,
   type UserBehaviorProfile,
 } from '@degenfeed/feed-core';
+import {
+  computeRecencyScore,
+  computeEngagementScore,
+  computeRelevanceScore,
+  isCryptoContent,
+  FRESH_CONTENT_BOOST,
+  FRESH_CONTENT_WINDOW_MS,
+  BOREDOM_BREAKER_INTERVAL,
+  BOREDOM_BREAKER_QUALITY_FLOOR,
+} from '../ranking/ranking-weights';
 
 function behaviorKey(address: string): string {
   return `user:behavior:${address.toLowerCase()}`;
@@ -289,7 +303,8 @@ async function generateForYouFeed(
     },
   );
 
-  // 9. V3 personalization: engagement prediction v2 + dwell boost + feedback boost
+  // 9. V3.1 personalization: engagement prediction v2 + dwell boost + feedback boost
+  //    + explicit recency/engagement/relevance/diversity weighting
   let finalRanked: UnifiedPost[] = ranked;
   const algorithmReasons: Map<string, string[]> = new Map();
   let personalizationApplied = false;
@@ -330,7 +345,7 @@ async function generateForYouFeed(
           legacyReasons = result.reasons;
         }
 
-        // B. Engagement prediction v2
+        // B. Engagement prediction v2 (includes recency as top factor)
         const v2Pred = predictEngagementV2({
           post,
           userNiches,
@@ -350,12 +365,31 @@ async function generateForYouFeed(
         // D. Feedback boost
         const feedbackResult = computeFeedbackBoost(post, feedbackProfile);
 
-        // Combine: legacy + v2 prediction + dwell + feedback
+        // E. V3.1 explicit weight formula:
+        //    recency(40%) + engagement(30%) + relevance(20%) + diversity(10%)
+        //    Combined with v2 prediction + dwell + feedback signals
+        const recencyComponent = computeRecencyScore(post.createdAt, now) * 0.4;
+        const engagementComponent = computeEngagementScore(
+          post.metrics.likes,
+          post.metrics.reposts,
+          post.metrics.replies,
+          post.metrics.quotes ?? 0,
+        ) * 0.3;
+        const relevanceComponent = computeRelevanceScore(
+          post.niches,
+          userNiches,
+          userCtx.followed,
+          post.author.id,
+        ) * 0.2;
+        // Diversity component from v2 prediction's diversity bonus
+        const diversityComponent = (v2Pred.normalizedScore * 0.1);
+
+        // Combine: explicit weights(60%) + v2 prediction(20%) + dwell(10%) + feedback(10%)
         const combinedBoost =
-          legacyBoost * 0.15 + // legacy weight
-          v2Pred.normalizedScore * 0.45 + // v2 prediction weight
-          (dwellResult.multiplier - 1.0) * 0.25 + // dwell weight (normalize to 0-1 range)
-          (feedbackResult.multiplier - 1.0) * 0.15; // feedback weight
+          (recencyComponent + engagementComponent + relevanceComponent + diversityComponent) * 0.6 +
+          v2Pred.normalizedScore * 0.20 +
+          (dwellResult.multiplier - 1.0) * 0.10 +
+          (feedbackResult.multiplier - 1.0) * 0.10;
 
         // Collect algorithm reasons
         const reasons = [
@@ -364,6 +398,15 @@ async function generateForYouFeed(
           ...feedbackResult.factors,
           ...legacyReasons,
         ];
+        // Add recency reason
+        if (recencyComponent > 0.3) {
+          reasons.push('Fresh content boost');
+        }
+        // Add crypto niche reason
+        if (isCryptoContent(post.niches, post.text)) {
+          reasons.push('Matched your crypto interests');
+        }
+
         // Dedup reasons
         const uniqueReasons = [...new Set(reasons)];
         algorithmReasons.set(post.id, uniqueReasons.length > 0 ? uniqueReasons : []);
@@ -386,14 +429,86 @@ async function generateForYouFeed(
     finalRanked = personalized.map(({ _personalizationScore, ...clean }) => clean);
   }
 
-  // 10. Cold start: attach cold start algorithm reasons
+  // 10. V3.1 Fresh content boost: posts <1hr old get +20% score multiplier
+  if (!isColdStart) {
+    const now = Date.now();
+    finalRanked = finalRanked.map((post) => {
+      const ageMs = now - post.createdAt;
+      if (ageMs < FRESH_CONTENT_WINDOW_MS && post.score) {
+        const boostMultiplier = FRESH_CONTENT_BOOST;
+        return {
+          ...post,
+          score: {
+            ...post.score,
+            total: post.score.total * boostMultiplier,
+          },
+        };
+      }
+      return post;
+    });
+  }
+
+  // 10a. V3.1 Boredom breaker: every BOREDOM_BREAKER_INTERVAL posts, inject a
+  //      high-quality post from a category the user doesn't usually see.
+  //      This prevents filter bubbles and keeps discovery alive.
+  if (!isColdStart && finalRanked.length > BOREDOM_BREAKER_INTERVAL) {
+    // Find categories the user is underserved in
+    const seenCategories = new Map<string, number>();
+    for (const post of finalRanked) {
+      const cat = ensureCategory(post);
+      seenCategories.set(cat, (seenCategories.get(cat) ?? 0) + 1);
+    }
+
+    // Find the least-seen category with high-quality posts
+    const sortedCats = [...seenCategories.entries()]
+      .sort((a, b) => a[1] - b[1])
+      .map(([cat]) => cat);
+
+    // Build boredom breaker injection list
+    const injected: UnifiedPost[] = [];
+    const unseenPool = finalRanked.filter((post) => {
+      const cat = ensureCategory(post);
+      const count = seenCategories.get(cat) ?? 0;
+      const qualityScore = post.score?.qualityScore ?? 0;
+      // Only take posts from underrepresented categories with decent quality
+      return count <= 2 && qualityScore > BOREDOM_BREAKER_QUALITY_FLOOR * 100;
+    });
+
+    // Inject boredom breakers at every interval position
+    if (unseenPool.length > 0) {
+      const result: UnifiedPost[] = [];
+      let unseenIdx = 0;
+      for (let i = 0; i < finalRanked.length; i++) {
+        result.push(finalRanked[i]!);
+        // After every BOREDOM_BREAKER_INTERVAL posts, inject a discovery post
+        if (
+          (i + 1) % BOREDOM_BREAKER_INTERVAL === 0 &&
+          unseenIdx < unseenPool.length &&
+          i < finalRanked.length - 1
+        ) {
+          const discoveryPost = unseenPool[unseenIdx]!;
+          unseenIdx++;
+          // Add algorithm reason for the boredom breaker
+          const existingReasons = algorithmReasons.get(discoveryPost.id) ?? [];
+          algorithmReasons.set(discoveryPost.id, [
+            ...existingReasons,
+            'Discovery pick — trying something new',
+          ]);
+          result.push(discoveryPost);
+        }
+      }
+      finalRanked = result;
+    }
+  }
+
+  // 10b. Cold start: attach cold start algorithm reasons
   if (isColdStart) {
     for (const post of finalRanked) {
       algorithmReasons.set(post.id, coldStartReasons(post));
     }
   }
 
-  // 10b. Underserved category boost — detect thin/empty categories and
+  // 10c. Underserved category boost — detect thin/empty categories and
   // boost posts from those categories by 1.2x to improve coverage diversity.
   const underserved = findUnderservedCategories(finalRanked);
   if (underserved.length > 0) {

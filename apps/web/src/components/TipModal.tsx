@@ -36,9 +36,11 @@ export function TipModal({
   const { account, connect: connectWallet } = useWeb3();
   const { account: solanaAccount, connect: connectSolana, signAndSendTransaction } = useSolana();
   const [amount, setAmount] = useState('0.001');
+  const [tipMessage, setTipMessage] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [_invoice, setInvoice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   /** L2 chain for on-chain tipping (Base / Optimism / Arbitrum). */
   const [onchainChain, setOnchainChain] = useState<string>('base');
   /** True while a direct on-chain tx is pending confirmation. */
@@ -177,6 +179,7 @@ export function TipModal({
 
         setTipStatus('sent', result.txHash);
         setOnchainPending(false);
+        if (confettiAmount >= 10) setShowConfetti(true);
         window.dispatchEvent(
           new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
         );
@@ -235,6 +238,7 @@ export function TipModal({
         window.dispatchEvent(
           new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
         );
+        if (confettiAmount >= 10) setShowConfetti(true);
         announce(`Tip sent to ${recipientDisplayName}`, 'polite');
         return;
       }
@@ -263,6 +267,7 @@ export function TipModal({
         window.dispatchEvent(
           new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
         );
+        if (confettiAmount >= 10) setShowConfetti(true);
         announce(`Tip sent to ${recipientDisplayName}`, 'polite');
         return;
       }
@@ -326,6 +331,7 @@ export function TipModal({
         window.dispatchEvent(
           new CustomEvent('df-toast', { detail: { kind: 'success', message: '⚡ Tip sent!' } }),
         );
+        if (confettiAmount >= 10) setShowConfetti(true);
         announce(`Tip sent to ${recipientDisplayName}`, 'polite');
         return;
       }
@@ -368,10 +374,32 @@ export function TipModal({
     announce,
   ]);
 
+  // ── Fiat amount equivalents ─────────────────────────────────────────────
+  const fiatEquivalents: Record<string, string> = {
+    '0.001': '≈ $1',
+    '0.005': '≈ $5',
+    '0.01': '≈ $10',
+    '0.05': '≈ $50',
+    '0.1': '≈ $100',
+    '1000': '≈ $0.60',
+    '5000': '≈ $3',
+    '10000': '≈ $6',
+    '50000': '≈ $30',
+    '100000': '≈ $60',
+  };
+
   const quickAmounts =
     selectedMethod === 'lightning_zap'
       ? ['1000', '5000', '10000', '50000', '100000']
       : ['0.001', '0.005', '0.01', '0.05', '0.1'];
+
+  // ── Confetti trigger for large tips ─────────────────────────────────────
+  const confettiAmount = useMemo(() => {
+    const fiatValue = fiatEquivalents[amount];
+    if (!fiatValue) return 0;
+    const match = fiatValue.match(/\d+/);
+    return match ? Number.parseInt(match[0], 10) : 0;
+  }, [amount]);
 
   if (!open) return null;
 
@@ -556,17 +584,75 @@ export function TipModal({
                       key={a}
                       type="button"
                       onClick={() => setAmount(a)}
-                      className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors border ${
+                      className={`group relative rounded-lg px-3 py-1 text-xs font-medium transition-colors border ${
                         amount === a
                           ? 'border-degen-500 bg-degen-500/20 text-degen-400'
                           : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-border)]'
                       }`}
                     >
-                      {a}
+                      <span className="font-mono">{a}</span>
+                      {fiatEquivalents[a] && (
+                        <span className="ml-1 text-[9px] opacity-60">{fiatEquivalents[a]}</span>
+                      )}
                     </button>
                   ))}
                 </div>
               </div>
+
+              {/* ── Tip message (optional) ──────────────────────────── */}
+              <div className="mb-4">
+                <label
+                  htmlFor="tip-message"
+                  className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]"
+                >
+                  Message{' '}
+                  <span className="font-normal normal-case text-[var(--color-muted)]">
+                    (optional)
+                  </span>
+                </label>
+                <div className="relative">
+                  <textarea
+                    id="tip-message"
+                    value={tipMessage}
+                    onChange={(e) => setTipMessage(e.target.value.slice(0, 140))}
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2.5 text-sm text-[var(--color-fg)] outline-none resize-none transition-colors focus:border-degen-500"
+                    rows={2}
+                    placeholder={`Say something to ${recipientDisplayName}…`}
+                    aria-label="Tip message (optional)"
+                  />
+                  <span className="absolute bottom-2 right-3 text-[10px] text-[var(--color-muted)]">
+                    {tipMessage.length}/140
+                  </span>
+                </div>
+              </div>
+
+              {/* ── Fiat equivalent hint ── */}
+              {fiatEquivalents[amount] && (
+                <p className="mb-3 text-[10px] text-[var(--color-muted)]">
+                  {fiatEquivalents[amount]} USD equivalent at current rates
+                </p>
+              )}
+
+              {/* ── Confetti overlay ── */}
+              {showConfetti && (
+                <div className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center">
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className="absolute text-lg"
+                      style={{
+                        animation: `tip-confetti ${1 + Math.random() * 0.6}s ease-out forwards`,
+                        animationDelay: `${i * 0.03}s`,
+                        left: `${25 + Math.random() * 50}%`,
+                        top: '40%',
+                      }}
+                      aria-hidden="true"
+                    >
+                      {['✨', '⚡', '💎', '🔥', '⭐', '💚', '🎯', '💫'][i % 8]}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {/* ── Chain selector (on-chain only) ──────────────────── */}
               {isOnchain && (
@@ -748,6 +834,17 @@ export function TipModal({
           </p>
         </div>
       </section>
+
+      <style>{`
+        @keyframes tip-confetti {
+          0% { transform: translateY(0) scale(0.3) rotate(0deg); opacity: 1; }
+          40% { transform: translateY(-40px) scale(1.2) rotate(180deg); opacity: 1; }
+          100% { transform: translateY(80px) scale(0.4) rotate(360deg); opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          * { animation-duration: 0.01ms !important; }
+        }
+      `}</style>
     </dialog>
   );
 }

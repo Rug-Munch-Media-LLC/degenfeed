@@ -46,8 +46,8 @@ export default function HomePage() {
         <h1 className="text-3xl font-bold tracking-tight text-[var(--color-fg)] sm:text-4xl">
           The social feed of <span className="gradient-text">web3</span>
         </h1>
-        <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-muted)]">
-          Pick a network. Browse, search, and cross-post everywhere.
+        <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--color-muted)]">
+          Aggregate 10 social protocols into one ranked feed. Browse without an account, or connect your wallet to post, tip, and engage across every network.
         </p>
       </div>
 
@@ -121,9 +121,32 @@ export default function HomePage() {
       </div>
 
       {/* Status footer */}
-      <div className="mt-8 text-center">
-        <p className="text-[10px] text-[var(--color-muted)]">
-          No account required to browse · Zero cookies · Zero tracking · MIT licensed
+      <div className="mt-8 border-t border-[var(--color-glass-border)] pt-6 text-center">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] text-[var(--color-muted)]">
+          <span>No account required to browse</span>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
+          <span>Zero cookies</span>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
+          <span>Zero tracking</span>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
+          <a href="/status" className="hover:text-[var(--color-fg)] transition-colors">
+            Protocol Status
+          </a>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
+          <a href="/api-docs" className="hover:text-[var(--color-fg)] transition-colors">
+            API
+          </a>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
+          <a href="/docs" className="hover:text-[var(--color-fg)] transition-colors">
+            Docs
+          </a>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
+          <a href="/about" className="hover:text-[var(--color-fg)] transition-colors">
+            About
+          </a>
+        </div>
+        <p className="mt-3 text-[10px] text-[var(--color-muted)] opacity-60">
+          MIT Licensed · Built on open protocols · 10 networks · One window
         </p>
       </div>
     </div>

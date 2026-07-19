@@ -9,6 +9,11 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_ADMIN_WALLETS: "0x1e3ac01d0fdb976179790bdd02823196a92705c9"
+        NEXT_PUBLIC_APP_URL: "https://app.degenfeed.xyz"
+        NEXT_PUBLIC_API_BASE: "https://degenfeed.xyz"
+        NEXT_PUBLIC_API_URL: "https://degenfeed.xyz"
     container_name: degenfeed-web
     restart: unless-stopped
     ports:

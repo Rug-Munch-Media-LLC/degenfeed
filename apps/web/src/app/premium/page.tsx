@@ -272,6 +272,109 @@ export default function PremiumPage() {
         <ComparisonTable />
       </div>
 
+      {/* ── Subscriber Badge Preview ── */}
+      <div className="mb-12 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6">
+        <h2 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Your Badge Preview</h2>
+        <p className="mb-4 text-xs text-[var(--color-muted)]">
+          Your subscriber badge shows next to your name across the platform.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/50 px-4 py-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-degen-500/20 text-xs font-bold text-degen-400">
+              D
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-[var(--color-fg)]">degen_user</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-degen-500/15 px-2 py-0.5 text-[9px] font-medium text-degen-400">
+                  ★ Fan
+                </span>
+              </div>
+              <span className="text-[10px] text-[var(--color-muted)]">ethereum</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/50 px-4 py-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/20 text-xs font-bold text-purple-400">
+              D
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-[var(--color-fg)]">creator_name</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/15 px-2 py-0.5 text-[9px] font-medium text-purple-400">
+                  ★★ Supporter
+                </span>
+              </div>
+              <span className="text-[10px] text-[var(--color-muted)]">farcaster</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/50 px-4 py-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-400">
+              D
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-[var(--color-fg)]">whale_trader</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-medium text-amber-400">
+                  ★★★ Patron
+                </span>
+              </div>
+              <span className="text-[10px] text-[var(--color-muted)]">solana</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Testimonials ── */}
+      <div className="mb-12">
+        <h2 className="mb-4 text-sm font-bold text-[var(--color-fg)]">What creators say</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            {
+              name: 'CryptoNomad',
+              handle: '@cryptonomad',
+              tier: 'Creator',
+              quote:
+                'The cross-protocol scheduling alone is worth it. I post to Farcaster, Lens, and Bluesky at once. Analytics actually help me understand where my audience is.',
+            },
+            {
+              name: 'DeFi_Degen',
+              handle: '@defi_degen',
+              tier: 'Pro',
+              quote:
+                'Unlimited custom feeds changed how I track alpha. No more jumping between apps. The x402 paywall also lets me monetize my deep dives.',
+            },
+            {
+              name: 'NFTCollector',
+              handle: '@nftcollector',
+              tier: 'Creator',
+              quote:
+                "Token-gated content is exactly what I needed for my exclusive drops. My subscribers get early mint access and it's all on-chain.",
+            },
+          ].map((t) => (
+            <div
+              key={t.name}
+              className="flex flex-col rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 transition-all hover:border-degen-500/20"
+            >
+              <div className="mb-2 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-degen-500/20 text-xs font-bold text-degen-400">
+                  {t.name[0]}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-[var(--color-fg)]">{t.name}</p>
+                  <p className="text-[10px] text-[var(--color-muted)]">{t.handle}</p>
+                </div>
+                <span className="ml-auto rounded-full bg-degen-500/10 px-2 py-0.5 text-[9px] font-medium text-degen-400">
+                  {t.tier}
+                </span>
+              </div>
+              <p className="flex-1 text-xs leading-relaxed text-[var(--color-muted)]">
+                &ldquo;{t.quote}&rdquo;
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── FAQ ── */}
       <div className="mb-12">
         <h2 className="mb-4 text-lg font-bold text-[var(--color-fg)]">Frequently asked</h2>

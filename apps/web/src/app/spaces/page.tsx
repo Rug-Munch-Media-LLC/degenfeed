@@ -224,6 +224,66 @@ function SectionHeader({
   );
 }
 
+// ─── Speaker Avatar with Speaking Indicator ───────────────────────
+
+function SpeakerAvatar({
+  speaker,
+  size = 'md',
+}: {
+  speaker: SpaceSpeaker;
+  size?: 'sm' | 'md' | 'lg';
+}) {
+  const sizeMap = { sm: 'h-7 w-7', md: 'h-9 w-9', lg: 'h-12 w-12' };
+  const ringSize = sizeMap[size];
+  return (
+    <div className="relative inline-flex flex-col items-center gap-1">
+      <div
+        className={`relative ${ringSize} ${
+          speaker.speaking ? 'animate-tip-pulse rounded-full' : 'rounded-full'
+        }`}
+        style={speaker.speaking ? { boxShadow: '0 0 12px rgba(0,255,65,0.5)' } : undefined}
+      >
+        <AvatarImg
+          src={speaker.avatarUrl}
+          name={speaker.displayName}
+          className={`${ringSize} ring-2 ${
+            speaker.speaking
+              ? 'ring-degen-500 shadow-[0_0_12px_rgba(0,255,65,0.3)]'
+              : speaker.isHost
+                ? 'ring-amber-500/60'
+                : 'ring-[var(--color-glass-border)]'
+          }`}
+        />
+        {speaker.isHost && (
+          <span
+            className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[8px] font-bold text-black shadow-lg"
+            title="Host"
+          >
+            H
+          </span>
+        )}
+        {speaker.isCoHost && (
+          <span
+            className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-purple-500 text-[7px] font-bold text-white shadow-lg"
+            title="Co-host"
+          >
+            C
+          </span>
+        )}
+        {/* Speaking waveform indicator */}
+        {speaker.speaking && (
+          <Waveform className="absolute -bottom-3 left-1/2 -translate-x-1/2 h-2.5" />
+        )}
+      </div>
+      {size !== 'sm' && (
+        <span className="max-w-[56px] truncate text-[9px] text-[var(--color-muted)]">
+          {speaker.displayName}
+        </span>
+      )}
+    </div>
+  );
+}
+
 // ─── LiveSpaceCard ────────────────────────────────────────────────
 
 function LiveSpaceCard({
@@ -235,12 +295,29 @@ function LiveSpaceCard({
   onJoin: (id: string) => void;
   onTip: (space: SpaceItem) => void;
 }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = useCallback(() => {
+    const url = `${window.location.origin}/spaces/${space.id}`;
+    navigator.clipboard.writeText(url).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    window.dispatchEvent(
+      new CustomEvent('df-toast', {
+        detail: { kind: 'success', message: 'Space link copied!' },
+      }),
+    );
+  }, [space.id]);
+
+  const speakingCount = space.speakers.filter((s) => s.speaking).length;
+  const maxVisibleSpeakers = 4;
+
   return (
     <div
       className="group relative flex w-[300px] shrink-0 snap-start flex-col rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5 transition-all duration-300 hover:border-degen-500/40 hover:shadow-[0_0_24px_rgba(0,255,65,0.06)]"
       style={{ animation: 'slideUp 0.35s ease-out both' }}
     >
-      {/* Host row */}
+      {/* Host row + Recording badge */}
       <div className="mb-3 flex items-start justify-between">
         <div className="flex items-center gap-2.5">
           <AvatarImg
@@ -257,16 +334,47 @@ function LiveSpaceCard({
               <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
                 LIVE
               </span>
-              <span className="text-[10px] text-[var(--color-muted)]">· {formatDuration(space.createdAt)}</span>
+              <span className="text-[10px] text-[var(--color-muted)]">
+                · {formatDuration(space.createdAt)}
+              </span>
             </div>
           </div>
         </div>
+        {/* Recording indicator */}
+        {space.recordingUrl && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-red-900/40 bg-red-950/30 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-red-400">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
+            </span>
+            REC
+          </span>
+        )}
       </div>
 
       {/* Topic */}
       <h3 className="mb-3 line-clamp-2 text-sm font-bold leading-snug text-[var(--color-fg)]">
         {space.title}
       </h3>
+
+      {/* Speaker avatars grid */}
+      {space.speakers.length > 0 && (
+        <div className="mb-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {space.speakers.slice(0, maxVisibleSpeakers).map((speaker) => (
+              <SpeakerAvatar key={speaker.id} speaker={speaker} size="sm" />
+            ))}
+            {space.speakers.length > maxVisibleSpeakers && (
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-muted)]/20 text-[9px] font-bold text-[var(--color-muted)]">
+                +{space.speakers.length - maxVisibleSpeakers}
+              </div>
+            )}
+          </div>
+          {speakingCount > 0 && (
+            <p className="mt-1 text-[9px] text-degen-400">{speakingCount} speaking</p>
+          )}
+        </div>
+      )}
 
       {/* Waveform + listeners + tip */}
       <div className="mb-3 flex items-center gap-2">
@@ -302,18 +410,38 @@ function LiveSpaceCard({
         </div>
       )}
 
-      {/* Tip button — always visible when enabled */}
-      {space.tippingEnabled && (
-        <div className="mb-2">
+      {/* Action buttons row */}
+      <div className="mb-2 flex items-center gap-2">
+        {/* Share / Invite */}
+        <button
+          type="button"
+          onClick={handleShare}
+          className="flex-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-3 py-2 text-[10px] font-medium text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-degen-400"
+          aria-label="Share space invite link"
+        >
+          {copied ? '✓ Copied' : '🔗 Share'}
+        </button>
+
+        {/* Raise hand — only for non-host scenarios */}
+        <button
+          type="button"
+          className="flex-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-3 py-2 text-[10px] font-medium text-[var(--color-muted)] transition-all hover:border-amber-500/30 hover:text-amber-400"
+          aria-label="Request to speak"
+        >
+          ✋ Hand
+        </button>
+
+        {/* Tip button */}
+        {space.tippingEnabled && (
           <button
             type="button"
             onClick={() => onTip(space)}
-            className="w-full rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-muted)]/10 px-4 py-2 text-xs font-medium text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-degen-400"
+            className="rounded-xl border border-[var(--color-glass-border)] bg-degen-500/10 px-3 py-2 text-xs font-medium text-degen-400 transition-all hover:bg-degen-500/20"
           >
-            Tip ⚡
+            ⚡
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Join button — reveals on hover */}
       <div className="mt-auto">

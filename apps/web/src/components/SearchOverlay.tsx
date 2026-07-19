@@ -503,7 +503,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       if (e.key === 'Enter') {
         if (selectedIndex >= 0 && selectedIndex < flatItems.length) {
           e.preventDefault();
-          navigateToItem(flatItems[selectedIndex]);
+          const item = flatItems[selectedIndex];
+          if (item) navigateToItem(item);
           return;
         }
         // If no item selected but query exists, go to search page
@@ -565,7 +566,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             value={query}
             onChange={(e) => handleChange(e.target.value)}
             placeholder="Search DegenFeed"
-            className="input h-12 pl-12 pr-14 text-base rounded-2xl shadow-lg shadow-black/20"
+            className="input h-12 pl-12 pr-20 text-base rounded-2xl shadow-lg shadow-black/20"
             role="searchbox"
             aria-label="Search posts, people, communities, and videos"
             autoComplete="off"
@@ -595,11 +596,30 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             </button>
           )}
 
-          {/* ESC badge */}
+          {/* Keyboard hints + ESC badge */}
+          <span className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-1">
+            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none text-[var(--color-muted)]">
+              ↑↓
+            </kbd>
+            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none text-[var(--color-muted)]">
+              ↵
+            </kbd>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-1.5 py-0.5 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+              aria-label="Close search"
+            >
+              <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none">
+                ESC
+              </kbd>
+            </button>
+          </span>
+          {/* Mobile ESC badge */}
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-1.5 py-0.5 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+            className="flex sm:hidden absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-1.5 py-0.5 text-[10px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close search"
           >
             <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none">

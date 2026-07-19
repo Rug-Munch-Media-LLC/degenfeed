@@ -101,7 +101,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
           ref={containerRef}
           className="page-crossfade-enter"
           style={{
-            animation: `page-crossfade-in ${FADE_IN_DURATION}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+            animation: `page-crossfade-in ${FADE_IN_DURATION}ms cubic-bezier(0.16, 1, 0.3, 1) forwards`,
           }}
         >
           {children}

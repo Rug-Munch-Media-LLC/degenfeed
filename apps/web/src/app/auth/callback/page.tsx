@@ -2,108 +2,169 @@ export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 /**
- * DegenFeed — Auth Callback Handler
+ * DegenFeed — Unified Auth Callback Handler
  *
  * Route: /auth/callback
- * Handles OAuth2 redirects from GotoSocial (social.degenfeed.xyz).
- * Exchanges the authorization code for an access token via the worker API.
+ * Handles OAuth2 redirects from all supported providers.
+ * Exchanges the authorization code for a token via the worker API,
+ * then stores the result client-side for AuthProvider to process.
  */
 
 interface AuthCallbackProps {
-  searchParams: Promise<{ code?: string; error?: string; state?: string }>;
+  searchParams: Promise<{
+    code?: string;
+    error?: string;
+    state?: string;
+    provider?: string;
+  }>;
 }
 
-interface CallbackProfile {
-  id?: string;
-  username?: string;
-  acct?: string;
-  displayName?: string;
-  avatar?: string;
-}
+/** Map provider path to its API callback endpoint */
+const PROVIDER_CONFIG: Record<string, { name: string; endpoint: string; icon: string }> = {
+  gotosocial: {
+    name: 'GoToSocial',
+    endpoint: '/api/auth/gotosocial/callback',
+    icon: '🐘',
+  },
+  google: {
+    name: 'Google',
+    endpoint: '/api/auth/google/callback',
+    icon: 'G',
+  },
+  github: {
+    name: 'GitHub',
+    endpoint: '/api/auth/github/callback',
+    icon: '🐙',
+  },
+  discord: {
+    name: 'Discord',
+    endpoint: '/api/auth/discord/callback',
+    icon: '🎮',
+  },
+  twitter: {
+    name: 'Twitter / X',
+    endpoint: '/api/auth/twitter/callback',
+    icon: '𝕏',
+  },
+  telegram: {
+    name: 'Telegram',
+    endpoint: '/api/auth/telegram/callback',
+    icon: '✈',
+  },
+  threads: {
+    name: 'Threads',
+    endpoint: '/api/auth/threads/callback',
+    icon: '🧵',
+  },
+  warpcast: {
+    name: 'Warpcast',
+    endpoint: '/api/auth/warpcast/callback',
+    icon: '◈',
+  },
+  reddit: {
+    name: 'Reddit',
+    endpoint: '/api/auth/reddit/callback',
+    icon: '🔴',
+  },
+};
 
-interface CallbackData {
+interface CallbackResult {
   accessToken?: string;
-  profile?: CallbackProfile;
+  profile?: { id?: string; username?: string; displayName?: string; avatar?: string; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+async function exchangeCode(
+  code: string,
+  state: string | null,
+  endpoint: string,
+  apiBase: string,
+): Promise<{ ok: boolean; data?: CallbackResult; error?: string }> {
+  try {
+    const res = await fetch(`${apiBase}${endpoint}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ code, state }),
+    });
+
+    if (res.ok) {
+      const data = (await res.json()) as CallbackResult;
+      if (data.accessToken || data.success) {
+        return { ok: true, data };
+      }
+      return { ok: false, error: 'No access token in response. Please try again.' };
+    }
+
+    const err = (await res.json().catch(() => ({ error: `Server returned ${res.status}` }))) as {
+      error?: string;
+    };
+    return { ok: false, error: err.error || `Authentication server returned an error (${res.status}). Please try again.` };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? `Cannot reach auth server: ${err.message}` : 'Network error. Check your connection and try again.',
+    };
+  }
 }
 
 export default async function AuthCallbackPage({ searchParams }: AuthCallbackProps) {
   const params = await searchParams;
 
-  if (params.error) {
-    return (
-      <div className="mx-auto max-w-md px-4 py-20 text-center">
-        <div className="mb-6 text-5xl text-red-400">!</div>
-        <h1 className="mb-4 text-2xl font-bold text-red-400">Authorization Failed</h1>
-        <p className="mb-8 text-[var(--color-muted)]">{params.error}</p>
-        <a href="/home" className="btn-primary inline-block">
-          Back to DegenFeed
-        </a>
-      </div>
-    );
-  }
-
-  if (!params.code) {
-    return (
-      <div className="mx-auto max-w-md px-4 py-20 text-center">
-        <div className="mb-6 text-5xl text-[var(--color-muted)]">?</div>
-        <h1 className="mb-4 text-2xl font-bold text-[var(--color-fg)]">No Authorization Code</h1>
-        <p className="mb-8 text-[var(--color-muted)]">
-          No authorization code was received. Please try signing in again.
-        </p>
-        <a href="/home" className="btn-primary inline-block">
-          Back to DegenFeed
-        </a>
-      </div>
-    );
-  }
+  // Determine provider from URL or provider param
+  const url = new URL(typeof window !== 'undefined' ? window.location.href : 'https://degenfeed.xyz');
+  const pathParts = url.pathname.split('/');
+  const providerFromPath = pathParts[pathParts.length - 1] || params.provider || 'gotosocial';
+  const provider = PROVIDER_CONFIG[providerFromPath] ?? PROVIDER_CONFIG['gotosocial']!;
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
-  let exchangeOk = false;
-  let exchangeError = '';
-  let tokenData: CallbackData = {};
 
-  try {
-    const res = await fetch(`${apiBase}/api/auth/gotosocial/callback`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code: params.code, state: params.state }),
-    });
-
-    if (res.ok) {
-      const data = (await res.json()) as CallbackData;
-      if (data.accessToken) {
-        exchangeOk = true;
-        tokenData = data;
-      } else {
-        exchangeError = 'No access token in response';
-      }
-    } else {
-      const err = (await res.json()) as { error?: string };
-      exchangeError = err.error ?? 'Token exchange failed';
-    }
-  } catch (err) {
-    exchangeError = err instanceof Error ? err.message : 'Network error';
+  // ── Error from OAuth provider ──
+  if (params.error) {
+    return (
+      <ErrorView provider={provider} message={`${provider.name} declined authorization: ${params.error}`} />
+    );
   }
 
-  if (exchangeOk) {
+  // ── No code ──
+  if (!params.code) {
+    return (
+      <ErrorView
+        provider={provider}
+        message="No authorization code received. This usually means the login was cancelled or the callback URL was opened directly."
+      />
+    );
+  }
+
+  // ── Exchange code for token ──
+  const result = await exchangeCode(params.code, params.state ?? null, provider.endpoint, apiBase);
+
+  // ── Success ──
+  if (result.ok && result.data) {
     const pending = JSON.stringify({
-      protocol: 'mastodon',
-      accessToken: tokenData.accessToken,
-      profile: tokenData.profile,
+      protocol: providerFromPath,
+      ...result.data,
+      linkedAt: Date.now(),
     });
 
     return (
       <html lang="en">
         <body>
-          <div className="mx-auto max-w-md px-4 py-20 text-center">
-            <div className="mb-6 text-5xl text-degen-400">✓</div>
-            <h1 className="mb-4 text-2xl font-bold text-[var(--color-fg)]">Signed in!</h1>
-            <p className="mb-8 text-[var(--color-muted)]">Redirecting to your feed...</p>
+          <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 text-center">
+            <div className="mb-6 text-6xl">{provider.icon}</div>
+            <h1 className="mb-2 text-2xl font-bold text-white">Connected to {provider.name}!</h1>
+            <p className="mb-8 text-zinc-400">Setting up your profile...</p>
+            <div className="h-1 w-48 overflow-hidden rounded-full bg-zinc-800">
+              <div className="h-full w-full animate-pulse rounded-full bg-green-500" />
+            </div>
           </div>
           <script
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: server-generated JSON stringified token stored client-side
             dangerouslySetInnerHTML={{
-              __html: `try { localStorage.setItem('degenfeed_pending_identity', ${JSON.stringify(pending).replace(/</g, '\\u003c')}); localStorage.setItem('degenfeed_auth_updated', Date.now().toString()); } catch(e) { console.error('Token storage failed', e); } window.location.href = '/home';`,
+              __html: `try {
+                localStorage.setItem('degenfeed_pending_identity', ${JSON.stringify(pending).replace(/</g, '\\u003c')});
+                localStorage.setItem('degenfeed_auth_updated', Date.now().toString());
+                localStorage.setItem('degenfeed_oauth_provider', ${JSON.stringify(providerFromPath)});
+              } catch(e) { console.error('Token storage failed', e); }
+              window.location.href = '/home';`,
             }}
           />
         </body>
@@ -111,15 +172,27 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
     );
   }
 
+  // ── Exchange failed ──
+  return <ErrorView provider={provider} message={result.error ?? 'Failed to complete authentication.'} />;
+}
+
+function ErrorView({ provider, message }: { provider: (typeof PROVIDER_CONFIG)[string]; message: string }) {
   return (
-    <div className="mx-auto max-w-md px-4 py-20 text-center">
-      <div className="mb-6 text-5xl text-red-400">!</div>
-      <h1 className="mb-4 text-2xl font-bold text-red-400">Exchange Failed</h1>
-      <p className="mb-2 text-[var(--color-muted)]">{exchangeError}</p>
-      <p className="mb-8 text-sm text-[var(--color-muted)]">Code: {params.code.slice(0, 30)}...</p>
-      <a href="/home" className="btn-primary inline-block">
-        Back to DegenFeed
-      </a>
-    </div>
+    <html lang="en">
+      <body>
+        <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 text-center">
+          <div className="mb-6 text-6xl">{provider.icon}</div>
+          <h1 className="mb-2 text-xl font-bold text-red-400">Sign-in Failed</h1>
+          <p className="mb-1 text-sm text-zinc-300">{provider.name}</p>
+          <p className="mb-8 max-w-sm text-sm text-zinc-400">{message}</p>
+          <a
+            href="/home"
+            className="inline-block rounded-lg bg-zinc-800 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+          >
+            Back to DegenFeed
+          </a>
+        </div>
+      </body>
+    </html>
   );
 }

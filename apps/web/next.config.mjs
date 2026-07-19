@@ -37,13 +37,6 @@ const nextConfig = {
   // ── Monorepo transpilation ──
   transpilePackages: [
     '@degenfeed/types',
-    '@degenfeed/feed-core',
-    '@degenfeed/feed-providers',
-    '@degenfeed/ranking',
-    '@degenfeed/nostr-sdk',
-    '@degenfeed/storage',
-    '@degenfeed/auth',
-    '@degenfeed/identity',
     '@degenfeed/ui',
   ],
 

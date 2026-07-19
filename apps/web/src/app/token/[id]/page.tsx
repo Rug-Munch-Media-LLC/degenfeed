@@ -96,15 +96,15 @@ export default function TokenPage({ params }: Props) {
           </h2>
 
           {state === 'loading' && (
-            <div className="space-y-1">
+            <div className="divide-y divide-white/5">
               {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="animate-pulse border-b border-[var(--color-border)] px-4 py-3"
-                >
-                  <div className="mb-2 h-3 w-32 rounded bg-[var(--color-card)]" />
-                  <div className="mb-1 h-3 w-full rounded bg-[var(--color-card)]" />
-                  <div className="h-3 w-3/4 rounded bg-[var(--color-card)]" />
+                <div key={i} className="animate-pulse px-4 py-3">
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="h-3 w-32 skeleton rounded" />
+                    <div className="h-3 w-16 skeleton rounded" />
+                  </div>
+                  <div className="mb-2 h-3 w-full skeleton rounded" />
+                  <div className="h-3 w-3/4 skeleton rounded" />
                 </div>
               ))}
             </div>

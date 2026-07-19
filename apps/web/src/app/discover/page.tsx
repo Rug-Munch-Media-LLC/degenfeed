@@ -546,6 +546,11 @@ export default function DiscoverPage() {
     [],
   );
 
+  const [popularThisHour, setPopularThisHour] = useState<TrendingPost[]>([]);
+  const [popularThisHourState, setPopularThisHourState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
+  const [recommendedPosts, setRecommendedPosts] = useState<TrendingPost[]>([]);
+  const [recommendedState, setRecommendedState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
+
   useEffect(() => {
     let cancelled = false;
 
@@ -560,6 +565,30 @@ export default function DiscoverPage() {
           setTrendingState,
           (items) => {
             if (!cancelled) setTrendingPosts(items as TrendingPost[]);
+          },
+        ),
+        // "Popular this hour" — high-engagement posts from the last 60 minutes
+        fetchSection(
+          '/api/feed/home?limit=10&sort=hot&trending=1',
+          (d: { data: TrendingPost[]; meta: { total: number } }) => ({
+            items: d.data,
+            total: d.meta.total,
+          }),
+          setPopularThisHourState,
+          (items) => {
+            if (!cancelled) setPopularThisHour(items as TrendingPost[]);
+          },
+        ),
+        // "Because you liked..." — personalized recommendations
+        fetchSection(
+          '/api/feed/for-you?limit=10&sort=scored&diverse=true',
+          (d: { data: TrendingPost[]; meta: { total: number } }) => ({
+            items: d.data,
+            total: d.meta.total,
+          }),
+          setRecommendedState,
+          (items) => {
+            if (!cancelled) setRecommendedPosts(items as TrendingPost[]);
           },
         ),
         fetchSection(
@@ -731,6 +760,52 @@ export default function DiscoverPage() {
             {trendingState === 'loaded' && trendingPosts.length > 0 && (
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {trendingPosts.slice(0, 10).map((post) => (
+                  <div key={post.id} className="w-72 shrink-0">
+                    <TrendingPostCard post={post} onPostClick={handlePostClick} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* ═══ 1.5. Popular This Hour ═══ */}
+          <section>
+            <SectionHeader
+              emoji="⏰"
+              title="Popular This Hour"
+              subtitle="Highest engagement posts from the last 60 minutes"
+            />
+            {popularThisHourState === 'loading' && <SectionSkeleton count={4} layout="row" />}
+            {popularThisHourState === 'empty' && (
+              <p className="text-sm text-[var(--color-muted)]">No popular content this hour.</p>
+            )}
+            {popularThisHourState === 'loaded' && popularThisHour.length > 0 && (
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {popularThisHour.slice(0, 8).map((post) => (
+                  <div key={post.id} className="w-72 shrink-0">
+                    <TrendingPostCard post={post} onPostClick={handlePostClick} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* ═══ 1.6. Because You Liked... ═══ */}
+          <section>
+            <SectionHeader
+              emoji="💡"
+              title="Because You Liked..."
+              subtitle="Personalized recommendations based on your activity"
+            />
+            {recommendedState === 'loading' && <SectionSkeleton count={4} layout="row" />}
+            {recommendedState === 'empty' && (
+              <p className="text-sm text-[var(--color-muted)]">
+                Like or bookmark posts to get personalized recommendations.
+              </p>
+            )}
+            {recommendedState === 'loaded' && recommendedPosts.length > 0 && (
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {recommendedPosts.slice(0, 6).map((post) => (
                   <div key={post.id} className="w-72 shrink-0">
                     <TrendingPostCard post={post} onPostClick={handlePostClick} />
                   </div>

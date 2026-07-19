@@ -9,12 +9,48 @@ interface BreadcrumbSegment {
   href: string;
 }
 
+function HomeIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="text-[var(--color-muted)]"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
 /**
  * Breadcrumb navigation for deep pages.
  * Auto-generates from the current pathname.
- * Shows: Home > Section > Subsection > Current
- *
- * Custom overrides can be passed for specific path segments.
+ * Shows: Home icon > Section > Subsection > Current
  */
 export function Breadcrumbs({
   overrides,
@@ -32,7 +68,6 @@ export function Breadcrumbs({
     let current = '';
     for (const part of parts) {
       current += `/${part}`;
-      // Decode URL-encoded segments and capitalize
       const decoded = decodeURIComponent(part);
       const label =
         overrides?.[part] ?? decoded.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -42,7 +77,7 @@ export function Breadcrumbs({
     return crumbs;
   }, [pathname, overrides]);
 
-  // Don't show breadcrumbs on top-level pages
+  // Don't show on top-level pages
   if (segments.length <= 2) return null;
 
   return (
@@ -50,24 +85,27 @@ export function Breadcrumbs({
       <ol className="flex items-center gap-1.5 text-xs text-[var(--color-muted)]">
         {segments.map((seg, i) => {
           const isLast = i === segments.length - 1;
+          const isRoot = i === 0;
           return (
             <Fragment key={seg.href}>
               {i > 0 && (
-                <li aria-hidden="true" className="text-[10px] text-[var(--color-muted)]">
-                  /
+                <li aria-hidden="true" className="flex items-center">
+                  <ChevronIcon />
                 </li>
               )}
               <li>
                 {isLast ? (
-                  <span className="font-medium text-[var(--color-fg)] truncate max-w-[200px] block">
-                    {seg.label}
+                  <span className="flex items-center gap-1 font-medium text-[var(--color-fg)] truncate max-w-[200px]">
+                    {isRoot && <HomeIcon />}
+                    {!isRoot && seg.label}
                   </span>
                 ) : (
                   <Link
                     href={seg.href}
-                    className="transition-colors hover:text-[var(--color-fg)] truncate max-w-[150px] block"
+                    className="flex items-center gap-1 transition-colors hover:text-[var(--color-fg)] truncate max-w-[150px]"
                   >
-                    {seg.label}
+                    {isRoot && <HomeIcon />}
+                    {!isRoot && seg.label}
                   </Link>
                 )}
               </li>

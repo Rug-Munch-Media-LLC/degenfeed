@@ -63,7 +63,7 @@ const TipModal = dynamic(
   },
 );
 
-type Tab = 'for-you' | 'following' | 'custom-mix';
+type Tab = 'for-you' | 'following' | 'trending' | 'news' | 'custom-mix';
 
 interface FeedMeta {
   total?: number;
@@ -702,7 +702,12 @@ export default function FeedPage() {
     [],
   );
 
-  const { announce } = useAnnouncer();
+  const announcerRef = useRef<ReturnType<typeof useAnnouncer>['announce'] | null>(null);
+  const { announce: announcerAnnounce } = useAnnouncer();
+  announcerRef.current = announcerAnnounce;
+  const announce = useCallback((msg: string, priority?: 'polite' | 'assertive') => {
+    announcerRef.current?.(msg, priority);
+  }, []);
 
   const fetchFeed = useCallback(
     async (checkOnly = false) => {
@@ -837,7 +842,6 @@ export default function FeedPage() {
       creatorDiversity,
       exploreRatio,
       activePreset,
-      announce,
     ],
   );
 
@@ -1261,9 +1265,9 @@ export default function FeedPage() {
               </div>
             </div>
 
-            {/* Tabs */}
-            <div className="feed-header-tabs flex" role="tablist" aria-label="Feed tabs">
-              <div className="relative flex-1">
+            {/* Tabs — Home / For You / Trending / News / Custom Mix */}
+            <div className="feed-header-tabs flex overflow-x-auto scrollbar-none" role="tablist" aria-label="Feed tabs">
+              <div className="relative shrink-0">
                 <button
                   type="button"
                   onClick={() => setActiveTab('for-you')}
@@ -1271,13 +1275,13 @@ export default function FeedPage() {
                   onMouseLeave={hoverPrefetch.onMouseLeave}
                   role="tab"
                   aria-selected={activeTab === 'for-you'}
-                  className={`w-full py-3 text-sm font-medium transition-colors ${
+                  className={`w-full px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
                     activeTab === 'for-you'
                       ? 'text-[var(--color-fg)]'
                       : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                   }`}
                 >
-                  For You
+                  🔥 For You
                   {activeTab === 'for-you' && (
                     <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
                   )}
@@ -1286,7 +1290,7 @@ export default function FeedPage() {
                   Use j/k keys to navigate between posts
                 </ContextualTooltip>
               </div>
-              <div className="relative flex-1">
+              <div className="relative shrink-0">
                 <button
                   type="button"
                   onClick={() => setActiveTab('following')}
@@ -1294,13 +1298,13 @@ export default function FeedPage() {
                   onMouseLeave={hoverPrefetch.onMouseLeave}
                   role="tab"
                   aria-selected={activeTab === 'following'}
-                  className={`w-full py-3 text-sm font-medium transition-colors ${
+                  className={`w-full px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
                     activeTab === 'following'
                       ? 'text-[var(--color-fg)]'
                       : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                   }`}
                 >
-                  Following
+                  👤 Following
                   {activeTab === 'following' && (
                     <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
                   )}
@@ -1309,7 +1313,46 @@ export default function FeedPage() {
                   Try the AI-powered For You feed instead
                 </ContextualTooltip>
               </div>
-              <div className="relative flex-1">
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('trending')}
+                  onMouseEnter={() => hoverPrefetch.onMouseEnter('/api/feed/home?trending=24')}
+                  onMouseLeave={hoverPrefetch.onMouseLeave}
+                  role="tab"
+                  aria-selected={activeTab === 'trending'}
+                  className={`w-full px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+                    activeTab === 'trending'
+                      ? 'text-[var(--color-fg)]'
+                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                  }`}
+                >
+                  📈 Trending
+                  {activeTab === 'trending' && (
+                    <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
+                  )}
+                </button>
+              </div>
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = '/news';
+                  }}
+                  onMouseEnter={() => hoverPrefetch.onMouseEnter('/api/feed/news')}
+                  onMouseLeave={hoverPrefetch.onMouseLeave}
+                  role="tab"
+                  aria-selected={activeTab === 'news'}
+                  className={`w-full px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+                    activeTab === 'news'
+                      ? 'text-[var(--color-fg)]'
+                      : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+                  }`}
+                >
+                  📰 News
+                </button>
+              </div>
+              <div className="relative shrink-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -1320,13 +1363,13 @@ export default function FeedPage() {
                   onMouseLeave={hoverPrefetch.onMouseLeave}
                   role="tab"
                   aria-selected={activeTab === 'custom-mix'}
-                  className={`w-full py-3 text-sm font-medium transition-colors ${
+                  className={`w-full px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
                     activeTab === 'custom-mix'
                       ? 'text-[var(--color-fg)]'
                       : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
                   }`}
                 >
-                  Custom Mix
+                  🔀 Custom Mix
                   {activeTab === 'custom-mix' && (
                     <span className="absolute bottom-0 left-1/2 h-1 w-12 -translate-x-1/2 rounded-full bg-degen-500" />
                   )}
@@ -1894,6 +1937,25 @@ export default function FeedPage() {
                   }}
                   onReport={handleReport}
                 />
+              )}
+
+              {/* ── "You're all caught up!" divider ── */}
+              {state === 'loaded' && posts.length > 0 && hasMore && (
+                <div className="flex items-center gap-3 px-4 py-8 select-none">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-lg" aria-hidden="true">🌅</span>
+                    <span className="text-xs font-medium text-[var(--color-muted)]">
+                      You&apos;re all caught up!
+                    </span>
+                    <span className="text-[10px] text-[var(--color-muted)]">
+                      {posts.length > 0
+                        ? `Showing ${posts.length} posts`
+                        : ''}
+                    </span>
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
+                </div>
               )}
             </div>
           </div>

@@ -211,9 +211,26 @@ export default function SubscribePage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-20 text-center text-[var(--color-muted)]">
-        <div className="mx-auto mb-4 h-2 w-32 animate-pulse rounded-full bg-[var(--color-muted)]" />
-        <p>Loading tiers...</p>
+      <div className="mx-auto max-w-2xl px-4 py-6 animate-pulse">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 h-16 w-16 skeleton rounded-full" />
+          <div className="mx-auto mb-2 h-7 w-64 skeleton rounded-lg" />
+          <div className="mx-auto h-4 w-48 skeleton rounded-lg" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6">
+              <div className="h-5 w-24 skeleton rounded mb-3" />
+              <div className="h-8 w-20 skeleton rounded mb-4" />
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, j) => (
+                  <div key={j} className="h-4 w-full skeleton rounded" />
+                ))}
+              </div>
+              <div className="mt-6 h-10 w-full skeleton rounded-lg" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

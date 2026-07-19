@@ -48,7 +48,10 @@ export function ScreenReaderAnnouncerProvider({ children }: { children: ReactNod
     if (ref.current) {
       ref.current.textContent = '';
       // Use requestAnimationFrame to ensure the clear takes effect before setting
-      requestAnimationFrame(() => {
+      const schedule = typeof requestAnimationFrame !== 'undefined'
+        ? requestAnimationFrame
+        : (fn: () => void) => setTimeout(fn, 0);
+      schedule(() => {
         if (ref.current) {
           ref.current.textContent = message;
         }

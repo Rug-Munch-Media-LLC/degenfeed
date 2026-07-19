@@ -248,6 +248,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   onPlayStateChange,
 }: ShortVideoCardProps) {
   const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.metrics.likes);
   const [bookmarked, setBookmarked] = useState(false);
   const [muted, setMuted] = useState(true);
   const [showOverlay, setShowOverlay] = useState(true);
@@ -257,11 +258,16 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   const [heartVisible, setHeartVisible] = useState(false);
   const [tipModalOpen, setTipModalOpen] = useState(false);
+  const [emotes, setEmotes] = useState<Array<{ id: number; emoji: string; x: number }>>([]);
+  const [pullDismissProgress, setPullDismissProgress] = useState(0);
+  const [isDismissing, setIsDismissing] = useState(false);
   const overlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressStartRef = useRef<number>(0);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTapTime = useRef(0);
+  const pullStartY = useRef(0);
+  const emoteIdCounter = useRef(0);
 
   // ── Video detection ───────────────────────────────────────────────────
   const videoInfo = useMemo<VideoInfo | null>(() => {
@@ -481,9 +487,65 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     };
   }, [isPeertube, videoInfo]);
 
+  // ── Pull-down to dismiss ────────────────────────────────────────────────
+  const handlePullStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    if ('touches' in e) {
+      pullStartY.current = e.touches[0].clientY;
+    } else {
+      pullStartY.current = e.clientY;
+    }
+  }, []);
+
+  const handlePullMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    const currentY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const delta = currentY - pullStartY.current;
+    if (delta > 0) {
+      const progress = Math.min(delta / 200, 1);
+      setPullDismissProgress(progress);
+    }
+  }, []);
+
+  const handlePullEnd = useCallback(() => {
+    if (pullDismissProgress > 0.5) {
+      setIsDismissing(true);
+      setPullDismissProgress(1);
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('shorts-dismiss-current'));
+        setIsDismissing(false);
+        setPullDismissProgress(0);
+      }, 300);
+    } else {
+      setPullDismissProgress(0);
+    }
+  }, [pullDismissProgress]);
+
+  // ── Emote reactions (floating emojis over video like Twitch bits) ─────────
+  const addEmote = useCallback((emoji: string) => {
+    const id = ++emoteIdCounter.current;
+    const x = 15 + Math.random() * 70; // random horizontal position (%)
+    setEmotes((prev) => [...prev.slice(-9), { id, emoji, x }]); // keep max 10
+    setTimeout(() => {
+      setEmotes((prev) => prev.filter((e) => e.id !== id));
+    }, 3000);
+  }, []);
+
+  useEffect(() => {
+    if (!isActive) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { emoji?: string } | undefined;
+      addEmote(detail?.emoji ?? '🔥');
+    };
+    window.addEventListener('shorts-emote', handler);
+    return () => window.removeEventListener('shorts-emote', handler);
+  }, [isActive, addEmote]);
+
   // ── Like ──
   const handleLike = useCallback(() => {
-    setLiked((prev) => !prev);
+    setLiked((prev) => {
+      const next = !prev;
+      setLikeCount((c) => (next ? c + 1 : Math.max(0, c - 1)));
+      return next;
+    });
     window.dispatchEvent(new CustomEvent('shorts-like-current'));
   }, []);
 
@@ -680,6 +742,51 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[15%] bg-gradient-to-b from-black/40 to-transparent" />
       </div>
 
+      {/* ── Pull-to-dismiss overlay ── */}
+      {pullDismissProgress > 0 && (
+        <div
+          className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center"
+          style={{
+            opacity: Math.min(pullDismissProgress * 2, 1),
+            transform: `scale(${1 - pullDismissProgress * 0.1})`,
+            backgroundColor: `rgba(0,0,0,${pullDismissProgress * 0.5})`,
+          }}
+        >
+          <svg
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-white/70 drop-shadow-lg"
+            style={{
+              transform: `rotate(${pullDismissProgress * 180}deg)`,
+              transition: 'transform 0.1s',
+            }}
+            aria-hidden="true"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </div>
+      )}
+
+      {/* ── Floating Emote Reactions (Twitch-style) ── */}
+      {emotes.map((emote) => (
+        <div
+          key={emote.id}
+          className="pointer-events-none absolute z-40 text-2xl drop-shadow-lg"
+          style={{
+            left: `${emote.x}%`,
+            bottom: '30%',
+            animation: 'emote-float 2.5s ease-out forwards',
+          }}
+          aria-hidden="true"
+        >
+          {emote.emoji}
+        </div>
+      ))}
+
       {/* ── Heart burst animation ── */}
       <HeartBurst visible={heartVisible} />
 
@@ -798,7 +905,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
             )
           }
           label="Like"
-          count={post.metrics.likes + (liked ? 1 : 0)}
+          count={likeCount}
           active={liked}
           color="#ff2d55"
           onClick={handleLike}
@@ -1113,6 +1220,17 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         @keyframes shorts-panel-slide-up {
           from { transform: translateY(100%); }
           to { transform: translateY(0); }
+        }
+        @keyframes emote-float {
+          0% { transform: translateY(0) scale(0.5); opacity: 0; }
+          15% { transform: translateY(-10px) scale(1.2); opacity: 1; }
+          30% { transform: translateY(-20px) scale(1); opacity: 0.9; }
+          100% { transform: translateY(-120px) scale(0.6); opacity: 0; }
+        }
+        @keyframes like-bump {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.2); }
+          100% { transform: scale(1); }
         }
         @media (prefers-reduced-motion: reduce) {
           * { animation-duration: 0.01ms !important; }

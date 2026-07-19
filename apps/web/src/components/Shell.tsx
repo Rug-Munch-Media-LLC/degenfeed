@@ -56,7 +56,7 @@ function _Logo() {
   );
 }
 
-/* ─── Mobile top bar ───────────────────────────────────────── */
+/* ─── Page title ───────────────────────────────────────────── */
 
 const TITLE_OVERRIDES: Record<string, string> = {
   '/feed': 'Home',
@@ -86,12 +86,8 @@ const TITLE_OVERRIDES: Record<string, string> = {
 
 function usePageTitle() {
   const pathname = usePathname();
-
   return useMemo(() => {
-    // Check static overrides
     if (TITLE_OVERRIDES[pathname]) return TITLE_OVERRIDES[pathname];
-
-    // Handle parameterized routes
     if (pathname.startsWith('/post/')) return 'Post';
     if (pathname.startsWith('/profile/')) return 'Profile';
     if (pathname.startsWith('/token/')) return 'Token';
@@ -102,19 +98,86 @@ function usePageTitle() {
     if (pathname.startsWith('/feeds/')) return 'Feed';
     if (pathname.startsWith('/news/')) return 'News';
     if (pathname.startsWith('/settings/')) return 'Settings';
-
-    // Fallback: derive from last path segment
     const segment = pathname.split('/').filter(Boolean).pop() ?? 'DegenFeed';
     return segment.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }, [pathname]);
 }
 
-function MobileTopBar({ onMenuToggle }: { onMenuToggle: () => void }) {
+/* ─── Desktop Header (scroll-aware) ───────────────────────── */
+
+function DesktopHeader({
+  onSearchOpen,
+  className,
+}: {
+  onSearchOpen: () => void;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <div className="mx-auto flex max-w-[1260px] items-center justify-between px-4 h-14">
+        {/* Left: Logo */}
+        <Link href="/feed" className="flex items-center gap-2 shrink-0" aria-label="DegenFeed Home">
+          <Image src="/icon.svg" alt="" width={28} height={28} className="h-7 w-7 rounded-lg logo-glow" />
+          <span className="text-base font-bold tracking-tight hidden sm:inline" style={{ color: 'var(--color-fg)' }}>
+            DegenFeed
+          </span>
+        </Link>
+
+        {/* Center: Search */}
+        <div className="hidden md:flex flex-1 max-w-md mx-4">
+          <button
+            type="button"
+            onClick={onSearchOpen}
+            className="flex w-full items-center gap-2 rounded-full border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2 text-sm text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)]"
+            aria-label="Open search"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span className="flex-1 text-left">Search DegenFeed</span>
+            <kbd className="rounded-md border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] font-medium leading-none text-[var(--color-muted)]">
+              ⌘K
+            </kbd>
+          </button>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2">
+          {/* Theme toggle placeholder */}
+          <Link
+            href="/notifications"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+            aria-label="Notifications"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 01-3.46 0" />
+            </svg>
+          </Link>
+          <Link
+            href="/settings"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+            aria-label="Settings"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+            </svg>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Mobile top bar ───────────────────────────────────────── */
+
+function MobileTopBar({ onMenuToggle, onSearchOpen }: { onMenuToggle: () => void; onSearchOpen: () => void }) {
   const pathname = usePathname();
   const pageTitle = usePageTitle();
   const router = useRouter();
 
-  // Show back button when not on top-level pages
   const showBack =
     !['/', '/feed', '/home/all', '/home', '/search'].includes(pathname) &&
     !pathname.startsWith('/feed/');
@@ -132,17 +195,7 @@ function MobileTopBar({ onMenuToggle }: { onMenuToggle: () => void }) {
             className="-ml-1 flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
             aria-label="Go back"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M19 12H5" />
               <polyline points="12 19 5 12 12 5" />
             </svg>
@@ -154,16 +207,7 @@ function MobileTopBar({ onMenuToggle }: { onMenuToggle: () => void }) {
             className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
             aria-label="Open navigation menu"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
               <line x1="4" y1="6" x2="20" y2="6" />
               <line x1="4" y1="12" x2="20" y2="12" />
               <line x1="4" y1="18" x2="20" y2="18" />
@@ -174,9 +218,22 @@ function MobileTopBar({ onMenuToggle }: { onMenuToggle: () => void }) {
           {pageTitle}
         </span>
       </div>
-      <Link href="/feed" className="flex items-center gap-2 shrink-0" aria-label="DegenFeed Home">
-        <Image src="/icon.svg" alt="" width={28} height={28} className="h-7 w-7 rounded-lg" />
-      </Link>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onSearchOpen}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+          aria-label="Search"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
+        <Link href="/feed" className="flex items-center shrink-0" aria-label="DegenFeed Home">
+          <Image src="/icon.svg" alt="" width={26} height={26} className="h-6 w-6 rounded-lg" />
+        </Link>
+      </div>
     </div>
   );
 }
@@ -187,9 +244,6 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
   const drawerRef = useRef<HTMLDivElement>(null);
   const swipeStartX = useRef(0);
 
-  // LeftSidebar handles auth internally
-
-  // Close on Escape
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -199,7 +253,6 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  // Swipe right on the drawer to close
   const handleDrawerTouchStart = useCallback((e: React.TouchEvent) => {
     swipeStartX.current = e.touches[0]?.clientX ?? 0;
   }, []);
@@ -208,23 +261,16 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
     (e: React.TouchEvent) => {
       const endX = e.changedTouches[0]?.clientX ?? 0;
       const dx = endX - swipeStartX.current;
-      // Swiped right 60px+ to close
-      if (dx > 60) {
-        onClose();
-      }
+      if (dx > 60) onClose();
     },
     [onClose],
   );
 
-  // Swipe right on backdrop to close
   const handleBackdropTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       const endX = e.changedTouches[0]?.clientX ?? 0;
       const startX = swipeStartX.current;
-      const dx = endX - startX;
-      if (dx > 60) {
-        onClose();
-      }
+      if (endX - startX > 60) onClose();
     },
     [onClose],
   );
@@ -233,7 +279,6 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 lg:hidden animate-backdrop-in"
         onClick={onClose}
@@ -242,7 +287,6 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
         aria-hidden="true"
         style={{ zIndex: 'var(--z-drawer-backdrop, 50)' }}
       />
-      {/* Drawer */}
       <div
         ref={drawerRef}
         className="fixed inset-y-0 left-0 w-[280px] max-w-[80vw] border-r border-[var(--color-glass-border)] bg-[var(--color-bg)] shadow-2xl lg:hidden animate-slide-in-left"
@@ -269,12 +313,34 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
   const { trackVisit } = useRecentVisited();
   const edgeSwipeStartX = useRef(0);
 
+  // ── Sidebar collapse state ──
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // ── Scroll-aware header visibility ──
+  const [showDesktopHeader, setShowDesktopHeader] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY < 50) {
+        setShowDesktopHeader(true);
+      } else if (currentY < lastScrollY.current) {
+        // Scrolling up
+        setShowDesktopHeader(true);
+      } else {
+        // Scrolling down
+        setShowDesktopHeader(false);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // ── Swipe from left edge to open drawer on mobile ──
-  // Only activates on top-level pages (feed/home) to avoid conflicting
-  // with the back-navigation edge swipe on sub-pages.
   useEffect(() => {
     if (mobileDrawerOpen) return;
-    // Only on top-level pages where back navigation isn't needed
     const isTopLevel =
       pathname === '/feed' ||
       pathname === '/home/all' ||
@@ -290,8 +356,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     const endHandler = (e: TouchEvent) => {
       if (edgeSwipeStartX.current === 0) return;
       const endX = e.changedTouches[0]?.clientX ?? 0;
-      const dx = endX - edgeSwipeStartX.current;
-      if (dx > 60) {
+      if (endX - edgeSwipeStartX.current > 60) {
         setMobileDrawerOpen(true);
       }
       edgeSwipeStartX.current = 0;
@@ -304,23 +369,22 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     };
   }, [mobileDrawerOpen, pathname]);
 
-  // Pages that manage their own internal 3-column layout (need center to expand beyond 600px)
+  // Pages that manage their own internal 3-column layout
   const isSelfLayoutPage =
-    pathname.startsWith('/feed') || // Feed has its own FeedSidebar
-    pathname.startsWith('/feeds/') || // Feed detail has own layout
-    pathname.startsWith('/messages') || // Messages has chat layout
-    pathname.startsWith('/notifications') || // Notifications has own grid layout
-    pathname.startsWith('/spaces') || // Spaces has own full-width layout
-    pathname.startsWith('/c/') || // Community pages
-    pathname.startsWith('/post/') || // Post detail page
-    pathname.startsWith('/home/') || // Home section pages
-    pathname.startsWith('/activity/') || // Activity/tips pages
-    pathname.startsWith('/token/') || // Token detail pages
-    pathname.startsWith('/topics/') || // Topic detail pages
-    pathname.startsWith('/digest/'); // Digest detail pages
-  // Note: admin, docs, embed have their own full layouts outside Shell
+    pathname.startsWith('/feed') ||
+    pathname.startsWith('/feeds/') ||
+    pathname.startsWith('/messages') ||
+    pathname.startsWith('/notifications') ||
+    pathname.startsWith('/spaces') ||
+    pathname.startsWith('/c/') ||
+    pathname.startsWith('/post/') ||
+    pathname.startsWith('/home/') ||
+    pathname.startsWith('/activity/') ||
+    pathname.startsWith('/token/') ||
+    pathname.startsWith('/topics/') ||
+    pathname.startsWith('/digest/');
 
-  // ── Protocol transition flash on route change between protocols ──
+  // ── Protocol transition flash ──
   const prevPathRef = useRef(pathname);
   useEffect(() => {
     const prev = prevPathRef.current;
@@ -329,7 +393,6 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     const wasProtocol = PROTOCOL_ROUTES.find((r) => prev === r || prev.startsWith(`${r}/`));
     const nowProtocol = PROTOCOL_ROUTES.find((r) => pathname === r || pathname.startsWith(`${r}/`));
     if (wasProtocol && nowProtocol && wasProtocol !== nowProtocol) {
-      // Use the protocol accent color from CSS variable (set by ProtocolFeedPage)
       const color =
         getComputedStyle(document.documentElement).getPropertyValue('--protocol-accent').trim() ||
         '#00ff41';
@@ -338,9 +401,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       overlay.style.backgroundColor = color;
       overlay.style.opacity = '0.25';
       document.body.appendChild(overlay);
-      setTimeout(() => {
-        overlay.remove();
-      }, 700);
+      setTimeout(() => overlay.remove(), 700);
     }
   }, [pathname]);
 
@@ -423,6 +484,9 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     return () => window.removeEventListener('keydown', handler);
   }, [cycleLayout]);
 
+  // Left sidebar width: 275px expanded, 72px collapsed
+  const sidebarWidth = sidebarCollapsed ? 'w-[72px]' : 'w-[275px]';
+
   return (
     <div
       className="relative flex min-h-screen flex-col"
@@ -437,14 +501,32 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       <OfflineBanner />
 
       {/* ══════════════════════════════════════════════════════════
-           DESKTOP: Three-column layout (skip sidebars on landing page)
-           Twitter spec: left 275px | center max-w-[600px] | right 350px
+           DESKTOP: Scroll-aware header
       ══════════════════════════════════════════════════════════ */}
-      <div className="mx-auto flex w-full max-w-[1260px] flex-1">
+      <div
+        className={`hidden lg:block fixed top-0 inset-x-0 z-30 border-b border-[var(--color-glass-border)] backdrop-blur-xl transition-transform duration-300 ${
+          showDesktopHeader ? 'translate-y-0' : '-translate-y-full'
+        }`}
+        style={{
+          backgroundColor: 'var(--color-glass-bg)',
+        }}
+      >
+        <DesktopHeader onSearchOpen={() => setSearchOpen(true)} />
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════
+           DESKTOP: Three-column layout
+      ══════════════════════════════════════════════════════════ */}
+      <div className="mx-auto flex w-full max-w-[1260px] flex-1 pt-0 lg:pt-14">
         {/* ── Left Sidebar (desktop, hide on landing page) ── */}
         {pathname !== '/' && (
-          <div className="hidden lg:block sticky top-0 h-screen w-[275px] shrink-0 border-r border-[var(--color-glass-border)]">
-            <LeftSidebar />
+          <div
+            className={`hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] shrink-0 overflow-y-auto border-r border-[var(--color-glass-border)] transition-[width] duration-200 ease-in-out ${sidebarWidth}`}
+          >
+            <LeftSidebar
+              collapsed={sidebarCollapsed}
+              onCollapseToggle={() => setSidebarCollapsed((v) => !v)}
+            />
           </div>
         )}
 
@@ -466,15 +548,13 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             }
           `}
         >
-          {/* Page announcements for screen readers */}
           <div aria-live="polite" aria-atomic="true" className="sr-only" role="status" />
-          {/* Mobile top bar */}
-          <MobileTopBar onMenuToggle={() => setMobileDrawerOpen(true)} />
-
-          {/* Mobile slide-out drawer */}
+          <MobileTopBar
+            onMenuToggle={() => setMobileDrawerOpen(true)}
+            onSearchOpen={() => setSearchOpen(true)}
+          />
           <MobileDrawer open={mobileDrawerOpen} onClose={() => setMobileDrawerOpen(false)} />
 
-          {/* Content */}
           <OnboardingProvider>
             <ScreenReaderAnnouncerProvider>
               {children}
@@ -484,14 +564,14 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           </OnboardingProvider>
         </main>
 
-        {/* ── Right Sidebar (desktop, hidden on landing, self-layout, and protocol pages) ── */}
+        {/* ── Right Sidebar (desktop) ── */}
         {pathname !== '/' &&
           !isSelfLayoutPage &&
           !['/farcaster', '/lens', '/bluesky', '/nostr', '/mastodon'].some(
             (p) => pathname === p || pathname.startsWith(`${p}/`),
           ) && (
             <div className="hidden xl:block w-[350px] shrink-0 overflow-y-auto px-6 py-4">
-              <div className="sticky top-0 space-y-4">
+              <div className="sticky top-20 space-y-4">
                 <RightSidebar />
               </div>
             </div>

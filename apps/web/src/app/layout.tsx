@@ -28,27 +28,23 @@ export const metadata: Metadata = {
     template: '%s — DegenFeed',
   },
   description:
-    'DegenFeed is the leading web3 social media platform and decentralized social network. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one unified feed. Cross-post, tip creators in crypto, and join web3 communities. The best blockchain social media app.',
+    'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post across protocols, tip creators in crypto, and follow web3 communities without switching apps.',
   keywords: [
-    'web3 social media',
-    'decentralized social network',
-    'crypto social platform',
-    'blockchain social media',
     'nostr feed',
-    'farcaster feed',
-    'lens protocol',
-    'bluesky feed',
-    'mastodon feed',
-    'fediverse aggregator',
-    'crypto tipping',
-    'web3 social app',
-    'cross protocol social',
-    'open source social media',
+    'farcaster client',
+    'lens protocol app',
+    'bluesky aggregator',
+    'mastodon reader',
+    'fediverse cross-post',
+    'web3 social feed',
+    'crypto tipping app',
+    'multi protocol social',
+    'decentralized social media',
   ],
   openGraph: {
     title: 'DegenFeed — Web3 Social Media Aggregator | Nostr, Farcaster, Lens, Bluesky',
     description:
-      'DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post, tip creators, and join web3 communities. The best decentralized social network.',
+      'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post across protocols, tip creators in crypto, and follow web3 communities without switching apps.',
     url: 'https://app.degenfeed.xyz',
     siteName: 'DegenFeed',
     type: 'website',
@@ -98,10 +94,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang="en"
       className={`${theme} ${inter.variable} ${sora.variable} ${jetbrainsMono.variable}`}
-      style={{ fontFamily: 'var(--font-body)' }}
       suppressHydrationWarning
     >
-      <body className="page-transition-enter">
+      <body>
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
         {/* ⚡ SSR-safe theme: sync localStorage before paint to prevent flash */}
         <script
           dangerouslySetInnerHTML={{
@@ -180,7 +178,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               name: 'DegenFeed',
               url: 'https://app.degenfeed.xyz',
               description:
-                'DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post, tip creators in crypto, and join web3 communities.',
+                'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post across protocols, tip creators in crypto, and follow web3 communities without switching apps.',
               applicationCategory: 'SocialNetworkingApplication',
               operatingSystem: 'All',
               offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
@@ -207,7 +205,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <AuthProvider>
                 <RealtimeClientProvider>
                   <GlobalErrorBoundary>
-                    <ConditionalShell>{children}</ConditionalShell>
+                    <main id="main-content">
+                      <ConditionalShell>{children}</ConditionalShell>
+                    </main>
                   </GlobalErrorBoundary>
                 </RealtimeClientProvider>
               </AuthProvider>

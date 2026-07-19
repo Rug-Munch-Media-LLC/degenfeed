@@ -11,15 +11,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
 
-/* ─── Nav items ────────────────────────────────────────────── */
-
-interface SidebarItem {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-  /** Only shown when signed in */
-  requiresAuth?: boolean;
-}
+/* ─── SVG Icon Components ──────────────────────────────────── */
 
 function HomeIcon({ active }: { active: boolean }) {
   return active ? (
@@ -27,37 +19,45 @@ function HomeIcon({ active }: { active: boolean }) {
       <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
     </svg>
   ) : (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
     </svg>
   );
 }
 
-function ExploreIcon({ active }: { active: boolean }) {
+function TrendingIcon({ active }: { active: boolean }) {
   return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2.5 : 1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 6v6l4 2" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+      <polyline points="17 6 23 6 23 12" />
+    </svg>
+  );
+}
+
+function SpacesIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+      <path d="M19 10v2a7 7 0 01-14 0v-2" />
+      <line x1="12" y1="19" x2="12" y2="23" />
+      <line x1="8" y1="23" x2="16" y2="23" />
+    </svg>
+  );
+}
+
+function VideosIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polygon points="23 7 16 12 23 17 23 7" />
+      <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+    </svg>
+  );
+}
+
+function MsgIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
     </svg>
   );
 }
@@ -69,155 +69,38 @@ function NotifIcon({ active }: { active: boolean }) {
       <path d="M15 19a3 3 0 11-6 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ) : (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
       <path d="M13.73 21a2 2 0 01-3.46 0" />
     </svg>
   );
 }
 
-function MsgIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2.5 : 1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-    </svg>
-  );
-}
-
-function DigestIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2.5 : 1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9h2" />
-      <path d="M18 14h-8" />
-      <path d="M15 18h-5" />
-      <path d="M10 6h8v4h-8V6z" />
-    </svg>
-  );
-}
-
-function BookmarkIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2.5 : 1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-    </svg>
-  );
-}
-
-function CommunitiesIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2.5 : 1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="2" y1="12" x2="22" y2="12" />
-      <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-    </svg>
-  );
-}
-
-function _ProfileIcon({ active }: { active: boolean }) {
+function ProfileIcon({ active }: { active: boolean }) {
   return active ? (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M12 12c3.314 0 6-2.686 6-6s-2.686-6-6-6-6 2.686-6 6 2.686 6 6 6zm0 2c-4.418 0-8 2.686-8 6v2h16v-2c0-3.314-3.582-6-8-6z" />
     </svg>
   ) : (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="8" r="4" />
       <path d="M20 21a8 8 0 00-16 0" />
     </svg>
   );
 }
 
-function TrendingIcon({ active }: { active: boolean }) {
+function SettingsIcon() {
   return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={active ? 2.5 : 1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-      <polyline points="17 6 23 6 23 12" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
     </svg>
   );
 }
 
 function MoreIcon() {
   return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="1" />
       <circle cx="12" cy="5" r="1" />
       <circle cx="12" cy="19" r="1" />
@@ -227,68 +110,60 @@ function MoreIcon() {
 
 function ComposeIcon() {
   return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
   );
 }
 
-const NAV_ITEMS: SidebarItem[] = [
-  { href: '/feed', label: 'Home', icon: null },
-  { href: '/search', label: 'Search', icon: null },
-  { href: '/notifications', label: 'Notifications', icon: null, requiresAuth: true },
-  { href: '/messages', label: 'Messages', icon: null, requiresAuth: true },
-  { href: '/digest', label: 'Digest', icon: null },
-  { href: '/profile/bookmarks', label: 'Bookmarks', icon: null, requiresAuth: true },
-  { href: '/c', label: 'Communities', icon: null },
+/* ─── Nav items ────────────────────────────────────────────── */
+
+interface SidebarItem {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  requiresAuth?: boolean;
+}
+
+const PRIMARY_NAV: SidebarItem[] = [
+  { href: '/feed', label: 'Feed', icon: null },
   { href: '/trending', label: 'Trending', icon: null },
+  { href: '/spaces', label: 'Spaces', icon: null },
+  { href: '/shorts', label: 'Videos', icon: null },
+  { href: '/messages', label: 'Messages', icon: null, requiresAuth: true },
+  { href: '/notifications', label: 'Notifications', icon: null, requiresAuth: true },
+  { href: '/profile', label: 'Profile', icon: null, requiresAuth: true },
+  { href: '/settings', label: 'Settings', icon: null },
 ];
 
-const MORE_ITEMS = [
-  { href: '/shorts', label: 'Shorts' },
-  { href: '/feeds', label: 'Feeds' },
-  { href: '/spaces', label: 'Spaces' },
-  { href: '/news', label: 'News' },
-  { href: '/discover', label: 'Discover' },
+const MORE_SUB_ITEMS = [
+  { href: '/profile/bookmarks', label: 'Bookmarks' },
+  { href: '/c', label: 'Communities' },
   { href: '/leaderboard', label: 'Leaderboard' },
-  { href: '/deploy', label: 'Launch' },
+  { href: '/digest', label: 'Digest' },
   { href: '/premium', label: 'Premium' },
-  { href: '/creator', label: 'Creator Studio' },
-  { href: '/docs', label: 'Docs' },
-  { href: '/faq', label: 'FAQ' },
-  { href: '/status', label: 'Status' },
-  { href: '/settings', label: 'Settings' },
+  { href: '/newsletter', label: 'Newsletter' },
 ];
 
 function iconFor(href: string, active: boolean): React.ReactNode {
   switch (href) {
     case '/feed':
       return <HomeIcon active={active} />;
-    case '/search':
-      return <ExploreIcon active={active} />;
-    case '/notifications':
-      return <NotifIcon active={active} />;
-    case '/messages':
-      return <MsgIcon active={active} />;
-    case '/digest':
-      return <DigestIcon active={active} />;
-    case '/profile/bookmarks':
-      return <BookmarkIcon active={active} />;
-    case '/c':
-      return <CommunitiesIcon active={active} />;
     case '/trending':
       return <TrendingIcon active={active} />;
+    case '/spaces':
+      return <SpacesIcon active={active} />;
+    case '/shorts':
+      return <VideosIcon active={active} />;
+    case '/messages':
+      return <MsgIcon active={active} />;
+    case '/notifications':
+      return <NotifIcon active={active} />;
+    case '/profile':
+      return <ProfileIcon active={active} />;
+    case '/settings':
+      return <SettingsIcon />;
     default:
       return <MoreIcon />;
   }
@@ -299,9 +174,11 @@ function iconFor(href: string, active: boolean): React.ReactNode {
 function WalletUserCard({
   walletAddress,
   onSignOut,
+  collapsed,
 }: {
   walletAddress: string;
   onSignOut: () => void;
+  collapsed: boolean;
 }) {
   const { walletAddresses, walletCount, walletMeta, switchWallet, addWallet } = useAuth();
   const { identity } = useCrossProtocolIdentity(walletAddress, true);
@@ -315,7 +192,6 @@ function WalletUserCard({
   const chain = activeMeta?.chain ?? 'ethereum';
   const isEth = chain === 'ethereum';
 
-  // Close on outside click
   useEffect(() => {
     if (!dropdownOpen) return;
     const handler = (e: MouseEvent) => {
@@ -359,50 +235,46 @@ function WalletUserCard({
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-sm font-mono font-bold text-degen-400">
           {walletAddress.slice(2, 4).toUpperCase()}
         </div>
-        <div className="flex-1 min-w-0 hidden lg:block">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold truncate" style={{ color: 'var(--color-fg)' }}>
-              {activeMeta?.walletName ?? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`}
+        {!collapsed && (
+          <>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold truncate" style={{ color: 'var(--color-fg)' }}>
+                  {activeMeta?.walletName ?? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`}
+                </span>
+                <span
+                  className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
+                    isEth ? 'bg-blue-500/15 text-blue-400' : 'bg-purple-500/15 text-purple-400'
+                  }`}
+                >
+                  {isEth ? 'ETH' : 'SOL'}
+                </span>
+              </div>
+              <div className="text-xs truncate" style={{ color: 'var(--color-muted)' }}>
+                {walletCount > 1
+                  ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)} + ${walletCount - 1} more`
+                  : `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`}
+              </div>
+            </div>
+            <span className="text-[var(--color-muted)]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="12" cy="5" r="1" />
+                <circle cx="12" cy="19" r="1" />
+              </svg>
             </span>
-            <span
-              className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-                isEth ? 'bg-blue-500/15 text-blue-400' : 'bg-purple-500/15 text-purple-400'
-              }`}
-            >
-              {isEth ? 'ETH' : 'SOL'}
-            </span>
-          </div>
-          <div className="text-xs truncate" style={{ color: 'var(--color-muted)' }}>
-            {walletCount > 1
-              ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)} + ${walletCount - 1} more`
-              : `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`}
-          </div>
-        </div>
-        <span className="hidden lg:inline text-[var(--color-muted)]">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="1" />
-            <circle cx="12" cy="5" r="1" />
-            <circle cx="12" cy="19" r="1" />
-          </svg>
-        </span>
+          </>
+        )}
       </button>
 
-      {/* Dropdown */}
       {dropdownOpen && (
         <div
           ref={dropdownRef}
-          className="absolute bottom-full left-0 z-50 mb-2 w-72 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-2 shadow-2xl backdrop-blur-xl"
+          className={`absolute z-50 mb-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-2 shadow-2xl backdrop-blur-xl ${
+            collapsed ? 'left-0 bottom-full' : 'bottom-full left-0 w-72'
+          }`}
           role="menu"
         >
-          {/* Active wallet detail */}
           <div className="border-b border-[var(--color-glass-border)] px-3 pb-2 mb-1">
             <div className="flex items-center gap-2 mb-1">
               <span
@@ -436,7 +308,6 @@ function WalletUserCard({
             )}
           </div>
 
-          {/* Wallet list */}
           <div className="space-y-0.5 max-h-48 overflow-y-auto">
             {walletAddresses.map((addr, idx) => {
               const m = walletMeta[addr];
@@ -466,9 +337,7 @@ function WalletUserCard({
                         {addr.slice(0, 6)}…{addr.slice(-4)}
                       </code>
                       {isActive && (
-                        <span className="shrink-0 text-[9px] font-bold text-degen-400">
-                          · Active
-                        </span>
+                        <span className="shrink-0 text-[9px] font-bold text-degen-400">· Active</span>
                       )}
                     </div>
                   </div>
@@ -493,15 +362,7 @@ function WalletUserCard({
               className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-degen-400 transition-colors hover:bg-degen-500/10"
               role="menuitem"
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -513,15 +374,7 @@ function WalletUserCard({
               className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-red-400 transition-colors hover:bg-red-500/10"
               role="menuitem"
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
                 <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
@@ -535,9 +388,48 @@ function WalletUserCard({
   );
 }
 
-/* ─── Component ────────────────────────────────────────────── */
+/* ─── Collapse toggle button ───────────────────────────────── */
 
-export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClick?: () => void }) {
+function CollapseToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex items-center justify-center w-full px-3 py-2 text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+      aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        className={`transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <line x1="9" y1="3" x2="9" y2="21" />
+      </svg>
+      {!collapsed && <span className="ml-3 text-xs font-medium">Collapse</span>}
+    </button>
+  );
+}
+
+/* ─── Main Component ───────────────────────────────────────── */
+
+export const LeftSidebar = memo(function LeftSidebar({
+  onNavClick,
+  collapsed = false,
+  onCollapseToggle,
+}: {
+  onNavClick?: () => void;
+  collapsed?: boolean;
+  onCollapseToggle?: () => void;
+}) {
   const pathname = usePathname();
   const { ready, signedInProtocols, openSignIn, openCompose, walletAddress, signOut } = useAuth();
   const { showToast } = useToast();
@@ -547,11 +439,10 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
 
   const isActive = (href: string) => {
     if (href === '/feed')
-      return (
-        pathname === '/feed' || pathname === '/home/all' || pathname === '/home' || pathname === '/'
-      );
-    if (href === '/search') return pathname === '/search' || pathname.startsWith('/search/');
+      return pathname === '/feed' || pathname === '/home/all' || pathname === '/home' || pathname === '/';
     if (href === '/c') return pathname === '/c' || pathname.startsWith('/c/');
+    if (href === '/profile') return pathname === '/profile' || pathname.startsWith('/profile/');
+    if (href === '/settings') return pathname === '/settings' || pathname.startsWith('/settings/');
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
@@ -566,29 +457,33 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
       aria-label="Primary navigation"
     >
       {/* Logo */}
-      <div className="px-3 py-2">
+      <div className={`${collapsed ? 'px-2 py-2' : 'px-3 py-2'}`}>
         <Link
           href="/feed"
           onClick={handleClick}
-          className="flex items-center gap-3 rounded-full px-3 py-3 transition-colors hover:bg-[var(--color-overlay)]"
+          className={`flex items-center rounded-full transition-colors hover:bg-[var(--color-overlay)] ${
+            collapsed ? 'justify-center px-2 py-2' : 'gap-3 px-3 py-3'
+          }`}
           aria-label="DegenFeed Home"
         >
           <Image
             src="/icon.svg"
             alt=""
-            width={32}
-            height={32}
-            className="h-8 w-8 rounded-lg logo-glow"
+            width={collapsed ? 28 : 32}
+            height={collapsed ? 28 : 32}
+            className={`rounded-lg logo-glow ${collapsed ? 'h-7 w-7' : 'h-8 w-8'}`}
           />
-          <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
-            DegenFeed
-          </span>
+          {!collapsed && (
+            <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
+              DegenFeed
+            </span>
+          )}
         </Link>
       </div>
 
       {/* Nav items */}
       <nav className="flex-1 space-y-0.5 px-1" aria-label="Sidebar">
-        {NAV_ITEMS.map((item) => {
+        {PRIMARY_NAV.map((item) => {
           if (item.requiresAuth && !hasSignedIn) return null;
           const active = isActive(item.href);
           return (
@@ -596,12 +491,15 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
               key={item.href}
               href={item.href}
               onClick={handleClick}
-              className={`sidebar-nav-item ${active ? 'sidebar-nav-active' : ''}`}
+              className={`sidebar-nav-item ${active ? 'sidebar-nav-active' : ''} ${
+                collapsed ? 'justify-center px-0' : ''
+              }`}
               aria-current={active ? 'page' : undefined}
+              title={collapsed ? item.label : undefined}
             >
               <span className="sidebar-nav-icon">{iconFor(item.href, active)}</span>
-              <span className="sidebar-nav-label">{item.label}</span>
-              {item.label === 'Notifications' && unreadCount > 0 && (
+              {!collapsed && <span className="sidebar-nav-label">{item.label}</span>}
+              {!collapsed && item.label === 'Notifications' && unreadCount > 0 && (
                 <span
                   role="status"
                   className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-degen-500 px-1.5 text-[11px] font-bold text-black"
@@ -619,34 +517,35 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
           <button
             type="button"
             onClick={() => setMoreOpen((v) => !v)}
-            className={`sidebar-nav-item w-full ${moreOpen ? 'sidebar-nav-active' : ''}`}
+            className={`sidebar-nav-item w-full ${moreOpen ? 'sidebar-nav-active' : ''} ${
+              collapsed ? 'justify-center px-0' : ''
+            }`}
             aria-expanded={moreOpen}
-            aria-label="Toggle more menu"
+            aria-label={collapsed ? 'More options' : 'Toggle more menu'}
+            title={collapsed ? 'More options' : undefined}
           >
             <span className="sidebar-nav-icon">
               <MoreIcon />
             </span>
-            <span className="sidebar-nav-label">More</span>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              className={`ml-auto transition-transform ${moreOpen ? 'rotate-180' : ''}`}
-              aria-hidden="true"
-            >
-              <path
-                d="M4 6l4 4 4-4"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            {!collapsed && (
+              <>
+                <span className="sidebar-nav-label">More</span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  className={`ml-auto transition-transform ${moreOpen ? 'rotate-180' : ''}`}
+                  aria-hidden="true"
+                >
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </>
+            )}
           </button>
-          {moreOpen && (
+          {!collapsed && moreOpen && (
             <div className="ml-3 mb-1 space-y-0.5 border-l border-[var(--color-glass-border)] pl-2">
-              {MORE_ITEMS.map((item) => {
+              {MORE_SUB_ITEMS.map((item) => {
                 const active = isActive(item.href);
                 return (
                   <Link
@@ -669,7 +568,7 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
       </nav>
 
       {/* Compose button */}
-      <div className="px-3 py-3">
+      <div className={`${collapsed ? 'px-2 py-2' : 'px-3 py-3'}`}>
         {ready && hasSignedIn ? (
           <button
             type="button"
@@ -677,13 +576,11 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
               handleClick();
               openCompose();
             }}
-            className="sidebar-compose-btn"
+            className={`sidebar-compose-btn ${collapsed ? '!px-0 !py-3' : ''}`}
             aria-label="Create new post"
+            title={collapsed ? 'Create post' : undefined}
           >
-            <span className="hidden lg:inline">Post</span>
-            <span className="lg:hidden">
-              <ComposeIcon />
-            </span>
+            {collapsed ? <ComposeIcon /> : 'Post'}
           </button>
         ) : (
           <button
@@ -693,37 +590,36 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
               showToast('info', 'Sign in to post');
               openSignIn();
             }}
-            className="sidebar-compose-btn sidebar-signin-btn"
+            className={`sidebar-compose-btn sidebar-signin-btn ${collapsed ? '!px-0 !py-3' : ''}`}
             aria-label="Sign in to DegenFeed"
+            title={collapsed ? 'Sign in' : undefined}
           >
-            <span className="hidden lg:inline">Sign In</span>
-            <span className="lg:hidden">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
+            {collapsed ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
                 <polyline points="10 17 15 12 10 7" />
                 <line x1="15" y1="12" x2="3" y2="12" />
               </svg>
-            </span>
+            ) : (
+              'Sign In'
+            )}
           </button>
         )}
       </div>
 
+      {/* Collapse toggle */}
+      {onCollapseToggle && (
+        <div className="border-t border-[var(--color-glass-border)] pt-1">
+          <CollapseToggle collapsed={collapsed} onToggle={onCollapseToggle} />
+        </div>
+      )}
+
       {/* Profile / Wallet at bottom */}
-      <div className="border-t border-[var(--color-glass-border)] px-2 py-2">
+      <div className={`border-t border-[var(--color-glass-border)] ${collapsed ? 'px-1 py-2' : 'px-2 py-2'}`}>
         {!ready ? (
-          <div className="skeleton h-12 w-full rounded-full" />
+          <div className={`skeleton rounded-full ${collapsed ? 'h-10 w-10 mx-auto' : 'h-12 w-full'}`} />
         ) : hasSignedIn && walletAddress ? (
-          <WalletUserCard walletAddress={walletAddress} onSignOut={signOut} />
+          <WalletUserCard walletAddress={walletAddress} onSignOut={signOut} collapsed={collapsed} />
         ) : (
           <button
             type="button"
@@ -731,32 +627,21 @@ export const LeftSidebar = memo(function LeftSidebar({ onNavClick }: { onNavClic
               handleClick();
               openSignIn();
             }}
-            className="sidebar-user-card w-full text-left"
+            className={`sidebar-user-card w-full text-left ${collapsed ? 'justify-center' : ''}`}
+            title={collapsed ? 'Sign in' : undefined}
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-degen-500/10 text-sm font-bold text-degen-400">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
             </div>
-            <div className="flex-1 min-w-0 hidden lg:block">
-              <div className="text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>
-                Sign In
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold" style={{ color: 'var(--color-fg)' }}>Sign In</div>
+                <div className="text-xs" style={{ color: 'var(--color-muted)' }}>Connect wallet</div>
               </div>
-              <div className="text-xs" style={{ color: 'var(--color-muted)' }}>
-                Connect wallet
-              </div>
-            </div>
+            )}
           </button>
         )}
       </div>
