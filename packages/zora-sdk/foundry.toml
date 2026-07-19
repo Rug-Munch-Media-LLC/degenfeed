@@ -1,0 +1,23 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["node_modules", "lib"]
+solc_version = "0.8.26"
+via_ir = false
+optimizer = true
+optimizer_runs = 200
+evm_version = "cancun"
+
+[fmt]
+line_length = 120
+
+# Docs: https://book.getfoundry.sh/reference/config/solidity-compiler
+#
+# Dependencies (install before compiling):
+#   forge install OpenZeppelin/openzeppelin-contracts --no-git
+#
+# Build:
+#   forge build
+#
+# Test:
+#   forge test

@@ -18,18 +18,20 @@ import {
 // ─── TGBotClient ───────────────────────────────────────────────────
 
 describe('TGBotClient', () => {
-  it('should construct with a bot token', () => {
+  it('should construct with a bot token (masked)', () => {
     const bot = new TGBotClient('test:token');
-    expect(bot.getBotToken()).toBe('test:token');
+    const masked = bot.getBotToken();
+    expect(masked).not.toBe('test:token');
   });
 
-  it('should construct with custom options', () => {
+  it('should construct with custom options (masked token)', () => {
     const bot = new TGBotClient('test:token', {
       baseUrl: 'https://custom.api.telegram.org/bottest:token',
       rateLimitRps: 10,
       userAgent: 'Test/1.0',
     });
-    expect(bot.getBotToken()).toBe('test:token');
+    const masked = bot.getBotToken();
+    expect(masked).not.toBe('test:token');
   });
 
   it('should throw TelegramError on unknown error code', () => {

@@ -16,6 +16,7 @@
   "dependencies": {
     "@degenfeed/bluesky-sdk": "workspace:*",
     "@degenfeed/farcaster-sdk": "workspace:*",
+    "@degenfeed/peertube-provider": "workspace:*",
     "@degenfeed/feed-core": "workspace:*",
     "@degenfeed/feed-providers": "workspace:*",
     "@degenfeed/identity": "workspace:*",

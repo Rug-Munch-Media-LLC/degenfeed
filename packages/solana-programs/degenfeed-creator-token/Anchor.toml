@@ -1,0 +1,20 @@
+[toolchain]
+anchor_version = "0.30.1"
+
+[programs.localnet]
+degenfeed_creator_token = "DFCCrTn111111111111111111111111111111111111"
+
+[programs.devnet]
+degenfeed_creator_token = "DFCCrTn111111111111111111111111111111111111"
+
+[programs.mainnet]
+degenfeed_creator_token = "DFCCrTn111111111111111111111111111111111111"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "pnpm anchor test"
+build = "anchor build"
+deploy = "anchor deploy"

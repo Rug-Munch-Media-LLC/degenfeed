@@ -175,14 +175,14 @@ function StepCoinDetails({
           id="coin-name"
           type="text"
           value={params.name}
-          onChange={(e) => onChange({ name: e.target.value })}
+          onChange={(e) => onChange({ name: e.target.value.slice(0, 32) })}
           placeholder="e.g. Degen Alice"
           className="input"
-          maxLength={64}
+          maxLength={32}
           autoComplete="off"
         />
         <p className="mt-1 text-right text-[10px] text-[var(--color-muted)]">
-          {params.name.length}/64
+          {params.name.length}/32
         </p>
       </div>
 
@@ -202,15 +202,15 @@ function StepCoinDetails({
             id="coin-symbol"
             type="text"
             value={params.symbol}
-            onChange={(e) => onChange({ symbol: e.target.value.toUpperCase() })}
+            onChange={(e) => onChange({ symbol: e.target.value.toUpperCase().slice(0, 10) })}
             placeholder="ALICE"
             className="input pl-8 font-mono uppercase"
-            maxLength={16}
+            maxLength={10}
             autoComplete="off"
           />
         </div>
         <p className="mt-1 text-[10px] text-[var(--color-muted)]">
-          {params.symbol.length}/16 · Letters, numbers, underscores only
+          {params.symbol.length}/10 · Letters, numbers, underscores only
         </p>
       </div>
 
@@ -674,10 +674,14 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
   // Validation per step
   const stepErrors = useMemo((): Partial<Record<StepId, string | null>> => {
     const errors: Partial<Record<StepId, string | null>> = {};
-    if (!params.name.trim()) errors[1] = 'Coin name is required';
-    else if (params.name.length < 2) errors[1] = 'Name must be at least 2 characters';
-    if (!params.symbol.trim()) errors[1] = 'Symbol is required';
-    else if (params.symbol.length < 1) errors[1] = 'Symbol is required';
+    const nameSanitized = params.name.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim();
+    if (!nameSanitized) errors[1] = 'Coin name is required';
+    else if (nameSanitized.length < 2) errors[1] = 'Name must be at least 2 characters';
+    else if (nameSanitized.length > 32) errors[1] = 'Name must be 32 characters or less';
+    const symbolSanitized = params.symbol.replace(/[^A-Z0-9_]/g, '').trim();
+    if (!symbolSanitized) errors[1] = 'Symbol is required';
+    else if (symbolSanitized.length < 1) errors[1] = 'Symbol is required';
+    else if (symbolSanitized.length > 10) errors[1] = 'Symbol must be 10 characters or less';
     if (params.supply < 1000) errors[2] = 'Minimum supply is 1,000';
     if (params.creatorAllocation < 0) errors[2] = 'Allocation must be 0 or more';
     const totalSplit = params.revenueSplits.reduce((s, r) => s + r.percentage, 0);
@@ -688,7 +692,12 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
   const canProceed = useMemo(() => {
     switch (step) {
       case 1:
-        return !!params.name.trim() && !!params.symbol.trim();
+        return (
+          Boolean(params.name.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim()) &&
+          Boolean(params.symbol.replace(/[^A-Z0-9_]/g, '').trim()) &&
+          params.name.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim().length <= 32 &&
+          params.symbol.replace(/[^A-Z0-9_]/g, '').trim().length <= 10
+        );
       case 2:
         return (
           params.supply >= 1000 && params.creatorAllocation >= 0 && params.creatorAllocation <= 30

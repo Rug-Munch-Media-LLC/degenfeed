@@ -1,0 +1,30 @@
+{
+  "name": "@degenfeed/zora-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./solana": "./src/solana.ts",
+    "./evm": "./src/evm.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "anchor:build": "cd ../solana-programs/degenfeed-creator-token && anchor build",
+    "anchor:test": "cd ../solana-programs/degenfeed-creator-token && anchor test"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0"
+  },
+  "peerDependencies": {
+    "viem": "^2.55.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "viem": "^2.55.0"
+  }
+}

@@ -7,8 +7,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import BondingCurveChart from '../../../components/launch/BondingCurveChart';
 import BuySellInterface from '../../../components/launch/BuySellInterface';
 import type { CoinCardData } from '../../../components/launch/CoinCard';
+import CommunityStats from '../../../components/launch/CommunityStats';
 import CreatorInfo from '../../../components/launch/CreatorInfo';
+import HolderLeaderboard from '../../../components/launch/HolderLeaderboard';
 import HolderList from '../../../components/launch/HolderList';
+import LiveCommentFeed from '../../../components/launch/LiveCommentFeed';
+import LiveStreamPlayer from '../../../components/launch/LiveStreamPlayer';
+import MilestoneTracker from '../../../components/launch/MilestoneTracker';
 import ProgressBar from '../../../components/launch/ProgressBar';
 import TradeFeed from '../../../components/launch/TradeFeed';
 import {
@@ -16,6 +21,7 @@ import {
   formatBondingUsd,
   useBondingCurve,
 } from '../../../hooks/useBondingCurve';
+import { useTokenCommunity } from '../../../hooks/useTokenCommunity';
 
 const ShareModal = dynamic(() => import('../../../components/launch/ShareModal'), { ssr: false });
 
@@ -102,6 +108,12 @@ export default function CoinPage() {
   const [pageError, setPageError] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
   const [txError, setTxError] = useState<string | null>(null);
+
+  // Community engagement data
+  const tokenAddress = curve?.tokenAddress ?? pageData?.address ?? '';
+  const {
+    data: communityData,
+  } = useTokenCommunity(tokenAddress);
 
   // Fetch coin metadata
   useEffect(() => {
@@ -403,6 +415,52 @@ export default function CoinPage() {
             </div>
           )}
 
+          {/* ════ Live Engagement Section ════ */}
+          {tokenAddress && (
+            <div className="space-y-4">
+              {/* Phase indicator */}
+              {!isGraduated && curve?.phase && (
+                <div className="flex items-center gap-2 rounded-xl border border-degen-500/10 bg-gradient-to-r from-degen-500/5 to-purple-500/5 px-4 py-2.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-degen-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-degen-500" />
+                  </span>
+                  <span className="text-xs font-medium text-degen-400">
+                    {curve.phaseLabel || `${curve.phase.charAt(0).toUpperCase() + curve.phase.slice(1)} phase`}
+                    {curve.phase === 'early' && ' — 2% max buys! Bonding in progress'}
+                  </span>
+                </div>
+              )}
+
+              {/* Live Stream Player */}
+              <LiveStreamPlayer
+                tokenAddress={tokenAddress}
+                tokenSymbol={coinSymbol}
+              />
+
+              {/* Live Comment Feed */}
+              <LiveCommentFeed tokenAddress={tokenAddress} />
+
+              {/* Community link */}
+              {isGraduated && (
+                <Link
+                  href={`/launch/${symbol}/community`}
+                  className="flex items-center justify-between rounded-xl border border-degen-500/20 bg-gradient-to-r from-degen-500/10 to-fuchsia-500/10 px-4 py-3 transition-colors hover:from-degen-500/20 hover:to-fuchsia-500/20"
+                >
+                  <div>
+                    <span className="text-sm font-semibold text-[var(--color-fg)]">
+                      🏛️ Community Hub
+                    </span>
+                    <p className="text-xs text-[var(--color-muted)]">
+                      Full discussion board, holder leaderboard, and more
+                    </p>
+                  </div>
+                  <span className="text-lg">→</span>
+                </Link>
+              )}
+            </div>
+          )}
+
           {/* Creator info */}
           <CreatorInfo creator={displayData.creator} />
 
@@ -485,14 +543,45 @@ export default function CoinPage() {
           </div>
 
           {/* Top Holders */}
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3">
-            <HolderList
-              holders={curve?.holderList ?? []}
-              totalHolders={holderCount ?? undefined}
-              loading={curveLoading}
-              maxItems={8}
-            />
-          </div>
+          {!tokenAddress && (
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3">
+              <HolderList
+                holders={curve?.holderList ?? []}
+                totalHolders={holderCount ?? undefined}
+                loading={curveLoading}
+                maxItems={8}
+              />
+            </div>
+          )}
+
+          {/* Community engagement sidebar (when token address is known) */}
+          {tokenAddress && (
+            <div className="space-y-4">
+              {/* Community Stats */}
+              <CommunityStats
+                onlineNow={communityData?.onlineNow ?? 0}
+                lastHourBuys={communityData?.lastHourBuys ?? 0}
+                totalHolders={holderCount ?? 0}
+                totalRaised={totalRaised ?? undefined}
+              />
+
+              {/* Milestone Tracker */}
+              <MilestoneTracker tokenAddress={tokenAddress} compact />
+
+              {/* Holder Leaderboard */}
+              <HolderLeaderboard
+                holders={communityData?.leaderboard ?? curve?.holderList?.map(h => ({
+                  wallet: h.address,
+                  amount: String(h.usdValue),
+                  percentage: h.percentage,
+                  usdValue: h.usdValue,
+                  badges: [],
+                  isCreator: false,
+                })) ?? []}
+                loading={curveLoading}
+              />
+            </div>
+          )}
         </div>
       </div>
 

@@ -633,10 +633,11 @@ export async function handleNotifications(request: Request, env: Env): Promise<R
     );
   }
   if (auth.farcaster?.fid) {
+    const fid = auth.farcaster.fid;
     fetchers.push(
       (async () => {
         try {
-          all.push(...(await fetchFarcasterNotifications(env, auth.farcaster!.fid)));
+          all.push(...(await fetchFarcasterNotifications(env, fid)));
         } catch (err) {
           console.error(
             '[notifications] farcaster fetcher failed:',
