@@ -166,7 +166,27 @@ pub struct Recipient {
     pub label: String,
 }
 
-/// Vested tokens that the creator can claim over time
+/// Customizable vesting configuration for creator token allocation.
+/// Mirrors the EVM VestingConfig struct — transparent and on-chain.
+///
+/// ## Schedule
+/// 1. `initial_unlock_bps`% of allocation is unlocked immediately at launch
+/// 2. No additional tokens unlock during the `cliff_duration` period
+/// 3. After cliff, remaining tokens vest linearly over `vesting_duration`
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub struct VestingConfig {
+    /// Basis points unlocked immediately at launch (0-3000 = 0-30%)
+    pub initial_unlock_bps: u16,
+
+    /// Cliff duration in seconds before linear vesting begins (0 = no cliff, max 90 days)
+    pub cliff_duration: i64,
+
+    /// Total vesting duration in seconds after cliff (min 7 days, max 2 years)
+    pub vesting_duration: i64,
+}
+
+/// Vested tokens that the creator can claim over time.
+/// Supports customizable vesting per VestingConfig.
 #[account]
 #[derive(InitSpace)]
 pub struct VestingVault {
@@ -182,11 +202,14 @@ pub struct VestingVault {
     /// Total tokens claimed so far
     pub total_claimed: u64,
 
-    /// Vesting start timestamp
+    /// Vesting start timestamp (token creation time)
     pub vesting_start: i64,
 
-    /// Vesting end timestamp
+    /// Vesting end timestamp (cliff_end + vesting_duration)
     pub vesting_end: i64,
+
+    /// Customizable vesting config — set once at creation, immutable
+    pub vesting_config: VestingConfig,
 
     /// PDA bump
     pub bump: u8,

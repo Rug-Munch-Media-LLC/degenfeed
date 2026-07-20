@@ -10,7 +10,10 @@ pragma solidity ^0.8.26;
  *   - ETH-denominated bonding curve (linear from 1 gwei → 1000 gwei per token)
  *   - Fee split: platform (0.5%) + creator (0-2%) + referrer (0-0.05%)
  *   - Anti-exploit guards: phase limits, buy cooldowns, max 15% per wallet
- *   - Creator vesting: 30-day cliff, 90-day linear
+ *   - Creator vesting: FULLY CUSTOMIZABLE via VestingConfig
+ *     - initialUnlockBps: 0-3000 (0-30% at launch, no lock)
+ *     - cliffDuration: 0-90 days before linear vesting starts
+ *     - vestingDuration: 7 days to 2 years of linear vesting
  *   - Graduation: at 80% supply + 50 unique buyers → bonding curve closes for Uniswap V4 pool
  *
  * Deployed on Base (chain 8453) via DegenFeedFactory (CREATE2).
@@ -78,12 +81,6 @@ contract DegenFeedCoin {
     /// @notice Minimum initial buy from factory.
     uint256 public constant MIN_INITIAL_BUY = 0.05 ether;
 
-    /// @notice Vesting cliff duration.
-    uint256 public constant VESTING_CLIFF = 30 days;
-
-    /// @notice Vesting linear duration after cliff.
-    uint256 public constant VESTING_DURATION = 90 days;
-
     /// @notice Minimum buy amount to prevent dust attacks (0.0001 ETH).
     uint256 public constant MIN_BUY_AMOUNT = 0.0001 ether;
 
@@ -98,6 +95,25 @@ contract DegenFeedCoin {
 
     /// @notice Minimum unique buyers for graduation.
     uint256 public constant MIN_UNIQUE_BUYERS = 50;
+
+    /// @notice Buy cooldown in seconds.
+    uint256 public constant COOLDOWN_SECONDS = 60;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Vesting Constants
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// @notice Maximum initial unlock in basis points (30%).
+    uint256 public constant MAX_INITIAL_UNLOCK_BPS = 3000;
+
+    /// @notice Maximum cliff duration (90 days).
+    uint256 public constant MAX_CLIFF_DURATION = 90 days;
+
+    /// @notice Minimum vesting duration (7 days).
+    uint256 public constant MIN_VESTING_DURATION = 7 days;
+
+    /// @notice Maximum vesting duration (2 years).
+    uint256 public constant MAX_VESTING_DURATION = 730 days;
 
     // ═══════════════════════════════════════════════════════════════════════
     // Tokenomics State
@@ -138,6 +154,26 @@ contract DegenFeedCoin {
 
     /// @notice Amount of creator tokens claimed via vesting.
     uint256 public creatorClaimed;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Vesting Configuration
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// @notice Vesting configuration struct.
+    /// @dev Immutable after deployment — set once in constructor.
+    struct VestingConfig {
+        /// Basis points unlocked immediately at launch (0-3000 = 0-30%)
+        uint256 initialUnlockBps;
+        /// Cliff duration in seconds before linear vesting begins (0 = no cliff)
+        uint256 cliffDuration;
+        /// Total vesting duration in seconds (min 7 days, max 2 years)
+        uint256 vestingDuration;
+    }
+
+    /// @notice The vesting configuration for this coin.
+    /// @dev Public so anyone can read the exact vesting parameters on-chain.
+    ///      Transparency: no hidden bundles, no special terms — what you see is what deploys.
+    VestingConfig public vestingConfig;
 
     // ═══════════════════════════════════════════════════════════════════════
     // Per-Wallet State
@@ -208,7 +244,7 @@ contract DegenFeedCoin {
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
-     * @notice Deploy a new DegenFeedCoin.
+     * @notice Deploy a new DegenFeedCoin with customizable vesting.
      * @param name_              Token name.
      * @param symbol_            Token symbol.
      * @param uri_               Metadata URI.
@@ -218,6 +254,12 @@ contract DegenFeedCoin {
      * @param platformFeeBps_    Platform fee on trades (set by factory, typically 50).
      * @param platformFeeReceiver_ Address receiving platform fees.
      * @param referrer_          Referrer address (zero = no referrer).
+     * @param vestingConfig_     Custom vesting configuration.
+     *                           - initialUnlockBps: 0-3000 (0-30% at launch)
+     *                           - cliffDuration: 0-90 days
+     *                           - vestingDuration: 7 days to 2 years
+     *                           Creators control these within reputation-based limits
+     *                           (enforced off-chain at the factory/API level).
      */
     constructor(
         string memory name_,
@@ -228,7 +270,8 @@ contract DegenFeedCoin {
         uint256 creatorFeeBps_,
         uint256 platformFeeBps_,
         address platformFeeReceiver_,
-        address referrer_
+        address referrer_,
+        VestingConfig memory vestingConfig_
     ) {
         require(bytes(name_).length > 0, "Name required");
         require(bytes(symbol_).length > 0, "Symbol required");
@@ -237,6 +280,30 @@ contract DegenFeedCoin {
         require(creatorFeeBps_ <= 200, "Creator fee > 2%");
         require(platformFeeBps_ <= 200, "Platform fee > 2%");
         require(platformFeeReceiver_ != address(0), "Invalid fee receiver");
+
+        // ── Validate vesting config ─────────────────────────────────────
+        require(
+            vestingConfig_.initialUnlockBps <= MAX_INITIAL_UNLOCK_BPS,
+            "Initial unlock > 30%"
+        );
+        require(
+            vestingConfig_.cliffDuration <= MAX_CLIFF_DURATION,
+            "Cliff > 90 days"
+        );
+        require(
+            vestingConfig_.vestingDuration >= MIN_VESTING_DURATION,
+            "Vesting < 7 days"
+        );
+        require(
+            vestingConfig_.vestingDuration <= MAX_VESTING_DURATION,
+            "Vesting > 2 years"
+        );
+        // Cliff + vesting must not exceed MAX_CLIFF_DURATION + MAX_VESTING_DURATION
+        // (no unbounded lockup)
+        require(
+            vestingConfig_.cliffDuration + vestingConfig_.vestingDuration <= MAX_CLIFF_DURATION + MAX_VESTING_DURATION,
+            "Total lockup > limit"
+        );
 
         _name = name_;
         _symbol = symbol_;
@@ -250,6 +317,9 @@ contract DegenFeedCoin {
         platformFeeBps = platformFeeBps_;
         platformFeeReceiver = platformFeeReceiver_;
         referrer = referrer_;
+
+        // Store vesting config — transparent and immutable on-chain
+        vestingConfig = vestingConfig_;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -622,32 +692,42 @@ contract DegenFeedCoin {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Creator Vesting
+    // Customizable Creator Vesting
+    // ═══════════════════════════════════════════════════════════════════════
+    //
+    // Creators choose their own vesting parameters at deployment:
+    //
+    //   initialUnlockBps: 0-3000 (0-30% at launch, no lock)
+    //   cliffDuration: 0-90 days before linear vesting begins
+    //   vestingDuration: 7 days to 2 years of linear vesting after cliff
+    //
+    // At deployment, the initial unlock amount is immediately available.
+    // The remainder vests linearly after the cliff period.
+    //
+    // Transparency: ALL parameters are on-chain and immutable.
+    // No hidden bundles, no special backroom deals — what you see is what deploys.
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
-     * @notice Creator claims vested tokens according to schedule.
-     * @dev Vesting schedule: 30-day cliff → 90-day linear vesting.
-     *      Total allocation = TOTAL_SUPPLY * creatorAllocationBps / 10000
-     *      After cliff: vests linearly over 90 days.
+     * @notice Creator claims vested tokens according to their custom schedule.
+     * @dev Vesting logic:
+     *      1. Initial unlock: `initialUnlockBps`% of allocation is claimable immediately at launch
+     *      2. Cliff: No additional tokens until `cliffDuration` seconds have passed
+     *      3. Linear vesting: After cliff, tokens vest linearly over `vestingDuration`
+     *
+     *      Example (balanced preset):
+     *        - 5% initial unlock at T+0
+     *        - 7-day cliff (no further unlocks)
+     *        - 60-day linear vesting after cliff
+     *        - At T+67: 100% vested
      */
     function claimVested() external onlyOwner nonReentrant {
-        require(block.timestamp >= createdAt + VESTING_CLIFF, "Cliff not reached");
-
         uint256 totalAllocation = (TOTAL_SUPPLY * creatorAllocationBps) / 10000;
         if (totalAllocation == 0) {
             revert("No allocation");
         }
 
-        uint256 elapsedSinceCliff = block.timestamp - createdAt - VESTING_CLIFF;
-        uint256 vestedAmount = (totalAllocation * elapsedSinceCliff) / VESTING_DURATION;
-
-        // Cap at total allocation
-        if (vestedAmount > totalAllocation) {
-            vestedAmount = totalAllocation;
-        }
-
-        uint256 claimable = vestedAmount - creatorClaimed;
+        uint256 claimable = _calculateClaimable(totalAllocation);
 
         require(claimable > 0, "Nothing to claim");
         require(_totalSupply + claimable <= TOTAL_SUPPLY, "Vesting exceeds supply");
@@ -660,22 +740,74 @@ contract DegenFeedCoin {
     }
 
     /**
+     * @notice Internal vesting calculation.
+     * @dev Computes the current vested amount based on the configurable schedule.
+     *
+     *      Vested = initialUnlock + linear(elapsedSinceCliff / vestingDuration * postInitial)
+     *
+     *      Where:
+     *        - initialUnlock = totalAllocation * initialUnlockBps / 10000
+     *        - postInitial = totalAllocation - initialUnlock
+     *        - elapsedSinceCliff = max(0, now - createdAt - cliffDuration)
+     */
+    function _calculateClaimable(uint256 totalAllocation) internal view returns (uint256) {
+        VestingConfig memory config = vestingConfig;
+        uint256 elapsed = block.timestamp - createdAt;
+
+        // ── Initial unlock (available immediately) ───────────────────────
+        uint256 initialUnlock = (totalAllocation * config.initialUnlockBps) / 10000;
+        uint256 alreadyClaimed = creatorClaimed;
+
+        // If nothing was claimed yet, include initial unlock
+        if (alreadyClaimed < initialUnlock) {
+            // Handle first claim — some or all of the initial unlock is available
+            if (elapsed < config.cliffDuration) {
+                // Still in cliff — only initial unlock is claimable
+                return initialUnlock - alreadyClaimed;
+            }
+        }
+
+        // ── Cliff check ──────────────────────────────────────────────────
+        if (elapsed < config.cliffDuration) {
+            // Past initial unlock but still in cliff period
+            // Only the initial unlock has been released
+            uint256 claimedForInitial = alreadyClaimed < initialUnlock ? alreadyClaimed : initialUnlock;
+            if (claimedForInitial < initialUnlock) {
+                return initialUnlock - claimedForInitial;
+            }
+            return 0;
+        }
+
+        // ── Linear vesting after cliff ───────────────────────────────────
+        uint256 elapsedSinceCliff = elapsed - config.cliffDuration;
+        uint256 postInitial = totalAllocation - initialUnlock;
+
+        if (config.vestingDuration == 0 || elapsedSinceCliff >= config.vestingDuration) {
+            // Full vest
+            return totalAllocation - alreadyClaimed;
+        }
+
+        uint256 vested = initialUnlock + (postInitial * elapsedSinceCliff) / config.vestingDuration;
+
+        if (vested > totalAllocation) {
+            vested = totalAllocation;
+        }
+
+        if (vested <= alreadyClaimed) {
+            return 0;
+        }
+
+        return vested - alreadyClaimed;
+    }
+
+    /**
      * @notice Returns the amount of tokens currently claimable by the creator.
      * @return claimable Amount of tokens (wei-adjusted).
      */
     function getClaimableVested() external view returns (uint256) {
-        if (block.timestamp < createdAt + VESTING_CLIFF) return 0;
-
         uint256 totalAllocation = (TOTAL_SUPPLY * creatorAllocationBps) / 10000;
         if (totalAllocation == 0) return 0;
-
-        uint256 elapsedSinceCliff = block.timestamp - createdAt - VESTING_CLIFF;
-        uint256 vestedAmount = (totalAllocation * elapsedSinceCliff) / VESTING_DURATION;
-
-        if (vestedAmount > totalAllocation) vestedAmount = totalAllocation;
-
-        uint256 claimable = vestedAmount - creatorClaimed;
-        return claimable;
+        return _calculateClaimable(totalAllocation);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -750,6 +882,7 @@ contract DegenFeedCoin {
 
     /**
      * @notice Returns the remaining unclaimed creator vesting allocation.
+     * @dev Considers the full allocation minus what's been claimed so far.
      */
     function remainingVesting() external view returns (uint256) {
         uint256 totalAllocation = (TOTAL_SUPPLY * creatorAllocationBps) / 10000;

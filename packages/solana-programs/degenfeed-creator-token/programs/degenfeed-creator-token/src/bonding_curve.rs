@@ -1,5 +1,6 @@
 use crate::constants::*;
 use crate::error::CreatorTokenError;
+use crate::state::VestingConfig;
 use anchor_lang::prelude::*;
 
 /// Get the current token price based on total supply issued.
@@ -137,42 +138,122 @@ pub fn get_max_holder_amount() -> u64 {
         .unwrap() as u64
 }
 
-/// Calculate vested amount based on linear vesting schedule
+/// Calculate vested amount based on customizable vesting schedule.
+///
+/// ## Schedule
+/// 1. **Initial unlock**: `config.initial_unlock_bps`% of allocation available at T+0
+/// 2. **Cliff**: No additional tokens until `cliff_end = created_at + config.cliff_duration`
+/// 3. **Linear vesting**: After cliff, tokens vest linearly over `config.vesting_duration`
+///
+/// ## Formula
+/// ```text
+/// initial_unlock = total_allocated * initial_unlock_bps / 10000
+/// post_initial   = total_allocated - initial_unlock
+///
+/// if current_time < cliff_end:
+///     vested = min(total_claimed, initial_unlock)  // only initial unlock
+/// else:
+///     elapsed = min(current_time - cliff_end, vesting_duration)
+///     vested = initial_unlock + (post_initial * elapsed / vesting_duration)
+///
+/// claimable = vested - total_claimed
+/// ```
 pub fn calculate_vested_amount(
     total_allocated: u64,
     total_claimed: u64,
-    vesting_start: i64,
-    vesting_end: i64,
+    created_at: i64,
+    config: &VestingConfig,
     current_time: i64,
 ) -> Result<u64> {
-    if current_time >= vesting_end {
-        // Fully vested
-        return total_allocated
-            .checked_sub(total_claimed)
-            .ok_or(error!(CreatorTokenError::NoVestedTokens));
-    }
-
-    if current_time <= vesting_start {
-        // Not yet started
-        return Err(error!(CreatorTokenError::VestingNotElapsed));
-    }
-
-    let elapsed = current_time
-        .checked_sub(vesting_start)
-        .ok_or(error!(CreatorTokenError::MathOverflow))? as u128;
-    let total_duration = vesting_end
-        .checked_sub(vesting_start)
-        .ok_or(error!(CreatorTokenError::MathOverflow))? as u128;
-
-    let vested = (total_allocated as u128)
-        .checked_mul(elapsed)
+    let initial_unlock = (total_allocated as u128)
+        .checked_mul(config.initial_unlock_bps as u128)
         .ok_or(error!(CreatorTokenError::MathOverflow))?
-        .checked_div(total_duration)
+        .checked_div(10_000u128)
         .ok_or(error!(CreatorTokenError::MathOverflow))? as u64;
+
+    let cliff_end = created_at
+        .checked_add(config.cliff_duration)
+        .ok_or(error!(CreatorTokenError::MathOverflow))?;
+
+    // ── Determine vested amount ─────────────────────────────────────
+    let vested: u64;
+
+    if current_time < cliff_end {
+        // Still in cliff period — only initial unlock is claimable
+        vested = initial_unlock;
+    } else {
+        // Past cliff — calculate linear vesting
+        let elapsed_since_cliff = current_time
+            .checked_sub(cliff_end)
+            .ok_or(error!(CreatorTokenError::MathOverflow))?;
+
+        if elapsed_since_cliff >= config.vesting_duration {
+            // Fully vested
+            vested = total_allocated;
+        } else {
+            // Partial vesting
+            let post_initial = (total_allocated as u128)
+                .checked_sub(initial_unlock as u128)
+                .ok_or(error!(CreatorTokenError::MathOverflow))?;
+
+            let linear_vested = post_initial
+                .checked_mul(elapsed_since_cliff as u128)
+                .ok_or(error!(CreatorTokenError::MathOverflow))?
+                .checked_div(config.vesting_duration as u128)
+                .ok_or(error!(CreatorTokenError::MathOverflow))?
+                as u64;
+
+            vested = initial_unlock
+                .checked_add(linear_vested)
+                .ok_or(error!(CreatorTokenError::MathOverflow))?;
+
+            if vested > total_allocated {
+                // Safety clamp (shouldn't happen with valid params)
+                return Ok(total_allocated
+                    .checked_sub(total_claimed)
+                    .ok_or(error!(CreatorTokenError::NoVestedTokens))?);
+            }
+        }
+    }
+
+    // ── Compute claimable ───────────────────────────────────────────
+    if vested <= total_claimed {
+        return Err(error!(CreatorTokenError::NoVestedTokens));
+    }
 
     vested
         .checked_sub(total_claimed)
         .ok_or(error!(CreatorTokenError::NoVestedTokens))
+}
+
+/// Validate a VestingConfig against constraints.
+pub fn validate_vesting_config(config: &VestingConfig) -> Result<()> {
+    require!(
+        config.initial_unlock_bps <= MAX_INITIAL_UNLOCK_BPS,
+        CreatorTokenError::VestingConfigInvalid
+    );
+    require!(
+        config.cliff_duration <= MAX_CLIFF_SECONDS,
+        CreatorTokenError::VestingConfigInvalid
+    );
+    require!(
+        config.vesting_duration >= MIN_VESTING_SECONDS,
+        CreatorTokenError::VestingConfigInvalid
+    );
+    require!(
+        config.vesting_duration <= MAX_VESTING_SECONDS,
+        CreatorTokenError::VestingConfigInvalid
+    );
+    // Cliff + vesting must not exceed the maximum total lockup
+    let total_lockup = config
+        .cliff_duration
+        .checked_add(config.vesting_duration)
+        .ok_or(error!(CreatorTokenError::MathOverflow))?;
+    require!(
+        total_lockup <= MAX_CLIFF_SECONDS + MAX_VESTING_SECONDS,
+        CreatorTokenError::VestingConfigInvalid
+    );
+    Ok(())
 }
 
 #[cfg(test)]
@@ -232,21 +313,123 @@ mod tests {
         assert_eq!(max, (TOTAL_SUPPLY * 15) / 100);
     }
 
+    // ── Customizable Vesting Tests ─────────────────────────────────────
+
+    const TEST_CONFIG_BALANCED: VestingConfig = VestingConfig {
+        initial_unlock_bps: 500,     // 5%
+        cliff_duration: 604_800,     // 7 days
+        vesting_duration: 5_184_000, // 60 days
+    };
+
+    const TEST_CONFIG_TRUSTLESS: VestingConfig = VestingConfig {
+        initial_unlock_bps: 0,       // 0%
+        cliff_duration: 2_592_000,   // 30 days
+        vesting_duration: 7_776_000, // 90 days
+    };
+
+    const TEST_CONFIG_FAST: VestingConfig = VestingConfig {
+        initial_unlock_bps: 2_000, // 20%
+        cliff_duration: 0,         // no cliff
+        vesting_duration: 604_800, // 7 days
+    };
+
     #[test]
     fn test_vesting_fully_elapsed() {
-        let result = calculate_vested_amount(1_000_000, 100_000, 1000, 2000, 3000).unwrap();
+        // Trustless config: 30d cliff + 90d vest, fully elapsed
+        let created_at = 1000;
+        let fully_elapsed = 1000 + 7_776_000 + 2_592_000 + 1;
+        let result = calculate_vested_amount(
+            1_000_000,
+            100_000,
+            created_at,
+            &TEST_CONFIG_TRUSTLESS,
+            fully_elapsed,
+        )
+        .unwrap();
         assert_eq!(result, 900_000); // total - claimed
     }
 
     #[test]
-    fn test_vesting_partial() {
-        let result = calculate_vested_amount(1_000_000, 0, 0, 1000, 500).unwrap();
-        assert_eq!(result, 500_000); // half vested
+    fn test_vesting_initial_unlock_during_cliff() {
+        // Balanced config: 5% initial unlock claimable during cliff
+        let created_at = 0;
+        let during_cliff = 100; // well before cliff ends
+        let result = calculate_vested_amount(
+            1_000_000,
+            0,
+            created_at,
+            &TEST_CONFIG_BALANCED,
+            during_cliff,
+        )
+        .unwrap();
+        // 5% of 1,000,000 = 50,000
+        assert_eq!(result, 50_000);
+    }
+
+    #[test]
+    fn test_vesting_initial_unlock_already_claimed() {
+        // If initial unlock was already claimed, nothing is claimable during cliff
+        let created_at = 0;
+        let during_cliff = 100;
+        let result = calculate_vested_amount(
+            1_000_000,
+            50_000,
+            created_at,
+            &TEST_CONFIG_BALANCED,
+            during_cliff,
+        );
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            error!(CreatorTokenError::NoVestedTokens)
+        );
+    }
+
+    #[test]
+    fn test_vesting_partial_after_cliff() {
+        // Balanced: 5% initial, 7d cliff, 60d vest
+        // At T+7d+30d = 50% of post-initial should be vested
+        let created_at = 0;
+        let after_cliff = 604_800 + 30 * 86_400; // 7d cliff + 30d
+        let result = calculate_vested_amount(
+            1_000_000,
+            50_000,
+            created_at,
+            &TEST_CONFIG_BALANCED,
+            after_cliff,
+        )
+        .unwrap();
+        // 5% initial + 50% of remaining 95% = 5% + 47.5% = 52.5% = 525,000
+        // Already claimed 50k, so claimable = 525k - 50k = 475k
+        assert_eq!(result, 475_000);
+    }
+
+    #[test]
+    fn test_vesting_no_cliff_fast() {
+        // Fast config: 20% initial, no cliff, 7d vest
+        let created_at = 0;
+        let half_way = 3 * 86_400; // 3 days into 7 day vest
+        let result =
+            calculate_vested_amount(1_000_000, 200_000, created_at, &TEST_CONFIG_FAST, half_way)
+                .unwrap();
+        // 20% initial + (3/7 * 80%) = 20% + 34.29% = 54.29% = 542,857
+        // Already claimed 200k, so claimable = 542,857 - 200,000 = 342,857
+        let expected_vested = 200_000 + ((800_000 * 259_200) / 604_800);
+        assert_eq!(result, expected_vested - 200_000);
     }
 
     #[test]
     fn test_vesting_not_started() {
-        let result = calculate_vested_amount(1_000_000, 0, 1000, 2000, 500);
+        // With no initial unlock and a cliff, nothing during cliff
+        let created_at = 0;
+        let during_cliff = 500;
+        let result = calculate_vested_amount(
+            1_000_000,
+            0,
+            created_at,
+            &TEST_CONFIG_TRUSTLESS,
+            during_cliff,
+        );
         assert!(result.is_err());
     }
 
@@ -258,5 +441,45 @@ mod tests {
         // net = 0.995 SOL = 995_000_000 lamports
         assert_eq!(net, 995_000_000);
         assert_eq!(fee, 5_000_000);
+    }
+
+    #[test]
+    fn test_validate_vesting_config_valid() {
+        let config = VestingConfig {
+            initial_unlock_bps: 1000,
+            cliff_duration: 86_400,
+            vesting_duration: 2_592_000,
+        };
+        assert!(validate_vesting_config(&config).is_ok());
+    }
+
+    #[test]
+    fn test_validate_vesting_config_invalid_initial() {
+        let config = VestingConfig {
+            initial_unlock_bps: 5000, // > 30%
+            cliff_duration: 0,
+            vesting_duration: 604_800,
+        };
+        assert!(validate_vesting_config(&config).is_err());
+    }
+
+    #[test]
+    fn test_validate_vesting_config_too_short() {
+        let config = VestingConfig {
+            initial_unlock_bps: 0,
+            cliff_duration: 0,
+            vesting_duration: 86_400, // 1 day < 7 days
+        };
+        assert!(validate_vesting_config(&config).is_err());
+    }
+
+    #[test]
+    fn test_validate_vesting_config_too_long() {
+        let config = VestingConfig {
+            initial_unlock_bps: 0,
+            cliff_duration: 0,
+            vesting_duration: 126_144_000, // 4 years > 2 years
+        };
+        assert!(validate_vesting_config(&config).is_err());
     }
 }

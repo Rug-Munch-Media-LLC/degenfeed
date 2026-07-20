@@ -34,8 +34,25 @@ pub const MAX_HOLDER_PCT: u64 = 15;
 /// Cooldown between buys: 60 seconds
 pub const BUY_COOLDOWN_SECONDS: i64 = 60;
 
-/// Vesting period for creator allocation: 180 days
-pub const VESTING_PERIOD_SECONDS: i64 = 15_552_000;
+// ═══════════════════════════════════════════════════════════════════════════
+// Customizable Vesting Constraints (mirrors EVM DegenFeedCoin)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Maximum initial unlock: 30% (3000 bps)
+pub const MAX_INITIAL_UNLOCK_BPS: u16 = 3_000;
+
+/// Maximum cliff duration: 90 days (7,776,000 seconds)
+pub const MAX_CLIFF_SECONDS: i64 = 7_776_000;
+
+/// Minimum vesting duration: 7 days (604,800 seconds)
+pub const MIN_VESTING_SECONDS: i64 = 604_800;
+
+/// Maximum vesting duration: 2 years (63,072,000 seconds)
+pub const MAX_VESTING_SECONDS: i64 = 63_072_000;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Anti-Snipe Phases
+// ═══════════════════════════════════════════════════════════════════════════
 
 /// Phase 1 limit: 2% — first 5 minutes
 pub const PHASE_1_DURATION: i64 = 300;

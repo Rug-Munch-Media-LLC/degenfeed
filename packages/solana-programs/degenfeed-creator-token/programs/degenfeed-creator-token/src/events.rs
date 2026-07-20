@@ -17,6 +17,12 @@ pub struct TokenCreated {
     pub creator_fee_bps: u16,
     /// Unix timestamp of creation
     pub timestamp: i64,
+    /// Vesting initial unlock in bps (0-3000)
+    pub vesting_initial_unlock_bps: u16,
+    /// Vesting cliff duration in seconds
+    pub vesting_cliff_duration: i64,
+    /// Vesting duration in seconds
+    pub vesting_vesting_duration: i64,
 }
 
 /// Emitted when tokens are bought
@@ -72,6 +78,8 @@ pub struct VestedTokensClaimed {
     pub mint: Pubkey,
     /// Amount of tokens claimed (9 decimals)
     pub amount: u64,
+    /// Remaining unclaimed allocation
+    pub remaining: u64,
     /// Unix timestamp
     pub timestamp: i64,
 }

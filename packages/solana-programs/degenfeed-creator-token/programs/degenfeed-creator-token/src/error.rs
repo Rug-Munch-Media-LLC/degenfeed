@@ -51,6 +51,8 @@ pub enum CreatorTokenError {
     NoVestedTokens,
     #[msg("Vesting period has not elapsed")]
     VestingNotElapsed,
+    #[msg("Vesting configuration is invalid — check constraints")]
+    VestingConfigInvalid,
 
     // ── Fee errors ────────────────────────────────────────────────────
     #[msg("Total fee bps must not exceed 10,000")]

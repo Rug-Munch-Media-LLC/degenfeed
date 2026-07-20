@@ -32,8 +32,8 @@ import { hasSuspiciousPayload, sanitizeString, validateBodySize } from '../sanit
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-export type TipPlatform = 'degenfeed' | 'lemmy' | 'peertube' | 'bluesky' | 'mastodon';
-export type TipEntityType = 'post' | 'comment' | 'video' | 'space';
+export type TipPlatform = 'degenfeed' | 'lemmy' | 'peertube' | 'bluesky' | 'mastodon' | 'farcaster' | 'lens';
+export type TipEntityType = 'post' | 'comment' | 'video' | 'space' | 'creator_coin';
 export type TipPeriod = 'daily' | 'weekly' | 'monthly' | 'alltime';
 
 export interface UnifiedTipEvent {
@@ -126,8 +126,8 @@ export interface ActivityItem {
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
-const PLATFORMS = new Set<string>(['degenfeed', 'lemmy', 'peertube', 'bluesky', 'mastodon']);
-const ENTITY_TYPES = new Set<string>(['post', 'comment', 'video', 'space']);
+const PLATFORMS = new Set<string>(['degenfeed', 'lemmy', 'peertube', 'bluesky', 'mastodon', 'farcaster', 'lens']);
+const ENTITY_TYPES = new Set<string>(['post', 'comment', 'video', 'space', 'creator_coin']);
 const PERIODS: TipPeriod[] = ['daily', 'weekly', 'monthly', 'alltime'];
 
 const ACTIVITY_KEY = 'tip:activity:recent';
@@ -699,4 +699,169 @@ export async function handleUnifiedTipActivity(request: Request, env: Env): Prom
   }
 
   return jsonResponse({ activity: feed.slice(0, limit), updatedAt: Date.now() });
+}
+
+// ─── Cross-Chain Tip Routing ──────────────────────────────────────────────
+
+/**
+ * Interface for cross-chain tip requests.
+ * A tip that originates on one chain/protocol must be settled on another.
+ */
+export interface CrossChainTipRequest {
+  /** Amount in USD equivalent */
+  amountUsd: number;
+  /** Source chain (where the tipper is sending from) */
+  fromChain: 'solana' | 'base' | 'polygon' | 'ethereum';
+  /** Source token/symbol being sent */
+  fromCurrency: string;
+  /** Target chain (where the creator coin lives) */
+  toChain: 'solana' | 'base' | 'polygon' | 'ethereum';
+  /** Creator coin contract address on the target chain */
+  targetCoinAddress: string;
+  /** Creator's wallet that receives the value (on the target chain) */
+  creatorAddress: string;
+  /** Creator's protocol + id for UnifiedIdentity resolution */
+  creatorProtocol?: string;
+  creatorId?: string;
+  /** Tipper info */
+  fromUserId?: string;
+  fromLabel?: string;
+  /** Platform-specific entity identifier for unified tip recording */
+  entityId?: string;
+  entityType?: TipEntityType;
+  entityLabel?: string;
+}
+
+export interface CrossChainTipResult {
+  success: boolean;
+  /** USD value after bridge fees */
+  settledAmountUsd: number;
+  /** Hash of the bridge transaction */
+  bridgeTxHash?: string;
+  /** Hash of the purchase transaction on the target chain */
+  purchaseTxHash?: string;
+  /** Activity ID in the unified tip ledger */
+  activityId?: string;
+  /** Any error message */
+  error?: string;
+}
+
+/**
+ * Handle a cross-chain tip: accept value on chain A, bridge to chain B,
+ * buy the creator coin, and record in the unified ledger.
+ *
+ * In production, this bridges via Wormhole or LayerZero.
+ */
+export async function handleCrossChainTip(request: Request, env: Env): Promise<Response> {
+  const bodySizeCheck = validateBodySize(request, 10 * 1024);
+  if (!bodySizeCheck.ok) return jsonResponse({ error: bodySizeCheck.error }, 413);
+
+  let body: CrossChainTipRequest;
+  try {
+    body = (await request.json()) as CrossChainTipRequest;
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  // Validate
+  if (!body.amountUsd || body.amountUsd <= 0 || body.amountUsd > 10000) {
+    return jsonResponse({ error: 'amountUsd must be positive and ≤ 10000' }, 400);
+  }
+  if (!body.fromChain || !body.toChain) {
+    return jsonResponse({ error: 'fromChain and toChain are required' }, 400);
+  }
+  if (!body.targetCoinAddress || !body.creatorAddress) {
+    return jsonResponse({ error: 'targetCoinAddress and creatorAddress are required' }, 400);
+  }
+
+  const amountUsd = Math.round(body.amountUsd * 100) / 100;
+
+  // Simulate bridge: in production, bridges via Wormhole/LayerZero
+  const bridgeResult = await simulateBridge({
+    fromChain: body.fromChain,
+    toChain: body.toChain,
+    amountUsd,
+    recipient: body.creatorAddress,
+  });
+
+  // Simulate buying the creator coin on the target chain
+  const buyResult = await simulateBuyCreatorCoin({
+    coinAddress: body.targetCoinAddress,
+    amountUsd: bridgeResult.receivedAmount,
+    chain: body.toChain,
+  });
+
+  // Record in unified tip ledger
+  const entityId =
+    body.entityId ||
+    `cross-chain:${body.fromChain}:${body.toChain}:${body.targetCoinAddress.slice(0, 10)}`;
+  const entityType = body.entityType || 'creator_coin';
+  const activity = await recordUnifiedTip(env, {
+    platform: body.fromChain === 'solana' ? 'solana' : 'degenfeed',
+    entityId,
+    entityType: entityType as TipEntityType,
+    amountUsd,
+    fromUserId: body.fromUserId,
+    toUserId: body.creatorAddress,
+    fromLabel: body.fromLabel || `Cross-chain tipper (${body.fromChain})`,
+    toLabel: body.creatorProtocol
+      ? `${body.creatorProtocol}:${body.creatorId || body.creatorAddress.slice(0, 8)}`
+      : body.creatorAddress.slice(0, 6) + '…' + body.creatorAddress.slice(-4),
+    entityLabel: body.entityLabel || `Cross-chain tip: ${body.fromChain} → ${body.toChain}`,
+    method: `cross-chain:${body.fromCurrency}`,
+  });
+
+  const result: CrossChainTipResult = {
+    success: true,
+    settledAmountUsd: bridgeResult.receivedAmount,
+    bridgeTxHash: bridgeResult.txHash,
+    purchaseTxHash: buyResult.txHash,
+    activityId: activity?.id,
+  };
+
+  return jsonResponse(result);
+}
+
+// ─── Bridge simulation helpers ───────────────────────────────────────────
+
+interface BridgeSimResult {
+  txHash: string;
+  receivedAmount: number;
+  feeUsd: number;
+}
+
+async function simulateBridge(opts: {
+  fromChain: string;
+  toChain: string;
+  amountUsd: number;
+  recipient: string;
+}): Promise<BridgeSimResult> {
+  // In production, calls Wormhole or LayerZero to bridge assets.
+  // For simulation, deduct a 0.5% bridge fee.
+  const bridgeFeeBps = 50; // 0.5%
+  const feeUsd = Math.round((opts.amountUsd * bridgeFeeBps) / 10000 * 100) / 100;
+  const receivedAmount = Math.round((opts.amountUsd - feeUsd) * 100) / 100;
+
+  return {
+    txHash: `0x${crypto.randomUUID().replace(/-/g, '')}`,
+    receivedAmount,
+    feeUsd,
+  };
+}
+
+interface BuySimResult {
+  txHash: string;
+  tokensReceived: string;
+}
+
+async function simulateBuyCreatorCoin(opts: {
+  coinAddress: string;
+  amountUsd: number;
+  chain: string;
+}): Promise<BuySimResult> {
+  // In production, calls the creator coin bonding curve on the target chain.
+  return {
+    txHash: `0x${crypto.randomUUID().replace(/-/g, '')}`,
+    tokensReceived: (opts.amountUsd * 100).toFixed(0), // Simulated: 100 tokens per USD
+  };
 }

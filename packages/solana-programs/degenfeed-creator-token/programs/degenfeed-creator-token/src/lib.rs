@@ -44,7 +44,7 @@ pub mod degenfeed_creator_token {
 
     /// ── Create Token ───────────────────────────────────────────────────
     ///
-    /// Creates a new creator token with bonding curve.
+    /// Creates a new creator token with bonding curve and customizable vesting.
     ///
     /// # Arguments
     /// * `token_seed` - Unique u64 seed for this creator's token (for PDA derivation)
@@ -54,6 +54,10 @@ pub mod degenfeed_creator_token {
     /// * `creator_allocation_bps` - Creator allocation in bps (0-1500 = 0-15%)
     /// * `creator_fee_bps` - Creator fee on buys in bps (0-200 = 0-2%)
     /// * `referrer` - Optional referrer address
+    /// * `vesting_config` - Customizable vesting parameters:
+    ///   - initial_unlock_bps: 0-3000 (0-30% at launch)
+    ///   - cliff_duration: 0-90 days (seconds)
+    ///   - vesting_duration: 7 days to 2 years (seconds)
     pub fn create_token(
         ctx: Context<CreateToken>,
         token_seed: u64,
@@ -63,6 +67,7 @@ pub mod degenfeed_creator_token {
         creator_allocation_bps: u16,
         creator_fee_bps: u16,
         referrer: Option<Pubkey>,
+        vesting_config: VestingConfig,
     ) -> Result<()> {
         // ── Validate inputs ────────────────────────────────────────
         require!(
@@ -88,6 +93,9 @@ pub mod degenfeed_creator_token {
                 CreatorTokenError::ReferrerIsCreator
             );
         }
+
+        // ── Validate vesting configuration ─────────────────────────
+        validate_vesting_config(&vesting_config)?;
 
         let clock = Clock::get()?;
         let token_state = &mut ctx.accounts.token_state;
@@ -117,19 +125,24 @@ pub mod degenfeed_creator_token {
         if creator_allocation_bps > 0 {
             let allocation_amount = token_state.creator_allocation_amount()?;
 
+            // Calculate vesting end: cliff_end + vesting_duration
+            let cliff_end = clock
+                .unix_timestamp
+                .checked_add(vesting_config.cliff_duration)
+                .ok_or(error!(CreatorTokenError::MathOverflow))?;
+            let vesting_end = cliff_end
+                .checked_add(vesting_config.vesting_duration)
+                .ok_or(error!(CreatorTokenError::MathOverflow))?;
+
             let vesting_vault = &mut ctx.accounts.vesting_vault;
             vesting_vault.token_mint = ctx.accounts.mint.key();
             vesting_vault.creator = ctx.accounts.creator.key();
             vesting_vault.total_allocated = allocation_amount;
             vesting_vault.total_claimed = 0;
             vesting_vault.vesting_start = clock.unix_timestamp;
-            vesting_vault.vesting_end = clock
-                .unix_timestamp
-                .checked_add(VESTING_PERIOD_SECONDS)
-                .ok_or(error!(CreatorTokenError::MathOverflow))?;
+            vesting_vault.vesting_end = vesting_end;
+            vesting_vault.vesting_config = vesting_config;
             vesting_vault.bump = ctx.bumps.vesting_vault;
-
-            // Mint allocation to vesting vault token account
             let authority_bump = ctx.bumps.mint_authority;
             let mint_key = ctx.accounts.mint.to_account_info().key;
             let mint_seeds = &[SEED_MINT_AUTHORITY, mint_key.as_ref(), &[authority_bump]];
@@ -158,6 +171,9 @@ pub mod degenfeed_creator_token {
             creator_allocation_bps,
             creator_fee_bps,
             timestamp: clock.unix_timestamp,
+            vesting_initial_unlock_bps: vesting_config.initial_unlock_bps,
+            vesting_cliff_duration: vesting_config.cliff_duration,
+            vesting_vesting_duration: vesting_config.vesting_duration,
         });
 
         Ok(())
@@ -495,11 +511,12 @@ pub mod degenfeed_creator_token {
         let clock = Clock::get()?;
         let vesting_vault = &mut ctx.accounts.vesting_vault;
 
+        // Use the customizable vesting config stored in the vault
         let claimable = calculate_vested_amount(
             vesting_vault.total_allocated,
             vesting_vault.total_claimed,
             vesting_vault.vesting_start,
-            vesting_vault.vesting_end,
+            &vesting_vault.vesting_config,
             clock.unix_timestamp,
         )?;
 
@@ -529,10 +546,16 @@ pub mod degenfeed_creator_token {
             .checked_add(claimable)
             .ok_or(error!(CreatorTokenError::MathOverflow))?;
 
+        let remaining = vesting_vault
+            .total_allocated
+            .checked_sub(vesting_vault.total_claimed)
+            .unwrap_or(0);
+
         emit!(VestedTokensClaimed {
             creator: ctx.accounts.creator.key(),
             mint: ctx.accounts.mint.key(),
             amount: claimable,
+            remaining,
             timestamp: clock.unix_timestamp,
         });
 
