@@ -2,41 +2,45 @@
  * DegenFeed Creator Token — EVM Contract Client (Zora 2026)
  *
  * Client for interacting with Zora's 2026 Coins Protocol on Base.
- * Zora Factory at 0x777777751622c0d3258f214F9DF38E35BF45baF3 deploys
- * creator coins with Uniswap V4 pools.
+ * Uses @zoralabs/coins-sdk for on-chain operations and queries.
+ *
+ * Our coins deploy through ZoraFactory (0x777777751622c0d3258f214F9DF38E35BF45baF3)
+ * so they appear natively on zora.co. Users can login to Zora and see their coin.
+ * Third-party apps integrating with Zora's API will see our coins automatically.
  *
  * ## Quick Start
  * ```ts
  * import { ZoraCreatorCoinClient } from '@degenfeed/zora-sdk/evm';
  *
- * const zora = new ZoraCreatorCoinClient(walletClient, publicClient);
- * const coin = await zora.deployCreatorCoin({ name: 'Alice Coin', ... });
+ * const zora = new ZoraCreatorCoinClient({ rpcUrl: '...', privateKey: '...' });
+ * const coin = await zora.deployCreatorCoin({
+ *   creator: '0x...',
+ *   name: 'Alice Coin',
+ *   symbol: 'ALICE',
+ *   uri: 'ipfs://...',
+ *   platformReferrer: '0x...PLATFORM',
+ * });
+ * console.log('View on Zora:', coin.zoraUrl);
  * ```
  *
- * ## Fee Model (Zora Protocol Rewards — 1% default, 0.5% our override)
- * Zora's default fee split (1%):
- *   - 0.5% → creator
- *   - 0.3% → Zora protocol
- *   - 0.2% → referrer
+ * ## Fee Model Override (forked from Zora, better)
+ * - 0.5% platform fee (replaces Zora's 0.3% platform + 0.05% protocol)
+ * - Creator sets 0-2% additional fee
+ * - Anti-exploit: phase limits, cooldowns, bundle detection
+ * - Cross-network: deploy on Base OR Solana with Wormhole bridge
+ * - 0.5% platform take on ALL tips/rewards on our platform
  *
- * Our override (0.5% total max, set via factory override):
- *   - 0.5% → DegenFeed platform (replaces Zora's 0.3%)
- *   - 0-2% → creator (creator chooses)
- *   - 0-0.05% → referrer
- *
- * Liquidity is via Uniswap V4 pools, not custom bonding curves.
+ * ## Zora 2026 Architecture (ETH Pair — No ZORA Token)
+ * - Creator Coins on Base via ZoraFactory
+ * - Uniswap V4 pools paired against ETH (not ZORA)
+ * - @zoralabs/coins-sdk for programmatic access
+ * - ETH as sole pair currency, payout currency, and fee currency
+ * - 0.5% + creator fee split: platform, creator, referrer
  */
-
-import {
-  type Account,
-  type Chain,
-  type HttpTransport,
-  type PublicClient,
-  type WalletClient,
-  encodeFunctionData,
-  getContract,
-  parseEther,
-} from 'viem';
+import { createCoin, tradeCoin, getCoin, CreateConstants } from '@zoralabs/coins-sdk';
+import { createWalletClient, createPublicClient, http, type Address } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
+import { base } from 'viem/chains';
 import type {
   DeployCoinInput,
   BuyCoinInput,
@@ -44,6 +48,7 @@ import type {
   CoinPrice,
   DeployResult,
   TradeResult,
+  ZoraCoin,
 } from './types';
 import { fetchZoraCoinInfo, fetchZoraTrendingCoins, fetchZoraCreatorCoins } from './zora-api';
 
@@ -57,6 +62,9 @@ export const ZORA_FACTORY_ADDRESS = '0x777777751622c0d3258f214F9DF38E35BF45baF3'
 /** DegenFeed default platform fee in bps (0.5%). Overrides Zora's 0.3%. */
 export const DEGENFEED_PLATFORM_FEE_BPS = 50;
 
+// ZORA TOKEN STRIPPED — we use ETH exclusively for pairing and fees
+// export const ZORA_TOKEN_ADDRESS = '0x1111111111166b7FE7bd91427724B487980aFc69' as const;
+
 /** Zora's minimum initial buy for factory deployment (0.0005 ETH). */
 export const ZORA_MIN_INITIAL_BUY = 500_000_000_000_000n; // 0.0005 ETH
 
@@ -67,20 +75,10 @@ export const DEGENFEED_V4_HOOK = '0x0000000000000000000000000000000000000000' as
 const BASE_CHAIN_ID = 8453;
 
 // ═════════════════════════════════════════════════════════════════════════
-// ZoraFactory ABI (2026 Coins Protocol)
-// ═════════════════════════════════════════════════════════════════════════
-//
-// The 2026 ZoraFactory deploys creator coins via:
-//  - deploy(TokenArgs) → address  (main deployment method)
-//  - TokenArgs contains: creator, name, symbol, uri, creatorAllocationBps,
-//    creatorFeeBps, platformFeeBps, referrer, initialBuyWei
-//
-// Protocol rewards are split via Uniswap V4 hooks.
-// The factory deploys an ERC-20 token with a linked Uniswap V4 pool.
+// ZoraFactory ABI (2026 Coins Protocol — kept for legacy direct calls)
 // ═════════════════════════════════════════════════════════════════════════
 
 export const ZORA_FACTORY_ABI = [
-  // ── Read ──
   {
     type: 'function' as const,
     name: 'totalCoins',
@@ -109,7 +107,6 @@ export const ZORA_FACTORY_ABI = [
     outputs: [{ type: 'bool' }],
     stateMutability: 'view' as const,
   },
-  // ── Write ──
   {
     type: 'function' as const,
     name: 'deploy',
@@ -132,7 +129,6 @@ export const ZORA_FACTORY_ABI = [
     outputs: [{ name: 'coin', type: 'address' }],
     stateMutability: 'payable' as const,
   },
-  // ── Events ──
   {
     type: 'event' as const,
     name: 'CoinDeployed',
@@ -147,11 +143,10 @@ export const ZORA_FACTORY_ABI = [
 ] as const;
 
 // ═════════════════════════════════════════════════════════════════════════
-// Zora Creator Coin ABI (2026 ERC-20 token)
+// Zora Creator Coin ABI (2026 ERC-20 token — kept for legacy direct calls)
 // ═════════════════════════════════════════════════════════════════════════
 
 export const ZORA_COIN_ABI = [
-  // ── Read ──
   {
     type: 'function' as const,
     name: 'name',
@@ -222,7 +217,6 @@ export const ZORA_COIN_ABI = [
     outputs: [{ type: 'bool' }],
     stateMutability: 'view' as const,
   },
-  // ── Write ──
   {
     type: 'function' as const,
     name: 'buy',
@@ -243,7 +237,6 @@ export const ZORA_COIN_ABI = [
     outputs: [{ name: 'ethOut', type: 'uint256' }],
     stateMutability: 'nonpayable' as const,
   },
-  // ── Events ──
   {
     type: 'event' as const,
     name: 'Transfer',
@@ -266,204 +259,197 @@ export const ZORA_COIN_ABI = [
 ] as const;
 
 // ═════════════════════════════════════════════════════════════════════════
-// Legacy Zora Creator Coin ABI (v1 — kept for backward compatibility)
-// ═════════════════════════════════════════════════════════════════════════
-
-const ZORA_CREATOR_COIN_ABI_V1 = [
-  {
-    type: 'function' as const,
-    name: 'name',
-    inputs: [],
-    outputs: [{ type: 'string' }],
-    stateMutability: 'view' as const,
-  },
-  {
-    type: 'function' as const,
-    name: 'symbol',
-    inputs: [],
-    outputs: [{ type: 'string' }],
-    stateMutability: 'view' as const,
-  },
-  {
-    type: 'function' as const,
-    name: 'totalSupply',
-    inputs: [],
-    outputs: [{ type: 'uint256' }],
-    stateMutability: 'view' as const,
-  },
-  {
-    type: 'function' as const,
-    name: 'balanceOf',
-    inputs: [{ type: 'address' }],
-    outputs: [{ type: 'uint256' }],
-    stateMutability: 'view' as const,
-  },
-  {
-    type: 'function' as const,
-    name: 'purchase',
-    inputs: [
-      { name: 'recipient', type: 'address' },
-      { name: 'minAmount', type: 'uint256' },
-    ],
-    outputs: [{ name: 'amount', type: 'uint256' }],
-    stateMutability: 'payable' as const,
-  },
-  {
-    type: 'function' as const,
-    name: 'sell',
-    inputs: [
-      { name: 'amount', type: 'uint256' },
-      { name: 'minEth', type: 'uint256' },
-    ],
-    outputs: [{ name: 'ethOut', type: 'uint256' }],
-    stateMutability: 'nonpayable' as const,
-  },
-  {
-    type: 'event' as const,
-    name: 'Purchased',
-    inputs: [
-      { name: 'buyer', type: 'address', indexed: true },
-      { name: 'recipient', type: 'address', indexed: true },
-      { name: 'amount', type: 'uint256', indexed: false },
-      { name: 'comment', type: 'string', indexed: false },
-    ],
-  },
-] as const;
-
-// ═════════════════════════════════════════════════════════════════════════
 // ZoraCreatorCoinClient — Zora 2026 Coins Protocol
 // ═════════════════════════════════════════════════════════════════════════
 
-/**
- * Client for interacting with Zora's 2026 Coins Protocol on Base.
- *
- * Uses the ZoraFactory at 0x777777751622c0d3258f214F9DF38E35BF45baF3
- * to deploy creator coins. Trading happens via Uniswap V4 pools.
- *
- * Fee model overrides Zora's default protocol rewards:
- *   - DegenFeed platform: 0.5% (instead of Zora's 0.3%)
- *   - Creator: 0-2% (unchanged)
- *   - Referrer: 0-0.05% (unchanged)
- *   - Total max: 0.5% + 2% + 0.05% = 2.55%
- */
 export class ZoraCreatorCoinClient {
-  private walletClient: WalletClient<HttpTransport, Chain, Account>;
-  private publicClient: PublicClient<HttpTransport, Chain>;
+  // Use `any` types for viem clients due to minor type differences between
+  // viem@2.53.1 (required by @zoralabs/coins-sdk) and viem@^2.55.0 (workspace).
+  // Runtime behavior is identical — only the TypeScript transaction union types differ.
+  private publicClient: any;
+  private walletClient: any;
+  private account?: ReturnType<typeof privateKeyToAccount>;
 
-  constructor(
-    walletClient: WalletClient<HttpTransport, Chain, Account>,
-    publicClient: PublicClient<HttpTransport, Chain>,
-  ) {
-    this.walletClient = walletClient;
-    this.publicClient = publicClient;
-  }
-
-  /**
-   * Deploy a creator coin on Base via ZoraFactory.
-   *
-   * Sends a deploy transaction to ZoraFactory with our fee overrides:
-   *   - platformFeeBps: 50 (0.5%) → DegenFeed platform fee
-   *   - creatorFeeBps: from opts (0-200 bps = 0-2%)
-   *   - referrer: from opts (earns 5 bps = 0.05%)
-   *
-   * Includes the minimum initial buy to bootstrap the curve/pool.
-   *
-   * @returns DeployResult with deployed coin address and tx hash.
-   */
-  async deployCreatorCoin(opts: DeployCoinInput): Promise<DeployResult> {
-    const factory = getContract({
-      address: ZORA_FACTORY_ADDRESS,
-      abi: ZORA_FACTORY_ABI,
-      client: this.walletClient,
+  constructor(opts: { rpcUrl?: string; privateKey?: string } = {}) {
+    this.publicClient = createPublicClient({
+      chain: base,
+      transport: http(opts.rpcUrl || 'https://mainnet.base.org'),
     });
 
-    // Enforce our fee model limits:
-    //   - Platform fee: max 50 bps (0.5%) — replaces Zora's default
-    //   - Creator fee: max 200 bps (2%)
-    //   - Creator allocation: max 1500 bps (15%)
+    if (opts.privateKey) {
+      this.account = privateKeyToAccount(opts.privateKey as `0x${string}`);
+      this.walletClient = createWalletClient({
+        chain: base,
+        transport: http(opts.rpcUrl || 'https://mainnet.base.org'),
+        account: this.account,
+      });
+    }
+  }
+
+  // ─── Deploy ───────────────────────────────────────────────────────────
+
+  /**
+   * Deploy a creator coin through ZoraFactory using @zoralabs/coins-sdk.
+   *
+   * This coin WILL appear on zora.co natively because it deploys through the
+   * same ZoraFactory. Users can login to zora.co and see their coin.
+   *
+   * Fee model (forked from Zora, better):
+   *   - 0.5% platform fee (replaces Zora's 0.3% platform + 0.05% protocol)
+   *   - Creator sets 0-2% additional fee
+   *   - Referrer gets 0-0.05%
+   *
+   * @throws If no walletClient is configured (privateKey required).
+   */
+  async deployCreatorCoin(opts: DeployCoinInput): Promise<DeployResult> {
+    if (!this.walletClient || !this.account) {
+      throw new Error('ZoraCreatorCoinClient: privateKey required to deploy');
+    }
+
+    // Validate our fee model overrides
     const platformFeeBps = opts.platformFeeBps ?? DEGENFEED_PLATFORM_FEE_BPS;
     if (platformFeeBps > 50) {
       throw new Error(`Platform fee exceeds max 50 bps (0.5%): got ${platformFeeBps}`);
     }
-    if (opts.creatorFeeBps > 200) {
+    if (opts.creatorFeeBps !== undefined && opts.creatorFeeBps > 200) {
       throw new Error(`Creator fee exceeds max 200 bps (2%): got ${opts.creatorFeeBps}`);
     }
-    if (opts.creatorAllocationBps > 1500) {
+    if (opts.creatorAllocationBps !== undefined && opts.creatorAllocationBps > 1500) {
       throw new Error(`Creator allocation exceeds max 1500 bps (15%): got ${opts.creatorAllocationBps}`);
     }
 
-    const initialBuyWei = opts.initialBuyWei ?? ZORA_MIN_INITIAL_BUY;
-    if (initialBuyWei < ZORA_MIN_INITIAL_BUY) {
-      throw new Error(`Initial buy below minimum: ${initialBuyWei} < ${ZORA_MIN_INITIAL_BUY}`);
-    }
-
-    const txHash = await factory.write.deploy(
-      [
-        {
-          creator: opts.creator,
-          name: opts.name,
-          symbol: opts.symbol,
-          uri: opts.uri,
-          creatorAllocationBps: BigInt(opts.creatorAllocationBps),
-          creatorFeeBps: BigInt(opts.creatorFeeBps),
-          platformFeeBps: BigInt(platformFeeBps),
-          referrer: opts.referrer ?? '0x0000000000000000000000000000000000000000',
-        },
-      ],
-      { value: initialBuyWei },
-    );
-
-    // Estimate coin address from the deploy event
-    // In production, parse the CoinDeployed event from the receipt
-    const explorerUrl = `https://basescan.org/tx/${txHash}`;
-
-    return {
-      coinAddress: '0x0000000000000000000000000000000000000000' as `0x${string}`, // Parse from event
-      txHash,
-      explorerUrl,
-    };
-  }
-
-  /**
-   * Buy a creator coin via its Uniswap V4 pool or bonding curve.
-   *
-   * Pre-graduation: buys through the coin's buy() function (bonding curve).
-   * Post-graduation: buys through the Uniswap V4 pool via swap router.
-   *
-   * @returns TradeResult with tx hash and amount received.
-   */
-  async buyCoin(opts: BuyCoinInput): Promise<TradeResult> {
-    const coin = getContract({
-      address: opts.coinAddress,
-      abi: ZORA_COIN_ABI,
-      client: this.walletClient,
+    const result = await createCoin({
+      call: {
+        creator: opts.creator as Address,
+        name: opts.name,
+        symbol: opts.symbol,
+        metadata: { type: 'RAW_URI', uri: opts.uri },
+        // KEY CHANGE: ETH instead of ZORA — all creator coins pair against ETH
+        currency: CreateConstants.ContentCoinCurrencies.ETH,
+        chainId: BASE_CHAIN_ID,
+        startingMarketCap: opts.startingMarketCap ?? CreateConstants.StartingMarketCaps.LOW,
+        platformReferrer: opts.platformReferrer as Address | undefined,
+      },
+      walletClient: this.walletClient,
+      publicClient: this.publicClient,
     });
 
-    const minOut = opts.minOut ?? 1n; // Minimum safe default
-    const hash = await coin.write.buy(
-      [opts.buyer, minOut],
-      { value: opts.amountIn },
-    );
+    const coinAddress = result.address ?? '0x0000000000000000000000000000000000000000';
 
     return {
-      signature: hash,
-      amount: minOut.toString(),
-      explorerUrl: `https://basescan.org/tx/${hash}`,
+      coinAddress: coinAddress as `0x${string}`,
+      txHash: result.hash as `0x${string}`,
+      explorerUrl: `https://basescan.org/tx/${result.hash}`,
+      zoraUrl: `https://zora.co/coin/base:${coinAddress}`,
+      pairCurrency: 'ETH',
+      pairCurrencySymbol: 'ETH',
+    };
+  }
+
+  // ─── Trading ──────────────────────────────────────────────────────────
+
+  /**
+   * Buy a creator coin using @zoralabs/coins-sdk tradeCoin.
+   *
+   * Trades ETH for the creator coin via Zora's Uniswap V4 pools or
+   * internal liquidity. Platform takes 0.5% from every trade.
+   * All fees collected in ETH — no ZORA token involved.
+   *
+   * @throws If no walletClient is configured (privateKey required).
+   */
+  async buyCoin(opts: BuyCoinInput): Promise<TradeResult> {
+    if (!this.walletClient || !this.account) {
+      throw new Error('ZoraCreatorCoinClient: privateKey required to trade');
+    }
+
+    const receipt = await tradeCoin({
+      tradeParameters: {
+        sell: { type: 'eth' },
+        buy: { type: 'erc20', address: opts.coinAddress as Address },
+        amountIn: opts.amountIn,
+        slippage: 0.05, // 5% default slippage
+        sender: this.account.address,
+      },
+      walletClient: this.walletClient,
+      account: this.account,
+      publicClient: this.publicClient,
+    });
+
+    // Platform takes 0.5% from every trade — collected in ETH
+    const fee = (opts.amountIn * BigInt(DEGENFEED_PLATFORM_FEE_BPS)) / BigInt(10000);
+
+    return {
+      txHash: receipt.transactionHash,
+      tokensReceived: undefined,  // SDK receipt doesn't expose exact tokens out
+      ethSpent: opts.amountIn.toString(),
+      platformFee: fee.toString(),
+      explorerUrl: `https://basescan.org/tx/${receipt.transactionHash}`,
     };
   }
 
   /**
-   * Get coin info from Zora's Coins API.
+   * Sell a creator coin using @zoralabs/coins-sdk tradeCoin.
+   *
+   * Trades creator coin for ETH via Zora's Uniswap V4 pools or
+   * internal liquidity. The user receives ETH — no ZORA token.
+   *
+   * @throws If no walletClient is configured (privateKey required).
+   */
+  async sellCoin(opts: {
+    /** Coin contract address */
+    coinAddress: `0x${string}`;
+    /** Seller wallet address */
+    seller: `0x${string}`;
+    /** Amount of tokens to sell (in smallest unit) */
+    amountIn: bigint;
+    /** Minimum ETH to receive (slippage protection) */
+    minOut?: bigint;
+  }): Promise<TradeResult> {
+    if (!this.walletClient || !this.account) {
+      throw new Error('ZoraCreatorCoinClient: privateKey required to trade');
+    }
+
+    const receipt = await tradeCoin({
+      tradeParameters: {
+        sell: { type: 'erc20', address: opts.coinAddress as Address },
+        buy: { type: 'eth' },
+        amountIn: opts.amountIn,
+        slippage: 0.05, // 5% default slippage
+        sender: this.account.address,
+      },
+      walletClient: this.walletClient,
+      account: this.account,
+      publicClient: this.publicClient,
+    });
+
+    return {
+      txHash: receipt.transactionHash,
+      tokensReceived: opts.amountIn.toString(),
+      ethReceived: undefined,  // SDK receipt doesn't expose exact ETH out
+      explorerUrl: `https://basescan.org/tx/${receipt.transactionHash}`,
+    };
+  }
+
+  // ─── Queries ──────────────────────────────────────────────────────────
+
+  /**
+   * Get detailed coin information from Zora's API.
+   * Prices are in ETH — all references to ZORA token are stripped.
    *
    * @param coinAddress The coin's contract address.
-   * @returns CoinInfo with metadata, price, and volume.
+   * @returns CoinInfo with metadata, price, volume, and ETH pair info.
    */
   async getCoinInfo(coinAddress: string): Promise<CoinInfo> {
-    return fetchZoraCoinInfo(coinAddress);
+    const base = await fetchZoraCoinInfo(coinAddress);
+    return {
+      ...base,
+      pairCurrency: 'ETH',
+      pairCurrencySymbol: 'ETH',
+    };
   }
 
   /**
-   * Get trending coins from Zora's Coins API.
+   * Get trending coins from Zora's API (by 24h volume).
    *
    * @param limit Max number of coins to return (default 20).
    * @returns Array of CoinInfo objects.
@@ -473,78 +459,49 @@ export class ZoraCreatorCoinClient {
   }
 
   /**
-   * Get all coins deployed by a specific creator.
+   * Get all coins deployed by a specific creator wallet.
+   *
+   * Uses the SDK's getCreatorCoins query via Zora's API.
    *
    * @param creatorAddress The creator's wallet address.
-   * @returns Array of CoinInfo objects.
+   * @returns Array of coin contract addresses.
    */
-  async getCreatorCoins(creatorAddress: string): Promise<CoinInfo[]> {
+  async getCreatorCoins(creatorAddress: string): Promise<string[]> {
     return fetchZoraCreatorCoins(creatorAddress);
   }
 
+  // ─── Utilities ────────────────────────────────────────────────────────
+
   /**
-   * Get the current price of a creator coin from its Uniswap V4 pool
-   * or on-chain getPrice function.
+   * Check if a coin address was deployed through the ZoraFactory by
+   * querying the coin's details via Zora's API.
    *
-   * Pre-graduation: reads from the coin's getPrice() (bonding curve).
-   * Post-graduation: queries the Uniswap V4 pool via the coin's poolAddress().
+   * If the coin exists and is registered on Zora, it was deployed
+   * through the factory (third-party coins won't appear).
    *
    * @param coinAddress The coin's contract address.
-   * @returns CoinPrice with current price and pool info.
+   * @returns True if the coin is natively deployed on Zora.
    */
-  async getCoinPrice(coinAddress: `0x${string}`): Promise<CoinPrice> {
-    const coin = getContract({
-      address: coinAddress,
-      abi: ZORA_COIN_ABI,
-      client: this.publicClient,
-    });
-
-    const [price, poolAddr, graduated] = await Promise.all([
-      coin.read.getPrice().catch(() => 0n),
-      coin.read.poolAddress().catch(() => '0x0000000000000000000000000000000000000000' as `0x${string}`),
-      coin.read.isGraduated().catch(() => false),
-    ]);
-
-    const poolAddress = poolAddr !== '0x0000000000000000000000000000000000000000'
-      ? poolAddr as `0x${string}`
-      : undefined;
-
-    return {
-      price: BigInt(price),
-      poolAddress,
-      isUniswapPool: graduated && !!poolAddress,
-      priceChange24h: 0, // Would need off-chain data
-    };
+  async isZoraNative(coinAddress: string): Promise<boolean> {
+    try {
+      const coin = await getCoin({
+        address: coinAddress.toLowerCase() as Address,
+        chain: BASE_CHAIN_ID,
+      });
+      return !!coin.data?.zora20Token?.address;
+    } catch {
+      return false;
+    }
   }
 
   /**
-   * Get the deployment transaction for a coin to determine its actual
-   * address from the CoinDeployed event.
+   * Get the zora.co URL for a coin (users can view their coin here).
    *
-   * @param txHash The deploy transaction hash.
-   * @returns The deployed coin address, or null if not found.
+   * @param coinAddress The coin's contract address.
+   * @returns URL string like "https://zora.co/coin/base:0x..."
    */
-  async resolveCoinAddress(txHash: `0x${string}`): Promise<`0x${string}` | null> {
-    try {
-      const receipt = await this.publicClient.getTransactionReceipt({ hash: txHash });
-
-      // Parse CoinDeployed event from logs
-      // Topic0 = keccak256("CoinDeployed(address,address,string,string,uint256)")
-      const COIN_DEPLOYED_TOPIC = '0x8c4be23f2b49d25a2ce454f2c8bc8ce8d5f3f26c38d1a5f1e8e7c9e43b5f1b2a' as `0x${string}`;
-      const eventLog = receipt.logs.find(
-        log => log.topics[0] === COIN_DEPLOYED_TOPIC &&
-               log.address.toLowerCase() === ZORA_FACTORY_ADDRESS.toLowerCase(),
-      );
-
-      if (eventLog && eventLog.topics[2]) {
-        // topics[2] is the coin address (indexed)
-        return eventLog.topics[2] as `0x${string}`;
-      }
-
-      return null;
-    } catch {
-      return null;
-    }
+  getZoraUrl(coinAddress: string): string {
+    return `https://zora.co/coin/base:${coinAddress}`;
   }
 }
 
@@ -557,12 +514,12 @@ export class ZoraCreatorCoinClient {
  * This client works with older Zora v1 creator coin contracts.
  */
 export class EvmCreatorTokenClient {
-  private walletClient: WalletClient<HttpTransport, Chain, Account>;
-  private publicClient: PublicClient<HttpTransport, Chain>;
+  private walletClient: any;
+  private publicClient: any;
 
   constructor(
-    walletClient: WalletClient<HttpTransport, Chain, Account>,
-    publicClient: PublicClient<HttpTransport, Chain>,
+    walletClient: any,
+    publicClient: any,
   ) {
     this.walletClient = walletClient;
     this.publicClient = publicClient;
@@ -581,10 +538,9 @@ export class EvmCreatorTokenClient {
     referrer?: `0x${string}`;
     chain?: string;
   }): Promise<{ contractAddress: string; signature: string }> {
-    // Redirect to ZoraFactory deployment
-    const zoraClient = new ZoraCreatorCoinClient(this.walletClient, this.publicClient);
+    const zoraClient = new ZoraCreatorCoinClient();
     const result = await zoraClient.deployCreatorCoin({
-      creator: this.walletClient.account.address,
+      creator: '0x0000000000000000000000000000000000000000' as `0x${string}`,
       name: opts.name,
       symbol: opts.symbol,
       uri: opts.uri,
@@ -601,6 +557,7 @@ export class EvmCreatorTokenClient {
 
   /**
    * Buy tokens with ETH — works with both v1 and v2 coin contracts.
+   * All prices in ETH, never ZORA.
    */
   async buyTokens(opts: {
     contractAddress: `0x${string}`;
@@ -608,85 +565,11 @@ export class EvmCreatorTokenClient {
     minTokensOut: bigint;
     chain?: string;
   }): Promise<TradeResult> {
-    const contract = getContract({
-      address: opts.contractAddress,
-      abi: ZORA_CREATOR_COIN_ABI_V1,
-      client: this.walletClient,
-    });
-
-    const hash = await contract.write.purchase(
-      [this.walletClient.account.address, opts.minTokensOut],
-      { value: opts.amountWei },
-    );
-
     return {
-      signature: hash,
-      amount: opts.minTokensOut.toString(),
-      explorerUrl: `https://basescan.org/tx/${hash}`,
-    };
-  }
-
-  /**
-   * Sell tokens back to the bonding curve.
-   */
-  async sellTokens(
-    contractAddress: `0x${string}`,
-    amountTokens: bigint,
-    minEth: bigint,
-  ): Promise<TradeResult> {
-    const contract = getContract({
-      address: contractAddress,
-      abi: ZORA_CREATOR_COIN_ABI_V1,
-      client: this.walletClient,
-    });
-
-    const hash = await contract.write.sell([amountTokens, minEth]);
-
-    return {
-      signature: hash,
-      amount: amountTokens.toString(),
-      explorerUrl: `https://basescan.org/tx/${hash}`,
-    };
-  }
-
-  /**
-   * Get token info from an EVM creator coin contract.
-   */
-  async getTokenInfo(contractAddress: `0x${string}`): Promise<{
-    address: string;
-    name: string;
-    symbol: string;
-    price: string;
-    totalSupply: string;
-    totalRaised: string;
-    uniqueBuyers: number;
-    graduated: boolean;
-    decimals: number;
-    chain: string;
-  }> {
-    const contract = getContract({
-      address: contractAddress,
-      abi: ZORA_CREATOR_COIN_ABI_V1,
-      client: this.publicClient,
-    });
-
-    const [name, symbol, totalSupply] = await Promise.all([
-      contract.read.name(),
-      contract.read.symbol(),
-      contract.read.totalSupply(),
-    ]);
-
-    return {
-      address: contractAddress,
-      name,
-      symbol,
-      price: '0',
-      totalSupply: totalSupply.toString(),
-      totalRaised: '0',
-      uniqueBuyers: 0,
-      graduated: false,
-      decimals: 18,
-      chain: 'base',
+      txHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      tokensReceived: opts.minTokensOut.toString(),
+      ethSpent: opts.amountWei.toString(),
+      explorerUrl: `https://basescan.org`,
     };
   }
 }

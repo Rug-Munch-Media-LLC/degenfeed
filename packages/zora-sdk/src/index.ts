@@ -5,20 +5,25 @@
  * - **EVM (Base)**: Zora 2026 Coins Protocol — creator coins on Base via ZoraFactory
  * - **Solana**: Custom Anchor program with bonding curve
  *
+ * Our coins deploy through ZoraFactory so they appear on zora.co natively.
+ * Users can login to Zora and see their coin. Third-party apps that integrate
+ * with Zora's API will see our coins automatically.
+ *
  * ## Usage
  * ```ts
  * import { ZoraCreatorCoinClient } from '@degenfeed/zora-sdk';
  *
- * const zora = new ZoraCreatorCoinClient(walletClient, publicClient);
+ * const zora = new ZoraCreatorCoinClient({ rpcUrl: '...', privateKey: '...' });
  * const coin = await zora.deployCreatorCoin({
  *   name: 'Alice Coin',
  *   symbol: 'ALICE',
  *   ...
  * });
+ * console.log('View on Zora:', coin.zoraUrl);
  * ```
  */
 
-// ─── Zora 2026 Coins Protocol ───────────────────────────────────────────────
+// ─── Zora 2026 Coins Protocol (ETH pair — ZORA token stripped) ─────────────
 export { ZoraCreatorCoinClient, ZORA_FACTORY_ADDRESS, DEGENFEED_PLATFORM_FEE_BPS } from './evm';
 
 // ─── Zora Coins API ─────────────────────────────────────────────────────────
@@ -27,8 +32,27 @@ export {
   fetchZoraCoinInfo,
   fetchZoraCreatorCoins,
   fetchZoraBatchPrices,
-  checkZoraLiveSupport,
+  fetchZoraLiveComments,
 } from './zora-api';
+export type { ZoraComment } from './zora-api';
+
+// ─── Cross-Network Deployer ─────────────────────────────────────────────────
+export { deployCrossNetwork, deployWormholeWrapper, registerForZoraVisibility } from './cross-network';
+export type { PrimaryChain, CrossNetworkOpts, CrossNetworkResult } from './cross-network';
+
+// ─── Platform Fee Collection (all fees in ETH, never ZORA) ─────────────────
+export {
+  PLATFORM_FEE_BPS,
+  PLATFORM_TREASURY,
+  calculateFee,
+  calculateFeeSplit,
+  collectPlatformFee,
+  calculateVestingPlatformFee,
+  formatBps,
+  calculateFeeInEth,
+  formatFee,
+} from './platform-fees';
+export type { FeeSplit } from './platform-fees';
 
 // ─── Solana exports ─────────────────────────────────────────────────────────
 export {
@@ -137,6 +161,19 @@ export type {
   PriceAlert,
   BurnEvent,
 } from './anti-exploit';
+
+// ─── Vesting Presets ──────────────────────────────────────────────────────
+export {
+  VESTING_PRESETS,
+  getAvailableVestingPresets,
+  validateVestingConfig,
+  generateVestingSchedule,
+} from './vesting/types';
+export type {
+  VestingConfig,
+  VestingPreset,
+  VestingSchedulePoint,
+} from './vesting/types';
 
 // ─── Legacy Math Functions (keep for backwards compat) ─────────────────────
 
