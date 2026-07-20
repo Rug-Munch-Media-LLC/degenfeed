@@ -368,7 +368,7 @@ export function CrossPlatformSignup({
                 Some platforms require Pro
               </p>
               <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-                Bluesky, Farcaster, and Lens registration require a Pro subscription ($5/mo).
+                Bluesky, Farcaster, and Lens registration require a Pro subscription ($10/mo).
                 Mastodon and Nostr are free.
               </p>
             </div>

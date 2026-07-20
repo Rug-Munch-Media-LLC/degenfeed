@@ -74,8 +74,8 @@ export function PremiumGate({
 
   const tierPricing: Record<PremiumTier, string> = {
     free: '$0',
-    pro: '$10 first month, then $5/mo',
-    creator: '$15/mo',
+    pro: '$10/mo',
+    creator: '$25/mo',
     enterprise: 'Custom',
   };
 

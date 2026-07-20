@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: 'Is DegenFeed free?',
-    a: 'Yes. Browsing the feed is completely free and requires no account. Creating an account is also free and gives you a @degenfeed.xyz Fediverse handle. Premium ($5/mo) adds advanced filtering, custom feeds, noise reduction, and priority support. Creator ($15/mo) unlocks analytics, cross-posting analytics, post scheduling, and API access. All subscriptions fund development and infrastructure.',
+    a: 'Yes. Browsing the feed is completely free and requires no account. Creating an account is also free and gives you a @degenfeed.xyz Fediverse handle. Premium ($10/mo) adds cross-platform posting, Feddy Communities, creator coins, livestreaming, and priority support. Creator ($25/mo) unlocks advanced analytics, custom domains, post scheduling, and API access. All subscriptions fund development and infrastructure.',
   },
   {
     q: 'Can I use DegenFeed without a wallet?',
@@ -45,7 +45,7 @@ const faqs = [
   },
   {
     q: 'How do I schedule a post?',
-    a: 'Compose your post as usual, then click the clock icon in the composer toolbar. Pick your desired publish time and timezone. You can schedule posts to individual protocols or cross-post to multiple. Scheduled posts appear in your Creator Studio dashboard where you can edit, reschedule, or cancel them. Post scheduling is available on the Creator tier ($15/mo) and is perfect for coordinating multi-protocol announcements.',
+    a: 'Compose your post as usual, then click the clock icon in the composer toolbar. Pick your desired publish time and timezone. You can schedule posts to individual protocols or cross-post to multiple. Scheduled posts appear in your Creator Studio dashboard where you can edit, reschedule, or cancel them. Post scheduling is available on the Creator tier ($25/mo) and is perfect for coordinating multi-protocol announcements.',
   },
   {
     q: 'How does the algorithm work?',

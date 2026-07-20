@@ -366,8 +366,8 @@ export default function UserGuidePage() {
 
       <H3 id="subscriptions">Subscriptions</H3>
       <p className="text-sm leading-relaxed text-[var(--color-muted)]">
-        Premium ($5/mo) unlocks advanced filtering, custom feeds, noise reduction, and priority
-        support. Creator ($15/mo) adds analytics, cross-posting analytics, post scheduling, RSS
+        Premium ($10/mo) unlocks cross-platform posting, Feddy Communities, creator coins, livestreaming, and priority
+        support. Creator ($25/mo) adds analytics, cross-posting analytics, post scheduling, RSS
         feeds, and API access. All subscriptions are billed monthly and can be cancelled anytime.
       </p>
 

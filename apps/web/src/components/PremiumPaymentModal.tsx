@@ -123,7 +123,7 @@ function StepSelectTier({ onSelect }: { onSelect: (tier: PremiumTier) => void })
               {tier.firstMonthPrice && (
                 <div className="mt-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5">
                   <p className="text-[11px] text-amber-400 leading-relaxed">
-                    💡 <strong>$10 first month</strong> covers the Farcaster ($5) registration fee +
+                    💡 <strong>$10/month</strong> covers the Farcaster ($5) registration fee + all platform features
                     30% platform fee. After that it&apos;s {tier.price}/month.
                   </p>
                 </div>

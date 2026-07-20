@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'DegenFeed Premium — Cross-Platform Registration, Advanced Analytics',
   description:
-    'Unlock cross-platform posting, advanced filtering, custom feeds, noise reduction, analytics, and more. Pro $5/mo, Creator $15/mo, Enterprise $50/mo.',
+    'Unlock cross-platform posting, advanced filtering, custom feeds, noise reduction, analytics, and more. Pro $10/mo, Creator $25/mo, Enterprise $50/mo.',
   keywords: [
     'DegenFeed Premium',
     'cross-platform registration',
