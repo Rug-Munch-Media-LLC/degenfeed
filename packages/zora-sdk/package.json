@@ -9,7 +9,8 @@
     ".": "./src/index.ts",
     "./solana": "./src/solana.ts",
     "./evm": "./src/evm.ts",
-    "./cross-chain": "./src/cross-chain/registry.ts"
+    "./cross-chain": "./src/cross-chain/registry.ts",
+    "./video": "./src/video.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

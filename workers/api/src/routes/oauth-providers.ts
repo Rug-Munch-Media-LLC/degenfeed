@@ -173,9 +173,7 @@ export async function handleGoogleCallback(
 				name = payload.name ?? "";
 				picture = payload.picture ?? "";
 				googleId = payload.sub ?? "";
-			} catch {
-				/* ignore */
-			}
+			} catch { /* KV operation failed -- non-critical, continue */ }
 		}
 
 		return jsonResponse({
@@ -528,9 +526,7 @@ export async function handleTwitterAuthorize(
 	await storeState(env, `${state}:pkce`, TWITTER_STATE_PREFIX);
 	try {
 		await env.CACHE?.put(`pkce:${state}`, codeVerifier, { expirationTtl: 600 });
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	const url = new URL(request.url);
 	const redirectUri = `${url.protocol}//${url.hostname}/auth/callback/twitter`;
@@ -580,14 +576,10 @@ export async function handleTwitterCallback(
 		let codeVerifier = "";
 		try {
 			codeVerifier = (await env.CACHE?.get(`pkce:${body.state}`)) ?? "";
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 		try {
 			await env.CACHE?.delete(`pkce:${body.state}`);
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 
 		const url = new URL(request.url);
 		const redirectUri = `${url.protocol}//${url.hostname}/auth/callback/twitter`;

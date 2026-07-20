@@ -337,9 +337,7 @@ export async function handleCustomFeedPublic(
 	if (indexRaw) {
 		try {
 			publicIds = JSON.parse(indexRaw) as string[];
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 	}
 
 	// If no index, we can't scan KV — return empty with a note

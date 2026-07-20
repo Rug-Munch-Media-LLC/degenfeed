@@ -92,9 +92,7 @@ async function trackBehavior(
 		try {
 			const postRaw = await env.CACHE?.get(`post:${postId}`);
 			if (postRaw) post = JSON.parse(postRaw);
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 
 		const minimalPost = post ?? {
 			id: postId,

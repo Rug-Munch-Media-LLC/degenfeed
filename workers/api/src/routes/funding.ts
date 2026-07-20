@@ -122,9 +122,9 @@ export async function handleFundingFeed(
 								announcedAt: post.createdAt,
 							});
 						}
-					} catch {}
+					} catch { /* empty -- error deliberately ignored */ }
 				}
-			} catch {}
+			} catch { /* empty -- error deliberately ignored */ }
 		}),
 	);
 

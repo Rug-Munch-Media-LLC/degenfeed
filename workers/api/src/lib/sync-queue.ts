@@ -228,7 +228,7 @@ export async function listPending(
 						entries.push(entry);
 						if (entries.length >= limit) break;
 					}
-				} catch {}
+				} catch { /* empty -- error deliberately ignored */ }
 			}
 
 			cursor = page.list_complete ? undefined : page.cursor;
@@ -350,7 +350,7 @@ export async function retryDeadLetters(env: Env, limit = 50): Promise<number> {
 					// Remove from dead letter
 					await env.CACHE.delete(key.name);
 					retried++;
-				} catch {}
+				} catch { /* empty -- error deliberately ignored */ }
 			}
 
 			cursor = page.list_complete ? undefined : page.cursor;
@@ -399,7 +399,7 @@ export async function getQueueStats(env: Env): Promise<{
 						pending++;
 					else if (entry.status === "failed") failed++;
 					else if (entry.status === "completed") completed++;
-				} catch {}
+				} catch { /* empty -- error deliberately ignored */ }
 			}
 
 			cursor = page.list_complete ? undefined : page.cursor;

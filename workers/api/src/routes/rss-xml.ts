@@ -172,9 +172,7 @@ export async function handleRssXml(
 				},
 			});
 		}
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	const raw = await gather(env, protocols);
 	let deduped = deduplicatePosts(raw);
@@ -240,9 +238,7 @@ ${atomEntries}
 
 	try {
 		await env.CACHE?.put(cacheKey, body, { expirationTtl: 120 });
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	return new Response(body, {
 		status: 200,

@@ -53,9 +53,7 @@ export async function handleRmiNews(
 			if (cached) {
 				return jsonResponse(JSON.parse(cached));
 			}
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 
 		const headers: Record<string, string> = { accept: "application/json" };
 		const res = await fetch(backendUrl, { headers, signal: request.signal });
@@ -81,9 +79,7 @@ export async function handleRmiNews(
 			await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 				expirationTtl: 180,
 			});
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 		return jsonResponse(response);
 	} catch (err) {
 		return jsonResponse(
@@ -104,9 +100,7 @@ export async function handleRmiHeadlines(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 	try {
 		const p = provider(env);
 		const data = await p.fetchHeadlines(count, category);
@@ -119,9 +113,7 @@ export async function handleRmiHeadlines(
 			await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 				expirationTtl: 300,
 			});
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 		return jsonResponse(response);
 	} catch (err) {
 		return jsonResponse(

@@ -72,6 +72,11 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
 	solana: 8000, // On-chain data fetch
 	kbin: 5000, // Fediverse — moderate timeout
 	tildes: 5000, // Link aggregator — moderate timeout
+	discord: 5000,
+	matrix: 5000,
+	webhook: 3000,
+	github: 5000,
+	"newsletter-bridge": 5000,
 };
 
 // ─── Per-provider fetch timer ────────────────────────────────────

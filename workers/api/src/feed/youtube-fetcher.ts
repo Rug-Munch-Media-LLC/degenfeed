@@ -5,10 +5,11 @@
  * channel subscriptions, and trending signals. Enriches videos with
  * DegenFeed metadata for cross-platform actions (tip, share, save).
  *
- * Sources:
- *   - YouTube RSS feeds (curated crypto channels via @degenfeed/youtube-provider)
- *   - YouTube Data API v3 (when API key configured)
- *   - YouTube oEmbed for single-video metadata
+ * Sources (in priority order):
+ *   1. Invidious / Piped API (open-source, no API key, auto failover)
+ *   2. YouTube RSS feeds (curated crypto channels via @degenfeed/youtube-provider)
+ *   3. YouTube Data API v3 (when API key configured)
+ *   4. YouTube oEmbed for single-video metadata
  *
  * KV cache prefix: youtube:feed:*
  * Cache TTL: 15 minutes (900s)
@@ -20,6 +21,15 @@ import {
 	getYouTubeVideoInfo,
 } from "@degenfeed/youtube-provider";
 import type { Env } from "../index";
+
+// ─── Invidious / Piped instances (open-source, no API key) ────────────────
+
+const INVIDIOUS_INSTANCES = [
+	"https://inv.nadeko.net",
+	"https://invidious.fdn.fr",
+	"https://invidious.privacydev.net",
+	"https://yewtu.be",
+];
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -192,10 +202,10 @@ const TAGS_FROM_NICHES: Record<string, string[]> = {
 
 function inferCategory(item: YouTubeVideoItem): YouTubeCategory {
 	if (item.channelCategory && CATEGORY_MAP[item.channelCategory]) {
-		return CATEGORY_MAP[item.channelCategory];
+		return CATEGORY_MAP[item.channelCategory]!;
 	}
 	if (item.category && CATEGORY_MAP[item.category]) {
-		return CATEGORY_MAP[item.category];
+		return CATEGORY_MAP[item.category]!;
 	}
 	// Detect from title/description
 	const text = `${item.title} ${item.description ?? ""}`.toLowerCase();
@@ -553,7 +563,7 @@ export class YouTubeFetcher {
 				videoUrl: `https://www.youtube.com/shorts/${item.id}`,
 				channelName: item.channelName,
 				channelAvatar: "",
-				channelId: item.channelId ?? "",
+				channelId: (item as any).channelId ?? "",
 				viewCount: item.views ?? 0,
 				likeCount: 0,
 				publishedAt: item.publishedAt,
@@ -657,7 +667,7 @@ export class YouTubeFetcher {
 					`https://img.youtube.com/vi/${item.id}/maxresdefault.jpg`,
 				channelName: item.channelName,
 				channelAvatar: `https://img.youtube.com/vi/${item.id}/0.jpg`, // Will be replaced by channel lookup
-				channelId: item.channelId ?? "",
+				channelId: (item as any).channelId ?? "",
 				viewCount: detail?.viewCount ?? item.views ?? 0,
 				likeCount: detail?.likeCount ?? 0,
 				duration,
@@ -702,10 +712,236 @@ export class YouTubeFetcher {
 	private parseDuration(duration: string): number {
 		if (/^\d+:\d{2}(:\d{2})?$/.test(duration)) {
 			const parts = duration.split(":").map(Number);
-			if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-			if (parts.length === 2) return parts[0] * 60 + parts[1];
+			if (parts.length === 3) return (parts[0] ?? 0) * 3600 + (parts[1] ?? 0) * 60 + (parts[2] ?? 0);
+			if (parts.length === 2) return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
 		}
 		return 300; // Default 5 min
+	}
+
+	// ── Invidious / Piped API fallback ──────────────────────────────────
+
+	/**
+	 * Invidious instance list with automatic failover.
+	 * Try each instance in order until one responds.
+	 */
+	private static readonly INVIDIOUS_INSTANCES = INVIDIOUS_INSTANCES;
+
+	/**
+	 * Fetch channel videos via Invidious API (no API key needed).
+	 * Used as a fallback when RSS feeds are unavailable.
+	 */
+	async fetchViaInvidious(
+		channelId: string,
+		limit: number = 10,
+	): Promise<YouTubeVideo[]> {
+		for (const instance of YouTubeFetcher.INVIDIOUS_INSTANCES) {
+			try {
+				const url = `${instance}/api/v1/channels/${channelId}/videos?sort=newest`;
+				const res = await fetch(url, {
+					headers: { accept: "application/json" },
+				});
+				if (!res.ok) continue;
+
+				const data = (await res.json()) as {
+					videos: Array<{
+						videoId: string;
+						title: string;
+						description: string;
+						lengthSeconds: number;
+						viewCount: number;
+						published: number;
+						author: string;
+						authorId: string;
+						authorUrl: string;
+						videoThumbnails: Array<{ url: string; quality: string; width: number; height: number }>;
+						liveNow: boolean;
+					}>;
+				};
+
+				const videos = data.videos ?? [];
+				return videos.slice(0, limit).map((v) => ({
+					id: v.videoId,
+					title: v.title,
+					description: v.description ?? "",
+					thumbnail:
+						v.videoThumbnails?.find((t) => t.quality === "maxres")?.url ??
+						v.videoThumbnails?.find((t) => t.quality === "medium")?.url ??
+						`https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`,
+					channelName: v.author,
+					channelAvatar: "",
+					channelId: v.authorId,
+					viewCount: v.viewCount ?? 0,
+					likeCount: 0,
+					duration: this.formatInvidiousDuration(v.lengthSeconds ?? 0),
+					publishedAt: new Date(v.published * 1000).toISOString(),
+					category: this.inferInvidiousCategory(v.title, v.description),
+					tags: [],
+					isShort: (v.lengthSeconds ?? 0) <= 60,
+				}));
+			} catch {
+				continue;
+			}
+		}
+		return [];
+	}
+
+	/**
+	 * Fetch trending videos from Invidious.
+	 */
+	async fetchTrendingViaInvidious(
+		category?: string,
+		limit: number = 20,
+	): Promise<YouTubeVideo[]> {
+		for (const instance of YouTubeFetcher.INVIDIOUS_INSTANCES) {
+			try {
+				const typeMap: Record<string, string> = {
+					gaming: "gaming",
+					music: "music",
+					news: "news",
+					sports: "sports",
+					education: "education",
+				};
+				const type = category ? typeMap[category] ?? "" : "";
+				const url = type
+					? `${instance}/api/v1/trending?type=${type}`
+					: `${instance}/api/v1/trending`;
+				const res = await fetch(url, {
+					headers: { accept: "application/json" },
+				});
+				if (!res.ok) continue;
+
+				const data = (await res.json()) as Array<{
+					videoId: string;
+					title: string;
+					description: string;
+					lengthSeconds: number;
+					viewCount: number;
+					published: number;
+					author: string;
+					authorId: string;
+					authorUrl: string;
+					videoThumbnails: Array<{ url: string; quality: string }>;
+					liveNow: boolean;
+				}>;
+
+				return (data ?? []).slice(0, limit).map((v) => ({
+					id: v.videoId,
+					title: v.title,
+					description: v.description ?? "",
+					thumbnail:
+						v.videoThumbnails?.find((t) => t.quality === "maxres")?.url ??
+						v.videoThumbnails?.find((t) => t.quality === "medium")?.url ??
+						`https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`,
+					channelName: v.author,
+					channelAvatar: "",
+					channelId: v.authorId,
+					viewCount: v.viewCount ?? 0,
+					likeCount: 0,
+					duration: this.formatInvidiousDuration(v.lengthSeconds ?? 0),
+					publishedAt: new Date(v.published * 1000).toISOString(),
+					category: this.inferInvidiousCategory(v.title, v.description),
+					tags: [],
+					isShort: (v.lengthSeconds ?? 0) <= 60,
+				}));
+			} catch {
+				continue;
+			}
+		}
+		return [];
+	}
+
+	/**
+	 * Search YouTube via Invidious.
+	 */
+	async searchViaInvidious(
+		query: string,
+		limit: number = 10,
+	): Promise<YouTubeVideo[]> {
+		for (const instance of YouTubeFetcher.INVIDIOUS_INSTANCES) {
+			try {
+				const url = `${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video&sort=relevance`;
+				const res = await fetch(url, {
+					headers: { accept: "application/json" },
+				});
+				if (!res.ok) continue;
+
+				const data = (await res.json()) as Array<{
+					videoId: string;
+					title: string;
+					description: string;
+					lengthSeconds: number;
+					viewCount: number;
+					published: number;
+					author: string;
+					authorId: string;
+					authorUrl: string;
+					videoThumbnails: Array<{ url: string; quality: string }>;
+					liveNow: boolean;
+				}>;
+
+				return (data ?? []).slice(0, limit).map((v) => ({
+					id: v.videoId,
+					title: v.title,
+					description: v.description ?? "",
+					thumbnail:
+						v.videoThumbnails?.find((t) => t.quality === "maxres")?.url ??
+						v.videoThumbnails?.find((t) => t.quality === "medium")?.url ??
+						`https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`,
+					channelName: v.author,
+					channelAvatar: "",
+					channelId: v.authorId,
+					viewCount: v.viewCount ?? 0,
+					likeCount: 0,
+					duration: this.formatInvidiousDuration(v.lengthSeconds ?? 0),
+					publishedAt: new Date(v.published * 1000).toISOString(),
+					category: this.inferInvidiousCategory(v.title, v.description),
+					tags: [],
+					isShort: (v.lengthSeconds ?? 0) <= 60,
+				}));
+			} catch {
+				continue;
+			}
+		}
+		return [];
+	}
+
+	/**
+	 * Override getChannelVideos to try Invidious first, fall back to RSS.
+	 */
+	async getChannelVideosWithFallback(
+		channelId: string,
+		limit: number,
+		env?: Env,
+	): Promise<YouTubeVideo[]> {
+		// Try Invidious first (no API key, more reliable)
+		const invidious = await this.fetchViaInvidious(channelId, limit);
+		if (invidious.length > 0) return invidious;
+
+		// Fall back to RSS-based fetcher
+		return this.getChannelVideos(channelId, limit, env);
+	}
+
+	private formatInvidiousDuration(seconds: number): string {
+		const h = Math.floor(seconds / 3600);
+		const m = Math.floor((seconds % 3600) / 60);
+		const s = seconds % 60;
+		if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+		return `${m}:${String(s).padStart(2, "0")}`;
+	}
+
+	private inferInvidiousCategory(title: string, description: string): YouTubeCategory {
+		const text = `${title} ${description}`.toLowerCase();
+		if (text.includes("gaming") || text.includes("gameplay") || text.includes("esports")) return "gaming";
+		if (text.includes("music") || text.includes("song") || text.includes("album")) return "music";
+		if (text.includes("tech") || text.includes("programming") || text.includes("software")) return "tech";
+		if (text.includes("crypto") || text.includes("bitcoin") || text.includes("defi")) return "crypto";
+		if (text.includes("news") || text.includes("breaking") || text.includes("report")) return "news";
+		if (text.includes("tutorial") || text.includes("learn") || text.includes("course")) return "education";
+		if (text.includes("sport") || text.includes("game") || text.includes("match")) return "sports";
+		if (text.includes("science") || text.includes("research")) return "science";
+		if (text.includes("comedy") || text.includes("funny")) return "comedy";
+		if (text.includes("entertainment") || text.includes("vlog")) return "entertainment";
+		return "all";
 	}
 }
 

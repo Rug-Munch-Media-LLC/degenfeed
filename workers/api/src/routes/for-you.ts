@@ -106,9 +106,7 @@ async function readBehavior(
 	try {
 		const raw = await env.CACHE?.get(behaviorKey(address));
 		if (raw) return JSON.parse(raw) as UserBehaviorProfile;
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 	return emptyBehaviorProfile();
 }
 

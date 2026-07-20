@@ -32,7 +32,9 @@
       "@degenfeed/source-discovery/*": ["packages/source-discovery/src/*"],
       "@degenfeed/crossplatform-register/*": ["packages/crossplatform-register/src/*"],
       "@degenfeed/peertube-provider": ["packages/peertube-provider/src"],
-      "@degenfeed/peertube-provider/*": ["packages/peertube-provider/src/*"]
+      "@degenfeed/peertube-provider/*": ["packages/peertube-provider/src/*"],
+      "@degenfeed/atproto-shorts-provider": ["packages/atproto-shorts-provider/src"],
+      "@degenfeed/atproto-shorts-provider/*": ["packages/atproto-shorts-provider/src/*"]
     }
   },
   "include": ["src"],

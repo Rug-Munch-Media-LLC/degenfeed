@@ -331,7 +331,7 @@ export async function handleNewsletterFeed(
 				const s = await GenericRssSource.fetch(src.url, { signal });
 				const posts = feedToUnifiedPosts(s);
 				allPosts.push(...posts);
-			} catch {}
+			} catch { /* empty -- error deliberately ignored */ }
 		}),
 	);
 

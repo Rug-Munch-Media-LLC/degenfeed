@@ -26,6 +26,11 @@ import {
 } from '@degenfeed/peertube-provider/federated';
 import type { YouTubeVideoItem } from '@degenfeed/youtube-provider';
 import { fetchYouTubeFeed } from '@degenfeed/youtube-provider';
+import {
+  fetchBlueskyShorts,
+  searchBlueskyVideos,
+  type BskyVideoItem,
+} from '@degenfeed/atproto-shorts-provider';
 
 export type { UserInterestProfile } from './scorer';
 export { computeShortScore, rankShorts } from './scorer';
@@ -39,11 +44,12 @@ export const SOURCE_COLORS: Record<string, string> = {
   peertube: '#f1680d',
   twitter: '#1da1f2',
   direct: '#666666',
+  bluesky: '#0085ff',
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type ShortVideoSource = 'peertube' | 'youtube' | 'twitter' | 'tiktok_rss' | 'instagram' | 'direct';
+export type ShortVideoSource = 'peertube' | 'youtube' | 'twitter' | 'tiktok_rss' | 'instagram' | 'direct' | 'bluesky';
 
 export interface ShortVideoItem {
   id: string;
@@ -85,6 +91,7 @@ export interface ShortsFeedResult {
     youtube: number;
     tiktok: number;
     instagram: number;
+    bluesky: number;
   };
   cursor: string | null;
   hasMore: boolean;
@@ -532,6 +539,7 @@ export async function fetchShortsFeed(options: FetchShortsOptions = {}): Promise
       youtube: youTubeVideos.length,
       tiktok: tikTokVideos.length,
       instagram: instagramVideos.length,
+      bluesky: 0,
     },
     cursor: filtered.length > limit ? (filtered[limit - 1]?.id ?? null) : null,
     hasMore: filtered.length > limit,

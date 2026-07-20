@@ -90,6 +90,11 @@ export const PLATFORM_TIER: Record<Protocol, number> = {
   youtube: 0.9,
   kbin: 0.7,
   tildes: 0.7,
+  discord: 0.6,
+  matrix: 0.6,
+  webhook: 0.5,
+  github: 0.6,
+  "newsletter-bridge": 0.5,
 };
 
 export interface UserAlgorithmPreferences {

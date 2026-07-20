@@ -1021,9 +1021,7 @@ export async function handleSearch(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	const results = await federatedSearch(q, sources, env, limit);
 
@@ -1045,9 +1043,7 @@ export async function handleSearch(
 		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 			expirationTtl: 120,
 		});
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	return jsonResponse(response);
 }

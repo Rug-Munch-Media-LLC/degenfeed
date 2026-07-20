@@ -35,6 +35,22 @@ export { EvmCreatorTokenClient } from './evm';
 // ─── Types ──────────────────────────────────────────────────────────────────
 export type * from './types';
 
+// ─── Zora Video NFT SDK ──────────────────────────────────────────────────────
+export { ZoraVideoSDK, buildVideoMetadata, uploadToIpfs, uploadMetadataToIpfs, metadataToDataUri } from './video';
+export type {
+	ZoraVideoSDKConfig,
+	VideoMetadata,
+	VideoUploadResult,
+	MintVideoOptions,
+	MintResult,
+	ZoraVideoNFT,
+	CollectResult,
+	TipResult,
+	AnnounceResult,
+	PinataConfig,
+	TrendingQuery,
+} from './video';
+
 // ─── Cross-Chain Registry ────────────────────────────────────────────────────
 export { CrossChainRegistry, createCrossChainRegistry } from './cross-chain/registry';
 export type {

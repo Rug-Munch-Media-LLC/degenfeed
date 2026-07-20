@@ -1393,8 +1393,15 @@ async function fetchRepliesFromNostr(
 	_auth: Record<string, string>,
 	env: Env,
 ): Promise<CrossProtocolReply[]> {
-	return (
-		reliableFetch(
+		const reliableResult = reliableFetch<
+			{
+				parentUri: string;
+				sourceProtocol: string;
+				replyNativeId: string;
+				text: string;
+				createdAt: number;
+			}[]
+		>(
 			"nostr",
 			"fetchRepliesFromNostr",
 			async () => {
