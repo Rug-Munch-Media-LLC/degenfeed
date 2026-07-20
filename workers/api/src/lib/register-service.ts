@@ -97,23 +97,53 @@ export function shouldRegisterLens(plan: string, isPremium: boolean): boolean {
   return isPremium || plan === 'standard' || plan === 'complete';
 }
 
+// ─── Lens Handle Cost By Length ───────────────────────────────────────────
+
+/**
+ * On-chain Lens handle registration costs on Polygon.
+ * Shorter handles cost more gas due to higher demand and storage.
+ *
+ * | Length    | Gas Cost | Included In                     |
+ * |-----------|----------|---------------------------------|
+ * | 9+ chars  | $2       | All plans (base cost)           |
+ * | 7-8 chars | $7       | Complete plan covers up to this |
+ * | 5-6 chars | $17      | Complete + add-on               |
+ * | 3-4 chars | $55      | À la carte add-on               |
+ */
+export function getLensHandleCost(handle: string): { gasCost: number; label: string } {
+  if (!handle) return { gasCost: 2, label: 'Standard handle (9+ chars)' };
+  const len = handle.length;
+  if (len >= 9) return { gasCost: 2, label: 'Standard handle (9+ chars)' };
+  if (len >= 7) return { gasCost: 7, label: 'Short handle (7-8 chars)' };
+  if (len >= 5) return { gasCost: 17, label: 'Premium short (5-6 chars)' };
+  if (len >= 3) return { gasCost: 55, label: 'Rare handle (3-4 chars)' };
+  return { gasCost: 2, label: 'Standard handle (9+ chars)' };
+}
+
 // ─── Pricing ──────────────────────────────────────────────────────────────
 
 /**
  * Calculate charges for a given plan and premium status.
  * Returns a transparent breakdown shown to the user before they confirm.
+ *
+ * @param plan - The registration plan (free, standard, complete)
+ * @param isPremium - Whether the user has an active premium subscription
+ * @param lensHandle - Optional custom Lens handle for character-based pricing
  */
 export function calculateCharges(
   plan: string,
   isPremium: boolean,
+  lensHandle?: string,
 ): ChargeBreakdown {
+  const handleCost = lensHandle ? getLensHandleCost(lensHandle) : { gasCost: 2, label: 'Standard handle (9+ chars)' };
+
   if (isPremium) {
     return {
       total: '$0 (covered by Premium subscription)',
       totalCents: 0,
       breakdown: [
         { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: true },
-        { item: 'Lens Profile ($2 gas)', cost: '$2', covered: true },
+        { item: `Lens Profile — ${handleCost.label} ($${handleCost.gasCost} gas)`, cost: `$${handleCost.gasCost}`, covered: true },
         { item: 'GoToSocial account', cost: '$0', covered: true },
         { item: 'AT Protocol PDS', cost: '$0', covered: true },
         { item: 'Nostr keypair', cost: '$0', covered: true },
@@ -124,31 +154,44 @@ export function calculateCharges(
   }
 
   switch (plan) {
-    case 'standard':
+    case 'standard': {
+      const handleUpcharge = Math.max(0, handleCost.gasCost - 2); // Standard covers $2 base handle
+      const totalUsd = 10 + handleUpcharge;
       return {
-        total: '$10',
-        totalCents: 800,
+        total: `$${totalUsd}`,
+        totalCents: totalUsd * 100,
         breakdown: [
           { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
-          { item: 'Lens Profile ($2 gas)', cost: '$2', covered: false },
-          { item: 'Service fee', cost: '$1', covered: false },
+          { item: `Lens Profile — ${handleCost.label} ($${handleCost.gasCost} gas)`, cost: `$${handleCost.gasCost}`, covered: false },
+          { item: 'Service fee', cost: '$3', covered: false },
+          ...(handleUpcharge > 0
+            ? [{ item: `Short handle premium ($${handleUpcharge} upcharge)`, cost: `$${handleUpcharge}`, covered: false }]
+            : []),
           { item: 'GoToSocial + PDS + Nostr + RSS', cost: '$0', covered: true },
         ],
-        serviceFeeCents: 100,
+        serviceFeeCents: 300,
       };
-    case 'complete':
+    }
+    case 'complete': {
+      // Complete plan covers handle gas up to ~$10 (7-8 char range)
+      const handleUpcharge = Math.max(0, handleCost.gasCost - 10);
+      const totalUsd = 20 + handleUpcharge;
       return {
-        total: '$20',
-        totalCents: 1500,
+        total: `$${totalUsd}`,
+        totalCents: totalUsd * 100,
         breakdown: [
           { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
-          { item: 'Lens + custom handle ($10 gas)', cost: '$10', covered: false },
+          { item: `Lens Profile — ${handleCost.label} ($${handleCost.gasCost} gas)`, cost: `$${handleCost.gasCost}`, covered: false },
           { item: 'ENS domain ($10)', cost: '$10', covered: false },
-          { item: 'Bundle discount', cost: '-$10', covered: false },
+          ...(handleUpcharge > 0
+            ? [{ item: `Premium handle upcharge ($${handleUpcharge})`, cost: `$${handleUpcharge}`, covered: false }]
+            : []),
+          { item: 'Bundle discount', cost: '-$7', covered: false },
           { item: 'GoToSocial + PDS + Nostr + RSS', cost: '$0', covered: true },
         ],
-        serviceFeeCents: 100,
+        serviceFeeCents: 300,
       };
+    }
     case 'free':
     default:
       return {
