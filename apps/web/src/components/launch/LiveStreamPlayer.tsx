@@ -88,6 +88,46 @@ export default function LiveStreamPlayer({
   // Determine which stream to display
   const stream = peertube.stream ?? legacy.stream;
 
+  async function handleStartStream() {
+    if (!streamTitle.trim()) return;
+    setIsStarting(true);
+    setStartError(null);
+
+    try {
+      if (streamPlatform === 'peertube') {
+        const result = await peertube.startStream({
+          title: streamTitle.trim(),
+          description: streamDescription.trim(),
+          tokenSymbol,
+          minHoldRequirement: tokenGated ? minHold : 0,
+          tokenGated,
+          category: 13, // Tech
+        });
+
+        setShowSetup({
+          rtmpUrl: result.setup.obs.server,
+          streamKey: result.setup.obs.streamKey,
+          embedUrl: result.stream.embedUrl,
+        });
+      } else {
+        await legacyStart({
+          title: streamTitle.trim(),
+          streamType,
+          minHold: tokenGated ? minHold : 0,
+          tokenSymbol,
+        });
+      }
+
+      setShowStartModal(false);
+      setStreamTitle('');
+      setStreamDescription('');
+    } catch (err) {
+      setStartError(err instanceof Error ? err.message : 'Failed to start stream');
+    } finally {
+      setIsStarting(false);
+    }
+  }
+
   // Loading state
   if (peertube.isLoading && legacy.isLoading) {
     return <StreamSkeleton />;
@@ -368,46 +408,6 @@ export default function LiveStreamPlayer({
       )}
     </>
   );
-
-  async function handleStartStream() {
-    if (!streamTitle.trim()) return;
-    setIsStarting(true);
-    setStartError(null);
-
-    try {
-      if (streamPlatform === 'peertube') {
-        const result = await peertube.startStream({
-          title: streamTitle.trim(),
-          description: streamDescription.trim(),
-          tokenSymbol,
-          minHoldRequirement: tokenGated ? minHold : 0,
-          tokenGated,
-          category: 13, // Tech
-        });
-
-        setShowSetup({
-          rtmpUrl: result.setup.obs.server,
-          streamKey: result.setup.obs.streamKey,
-          embedUrl: result.stream.embedUrl,
-        });
-      } else {
-        await legacyStart({
-          title: streamTitle.trim(),
-          streamType,
-          minHold: tokenGated ? minHold : 0,
-          tokenSymbol,
-        });
-      }
-
-      setShowStartModal(false);
-      setStreamTitle('');
-      setStreamDescription('');
-    } catch (err) {
-      setStartError(err instanceof Error ? err.message : 'Failed to start stream');
-    } finally {
-      setIsStarting(false);
-    }
-  }
 }
 
 /* ─── Copy Button ──────────────────────────────────── */
