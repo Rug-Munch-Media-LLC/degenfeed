@@ -47,6 +47,7 @@
     "@degenfeed/utils": "workspace:*",
     "@degenfeed/web3": "workspace:*",
     "@degenfeed/youtube-provider": "workspace:*",
+    "@simplewebauthn/browser": "^11.0.0",
     "dompurify": "^3.2.3",
     "next": "^16.2.10",
     "qrcode.react": "^4.2.0",

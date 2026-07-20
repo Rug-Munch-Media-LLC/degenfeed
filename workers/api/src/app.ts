@@ -424,7 +424,24 @@ import {
 	handleVisualTrending,
 } from "./routes/visual-feed";
 import { handleWalletNonce, handleWalletVerify } from "./routes/wallet";
+import {
+	handleHwWalletChallenge,
+	handleHwWalletStatus,
+	handleHwWalletToggle,
+	handleHwWalletVerify,
+	handleHwWalletVerifyOnLogin,
+} from "./routes/hw-wallet-2fa";
 import { handleX402Paywall, handleX402Verify } from "./routes/x402";
+import totpRoutes from "./routes/totp";
+import {
+	handleWebAuthnAuthenticateBegin,
+	handleWebAuthnAuthenticateComplete,
+	handleWebAuthnDeleteCredential,
+	handleWebAuthnListCredentials,
+	handleWebAuthnRegisterBegin,
+	handleWebAuthnRegisterComplete,
+	handleWebAuthnRenameCredential,
+} from "./routes/webauthn";
 import youtubeRoutes from "./routes/youtube";
 
 // ─── App ────────────────────────────────────────────────────
@@ -990,12 +1007,69 @@ app.all("/api/auth/session/revoke", async (c) => {
 	const { handleSessionRevoke } = await import("./session");
 	return handleSessionRevoke(c.req.raw, c.env);
 });
+
+// ─── API: Session Management (list, revoke specific, revoke all) ──
+app.get("/api/auth/sessions", async (c) => {
+	const { handleListSessions } = await import("./routes/sessions");
+	return handleListSessions(c.req.raw, c.env);
+});
+app.delete("/api/auth/sessions", async (c) => {
+	const { handleRevokeAllSessions } = await import("./routes/sessions");
+	return handleRevokeAllSessions(c.req.raw, c.env);
+});
+app.delete("/api/auth/sessions/:nonce", async (c) => {
+	const { handleRevokeSession } = await import("./routes/sessions");
+	return handleRevokeSession(c.req.raw, c.env, c.req.param("nonce"));
+});
 app.all("/api/auth/wallet/nonce", async (c) =>
 	handleWalletNonce(c.req.raw, c.env),
 );
 app.all("/api/auth/wallet/verify", async (c) =>
 	handleWalletVerify(c.req.raw, c.env),
 );
+
+// ─── API: Hardware Wallet 2FA ──────────────────────────────────
+app.get("/api/auth/hw-wallet/status", async (c) =>
+	handleHwWalletStatus(c.req.raw, c.env),
+);
+app.post("/api/auth/hw-wallet/challenge", async (c) =>
+	handleHwWalletChallenge(c.req.raw, c.env),
+);
+app.post("/api/auth/hw-wallet/verify", async (c) =>
+	handleHwWalletVerify(c.req.raw, c.env),
+);
+app.post("/api/auth/hw-wallet/toggle", async (c) =>
+	handleHwWalletToggle(c.req.raw, c.env),
+);
+app.post("/api/auth/hw-wallet/verify-on-login", async (c) =>
+	handleHwWalletVerifyOnLogin(c.req.raw, c.env),
+);
+
+// ─── API: WebAuthn / Passkeys 2FA ──────────────────────────────
+app.post("/api/auth/webauthn/register/begin", async (c) =>
+	handleWebAuthnRegisterBegin(c.req.raw, c.env),
+);
+app.post("/api/auth/webauthn/register/complete", async (c) =>
+	handleWebAuthnRegisterComplete(c.req.raw, c.env),
+);
+app.post("/api/auth/webauthn/authenticate/begin", async (c) =>
+	handleWebAuthnAuthenticateBegin(c.req.raw, c.env),
+);
+app.post("/api/auth/webauthn/authenticate/complete", async (c) =>
+	handleWebAuthnAuthenticateComplete(c.req.raw, c.env),
+);
+app.get("/api/auth/webauthn/credentials", async (c) =>
+	handleWebAuthnListCredentials(c.req.raw, c.env),
+);
+app.delete("/api/auth/webauthn/credentials/:id", async (c) =>
+	handleWebAuthnDeleteCredential(c.req.raw, c.env, c.req.param("id")),
+);
+app.patch("/api/auth/webauthn/credentials/:id", async (c) =>
+	handleWebAuthnRenameCredential(c.req.raw, c.env, c.req.param("id")),
+);
+
+// ─── API: TOTP 2FA (RFC 6238 — Google Authenticator, Authy) ──
+app.route("/api/auth/totp", totpRoutes);
 
 // ─── API: Email Auth ───────────────────────────────────
 app.all("/api/auth/email/register", async (c) =>
@@ -1084,6 +1158,12 @@ app.delete("/api/follow", async (c) =>
 app.get("/api/follow/list", async (c) => handleFollowList(c.req.raw, c.env));
 app.get("/api/follow/check", async (c) => handleFollowCheck(c.req.raw, c.env));
 app.get("/api/follow/feed", async (c) => handleFollowingFeed(c.req.raw, c.env));
+
+// ─── API: Security Log ───────────────────────────────────────
+app.get("/api/auth/security-log", async (c) => {
+	const { handleSecurityLog } = await import("./routes/sessions");
+	return handleSecurityLog(c.req.raw, c.env);
+});
 
 // ─── API: Account ────────────────────────────────────────────
 app.all("/api/account/export", async (c) =>
