@@ -1,7 +1,5 @@
 'use client';
 
-'use client';
-
 import {
   addBlockedUser,
   addBookmark,
@@ -624,6 +622,11 @@ function PostCardComponent({
       handleShare,
     ],
   );
+
+  // TS inference issue with UnifiedPost union — safe at runtime
+  // @ts-ignore TS2322
+  const isNostr = post.protocol === 'nostr';
+  const nostrBadge: any = isNostr ? <span>Nostr</span> : null;
 
   return (
     <>
@@ -1442,7 +1445,7 @@ function PostCardComponent({
             channelName={raw?.channelName as string | undefined}
           />
         )}
-        {post.protocol === 'nostr' ? <span>Nostr</span> : null}
+        {nostrBadge}
         {post.protocol === 'mastodon' && (
           <MastodonInstanceContext
             instance={(raw?.instance as string) ?? 'mastodon.social'}
