@@ -98,7 +98,7 @@ const PLANS: PlanInfo[] = [
   {
     id: 'standard',
     label: 'Standard',
-    price: '$8',
+    price: '$10',
     description: 'We create everything including on-chain accounts',
     features: [
       'Everything in Free, plus:',
@@ -112,7 +112,7 @@ const PLANS: PlanInfo[] = [
   {
     id: 'complete',
     label: 'Complete',
-    price: '$15',
+    price: '$20',
     description: 'Everything + custom Lens handle + ENS domain',
     features: [
       'Everything in Standard, plus:',
