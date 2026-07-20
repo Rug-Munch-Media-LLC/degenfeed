@@ -273,3 +273,19 @@ export {
   communityMembersKey,
   slugifyCommunity,
 } from './community';
+
+// ─── Identity (folded from @degenfeed/identity) ───────────────────
+export type {
+  HandleResolution,
+  IdentityLink,
+  IdentityResolution,
+  ProtocolHandle,
+  UnifiedProfile,
+} from '@degenfeed/identity';
+export {
+  buildUnifiedProfile,
+  formatCrossProtocolFollowers,
+  mergeIdentities,
+  resolveFediverseHandle,
+  resolveHandle,
+} from '@degenfeed/identity';

@@ -1,6 +1,6 @@
 'use client';
 
-import { TIP_CHAIN_CONFIG } from '@degenfeed/tip-contract';
+import { TIP_CHAIN_CONFIG } from '@degenfeed/web3';
 import { tipOnChain } from '@degenfeed/web3';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useRef, useState } from 'react';

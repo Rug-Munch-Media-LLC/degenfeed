@@ -158,8 +158,9 @@ function ToastViewport() {
   if (toasts.length === 0) return null;
   return (
     <section
-      className="pointer-events-none fixed inset-x-0 bottom-4 z-[100] flex flex-col items-center gap-2 px-4 sm:bottom-auto sm:right-4 sm:left-auto sm:top-20 sm:items-end"
+      className="pointer-events-none fixed inset-x-0 bottom-4 z-[100] flex flex-col items-center gap-2 px-4 sm:bottom-auto sm:right-4 sm:left-auto sm:top-[5.5rem] sm:items-end"
       aria-label="Notifications"
+      style={{ filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.2))' }}
     >
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onDismiss={dismiss} />

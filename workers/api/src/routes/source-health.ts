@@ -22,7 +22,7 @@ import {
   type SourceHealth,
   type SourceLifecycle,
   type TrendingSource,
-} from '@degenfeed/source-discovery';
+} from '@degenfeed/feed-providers';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
 

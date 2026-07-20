@@ -24,24 +24,21 @@ const VisualFeedLayout = dynamic(
 
 function VisualFeedSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 lg:px-8 animate-page-enter" role="status" aria-label="Loading visual feed">
+      <div className="sr-only">Loading visual feed...</div>
       {/* Header skeleton */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="h-10 w-10 animate-pulse rounded-xl" style={{ backgroundColor: 'var(--color-muted)', opacity: 0.3 }} />
+          <div className="skeleton-avatar h-10 w-10 rounded-xl" />
           <div className="space-y-1.5">
-            <div className="h-5 w-32 animate-pulse rounded" style={{ backgroundColor: 'var(--color-muted)', opacity: 0.3 }} />
-            <div className="h-3 w-48 animate-pulse rounded" style={{ backgroundColor: 'var(--color-muted)', opacity: 0.2 }} />
+            <div className="skeleton-title h-5 w-32" />
+            <div className="skeleton-text h-3 w-48" />
           </div>
         </div>
         {/* Filter pills skeleton */}
         <div className="flex gap-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className="h-8 w-20 animate-pulse rounded-full"
-              style={{ backgroundColor: 'var(--color-muted)', opacity: 0.25 }}
-            />
+            <div key={i} className="skeleton-text h-8 w-20 rounded-full" />
           ))}
         </div>
       </div>
@@ -53,10 +50,8 @@ function VisualFeedSkeleton() {
           return (
             <div
               key={i}
-              className="mb-4 animate-pulse rounded-xl"
+              className="skeleton-card mb-4"
               style={{
-                backgroundColor: 'var(--color-muted)',
-                opacity: 0.15,
                 height: `${heights[i % heights.length]}px`,
                 breakInside: 'avoid',
               }}

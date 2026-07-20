@@ -1,6 +1,6 @@
 'use client';
 
-import { CHANNELS, useRealtime } from '@degenfeed/realtime';
+import { CHANNELS, useRealtime } from '@degenfeed/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../components/AuthProvider';
 import { useAnnouncer } from '../components/ScreenReaderAnnouncer';

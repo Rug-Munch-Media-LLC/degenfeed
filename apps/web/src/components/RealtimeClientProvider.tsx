@@ -1,6 +1,6 @@
 'use client';
 
-import { WebSocketProvider } from '@degenfeed/realtime';
+import { WebSocketProvider } from '@degenfeed/ui';
 import { useAuth } from './AuthProvider';
 
 export function RealtimeClientProvider({ children }: { children: React.ReactNode }) {

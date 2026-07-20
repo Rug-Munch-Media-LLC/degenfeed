@@ -359,12 +359,32 @@ export async function scheduled(
 ): Promise<void> {
   const cron = controller.cron;
 
-  // ── Every minute: scheduled post executor ──────────────────────────
+  // ── Every minute: scheduled post executor + sync queue processing ──
   if (cron === '* * * * *') {
+    // Execute scheduled posts
     const { executeScheduledPosts } = await import('./routes/scheduled-executor');
     await executeScheduledPosts(env).catch((err) =>
       log('warn', '[scheduled] scheduled post executor failed', err),
     );
+
+    // Process realtime sync queue (every 30s effectively, since cron fires every min)
+    try {
+      const { processQueue } = await import('./lib/sync-queue');
+      const { processSyncAction } = await import('./lib/realtime-sync');
+      const result = await processQueue(env, processSyncAction, 25);
+      if (result.processed > 0) {
+        log('info', `[scheduled] sync queue processed: ${result.succeeded} succeeded, ${result.failed} failed`);
+      }
+
+      // Retry dead letters
+      const retried = await retrySyncDeadLetters(env);
+      if (retried > 0) {
+        log('info', `[scheduled] retried ${retried} dead letter sync entries`);
+      }
+    } catch (err) {
+      log('error', '[scheduled] sync queue processing failed', err);
+    }
+
     return; // No other work on the every-minute tick
   }
 
@@ -426,5 +446,16 @@ export async function scheduled(
 
     // Record KV last-run timestamp
     await env.CACHE?.put('discovered:sources:discovery:last-run', String(Date.now()));
+  }
+}
+
+// ─── Helper: retry sync dead letters ─────────────────────────────────────
+
+async function retrySyncDeadLetters(env: Env): Promise<number> {
+  try {
+    const { retryDeadLetters } = await import('./lib/sync-queue');
+    return retryDeadLetters(env, 50);
+  } catch {
+    return 0;
   }
 }

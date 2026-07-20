@@ -78,3 +78,28 @@ export {
   withRetry,
   withTimeout,
 } from './utils';
+
+// ─── Source Discovery (folded from @degenfeed/source-discovery) ───
+export type {
+  DiscoveryResult,
+  DiscoverySource,
+  DiscoveredChannel,
+  SourceQuality,
+} from '@degenfeed/source-discovery';
+export {
+  discoverBlueskySources,
+  discoverLemmySources,
+  discoverNewsletterSources,
+  discoverPeerTubeSources,
+  discoverRedditSources,
+  discoverRssSources,
+  discoverSources,
+  discoverYouTubeSources,
+  filterStaleSources,
+  getSourceHealth,
+  getStaleSources,
+  getTrendingSources,
+  getWeeklyNewSources,
+  scoreSource,
+  SOURCE_DISCOVERY_CACHE_TTL,
+} from '@degenfeed/source-discovery';

@@ -25,3 +25,15 @@ export {
 export { forgetIdentity, lockIdentity, refreshSessionIfNeeded, unlockIdentity } from './session';
 export type { TokenPayload } from './token';
 export { verifyToken } from './token';
+
+// ─── Identity Hub (folded from @degenfeed/identity-hub) ───────────
+export type {
+  AutoCreateResult,
+  IdentityHubConfig,
+  PremiumStatus,
+  ProtocolCredentials,
+  ProtocolIdentity,
+  ResolvedIdentity,
+  ResolvedProtocolInfo,
+} from '@degenfeed/identity-hub';
+export { createIdentityHub, IdentityHub } from '@degenfeed/identity-hub';

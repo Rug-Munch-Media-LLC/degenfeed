@@ -1898,6 +1898,41 @@ app.post('/v1/feed/cache/invalidate', async (c) =>
   withSession(c, () => handleFeedCacheInvalidate(c.req.raw, c.env)),
 );
 
+// ═══════════════════════════════════════════════════════════════
+// REALTIME CROSS-PROTOCOL SYNC
+// ═══════════════════════════════════════════════════════════════
+
+import {
+  handleRealtimeWebSocket,
+  handleWebhookReceiver,
+  handleProcessSyncQueue,
+  handleSyncStatus,
+} from './routes/realtime';
+
+// WebSocket upgrade handler for real-time client connections
+// wss://api.degenfeed.xyz/ws/realtime?topics=posts,likes,tips,coins,streams,replies
+app.get('/ws/realtime', async (c) => {
+  const wsResp = handleRealtimeWebSocket(c.req.raw, c.env);
+  if (wsResp) return wsResp;
+  return jsonResponse({ error: 'WebSocket upgrade failed' }, 400);
+});
+
+// Webhook receivers for protocol event callbacks
+app.post('/api/webhook/realtime/:protocol', async (c) =>
+  handleWebhookReceiver(c.req.raw, c.env),
+);
+
+// Sync queue management
+app.post('/api/sync/process', async (c) => handleProcessSyncQueue(c.req.raw, c.env));
+app.get('/api/sync/status', async (c) => handleSyncStatus(c.req.raw, c.env));
+
+// V1 realtime endpoints
+app.post('/v1/sync/process', async (c) => handleProcessSyncQueue(c.req.raw, c.env));
+app.get('/v1/sync/status', async (c) => handleSyncStatus(c.req.raw, c.env));
+app.post('/v1/webhook/realtime/:protocol', async (c) =>
+  handleWebhookReceiver(c.req.raw, c.env),
+);
+
 // ─── Catch-all: return API info ─────────────────────────────
 app.all('*', (c) => {
   if (c.req.path.startsWith('/v1/')) {

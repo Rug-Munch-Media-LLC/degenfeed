@@ -13,6 +13,28 @@
 import type { Env } from '../index';
 import { IdentityHub } from '@degenfeed/identity-hub';
 import type { Protocol } from '@degenfeed/types';
+import { withReliability, recordBridgeOperation } from './bridge-reliability';
+
+// ─── Reliability Helper ────────────────────────────────────────────────────
+
+/**
+ * Execute a stream announcement with reliability (retry + circuit breaker).
+ */
+async function reliableAnnounce<T>(
+  protocol: string,
+  operation: () => Promise<T>,
+  env: Env,
+): Promise<T> {
+  const start = performance.now();
+  try {
+    const result = await withReliability(protocol, operation, { env });
+    await recordBridgeOperation(env, protocol, true, Math.round(performance.now() - start));
+    return result;
+  } catch (err) {
+    await recordBridgeOperation(env, protocol, false, Math.round(performance.now() - start), String(err));
+    throw err;
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -182,7 +204,63 @@ export async function announceStreamToAllProtocols(
     }),
   );
 
+  // ── Fire real-time sync events for stream announcements ──────────
+  fireStreamSyncEvents(stream, results, env).catch((err) =>
+    console.error('[stream-announcer] realtime sync event failed:', err),
+  );
+
   return results;
+}
+
+/**
+ * Fire real-time sync events for a stream announcement.
+ * Propagates the stream status to all linked protocols.
+ */
+async function fireStreamSyncEvents(
+  stream: StreamAnnouncement,
+  results: AnnouncementResults,
+  env: Env,
+): Promise<void> {
+  try {
+    const { createEvent, onEvent } = await import('./realtime-sync');
+
+    // For each successful announcement, create a sync event
+    for (const [protocol, result] of Object.entries(results)) {
+      if (!result.ok) continue;
+
+      const proto = normalizeProtocolForACL(protocol);
+      const eventType = stream.streamType === 'live' ? 'stream_started' : ('stream_started' as const);
+
+      const event = createEvent(
+        proto as Protocol,
+        'stream',
+        result.id ?? stream.streamId,
+        {
+          id: stream.creator,
+          handle: stream.creatorHandle,
+        },
+        {
+          text: `${stream.title}`,
+          subjectId: stream.streamId,
+          streamTitle: stream.title,
+          streamUrl: stream.streamUrl,
+          raw: { streamType: stream.streamType, thumbnail: stream.thumbnail },
+        },
+      );
+
+      onEvent(proto as Protocol, event, env).catch((e) =>
+        console.error(`[stream-announcer] sync event failed for ${protocol}:`, e),
+      );
+    }
+  } catch (e) {
+    console.error('[stream-announcer] fireStreamSyncEvents error:', e);
+  }
+}
+
+function normalizeProtocolForACL(p: string): string {
+  if (p === 'activitypub' || p === 'mastodon') return 'mastodon';
+  if (p === 'atproto' || p === 'bluesky') return 'bluesky';
+  return p;
 }
 
 // ─── Identity Resolution ──────────────────────────────────────────────────
@@ -404,10 +482,13 @@ async function announceToActivityPub(
   }
 
   try {
-    const client = new GtSClient(instanceUrl, accessToken);
-    const result = await client.publish(announcement.activityPub, {
-      visibility: 'public',
-    });
+    const result = await reliableAnnounce('activitypub', async () => {
+      const client = new GtSClient(instanceUrl, accessToken);
+      const publishResult = await client.publish(announcement.activityPub, {
+        visibility: 'public',
+      });
+      return publishResult;
+    }, env);
 
     return {
       ok: true,
@@ -450,28 +531,31 @@ async function announceToNostr(
   }
 
   try {
-    const pubkey = nostr.getPublicKey(nsec);
+    const signedEvent = await reliableAnnounce('nostr', async () => {
+      const pubkey = nostr.getPublicKey(nsec);
 
-    // Build Kind 30311 live event — per NIP-93 (formerly NIP-53 live streaming)
-    const unsigned = {
-      pubkey,
-      created_at: Math.floor(Date.now() / 1000),
-      kind: announcement.nostr.kind,
-      tags: announcement.nostr.tags,
-      content: announcement.nostr.content,
-    };
+      // Build Kind 30311 live event — per NIP-93 (formerly NIP-53 live streaming)
+      const unsigned = {
+        pubkey,
+        created_at: Math.floor(Date.now() / 1000),
+        kind: announcement.nostr.kind,
+        tags: announcement.nostr.tags,
+        content: announcement.nostr.content,
+      };
 
-    const signedEvent = nostr.signEvent(unsigned, nsec);
+      const signed = nostr.signEvent(unsigned, nsec);
 
-    // Publish to the configured relay pool
-    const relayUrls = (env.RELAY_URLS || 'wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net')
-      .split(',')
-      .map((u) => u.trim())
-      .filter(Boolean);
+      // Publish to the configured relay pool
+      const relayUrls = (env.RELAY_URLS || 'wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net')
+        .split(',')
+        .map((u) => u.trim())
+        .filter(Boolean);
 
-    const pool = new nostr.RelayPool(relayUrls, { eoseTimeout: 3000 });
-    await pool.publish(signedEvent);
-    pool.disconnectAll();
+      const pool = new nostr.RelayPool(relayUrls, { eoseTimeout: 3000 });
+      await pool.publish(signed);
+      pool.disconnectAll();
+      return signed;
+    }, env);
 
     return {
       ok: true,
@@ -524,21 +608,23 @@ async function announceToAtProtocol(
   }
 
   try {
-    const client = new PdsClient(pdsUrl);
-    // Set auth directly for pre-authenticated calls
-    (client as unknown as { accessJwt: string }).accessJwt = accessJwt;
-    (client as unknown as { did: string }).did = did;
+    const result = await reliableAnnounce('atproto', async () => {
+      const client = new PdsClient(pdsUrl);
+      // Set auth directly for pre-authenticated calls
+      (client as unknown as { accessJwt: string }).accessJwt = accessJwt;
+      (client as unknown as { did: string }).did = did;
 
-    const { text, embed } = announcement.atProtocol;
+      const { text, embed } = announcement.atProtocol;
 
-    const result = await client.createPost({
-      text,
-      embed: embed as {
-        $type: 'app.bsky.embed.external';
-        external: { uri: string; title: string; description: string };
-      },
-      langs: ['en'],
-    });
+      return client.createPost({
+        text,
+        embed: embed as {
+          $type: 'app.bsky.embed.external';
+          external: { uri: string; title: string; description: string };
+        },
+        langs: ['en'],
+      });
+    }, env);
 
     return {
       ok: true,
@@ -590,28 +676,26 @@ async function announceToFarcaster(
   }
 
   try {
-    // Build and sign the cast
-    const signed = buildFarcasterCastMessage({
-      signerKeyHex,
-      fid,
-      text: announcement.farcaster,
-    });
+    const castHash = await reliableAnnounce('farcaster', async () => {
+      // Build and sign the cast
+      const signed = buildFarcasterCastMessage({
+        signerKeyHex,
+        fid,
+        text: announcement.farcaster,
+      });
 
-    if (!signed.ok || !signed.messageHex) {
-      return {
-        ok: false,
-        protocol: 'farcaster',
-        error: signed.error ?? 'Failed to build Farcaster cast message',
-      };
-    }
+      if (!signed.ok || !signed.messageHex) {
+        throw new Error(signed.error ?? 'Failed to build Farcaster cast message');
+      }
 
-    // Submit to Hub
-    const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
-    const client = new HubClient(hubUrl);
-    await client.submitMessage(signed.messageHex);
+      // Submit to Hub
+      const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+      const client = new HubClient(hubUrl);
+      await client.submitMessage(signed.messageHex);
 
-    // Extract hash from the signed message for the cast ID
-    const castHash = signed.messageHex.slice(0, 40);
+      // Extract hash from the signed message for the cast ID
+      return signed.messageHex.slice(0, 40);
+    }, env);
 
     return {
       ok: true,

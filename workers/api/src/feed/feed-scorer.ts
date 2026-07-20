@@ -27,7 +27,7 @@ import {
   scoreBreakdownV2,
   type TrendingTopic,
   type UserAlgorithmPreferences,
-} from '@degenfeed/ranking';
+} from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { type Env, log } from '../index';
 import type { StoredUserPreferences } from './feed-cache';

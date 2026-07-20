@@ -142,6 +142,7 @@ export default function LiveStreamPlayer({
         tokenSymbol={tokenSymbol}
         isCreator={isCreator}
         isPeerTube={peertube.isLive}
+        isMobileScreen={isMobileScreen}
         onEndStream={peertube.isLive ? peertube.endStream : legacyEnd}
         chatMessages={chatMessages}
         onSendChat={peertube.sendChat}
@@ -350,8 +351,9 @@ export default function LiveStreamPlayer({
                 {isStarting ? 'Starting...' : `Go Live ${streamPlatform === 'peertube' ? '🌐' : '🚀'}`}
               </button>
             </div>
-          </div> {/* Close mobile padding wrapper */}
-        </div> {/* Close modal container */}
+          </div>
+        </div>
+      </div>
       )}
 
       {/* OBS Setup Card */}
@@ -438,6 +440,7 @@ function LiveStreamView({
   tokenSymbol,
   isCreator,
   isPeerTube,
+  isMobileScreen,
   onEndStream,
   chatMessages,
   onSendChat,
@@ -459,6 +462,7 @@ function LiveStreamView({
   tokenSymbol?: string;
   isCreator: boolean;
   isPeerTube: boolean;
+  isMobileScreen: boolean;
   onEndStream: () => Promise<void>;
   chatMessages: Array<{
     id: string;

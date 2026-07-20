@@ -19,6 +19,36 @@ import type { Env } from '../index';
 import type { BlobRef } from '@degenfeed/bluesky-sdk';
 import type { MediaAttachment } from './format-translator';
 import { formatForActivityPub, formatForTelegram } from './format-translator';
+import { createEvent } from './realtime-sync';
+import { withReliability, recordBridgeOperation } from './bridge-reliability';
+
+// ─── Reliability Helper ────────────────────────────────────────────────────
+
+/**
+ * Execute a protocol publish operation with reliability (retry + circuit breaker).
+ * Records outcome for stats and alerting.
+ */
+async function reliablePublish<T>(
+  protocol: string,
+  operation: () => Promise<T>,
+  env: Env,
+): Promise<T> {
+  const start = performance.now();
+  try {
+    const result = await withReliability(protocol, operation, { env });
+    await recordBridgeOperation(env, protocol, true, Math.round(performance.now() - start));
+    return result;
+  } catch (err) {
+    await recordBridgeOperation(
+      env,
+      protocol,
+      false,
+      Math.round(performance.now() - start),
+      err instanceof Error ? err.message : String(err),
+    );
+    throw err;
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -94,6 +124,11 @@ export async function orchestratePublish(
   const successCount = Object.values(results).filter((r) => r.ok).length;
   const failureCount = Object.values(results).filter((r) => !r.ok).length;
 
+  // ── Fire real-time sync events for successful publishes ────────────
+  fireSyncEvents(input, results, env).catch((err) =>
+    console.error('[orchestrator] realtime sync event failed:', err),
+  );
+
   return {
     results,
     startedAt,
@@ -101,6 +136,56 @@ export async function orchestratePublish(
     successCount,
     failureCount,
   };
+}
+
+/**
+ * Fire real-time sync events for all successfully published protocols.
+ * This ensures that cross-protocol siblings are aware of the new content
+ * within seconds, not minutes.
+ */
+async function fireSyncEvents(
+  input: PublishInput,
+  results: Record<string, PublishResult>,
+  env: Env,
+): Promise<void> {
+  // For each successful target, enqueue a sync event
+  for (const [protocol, result] of Object.entries(results)) {
+    if (!result.ok || !result.nativeId) continue;
+
+    try {
+      const { onEvent } = await import('./realtime-sync');
+
+      const event = createEvent(
+        protocol as Protocol,
+        'post',
+        result.nativeId,
+        {
+          id: result.nativeId,
+          handle: input.auth?.[`${protocol}_handle`],
+        },
+        {
+          text: input.text,
+          title: input.title,
+          subjectId: result.nativeId,
+          subjectUri: result.nativeUri,
+          raw: {
+            images: input.images,
+            links: input.links,
+            hashtags: input.hashtags,
+            parentNativeId: input.parentNativeId,
+            parentProtocol: input.parentProtocol,
+          },
+        },
+      );
+
+      // Fire-and-forget: sync to siblings in background
+      onEvent(protocol as Protocol, event, env).catch((e) =>
+        console.error(`[orchestrator] sync event failed for ${protocol}:`, e),
+      );
+    } catch (e) {
+      console.error(`[orchestrator] fireSyncEvents error for ${protocol}:`, e);
+    }
+  }
 }
 
 // ─── Protocol Router ──────────────────────────────────────────────────────
@@ -159,49 +244,53 @@ async function publishToActivityPub(
   }
 
   try {
-    const client = new GtSClient(instance, accessToken);
-    const formatted = formatForActivityPub({
-      text: input.text,
-      images: input.images,
-      links: input.links,
-      hashtags: input.hashtags,
-    });
+    const result = await reliablePublish('activitypub', async () => {
+      const client = new GtSClient(instance, accessToken);
+      const formatted = formatForActivityPub({
+        text: input.text,
+        images: input.images,
+        links: input.links,
+        hashtags: input.hashtags,
+      });
 
-    // Upload media attachments first (if any)
-    const mediaIds: string[] = [];
-    if (input.images && input.images.length > 0) {
-      for (const img of input.images) {
-        try {
-          const uploadUrl = `${instance}/api/v2/media`;
-          const formData = new FormData();
-          // Fetch the image and re-post it
-          const imgRes = await fetch(img.url);
-          if (imgRes.ok) {
-            const blob = await imgRes.blob();
-            formData.append('file', blob, 'media.jpg');
-            formData.append('description', img.alt ?? '');
-            const uploadRes = await fetch(uploadUrl, {
-              method: 'POST',
-              headers: {
-                authorization: `Bearer ${accessToken}`,
-              },
-              body: formData,
-            });
-            if (uploadRes.ok) {
-              const uploadData = (await uploadRes.json()) as { id: string };
-              mediaIds.push(uploadData.id);
+      // Upload media attachments first (if any)
+      const mediaIds: string[] = [];
+      if (input.images && input.images.length > 0) {
+        for (const img of input.images) {
+          try {
+            const uploadUrl = `${instance}/api/v2/media`;
+            const formData = new FormData();
+            // Fetch the image and re-post it
+            const imgRes = await fetch(img.url);
+            if (imgRes.ok) {
+              const blob = await imgRes.blob();
+              formData.append('file', blob, 'media.jpg');
+              formData.append('description', img.alt ?? '');
+              const uploadRes = await fetch(uploadUrl, {
+                method: 'POST',
+                headers: {
+                  authorization: `Bearer ${accessToken}`,
+                },
+                body: formData,
+              });
+              if (uploadRes.ok) {
+                const uploadData = (await uploadRes.json()) as { id: string };
+                mediaIds.push(uploadData.id);
+              }
             }
+          } catch (e) {
+            console.error('[orchestrator] Mastodon media upload failed:', e);
           }
-        } catch (e) {
-          console.error('[orchestrator] Mastodon media upload failed:', e);
         }
       }
-    }
 
-    const result = await client.publish(formatted.status, {
-      visibility: 'public',
-      mediaIds: mediaIds.length > 0 ? mediaIds : undefined,
-    });
+      const publishResult = await client.publish(formatted.status, {
+        visibility: 'public',
+        mediaIds: mediaIds.length > 0 ? mediaIds : undefined,
+      });
+
+      return publishResult;
+    }, env);
 
     return {
       ok: true,
@@ -237,84 +326,86 @@ async function publishToAtProtocol(
   }
 
   try {
-    const pdsUrl = env.BSKY_SOCIAL_URL || 'https://bsky.social';
-    const client = new PdsClient(pdsUrl);
-    // Set auth and DID directly — these are private fields but we set them
-    // for pre-authenticated calls (the PdsClient normally sets these via createSession)
-    (client as unknown as { accessJwt: string }).accessJwt = accessJwt;
-    (client as unknown as { did: string }).did = repoDid;
+    const result = await reliablePublish('bluesky', async () => {
+      const pdsUrl = env.BSKY_SOCIAL_URL || 'https://bsky.social';
+      const client = new PdsClient(pdsUrl);
+      // Set auth and DID directly — these are private fields but we set them
+      // for pre-authenticated calls (the PdsClient normally sets these via createSession)
+      (client as unknown as { accessJwt: string }).accessJwt = accessJwt;
+      (client as unknown as { did: string }).did = repoDid;
 
-    // Upload images if present (Bluesky supports up to 4)
-    let uploadedImages:
-      | Array<{ image: { $type: string; ref: { $link: string }; mimeType: string; size: number }; alt: string }>
-      | undefined;
+      // Upload images if present (Bluesky supports up to 4)
+      let uploadedImages:
+        | Array<{ image: { $type: string; ref: { $link: string }; mimeType: string; size: number }; alt: string }>
+        | undefined;
 
-    if (input.images && input.images.length > 0) {
-      const uploads = await Promise.all(
-        input.images.slice(0, 4).map(async (img) => {
-          try {
-            const imgRes = await fetch(img.url);
-            if (!imgRes.ok) return null;
-            const buf = await imgRes.arrayBuffer();
-            const blob = new Uint8Array(buf);
-            const uploaded = await client.uploadBlob(blob, {
-              encoding: img.mimeType ?? 'image/jpeg',
-            });
-            return {
-              image: uploaded.blob,
-              alt: img.alt ?? '',
-            };
-          } catch {
-            return null;
-          }
-        }),
+      if (input.images && input.images.length > 0) {
+        const uploads = await Promise.all(
+          input.images.slice(0, 4).map(async (img) => {
+            try {
+              const imgRes = await fetch(img.url);
+              if (!imgRes.ok) return null;
+              const buf = await imgRes.arrayBuffer();
+              const blob = new Uint8Array(buf);
+              const uploaded = await client.uploadBlob(blob, {
+                encoding: img.mimeType ?? 'image/jpeg',
+              });
+              return {
+                image: uploaded.blob,
+                alt: img.alt ?? '',
+              };
+            } catch {
+              return null;
+            }
+          }),
+        );
+
+        const validUploads = uploads.filter(Boolean) as Array<{
+          image: BlobRef;
+          alt: string;
+        }>;
+        if (validUploads.length > 0) {
+          uploadedImages = validUploads;
+        }
+      }
+
+      // Build the AT Protocol record with facets
+      const formatted = await formatForAtProtocol(
+        {
+          text: input.text,
+          images: input.images,
+          links: input.links,
+          mentions: input.hashtags,
+          hashtags: input.hashtags,
+          parentNativeId: input.parentNativeId,
+          parentProtocol: input.parentProtocol,
+        },
+        pdsUrl,
       );
 
-      const validUploads = uploads.filter(Boolean) as Array<{
-        image: BlobRef;
-        alt: string;
-      }>;
-      if (validUploads.length > 0) {
-        uploadedImages = validUploads;
-      }
-    }
-
-    // Build the AT Protocol record with facets
-    const formatted = await formatForAtProtocol(
-      {
-        text: input.text,
-        images: input.images,
-        links: input.links,
-        mentions: input.hashtags,
-        hashtags: input.hashtags,
-        parentNativeId: input.parentNativeId,
-        parentProtocol: input.parentProtocol,
-      },
-      pdsUrl,
-    );
-
-    const embedInput = uploadedImages
-      ? {
-          $type: 'app.bsky.embed.images' as const,
-          images: uploadedImages,
-        }
-      : formatted.embed
+      const embedInput = uploadedImages
         ? {
             $type: 'app.bsky.embed.images' as const,
-            images: (formatted.embed as { images?: Array<{ image: BlobRef; alt: string }> }).images?.map((img) => ({
-              image: img.image,
-              alt: img.alt,
-            })) ?? [],
+            images: uploadedImages,
           }
-        : undefined;
+        : formatted.embed
+          ? {
+              $type: 'app.bsky.embed.images' as const,
+              images: (formatted.embed as { images?: Array<{ image: BlobRef; alt: string }> }).images?.map((img) => ({
+                image: img.image,
+                alt: img.alt,
+              })) ?? [],
+            }
+          : undefined;
 
-    const result = await client.createPost({
-      text: formatted.text,
-      facets: formatted.facets,
-      embed: embedInput,
-      langs: ['en'],
-      createdAt: new Date().toISOString(),
-    });
+      return client.createPost({
+        text: formatted.text,
+        facets: formatted.facets,
+        embed: embedInput,
+        langs: ['en'],
+        createdAt: new Date().toISOString(),
+      });
+    }, env);
 
     return {
       ok: true,
@@ -348,47 +439,50 @@ async function publishToNostr(
   }
 
   try {
-    const pubkey = nostr.getPublicKey(nsec);
-    const formatted = formatForNostr(
-      {
-        text: input.text,
-        title: input.title,
-        images: input.images,
-        links: input.links,
-        hashtags: input.hashtags,
-        mentions: input.hashtags,
-        parentNativeId: input.parentNativeId,
-        parentProtocol: input.parentProtocol,
-      },
-      pubkey,
-    );
+    const signedEvent = await reliablePublish('nostr', async () => {
+      const pubkey = nostr.getPublicKey(nsec);
+      const formatted = formatForNostr(
+        {
+          text: input.text,
+          title: input.title,
+          images: input.images,
+          links: input.links,
+          hashtags: input.hashtags,
+          mentions: input.hashtags,
+          parentNativeId: input.parentNativeId,
+          parentProtocol: input.parentProtocol,
+        },
+        pubkey,
+      );
 
-    // Build the relay pool
-    const relayUrls = (env.RELAY_URLS || 'wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net')
-      .split(',')
-      .map((u) => u.trim())
-      .filter(Boolean);
+      // Build the relay pool
+      const relayUrls = (env.RELAY_URLS || 'wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net')
+        .split(',')
+        .map((u) => u.trim())
+        .filter(Boolean);
 
-    const pool = new nostr.RelayPool(relayUrls, { eoseTimeout: 5000 });
+      const pool = new nostr.RelayPool(relayUrls, { eoseTimeout: 5000 });
 
-    // Create and sign the event
-    const unsigned = {
-      pubkey,
-      created_at: formatted.created_at,
-      kind: formatted.kind,
-      tags: formatted.tags,
-      content: formatted.content,
-    } satisfies {
-      pubkey: string;
-      created_at: number;
-      kind: number;
-      tags: string[][];
-      content: string;
-    };
+      // Create and sign the event
+      const unsigned = {
+        pubkey,
+        created_at: formatted.created_at,
+        kind: formatted.kind,
+        tags: formatted.tags,
+        content: formatted.content,
+      } satisfies {
+        pubkey: string;
+        created_at: number;
+        kind: number;
+        tags: string[][];
+        content: string;
+      };
 
-    const signedEvent = nostr.signEvent(unsigned, nsec);
-    await pool.publish(signedEvent);
-    pool.disconnectAll();
+      const signed = nostr.signEvent(unsigned, nsec);
+      await pool.publish(signed);
+      pool.disconnectAll();
+      return signed;
+    }, env);
 
     return {
       ok: true,
@@ -417,7 +511,7 @@ async function publishToFarcaster(
   // or a signer key + fid for server-side signing
   if (signedMessage) {
     // Pre-signed message path — submit directly to Hub
-    try {
+    return reliablePublish('farcaster', async () => {
       const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
       const client = new HubClient(hubUrl);
 
@@ -433,12 +527,7 @@ async function publishToFarcaster(
 
       await client.submitMessage(messageBody);
       return { ok: true, nativeId: hex.slice(0, 40) };
-    } catch (err) {
-      return {
-        ok: false,
-        error: `Farcaster Hub rejected pre-signed message: ${err instanceof Error ? err.message : String(err)}`,
-      };
-    }
+    }, env);
   }
 
   // Server-side signing path (requires signer key + fid)
@@ -455,50 +544,52 @@ async function publishToFarcaster(
   }
 
   try {
-    const { buildFarcasterCastMessage } = await import('@degenfeed/farcaster-sdk');
-    const fid = parseInt(fidStr, 10);
-    if (Number.isNaN(fid) || fid <= 0) {
-      return { ok: false, error: 'Invalid Farcaster FID' };
-    }
-
-    const formatted = formatForFarcaster({
-      text: input.text,
-      images: input.images,
-      links: input.links,
-      parentNativeId: input.parentNativeId,
-      parentProtocol: input.parentProtocol,
-    });
-
-    // Append embed URLs to the text so they render as links
-    let castText = formatted.text;
-    for (const embed of formatted.embeds) {
-      if (!castText.includes(embed.url)) {
-        castText += `\n${embed.url}`;
+    return reliablePublish('farcaster', async () => {
+      const { buildFarcasterCastMessage } = await import('@degenfeed/farcaster-sdk');
+      const fid = parseInt(fidStr, 10);
+      if (Number.isNaN(fid) || fid <= 0) {
+        return { ok: false, error: 'Invalid Farcaster FID' };
       }
-    }
-    castText = castText.slice(0, 320);
 
-    // Build and sign the cast (BuildCastMessageOpts does not support embeds natively)
-    const signed = buildFarcasterCastMessage({
-      signerKeyHex: signerKey,
-      fid,
-      text: castText,
-      parentFid: input.parentNativeId ? parseInt(input.parentNativeId, 10) : undefined,
-      parentHashHex: input.parentNativeId,
-    });
+      const formatted = formatForFarcaster({
+        text: input.text,
+        images: input.images,
+        links: input.links,
+        parentNativeId: input.parentNativeId,
+        parentProtocol: input.parentProtocol,
+      });
 
-    if (!signed.ok || !signed.messageHex) {
-      return { ok: false, error: signed.error ?? 'Failed to build Farcaster cast message' };
-    }
+      // Append embed URLs to the text so they render as links
+      let castText = formatted.text;
+      for (const embed of formatted.embeds) {
+        if (!castText.includes(embed.url)) {
+          castText += `\n${embed.url}`;
+        }
+      }
+      castText = castText.slice(0, 320);
 
-    // Submit to Hub
-    const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
-    const client = new HubClient(hubUrl);
-    await client.submitMessage(signed.messageHex);
+      // Build and sign the cast (BuildCastMessageOpts does not support embeds natively)
+      const signed = buildFarcasterCastMessage({
+        signerKeyHex: signerKey,
+        fid,
+        text: castText,
+        parentFid: input.parentNativeId ? parseInt(input.parentNativeId, 10) : undefined,
+        parentHashHex: input.parentNativeId,
+      });
 
-    // Create a fake nativeId from hash
-    const fakeHash = signed.messageHex.slice(0, 40);
-    return { ok: true, nativeId: fakeHash };
+      if (!signed.ok || !signed.messageHex) {
+        return { ok: false, error: signed.error ?? 'Failed to build Farcaster cast message' };
+      }
+
+      // Submit to Hub
+      const hubUrl = env.FARCASTER_HUB_URL || 'https://hub.farcaster.standardcrypto.vc:2281';
+      const client = new HubClient(hubUrl);
+      await client.submitMessage(signed.messageHex);
+
+      // Create a fake nativeId from hash
+      const fakeHash = signed.messageHex.slice(0, 40);
+      return { ok: true, nativeId: fakeHash };
+    }, env);
   } catch (err) {
     return {
       ok: false,
@@ -523,7 +614,7 @@ async function publishToLens(
   // The client must create a post via the Lens API, sign the typed data,
   // then pass typedDataId + signature to this endpoint for broadcast.
   if (typedDataId && signature) {
-    try {
+    return reliablePublish('lens', async () => {
       const lensApi = env.LENS_API_URL || 'https://api-v2.lens.dev/graphql';
 
       const broadcastRes = await fetch(lensApi, {
@@ -555,19 +646,14 @@ async function publishToLens(
         nativeId: (result?.txHash as string) ?? undefined,
         error: (result?.reason as string) ?? undefined,
       };
-    } catch (err) {
-      return {
-        ok: false,
-        error: `Lens broadcast failed: ${err instanceof Error ? err.message : String(err)}`,
-      };
-    }
+    }, env);
   }
 
   // If we have a Lens API access token, we can try to create a post
   // via the Lens API without client-side signing (if the API supports it)
   const accessToken = auth.lens_token || auth.lens_accessToken;
   if (accessToken) {
-    try {
+    return reliablePublish('lens', async () => {
       const client = new LensClient(env.LENS_API_URL ?? undefined);
       client.setAuth(accessToken);
 
@@ -606,12 +692,7 @@ async function publishToLens(
         nativeId: (result?.txHash as string) ?? undefined,
         error: (result?.reason as string) ?? undefined,
       };
-    } catch (err) {
-      return {
-        ok: false,
-        error: `Lens publish failed: ${err instanceof Error ? err.message : String(err)}`,
-      };
-    }
+    }, env);
   }
 
   return {
@@ -642,40 +723,42 @@ async function publishToTelegram(
   }
 
   try {
-    const bot = new TGBotClient(botToken);
-    const formatted = formatForTelegram({
-      text: input.text,
-      images: input.images,
-      links: input.links,
-      hashtags: input.hashtags,
-    });
+    return reliablePublish('telegram', async () => {
+      const bot = new TGBotClient(botToken);
+      const formatted = formatForTelegram({
+        text: input.text,
+        images: input.images,
+        links: input.links,
+        hashtags: input.hashtags,
+      });
 
-    if (formatted.mediaUrls && formatted.mediaUrls.length > 0) {
-      // Send as media group with caption on first image
-      const result = await uploadMediaGroup(
-        bot,
-        chatId,
-        formatted.mediaUrls,
-        formatted.text,
-      );
-      if (result.ok && result.messageIds) {
-        return {
-          ok: true,
-          nativeId: String(result.messageIds[0]),
-        };
+      if (formatted.mediaUrls && formatted.mediaUrls.length > 0) {
+        // Send as media group with caption on first image
+        const mediaResult = await uploadMediaGroup(
+          bot,
+          chatId,
+          formatted.mediaUrls,
+          formatted.text,
+        );
+        if (mediaResult.ok && mediaResult.messageIds) {
+          return {
+            ok: true,
+            nativeId: String(mediaResult.messageIds[0]),
+          };
+        }
+        // Fallback: send as text if media group fails
       }
-      // Fallback: send as text if media group fails
-    }
 
-    // Send as text message
-    const result = await bot.sendMessage(chatId, formatted.text, {
-      parseMode: 'HTML',
-    });
+      // Send as text message
+      const msgResult = await bot.sendMessage(chatId, formatted.text, {
+        parseMode: 'HTML',
+      });
 
-    return {
-      ok: true,
-      nativeId: String(result.messageId),
-    };
+      return {
+        ok: true,
+        nativeId: String(msgResult.messageId),
+      };
+    }, env);
   } catch (err) {
     return {
       ok: false,
@@ -701,44 +784,46 @@ async function publishToRss(
   }
 
   try {
-    const xml = formatForRss(
-      {
-        text: input.text,
-        title: input.title,
-        images: input.images,
-        links: input.links,
-      },
-      feedUrl,
-    );
-
-    // If a publish endpoint is configured, POST the XML there
-    if (publishUrl) {
-      const res = await fetch(publishUrl, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/rss+xml',
-          authorization: auth.rss_token ? `Bearer ${auth.rss_token}` : '',
+    return reliablePublish('rss', async () => {
+      const xml = formatForRss(
+        {
+          text: input.text,
+          title: input.title,
+          images: input.images,
+          links: input.links,
         },
-        body: xml,
-      });
+        feedUrl,
+      );
 
-      if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        return {
-          ok: false,
-          error: `RSS publish endpoint returned ${res.status}: ${errText.slice(0, 200)}`,
-        };
+      // If a publish endpoint is configured, POST the XML there
+      if (publishUrl) {
+        const res = await fetch(publishUrl, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/rss+xml',
+            authorization: auth.rss_token ? `Bearer ${auth.rss_token}` : '',
+          },
+          body: xml,
+        });
+
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          return {
+            ok: false,
+            error: `RSS publish endpoint returned ${res.status}: ${errText.slice(0, 200)}`,
+          };
+        }
+
+        return { ok: true, nativeId: `rss:${Date.now()}` };
       }
 
-      return { ok: true, nativeId: `rss:${Date.now()}` };
-    }
-
-    // Without a publish URL, we return the XML for the caller to use
-    return {
-      ok: true,
-      nativeId: `rss:${Date.now()}`,
-      nativeUri: `data:application/rss+xml,${encodeURIComponent(xml)}`,
-    };
+      // Without a publish URL, we return the XML for the caller to use
+      return {
+        ok: true,
+        nativeId: `rss:${Date.now()}`,
+        nativeUri: `data:application/rss+xml,${encodeURIComponent(xml)}`,
+      };
+    }, env);
   } catch (err) {
     return {
       ok: false,
@@ -765,43 +850,45 @@ async function publishToThreads(
   }
 
   try {
-    // Step 1: Create the thread
-    const createRes = await fetch(
-      `https://graph.threads.net/v1.0/${threadsUserId}/threads?access_token=${accessToken}`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          text: input.text.slice(0, 500),
-          media_type: 'TEXT',
-        }),
-      },
-    );
+    return reliablePublish('threads', async () => {
+      // Step 1: Create the thread
+      const createRes = await fetch(
+        `https://graph.threads.net/v1.0/${threadsUserId}/threads?access_token=${accessToken}`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            text: input.text.slice(0, 500),
+            media_type: 'TEXT',
+          }),
+        },
+      );
 
-    if (!createRes.ok) {
-      const errText = await createRes.text();
-      return { ok: false, error: `Threads create failed: ${errText.slice(0, 200)}` };
-    }
+      if (!createRes.ok) {
+        const errText = await createRes.text();
+        return { ok: false, error: `Threads create failed: ${errText.slice(0, 200)}` };
+      }
 
-    const createData = (await createRes.json()) as { id: string };
+      const createData = (await createRes.json()) as { id: string };
 
-    // Step 2: Publish the thread
-    const publishRes = await fetch(
-      `https://graph.threads.net/v1.0/${threadsUserId}/threads_publish?access_token=${accessToken}`,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ creation_id: createData.id }),
-      },
-    );
+      // Step 2: Publish the thread
+      const publishRes = await fetch(
+        `https://graph.threads.net/v1.0/${threadsUserId}/threads_publish?access_token=${accessToken}`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ creation_id: createData.id }),
+        },
+      );
 
-    if (!publishRes.ok) {
-      const errText = await publishRes.text();
-      return { ok: false, error: `Threads publish failed: ${errText.slice(0, 200)}` };
-    }
+      if (!publishRes.ok) {
+        const errText = await publishRes.text();
+        return { ok: false, error: `Threads publish failed: ${errText.slice(0, 200)}` };
+      }
 
-    const publishData = (await publishRes.json()) as { id: string };
-    return { ok: true, nativeId: publishData.id };
+      const publishData = (await publishRes.json()) as { id: string };
+      return { ok: true, nativeId: publishData.id };
+    }, env);
   } catch (err) {
     return {
       ok: false,
