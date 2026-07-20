@@ -1220,6 +1220,10 @@ app.all('/api/subscription/:creator', async (c) =>
   handleSubscriptionTiers(c.req.raw, c.env, c.req.param('creator')),
 );
 
+// ─── API: Tiers ──────────────────────────────────────────────
+import tiers from './routes/tiers';
+app.route('/api/tiers', tiers);
+
 // ─── API: Preferences ───────────────────────────────────────
 app.all('/api/preferences', async (c) => handlePreferences(c.req.raw, c.env));
 app.get('/api/preferences/topics', async (c) => handleGetTopics(c.req.raw, c.env));

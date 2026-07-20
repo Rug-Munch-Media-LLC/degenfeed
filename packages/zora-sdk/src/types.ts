@@ -248,6 +248,184 @@ export interface DeployCoinInput {
   initialBuyWei?: bigint;
 }
 
+// ═════════════════════════════════════════════════════════════════════════
+// Dual-Chain (One Coin, Two Networks) Types
+// ═════════════════════════════════════════════════════════════════════════
+
+/**
+ * Config for deploying a dual-chain coin.
+ * ONE coin deployed on Solana (primary) and wrapped to Base (via Wormhole).
+ * Same name, symbol, supply on both chains — paired to each other.
+ */
+export interface DualChainCoinConfig {
+  /** Coin name (e.g. "Alice Coin") */
+  name: string;
+  /** Coin symbol (e.g. "ALICE") */
+  symbol: string;
+  /** Metadata URI (IPFS or HTTP) */
+  uri: string;
+  /** Creator wallet address (Solana pubkey) */
+  creator: string;
+
+  /** Solana RPC URL (optional, defaults to public mainnet) */
+  solanaRpcUrl?: string;
+  /** Base RPC URL (optional, defaults to public mainnet) */
+  baseRpcUrl?: string;
+  /** Solana creator wallet private key (for signing) */
+  solanaPrivateKey?: string;
+  /** Base wallet private key (for wrapped token registration) */
+  basePrivateKey?: string;
+
+  /** Total supply — SAME on both chains */
+  totalSupply: bigint;
+  /** Creator allocation in bps (0-1500 = 0-15%) */
+  creatorAllocationPercent: number;
+  /** Platform fee in bps (default 50 = 0.5%) */
+  platformFeeBps?: number;
+  /** Creator fee on buys in bps (0-200 = 0-2%) */
+  creatorFeeBps?: number;
+
+  /** One-time token generation fee in USD (default $20) */
+  tokenGenerationFeeUsd?: number;
+  /** Unique token seed for Solana PDA derivation */
+  tokenSeed?: bigint;
+}
+
+/**
+ * Result from a dual-chain coin deployment.
+ * One coin that exists on both Solana (primary) and Base (wrapped).
+ */
+export interface DualChainDeployResult {
+  /** Solana token info */
+  solana: {
+    /** SPL token mint address */
+    address: string;
+    /** Paired currency */
+    pairCurrency: 'SOL';
+    /** Jupiter swap URL */
+    dexUrl: string;
+    /** Explorer URL */
+    explorerUrl: string;
+  };
+  /** Base wrapped token info */
+  base: {
+    /** Wrapped ERC-20 contract address */
+    address: `0x${string}`;
+    /** Paired currency */
+    pairCurrency: 'ETH';
+    /** Whether this is a Wormhole-wrapped token */
+    isWrapped: true;
+    /** Zora.co URL — visible on Zora */
+    zoraUrl: string;
+    /** Uniswap V4 swap URL */
+    dexUrl: string;
+    /** Explorer URL */
+    explorerUrl: string;
+  };
+  /** Wormhole attestation VAA hash (for bridging) */
+  wormholeAttestation: string;
+  /** Total supply (same on both chains) */
+  totalSupply: string;
+  /** Deployment cost breakdown */
+  deploymentCost: CostBreakdown;
+  /** Token seed used for Solana PDA */
+  tokenSeed: string;
+  /** Cross-chain registry mapping ID */
+  registryId?: string;
+}
+
+/**
+ * Price info for a dual-chain coin on both networks.
+ */
+export interface DualChainPrice {
+  /** Price on Solana in SOL */
+  solana: {
+    priceUsd: number;
+    priceNative: number;
+    pairCurrency: 'SOL';
+  };
+  /** Price on Base in ETH */
+  base: {
+    priceUsd: number;
+    priceNative: number;
+    pairCurrency: 'ETH';
+  };
+  /** Price difference as percentage of the higher price */
+  priceDiffPercent: number;
+  /** Whether arbitrage is profitable (>1% diff) */
+  arbitrageProfitable: boolean;
+  /** Timestamp of price fetch */
+  timestamp: number;
+}
+
+/**
+ * Reference to a deployed dual-chain coin.
+ */
+export interface DualChainCoin {
+  /** Coin name */
+  name: string;
+  /** Coin symbol (wrapped version on Base uses .w suffix) */
+  symbol: string;
+  /** Same metadata URI on both chains */
+  uri: string;
+  /** Creator wallet address */
+  creator: string;
+  /** Solana token info */
+  solana: {
+    address: string;
+    priceUsd?: number;
+    volume24h?: number;
+  };
+  /** Base wrapped token info */
+  base: {
+    address: `0x${string}`;
+    priceUsd?: number;
+    volume24h?: number;
+    zoraUrl?: string;
+  };
+  /** Total supply (same both chains) */
+  totalSupply: string;
+  /** Wormhole attestation */
+  wormholeAttestation: string;
+}
+
+/**
+ * Cost breakdown for dual-chain deployment.
+ * Creator pays the token generation fee; network fees cover gas.
+ */
+export interface CostBreakdown {
+  /** Platform token generation fee */
+  tokenGenerationFee: { amount: number; currency: 'USD'; note: string };
+  /** Solana token creation gas */
+  solanaDeploy: { amount: number; currency: 'SOL'; note: string };
+  /** Wormhole attestation fee */
+  wormholeAttest: { amount: number; currency: 'SOL'; note: string };
+  /** Base wrapped deployment gas (Zora wrapper) */
+  baseWrapped: { amount: number; currency: 'USD'; note: string };
+  /** Approximate total cost to creator */
+  total: { amount: number; currency: 'USD'; note: string };
+  /** Platform profit from this deployment */
+  ourProfit: { amount: number; currency: 'USD'; note: string };
+}
+
+/**
+ * Result of collecting the token generation fee.
+ */
+export interface FeePaymentResult {
+  /** Whether payment was successfully collected */
+  paid: boolean;
+  /** Amount paid (formatted) */
+  amount: string;
+  /** Currency used (SOL or ETH) */
+  currency: 'SOL' | 'ETH';
+  /** Unique receipt ID for accounting */
+  receiptId: string;
+  /** Payment transaction hash (if on-chain) */
+  txHash?: string;
+}
+
+export type FeePaymentStatus = 'pending' | 'confirmed' | 'failed';
+
 /**
  * Input for buying a creator coin.
  */
