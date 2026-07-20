@@ -514,13 +514,19 @@ function buildAnnouncement(stream: StreamAnnouncement): AnnouncementTexts {
 			tags: [
 				["d", `degenfeed-${stream.streamId}`],
 				["title", stream.title],
+				["summary", `${stream.creatorHandle} is streaming on DegenFeed`],
 				["streaming", stream.streamUrl],
 				["t", hashtagLive],
 				["t", hashtagType],
+				["t", "liveshort"],
+				["t", "degenfeed"],
 				["r", stream.streamUrl],
 				...(stream.thumbnail ? [["image", stream.thumbnail]] : []),
 				["status", "live"],
 				["current_participants", "1"],
+				["duration", "60"],
+				["p", stream.creator],
+				["relays", "wss://relay.degenfeed.xyz"],
 			],
 		},
 
@@ -541,7 +547,7 @@ function buildAnnouncement(stream: StreamAnnouncement): AnnouncementTexts {
 		},
 
 		farcaster:
-			`🔴 LIVE: ${stream.title}\n\n${stream.creatorHandle} is live!\n\n${stream.streamUrl}`.slice(
+			`🔴 LIVE SHORT: ${stream.title}\n\n${stream.creatorHandle} is live on DegenFeed!\n\n⏱ 60s\n\n${stream.streamUrl}`.slice(
 				0,
 				320,
 			),

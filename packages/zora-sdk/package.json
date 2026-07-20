@@ -10,7 +10,8 @@
     "./solana": "./src/solana.ts",
     "./evm": "./src/evm.ts",
     "./cross-chain": "./src/cross-chain/registry.ts",
-    "./video": "./src/video.ts"
+    "./video": "./src/video.ts",
+    "./zora-api": "./src/zora-api.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

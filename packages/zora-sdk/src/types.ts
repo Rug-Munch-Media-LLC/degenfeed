@@ -47,17 +47,6 @@ export interface SolanaDeployResult {
   tokenState: string;
 }
 
-export interface TradeResult {
-  /** Transaction signature */
-  signature: string;
-  /** Amount of tokens received/sold */
-  amount: string;
-  /** USD equivalent (if price feed available) */
-  usdValue?: string;
-  /** Explorer URL */
-  explorerUrl: string;
-}
-
 export interface TokenInfo {
   /** Token mint / contract address */
   address: string;
@@ -115,6 +104,141 @@ export interface EvmBuyInput {
   minTokensOut: bigint;
   /** Target chain */
   chain: 'base' | 'optimism' | 'arbitrum';
+}
+
+// ─── Zora 2026 Creator Coin types ──────────────────────────────────────────
+
+/**
+ * Result from deploying a creator coin via ZoraFactory.
+ */
+export interface DeployResult {
+  /** The deployed coin contract address */
+  coinAddress: `0x${string}`;
+  /** Transaction hash */
+  txHash: `0x${string}`;
+  /** Explorer URL */
+  explorerUrl: string;
+  /** The mint/buy transaction for the initial supply */
+  initialBuyTx?: `0x${string}`;
+}
+
+/**
+ * Result from buying/selling a creator coin.
+ */
+export interface TradeResult {
+  /** Transaction signature */
+  signature: string;
+  /** Amount of tokens received/sold */
+  amount: string;
+  /** USD equivalent (if price feed available) */
+  usdValue?: string;
+  /** Explorer URL */
+  explorerUrl: string;
+}
+
+/**
+ * Information about a creator coin from the Zora Coins API.
+ */
+export interface CoinInfo {
+  /** Coin address */
+  address: `0x${string}`;
+  /** Coin name */
+  name: string;
+  /** Coin symbol */
+  symbol: string;
+  /** Creator wallet address */
+  creator: `0x${string}`;
+  /** Metadata URI */
+  uri: string;
+  /** Current price in ETH wei */
+  price: string;
+  /** Market cap in ETH wei */
+  marketCap: string;
+  /** Total supply */
+  totalSupply: string;
+  /** ETH raised */
+  totalRaised: string;
+  /** Number of holders/supporters */
+  holderCount: number;
+  /** 24h volume in ETH */
+  volume24h: string;
+  /** Price change % in 24h */
+  priceChange24h: number;
+  /** Whether graduated (Uniswap V4 pool active) */
+  graduated: boolean;
+  /** Underlying Uniswap V4 pool address (if graduated) */
+  poolAddress?: `0x${string}`;
+  /** Chain */
+  chain: 'base';
+}
+
+export interface CoinPrice {
+  /** Current price in ETH wei */
+  price: bigint;
+  /** Pool address on Uniswap V4 */
+  poolAddress?: `0x${string}`;
+  /** Whether the pool is post-graduation (on Uniswap V4) */
+  isUniswapPool: boolean;
+  /** 24h price change percentage */
+  priceChange24h: number;
+}
+
+/**
+ * Raw coin data from Zora's Coins API.
+ */
+export interface ZoraCoin {
+  address: string;
+  name: string;
+  symbol: string;
+  creator: string;
+  uri: string;
+  price: string;
+  marketCap: string;
+  totalSupply: string;
+  totalRaised: string;
+  holderCount: number;
+  volume24h: string;
+  priceChange24h: number;
+  graduated: boolean;
+  poolAddress?: string;
+}
+
+/**
+ * Input for deploying a creator coin via ZoraCreatorCoinClient.
+ */
+export interface DeployCoinInput {
+  /** Creator wallet address */
+  creator: `0x${string}`;
+  /** Coin name (e.g. "Alice Coin") */
+  name: string;
+  /** Coin symbol (e.g. "ALICE") */
+  symbol: string;
+  /** Metadata URI */
+  uri: string;
+  /** Creator allocation in basis points (0-1500 = 0-15%) */
+  creatorAllocationBps: number;
+  /** Platform fee in bps (0-50 = 0-0.5%) — replaces Zora's default platform fee */
+  platformFeeBps?: number;
+  /** Creator fee on buys in bps (0-200 = 0-2%) */
+  creatorFeeBps: number;
+  /** Referrer address */
+  referrer?: `0x${string}`;
+  /** Initial buy amount in wei (defaults to 0.05 ETH minimum) */
+  initialBuyWei?: bigint;
+}
+
+/**
+ * Input for buying a creator coin.
+ */
+export interface BuyCoinInput {
+  /** Coin contract address */
+  coinAddress: `0x${string}`;
+  /** Buyer wallet address */
+  buyer: `0x${string}`;
+  /** Amount of ETH to spend (in wei) */
+  amountIn: bigint;
+  /** Minimum tokens to receive (slippage protection) */
+  minOut?: bigint;
 }
 
 // ─── Unified types ─────────────────────────────────────────────────────────
