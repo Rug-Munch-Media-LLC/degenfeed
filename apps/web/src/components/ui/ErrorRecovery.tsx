@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 export type ErrorCategory =
   | 'network'
@@ -61,7 +61,7 @@ export interface ErrorRecoveryProps {
   autoDismissMs?: number;
 }
 
-// ─── Error Category Detection ──────────────────────────────────────────────
+// === Error Category Detection ==============================================
 
 const CATEGORY_PATTERNS: Record<ErrorCategory, RegExp[]> = {
   network: [
@@ -102,7 +102,7 @@ function detectCategory(message: string): ErrorCategory {
   return 'unknown';
 }
 
-// ─── Suggestion Factory ────────────────────────────────────────────────────
+// === Suggestion Factory ====================================================
 
 function getSuggestion(category: ErrorCategory): RecoverySuggestion {
   switch (category) {
@@ -163,7 +163,7 @@ function getSuggestion(category: ErrorCategory): RecoverySuggestion {
   }
 }
 
-// ─── Action Icon ───────────────────────────────────────────────────────────
+// === Action Icon ===========================================================
 
 function ActionIcon({ action }: { action: RecoveryAction }) {
   const paths: Record<RecoveryAction, string> = {
@@ -194,7 +194,7 @@ function ActionIcon({ action }: { action: RecoveryAction }) {
   );
 }
 
-// ─── Main Component ────────────────────────────────────────────────────────
+// === Main Component ========================================================
 
 /**
  * ErrorRecovery — Contextual error recovery UI.
@@ -369,7 +369,7 @@ export function ErrorRecovery({
   );
 }
 
-// ─── Title Helper ──────────────────────────────────────────────────────────
+// === Title Helper ==========================================================
 
 function getTitleForCategory(category: ErrorCategory): string {
   switch (category) {
@@ -382,7 +382,7 @@ function getTitleForCategory(category: ErrorCategory): string {
   }
 }
 
-// ─── Inline Recovery Toast ─────────────────────────────────────────────────
+// === Inline Recovery Toast =================================================
 
 interface RecoveryToastProps {
   error: Error | { message: string; category?: ErrorCategory };
@@ -454,7 +454,7 @@ export function RecoveryToast({
   );
 }
 
-// ─── Retry Button ──────────────────────────────────────────────────────────
+// === Retry Button ==========================================================
 
 interface RetryButtonProps {
   onRetry: () => void;

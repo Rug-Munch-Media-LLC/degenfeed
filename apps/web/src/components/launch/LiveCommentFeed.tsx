@@ -5,7 +5,7 @@ import { useLiveComments } from '../../hooks/useLiveComments';
 import type { TokenComment } from '../../hooks/useLiveComments';
 import { useIsMobile, useKeyboardHeight } from '../../hooks/useMobileResponsive';
 
-/* ─── Config ─────────────────────────────────────────── */
+/* === Config =========================================== */
 
 const SOUND_ENABLED_KEY = 'df:comment-sound';
 
@@ -15,7 +15,7 @@ interface LiveCommentFeedProps {
   className?: string;
 }
 
-/* ─── Badge display config ──────────────────────────── */
+/* === Badge display config ============================ */
 
 interface BadgeStyle {
   label: string;
@@ -31,7 +31,7 @@ const BADGE_STYLES: Record<string, BadgeStyle> = {
   superfan: { label: 'FAN', className: 'badge-superfan' },
 };
 
-/* ─── Main Component ────────────────────────────────── */
+/* === Main Component ================================== */
 
 export default function LiveCommentFeed({
   tokenAddress,
@@ -276,7 +276,7 @@ export default function LiveCommentFeed({
   );
 }
 
-/* ─── Comment Bubble ─────────────────────────────────── */
+/* === Comment Bubble =================================== */
 
 function CommentBubble({ comment }: { comment: TokenComment }) {
   const topBadge = comment.badges
@@ -335,7 +335,7 @@ function CommentBubble({ comment }: { comment: TokenComment }) {
   );
 }
 
-/* ─── Helpers ─────────────────────────────────────────── */
+/* === Helpers =========================================== */
 
 function formatTimeAgo(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);

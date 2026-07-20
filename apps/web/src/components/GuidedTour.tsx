@@ -18,7 +18,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 interface TourStep {
   targetSelector: string;
@@ -31,7 +31,7 @@ interface TourStep {
 
 export type TourState = 'idle' | 'active' | 'completed' | 'skipped';
 
-// ─── Constants ────────────────────────────────────────────────────────────
+// === Constants ============================================================
 
 const STORAGE_KEY = 'degenfeed_guided_tour';
 
@@ -78,7 +78,7 @@ const STEPS: TourStep[] = [
   },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+// === Helpers ==============================================================
 
 function getTargetRect(selector: string): DOMRect | null {
   if (typeof document === 'undefined') return null;
@@ -118,7 +118,7 @@ function markTourCompleted() {
   }
 }
 
-// ─── Component ────────────────────────────────────────────────────────────
+// === Component ============================================================
 
 interface GuidedTourProps {
   /** External control: force show the tour */
@@ -138,7 +138,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
 
   const step = STEPS[currentStep];
 
-  // ── Initialize tour ─────────────────────────────────────────────────
+  // == Initialize tour =================================================
   useEffect(() => {
     if (forceShow || (!isTourCompleted() && !forceShow)) {
       // Wait for the page to settle before starting
@@ -152,7 +152,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     };
   }, [forceShow]);
 
-  // ── Poll for target element to appear (dynamic DOM) ─────────────────
+  // == Poll for target element to appear (dynamic DOM) =================
   useEffect(() => {
     if (tourState !== 'active') return;
 
@@ -187,7 +187,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     };
   }, [tourState, currentStep]);
 
-  // ── Re-calculate position on scroll/resize ─────────────────────────
+  // == Re-calculate position on scroll/resize =========================
   useEffect(() => {
     if (tourState !== 'active') return;
 
@@ -204,7 +204,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     };
   }, [tourState, currentStep]);
 
-  // ── Navigation handlers ─────────────────────────────────────────────
+  // == Navigation handlers =============================================
   const handleNext = useCallback(() => {
     if (currentStep < STEPS.length - 1) {
       setVisible(false);
@@ -233,7 +233,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     onComplete?.();
   }, [onComplete]);
 
-  // ── Keyboard handlers ───────────────────────────────────────────────
+  // == Keyboard handlers ===============================================
   useEffect(() => {
     if (tourState !== 'active') return;
 
@@ -260,7 +260,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tourState, handleSkip, handlePrev, handleNext]);
 
-  // ── Compute tooltip position ────────────────────────────────────────
+  // == Compute tooltip position ========================================
   const tooltipStyle = useMemo(() => {
     if (!targetRect) {
       // Fallback: center of screen
@@ -309,7 +309,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     }
   }, [targetRect, step]);
 
-  // ── Spotlight style ─────────────────────────────────────────────────
+  // == Spotlight style =================================================
   const spotlightStyle = useMemo(() => {
     if (!targetRect) return undefined;
     return {
@@ -324,7 +324,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
 
   return (
     <>
-      {/* ── Full-screen dim overlay ── */}
+      {/* == Full-screen dim overlay == */}
       <div
         className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-[2px]"
         onClick={handleSkip}
@@ -335,7 +335,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
         aria-hidden="true"
       />
 
-      {/* ── Spotlight highlight ring ── */}
+      {/* == Spotlight highlight ring == */}
       {spotlightStyle && (
         <div
           className="fixed z-[81] pointer-events-none rounded-2xl"
@@ -349,7 +349,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
         />
       )}
 
-      {/* ── Tooltip card ── */}
+      {/* == Tooltip card == */}
       <div
         ref={tooltipRef}
         className="fixed z-[82] w-[min(90vw,380px)]"
@@ -442,7 +442,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
         </div>
       </div>
 
-      {/* ── Animations ── */}
+      {/* == Animations == */}
       <style>{`
         @keyframes guided-tour-pulse {
           0%, 100% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.5), 0 0 0 2px rgba(0,255,65,0.6), 0 0 24px rgba(0,255,65,0.3); }

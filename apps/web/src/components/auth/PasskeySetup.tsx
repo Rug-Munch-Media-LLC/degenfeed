@@ -15,7 +15,7 @@
 import { startRegistration } from '@simplewebauthn/browser';
 import { useCallback, useEffect, useState } from 'react';
 
-/* ─── Types ─────────────────────────────────────────────────── */
+/* === Types =================================================== */
 
 interface PasskeyInfo {
   id: string;
@@ -24,7 +24,7 @@ interface PasskeyInfo {
   lastUsed: number;
 }
 
-/* ─── Helpers ──────────────────────────────────────────────── */
+/* === Helpers ================================================ */
 
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString(undefined, {
@@ -46,7 +46,7 @@ function timeAgo(ts: number): string {
   return formatDate(ts);
 }
 
-/* ─── Component ────────────────────────────────────────────── */
+/* === Component ============================================== */
 
 interface PasskeySetupProps {
   /** Called after successful registration */
@@ -66,7 +66,7 @@ export function PasskeySetup({ onRegistered, onError }: PasskeySetupProps) {
   const [renameValue, setRenameValue] = useState('');
   const [renaming, setRenaming] = useState(false);
 
-  // ── Load passkeys ────────────────────────────────────────
+  // == Load passkeys ========================================
 
   const loadPasskeys = useCallback(async () => {
     try {
@@ -89,7 +89,7 @@ export function PasskeySetup({ onRegistered, onError }: PasskeySetupProps) {
     loadPasskeys();
   }, [loadPasskeys]);
 
-  // ── Register new passkey ──────────────────────────────────
+  // == Register new passkey ==================================
 
   const handleRegister = useCallback(async () => {
     setRegistering(true);
@@ -147,7 +147,7 @@ export function PasskeySetup({ onRegistered, onError }: PasskeySetupProps) {
     }
   }, [loadPasskeys, onRegistered, onError]);
 
-  // ── Delete passkey ─────────────────────────────────────────
+  // == Delete passkey =========================================
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -175,7 +175,7 @@ export function PasskeySetup({ onRegistered, onError }: PasskeySetupProps) {
     [onError],
   );
 
-  // ── Rename passkey ─────────────────────────────────────────
+  // == Rename passkey =========================================
 
   const handleRename = useCallback(
     async (id: string) => {
@@ -209,7 +209,7 @@ export function PasskeySetup({ onRegistered, onError }: PasskeySetupProps) {
     [renameValue, onError],
   );
 
-  // ── Render ────────────────────────────────────────────────
+  // == Render ================================================
 
   return (
     <div className="space-y-4">

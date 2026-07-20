@@ -19,7 +19,7 @@ import { SessionList } from '../../../components/auth/SessionList';
 import TOTPSetup from '../../../components/auth/TOTPSetup';
 import PageHeader from '../../../components/ui/PageHeader';
 
-/* ─── Danger Zone ──────────────────────────────────────────── */
+/* === Danger Zone ============================================ */
 
 function DangerZone() {
   const [showConfirm, setShowConfirm] = useState(false);
@@ -85,7 +85,7 @@ function DangerZone() {
   );
 }
 
-/* ─── Page Component ───────────────────────────────────────── */
+/* === Page Component ========================================= */
 
 export default function SecuritySettingsPage() {
   const [totpEnabled, setTotpEnabled] = useState(false);
@@ -139,7 +139,7 @@ export default function SecuritySettingsPage() {
         breadcrumbs={[{ label: 'Settings', href: '/settings' }, { label: 'Security' }]}
       />
 
-      {/* ─── 2FA Methods Section ───────────────────────────── */}
+      {/* === 2FA Methods Section ============================= */}
       <section className="mb-8" aria-labelledby="heading-2fa">
         <h2 id="heading-2fa" className="mb-3 text-base font-semibold text-[var(--color-fg)]">
           Two-Factor Authentication (2FA)
@@ -181,7 +181,7 @@ export default function SecuritySettingsPage() {
         </div>
       </section>
 
-      {/* ─── Recovery Codes Section ────────────────────────── */}
+      {/* === Recovery Codes Section ========================== */}
       {recoveryCodes && (
         <section className="mb-8" aria-labelledby="heading-recovery">
           <h2 id="heading-recovery" className="mb-3 text-base font-semibold text-[var(--color-fg)]">
@@ -193,7 +193,7 @@ export default function SecuritySettingsPage() {
         </section>
       )}
 
-      {/* ─── Active Sessions Section ───────────────────────── */}
+      {/* === Active Sessions Section ========================= */}
       <section className="mb-8" aria-labelledby="heading-sessions">
         <h2 id="heading-sessions" className="mb-3 text-base font-semibold text-[var(--color-fg)]">
           Active Sessions
@@ -201,7 +201,7 @@ export default function SecuritySettingsPage() {
         <SessionList />
       </section>
 
-      {/* ─── Security Log Section ──────────────────────────── */}
+      {/* === Security Log Section ============================ */}
       <section className="mb-8" aria-labelledby="heading-log">
         <h2 id="heading-log" className="mb-3 text-base font-semibold text-[var(--color-fg)]">
           Security Log
@@ -209,7 +209,7 @@ export default function SecuritySettingsPage() {
         <SecurityLog />
       </section>
 
-      {/* ─── Danger Zone ──────────────────────────────────── */}
+      {/* === Danger Zone ==================================== */}
       <section aria-labelledby="heading-danger">
         <DangerZone />
       </section>

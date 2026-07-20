@@ -7,14 +7,14 @@ import { useAuth } from '../../components/AuthProvider';
 import { useWeb3 } from '../../components/Web3Provider';
 import { useScheduledPosts } from '../../hooks/useScheduledPosts';
 
-/* ─── Dynamic imports ─── */
+/* === Dynamic imports === */
 
 const ContentCalendar = dynamic(
   () => import('@degenfeed/ui').then((m) => ({ default: m.ContentCalendar })),
   { ssr: false },
 );
 
-/* ─── Types ─── */
+/* === Types === */
 
 interface CreatorStats {
   totalPosts: number;
@@ -75,7 +75,7 @@ const CURRENCY_COLORS: Record<string, string> = {
   MATIC: '#8247e5',
 };
 
-/* ─── Helpers ─── */
+/* === Helpers === */
 
 function formatCompact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -106,7 +106,7 @@ function shortenAddress(addr: string): string {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
 
-/* ─── Stat Card ─── */
+/* === Stat Card === */
 
 function StatCard({
   label,
@@ -145,7 +145,7 @@ function StatCard({
   );
 }
 
-/* ─── Mini Bar ─── */
+/* === Mini Bar === */
 
 function MiniBar({
   value,
@@ -185,7 +185,7 @@ function MiniBar({
   );
 }
 
-/* ─── Bar Chart ─── */
+/* === Bar Chart === */
 
 function BarChart({
   data,
@@ -229,7 +229,7 @@ function BarChart({
   );
 }
 
-/* ─── Pie (CSS conic gradient) ─── */
+/* === Pie (CSS conic gradient) === */
 
 function PieChart({
   data,
@@ -297,7 +297,7 @@ function PieChart({
   );
 }
 
-/* ─── Main Dashboard ─── */
+/* === Main Dashboard === */
 
 export default function CreatorDashboard() {
   const { ready, walletAddress, primaryIdentity, signedInProtocols, openSignIn, openCompose } =
@@ -432,7 +432,7 @@ export default function CreatorDashboard() {
     [scheduled, cancelSchedule, schedulePost],
   );
 
-  /* ─── Wallet Gate ─── */
+  /* === Wallet Gate === */
 
   if (!ready) {
     return (
@@ -475,7 +475,7 @@ export default function CreatorDashboard() {
     );
   }
 
-  /* ─── Dashboard ─── */
+  /* === Dashboard === */
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -547,7 +547,7 @@ export default function CreatorDashboard() {
         ))}
       </div>
 
-      {/* ─────── OVERVIEW ─────── */}
+      {/* ======= OVERVIEW ======= */}
       {activeTab === 'overview' && (
         <div className="space-y-8">
           {/* Stat cards */}
@@ -703,7 +703,7 @@ export default function CreatorDashboard() {
         </div>
       )}
 
-      {/* ─────── CONTENT ─────── */}
+      {/* ======= CONTENT ======= */}
       {activeTab === 'content' && (
         <div className="space-y-8">
           {/* Quick summary */}
@@ -762,7 +762,7 @@ export default function CreatorDashboard() {
         </div>
       )}
 
-      {/* ─────── ANALYTICS ─────── */}
+      {/* ======= ANALYTICS ======= */}
       {activeTab === 'analytics' && (
         <div className="space-y-6">
           <div className="card border-degen-500/20 bg-degen-500/5 p-6 text-center backdrop-blur-xl">
@@ -816,7 +816,7 @@ export default function CreatorDashboard() {
         </div>
       )}
 
-      {/* ─────── MONETIZATION ─────── */}
+      {/* ======= MONETIZATION ======= */}
       {activeTab === 'monetization' && (
         <div className="space-y-8">
           {/* Earnings summary */}
@@ -971,7 +971,7 @@ export default function CreatorDashboard() {
         </div>
       )}
 
-      {/* ─────── PUBLISHING ─────── */}
+      {/* ======= PUBLISHING ======= */}
       {activeTab === 'publishing' && (
         <div className="space-y-8">
           {/* Cross-Protocol Composer */}
@@ -1208,7 +1208,7 @@ export default function CreatorDashboard() {
         </div>
       )}
 
-      {/* ─────── ARTICLES ─────── */}
+      {/* ======= ARTICLES ======= */}
       {activeTab === 'articles' && (
         <div className="space-y-6">
           {/* Article Stats */}

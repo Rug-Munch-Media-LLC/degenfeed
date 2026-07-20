@@ -16,14 +16,14 @@ import { ShortsProgress } from './ShortsProgress';
 import { ShortsCreatorInfo } from './ShortsCreatorInfo';
 import type { UseShortsResult } from './useShorts';
 
-// ─── Constants ────────────────────────────────────────────────────────────
+// === Constants ============================================================
 
 const PRELOAD_AHEAD = 1;
 const UNLOAD_BEHIND_MS = 2_000;
 const LOAD_MORE_BUFFER = 3;
 const AUTO_ADVANCE_MS = 30_000;
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 interface ShortVideoItem {
   id: string;
@@ -88,7 +88,7 @@ export function ShortsFeed({
   const [pullDismissing, setPullDismissing] = useState(false);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Snap-scroll detection via IntersectionObserver ─────────────────────
+  // == Snap-scroll detection via IntersectionObserver =====================
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -114,7 +114,7 @@ export function ShortsFeed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex]);
 
-  // ── Preloading & unloading ──────────────────────────────────────────────
+  // == Preloading & unloading ==============================================
   useEffect(() => {
     const nextBatch = new Set<number>();
     for (let i = currentIndex; i <= currentIndex + PRELOAD_AHEAD && i < videos.length; i++) {
@@ -129,14 +129,14 @@ export function ShortsFeed({
     return () => clearTimeout(timer);
   }, [currentIndex, videos.length]);
 
-  // ── Infinite scroll — trigger loadMore when near end ────────────────────
+  // == Infinite scroll — trigger loadMore when near end ====================
   useEffect(() => {
     if (currentIndex >= videos.length - LOAD_MORE_BUFFER && hasMore && !loadingMore) {
       loadMore();
     }
   }, [currentIndex, videos.length, hasMore, loadMore, loadingMore]);
 
-  // ── Auto-advance timer ────────────────────────────────────────────────
+  // == Auto-advance timer ================================================
   useEffect(() => {
     if (videos.length === 0 || currentIndex >= videos.length - 1) return;
     const timer = setTimeout(() => {
@@ -149,7 +149,7 @@ export function ShortsFeed({
     return () => clearTimeout(timer);
   }, [currentIndex, videos.length]);
 
-  // ── Pull-to-dismiss ───────────────────────────────────────────────────
+  // == Pull-to-dismiss ===================================================
   useEffect(() => {
     if (!pullDismissing) return;
     const container = containerRef.current;
@@ -169,7 +169,7 @@ export function ShortsFeed({
     };
   }, [pullDismissing, onDismiss]);
 
-  // ── Touch handlers ────────────────────────────────────────────────────
+  // == Touch handlers ====================================================
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     if (!touch) return;
@@ -259,7 +259,7 @@ export function ShortsFeed({
     [currentIndex, videos.length],
   );
 
-  // ── Double-tap to like ──────────────────────────────────────────────────
+  // == Double-tap to like ==================================================
   const handleDoubleTap = useCallback(() => {
     const now = Date.now();
     if (now - lastTapTime.current < 350) {
@@ -271,7 +271,7 @@ export function ShortsFeed({
     }
   }, []);
 
-  // ── Toast events ───────────────────────────────────────────────────────
+  // == Toast events =======================================================
   useEffect(() => {
     const onLike = () => setShowToast('❤️');
     const onBookmark = () => setShowToast('🔖 Saved');
@@ -296,7 +296,7 @@ export function ShortsFeed({
     };
   }, []);
 
-  // ── Keyboard navigation ────────────────────────────────────────────────
+  // == Keyboard navigation ================================================
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (
@@ -362,14 +362,14 @@ export function ShortsFeed({
     return () => window.removeEventListener('keydown', handler);
   }, [currentIndex, videos.length]);
 
-  // ── Toast timer ────────────────────────────────────────────────────────
+  // == Toast timer ========================================================
   useEffect(() => {
     if (!showToast) return;
     const t = setTimeout(() => setShowToast(null), 1200);
     return () => clearTimeout(t);
   }, [showToast]);
 
-  // ── Render ─────────────────────────────────────────────────────────────
+  // == Render =============================================================
 
   const topicOptions = ['defi', 'nft', 'trading', 'bitcoin', 'memecoin', 'ai'];
 

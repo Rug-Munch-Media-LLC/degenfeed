@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthProvider';
 
-// ─── Types ─────────────────────────────────────────────────────────────
+// === Types =============================================================
 
 interface ChatMessage {
   id: string;
@@ -29,7 +29,7 @@ interface ChatMessage {
   tipAmount?: string;
 }
 
-// ─── Mock messages (dev/fallback) ──────────────────────────────────────
+// === Mock messages (dev/fallback) ======================================
 
 function generateMockMessages(): ChatMessage[] {
   const users = [
@@ -73,7 +73,7 @@ function generateMockMessages(): ChatMessage[] {
   });
 }
 
-// ─── Protocol badge colors ────────────────────────────────────────────
+// === Protocol badge colors ============================================
 
 const PROTOCOL_COLORS: Record<string, { label: string; color: string }> = {
   ethereum: { label: 'ETH', color: '#627eea' },
@@ -98,7 +98,7 @@ function ProtocolBadge({ protocol }: { protocol?: string }) {
   );
 }
 
-// ─── Tip indicator ────────────────────────────────────────────────────
+// === Tip indicator ====================================================
 
 function TipIndicator({ amount }: { amount?: string }) {
   if (!amount) return null;
@@ -112,7 +112,7 @@ function TipIndicator({ amount }: { amount?: string }) {
   );
 }
 
-// ─── Single message ───────────────────────────────────────────────────
+// === Single message ===================================================
 
 function ChatMessageItem({ message }: { message: ChatMessage }) {
   return (
@@ -150,7 +150,7 @@ function ChatMessageItem({ message }: { message: ChatMessage }) {
   );
 }
 
-// ─── Message input ────────────────────────────────────────────────────
+// === Message input ====================================================
 
 function ChatInput({ onSend, disabled }: { onSend: (text: string) => void; disabled?: boolean }) {
   const [value, setValue] = useState('');
@@ -195,7 +195,7 @@ function ChatInput({ onSend, disabled }: { onSend: (text: string) => void; disab
   );
 }
 
-// ─── Main Chat Component ──────────────────────────────────────────────
+// === Main Chat Component ==============================================
 
 interface LiveShortsChatProps {
   sessionId: string;

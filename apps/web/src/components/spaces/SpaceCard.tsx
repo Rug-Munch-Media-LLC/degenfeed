@@ -4,7 +4,7 @@ import { getProtocolColor, getProtocolIcon } from '@degenfeed/ui';
 import Image from 'next/image';
 import { useCallback, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────
+// === Types ========================================================
 
 interface Speaker {
   id: string;
@@ -42,7 +42,7 @@ interface SpaceCardProps {
   onTip?: (space: SpaceCardData) => void;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────
+// === Helpers ======================================================
 
 function Avatar({ src, name, className = '' }: { src?: string; name: string; className?: string }) {
   if (src) {
@@ -94,7 +94,7 @@ function formatScheduledDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-// ─── SpaceCard ────────────────────────────────────────────────────
+// === SpaceCard ====================================================
 
 export function SpaceCard({ space, variant, onJoin, onReminder, onTip }: SpaceCardProps) {
   const [reminded, setReminded] = useState(false);

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { type ChatMessage, useStreamChat } from './useStreamChat';
 
-/* ─── Badge component ────────────────────────────────────────── */
+/* === Badge component ========================================== */
 
 function MessageBadge({ badge }: { badge: ChatMessage['badge'] }) {
   if (!badge) return null;
@@ -24,7 +24,7 @@ function MessageBadge({ badge }: { badge: ChatMessage['badge'] }) {
   );
 }
 
-/* ─── Chat message bubble ────────────────────────────────────── */
+/* === Chat message bubble ====================================== */
 
 function ChatBubble({ msg }: { msg: ChatMessage }) {
   const isSystem = msg.userId === 'system';
@@ -66,7 +66,7 @@ function ChatBubble({ msg }: { msg: ChatMessage }) {
   );
 }
 
-/* ─── Chat input ─────────────────────────────────────────────── */
+/* === Chat input =============================================== */
 
 function ChatInput({ onSend, disabled }: { onSend: (text: string) => void; disabled?: boolean }) {
   const [value, setValue] = useState('');
@@ -111,7 +111,7 @@ function ChatInput({ onSend, disabled }: { onSend: (text: string) => void; disab
   );
 }
 
-/* ─── Main Component ─────────────────────────────────────────── */
+/* === Main Component =========================================== */
 
 interface StreamChatProps {
   streamId: string;

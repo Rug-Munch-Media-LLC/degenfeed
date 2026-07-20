@@ -4,7 +4,7 @@ import { ErrorBoundary } from '@degenfeed/ui';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
-// ─── Types (matches API response from /api/subscription/my) ─────
+// === Types (matches API response from /api/subscription/my) =====
 
 interface MySubscription {
   creator: string;

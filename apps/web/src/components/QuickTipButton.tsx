@@ -15,7 +15,7 @@ interface QuickTipButtonProps {
   subtle?: boolean;
 }
 
-// ─── Fiat-to-crypto quick amounts ─────────────────────────────────────────
+// === Fiat-to-crypto quick amounts =========================================
 
 interface QuickAmount {
   fiat: string;

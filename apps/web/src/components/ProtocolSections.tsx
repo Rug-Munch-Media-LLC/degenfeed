@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-// ─── Types (mirror worker protocol-sections route) ─────────────────────────
+// === Types (mirror worker protocol-sections route) =========================
 
 interface SectionItem {
   id: string;

@@ -12,7 +12,7 @@
 import { useCallback } from 'react';
 import type { AggregatorSourceCount } from './useVideoHub';
 
-// ─── Platform config (order determines display order) ────────────────────
+// === Platform config (order determines display order) ====================
 
 export interface VideoSourceFilterOption {
   id: string;
@@ -70,7 +70,7 @@ export function VideoSourceFilter({
   );
 }
 
-// ─── Individual toggle button ────────────────────────────────────────────
+// === Individual toggle button ============================================
 
 interface SourceToggleProps {
   id: string;
@@ -137,7 +137,7 @@ function SourceToggle({
   );
 }
 
-// ─── Platform SVG icons (inline, no dangerouslySetInnerHTML) ────────────
+// === Platform SVG icons (inline, no dangerouslySetInnerHTML) ============
 
 const PLATFORM_SVGS: Record<string, React.ReactNode> = {
   youtube: (

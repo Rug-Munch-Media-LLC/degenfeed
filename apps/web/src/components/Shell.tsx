@@ -34,7 +34,7 @@ const WelcomeBackModal = dynamic(
 
 const _APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
 
-/* ─── Logo ─────────────────────────────────────────────────── */
+/* === Logo =================================================== */
 
 function _Logo() {
   return (
@@ -56,7 +56,7 @@ function _Logo() {
   );
 }
 
-/* ─── Page title ───────────────────────────────────────────── */
+/* === Page title ============================================= */
 
 const TITLE_OVERRIDES: Record<string, string> = {
   '/feed': 'Home',
@@ -103,7 +103,7 @@ function usePageTitle() {
   }, [pathname]);
 }
 
-/* ─── Desktop Header (scroll-aware) ───────────────────────── */
+/* === Desktop Header (scroll-aware) ========================= */
 
 function DesktopHeader({
   onSearchOpen,
@@ -210,7 +210,7 @@ function DesktopHeader({
   );
 }
 
-/* ─── Mobile top bar ───────────────────────────────────────── */
+/* === Mobile top bar ========================================= */
 
 function MobileTopBar({
   onMenuToggle,
@@ -312,7 +312,7 @@ function MobileTopBar({
   );
 }
 
-/* ─── Mobile slide-out drawer ──────────────────────────────── */
+/* === Mobile slide-out drawer ================================ */
 
 function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -374,7 +374,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
-/* ─── Shell main component ─────────────────────────────────── */
+/* === Shell main component =================================== */
 
 export const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   const { showToast } = useToast();
@@ -387,10 +387,10 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
   const { trackVisit } = useRecentVisited();
   const edgeSwipeStartX = useRef(0);
 
-  // ── Sidebar collapse state ──
+  // == Sidebar collapse state ==
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // ── Scroll-aware header visibility ──
+  // == Scroll-aware header visibility ==
   const [showDesktopHeader, setShowDesktopHeader] = useState(true);
   const lastScrollY = useRef(0);
 
@@ -412,7 +412,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // ── Swipe from left edge to open drawer on mobile ──
+  // == Swipe from left edge to open drawer on mobile ==
   useEffect(() => {
     if (mobileDrawerOpen) return;
     const isTopLevel =
@@ -458,7 +458,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     pathname.startsWith('/topics/') ||
     pathname.startsWith('/digest/');
 
-  // ── Protocol transition flash ──
+  // == Protocol transition flash ==
   const prevPathRef = useRef(pathname);
   useEffect(() => {
     const prev = prevPathRef.current;
@@ -592,7 +592,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
            DESKTOP: Three-column layout
       ══════════════════════════════════════════════════════════ */}
       <div className="mx-auto flex w-full max-w-[1260px] flex-1 pt-0 lg:pt-14">
-        {/* ── Left Sidebar (desktop, hide on landing page) ── */}
+        {/* == Left Sidebar (desktop, hide on landing page) == */}
         {pathname !== '/' && (
           <div
             className={`hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] shrink-0 overflow-y-auto border-r border-[var(--color-glass-border)] transition-[width] duration-200 ease-in-out ${sidebarWidth}`}
@@ -604,7 +604,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           </div>
         )}
 
-        {/* ── Center: Main content ── */}
+        {/* == Center: Main content == */}
         <main
           id="main"
           aria-label="Main content"
@@ -638,7 +638,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           </OnboardingProvider>
         </main>
 
-        {/* ── Right Sidebar (desktop) ── */}
+        {/* == Right Sidebar (desktop) == */}
         {pathname !== '/' &&
           !isSelfLayoutPage &&
           !['/farcaster', '/lens', '/bluesky', '/nostr', '/mastodon'].some(
@@ -655,7 +655,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       {/* Mobile bottom nav */}
       <BottomNav />
 
-      {/* ── Floating overlays ── */}
+      {/* == Floating overlays == */}
       <QuickJumpFloating />
       <ScrollToTop />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />

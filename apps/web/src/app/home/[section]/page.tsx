@@ -347,7 +347,7 @@ function SectionContent({ section }: { section: string }) {
             >
               {displayName}
             </span>
-            {/* ── Preset selector ── */}
+            {/* == Preset selector == */}
             <div className="relative flex items-center gap-1">
               <select
                 value={activePreset}

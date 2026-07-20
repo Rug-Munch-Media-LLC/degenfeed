@@ -15,7 +15,7 @@ import type { ChatMessage } from '../streams/useStreamChat';
 import { useStreamChat } from '../streams/useStreamChat';
 import { type GuestIdentity, PLATFORM_CONFIG, type SourcePlatform } from './types';
 
-/* ─── Constants ─────────────────────────────────────────────────── */
+/* === Constants =================================================== */
 
 const STORAGE_KEY = 'df_guest_identity';
 
@@ -30,7 +30,7 @@ const GUEST_NOUNS = [
   'Lynx', 'Hawk', 'Ape', 'Bull', 'Koala', 'Panda', 'Raven',
 ];
 
-/* ─── Helpers ───────────────────────────────────────────────────── */
+/* === Helpers ===================================================== */
 
 function generateGuestName(): string {
   const adj = GUEST_ADJECTIVES[Math.floor(Math.random() * GUEST_ADJECTIVES.length)] ?? 'Guest';
@@ -69,7 +69,7 @@ function loadGuestIdentity(platform: SourcePlatform, instance?: string): GuestId
   return identity;
 }
 
-/* ─── Props ─────────────────────────────────────────────────────── */
+/* === Props ======================================================= */
 
 interface GuestChatProps {
   streamId: string;
@@ -82,7 +82,7 @@ interface GuestChatProps {
   compact?: boolean;
 }
 
-/* ─── Message Bubble (guest-aware) ─────────────────────────────── */
+/* === Message Bubble (guest-aware) =============================== */
 
 function GuestMessageBubble({
   msg,
@@ -147,7 +147,7 @@ function GuestMessageBubble({
   );
 }
 
-/* ─── Guest Chat Input ─────────────────────────────────────────── */
+/* === Guest Chat Input =========================================== */
 
 function GuestChatInput({
   onSend,
@@ -211,7 +211,7 @@ function GuestChatInput({
   );
 }
 
-/* ─── Main Component ───────────────────────────────────────────── */
+/* === Main Component ============================================= */
 
 export function GuestChat({
   streamId,

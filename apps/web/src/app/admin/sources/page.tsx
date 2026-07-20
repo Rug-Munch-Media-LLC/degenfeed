@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 
-// ─── Types ────────────────────────────────────────────────────────────
+// === Types ============================================================
 
 type Platform = 'reddit' | 'youtube' | 'rss' | 'lemmy' | 'peertube' | 'newsletter';
 type SourceLifecycle = 'active' | 'stale' | 'dormant' | 'culled';
@@ -66,7 +66,7 @@ interface DiscoveryStats {
   }>;
 }
 
-// ─── Admin wallets ────────────────────────────────────────────────────
+// === Admin wallets ====================================================
 
 const ADMIN_WALLETS_RAW = process.env.NEXT_PUBLIC_ADMIN_WALLETS || '';
 const ADMIN_WALLETS = new Set(
@@ -118,7 +118,7 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-// ─── Component ────────────────────────────────────────────────────────
+// === Component ========================================================
 
 export default function AdminSourcesPage() {
   const { walletAddress } = useAuth();
@@ -328,7 +328,7 @@ export default function AdminSourcesPage() {
   const filteredPending =
     platformFilter === 'all' ? pending : pending.filter((s) => s.platform === platformFilter);
 
-  // ── Access denied ──
+  // == Access denied ==
 
   if (!loading && (!walletAddress || !isAdmin)) {
     return (
@@ -410,7 +410,7 @@ export default function AdminSourcesPage() {
         </div>
       )}
 
-      {/* ── Stats bar ── */}
+      {/* == Stats bar == */}
       {stats && (
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
           <StatCard label="Total Runs" value={String(stats.totalRuns)} />
@@ -434,7 +434,7 @@ export default function AdminSourcesPage() {
         </div>
       )}
 
-      {/* ── Last run info ── */}
+      {/* == Last run info == */}
       {stats?.lastRunAt && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2">
           <span className="text-xs text-[var(--color-muted)]">
@@ -450,7 +450,7 @@ export default function AdminSourcesPage() {
         </div>
       )}
 
-      {/* ── Tab navigation ── */}
+      {/* == Tab navigation == */}
       <div className="mb-6 flex flex-wrap gap-2 border-b border-[var(--color-border)] pb-2">
         {[
           { id: 'pending' as const, label: 'Pending Review', count: pending.length },
@@ -878,7 +878,7 @@ export default function AdminSourcesPage() {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────
+// === Sub-components ===================================================
 
 function StatCard({
   label,

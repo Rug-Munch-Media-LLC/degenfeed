@@ -60,7 +60,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/* ─── Kind tokens ──────────────────────────────────────────── */
+/* === Kind tokens ============================================ */
 
 function kindClasses(kind: ToastKind): string {
   switch (kind) {
@@ -77,7 +77,7 @@ function kindClasses(kind: ToastKind): string {
   }
 }
 
-/* ─── SVG Icons ────────────────────────────────────────────── */
+/* === SVG Icons ============================================== */
 
 function SuccessIcon() {
   return (
@@ -151,7 +151,7 @@ function kindIcon(kind: ToastKind): ReactNode {
   }
 }
 
-/* ─── Viewport ─────────────────────────────────────────────── */
+/* === Viewport =============================================== */
 
 function ToastViewport() {
   const { toasts, dismiss } = useToast();
@@ -169,7 +169,7 @@ function ToastViewport() {
   );
 }
 
-/* ─── Item ─────────────────────────────────────────────────── */
+/* === Item =================================================== */
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
   const [exiting, setExiting] = useState(false);
@@ -200,7 +200,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
     };
   }, [ms, handleDismiss]);
 
-  // ── Swipe to dismiss ──
+  // == Swipe to dismiss ==
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     startXRef.current = e.touches[0]?.clientX;
     setIsSwiping(true);

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { rerankResults } from '@/lib/fuzzySearch';
 
-// ─── Types ────────────────────────────────────────────────────
+// === Types ====================================================
 
 interface SearchResult {
   id: string;
@@ -59,7 +59,7 @@ interface SearchResponse {
   videos?: VideoResult[];
 }
 
-// ─── Constants ─────────────────────────────────────────────────
+// === Constants =================================================
 
 const RECENT_SEARCHES_KEY = 'df_recent_searches';
 const MAX_RECENT = 5;
@@ -84,7 +84,7 @@ const TRENDING_TOPICS = [
   { label: 'Gaming', query: 'gaming', icon: '🎮' },
 ];
 
-// ─── Helpers ───────────────────────────────────────────────────
+// === Helpers ===================================================
 
 function formatTime(ts: number): string {
   const diff = Date.now() - ts;
@@ -147,7 +147,7 @@ function saveRecentSearch(q: string): void {
   }
 }
 
-// ─── Flat item for keyboard nav ────────────────────────────────
+// === Flat item for keyboard nav ================================
 
 type ItemType = 'identity' | 'post' | 'community' | 'video';
 interface FlatItem {
@@ -155,7 +155,7 @@ interface FlatItem {
   data: IdentityResult | SearchResult | CommunityResult | VideoResult;
 }
 
-// ─── Sub-components ────────────────────────────────────────────
+// === Sub-components ============================================
 
 function SearchIcon({ loading }: { loading: boolean }) {
   if (loading) {
@@ -262,7 +262,7 @@ function getTrendingIcon(title: string): string {
   return '🔥';
 }
 
-// ─── Main Component ────────────────────────────────────────────
+// === Main Component ============================================
 
 export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [query, setQuery] = useState('');
@@ -554,7 +554,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       className="fixed inset-0 z-[65] flex items-start justify-center bg-black/60 pt-[15vh] backdrop-blur-sm"
     >
       <div className="w-full max-w-xl px-4">
-        {/* ── Search Input ── */}
+        {/* == Search Input == */}
         <div className="relative mb-2">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-muted)] pointer-events-none">
             <SearchIcon loading={loading} />
@@ -628,7 +628,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </button>
         </div>
 
-        {/* ── Protocol Filter Pills ── */}
+        {/* == Protocol Filter Pills == */}
         {query.length >= 2 && (
           <div className="mb-3 flex flex-wrap gap-1.5 px-1">
             {PROTOCOL_FILTERS.map((pf) => (
@@ -652,7 +652,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </div>
         )}
 
-        {/* ── Recent Searches ── */}
+        {/* == Recent Searches == */}
         {showRecent && (
           <div className="rounded-2xl bg-[var(--color-card)] shadow-lg shadow-black/10 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)]">
@@ -714,7 +714,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </div>
         )}
 
-        {/* ── Trending Searches ── */}
+        {/* == Trending Searches == */}
         {showTrending && (
           <div className="rounded-2xl bg-[var(--color-card)] shadow-lg shadow-black/10 overflow-hidden">
             <div className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)] border-b border-[var(--color-border)]">
@@ -736,7 +736,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </div>
         )}
 
-        {/* ── Empty state (no query, no recent/trending) ── */}
+        {/* == Empty state (no query, no recent/trending) == */}
         {!searched && !loading && !query && !showRecent && !showTrending && (
           <div className="rounded-2xl bg-[var(--color-card)] shadow-lg shadow-black/10 py-12 text-center">
             <div className="mb-4 text-[var(--color-muted)] opacity-30">
@@ -761,7 +761,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </div>
         )}
 
-        {/* ── Loading skeleton ── */}
+        {/* == Loading skeleton == */}
         {loading && (
           <div className="rounded-2xl bg-[var(--color-card)] shadow-lg shadow-black/10 p-3 space-y-2">
             {[1, 2, 3].map((i) => (
@@ -777,14 +777,14 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </div>
         )}
 
-        {/* ── Error ── */}
+        {/* == Error == */}
         {error && (
           <div className="rounded-2xl border border-red-900/50 bg-red-900/10 py-4 text-center">
             <p className="text-sm text-red-400">{error}</p>
           </div>
         )}
 
-        {/* ── Results Container ── */}
+        {/* == Results Container == */}
         {searched && !loading && !error && (
           <div
             ref={resultsContainerRef}
@@ -807,7 +807,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               </div>
             )}
 
-            {/* ── People Section ── */}
+            {/* == People Section == */}
             {identities.length > 0 && (
               <div>
                 <div className="sticky top-0 z-10 bg-[var(--color-card)]/95 backdrop-blur-sm px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)] border-b border-[var(--color-border)]">
@@ -862,7 +862,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               </div>
             )}
 
-            {/* ── Posts Section ── */}
+            {/* == Posts Section == */}
             {results.length > 0 && (
               <div>
                 <div className="sticky top-0 z-10 bg-[var(--color-card)]/95 backdrop-blur-sm px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)] border-b border-[var(--color-border)]">
@@ -949,7 +949,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               </div>
             )}
 
-            {/* ── Communities Section ── */}
+            {/* == Communities Section == */}
             {communities.length > 0 && (
               <div>
                 <div className="sticky top-0 z-10 bg-[var(--color-card)]/95 backdrop-blur-sm px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)] border-b border-[var(--color-border)]">
@@ -1010,7 +1010,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               </div>
             )}
 
-            {/* ── Videos Section ── */}
+            {/* == Videos Section == */}
             {videos.length > 0 && (
               <div>
                 <div className="sticky top-0 z-10 bg-[var(--color-card)]/95 backdrop-blur-sm px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-muted)] border-b border-[var(--color-border)]">
@@ -1083,7 +1083,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               </div>
             )}
 
-            {/* ── Footer: "View all results" link to search page ── */}
+            {/* == Footer: "View all results" link to search page == */}
             {query.length >= 2 && (
               <a
                 href={`/search?q=${encodeURIComponent(query)}${protocolFilter ? `&protocols=${protocolFilter}` : ''}`}

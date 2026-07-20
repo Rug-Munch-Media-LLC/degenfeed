@@ -12,7 +12,7 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 
-// ─── Types ────────────────────────────────────────────────────────────
+// === Types ============================================================
 
 export interface SessionPayload {
   address: string;
@@ -23,7 +23,7 @@ export interface SessionPayload {
 
 const COOKIE_NAME = '__Host-dfid';
 
-// ─── Helpers ──────────────────────────────────────────────────────────
+// === Helpers ==========================================================
 
 function decodeHex(hex: string): Buffer {
   return Buffer.from(hex, 'hex');
@@ -61,7 +61,7 @@ function parseCookie(cookieHeader: string | null): string | null {
   return null;
 }
 
-// ─── Low-level verify ─────────────────────────────────────────────────
+// === Low-level verify =================================================
 
 /**
  * Parse and verify the session cookie.
@@ -97,7 +97,7 @@ export async function verifySessionCookie(
   }
 }
 
-// ─── Guard helpers ────────────────────────────────────────────────────
+// === Guard helpers ====================================================
 
 /**
  * Add `X-Admin-Validated: true` header to a ResponseInit.

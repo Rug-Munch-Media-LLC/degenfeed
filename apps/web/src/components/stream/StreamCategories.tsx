@@ -2,7 +2,7 @@
 
 import { STREAM_CATEGORIES, type StreamCategory, getCategoryInfo } from './types';
 
-/* ─── Category Pill ──────────────────────────────────────────── */
+/* === Category Pill ============================================ */
 
 interface StreamCategoryPillProps {
   category: StreamCategory;
@@ -29,7 +29,7 @@ export function StreamCategoryPill({ category, active = false, onClick }: Stream
   );
 }
 
-/* ─── Category Bar ───────────────────────────────────────────── */
+/* === Category Bar ============================================= */
 
 interface StreamCategoriesBarProps {
   activeCategory?: StreamCategory | 'all';
@@ -65,7 +65,7 @@ export function StreamCategoriesBar({ activeCategory = 'all', onCategoryChange }
   );
 }
 
-/* ─── Category Grid (for discovery) ──────────────────────────── */
+/* === Category Grid (for discovery) ============================ */
 
 interface StreamCategoryGridProps {
   onSelectCategory?: (category: StreamCategory) => void;

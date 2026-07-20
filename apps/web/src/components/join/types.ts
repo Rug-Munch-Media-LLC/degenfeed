@@ -5,7 +5,7 @@
  * and stream/space data contracts used by join components.
  */
 
-/* ─── Source Platform ─────────────────────────────────────────── */
+/* === Source Platform =========================================== */
 
 export type SourcePlatform =
   | 'mastodon'
@@ -28,7 +28,7 @@ export const PLATFORM_IDS: SourcePlatform[] = [
   'direct',
 ];
 
-/* ─── Platform Metadata ───────────────────────────────────────── */
+/* === Platform Metadata ========================================= */
 
 export interface PlatformConfig {
   id: SourcePlatform;
@@ -115,7 +115,7 @@ export const PLATFORM_CONFIG: Record<SourcePlatform, PlatformConfig> = {
   },
 };
 
-/* ─── Guest Identity ──────────────────────────────────────────── */
+/* === Guest Identity ============================================ */
 
 export interface GuestIdentity {
   id: string;
@@ -124,7 +124,7 @@ export interface GuestIdentity {
   instance?: string;
 }
 
-/* ─── Stream Data (join-context subset) ───────────────────────── */
+/* === Stream Data (join-context subset) ========================= */
 
 export interface JoinStreamData {
   id: string;
@@ -140,7 +140,7 @@ export interface JoinStreamData {
   thumbnailUrl?: string;
 }
 
-/* ─── Space Data (join-context subset) ────────────────────────── */
+/* === Space Data (join-context subset) ========================== */
 
 export interface JoinSpaceData {
   id: string;
@@ -169,7 +169,7 @@ export interface JoinSpaceData {
   scheduledAt?: string;
 }
 
-/* ─── Analytics Payload ───────────────────────────────────────── */
+/* === Analytics Payload ========================================= */
 
 export interface StreamViewAnalytics {
   streamId: string;

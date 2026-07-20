@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import useSWR from 'swr';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 export interface TokenStream {
   id: string;
@@ -46,7 +46,7 @@ export interface UseTokenStreamsResult {
   refresh: () => void;
 }
 
-/* ─── Hook ───────────────────────────────────────────── */
+/* === Hook ============================================= */
 
 export function useActiveStream(tokenAddress: string): {
   stream: TokenStream | null;

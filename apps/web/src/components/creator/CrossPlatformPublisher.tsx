@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export interface PlatformOption {
   id: string;
@@ -38,7 +38,7 @@ interface CrossPlatformPublisherProps {
   showEditor?: boolean;
 }
 
-// ─── Platform Definitions ────────────────────────────────────────────────
+// === Platform Definitions ================================================
 
 const PLATFORMS: PlatformOption[] = [
   {
@@ -98,7 +98,7 @@ const PLATFORMS: PlatformOption[] = [
   },
 ];
 
-// ─── Platform Row ────────────────────────────────────────────────────────
+// === Platform Row ========================================================
 
 function PlatformRow({
   platform,
@@ -179,7 +179,7 @@ function PlatformRow({
   );
 }
 
-// ─── Main Component ──────────────────────────────────────────────────────
+// === Main Component ======================================================
 
 export default function CrossPlatformPublisher({
   contentId,
@@ -280,7 +280,7 @@ export default function CrossPlatformPublisher({
     setPublishing(false);
   }, []);
 
-  // ── Content ──────────────────────────────────────────────────────────
+  // == Content ==========================================================
 
   const body = (
     <div className="space-y-5">
@@ -428,7 +428,7 @@ export default function CrossPlatformPublisher({
     </div>
   );
 
-  // ── Modal mode ────────────────────────────────────────────────────────
+  // == Modal mode ========================================================
 
   if (mode === 'modal') {
     return (
@@ -462,7 +462,7 @@ export default function CrossPlatformPublisher({
     );
   }
 
-  // ── Inline mode ───────────────────────────────────────────────────────
+  // == Inline mode =======================================================
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">

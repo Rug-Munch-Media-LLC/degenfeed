@@ -17,7 +17,7 @@ interface BuySellInterfaceProps {
   onSell?: (amount: string) => void;
   className?: string;
 
-  // ── New Features ──────────────────────────────────────
+  // == New Features ======================================
 
   /** Flash sale active */
   flashSaleDiscount?: number;

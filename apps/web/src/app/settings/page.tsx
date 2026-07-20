@@ -30,7 +30,7 @@ import type { FontSize, NotificationType, Theme } from '../../hooks/usePreferenc
 import { usePreferences } from '../../hooks/usePreferences';
 import { usePremium } from '../../hooks/usePremium';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 type Section =
   | 'account'
@@ -95,7 +95,7 @@ const SECTION_LABELS: Record<Section, { label: string; icon: string; desc: strin
 const PROTOCOLS: Protocol[] = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
 const NOTIFICATION_TYPES: NotificationType[] = ['likes', 'reposts', 'replies', 'follows', 'tips'];
 
-/* ─── Collapsible Section ────────────────────────────────────── */
+/* === Collapsible Section ====================================== */
 
 function SettingsSection({
   section,
@@ -159,7 +159,7 @@ function SettingsSection({
   );
 }
 
-/* ─── Toggle Switch ──────────────────────────────────────────── */
+/* === Toggle Switch ============================================ */
 
 function Toggle({
   checked,
@@ -192,7 +192,7 @@ function Toggle({
   );
 }
 
-/* ─── Select Row ─────────────────────────────────────────────── */
+/* === Select Row =============================================== */
 
 function SelectRow({
   label,
@@ -228,7 +228,7 @@ function SelectRow({
   );
 }
 
-/* ─── Muted/Blocked Tag List ──────────────────────────────────── */
+/* === Muted/Blocked Tag List ==================================== */
 
 function TagList({
   items,
@@ -317,7 +317,7 @@ function TagList({
   );
 }
 
-/* ─── API Key Card ───────────────────────────────────────────── */
+/* === API Key Card ============================================= */
 
 function ApiKeyCard({
   name,
@@ -348,7 +348,7 @@ function ApiKeyCard({
   );
 }
 
-/* ─── Main Settings Page ─────────────────────────────────────── */
+/* === Main Settings Page ======================================= */
 
 export default function SettingsPage() {
   const { primaryIdentity, walletAddress, openSignIn, linkedIdentities } = useAuth();
@@ -429,7 +429,7 @@ export default function SettingsPage() {
   const [email, setEmail] = useState('');
   const [emailSaved, setEmailSaved] = useState(false);
 
-  // ── Hardware Wallet 2FA ──────────────────────────────────────
+  // == Hardware Wallet 2FA ======================================
   const { status: hw2FA, fetchStatus: fetchHw2FA, toggle2FA } = useHardwareWallet2FA();
   const [hw2faLoading, setHw2faLoading] = useState(true);
 
@@ -508,7 +508,7 @@ export default function SettingsPage() {
 
         {/* Sections */}
         <section className="space-y-3" aria-label="Settings sections">
-          {/* ─────────── ACCOUNT ─────────── */}
+          {/* =========== ACCOUNT =========== */}
           <SettingsSection
             section="account"
             isOpen={openSections.includes('account')}
@@ -703,7 +703,7 @@ export default function SettingsPage() {
             </div>
           </SettingsSection>
 
-          {/* ─────────── APPEARANCE ─────────── */}
+          {/* =========== APPEARANCE =========== */}
           <SettingsSection
             section="appearance"
             isOpen={openSections.includes('appearance')}
@@ -774,7 +774,7 @@ export default function SettingsPage() {
             </div>
           </SettingsSection>
 
-          {/* ─────────── NOTIFICATIONS ─────────── */}
+          {/* =========== NOTIFICATIONS =========== */}
           <SettingsSection
             section="notifications"
             isOpen={openSections.includes('notifications')}
@@ -831,7 +831,7 @@ export default function SettingsPage() {
             </div>
           </SettingsSection>
 
-          {/* ─────────── PRIVACY ─────────── */}
+          {/* =========== PRIVACY =========== */}
           <SettingsSection
             section="privacy"
             isOpen={openSections.includes('privacy')}
@@ -860,7 +860,7 @@ export default function SettingsPage() {
             />
           </SettingsSection>
 
-          {/* ─────────── SECURITY ─────────── */}
+          {/* =========== SECURITY =========== */}
           <SettingsSection
             section="security"
             isOpen={openSections.includes('security')}
@@ -914,7 +914,7 @@ export default function SettingsPage() {
             </a>
           </SettingsSection>
 
-          {/* ─────────── CONTENT ─────────── */}
+          {/* =========== CONTENT =========== */}
           <SettingsSection
             section="content"
             isOpen={openSections.includes('content')}
@@ -975,7 +975,7 @@ export default function SettingsPage() {
             </div>
           </SettingsSection>
 
-          {/* ─────────── SUBSCRIPTION ─────────── */}
+          {/* =========== SUBSCRIPTION =========== */}
           <SettingsSection
             section="subscription"
             isOpen={openSections.includes('subscription')}
@@ -1050,7 +1050,7 @@ export default function SettingsPage() {
                   </div>
                 )}
 
-                {/* ── Cross-Platform Accounts ── */}
+                {/* == Cross-Platform Accounts == */}
                 <div className="border-t border-[var(--color-glass-border)] pt-4">
                   <h4 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">
                     Cross-Platform Accounts
@@ -1070,7 +1070,7 @@ export default function SettingsPage() {
                     onUpgrade={() => setShowUpgradeModal(true)}
                   />
 
-                  {/* ── Portable Credentials ── */}
+                  {/* == Portable Credentials == */}
                   <div className="mt-6 border-t border-[var(--color-glass-border)] pt-4">
                     <h4 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
                       Your Portable Credentials
@@ -1100,7 +1100,7 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                {/* ── Cross-Platform Preview (shows upgrade prompt) ── */}
+                {/* == Cross-Platform Preview (shows upgrade prompt) == */}
                 <div className="border-t border-[var(--color-glass-border)] pt-4">
                   <h4 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">
                     Cross-Platform Accounts
@@ -1116,7 +1116,7 @@ export default function SettingsPage() {
                     onUpgrade={() => setShowUpgradeModal(true)}
                   />
 
-                  {/* ── Portable Credentials ── */}
+                  {/* == Portable Credentials == */}
                   {isPremium && (
                     <div className="mt-6 border-t border-[var(--color-glass-border)] pt-4">
                       <h4 className="mb-1 text-sm font-semibold text-[var(--color-fg)]">
@@ -1134,7 +1134,7 @@ export default function SettingsPage() {
             )}
           </SettingsSection>
 
-          {/* ─────────── API ─────────── */}
+          {/* =========== API =========== */}
           <SettingsSection
             section="api"
             isOpen={openSections.includes('api')}
@@ -1181,7 +1181,7 @@ export default function SettingsPage() {
           </SettingsSection>
         </section>
 
-        {/* ─── Sticky Save Footer ─── */}
+        {/* === Sticky Save Footer === */}
         <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--color-glass-border)] bg-[var(--color-card)]/95 backdrop-blur-xl px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:static sm:mt-6 sm:border-0 sm:bg-transparent sm:backdrop-blur-none sm:px-0 sm:py-0 lg:pb-3">
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
             <div className="text-xs text-[var(--color-muted)]">
@@ -1223,7 +1223,7 @@ export default function SettingsPage() {
   );
 }
 
-// ─── Credentials display for registered accounts ─────────────────────────
+// === Credentials display for registered accounts =========================
 
 function AccountsCredentialsDisplay({ walletAddress }: { walletAddress?: string }) {
   const [accounts, setAccounts] = useState<PlatformAccount[]>([]);

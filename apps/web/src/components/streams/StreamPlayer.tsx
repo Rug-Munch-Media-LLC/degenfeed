@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import type { LiveStream } from './useLiveStreams';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface StreamPlayerProps {
   stream: LiveStream;
@@ -11,7 +11,7 @@ interface StreamPlayerProps {
   onFullscreen?: () => void;
 }
 
-/* ─── Play Icon ──────────────────────────────────────────────── */
+/* === Play Icon ================================================ */
 
 function PlayIcon() {
   return (
@@ -100,7 +100,7 @@ function CloseIcon() {
   );
 }
 
-/* ─── Embbed Player (PeerTube / Huddle01) ───────────────────── */
+/* === Embbed Player (PeerTube / Huddle01) ===================== */
 
 function VideoEmbed({ stream }: { stream: LiveStream }) {
   // Use a placeholder / gradient when no real embed is configured
@@ -134,7 +134,7 @@ function VideoEmbed({ stream }: { stream: LiveStream }) {
   );
 }
 
-/* ─── Component ──────────────────────────────────────────────── */
+/* === Component ================================================ */
 
 export function StreamPlayer({ stream, onClose, onFullscreen }: StreamPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(true);

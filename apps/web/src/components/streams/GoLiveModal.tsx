@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { StreamType } from './useLiveStreams';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface GoLiveForm {
   title: string;
@@ -20,7 +20,7 @@ interface GoLiveModalProps {
   onStart: (data: GoLiveForm) => void;
 }
 
-/* ─── Stream type config ─────────────────────────────────────── */
+/* === Stream type config ======================================= */
 
 const STREAM_OPTIONS: Array<{
   type: StreamType;
@@ -59,7 +59,7 @@ const STREAM_OPTIONS: Array<{
   },
 ];
 
-/* ─── TypeSelector ───────────────────────────────────────────── */
+/* === TypeSelector ============================================= */
 
 function TypeSelector({
   selected,
@@ -111,7 +111,7 @@ function TypeSelector({
   );
 }
 
-/* ─── Token gate configuration ───────────────────────────────── */
+/* === Token gate configuration ================================= */
 
 function TokenGateConfig({
   enabled,
@@ -207,7 +207,7 @@ function TokenGateConfig({
   );
 }
 
-/* ─── Main Modal ─────────────────────────────────────────────── */
+/* === Main Modal =============================================== */
 
 export function GoLiveModal({ isOpen, onClose, onStart }: GoLiveModalProps) {
   const [form, setForm] = useState<GoLiveForm>({

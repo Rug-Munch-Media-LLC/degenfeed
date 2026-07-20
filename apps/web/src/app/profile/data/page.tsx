@@ -26,7 +26,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { useToast } from '../../../components/Toast';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface ExportState {
   status: 'idle' | 'collecting' | 'downloading' | 'done' | 'error';
@@ -143,7 +143,7 @@ const HOSTED_INSTANCES = [
   },
 ];
 
-/* ─── Skeletons ───────────────────────────────────────────────── */
+/* === Skeletons ================================================= */
 
 function _SectionSkeleton() {
   return (
@@ -161,7 +161,7 @@ function _SectionSkeleton() {
   );
 }
 
-/* ─── Section Component ──────────────────────────────────────── */
+/* === Section Component ======================================== */
 
 function DataSection({
   title,
@@ -206,7 +206,7 @@ function DataSection({
   );
 }
 
-/* ─── Main Page ───────────────────────────────────────────────── */
+/* === Main Page ================================================= */
 
 export default function DataPage() {
   const { primaryIdentity, linkedIdentities, signOut } = useAuth();
@@ -223,7 +223,7 @@ export default function DataPage() {
   const displayName = primaryIdentity?.displayName ?? 'User';
   const hasIdentities = (primaryIdentity ? 1 : 0) + linkedIdentities.length > 0;
 
-  /* ─── Load data stats ─────────────────────────────────────── */
+  /* === Load data stats ======================================= */
 
   useEffect(() => {
     let cancelled = false;
@@ -273,7 +273,7 @@ export default function DataPage() {
     };
   }, [primaryIdentity?.id]);
 
-  /* ─── Collect all user data from IndexedDB ────────────────── */
+  /* === Collect all user data from IndexedDB ================== */
 
   const collectAllData = useCallback(async (): Promise<Record<string, unknown>> => {
         const identityId = primaryIdentity?.id ?? '';
@@ -472,7 +472,7 @@ export default function DataPage() {
     };
   }, [primaryIdentity]);
 
-  /* ─── Collect portable credentials ────────────────────────── */
+  /* === Collect portable credentials ========================== */
 
   const collectCredentials = useCallback(async (): Promise<Array<Record<string, unknown>>> => {
     const identities = await getAllIdentities().catch(() => [] as StoredIdentity[]);
@@ -541,7 +541,7 @@ export default function DataPage() {
       });
   }, []);
 
-  /* ─── Export all data ─────────────────────────────────────── */
+  /* === Export all data ======================================= */
 
   const handleExportAll = useCallback(async () => {
     setExportState({ status: 'collecting' });
@@ -584,7 +584,7 @@ export default function DataPage() {
     }
   }, [collectAllData, showToast]);
 
-  /* ─── Export credentials ──────────────────────────────────── */
+  /* === Export credentials ==================================== */
 
   const handleExportCredentials = useCallback(async () => {
     setCredExportState({ status: 'preparing' });
@@ -626,7 +626,7 @@ export default function DataPage() {
     }
   }, [collectCredentials, showToast]);
 
-  /* ─── Delete account ──────────────────────────────────────── */
+  /* === Delete account ======================================== */
 
   const handleDeleteAccount = useCallback(async () => {
     setDeleteState({ status: 'deleting' });
@@ -657,7 +657,7 @@ export default function DataPage() {
     }
   }, [signOut]);
 
-  /* ─── Export single category ──────────────────────────────── */
+  /* === Export single category ================================ */
 
   const handleExportCategory = useCallback(
     async (category: DataCategory) => {
@@ -731,7 +731,7 @@ export default function DataPage() {
     [primaryIdentity, showToast],
   );
 
-  /* ─── Render ──────────────────────────────────────────────── */
+  /* === Render ================================================ */
 
   const isExporting = exportState.status === 'collecting' || exportState.status === 'downloading';
   const isCredExporting =

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { retryFetch } from '../../lib/retryFetch';
 
-// ── Types ─────────────────────────────────────────────────────────────────
+// == Types =================================================================
 
 interface TrendingTopic {
   topic: string;
@@ -19,7 +19,7 @@ interface TimeFilter {
   windowHours: number;
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────
+// == Constants =============================================================
 
 const TIME_FILTERS: TimeFilter[] = [
   { id: 'now', label: 'Now', windowHours: 1 },
@@ -63,7 +63,7 @@ function formatScore(score: number): string {
   return score.toFixed(0);
 }
 
-// ── Skeleton ──────────────────────────────────────────────────────────────
+// == Skeleton ==============================================================
 
 function TrendingSkeleton() {
   return (
@@ -82,7 +82,7 @@ function TrendingSkeleton() {
   );
 }
 
-// ── Topic Card ────────────────────────────────────────────────────────────
+// == Topic Card ============================================================
 
 function TopicCard({
   topic,
@@ -185,7 +185,7 @@ function TopicCard({
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────
+// == Main Page =============================================================
 
 export default function TrendingPage() {
   const [activeFilter, setActiveFilter] = useState<TimeFilter>(TIME_FILTERS[1]!); // default Today

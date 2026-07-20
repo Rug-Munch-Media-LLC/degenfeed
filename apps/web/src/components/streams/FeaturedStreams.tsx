@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { LiveStreamCard } from './LiveStreamCard';
 import type { LiveStream } from './useLiveStreams';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface FeaturedStreamsProps {
   streams: LiveStream[];
@@ -12,7 +12,7 @@ interface FeaturedStreamsProps {
   onPlay?: (stream: LiveStream) => void;
 }
 
-/* ─── Scroll arrow button ────────────────────────────────────── */
+/* === Scroll arrow button ====================================== */
 
 function ScrollArrow({
   direction,
@@ -50,7 +50,7 @@ function ScrollArrow({
   );
 }
 
-/* ─── Featured section skeleton ──────────────────────────────── */
+/* === Featured section skeleton ================================ */
 
 function FeaturedSkeleton() {
   return (
@@ -71,7 +71,7 @@ function FeaturedSkeleton() {
   );
 }
 
-/* ─── Component ──────────────────────────────────────────────── */
+/* === Component ================================================ */
 
 export function FeaturedStreams({ streams, isLoading = false, onPlay }: FeaturedStreamsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);

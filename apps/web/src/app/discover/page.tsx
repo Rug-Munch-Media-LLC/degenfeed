@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CATEGORIES, CategoryCard } from '../../components/CategoryCard';
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 interface TrendingPost {
   id: string;
@@ -67,7 +67,7 @@ interface FeaturedSpace {
   scheduledAt?: string;
 }
 
-// ─── Topic metadata ────────────────────────────────────────────────────────
+// === Topic metadata ========================================================
 
 const TOPIC_META: Record<string, { emoji: string; color: string; label: string }> = {
   bitcoin: { emoji: '\u20BF', color: '#f7931a', label: 'Bitcoin' },
@@ -96,7 +96,7 @@ function topicSlug(topic: string): string {
   return topic.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// === Helpers ===============================================================
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -121,7 +121,7 @@ function stripHtml(html: string): string {
     .slice(0, 120);
 }
 
-// ─── Section Skeleton ──────────────────────────────────────────────────────
+// === Section Skeleton ======================================================
 
 function SectionSkeleton({
   count = 3,
@@ -151,7 +151,7 @@ function TopicPillsSkeleton() {
   );
 }
 
-// ─── Section Header ───────────────────────────────────────────────────────
+// === Section Header =======================================================
 
 function SectionHeader({
   emoji,
@@ -185,7 +185,7 @@ function SectionHeader({
   );
 }
 
-// ─── Trending Post Card ────────────────────────────────────────────────────
+// === Trending Post Card ====================================================
 
 function TrendingPostCard({
   post,
@@ -251,7 +251,7 @@ function TrendingPostCard({
   );
 }
 
-// ─── Community Card ────────────────────────────────────────────────────────
+// === Community Card ========================================================
 
 function CommunityCard({ community }: { community: DiscoverCommunity }) {
   const activityColor =
@@ -323,7 +323,7 @@ function CommunityCard({ community }: { community: DiscoverCommunity }) {
   );
 }
 
-// ─── Person Card ──────────────────────────────────────────────────────────
+// === Person Card ==========================================================
 
 function PersonCard({ person }: { person: DiscoverPerson }) {
   return (
@@ -380,7 +380,7 @@ function PersonCard({ person }: { person: DiscoverPerson }) {
   );
 }
 
-// ─── Topic Pill ────────────────────────────────────────────────────────────
+// === Topic Pill ============================================================
 
 function TopicPill({ topic, count }: { topic: TrendingTopic; count: number }) {
   const meta = getTopicMeta(topic.topic);
@@ -397,7 +397,7 @@ function TopicPill({ topic, count }: { topic: TrendingTopic; count: number }) {
   );
 }
 
-// ─── Space Card ────────────────────────────────────────────────────────────
+// === Space Card ============================================================
 
 function SpaceCard({ space }: { space: FeaturedSpace }) {
   const isLive = space.status === 'live';
@@ -432,7 +432,7 @@ function SpaceCard({ space }: { space: FeaturedSpace }) {
   );
 }
 
-// ─── New Item Card ─────────────────────────────────────────────────────────
+// === New Item Card =========================================================
 
 function NewItemCard({
   name,
@@ -486,7 +486,7 @@ function NewItemCard({
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────
+// === Main Page =============================================================
 
 export default function DiscoverPage() {
   const [trendingPosts, setTrendingPosts] = useState<TrendingPost[]>([]);
@@ -555,7 +555,7 @@ export default function DiscoverPage() {
     'loading' | 'loaded' | 'empty' | 'error'
   >('loading');
 
-  // ── Creator Discovery state ──
+  // == Creator Discovery state ==
   const [trendingCreators, setTrendingCreators] = useState<DiscoverPerson[]>([]);
   const [trendingCreatorsState, setTrendingCreatorsState] = useState<
     'loading' | 'loaded' | 'empty' | 'error'
@@ -756,7 +756,7 @@ export default function DiscoverPage() {
     setTrendingPeriod(period);
   }, []);
 
-  // ── Creator search ──
+  // == Creator search ==
   const doCreatorSearch = useCallback(async (q: string) => {
     if (q.length < 2) {
       setCreatorSearchResults([]);

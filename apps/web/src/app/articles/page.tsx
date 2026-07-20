@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatTimeAgo } from '@degenfeed/utils';
 
-// ─── Types ─────────────────────────────────────────────────────────
+// === Types =========================================================
 
 interface GhostPost {
   id: string;
@@ -22,7 +22,7 @@ interface GhostPost {
   minTokenHold?: string;
 }
 
-// ─── Article Card ──────────────────────────────────────────────────
+// === Article Card ==================================================
 
 function ArticleCard({ post }: { post: GhostPost }) {
   return (
@@ -85,7 +85,7 @@ function ArticleCard({ post }: { post: GhostPost }) {
   );
 }
 
-// ─── Loading Grid ──────────────────────────────────────────────────
+// === Loading Grid ==================================================
 
 function LoadingGrid() {
   return (
@@ -103,7 +103,7 @@ function LoadingGrid() {
   );
 }
 
-// ─── Newsletter Banner ─────────────────────────────────────────────
+// === Newsletter Banner =============================================
 
 function NewsletterBanner() {
   const [email, setEmail] = useState('');
@@ -167,7 +167,7 @@ function NewsletterBanner() {
   );
 }
 
-// ─── Filter Bar ────────────────────────────────────────────────────
+// === Filter Bar ====================================================
 
 function FilterBar({
   tags,
@@ -209,7 +209,7 @@ function FilterBar({
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────
+// === Main Page =====================================================
 
 export default function ArticlesPage() {
   const [posts, setPosts] = useState<GhostPost[]>([]);

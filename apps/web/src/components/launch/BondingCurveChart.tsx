@@ -21,7 +21,7 @@ interface BondingCurveChartProps {
   onRetry?: () => void;
   className?: string;
 
-  // ── New Features ──────────────────────────────────────
+  // == New Features ======================================
 
   /** User's past buy points for "You bought here" markers */
   userBuys?: Array<{ timestamp: number; price: number; amount: number }>;
@@ -78,7 +78,7 @@ export default function BondingCurveChart({
   const width = 500;
   const volumeHeight = compact ? 0 : 30;
 
-  // ── Swipe handler for timeframe change on mobile ──────
+  // == Swipe handler for timeframe change on mobile ======
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0]!.clientX;
@@ -98,7 +98,7 @@ export default function BondingCurveChart({
     }
   }, [timeframe, onTimeframeChange]);
 
-  // ── Generate curve points ──────────────────────────────
+  // == Generate curve points ==============================
 
   const points = useMemo(() => {
     if (priceHistory && priceHistory.length >= 2) return priceHistory;
@@ -130,7 +130,7 @@ export default function BondingCurveChart({
     return [];
   }, [price, trades, priceHistory]);
 
-  // ── SVG path calculations ──────────────────────────────
+  // == SVG path calculations ==============================
 
   const { pathDef, gradientId, maxPrice, minPrice, timeRange, minTime } = useMemo(() => {
     if (points.length < 2) {
@@ -174,7 +174,7 @@ export default function BondingCurveChart({
   const isUp = lastVal >= firstVal;
   const lineColor = isUp ? 'var(--color-accent)' : 'var(--color-danger)';
 
-  // ── Volume bars ────────────────────────────────────────
+  // == Volume bars ========================================
 
   const volumeBars = useMemo(() => {
     if (!volumeData?.length) return [];
@@ -186,7 +186,7 @@ export default function BondingCurveChart({
     }));
   }, [volumeData, minTime, timeRange]);
 
-  // ── Prediction line points ─────────────────────────────
+  // == Prediction line points =============================
 
   const predictionPoints = useMemo(() => {
     if (!points.length || !priceAfter10Buys && !priceAfter50Buys) return null;
@@ -204,7 +204,7 @@ export default function BondingCurveChart({
     return predictions;
   }, [points, priceAfter10Buys, priceAfter50Buys]);
 
-  // ── User buy markers ──────────────────────────────────
+  // == User buy markers ==================================
 
   const userBuyMarkers = useMemo(() => {
     if (!userBuys?.length || timeRange <= 1) return [];
@@ -215,11 +215,11 @@ export default function BondingCurveChart({
     }));
   }, [userBuys, minTime, timeRange, height, maxPrice, minPrice, volumeHeight]);
 
-  // ── Era color ─────────────────────────────────────────
+  // == Era color =========================================
 
   const eraColor = eraName ? ERA_COLORS[eraName] ?? '#22c55e' : '#22c55e';
 
-  // ── Loading skeleton ───────────────────────────────────
+  // == Loading skeleton ===================================
 
   if (loading) {
     return (
@@ -229,7 +229,7 @@ export default function BondingCurveChart({
     );
   }
 
-  // ── Error state ────────────────────────────────────────
+  // == Error state ========================================
 
   if (error) {
     return (
@@ -251,7 +251,7 @@ export default function BondingCurveChart({
     );
   }
 
-  // ── Empty state ────────────────────────────────────────
+  // == Empty state ========================================
 
   if (points.length < 2) {
     return (

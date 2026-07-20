@@ -21,7 +21,7 @@ import { VideoSourceBadge } from '../../../components/video/VideoSourceBadge';
 import { VideoRow } from '../../../components/video/VideoRow';
 import type { UnifiedVideo } from '../../../components/video/useVideoHub';
 
-// ─── Mock data for demonstration ──────────────────────────────────────────
+// === Mock data for demonstration ==========================================
 
 function getMockVideo(id: string): UnifiedVideo | null {
   const idx = Number(id.split('-').pop()) || 0;
@@ -120,7 +120,7 @@ function formatViews(views: number): string {
   return String(views);
 }
 
-// ─── Page Component ──────────────────────────────────────────────────────
+// === Page Component ======================================================
 
 export default function VideoDetailPage() {
   const params = useParams<{ id: string }>();

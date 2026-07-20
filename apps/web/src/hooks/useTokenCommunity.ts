@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import type { TokenComment } from './useLiveComments';
 import type { TokenStream } from './useTokenStreams';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 export interface HolderEntry {
   wallet: string;
@@ -44,7 +44,7 @@ export interface UseTokenCommunityResult {
   refresh: () => void;
 }
 
-/* ─── Hook ───────────────────────────────────────────── */
+/* === Hook ============================================= */
 
 export function useTokenCommunity(tokenAddress: string): UseTokenCommunityResult {
   const { data, error, isLoading, mutate } = useSWR<CommunityData>(
@@ -70,7 +70,7 @@ export function useTokenCommunity(tokenAddress: string): UseTokenCommunityResult
   };
 }
 
-/* ─── Token progress helper for milestones ──────────── */
+/* === Token progress helper for milestones ============ */
 
 export function useTokenProgress(tokenAddress: string): {
   stats: { holders: number; volume: number; price: number; daysAlive: number };

@@ -116,7 +116,7 @@ export function ContinueWatching({
   );
 }
 
-// ─── Barrel export for convenience ───────────────────────────────────────
+// === Barrel export for convenience =======================================
 
 export {
   RecommendedRow,

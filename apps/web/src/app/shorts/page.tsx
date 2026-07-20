@@ -27,7 +27,7 @@ import { ShortsSourceBar } from '../../components/shorts/ShortsSourceBar';
 import type { ShortSource, UnifiedShortItem } from '../../hooks/useUnifiedShorts';
 import { useUnifiedShorts } from '../../hooks/useUnifiedShorts';
 
-// ─── Adapter: UnifiedShortItem → ShortVideoCard post shape ──────────────
+// === Adapter: UnifiedShortItem → ShortVideoCard post shape ==============
 
 /**
  * Map unified source names (used by the API) to the Protocol union
@@ -90,7 +90,7 @@ function unifiedShortToPost(short: UnifiedShortItem, idx: number) {
   };
 }
 
-// ─── Page Component ─────────────────────────────────────────────────────
+// === Page Component =====================================================
 
 export default function ShortsPage() {
   const [topicFilter, setTopicFilter] = useState<string[]>(() => {
@@ -118,7 +118,7 @@ export default function ShortsPage() {
 
   return (
     <ErrorBoundary>
-      {/* ── Video feed container ── */}
+      {/* == Video feed container == */}
       <section
         className="fixed inset-0 z-40 overflow-y-scroll snap-y snap-mandatory overscroll-none"
         style={{ backgroundColor: '#000', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -274,7 +274,7 @@ export default function ShortsPage() {
         )}
       </section>
 
-      {/* ── Persistent UI chrome ── */}
+      {/* == Persistent UI chrome == */}
       <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex flex-col gap-1.5 px-4 pt-3">
         {/* Top bar */}
         <div className="pointer-events-auto flex items-center justify-between">
@@ -343,7 +343,7 @@ export default function ShortsPage() {
           </button>
         </div>
 
-        {/* ── Source bar — protocol breakdown ── */}
+        {/* == Source bar — protocol breakdown == */}
         {unifiedFeed.sources && unifiedFeed.shorts.length > 0 && (
           <div className="pointer-events-auto overflow-x-auto">
             <ShortsSourceBar
@@ -355,12 +355,12 @@ export default function ShortsPage() {
         )}
       </div>
 
-      {/* ── Topic filter chips ── */}
+      {/* == Topic filter chips == */}
       {unifiedFeed.shorts.length > 0 && (
         <ShortTopicsBar topics={topicFilter} onChange={setTopicFilter} />
       )}
 
-      {/* ── Create short modal ── */}
+      {/* == Create short modal == */}
       <CreateShortModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
@@ -372,7 +372,7 @@ export default function ShortsPage() {
   );
 }
 
-// ─── Topic Filter Chips ─────────────────────────────────────────────────
+// === Topic Filter Chips =================================================
 
 function ShortTopicsBar({
   topics,

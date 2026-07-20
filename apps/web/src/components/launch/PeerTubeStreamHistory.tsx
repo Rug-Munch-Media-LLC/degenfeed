@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePeerTubeStream, type StreamHistoryItem } from '../../hooks/usePeerTubeStream';
 import { useIsMobile } from '../../hooks/useMobileResponsive';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 interface PeerTubeStreamHistoryProps {
   tokenAddress: string;
@@ -12,7 +12,7 @@ interface PeerTubeStreamHistoryProps {
   limit?: number;
 }
 
-/* ─── Helpers ────────────────────────────────────────── */
+/* === Helpers ========================================== */
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -38,7 +38,7 @@ function formatDate(iso: string): string {
   });
 }
 
-/* ─── Main Component ────────────────────────────────── */
+/* === Main Component ================================== */
 
 export default function PeerTubeStreamHistory({
   tokenAddress,

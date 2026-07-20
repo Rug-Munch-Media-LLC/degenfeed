@@ -10,7 +10,7 @@ import {
 } from '../../components/pricing/PricingTable';
 import { type PremiumTier, TIERS, usePremium } from '../../hooks/usePremium';
 
-/* ─── Free forever callout ───────────────────────────────────── */
+/* === Free forever callout ===================================== */
 
 function FreeForeverBanner() {
   return (
@@ -35,7 +35,7 @@ function FreeForeverBanner() {
   );
 }
 
-/* ─── Token generation fee explainer ────────────────────────── */
+/* === Token generation fee explainer ========================== */
 
 function TokenGenerationFeeExplainer() {
   return (
@@ -109,7 +109,7 @@ function TokenGenerationFeeExplainer() {
   );
 }
 
-/* ─── Enterprise contact section ────────────────────────────── */
+/* === Enterprise contact section ============================== */
 
 function EnterpriseSection() {
   return (
@@ -165,7 +165,7 @@ function EnterpriseSection() {
   );
 }
 
-/* ─── FAQ ────────────────────────────────────────────────────── */
+/* === FAQ ====================================================== */
 
 const FAQS = [
   {
@@ -210,7 +210,7 @@ const FAQS = [
   },
 ];
 
-/* ─── Testimonials ───────────────────────────────────────────── */
+/* === Testimonials ============================================= */
 
 const TESTIMONIALS = [
   {
@@ -236,7 +236,7 @@ const TESTIMONIALS = [
   },
 ];
 
-/* ─── Page ───────────────────────────────────────────────────── */
+/* === Page ===================================================== */
 
 const TIER_ID_MAP: Record<string, PremiumTier> = {
   Basic: 'basic',
@@ -268,7 +268,7 @@ export default function PremiumPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12 animate-page-enter">
-      {/* ── Hero ── */}
+      {/* == Hero == */}
       <div className="mb-8 text-center">
         <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-degen-500/10 border border-degen-500/20 px-4 py-1.5">
           <span className="text-sm" aria-hidden="true">🪄</span>
@@ -294,7 +294,7 @@ export default function PremiumPage() {
         )}
       </div>
 
-      {/* ── Billing toggle ── */}
+      {/* == Billing toggle == */}
       <div className="mb-8 flex items-center justify-center gap-3">
         <span className={`text-sm font-medium ${!annualBilling ? 'text-[var(--color-fg)]' : 'text-[var(--color-muted)]'}`}>
           Monthly
@@ -323,12 +323,12 @@ export default function PremiumPage() {
         </span>
       </div>
 
-      {/* ── Free Forever Banner ── */}
+      {/* == Free Forever Banner == */}
       <div className="mb-8">
         <FreeForeverBanner />
       </div>
 
-      {/* ── Four-Tier Grid ── */}
+      {/* == Four-Tier Grid == */}
       <div className="mb-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {pricingTiers.map((tier) => (
           <PricingCard
@@ -340,7 +340,7 @@ export default function PremiumPage() {
         ))}
       </div>
 
-      {/* ── Pricing summary callout ── */}
+      {/* == Pricing summary callout == */}
       <div className="mb-12 rounded-2xl border border-degen-500/10 bg-gradient-to-r from-degen-500/[0.03] to-transparent p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
@@ -361,7 +361,7 @@ export default function PremiumPage() {
         </div>
       </div>
 
-      {/* ── Token Generation Fee Explainer ── */}
+      {/* == Token Generation Fee Explainer == */}
       <div className="mb-12">
         <div className="mb-4 flex items-center gap-3">
           <h2 className="text-lg font-bold text-[var(--color-fg)]">Creator Coin Pricing</h2>
@@ -370,7 +370,7 @@ export default function PremiumPage() {
         <TokenGenerationFeeExplainer />
       </div>
 
-      {/* ── Full Comparison Table ── */}
+      {/* == Full Comparison Table == */}
       <div className="mb-12">
         <div className="mb-4 flex items-center gap-3">
           <h2 className="text-lg font-bold text-[var(--color-fg)]">Compare All Features</h2>
@@ -379,12 +379,12 @@ export default function PremiumPage() {
         <ComparisonTable />
       </div>
 
-      {/* ── Enterprise Section ── */}
+      {/* == Enterprise Section == */}
       <div className="mb-12">
         <EnterpriseSection />
       </div>
 
-      {/* ── Profit Transparency ── */}
+      {/* == Profit Transparency == */}
       <div className="mb-12">
         <div className="mb-4 flex items-center gap-3">
           <h2 className="text-lg font-bold text-[var(--color-fg)]">How We Make Money</h2>
@@ -447,7 +447,7 @@ export default function PremiumPage() {
         </div>
       </div>
 
-      {/* ── Testimonials ── */}
+      {/* == Testimonials == */}
       <div className="mb-12">
         <div className="mb-4 flex items-center gap-3">
           <h2 className="text-lg font-bold text-[var(--color-fg)]">What Creators Say</h2>
@@ -479,7 +479,7 @@ export default function PremiumPage() {
         </div>
       </div>
 
-      {/* ── FAQ ── */}
+      {/* == FAQ == */}
       <div className="mb-12">
         <div className="mb-4 flex items-center gap-3">
           <h2 className="text-lg font-bold text-[var(--color-fg)]">Frequently Asked Questions</h2>
@@ -514,7 +514,7 @@ export default function PremiumPage() {
         </div>
       </div>
 
-      {/* ── Footer ── */}
+      {/* == Footer == */}
       <div className="text-center space-y-2">
         <p className="text-xs text-[var(--color-muted)]">
           All paid features are open source and available in our{' '}
@@ -534,7 +534,7 @@ export default function PremiumPage() {
         </p>
       </div>
 
-      {/* ── Payment Modal ── */}
+      {/* == Payment Modal == */}
       <PremiumPaymentModal
         open={showModal}
         onClose={() => {

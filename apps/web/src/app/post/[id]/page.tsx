@@ -20,7 +20,7 @@ import { Breadcrumbs } from '../../../components/Breadcrumbs';
 import { QuickTipButton } from '../../../components/QuickTipButton';
 import { sanitizeHtml } from '../../../lib/sanitize';
 
-// ─── Read time helper ─────────────────────────────────────────
+// === Read time helper =========================================
 
 const WORDS_PER_MINUTE = 200;
 

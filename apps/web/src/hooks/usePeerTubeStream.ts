@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useSWR from 'swr';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 export interface PeerTubeStreamData {
   id: string;
@@ -125,7 +125,7 @@ export interface StreamHistoryItem {
   embedUrl: string;
 }
 
-/* ─── Fetcher ────────────────────────────────────────── */
+/* === Fetcher ========================================== */
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -133,7 +133,7 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-/* ─── Hook ───────────────────────────────────────────── */
+/* === Hook ============================================= */
 
 export function usePeerTubeStream(
   tokenAddress: string,

@@ -6,7 +6,7 @@ import { useWeb3 } from '../../../components/Web3Provider';
 import { getCached, setCache } from '../../../lib/fetchWithCache';
 import { retryFetch } from '../../../lib/retryFetch';
 
-/* ── Types ── */
+/* == Types == */
 
 interface TopPost {
   id: string;
@@ -78,7 +78,7 @@ interface AnalyticsData {
   isMock: boolean;
 }
 
-/* ── Constants ── */
+/* == Constants == */
 
 const PROTOCOL_COLORS: Record<string, string> = {
   nostr: '#8e30eb',
@@ -149,7 +149,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'earnings', label: 'Earnings' },
 ];
 
-/* ── Helpers ── */
+/* == Helpers == */
 
 function formatUsd(n: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -196,7 +196,7 @@ function protocolBadge(protocol: string): { bg: string; fg: string; label: strin
   return { bg: `${color}18`, fg: color, label: PROTOCOL_LABELS[protocol] || protocol };
 }
 
-/* ── Sub-components ── */
+/* == Sub-components == */
 
 function StatCard({
   label,
@@ -344,7 +344,7 @@ function Heatmap({ data, labels, color }: { data: number[]; labels: string[]; co
   );
 }
 
-/* ── Post Row ── */
+/* == Post Row == */
 
 function PostRow({ post, rank }: { post: TopPost; rank: number }) {
   const badge = protocolBadge(post.protocol);
@@ -387,7 +387,7 @@ function PostRow({ post, rank }: { post: TopPost; rank: number }) {
   );
 }
 
-/* ── Pie (CSS conic gradient) ── */
+/* == Pie (CSS conic gradient) == */
 
 function PieChart({
   data,
@@ -450,7 +450,7 @@ function PieChart({
   );
 }
 
-/* ── Protocol breakdown table ── */
+/* == Protocol breakdown table == */
 
 function ProtocolBreakdownTable({
   followers,
@@ -522,7 +522,7 @@ function ProtocolBreakdownTable({
   );
 }
 
-/* ── Connect Protocols Banner ── */
+/* == Connect Protocols Banner == */
 
 function ConnectProtocolsBanner({ missing }: { missing: string[] }) {
   if (missing.length === 0) return null;
@@ -567,7 +567,7 @@ function ConnectProtocolsBanner({ missing }: { missing: string[] }) {
   );
 }
 
-/* ── Tip Row (for last 10) ── */
+/* == Tip Row (for last 10) == */
 
 function TipRow({
   tip,
@@ -594,7 +594,7 @@ function TipRow({
   );
 }
 
-/* ── Export CSV ── */
+/* == Export CSV == */
 
 function useCsvExport(data: AnalyticsData) {
   return useCallback(() => {
@@ -637,7 +637,7 @@ function useCsvExport(data: AnalyticsData) {
   }, [data]);
 }
 
-/* ── Main Component ── */
+/* == Main Component == */
 
 export default function AnalyticsDashboard() {
   const { ready, signedInProtocols } = useAuth();
@@ -724,7 +724,7 @@ export default function AnalyticsDashboard() {
     [data.audience.locations],
   );
 
-  /* ── Auth Gate ── */
+  /* == Auth Gate == */
 
   if (!ready) {
     return (
@@ -763,7 +763,7 @@ export default function AnalyticsDashboard() {
     );
   }
 
-  /* ── Loading ── */
+  /* == Loading == */
 
   if (loading) {
     return (
@@ -783,7 +783,7 @@ export default function AnalyticsDashboard() {
     );
   }
 
-  /* ── Error ── */
+  /* == Error == */
 
   if (error) {
     return (
@@ -806,7 +806,7 @@ export default function AnalyticsDashboard() {
     );
   }
 
-  /* ── Dashboard ── */
+  /* == Dashboard == */
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -908,7 +908,7 @@ export default function AnalyticsDashboard() {
         ))}
       </div>
 
-      {/* ──────────────── OVERVIEW ──────────────── */}
+      {/* ================ OVERVIEW ================ */}
       {activeTab === 'overview' && (
         <div className="space-y-8 animate-fade-in">
           {/* Stat cards */}
@@ -1093,7 +1093,7 @@ export default function AnalyticsDashboard() {
         </div>
       )}
 
-      {/* ──────────────── CONTENT ──────────────── */}
+      {/* ================ CONTENT ================ */}
       {activeTab === 'content' && (
         <div className="space-y-8 animate-fade-in">
           {/* Top by engagement */}
@@ -1155,7 +1155,7 @@ export default function AnalyticsDashboard() {
         </div>
       )}
 
-      {/* ──────────────── AUDIENCE ──────────────── */}
+      {/* ================ AUDIENCE ================ */}
       {activeTab === 'audience' && (
         <div className="space-y-8 animate-fade-in">
           {/* Pie chart followers by protocol */}
@@ -1266,7 +1266,7 @@ export default function AnalyticsDashboard() {
         </div>
       )}
 
-      {/* ──────────────── EARNINGS ──────────────── */}
+      {/* ================ EARNINGS ================ */}
       {activeTab === 'earnings' && (
         <div className="space-y-8 animate-fade-in">
           {/* Summary cards */}

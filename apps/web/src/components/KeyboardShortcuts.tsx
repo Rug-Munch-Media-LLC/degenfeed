@@ -188,7 +188,7 @@ export const KeyboardShortcuts = memo(function KeyboardShortcuts({
         onClick={(e) => e.stopPropagation()}
         style={{ maxHeight: '85vh' }}
       >
-        {/* ── Header ── */}
+        {/* == Header == */}
         <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-4">
           <h2 className="flex items-center gap-2 text-base font-bold text-[var(--color-fg)]">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-degen-500/10 text-sm text-degen-400">
@@ -213,7 +213,7 @@ export const KeyboardShortcuts = memo(function KeyboardShortcuts({
           </button>
         </div>
 
-        {/* ── Groups ── */}
+        {/* == Groups == */}
         <div className="overflow-y-auto px-5 py-4" style={{ maxHeight: 'calc(85vh - 70px)' }}>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             {GROUPS.map((group) => (

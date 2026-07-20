@@ -7,12 +7,12 @@
  * ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Font families ── */
+  /* == Font families == */
   --font-heading: 'Sora', 'Inter', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* ── Heading sizes (h1-h6) ── */
+  /* == Heading sizes (h1-h6) == */
   --text-h1: 2rem;
   --text-h2: 1.5rem;
   --text-h3: 1.25rem;
@@ -20,21 +20,21 @@
   --text-h5: 1rem;
   --text-h6: 0.875rem;
 
-  /* ── Heading line-height ── */
+  /* == Heading line-height == */
   --leading-h1: 1.2;
   --leading-h2: 1.25;
   --leading-h3: 1.3;
   --leading-h4: 1.3;
 
-  /* ── Body line-height ── */
+  /* == Body line-height == */
   --leading-body: 1.6;
   --leading-compact: 1.4;
 
-  /* ── Letter spacing ── */
+  /* == Letter spacing == */
   --tracking-heading: -0.02em;
   --tracking-body: 0;
 
-  /* ── Spacing scale (4px base grid) ── */
+  /* == Spacing scale (4px base grid) == */
   --space-xs: 0.25rem; /* 4px */
   --space-sm: 0.5rem; /* 8px */
   --space-md: 1rem; /* 16px */
@@ -42,12 +42,12 @@
   --space-xl: 2rem; /* 32px */
   --space-2xl: 3rem; /* 48px */
 
-  /* ── Gap scale ── */
+  /* == Gap scale == */
   --gap-xs: 0.25rem; /* 4px */
   --gap-sm: 0.5rem; /* 8px */
   --gap-md: 1rem; /* 16px */
 
-  /* ── Border radius ── */
+  /* == Border radius == */
   --radius-sm: 0.25rem; /* 4px */
   --radius-md: 0.5rem; /* 8px */
   --radius-lg: 0.75rem; /* 12px */
@@ -55,25 +55,25 @@
   --radius-2xl: 1.5rem; /* 24px */
   --radius-full: 9999px;
 
-  /* ── Button height min touch target ── */
+  /* == Button height min touch target == */
   --btn-min-height: 2.75rem; /* 44px */
 
-  /* ── Focus ring ── */
+  /* == Focus ring == */
   --ring-width: 2px;
   --ring-offset: 2px;
 
-  /* ── Duration tokens ── */
+  /* == Duration tokens == */
   --duration-fast: 150ms;
   --duration-normal: 250ms;
   --duration-slow: 400ms;
 
-  /* ── Safe area insets ── */
+  /* == Safe area insets == */
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
 
-  /* ── Z-Index Scale ── */
+  /* == Z-Index Scale == */
   --z-base: 1;
   --z-sticky: 10;
   --z-feed-header: 30;
@@ -88,7 +88,7 @@
   --z-toast: 80;
   --z-loading-bar: 100;
 
-  /* ── Protocol colors (as CSS vars) ── */
+  /* == Protocol colors (as CSS vars) == */
   --color-protocol-nostr: #8b5cf6;
   --color-protocol-farcaster: #8a63d2;
   --color-protocol-lens: #abfe2c;
@@ -99,13 +99,13 @@
   --color-protocol-lemmy: #00b868;
   --color-protocol-rss: #ffa500;
 
-  /* ── Font size scale (reader) ── */
+  /* == Font size scale (reader) == */
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
   --font-size-md: 1.0625rem;
   --font-size-lg: 1.125rem;
 
-  /* ── Line spacing scale (reader) ── */
+  /* == Line spacing scale (reader) == */
   --line-spacing-compact: 1.4;
   --line-spacing-comfortable: 1.6;
   --line-spacing-relaxed: 1.8;
@@ -124,7 +124,7 @@
 }
 
 @layer base {
-  /* ── Screen-reader-only utility ── */
+  /* == Screen-reader-only utility == */
   .sr-only {
     position: absolute;
     width: 1px;
@@ -137,7 +137,7 @@
     border-width: 0;
   }
 
-  /* ── Global focus-visible ring ── */
+  /* == Global focus-visible ring == */
   *:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
@@ -149,7 +149,7 @@
     outline: none;
   }
 
-  /* ── Light theme (default) ── */
+  /* == Light theme (default) == */
   :root {
     /* shadcn-style tokens */
     --background: #ffffff;
@@ -186,7 +186,7 @@
     --color-overlay: rgba(0, 0, 0, 0.05);
   }
 
-  /* ── Dark theme — Premium Twitter/X clone ── */
+  /* == Dark theme — Premium Twitter/X clone == */
   .dark {
     --background: #000000;
     --foreground: #e7e9ea;
@@ -228,7 +228,7 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* ── Heading hierarchy ── */
+  /* == Heading hierarchy == */
   h1,
   h2,
   h3,
@@ -265,7 +265,7 @@
     line-height: var(--leading-h4);
   }
 
-  /* ── Body text defaults ── */
+  /* == Body text defaults == */
   p,
   li,
   blockquote,
@@ -534,7 +534,7 @@
   }
 }
 
-/* ── Glass morphism + DegenFeed design upgrade ── */
+/* == Glass morphism + DegenFeed design upgrade == */
 @keyframes logo-glow {
   0%,
   100% {
@@ -571,7 +571,7 @@
   border: 1px solid rgba(234, 179, 8, 0.2);
 }
 
-/* ── Animation Keyframes ─────────────────────────────────────────── */
+/* == Animation Keyframes =========================================== */
 
 @keyframes btn-press {
   0% {
@@ -763,7 +763,7 @@
   }
 }
 
-/* ── Animation Utility Classes ──────────────────────────────────── */
+/* == Animation Utility Classes ==================================== */
 
 @layer utilities {
   .animate-btn-press {
@@ -888,14 +888,14 @@
   }
 }
 
-/* ── Ensure next/image plays nice with existing Tailwind classes ── */
+/* == Ensure next/image plays nice with existing Tailwind classes == */
 .next-image-fix img {
   max-width: 100%;
   height: auto;
   vertical-align: middle;
 }
 
-/* ── Reduced Motion ── */
+/* == Reduced Motion == */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1041,7 +1041,7 @@
   }
 }
 
-/* ── Image placeholder to prevent CLS ── (now after reduced motion)
+/* == Image placeholder to prevent CLS == (now after reduced motion)
  * This section deliberately placed after reduced-motion block
  * to avoid conflict with @layer rules. Do not move. */
 .image-placeholder {
@@ -1175,7 +1175,7 @@
   pointer-events: none;
 }
 
-/* ── Toast swipe region ── */
+/* == Toast swipe region == */
 .toast-swipe-region {
   touch-action: pan-y;
   will-change: transform;
@@ -1326,7 +1326,7 @@
   animation: tab-slide-in-left 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── Feed content transition for tab switches ── */
+/* == Feed content transition for tab switches == */
 .tab-content-enter {
   animation: tab-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -1397,7 +1397,7 @@
   animation: copy-flash 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── Toggle switch ── */
+/* == Toggle switch == */
 .toggle-track {
   position: relative;
   display: inline-flex;
@@ -1781,7 +1781,7 @@
   }
 }
 
-/* ── Protocol transition overlay (colored flash on route change) ── */
+/* == Protocol transition overlay (colored flash on route change) == */
 
 @keyframes protocol-transition-flash {
   0% {
@@ -1810,7 +1810,7 @@
   animation: protocol-transition-flash 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── View Transitions API support (Chrome 111+) ── */
+/* == View Transitions API support (Chrome 111+) == */
 @keyframes view-transition-fade-in {
   from {
     opacity: 0;
@@ -2286,7 +2286,7 @@
 
 /* Color tokens are set in :root and .dark above */
 
-/* ── Message enter animation ── */
+/* == Message enter animation == */
 @keyframes message-enter {
   0% {
     opacity: 0;
@@ -2302,7 +2302,7 @@
   animation: message-enter 0.2s ease-out both;
 }
 
-/* ── Typing indicator dots ── */
+/* == Typing indicator dots == */
 @keyframes typing-dot {
   0%,
   60%,
@@ -2328,7 +2328,7 @@
  * FEED FLOW ENHANCEMENTS — While you were away, end-of-feed, boredom
  * ═══════════════════════════════════════════════════════════════ */
 
-/* ── "While you were away" card entrance ── */
+/* == "While you were away" card entrance == */
 @keyframes while-away-slide-in {
   from {
     opacity: 0;
@@ -2344,7 +2344,7 @@
   animation: while-away-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── End-of-feed discovery section entrance ── */
+/* == End-of-feed discovery section entrance == */
 @keyframes end-of-feed-in {
   from {
     opacity: 0;
@@ -2360,7 +2360,7 @@
   animation: end-of-feed-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── End-of-feed discovery cards staggered entrance ── */
+/* == End-of-feed discovery cards staggered entrance == */
 .end-of-feed-section > .space-y-3 > *:nth-child(1) {
   animation-delay: 0ms;
 }
@@ -2374,7 +2374,7 @@
   animation-delay: 240ms;
 }
 
-/* ── Feed item individual animation refinement ── */
+/* == Feed item individual animation refinement == */
 @keyframes feed-item-fade-in {
   from {
     opacity: 0;
@@ -2419,7 +2419,7 @@
   border-radius: var(--radius-lg);
 }
 
-/* ── Post card focus-visible ── */
+/* == Post card focus-visible == */
 .post-card {
   transition:
     box-shadow var(--duration-fast) ease-out,
@@ -2431,7 +2431,7 @@
   border-radius: var(--radius-lg);
 }
 
-/* ── Post preview hover tooltip ── */
+/* == Post preview hover tooltip == */
 @keyframes preview-pop {
   from {
     opacity: 0;
@@ -2450,7 +2450,7 @@
     0 0 0 1px var(--color-glass-border);
 }
 
-/* ── Boredom-breaker explore card ── */
+/* == Boredom-breaker explore card == */
 @keyframes explore-card-in {
   from {
     opacity: 0;
@@ -2576,7 +2576,7 @@
   }
 }
 
-/* ── Animation utility classes ── */
+/* == Animation utility classes == */
 
 .animate-progress-glow {
   animation: progress-glow 2s ease-in-out infinite;
@@ -2610,7 +2610,7 @@
   animation: share-sheet-in 0.25s ease-out forwards;
 }
 
-/* ── Category break styling ── */
+/* == Category break styling == */
 .category-break::before {
   content: "";
   display: block;
@@ -2629,7 +2629,7 @@
  * MOBILE RESPONSIVE UTILITIES — Safe areas, touch targets, layouts
  * ═══════════════════════════════════════════════════════════════ */
 
-/* ── Safe area padding utilities ── */
+/* == Safe area padding utilities == */
 .pb-safe {
   padding-bottom: calc(0.5rem + var(--sab));
 }
@@ -2655,7 +2655,7 @@
   top: var(--sat);
 }
 
-/* ── Full-screen modal on mobile ── */
+/* == Full-screen modal on mobile == */
 @media (max-width: 639px) {
   .modal-mobile-full {
     position: fixed !important;
@@ -2690,7 +2690,7 @@
   }
 }
 
-/* ── Bottom sheet style modal (default mobile modal) ── */
+/* == Bottom sheet style modal (default mobile modal) == */
 @media (max-width: 639px) {
   .mobile-bottom-sheet {
     align-items: flex-end !important;
@@ -2705,7 +2705,7 @@
   }
 }
 
-/* ── Sticky bottom bar for mobile ── */
+/* == Sticky bottom bar for mobile == */
 @media (max-width: 767px) {
   .sticky-bottom-mobile {
     position: fixed !important;
@@ -2723,7 +2723,7 @@
   }
 }
 
-/* ── Touch target minimum 44px ── */
+/* == Touch target minimum 44px == */
 .touch-target {
   min-width: 44px;
   min-height: 44px;
@@ -2732,7 +2732,7 @@
   justify-content: center;
 }
 
-/* ── Scrollable tab bar for mobile ── */
+/* == Scrollable tab bar for mobile == */
 @media (max-width: 639px) {
   .scrollable-x-mobile {
     overflow-x: auto !important;
@@ -2749,13 +2749,13 @@
   }
 }
 
-/* ── Pull-to-refresh indicator ── */
+/* == Pull-to-refresh indicator == */
 .ptr-container {
   overflow: hidden;
   transition: height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ── Mobile compact spacing ── */
+/* == Mobile compact spacing == */
 @media (max-width: 639px) {
   .mobile-compact > * + * {
     margin-top: 0.25rem !important;
@@ -2773,7 +2773,7 @@
   }
 }
 
-/* ── Responsive typography scale-down ── */
+/* == Responsive typography scale-down == */
 @media (max-width: 374px) {
   .text-responsive-sm {
     font-size: 0.75rem !important;
@@ -2803,7 +2803,7 @@
   }
 }
 
-/* ── Collapsible section for mobile ── */
+/* == Collapsible section for mobile == */
 @media (max-width: 767px) {
   .collapsible-mobile-header {
     cursor: pointer;
@@ -2815,7 +2815,7 @@
   }
 }
 
-/* ── Mobile grid overrides ── */
+/* == Mobile grid overrides == */
 @media (max-width: 374px) {
   .grid-mobile-2cols {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -2830,7 +2830,7 @@
   }
 }
 
-/* ── Keyboard avoidance for fixed elements ── */
+/* == Keyboard avoidance for fixed elements == */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .keyboard-aware {
     transition: padding-bottom 0.2s ease-out;

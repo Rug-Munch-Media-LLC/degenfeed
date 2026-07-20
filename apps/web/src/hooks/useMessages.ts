@@ -7,7 +7,7 @@ import { useAnnouncer } from '../components/ScreenReaderAnnouncer';
 import { getCached, setCache } from '../lib/fetchWithCache';
 import { retryFetch, retryFetchJson } from '../lib/retryFetch';
 
-/* ─── Types ─────────────────────────────────────────────────── */
+/* === Types =================================================== */
 
 export interface Message {
   id: string;
@@ -46,7 +46,7 @@ const CONV_CACHE_KEY = 'messages_conversations';
 const POLL_INTERVAL_MS = 30000;
 const TYPING_TIMEOUT_MS = 4000;
 
-/* ─── Helpers ───────────────────────────────────────────────── */
+/* === Helpers ================================================= */
 
 export function getOtherParticipant(participants: string[]): string {
   return participants[1] ?? participants[0] ?? '';
@@ -110,7 +110,7 @@ export function timeAgo(ts: number): string {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-/* ─── useMessages Hook ──────────────────────────────────────── */
+/* === useMessages Hook ======================================== */
 
 export function useMessages() {
   const { ready, signedInProtocols, tokens } = useAuth();
@@ -170,7 +170,7 @@ export function useMessages() {
     });
   }, [conversations, searchQuery]);
 
-  // ── Fetch conversations ────────────────────────────────────
+  // == Fetch conversations ====================================
   const fetchConversations = useCallback(async () => {
     if (!hasSignedIn) return;
     setConvLoading(true);
@@ -197,7 +197,7 @@ export function useMessages() {
     }
   }, [hasSignedIn, conversations.length]);
 
-  // ── Fetch messages for conversation ────────────────────────
+  // == Fetch messages for conversation ========================
   const fetchMessages = useCallback(async (convId: string) => {
     setMsgLoading(true);
     setMsgError(null);
@@ -214,7 +214,7 @@ export function useMessages() {
     }
   }, []);
 
-  // ── Send message ───────────────────────────────────────────
+  // == Send message ===========================================
   const handleSend = useCallback(
     async (opts?: { protocol?: string; toId?: string; content?: string }) => {
       const text = (opts?.content ?? composeText).trim();
@@ -270,7 +270,7 @@ export function useMessages() {
     ],
   );
 
-  // ── Select conversation ────────────────────────────────────
+  // == Select conversation ====================================
   const selectConv = useCallback(
     (convId: string) => {
       setSelectedConvId(convId);
@@ -298,7 +298,7 @@ export function useMessages() {
     setMsgError(null);
   }, []);
 
-  // ── Typing indicator ───────────────────────────────────────
+  // == Typing indicator =======================================
   const handleTyping = useCallback(
     (conversationId: string) => {
       wsSendTyping(conversationId);
@@ -332,7 +332,7 @@ export function useMessages() {
     return () => clearInterval(interval);
   }, []);
 
-  // ── Handle incoming realtime DM ────────────────────────────
+  // == Handle incoming realtime DM ============================
   useEffect(() => {
     if (!hasSignedIn || !subscribe) return;
 
@@ -399,7 +399,7 @@ export function useMessages() {
     };
   }, [hasSignedIn, subscribe, selectedConvId, fetchConversations]);
 
-  // ── Initial fetch + polling ────────────────────────────────
+  // == Initial fetch + polling ================================
   useEffect(() => {
     if (!hasSignedIn) {
       setConversations([]);
@@ -411,7 +411,7 @@ export function useMessages() {
     return () => clearInterval(interval);
   }, [hasSignedIn, fetchConversations]);
 
-  // ── Fetch messages when selected conversation changes ──────
+  // == Fetch messages when selected conversation changes ======
   useEffect(() => {
     if (selectedConvId && hasSignedIn) {
       fetchMessages(selectedConvId);
@@ -420,7 +420,7 @@ export function useMessages() {
     }
   }, [selectedConvId, hasSignedIn, fetchMessages]);
 
-  // ── Keyboard nav ───────────────────────────────────────────
+  // == Keyboard nav ===========================================
   const [focusedConvIndex, setFocusedConvIndex] = useState(-1);
 
   const focusConvByIndex = useCallback(

@@ -14,7 +14,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 interface ChecklistItem {
   id: string;
@@ -27,7 +27,7 @@ interface ChecklistItem {
   checkFn?: () => boolean;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────
+// === Constants ============================================================
 
 const STORAGE_KEY_MANUAL = 'degenfeed_checklist_manual';
 
@@ -98,7 +98,7 @@ const ITEMS: ChecklistItem[] = [
   },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────
+// === Component ============================================================
 
 interface GettingStartedChecklistProps {
   /** If true, shows in compact mode (for sidebar/widget use) */
@@ -168,12 +168,12 @@ export function GettingStartedChecklist({
     }
   }, [allDone, onAllComplete]);
 
-  // ── Circular progress SVG ──
+  // == Circular progress SVG ==
   const CIRCLE_RADIUS = 32;
   const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
   const strokeDashoffset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
 
-  // ── Render ──
+  // == Render ==
 
   if (allDone && compact) return null;
 
@@ -186,7 +186,7 @@ export function GettingStartedChecklist({
       aria-label="Getting started checklist"
     >
       {allDone ? (
-        /* ── All done state ── */
+        /* == All done state == */
         <div className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-degen-500/10">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -211,7 +211,7 @@ export function GettingStartedChecklist({
         </div>
       ) : (
         <>
-          {/* ── Header with progress ring ── */}
+          {/* == Header with progress ring == */}
           <div className="mb-5 flex items-center gap-4">
             <div className="relative flex h-16 w-16 shrink-0 items-center justify-center">
               <svg
@@ -273,7 +273,7 @@ export function GettingStartedChecklist({
             </div>
           </div>
 
-          {/* ── Checklist items ── */}
+          {/* == Checklist items == */}
           <ul className="space-y-2">
             {statuses.map((item) => (
               <li key={item.id}>
@@ -376,7 +376,7 @@ export function GettingStartedChecklist({
             ))}
           </ul>
 
-          {/* ── Compact footer ── */}
+          {/* == Compact footer == */}
           {!compact && (
             <p
               className="mt-4 text-center text-[10px]"

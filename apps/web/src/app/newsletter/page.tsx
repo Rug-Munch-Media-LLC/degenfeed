@@ -4,7 +4,7 @@ import { getProtocolColor } from '@degenfeed/ui';
 import { useCallback, useMemo, useState } from 'react';
 import { QuickTipButton } from '../../components/QuickTipButton';
 
-// ── Newsletter Categories ───────────────────────────────────────────
+// == Newsletter Categories ===========================================
 
 const NEWSLETTER_CATEGORIES = [
   { id: 'crypto', label: 'Crypto', color: '#f7931a', icon: '₿' },
@@ -18,7 +18,7 @@ const NEWSLETTER_CATEGORIES = [
   { id: 'science', label: 'Science', color: '#06b6d4', icon: '🔬' },
 ];
 
-// ── Newsletter Entry Type ───────────────────────────────────────────
+// == Newsletter Entry Type ===========================================
 
 interface NewsletterEntry {
   name: string;
@@ -28,7 +28,7 @@ interface NewsletterEntry {
   description?: string;
 }
 
-// ── All Newsletters ─────────────────────────────────────────────────
+// == All Newsletters =================================================
 
 const ALL_NEWSLETTERS: NewsletterEntry[] = [
   // ═══ CRYPTO ═══
@@ -257,7 +257,7 @@ const ALL_NEWSLETTERS: NewsletterEntry[] = [
   { name: 'The Algorithmic Bridge', schedule: 'weekly', description: 'AI philosophy and society' },
 ];
 
-// ── Newsletter Topics (groupings) ───────────────────────────────────
+// == Newsletter Topics (groupings) ===================================
 
 const NEWSLETTER_TOPICS = [
   { id: 'all', label: 'All' },
@@ -380,7 +380,7 @@ const NEWSLETTERS_BY_TOPIC: Record<string, NewsletterEntry[]> = {
   ],
 };
 
-// ── "New Today" Counts ──────────────────────────────────────────────
+// == "New Today" Counts ==============================================
 
 function computeNewTodayStats(): { categoryCounts: Record<string, number>; totalDaily: number } {
   const daily = ALL_NEWSLETTERS.filter((n) => n.schedule === 'daily');
@@ -427,7 +427,7 @@ function computeNewTodayStats(): { categoryCounts: Record<string, number>; total
   };
 }
 
-// ── Trending Feed (simulated weekly top) ────────────────────────────
+// == Trending Feed (simulated weekly top) ============================
 
 const TOP_NEWSLETTERS_THIS_WEEK = [
   { name: 'The Neuron', category: 'ai', reason: 'Daily AI tools & trends loved by 700K+' },

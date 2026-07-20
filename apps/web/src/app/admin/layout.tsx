@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 
-// ─── Nav config ─────────────────────────────────────────────────────────
+// === Nav config =========================================================
 
 interface NavSection {
   label: string;
@@ -53,7 +53,7 @@ function shortAddr(addr: string): string {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
-// ─── Layout ─────────────────────────────────────────────────────────────
+// === Layout =============================================================
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { walletAddress } = useAuth();
@@ -61,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isAdmin = walletAddress && ADMIN_WALLETS.has(walletAddress.toLowerCase());
 
-  // ── Auth gate ──
+  // == Auth gate ==
 
   if (!walletAddress || !isAdmin) {
     return (
@@ -106,7 +106,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         />
       )}
 
-      {/* ── Sidebar ── */}
+      {/* == Sidebar == */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[var(--color-border)] bg-[var(--color-card)] transition-transform duration-300 lg:static lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -176,7 +176,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* ── Main content ── */}
+      {/* == Main content == */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar (mobile) */}
         <header className="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-card)] px-4 lg:hidden">

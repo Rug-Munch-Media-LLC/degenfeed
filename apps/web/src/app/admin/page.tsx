@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────
+// === Types ============================================================
 
 interface DashboardStats {
   totalUsers: number;
@@ -32,7 +32,7 @@ interface ActivityEntry {
   severity?: 'info' | 'warning' | 'error';
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────
+// === Helpers ==========================================================
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -62,7 +62,7 @@ function formatDuration(seconds: number): string {
   return `${h}h ${m}m`;
 }
 
-// ─── Default / fallback data ─────────────────────────────────────────
+// === Default / fallback data =========================================
 
 const DEFAULT_STATS: DashboardStats = {
   totalUsers: 1247,
@@ -139,7 +139,7 @@ const DEFAULT_ACTIVITY: ActivityEntry[] = [
   },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────
+// === Component ========================================================
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats>(DEFAULT_STATS);
@@ -206,7 +206,7 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* ── Row 1: Key metric cards ── */}
+      {/* == Row 1: Key metric cards == */}
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <MetricCard label="Total Users" value={formatCount(stats.totalUsers)} subtitle="All time" />
         <MetricCard
@@ -237,7 +237,7 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* ── Row 2: Protocol health + Activity feed ── */}
+      {/* == Row 2: Protocol health + Activity feed == */}
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
         {/* Protocol health */}
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
@@ -326,7 +326,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* ── Row 3: System gauges + quick actions ── */}
+      {/* == Row 3: System gauges + quick actions == */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* System health gauges */}
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
@@ -366,7 +366,7 @@ export default function AdminDashboardPage() {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────
+// === Sub-components ===================================================
 
 function MetricCard({
   label,

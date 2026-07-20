@@ -11,7 +11,7 @@ import {
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-// ─── Protocol display helpers ────────────────────────────────
+// === Protocol display helpers ================================
 
 const PROTOCOL_COLORS: Record<string, string> = {
   nostr: '#8e30eb',
@@ -55,7 +55,7 @@ export default function BookmarksPage() {
   const [editingTags, setEditingTags] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
 
-  // ─── Load bookmarks with server sync ─────────────────────
+  // === Load bookmarks with server sync =====================
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,7 +90,7 @@ export default function BookmarksPage() {
     load();
   }, [load]);
 
-  // ─── Remove ───────────────────────────────────────────────
+  // === Remove ===============================================
 
   const handleRemove = useCallback(async (postId: string) => {
     setBookmarks((prev) => prev.filter((b) => b.postId !== postId));
@@ -102,7 +102,7 @@ export default function BookmarksPage() {
     }
   }, []);
 
-  // ─── Tag editing ──────────────────────────────────────────
+  // === Tag editing ==========================================
 
   const startTagEdit = useCallback((postId: string, currentTags?: string[]) => {
     setEditingTags(postId);
@@ -134,7 +134,7 @@ export default function BookmarksPage() {
     setTagInput('');
   }, []);
 
-  // ─── Derived data ─────────────────────────────────────────
+  // === Derived data =========================================
 
   // All unique tags across bookmarks
   const allTags = useMemo(() => {
@@ -180,7 +180,7 @@ export default function BookmarksPage() {
     return filtered;
   }, [bookmarks, sort, search, tagFilter]);
 
-  // ─── Render ───────────────────────────────────────────────
+  // === Render ===============================================
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">

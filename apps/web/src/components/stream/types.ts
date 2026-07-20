@@ -1,4 +1,4 @@
-/* ─── Extended Stream Types for Twitch-Quality Experience ───── */
+/* === Extended Stream Types for Twitch-Quality Experience ===== */
 
 export type StreamCategory =
   | 'gaming'
@@ -43,7 +43,7 @@ export function getCategoryInfo(id: string): StreamCategoryInfo {
   };
 }
 
-/* ─── Stream Quality ─────────────────────────────────────────── */
+/* === Stream Quality =========================================== */
 
 export type StreamQuality = 'auto' | '1080p' | '720p' | '480p' | '360p';
 
@@ -61,7 +61,7 @@ export const QUALITY_OPTIONS: QualityOption[] = [
   { id: 'auto', label: 'Auto', bitrate: 'Adaptive' },
 ];
 
-/* ─── Chat Types ─────────────────────────────────────────────── */
+/* === Chat Types =============================================== */
 
 export type ChatBadge = 'subscriber' | 'moderator' | 'vip' | 'og' | 'verified' | 'founder' | 'degen';
 
@@ -82,7 +82,7 @@ export const CHAT_BADGES: Record<ChatBadge, BadgeInfo> = {
   degen: { id: 'degen', label: 'DEGEN', tooltip: 'DegenFeed OG', color: '#00ff41' },
 };
 
-/* ─── Emote Types ────────────────────────────────────────────── */
+/* === Emote Types ============================================== */
 
 export interface Emote {
   id: string;
@@ -110,7 +110,7 @@ export const DEFAULT_EMOTES: Emote[] = [
   { id: 'e16', name: 'degenBag', src: '💰', category: 'crypto' },
 ];
 
-/* ─── Streamer Stats ─────────────────────────────────────────── */
+/* === Streamer Stats =========================================== */
 
 export interface StreamerStats {
   followers: number;
@@ -122,7 +122,7 @@ export interface StreamerStats {
   streamingSince: string;
 }
 
-/* ─── Extended Stream Info ───────────────────────────────────── */
+/* === Extended Stream Info ===================================== */
 
 export interface StreamExtended {
   id: string;
@@ -146,7 +146,7 @@ export interface StreamExtended {
   latency?: 'low' | 'normal';
 }
 
-/* ─── VOD / Clip Types ───────────────────────────────────────── */
+/* === VOD / Clip Types ========================================= */
 
 export interface VOD {
   id: string;
@@ -177,7 +177,7 @@ export interface StreamSchedule {
   description?: string;
 }
 
-/* ─── Viewer Analytics ───────────────────────────────────────── */
+/* === Viewer Analytics ========================================= */
 
 export interface ViewerAnalytics {
   peakViewers: number;
@@ -191,7 +191,7 @@ export interface ViewerAnalytics {
   viewerHistory: Array<{ timestamp: number; count: number }>;
 }
 
-/* ─── Mock Data Generator ────────────────────────────────────── */
+/* === Mock Data Generator ====================================== */
 
 const CATEGORIES: StreamCategory[] = [
   'gaming', 'music', 'crypto', 'art', 'irl', 'talk', 'education', 'sports', 'tech', 'trading',

@@ -54,7 +54,7 @@ export function PostCardPrefetcher({ containerRef }: PostCardPrefetcherProps) {
       return null;
     };
 
-    // ── Hover prefetch (delegated) ──
+    // == Hover prefetch (delegated) ==
     const onMouseOver = (e: MouseEvent) => {
       const card = (e.target as Element).closest('[data-post-id],[data-href]');
       if (!card) return;
@@ -75,7 +75,7 @@ export function PostCardPrefetcher({ containerRef }: PostCardPrefetcherProps) {
       }
     };
 
-    // ── Viewport prefetch (IntersectionObserver) ──
+    // == Viewport prefetch (IntersectionObserver) ==
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {

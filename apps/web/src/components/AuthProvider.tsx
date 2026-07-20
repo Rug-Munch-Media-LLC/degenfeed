@@ -127,13 +127,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [primaryIdentity, setPrimaryIdentity] = useState<StoredIdentity | undefined>(undefined);
   const [signedInProtocols, setSignedInProtocols] = useState<Record<string, boolean>>({});
   const [tokens, setTokens] = useState<Record<string, string>>({});
-  // ── Multi-wallet state ──────────────────────────────────────────
+  // == Multi-wallet state ==========================================
   const [walletAddresses, setWalletAddresses] = useState<string[]>([]);
   const [activeWalletIndex, setActiveWalletIndexState] = useState<number>(0);
   const [walletMeta, setWalletMeta] = useState<Record<string, StoredWalletMeta>>({});
-  // ── Legacy single-wallet derived state ──────────────────────────
+  // == Legacy single-wallet derived state ==========================
   const walletAddress = walletAddresses[activeWalletIndex] ?? undefined;
-  // ──
+  // ==
   const [linkGtsUrl, setLinkGtsUrl] = useState<string | null>(null);
   const [nostrPublicId, setNostrPublicId] = useState<string | undefined>(undefined);
   // App starts READY immediately — no blocking init.
@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { signInWithSolana, signingIn: solanaSigningIn } = useSolanaSignIn();
   const { showToast } = useToast();
 
-  // ── Wallet persistence helpers ──────────────────────────────────
+  // == Wallet persistence helpers ==================================
 
   /** Load wallet list from localStorage and merge with any stored identities */
   const loadWallets = useCallback(() => {
@@ -625,7 +625,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
-  // ── Multi-wallet actions ──────────────────────────────────────
+  // == Multi-wallet actions ======================================
 
   const switchWallet = useCallback((index: number) => {
     const stored = getStoredWallets();

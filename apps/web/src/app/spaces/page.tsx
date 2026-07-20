@@ -12,7 +12,7 @@ const TipModal = dynamic(
   { ssr: false, loading: () => null },
 );
 
-// ─── Types ────────────────────────────────────────────────────────
+// === Types ========================================================
 
 interface SpaceSpeaker {
   id: string;
@@ -51,7 +51,7 @@ interface SpaceItem {
   endedAt?: number;
 }
 
-// ─── Animation keyframes ──────────────────────────────────────────
+// === Animation keyframes ==========================================
 
 const ANIM_STYLES = `
 @keyframes waveform {
@@ -71,7 +71,7 @@ const ANIM_STYLES = `
 .scrollbar-none::-webkit-scrollbar { display: none; }
 `;
 
-// ─── Shared components ────────────────────────────────────────────
+// === Shared components ============================================
 
 function LiveDot({ className = '' }: { className?: string }) {
   return (
@@ -224,7 +224,7 @@ function SectionHeader({
   );
 }
 
-// ─── Speaker Avatar with Speaking Indicator ───────────────────────
+// === Speaker Avatar with Speaking Indicator =======================
 
 function SpeakerAvatar({
   speaker,
@@ -284,7 +284,7 @@ function SpeakerAvatar({
   );
 }
 
-// ─── LiveSpaceCard ────────────────────────────────────────────────
+// === LiveSpaceCard ================================================
 
 function LiveSpaceCard({
   space,
@@ -457,7 +457,7 @@ function LiveSpaceCard({
   );
 }
 
-// ─── UpcomingSpaceCard ────────────────────────────────────────────
+// === UpcomingSpaceCard ============================================
 
 function UpcomingSpaceCard({
   space,
@@ -587,7 +587,7 @@ function UpcomingSpaceCard({
   );
 }
 
-// ─── PastSpaceCard ────────────────────────────────────────────────
+// === PastSpaceCard ================================================
 
 function PastSpaceCard({ space }: { space: SpaceItem }) {
   return (
@@ -635,7 +635,7 @@ function PastSpaceCard({ space }: { space: SpaceItem }) {
   );
 }
 
-// ─── EmptyState ───────────────────────────────────────────────────
+// === EmptyState ===================================================
 
 function EmptyState({
   icon,
@@ -668,7 +668,7 @@ function EmptyState({
   );
 }
 
-// ─── Skeletons ────────────────────────────────────────────────────
+// === Skeletons ====================================================
 
 function LiveSkeleton() {
   return (
@@ -711,7 +711,7 @@ function GridSkeleton() {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────
+// === Main Page ====================================================
 
 export default function SpacesPage() {
   const { ready, signedInProtocols, openSignIn } = useAuth();
@@ -803,7 +803,7 @@ export default function SpacesPage() {
     }
   }, []);
 
-  // ── Live Space Room ──
+  // == Live Space Room ==
   if (activeSpace) {
     return (
       <>
@@ -906,7 +906,7 @@ export default function SpacesPage() {
         {/* ═══ Content ═══ */}
         {!loading && (
           <div className="space-y-10">
-            {/* ── Live Now ── */}
+            {/* == Live Now == */}
             <section>
               <div className="mb-4 flex items-center gap-2">
                 <LiveDot />
@@ -950,7 +950,7 @@ export default function SpacesPage() {
               )}
             </section>
 
-            {/* ── Upcoming ── */}
+            {/* == Upcoming == */}
             <section>
               <SectionHeader
                 icon={
@@ -998,7 +998,7 @@ export default function SpacesPage() {
               )}
             </section>
 
-            {/* ── Recent ── */}
+            {/* == Recent == */}
             <section>
               <SectionHeader
                 icon={

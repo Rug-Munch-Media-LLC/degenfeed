@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import { STREAM_CATEGORIES, type StreamCategory } from './types';
 
-/* ─── Go Live Setup Form ─────────────────────────────────────── */
+/* === Go Live Setup Form ======================================= */
 
 interface GoLiveSetupData {
   title: string;

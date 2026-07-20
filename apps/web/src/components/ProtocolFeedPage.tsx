@@ -22,7 +22,7 @@ const TipModal = dynamic(() => import('./TipModal').then((m) => ({ default: m.Ti
   loading: () => null,
 });
 
-// ─── Protocol configuration ────────────────────────────────────────────────
+// === Protocol configuration ================================================
 
 export interface ProtocolFeedConfig {
   id: string;
@@ -154,7 +154,7 @@ function hexToRgb(hex: string): string {
   return `${Number.parseInt(result[1], 16)},${Number.parseInt(result[2], 16)},${Number.parseInt(result[3], 16)}`;
 }
 
-// ─── Shared component ──────────────────────────────────────────────────────
+// === Shared component ======================================================
 
 interface FeedMeta {
   total?: number;
@@ -192,7 +192,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
   const feedContainerRef = useRef<HTMLDivElement>(null);
   const prevProtocolRef = useRef<string>(protocol);
 
-  // ── Set protocol accent color on document for transition overlay ──
+  // == Set protocol accent color on document for transition overlay ==
   useEffect(() => {
     if (config) {
       document.documentElement.style.setProperty('--protocol-accent', config.color);
@@ -201,7 +201,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
     }
   }, [protocol, config]);
 
-  // ── Protocol transition flash effect (only on protocol change) ──
+  // == Protocol transition flash effect (only on protocol change) ==
   useEffect(() => {
     if (prevProtocolRef.current !== protocol) {
       const prev = prevProtocolRef.current;
@@ -219,7 +219,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
     }
   }, [protocol, config]);
 
-  // ── Handle tab change with smooth transition ──
+  // == Handle tab change with smooth transition ==
   const handleTabChange = useCallback(
     (tabId: string) => {
       if (tabId === activeTab) return;
@@ -397,10 +397,10 @@ export function ProtocolFeedPage({ protocol }: Props) {
   return (
     <ErrorBoundary>
       <div className="mx-auto max-w-6xl px-4 py-4">
-        {/* ── Hero section (full width) ── */}
+        {/* == Hero section (full width) == */}
         <ProtocolHero config={config} />
 
-        {/* ── Featured posts mosaic (full width) ── */}
+        {/* == Featured posts mosaic (full width) == */}
         <ContentMosaic
           posts={featuredPosts}
           color={config.color}
@@ -408,10 +408,10 @@ export function ProtocolFeedPage({ protocol }: Props) {
           loading={featuredLoading}
         />
 
-        {/* ── Protocol-specific curated sections ── */}
+        {/* == Protocol-specific curated sections == */}
         <ProtocolSections protocol={config.id} color={config.color} />
 
-        {/* ── Two-column layout: feed + sidebar ── */}
+        {/* == Two-column layout: feed + sidebar == */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
           {/* Left column — main feed */}
           <div className="min-w-0 flex-1">
@@ -444,7 +444,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
                     </button>
                   );
                 })}
-                {/* ── Dedicated Trending page link ── */}
+                {/* == Dedicated Trending page link == */}
                 <Link
                   href={`/${config.id}/trending`}
                   className="relative whitespace-nowrap px-4 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-muted)]"
@@ -482,7 +482,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
             {/* Quick jump — mobile dropdown */}
             <QuickJumpSidebar color={config.color} activeTab={activeTab} onJump={setActiveTab} />
 
-            {/* ── Feed */}
+            {/* == Feed */}
             <FeedPollerBanner count={newPostCount} onRefresh={handleRefresh} />
 
             {feedMeta.notices && feedMeta.notices.length > 0 && (

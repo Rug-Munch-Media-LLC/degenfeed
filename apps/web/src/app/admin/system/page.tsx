@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────
+// === Types ============================================================
 
 interface FeatureFlag {
   key: string;
@@ -33,7 +33,7 @@ interface SystemConfig {
   environment: string;
 }
 
-// ─── Default data ─────────────────────────────────────────────────────
+// === Default data =====================================================
 
 const DEFAULT_FLAGS: FeatureFlag[] = [
   {
@@ -165,7 +165,7 @@ const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   environment: process.env.NODE_ENV || 'production',
 };
 
-// ─── Component ────────────────────────────────────────────────────────
+// === Component ========================================================
 
 export default function AdminSystemPage() {
   const [flags, setFlags] = useState<FeatureFlag[]>(DEFAULT_FLAGS);
@@ -361,7 +361,7 @@ export default function AdminSystemPage() {
         ))}
       </div>
 
-      {/* ── Feature Flags Tab ── */}
+      {/* == Feature Flags Tab == */}
       {activeTab === 'flags' && (
         <div className="space-y-6">
           {categories.map((cat) => (
@@ -407,7 +407,7 @@ export default function AdminSystemPage() {
         </div>
       )}
 
-      {/* ── Rate Limits Tab ── */}
+      {/* == Rate Limits Tab == */}
       {activeTab === 'limits' && (
         <div>
           <div className="mb-4 flex items-center gap-3">
@@ -503,7 +503,7 @@ export default function AdminSystemPage() {
         </div>
       )}
 
-      {/* ── Global Config Tab ── */}
+      {/* == Global Config Tab == */}
       {activeTab === 'config' && (
         <div>
           <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -549,7 +549,7 @@ export default function AdminSystemPage() {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────
+// === Sub-components ===================================================
 
 function ConfigCard({ label, value, accent }: { label: string; value: string; accent?: 'green' }) {
   return (

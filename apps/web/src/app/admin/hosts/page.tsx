@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────
+// === Types ============================================================
 
 interface ServerInfo {
   id: string;
@@ -40,7 +40,7 @@ interface HostsResponse {
   servers: ServerInfo[];
 }
 
-// ─── Default data ─────────────────────────────────────────────────────
+// === Default data =====================================================
 
 const DEFAULT_SERVERS: ServerInfo[] = [
   {
@@ -187,7 +187,7 @@ function formatGB(mb: number): string {
   return `${(mb / 1024).toFixed(1)} GB`;
 }
 
-// ─── Component ────────────────────────────────────────────────────────
+// === Component ========================================================
 
 export default function AdminHostsPage() {
   const [servers, setServers] = useState<ServerInfo[]>(DEFAULT_SERVERS);
@@ -524,7 +524,7 @@ export default function AdminHostsPage() {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────
+// === Sub-components ===================================================
 
 function ResourceCard({
   label,

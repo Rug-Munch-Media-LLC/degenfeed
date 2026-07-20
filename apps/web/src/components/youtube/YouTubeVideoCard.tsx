@@ -13,7 +13,7 @@ import { YouTubeSourceBadge } from './YouTubeSourceBadge';
 import { formatYouTubeCount, formatYouTubeDuration, formatYouTubeTimeAgo } from './useYouTube';
 import type { EnrichedYouTubeVideo } from './useYouTube';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export interface YouTubeVideoCardProps {
   video: EnrichedYouTubeVideo;
@@ -31,7 +31,7 @@ export interface YouTubeVideoCardProps {
   variant?: 'card' | 'compact' | 'featured';
 }
 
-// ─── Component ───────────────────────────────────────────────────────────
+// === Component ===========================================================
 
 export const YouTubeVideoCard = memo(function YouTubeVideoCard({
   video,
@@ -77,7 +77,7 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ── Thumbnail ── */}
+      {/* == Thumbnail == */}
       <div
         className={`relative overflow-hidden bg-[var(--color-muted)] ${
           isFeatured ? 'lg:w-3/5 aspect-video lg:aspect-auto' : isCompact ? 'aspect-video' : 'aspect-video w-full'
@@ -134,7 +134,7 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
         )}
       </div>
 
-      {/* ── Card Body ── */}
+      {/* == Card Body == */}
       <div className={`flex flex-1 flex-col ${isFeatured ? 'lg:w-2/5' : ''} p-3`}>
         {/* Title */}
         <h3 className={`font-semibold text-[var(--color-fg)] line-clamp-2 leading-snug group-hover:text-red-400 transition-colors ${isFeatured ? 'text-lg' : isCompact ? 'text-xs' : 'text-sm'}`}>
@@ -193,7 +193,7 @@ export const YouTubeVideoCard = memo(function YouTubeVideoCard({
         )}
       </div>
 
-      {/* ── Action Bar ── */}
+      {/* == Action Bar == */}
       <div className="flex items-center border-t border-[var(--color-glass-border)] divide-x divide-[var(--color-glass-border)]">
         {/* Tip */}
         <button

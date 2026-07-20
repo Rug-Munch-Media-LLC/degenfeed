@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { memo } from 'react';
 
-/* ─── Trending topics ──────────────────────────────────────── */
+/* === Trending topics ======================================== */
 
 interface TrendingTopic {
   tag: string;
@@ -22,7 +22,7 @@ const TRENDING_TOPICS: TrendingTopic[] = [
   { tag: '#Web3', posts: '18K posts', category: 'Technology' },
 ];
 
-/* ─── Who to follow ────────────────────────────────────────── */
+/* === Who to follow ========================================== */
 
 interface FollowSuggestion {
   handle: string;
@@ -36,7 +36,7 @@ const FOLLOW_SUGGESTIONS: FollowSuggestion[] = [
   { handle: '@preethi', name: 'Preethi K.', protocol: 'Lens' },
 ];
 
-/* ─── Live now ─────────────────────────────────────────────── */
+/* === Live now =============================================== */
 
 interface LiveSpace {
   name: string;
@@ -51,7 +51,7 @@ const LIVE_SPACES: LiveSpace[] = [
   { name: 'DeFi Deep Dive', host: '@defi_dad', listeners: '892', color: '#3b82f6' },
 ];
 
-/* ─── Footer links ─────────────────────────────────────────── */
+/* === Footer links =========================================== */
 
 const FOOTER_LINKS = [
   { href: '/about', label: 'About' },
@@ -64,7 +64,7 @@ const FOOTER_LINKS = [
   { href: '/developers', label: 'Developers' },
 ];
 
-/* ─── Search bar ───────────────────────────────────────────── */
+/* === Search bar ============================================= */
 
 function SearchBar() {
   return (
@@ -94,7 +94,7 @@ function SearchBar() {
   );
 }
 
-/* ─── Trending card ────────────────────────────────────────── */
+/* === Trending card ========================================== */
 
 function TrendingCard() {
   return (
@@ -130,7 +130,7 @@ function TrendingCard() {
   );
 }
 
-/* ─── Who to follow card ───────────────────────────────────── */
+/* === Who to follow card ===================================== */
 
 function WhoToFollowCard() {
   return (
@@ -175,7 +175,7 @@ function WhoToFollowCard() {
   );
 }
 
-/* ─── Live now card ────────────────────────────────────────── */
+/* === Live now card ========================================== */
 
 function LiveNowCard() {
   return (
@@ -237,7 +237,7 @@ function LiveNowCard() {
   );
 }
 
-/* ─── Premium CTA ──────────────────────────────────────────── */
+/* === Premium CTA ============================================ */
 
 function PremiumCta() {
   return (
@@ -275,7 +275,7 @@ function PremiumCta() {
   );
 }
 
-/* ─── Footer nav ───────────────────────────────────────────── */
+/* === Footer nav ============================================= */
 
 function SidebarFooter() {
   return (
@@ -296,7 +296,7 @@ function SidebarFooter() {
   );
 }
 
-/* ─── Main export ──────────────────────────────────────────── */
+/* === Main export ============================================ */
 
 export const RightSidebar = memo(function RightSidebar() {
   return (

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '../Toast';
 
-/* ─── Types ─────────────────────────────────────────────────── */
+/* === Types =================================================== */
 
 export interface SessionMeta {
   nonce: string;
@@ -19,7 +19,7 @@ export interface SessionMeta {
   isCurrent: boolean;
 }
 
-/* ─── Device Icon ───────────────────────────────────────────── */
+/* === Device Icon ============================================= */
 
 function DeviceIcon({ device, os }: { device: string; os: string }) {
   // Pick an icon based on device type
@@ -52,7 +52,7 @@ function DeviceIcon({ device, os }: { device: string; os: string }) {
   );
 }
 
-/* ─── Format helpers ────────────────────────────────────────── */
+/* === Format helpers ========================================== */
 
 function formatTime(ts: number): string {
   const date = new Date(ts);
@@ -94,7 +94,7 @@ function maskIp(ip: string): string {
   return ip;
 }
 
-/* ─── Confirm dialog ────────────────────────────────────────── */
+/* === Confirm dialog ========================================== */
 
 function ConfirmAction({
   open,
@@ -161,7 +161,7 @@ function ConfirmAction({
   );
 }
 
-/* ─── Session List ──────────────────────────────────────────── */
+/* === Session List ============================================ */
 
 export function SessionList() {
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
@@ -248,7 +248,7 @@ export function SessionList() {
     }
   }, [showToast]);
 
-  /* ─── Loading skeleton ────────────────────────────────── */
+  /* === Loading skeleton ================================== */
 
   if (loading) {
     return (
@@ -269,7 +269,7 @@ export function SessionList() {
     );
   }
 
-  /* ─── Error state ─────────────────────────────────────── */
+  /* === Error state ======================================= */
 
   if (error) {
     return (
@@ -286,7 +286,7 @@ export function SessionList() {
     );
   }
 
-  /* ─── Empty state ─────────────────────────────────────── */
+  /* === Empty state ======================================= */
 
   if (sessions.length === 0) {
     return (
@@ -300,7 +300,7 @@ export function SessionList() {
     );
   }
 
-  /* ─── Session rows ────────────────────────────────────── */
+  /* === Session rows ====================================== */
 
   const otherCount = sessions.filter((s) => !s.isCurrent).length;
 

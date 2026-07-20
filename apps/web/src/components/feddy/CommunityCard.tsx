@@ -5,7 +5,7 @@ import Image from 'next/image';
 import type { DirectoryEntry, FeddyCategory } from './types';
 import { CATEGORY_LABELS, CATEGORY_EMOJIS } from './types';
 
-// ─── Helpers ───────────────────────────────────────────────────────────
+// === Helpers ===========================================================
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -23,7 +23,7 @@ function timeSince(ts: number): string {
   return `${Math.floor(days / 365)}y ago`;
 }
 
-// ─── Card ──────────────────────────────────────────────────────────────
+// === Card ==============================================================
 
 export function CommunityCard({ entry }: { entry: DirectoryEntry }) {
   const categoryEmoji = CATEGORY_EMOJIS[entry.category as FeddyCategory] || '🌐';

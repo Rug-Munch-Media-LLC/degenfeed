@@ -9,7 +9,7 @@ function formatCompact(n: number): string {
   return String(n);
 }
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 interface CommunityStatsProps {
   onlineNow: number;
@@ -22,7 +22,7 @@ interface CommunityStatsProps {
   className?: string;
 }
 
-/* ─── Component ─────────────────────────────────────── */
+/* === Component ======================================= */
 
 export default function CommunityStats({
   onlineNow,

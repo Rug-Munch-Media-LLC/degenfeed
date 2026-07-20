@@ -12,7 +12,7 @@ import { useLiveStreams } from '../components/streams/useLiveStreams';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
 
-/* ─── SVG Icon Components ──────────────────────────────────── */
+/* === SVG Icon Components ==================================== */
 
 function HomeIcon({ active }: { active: boolean }) {
   return active ? (
@@ -271,7 +271,7 @@ function ComposeIcon() {
   );
 }
 
-/* ─── Nav items ────────────────────────────────────────────── */
+/* === Nav items ============================================== */
 
 interface SidebarItem {
   href: string;
@@ -329,7 +329,7 @@ function iconFor(href: string, active: boolean, hasLive?: boolean): React.ReactN
   }
 }
 
-/* ─── User card dropdown ───────────────────────────────────── */
+/* === User card dropdown ===================================== */
 
 function WalletUserCard({
   walletAddress,
@@ -578,7 +578,7 @@ function WalletUserCard({
   );
 }
 
-/* ─── Collapse toggle button ───────────────────────────────── */
+/* === Collapse toggle button ================================= */
 
 function CollapseToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   return (
@@ -609,7 +609,7 @@ function CollapseToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle:
   );
 }
 
-/* ─── Main Component ───────────────────────────────────────── */
+/* === Main Component ========================================= */
 
 export const LeftSidebar = memo(function LeftSidebar({
   onNavClick,

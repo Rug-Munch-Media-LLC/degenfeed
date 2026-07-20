@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { generateMockStream, type ViewerAnalytics, type StreamExtended } from './types';
 
-/* ─── Stat Card ──────────────────────────────────────────────── */
+/* === Stat Card ================================================ */
 
 function StatCard({ label, value, change, icon, color }: {
   label: string;
@@ -31,7 +31,7 @@ function StatCard({ label, value, change, icon, color }: {
   );
 }
 
-/* ─── Viewer Chart (simplified) ──────────────────────────────── */
+/* === Viewer Chart (simplified) ================================ */
 
 function ViewerChart({ data }: { data: ViewerAnalytics }) {
   const max = Math.max(...data.viewerHistory.map((h) => h.count), 1);
@@ -55,7 +55,7 @@ function ViewerChart({ data }: { data: ViewerAnalytics }) {
   );
 }
 
-/* ─── Metric bar ─────────────────────────────────────────────── */
+/* === Metric bar =============================================== */
 
 function MetricBar({ label, value, max, color }: {
   label: string;
@@ -75,7 +75,7 @@ function MetricBar({ label, value, max, color }: {
   );
 }
 
-/* ─── Generate mock analytics ────────────────────────────────── */
+/* === Generate mock analytics ================================== */
 
 function generateMockAnalytics(): ViewerAnalytics {
   const now = Date.now();
@@ -101,7 +101,7 @@ function generateMockAnalytics(): ViewerAnalytics {
   };
 }
 
-/* ─── CreatorDashboard ───────────────────────────────────────── */
+/* === CreatorDashboard ========================================= */
 
 interface CreatorDashboardProps {
   streamId?: string;
@@ -112,7 +112,7 @@ export function CreatorDashboard({ streamId }: CreatorDashboardProps) {
   const analytics = useRef(generateMockAnalytics()).current;
   const streams = useRef(generateMockStream(1)).current[0];
 
-  /* ─── Stream health simulation ─────────────────────────────── */
+  /* === Stream health simulation =============================== */
   const [uptime, setUptime] = useState('00:00:00');
   const [bitrate, setBitrate] = useState(3500);
   const [fps, setFps] = useState(60);

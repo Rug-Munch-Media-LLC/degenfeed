@@ -12,7 +12,7 @@ import { memo, useRef, useState } from 'react';
 import { YouTubeShortsCard } from './YouTubeShortsCard';
 import type { YouTubeShort } from './useYouTube';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export interface YouTubeShortsFeedProps {
   /** Array of YouTube Shorts */
@@ -27,7 +27,7 @@ export interface YouTubeShortsFeedProps {
   onPlay?: (short: YouTubeShort) => void;
 }
 
-// ─── Category selector ───────────────────────────────────────────────────
+// === Category selector ===================================================
 
 const SHORTS_CATEGORIES = [
   { id: 'crypto', label: 'Crypto', emoji: '\uD83E\uDE99' },
@@ -38,7 +38,7 @@ const SHORTS_CATEGORIES = [
   { id: 'education', label: 'Education', emoji: '\uD83D\uDCDA' },
 ];
 
-// ─── Component ───────────────────────────────────────────────────────────
+// === Component ===========================================================
 
 export const YouTubeShortsFeed = memo(function YouTubeShortsFeed({
   shorts,

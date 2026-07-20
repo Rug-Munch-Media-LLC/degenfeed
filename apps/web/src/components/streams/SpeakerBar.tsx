@@ -2,13 +2,13 @@
 
 import type { LiveStream } from './useLiveStreams';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface SpeakerBarProps {
   stream: LiveStream;
 }
 
-/* ─── Speaker avatar with mute indicator ─────────────────────── */
+/* === Speaker avatar with mute indicator ======================= */
 
 function SpeakerAvatar({
   name,
@@ -83,7 +83,7 @@ function SpeakerAvatar({
   );
 }
 
-/* ─── Main Component ─────────────────────────────────────────── */
+/* === Main Component =========================================== */
 
 export function SpeakerBar({ stream }: SpeakerBarProps) {
   const speakers = stream.space?.speakers ?? [];

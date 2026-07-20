@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 
-// ─── Types ────────────────────────────────────────────────────────────
+// === Types ============================================================
 
 interface ReportEntry {
   id: string;
@@ -39,7 +39,7 @@ interface StatsResponse {
   mostReported: { userId: string; count: number }[];
 }
 
-// ─── Admin wallets (hardcoded for now; also checked server-side) ──────
+// === Admin wallets (hardcoded for now; also checked server-side) ======
 // In production, this should be set via NEXT_PUBLIC_ADMIN_WALLETS env var.
 const ADMIN_WALLETS_RAW = process.env.NEXT_PUBLIC_ADMIN_WALLETS || '';
 const ADMIN_WALLETS = new Set(
@@ -87,7 +87,7 @@ function shortenAddress(addr: string): string {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
 
-// ─── Component ────────────────────────────────────────────────────────
+// === Component ========================================================
 
 export default function AdminModerationPage() {
   const { walletAddress } = useAuth();
@@ -223,7 +223,7 @@ export default function AdminModerationPage() {
     }
   }, [showBanModal, banReason, showToast_]);
 
-  // ── Not admin → access denied ──
+  // == Not admin → access denied ==
 
   if (!loading && (!walletAddress || !isAdmin)) {
     return (
@@ -624,7 +624,7 @@ export default function AdminModerationPage() {
   );
 }
 
-// ─── Stat Card Component ──────────────────────────────────────────────
+// === Stat Card Component ==============================================
 
 function StatCard({
   label,

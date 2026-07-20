@@ -14,7 +14,7 @@ import { getDb } from '@degenfeed/storage';
 import type { Protocol } from '@degenfeed/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-/* ─── IndexedDB helpers for muted/blocked ────────────────────── */
+/* === IndexedDB helpers for muted/blocked ====================== */
 
 async function _idbAddMutedWord(word: string): Promise<void> {
   try {
@@ -81,7 +81,7 @@ async function _idbRemoveBlockedUser(userId: string): Promise<void> {
   }
 }
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 export type Theme = 'dark' | 'light' | 'auto';
 export type FontSize = 'small' | 'medium' | 'large';
@@ -112,7 +112,7 @@ export interface AppPreferences {
   content: ContentSettings;
 }
 
-/* ─── Defaults ────────────────────────────────────────────────── */
+/* === Defaults ================================================== */
 
 const DEFAULT_NOTIFICATIONS: NotificationPreferences = {
   nostr: { likes: true, reposts: true, replies: true, follows: true, tips: true },
@@ -133,7 +133,7 @@ const DEFAULT_PREFERENCES: AppPreferences = {
   content: { defaultFeed: 'for-you', mutedWords: [], mutedUsers: [], blockedUsers: [] },
 };
 
-/* ─── Storage keys ────────────────────────────────────────────── */
+/* === Storage keys ============================================== */
 
 const LS_THEME = 'df_theme';
 const LS_FONT_SIZE = 'df_font_size';
@@ -143,7 +143,7 @@ const LS_PRIVACY = 'df_privacy';
 const LS_CONTENT = 'df_content';
 const COOKIE_THEME = 'df-theme';
 
-/* ─── Helpers ─────────────────────────────────────────────────── */
+/* === Helpers =================================================== */
 
 function getLocal<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -205,7 +205,7 @@ function applyFontSize(size: FontSize): void {
   else root.classList.add('reader-md');
 }
 
-/* ─── Hook ────────────────────────────────────────────────────── */
+/* === Hook ====================================================== */
 
 export function usePreferences() {
   const [prefs, setPrefs] = useState<AppPreferences>(() => {
@@ -277,7 +277,7 @@ export function usePreferences() {
     return () => mq.removeEventListener('change', handler);
   }, [prefs.theme]);
 
-  /* ─── Setters ─────────────────────────────────────────────── */
+  /* === Setters =============================================== */
 
   const setTheme = useCallback((theme: Theme) => {
     setPrefs((p) => ({ ...p, theme }));
@@ -334,7 +334,7 @@ export function usePreferences() {
     setLocal(LS_CONTENT, content);
   }, []);
 
-  /* ─── Save to KV API ──────────────────────────────────────── */
+  /* === Save to KV API ======================================== */
 
   const saveToServer = useCallback(async () => {
     setSaveStatus('saving');
@@ -364,7 +364,7 @@ export function usePreferences() {
     }
   }, [prefs]);
 
-  /* ─── Muted / Blocked management ──────────────────────────── */
+  /* === Muted / Blocked management ============================ */
 
   const addMutedWord = useCallback(async (word: string) => {
     setPrefs((p) => {

@@ -1,6 +1,6 @@
 'use client';
 
-/* ─── Error code helpers ───────────────────────────────────── */
+/* === Error code helpers ===================================== */
 
 let _errorCounter = 0;
 function generateCode(): string {
@@ -9,7 +9,7 @@ function generateCode(): string {
   return `DF-${rand}`;
 }
 
-/* ─── Friendly messages per error pattern ──────────────────── */
+/* === Friendly messages per error pattern ==================== */
 
 const FRIENDLY_MESSAGES = [
   'Something hiccupped. Give it another shot.',
@@ -26,7 +26,7 @@ const NETWORK_MESSAGES = [
   "Network hiccup! Things should work once you're back online.",
 ];
 
-/* ─── ErrorFallback ────────────────────────────────────────── */
+/* === ErrorFallback ========================================== */
 
 interface ErrorFallbackProps {
   error: Error & { digest?: string };
@@ -154,7 +154,7 @@ export function ErrorFallback({
   );
 }
 
-/* ─── ErrorCard (inline, for data sections) ────────────────── */
+/* === ErrorCard (inline, for data sections) ================== */
 
 interface ErrorCardProps {
   message?: string;
@@ -216,7 +216,7 @@ export function ErrorCard({ message = 'Could not load data', onRetry, compact }:
   );
 }
 
-/* ─── ErrorMessage (inline text, for forms/inputs) ─────────── */
+/* === ErrorMessage (inline text, for forms/inputs) =========== */
 
 interface ErrorMessageProps {
   message: string;

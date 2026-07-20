@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { PLATFORM_CONFIG, type SourcePlatform } from './types';
 
-/* ─── Props ────────────────────────────────────────────────────── */
+/* === Props ====================================================== */
 
 interface GuestSignUpProps {
   sourcePlatform: SourcePlatform;
@@ -24,11 +24,11 @@ interface GuestSignUpProps {
   compact?: boolean;
 }
 
-/* ─── Types ────────────────────────────────────────────────────── */
+/* === Types ====================================================== */
 
 type SignUpMethod = 'wallet' | 'email' | 'platform';
 
-/* ─── Component ────────────────────────────────────────────────── */
+/* === Component ================================================== */
 
 export function GuestSignUp({
   sourcePlatform,

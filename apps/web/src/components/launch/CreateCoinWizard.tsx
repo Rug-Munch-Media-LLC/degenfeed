@@ -9,7 +9,7 @@ import RecipientSplitEditor from './RecipientSplitEditor';
 import ShareModal from './ShareModal';
 import VestingConfigPanel from './VestingConfigPanel';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 interface VestingConfig {
   initialUnlockBps: number;
@@ -46,7 +46,7 @@ const STEPS: StepConfig[] = [
   { id: 6, label: 'Success!', icon: '🚀' },
 ];
 
-/* ─── Helpers ────────────────────────────────────────── */
+/* === Helpers ========================================== */
 
 function shortenAddress(addr: string): string {
   if (addr.length < 10) return addr;
@@ -59,7 +59,7 @@ function formatCompact(n: number): string {
   return String(n);
 }
 
-/* ─── Step 1: Coin Details ───────────────────────────── */
+/* === Step 1: Coin Details ============================= */
 
 function StepCoinDetails({
   params,
@@ -248,7 +248,7 @@ function StepCoinDetails({
   );
 }
 
-/* ─── Step 2: Tokenomics ─────────────────────────────── */
+/* === Step 2: Tokenomics =============================== */
 
 function StepTokenomics({
   params,
@@ -343,7 +343,7 @@ function StepTokenomics({
   );
 }
 
-/* ─── Step 3: Revenue Sharing ────────────────────────── */
+/* === Step 3: Revenue Sharing ========================== */
 
 function StepRevenueSharing({
   params,
@@ -400,7 +400,7 @@ function StepRevenueSharing({
   );
 }
 
-/* ─── Step 4: Review & Deploy ────────────────────────── */
+/* === Step 4: Review & Deploy ========================== */
 
 function StepReviewDeploy({
   params,
@@ -566,7 +566,7 @@ function StepReviewDeploy({
   );
 }
 
-/* ─── Step 5: Success ────────────────────────────────── */
+/* === Step 5: Success ================================== */
 
 function StepSuccess({ symbol, coinAddress }: { symbol: string; coinAddress: string }) {
   const [showShare, setShowShare] = useState(false);
@@ -659,7 +659,7 @@ function StepSuccess({ symbol, coinAddress }: { symbol: string; coinAddress: str
   );
 }
 
-/* ─── Main Wizard ────────────────────────────────────── */
+/* === Main Wizard ====================================== */
 
 interface CreateCoinWizardProps {
   className?: string;

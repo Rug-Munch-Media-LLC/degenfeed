@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-/* ─── Category-specific empty state presets ────────────────── */
+/* === Category-specific empty state presets ================== */
 
 export type EmptyCategory =
   | 'feed'
@@ -265,7 +265,7 @@ const presets: Record<EmptyCategory, EmptyStatePreset> = {
   },
 };
 
-/* ─── Component ────────────────────────────────────────────── */
+/* === Component ============================================== */
 
 interface EmptyStateProps {
   /** Category preset or custom emoji icon */

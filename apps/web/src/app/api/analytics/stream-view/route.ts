@@ -11,7 +11,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-/* ─── Types ─────────────────────────────────────────────────────── */
+/* === Types ======================================================= */
 
 interface StreamViewPayload {
   streamId: string;
@@ -23,7 +23,7 @@ interface StreamViewPayload {
   guestId?: string;
 }
 
-/* ─── Rate limiting (in-memory, per-IP, burst-aware) ─────────── */
+/* === Rate limiting (in-memory, per-IP, burst-aware) =========== */
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 60; // requests per minute per IP
@@ -62,7 +62,7 @@ function maybeCleanupRateLimits(): void {
   }
 }
 
-/* ─── Validation ────────────────────────────────────────────────── */
+/* === Validation ================================================== */
 
 const VALID_PLATFORMS = new Set([
   'mastodon',
@@ -85,7 +85,7 @@ function validatePayload(body: unknown): body is StreamViewPayload {
   return true;
 }
 
-/* ─── Handler ────────────────────────────────────────────────────── */
+/* === Handler ====================================================== */
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   maybeCleanupRateLimits();
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const payload = body as StreamViewPayload;
 
   try {
-    // ── Log to stdout for log aggregators ──
+    // == Log to stdout for log aggregators ==
     const logEntry = {
       event: 'stream_view',
       streamId: payload.streamId,
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // eslint-disable-next-line no-console
     console.log(JSON.stringify(logEntry));
 
-    // ── Persist to database (async, non-blocking) ──
+    // == Persist to database (async, non-blocking) ==
     // This is a placeholder for the actual DB insertion.
     // In production this writes to ClickHouse or Postgres via the
     // /api/analytics/batch endpoint for efficient batching.
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-/* ─── Persistence ────────────────────────────────────────────────── */
+/* === Persistence ================================================== */
 
 interface AnalyticsRecord {
   event: string;
@@ -174,7 +174,7 @@ async function persistAnalytics(_record: AnalyticsRecord): Promise<void> {
   // by our log aggregator (Grafana Loki / Datadog).
 }
 
-/* ─── Helpers ────────────────────────────────────────────────────── */
+/* === Helpers ====================================================== */
 
 /**
  * Anonymize an IP address by zeroing out the last segment.

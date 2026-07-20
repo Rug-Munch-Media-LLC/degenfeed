@@ -4,7 +4,7 @@
  * and makes the mock data independently reusable/testable.
  */
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 export interface TrendingPost {
   id: string;
@@ -54,7 +54,7 @@ export interface TrendingResponse {
   fetchedAt?: number;
 }
 
-// ─── Per-platform mock data ────────────────────────────────────────────────
+// === Per-platform mock data ================================================
 
 export const PLATFORM_TRENDING: Record<string, TrendingResponse> = {
   farcaster: {

@@ -23,7 +23,7 @@ function formatUsd(n: number): string {
   return `$${n.toFixed(0)}`;
 }
 
-/* ─── Stat Card Subcomponent ──────────────────────────── */
+/* === Stat Card Subcomponent ============================ */
 
 interface StatCardProps {
   label: string;

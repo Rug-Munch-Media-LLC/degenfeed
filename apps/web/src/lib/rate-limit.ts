@@ -9,7 +9,7 @@
  *   result.allowed ? NextResponse.next() : 429;
  */
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// == Types ==================================================================
 
 export interface RateLimitResult {
   /** Whether the request is allowed through */
@@ -27,14 +27,14 @@ export interface RateLimitConfig {
   refillRate: number;
 }
 
-// ── Bucket internals ───────────────────────────────────────────────────────
+// == Bucket internals =======================================================
 
 interface Bucket {
   tokens: number;
   lastRefill: number;
 }
 
-// ── TokenBucket class ──────────────────────────────────────────────────────
+// == TokenBucket class ======================================================
 
 export class TokenBucket {
   private readonly buckets = new Map<string, Bucket>();
@@ -105,7 +105,7 @@ export class TokenBucket {
   }
 }
 
-// ── Singleton limiters ─────────────────────────────────────────────────────
+// == Singleton limiters =====================================================
 // Each tier maps to a specific endpoint / method group from the spec.
 //
 // The refill rate is derived as  maxTokens / windowSeconds  so the bucket

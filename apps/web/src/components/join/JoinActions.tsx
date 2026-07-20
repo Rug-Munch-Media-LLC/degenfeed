@@ -12,7 +12,7 @@ import { useCallback, useState } from 'react';
 import { TipModal } from '../../components/TipModal';
 import { PLATFORM_CONFIG, type SourcePlatform } from './types';
 
-/* ─── Props ────────────────────────────────────────────────────── */
+/* === Props ====================================================== */
 
 interface JoinActionsProps {
   /** The creator's display name (for tip modal). */
@@ -31,7 +31,7 @@ interface JoinActionsProps {
   tipEnabled?: boolean;
 }
 
-/* ─── Component ────────────────────────────────────────────────── */
+/* === Component ================================================== */
 
 export function JoinActions({
   creatorName,

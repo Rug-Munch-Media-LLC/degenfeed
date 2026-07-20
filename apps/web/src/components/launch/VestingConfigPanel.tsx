@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 interface VestingConfig {
   initialUnlockBps: number;
@@ -26,7 +26,7 @@ interface VestingConfigPanelProps {
   supply: number;
 }
 
-/* ─── Presets ────────────────────────────────────────── */
+/* === Presets ========================================== */
 
 const PRESETS: VestingPreset[] = [
   {
@@ -60,7 +60,7 @@ const PRESETS: VestingPreset[] = [
   },
 ];
 
-/* ─── Vesting Timeline Visualization ─────────────────── */
+/* === Vesting Timeline Visualization =================== */
 
 function VestingTimeline({ config, allocationPct }: { config: VestingConfig; allocationPct: number }) {
   const totalDays = Math.ceil((config.cliffDuration + config.vestingDuration) / 86400);
@@ -126,7 +126,7 @@ function VestingTimeline({ config, allocationPct }: { config: VestingConfig; all
   );
 }
 
-/* ─── Main Component ─────────────────────────────────── */
+/* === Main Component =================================== */
 
 export default function VestingConfigPanel({ config, onChange, creatorAllocation, supply }: VestingConfigPanelProps) {
   const [activePreset, setActivePreset] = useState<string | null>(() => {
@@ -141,7 +141,7 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
 
   const [customMode, setCustomMode] = useState(activePreset === null);
 
-  // ── Calculations ──────────────────────────────────────
+  // == Calculations ======================================
 
   const totalAllocation = (supply * creatorAllocation) / 100;
   const initialUnlockTokens = (totalAllocation * config.initialUnlockBps) / 10000;
@@ -182,7 +182,7 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
     });
   }, [config]);
 
-  // ── Handlers ──────────────────────────────────────────
+  // == Handlers ==========================================
 
   function selectPreset(preset: VestingPreset) {
     if (preset.locked) return;
@@ -201,7 +201,7 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
     }
   }
 
-  // ── Render ────────────────────────────────────────────
+  // == Render ============================================
 
   return (
     <div className="space-y-6">

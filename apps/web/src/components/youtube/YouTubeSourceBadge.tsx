@@ -14,7 +14,7 @@
 
 import { memo } from 'react';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export type SourceType = 'youtube' | 'peertube' | 'shorts' | 'degenfeed';
 
@@ -52,7 +52,7 @@ const SOURCE_CONFIG: Record<SourceType, SourceBadgeConfig> = {
   },
 };
 
-// ─── Component ───────────────────────────────────────────────────────────
+// === Component ===========================================================
 
 export interface YouTubeSourceBadgeProps {
   source: SourceType;
@@ -90,7 +90,7 @@ export const YouTubeSourceBadge = memo(function YouTubeSourceBadge({
   );
 });
 
-// ─── Inline badge for within-text usage ─────────────────────────────────
+// === Inline badge for within-text usage =================================
 
 export function YouTubeSourceText({ source }: { source: SourceType }) {
   const config = SOURCE_CONFIG[source] ?? SOURCE_CONFIG.degenfeed;

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@degenfeed/feed-core": "workspace:*",
+    "@degenfeed/source-discovery": "workspace:*",
     "@degenfeed/types": "workspace:*"
   },
   "devDependencies": {

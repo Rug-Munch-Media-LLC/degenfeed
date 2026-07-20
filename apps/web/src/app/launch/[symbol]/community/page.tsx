@@ -10,13 +10,13 @@ import MilestoneTracker from '../../../../components/launch/MilestoneTracker';
 import CommunityStats from '../../../../components/launch/CommunityStats';
 import HolderLeaderboard from '../../../../components/launch/HolderLeaderboard';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 interface CommunityPageProps {
   params: { symbol: string };
 }
 
-/* ─── Skeleton Loading ───────────────────────────────── */
+/* === Skeleton Loading ================================= */
 
 function CommunitySkeleton() {
   return (
@@ -37,7 +37,7 @@ function CommunitySkeleton() {
   );
 }
 
-/* ─── Main Page ──────────────────────────────────────── */
+/* === Main Page ======================================== */
 
 export default function TokenCommunityPage({ params }: CommunityPageProps) {
   const { symbol } = params;

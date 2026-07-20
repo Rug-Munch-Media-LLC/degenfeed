@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────
+// === Types ============================================================
 
 interface ContentItem {
   id: string;
@@ -30,7 +30,7 @@ interface SpamItem {
   protocol: string;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────
+// === Helpers ==========================================================
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -63,7 +63,7 @@ const PROTOCOL_ICONS: Record<string, string> = {
   rss: '📡',
 };
 
-// ─── Mock data ────────────────────────────────────────────────────────
+// === Mock data ========================================================
 
 const PROTOCOLS = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'];
 const HANDLES = ['alice_web3', 'bob_nft', 'crypto_kyle', 'defi_dan', 'metaverse_mary'];
@@ -143,7 +143,7 @@ const MOCK_SPAM: SpamItem[] = [
   },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────
+// === Component ========================================================
 
 export default function AdminContentPage() {
   const [activeTab, setActiveTab] = useState<'feed' | 'spam' | 'trending'>('feed');
@@ -311,7 +311,7 @@ export default function AdminContentPage() {
         ))}
       </div>
 
-      {/* ── Content Feed Tab ── */}
+      {/* == Content Feed Tab == */}
       {activeTab === 'feed' && (
         <div>
           <div className="mb-4 flex items-center gap-3">
@@ -432,7 +432,7 @@ export default function AdminContentPage() {
         </div>
       )}
 
-      {/* ── Spam Queue Tab ── */}
+      {/* == Spam Queue Tab == */}
       {activeTab === 'spam' && (
         <div className="space-y-3">
           {spam.length === 0 ? (
@@ -508,7 +508,7 @@ export default function AdminContentPage() {
         </div>
       )}
 
-      {/* ── Trending Curation Tab ── */}
+      {/* == Trending Curation Tab == */}
       {activeTab === 'trending' && (
         <div>
           <p className="mb-4 text-sm text-[var(--color-muted)]">

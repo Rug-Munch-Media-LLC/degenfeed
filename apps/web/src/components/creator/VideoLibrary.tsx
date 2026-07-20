@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { CreatorVideoMeta } from './useCreatorVideos';
 import { useCreatorVideos, useCreatorVideoActions } from './useCreatorVideos';
 
-// ─── Helpers ─────────────────────────────────────────────────────────────
+// === Helpers =============================================================
 
 function formatDuration(seconds: number): string {
   if (!seconds) return '—';
@@ -46,7 +46,7 @@ function stateLabel(state: string): { text: string; color: string } {
   }
 }
 
-// ─── Video Card ──────────────────────────────────────────────────────────
+// === Video Card ==========================================================
 
 function VideoCard({
   video,
@@ -195,7 +195,7 @@ function VideoCard({
   );
 }
 
-// ─── Main Video Library ──────────────────────────────────────────────────
+// === Main Video Library ==================================================
 
 interface VideoLibraryProps {
   type?: 'video' | 'short';

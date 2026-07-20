@@ -8,11 +8,11 @@ import { ChatView } from './ChatView';
 import { ComposeBar } from './ComposeBar';
 import { ConversationList } from './ConversationList';
 
-/* ─── Constants ─────────────────────────────────────────────── */
+/* === Constants =============================================== */
 
 const PROTOCOLS = ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon'] as const;
 
-/* ─── My IDs helper ─────────────────────────────────────────── */
+/* === My IDs helper =========================================== */
 
 function getMyIds(tokens: Record<string, string>): string[] {
   return [
@@ -29,7 +29,7 @@ function getMyIds(tokens: Record<string, string>): string[] {
   ].filter(Boolean) as string[];
 }
 
-/* ─── Page ──────────────────────────────────────────────────── */
+/* === Page ==================================================== */
 
 export default function MessagesPage() {
   const { ready, signedInProtocols, tokens } = useAuth();
@@ -67,7 +67,7 @@ export default function MessagesPage() {
 
   const myIds = useMemo(() => getMyIds(tokens), [tokens]);
 
-  // ── Select conversation handler ──────────────────────────
+  // == Select conversation handler ==========================
   const handleSelectConv = useCallback(
     (conv: { conversationId: string }) => {
       selectConv(conv.conversationId);
@@ -75,36 +75,36 @@ export default function MessagesPage() {
     [selectConv],
   );
 
-  // ── Send from chat view (uses conversation context) ─────
+  // == Send from chat view (uses conversation context) =====
   const handleSendFromChat = useCallback(() => {
     if (!selectedConv) return;
     const other = selectedConv.participants[1] ?? selectedConv.participants[0] ?? '';
     handleSend({ protocol: selectedConv.protocol, toId: other });
   }, [selectedConv, handleSend]);
 
-  // ── Send from "New Message" compose ─────────────────────
+  // == Send from "New Message" compose =====================
   const handleSendNew = useCallback(() => {
     handleSend({ protocol: sendingProtocol, toId: sendToId });
   }, [handleSend, sendingProtocol, sendToId]);
 
-  // ── Typing forwarding ───────────────────────────────────
+  // == Typing forwarding ===================================
   const handleUserTyping = useCallback(() => {
     if (selectedConvId) {
       handleTyping(selectedConvId);
     }
   }, [selectedConvId, handleTyping]);
 
-  // ── New message: reset compose state ────────────────────
+  // == New message: reset compose state ====================
   const handleOpenNewMessage = useCallback(() => {
     setShowCompose(true);
     setSearchQuery('');
   }, [setShowCompose, setSearchQuery]);
 
-  // ── Render ──────────────────────────────────────────────
+  // == Render ==============================================
 
   return (
     <div className="mx-auto flex h-[calc(100dvh-8rem)] flex-col lg:h-[calc(100dvh-4rem)]">
-      {/* ── Header ────────────────────────────────────────── */}
+      {/* == Header ========================================== */}
       <header className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-glass-bg)] px-4 py-2.5 shrink-0">
         <div className="flex items-center gap-3">
           <span className="text-xl" aria-hidden="true">
@@ -242,7 +242,7 @@ export default function MessagesPage() {
       ) : (
         /* ═══ MAIN SPLIT VIEW ═══════════════════════════════ */
         <div className="flex flex-1 overflow-hidden">
-          {/* ── Left: Conversation list ────────────────────────── */}
+          {/* == Left: Conversation list ========================== */}
           <aside
             className={`w-full shrink-0 border-r border-[var(--color-border)] sm:w-[300px] ${
               selectedConvId && !showCompose ? 'hidden sm:flex sm:flex-col' : 'flex flex-col'
@@ -262,7 +262,7 @@ export default function MessagesPage() {
             />
           </aside>
 
-          {/* ── Right: Chat view ──────────────────────────────────── */}
+          {/* == Right: Chat view ==================================== */}
           <section
             className={`flex flex-1 flex-col overflow-hidden ${
               !selectedConvId && !showCompose ? 'hidden sm:flex' : ''

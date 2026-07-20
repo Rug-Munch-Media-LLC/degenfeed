@@ -28,7 +28,7 @@ describe('useFeedPoller', () => {
     vi.useRealTimers();
   });
 
-  // ─── Basic polling ──────────────────────────────────────────────────
+  // === Basic polling ==================================================
 
   it('should call fetchFunction immediately on mount', async () => {
     const fetchFn = vi.fn().mockResolvedValue([createItem('a')]);
@@ -65,7 +65,7 @@ describe('useFeedPoller', () => {
     expect(fetchFn).toHaveBeenCalledTimes(3);
   });
 
-  // ─── Deduplication ──────────────────────────────────────────────────
+  // === Deduplication ==================================================
 
   it('should deduplicate posts with known IDs on seed', async () => {
     const fetchFn = vi.fn().mockResolvedValue([createItem('a'), createItem('b')]);
@@ -128,7 +128,7 @@ describe('useFeedPoller', () => {
     expect(result.current.newPostCount).toBe(2); // b (from earlier) + c (new)
   });
 
-  // ─── refresh() ──────────────────────────────────────────────────────
+  // === refresh() ======================================================
 
   it('should clear newPosts when refresh() is called', async () => {
     let callCount = 0;
@@ -155,7 +155,7 @@ describe('useFeedPoller', () => {
     expect(result.current.newPosts).toEqual([]);
   });
 
-  // ─── lastPolledAt ───────────────────────────────────────────────────
+  // === lastPolledAt ===================================================
 
   it('should update lastPolledAt after successful poll', async () => {
     const fetchFn = vi.fn().mockResolvedValue([createItem('a')]);
@@ -173,7 +173,7 @@ describe('useFeedPoller', () => {
     expect(result.current.lastPolledAt!).toBeGreaterThanOrEqual(startTime);
   });
 
-  // ─── Visibility pause/resume ────────────────────────────────────────
+  // === Visibility pause/resume ========================================
 
   it('should pause polling when the tab is hidden', async () => {
     const fetchFn = vi.fn().mockResolvedValue([createItem('a')]);
@@ -230,7 +230,7 @@ describe('useFeedPoller', () => {
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
-  // ─── Cleanup ────────────────────────────────────────────────────────
+  // === Cleanup ========================================================
 
   it('should clear interval on unmount', async () => {
     const fetchFn = vi.fn().mockResolvedValue([createItem('a')]);
@@ -268,7 +268,7 @@ describe('useFeedPoller', () => {
     removeSpy.mockRestore();
   });
 
-  // ─── Disabled state ─────────────────────────────────────────────────
+  // === Disabled state =================================================
 
   it('should not poll when enabled is false', async () => {
     const fetchFn = vi.fn().mockResolvedValue([createItem('a')]);
@@ -281,7 +281,7 @@ describe('useFeedPoller', () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
-  // ─── isPolling ──────────────────────────────────────────────────────
+  // === isPolling ======================================================
 
   it('should reflect the enabled state via isPolling', async () => {
     const fetchFn = vi.fn().mockResolvedValue([createItem('a')]);
@@ -297,7 +297,7 @@ describe('useFeedPoller', () => {
     expect(disabledResult.current.isPolling).toBe(false);
   });
 
-  // ─── Error handling ─────────────────────────────────────────────────
+  // === Error handling =================================================
 
   it('should not crash when fetchFunction throws', async () => {
     const fetchFn = vi.fn().mockRejectedValue(new Error('Network error'));
@@ -337,7 +337,7 @@ describe('useFeedPoller', () => {
     expect(result.current.newPostCount).toBe(0);
   });
 
-  // ─── Edge: empty fetch result ──────────────────────────────────────
+  // === Edge: empty fetch result ======================================
 
   it('should handle empty fetch result gracefully', async () => {
     const fetchFn = vi.fn().mockResolvedValue([]);

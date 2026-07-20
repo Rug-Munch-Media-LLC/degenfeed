@@ -13,7 +13,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { YouTubeVideoCard } from './YouTubeVideoCard';
 import type { EnrichedYouTubeVideo } from './useYouTube';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export interface YouTubeVideoGridProps {
   /** Videos to display */
@@ -44,7 +44,7 @@ export interface YouTubeVideoGridProps {
   title?: string;
 }
 
-// ─── Infinite Scroll Hook ───────────────────────────────────────────────
+// === Infinite Scroll Hook ===============================================
 
 function useInfiniteScroll(onLoadMore?: () => void, hasMore?: boolean) {
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -69,7 +69,7 @@ function useInfiniteScroll(onLoadMore?: () => void, hasMore?: boolean) {
   return sentinelRef;
 }
 
-// ─── Skeleton ────────────────────────────────────────────────────────────
+// === Skeleton ============================================================
 
 function GridSkeleton({ count = 8 }: { count?: number }) {
   return (
@@ -96,7 +96,7 @@ function GridSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
-// ─── Empty State ─────────────────────────────────────────────────────────
+// === Empty State =========================================================
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -113,7 +113,7 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-// ─── Component ───────────────────────────────────────────────────────────
+// === Component ===========================================================
 
 export const YouTubeVideoGrid = memo(function YouTubeVideoGrid({
   videos,

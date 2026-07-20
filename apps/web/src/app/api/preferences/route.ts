@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 // TODO: Wire to worker backend
 
-// ─── In-memory store (replace with KV in production) ──────────
+// === In-memory store (replace with KV in production) ==========
 // This is a simple store for demo. In production, use Cloudflare KV, Upstash, or similar.
 const preferencesStore = new Map<string, Record<string, unknown>>();
 

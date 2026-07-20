@@ -2,7 +2,7 @@
 
 import type { HolderEntry } from '../../hooks/useTokenCommunity';
 
-/* ─── Badge display ─────────────────────────────────── */
+/* === Badge display =================================== */
 
 const BADGE_ICONS: Record<string, string> = {
   creator: '👑',
@@ -13,7 +13,7 @@ const BADGE_ICONS: Record<string, string> = {
   superfan: '⭐',
 };
 
-/* ─── Component ─────────────────────────────────────── */
+/* === Component ======================================= */
 
 interface HolderLeaderboardProps {
   holders: HolderEntry[];
@@ -108,7 +108,7 @@ export default function HolderLeaderboard({
   );
 }
 
-/* ─── Holder Row — compact on mobile ─────────────────── */
+/* === Holder Row — compact on mobile =================== */
 
 function HolderRow({ entry, rank }: { entry: HolderEntry; rank: number }) {
   const topBadge = entry.badges[0];
@@ -165,7 +165,7 @@ function HolderRow({ entry, rank }: { entry: HolderEntry; rank: number }) {
   );
 }
 
-/* ─── Helpers ─────────────────────────────────────────── */
+/* === Helpers =========================================== */
 
 function formatHolderAmount(amount: string): string {
   const n = Number(amount);

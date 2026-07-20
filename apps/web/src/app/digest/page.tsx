@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { retryFetch } from '../../lib/retryFetch';
 
-// ─── Types (local mirror since types package may not have digest types yet) ──
+// === Types (local mirror since types package may not have digest types yet) ==
 
 interface LocalDigestSection {
   type: string;
@@ -37,7 +37,7 @@ interface LocalDigestResponse {
   error?: string;
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────
+// === Helpers ===========================================================
 
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts;
@@ -57,7 +57,7 @@ function shareDigest() {
   }
 }
 
-// ─── Section Renderers ────────────────────────────────────────────────────
+// === Section Renderers ====================================================
 
 function SectionCard({ section }: { section: LocalDigestSection }) {
   return (
@@ -152,7 +152,7 @@ function DigestCard({ item }: { item: LocalDigestItem }) {
   );
 }
 
-// ─── Market Summary Card ──────────────────────────────────────────────────
+// === Market Summary Card ==================================================
 
 function MarketRow({ item }: { item: LocalDigestItem }) {
   const isUp = item.protocolColor === '#22c55e';
@@ -174,7 +174,7 @@ function MarketRow({ item }: { item: LocalDigestItem }) {
   );
 }
 
-// ─── Trending Tags ────────────────────────────────────────────────────────
+// === Trending Tags ========================================================
 
 function TrendingTag({ item }: { item: LocalDigestItem }) {
   return (
@@ -189,7 +189,7 @@ function TrendingTag({ item }: { item: LocalDigestItem }) {
   );
 }
 
-// ─── Loading State ────────────────────────────────────────────────────────
+// === Loading State ========================================================
 
 function DigestLoading() {
   return (
@@ -209,7 +209,7 @@ function DigestLoading() {
   );
 }
 
-// ─── Error State ──────────────────────────────────────────────────────────
+// === Error State ==========================================================
 
 function DigestError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
@@ -228,7 +228,7 @@ function DigestError({ message, onRetry }: { message: string; onRetry: () => voi
   );
 }
 
-// ─── Empty State ──────────────────────────────────────────────────────────
+// === Empty State ==========================================================
 
 function DigestEmpty() {
   return (
@@ -248,7 +248,7 @@ function DigestEmpty() {
   );
 }
 
-// ─── Main Digest Component ──────────────────────────────────────────────
+// === Main Digest Component ==============================================
 
 export default function DigestPage() {
   const [digest, setDigest] = useState<LocalDigestResponse | null>(null);

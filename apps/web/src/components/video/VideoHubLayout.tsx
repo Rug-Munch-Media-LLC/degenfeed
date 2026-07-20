@@ -20,7 +20,7 @@ import { VideoHero } from './VideoHero';
 import { VideoRow } from './VideoRow';
 import { VideoSearchBar } from './VideoSearchBar';
 
-// ─── Source filter options ───────────────────────────────────────────────
+// === Source filter options ===============================================
 
 const SOURCE_FILTERS = [
   { id: 'all', label: 'All' },
@@ -30,7 +30,7 @@ const SOURCE_FILTERS = [
   { id: 'livestream', label: 'Live', color: '#9146FF' },
 ] as const;
 
-// ─── Category-to-color mapping for row accents ───────────────────────────
+// === Category-to-color mapping for row accents ===========================
 
 const CATEGORY_ROW_COLORS: Record<string, string> = {
   crypto: '#0052FF',

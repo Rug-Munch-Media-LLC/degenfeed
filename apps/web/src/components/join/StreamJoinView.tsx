@@ -16,7 +16,7 @@ import { GuestChat } from './GuestChat';
 import { JoinActions } from './JoinActions';
 import { GuestSignUp } from './GuestSignUp';
 
-/* ─── Props ────────────────────────────────────────────────────── */
+/* === Props ====================================================== */
 
 interface StreamJoinViewProps {
   streamId: string;
@@ -24,7 +24,7 @@ interface StreamJoinViewProps {
   sourceInstance?: string;
 }
 
-/* ─── Skeleton ─────────────────────────────────────────────────── */
+/* === Skeleton =================================================== */
 
 function StreamJoinSkeleton() {
   return (
@@ -45,7 +45,7 @@ function StreamJoinSkeleton() {
   );
 }
 
-/* ─── Error ────────────────────────────────────────────────────── */
+/* === Error ====================================================== */
 
 function StreamJoinError({
   message,
@@ -82,7 +82,7 @@ function StreamJoinError({
   );
 }
 
-/* ─── Main Component ──────────────────────────────────────────── */
+/* === Main Component ============================================ */
 
 export function StreamJoinView({
   streamId,

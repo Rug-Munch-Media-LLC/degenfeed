@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────
+// === Types ========================================================
 
 interface SpaceTranscriptProps {
   spaceId: string;
@@ -12,7 +12,7 @@ interface SpaceTranscriptProps {
   hasRecording: boolean;
 }
 
-// ─── Main Component ───────────────────────────────────────────────
+// === Main Component ===============================================
 
 export function SpaceTranscript({
   spaceId,

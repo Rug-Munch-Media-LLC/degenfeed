@@ -45,13 +45,13 @@ import {
 } from '../../components/youtube/useYouTube';
 import type { EnrichedYouTubeVideo, YouTubeShort } from '../../components/youtube/useYouTube';
 
-// ─── Constants ───────────────────────────────────────────────────────────
+// === Constants ===========================================================
 
 const TRENDING_LIMIT = 24;
 const RECOMMENDED_LIMIT = 12;
 const SHORTS_LIMIT = 18;
 
-// ─── Skeleton Loading ────────────────────────────────────────────────────
+// === Skeleton Loading ====================================================
 
 function YouTubePageSkeleton() {
   return (
@@ -102,7 +102,7 @@ function YouTubePageSkeleton() {
   );
 }
 
-// ─── Error State ─────────────────────────────────────────────────────────
+// === Error State =========================================================
 
 function YouTubePageError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
@@ -131,15 +131,15 @@ function YouTubePageError({ message, onRetry }: { message: string; onRetry: () =
   );
 }
 
-// ─── Main Page ───────────────────────────────────────────────────────────
+// === Main Page ===========================================================
 
 export default function YouTubePage() {
-  // ── State ──
+  // == State ==
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchActive, setSearchActive] = useState(false);
 
-  // ── Data ──
+  // == Data ==
   const {
     videos: trending,
     isLoading: trendingLoading,
@@ -163,7 +163,7 @@ export default function YouTubePage() {
     isLoading: categoriesLoading,
   } = useYouTubeCategories();
 
-  // ── Callbacks ──
+  // == Callbacks ==
 
   const handlePlay = useCallback((video: EnrichedYouTubeVideo) => {
     window.open(`https://www.youtube.com/watch?v=${video.id}`, '_blank', 'noopener noreferrer');
@@ -203,10 +203,10 @@ export default function YouTubePage() {
     setSearchActive(false);
   }, []);
 
-  // ── Featured video (first trending item) ──
+  // == Featured video (first trending item) ==
   const featuredVideo = trending.length > 0 ? trending[0] : null;
 
-  // ── Render ──
+  // == Render ==
 
   const isError = trendingError && !trendingLoading;
 

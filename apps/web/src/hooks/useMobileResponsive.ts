@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-/* ─── Breakpoints ─────────────────────────────────────── */
+/* === Breakpoints ======================================= */
 
 export const BREAKPOINTS = {
   xs: 320,
@@ -12,7 +12,7 @@ export const BREAKPOINTS = {
   xl: 1440,
 } as const;
 
-/* ─── Mobile Detection ────────────────────────────────── */
+/* === Mobile Detection ================================== */
 
 export function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(false);
@@ -27,7 +27,7 @@ export function useIsMobile(): boolean {
   return isMobile;
 }
 
-/* ─── Safe Area Insets ────────────────────────────────── */
+/* === Safe Area Insets ================================== */
 
 export function useSafeArea() {
   const [safeArea, setSafeArea] = useState({ top: 0, bottom: 0, left: 0, right: 0 });
@@ -51,7 +51,7 @@ export function useSafeArea() {
   return safeArea;
 }
 
-/* ─── Keyboard Avoidance ──────────────────────────────── */
+/* === Keyboard Avoidance ================================ */
 
 export function useKeyboardHeight(): number {
   const [height, setHeight] = useState(0);
@@ -87,7 +87,7 @@ export function useKeyboardHeight(): number {
   return height;
 }
 
-/* ─── Pull-to-Refresh ─────────────────────────────────── */
+/* === Pull-to-Refresh =================================== */
 
 interface PullToRefreshOptions {
   onRefresh: () => Promise<void>;
@@ -165,7 +165,7 @@ export function usePullToRefresh({ onRefresh, threshold = 80, disabled = false }
   };
 }
 
-/* ─── Swipe to Dismiss ────────────────────────────────── */
+/* === Swipe to Dismiss ================================== */
 
 interface SwipeDismissOptions {
   onDismiss: () => void;
@@ -230,13 +230,13 @@ export function useSwipeDismiss({ onDismiss, threshold = 100, disabled = false }
   return { elementRef, swipeOffset };
 }
 
-/* ─── Responsive Font Size ────────────────────────────── */
+/* === Responsive Font Size ============================== */
 
 export function responsiveFont(base: number, min: number, max: number): string {
   return `clamp(${min}px, ${base}px + 0.5vw, ${max}px)`;
 }
 
-/* ─── Virtual Keyboard Input Focus ────────────────────── */
+/* === Virtual Keyboard Input Focus ====================== */
 
 export function useKeyboardAwareInput() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -254,7 +254,7 @@ export function useKeyboardAwareInput() {
   return inputRef;
 }
 
-/* ─── Intersection Observer for Lazy Loading ──────────── */
+/* === Intersection Observer for Lazy Loading ============ */
 
 export function useLazyLoad(options?: IntersectionObserverInit) {
   const ref = useRef<HTMLDivElement>(null);

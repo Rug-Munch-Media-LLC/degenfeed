@@ -16,7 +16,7 @@ import { PLATFORM_CONFIG, type JoinSpaceData, type SourcePlatform } from './type
 import { JoinActions } from './JoinActions';
 import { GuestSignUp } from './GuestSignUp';
 
-/* ─── Props ────────────────────────────────────────────────────── */
+/* === Props ====================================================== */
 
 interface SpaceJoinViewProps {
   spaceId: string;
@@ -24,7 +24,7 @@ interface SpaceJoinViewProps {
   sourceInstance?: string;
 }
 
-/* ─── Skeleton ─────────────────────────────────────────────────── */
+/* === Skeleton =================================================== */
 
 function SpaceJoinSkeleton() {
   return (
@@ -46,7 +46,7 @@ function SpaceJoinSkeleton() {
   );
 }
 
-/* ─── Error ────────────────────────────────────────────────────── */
+/* === Error ====================================================== */
 
 function SpaceJoinError({
   message,
@@ -83,7 +83,7 @@ function SpaceJoinError({
   );
 }
 
-/* ─── Main Component ────────────────────────────────────────────── */
+/* === Main Component ============================================== */
 
 export function SpaceJoinView({
   spaceId,

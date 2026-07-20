@@ -2,7 +2,7 @@
 
 import { type ReactNode, useState } from 'react';
 
-/* ─── Status Badge ──────────────────────────────────────────── */
+/* === Status Badge ============================================ */
 
 function StatusBadge({ status }: { status: 'active' | 'inactive' }) {
   return (
@@ -19,7 +19,7 @@ function StatusBadge({ status }: { status: 'active' | 'inactive' }) {
   );
 }
 
-/* ─── Security Icon ─────────────────────────────────────────── */
+/* === Security Icon =========================================== */
 
 function SecurityIcon({ icon }: { icon: string }) {
   return (
@@ -29,7 +29,7 @@ function SecurityIcon({ icon }: { icon: string }) {
   );
 }
 
-/* ─── Security Card ─────────────────────────────────────────── */
+/* === Security Card =========================================== */
 
 export interface SecurityCardProps {
   icon: string;

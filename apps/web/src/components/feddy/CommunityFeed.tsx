@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import Image from 'next/image';
 import type { FeddyCommunity, CommunityPost } from './types';
 
-// ─── Helpers ───────────────────────────────────────────────────────────
+// === Helpers ===========================================================
 
 function formatTime(ts: number): string {
   const diff = Date.now() - ts;
@@ -23,7 +23,7 @@ function shortenWallet(wallet: string): string {
   return `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
 }
 
-// ─── Post Composer ─────────────────────────────────────────────────────
+// === Post Composer =====================================================
 
 function PostComposer({
   community,
@@ -105,7 +105,7 @@ function PostComposer({
   );
 }
 
-// ─── Post Card ─────────────────────────────────────────────────────────
+// === Post Card =========================================================
 
 function PostCard({ post }: { post: CommunityPost }) {
   return (
@@ -175,7 +175,7 @@ function PostCard({ post }: { post: CommunityPost }) {
   );
 }
 
-// ─── Feed ──────────────────────────────────────────────────────────────
+// === Feed ==============================================================
 
 export function CommunityFeed({
   community,

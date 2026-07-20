@@ -20,7 +20,7 @@ import {
 import { PremiumPaymentModal } from './PremiumPaymentModal';
 import { useToast } from './Toast';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 interface PlatformMeta {
   id: string;
@@ -54,7 +54,7 @@ interface RegistrationStatusData {
   tier: string | null;
 }
 
-// ─── Platform config ──────────────────────────────────────────────────────
+// === Platform config ======================================================
 
 const SIGNUP_PLATFORMS: PlatformMeta[] = [
   {
@@ -104,7 +104,7 @@ const SIGNUP_PLATFORMS: PlatformMeta[] = [
   },
 ];
 
-// ─── Username input ───────────────────────────────────────────────────────
+// === Username input =======================================================
 
 function PlatformSignupForm({
   onSignup,
@@ -154,7 +154,7 @@ function PlatformSignupForm({
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────
+// === Main component =======================================================
 
 interface CrossPlatformSignupProps {
   /** If true, shows compact version for sidebar/widget use */
@@ -305,7 +305,7 @@ export function CrossPlatformSignup({
       .filter(Boolean) as NonNullable<ReturnType<typeof registrationToCredential>>[];
   }, [results]);
 
-  // ── Loading state ──
+  // == Loading state ==
   if (!walletAddress) {
     return (
       <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4 text-center text-sm text-[var(--color-muted)]">
@@ -345,7 +345,7 @@ export function CrossPlatformSignup({
 
   return (
     <div className="space-y-6">
-      {/* ── Header ── */}
+      {/* == Header == */}
       <div>
         <h2 className="text-lg font-bold text-[var(--color-fg)]">
           Cross-Platform Account Creation
@@ -356,7 +356,7 @@ export function CrossPlatformSignup({
         </p>
       </div>
 
-      {/* ── Transparent cost breakdown ── */}
+      {/* == Transparent cost breakdown == */}
       <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] overflow-hidden">
         <div className="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-4 py-2.5">
           <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-fg)]">
@@ -389,7 +389,7 @@ export function CrossPlatformSignup({
         </div>
       </div>
 
-      {/* ── Premium status bar ── */}
+      {/* == Premium status bar == */}
       {!premiumLoading && !isPremium && (
         <div className="rounded-xl border border-amber-500/10 bg-amber-500/[0.03] px-4 py-3">
           <div className="flex items-start gap-2.5">
@@ -415,10 +415,10 @@ export function CrossPlatformSignup({
         </div>
       )}
 
-      {/* ── Progress banner ── */}
+      {/* == Progress banner == */}
       <CredentialsProgressBanner connectedCount={connectedCount} totalPlatforms={totalPlatforms} />
 
-      {/* ── Platform cards ── */}
+      {/* == Platform cards == */}
       <div className="space-y-3">
         {SIGNUP_PLATFORMS.map((platform) => {
           const registered = registeredPlatforms.has(platform.id);
@@ -499,7 +499,7 @@ export function CrossPlatformSignup({
         })}
       </div>
 
-      {/* ── Credential cards ── */}
+      {/* == Credential cards == */}
       {credentialCards.length > 0 && (
         <>
           <div>
@@ -522,7 +522,7 @@ export function CrossPlatformSignup({
         </>
       )}
 
-      {/* ── Empty state ── */}
+      {/* == Empty state == */}
       {credentialCards.length === 0 && !loadingStatus && (
         <div className="rounded-xl border border-dashed border-[var(--color-glass-border)] bg-[var(--color-card)] p-6 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-degen-500/10 text-xl text-degen-400">
@@ -536,7 +536,7 @@ export function CrossPlatformSignup({
         </div>
       )}
 
-      {/* ── Payment modal ── */}
+      {/* == Payment modal == */}
       <PremiumPaymentModal
         open={showPaymentModal}
         onClose={() => {
@@ -552,7 +552,7 @@ export function CrossPlatformSignup({
   );
 }
 
-// ─── Cost row helper (for transparent pricing table) ───────────────────────
+// === Cost row helper (for transparent pricing table) =======================
 
 function CostRow({ label, cost, note }: { label: string; cost: string; note: string }) {
   const isFree = cost === 'Free';
@@ -577,7 +577,7 @@ function CostRow({ label, cost, note }: { label: string; cost: string; note: str
   );
 }
 
-// ─── Mini signup widget (for sidebar/protocol pages) ──────────────────────
+// === Mini signup widget (for sidebar/protocol pages) ======================
 
 export function CrossPlatformSignupMini() {
   const { walletAddress } = useAuth();

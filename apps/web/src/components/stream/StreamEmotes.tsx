@@ -49,7 +49,7 @@ export function StreamEmotes({ onSelect }: StreamEmotesProps) {
   );
 }
 
-/* ─── Emote Autocomplete Suggestion ──────────────────────────── */
+/* === Emote Autocomplete Suggestion ============================ */
 
 interface EmoteSuggestionProps {
   query: string;

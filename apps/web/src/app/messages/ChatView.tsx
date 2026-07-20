@@ -12,7 +12,7 @@ import {
 import { ComposeBar } from './ComposeBar';
 import { MessageBubble, TypingIndicator } from './MessageBubble';
 
-/* ─── Props ─────────────────────────────────────────────────── */
+/* === Props =================================================== */
 
 export interface ChatViewProps {
   conversation: ConversationListItem;
@@ -30,7 +30,7 @@ export interface ChatViewProps {
   myIds: string[];
 }
 
-/* ─── Component ─────────────────────────────────────────────── */
+/* === Component =============================================== */
 
 export function ChatView({
   conversation,
@@ -75,7 +75,7 @@ export function ChatView({
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      {/* ── Header ──────────────────────────────────────────── */}
+      {/* == Header ============================================ */}
       <div className="flex items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-glass-bg)] px-3 py-2.5 shrink-0">
         {/* Back button (mobile) */}
         <button
@@ -125,7 +125,7 @@ export function ChatView({
         </div>
       </div>
 
-      {/* ── Messages ────────────────────────────────────────── */}
+      {/* == Messages ========================================== */}
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto px-3 py-3 space-y-2 scroll-smooth"
@@ -196,7 +196,7 @@ export function ChatView({
         <div ref={msgEndRef} className="h-px" />
       </div>
 
-      {/* ── Compose bar ─────────────────────────────────────── */}
+      {/* == Compose bar ======================================= */}
       <ComposeBar
         value={composeText}
         onChange={onComposeChange}

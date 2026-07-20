@@ -8,14 +8,14 @@ import LaunchCTA from '../../components/launch/LaunchCTA';
 import LaunchHeader from '../../components/launch/LaunchHeader';
 import PrebondingLeaderboard from '../../components/launch/PrebondingLeaderboard';
 
-/* ─── Dynamic imports (heavy components) ─────────────── */
+/* === Dynamic imports (heavy components) =============== */
 
 const TrendingSidebar = dynamic(
   () => import('@degenfeed/ui').then((m) => ({ default: m.TrendingSidebar })),
   { ssr: false },
 );
 
-/* ─── Mock data for development ──────────────────────── */
+/* === Mock data for development ======================== */
 
 function generateMockCoins(): CoinCardData[] {
   const names = [
@@ -50,7 +50,7 @@ function generateMockCoins(): CoinCardData[] {
   }));
 }
 
-/* ─── Page ───────────────────────────────────────────── */
+/* === Page ============================================= */
 
 export default function LaunchPage() {
   const [coins, setCoins] = useState<CoinCardData[]>([]);

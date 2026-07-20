@@ -53,7 +53,7 @@ export default function PreferencesPage() {
     };
   }, []);
 
-  // ── AI-learned topic preferences ───────────────────────────────
+  // == AI-learned topic preferences ===============================
   interface LearnedTopic {
     topic: string;
     weight: number;
@@ -195,7 +195,7 @@ export default function PreferencesPage() {
         </div>
       </div>
 
-      {/* ── AI-learned topics ── */}
+      {/* == AI-learned topics == */}
       <div className="card mb-4" id="topics">
         <h2 className="mb-3 text-sm font-semibold text-degen-400">
           AI-learned topics
@@ -296,7 +296,7 @@ export default function PreferencesPage() {
         )}
       </div>
 
-      {/* ── Protocol Quality Presets ── */}
+      {/* == Protocol Quality Presets == */}
       <div className="card mb-4">
         <h2 className="mb-3 text-sm font-semibold text-degen-400">Protocol Quality</h2>
         <p className="mb-3 text-xs text-[var(--color-muted)]">
@@ -329,7 +329,7 @@ export default function PreferencesPage() {
         })}
       </div>
 
-      {/* ── Feed Layout ── */}
+      {/* == Feed Layout == */}
       <div className="card mb-4">
         <h2 className="mb-3 text-sm font-semibold text-degen-400">Feed Layout</h2>
         <div className="grid grid-cols-2 gap-3">

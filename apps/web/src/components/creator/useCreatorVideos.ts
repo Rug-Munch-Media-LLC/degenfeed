@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import useSWR, { mutate } from 'swr';
 import type { CreatorVideoMeta, VideoAnalytics } from '@degenfeed/api-worker';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export interface UploadVideoInput {
   file: File | Blob;
@@ -41,7 +41,7 @@ export interface VideoDetailResponse {
   analytics: VideoAnalytics | null;
 }
 
-// ─── Fetcher ─────────────────────────────────────────────────────────────
+// === Fetcher =============================================================
 
 const fetcher = async (url: string) => {
   const res = await fetch(url, { credentials: 'include' });
@@ -52,7 +52,7 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-// ─── Hook: Creator's video library ───────────────────────────────────────
+// === Hook: Creator's video library =======================================
 
 export function useCreatorVideos(type?: 'video' | 'short') {
   const params = type ? `?type=${type}` : '';
@@ -74,7 +74,7 @@ export function useCreatorVideos(type?: 'video' | 'short') {
   };
 }
 
-// ─── Hook: Single video details ──────────────────────────────────────────
+// === Hook: Single video details ==========================================
 
 export function useCreatorVideo(uuid: string | null) {
   const { data, error, isLoading } = useSWR<VideoDetailResponse>(
@@ -91,7 +91,7 @@ export function useCreatorVideo(uuid: string | null) {
   };
 }
 
-// ─── Hook: Video upload actions ──────────────────────────────────────────
+// === Hook: Video upload actions ==========================================
 
 export function useCreatorVideoActions() {
   const uploadVideo = useCallback(async (input: UploadVideoInput): Promise<UploadResult> => {
