@@ -54,9 +54,9 @@ export default function CoinCard({ coin, rank, featured = false, className = '' 
         featured ? 'border-degen-500/30 bg-degen-500/5' : ''
       } ${className}`}
     >
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         {/* Top row */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-2 sm:gap-3">
           {/* Rank badge */}
           {rank !== undefined && (
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--color-overlay)] text-[10px] font-bold tabular-nums text-[var(--color-muted)]">
@@ -65,7 +65,7 @@ export default function CoinCard({ coin, rank, featured = false, className = '' 
           )}
 
           {/* Coin image */}
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border)] bg-gradient-to-br from-degen-500/20 to-purple-500/20">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border)] bg-gradient-to-br from-degen-500/20 to-purple-500/20">
             {coin.image ? (
               <img
                 src={coin.image}
@@ -80,32 +80,32 @@ export default function CoinCard({ coin, rank, featured = false, className = '' 
 
           {/* Name + symbol */}
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <h3 className="truncate text-sm font-semibold text-[var(--color-fg)]">{coin.name}</h3>
-              <span className="shrink-0 rounded bg-[var(--color-overlay)] px-1.5 py-0.5 text-[10px] font-mono font-medium text-[var(--color-muted)]">
+              <span className="shrink-0 rounded bg-[var(--color-overlay)] px-1.5 py-0.5 text-[9px] sm:text-[10px] font-mono font-medium text-[var(--color-muted)]">
                 ${coin.symbol}
               </span>
             </div>
-            <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">by {coin.creator.name}</p>
+            <p className="mt-0.5 text-[10px] sm:text-[11px] text-[var(--color-muted)]">by {coin.creator.name}</p>
           </div>
 
           {/* Phase badge */}
           <span
-            className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold ${phaseBadge.color}`}
+            className={`shrink-0 rounded-full px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[9px] font-semibold ${phaseBadge.color}`}
           >
             {phaseBadge.label}
           </span>
         </div>
 
         {/* Price row */}
-        <div className="mt-3 flex items-center justify-between">
-          <div>
-            <span className="text-lg font-bold tabular-nums text-[var(--color-fg)]">
+        <div className="mt-2 sm:mt-3 flex items-center justify-between">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-base sm:text-lg font-bold tabular-nums text-[var(--color-fg)]">
               {formatBondingPrice(coin.price)}
             </span>
             {coin.priceChange24h !== undefined && (
               <span
-                className={`ml-2 text-[11px] font-medium tabular-nums ${
+                className={`text-[10px] sm:text-[11px] font-medium tabular-nums ${
                   priceUp ? 'text-degen-400' : 'text-red-400'
                 }`}
               >
@@ -114,14 +114,14 @@ export default function CoinCard({ coin, rank, featured = false, className = '' 
               </span>
             )}
           </div>
-          <span className="text-[11px] tabular-nums text-[var(--color-muted)]">
+          <span className="text-[10px] sm:text-[11px] tabular-nums text-[var(--color-muted)]">
             {coin.holderCount} holder{coin.holderCount !== 1 ? 's' : ''}
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="mt-2.5">
-          <div className="flex items-center justify-between text-[10px] text-[var(--color-muted)]">
+        <div className="mt-2 sm:mt-2.5">
+          <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-[var(--color-muted)]">
             <span>{Math.round(clampedProgress)}% to graduation</span>
             <span>{formatBondingUsd(coin.totalRaised)} raised</span>
           </div>
@@ -150,7 +150,7 @@ export default function CoinCard({ coin, rank, featured = false, className = '' 
 
         {/* Social proof */}
         {coin.socialProof !== undefined && coin.socialProof > 0 && (
-          <div className="mt-2 flex items-center gap-1 text-[10px] text-degen-400">
+          <div className="mt-1.5 sm:mt-2 flex items-center gap-1 text-[9px] sm:text-[10px] text-degen-400">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-degen-400 opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-degen-500" />
@@ -161,7 +161,7 @@ export default function CoinCard({ coin, rank, featured = false, className = '' 
 
         {/* Market cap */}
         {coin.marketCap !== undefined && coin.marketCap > 0 && (
-          <div className="mt-1 text-[10px] text-[var(--color-muted)]">
+          <div className="mt-0.5 text-[9px] sm:text-[10px] text-[var(--color-muted)]">
             MC: {formatBondingUsd(coin.marketCap)}
           </div>
         )}

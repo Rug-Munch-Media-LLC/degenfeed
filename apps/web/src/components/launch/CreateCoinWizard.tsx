@@ -107,11 +107,11 @@ function StepCoinDetails({
         </p>
       </div>
 
-      {/* Image upload */}
+      {/* Image upload — larger touch target */}
       <div>
         <label className="mb-2 block text-sm font-medium text-[var(--color-fg)]">Coin Image</label>
         <div
-          className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-overlay)] p-6 transition-colors hover:border-degen-500/30"
+          className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-overlay)] p-8 sm:p-6 transition-colors hover:border-degen-500/30 touch-target"
           onClick={() => document.getElementById('coin-image-input')?.click()}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -121,13 +121,14 @@ function StepCoinDetails({
           role="button"
           tabIndex={0}
           aria-label="Upload coin image"
+          style={{ minHeight: 120 }}
         >
           {imagePreview ? (
             <div className="relative">
               <img
                 src={imagePreview}
                 alt="Coin preview"
-                className="h-24 w-24 rounded-full object-cover"
+                className="h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover"
               />
               <button
                 type="button"
@@ -136,7 +137,7 @@ function StepCoinDetails({
                   setImagePreview(null);
                   onChange({ image: null });
                 }}
-                className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs"
+                className="absolute -right-2 -top-2 flex h-7 w-7 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs touch-target"
                 aria-label="Remove image"
               >
                 ✕
@@ -260,7 +261,7 @@ function StepTokenomics({
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-bold text-[var(--color-fg)]">Tokenomics</h2>
-        <p className="mt-1 text-sm text-[var(--color-muted])">
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
           Configure your coin&apos;s supply and your allocation.
         </p>
       </div>
@@ -354,7 +355,7 @@ function StepRevenueSharing({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-[var(--color-fg])">Revenue Sharing</h2>
+        <h2 className="text-lg font-bold text-[var(--color-fg)]">Revenue Sharing</h2>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
           Configure your creator fee and distribute it among recipients.
         </p>
@@ -795,15 +796,17 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
     );
   }
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
   return (
     <div className={`mx-auto max-w-2xl ${className}`}>
-      {/* Step indicators */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
+      {/* Step indicators — horizontal scrollable on mobile */}
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-center justify-between sm:justify-center">
           {STEPS.slice(0, 5).map((s, i) => (
             <div key={s.id} className="flex items-center">
               <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                className={`flex h-8 w-8 sm:h-8 sm:w-8 items-center justify-center rounded-full text-[11px] sm:text-xs font-bold transition-all touch-target ${
                   step === s.id
                     ? 'bg-degen-500 text-black shadow-[0_0_12px_rgba(0,255,65,0.4)]'
                     : step > s.id
@@ -815,7 +818,7 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
               </div>
               {i < 4 && (
                 <div
-                  className={`mx-2 h-0.5 w-12 transition-colors sm:w-20 ${
+                  className={`mx-1 sm:mx-2 h-0.5 w-6 sm:w-20 transition-colors ${
                     step > s.id ? 'bg-degen-500/40' : 'bg-[var(--color-border)]'
                   }`}
                 />
@@ -823,10 +826,10 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
             </div>
           ))}
         </div>
-        <div className="mt-2 flex justify-between text-[10px] font-medium text-[var(--color-muted)]">
+        <div className="mt-2 flex justify-between text-[8px] sm:text-[10px] font-medium text-[var(--color-muted)]">
           {STEPS.slice(0, 5).map((s) => (
-            <span key={s.id} className={step === s.id ? 'text-degen-400' : ''}>
-              {s.label}
+            <span key={s.id} className={`truncate px-0.5 ${step === s.id ? 'text-degen-400' : ''}`}>
+              {isMobile ? s.label.split(' ')[0] || s.label : s.label}
             </span>
           ))}
         </div>
@@ -862,25 +865,27 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
         </div>
       )}
 
-      {/* Navigation buttons (hidden on step 5, which has its own deploy button) */}
+      {/* Navigation buttons — full-width on mobile */}
       {step < 5 && (
-        <div className="mt-8 flex items-center justify-between">
+        <div className="mt-6 sm:mt-8 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={handleBack}
             disabled={step === 1}
-            className="btn-secondary text-sm disabled:opacity-30"
+            className="btn-secondary text-sm touch-target disabled:opacity-30 flex-1 sm:flex-none"
+            style={{ minHeight: 48 }}
           >
             ← Back
           </button>
-          <span className="text-[10px] tabular-nums text-[var(--color-muted)]">
+          <span className="text-[10px] tabular-nums text-[var(--color-muted)] hidden sm:block">
             Step {step} of 5
           </span>
           <button
             type="button"
             onClick={handleNext}
             disabled={!canProceed}
-            className="btn-primary text-sm disabled:opacity-40"
+            className="btn-primary text-sm touch-target disabled:opacity-40 flex-1 sm:flex-none"
+            style={{ minHeight: 48 }}
           >
             {step === 4 ? 'Review →' : 'Continue →'}
           </button>

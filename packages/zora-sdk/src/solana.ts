@@ -147,7 +147,7 @@ function getExplorerUrl(signature: string): string {
 // ─── SDK Client ─────────────────────────────────────────────────────────────
 
 export class SolanaCreatorTokenSDK {
-  private program: Program;
+  private program: any;
   private provider: AnchorProvider;
   private platformFeeVault: PublicKey;
 
@@ -161,9 +161,8 @@ export class SolanaCreatorTokenSDK {
       // import idl from '../target/idl/degenfeed_creator_token.json';
       // For development, use the minimal IDL stub below
       getProgramIdl(),
-      PROGRAM_ID,
       provider,
-    );
+    ) as unknown as Program;
     this.platformFeeVault = derivePlatformFeeVault()[0];
   }
 

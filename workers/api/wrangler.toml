@@ -78,6 +78,36 @@ binding = "CUSTOM_FEEDS"
 id = "" # TODO: create with: wrangler kv:namespace create CUSTOM_FEEDS
 preview_id = "" # TODO: create with: wrangler kv:namespace create CUSTOM_FEEDS --preview
 
+[[kv_namespaces]]
+binding = "CONTENT_STORE"
+id = "" # TODO: create with: wrangler kv:namespace create CONTENT_STORE
+preview_id = "" # TODO: create with: wrangler kv:namespace create CONTENT_STORE --preview
+
+[[kv_namespaces]]
+binding = "FARCASTER_COINS"
+id = "" # TODO: create with: wrangler kv:namespace create FARCASTER_COINS
+preview_id = "" # TODO: create with: wrangler kv:namespace create FARCASTER_COINS --preview
+
+[[kv_namespaces]]
+binding = "LENS_COINS"
+id = "" # TODO: create with: wrangler kv:namespace create LENS_COINS
+preview_id = "" # TODO: create with: wrangler kv:namespace create LENS_COINS --preview
+
+[[kv_namespaces]]
+binding = "XCHAIN_REGISTRY"
+id = "" # TODO: create with: wrangler kv:namespace create XCHAIN_REGISTRY
+preview_id = "" # TODO: create with: wrangler kv:namespace create XCHAIN_REGISTRY --preview
+
+[[kv_namespaces]]
+binding = "PLATFORM_ACCOUNTS"
+id = "" # TODO: create with: wrangler kv:namespace create PLATFORM_ACCOUNTS
+preview_id = "" # TODO: create with: wrangler kv:namespace create PLATFORM_ACCOUNTS --preview
+
+[[kv_namespaces]]
+binding = "BLUESKY_INVITE_POOL"
+id = "" # TODO: create with: wrangler kv:namespace create BLUESKY_INVITE_POOL
+preview_id = "" # TODO: create with: wrangler kv:namespace create BLUESKY_INVITE_POOL --preview
+
 # Routes — main app + api on degenfeed.xyz domain
 routes = [
   { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
@@ -92,6 +122,25 @@ routes = [
 #   wrangler secret put NEWSLETTER_API_KEY
 #   wrangler secret put ADMIN_WALLETS
 #   wrangler secret put ADMIN_API_KEY  (deprecated — use scoped keys above)
+#   wrangler secret put PEERTUBE_CLIENT_SECRET
+#   wrangler secret put TELEGRAM_BOT_TOKEN
+#   wrangler secret put NOSTR_PRIVATE_KEY
+#   wrangler secret put NEYNAR_API_KEY
+#   wrangler secret put PINATA_API_KEY
+#   wrangler secret put PINATA_SECRET_KEY
+#   wrangler secret put PREMIUM_WALLET_KEY
+#   wrangler secret put POSTMARK_SERVER_TOKEN
+#   wrangler secret put MEILI_SEARCH_KEY
+#   wrangler secret put RMI_API_KEY
+#   wrangler secret put SENTRY_DSN
+#   wrangler secret put THREADS_APP_SECRET
+#   wrangler secret put REDDIT_CLIENT_SECRET
+#   wrangler secret put GOOGLE_CLIENT_SECRET
+#   wrangler secret put GITHUB_CLIENT_SECRET
+#   wrangler secret put DISCORD_CLIENT_SECRET
+#   wrangler secret put TWITTER_CLIENT_SECRET
+#   wrangler secret put VAPID_PRIVATE_KEY
+#   wrangler secret put POSTIZ_API_KEY
 # Generate AUTH_SECRET with:  openssl rand -hex 32
 # GTS_CLIENT_SECRET is from your GotoSocial app config.
 # PUSH_API_KEY — scoped key for POST /api/push/send (push notification sending)
@@ -148,6 +197,52 @@ FEATURE_FLAGS_DEFAULT = "reply-composer,dark-mode-only,farcaster-frames"
 POSTIZ_BASE_URL = "http://127.0.0.1:3105"
 POSTIZ_API_KEY = "CHANGEME"
 POSTIZ_INTEGRATIONS = ""
+
+# PeerTube — self-hosted video + livestream platform
+PEERTUBE_INSTANCE_URL = "https://video.degenfeed.xyz"
+PEERTUBE_CLIENT_ID = ""
+PEERTUBE_CLIENT_SECRET = ""
+
+# Telegram bot for OAuth + livestream notifications
+TELEGRAM_BOT_NAME = ""
+
+# EVM RPC endpoints for on-chain operations
+BASE_RPC_URL = "https://mainnet.base.org"
+POLYGON_RPC_URL = "https://polygon-rpc.com"
+
+# Mastodon instance for account creation (defaults to GoToSocial)
+MASTODON_INSTANCE_URL = "https://social.degenfeed.xyz"
+
+# Creator coin contracts
+ZORA_WRAPPER_FACTORY = "0x0000000000000000000000000000000000000000"
+
+# Cross-chain bridge (Wormhole)
+WORMHOLE_BRIDGE = ""
+
+# Optional — OAuth allow-all for local dev
+ALLOW_DEV_OAUTH = "false"
+
+# Bluesky AT Protocol posting — DID for identity
+BSKY_DID = ""
+
+# YouTube Data API v3 key
+YOUTUBE_API_KEY = ""
+
+# Solana — RPC URL for wallet verification, Blinks, and billing
+SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
+
+# OAuth provider client IDs (non-secret — set corresponding _SECRET as wrangler secret)
+GOOGLE_CLIENT_ID = ""
+GITHUB_CLIENT_ID = ""
+DISCORD_CLIENT_ID = ""
+TWITTER_CLIENT_ID = ""
+
+# VAPID keys for Web Push notifications (public key is safe in vars; private key as secret)
+VAPID_SUBJECT = "mailto:admin@degenfeed.xyz"
+VAPID_PUBLIC_KEY = ""
+
+# Bluesky AT Protocol resolve URLs
+BSKY_SOCIAL_URL = "https://bsky.social"
 
 # Per-environment overrides. Preview deploys (PR builds) use --env preview.
 [env.preview]

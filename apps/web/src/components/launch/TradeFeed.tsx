@@ -2,11 +2,14 @@
 
 import { useEffect, useRef } from 'react';
 import type { TradeEvent } from '../../hooks/useBondingCurve';
+import { useIsMobile } from '../../hooks/useMobileResponsive';
 
 interface TradeFeedProps {
   trades: TradeEvent[];
   maxItems?: number;
   loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   className?: string;
 }
 
@@ -29,12 +32,18 @@ function formatAmount(usd: number): string {
 
 export default function TradeFeed({
   trades,
-  maxItems = 50,
+  maxItems,
   loading = false,
+  error = null,
+  onRetry,
   className = '',
 }: TradeFeedProps) {
+  const isMobile = useIsMobile();
   const listRef = useRef<HTMLDivElement>(null);
   const prevLengthRef = useRef(trades.length);
+
+  // Responsive max items
+  const responsiveMax = maxItems ?? (isMobile ? 10 : 50);
 
   // Auto-scroll to top when new trades arrive
   useEffect(() => {
@@ -44,12 +53,12 @@ export default function TradeFeed({
     prevLengthRef.current = trades.length;
   }, [trades.length]);
 
-  const displayTrades = trades.slice(0, maxItems);
+  const displayTrades = trades.slice(0, responsiveMax);
 
-  // Loading skeleton
+  // Loading skeleton — mobile friendly
   if (loading && trades.length === 0) {
     return (
-      <div className={`space-y-1.5 ${className}`}>
+      <div className={`flex flex-col ${className}`}>
         <div className="flex items-center gap-2 px-1 py-2">
           <span className="h-2 w-2 rounded-full bg-degen-500 animate-pulse" />
           <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
@@ -57,9 +66,31 @@ export default function TradeFeed({
           </span>
           <span className="text-[10px] text-[var(--color-muted)]">(loading...)</span>
         </div>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="skeleton h-10 rounded-lg" />
-        ))}
+        <div className="space-y-1">
+          {Array.from({ length: isMobile ? 3 : 5 }).map((_, i) => (
+            <div key={i} className="skeleton h-10 sm:h-12 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div
+        className={`rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center ${className}`}
+      >
+        <p className="text-xs text-red-400">{error}</p>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-2 rounded-lg bg-red-500/20 px-3 py-1.5 text-[10px] font-medium text-red-400 hover:bg-red-500/30 touch-target"
+          >
+            Retry
+          </button>
+        )}
       </div>
     );
   }
@@ -68,7 +99,7 @@ export default function TradeFeed({
   if (trades.length === 0) {
     return (
       <div
-        className={`rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-card)] p-6 text-center ${className}`}
+        className={`rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-card)] p-4 sm:p-6 text-center ${className}`}
       >
         <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent-glow)]">
           <svg
@@ -107,20 +138,21 @@ export default function TradeFeed({
         </span>
       </div>
 
-      {/* Trade list — scrollable */}
+      {/* Trade list — scrollable, responsive height */}
       <div
         ref={listRef}
         className="flex-1 space-y-0.5 overflow-y-auto overscroll-contain"
-        style={{ maxHeight: 400 }}
+        style={{ maxHeight: isMobile ? '40vh' : 400 }}
       >
         {displayTrades.map((trade, i) => (
           <div
             key={trade.id || `${trade.txHash}-${i}`}
-            className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors hover:bg-[var(--color-overlay)]"
+            className="group flex items-center gap-2 rounded-lg px-2 py-2 sm:py-2.5 transition-colors hover:bg-[var(--color-overlay)]"
+            style={{ minHeight: 44 }}
           >
             {/* Buy/sell indicator */}
             <span
-              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${
+              className={`flex h-7 w-7 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${
                 trade.type === 'buy'
                   ? 'bg-degen-500/15 text-degen-400'
                   : 'bg-red-500/15 text-red-400'
@@ -130,7 +162,7 @@ export default function TradeFeed({
             </span>
 
             {/* Wallet address */}
-            <span className="min-w-0 flex-1 font-mono text-xs tabular-nums text-[var(--color-fg)]">
+            <span className="min-w-0 flex-1 font-mono text-xs tabular-nums text-[var(--color-fg)] truncate">
               {shortenAddress(trade.wallet)}
             </span>
 
@@ -144,20 +176,24 @@ export default function TradeFeed({
             </span>
 
             {/* Token amount */}
-            <span className="hidden w-20 shrink-0 text-right text-[10px] tabular-nums text-[var(--color-muted)] sm:block">
+            <span className="hidden sm:block w-20 shrink-0 text-right text-[10px] tabular-nums text-[var(--color-muted)]">
               {Number.parseFloat(trade.tokenAmount).toFixed(2)}
             </span>
 
             {/* Time */}
-            <span className="hidden w-14 shrink-0 text-right text-[10px] tabular-nums text-[var(--color-muted)] md:block">
+            <span className="hidden md:block w-14 shrink-0 text-right text-[10px] tabular-nums text-[var(--color-muted)]">
               {formatTime(trade.timestamp)}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Live indicator */}
-      <div className="flex items-center gap-1.5 border-t border-[var(--color-border)] px-1 py-1.5">
+      {/* Live indicator — sticky bottom bar on mobile */}
+      <div
+        className={`flex items-center gap-1.5 border-t border-[var(--color-border)] px-1 py-1.5 ${
+          isMobile ? 'sticky-bottom-mobile' : ''
+        }`}
+      >
         <span className="h-1.5 w-1.5 rounded-full bg-degen-500 animate-pulse" />
         <span className="text-[9px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
           Real-time

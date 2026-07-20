@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useActiveStream, useTokenStreams } from '../../hooks/useTokenStreams';
 import { usePeerTubeStream } from '../../hooks/usePeerTubeStream';
+import { useIsMobile, useKeyboardHeight } from '../../hooks/useMobileResponsive';
 import LiveCommentFeed from './LiveCommentFeed';
 import PeerTubeChatFeed from './PeerTubeChatFeed';
 
@@ -23,6 +24,9 @@ export default function LiveStreamPlayer({
   isCreator = false,
   className = '',
 }: LiveStreamPlayerProps) {
+  const isMobileScreen = useIsMobile();
+  const keyboardHeight = useKeyboardHeight();
+
   // Legacy stream (non-PeerTube fallback)
   const legacy = useActiveStream(tokenAddress);
   const { startStream: legacyStart, endStream: legacyEnd } =
@@ -67,8 +71,9 @@ export default function LiveStreamPlayer({
       try {
         const result = await peertube.fetchChat();
         setChatMessages(result.messages);
-      } catch {
-        // Chat polling failed — use cached
+      } catch (err) {
+        console.error('[LiveStreamPlayer] Chat polling failed:', err);
+        // Use cached messages
       }
     };
 
@@ -109,7 +114,6 @@ export default function LiveStreamPlayer({
   // Stream is offline
   return (
     <>
-      <StreamOffline
         tokenAddress={tokenAddress}
         tokenSymbol={tokenSymbol}
         isCreator={isCreator}
@@ -120,10 +124,28 @@ export default function LiveStreamPlayer({
         onViewRecording={() => {}}
       />
 
-      {/* Start stream modal */}
+      {/* Start stream modal — full-screen on mobile */}
       {showStartModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl">
+        <div
+          className={`fixed inset-0 z-50 flex bg-black/60 backdrop-blur-sm ${
+            isMobileScreen ? 'items-end' : 'items-center justify-center'
+          }`}
+        >
+          <div
+            className={`w-full max-w-md border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl overflow-y-auto ${
+              isMobileScreen
+                ? 'modal-mobile-content rounded-t-2xl rounded-b-none pb-safe max-h-[90dvh]'
+                : 'rounded-xl p-6'
+            }`}
+          >
+            {/* Swipe indicator (mobile) */}
+            {isMobileScreen && (
+              <div className="flex justify-center pt-2 pb-3">
+                <div className="h-1 w-10 rounded-full bg-[var(--color-border)]" />
+              </div>
+            )}
+
+            <div className={isMobileScreen ? 'px-5 pb-5' : ''}>
             <h3 className="text-lg font-bold text-[var(--color-fg)]">Go Live</h3>
             <p className="mt-1 text-sm text-[var(--color-muted)]">
               Start streaming to your token community
@@ -274,8 +296,8 @@ export default function LiveStreamPlayer({
                 {isStarting ? 'Starting...' : `Go Live ${streamPlatform === 'peertube' ? '🌐' : '🚀'}`}
               </button>
             </div>
-          </div>
-        </div>
+          </div> {/* Close mobile padding wrapper */}
+        </div> {/* Close modal container */}
       )}
 
       {/* OBS Setup Card */}
@@ -578,7 +600,7 @@ function LiveStreamView({
 
         {/* Chat sidebar (PeerTube only) */}
         {isPeerTube && (
-          <div className="w-full lg:w-80 lg:max-h-[calc(100vw*0.5625)] xl:w-96 flex-shrink-0 border-t lg:border-t-0 lg:border-l border-[var(--color-border)]">
+          <div className="w-full lg:w-80 lg:max-h-[calc(100vw*0.5625)] xl:w-96 flex-shrink-0 border-t lg:border-t-0 lg:border-l border-[var(--color-border)]" style={isMobileScreen ? { maxHeight: '50vh' } : undefined}>
             <PeerTubeChatFeed
               messages={chatMessages}
               onSend={onSendChat}

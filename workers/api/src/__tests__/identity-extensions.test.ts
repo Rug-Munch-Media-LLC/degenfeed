@@ -7,6 +7,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Env } from '../index';
 
+// In-memory store for mock KV behaviour (used by CSRF, session, cache)
+const mockKvStore = new Map<string, string>();
+
 // Mock fetch globally for DID resolution tests
 const originalFetch = globalThis.fetch;
 
@@ -16,40 +19,55 @@ function makeMockEnv(overrides: Partial<Env> = {}): Env {
   return {
     AUTH_SECRET: 'test-secret-at-least-32-bytes-long!!',
     IDENTITIES: {
-      get: vi.fn().mockResolvedValue(null),
-      put: vi.fn().mockResolvedValue(undefined),
-      delete: vi.fn().mockResolvedValue(undefined),
+      get: vi.fn().mockImplementation(async (key: string) => mockKvStore.get(key) ?? null),
+      put: vi.fn().mockImplementation(async (key: string, value: string) => { mockKvStore.set(key, value); }),
+      delete: vi.fn().mockImplementation(async (key: string) => { mockKvStore.delete(key); }),
     },
     CACHE: {
-      get: vi.fn().mockResolvedValue(null),
-      put: vi.fn().mockResolvedValue(undefined),
-      delete: vi.fn().mockResolvedValue(undefined),
+      get: vi.fn().mockImplementation(async (key: string) => mockKvStore.get(key) ?? null),
+      put: vi.fn().mockImplementation(async (key: string, value: string) => { mockKvStore.set(key, value); }),
+      delete: vi.fn().mockImplementation(async (key: string) => { mockKvStore.delete(key); }),
     },
     TELEGRAM_BOT_TOKEN: 'test-bot-token',
     ...overrides,
   } as unknown as Env;
 }
 
-async function createTestSessionCookie(env: Env): Promise<string> {
-  const { createSession } = await import('../session');
+/** Extract the raw cookie value (after `__Host-dfid=`) from a full Set-Cookie string */
+function parseCookieValue(setCookieHeader: string): string {
+  const match = setCookieHeader.match(/__Host-dfid=([^;]+)/);
+  return match ? match[1] : '';
+}
+
+async function createTestSessionCookie(env: Env): Promise<{
+  setCookie: string;
+  cookieValue: string;
+  csrfToken: string;
+}> {
+  const { createSession, storeCsrfToken } = await import('../session');
   const { setCookie } = await createSession(
     '0x1234567890abcdef1234567890abcdef12345678',
     'ethereum',
     env.AUTH_SECRET || 'test-secret-at-least-32-bytes-long!!',
   );
-  return setCookie;
+  const cookieValue = parseCookieValue(setCookie);
+  const csrfToken = await storeCsrfToken(cookieValue, env);
+  return { setCookie, cookieValue, csrfToken };
 }
 
-async function makeLinkRequest(body: unknown, env: Env): Promise<Request> {
-  const cookie = await createTestSessionCookie(env);
-  return new Request('http://localhost/api/identity/extensions/test', {
+async function makeLinkRequest(body: unknown, env: Env): Promise<Request & { _csrfToken?: string }> {
+  const { setCookie, csrfToken } = await createTestSessionCookie(env);
+  const req = new Request('http://localhost/api/identity/extensions/test', {
     method: 'POST',
     body: JSON.stringify(body),
     headers: {
       'content-type': 'application/json',
-      cookie,
+      cookie: setCookie,
+      'X-CSRF-Token': csrfToken,
     },
-  });
+  }) as Request & { _csrfToken?: string };
+  req._csrfToken = csrfToken;
+  return req;
 }
 
 function makeGetRequest(url: string): Request {

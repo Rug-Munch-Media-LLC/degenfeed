@@ -736,9 +736,8 @@ export class TGBotClient {
     if (!file.file_path) {
       throw new TelegramError('File has no path', 400);
     }
-    const token = this.botToken;
-    const proxyUrl = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
-    const encodedUrl = btoa(proxyUrl);
-    return `https://api.degenfeed.xyz/media/proxy/${encodedUrl}`;
+    // Use a server-side proxy that handles the bot token internally
+    // Never expose the token in client-facing URLs
+    return `https://api.degenfeed.xyz/media/proxy/${fileId}`;
   }
 }

@@ -36,7 +36,10 @@ function decodeBase64Url(str: string): Uint8Array {
 }
 
 async function deriveKey(env: Env, purpose: string): Promise<CryptoKey> {
-  const secret = env.AUTH_SECRET || 'degenfeed-default-dev-key-do-not-use-in-production';
+  const secret = env.AUTH_SECRET;
+  if (!secret) {
+    throw new Error('[crypto-seal] AUTH_SECRET is not configured — cannot derive encryption key');
+  }
   const salt = new TextEncoder().encode(`degenfeed:${purpose}:v1`);
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
@@ -89,7 +92,8 @@ export async function unseal(env: Env, sealed: string, purpose: string): Promise
       ciphertext,
     );
     return new TextDecoder().decode(decrypted);
-  } catch {
+  } catch (err) {
+    console.error('[crypto-seal] unseal failed:', err);
     return null;
   }
 }
@@ -140,7 +144,8 @@ export async function unsealForWallet(
       ciphertext,
     );
     return new TextDecoder().decode(decrypted);
-  } catch {
+  } catch (err) {
+    console.error('[crypto-seal] unsealForWallet failed:', err);
     return null;
   }
 }

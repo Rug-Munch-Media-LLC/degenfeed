@@ -88,24 +88,49 @@ export default function RecipientSplitEditor({
             key={recipient.id}
             className="flex items-start gap-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] p-3"
           >
-            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
-              {/* Name */}
-              <div className="flex-1">
-                <label className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={recipient.name}
-                  onChange={(e) => updateRecipient(recipient.id, { name: e.target.value })}
-                  placeholder="Label (e.g. Treasury)"
-                  className="input py-1.5 text-sm"
-                  maxLength={32}
-                />
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* Name */}
+                <div>
+                  <label className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={recipient.name}
+                    onChange={(e) => updateRecipient(recipient.id, { name: e.target.value })}
+                    placeholder="Label (e.g. Treasury)"
+                    className="input py-2 sm:py-1.5 text-sm"
+                    maxLength={32}
+                  />
+                </div>
+
+                {/* Percentage */}
+                <div>
+                  <label className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]">
+                    Split %
+                  </label>
+                  <input
+                    type="number"
+                    value={recipient.percentage}
+                    onChange={(e) => {
+                      const val = Number.parseFloat(e.target.value);
+                      if (!Number.isNaN(val)) {
+                        updateRecipient(recipient.id, {
+                          percentage: Math.max(0, Math.min(100, val)),
+                        });
+                      }
+                    }}
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    className="input py-2 sm:py-1.5 text-right text-sm tabular-nums"
+                  />
+                </div>
               </div>
 
-              {/* Address */}
-              <div className="flex-1">
+              {/* Address — full width */}
+              <div>
                 <label className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]">
                   Wallet Address
                 </label>
@@ -114,30 +139,7 @@ export default function RecipientSplitEditor({
                   value={recipient.address}
                   onChange={(e) => updateRecipient(recipient.id, { address: e.target.value })}
                   placeholder="0x... or SOL..."
-                  className="input py-1.5 font-mono text-xs"
-                />
-              </div>
-
-              {/* Percentage */}
-              <div className="w-20 shrink-0">
-                <label className="mb-0.5 block text-[10px] font-medium text-[var(--color-muted)]">
-                  Split %
-                </label>
-                <input
-                  type="number"
-                  value={recipient.percentage}
-                  onChange={(e) => {
-                    const val = Number.parseFloat(e.target.value);
-                    if (!Number.isNaN(val)) {
-                      updateRecipient(recipient.id, {
-                        percentage: Math.max(0, Math.min(100, val)),
-                      });
-                    }
-                  }}
-                  min={0}
-                  max={100}
-                  step={0.1}
-                  className="input py-1.5 text-right text-sm tabular-nums"
+                  className="input py-2 sm:py-1.5 font-mono text-xs"
                 />
               </div>
             </div>
@@ -146,7 +148,7 @@ export default function RecipientSplitEditor({
             <button
               type="button"
               onClick={() => removeRecipient(recipient.id)}
-              className="mt-5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-red-500/10 hover:text-red-400"
+              className="mt-2 sm:mt-5 flex h-8 w-8 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-red-500/10 hover:text-red-400 touch-target"
               aria-label={`Remove ${recipient.name || `recipient ${i + 1}`}`}
             >
               <svg

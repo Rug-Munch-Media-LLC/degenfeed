@@ -32,7 +32,7 @@ import { hasSuspiciousPayload, sanitizeString, validateBodySize } from '../sanit
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-export type TipPlatform = 'degenfeed' | 'lemmy' | 'peertube' | 'bluesky' | 'mastodon' | 'farcaster' | 'lens';
+export type TipPlatform = 'degenfeed' | 'lemmy' | 'peertube' | 'bluesky' | 'mastodon' | 'farcaster' | 'lens' | 'solana';
 export type TipEntityType = 'post' | 'comment' | 'video' | 'space' | 'creator_coin';
 export type TipPeriod = 'daily' | 'weekly' | 'monthly' | 'alltime';
 

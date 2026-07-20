@@ -695,6 +695,12 @@
   --duration-normal: 250ms;
   --duration-slow: 400ms;
 
+  /* ── Safe area insets (env works in iOS Safari) ── */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
   /* ── Z-Index Scale ── */
   --z-base: 1;
   --z-sticky: 10;
@@ -2618,4 +2624,216 @@
     transparent
   );
   margin-bottom: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+ * MOBILE RESPONSIVE UTILITIES — Safe areas, touch targets, layouts
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* ── Safe area padding utilities ── */
+.pb-safe {
+  padding-bottom: calc(0.5rem + var(--sab));
+}
+.pt-safe {
+  padding-top: calc(0.5rem + var(--sat));
+}
+.pl-safe {
+  padding-left: calc(0.5rem + var(--sal));
+}
+.pr-safe {
+  padding-right: calc(0.5rem + var(--sar));
+}
+.pb-safe-0 {
+  padding-bottom: var(--sab);
+}
+.pt-safe-0 {
+  padding-top: var(--sat);
+}
+.bottom-safe {
+  bottom: var(--sab);
+}
+.top-safe {
+  top: var(--sat);
+}
+
+/* ── Full-screen modal on mobile ── */
+@media (max-width: 639px) {
+  .modal-mobile-full {
+    position: fixed !important;
+    inset: 0 !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    transform: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-mobile-content {
+    border-radius: 0 !important;
+    max-height: 100dvh !important;
+    height: 100dvh !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .modal-mobile-scroll {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ── Bottom sheet style modal (default mobile modal) ── */
+@media (max-width: 639px) {
+  .mobile-bottom-sheet {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .mobile-bottom-sheet > div {
+    border-radius: 1rem 1rem 0 0 !important;
+    max-height: 90dvh !important;
+    width: 100% !important;
+    margin-top: auto !important;
+    padding-bottom: var(--sab) !important;
+  }
+}
+
+/* ── Sticky bottom bar for mobile ── */
+@media (max-width: 767px) {
+  .sticky-bottom-mobile {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 45 !important;
+    border-radius: 0 !important;
+    border-bottom: none !important;
+    padding-bottom: var(--sab) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15) !important;
+  }
+  .dark .sticky-bottom-mobile {
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4) !important;
+  }
+}
+
+/* ── Touch target minimum 44px ── */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Scrollable tab bar for mobile ── */
+@media (max-width: 639px) {
+  .scrollable-x-mobile {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .scrollable-x-mobile::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollable-x-mobile > * {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+}
+
+/* ── Pull-to-refresh indicator ── */
+.ptr-container {
+  overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Mobile compact spacing ── */
+@media (max-width: 639px) {
+  .mobile-compact > * + * {
+    margin-top: 0.25rem !important;
+  }
+  .mobile-px {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  .mobile-py {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  .mobile-gap {
+    gap: 0.375rem !important;
+  }
+}
+
+/* ── Responsive typography scale-down ── */
+@media (max-width: 374px) {
+  .text-responsive-sm {
+    font-size: 0.75rem !important;
+  }
+  .text-responsive-base {
+    font-size: 0.8125rem !important;
+  }
+  .text-responsive-lg {
+    font-size: 0.9375rem !important;
+  }
+  .text-responsive-xl {
+    font-size: 1.125rem !important;
+  }
+}
+@media (min-width: 375px) and (max-width: 767px) {
+  .text-responsive-sm {
+    font-size: 0.8125rem !important;
+  }
+  .text-responsive-base {
+    font-size: 0.875rem !important;
+  }
+  .text-responsive-lg {
+    font-size: 1rem !important;
+  }
+  .text-responsive-xl {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* ── Collapsible section for mobile ── */
+@media (max-width: 767px) {
+  .collapsible-mobile-header {
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .collapsible-mobile-header:active {
+    opacity: 0.7;
+  }
+}
+
+/* ── Mobile grid overrides ── */
+@media (max-width: 374px) {
+  .grid-mobile-2cols {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .grid-mobile-3cols {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+@media (max-width: 639px) {
+  .grid-mobile-stack {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Keyboard avoidance for fixed elements ── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .keyboard-aware {
+    transition: padding-bottom 0.2s ease-out;
+  }
 }

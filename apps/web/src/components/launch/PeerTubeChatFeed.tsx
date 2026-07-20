@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import type { ChatMessage } from '../../hooks/usePeerTubeStream';
+import { useIsMobile, useKeyboardHeight } from '../../hooks/useMobileResponsive';
 
 /* ─── Types ──────────────────────────────────────────── */
 
@@ -38,10 +39,13 @@ export default function PeerTubeChatFeed({
   compact = false,
   maxHeight = '400px',
 }: PeerTubeChatFeedProps) {
+  const isMobile = useIsMobile();
+  const keyboardHeight = useKeyboardHeight();
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
   // Auto-scroll to bottom on new messages
@@ -59,6 +63,15 @@ export default function PeerTubeChatFeed({
     setAutoScroll(isAtBottom);
   };
 
+  // Handle mobile keyboard
+  useEffect(() => {
+    if (keyboardHeight > 0 && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [keyboardHeight]);
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || sending) return;
@@ -67,8 +80,8 @@ export default function PeerTubeChatFeed({
     try {
       await onSend(text);
       setInput('');
-    } catch {
-      // Error handled by parent
+    } catch (err) {
+      console.error('[PeerTubeChat] Send failed:', err);
     } finally {
       setSending(false);
     }
@@ -133,10 +146,14 @@ export default function PeerTubeChatFeed({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className="border-t border-[var(--color-border)] p-2">
+        {/* Input — keyboard aware */}
+        <div
+          className="border-t border-[var(--color-border)] p-2"
+          style={isMobile && keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : undefined}
+        >
           <div className="flex gap-2">
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -144,13 +161,14 @@ export default function PeerTubeChatFeed({
               placeholder="Send a message..."
               maxLength={500}
               disabled={sending}
-              className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-xs text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none focus:border-degen-500/30 disabled:opacity-50"
+              className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-xs text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none focus:border-degen-500/30 disabled:opacity-50"
             />
             <button
               type="button"
               onClick={handleSend}
               disabled={!input.trim() || sending}
-              className="rounded-lg bg-degen-500/20 px-3 py-1.5 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-colors disabled:opacity-50"
+              className="rounded-lg bg-degen-500/20 px-3.5 py-2 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-colors disabled:opacity-50 touch-target"
+              style={{ minHeight: 44 }}
             >
               {sending ? '...' : 'Send'}
             </button>
@@ -224,10 +242,14 @@ export default function PeerTubeChatFeed({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t border-[var(--color-border)] p-3">
+      {/* Input — keyboard aware */}
+      <div
+        className="border-t border-[var(--color-border)] p-2.5 sm:p-3"
+        style={isMobile && keyboardHeight > 0 ? { paddingBottom: keyboardHeight } : undefined}
+      >
         <div className="flex gap-2">
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -235,13 +257,14 @@ export default function PeerTubeChatFeed({
             placeholder="Send a message to the stream..."
             maxLength={500}
             disabled={sending}
-            className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none focus:border-degen-500/30 disabled:opacity-50"
+            className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2.5 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none focus:border-degen-500/30 disabled:opacity-50"
           />
           <button
             type="button"
             onClick={handleSend}
             disabled={!input.trim() || sending}
-            className="btn-primary flex items-center gap-1 px-4 py-2 text-sm disabled:opacity-50"
+            className="btn-primary flex items-center gap-1 px-4 py-2.5 text-sm disabled:opacity-50 touch-target"
+            style={{ minHeight: 44 }}
           >
             {sending ? (
               <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
