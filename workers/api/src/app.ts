@@ -710,6 +710,41 @@ app.get('/api/thread/:dfUri', async (c) => {
   return handleUnifiedThread(c.req.raw, c.env, c.req.param('dfUri'));
 });
 
+// ─── API: Cross-Protocol Stream Chat Bridge ──────────────────
+// Start/stop bridging comments from external protocols into stream chat
+app.post('/api/cross-protocol-bridge/stream/start', async (c) => {
+  const { startBridge } = await import('./lib/cross-protocol-chat-bridge');
+  const { stopBridge } = await import('./lib/cross-protocol-chat-bridge');
+  try {
+    const body = (await c.req.json()) as {
+      streamId: string;
+      announcementResults?: Record<string, { ok: boolean; id?: string; url?: string; error?: string }>;
+    };
+    if (!body.streamId) {
+      return jsonResponse({ error: 'streamId required' }, 400);
+    }
+    startBridge(c.env, body.streamId, body.announcementResults ?? {});
+    return jsonResponse({ ok: true, streamId: body.streamId });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ error: `Failed to start bridge: ${msg}` }, 500);
+  }
+});
+app.post('/api/cross-protocol-bridge/stream/stop', async (c) => {
+  const { stopBridge } = await import('./lib/cross-protocol-chat-bridge');
+  try {
+    const body = (await c.req.json()) as { streamId: string };
+    if (!body.streamId) {
+      return jsonResponse({ error: 'streamId required' }, 400);
+    }
+    stopBridge(body.streamId);
+    return jsonResponse({ ok: true, streamId: body.streamId });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ error: `Failed to stop bridge: ${msg}` }, 500);
+  }
+});
+
 // ─── API: Cross-Protocol Bridge ──────────────────────────────
 // Content wrapping, Zora bridge, edit sync, and bridge status
 app.all('/api/cross-protocol-bridge/wrap', async (c) => {
@@ -880,6 +915,10 @@ app.post('/api/bluesky/tip', async (c) =>
 );
 app.get('/api/bluesky/tip/stats', async (c) => handleBlueskyTipStats(c.req.raw, c.env));
 app.get('/api/bluesky/tip/leaderboard', async (c) => handleBlueskyLeaderboard(c.req.raw, c.env));
+
+// ─── API: Bluesky Feed Generator (live content feed) ─────────
+app.route('/api/bluesky/feed', blueskyFeedGen);
+app.route('/v1/bluesky/feed', blueskyFeedGen);
 
 // ─── API: Mastodon Tips ──────────────────────────────────────
 app.post('/api/mastodon/tip', async (c) =>
@@ -1063,6 +1102,9 @@ app.route('/api/video', videoHub);
 app.route('/api/streams', streams);
 app.route('/v1/streams', streams);
 
+// ─── API: Bluesky Feed Generator (DegenFeed Live) ──────────
+app.route('/api/bsky-feed', feedGen);
+
 // ─── WebSocket: Token real-time updates ────────────────────
 app.get('/ws/token/:address', async (c) => {
   // SSE fallback: check for text/event-stream Accept header
@@ -1232,6 +1274,33 @@ app.all('/api/embed/*', async (c) => handleEmbedPost(c.req.raw, c.env));
 // ─── API: Frame ─────────────────────────────────────────────
 app.all('/api/frame/resolve', async (c) => handleFrameResolve(c.req.raw, c.env));
 app.all('/api/frame/action', async (c) => handleFrameAction(c.req.raw, c.env));
+
+// ─── API: Farcaster Frames ─────────────────────────────────
+import farcasterFrames from './routes/farcaster-frames';
+import blueskyFeedGen from './routes/bluesky-feed-generator';
+app.route('/api/farcaster/frames', farcasterFrames);
+app.route('/v1/farcaster/frames', farcasterFrames);
+
+// ─── Farcaster Frame Manifest (/.well-known/farcaster.json) ──
+import { DEFAULT_MANIFEST } from './lib/farcaster-manifest';
+app.get('/.well-known/farcaster.json', async (_c) => {
+  return new Response(JSON.stringify(DEFAULT_MANIFEST, null, 2), {
+    headers: {
+      'content-type': 'application/json',
+      'access-control-allow-origin': '*',
+      'cache-control': 'public, max-age=3600',
+    },
+  });
+});
+app.get('/v1/.well-known/farcaster.json', async (_c) => {
+  return new Response(JSON.stringify(DEFAULT_MANIFEST, null, 2), {
+    headers: {
+      'content-type': 'application/json',
+      'access-control-allow-origin': '*',
+      'cache-control': 'public, max-age=3600',
+    },
+  });
+});
 
 // ─── API: Features ─────────────────────────────────────────
 app.all('/api/features', async (c) => handleFeatures(c.req.raw, c.env));
@@ -1940,6 +2009,30 @@ app.get('/v1/cross-reply/status', async (c) => {
   return handleCrossReplyStatus(c.req.raw, c.env);
 });
 app.all('/v1/cross-reply', async (c) => withSession(c, () => handleCrossReply(c.req.raw, c.env)));
+
+// V1 cross-protocol stream chat bridge
+app.post('/v1/cross-protocol-bridge/stream/start', async (c) => {
+  const { startBridge } = await import('./lib/cross-protocol-chat-bridge');
+  try {
+    const body = (await c.req.json()) as { streamId: string; announcementResults?: Record<string, { ok: boolean; id?: string; url?: string; error?: string }> };
+    if (!body.streamId) return jsonResponse({ error: 'streamId required' }, 400);
+    startBridge(c.env, body.streamId, body.announcementResults ?? {});
+    return jsonResponse({ ok: true, streamId: body.streamId });
+  } catch (err) {
+    return jsonResponse({ error: `Failed to start bridge: ${(err as Error).message}` }, 500);
+  }
+});
+app.post('/v1/cross-protocol-bridge/stream/stop', async (c) => {
+  const { stopBridge } = await import('./lib/cross-protocol-chat-bridge');
+  try {
+    const body = (await c.req.json()) as { streamId: string };
+    if (!body.streamId) return jsonResponse({ error: 'streamId required' }, 400);
+    stopBridge(body.streamId);
+    return jsonResponse({ ok: true, streamId: body.streamId });
+  } catch (err) {
+    return jsonResponse({ error: `Failed to stop bridge: ${(err as Error).message}` }, 500);
+  }
+});
 app.all('/v1/deploy/request', async (c) => handleDeployRequest(c.req.raw, c.env));
 app.all('/v1/deploy/status', async (c) => handleDeployStatus(c.req.raw, c.env));
 app.all('/v1/account/export', async (c) => handleAccountExport(c.req.raw, c.env));
