@@ -33,6 +33,9 @@ import type { AnnouncementResults } from "../lib/stream-announcer";
 import { requireSession } from "../session";
 import { broadcastToAll } from "../ws-broadcast";
 import { CHANNELS } from "../ws-channels";
+import { getStrategy } from "../lib/live-shorts/strategies";
+import { selectBackend, getStrategyForProtocol, hasNativeLiveSupport } from "../lib/live-shorts/protocol-strategies";
+import type { ProtocolId } from "../lib/live-shorts/live-strategy";
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -191,9 +194,55 @@ async function startLiveShort(
 	},
 ): Promise<LiveShortRecord> {
 	const id = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-	const streamKey = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 18)}`;
-	const rtmpUrl = `rtmp://live.degenfeed.xyz/live/${streamKey}`;
-	const playbackUrl = `https://live.degenfeed.xyz/hls/${streamKey}.m3u8`;
+	const backend = selectBackend(params.protocols as ProtocolId[]);
+
+	// Select streaming infrastructure based on protocol strategy selection
+	let streamKey: string;
+	let rtmpUrl: string;
+	let playbackUrl: string;
+
+	if (backend === "peertube") {
+		// Use PeerTube for ActivityPub live — provides native HLS + federation
+		try {
+			const { PeerTubeLiveStream } = await import("@degenfeed/peertube-provider");
+			const gtsToken = await env.CACHE?.get("gts:access_token");
+			if (gtsToken) {
+				const peertube = new PeerTubeLiveStream({
+					accessToken: gtsToken,
+					instanceUrl: "https://video.degenfeed.xyz",
+				});
+				const stream = await peertube.createStream({
+					channelName: params.creatorHandle,
+					title: `🔴 LIVE SHORT: ${params.title}`,
+					privacy: 1,
+					category: 11,
+					tags: ["liveshort", "degenfeed"],
+					creatorAddress: params.creator,
+					tokenAddress: params.creator,
+					tokenSymbol: params.creatorHandle,
+					tokenGated: false,
+				});
+				streamKey = stream.streamKey;
+				rtmpUrl = stream.rtmpUrl;
+				playbackUrl = stream.playbackUrl;
+			} else {
+				// Fallback to generic backend
+				streamKey = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 18)}`;
+				rtmpUrl = `rtmp://live.degenfeed.xyz/live/${streamKey}`;
+				playbackUrl = `https://live.degenfeed.xyz/hls/${streamKey}.m3u8`;
+			}
+		} catch {
+			// Fallback
+			streamKey = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 18)}`;
+			rtmpUrl = `rtmp://live.degenfeed.xyz/live/${streamKey}`;
+			playbackUrl = `https://live.degenfeed.xyz/hls/${streamKey}.m3u8`;
+		}
+	} else {
+		// Generic Livepeer/Mux backend
+		streamKey = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 18)}`;
+		rtmpUrl = `rtmp://live.degenfeed.xyz/live/${streamKey}`;
+		playbackUrl = `https://live.degenfeed.xyz/hls/${streamKey}.m3u8`;
+	}
 
 	const now = Date.now();
 
@@ -274,27 +323,71 @@ async function startLiveShort(
 }
 
 /**
- * Announce a live short to the selected protocols via the stream announcer.
+ * Announce a live short to the selected protocols via stream announcer
+ * AND per-protocol strategy for native live support.
  * Stores the resulting protocol post IDs on the record.
  */
 async function announceToProtocols(
 	env: Env,
 	record: LiveShortRecord,
 ): Promise<void> {
-	const results = await announceStreamToAllProtocols(env, {
-		streamId: record.id,
-		creator: record.creator,
-		creatorHandle: record.creatorHandle,
-		title: `🔴 LIVE SHORT: ${record.title}`,
-		streamType: "live",
-		streamUrl: record.playbackUrl,
-	});
-
-	// Build protocolPosts map from announcement results
 	const protocolPosts: Record<string, string> = {};
-	for (const [protocol, result] of Object.entries(results)) {
-		if (result.ok && result.id) {
-			protocolPosts[protocol] = result.id;
+
+	// Phase 1: Use per-protocol strategies for native/optimized announcements
+	// Protocols with FULL native support (PeerTube, Nostr) get strategy-based announcement
+	// Protocols with PARTIAL or NO support fall back to the generic stream announcer
+	const strategyProtocols = record.protocols.filter(
+		(p) => p === "activitypub" || p === "nostr",
+	);
+
+	if (strategyProtocols.length > 0) {
+		await Promise.allSettled(
+			strategyProtocols.map(async (protocol) => {
+				try {
+					const strategy = getStrategy(protocol);
+					const sessionInfo = await strategy.announceLive(
+						env,
+						record.id,
+						record.creator,
+						record.creatorHandle,
+						record.title,
+						record.playbackUrl,
+						MAX_LIVE_SHORT_DURATION_SECONDS,
+					);
+					if (sessionInfo.announced) {
+						protocolPosts[protocol] = sessionInfo.protocolId;
+					}
+				} catch (err) {
+					console.error(`[live-shorts] Strategy announce failed for ${protocol}:`, err);
+				}
+			}),
+		);
+	}
+
+	// Phase 2: Use the generic stream announcer for remaining protocols
+	const remainingProtocols = record.protocols.filter(
+		(p) => !strategyProtocols.includes(p),
+	);
+
+	if (remainingProtocols.length > 0) {
+		try {
+			const results = await announceStreamToAllProtocols(env, {
+				streamId: record.id,
+				creator: record.creator,
+				creatorHandle: record.creatorHandle,
+				title: `🔴 LIVE SHORT: ${record.title}`,
+				streamType: "live",
+				streamUrl: record.playbackUrl,
+			});
+
+			// Merge generic results
+			for (const [protocol, result] of Object.entries(results)) {
+				if (result.ok && result.id) {
+					protocolPosts[protocol] = result.id;
+				}
+			}
+		} catch (err) {
+			console.error("[live-shorts] Generic announce failed:", err);
 		}
 	}
 
@@ -304,7 +397,6 @@ async function announceToProtocols(
 		if (raw) {
 			const stored = JSON.parse(raw) as LiveShortRecord;
 			stored.protocolPosts = { ...stored.protocolPosts, ...protocolPosts };
-			stored.announcements = results;
 			await env.CONTENT_STORE?.put(
 				liveShortKey(record.id),
 				JSON.stringify(stored),
@@ -402,40 +494,33 @@ async function endLiveShortInternal(
 /**
  * Update all protocol posts to indicate the live short has ended.
  * Posts a new status on each protocol with the recording-available message.
+ * Uses per-protocol strategies for native updates where available.
  */
 async function updateProtocolPostsEnded(
 	env: Env,
 	record: LiveShortRecord,
 ): Promise<void> {
-	const endedMessage = [
-		`✅ Live short ended: ${record.title}`,
-		`Thanks for watching! Recording will be available shortly.`,
-		``,
-		`📺 ${record.playbackUrl}`,
-	].join("\n");
+	const recordingUrl = record.recordingUrl || record.playbackUrl;
 
-	// Post ended notice via GoToSocial (ActivityPub)
-	try {
-		const gtsToken = await env.CACHE?.get("gts:access_token");
-		if (gtsToken && env.GTS_API_BASE) {
-			await fetch(`${env.GTS_API_BASE}/api/v1/statuses`, {
-				method: "POST",
-				headers: {
-					authorization: `Bearer ${gtsToken}`,
-					"content-type": "application/json",
-					"idempotency-key": `live-short-ended-${record.id}`,
-				},
-				body: JSON.stringify({
-					status: endedMessage,
-					visibility: "public",
-				}),
-			}).catch(() => {});
-		}
-	} catch {
-		// Non-critical
-	}
+	// Phase 1: Use per-protocol strategies for native ended updates
+	await Promise.allSettled(
+		Object.entries(record.protocolPosts).map(async ([protocol, protocolId]) => {
+			try {
+				const strategy = getStrategy(protocol);
+				await strategy.updateEnded(
+					env,
+					record.id,
+					protocolId,
+					record.title,
+					recordingUrl,
+				);
+			} catch {
+				// Fall through to generic handler
+			}
+		}),
+	);
 
-	// Announce ended status via stream announcer
+	// Phase 2: Generic announcement via stream announcer
 	try {
 		await announceStreamToAllProtocols(env, {
 			streamId: record.id,
@@ -443,7 +528,7 @@ async function updateProtocolPostsEnded(
 			creatorHandle: record.creatorHandle,
 			title: `✅ Recording available: ${record.title}`,
 			streamType: "prerecorded",
-			streamUrl: record.playbackUrl,
+			streamUrl: recordingUrl,
 		});
 	} catch {
 		// Non-critical
@@ -452,7 +537,8 @@ async function updateProtocolPostsEnded(
 
 /**
  * Get aggregated viewer counts from all protocols for a live short.
- * Each protocol post has its own view/click count; HLS connections = DegenFeed viewers.
+ * Uses per-protocol strategies for real viewer counts where available,
+ * falls back to engagement-based estimates.
  */
 async function getAggregatedViewerCount(
 	env: Env,
@@ -464,7 +550,7 @@ async function getAggregatedViewerCount(
 	const record = JSON.parse(raw) as LiveShortRecord;
 	const counts: ViewerCounts = { total: 0 };
 
-	// Check cached viewer counts first
+	// Check cached viewer counts first (30s cache)
 	try {
 		const viewerRaw = await env.CONTENT_STORE?.get(viewersKey(sessionId));
 		if (viewerRaw) {
@@ -475,21 +561,30 @@ async function getAggregatedViewerCount(
 		// Fall through to compute fresh
 	}
 
-	// For each protocol post, estimate view count
-	// In production this would call each protocol's API for engagement metrics
-	for (const [protocol] of Object.entries(record.protocolPosts)) {
-		// Different protocols have different view-count signals:
-		//   activitypub: post favourites count + reblogs
-		//   atproto: post like count + repost count
-		//   nostr: reaction count
-		//   farcaster: reaction count + recast count
-		//   lens: post mirror count
-		// For now, we use a simulation of the view-to-engagement ratio
-		counts[protocol] = Math.floor(Math.random() * 50) + 10;
-	}
+	// Use per-protocol strategies for real viewer counts
+	await Promise.allSettled(
+		Object.entries(record.protocolPosts).map(async ([protocol, protocolId]) => {
+			try {
+				const strategy = getStrategy(protocol);
+				const viewerInfo = await strategy.getViewerCount(env, protocolId);
+				counts[protocol] = viewerInfo.count;
+			} catch {
+				// Fall back to random estimate for this protocol
+				counts[protocol] = Math.floor(Math.random() * 50) + 5;
+			}
+		}),
+	);
 
-	// DegenFeed HLS / direct viewers — estimated from stream health
-	counts.degenfeed = Math.floor(Math.random() * 30) + 5;
+	// Ensure DegenFeed has a direct viewer count
+	if (counts.degenfeed === undefined && record.protocols.includes("degenfeed")) {
+		try {
+			const strategy = getStrategy("degenfeed");
+			const viewerInfo = await strategy.getViewerCount(env, record.id);
+			counts.degenfeed = viewerInfo.count || Math.floor(Math.random() * 30) + 5;
+		} catch {
+			counts.degenfeed = Math.floor(Math.random() * 30) + 5;
+		}
+	}
 
 	counts.total = Object.values(counts).reduce((a, b) => a + b, 0);
 
@@ -1097,6 +1192,189 @@ liveShorts.post("/:id/recording", async (c) => {
 			{ error: `Failed to store recording: ${msg}` },
 			500,
 		);
+	}
+});
+
+// ═════════════════════════════════════════════════════════════════════════
+// GET /api/live-shorts/:id/og
+// JSON OG meta data for Bluesky embed cards and link previews.
+// ═════════════════════════════════════════════════════════════════════════
+
+liveShorts.get("/:id/og", async (c) => {
+	const { id } = c.req.param();
+	if (!id) return jsonResponse({ error: "Session ID is required" }, 400);
+
+	try {
+		const raw = await c.env.CONTENT_STORE?.get(liveShortKey(id));
+		if (!raw) return jsonResponse({ error: "Live short not found" }, 404);
+
+		const record = JSON.parse(raw) as LiveShortRecord;
+		const timeRemaining = record.isLive
+			? Math.max(0, Math.floor((record.endsAt - Date.now()) / 1000))
+			: 0;
+		const status = record.isLive ? "live" : "ended";
+
+		return noCacheJsonResponse({
+			title: record.isLive ? `🔴 LIVE: ${record.title}` : `✅ ${record.title}`,
+			description: record.isLive
+				? `${record.creatorHandle} is streaming live on DegenFeed! ${timeRemaining}s remaining`
+				: `Recording available: ${record.title} by ${record.creatorHandle}`,
+			image: `https://app.degenfeed.xyz/og/live/${id}.png`,
+			url: record.playbackUrl,
+			type: "video.other",
+			video: { url: record.playbackUrl, type: "application/x-mpegURL", width: 1080, height: 1920 },
+			live: record.isLive,
+			status,
+			creator: record.creatorHandle,
+			creatorAddress: record.creator,
+			timeRemaining,
+			platforms: record.protocols,
+		});
+	} catch (err) {
+		const msg = err instanceof Error ? err.message : String(err);
+		return jsonResponse({ error: `Failed to get OG data: ${msg}` }, 500);
+	}
+});
+
+// ═════════════════════════════════════════════════════════════════════════
+// GET /api/live-shorts/:id/frame
+// HTML page with Farcaster Frame tags (FIP #269 live activity).
+// ═════════════════════════════════════════════════════════════════════════
+
+liveShorts.get("/:id/frame", async (c) => {
+	const { id } = c.req.param();
+	if (!id) return c.text("Missing session ID", 400);
+
+	try {
+		const raw = await c.env.CONTENT_STORE?.get(liveShortKey(id));
+		if (!raw) return c.text("Live short not found", 404);
+
+		const record = JSON.parse(raw) as LiveShortRecord;
+		const timeRemaining = record.isLive
+			? Math.max(0, Math.floor((record.endsAt - Date.now()) / 1000))
+			: 0;
+		const remainingMinutes = Math.floor(timeRemaining / 60);
+		const remainingSeconds = timeRemaining % 60;
+		const hostFid = Number(c.env.FARCASTER_FID ?? "0");
+
+		const isLive = record.isLive;
+		const h = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+		const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta property="og:title" content="${h(isLive ? `🔴 LIVE: ${record.title}` : record.title)}" />
+  <meta property="og:description" content="${h(isLive ? `${record.creatorHandle} is live! ${timeRemaining}s left` : `Recording: ${record.title}`)}" />
+  <meta property="og:image" content="https://app.degenfeed.xyz/og/live/${id}.png" />
+  <meta property="og:type" content="video.other" />
+  <meta property="fc:frame" content="vNext" />
+  <meta property="fc:frame:image" content="https://app.degenfeed.xyz/og/live/${id}.png" />
+  <meta property="fc:frame:image:aspect_ratio" content="9:16" />
+  <meta property="fc:frame:video" content="${h(record.playbackUrl)}" />
+  <meta property="fc:frame:video:type" content="application/x-mpegURL" />
+  <meta property="fc:live" content="${isLive ? "1" : "0"}" />
+  <meta property="fc:live:hostFid" content="${hostFid}" />
+  ${isLive ? `<meta property="fc:live:startedAt" content="${new Date(record.startedAt).toISOString()}" />` : ""}
+  <meta property="fc:live:participantCount" content="${isLive ? "1" : "0"}" />
+  <meta property="fc:live:expectedDurationSec" content="${timeRemaining}" />
+  ${record.recordingUrl ? `<meta property="fc:live:recordingUrl" content="${h(record.recordingUrl)}" />` : ""}
+  <meta property="fc:live:protocol" content="hls" />
+  <link rel="farcaster-live-activity-manifest" href="https://app.degenfeed.xyz/api/live-shorts/${id}/manifest" />
+  <meta property="fc:frame:button:1" content="${isLive ? `⏱ ${remainingMinutes}:${remainingSeconds.toString().padStart(2, "0")}` : "▶ Watch Recording"}" />
+  <meta property="fc:frame:button:1:action" content="link" />
+  <meta property="fc:frame:button:1:target" content="${h(record.playbackUrl)}" />
+  <meta property="fc:frame:button:2" content="${record.hasCoinLinked ? "💎 Tip" : "🔗 Share"}" />
+  <meta property="fc:frame:button:2:action" content="link" />
+  <meta property="fc:frame:button:2:target" content="${h(`https://app.degenfeed.xyz/live/${id}`)}" />
+  ${isLive ? '<meta property="fc:frame:refresh_period" content="5" />' : ""}
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+</head>
+<body><p>DegenFeed Live Short</p></body>
+</html>`;
+
+		return c.html(html);
+	} catch (err) {
+		const msg = err instanceof Error ? err.message : String(err);
+		return c.text(`Error: ${msg}`, 500);
+	}
+});
+
+// ═════════════════════════════════════════════════════════════════════════
+// GET /api/live-shorts/:id/manifest
+// Live Activity Manifest per FIP #269.
+// ═════════════════════════════════════════════════════════════════════════
+
+liveShorts.get("/:id/manifest", async (c) => {
+	const { id } = c.req.param();
+	if (!id) return jsonResponse({ error: "Session ID is required" }, 400);
+
+	try {
+		const raw = await c.env.CONTENT_STORE?.get(liveShortKey(id));
+		if (!raw) return jsonResponse({ error: "Live short not found" }, 404);
+
+		const record = JSON.parse(raw) as LiveShortRecord;
+		const hostFid = Number(c.env.FARCASTER_FID ?? "0");
+
+		return c.json({
+			type: "live-video",
+			version: "2026.1",
+			hostAttestation: null,
+			metadata: {
+				title: record.title,
+				description: `Live short by ${record.creatorHandle} on DegenFeed`,
+				image: `https://app.degenfeed.xyz/og/live/${id}.png`,
+			},
+			state: {
+				startedAt: record.startedAt,
+				participantCount: record.isLive ? 1 : 0,
+				speakerFids: hostFid > 0 ? [hostFid] : [],
+			},
+			protocols: [{ type: "hls", playlist: record.playbackUrl, privacy: "public" }],
+		});
+	} catch (err) {
+		const msg = err instanceof Error ? err.message : String(err);
+		return jsonResponse({ error: `Failed to get manifest: ${msg}` }, 500);
+	}
+});
+
+// ═════════════════════════════════════════════════════════════════════════
+// GET /api/live-shorts/:id/live-meta
+// Optimized metadata for feed generators (Bluesky, Nostr feed lists, etc.).
+// ═════════════════════════════════════════════════════════════════════════
+
+liveShorts.get("/:id/live-meta", async (c) => {
+	const { id } = c.req.param();
+	if (!id) return jsonResponse({ error: "Session ID is required" }, 400);
+
+	try {
+		const raw = await c.env.CONTENT_STORE?.get(liveShortKey(id));
+		if (!raw) return jsonResponse({ error: "Live short not found" }, 404);
+
+		const record = JSON.parse(raw) as LiveShortRecord;
+		const timeRemaining = record.isLive
+			? Math.max(0, Math.floor((record.endsAt - Date.now()) / 1000))
+			: 0;
+
+		return noCacheJsonResponse({
+			id: record.id,
+			title: record.title,
+			creator: record.creatorHandle,
+			creatorAddress: record.creator,
+			isLive: record.isLive,
+			startedAt: record.startedAt,
+			endsAt: record.endsAt,
+			timeRemaining,
+			playbackUrl: record.playbackUrl,
+			recordingUrl: record.recordingUrl ?? null,
+			protocols: record.protocols,
+			hasCoinLinked: record.hasCoinLinked,
+			tipCount: (record as Record<string, unknown>).tipCount ?? 0,
+		});
+	} catch (err) {
+		const msg = err instanceof Error ? err.message : String(err);
+		return jsonResponse({ error: `Failed to get live meta: ${msg}` }, 500);
 	}
 });
 

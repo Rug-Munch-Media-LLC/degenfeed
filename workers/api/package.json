@@ -22,6 +22,7 @@
     "@degenfeed/identity": "workspace:*",
     "@degenfeed/identity-hub": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",
+    "@degenfeed/livepeer-provider": "workspace:*",
     "@degenfeed/mastodon-sdk": "workspace:*",
     "@degenfeed/nostr-sdk": "workspace:*",
     "@degenfeed/peertube-provider": "workspace:*",

@@ -167,6 +167,18 @@ export interface Env {
 	PINATA_API_KEY?: string;
 	/** Pinata secret key for IPFS pinning (Content Permanence API) */
 	PINATA_SECRET_KEY?: string;
+
+	// ─── Live Shorts / Protocol Streaming ──────────────────────────────
+	/** Farcaster signer private key hex for live short frame posting */
+	FARCASTER_SIGNER_KEY?: string;
+	/** Farcaster FID for the bot account used for live short announcements */
+	FARCASTER_FID?: string;
+	/** Bluesky access JWT for AT Protocol live short announcements */
+	BSKY_ACCESS_TOKEN?: string;
+	/** Lens API access token for Lens live short publishing */
+	LENS_ACCESS_TOKEN?: string;
+	/** Livepeer Studio API key for Livepeer-backed streaming (Zora, generic) */
+	LIVEPEER_API_KEY?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

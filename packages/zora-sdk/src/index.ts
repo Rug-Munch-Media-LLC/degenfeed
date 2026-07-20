@@ -2,18 +2,33 @@
  * DegenFeed Creator Token SDK
  *
  * Unified SDK for creating and trading creator tokens across chains.
+ * - **EVM (Base)**: Zora 2026 Coins Protocol — creator coins on Base via ZoraFactory
  * - **Solana**: Custom Anchor program with bonding curve
- * - **EVM** (Base, Optimism, Arbitrum): Zora/Base creator coin protocol
  *
  * ## Usage
  * ```ts
- * import { CreatorTokenSDK, getDynamicPrice, getEraName } from '@degenfeed/zora-sdk';
+ * import { ZoraCreatorCoinClient } from '@degenfeed/zora-sdk';
  *
- * // Get the dynamic bonding curve price at a given supply
- * const price = getDynamicPrice(currentSupply);
- * const era = getEraName(currentSupply); // "Steal Deal" | "Early Bird" | ...
+ * const zora = new ZoraCreatorCoinClient(walletClient, publicClient);
+ * const coin = await zora.deployCreatorCoin({
+ *   name: 'Alice Coin',
+ *   symbol: 'ALICE',
+ *   ...
+ * });
  * ```
  */
+
+// ─── Zora 2026 Coins Protocol ───────────────────────────────────────────────
+export { ZoraCreatorCoinClient, ZORA_FACTORY_ADDRESS, DEGENFEED_PLATFORM_FEE_BPS } from './evm';
+
+// ─── Zora Coins API ─────────────────────────────────────────────────────────
+export {
+  fetchZoraTrendingCoins,
+  fetchZoraCoinInfo,
+  fetchZoraCreatorCoins,
+  fetchZoraBatchPrices,
+  checkZoraLiveSupport,
+} from './zora-api';
 
 // ─── Solana exports ─────────────────────────────────────────────────────────
 export {
@@ -29,7 +44,7 @@ export {
   PROGRAM_ID,
 } from './solana';
 
-// ─── EVM exports ────────────────────────────────────────────────────────────
+// ─── EVM exports (legacy) ───────────────────────────────────────────────────
 export { EvmCreatorTokenClient } from './evm';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
