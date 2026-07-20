@@ -9,8 +9,6 @@
  * and Node.js.
  */
 
-import type { Protocol } from '@degenfeed/types';
-
 // ─── Types ─────────────────────────────────────────────────────────
 
 export interface GhostPost {

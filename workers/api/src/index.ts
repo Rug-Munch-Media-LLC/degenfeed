@@ -114,6 +114,29 @@ export interface Env {
 	BSKY_DID?: string;
 	/** YouTube Data API v3 key for channel discovery */
 	YOUTUBE_API_KEY?: string;
+
+	// ─── Centralized Platform OAuth Credentials ──────────────────────
+	/** Medium OAuth client ID (requires OAuth app in Medium settings) */
+	MEDIUM_CLIENT_ID?: string;
+	/** Medium OAuth client secret */
+	MEDIUM_CLIENT_SECRET?: string;
+	/** LinkedIn OAuth client ID (requires LinkedIn Developer App) */
+	LINKEDIN_CLIENT_ID?: string;
+	/** LinkedIn OAuth client secret */
+	LINKEDIN_CLIENT_SECRET?: string;
+	/** Instagram Basic Display / Graph API App ID */
+	INSTAGRAM_APP_ID?: string;
+	/** Instagram App Secret */
+	INSTAGRAM_APP_SECRET?: string;
+	/** Pinterest OAuth client ID (requires Pinterest Developer App) */
+	PINTEREST_CLIENT_ID?: string;
+	/** Pinterest OAuth client secret */
+	PINTEREST_CLIENT_SECRET?: string;
+	/** TikTok OAuth client key (requires TikTok Developer App) */
+	TIKTOK_CLIENT_KEY?: string;
+	/** TikTok OAuth client secret */
+	TIKTOK_CLIENT_SECRET?: string;
+
 	/** KV namespace for Audio Spaces data */
 	SPACES?: KVNamespace;
 

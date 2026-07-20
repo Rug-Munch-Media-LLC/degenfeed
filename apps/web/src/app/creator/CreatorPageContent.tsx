@@ -1028,6 +1028,33 @@ export default function CreatorDashboard() {
             </div>
           </div>
 
+          {/* Centralized Platform Cross-Posting */}
+          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-overlay)] text-lg">
+                  📤
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold text-[var(--color-fg)]">
+                    Cross-Post to Centralized Platforms
+                  </h3>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    Medium · Substack · YouTube · TikTok · Instagram · LinkedIn · Reddit · Pinterest
+                  </p>
+                </div>
+              </div>
+              <Link href="/creator/cross-post" className="btn-primary text-sm shrink-0">
+                Manage
+              </Link>
+            </div>
+            <p className="mt-3 text-xs text-[var(--color-muted)]">
+              Connect your accounts on centralized platforms and publish to all of them
+              from one place. OAuth-supported platforms connect securely via their APIs.
+              For others (Substack), use email-to-post.
+            </p>
+          </div>
+
           {/* Connected publishing platforms */}
           <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
             <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">

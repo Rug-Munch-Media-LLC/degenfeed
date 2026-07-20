@@ -391,7 +391,22 @@ import {
 } from './routes/rmi';
 import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
-import { handleListScheduledPosts, handleSchedulePost } from './routes/scheduled';
+import {
+	handleDeleteScheduledPost,
+	handleListScheduledPosts,
+	handlePublishNow,
+	handleSchedulePost,
+	handleUpdateScheduledPost,
+} from './routes/scheduled';
+import {
+	handleAccountStatus,
+	handleConnectPlatform,
+	handleDisconnectPlatform,
+	handleListConnectedAccounts,
+	handleOAuthCallback,
+	handleSubstackEmailSetup,
+} from './routes/connected-accounts';
+import { handleCrossPostCentralized } from './routes/cross-post-centralized';
 import {
 	handleSearch,
 	handleSearchAutocomplete,
@@ -740,6 +755,13 @@ app.get('/api/infra/health/:service', async (c) =>
 );
 app.get('/api/infra/status', async (c) => handleInfraStatus(c.env));
 
+// ─── API: Bridge Health ────────────────────────────────────
+app.get('/api/bridge/health', async (c) => handleBridgeHealth(c.req.raw, c.env));
+app.get('/api/bridge/health/:protocol', async (c) => handleProtocolHealth(c.req.raw, c.env));
+app.post('/api/bridge/circuit/reset', async (c) => handleCircuitReset(c.req.raw, c.env));
+app.get('/api/bridge/stats', async (c) => handleBridgeStats(c.req.raw, c.env));
+app.get('/api/bridge/stats/:protocol', async (c) => handleProtocolStats(c.req.raw, c.env));
+
 // ─── API: Health ────────────────────────────────────────────
 app.all('/api/health', async (c) => {
   // Base relay health
@@ -1075,6 +1097,15 @@ app.delete('/api/custom-feeds/:id', async (c) =>
 );
 
 // ─── API: Bookmarks (session-gated) ─────────────────────────
+// ─── API: Bridge Health ──────────────────────────────────────────
+import {
+  handleBridgeHealth,
+  handleBridgeStats,
+  handleCircuitReset,
+  handleProtocolHealth,
+  handleProtocolStats,
+} from './routes/bridge-health';
+
 import {
   handleBookmarkAdd,
   handleBookmarkCheck,
@@ -1802,6 +1833,41 @@ app.all('/api/moderation/sync', (c) => handleBlockSync(c.req.raw, c.env));
 // ─── API: Schedule ─────────────────────────────────────────
 app.all('/api/schedule', (c) => handleSchedulePost(c.req.raw, c.env));
 app.get('/api/scheduled', (c) => handleListScheduledPosts(c.req.raw, c.env));
+app.put('/api/schedule/:id', async (c) => handleUpdateScheduledPost(c.req.raw, c.env, c.req.param('id')));
+app.delete('/api/schedule/:id', async (c) => handleDeleteScheduledPost(c.req.raw, c.env, c.req.param('id')));
+app.post('/api/schedule/:id/publish-now', async (c) => handlePublishNow(c.req.raw, c.env, c.req.param('id')));
+
+// ─── API: Connected Centralized Accounts ─────────────────────────
+app.get('/api/accounts/connected', async (c) => handleListConnectedAccounts(c.req.raw, c.env));
+app.post('/api/accounts/connect/:platform', async (c) =>
+	handleConnectPlatform(c.req.raw, c.env, c.req.param('platform')),
+);
+app.get('/api/accounts/callback/:platform', async (c) =>
+	handleOAuthCallback(c.req.raw, c.env, c.req.param('platform')),
+);
+app.delete('/api/accounts/disconnect/:platform', async (c) =>
+	handleDisconnectPlatform(c.req.raw, c.env, c.req.param('platform')),
+);
+app.get('/api/accounts/status/:platform', async (c) =>
+	handleAccountStatus(c.req.raw, c.env, c.req.param('platform')),
+);
+app.all('/api/accounts/connect/substack/email', async (c) => handleSubstackEmailSetup(c.req.raw, c.env));
+
+// ─── API: Cross-Post to Centralized Platforms ─────────────────────
+app.post('/api/cross-post/medium', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'medium'));
+app.post('/api/cross-post/substack', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'substack'));
+app.post('/api/cross-post/youtube', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'youtube'));
+app.post('/api/cross-post/tiktok', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'tiktok'));
+app.post('/api/cross-post/instagram', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'instagram'));
+app.post('/api/cross-post/linkedin', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'linkedin'));
+app.post('/api/cross-post/reddit', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'reddit'));
+app.post('/api/cross-post/pinterest', async (c) => handleCrossPostCentralized(c.req.raw, c.env, 'pinterest'));
+
+// ─── API: Platform Limits (for UI content adaptation) ─────────────
+app.get('/api/cross-post/limits', async (c) => {
+	const { PLATFORM_LIMITS } = await import('./routes/cross-post-centralized');
+	return jsonResponse({ limits: PLATFORM_LIMITS });
+});
 
 // ─── API: Audio Spaces ───────────────────────────────────────────
 import {
