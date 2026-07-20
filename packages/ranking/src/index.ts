@@ -95,6 +95,8 @@ export const PLATFORM_TIER: Record<Protocol, number> = {
   webhook: 0.5,
   github: 0.6,
   "newsletter-bridge": 0.5,
+  mirror: 0.8,
+  paragraph: 0.8,
 };
 
 export interface UserAlgorithmPreferences {

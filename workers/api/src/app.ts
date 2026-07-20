@@ -246,6 +246,24 @@ import {
 import { handleLensCoinDeploy, handleLensCoinGet, handleLensCoinTip } from './routes/lens-coin';
 import { handleLinksPage } from './routes/links';
 import {
+  handleMirrorArticles,
+  handleMirrorArticleByTxId,
+  handleMirrorImport,
+  handleMirrorPublish,
+  handleMirrorSearch,
+  handleMirrorTrending,
+} from './routes/mirror';
+import {
+  handleParagraphArticles,
+  handleParagraphArticlesByFid,
+  handleParagraphImport,
+  handleParagraphNewsletterStats,
+  handleParagraphPublish,
+  handleParagraphSearch,
+  handleParagraphSubscribe,
+  handleParagraphTrending,
+} from './routes/paragraph';
+import {
   handleMastodonLeaderboard,
   handleMastodonTipCreate,
   handleMastodonTipStats,
@@ -274,6 +292,11 @@ import {
   handleResolveReport,
   handleSubmitReport,
 } from './routes/moderation';
+import {
+  handleInfraHealth,
+  handleInfraServiceHealth,
+  handleInfraStatus,
+} from './routes/infra-health';
 import { handleNewsFeed } from './routes/news';
 import {
   handleNewsletterDigest,
@@ -369,7 +392,16 @@ import {
 import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
 import { handleListScheduledPosts, handleSchedulePost } from './routes/scheduled';
-import { handleSearch, handleSearchIdentity, handleSearchIndex } from './routes/search';
+import {
+	handleSearch,
+	handleSearchAutocomplete,
+	handleSearchCoins,
+	handleSearchCommunities,
+	handleSearchCreators,
+	handleSearchIdentity,
+	handleSearchIndex,
+	handleSearchTrending,
+} from './routes/search';
 import {
   handleCreateShort,
   handleShortsBySource,
@@ -385,6 +417,16 @@ import {
   handleZoraCreator,
   handleZoraTrending,
 } from './routes/shorts';
+import {
+  handleCategoryFeed,
+  handleDefaultFeed,
+  handleForYouFeed as handleUnifiedForYouFeed,
+  handleNetworkFeed,
+  handleSourceDiscovery,
+  handleTrendingContent,
+  handleUnifiedFeed as handleContentPipelineFeed,
+  handleUnifiedSearch,
+} from './routes/feed-unified';
 import {
   handleSourcesApprove,
   handleSourcesDiscover,
@@ -691,6 +733,13 @@ app.all(
 app.all('/', (c) => handleLandingHtml(c.req.raw, c.env));
 app.all('/index.html', (c) => handleLandingHtml(c.req.raw, c.env));
 
+// ─── API: Infrastructure Health (self-hosted services) ─────
+app.get('/api/infra/health', async (c) => handleInfraHealth(c.env));
+app.get('/api/infra/health/:service', async (c) =>
+  handleInfraServiceHealth(c.env, c.req.param('service')),
+);
+app.get('/api/infra/status', async (c) => handleInfraStatus(c.env));
+
 // ─── API: Health ────────────────────────────────────────────
 app.all('/api/health', async (c) => {
   // Base relay health
@@ -802,8 +851,15 @@ app.all('/api/feed/per-protocol/:protocol/:category', async (c) =>
     c.executionCtx,
   ),
 );
-// Unified blended feed — interleaves all sources
-app.all('/api/feed/unified', async (c) => handleUnifiedFeed(c.req.raw, c.env));
+// Unified blended feed — interleaves all sources (content pipeline)
+app.all('/api/feed/unified', async (c) => handleContentPipelineFeed(c.req.raw, c.env));
+app.get('/api/feed/unified/trending', async (c) => handleTrendingContent(c.req.raw, c.env));
+app.get('/api/feed/unified/for-you', async (c) => handleUnifiedForYouFeed(c.req.raw, c.env));
+app.get('/api/feed/unified/category/:id', async (c) => handleCategoryFeed(c.req.raw, c.env, c.req.param('id')));
+app.get('/api/feed/unified/search', async (c) => handleUnifiedSearch(c.req.raw, c.env));
+app.get('/api/feed/unified/sources', async (c) => handleSourceDiscovery(c.req.raw, c.env));
+app.post('/api/feed/unified/default', async (c) => handleDefaultFeed(c.req.raw, c.env));
+app.get('/api/feed/unified/network/:network', async (c) => handleNetworkFeed(c.req.raw, c.env, c.req.param('network')));
 // Visual feed — masonry-grid media feed from Pixelfed, Zora, Bluesky, etc.
 app.all('/api/feed/visual', async (c) => handleVisualFeed(c.req.raw, c.env));
 app.all('/api/feed/visual/trending', async (c) => handleVisualTrending(c.req.raw, c.env));
@@ -1056,6 +1112,30 @@ app.get('/api/auth/security-log', async (c) => {
 // ─── API: Account ────────────────────────────────────────────
 app.all('/api/account/export', async (c) => handleAccountExport(c.req.raw, c.env));
 app.all('/api/account/delete', async (c) => handleAccountDelete(c.req.raw, c.env));
+
+// ─── API: Account Sovereignty (deplatform-proof verification) ──
+app.get('/api/account/sovereignty', async (c) => {
+  const { requireSession } = await import('./session');
+  const { verifyUserOwnership } = await import('./lib/account-sovereignty');
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+  const report = await verifyUserOwnership(session, c.env);
+  return jsonResponse(report);
+});
+app.get('/api/account/sovereignty/export', async (c) => {
+  const { requireSession } = await import('./session');
+  const { generateExportManifest } = await import('./lib/account-sovereignty');
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+  const manifest = await generateExportManifest(session, c.env);
+  return jsonResponse(manifest);
+});
+app.get('/api/account/sovereignty/migration-guide', async (_c) => {
+  const { getMigrationInstructions } = await import('./lib/account-sovereignty');
+  return new Response(getMigrationInstructions(), {
+    headers: { 'content-type': 'text/markdown; charset=utf-8' },
+  });
+});
 
 // ─── API: Publish & Engage (session-gated) ──────────────────
 app.all('/api/publish', async (c) => withSession(c, () => handlePublish(c.req.raw, c.env)));
@@ -1487,6 +1567,24 @@ app.post('/api/ghost/subscribe', async (c) => handleGhostSubscribe(c.req.raw, c.
 app.post('/api/ghost/unsubscribe', async (c) => handleGhostUnsubscribe(c.req.raw, c.env));
 app.get('/api/ghost/subscribers', async (c) => handleGhostSubscribers(c.req.raw, c.env));
 
+// ─── API: Mirror.xyz Bridge ──────────────────────────────
+app.post('/api/mirror/publish', async (c) => handleMirrorPublish(c.req.raw, c.env));
+app.get('/api/mirror/articles', async (c) => handleMirrorArticles(c.req.raw, c.env));
+app.get('/api/mirror/articles/:txId', async (c) => handleMirrorArticleByTxId(c.req.raw, c.env));
+app.post('/api/mirror/import', async (c) => handleMirrorImport(c.req.raw, c.env));
+app.get('/api/mirror/trending', async (c) => handleMirrorTrending(c.req.raw, c.env));
+app.get('/api/mirror/search', async (c) => handleMirrorSearch(c.req.raw, c.env));
+
+// ─── API: Paragraph.xyz Bridge ───────────────────────────
+app.post('/api/paragraph/publish', async (c) => handleParagraphPublish(c.req.raw, c.env));
+app.get('/api/paragraph/articles/:fid', async (c) => handleParagraphArticlesByFid(c.req.raw, c.env));
+app.get('/api/paragraph/articles', async (c) => handleParagraphArticles(c.req.raw, c.env));
+app.get('/api/paragraph/trending', async (c) => handleParagraphTrending(c.req.raw, c.env));
+app.post('/api/paragraph/import', async (c) => handleParagraphImport(c.req.raw, c.env));
+app.post('/api/paragraph/subscribe', async (c) => handleParagraphSubscribe(c.req.raw, c.env));
+app.get('/api/paragraph/newsletter/stats', async (c) => handleParagraphNewsletterStats(c.req.raw, c.env));
+app.get('/api/paragraph/search', async (c) => handleParagraphSearch(c.req.raw, c.env));
+
 // ─── API: Creator Newsletter (EmailEngine) ────────────────
 app.post('/api/newsletter/creator/send', async (c) =>
   handleCreatorNewsletterSend(c.req.raw, c.env),
@@ -1584,18 +1682,25 @@ app.get('/api/trending/sidebar', async (c) => handleTrendingSidebar(c.req.raw, c
 
 // ─── API: Trending Scraper & Aggregation ────────────────────
 import {
-  handleTrendingAggregated,
-  handleTrendingNow,
-  handleTrendingPerPlatform,
+	handleCrossTrending,
+	handleTrendingAggregated,
+	handleTrendingNow,
+	handleTrendingPerPlatform,
 } from './routes/trending';
 
 app.get('/api/trending/aggregated', async (c) => handleTrendingAggregated(c.req.raw, c.env));
 app.get('/api/trending/per-platform', async (c) => handleTrendingPerPlatform(c.req.raw, c.env));
 app.get('/api/trending/now', async (c) => handleTrendingNow(c.req.raw, c.env));
+app.get('/api/trending/cross-network', async (c) => handleCrossTrending(c.req.raw, c.env));
 
 // ─── API: Search ────────────────────────────────────────────
 app.all('/api/search/identity', async (c) => handleSearchIdentity(c.req.raw, c.env));
 app.all('/api/search/index', async (c) => handleSearchIndex(c.req.raw, c.env));
+app.all('/api/search/autocomplete', async (c) => handleSearchAutocomplete(c.req.raw, c.env));
+app.all('/api/search/creators', async (c) => handleSearchCreators(c.req.raw, c.env));
+app.all('/api/search/coins', async (c) => handleSearchCoins(c.req.raw, c.env));
+app.all('/api/search/communities', async (c) => handleSearchCommunities(c.req.raw, c.env));
+app.all('/api/search/trending', async (c) => handleSearchTrending(c.req.raw, c.env));
 app.all('/api/search', async (c) => handleSearch(c.req.raw, c.env));
 
 // ─── API: Content Resolution (df:// URIs) ───────────────────
@@ -1854,13 +1959,18 @@ app.all('/v1/feed/per-protocol/:protocol/:category', async (c) =>
   ),
 );
 // V1 unified blended feed
-app.all('/v1/feed/unified', async (c) => handleUnifiedFeed(c.req.raw, c.env));
+app.all('/v1/feed/unified', async (c) => handleContentPipelineFeed(c.req.raw, c.env));
 app.all('/v1/feed/:provider', async (c) =>
   handleProviderFeed(c.req.raw, c.env, c.req.param('provider')),
 );
 
 // ─── V1: Search ─────────────────────────────────────────
 app.all('/v1/search/identity', async (c) => handleSearchIdentity(c.req.raw, c.env));
+app.all('/v1/search/autocomplete', async (c) => handleSearchAutocomplete(c.req.raw, c.env));
+app.all('/v1/search/creators', async (c) => handleSearchCreators(c.req.raw, c.env));
+app.all('/v1/search/coins', async (c) => handleSearchCoins(c.req.raw, c.env));
+app.all('/v1/search/communities', async (c) => handleSearchCommunities(c.req.raw, c.env));
+app.all('/v1/search/trending', async (c) => handleSearchTrending(c.req.raw, c.env));
 app.all('/v1/search', async (c) => handleSearch(c.req.raw, c.env));
 
 // ─── V1: Identity ───────────────────────────────────────
@@ -1897,6 +2007,13 @@ app.post('/v1/tip/unified', async (c) =>
 app.get('/v1/tip/unified/stats', async (c) => handleUnifiedTipStats(c.req.raw, c.env));
 app.get('/v1/tip/unified/leaderboard', async (c) => handleUnifiedTipLeaderboard(c.req.raw, c.env));
 app.get('/v1/tip/unified/activity', async (c) => handleUnifiedTipActivity(c.req.raw, c.env));
+
+// ─── V1: Infrastructure Health (self-hosted services) ──
+app.get('/v1/infra/health', async (c) => handleInfraHealth(c.env));
+app.get('/v1/infra/health/:service', async (c) =>
+  handleInfraServiceHealth(c.env, c.req.param('service')),
+);
+app.get('/v1/infra/status', async (c) => handleInfraStatus(c.env));
 
 // ─── V1: Health ─────────────────────────────────────────
 app.all('/v1/health', async (c) => {
@@ -2460,6 +2577,28 @@ app.all('/v1/deploy/request', async (c) => handleDeployRequest(c.req.raw, c.env)
 app.all('/v1/deploy/status', async (c) => handleDeployStatus(c.req.raw, c.env));
 app.all('/v1/account/export', async (c) => handleAccountExport(c.req.raw, c.env));
 app.all('/v1/account/delete', async (c) => handleAccountDelete(c.req.raw, c.env));
+app.get('/v1/account/sovereignty', async (c) => {
+  const { requireSession } = await import('./session');
+  const { verifyUserOwnership } = await import('./lib/account-sovereignty');
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+  const report = await verifyUserOwnership(session, c.env);
+  return jsonResponse(report);
+});
+app.get('/v1/account/sovereignty/export', async (c) => {
+  const { requireSession } = await import('./session');
+  const { generateExportManifest } = await import('./lib/account-sovereignty');
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+  const manifest = await generateExportManifest(session, c.env);
+  return jsonResponse(manifest);
+});
+app.get('/v1/account/sovereignty/migration-guide', async (_c) => {
+  const { getMigrationInstructions } = await import('./lib/account-sovereignty');
+  return new Response(getMigrationInstructions(), {
+    headers: { 'content-type': 'text/markdown; charset=utf-8' },
+  });
+});
 app.all('/v1/embed/*', async (c) => handleEmbedPost(c.req.raw, c.env));
 app.get('/v1/thread/:dfUri', async (c) => {
   const { handleUnifiedThread } = await import('./routes/thread');

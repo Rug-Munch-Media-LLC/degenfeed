@@ -17,6 +17,7 @@ import {
 	type TrendingData,
 	type TrendingItem,
 } from "./trending-scraper";
+import { CrossNetworkSearch } from "../lib/cross-search";
 
 // ─── KV / TTL ────────────────────────────────────────────────────────────
 
@@ -178,6 +179,50 @@ export async function handleTrendingPerPlatform(
  * Compact "Trending Now" response designed for in-feed embedding.
  * Returns the top 5 items across all platforms with minimal payload.
  */
+// ─── GET /api/trending/cross-network ──────────────────────────────────
+
+/**
+ * Returns what's trending across ALL networks right now.
+ * Weighted by: volume, velocity, cross-protocol engagement.
+ */
+export async function handleCrossTrending(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	const url = new URL(request.url);
+	const limit = Math.min(Number(url.searchParams.get("limit")) || 20, 50);
+
+	const cacheKey = `trending:cross:v1:${limit}`;
+	try {
+		const cached = await env.CACHE?.get(cacheKey);
+		if (cached) return jsonResponse(JSON.parse(cached));
+	} catch {
+		/* cache miss */
+	}
+
+	const engine = new CrossNetworkSearch(env);
+	const items = await engine.trending(limit);
+
+	const response = {
+		data: items,
+		meta: {
+			total: items.length,
+			sources: [...new Set(items.map((i) => i.source))],
+			fetchedAt: Date.now(),
+		},
+	};
+
+	try {
+		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
+			expirationTtl: 120,
+		});
+	} catch {
+		/* non-critical */
+	}
+
+	return jsonResponse(response);
+}
+
 export async function handleTrendingNow(
 	request: Request,
 	env: Env,

@@ -3,7 +3,7 @@
 import { ErrorBoundary, getProtocolColor, getProtocolIcon } from '@degenfeed/ui';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CATEGORIES, CategoryCard } from '../../components/CategoryCard';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -555,6 +555,31 @@ export default function DiscoverPage() {
     'loading' | 'loaded' | 'empty' | 'error'
   >('loading');
 
+  // ── Creator Discovery state ──
+  const [trendingCreators, setTrendingCreators] = useState<DiscoverPerson[]>([]);
+  const [trendingCreatorsState, setTrendingCreatorsState] = useState<
+    'loading' | 'loaded' | 'empty' | 'error'
+  >('loading');
+  const [recommendedCreators, setRecommendedCreators] = useState<DiscoverPerson[]>([]);
+  const [recommendedCreatorsState, setRecommendedCreatorsState] = useState<
+    'loading' | 'loaded' | 'empty' | 'error'
+  >('loading');
+  const [crossNetworkTrending, setCrossNetworkTrending] = useState<TrendingItem[]>([]);
+  const [crossTrendingState, setCrossTrendingState] = useState<
+    'loading' | 'loaded' | 'empty' | 'error'
+  >('loading');
+  const [creatorSearchQuery, setCreatorSearchQuery] = useState('');
+  const [creatorSearchResults, setCreatorSearchResults] = useState<DiscoverPerson[]>([]);
+  const [creatorSearchState, setCreatorSearchState] = useState<'idle' | 'loading' | 'loaded' | 'empty' | 'error'>('idle');
+
+  interface TrendingItem {
+    id: string; title: string; description: string; url: string;
+    source: string; sourceLabel: string; sourceColor: string;
+    score: number; velocity: number; engagement: number;
+    thumbnailUrl?: string; publishedAt: number;
+    metadata: Record<string, unknown>;
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -662,6 +687,45 @@ export default function DiscoverPage() {
         })(),
       ];
 
+      // Creator discovery — trending creators across protocols
+      fetches.push(
+        fetchSection(
+          '/api/discover/people',
+          (d: { data: DiscoverPerson[]; meta: { total: number } }) => ({
+            items: d.data,
+            total: d.meta.total,
+          }),
+          setTrendingCreatorsState,
+          (items) => {
+            if (!cancelled) setTrendingCreators(items as DiscoverPerson[]);
+          },
+        ),
+      );
+
+      // Cross-network trending
+      fetches.push(
+        (async () => {
+          try {
+            const res = await fetch('/api/trending/cross-network');
+            if (!res.ok) {
+              if (!cancelled) setCrossTrendingState('error');
+              return;
+            }
+            const data = (await res.json()) as { data: TrendingItem[]; meta: { total: number } };
+            if (!cancelled) {
+              if (data.data.length > 0) {
+                setCrossNetworkTrending(data.data);
+                setCrossTrendingState('loaded');
+              } else {
+                setCrossTrendingState('empty');
+              }
+            }
+          } catch {
+            if (!cancelled) setCrossTrendingState('error');
+          }
+        })(),
+      );
+
       await Promise.allSettled(fetches);
     }
 
@@ -691,6 +755,43 @@ export default function DiscoverPage() {
   const handleTrendingPeriodChange = useCallback((period: string) => {
     setTrendingPeriod(period);
   }, []);
+
+  // ── Creator search ──
+  const doCreatorSearch = useCallback(async (q: string) => {
+    if (q.length < 2) {
+      setCreatorSearchResults([]);
+      setCreatorSearchState('idle');
+      return;
+    }
+    setCreatorSearchState('loading');
+    try {
+      const res = await fetch(`/api/search/creators?q=${encodeURIComponent(q)}&limit=12`);
+      if (!res.ok) {
+        setCreatorSearchState('error');
+        return;
+      }
+      const data = (await res.json()) as { data: DiscoverPerson[]; meta: { total: number } };
+      if (data.data.length === 0) {
+        setCreatorSearchState('empty');
+        setCreatorSearchResults([]);
+      } else {
+        setCreatorSearchState('loaded');
+        setCreatorSearchResults(data.data);
+      }
+    } catch {
+      setCreatorSearchState('error');
+    }
+  }, []);
+
+  const creatorSearchDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const handleCreatorSearchChange = useCallback(
+    (val: string) => {
+      setCreatorSearchQuery(val);
+      if (creatorSearchDebounceRef.current) clearTimeout(creatorSearchDebounceRef.current);
+      creatorSearchDebounceRef.current = setTimeout(() => doCreatorSearch(val), 250);
+    },
+    [doCreatorSearch],
+  );
 
   return (
     <ErrorBoundary>
@@ -730,6 +831,138 @@ export default function DiscoverPage() {
               ))}
             </div>
           </section>
+
+          {/* ═══ CREATOR DISCOVERY ═══ */}
+          <section>
+            <SectionHeader
+              emoji={'\uD83D\uDC65'}
+              title="Find Creators to Follow"
+              subtitle="Search across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more"
+            />
+            <div className="relative mb-4">
+              <label htmlFor="creator-search" className="sr-only">
+                Search creators
+              </label>
+              <input
+                id="creator-search"
+                type="text"
+                value={creatorSearchQuery}
+                onChange={(e) => handleCreatorSearchChange(e.target.value)}
+                placeholder="Search creators by name, handle, or topic..."
+                className="input h-11 w-full pl-11 pr-4 text-sm"
+              />
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-muted)]">
+                ⌕
+              </span>
+            </div>
+            {creatorSearchState === 'loading' && (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="card animate-pulse h-20" />
+                ))}
+              </div>
+            )}
+            {creatorSearchState === 'loaded' && creatorSearchResults.length > 0 && (
+              <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {creatorSearchResults.map((person) => (
+                  <PersonCard key={person.id} person={person} />
+                ))}
+              </div>
+            )}
+            {creatorSearchState === 'empty' && (
+              <p className="mb-6 text-xs text-[var(--color-muted)]">
+                No creators found. Try a different search term.
+              </p>
+            )}
+          </section>
+
+          {/* ═══ TRENDING CREATORS ═══ */}
+          {(trendingCreatorsState === 'loaded' && trendingCreators.length > 0) && (
+            <section>
+              <SectionHeader
+                emoji={'\uD83D\uDD25'}
+                title="Trending Creators"
+                subtitle="Across all protocols"
+              />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {trendingCreators.slice(0, 6).map((person) => (
+                  <PersonCard key={person.id} person={person} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ═══ CROSS-NETWORK TRENDING ═══ */}
+          {crossTrendingState === 'loaded' && crossNetworkTrending.length > 0 && (
+            <section>
+              <SectionHeader
+                emoji={'\uD83C\uDF0D'}
+                title="Cross-Network Trending"
+                subtitle="What's hot across every protocol right now"
+              />
+              <div className="grid grid-cols-1 gap-2">
+                {crossNetworkTrending.slice(0, 8).map((item) => (
+                  <a
+                    key={item.id}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="card-hover flex items-start gap-4 p-4 transition-colors"
+                  >
+                    {item.thumbnailUrl && (
+                      <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-[var(--color-card)]">
+                        <Image
+                          src={item.thumbnailUrl}
+                          alt={item.title}
+                          width={80}
+                          height={56}
+                          className="h-14 w-20 object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm font-medium text-[var(--color-fg)]">
+                          {item.title}
+                        </span>
+                        <span
+                          className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
+                          style={{ backgroundColor: `${item.sourceColor}18`, color: item.sourceColor }}
+                        >
+                          {item.sourceLabel}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 line-clamp-1 text-xs text-[var(--color-muted)]">
+                        {item.description}
+                      </p>
+                      <div className="mt-1 flex items-center gap-3 text-[10px] text-[var(--color-muted)]">
+                        <span>🔥 {(item.score)}</span>
+                        <span>⚡ {Math.round(item.velocity)}/hr</span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ═══ RECOMMENDED FOR YOU ═══ */}
+          {(recommendedState === 'loaded' && recommendedPosts.length > 0) && (
+            <section>
+              <SectionHeader
+                emoji={'\uD83D\uDCA1'}
+                title="Recommended for You"
+                subtitle="Based on your interests and activity"
+              />
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {recommendedPosts.slice(0, 6).map((post) => (
+                  <div key={post.id} className="w-72 shrink-0">
+                    <TrendingPostCard post={post} onPostClick={handlePostClick} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* ═══ 1. Trending Now ═══ */}
           <section>
@@ -786,30 +1019,6 @@ export default function DiscoverPage() {
             {popularThisHourState === 'loaded' && popularThisHour.length > 0 && (
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {popularThisHour.slice(0, 8).map((post) => (
-                  <div key={post.id} className="w-72 shrink-0">
-                    <TrendingPostCard post={post} onPostClick={handlePostClick} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* ═══ 1.6. Because You Liked... ═══ */}
-          <section>
-            <SectionHeader
-              emoji="💡"
-              title="Because You Liked..."
-              subtitle="Personalized recommendations based on your activity"
-            />
-            {recommendedState === 'loading' && <SectionSkeleton count={4} layout="row" />}
-            {recommendedState === 'empty' && (
-              <p className="text-sm text-[var(--color-muted)]">
-                Like or bookmark posts to get personalized recommendations.
-              </p>
-            )}
-            {recommendedState === 'loaded' && recommendedPosts.length > 0 && (
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {recommendedPosts.slice(0, 6).map((post) => (
                   <div key={post.id} className="w-72 shrink-0">
                     <TrendingPostCard post={post} onPostClick={handlePostClick} />
                   </div>

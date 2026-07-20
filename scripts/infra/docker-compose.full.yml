@@ -1,0 +1,483 @@
+# DegenFeed — Deplatform-Proof Infrastructure Stack
+# ====================================================
+# Every protocol DegenFeed supports gets a self-hosted instance
+# that WE control. Users own their accounts. No one can deplatform them.
+#
+# Architecture:
+#   Caddy (reverse proxy / auto TLS) → per-protocol services
+#   Tailscale for inter-service auth (no public ports except Caddy)
+#   Prometheus + Loki + Grafana for observability
+#   MinIO for S3-compatible object storage
+#   PostgreSQL for relational data (shared across services)
+#
+# Deploy:   docker compose -f scripts/infra/docker-compose.full.yml up -d
+# Logs:     docker compose -f scripts/infra/docker-compose.full.yml logs -f
+# Teardown: docker compose -f scripts/infra/docker-compose.full.yml down
+#
+# Subdomain         Service          Protocol
+# ─────────         ───────          ────────
+# social.           GoToSocial       ActivityPub / Mastodon-compatible
+# pds.              AT Protocol PDS  AT Protocol / Bluesky
+# relay.            Nostr Relay      Nostr
+# video.            PeerTube          ActivityPub video
+# matrix.           Synapse           Matrix
+# articles.         Ghost CMS         Blog / Newsletter
+# live.             Owncast           Live streaming
+# blog.             WriteFreely       ActivityPub blog
+# events.           Mobilizon         ActivityPub events
+# community.        Forem             Community platform
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # ═══════════════════════════════════════════════════════════════
+  # REVERSE PROXY — Caddy (auto TLS, single entry point)
+  # ═══════════════════════════════════════════════════════════════
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "2019:2019"
+    environment:
+      - DOMAIN=${DOMAIN:?DOMAIN is required — set it in .env}
+      - ADMIN_EMAIL=${ACME_EMAIL:-admin@${DOMAIN}}
+    volumes:
+      - ./data/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/caddy/data:/data
+      - ./data/caddy/config:/config
+    logging: *default-logging
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # ═══════════════════════════════════════════════════════════════
+  # ActivityPub — GoToSocial (social.degenfeed.xyz)
+  # ALREADY RUNNING. Self-hosted ActivityPub/Mastodon-compatible
+  # server. Users get @user@social.degenfeed.xyz handles.
+  # ═══════════════════════════════════════════════════════════════
+  gotosocial:
+    image: superseriousbusiness/gotosocial:latest
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      - GTS_HOST=${GTS_HOST:-social.${DOMAIN}}
+      - GTS_ACCOUNT_DOMAIN=${GTS_ACCOUNT_DOMAIN:-social.${DOMAIN}}
+      - GTS_PORT=8080
+      - GTS_TRUSTED_PROXIES=caddy
+      - GTS_PROTOCOL=https
+      - GTS_LETS_ENCRYPT_ENABLED=false
+      - GTS_LANDING_PAGE_USER=${GTS_ADMIN_USER:-admin}
+      - GTS_APPLICATION_NAME=DegenFeed
+      - GTS_STORAGE_BACKEND=local
+      - GTS_DB_TYPE=sqlite
+    volumes:
+      - ./data/gotosocial:/gotosocial/storage
+    logging: *default-logging
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/api/v1/instance"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  # ═══════════════════════════════════════════════════════════════
+  # AT Protocol — Personal Data Server (pds.degenfeed.xyz)
+  # ALREADY RUNNING. Self-hosted Bluesky PDS. Users get their own
+  # DID on OUR PDS. They own their data and identity.
+  # ═══════════════════════════════════════════════════════════════
+  pds:
+    image: ghcr.io/bluesky-social/pds:latest
+    restart: unless-stopped
+    expose:
+      - "2583"
+    environment:
+      - PDS_HOST=${PDS_HOST:-pds.${DOMAIN}}
+      - PDS_PORT=2583
+      - PDS_DATA_DIR=/pds
+      - PDS_BLOBSTORE=disk
+      - PDS_BLOBSTORE_DISK_LOCATION=/pds/blobs
+      - PDS_DB_SQLITE_LOCATION=/pds/db.sqlite
+      - PDS_JWT_SECRET=${PDS_JWT_SECRET:?PDS_JWT_SECRET required}
+      - PDS_ADMIN_PASSWORD=${PDS_ADMIN_PASSWORD:?PDS_ADMIN_PASSWORD required}
+      - PDS_REPO_SIGNING_KEY_K256_PRIVATE_KEY_HEX=${PDS_REPO_SIGNING_KEY:?PDS_REPO_SIGNING_KEY required}
+      - PDS_EMAIL_SENDER_FROM=noreply@${DOMAIN}
+      - LOG_ENABLED=true
+    volumes:
+      - ./data/pds:/pds
+      - ./data/pds/blobs:/pds/blobs
+    logging: *default-logging
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:2583/xrpc/_health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  # ═══════════════════════════════════════════════════════════════
+  # Nostr — Relay (relay.degenfeed.xyz)
+  # NEED TO DEPLOY. Self-hosted Nostr relay. Users connect with
+  # their own keypair (THEY hold the nsec). We just run the relay.
+  # ═══════════════════════════════════════════════════════════════
+  nostr-relay:
+    image: ghcr.io/scsibug/nostr-rs-relay:latest
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      - RELAY_PORT=8080
+      - RELAY_NAME=${RELAY_NAME:-DegenFeed Relay}
+      - RELAY_DESCRIPTION=${RELAY_DESCRIPTION:-Self-hosted Nostr relay for DegenFeed}
+      - RELAY_PUBKEY=${RELAY_PUBKEY:-}
+      - RELAY_CONTACT=${RELAY_CONTACT:-admin@${DOMAIN}}
+    volumes:
+      - ./data/nostr-relay:/usr/src/app/data
+    logging: *default-logging
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # ═══════════════════════════════════════════════════════════════
+  # PeerTube — Video platform (video.degenfeed.xyz)
+  # NEED TO DEPLOY. ActivityPub-compatible video sharing.
+  # Users get @user@video.degenfeed.xyz for their channel.
+  # ═══════════════════════════════════════════════════════════════
+  peertube:
+    image: chocobozzz/peertube:production-bullseye
+    restart: unless-stopped
+    expose:
+      - "9000"
+    environment:
+      - NODE_ENV=production
+      - PEERTUBE_WEBSERVER_HOST=${PEERTUBE_HOST:-video.${DOMAIN}}
+      - PEERTUBE_WEBSERVER_PORT=443
+      - PEERTUBE_WEBSERVER_HTTPS=true
+      - PEERTUBE_REDIS_HOSTNAME=redis
+      - PEERTUBE_DB_HOSTNAME=postgres
+      - PEERTUBE_DB_USERNAME=peertube
+      - PEERTUBE_DB_PASSWORD=${PEERTUBE_DB_PASSWORD:?PEERTUBE_DB_PASSWORD required}
+      - PEERTUBE_DB_NAME=peertube
+      - PEERTUBE_ADMIN_EMAIL=${PEERTUBE_ADMIN_EMAIL:-admin@${DOMAIN}}
+      - PEERTUBE_SIGNUP_ENABLED=${PEERTUBE_SIGNUP_ENABLED:-true}
+      - PEERTUBE_TRANSCODING_ENABLED=true
+      - PEERTUBE_OBJECT_STORAGE_ENABLED=false
+      - PEERTUBE_CONTACT_FORM_ENABLED=true
+    volumes:
+      - ./data/peertube/config:/config
+      - ./data/peertube/data:/data
+      - ./data/peertube/videos:/videos
+    logging: *default-logging
+    networks:
+      - degenfeed
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9000/api/v1/instance/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════════
+  # Matrix — Synapse Homeserver (matrix.degenfeed.xyz)
+  # NEED TO DEPLOY. Self-hosted Matrix server for encrypted,
+  # decentralized communication.
+  # ═══════════════════════════════════════════════════════════════
+  synapse:
+    image: matrixdotorg/synapse:latest
+    restart: unless-stopped
+    expose:
+      - "8008"
+    environment:
+      - SYNAPSE_SERVER_NAME=${SYNAPSE_SERVER_NAME:-matrix.${DOMAIN}}
+      - SYNAPSE_REPORT_STATS=no
+      - SYNAPSE_ENABLE_REGISTRATION=${SYNAPSE_ENABLE_REGISTRATION:-true}
+      - SYNAPSE_LOG_LEVEL=INFO
+      - SYNAPSE_POSTGRES_HOST=postgres
+      - SYNAPSE_POSTGRES_USER=synapse
+      - SYNAPSE_POSTGRES_PASSWORD=${SYNAPSE_DB_PASSWORD:?SYNAPSE_DB_PASSWORD required}
+      - SYNAPSE_POSTGRES_DATABASE=synapse
+    volumes:
+      - ./data/synapse:/data
+    logging: *default-logging
+    networks:
+      - degenfeed
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8008/_matrix/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════════
+  # Ghost — Blog CMS (articles.degenfeed.xyz)
+  # NEED TO DEPLOY. Headless CMS for long-form publishing.
+  # Users get their own corner of the web.
+  # ═══════════════════════════════════════════════════════════════
+  ghost:
+    image: ghost:5-alpine
+    restart: unless-stopped
+    expose:
+      - "2368"
+    environment:
+      - url=https://${GHOST_HOST:-articles.${DOMAIN}}
+      - database__client=sqlite3
+      - database__connection__filename=/var/lib/ghost/content/data/ghost.db
+      - mail__transport=Direct
+      - mail__from=noreply@${DOMAIN}
+      - privacy__useRpcPing=false
+      - privacy__useUpdateCheck=false
+      - NODE_ENV=production
+    volumes:
+      - ./data/ghost:/var/lib/ghost/content
+    logging: *default-logging
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:2368/ghost/api/admin/ping/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════════
+  # WriteFreely — ActivityPub blog (blog.degenfeed.xyz)
+  # NEED TO DEPLOY. Minimalist, federated blogging platform.
+  # Users get posts on OUR instance, federated via ActivityPub.
+  # ═══════════════════════════════════════════════════════════════
+  writefreely:
+    image: writeas/writefreely:latest
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      - WF_HOST=${WF_HOST:-blog.${DOMAIN}}
+      - WF_PORT=8080
+      - WF_SINGLE_USER=false
+      - WF_OPEN_REGISTRATION=${WF_OPEN_REGISTRATION:-true}
+      - WF_FEDERATION=true
+      - WF_DATABASE_URL=postgres://writefreely:${WRITEFREELY_DB_PASSWORD:?WRITEFREELY_DB_PASSWORD required}@postgres:5432/writefreely?sslmode=disable
+      - WF_SERVER_NAME=DegenFeed Blog
+      - WF_SERVER_DESCRIPTION=Self-hosted federated blogging for DegenFeed
+      - WF_ADMIN_USERNAME=${WF_ADMIN_USERNAME:-admin}
+      - WF_ADMIN_PASSWORD=${WF_ADMIN_PASSWORD:?WF_ADMIN_PASSWORD required}
+    volumes:
+      - ./data/writefreely:/data
+    logging: *default-logging
+    networks:
+      - degenfeed
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  # ═══════════════════════════════════════════════════════════════
+  # Owncast — Live streaming (live.degenfeed.xyz)
+  # NEED TO DEPLOY. Self-hosted live video streaming server.
+  # Users can go live without Twitch/YouTube dependency.
+  # ═══════════════════════════════════════════════════════════════
+  owncast:
+    image: gabekangas/owncast:latest
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      - OWNCAST_DB=/app/data/owncast.db
+      - OWNCAST_SERVERNAME=${OWNCAST_SERVERNAME:-DegenFeed Live}
+      - OWNCAST_ENABLE_JUSTICE=false
+    volumes:
+      - ./data/owncast:/app/data
+    logging: *default-logging
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  # ═══════════════════════════════════════════════════════════════
+  # Mobilizon — Events platform (events.degenfeed.xyz)
+  # NEED TO DEPLOY. Federated event management and organization.
+  # ═══════════════════════════════════════════════════════════════
+  mobilizon:
+    image: framasoft/mobilizon:latest
+    restart: unless-stopped
+    expose:
+      - "4000"
+    environment:
+      - MOBILIZON_INSTANCE_NAME=${MOBILIZON_INSTANCE_NAME:-DegenFeed Events}
+      - MOBILIZON_HOST=${MOBILIZON_HOST:-events.${DOMAIN}}
+      - MOBILIZON_PORT=4000
+      - MOBILIZON_DB_HOST=postgres
+      - MOBILIZON_DB_PORT=5432
+      - MOBILIZON_DB_NAME=mobilizon
+      - MOBILIZON_DB_USER=mobilizon
+      - MOBILIZON_DB_PASSWORD=${MOBILIZON_DB_PASSWORD:?MOBILIZON_DB_PASSWORD required}
+      - MOBILIZON_SECRET_KEY=${MOBILIZON_SECRET_KEY:?MOBILIZON_SECRET_KEY required}
+      - MOBILIZON_REGISTRATION_OPEN=true
+    volumes:
+      - ./data/mobilizon:/var/lib/mobilizon
+    logging: *default-logging
+    networks:
+      - degenfeed
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:4000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════════
+  # SUPPORTING INFRASTRUCTURE
+  # ═══════════════════════════════════════════════════════════════
+
+  # ── PostgreSQL (shared database) ────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    expose:
+      - "5432"
+    environment:
+      - POSTGRES_USER=degenfeed
+      - POSTGRES_PASSWORD=${PG_PASSWORD:?PG_PASSWORD required}
+      - POSTGRES_MULTIPLE_DATABASES=peertube,synapse,writefreely,mobilizon
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./init-pg-multi-db.sh:/docker-entrypoint-initdb.d/init-pg-multi-db.sh:ro
+    logging: *default-logging
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U degenfeed"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  # ── Redis (caching, queues, pub/sub) ────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    expose:
+      - "6379"
+    volumes:
+      - ./data/redis:/data
+    logging: *default-logging
+    networks:
+      - degenfeed
+    command: redis-server --appendonly yes --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+  # ── MinIO (S3-compatible object storage) ────────────────────
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    expose:
+      - "9000"
+      - "9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:?MINIO_ROOT_USER required}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD required}
+    volumes:
+      - ./data/minio:/data
+    logging: *default-logging
+    networks:
+      - degenfeed
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  # ═══════════════════════════════════════════════════════════════
+  # OBSERVABILITY
+  # ═══════════════════════════════════════════════════════════════
+
+  # ── Prometheus ──────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    expose:
+      - "9090"
+    volumes:
+      - ./data/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data/prometheus/data:/prometheus
+    logging: *default-logging
+    networks:
+      - degenfeed
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+
+  # ── Grafana ─────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD required}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+    logging: *default-logging
+    networks:
+      - degenfeed
+    depends_on:
+      - prometheus
+
+networks:
+  degenfeed:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

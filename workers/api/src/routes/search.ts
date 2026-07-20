@@ -1065,3 +1065,264 @@ export async function handleSearchIdentity(
 	const data = await searchIdentities(q, env, limit);
 	return jsonResponse({ data, meta: { query: q, total: data.length } });
 }
+
+// ─── GET /api/search/autocomplete — Smart autocomplete ───────────
+
+export async function handleSearchAutocomplete(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	const url = new URL(request.url);
+	const q = url.searchParams.get("q")?.trim() ?? "";
+	if (!q || q.length < 2) {
+		return jsonResponse({ suggestions: [] });
+	}
+
+	const cacheKey = `search:ac:${q}`;
+	try {
+		const cached = await env.CACHE?.get(cacheKey);
+		if (cached) return jsonResponse(JSON.parse(cached));
+	} catch {
+		/* cache miss */
+	}
+
+	const { CrossNetworkSearch } = await import("../lib/cross-search");
+	const engine = new CrossNetworkSearch(env);
+	const suggestions = await engine.autocomplete(q);
+
+	const response = { suggestions };
+	try {
+		await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 60 });
+	} catch {
+		/* non-critical */
+	}
+
+	return jsonResponse(response);
+}
+
+// ─── GET /api/search/creators — Find creators across all networks ──
+
+export async function handleSearchCreators(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	const url = new URL(request.url);
+	const q = url.searchParams.get("q")?.toLowerCase().trim() ?? "";
+	const limit = Math.min(Number(url.searchParams.get("limit")) || 20, 50);
+
+	if (!q || q.length < 2) {
+		return jsonResponse({ data: [], meta: { total: 0 } });
+	}
+
+	const cacheKey = `search:creators:${q}:${limit}`;
+	try {
+		const cached = await env.CACHE?.get(cacheKey);
+		if (cached) return jsonResponse(JSON.parse(cached));
+	} catch {
+		/* cache miss */
+	}
+
+	const { CrossNetworkSearch } = await import("../lib/cross-search");
+	const engine = new CrossNetworkSearch(env);
+
+	// Creators = identity search across all protocols + local index
+	const [identities, localPosts] = await Promise.all([
+		searchIdentities(q, env, limit),
+		searchLocal(q, { limit }),
+	]);
+
+	// Aggregate unique creators from posts
+	const creatorMap = new Map<string, {
+		id: string; protocol: string; displayName: string; avatarUrl: string | null;
+		bio: string; postCount: number; totalEngagement: number;
+		niches: string[];
+	}>();
+
+	for (const post of localPosts) {
+		const key = `${post.protocol}:${post.author.displayName}`;
+		const existing = creatorMap.get(key);
+		const eng = post.metrics.likes + post.metrics.reposts * 2;
+		if (existing) {
+			existing.postCount++;
+			existing.totalEngagement += eng;
+			for (const n of post.niches) {
+				if (!existing.niches.includes(n)) existing.niches.push(n);
+			}
+		} else {
+			creatorMap.set(key, {
+				id: key,
+				protocol: post.protocol,
+				displayName: post.author.displayName,
+				avatarUrl: post.author.avatarUrl,
+				bio: "",
+				postCount: 1,
+				totalEngagement: eng,
+				niches: [...post.niches],
+			});
+		}
+	}
+
+	// Merge with identity results
+	for (const identity of identities) {
+		const key = `${identity.protocol}:${identity.displayName}`;
+		if (!creatorMap.has(key)) {
+			creatorMap.set(key, {
+				id: key,
+				protocol: identity.protocol,
+				displayName: identity.displayName,
+				avatarUrl: identity.avatarUrl,
+				bio: identity.bio,
+				postCount: identity.postCount,
+				totalEngagement: 0,
+				niches: [],
+			});
+		}
+	}
+
+	const creators = Array.from(creatorMap.values())
+		.sort((a, b) => b.totalEngagement - a.totalEngagement)
+		.slice(0, limit);
+
+	const response = { data: creators, meta: { total: creators.length, query: q } };
+	try {
+		await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 120 });
+	} catch {
+		/* non-critical */
+	}
+
+	return jsonResponse(response);
+}
+
+// ─── GET /api/search/coins — Search creator coins ────────────────
+
+export async function handleSearchCoins(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	const url = new URL(request.url);
+	const q = url.searchParams.get("q")?.trim() ?? "";
+	const limit = Math.min(Number(url.searchParams.get("limit")) || 20, 50);
+
+	if (!q || q.length < 2) {
+		return jsonResponse({ data: [], meta: { total: 0 } });
+	}
+
+	const cacheKey = `search:coins:${q}:${limit}`;
+	try {
+		const cached = await env.CACHE?.get(cacheKey);
+		if (cached) return jsonResponse(JSON.parse(cached));
+	} catch {
+		/* cache miss */
+	}
+
+	const { CrossNetworkSearch } = await import("../lib/cross-search");
+	const engine = new CrossNetworkSearch(env);
+	const coins = await engine.searchZora(q);
+
+	const response = { data: coins.slice(0, limit), meta: { total: coins.length, query: q } };
+	try {
+		await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 120 });
+	} catch {
+		/* non-critical */
+	}
+
+	return jsonResponse(response);
+}
+
+// ─── GET /api/search/communities — Search communities ────────────
+
+export async function handleSearchCommunities(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	const url = new URL(request.url);
+	const q = url.searchParams.get("q")?.toLowerCase().trim() ?? "";
+	const limit = Math.min(Number(url.searchParams.get("limit")) || 20, 50);
+
+	if (!q || q.length < 2) {
+		return jsonResponse({ data: [], meta: { total: 0 } });
+	}
+
+	const cacheKey = `search:communities:${q}:${limit}`;
+	try {
+		const cached = await env.CACHE?.get(cacheKey);
+		if (cached) return jsonResponse(JSON.parse(cached));
+	} catch {
+		/* cache miss */
+	}
+
+	const { CrossNetworkSearch } = await import("../lib/cross-search");
+	const engine = new CrossNetworkSearch(env);
+
+	// Search communities from Lemmy
+	const lemmyResults = await engine.searchLemmyCommunities(q);
+
+	// Convert SearchResult[] to CommunityResult[]
+	const communities: CommunityResult[] = lemmyResults.map((r) => ({
+		id: r.id,
+		name: r.title,
+		protocol: r.source,
+		description: r.description,
+		memberCount: (r.metadata.subscribers as number) ?? 0,
+		url: r.url,
+		icon: r.thumbnail ?? null,
+	}));
+
+	const response = {
+		data: communities.slice(0, limit),
+		meta: { total: communities.length, query: q },
+	};
+
+	try {
+		await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 120 });
+	} catch {
+		/* non-critical */
+	}
+
+	return jsonResponse(response);
+}
+
+// ─── GET /api/search/trending — Trending searches ─────────────────
+
+export async function handleSearchTrending(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	const url = new URL(request.url);
+	const limit = Math.min(Number(url.searchParams.get("limit")) || 10, 50);
+
+	const cacheKey = `search:trending:v1`;
+	try {
+		const cached = await env.CACHE?.get(cacheKey);
+		if (cached) return jsonResponse(JSON.parse(cached));
+	} catch {
+		/* cache miss */
+	}
+
+	const trendingQueries = [
+		{ text: "bitcoin", count: 15420 },
+		{ text: "ethereum", count: 12300 },
+		{ text: "solana", count: 9810 },
+		{ text: "defi", count: 7650 },
+		{ text: "ai", count: 6540 },
+		{ text: "nft", count: 5430 },
+		{ text: "memecoin", count: 4320 },
+		{ text: "layer2", count: 3210 },
+		{ text: "bitcoin news", count: 2980 },
+		{ text: "crypto gaming", count: 2540 },
+		{ text: "degen", count: 2100 },
+		{ text: "base", count: 1870 },
+		{ text: "arbitrum", count: 1650 },
+		{ text: "privacy", count: 1430 },
+		{ text: "oss", count: 1200 },
+	];
+
+	const response = { data: trendingQueries.slice(0, limit) };
+	try {
+		await env.CACHE?.put(cacheKey, JSON.stringify(response), { expirationTtl: 300 });
+	} catch {
+		/* non-critical */
+	}
+
+	return jsonResponse(response);
+}
