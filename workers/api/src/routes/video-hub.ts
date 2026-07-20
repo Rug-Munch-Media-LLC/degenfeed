@@ -332,7 +332,7 @@ videoHub.get("/categories", async (c) => {
 	try {
 		const trending = await categorizer.getTrendingCategories(c.env);
 		return noCacheJsonResponse({
-			categories: VIDEO_CATEGORIES.map((cat) => ({
+			categories: await Promise.all(VIDEO_CATEGORIES.map(async (cat) => ({
 				id: cat.id,
 				label: cat.label,
 				icon: cat.icon,
@@ -340,7 +340,7 @@ videoHub.get("/categories", async (c) => {
 				subCategories:
 					(await import('../lib/video-categories')).SUB_CATEGORIES[cat.id] ??
 					[],
-			})),
+			}))),
 			trending,
 		});
 	} catch (e) {

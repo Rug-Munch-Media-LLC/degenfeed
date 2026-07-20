@@ -13,4 +13,8 @@ export const CHANNELS = {
 	STREAM_CHAT: "stream:chat",
 } as const;
 
+export const SYNC_TOPICS = Object.values(CHANNELS);
+
+export type SyncTopic = (typeof SYNC_TOPICS)[number];
+
 export type ChannelName = (typeof CHANNELS)[keyof typeof CHANNELS];
