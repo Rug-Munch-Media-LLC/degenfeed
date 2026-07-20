@@ -44,6 +44,10 @@ interface ChargeBreakdown {
   totalCents: number;
   breakdown: { item: string; cost: string; covered: boolean }[];
   serviceFeeCents: number;
+  ourProfit: number;
+  requiresConfirmation: boolean;
+  overageReason?: string;
+  overage?: number;
 }
 
 interface RecoveryAccount {
@@ -59,6 +63,11 @@ interface RecoveryPackage {
   dataExportUrl: string;
 }
 
+interface ProfitGuarantee {
+  ourProfit?: number;
+  note: string;
+}
+
 interface RegistrationResponse {
   success: boolean;
   plan: string;
@@ -67,6 +76,13 @@ interface RegistrationResponse {
   charges: ChargeBreakdown;
   recoveryInfo: RecoveryPackage;
   nextSteps: string[];
+  profitGuarantee?: ProfitGuarantee;
+  requiresConfirmation?: boolean;
+  proposedTotal?: string;
+  ourProfit?: string;
+  overage?: number;
+  message?: string;
+  action?: string;
 }
 
 interface RegistrationStatus {
@@ -540,8 +556,10 @@ function Step3_ReviewCosts({
   lensHandle,
   ensName,
   handleGasCost,
+  confirmedOverage,
   onBack,
   onConfirm,
+  onConfirmOverage,
 }: {
   plan: PlanId;
   isPremium: boolean;
@@ -550,8 +568,10 @@ function Step3_ReviewCosts({
   lensHandle: string;
   ensName: string;
   handleGasCost: number;
+  confirmedOverage: boolean;
   onBack: () => void;
   onConfirm: () => void;
+  onConfirmOverage: () => void;
 }) {
   return (
     <div>
@@ -616,8 +636,62 @@ function Step3_ReviewCosts({
         </div>
       </div>
 
+      {/* PROFIT GUARANTEE BADGE */}
+      {plan !== 'free' && !isPremium && (
+        <div className="mb-4 rounded-xl border border-degen-500/10 bg-degen-500/[0.03] px-4 py-3">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm">💰</span>
+            <h4 className="text-sm font-bold text-[var(--color-fg)]">
+              Our Profit: ${charges.ourProfit}
+            </h4>
+          </div>
+          <p className="text-xs text-[var(--color-muted)] leading-relaxed">
+            {charges.requiresConfirmation
+              ? `⚠️ Gas costs exceed plan budget. +$${charges.overage?.toFixed(2)} extra required.`
+              : '✅ Gas costs within plan budget. No extra charges.'
+            }
+          </p>
+          <p className="mt-1.5 text-[11px] text-[var(--color-muted)] leading-relaxed">
+            We charge a flat ${charges.ourProfit} service fee for handling all 5 protocol registrations,
+            recovery key generation, and account handoff. Gas is pass-through — we don't mark it up.
+            <strong> We never lose money on a registration.</strong>
+          </p>
+        </div>
+      )}
+
+      {/* OVERAGE CONFIRMATION */}
+      {charges.requiresConfirmation && !confirmedOverage && (
+        <div className="mb-4 rounded-xl border border-orange-500/20 bg-orange-500/[0.04] px-4 py-4">
+          <p className="mb-3 text-sm font-medium text-orange-400">
+            ⚠️ Current gas costs are higher than usual
+          </p>
+          <p className="mb-3 text-xs text-[var(--color-muted)] leading-relaxed">
+            The combined on-chain gas costs (${(charges.overage || 0) + 7} total) exceed the plan's
+            gas budget ($7). We need your approval to charge an additional{' '}
+            <strong className="text-orange-400">+${charges.overage?.toFixed(2)}</strong> to cover the
+            difference.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onConfirmOverage}
+              className="rounded-lg bg-orange-500 px-4 py-2 text-xs font-bold text-black transition-all hover:bg-orange-400"
+            >
+              Proceed anyway (+${charges.overage?.toFixed(2)})
+            </button>
+            <button
+              type="button"
+              onClick={onBack}
+              className="rounded-lg border border-[var(--color-glass-border)] px-4 py-2 text-xs text-[var(--color-fg)] hover:bg-[var(--color-overlay)] transition-colors"
+            >
+              Wait for lower gas
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Free alternatives reminder */}
-      {plan !== 'free' && (
+      {plan !== 'free' && !charges.requiresConfirmation && (
         <div className="mb-4 rounded-xl border border-amber-500/10 bg-amber-500/[0.03] px-4 py-3">
           <p className="text-xs text-[var(--color-muted)]">
             <span className="font-medium text-amber-400">💰 Want to save money?</span>
@@ -670,11 +744,14 @@ function Step3_ReviewCosts({
         <button
           type="button"
           onClick={onConfirm}
-          className="rounded-lg bg-degen-500 px-6 py-2 text-sm font-bold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_12px_var(--color-accent-glow)]"
+          disabled={charges.requiresConfirmation && !confirmedOverage}
+          className="rounded-lg bg-degen-500 px-6 py-2 text-sm font-bold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_12px_var(--color-accent-glow)] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isPremium && plan !== 'free'
             ? 'Confirm Registration ($0)'
-            : `Confirm — ${charges.total}`}
+            : charges.requiresConfirmation && !confirmedOverage
+              ? 'Confirm overage above'
+              : `Confirm — ${charges.total}`}
         </button>
       </div>
     </div>
@@ -1047,6 +1124,12 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
   const [nextSteps, setNextSteps] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [plans, setPlans] = useState<PlanInfo[]>(PLANS);
+  const [confirmedOverage, setConfirmedOverage] = useState(false);
+  const [requiresOverageConfirm, setRequiresOverageConfirm] = useState(false);
+  const [pendingOverageInfo, setPendingOverageInfo] = useState<{
+    proposedTotal: string;
+    overage: number;
+  } | null>(null);
 
   // Fetch pricing on mount
   useEffect(() => {
@@ -1082,34 +1165,60 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
           { item: 'RSS feed', cost: '$0', covered: true },
         ],
         serviceFeeCents: 0,
+        ourProfit: 0,
+        requiresConfirmation: false,
+        overage: 0,
       };
     }
 
     switch (selectedPlan) {
       case 'standard': {
         const handleUpcharge = Math.max(0, handleGasCost - 2);
-        const totalUsd = 10 + handleUpcharge;
+        const totalGas = 5 + handleGasCost;
+        const gasBudget = 7;
+        const overage = Math.max(0, totalGas - gasBudget);
+        const ourProfit = 3;
+        const totalUsd = totalGas + ourProfit;
         return {
           total: `$${totalUsd}`,
           totalCents: totalUsd * 100,
+          ourProfit,
+          requiresConfirmation: overage > 0,
+          overage,
+          overageReason: overage > 0
+            ? `Gas costs ($${totalGas}) exceed plan budget ($${gasBudget}). +$${overage.toFixed(2)} extra required.`
+            : undefined,
           breakdown: [
             { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
             { item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`, cost: `$${handleGasCost}`, covered: false },
-            { item: 'Service fee', cost: '$3', covered: false },
+            { item: 'Service fee (our profit)', cost: `$${ourProfit}`, covered: false },
             ...(handleUpcharge > 0
               ? [{ item: `Short handle premium ($${handleUpcharge} upcharge)`, cost: `$${handleUpcharge}`, covered: false }]
               : []),
+            ...(overage > 0
+              ? [{ item: `Gas overage (exceeds plan budget)`, cost: `$${overage}`, covered: false }]
+              : []),
             { item: 'GoToSocial + PDS + Nostr + RSS', cost: '$0', covered: true },
           ],
-          serviceFeeCents: 300,
+          serviceFeeCents: ourProfit * 100,
         };
       }
       case 'complete': {
         const handleUpcharge = Math.max(0, handleGasCost - 10);
-        const totalUsd = 20 + handleUpcharge;
+        const totalGas = 5 + handleGasCost + 10 - 7; // fc + lens + ens - bundle
+        const gasBudget = 17;
+        const overage = Math.max(0, totalGas - gasBudget);
+        const ourProfit = 3;
+        const totalUsd = totalGas + ourProfit;
         return {
           total: `$${totalUsd}`,
           totalCents: totalUsd * 100,
+          ourProfit,
+          requiresConfirmation: overage > 0,
+          overage,
+          overageReason: overage > 0
+            ? `Gas costs ($${totalGas}) exceed plan budget ($${gasBudget}). +$${overage.toFixed(2)} extra required.`
+            : undefined,
           breakdown: [
             { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
             { item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`, cost: `$${handleGasCost}`, covered: false },
@@ -1117,10 +1226,14 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
             ...(handleUpcharge > 0
               ? [{ item: `Premium handle upcharge ($${handleUpcharge})`, cost: `$${handleUpcharge}`, covered: false }]
               : []),
+            { item: 'Service fee (our profit)', cost: `$${ourProfit}`, covered: false },
             { item: 'Bundle discount', cost: '-$7', covered: false },
+            ...(overage > 0
+              ? [{ item: `Gas overage (exceeds plan budget)`, cost: `$${overage}`, covered: false }]
+              : []),
             { item: 'GoToSocial + PDS + Nostr + RSS', cost: '$0', covered: true },
           ],
-          serviceFeeCents: 300,
+          serviceFeeCents: ourProfit * 100,
         };
       }
       default:
@@ -1134,6 +1247,9 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
             { item: 'RSS feed', cost: '$0', covered: true },
           ],
           serviceFeeCents: 0,
+          ourProfit: 0,
+          requiresConfirmation: false,
+          overage: 0,
         };
     }
   }, [selectedPlan, isPremium, handleGasCost, handleLabel]);
@@ -1165,8 +1281,13 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
       // In compact mode, skip sign and go straight to processing
       await executeRegistration(plan, true);
     },
-    [selectedPlan, compact, walletAddress],
+    [selectedPlan, compact, walletAddress, executeRegistration],
   );
+
+  // ── Handle overage confirmation ─────────────────────
+  const handleConfirmOverage = useCallback(() => {
+    setConfirmedOverage(true);
+  }, []);
 
   // ── Execute registration ────────────────────────────
   const executeRegistration = useCallback(
@@ -1208,6 +1329,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
         if (farcasterUsername) body.farcasterUsername = farcasterUsername;
         if (lensHandle) body.lensHandle = lensHandle;
         if (ensName && plan === 'complete') body.ensName = ensName;
+        if (confirmedOverage) body.confirmedOverage = 'true';
 
         const res = await fetch('/api/register/all', {
           method: 'POST',
@@ -1217,6 +1339,19 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
         });
 
         const data = (await res.json()) as RegistrationResponse;
+
+        // Handle overage confirmation required (402 Payment Required)
+        if (res.status === 402 && data.requiresConfirmation) {
+          setPendingOverageInfo({
+            proposedTotal: data.proposedTotal || '',
+            overage: data.overage || 0,
+          });
+          setRequiresOverageConfirm(true);
+          setProcessing(false);
+          setStep(2); // Go back to review step
+          showToast('warning', data.message || 'Gas costs are higher than usual');
+          return;
+        }
 
         if (!res.ok) {
           throw new Error((data as unknown as { error?: string }).error || 'Registration failed');
@@ -1240,7 +1375,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
         setProcessing(false);
       }
     },
-    [walletAddress, farcasterUsername, lensHandle, ensName, signMessage, showToast, onComplete, compact],
+    [walletAddress, farcasterUsername, lensHandle, ensName, confirmedOverage, signMessage, showToast, onComplete, compact],
   );
 
   // ── Handle sign + submit ────────────────────────────
@@ -1260,6 +1395,9 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     setCharges(null);
     setRecoveryInfo(null);
     setError('');
+    setConfirmedOverage(false);
+    setRequiresOverageConfirm(false);
+    setPendingOverageInfo(null);
   }, []);
 
   // ── Not connected ──────────────────────────────────
@@ -1406,8 +1544,10 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
             lensHandle={lensHandle}
             ensName={ensName}
             handleGasCost={handleGasCost}
+            confirmedOverage={confirmedOverage}
             onBack={() => setStep(1)}
             onConfirm={() => handleConfirm()}
+            onConfirmOverage={handleConfirmOverage}
           />
         )}
 

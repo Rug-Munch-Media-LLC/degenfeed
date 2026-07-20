@@ -28,10 +28,13 @@ import { checkPremiumStatus } from '../premium';
 import { requireSession } from '../session';
 import {
   calculateCharges,
+  checkGasBudget,
   createRssFeed,
   deriveGtsHandle,
   derivePdsHandle,
   generateRecoveryPackage,
+  getLensHandleCost,
+  isPlanPaid,
   recordEnsIntent,
   REGISTRATION_PLANS,
   shouldRegisterFarcaster,
@@ -96,6 +99,7 @@ registerAll.post('/all', async (c) => {
     farcasterUsername?: string;
     lensHandle?: string;
     ensName?: string;
+    confirmedOverage?: boolean;
   };
   try {
     body = await c.req.json<{
@@ -103,6 +107,7 @@ registerAll.post('/all', async (c) => {
       farcasterUsername?: string;
       lensHandle?: string;
       ensName?: string;
+      confirmedOverage?: boolean;
     }>();
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, 400);
@@ -116,6 +121,31 @@ registerAll.post('/all', async (c) => {
   // Check premium status
   const premium = await checkPremiumStatus(walletAddress, c.env);
   const isPremium = !!premium;
+
+  // ── Profit Guarantee: Gas Budget Gate ─────────────────────────────────
+  // We never proceed with a registration that would lose us money.
+  // If gas costs exceed the plan budget, the user must explicitly confirm.
+  if (!isPremium && isPlanPaid(plan)) {
+    const handleCost = body.lensHandle ? getLensHandleCost(body.lensHandle) : { gasCost: 2 };
+    const fcGas = 5; // Base gas cost for Farcaster on Base
+    const lensGas = handleCost.gasCost;
+    const ensGas = plan === 'complete' ? 10 : 0;
+
+    const gasResult = checkGasBudget(plan, fcGas, lensGas, ensGas);
+
+    if (!gasResult.withinBudget && !body.confirmedOverage) {
+      return c.json({
+        requiresConfirmation: true,
+        message: gasResult.overage > 0
+          ? `Gas costs are higher than usual ($${gasResult.actualCost}). Continue (+$${gasResult.overage.toFixed(2)} extra) or wait for lower gas.`
+          : `Gas costs ($${gasResult.actualCost}) exceed plan budget.`,
+        proposedTotal: `$${gasResult.proposedTotal}`,
+        ourProfit: `$${gasResult.ourProfit}`,
+        overage: gasResult.overage,
+        action: 'Resubmit with confirmedOverage: true to proceed, or wait for lower gas.',
+      }, 402); // Payment Required
+    }
+  }
 
   // Check if already registered — allow re-registration but warn
   const identityKeyVal = identityKey(walletAddress);
@@ -325,6 +355,12 @@ registerAll.post('/all', async (c) => {
     accounts: results,
     charges,
     recoveryInfo,
+    profitGuarantee: isPremium
+      ? { note: 'All gas covered by Premium subscription — profitable over lifetime.' }
+      : {
+          ourProfit: charges.ourProfit,
+          note: `We charged a flat $${charges.ourProfit} service fee (our minimum profit). Gas was pass-through at actual cost. We never lose money on a registration.`,
+        },
     nextSteps: [
       'Save your recovery keys (shown below)',
       'Set up your Feddy Communities (Premium)',

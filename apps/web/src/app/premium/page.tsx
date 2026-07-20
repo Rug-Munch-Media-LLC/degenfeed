@@ -429,6 +429,69 @@ export default function PremiumPage() {
         </div>
       </div>
 
+      {/* ── Profit Transparency ── */}
+      <div className="mb-12">
+        <div className="mb-4 flex items-center gap-3">
+          <h2 className="text-lg font-bold text-[var(--color-fg)]">How We Make Money</h2>
+          <div className="flex-1 border-t border-[var(--color-border)]" />
+        </div>
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
+          <p className="mb-4 text-xs text-[var(--color-muted)] leading-relaxed">
+            We're transparent about our pricing. Here's exactly how we stay profitable while keeping
+            things fair for you.
+          </p>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-[10px] text-degen-400 font-bold">$</span>
+              <div>
+                <span className="text-sm font-medium text-[var(--color-fg)]">$3 service fee</span>
+                <p className="text-xs text-[var(--color-muted)] leading-relaxed">
+                  Our minimum profit per paid registration. Covers account setup, key generation,
+                  and handoff. This is our margin — we never go below it.
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-[10px] text-degen-400 font-bold">⛽</span>
+              <div>
+                <span className="text-sm font-medium text-[var(--color-fg)]">Gas costs — pass-through</span>
+                <p className="text-xs text-[var(--color-muted)] leading-relaxed">
+                  Blockchain transaction fees (gas) are passed through at exact network rates.
+                  We don't mark up gas. Standard handles (9+ chars) always included.
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-[10px] text-degen-400 font-bold">🔄</span>
+              <div>
+                <span className="text-sm font-medium text-[var(--color-fg)]">Premium subscriptions</span>
+                <p className="text-xs text-[var(--color-muted)] leading-relaxed">
+                  $10/mo covers all gas fees. Profitable over customer lifetime through recurring
+                  subscription revenue.
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-[10px] text-degen-400 font-bold">🛡️</span>
+              <div>
+                <span className="text-sm font-medium text-[var(--color-fg)]">Gas spike protection</span>
+                <p className="text-xs text-[var(--color-muted)] leading-relaxed">
+                  If gas exceeds our plan budget, we ask before proceeding. We{' '}
+                  <strong>never</strong> lose money on a registration. Your approval is required
+                  before any overage charge.
+                </p>
+              </div>
+            </li>
+          </ul>
+          <div className="mt-4 rounded-lg bg-degen-500/[0.04] border border-degen-500/10 px-4 py-3">
+            <p className="text-xs text-[var(--color-muted)] text-center">
+              We never lose money on a registration. Every paid plan has a built-in gas budget and
+              a guaranteed $3 minimum profit. If gas spikes, you decide whether to proceed.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* ── Add-Ons Section ── */}
       <div className="mb-12">
         <div className="mb-4 flex items-center gap-3">
