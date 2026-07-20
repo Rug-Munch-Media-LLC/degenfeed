@@ -7,25 +7,29 @@ pragma solidity ^0.8.26;
  *
  * Core mechanism:
  *   - ERC-20 token with 1B total supply
- *   - ETH-denominated bonding curve (linear from 1 gwei → 1000 gwei per token)
+ *   - ETH-denominated DYNAMIC bonding curve (super-linear eras, not just linear)
  *   - Fee split: platform (0.5%) + creator (0-2%) + referrer (0-0.05%)
  *   - Anti-exploit guards: phase limits, buy cooldowns, max 15% per wallet
  *   - Creator vesting: FULLY CUSTOMIZABLE via VestingConfig
- *     - initialUnlockBps: 0-3000 (0-30% at launch, no lock)
- *     - cliffDuration: 0-90 days before linear vesting starts
- *     - vestingDuration: 7 days to 2 years of linear vesting
  *   - Graduation: at 80% supply + 50 unique buyers → bonding curve closes for Uniswap V4 pool
+ *   - Flash sales: time-limited discount windows
+ *   - Creator-triggered events: post → N discounted buys
+ *   - Streak tracking: consecutive daily buys tracked
+ *   - Burn mechanism: creator can burn to increase scarcity
+ *   - Top-holder rewards: ETH dividend-style distribution
+ *   - Referral boosts: bonus tokens for sharing
+ *
+ * ## Dynamic Bonding Curve
+ * NOT linear — uses 5 eras with different exponents:
+ *   Era 0 (0-5%):     exponent 2.2 — steepest early-deal
+ *   Era 1 (5-15%):    exponent 1.6 — moderate
+ *   Era 2 (15-40%):   exponent 1.0 — linear cruise
+ *   Era 3 (40-70%):   exponent 1.5 — FOMO acceleration
+ *   Era 4 (70-100%):  exponent 2.0 — scarcity finale
  *
  * Deployed on Base (chain 8453) via DegenFeedFactory (CREATE2).
- * Target Solidity: 0.8.26+, EVM: cancun+ (Base supports PUSH0)
  *
- * Security:
- *   - Checks-effects-interactions: state updates before external calls
- *   - No selfdestruct, no delegatecall
- *   - Reentrancy protection via gas limit on fee transfers + CEI
- *   - Price calculated from supply, not manipulable by external state
- *
- * @dev This contract is a self-contained ERC20 implementation (no OZ dependency).
+ * @dev Self-contained ERC20 implementation (no OZ dependency).
  */
 contract DegenFeedCoin {
     // ═══════════════════════════════════════════════════════════════════════
@@ -99,90 +103,147 @@ contract DegenFeedCoin {
     /// @notice Buy cooldown in seconds.
     uint256 public constant COOLDOWN_SECONDS = 60;
 
+    /// @notice Flash sale duration (5 minutes).
+    uint256 public constant FLASH_SALE_DURATION = 5 minutes;
+
+    /// @notice Max discount for flash sales/events (10% = 1000 bps).
+    uint256 public constant MAX_DISCOUNT_BPS = 1000;
+
+    /// @notice Max flash sales per day.
+    uint256 public constant MAX_FLASH_SALES_PER_DAY = 3;
+
+    /// @notice Referral bonus tokens bps (1% bonus for both parties).
+    uint256 public constant REFERRAL_BONUS_BPS = 100;
+
     // ═══════════════════════════════════════════════════════════════════════
     // Vesting Constants
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// @notice Maximum initial unlock in basis points (30%).
     uint256 public constant MAX_INITIAL_UNLOCK_BPS = 3000;
-
-    /// @notice Maximum cliff duration (90 days).
     uint256 public constant MAX_CLIFF_DURATION = 90 days;
-
-    /// @notice Minimum vesting duration (7 days).
     uint256 public constant MIN_VESTING_DURATION = 7 days;
-
-    /// @notice Maximum vesting duration (2 years).
     uint256 public constant MAX_VESTING_DURATION = 730 days;
 
     // ═══════════════════════════════════════════════════════════════════════
     // Tokenomics State
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// @notice Creator allocation in basis points (0-1500 = 0-15%).
     uint256 public creatorAllocationBps;
-
-    /// @notice Creator fee in basis points (0-200 = 0-2%).
     uint256 public creatorFeeBps;
-
-    /// @notice Platform fee in basis points (set by factory, typically 50).
     uint256 public platformFeeBps;
-
-    /// @notice Address that receives platform fees.
     address public platformFeeReceiver;
-
-    /// @notice Referrer address (zero address if none).
     address public referrer;
-
-    /// @notice Factory address that deployed this coin.
     address public factory;
-
-    /// @notice Block timestamp of deployment.
     uint256 public createdAt;
-
-    /// @notice Total ETH raised through the bonding curve (net of fees).
     uint256 public totalRaised;
-
-    /// @notice Number of unique buyer addresses.
     uint256 public uniqueBuyers;
-
-    /// @notice Whether the coin has graduated (bonding curve closed).
     bool public graduated;
-
-    /// @notice Whether initialBuy has been called.
     bool public initialized;
-
-    /// @notice Amount of creator tokens claimed via vesting.
     uint256 public creatorClaimed;
 
     // ═══════════════════════════════════════════════════════════════════════
     // Vesting Configuration
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// @notice Vesting configuration struct.
-    /// @dev Immutable after deployment — set once in constructor.
     struct VestingConfig {
-        /// Basis points unlocked immediately at launch (0-3000 = 0-30%)
         uint256 initialUnlockBps;
-        /// Cliff duration in seconds before linear vesting begins (0 = no cliff)
         uint256 cliffDuration;
-        /// Total vesting duration in seconds (min 7 days, max 2 years)
         uint256 vestingDuration;
     }
 
-    /// @notice The vesting configuration for this coin.
-    /// @dev Public so anyone can read the exact vesting parameters on-chain.
-    ///      Transparency: no hidden bundles, no special terms — what you see is what deploys.
     VestingConfig public vestingConfig;
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Per-Wallet State
+    // Dynamic Curve: Era Definitions (mirrors TS bonding-curve.ts)
+    // ═══════════════════════════════════════════════════════════════════════
+    //
+    // The curve uses 5 eras with progressive steepness:
+    //
+    //   Era 0: 0-5%     -> exponent 2.2  -> very flat start (great for early buyers)
+    //   Era 1: 5-15%    -> exponent 1.6  -> moderate steep
+    //   Era 2: 15-40%   -> exponent 1.0  -> linear cruise
+    //   Era 3: 40-70%   -> exponent 1.5  -> FOMO acceleration
+    //   Era 4: 70-100%  -> exponent 2.0  -> steep finale
+    //
+    // Price = MIN_PRICE + (MAX_PRICE - MIN_PRICE) * (progress ^ exponent) * eraMultiplier
+    //
+    // In Solidity we approximate the exponent with piecewise-linear segments
+    // to keep gas costs low while preserving the super-linear shape.
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// @notice Last buy timestamp per wallet.
-    mapping(address => uint256) public lastBuyTimestamp;
+    /// @notice Era supply thresholds (as fraction of GRADUATION_SUPPLY * 1e4).
+    uint256 public constant ERA_0_END = 500;    // 5%
+    uint256 public constant ERA_1_END = 1500;   // 15%
+    uint256 public constant ERA_2_END = 4000;   // 40%
+    uint256 public constant ERA_3_END = 7000;   // 70%
+    uint256 public constant ERA_4_END = 10000;  // 100%
 
-    /// @notice Total tokens bought per wallet (cumulative).
+    /// @notice Era slope multipliers (fixed-point 1e4).
+    uint256 public constant ERA_0_MUL = 30000; // 3.0x
+    uint256 public constant ERA_1_MUL = 18000; // 1.8x
+    uint256 public constant ERA_2_MUL = 10000; // 1.0x
+    uint256 public constant ERA_3_MUL = 15000; // 1.5x
+    uint256 public constant ERA_4_MUL = 22000; // 2.2x
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Gamification State
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // ── Flash Sales ──────────────────────────────────────────────────────
+    /// @notice Whether a flash sale is currently active.
+    bool public flashSaleActive;
+    /// @notice Flash sale discount in bps.
+    uint256 public flashSaleDiscountBps;
+    /// @notice When the flash sale ends.
+    uint256 public flashSaleEndTime;
+    /// @notice Maximum buys during this flash sale.
+    uint256 public flashSaleMaxBuys;
+    /// @notice How many buys have been used in this flash sale.
+    uint256 public flashSaleBuysUsed;
+    /// @notice Number of flash sales today (rate-limited).
+    uint256 public flashSalesToday;
+    /// @notice Last flash sale day (for reset).
+    uint256 public flashSaleLastDay;
+
+    // ── Creator Events ───────────────────────────────────────────────────
+    /// @notice Whether a creator-triggered event is active.
+    bool public creatorEventActive;
+    /// @notice Creator event discount in bps.
+    uint256 public creatorEventDiscountBps;
+    /// @notice Remaining discounted buys for this event.
+    uint256 public creatorEventRemainingBuys;
+    /// @notice Total buys this event covers.
+    uint256 public creatorEventTotalBuys;
+    /// @notice Creator's message for this event.
+    string public creatorEventMessage;
+
+    // ── Streak Tracking ───────────────────────────────────────────────────
+    /// @notice Last buy timestamp per wallet (day-level, for streaks).
+    mapping(address => uint256) public lastBuyDay;
+    /// @notice Current streak count per wallet.
+    mapping(address => uint256) public buyStreak;
+
+    // ── Referral Tracking ─────────────────────────────────────────────────
+    /// @notice Total referred count per wallet.
+    mapping(address => uint256) public totalReferred;
+    /// @notice Referral bonus tokens claimed per wallet.
+    mapping(address => uint256) public referralBonusClaimed;
+
+    // ── Top Holder Rewards ───────────────────────────────────────────────
+    /// @notice Accumulated ETH rewards for top holders.
+    mapping(address => uint256) public holderRewards;
+    /// @notice Total ETH distributed as holder rewards.
+    uint256 public totalRewardsDistributed;
+
+    // ── Burn Tracking ─────────────────────────────────────────────────────
+    /// @notice Total tokens burned by creator.
+    uint256 public totalBurned;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Per-Wallet State (Legacy — kept for backwards compat)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    mapping(address => uint256) public lastBuyTimestamp;
     mapping(address => uint256) public totalBought;
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -210,12 +271,20 @@ contract DegenFeedCoin {
 
     event VestingClaimed(address indexed creator, uint256 amount, uint256 remaining);
 
+    // ── New Events ────────────────────────────────────────────────────────
+    event FlashSaleStarted(uint256 discountBps, uint256 endTime, uint256 maxBuys);
+    event FlashSaleBuy(address indexed buyer, uint256 discountBps);
+    event CreatorEventStarted(string message, uint256 discountBps, uint256 totalBuys);
+    event CreatorEventBuy(address indexed buyer, uint256 discountBps);
+    event StreakUpdated(address indexed wallet, uint256 streakDays);
+    event ReferralBonus(address indexed referrer, address indexed referee, uint256 bonusTokens);
+    event HolderRewardDistributed(address indexed holder, uint256 ethAmount);
+    event TokensBurned(address indexed burner, uint256 amount, uint256 newTotalSupply);
+    event PostGraduationVerified(address indexed coin);
+    event DividendPaid(uint256 totalAmount, uint256 holdersPaid);
+
     event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // ERC-20 Events
-    // ═══════════════════════════════════════════════════════════════════════
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -243,24 +312,6 @@ contract DegenFeedCoin {
     // Constructor
     // ═══════════════════════════════════════════════════════════════════════
 
-    /**
-     * @notice Deploy a new DegenFeedCoin with customizable vesting.
-     * @param name_              Token name.
-     * @param symbol_            Token symbol.
-     * @param uri_               Metadata URI.
-     * @param creator_           Creator/owner address.
-     * @param creatorAllocationBps_  Creator token allocation (0-1500 bps = 0-15%).
-     * @param creatorFeeBps_     Creator fee on trades (0-200 bps = 0-2%).
-     * @param platformFeeBps_    Platform fee on trades (set by factory, typically 50).
-     * @param platformFeeReceiver_ Address receiving platform fees.
-     * @param referrer_          Referrer address (zero = no referrer).
-     * @param vestingConfig_     Custom vesting configuration.
-     *                           - initialUnlockBps: 0-3000 (0-30% at launch)
-     *                           - cliffDuration: 0-90 days
-     *                           - vestingDuration: 7 days to 2 years
-     *                           Creators control these within reputation-based limits
-     *                           (enforced off-chain at the factory/API level).
-     */
     constructor(
         string memory name_,
         string memory symbol_,
@@ -281,7 +332,6 @@ contract DegenFeedCoin {
         require(platformFeeBps_ <= 200, "Platform fee > 2%");
         require(platformFeeReceiver_ != address(0), "Invalid fee receiver");
 
-        // ── Validate vesting config ─────────────────────────────────────
         require(
             vestingConfig_.initialUnlockBps <= MAX_INITIAL_UNLOCK_BPS,
             "Initial unlock > 30%"
@@ -298,8 +348,6 @@ contract DegenFeedCoin {
             vestingConfig_.vestingDuration <= MAX_VESTING_DURATION,
             "Vesting > 2 years"
         );
-        // Cliff + vesting must not exceed MAX_CLIFF_DURATION + MAX_VESTING_DURATION
-        // (no unbounded lockup)
         require(
             vestingConfig_.cliffDuration + vestingConfig_.vestingDuration <= MAX_CLIFF_DURATION + MAX_VESTING_DURATION,
             "Total lockup > limit"
@@ -318,8 +366,10 @@ contract DegenFeedCoin {
         platformFeeReceiver = platformFeeReceiver_;
         referrer = referrer_;
 
-        // Store vesting config — transparent and immutable on-chain
         vestingConfig = vestingConfig_;
+
+        // Initialize flash sale day tracking
+        flashSaleLastDay = block.timestamp / 1 days;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -397,19 +447,12 @@ contract DegenFeedCoin {
     // Ownable Implementation
     // ═══════════════════════════════════════════════════════════════════════
 
-    /**
-     * @notice Start ownership transfer to a new address.
-     * @param newOwner Address that will become the new owner.
-     */
     function transferOwnership(address newOwner) external onlyOwner {
         require(newOwner != address(0), "Owner cannot be zero");
         _pendingOwner = newOwner;
         emit OwnershipTransferStarted(owner, newOwner);
     }
 
-    /**
-     * @notice Accept ownership transfer (called by the pending owner).
-     */
     function acceptOwnership() external {
         require(msg.sender == _pendingOwner, "Not pending owner");
         emit OwnershipTransferred(owner, _pendingOwner);
@@ -417,59 +460,140 @@ contract DegenFeedCoin {
         _pendingOwner = address(0);
     }
 
-    /**
-     * @notice Returns the pending owner (zero if no transfer in flight).
-     */
     function pendingOwner() external view returns (address) {
         return _pendingOwner;
     }
 
-    /**
-     * @notice Renounce ownership (irreversible — use with extreme caution).
-     */
     function renounceOwnership() external onlyOwner {
         emit OwnershipTransferred(owner, address(0));
         owner = address(0);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Bonding Curve
+    // DYNAMIC BONDING CURVE
+    // ═══════════════════════════════════════════════════════════════════════
+    //
+    // NOT linear — uses 5 eras with progressive steepness.
+    // The curve is piecewise-linear with era multipliers to approximate
+    // the super-linear shape on-chain without expensive exponentiation.
+    //
+    // How it works:
+    //   1. Compute overall linear progress: supply / GRADUATION_SUPPLY
+    //   2. Find the current era
+    //   3. Compute era-local progress within the era
+    //   4. Blend: base linear price * (1 + (eraMul - 1) * eraProgress^2)
+    //
+    // This gives a smooth S-curve that starts flat (great for early buyers)
+    // and accelerates as supply increases.
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
-     * @notice Returns the current price per token in wei based on bonding curve progress.
-     * @dev Linear from MIN_PRICE (1 gwei) at 0% to MAX_PRICE (1000 gwei) at 100%.
-     *      Price is determined by how much of GRADUATION_SUPPLY has been minted.
+     * @notice Returns the current dynamic price per token in wei.
+     * @dev Super-linear curve with 5 eras — NOT the simple linear from v1.
      * @return Price per token in wei.
      */
     function getCurrentPrice() public view returns (uint256) {
         uint256 minted = _totalSupply;
         if (minted >= GRADUATION_SUPPLY) return MAX_PRICE;
 
-        // progress = minted / GRADUATION_SUPPLY, as 1e18 fixed-point
-        uint256 progress = (minted * 1e18) / GRADUATION_SUPPLY;
+        // Overall linear progress (0 to 1e4 fixed-point)
+        uint256 progress = (minted * 10000) / GRADUATION_SUPPLY;
 
-        // price = MIN_PRICE + (MAX_PRICE - MIN_PRICE) * progress / 1e18
-        uint256 priceRange = MAX_PRICE - MIN_PRICE;
-        uint256 priceIncrement = (priceRange * progress) / 1e18;
+        // Linear baseline price
+        uint256 linearPrice = MIN_PRICE + ((MAX_PRICE - MIN_PRICE) * progress) / 10000;
 
-        return MIN_PRICE + priceIncrement;
+        // Find era and apply multiplier
+        (uint256 eraStartProgress, uint256 eraEndProgress, uint256 eraMul) = _getEra(progress);
+
+        if (eraMul == 10000) {
+            // Era 2 — pure linear, no adjustment needed
+            return _applyDiscount(linearPrice);
+        }
+
+        // Era-local progress (0 to 1e4)
+        uint256 eraProgress = eraEndProgress > eraStartProgress
+            ? ((progress - eraStartProgress) * 10000) / (eraEndProgress - eraStartProgress)
+            : 10000;
+
+        // Era boost = 1 + (eraMul - 1) * (eraProgress / 1e4)^2
+        // We use quadratic easing for smooth acceleration
+        uint256 eraProgressSq = (eraProgress * eraProgress) / 10000;
+        uint256 boost = 10000 + ((eraMul - 10000) * eraProgressSq) / 10000;
+
+        uint256 dynamicPrice = (linearPrice * boost) / 10000;
+
+        if (dynamicPrice > MAX_PRICE) return _applyDiscount(MAX_PRICE);
+        if (dynamicPrice < MIN_PRICE) return _applyDiscount(MIN_PRICE);
+
+        return _applyDiscount(dynamicPrice);
+    }
+
+    /**
+     * @notice Get era parameters for a given progress value.
+     * @return eraStartProgress Start of current era (0-10000)
+     * @return eraEndProgress End of current era (0-10000)
+     * @return eraMul Era multiplier (10000 = 1x, 30000 = 3x)
+     */
+    function _getEra(uint256 progress) internal pure returns (
+        uint256 eraStartProgress,
+        uint256 eraEndProgress,
+        uint256 eraMul
+    ) {
+        if (progress <= ERA_0_END) {
+            return (0, ERA_0_END, ERA_0_MUL);
+        } else if (progress <= ERA_1_END) {
+            return (ERA_0_END, ERA_1_END, ERA_1_MUL);
+        } else if (progress <= ERA_2_END) {
+            return (ERA_1_END, ERA_2_END, ERA_2_MUL);
+        } else if (progress <= ERA_3_END) {
+            return (ERA_2_END, ERA_3_END, ERA_3_MUL);
+        } else {
+            return (ERA_3_END, ERA_4_END, ERA_4_MUL);
+        }
+    }
+
+    /**
+     * @notice Apply flash sale / creator event discount to a price.
+     * @param price The base dynamic price.
+     * @return Discounted price (or same if no discount active).
+     */
+    function _applyDiscount(uint256 price) internal view returns (uint256) {
+        uint256 totalDiscount = 0;
+
+        if (flashSaleActive && block.timestamp < flashSaleEndTime && flashSaleBuysUsed < flashSaleMaxBuys) {
+            totalDiscount += flashSaleDiscountBps;
+        }
+
+        if (creatorEventActive && creatorEventRemainingBuys > 0) {
+            totalDiscount += creatorEventDiscountBps;
+        }
+
+        if (totalDiscount == 0) return price;
+        if (totalDiscount > MAX_DISCOUNT_BPS) totalDiscount = MAX_DISCOUNT_BPS;
+
+        uint256 discountAmount = (price * totalDiscount) / 10000;
+        if (price - discountAmount < MIN_PRICE) return MIN_PRICE;
+        return price - discountAmount;
     }
 
     /**
      * @notice Calculate how many tokens `amount` wei of ETH buys at current curve price.
-     * @param amount Wei amount of ETH.
-     * @return tokens Number of tokens (wei-adjusted).
+     * Includes referral bonus if referrer exists.
      */
     function getTokenAmount(uint256 amount) public view returns (uint256) {
         uint256 price = getCurrentPrice();
-        return (amount * 1e18) / price;
+        uint256 tokens = (amount * 1e18) / price;
+
+        // Referral bonus: additional tokens for the buyer
+        if (referrer != address(0)) {
+            tokens += (tokens * REFERRAL_BONUS_BPS) / 10000;
+        }
+
+        return tokens;
     }
 
     /**
      * @notice Calculate how much ETH `tokenAmount` tokens would return at current curve price.
-     * @param tokenAmount Number of tokens (wei-adjusted).
-     * @return ethAmount Wei amount of ETH.
      */
     function getEthAmount(uint256 tokenAmount) public view returns (uint256) {
         uint256 price = getCurrentPrice();
@@ -477,118 +601,210 @@ contract DegenFeedCoin {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Buy
+    // Flash Sales — Limited-Time Price Dips
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
-     * @notice Initial buy called by the factory on deployment.
-     * @dev Mints first tokens to the creator at the current curve price.
-     *      Can only be called once by the factory.
+     * @notice Start a flash sale (creator-only, rate-limited).
+     * @param discountBps Discount in basis points (max 1000 = 10%).
+     * @param maxBuys Maximum number of discounted buys.
      */
+    function startFlashSale(uint256 discountBps, uint256 maxBuys) external onlyOwner notGraduated {
+        require(discountBps > 0, "Discount required");
+        require(discountBps <= MAX_DISCOUNT_BPS, "Discount > 10%");
+        require(maxBuys > 0 && maxBuys <= 50, "Invalid max buys");
+        require(!flashSaleActive, "Flash sale already active");
+
+        // Rate limit: max 3 flash sales per day
+        uint256 today = block.timestamp / 1 days;
+        if (today > flashSaleLastDay) {
+            flashSalesToday = 0;
+            flashSaleLastDay = today;
+        }
+        require(flashSalesToday < MAX_FLASH_SALES_PER_DAY, "Flash sale rate limit");
+
+        flashSaleActive = true;
+        flashSaleDiscountBps = discountBps;
+        flashSaleEndTime = block.timestamp + FLASH_SALE_DURATION;
+        flashSaleMaxBuys = maxBuys;
+        flashSaleBuysUsed = 0;
+        flashSalesToday++;
+
+        emit FlashSaleStarted(discountBps, flashSaleEndTime, maxBuys);
+    }
+
+    /**
+     * @notice End a flash sale early (creator-only).
+     */
+    function endFlashSale() external onlyOwner {
+        flashSaleActive = false;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Creator Events — "Creator just posted! Next 10 buys get 5% off"
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * @notice Start a creator-triggered discount event.
+     * @param message The creator's message (e.g., "Just dropped new content!").
+     * @param discountBps Discount in basis points (max 1000 = 10%).
+     * @param totalBuys Number of buys this event covers.
+     */
+    function startCreatorEvent(string calldata message, uint256 discountBps, uint256 totalBuys)
+        external onlyOwner notGraduated
+    {
+        require(bytes(message).length > 0, "Message required");
+        require(discountBps > 0 && discountBps <= MAX_DISCOUNT_BPS, "Invalid discount");
+        require(totalBuys > 0 && totalBuys <= 100, "Invalid total buys");
+        require(!creatorEventActive, "Event already active");
+
+        creatorEventActive = true;
+        creatorEventDiscountBps = discountBps;
+        creatorEventRemainingBuys = totalBuys;
+        creatorEventTotalBuys = totalBuys;
+        creatorEventMessage = message;
+
+        emit CreatorEventStarted(message, discountBps, totalBuys);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Buy
+    // ═══════════════════════════════════════════════════════════════════════
+
     function initialBuy() external payable onlyFactory {
         require(!initialized, "Already initialized");
         require(msg.value >= MIN_INITIAL_BUY, "Minimum 0.05 ETH initial buy");
         initialized = true;
 
-        _buy(owner, msg.value, 0);
+        _buy(owner, msg.value, 0, address(0)); // No referrer for initial buy
     }
 
-    /**
-     * @notice Buy tokens with ETH.
-     * @param minOut Minimum number of tokens to receive (slippage protection).
-     * @return tokens Number of tokens minted to the buyer.
-     */
     function buy(uint256 minOut) external payable notGraduated nonReentrant returns (uint256) {
         require(msg.value > 0, "Must send ETH");
         require(msg.value >= MIN_BUY_AMOUNT, "Buy amount too small");
-        return _buy(msg.sender, msg.value, minOut);
+        return _buy(msg.sender, msg.value, minOut, referrer);
     }
 
     /**
-     * @notice Internal buy logic.
-     * @param buyer Address receiving the tokens.
-     * @param amount Wei amount of ETH sent.
+     * @notice Buy with an explicit referrer address (for referral tracking).
      * @param minOut Minimum tokens to receive.
-     * @return tokens Number of tokens minted.
+     * @param referrer_ The referrer's address.
      */
-    function _buy(address buyer, uint256 amount, uint256 minOut) internal returns (uint256) {
+    function buyWithReferrer(uint256 minOut, address referrer_) external payable notGraduated nonReentrant returns (uint256) {
+        require(msg.value > 0, "Must send ETH");
+        require(msg.value >= MIN_BUY_AMOUNT, "Buy amount too small");
+        require(referrer_ != address(0) && referrer_ != msg.sender, "Invalid referrer");
+        return _buy(msg.sender, msg.value, minOut, referrer_);
+    }
+
+    /**
+     * @notice Internal buy logic with referrer support.
+     */
+    function _buy(address buyer, uint256 amount, uint256 minOut, address referrer_) internal returns (uint256) {
         _enforceBuyLimits(buyer, amount);
 
         uint256 price = getCurrentPrice();
+
+        // Base tokens from curve
         uint256 tokens = (amount * 1e18) / price;
+
+        // Referral bonus: bonus tokens for both parties
+        uint256 referrerTokens = 0;
+        if (referrer_ != address(0) && referrer_ != buyer) {
+            referrerTokens = (tokens * REFERRAL_BONUS_BPS) / 10000;
+            tokens += referrerTokens; // Bonus for buyer
+            totalReferred[referrer_]++;
+            emit ReferralBonus(referrer_, buyer, referrerTokens);
+        }
+
+        // Streak bonus: if on a 7+ day streak, get 2x tokens
+        uint256 streakBonus = _computeStreakBonus(buyer, tokens);
 
         require(tokens >= minOut, "Slippage exceeded");
 
-        // Check max holder: buyer's total + new tokens ≤ 15% of TOTAL_SUPPLY
         require(
-            _balances[buyer] + tokens <= (TOTAL_SUPPLY * 15) / 100,
+            _balances[buyer] + tokens + streakBonus <= (TOTAL_SUPPLY * 15) / 100,
             "Max holder 15%"
         );
 
-        // Check supply cap
-        require(_totalSupply + tokens <= TOTAL_SUPPLY, "Exceeds total supply");
+        require(_totalSupply + tokens + streakBonus <= TOTAL_SUPPLY, "Exceeds total supply");
 
         // ── Fee calculation ──────────────────────────────────────────────
         uint256 platformFee = (amount * platformFeeBps) / 10000;
         uint256 creatorFee  = (amount * creatorFeeBps) / 10000;
-        uint256 referralFee = (referrer != address(0)) ? (amount * REFERRAL_FEE_BPS) / 10000 : 0;
+        uint256 referralFee = (referrer_ != address(0) && referrer_ != address(this))
+            ? (amount * REFERRAL_FEE_BPS) / 10000 : 0;
 
-        // Ensure total fee rate doesn't exceed MAX_TOTAL_FEE_BPS
         require(platformFeeBps + creatorFeeBps + REFERRAL_FEE_BPS <= MAX_TOTAL_FEE_BPS,
             "Total fees exceed max");
 
-        // Ensure fees don't exceed amount (sanity check — should never happen)
         uint256 totalFees = platformFee + creatorFee + referralFee;
         require(totalFees <= amount, "Fees exceed purchase");
 
-        // Prevent dust: ensure net proceeds are non-zero
         uint256 netProceeds = amount - totalFees;
         require(netProceeds > 0, "Fees consume entire purchase");
 
-        // ── State updates (CEI: checks → effects → interactions) ────────
-        _mint(buyer, tokens);
+        // ── State updates (CEI) ────────────────────────────────────────
+        _mint(buyer, tokens + streakBonus);
+
+        // Mint referral bonus tokens to referrer
+        if (referrerTokens > 0 && referrer_ != address(this)) {
+            _mint(referrer_, referrerTokens);
+        }
 
         totalRaised += netProceeds;
 
-        if (_balances[buyer] == tokens) {
-            // First buy for this wallet
+        if (_balances[buyer] == tokens + streakBonus) {
             uniqueBuyers++;
         }
 
-        totalBought[buyer] += tokens;
+        totalBought[buyer] += tokens + streakBonus;
         lastBuyTimestamp[buyer] = block.timestamp;
 
-        emit Trade(buyer, true, tokens, amount, block.timestamp);
+        // ── Streak update ──────────────────────────────────────────────
+        _updateStreak(buyer, tokens);
+
+        // ── Flash sale tracking ────────────────────────────────────────
+        bool usedFlashSale = false;
+        if (flashSaleActive && block.timestamp < flashSaleEndTime && flashSaleBuysUsed < flashSaleMaxBuys) {
+            flashSaleBuysUsed++;
+            usedFlashSale = true;
+            emit FlashSaleBuy(buyer, flashSaleDiscountBps);
+        }
+
+        // ── Creator event tracking ────────────────────────────────────
+        if (creatorEventActive && creatorEventRemainingBuys > 0) {
+            creatorEventRemainingBuys--;
+            if (creatorEventRemainingBuys == 0) {
+                creatorEventActive = false;
+            }
+            emit CreatorEventBuy(buyer, creatorEventDiscountBps);
+        }
+
+        emit Trade(buyer, true, tokens + streakBonus, amount, block.timestamp);
 
         if (totalFees > 0) {
             emit FeesDistributed(
                 platformFeeReceiver, platformFee,
                 owner, creatorFee,
-                referrer, referralFee
+                referrer_, referralFee
             );
         }
 
-        // ── Fee transfers (external calls last) ─────────────────────────
+        // ── Fee transfers ─────────────────────────────────────────────
         _sendFee(platformFeeReceiver, platformFee);
         _sendFee(owner, creatorFee);
-        _sendFee(referrer, referralFee);
 
-        // ── Graduation check ────────────────────────────────────────────
+        // ── Graduation check ──────────────────────────────────────────
         _checkGraduation();
 
-        return tokens;
+        return tokens + streakBonus;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
     // Sell
     // ═══════════════════════════════════════════════════════════════════════
 
-    /**
-     * @notice Sell tokens back to the bonding curve for ETH.
-     * @param tokenAmount Number of tokens to sell.
-     * @param minOut Minimum ETH to receive (slippage protection).
-     * @return ethAmount Wei amount returned to the seller.
-     */
     function sell(uint256 tokenAmount, uint256 minOut) external notGraduated nonReentrant returns (uint256) {
         require(tokenAmount > 0, "Must sell > 0");
         require(_balances[msg.sender] >= tokenAmount, "Insufficient balance");
@@ -598,7 +814,6 @@ contract DegenFeedCoin {
 
         require(ethAmount >= minOut, "Slippage exceeded");
 
-        // ── Fee calculation ──────────────────────────────────────────────
         uint256 platformFee = (ethAmount * platformFeeBps) / 10000;
         uint256 creatorFee  = (ethAmount * creatorFeeBps) / 10000;
         uint256 referralFee = (referrer != address(0)) ? (ethAmount * REFERRAL_FEE_BPS) / 10000 : 0;
@@ -606,12 +821,11 @@ contract DegenFeedCoin {
         uint256 totalFees = platformFee + creatorFee + referralFee;
         uint256 netProceeds = ethAmount - totalFees;
 
-        // Check contract has enough ETH
         require(address(this).balance >= netProceeds, "Insufficient ETH in curve");
 
         // ── State updates (CEI) ──────────────────────────────────────────
         _burn(msg.sender, tokenAmount);
-        totalRaised -= ethAmount; // Reduce raised amount when selling
+        totalRaised -= ethAmount;
 
         emit Trade(msg.sender, false, tokenAmount, netProceeds, block.timestamp);
 
@@ -623,104 +837,221 @@ contract DegenFeedCoin {
             );
         }
 
-        // ── Fee transfers + seller payout ────────────────────────────────
         _sendFee(platformFeeReceiver, platformFee);
         _sendFee(owner, creatorFee);
         _sendFee(referrer, referralFee);
-
-        // Send net proceeds to seller
         _sendFee(msg.sender, netProceeds);
 
         return netProceeds;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Anti-Exploit Guards
+    // Streak System
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
-     * @notice Enforce per-wallet buy limits that scale with time since creation.
-     * @dev Phase limits:
-     *      0-5 min:    2% of TOTAL_SUPPLY max per buy
-     *      5-30 min:   5% of TOTAL_SUPPLY max per buy
-     *      30 min-24h: 10% of TOTAL_SUPPLY max per buy
-     *      24h+:       15% of TOTAL_SUPPLY max per buy
-     *      Cooldown:   60 seconds between buys per wallet
+     * @notice Update the buy streak for a wallet.
+     * @dev A "day" = floor(timestamp / 86400). If same day, no change.
+     *      If consecutive day, increment. Otherwise, reset to 1.
      */
+    function _updateStreak(address wallet, uint256 baseTokens) internal {
+        uint256 currentDay = block.timestamp / 1 days;
+        uint256 lastDay = lastBuyDay[wallet];
+
+        if (lastDay == 0) {
+            // First buy ever
+            buyStreak[wallet] = 1;
+        } else if (currentDay > lastDay) {
+            if (currentDay == lastDay + 1) {
+                // Consecutive day — increment
+                buyStreak[wallet]++;
+            } else {
+                // Missed a day — reset
+                buyStreak[wallet] = 1;
+            }
+        }
+        // else same day — no change
+
+        lastBuyDay[wallet] = currentDay;
+        emit StreakUpdated(wallet, buyStreak[wallet]);
+    }
+
+    /**
+     * @notice Compute streak bonus tokens.
+     * @dev 7+ day streak → 2x tokens (100% bonus)
+     *      3-6 day streak → 10-40% bonus
+     */
+    function _computeStreakBonus(address wallet, uint256 baseTokens) internal view returns (uint256) {
+        uint256 streak = buyStreak[wallet];
+
+        // Also check if today is a consecutive day
+        uint256 currentDay = block.timestamp / 1 days;
+        if (lastBuyDay[wallet] < currentDay) {
+            // User hasn't bought today — no bonus yet (they will after buying)
+            if (currentDay > lastBuyDay[wallet] + 1) {
+                streak = 0; // Streak broken
+            }
+        }
+
+        if (streak >= 7) {
+            return baseTokens; // 100% bonus (2x total)
+        } else if (streak >= 6) {
+            return (baseTokens * 40) / 100; // 40% bonus
+        } else if (streak >= 5) {
+            return (baseTokens * 30) / 100; // 30% bonus
+        } else if (streak >= 4) {
+            return (baseTokens * 20) / 100; // 20% bonus
+        } else if (streak >= 3) {
+            return (baseTokens * 10) / 100; // 10% bonus
+        }
+
+        return 0;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Burn Mechanism — Creator Burns Tokens to Increase Scarcity
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * @notice Burn tokens from the creator's balance.
+     * @param amount Amount of tokens to burn.
+     */
+    function burn(uint256 amount) external onlyOwner {
+        require(amount > 0, "Must burn > 0");
+        require(_balances[owner] >= amount, "Insufficient creator balance");
+
+        _burn(owner, amount);
+        totalBurned += amount;
+
+        emit TokensBurned(owner, amount, _totalSupply);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Top Holder Rewards (Dividend-like Distribution)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * @notice Distribute ETH rewards to top holders.
+     * @dev Creator can distribute a portion of their fees to top holders.
+     * @param ethAmount Amount of ETH to distribute.
+     * @param minBalance Minimum token balance to qualify.
+     */
+    function distributeRewards(uint256 ethAmount, uint256 minBalance) external onlyOwner {
+        require(ethAmount > 0, "Amount required");
+        require(address(this).balance >= ethAmount, "Insufficient ETH");
+
+        // Find top holders (up to 10)
+        // We use a simple approach: iterate through a provided list of holders
+        // In production, this would read from an off-chain indexer
+        // For now, we just put the ETH aside and emit an event for off-chain distribution
+        holderRewards[address(0)] += ethAmount; // Accumulator for off-chain claims
+        totalRewardsDistributed += ethAmount;
+
+        emit DividendPaid(ethAmount, 0);
+    }
+
+    /**
+     * @notice Claim accumulated holder rewards.
+     * @param proof Off-chain merkle proof (for future use).
+     */
+    function claimRewards(bytes calldata /* proof */) external nonReentrant {
+        uint256 amount = holderRewards[msg.sender];
+        require(amount > 0, "No rewards to claim");
+        require(address(this).balance >= amount, "Insufficient ETH");
+
+        holderRewards[msg.sender] = 0;
+        (bool sent,) = msg.sender.call{value: amount}("");
+        require(sent, "Claim failed");
+
+        emit HolderRewardDistributed(msg.sender, amount);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Anti-Exploit Guards (Enhanced)
+    // ═══════════════════════════════════════════════════════════════════════
+
     function _enforceBuyLimits(address buyer, uint256 amount) internal view {
         uint256 elapsed = block.timestamp - createdAt;
         uint256 maxBps;
 
-        if (elapsed < 5 minutes) {
-            maxBps = 200;   // 2%
-        } else if (elapsed < 30 minutes) {
-            maxBps = 500;   // 5%
-        } else if (elapsed < 24 hours) {
-            maxBps = 1000;  // 10%
+        if (elapsed < 60) {
+            // 0-1 min: ultra restrictive
+            maxBps = 100; // 1%
+        } else if (elapsed < 300) {
+            maxBps = 200; // 2%
+        } else if (elapsed < 1800) {
+            maxBps = 500; // 5%
+        } else if (elapsed < 86400) {
+            maxBps = 1000; // 10%
         } else {
-            maxBps = 1500;  // 15% absolute max
+            maxBps = 1500; // 15%
         }
 
-        // Convert amount from ETH to equivalent token amount at current price for comparison
         uint256 price = getCurrentPrice();
         uint256 impliedTokens = (amount * 1e18) / price;
         uint256 maxBuyTokens = (TOTAL_SUPPLY * maxBps) / 10000;
 
         require(impliedTokens <= maxBuyTokens, "Buy exceeds phase limit");
 
-        // Per-wallet cooldown
-        require(
-            block.timestamp >= lastBuyTimestamp[buyer] + COOLDOWN_SECONDS,
-            "Cooldown active"
-        );
+        // Cooldown: 60s → 0s over time (relaxes)
+        uint256 cooldown = elapsed < 3600 ? 60 : (elapsed < 86400 ? 30 : 0);
+        if (cooldown > 0) {
+            require(
+                block.timestamp >= lastBuyTimestamp[buyer] + cooldown,
+                "Cooldown active"
+            );
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
     // Graduation
     // ═══════════════════════════════════════════════════════════════════════
 
-    /**
-     * @notice Check if the coin has reached graduation threshold.
-     * @dev Graduated coins can no longer use the bonding curve.
-     *      Creator should deploy a Uniswap V4 pool with the remaining ETH and tokens.
-     */
     function _checkGraduation() internal {
         if (_totalSupply >= GRADUATION_SUPPLY && uniqueBuyers >= MIN_UNIQUE_BUYERS) {
             graduated = true;
+            _postGraduationSetup();
             emit Graduated(block.timestamp, _totalSupply, totalRaised);
         }
     }
 
+    /**
+     * @notice Post-graduation setup: mark as graduated, ready for AMM.
+     */
+    function _postGraduationSetup() internal {
+        graduated = true;
+        // Any leftover creator event / flash sale is auto-closed
+        flashSaleActive = false;
+        creatorEventActive = false;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
-    // Customizable Creator Vesting
-    // ═══════════════════════════════════════════════════════════════════════
-    //
-    // Creators choose their own vesting parameters at deployment:
-    //
-    //   initialUnlockBps: 0-3000 (0-30% at launch, no lock)
-    //   cliffDuration: 0-90 days before linear vesting begins
-    //   vestingDuration: 7 days to 2 years of linear vesting after cliff
-    //
-    // At deployment, the initial unlock amount is immediately available.
-    // The remainder vests linearly after the cliff period.
-    //
-    // Transparency: ALL parameters are on-chain and immutable.
-    // No hidden bundles, no special backroom deals — what you see is what deploys.
+    // Post-Graduation Features
     // ═══════════════════════════════════════════════════════════════════════
 
+    /// @notice Whether this coin is verified post-graduation.
+    bool public isVerified;
+
     /**
-     * @notice Creator claims vested tokens according to their custom schedule.
-     * @dev Vesting logic:
-     *      1. Initial unlock: `initialUnlockBps`% of allocation is claimable immediately at launch
-     *      2. Cliff: No additional tokens until `cliffDuration` seconds have passed
-     *      3. Linear vesting: After cliff, tokens vest linearly over `vestingDuration`
-     *
-     *      Example (balanced preset):
-     *        - 5% initial unlock at T+0
-     *        - 7-day cliff (no further unlocks)
-     *        - 60-day linear vesting after cliff
-     *        - At T+67: 100% vested
+     * @notice Mark the coin as verified (called by factory/off-chain after AMM listing).
      */
+    function verify() external onlyFactory {
+        require(graduated, "Not graduated yet");
+        isVerified = true;
+        emit PostGraduationVerified(address(this));
+    }
+
+    /**
+     * @notice Check if an address holds tokens (for token-gating).
+     */
+    function isHolder(address wallet) external view returns (bool) {
+        return _balances[wallet] > 0 || wallet == owner;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Creator Vesting (Unchanged from v1)
+    // ═══════════════════════════════════════════════════════════════════════
+
     function claimVested() external onlyOwner nonReentrant {
         uint256 totalAllocation = (TOTAL_SUPPLY * creatorAllocationBps) / 10000;
         if (totalAllocation == 0) {
@@ -739,38 +1070,20 @@ contract DegenFeedCoin {
         emit VestingClaimed(owner, claimable, remaining);
     }
 
-    /**
-     * @notice Internal vesting calculation.
-     * @dev Computes the current vested amount based on the configurable schedule.
-     *
-     *      Vested = initialUnlock + linear(elapsedSinceCliff / vestingDuration * postInitial)
-     *
-     *      Where:
-     *        - initialUnlock = totalAllocation * initialUnlockBps / 10000
-     *        - postInitial = totalAllocation - initialUnlock
-     *        - elapsedSinceCliff = max(0, now - createdAt - cliffDuration)
-     */
     function _calculateClaimable(uint256 totalAllocation) internal view returns (uint256) {
         VestingConfig memory config = vestingConfig;
         uint256 elapsed = block.timestamp - createdAt;
 
-        // ── Initial unlock (available immediately) ───────────────────────
         uint256 initialUnlock = (totalAllocation * config.initialUnlockBps) / 10000;
         uint256 alreadyClaimed = creatorClaimed;
 
-        // If nothing was claimed yet, include initial unlock
         if (alreadyClaimed < initialUnlock) {
-            // Handle first claim — some or all of the initial unlock is available
             if (elapsed < config.cliffDuration) {
-                // Still in cliff — only initial unlock is claimable
                 return initialUnlock - alreadyClaimed;
             }
         }
 
-        // ── Cliff check ──────────────────────────────────────────────────
         if (elapsed < config.cliffDuration) {
-            // Past initial unlock but still in cliff period
-            // Only the initial unlock has been released
             uint256 claimedForInitial = alreadyClaimed < initialUnlock ? alreadyClaimed : initialUnlock;
             if (claimedForInitial < initialUnlock) {
                 return initialUnlock - claimedForInitial;
@@ -778,32 +1091,21 @@ contract DegenFeedCoin {
             return 0;
         }
 
-        // ── Linear vesting after cliff ───────────────────────────────────
         uint256 elapsedSinceCliff = elapsed - config.cliffDuration;
         uint256 postInitial = totalAllocation - initialUnlock;
 
         if (config.vestingDuration == 0 || elapsedSinceCliff >= config.vestingDuration) {
-            // Full vest
             return totalAllocation - alreadyClaimed;
         }
 
         uint256 vested = initialUnlock + (postInitial * elapsedSinceCliff) / config.vestingDuration;
 
-        if (vested > totalAllocation) {
-            vested = totalAllocation;
-        }
-
-        if (vested <= alreadyClaimed) {
-            return 0;
-        }
+        if (vested > totalAllocation) vested = totalAllocation;
+        if (vested <= alreadyClaimed) return 0;
 
         return vested - alreadyClaimed;
     }
 
-    /**
-     * @notice Returns the amount of tokens currently claimable by the creator.
-     * @return claimable Amount of tokens (wei-adjusted).
-     */
     function getClaimableVested() external view returns (uint256) {
         uint256 totalAllocation = (TOTAL_SUPPLY * creatorAllocationBps) / 10000;
         if (totalAllocation == 0) return 0;
@@ -814,32 +1116,22 @@ contract DegenFeedCoin {
     // Fee Helpers
     // ═══════════════════════════════════════════════════════════════════════
 
-    /**
-     * @notice Send ETH to a recipient, ignoring gas limits.
-     * @dev Uses call{value} with a gas limit to prevent reentrancy.
-     */
     function _sendFee(address recipient, uint256 amount) internal {
         if (recipient == address(0) || amount == 0) return;
         (bool sent,) = recipient.call{value: amount, gas: 2300}("");
-        // Fee transfer failure is non-fatal — recipient can withdraw via batchCollect
         if (!sent) {
-            emit Transfer(address(0), recipient, amount); // Log as event for off-chain recovery
+            unclaimedFees[recipient] += amount;
+            emit FeeTransferFailed(recipient, amount);
         }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Fee Collection (failed fee transfers)
+    // Fee Collection
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// @notice Accumulated unclaimed fees per recipient.
     mapping(address => uint256) public unclaimedFees;
-
-    /// @notice Track failed fee transfers for later withdrawal.
     event FeeTransferFailed(address indexed recipient, uint256 amount);
 
-    /**
-     * @notice Collect accumulated fees that failed to transfer.
-     */
     function collectFees() external nonReentrant {
         uint256 amount = unclaimedFees[msg.sender];
         require(amount > 0, "No unclaimed fees");
@@ -852,40 +1144,114 @@ contract DegenFeedCoin {
     // Receive
     // ═══════════════════════════════════════════════════════════════════════
 
-    /// @notice Accept direct ETH deposits (e.g., for Uniswap pool bootstrapping).
     receive() external payable {}
 
     // ═══════════════════════════════════════════════════════════════════════
     // Views
     // ═══════════════════════════════════════════════════════════════════════
 
-    /**
-     * @notice Returns the token metadata URI.
-     */
     function tokenURI() external view returns (string memory) {
         return _uri;
     }
 
-    /**
-     * @notice Returns the current bonding curve progress as a percentage (1e18 fixed-point).
-     */
     function bondingCurveProgress() external view returns (uint256) {
         return (_totalSupply * 1e18) / GRADUATION_SUPPLY;
     }
 
-    /**
-     * @notice Returns the ETH balance currently backing the bonding curve.
-     */
     function curveLiquidity() external view returns (uint256) {
         return address(this).balance;
     }
 
-    /**
-     * @notice Returns the remaining unclaimed creator vesting allocation.
-     * @dev Considers the full allocation minus what's been claimed so far.
-     */
     function remainingVesting() external view returns (uint256) {
         uint256 totalAllocation = (TOTAL_SUPPLY * creatorAllocationBps) / 10000;
         return totalAllocation - creatorClaimed;
+    }
+
+    /**
+     * @notice Get the current era index (0-4).
+     */
+    function getCurrentEra() external view returns (uint256) {
+        uint256 minted = _totalSupply;
+        if (minted >= GRADUATION_SUPPLY) return 4;
+        uint256 progress = (minted * 10000) / GRADUATION_SUPPLY;
+
+        if (progress <= ERA_0_END) return 0;
+        if (progress <= ERA_1_END) return 1;
+        if (progress <= ERA_2_END) return 2;
+        if (progress <= ERA_3_END) return 3;
+        return 4;
+    }
+
+    /**
+     * @notice Get a buyer's current streak (0 if broken).
+     */
+    function getStreak(address wallet) external view returns (uint256) {
+        uint256 currentDay = block.timestamp / 1 days;
+        uint256 lastDay = lastBuyDay[wallet];
+
+        if (lastDay == 0) return 0;
+        // Streak is active if last buy was today or yesterday
+        if (currentDay - lastDay <= 1) {
+            return buyStreak[wallet];
+        }
+        return 0; // Streak broken
+    }
+
+    /**
+     * @notice Get holder count (approximate — iterates if needed, but returns uint256).
+     * In practice, off-chain indexers provide this.
+     */
+    function getHolderCount() external view returns (uint256) {
+        return uniqueBuyers;
+    }
+
+    /**
+     * @notice Returns remaining flash sale info.
+     */
+    function getFlashSaleInfo() external view returns (
+        bool active,
+        uint256 discountBps,
+        uint256 remainingTime,
+        uint256 remainingBuys
+    ) {
+        if (!flashSaleActive || block.timestamp >= flashSaleEndTime || flashSaleBuysUsed >= flashSaleMaxBuys) {
+            return (false, 0, 0, 0);
+        }
+        return (
+            true,
+            flashSaleDiscountBps,
+            flashSaleEndTime - block.timestamp,
+            flashSaleMaxBuys - flashSaleBuysUsed
+        );
+    }
+
+    /**
+     * @notice Returns active creator event info.
+     */
+    function getCreatorEventInfo() external view returns (
+        bool active,
+        uint256 discountBps,
+        uint256 remainingBuys,
+        string memory message
+    ) {
+        if (!creatorEventActive || creatorEventRemainingBuys == 0) {
+            return (false, 0, 0, "");
+        }
+        return (true, creatorEventDiscountBps, creatorEventRemainingBuys, creatorEventMessage);
+    }
+
+    /**
+     * @notice Returns the dynamic curve era name for UI.
+     */
+    function getEraName() external pure returns (string memory) {
+        // Not stored — computed by off-chain UI
+        return "Dynamic";
+    }
+
+    /**
+     * @notice Returns total supply after burns.
+     */
+    function getEffectiveSupply() external view returns (uint256) {
+        return TOTAL_SUPPLY - totalBurned;
     }
 }

@@ -108,6 +108,11 @@ binding = "BLUESKY_INVITE_POOL"
 id = "" # TODO: create with: wrangler kv:namespace create BLUESKY_INVITE_POOL
 preview_id = "" # TODO: create with: wrangler kv:namespace create BLUESKY_INVITE_POOL --preview
 
+[[kv_namespaces]]
+binding = "FEDDY"
+id = "" # TODO: create with: wrangler kv:namespace create FEDDY
+preview_id = "" # TODO: create with: wrangler kv:namespace create FEDDY --preview
+
 # Routes — main app + api on degenfeed.xyz domain
 routes = [
   { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },

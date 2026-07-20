@@ -132,6 +132,7 @@ import {
   handlePerProtocolCategoryFeed,
 } from './routes/feed-category';
 import { handleUnifiedFeed } from './routes/feed-unified';
+import { handleVisualFeed, handleVisualForYou, handleVisualTrending } from './routes/visual-feed';
 import {
   handleAdjustTopic,
   handleClearTopic,
@@ -332,6 +333,7 @@ import {
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleX402Paywall, handleX402Verify } from './routes/x402';
 import { creatorConfig } from './routes/creator-config';
+import feddyCommunities from './routes/feddy-communities';
 
 // ─── App ────────────────────────────────────────────────────
 
@@ -651,6 +653,10 @@ app.all('/api/feed/per-protocol/:protocol/:category', async (c) =>
 );
 // Unified blended feed — interleaves all sources
 app.all('/api/feed/unified', async (c) => handleUnifiedFeed(c.req.raw, c.env));
+// Visual feed — masonry-grid media feed from Pixelfed, Zora, Bluesky, etc.
+app.all('/api/feed/visual', async (c) => handleVisualFeed(c.req.raw, c.env));
+app.all('/api/feed/visual/trending', async (c) => handleVisualTrending(c.req.raw, c.env));
+app.all('/api/feed/visual/for-you', async (c) => handleVisualForYou(c.req.raw, c.env));
 // Feed provider catch-all — must be last /api/feed/* route
 app.all('/api/feed/:provider', async (c) =>
   handleProviderFeed(c.req.raw, c.env, c.req.param('provider')),
@@ -672,6 +678,25 @@ app.all('/api/cross-reply', async (c) => withSession(c, () => handleCrossReply(c
 app.get('/api/thread/:dfUri', async (c) => {
   const { handleUnifiedThread } = await import('./routes/thread');
   return handleUnifiedThread(c.req.raw, c.env, c.req.param('dfUri'));
+});
+
+// ─── API: Cross-Protocol Bridge ──────────────────────────────
+// Content wrapping, Zora bridge, edit sync, and bridge status
+app.all('/api/cross-protocol-bridge/wrap', async (c) => {
+  const { handleWrapContent } = await import('./routes/cross-protocol-bridge');
+  return withSession(c, () => handleWrapContent(c.req.raw, c.env));
+});
+app.all('/api/cross-protocol-bridge/zora', async (c) => {
+  const { handleZoraBridge } = await import('./routes/cross-protocol-bridge');
+  return withSession(c, () => handleZoraBridge(c.req.raw, c.env));
+});
+app.all('/api/cross-protocol-bridge/sync', async (c) => {
+  const { handleSyncEdit } = await import('./routes/cross-protocol-bridge');
+  return withSession(c, () => handleSyncEdit(c.req.raw, c.env));
+});
+app.get('/api/cross-protocol-bridge/status', async (c) => {
+  const { handleBridgeStatus } = await import('./routes/cross-protocol-bridge');
+  return handleBridgeStatus(c.req.raw, c.env);
 });
 
 // ─── API: Auth ──────────────────────────────────────────────
@@ -1018,6 +1043,7 @@ app.get('/api/register-platform/bluesky-pool', async (c) =>
 
 // ─── API: Concierge Registration (register-all) ──────────────
 app.route('/api/register', registerAll);
+app.route('/api/feddy', feddyCommunities);
 
 // ─── V1: Cross-Platform Registration ─────────────────────
 app.post('/v1/register-platform', async (c) =>
@@ -1788,6 +1814,22 @@ app.all('/v1/embed/*', async (c) => handleEmbedPost(c.req.raw, c.env));
 app.get('/v1/thread/:dfUri', async (c) => {
   const { handleUnifiedThread } = await import('./routes/thread');
   return handleUnifiedThread(c.req.raw, c.env, c.req.param('dfUri'));
+});
+app.all('/v1/cross-protocol-bridge/wrap', async (c) => {
+  const { handleWrapContent } = await import('./routes/cross-protocol-bridge');
+  return withSession(c, () => handleWrapContent(c.req.raw, c.env));
+});
+app.all('/v1/cross-protocol-bridge/zora', async (c) => {
+  const { handleZoraBridge } = await import('./routes/cross-protocol-bridge');
+  return withSession(c, () => handleZoraBridge(c.req.raw, c.env));
+});
+app.all('/v1/cross-protocol-bridge/sync', async (c) => {
+  const { handleSyncEdit } = await import('./routes/cross-protocol-bridge');
+  return withSession(c, () => handleSyncEdit(c.req.raw, c.env));
+});
+app.get('/v1/cross-protocol-bridge/status', async (c) => {
+  const { handleBridgeStatus } = await import('./routes/cross-protocol-bridge');
+  return handleBridgeStatus(c.req.raw, c.env);
 });
 app.all('/v1/blink/tip', async (c) => handleBlinkTip(c.req.raw, c.env));
 app.all('/v1/billing/checkout', async (c) => handleBillingCheckout(c.req.raw, c.env));

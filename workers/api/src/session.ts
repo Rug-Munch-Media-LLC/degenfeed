@@ -6,6 +6,8 @@ export interface SessionPayload {
   chain: 'ethereum' | 'solana';
   exp: number;
   nonce: string;
+  displayName?: string;
+  avatarUrl?: string;
 }
 
 const COOKIE_NAME = '__Host-dfid';

@@ -114,15 +114,29 @@ export default function LiveStreamPlayer({
   // Stream is offline
   return (
     <>
-        tokenAddress={tokenAddress}
-        tokenSymbol={tokenSymbol}
-        isCreator={isCreator}
-        notifySubscribed={notifySubscribed}
-        onNotifySubscribe={() => setNotifySubscribed(true)}
-        onStartStream={() => setShowStartModal(true)}
-        hasRecording={false}
-        onViewRecording={() => {}}
-      />
+      {/* Offline view */}
+      <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-card)] p-8 text-center">
+        <div className="text-4xl opacity-40">📡</div>
+        <p className="text-sm text-[var(--color-muted)]">
+          {tokenSymbol ?? tokenAddress.slice(0, 6)} is offline
+        </p>
+        {isCreator && (
+          <button
+            onClick={() => setShowStartModal(true)}
+            className="rounded-lg bg-degen-500 px-4 py-2 text-sm font-medium text-white hover:bg-degen-600"
+          >
+            Go Live
+          </button>
+        )}
+        {!isCreator && (
+          <button
+            onClick={() => setNotifySubscribed(true)}
+            className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-fg)]"
+          >
+            {notifySubscribed ? 'Notification Set' : 'Notify When Live'}
+          </button>
+        )}
+      </div>
 
       {/* Start stream modal — full-screen on mobile */}
       {showStartModal && (
