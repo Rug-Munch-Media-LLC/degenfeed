@@ -479,7 +479,9 @@ async function fetchHackerNews(): Promise<RssItem[]> {
 			if (!res?.ok) continue;
 			const data = (await res.json()) as { hits?: HnHit[] };
 			if (data.hits) hits.push(...data.hits);
-		} catch { /* KV operation failed -- non-critical, continue */ }
+		} catch {
+			/* KV operation failed -- non-critical, continue */
+		}
 	}
 
 	return hits.map((h) => ({
@@ -760,7 +762,9 @@ export async function handleNewsFeed(
 			const parsed = JSON.parse(cached);
 			return noCacheJsonResponse(parsed);
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const now = Date.now();
 
@@ -841,7 +845,9 @@ export async function handleNewsFeed(
 		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 			expirationTtl: 300,
 		});
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return noCacheJsonResponse(response);
 }

@@ -69,7 +69,9 @@ export async function handleCron(env: Env): Promise<Response> {
 		try {
 			const idx = await env.SUBSCRIPTIONS.get("newsletter:subscribers");
 			if (idx) subscribers = idx.split("\n").filter(Boolean);
-		} catch { /* KV operation failed -- non-critical, continue */ }
+		} catch {
+			/* KV operation failed -- non-critical, continue */
+		}
 	}
 
 	const token = env.POSTMARK_SERVER_TOKEN;

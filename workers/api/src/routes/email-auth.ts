@@ -45,7 +45,7 @@ async function verifyPassword(
 	if (parts.length !== 3 || parts[0] !== "v1") return false;
 	const saltHex = parts[1]!;
 	const salt = new Uint8Array(
-		saltHex.match(/.{2}/g)!.map((b) => parseInt(b, 16)),
+		saltHex.match(/.{2}/g)?.map((b) => parseInt(b, 16)),
 	);
 	const key = await crypto.subtle.importKey(
 		"raw",

@@ -76,7 +76,9 @@ async function fetchPostByUri(
 			const post = JSON.parse(stored) as UnifiedPost;
 			if (!isSpamPost(post)) return post;
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	// 2. Try the native protocol provider
 	const provider = protocolToFeedProvider(protocol, env);
@@ -113,7 +115,9 @@ async function fetchPostByUri(
 			enriched.dfUri = `df://${protocol}:${id}`;
 			return enriched;
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return null;
 }
@@ -142,7 +146,9 @@ export async function handleContentResolve(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const post = await fetchPostByUri(decoded, env);
 	if (!post) {
@@ -154,7 +160,9 @@ export async function handleContentResolve(
 		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 			expirationTtl: 300,
 		});
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return jsonResponse(response);
 }

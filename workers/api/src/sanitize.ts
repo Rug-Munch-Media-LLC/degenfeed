@@ -100,7 +100,7 @@ export function isValidCoinSymbol(value: string): boolean {
 	return COIN_SYMBOL_RE.test(value);
 }
 
-const COMMENT_TEXT_RE = /^[^<>]{1,500}$/;
+const _COMMENT_TEXT_RE = /^[^<>]{1,500}$/;
 
 export function sanitizeCommentText(text: string): string {
 	let cleaned = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "");
@@ -110,8 +110,6 @@ export function sanitizeCommentText(text: string): string {
 	cleaned = cleaned.substring(0, 500).trim();
 	return cleaned;
 }
-
-const STREAM_TITLE_RE = /^[^\x00-\x1f\x7f]{1,100}$/;
 
 export function sanitizeStreamTitle(title: string): string {
 	return title

@@ -22,9 +22,7 @@
  */
 
 import type { Env } from "../index";
-import {
-	recoveryCodeHashKey,
-} from "../kv-key-patterns";
+import { recoveryCodeHashKey } from "../kv-key-patterns";
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -74,9 +72,7 @@ export async function generateRecoveryCodes(
 		} catch {
 			// KV write failure — continue generating remaining codes
 			// The user can regenerate if setup fails
-			console.error(
-				`[recovery-codes] Failed to store code ${i + 1}/${count}`,
-			);
+			console.error(`[recovery-codes] Failed to store code ${i + 1}/${count}`);
 		}
 
 		codes.push(code);
@@ -132,8 +128,8 @@ export async function verifyRecoveryCode(
  * @returns Number of codes found, or -1 if we can't determine (KV error).
  */
 export async function countRemainingRecoveryCodes(
-	env: Env,
-	address: string,
+	_env: Env,
+	_address: string,
 ): Promise<number> {
 	// We store hashes with deterministic keys based on the hash itself.
 	// Without a list index, we can't enumerate them efficiently.

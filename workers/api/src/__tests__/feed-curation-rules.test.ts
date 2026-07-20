@@ -291,7 +291,7 @@ it("boosts underrepresented protocols proportionally", () => {
 	expect(rssEntry?.protocolBonus).toBeCloseTo(2.25, 1);
 
 	// Rare protocols should get higher total
-	expect(lensEntry!.finalScore).toBeGreaterThan(nostrEntry!.finalScore);
+	expect(lensEntry?.finalScore).toBeGreaterThan(nostrEntry?.finalScore);
 });
 
 describe("interleaveProtocolsRoundRobin", () => {

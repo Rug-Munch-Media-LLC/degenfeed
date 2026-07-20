@@ -11,6 +11,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ─── Types matching the API responses ────────────────────────────────────
 
+export interface CreatorPlatform {
+  platform: 'youtube' | 'twitch' | 'rumble' | 'peertube' | 'zora';
+  handle: string;
+  url: string;
+  followerCount: number;
+  subscriberCount?: number;
+  videoCount?: number;
+  nftCount?: number;
+  lastActive?: string;
+}
+
 export interface UnifiedVideo {
   id: string;
   title: string;
@@ -20,10 +31,11 @@ export interface UnifiedVideo {
   embedUrl?: string;
   duration: number;
   durationLabel: string;
-  source: 'youtube' | 'peertube' | 'shorts' | 'livestream';
+  source: 'youtube' | 'twitch' | 'rumble' | 'peertube' | 'zora' | 'shorts' | 'livestream' | 'creator';
   sourceLabel: string;
   sourceColor: string;
   channelName: string;
+  channelId: string;
   channelUrl?: string;
   channelAvatar?: string;
   publishedAt: number;
@@ -34,6 +46,14 @@ export interface UnifiedVideo {
   tags: string[];
   isLive: boolean;
   language?: string;
+  /** Aggregator: which platforms this creator is active on */
+  creatorPlatforms?: CreatorPlatform[];
+  /** Aggregator: raw engagement breakdown */
+  aggregatorEngagement?: {
+    likes: number;
+    comments: number;
+    shares: number;
+  };
 }
 
 export interface VideoCategory {
@@ -199,15 +219,12 @@ export function useCategoryPage(
 
 export function useVideoSearch(query: string, params?: { source?: string; limit?: number }) {
   const trimmed = query.trim();
-  if (!trimmed || trimmed.length < 2) {
-    return { data: null, loading: false, error: null, refetch: () => {} } as const;
+  const qs = trimmed.length >= 2 ? new URLSearchParams({ q: trimmed }) : null;
+  if (qs) {
+    if (params?.source) qs.set('source', params.source);
+    if (params?.limit) qs.set('limit', String(params.limit));
   }
-
-  const qs = new URLSearchParams({ q: trimmed });
-  if (params?.source) qs.set('source', params.source);
-  if (params?.limit) qs.set('limit', String(params.limit));
-
-  const url = `/api/video/search?${qs.toString()}`;
+  const url = qs ? `/api/video/search?${qs.toString()}` : null;
   return useApiFetch<SearchResults>(url);
 }
 
@@ -291,4 +308,129 @@ export function useContinueWatching() {
   }, []);
 
   return { items, addItem, removeItem };
+}
+
+// ─── Aggregator Types ────────────────────────────────────────────────────
+
+export interface AggregatorSourceCount {
+  id: string;
+  label: string;
+  color: string;
+  count: number;
+}
+
+export interface AggregatorFeedResponse {
+  videos: UnifiedVideo[];
+  categories: string[];
+  sourceCounts: AggregatorSourceCount[];
+  total: number;
+  cursor: string | null;
+  hasMore: boolean;
+}
+
+export interface AggregatorCreatorResponse {
+  creator: CreatorProfile;
+  videos: UnifiedVideo[];
+  total: number;
+  cursor: string | null;
+  hasMore: boolean;
+}
+
+export interface CreatorProfile {
+  id: string;
+  name: string;
+  avatar?: string;
+  description?: string;
+  platforms: CreatorPlatform[];
+  totalFollowers: number;
+  joinedAt?: string;
+}
+
+export interface AggregatorResolveResponse {
+  creator?: CreatorProfile;
+  video?: UnifiedVideo;
+  matched: boolean;
+}
+
+// ─── Aggregator Hooks ────────────────────────────────────────────────────
+
+/**
+ * Fetch aggregated trending / personalized feed.
+ * Omitting category returns the general feed; pass a category for scoped trending.
+ */
+export function useAggregatorFeed(category?: string) {
+  const qs = category && category !== 'all' ? `?category=${encodeURIComponent(category)}` : '';
+  return useApiFetch<AggregatorFeedResponse>(`/api/video/aggregator/feed${qs}`);
+}
+
+/**
+ * Fetch a creator's profile + their videos across all platforms.
+ */
+export function useAggregatorCreator(creatorId: string) {
+  const url = creatorId ? `/api/video/aggregator/creator/${encodeURIComponent(creatorId)}` : null;
+  return useApiFetch<AggregatorCreatorResponse>(url);
+}
+
+/**
+ * Resolve an identifier (handle, channel URL, or mint address) to a creator or video.
+ * Pass null or empty to skip fetching.
+ */
+export function useAggregatorResolve(identifier: string | null) {
+  const trimmed = identifier?.trim() ?? '';
+  const url =
+    trimmed.length >= 2
+      ? `/api/video/aggregator/resolve?${new URLSearchParams({ identifier: trimmed }).toString()}`
+      : null;
+  return useApiFetch<AggregatorResolveResponse>(url);
+}
+
+/**
+ * Mutation hook to follow a creator across all their platforms.
+ * Returns { follow, unfollow, loading, error }.
+ */
+export function useAggregatorFollow() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const follow = useCallback(async (creatorId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/video/aggregator/creator/${encodeURIComponent(creatorId)}/follow`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(`Follow failed: ${res.status}`);
+      return (await res.json()) as { success: boolean; followed: number };
+    } catch (err) {
+      const msg = (err as Error).message;
+      setError(msg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const unfollow = useCallback(async (creatorId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/video/aggregator/creator/${encodeURIComponent(creatorId)}/follow`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+      });
+      if (!res.ok) throw new Error(`Unfollow failed: ${res.status}`);
+      return (await res.json()) as { success: boolean };
+    } catch (err) {
+      const msg = (err as Error).message;
+      setError(msg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { follow, unfollow, loading, error };
 }

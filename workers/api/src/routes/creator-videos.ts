@@ -188,7 +188,7 @@ async function announceNewVideo(
 		thumbnailUrl?: string;
 	},
 ): Promise<void> {
-	const announcement = [
+	const _announcement = [
 		`🎬 New video: "${video.title}"`,
 		video.description ? video.description.slice(0, 200) : "",
 		``,
@@ -216,12 +216,8 @@ async function announceNewVideo(
 			});
 		};
 
-		if (ctx) {
-			ctx.waitUntil(announce());
-		} else {
-			// Fire and forget
-			announce().catch(() => {});
-		}
+		// Fire and forget — no execution context access in internal helpers
+		announce().catch(() => {});
 	} catch {
 		// announcer not available — skip cross-post
 	}
@@ -246,7 +242,7 @@ creatorVideos.post("/upload", async (c) => {
 
 	try {
 		const formData = await c.req.parseBody({ all: true });
-		const file = formData["file"] as File | Blob | undefined;
+		const file = formData.file as File | Blob | undefined;
 
 		if (!file) {
 			return jsonResponse({ error: "Video file is required" }, 400);
@@ -257,7 +253,7 @@ creatorVideos.post("/upload", async (c) => {
 			return jsonResponse({ error: "Video file must be under 500MB" }, 400);
 		}
 
-		const title = (formData["title"] as string)?.trim();
+		const title = (formData.title as string)?.trim();
 		if (!title || title.length > 120) {
 			return jsonResponse(
 				{ error: "Title is required (max 120 characters)" },
@@ -265,8 +261,8 @@ creatorVideos.post("/upload", async (c) => {
 			);
 		}
 
-		const description = (formData["description"] as string)?.trim() ?? "";
-		const rawTags = (formData["tags"] as string)?.trim() ?? "";
+		const description = (formData.description as string)?.trim() ?? "";
+		const rawTags = (formData.tags as string)?.trim() ?? "";
 		const tags = rawTags
 			? rawTags
 					.split(",")
@@ -274,18 +270,16 @@ creatorVideos.post("/upload", async (c) => {
 					.filter(Boolean)
 					.slice(0, 5)
 			: [];
-		const category = formData["category"]
-			? Number(formData["category"])
-			: undefined;
-		const privacy = formData["privacy"]
-			? (Number(formData["privacy"]) as 1 | 2 | 3)
+		const category = formData.category ? Number(formData.category) : undefined;
+		const privacy = formData.privacy
+			? (Number(formData.privacy) as 1 | 2 | 3)
 			: 1;
-		const thumbnail = formData["thumbnail"] as File | Blob | undefined;
-		const scheduleAt = formData["scheduleAt"] as string | undefined;
+		const thumbnail = formData.thumbnail as File | Blob | undefined;
+		const scheduleAt = formData.scheduleAt as string | undefined;
 
 		// Detect short: vertical or tagged
 		const isShort =
-			formData["isShort"] === "true" ||
+			formData.isShort === "true" ||
 			tags.includes("short") ||
 			tags.includes("shorts");
 
@@ -431,7 +425,7 @@ creatorVideos.post("/short", async (c) => {
 
 	try {
 		const formData = await c.req.parseBody({ all: true });
-		const file = formData["file"] as File | Blob | undefined;
+		const file = formData.file as File | Blob | undefined;
 
 		if (!file) {
 			return jsonResponse({ error: "Video file is required" }, 400);
@@ -442,7 +436,7 @@ creatorVideos.post("/short", async (c) => {
 			return jsonResponse({ error: "Short video must be under 100MB" }, 400);
 		}
 
-		const title = (formData["title"] as string)?.trim();
+		const title = (formData.title as string)?.trim();
 		if (!title || title.length > 80) {
 			return jsonResponse(
 				{ error: "Title is required (max 80 characters)" },
@@ -450,8 +444,8 @@ creatorVideos.post("/short", async (c) => {
 			);
 		}
 
-		const description = (formData["description"] as string)?.trim() ?? "";
-		const rawTags = (formData["tags"] as string)?.trim() ?? "";
+		const description = (formData.description as string)?.trim() ?? "";
+		const rawTags = (formData.tags as string)?.trim() ?? "";
 		const tags = rawTags
 			? rawTags
 					.split(",")
@@ -459,7 +453,7 @@ creatorVideos.post("/short", async (c) => {
 					.filter(Boolean)
 					.slice(0, 3)
 			: [];
-		const thumbnail = formData["thumbnail"] as File | Blob | undefined;
+		const thumbnail = formData.thumbnail as File | Blob | undefined;
 
 		const { accessToken, instanceUrl } = await getPeerTubeAccess(c.env);
 		const { PeerTubeUploader } = await import("@degenfeed/peertube-provider");
@@ -679,7 +673,7 @@ creatorVideos.get("/:id", async (c) => {
 			const { accessToken, instanceUrl } = await getPeerTubeAccess(c.env);
 			const { PeerTubeUploader } = await import("@degenfeed/peertube-provider");
 			const uploader = new PeerTubeUploader({ instanceUrl, accessToken });
-			const progress = await uploader.getUploadProgress(uuid);
+			const _progress = await uploader.getUploadProgress(uuid);
 
 			// Fetch full video details for views/likes
 			const peertubeUrl = `${instanceUrl}/api/v1/videos/${uuid}`;
@@ -775,20 +769,20 @@ creatorVideos.put("/:id", async (c) => {
 
 		// Build update options
 		const updateOpts: Record<string, unknown> = {};
-		if (body["title"]) updateOpts.title = (body["title"] as string).trim();
-		if (body["description"] !== undefined)
-			updateOpts.description = (body["description"] as string).trim();
-		if (body["category"]) updateOpts.category = Number(body["category"]);
-		if (body["privacy"]) updateOpts.privacy = Number(body["privacy"]);
-		if (body["tags"]) {
-			updateOpts.tags = (body["tags"] as string)
+		if (body.title) updateOpts.title = (body.title as string).trim();
+		if (body.description !== undefined)
+			updateOpts.description = (body.description as string).trim();
+		if (body.category) updateOpts.category = Number(body.category);
+		if (body.privacy) updateOpts.privacy = Number(body.privacy);
+		if (body.tags) {
+			updateOpts.tags = (body.tags as string)
 				.split(",")
 				.map((t: string) => t.trim())
 				.filter(Boolean)
 				.slice(0, 5);
 		}
 
-		const thumbnail = body["thumbnail"] as File | Blob | undefined;
+		const thumbnail = body.thumbnail as File | Blob | undefined;
 
 		// Update on PeerTube
 		const { accessToken, instanceUrl } = await getPeerTubeAccess(c.env);

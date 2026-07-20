@@ -29,7 +29,6 @@ import { Hono } from "hono";
 import type { Env } from "../index";
 import { jsonResponse, noCacheJsonResponse } from "../index";
 import {
-	announceToRelevantChannels,
 	type FarcasterChannel,
 	getRelevantChannels,
 	postCastToFarcaster,
@@ -286,7 +285,7 @@ frames.get("/stream/:id/gated", async (c) => {
 	}
 
 	const title = (stream.title as string) || "Untitled Stream";
-	const creatorHandle = (stream.creatorHandle as string) || "anonymous";
+	const _creatorHandle = (stream.creatorHandle as string) || "anonymous";
 	const thumbnail =
 		(stream.thumbnail as string) ||
 		"https://app.degenfeed.xyz/og/live-default.png";
@@ -301,7 +300,7 @@ frames.get("/stream/:id/gated", async (c) => {
 	// If not → return "Buy Token" frame
 
 	const gatedFrameUrl = `https://app.degenfeed.xyz/api/farcaster/frames/stream/${streamId}/gated`;
-	const unlockUrl = `https://app.degenfeed.xyz/live/${streamId}`;
+	const _unlockUrl = `https://app.degenfeed.xyz/live/${streamId}`;
 	const buyUrl = requiredToken
 		? `https://app.degenfeed.xyz/launch/${coinSymbol}`
 		: `https://app.degenfeed.xyz/live/${streamId}`;
@@ -540,12 +539,12 @@ frames.get("/space/:id", async (c) => {
 
 	const title = (space.title as string) || "Untitled Space";
 	const hostName = (space.hostName as string) || "Anonymous";
-	const hostId = (space.hostId as string) || "";
+	const _hostId = (space.hostId as string) || "";
 	const speakers = (space.speakers as Array<Record<string, unknown>>) || [];
 	const listenerCount = (space.listeners as number) || 0;
 	const speakerCount = speakers.length || 0;
-	const status = (space.status as string) || "live";
-	const tags = (space.tags as string[]) || [];
+	const _status = (space.status as string) || "live";
+	const _tags = (space.tags as string[]) || [];
 	const thumbnail = "https://app.degenfeed.xyz/og/space-default.png";
 
 	// Build live activity meta for FIP #269
@@ -634,7 +633,7 @@ frames.post("/space/:id", async (c) => {
 	const spaceAppUrl = `https://app.degenfeed.xyz/spaces/${spaceId}`;
 
 	// Return speakers/listeners info frame
-	const speakerList = speakers
+	const _speakerList = speakers
 		.slice(0, 5)
 		.map((s) => `• ${(s.displayName as string) || "Anonymous"}`)
 		.join("\n");
@@ -822,7 +821,7 @@ frames.post("/coin/:symbol", async (c) => {
 		);
 	}
 
-	const progress = (coin.progress as number) || 0;
+	const _progress = (coin.progress as number) || 0;
 	const holders = (coin.supporters as number) || 0;
 	const totalTips = (coin.totalTips as number) || 0;
 	const totalTipsUsd = (coin.totalTipsUsd as number) || 0;
@@ -955,7 +954,7 @@ frames.post("/post-to-channel", async (c) => {
 		}
 
 		const castText =
-			body.text.length > 320 ? body.text.slice(0, 317) + "..." : body.text;
+			body.text.length > 320 ? `${body.text.slice(0, 317)}...` : body.text;
 
 		const castBody: Record<string, unknown> = {
 			signer_uuid: body.signerUuid,
@@ -1093,7 +1092,7 @@ frames.post("/announce-stream", async (c) => {
 /**
  * Return the list of available Farcaster channels for announcement routing.
  */
-frames.get("/channels", async (c) => {
+frames.get("/channels", async (_c) => {
 	const channels = getRelevantChannels();
 	return noCacheJsonResponse({ channels });
 });

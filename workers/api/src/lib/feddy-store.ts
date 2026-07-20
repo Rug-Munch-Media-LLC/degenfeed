@@ -1392,22 +1392,22 @@ export async function getFollowerCommunities(
 			ids.slice(0, limit).map((id) => getCommunityById(env, id)),
 		);
 		return communities.filter(Boolean).map((c) => ({
-			id: c!.id,
-			name: c!.name,
-			displayName: c!.displayName,
-			description: c!.description.slice(0, 200),
-			category: c!.category,
-			tags: c!.tags,
-			memberCount: c!.memberCount,
-			postCount: c!.totalPosts,
-			createdAt: c!.createdAt,
-			avatarUrl: c!.avatarUrl,
-			federationStatus: c!.federationStatus,
-			linkedCoin: c!.linkedCoin,
-			trendingScore: c!.totalPosts * 2 + c!.memberCount,
-			communityTokenSymbol: c!.communityTokenSymbol ?? null,
-			featuredPosition: c!.featuredPosition,
-			remoteInstance: c!.remoteInstance ?? null,
+			id: c?.id,
+			name: c?.name,
+			displayName: c?.displayName,
+			description: c?.description.slice(0, 200),
+			category: c?.category,
+			tags: c?.tags,
+			memberCount: c?.memberCount,
+			postCount: c?.totalPosts,
+			createdAt: c?.createdAt,
+			avatarUrl: c?.avatarUrl,
+			federationStatus: c?.federationStatus,
+			linkedCoin: c?.linkedCoin,
+			trendingScore: c?.totalPosts * 2 + c?.memberCount,
+			communityTokenSymbol: c?.communityTokenSymbol ?? null,
+			featuredPosition: c?.featuredPosition,
+			remoteInstance: c?.remoteInstance ?? null,
 		}));
 	} catch {
 		return [];
@@ -1439,7 +1439,7 @@ export async function getCommunityStats(
 			};
 		}
 
-		const members = await getCommunityMembers(env, communityId);
+		const _members = await getCommunityMembers(env, communityId);
 		const posts = await getCommunityPosts(env, communityId, 500);
 
 		const now = Date.now();
@@ -1464,7 +1464,7 @@ export async function getCommunityStats(
 			.slice(0, 10)
 			.map(([wallet, count]) => ({
 				wallet,
-				displayName: wallet.slice(0, 6) + "..." + wallet.slice(-4),
+				displayName: `${wallet.slice(0, 6)}...${wallet.slice(-4)}`,
 				postCount: count,
 			}));
 
@@ -1846,7 +1846,7 @@ export async function getTreasuryTxs(
 	try {
 		// Scan for transactions — in production use proper cursor-based approach
 		const store = getStore(env);
-		const prefix = k("feddy", "treasury-tx", communityId);
+		const _prefix = k("feddy", "treasury-tx", communityId);
 		// KV list is not available in all Workers runtimes; use a simple index
 		const indexKey = k("feddy", "treasury-tx-index", communityId);
 		const raw = await store.get(indexKey);
@@ -1994,7 +1994,7 @@ export async function getModLog(
 		const entries: ModLogEntry[] = [];
 		for (const id of ids) {
 			// Scan for entry (we don't have the timestamp prefix)
-			const prefix = k("feddy", "mod-log", communityId);
+			const _prefix = k("feddy", "mod-log", communityId);
 			// Use the stored keys approach — for production, store full keys
 			const entry = await findModLogEntry(env, communityId, id);
 			if (entry) entries.push(entry);
@@ -2008,7 +2008,7 @@ export async function getModLog(
 async function findModLogEntry(
 	env: Env,
 	communityId: string,
-	entryId: string,
+	_entryId: string,
 ): Promise<ModLogEntry | null> {
 	// In production, maintain a full key index. For now, list via the index.
 	// This is a simplified approach — real impl would store full keys.
@@ -2486,7 +2486,7 @@ export async function getDiscoveredRemoteCommunities(
 
 		const communities: RemoteCommunity[] = [];
 		// Scan by prefix — for production use a proper index
-		const prefix = "feddy:discovered-remote:";
+		const _prefix = "feddy:discovered-remote:";
 		// KV list isn't universally available; iterate from known index
 		for (const id of ids) {
 			// Find by scanning instances — simplified for now

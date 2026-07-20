@@ -112,7 +112,9 @@ export async function handleFeatures(
 				const flags = JSON.parse(raw) as FeatureFlag[];
 				return noCacheJsonResponse({ flags, enabled: toRecord(flags) });
 			}
-		} catch { /* KV operation failed -- non-critical, continue */ }
+		} catch {
+			/* KV operation failed -- non-critical, continue */
+		}
 		const fallback = buildFlags(env);
 		return noCacheJsonResponse({
 			flags: fallback,

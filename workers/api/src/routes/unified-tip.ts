@@ -27,6 +27,7 @@
  *   GET  /api/tip/unified/activity     — recent tips across all platforms (live feed)
  */
 
+import type { Protocol } from "@degenfeed/types";
 import { type Env, jsonResponse } from "../index";
 import {
 	hasSuspiciousPayload,
@@ -987,7 +988,7 @@ export async function handleCrossChainTip(
 		fromLabel: body.fromLabel || `Cross-chain tipper (${body.fromChain})`,
 		toLabel: body.creatorProtocol
 			? `${body.creatorProtocol}:${body.creatorId || body.creatorAddress.slice(0, 8)}`
-			: body.creatorAddress.slice(0, 6) + "…" + body.creatorAddress.slice(-4),
+			: `${body.creatorAddress.slice(0, 6)}…${body.creatorAddress.slice(-4)}`,
 		entityLabel:
 			body.entityLabel ||
 			`Cross-chain tip: ${body.fromChain} → ${body.toChain}`,

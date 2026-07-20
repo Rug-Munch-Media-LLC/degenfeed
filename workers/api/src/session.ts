@@ -131,7 +131,7 @@ export async function storeCsrfToken(
 	try {
 		await env.CACHE?.put(key, token, { expirationTtl: CSRF_TTL_SECONDS });
 	} catch {
-		// KV unavailable — token validation is skipped in dev mode
+		/* KV cache operation failed -- non-critical, continue */
 	}
 	return token;
 }
@@ -169,7 +169,7 @@ export async function deleteCsrfToken(
 	try {
 		await env.CACHE?.delete(key);
 	} catch {
-		// ignore cleanup failure
+		/* KV cache operation failed -- non-critical, continue */
 	}
 }
 

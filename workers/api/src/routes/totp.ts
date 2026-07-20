@@ -28,22 +28,19 @@
 import { Hono } from "hono";
 import type { Env } from "../index";
 import { jsonResponse } from "../index";
-import { validateBodySize } from "../sanitize";
-import { requireSession } from "../session";
-import {
-	totpSecretKey,
-	totpTempKey,
-} from "../kv-key-patterns";
-import {
-	generateTOTPSecret,
-	buildOtpauthUrl,
-	verifyTOTP,
-	isValidTOTPCode,
-} from "../lib/totp";
+import { totpSecretKey, totpTempKey } from "../kv-key-patterns";
 import {
 	generateRecoveryCodes,
 	verifyRecoveryCode,
 } from "../lib/recovery-codes";
+import {
+	buildOtpauthUrl,
+	generateTOTPSecret,
+	isValidTOTPCode,
+	verifyTOTP,
+} from "../lib/totp";
+import { validateBodySize } from "../sanitize";
+import { requireSession } from "../session";
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -60,9 +57,9 @@ const totp = new Hono<{ Bindings: Env }>();
  * Extract and validate the JSON body, returning a parsed object
  * or an error Response.
  */
-async function parseBody<T>(
-	c: { req: { raw: Request } },
-): Promise<{ data?: T; error?: Response }> {
+async function parseBody<T>(c: {
+	req: { raw: Request };
+}): Promise<{ data?: T; error?: Response }> {
 	const sizeCheck = validateBodySize(c.req.raw, 4096);
 	if (!sizeCheck.ok) {
 		return { error: jsonResponse({ error: sizeCheck.error }, 413) };
@@ -142,10 +139,7 @@ totp.post("/verify", async (c) => {
 	// Get temporary secret
 	const tempSecret = await getTOTPTemp(c.env, address);
 	if (!tempSecret) {
-		return jsonResponse(
-			{ error: "Setup expired. Please start over." },
-			400,
-		);
+		return jsonResponse({ error: "Setup expired. Please start over." }, 400);
 	}
 
 	// Verify the code (allow 1 step drift for time sync)
@@ -166,7 +160,8 @@ totp.post("/verify", async (c) => {
 	return jsonResponse({
 		verified: true,
 		recoveryCodes,
-		message: "2FA is now active. Save your recovery codes — they will not be shown again.",
+		message:
+			"2FA is now active. Save your recovery codes — they will not be shown again.",
 	});
 });
 
@@ -219,7 +214,10 @@ totp.put("/disable", async (c) => {
 
 	const { code } = data ?? {};
 	if (!code) {
-		return jsonResponse({ error: "Code is required (TOTP or recovery code)" }, 400);
+		return jsonResponse(
+			{ error: "Code is required (TOTP or recovery code)" },
+			400,
+		);
 	}
 
 	// Try recovery code first
@@ -282,10 +280,7 @@ async function storeTOTPTemp(
 /**
  * Retrieve the temporary TOTP secret during setup verification.
  */
-async function getTOTPTemp(
-	env: Env,
-	address: string,
-): Promise<string | null> {
+async function getTOTPTemp(env: Env, address: string): Promise<string | null> {
 	const key = totpTempKey(address);
 	try {
 		return (await env.CACHE?.get(key)) ?? null;

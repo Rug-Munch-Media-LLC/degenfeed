@@ -3,13 +3,13 @@ import { secp256k1 } from "@noble/curves/secp256k1";
 import { keccak_256 } from "@noble/hashes/sha3";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
 import { type Env, jsonResponse, rateLimit } from "../index";
+import { extractRequestMetadata, logSecurityEvent } from "../lib/security-log";
 import {
 	createSession,
 	generateCsrfToken,
 	parseSessionCookie,
 	storeCsrfToken,
 } from "../session";
-import { extractRequestMetadata, logSecurityEvent } from "../lib/security-log";
 import { storeSessionMeta } from "./sessions";
 
 const GTS_SCOPES = "read write follow push";

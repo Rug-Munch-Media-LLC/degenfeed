@@ -434,30 +434,30 @@ creatorConfig.get("/:id/tokens", async (c) => {
 	)) as Partial<CreatorConfig> | null;
 
 	if (walletConfig?.crossChainTokens) {
-		allMappings["base"] = walletConfig.crossChainTokens.filter(
+		allMappings.base = walletConfig.crossChainTokens.filter(
 			(t) => t.protocol === "base",
 		);
-		allMappings["solana"] = walletConfig.crossChainTokens.filter(
+		allMappings.solana = walletConfig.crossChainTokens.filter(
 			(t) => t.protocol === "solana",
 		);
 	}
 
 	// Search by Farcaster FID
-	const fcKey = CROSS_CHAIN_PREFIX + `8453:farcaster:${creatorId}`;
+	const fcKey = `${CROSS_CHAIN_PREFIX}8453:farcaster:${creatorId}`;
 	const fcMapping = (await c.env.CACHE?.get(fcKey, "json").catch(() => null)) as
 		| CrossChainMapping[]
 		| null;
 	if (fcMapping) {
-		allMappings["farcaster"] = fcMapping;
+		allMappings.farcaster = fcMapping;
 	}
 
 	// Search by Lens profile ID
-	const lensKey = CROSS_CHAIN_PREFIX + `8453:lens:${creatorId}`;
+	const lensKey = `${CROSS_CHAIN_PREFIX}8453:lens:${creatorId}`;
 	const lensMapping = (await c.env.CACHE?.get(lensKey, "json").catch(
 		() => null,
 	)) as CrossChainMapping[] | null;
 	if (lensMapping) {
-		allMappings["lens"] = lensMapping;
+		allMappings.lens = lensMapping;
 	}
 
 	return noCacheJsonResponse({
@@ -514,7 +514,7 @@ creatorConfig.post("/coin/farcaster", async (c) => {
 	const mockAddress = `0x${crypto.randomUUID().replace(/-/g, "").slice(0, 40)}`;
 
 	// Store Farcaster mapping
-	const mappingKey = CROSS_CHAIN_PREFIX + `8453:farcaster:${body.fid}`;
+	const mappingKey = `${CROSS_CHAIN_PREFIX}8453:farcaster:${body.fid}`;
 	await c.env.CACHE?.put(
 		mappingKey,
 		JSON.stringify([
@@ -577,7 +577,7 @@ creatorConfig.post("/coin/lens", async (c) => {
 
 	const mockAddress = `0x${crypto.randomUUID().replace(/-/g, "").slice(0, 40)}`;
 
-	const mappingKey = CROSS_CHAIN_PREFIX + `8453:lens:${body.profileId}`;
+	const mappingKey = `${CROSS_CHAIN_PREFIX}8453:lens:${body.profileId}`;
 	await c.env.CACHE?.put(
 		mappingKey,
 		JSON.stringify([
@@ -645,8 +645,8 @@ async function getCreatorReputation(
 }
 
 async function verifyFarcasterFid(
-	fid: number,
-	env: Env,
+	_fid: number,
+	_env: Env,
 ): Promise<string | null> {
 	// In production, query Neynar or the Farcaster hub to verify FID owner
 	// For now, return a mock
@@ -654,8 +654,8 @@ async function verifyFarcasterFid(
 }
 
 async function verifyLensProfile(
-	profileId: string,
-	env: Env,
+	_profileId: string,
+	_env: Env,
 ): Promise<string | null> {
 	// In production, query Lens API to verify profile owner
 	return null;

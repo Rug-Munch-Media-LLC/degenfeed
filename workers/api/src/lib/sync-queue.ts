@@ -75,7 +75,7 @@ export interface SyncQueueEntry {
 
 const QUEUE_PREFIX = "sync:queue:";
 const DEAD_LETTER_PREFIX = "sync:dead:";
-const PROCESSING_PREFIX = "sync:processing:";
+const _PROCESSING_PREFIX = "sync:processing:";
 const QUEUE_TTL = 86400 * 3; // 3 days — entries auto-expire
 const MAX_RETRIES = 5;
 const BACKOFF_BASE_MS = 1000; // 1s initial, doubles each retry
@@ -228,7 +228,9 @@ export async function listPending(
 						entries.push(entry);
 						if (entries.length >= limit) break;
 					}
-				} catch { /* empty -- error deliberately ignored */ }
+				} catch {
+					/* empty -- error deliberately ignored */
+				}
 			}
 
 			cursor = page.list_complete ? undefined : page.cursor;
@@ -350,7 +352,9 @@ export async function retryDeadLetters(env: Env, limit = 50): Promise<number> {
 					// Remove from dead letter
 					await env.CACHE.delete(key.name);
 					retried++;
-				} catch { /* empty -- error deliberately ignored */ }
+				} catch {
+					/* empty -- error deliberately ignored */
+				}
 			}
 
 			cursor = page.list_complete ? undefined : page.cursor;
@@ -399,7 +403,9 @@ export async function getQueueStats(env: Env): Promise<{
 						pending++;
 					else if (entry.status === "failed") failed++;
 					else if (entry.status === "completed") completed++;
-				} catch { /* empty -- error deliberately ignored */ }
+				} catch {
+					/* empty -- error deliberately ignored */
+				}
 			}
 
 			cursor = page.list_complete ? undefined : page.cursor;

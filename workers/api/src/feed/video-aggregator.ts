@@ -19,8 +19,11 @@
  */
 
 import type { Env } from "../index";
-import { VIDEO_PLATFORM_COLORS, VIDEO_PLATFORM_LABELS } from "../lib/creator-resolver";
 import type { VideoPlatform } from "../lib/creator-resolver";
+import {
+	VIDEO_PLATFORM_COLORS,
+	VIDEO_PLATFORM_LABELS,
+} from "../lib/creator-resolver";
 
 // ─── Invidious/Piped instances for YouTube (no API key needed) ──────────────
 
@@ -129,7 +132,10 @@ export class VideoAggregator {
 		const limit = opts.limit ?? 20;
 		const cacheSuffix = `creator:${creatorId.toLowerCase()}:${limit}`;
 
-		const cached = await getCachedJson<UnifiedVideo[]>(this.env, cacheKey(cacheSuffix));
+		const cached = await getCachedJson<UnifiedVideo[]>(
+			this.env,
+			cacheKey(cacheSuffix),
+		);
 		if (cached) return cached;
 
 		const fetchers: Promise<UnifiedVideo[]>[] = [];
@@ -174,7 +180,10 @@ export class VideoAggregator {
 		const limit = opts.limit ?? 20;
 		const cacheSuffix = `trending:${category}:${limit}`;
 
-		const cached = await getCachedJson<UnifiedVideo[]>(this.env, cacheKey(cacheSuffix));
+		const cached = await getCachedJson<UnifiedVideo[]>(
+			this.env,
+			cacheKey(cacheSuffix),
+		);
 		if (cached) return cached;
 
 		const fetchers: Promise<UnifiedVideo[]>[] = [
@@ -211,7 +220,10 @@ export class VideoAggregator {
 		const limit = opts.limit ?? 20;
 		const cacheSuffix = `feed:${wallet.toLowerCase()}:${limit}`;
 
-		const cached = await getCachedJson<UnifiedVideo[]>(this.env, cacheKey(cacheSuffix));
+		const cached = await getCachedJson<UnifiedVideo[]>(
+			this.env,
+			cacheKey(cacheSuffix),
+		);
 		if (cached) return cached;
 
 		// Get the creator IDs this wallet follows from KV
@@ -230,9 +242,9 @@ export class VideoAggregator {
 		}
 
 		// Fetch videos from all followed creators in parallel
-		const fetchers = followedCreators.slice(0, 10).map((creatorId) =>
-			this.getCreatorVideos(creatorId, { limit: 5 }),
-		);
+		const fetchers = followedCreators
+			.slice(0, 10)
+			.map((creatorId) => this.getCreatorVideos(creatorId, { limit: 5 }));
 
 		const results = await Promise.allSettled(fetchers);
 		const allVideos: UnifiedVideo[] = [];
@@ -253,9 +265,15 @@ export class VideoAggregator {
 		opts: VideoAggregatorOptions = {},
 	): Promise<UnifiedVideo[]> {
 		const limit = opts.limit ?? 20;
-		const cacheSuffix = `search:${query.toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 60)}:${limit}`;
+		const cacheSuffix = `search:${query
+			.toLowerCase()
+			.replace(/[^a-z0-9]/g, "_")
+			.slice(0, 60)}:${limit}`;
 
-		const cached = await getCachedJson<UnifiedVideo[]>(this.env, cacheKey(cacheSuffix));
+		const cached = await getCachedJson<UnifiedVideo[]>(
+			this.env,
+			cacheKey(cacheSuffix),
+		);
 		if (cached) return cached;
 
 		const fetchers: Promise<UnifiedVideo[]>[] = [
@@ -300,7 +318,12 @@ export class VideoAggregator {
 						author: string;
 						authorId: string;
 						authorUrl: string;
-						videoThumbnails: Array<{ url: string; quality: string; width: number; height: number }>;
+						videoThumbnails: Array<{
+							url: string;
+							quality: string;
+							width: number;
+							height: number;
+						}>;
 						liveNow: boolean;
 					}>;
 				};
@@ -325,7 +348,8 @@ export class VideoAggregator {
 						creatorName: v.author,
 						creatorId: v.authorId,
 						creatorAvatar: `https://img.youtube.com/vi/${v.videoId}/0.jpg`,
-						creatorUrl: v.authorUrl ?? `https://www.youtube.com/channel/${v.authorId}`,
+						creatorUrl:
+							v.authorUrl ?? `https://www.youtube.com/channel/${v.authorId}`,
 						viewCount: v.viewCount ?? 0,
 						likeCount: 0,
 						publishedAt: new Date(v.published * 1000).toISOString(),
@@ -334,12 +358,13 @@ export class VideoAggregator {
 						tags: [],
 						isShort: (v.lengthSeconds ?? 0) <= 60,
 						isLive: v.liveNow ?? false,
-						qualityScore: this.computeScore(v.viewCount ?? 0, v.published * 1000),
+						qualityScore: this.computeScore(
+							v.viewCount ?? 0,
+							v.published * 1000,
+						),
 					};
 				});
-			} catch {
-				continue;
-			}
+			} catch {}
 		}
 		return [];
 	}
@@ -356,7 +381,9 @@ export class VideoAggregator {
 					education: "education",
 				};
 				const type = typeMap[category] ?? "";
-				const url = type ? `${trendingUrl}${type}` : `${instance}/api/v1/trending`;
+				const url = type
+					? `${trendingUrl}${type}`
+					: `${instance}/api/v1/trending`;
 				const res = await fetch(url, {
 					headers: { accept: "application/json" },
 				});
@@ -395,7 +422,8 @@ export class VideoAggregator {
 						creatorName: v.author,
 						creatorId: v.authorId,
 						creatorAvatar: "",
-						creatorUrl: v.authorUrl ?? `https://www.youtube.com/channel/${v.authorId}`,
+						creatorUrl:
+							v.authorUrl ?? `https://www.youtube.com/channel/${v.authorId}`,
 						viewCount: v.viewCount ?? 0,
 						likeCount: 0,
 						publishedAt: new Date(v.published * 1000).toISOString(),
@@ -404,12 +432,13 @@ export class VideoAggregator {
 						tags: [],
 						isShort: (v.lengthSeconds ?? 0) <= 60,
 						isLive: v.liveNow ?? false,
-						qualityScore: this.computeScore(v.viewCount ?? 0, v.published * 1000),
+						qualityScore: this.computeScore(
+							v.viewCount ?? 0,
+							v.published * 1000,
+						),
 					};
 				});
-			} catch {
-				continue;
-			}
+			} catch {}
 		}
 		return [];
 	}
@@ -453,7 +482,8 @@ export class VideoAggregator {
 					creatorName: v.author,
 					creatorId: v.authorId,
 					creatorAvatar: "",
-					creatorUrl: v.authorUrl ?? `https://www.youtube.com/channel/${v.authorId}`,
+					creatorUrl:
+						v.authorUrl ?? `https://www.youtube.com/channel/${v.authorId}`,
 					viewCount: v.viewCount ?? 0,
 					likeCount: 0,
 					publishedAt: new Date(v.published * 1000).toISOString(),
@@ -464,9 +494,7 @@ export class VideoAggregator {
 					isLive: v.liveNow ?? false,
 					qualityScore: this.computeScore(v.viewCount ?? 0, v.published * 1000),
 				}));
-			} catch {
-				continue;
-			}
+			} catch {}
 		}
 		return [];
 	}
@@ -535,7 +563,8 @@ export class VideoAggregator {
 					creatorName: author?.displayName ?? author?.name ?? "Unknown",
 					creatorId: `peertube:${author?.id ?? v.uuid}`,
 					creatorAvatar: avatar,
-					creatorUrl: author?.url ?? `${PEERTUBE_INSTANCE}/accounts/${author?.name}`,
+					creatorUrl:
+						author?.url ?? `${PEERTUBE_INSTANCE}/accounts/${author?.name}`,
 					viewCount: v.views ?? 0,
 					likeCount: v.likes ?? 0,
 					publishedAt: v.publishedAt,
@@ -544,7 +573,10 @@ export class VideoAggregator {
 					tags: v.tags ?? [],
 					isShort: v.duration <= 90,
 					isLive: false,
-					qualityScore: this.computeScore(v.views ?? 0, Date.parse(v.publishedAt)),
+					qualityScore: this.computeScore(
+						v.views ?? 0,
+						Date.parse(v.publishedAt),
+					),
 				};
 			});
 		} catch {
@@ -587,8 +619,19 @@ export class VideoAggregator {
 					likes: number;
 					publishedAt: string;
 					thumbnailPath?: string;
-					account: { id: number; name: string; displayName: string; url: string };
-					channel: { id: number; name: string; displayName: string; url: string; avatar?: { path: string } };
+					account: {
+						id: number;
+						name: string;
+						displayName: string;
+						url: string;
+					};
+					channel: {
+						id: number;
+						name: string;
+						displayName: string;
+						url: string;
+						avatar?: { path: string };
+					};
 					tags?: string[];
 				}>;
 			};
@@ -614,7 +657,8 @@ export class VideoAggregator {
 					creatorName: channel?.displayName ?? channel?.name ?? "Unknown",
 					creatorId: `peertube:${channel?.id ?? v.uuid}`,
 					creatorAvatar: avatar,
-					creatorUrl: channel?.url ?? `${PEERTUBE_INSTANCE}/accounts/${channel?.name}`,
+					creatorUrl:
+						channel?.url ?? `${PEERTUBE_INSTANCE}/accounts/${channel?.name}`,
 					viewCount: v.views ?? 0,
 					likeCount: v.likes ?? 0,
 					publishedAt: v.publishedAt,
@@ -623,7 +667,10 @@ export class VideoAggregator {
 					tags: v.tags ?? [],
 					isShort: v.duration <= 90,
 					isLive: false,
-					qualityScore: this.computeScore(v.views ?? 0, Date.parse(v.publishedAt)),
+					qualityScore: this.computeScore(
+						v.views ?? 0,
+						Date.parse(v.publishedAt),
+					),
 				};
 			});
 		} catch {
@@ -649,8 +696,19 @@ export class VideoAggregator {
 					likes: number;
 					publishedAt: string;
 					thumbnailPath?: string;
-					account: { id: number; name: string; displayName: string; url: string };
-					channel: { id: number; name: string; displayName: string; url: string; avatar?: { path: string } };
+					account: {
+						id: number;
+						name: string;
+						displayName: string;
+						url: string;
+					};
+					channel: {
+						id: number;
+						name: string;
+						displayName: string;
+						url: string;
+						avatar?: { path: string };
+					};
 					tags?: string[];
 				}>;
 			};
@@ -676,7 +734,8 @@ export class VideoAggregator {
 					creatorName: channel?.displayName ?? channel?.name ?? "Unknown",
 					creatorId: `peertube:${channel?.id ?? v.uuid}`,
 					creatorAvatar: avatar,
-					creatorUrl: channel?.url ?? `${PEERTUBE_INSTANCE}/accounts/${channel?.name}`,
+					creatorUrl:
+						channel?.url ?? `${PEERTUBE_INSTANCE}/accounts/${channel?.name}`,
 					viewCount: v.views ?? 0,
 					likeCount: v.likes ?? 0,
 					publishedAt: v.publishedAt,
@@ -685,7 +744,10 @@ export class VideoAggregator {
 					tags: v.tags ?? [],
 					isShort: v.duration <= 90,
 					isLive: false,
-					qualityScore: this.computeScore(v.views ?? 0, Date.parse(v.publishedAt)),
+					qualityScore: this.computeScore(
+						v.views ?? 0,
+						Date.parse(v.publishedAt),
+					),
 				};
 			});
 		} catch {
@@ -697,7 +759,7 @@ export class VideoAggregator {
 
 	async fetchTwitchChannelVideos(
 		channelName: string,
-		limit: number = 10,
+		_limit: number = 10,
 	): Promise<UnifiedVideo[]> {
 		try {
 			// Use ivr.fi API for public Twitch data
@@ -737,7 +799,10 @@ export class VideoAggregator {
 							id: `twitch:live:${channelName}:${Date.now()}`,
 							title: liveData.title ?? `${channel.displayName} is live!`,
 							description: `Live on Twitch — ${liveData.game ?? ""}`,
-							thumbnail: liveData.thumbnail ?? channel.avatar ?? `https://static-cdn.jtvnw.net/previews-ttv/live_user_${channelName}-440x248.jpg`,
+							thumbnail:
+								liveData.thumbnail ??
+								channel.avatar ??
+								`https://static-cdn.jtvnw.net/previews-ttv/live_user_${channelName}-440x248.jpg`,
 							url: `https://twitch.tv/${channelName}`,
 							duration: 0,
 							platform: "twitch",
@@ -751,7 +816,10 @@ export class VideoAggregator {
 							likeCount: 0,
 							publishedAt: new Date().toISOString(),
 							publishedMs: Date.now(),
-							category: this.inferCategory(liveData.title ?? "", liveData.game ?? ""),
+							category: this.inferCategory(
+								liveData.title ?? "",
+								liveData.game ?? "",
+							),
 							tags: [],
 							isShort: false,
 							isLive: true,
@@ -800,7 +868,8 @@ export class VideoAggregator {
 				const pubDate = this.extractXmlTag(block, "pubDate");
 				const description = this.extractXmlTag(block, "description");
 				const thumbnail = this.extractXmlAttr(block, "media:thumbnail", "url");
-				const channelName = this.extractXmlTag(block, "channel") || "Rumble Creator";
+				const channelName =
+					this.extractXmlTag(block, "channel") || "Rumble Creator";
 				const duration = Number.parseInt(
 					this.extractXmlTag(block, "media:duration") || "0",
 					10,
@@ -812,7 +881,9 @@ export class VideoAggregator {
 						id: `rumble:${globalThis.btoa?.(link)?.slice(0, 16) ?? link.slice(0, 16)}`,
 						title: this.decodeXml(title),
 						description: this.decodeXml(description),
-						thumbnail: thumbnail || `https://placehold.co/640x360/85C742/FFFFFF?text=Rumble`,
+						thumbnail:
+							thumbnail ||
+							`https://placehold.co/640x360/85C742/FFFFFF?text=Rumble`,
 						url: link,
 						duration,
 						platform: "rumble",
@@ -876,7 +947,9 @@ export class VideoAggregator {
 				id: `odysee:${v.claimId}`,
 				title: v.title || v.name,
 				description: v.description ?? "",
-				thumbnail: v.thumbnail?.url ?? `https://placehold.co/640x360/FF6A00/FFFFFF?text=Odysee`,
+				thumbnail:
+					v.thumbnail?.url ??
+					`https://placehold.co/640x360/FF6A00/FFFFFF?text=Odysee`,
 				url: `https://odysee.com/${v.name}:${v.claimId}`,
 				duration: v.duration ?? 0,
 				platform: "odysee" as VideoPlatform,
@@ -976,7 +1049,10 @@ export class VideoAggregator {
 			return nodes
 				.filter((n) => {
 					const media = n.token.metadata.content?.media;
-					return media?.mimeType?.startsWith("video/") || n.token.metadata.animationUrl;
+					return (
+						media?.mimeType?.startsWith("video/") ||
+						n.token.metadata.animationUrl
+					);
 				})
 				.map((n) => {
 					const videoUrl =
@@ -1019,7 +1095,14 @@ export class VideoAggregator {
 		videos: UnifiedVideo[],
 		opts: VideoAggregatorOptions,
 	): UnifiedVideo[] {
-		const { limit = 20, sort = "recent", minViews = 0, maxAgeDays = 30, platforms, categories } = opts;
+		const {
+			limit = 20,
+			sort = "recent",
+			minViews = 0,
+			maxAgeDays = 30,
+			platforms,
+			categories,
+		} = opts;
 
 		// Deduplicate by URL
 		const seen = new Set<string>();
@@ -1031,10 +1114,20 @@ export class VideoAggregator {
 			seen.add(key);
 
 			// Filter by platform
-			if (platforms && platforms.length > 0 && !platforms.includes(video.platform)) continue;
+			if (
+				platforms &&
+				platforms.length > 0 &&
+				!platforms.includes(video.platform)
+			)
+				continue;
 
 			// Filter by category
-			if (categories && categories.length > 0 && !categories.includes(video.category)) continue;
+			if (
+				categories &&
+				categories.length > 0 &&
+				!categories.includes(video.category)
+			)
+				continue;
 
 			// Filter by min views
 			if (video.viewCount < minViews) continue;

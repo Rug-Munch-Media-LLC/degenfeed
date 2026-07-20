@@ -12,7 +12,6 @@
  */
 
 import type { Env } from "../index";
-import { jsonResponse } from "../index";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -159,7 +158,7 @@ export function getRelevantChannels(
 
 	if (allTerms.length === 0) {
 		// Default: suggest the general live channel
-		return [CHANNEL_REGISTRY[0]!.channel];
+		return [CHANNEL_REGISTRY[0]?.channel];
 	}
 
 	const scored = CHANNEL_REGISTRY.map((entry) => {
@@ -176,7 +175,7 @@ export function getRelevantChannels(
 		.slice(0, 3);
 
 	if (scored.length === 0) {
-		return [CHANNEL_REGISTRY[0]!.channel];
+		return [CHANNEL_REGISTRY[0]?.channel];
 	}
 
 	return scored.map((s) => s.channel);
@@ -213,7 +212,7 @@ export async function postToFarcasterChannel(
 	}
 
 	// Ensure text is within Farcaster's 320-char limit
-	const castText = text.length > 320 ? text.slice(0, 317) + "..." : text;
+	const castText = text.length > 320 ? `${text.slice(0, 317)}...` : text;
 
 	try {
 		const response = await fetch("https://api.neynar.com/v2/farcaster/cast", {
@@ -324,7 +323,7 @@ export async function postCastToFarcaster(
 		return { error: "NEYNAR_API_KEY not configured" };
 	}
 
-	const castText = text.length > 320 ? text.slice(0, 317) + "..." : text;
+	const castText = text.length > 320 ? `${text.slice(0, 317)}...` : text;
 
 	try {
 		const body: Record<string, unknown> = {

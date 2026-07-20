@@ -16,10 +16,7 @@
  */
 
 import type { YouTubeVideoItem } from "@degenfeed/youtube-provider";
-import {
-	fetchYouTubeFeed,
-	getYouTubeVideoInfo,
-} from "@degenfeed/youtube-provider";
+import { fetchYouTubeFeed } from "@degenfeed/youtube-provider";
 import type { Env } from "../index";
 
 // ─── Invidious / Piped instances (open-source, no API key) ────────────────
@@ -648,7 +645,7 @@ export class YouTubeFetcher {
 	private async normalizeItems(
 		items: YouTubeVideoItem[],
 		limit: number,
-		env?: Env,
+		_env?: Env,
 	): Promise<YouTubeVideo[]> {
 		// Enhance with Data API if key is available
 		const videoIds = items.map((i) => i.id);
@@ -712,7 +709,8 @@ export class YouTubeFetcher {
 	private parseDuration(duration: string): number {
 		if (/^\d+:\d{2}(:\d{2})?$/.test(duration)) {
 			const parts = duration.split(":").map(Number);
-			if (parts.length === 3) return (parts[0] ?? 0) * 3600 + (parts[1] ?? 0) * 60 + (parts[2] ?? 0);
+			if (parts.length === 3)
+				return (parts[0] ?? 0) * 3600 + (parts[1] ?? 0) * 60 + (parts[2] ?? 0);
 			if (parts.length === 2) return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
 		}
 		return 300; // Default 5 min
@@ -753,7 +751,12 @@ export class YouTubeFetcher {
 						author: string;
 						authorId: string;
 						authorUrl: string;
-						videoThumbnails: Array<{ url: string; quality: string; width: number; height: number }>;
+						videoThumbnails: Array<{
+							url: string;
+							quality: string;
+							width: number;
+							height: number;
+						}>;
 						liveNow: boolean;
 					}>;
 				};
@@ -778,9 +781,7 @@ export class YouTubeFetcher {
 					tags: [],
 					isShort: (v.lengthSeconds ?? 0) <= 60,
 				}));
-			} catch {
-				continue;
-			}
+			} catch {}
 		}
 		return [];
 	}
@@ -801,7 +802,7 @@ export class YouTubeFetcher {
 					sports: "sports",
 					education: "education",
 				};
-				const type = category ? typeMap[category] ?? "" : "";
+				const type = category ? (typeMap[category] ?? "") : "";
 				const url = type
 					? `${instance}/api/v1/trending?type=${type}`
 					: `${instance}/api/v1/trending`;
@@ -843,9 +844,7 @@ export class YouTubeFetcher {
 					tags: [],
 					isShort: (v.lengthSeconds ?? 0) <= 60,
 				}));
-			} catch {
-				continue;
-			}
+			} catch {}
 		}
 		return [];
 	}
@@ -898,9 +897,7 @@ export class YouTubeFetcher {
 					tags: [],
 					isShort: (v.lengthSeconds ?? 0) <= 60,
 				}));
-			} catch {
-				continue;
-			}
+			} catch {}
 		}
 		return [];
 	}
@@ -925,22 +922,62 @@ export class YouTubeFetcher {
 		const h = Math.floor(seconds / 3600);
 		const m = Math.floor((seconds % 3600) / 60);
 		const s = seconds % 60;
-		if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+		if (h > 0)
+			return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 		return `${m}:${String(s).padStart(2, "0")}`;
 	}
 
-	private inferInvidiousCategory(title: string, description: string): YouTubeCategory {
+	private inferInvidiousCategory(
+		title: string,
+		description: string,
+	): YouTubeCategory {
 		const text = `${title} ${description}`.toLowerCase();
-		if (text.includes("gaming") || text.includes("gameplay") || text.includes("esports")) return "gaming";
-		if (text.includes("music") || text.includes("song") || text.includes("album")) return "music";
-		if (text.includes("tech") || text.includes("programming") || text.includes("software")) return "tech";
-		if (text.includes("crypto") || text.includes("bitcoin") || text.includes("defi")) return "crypto";
-		if (text.includes("news") || text.includes("breaking") || text.includes("report")) return "news";
-		if (text.includes("tutorial") || text.includes("learn") || text.includes("course")) return "education";
-		if (text.includes("sport") || text.includes("game") || text.includes("match")) return "sports";
+		if (
+			text.includes("gaming") ||
+			text.includes("gameplay") ||
+			text.includes("esports")
+		)
+			return "gaming";
+		if (
+			text.includes("music") ||
+			text.includes("song") ||
+			text.includes("album")
+		)
+			return "music";
+		if (
+			text.includes("tech") ||
+			text.includes("programming") ||
+			text.includes("software")
+		)
+			return "tech";
+		if (
+			text.includes("crypto") ||
+			text.includes("bitcoin") ||
+			text.includes("defi")
+		)
+			return "crypto";
+		if (
+			text.includes("news") ||
+			text.includes("breaking") ||
+			text.includes("report")
+		)
+			return "news";
+		if (
+			text.includes("tutorial") ||
+			text.includes("learn") ||
+			text.includes("course")
+		)
+			return "education";
+		if (
+			text.includes("sport") ||
+			text.includes("game") ||
+			text.includes("match")
+		)
+			return "sports";
 		if (text.includes("science") || text.includes("research")) return "science";
 		if (text.includes("comedy") || text.includes("funny")) return "comedy";
-		if (text.includes("entertainment") || text.includes("vlog")) return "entertainment";
+		if (text.includes("entertainment") || text.includes("vlog"))
+			return "entertainment";
 		return "all";
 	}
 }

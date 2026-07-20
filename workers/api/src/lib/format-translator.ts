@@ -11,7 +11,7 @@
  */
 
 import type { Facet, ImageEmbed } from "@degenfeed/bluesky-sdk/formatter";
-import type { Embed, Protocol } from "@degenfeed/types";
+import type { Protocol } from "@degenfeed/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -73,7 +73,7 @@ export function formatForActivityPub(input: TranslateInput): {
  */
 export async function formatForAtProtocol(
 	input: TranslateInput,
-	pdsUrl?: string,
+	_pdsUrl?: string,
 	opts?: { resolveMentions?: boolean },
 ): Promise<{
 	text: string;
@@ -161,7 +161,7 @@ export async function formatForAtProtocol(
  */
 export function formatForNostr(
 	input: TranslateInput,
-	pubkey: string,
+	_pubkey: string,
 ): {
 	kind: number;
 	content: string;

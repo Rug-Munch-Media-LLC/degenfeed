@@ -3,29 +3,43 @@
 /**
  * @degenfeed/web — /video (Video Hub)
  *
- * Netflix-style video browsing experience:
+ * Netflix-style video browsing experience powered by the video aggregator backend:
+ * - Aggregated content from YouTube (via Invidious), Twitch, Rumble, PeerTube, Zora
  * - Hero banner: featured video with play/watch later/details
  * - Category tabs at top (horizontal scrollable pills)
- * - Source filter: [All] [YouTube] [PeerTube] [Shorts] [Live]
+ * - Source filter bar with per-platform video counts
  * - Themed rows: Trending Now, per-category rows, New Releases
  * - Continue Watching from localStorage
- * - Unified search with source filter
+ * - Creator presence indicators across all platforms
  *
  * Every video is labeled with its source (color-coded).
+ * No pretense — YouTube is labeled "YouTube (via Invidious)", Twitch is Twitch, etc.
+ * The value is in aggregation, cross-platform actions, and creator monetization.
  */
 
 import { ErrorBoundary } from '@degenfeed/ui';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { VideoHubLayout } from '../../components/video/VideoHubLayout';
+import { VideoSourceFilter } from '../../components/video/VideoSourceFilter';
+import type { AggregatorSourceCount } from '../../components/video/VideoSourceFilter';
 import {
   type UnifiedVideo,
-  type CategoryTrend,
   type UnifiedVideoFeed,
-  useVideoHub,
+  useAggregatorFeed,
   useVideoCategories,
-  useTrendingVideos,
 } from '../../components/video/useVideoHub';
+
+// ─── Platform color mapping (matches VideoSourceBadge) ───────────────────
+
+const PLATFORM_COLORS: Record<string, string> = {
+  youtube: '#FF0000',
+  twitch: '#9146FF',
+  rumble: '#00A651',
+  peertube: '#F1680D',
+  zora: '#0052FF',
+  creator: '#00FF41',
+};
 
 // ─── Page ────────────────────────────────────────────────────────────────
 
@@ -33,19 +47,15 @@ export default function VideoHubPage() {
   // URL params
   const [category, setCategory] = useState('all');
   const [source, setSource] = useState('all');
-  const [sort, setSort] = useState('trending');
+  const [sort] = useState('trending');
   const [cursor, setCursor] = useState<string | undefined>();
   const [allVideos, setAllVideos] = useState<UnifiedVideo[]>([]);
   const [hasMore, setHasMore] = useState(true);
-  const [trendingCategories, setTrendingCategories] = useState<CategoryTrend[]>([]);
+  const [sourceCounts, setSourceCounts] = useState<AggregatorSourceCount[]>([]);
 
-  // Fetch initial feed
-  const { data, loading, error, refetch } = useVideoHub({
-    category,
-    source,
-    sort,
-    limit: 60,
-  });
+  // Fetch aggregated feed from /api/video/aggregator/feed
+  const feedCategory = category !== 'all' ? category : undefined;
+  const { data, loading, error } = useAggregatorFeed(feedCategory);
 
   // Fetch trending categories separately
   const { data: catData } = useVideoCategories();
@@ -67,18 +77,13 @@ export default function VideoHubPage() {
         setAllVideos(data.videos);
       }
       setHasMore(data.hasMore);
-      if (data.trendingCategories.length > 0) {
-        setTrendingCategories(data.trendingCategories);
+
+      // Update source counts from aggregator response
+      if (data.sourceCounts && data.sourceCounts.length > 0) {
+        setSourceCounts(data.sourceCounts);
       }
     }
   }, [data, cursor]);
-
-  // Also populate trending from categories endpoint
-  useEffect(() => {
-    if (catData?.trending && catData.trending.length > 0) {
-      setTrendingCategories(catData.trending);
-    }
-  }, [catData]);
 
   // Reset when category/source/sort changes
   useEffect(() => {
@@ -86,6 +91,12 @@ export default function VideoHubPage() {
     setAllVideos([]);
     setHasMore(true);
   }, [category, source, sort]);
+
+  // Filter videos client-side by source when a source is selected
+  const filteredVideos = useMemo(() => {
+    if (source === 'all') return allVideos;
+    return allVideos.filter((v) => v.source === source);
+  }, [allVideos, source]);
 
   const handleCategoryChange = useCallback((newCategory: string) => {
     setCategory(newCategory);
@@ -123,7 +134,6 @@ export default function VideoHubPage() {
   const handleLoadMore = useCallback(() => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-    // Simulate load more by refetching with cursor
     setCursor(String((allVideos.length / 60) + 1));
     setLoadingMore(false);
   }, [loadingMore, hasMore, allVideos.length]);
@@ -131,20 +141,39 @@ export default function VideoHubPage() {
   const handleSearch = useCallback((query: string, searchSource: string) => {
     const params = new URLSearchParams({ q: query });
     if (searchSource !== 'all') params.set('source', searchSource);
-    window.location.href = `/video?search=${encodeURIComponent(query)}${searchSource !== 'all' ? `&source=${searchSource}` : ''}`;
+    window.location.href =
+      `/video?search=${encodeURIComponent(query)}${searchSource !== 'all' ? `&source=${searchSource}` : ''}`;
   }, []);
 
-  // Build the feed object from accumulated data
+  // Map source counts to filter options with colors
+  const filterSources = useMemo(() => {
+    const mapped = sourceCounts.map((sc) => ({
+      id: sc.id,
+      label: sc.label,
+      count: sc.count,
+      color: PLATFORM_COLORS[sc.id] ?? '#888',
+    }));
+    // Ensure standard platforms always appear (even at 0) when we have data
+    const standardPlatforms = ['youtube', 'twitch', 'rumble', 'peertube', 'zora'];
+    for (const pid of standardPlatforms) {
+      if (!mapped.find((m) => m.id === pid) && allVideos.length > 0) {
+        mapped.push({ id: pid, label: pid.charAt(0).toUpperCase() + pid.slice(1), count: 0, color: PLATFORM_COLORS[pid] ?? '#888' });
+      }
+    }
+    return mapped;
+  }, [sourceCounts, allVideos.length]);
+
+  // Build the feed object from accumulated + filtered data
   const feed: UnifiedVideoFeed = useMemo(
     () => ({
-      videos: allVideos,
-      categories: data?.categories ?? [],
-      trendingCategories,
-      total: allVideos.length,
+      videos: filteredVideos,
+      categories: data?.categories?.map((c: string) => ({ id: c, label: c, icon: '▶' })) ?? [],
+      trendingCategories: catData?.trending ?? [],
+      total: filteredVideos.length,
       cursor: data?.cursor ?? null,
       hasMore,
     }),
-    [allVideos, data?.categories, trendingCategories, hasMore],
+    [filteredVideos, data?.categories, data?.cursor, catData?.trending, hasMore],
   );
 
   return (
@@ -158,9 +187,24 @@ export default function VideoHubPage() {
           <span>/</span>
           <span className="text-[var(--color-fg)]">Video Hub</span>
           <span className="ml-auto text-[10px]">
-            {allVideos.length > 0 && `${allVideos.length} videos`}
+            {filteredVideos.length > 0 && `${filteredVideos.length} videos`}
           </span>
         </div>
+
+        {/* Source filter bar with platform counts */}
+        {!loading && (
+          <div className="mb-4">
+            <p className="mb-2 text-[10px] font-medium tracking-wider text-[var(--color-muted)] uppercase">
+              Content Sources
+            </p>
+            <VideoSourceFilter
+              sources={filterSources}
+              activeSource={source}
+              onSourceChange={handleSourceChange}
+              loading={loading}
+            />
+          </div>
+        )}
 
         <VideoHubLayout
           feed={feed}
@@ -174,7 +218,7 @@ export default function VideoHubPage() {
           onSave={handleSave}
           onLoadMore={handleLoadMore}
           onSearch={handleSearch}
-          trendingCategories={trendingCategories}
+          trendingCategories={catData?.trending ?? []}
         />
       </div>
     </ErrorBoundary>

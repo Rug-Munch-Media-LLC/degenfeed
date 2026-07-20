@@ -78,7 +78,7 @@ const CHAIN_EXPLORERS: Record<string, string> = {
 const PURCHASE_SIG = "0xefbec170";
 
 /** setMetadata(string,string) */
-const SET_METADATA_SIG = "0x5d2a6b1c";
+const _SET_METADATA_SIG = "0x5d2a6b1c";
 
 // ─── Main Wrapper Functions ──────────────────────────────────────────────
 
@@ -295,7 +295,7 @@ function buildMetadataUri(source: ZoraContentInput, chain: string): string {
  * Encode a purchase(address,uint256) call for a creator coin.
  */
 function encodePurchaseCall(
-	contractAddress: string,
+	_contractAddress: string,
 	recipient: string,
 ): string {
 	// Simple ABI encoding without viem:

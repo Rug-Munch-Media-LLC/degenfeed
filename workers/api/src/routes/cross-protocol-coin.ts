@@ -709,8 +709,7 @@ async function postFarcasterCast(
 		if (env.NEYNAR_API_KEY) {
 			// Use the DegenFeed bot signer UUID (configured in env)
 			const signerUuid =
-				(env as Record<string, string | undefined>)["FARCASTER_SIGNER_UUID"] ||
-				"";
+				(env as Record<string, string | undefined>).FARCASTER_SIGNER_UUID || "";
 			if (signerUuid) {
 				const res = await fetch("https://api.neynar.com/v2/farcaster/cast", {
 					method: "POST",
@@ -747,11 +746,10 @@ async function postFarcasterCast(
 		}
 
 		// Fallback: build and submit a signed message via a bot signer key
-		const botSignerHex = (env as Record<string, string | undefined>)[
-			"FARCASTER_BOT_SIGNER_KEY"
-		];
+		const botSignerHex = (env as Record<string, string | undefined>)
+			.FARCASTER_BOT_SIGNER_KEY;
 		const botFid = Number(
-			(env as Record<string, string | undefined>)["FARCASTER_BOT_FID"] || 0,
+			(env as Record<string, string | undefined>).FARCASTER_BOT_FID || 0,
 		);
 		if (botSignerHex && botFid) {
 			const { buildFarcasterCastMessage } = await import(

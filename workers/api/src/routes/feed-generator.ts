@@ -38,7 +38,7 @@ const feedGen = new Hono<{ Bindings: Env }>();
 // service endpoint. Required for feed generator discovery.
 // ═══════════════════════════════════════════════════════════════════════
 
-feedGen.get("/.well-known/did.json", async (c) => {
+feedGen.get("/.well-known/did.json", async (_c) => {
 	const didDoc = buildFeedGeneratorDidDoc();
 
 	return new Response(JSON.stringify(didDoc), {
@@ -59,7 +59,7 @@ feedGen.get("/.well-known/did.json", async (c) => {
 
 feedGen.get(
 	"/api/bsky-feed/xrpc/app.bsky.feed.describeFeedGenerator",
-	async (c) => {
+	async (_c) => {
 		const description = describeFeedGenerator();
 
 		// The AT Protocol expects feeds array — we provide one feed
@@ -145,7 +145,7 @@ feedGen.get("/api/bsky-feed/xrpc/app.bsky.feed.getFeedSkeleton", async (c) => {
 // GET /api/bsky-feed/health — Feed generator health check
 // ═══════════════════════════════════════════════════════════════════════
 
-feedGen.get("/api/bsky-feed/health", async (c) => {
+feedGen.get("/api/bsky-feed/health", async (_c) => {
 	return noCacheJsonResponse({
 		ok: true,
 		did: describeFeedGenerator().did,

@@ -22,10 +22,10 @@
  */
 
 import {
-	fetchPeerTubeShorts,
-	fetchYouTubeShorts,
-	fetchTikTokShorts,
 	fetchInstagramReels,
+	fetchPeerTubeShorts,
+	fetchTikTokShorts,
+	fetchYouTubeShorts,
 	type ShortVideoItem,
 } from "@degenfeed/shorts-provider";
 import type { Env } from "../index";
@@ -121,14 +121,26 @@ export class UnifiedShortsFeed {
 	 */
 	async getFeed(opts: UnifiedFeedOptions): Promise<UnifiedShortFeed> {
 		const {
-			sources = ["activitypub", "atproto", "nostr", "farcaster", "lens", "zora", "peertube", "youtube", "tiktok", "instagram", "degenfeed"],
+			sources = [
+				"activitypub",
+				"atproto",
+				"nostr",
+				"farcaster",
+				"lens",
+				"zora",
+				"peertube",
+				"youtube",
+				"tiktok",
+				"instagram",
+				"degenfeed",
+			] as FeedSource[],
 			sort = "trending",
 			limit = 20,
 			cursor,
 			excludeIds = [],
 		} = opts;
 
-		const startedAt = Date.now();
+		const _startedAt = Date.now();
 		const fetchPromises = sources.map(async (source) => {
 			try {
 				const sourceShorts = await this.fetchSource(source, limit * 2);
@@ -141,8 +153,14 @@ export class UnifiedShortsFeed {
 
 		const results = await Promise.allSettled(fetchPromises);
 		const sourceContents = results
-			.filter((r): r is PromiseFulfilledResult<{ source: string; shorts: ShortVideo[]; count: number }> =>
-				r.status === "fulfilled"
+			.filter(
+				(
+					r,
+				): r is PromiseFulfilledResult<{
+					source: FeedSource;
+					shorts: ShortVideo[];
+					count: number;
+				}> => r.status === "fulfilled",
 			)
 			.map((r) => r.value);
 
@@ -180,7 +198,8 @@ export class UnifiedShortsFeed {
 
 		return {
 			shorts: paginated,
-			nextCursor: paginated.length > 0 ? paginated[paginated.length - 1]?.id : undefined,
+			nextCursor:
+				paginated.length > 0 ? paginated[paginated.length - 1]?.id : undefined,
 			sources: sourceCounts,
 			total: ranked.length,
 			hasMore: ranked.length > limit,
@@ -191,10 +210,7 @@ export class UnifiedShortsFeed {
 	/**
 	 * Fetch shorts from a single protocol source.
 	 */
-	async fetchSource(
-		source: FeedSource,
-		limit: number,
-	): Promise<ShortVideo[]> {
+	async fetchSource(source: FeedSource, limit: number): Promise<ShortVideo[]> {
 		switch (source) {
 			case "activitypub":
 				return this.fetchActivityPubShorts(limit);
@@ -209,13 +225,25 @@ export class UnifiedShortsFeed {
 			case "zora":
 				return this.fetchZoraShorts(limit);
 			case "peertube":
-				return this.mapShortVideoItems(await fetchPeerTubeShorts(limit), "peertube");
+				return this.mapShortVideoItems(
+					await fetchPeerTubeShorts(limit),
+					"peertube",
+				);
 			case "youtube":
-				return this.mapShortVideoItems(await fetchYouTubeShorts(limit), "youtube");
+				return this.mapShortVideoItems(
+					await fetchYouTubeShorts(limit),
+					"youtube",
+				);
 			case "tiktok":
-				return this.mapShortVideoItems(await fetchTikTokShorts(limit), "tiktok");
+				return this.mapShortVideoItems(
+					await fetchTikTokShorts(limit),
+					"tiktok",
+				);
 			case "instagram":
-				return this.mapShortVideoItems(await fetchInstagramReels(limit), "instagram");
+				return this.mapShortVideoItems(
+					await fetchInstagramReels(limit),
+					"instagram",
+				);
 			case "degenfeed":
 				return this.fetchDegenFeedShorts(limit);
 			default:
@@ -228,7 +256,8 @@ export class UnifiedShortsFeed {
 	async fetchActivityPubShorts(limit: number): Promise<ShortVideo[]> {
 		// 1. Fetch from our GoToSocial instance (Loops/Pixelfed compatible)
 		const apShorts: ShortVideo[] = [];
-		const instanceUrl = this.env.GTS_INSTANCE_URL || "https://social.degenfeed.xyz";
+		const instanceUrl =
+			this.env.GTS_INSTANCE_URL || "https://social.degenfeed.xyz";
 
 		try {
 			// Query the federated timeline for video posts
@@ -269,8 +298,12 @@ export class UnifiedShortsFeed {
 						const hashtags = post.tags?.map((t) => t.name) ?? [];
 						apShorts.push({
 							id: `activitypub:${post.id}:${media.id}`,
-							title: media.description || post.content?.replace(/<[^>]+>/g, "").slice(0, 100) || "Video",
-							caption: post.content?.replace(/<[^>]+>/g, "").slice(0, 500) || "",
+							title:
+								media.description ||
+								post.content?.replace(/<[^>]+>/g, "").slice(0, 100) ||
+								"Video",
+							caption:
+								post.content?.replace(/<[^>]+>/g, "").slice(0, 500) || "",
 							videoUrl: media.url,
 							thumbnailUrl: media.preview_url || "",
 							duration: media.meta?.duration || 30,
@@ -281,7 +314,9 @@ export class UnifiedShortsFeed {
 								avatar: post.account.avatar,
 							},
 							publishedAt: new Date(post.created_at).getTime(),
-							protocols: { activitypub: `${instanceUrl}/@${post.account.username}/${post.id}` },
+							protocols: {
+								activitypub: `${instanceUrl}/@${post.account.username}/${post.id}`,
+							},
 							engagement: {
 								likes: (post.favourites_count ?? 0) + (post.reblogs_count ?? 0),
 								views: 0,
@@ -326,7 +361,11 @@ export class UnifiedShortsFeed {
 								createdAt: string;
 								embed?: {
 									$type: string;
-									video?: { $type?: string; ref?: { $link?: string }; mimeType?: string };
+									video?: {
+										$type?: string;
+										ref?: { $link?: string };
+										mimeType?: string;
+									};
 									playlist?: string;
 								};
 							};
@@ -338,18 +377,26 @@ export class UnifiedShortsFeed {
 
 				for (const item of data?.feed ?? []) {
 					const embed = item.post.record.embed;
-					if (!embed || (embed.$type !== "app.bsky.embed.video" && embed.$type !== "app.bsky.embed.video#main")) {
+					if (
+						!embed ||
+						(embed.$type !== "app.bsky.embed.video" &&
+							embed.$type !== "app.bsky.embed.video#main")
+					) {
 						continue;
 					}
 
-					const videoUrl = embed.playlist || `https://video.bsky.app/watch/${item.post.uri.split("/").pop()}`;
+					const videoUrl =
+						embed.playlist ||
+						`https://video.bsky.app/watch/${item.post.uri.split("/").pop()}`;
 					if (!videoUrl) continue;
 
-					const hashtags = item.post.record.text.match(/#\w+/g)?.map((t) => t.slice(1)) ?? [];
+					const hashtags =
+						item.post.record.text.match(/#\w+/g)?.map((t) => t.slice(1)) ?? [];
 
 					atShorts.push({
 						id: `atproto:${item.post.uri}`,
-						title: item.post.record.text.split("\n")[0]?.slice(0, 100) || "Video",
+						title:
+							item.post.record.text.split("\n")[0]?.slice(0, 100) || "Video",
 						caption: item.post.record.text.slice(0, 500),
 						videoUrl,
 						thumbnailUrl: `https://og.bsky.app/${item.post.uri.split("/").pop()}`,
@@ -361,7 +408,9 @@ export class UnifiedShortsFeed {
 							avatar: item.post.author.avatar,
 						},
 						publishedAt: new Date(item.post.record.createdAt).getTime(),
-						protocols: { atproto: `https://bsky.app/profile/${item.post.author.handle}/post/${item.post.uri.split("/").pop()}` },
+						protocols: {
+							atproto: `https://bsky.app/profile/${item.post.author.handle}/post/${item.post.uri.split("/").pop()}`,
+						},
 						engagement: {
 							likes: (item.post.likeCount ?? 0) + (item.post.repostCount ?? 0),
 							views: 0,
@@ -384,12 +433,17 @@ export class UnifiedShortsFeed {
 		const relayUrls = (
 			this.env.RELAY_URLS ||
 			"wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net"
-		).split(",").map((u) => u.trim()).filter(Boolean);
+		)
+			.split(",")
+			.map((u) => u.trim())
+			.filter(Boolean);
 
 		// Use relay.sc bridge for HTTP-accessible Nostr queries
 		for (const relay of relayUrls.slice(0, 2)) {
 			try {
-				const relayHttpUrl = relay.replace("wss://", "https://").replace("ws://", "http://");
+				const relayHttpUrl = relay
+					.replace("wss://", "https://")
+					.replace("ws://", "http://");
 				const res = await fetch(
 					`${relayHttpUrl}/api/v1/events?kind=1&limit=${Math.min(limit, 20)}`,
 				);
@@ -406,15 +460,22 @@ export class UnifiedShortsFeed {
 					for (const evt of events) {
 						// Check for video URLs in tags (imeta or i tags with video URLs)
 						const videoTags = evt.tags.filter(
-							(t) => (t[0] === "i" || t[0] === "imeta") && t[1]?.match(/\.(mp4|webm|mov|avi)$/i),
+							(t) =>
+								(t[0] === "i" || t[0] === "imeta") &&
+								t[1]?.match(/\.(mp4|webm|mov|avi)$/i),
 						);
 						if (videoTags.length === 0) {
 							// Also check content for direct video URLs
-							const urlMatch = evt.content.match(/(https?:\/\/[^\s]+\.(mp4|webm|mov))/i);
+							const urlMatch = evt.content.match(
+								/(https?:\/\/[^\s]+\.(mp4|webm|mov))/i,
+							);
 							if (!urlMatch) continue;
 						}
 
-						const hashtags = evt.tags.filter((t) => t[0] === "t").map((t) => t[1]);
+						const hashtags: string[] = evt.tags
+							.filter((t) => t[0] === "t")
+							.map((t) => t[1])
+							.filter((t): t is string => t !== undefined);
 
 						nostrShorts.push({
 							id: `nostr:${evt.id}`,
@@ -435,9 +496,7 @@ export class UnifiedShortsFeed {
 						});
 					}
 				}
-			} catch {
-				continue;
-			}
+			} catch {}
 		}
 
 		return nostrShorts.slice(0, limit);
@@ -460,7 +519,12 @@ export class UnifiedShortsFeed {
 				const data = (await res.json()) as {
 					casts?: Array<{
 						hash: string;
-						author: { fid: number; username: string; display_name?: string; pfp_url?: string };
+						author: {
+							fid: number;
+							username: string;
+							display_name?: string;
+							pfp_url?: string;
+						};
 						text: string;
 						embeds?: Array<{ url: string }>;
 						reactions?: { likes_count: number; recasts_count: number };
@@ -488,9 +552,13 @@ export class UnifiedShortsFeed {
 							avatar: cast.author.pfp_url,
 						},
 						publishedAt: new Date(cast.timestamp).getTime(),
-						protocols: { farcaster: `https://warpcast.com/${cast.author.username}/${cast.hash}` },
+						protocols: {
+							farcaster: `https://warpcast.com/${cast.author.username}/${cast.hash}`,
+						},
 						engagement: {
-							likes: (cast.reactions?.likes_count ?? 0) + (cast.reactions?.recasts_count ?? 0),
+							likes:
+								(cast.reactions?.likes_count ?? 0) +
+								(cast.reactions?.recasts_count ?? 0),
 							views: 0,
 							tips: 0,
 						},
@@ -510,7 +578,8 @@ export class UnifiedShortsFeed {
 		const lensShorts: ShortVideo[] = [];
 
 		try {
-			const lensApiUrl = this.env.LENS_API_URL || "https://api-v2.lens.dev/graphql";
+			const lensApiUrl =
+				this.env.LENS_API_URL || "https://api-v2.lens.dev/graphql";
 			const query = `
 				query ExplorePublications {
 					explorePublications(
@@ -550,9 +619,15 @@ export class UnifiedShortsFeed {
 								metadata?: {
 									name?: string;
 									content?: string;
-									media?: Array<{ original?: { url: string; mimeType: string } }>;
+									media?: Array<{
+										original?: { url: string; mimeType: string };
+									}>;
 								};
-								profile?: { id: string; handle: string; metadata?: { picture?: { optimized?: { uri: string } } } };
+								profile?: {
+									id: string;
+									handle: string;
+									metadata?: { picture?: { optimized?: { uri: string } } };
+								};
 								stats?: { reactions: number; totalUpvotes: number };
 								createdAt: string;
 							}>;
@@ -561,14 +636,17 @@ export class UnifiedShortsFeed {
 				};
 
 				for (const item of data?.data?.explorePublications?.items ?? []) {
-					const videoMedia = item.metadata?.media?.find(
-						(m) => m.original?.mimeType?.startsWith("video/"),
+					const videoMedia = item.metadata?.media?.find((m) =>
+						m.original?.mimeType?.startsWith("video/"),
 					);
 					if (!videoMedia?.original?.url) continue;
 
 					lensShorts.push({
 						id: `lens:${item.id}`,
-						title: item.metadata?.name || item.metadata?.content?.split("\n")[0]?.slice(0, 100) || "Video",
+						title:
+							item.metadata?.name ||
+							item.metadata?.content?.split("\n")[0]?.slice(0, 100) ||
+							"Video",
 						caption: item.metadata?.content?.slice(0, 500) || "",
 						videoUrl: videoMedia.original.url,
 						thumbnailUrl: item.profile?.metadata?.picture?.optimized?.uri || "",
@@ -582,7 +660,8 @@ export class UnifiedShortsFeed {
 						publishedAt: new Date(item.createdAt).getTime(),
 						protocols: { lens: `https://hey.xyz/posts/${item.id}` },
 						engagement: {
-							likes: (item.stats?.totalUpvotes ?? 0) + (item.stats?.reactions ?? 0),
+							likes:
+								(item.stats?.totalUpvotes ?? 0) + (item.stats?.reactions ?? 0),
 							views: 0,
 							tips: 0,
 						},
@@ -652,7 +731,7 @@ export class UnifiedShortsFeed {
 
 				for (const node of data?.data?.tokens?.nodes ?? []) {
 					const t = node?.token;
-					if (!t || !t.content?.mimeType?.startsWith("video/")) continue;
+					if (!t?.content?.mimeType?.startsWith("video/")) continue;
 
 					zoraShorts.push({
 						id: `zora:${t.tokenId}`,
@@ -688,7 +767,8 @@ export class UnifiedShortsFeed {
 	async fetchPeerTubeV2Shorts(limit: number): Promise<ShortVideo[]> {
 		// Enhanced PeerTube fetcher using the instance API
 		const ptShorts: ShortVideo[] = [];
-		const instanceUrl = this.env.PEERTUBE_INSTANCE_URL || "https://video.degenfeed.xyz";
+		const instanceUrl =
+			this.env.PEERTUBE_INSTANCE_URL || "https://video.degenfeed.xyz";
 
 		try {
 			const res = await fetch(
@@ -705,7 +785,11 @@ export class UnifiedShortsFeed {
 						previewPath?: string;
 						duration: number;
 						url: string;
-						channel?: { displayName: string; name: string; avatar?: { path: string } };
+						channel?: {
+							displayName: string;
+							name: string;
+							avatar?: { path: string };
+						};
 						views: number;
 						likes: number;
 						tags?: string[];
@@ -714,7 +798,11 @@ export class UnifiedShortsFeed {
 				};
 
 				for (const video of data.data) {
-					if (video.duration > 120 && !video.name.toLowerCase().includes("shorts")) continue;
+					if (
+						video.duration > 120 &&
+						!video.name.toLowerCase().includes("shorts")
+					)
+						continue;
 
 					ptShorts.push({
 						id: `peertube:${video.uuid}`,
@@ -730,14 +818,19 @@ export class UnifiedShortsFeed {
 						hashtags: video.tags ?? [],
 						creator: {
 							address: `peertube:${video.channel?.name || "unknown"}`,
-							handle: video.channel?.displayName || video.channel?.name || "unknown",
+							handle:
+								video.channel?.displayName || video.channel?.name || "unknown",
 							avatar: video.channel?.avatar?.path
 								? `${instanceUrl}${video.channel.avatar.path}`
 								: undefined,
 						},
 						publishedAt: new Date(video.publishedAt).getTime(),
 						protocols: { peertube: video.url },
-						engagement: { likes: video.likes ?? 0, views: video.views ?? 0, tips: 0 },
+						engagement: {
+							likes: video.likes ?? 0,
+							views: video.views ?? 0,
+							tips: 0,
+						},
 						contentHash: `pt:${video.uuid}`,
 					});
 				}
@@ -755,11 +848,18 @@ export class UnifiedShortsFeed {
 
 		try {
 			// List all shorts from KV
-			const listResult = await this.env.SHORTS?.list({ prefix: "shorts:", limit });
+			const listResult = await this.env.SHORTS?.list({
+				prefix: "shorts:",
+				limit,
+			});
 
 			if (listResult?.keys) {
 				for (const key of listResult.keys) {
-					if (key.name.startsWith("shorts:by_") || key.name.includes(":comments:")) continue;
+					if (
+						key.name.startsWith("shorts:by_") ||
+						key.name.includes(":comments:")
+					)
+						continue;
 
 					try {
 						const raw = await this.env.SHORTS?.get(key.name);
@@ -771,9 +871,7 @@ export class UnifiedShortsFeed {
 								dfShorts.push(short);
 							}
 						}
-					} catch {
-						continue;
-					}
+					} catch {}
 				}
 			}
 		} catch {
@@ -816,7 +914,8 @@ export class UnifiedShortsFeed {
 			};
 
 			// Keep the one with higher total engagement
-			const existingScore = existing.engagement.likes + existing.engagement.views;
+			const existingScore =
+				existing.engagement.likes + existing.engagement.views;
 			const newScore = short.engagement.likes + short.engagement.views;
 
 			if (newScore > existingScore) {
@@ -859,10 +958,12 @@ export class UnifiedShortsFeed {
 			case "for-you":
 				// Weighted: 60% engagement, 30% freshness, 10% source diversity
 				sorted.sort((a, b) => {
-					const aScore = this.computeTrendingScore(a) * 0.6 +
+					const aScore =
+						this.computeTrendingScore(a) * 0.6 +
 						this.computeFreshness(a) * 0.3 +
 						this.computeDiversityBonus(a) * 0.1;
-					const bScore = this.computeTrendingScore(b) * 0.6 +
+					const bScore =
+						this.computeTrendingScore(b) * 0.6 +
 						this.computeFreshness(b) * 0.3 +
 						this.computeDiversityBonus(b) * 0.1;
 					return bScore - aScore;
@@ -881,8 +982,11 @@ export class UnifiedShortsFeed {
 	 */
 	private computeTrendingScore(short: ShortVideo): number {
 		const ageHours = Math.max(1, (Date.now() - short.publishedAt) / 3600000);
-		const engagement = short.engagement.likes + short.engagement.views * 0.01 + short.engagement.tips * 0.5;
-		return engagement / Math.pow(ageHours, 1.2);
+		const engagement =
+			short.engagement.likes +
+			short.engagement.views * 0.01 +
+			short.engagement.tips * 0.5;
+		return engagement / ageHours ** 1.2;
 	}
 
 	/**
@@ -927,7 +1031,9 @@ export class UnifiedShortsFeed {
 				avatar: item.authorAvatar,
 			},
 			publishedAt: item.publishedAt,
-			protocols: { [source]: item.sourceUrl } as Partial<Record<ShortProtocol, string>>,
+			protocols: { [source]: item.sourceUrl } as Partial<
+				Record<ShortProtocol, string>
+			>,
 			engagement: { likes: item.likes, views: item.views, tips: 0 },
 			contentHash: `${source}:${item.id}`,
 		}));

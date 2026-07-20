@@ -15,8 +15,6 @@
  * @see https://github.com/farcasterxyz/protocol/discussions/268
  */
 
-import type { Env } from "../index";
-
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export type LiveActivityType =

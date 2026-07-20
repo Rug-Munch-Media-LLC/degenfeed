@@ -19,13 +19,8 @@
 
 import type { Protocol } from "@degenfeed/types";
 import type { Env } from "../index";
-import {
-	alertBridgeFailure,
-} from "./alerts";
-import {
-	recordBridgeOperation,
-	withReliability,
-} from "./bridge-reliability";
+import { alertBridgeFailure } from "./alerts";
+import { recordBridgeOperation, withReliability } from "./bridge-reliability";
 import type { MediaAttachment } from "./format-translator";
 import type { PublishInput } from "./publish-orchestrator";
 
@@ -979,7 +974,7 @@ async function genericBridgePublish(
 				text =
 					bodyLimit > 0
 						? `${source.text.slice(0, bodyLimit)}...${footer}`
-						: source.text.slice(0, maxLen - 3 - footerLen) + "...";
+						: `${source.text.slice(0, maxLen - 3 - footerLen)}...`;
 			} else {
 				text = textWithFooter;
 			}
@@ -1393,15 +1388,8 @@ async function fetchRepliesFromNostr(
 	_auth: Record<string, string>,
 	env: Env,
 ): Promise<CrossProtocolReply[]> {
-		const reliableResult = reliableFetch<
-			{
-				parentUri: string;
-				sourceProtocol: string;
-				replyNativeId: string;
-				text: string;
-				createdAt: number;
-			}[]
-		>(
+	return (
+		reliableFetch<CrossProtocolReply[]>(
 			"nostr",
 			"fetchRepliesFromNostr",
 			async () => {
@@ -1425,7 +1413,7 @@ async function fetchRepliesFromNostr(
 						}>;
 					};
 					const replies = bandData.thread ?? [];
-					return replies.slice(1).map((reply) => ({
+					return replies.slice(1).map((reply): CrossProtocolReply => ({
 						parentUri: `df://nostr:${nativeId}`,
 						sourceProtocol: "nostr",
 						replyNativeId: reply.id ?? "",
@@ -1438,7 +1426,7 @@ async function fetchRepliesFromNostr(
 				const events = await pool.list([{ "#e": [nativeId], kinds: [1] }]);
 				pool.disconnectAll();
 				return events.map(
-					(ev: { id?: string; content?: string; created_at?: number }) => ({
+					(ev: { id?: string; content?: string; created_at?: number }): CrossProtocolReply => ({
 						parentUri: `df://nostr:${nativeId}`,
 						sourceProtocol: "nostr",
 						replyNativeId: ev.id ?? "",
@@ -1477,7 +1465,7 @@ async function fetchRepliesFromFarcaster(
 						hash?: string;
 					}>;
 				};
-				return (data.messages ?? []).map((msg) => ({
+				return (data.messages ?? []).map((msg): CrossProtocolReply => ({
 					parentUri: `df://farcaster:${nativeId}`,
 					sourceProtocol: "farcaster",
 					replyNativeId: msg.hash ?? "",
@@ -1519,7 +1507,7 @@ async function fetchRepliesFromLens(
 						};
 					};
 				};
-				return (data.data?.publications?.items ?? []).map((pub) => ({
+				return (data.data?.publications?.items ?? []).map((pub): CrossProtocolReply => ({
 					parentUri: `df://lens:${nativeId}`,
 					sourceProtocol: "lens",
 					replyNativeId: pub.id,

@@ -75,51 +75,6 @@ import { handleContentResolve } from "./routes/content";
 import { creatorConfig } from "./routes/creator-config";
 import { creatorVideos } from "./routes/creator-videos";
 import { crossProtocolCoin } from "./routes/cross-protocol-coin";
-
-// ── New protocol integration route handlers ──────────────────
-import {
-	handleDiscordConnect,
-	handleDiscordChannelAnnounce,
-	handleDiscordChannelsList,
-	handleDiscordDisconnect,
-	handleDiscordBridgeMessage,
-} from "./routes/discord";
-import {
-	handleMatrixConnect,
-	handleMatrixSendMessage,
-	handleMatrixRoomsList,
-	handleMatrixDisconnect,
-	handleMatrixBridgeMessages,
-} from "./routes/matrix";
-import {
-	handleWebhookCreate,
-	handleWebhookTest,
-	handleWebhookList,
-	handleWebhookDelete,
-	handleWebhookTrigger,
-} from "./routes/webhooks";
-import {
-	handleNewsletterSend,
-	handleNewsletterSubscribersList,
-	handleNewsletterSubscriberRemove,
-	handleNewsletterCreateDraft,
-	handleNewsletterSendTest,
-} from "./routes/newsletter-send";
-import {
-	handleGitHubConnect,
-	handleGitHubRepoActivity,
-	handleGitHubDisconnect,
-	handleGitHubConnectedAccounts,
-	handleGitHubBridgeActivity,
-} from "./routes/github-connect";
-import {
-	handleNewsletterBridgeConnect,
-	handleNewsletterBridgeDisconnect,
-	handleNewsletterBridgeList,
-	handleNewsletterBridgePoll,
-	handleNewsletterBridgeAutoPoll,
-	handleNewsletterBridgeStats,
-} from "./routes/newsletter-bridge";
 import { handleCrossReply } from "./routes/cross-reply";
 import {
 	handleAltFeed,
@@ -148,6 +103,14 @@ import {
 	handleDigestUnsubscribeEmail,
 	handleDigestYesterday,
 } from "./routes/digest";
+// ── New protocol integration route handlers ──────────────────
+import {
+	handleDiscordBridgeMessage,
+	handleDiscordChannelAnnounce,
+	handleDiscordChannelsList,
+	handleDiscordConnect,
+	handleDiscordDisconnect,
+} from "./routes/discord";
 import {
 	handleDiscover,
 	handleDiscoverCommunities,
@@ -189,7 +152,6 @@ import {
 	handleEverythingFeed,
 	handlePerProtocolCategoryFeed,
 } from "./routes/feed-category";
-import { handleUnifiedFeed } from "./routes/feed-unified";
 import {
 	handleAdjustTopic,
 	handleClearTopic,
@@ -214,12 +176,30 @@ import {
 	handleXpAward,
 } from "./routes/gamification";
 import {
+	handleGitHubBridgeActivity,
+	handleGitHubConnect,
+	handleGitHubConnectedAccounts,
+	handleGitHubDisconnect,
+	handleGitHubRepoActivity,
+} from "./routes/github-connect";
+import {
 	handleProposalCreate,
 	handleProposalResults,
 	handleProposalsList,
 	handleProposalVote,
 } from "./routes/governance";
-import { handleFullHealth, handleProtocolsHealth, handleRelaysHealth } from "./routes/health";
+import {
+	handleFullHealth,
+	handleProtocolsHealth,
+	handleRelaysHealth,
+} from "./routes/health";
+import {
+	handleHwWalletChallenge,
+	handleHwWalletStatus,
+	handleHwWalletToggle,
+	handleHwWalletVerify,
+	handleHwWalletVerifyOnLogin,
+} from "./routes/hw-wallet-2fa";
 import {
 	handleGetIdentityProfile,
 	handleLinkIdentity,
@@ -266,6 +246,13 @@ import {
 	handleMastodonTipStats,
 } from "./routes/mastodon-tip";
 import {
+	handleMatrixBridgeMessages,
+	handleMatrixConnect,
+	handleMatrixDisconnect,
+	handleMatrixRoomsList,
+	handleMatrixSendMessage,
+} from "./routes/matrix";
+import {
 	handleConversationMessages,
 	handleConversations,
 	handleDeleteMessage,
@@ -288,6 +275,21 @@ import {
 	handleNewsletterStatus,
 	handleNewsletterSubscribe,
 } from "./routes/newsletter";
+import {
+	handleNewsletterBridgeAutoPoll,
+	handleNewsletterBridgeConnect,
+	handleNewsletterBridgeDisconnect,
+	handleNewsletterBridgeList,
+	handleNewsletterBridgePoll,
+	handleNewsletterBridgeStats,
+} from "./routes/newsletter-bridge";
+import {
+	handleNewsletterCreateDraft,
+	handleNewsletterSend,
+	handleNewsletterSendTest,
+	handleNewsletterSubscriberRemove,
+	handleNewsletterSubscribersList,
+} from "./routes/newsletter-send";
 import { handleMarkAllRead, handleNotifications } from "./routes/notifications";
 import { handleNotify } from "./routes/notify";
 import {
@@ -365,9 +367,9 @@ import {
 	handleShortsBySource,
 	handleShortsFeed,
 	handleShortsForYou,
-	handleShortsTrending,
 	handleShortsShare,
 	handleShortsTip,
+	handleShortsTrending,
 	handleUnifiedFeed,
 	handleUnifiedFeedBySource,
 	handleUnifiedMint,
@@ -418,6 +420,7 @@ import {
 	handleTokenGateVerify,
 } from "./routes/token-gate";
 import { handleTokenSSE, handleTokenWebSocket } from "./routes/token-websocket";
+import totpRoutes from "./routes/totp";
 import { handleTranslate } from "./routes/translate";
 import {
 	handleUnifiedTipActivity,
@@ -433,15 +436,6 @@ import {
 } from "./routes/visual-feed";
 import { handleWalletNonce, handleWalletVerify } from "./routes/wallet";
 import {
-	handleHwWalletChallenge,
-	handleHwWalletStatus,
-	handleHwWalletToggle,
-	handleHwWalletVerify,
-	handleHwWalletVerifyOnLogin,
-} from "./routes/hw-wallet-2fa";
-import { handleX402Paywall, handleX402Verify } from "./routes/x402";
-import totpRoutes from "./routes/totp";
-import {
 	handleWebAuthnAuthenticateBegin,
 	handleWebAuthnAuthenticateComplete,
 	handleWebAuthnDeleteCredential,
@@ -450,6 +444,14 @@ import {
 	handleWebAuthnRegisterComplete,
 	handleWebAuthnRenameCredential,
 } from "./routes/webauthn";
+import {
+	handleWebhookCreate,
+	handleWebhookDelete,
+	handleWebhookList,
+	handleWebhookTest,
+	handleWebhookTrigger,
+} from "./routes/webhooks";
+import { handleX402Paywall, handleX402Verify } from "./routes/x402";
 import youtubeRoutes from "./routes/youtube";
 import zoraVideoRoutes from "./routes/zora-video";
 
@@ -772,9 +774,7 @@ app.post("/api/shorts/create", async (c) =>
 app.post("/api/shorts/publish", async (c) =>
 	handleUnifiedPublish(c.req.raw, c.env),
 );
-app.post("/api/shorts/mint", async (c) =>
-	handleUnifiedMint(c.req.raw, c.env),
-);
+app.post("/api/shorts/mint", async (c) => handleUnifiedMint(c.req.raw, c.env));
 
 // ── Unified multi-protocol feed ──────────────────
 app.get("/api/shorts/unified/feed", async (c) =>
@@ -785,9 +785,7 @@ app.get("/api/shorts/unified/:source", async (c) =>
 );
 
 // ── Cross-platform actions on shorts ─────────────
-app.post("/api/shorts/:id/tip", async (c) =>
-	handleShortsTip(c.req.raw, c.env),
-);
+app.post("/api/shorts/:id/tip", async (c) => handleShortsTip(c.req.raw, c.env));
 app.post("/api/shorts/:id/share", async (c) =>
 	handleShortsShare(c.req.raw, c.env),
 );
@@ -937,7 +935,20 @@ app.post("/api/cross-protocol-bridge/stream/start", async (c) => {
 		if (!body.streamId) {
 			return jsonResponse({ error: "streamId required" }, 400);
 		}
-		startBridge(c.env, body.streamId, (body.announcementResults ?? {}) as Record<string, { ok: boolean; protocol: string; id?: string; url?: string; error?: string }>);
+		startBridge(
+			c.env,
+			body.streamId,
+			(body.announcementResults ?? {}) as Record<
+				string,
+				{
+					ok: boolean;
+					protocol: string;
+					id?: string;
+					url?: string;
+					error?: string;
+				}
+			>,
+		);
 		return jsonResponse({ ok: true, streamId: body.streamId });
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
@@ -945,13 +956,13 @@ app.post("/api/cross-protocol-bridge/stream/start", async (c) => {
 	}
 });
 app.post("/api/cross-protocol-bridge/stream/stop", async (c) => {
-		const { stopBridge } = await import("./lib/cross-protocol-chat-bridge");
-		try {
-			const body = (await c.req.json()) as { streamId: string };
-			if (!body.streamId) {
-				return jsonResponse({ error: "streamId required" }, 400);
-			}
-			stopBridge(c.env, body.streamId);
+	const { stopBridge } = await import("./lib/cross-protocol-chat-bridge");
+	try {
+		const body = (await c.req.json()) as { streamId: string };
+		if (!body.streamId) {
+			return jsonResponse({ error: "streamId required" }, 400);
+		}
+		stopBridge(c.env, body.streamId);
 		return jsonResponse({ ok: true, streamId: body.streamId });
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
@@ -1657,15 +1668,21 @@ app.all("/api/newsletter/digest/*", async (c) =>
 );
 
 // ─── API: Newsletter Send (SendGrid/Mailgun/SMTP) ──────────
-app.post("/api/newsletter/send", async (c) => handleNewsletterSend(c.req.raw, c.env));
+app.post("/api/newsletter/send", async (c) =>
+	handleNewsletterSend(c.req.raw, c.env),
+);
 app.get("/api/newsletter/subscribers", async (c) =>
 	handleNewsletterSubscribersList(c.req.raw, c.env),
 );
 app.delete("/api/newsletter/subscriber", async (c) =>
 	handleNewsletterSubscriberRemove(c.req.raw, c.env),
 );
-app.post("/api/newsletter/draft", async (c) => handleNewsletterCreateDraft(c.req.raw, c.env));
-app.post("/api/newsletter/test", async (c) => handleNewsletterSendTest(c.req.raw, c.env));
+app.post("/api/newsletter/draft", async (c) =>
+	handleNewsletterCreateDraft(c.req.raw, c.env),
+);
+app.post("/api/newsletter/test", async (c) =>
+	handleNewsletterSendTest(c.req.raw, c.env),
+);
 
 // ─── API: Newsletter Bridge (Substack/Ghost) ───────────────
 app.post("/api/newsletter/bridge/connect", async (c) =>
@@ -1674,42 +1691,82 @@ app.post("/api/newsletter/bridge/connect", async (c) =>
 app.delete("/api/newsletter/bridge/disconnect", async (c) =>
 	handleNewsletterBridgeDisconnect(c.req.raw, c.env),
 );
-app.get("/api/newsletter/bridge/list", async (c) => handleNewsletterBridgeList(c.req.raw, c.env));
-app.post("/api/newsletter/bridge/poll", async (c) => handleNewsletterBridgePoll(c.req.raw, c.env));
+app.get("/api/newsletter/bridge/list", async (c) =>
+	handleNewsletterBridgeList(c.req.raw, c.env),
+);
+app.post("/api/newsletter/bridge/poll", async (c) =>
+	handleNewsletterBridgePoll(c.req.raw, c.env),
+);
 app.post("/api/newsletter/bridge/auto-poll", async (c) =>
 	handleNewsletterBridgeAutoPoll(c.req.raw, c.env),
 );
-app.get("/api/newsletter/bridge/stats", async (c) => handleNewsletterBridgeStats(c.req.raw, c.env));
+app.get("/api/newsletter/bridge/stats", async (c) =>
+	handleNewsletterBridgeStats(c.req.raw, c.env),
+);
 
 // ─── API: Discord Integration ─────────────────────────────
-app.post("/api/discord/connect", async (c) => handleDiscordConnect(c.req.raw, c.env));
+app.post("/api/discord/connect", async (c) =>
+	handleDiscordConnect(c.req.raw, c.env),
+);
 app.post("/api/discord/channel/announce", async (c) =>
 	handleDiscordChannelAnnounce(c.req.raw, c.env),
 );
-app.get("/api/discord/channels", async (c) => handleDiscordChannelsList(c.req.raw, c.env));
-app.delete("/api/discord/disconnect", async (c) => handleDiscordDisconnect(c.req.raw, c.env));
-app.post("/api/discord/bridge", async (c) => handleDiscordBridgeMessage(c.req.raw, c.env));
+app.get("/api/discord/channels", async (c) =>
+	handleDiscordChannelsList(c.req.raw, c.env),
+);
+app.delete("/api/discord/disconnect", async (c) =>
+	handleDiscordDisconnect(c.req.raw, c.env),
+);
+app.post("/api/discord/bridge", async (c) =>
+	handleDiscordBridgeMessage(c.req.raw, c.env),
+);
 
 // ─── API: Matrix Integration ───────────────────────────────
-app.post("/api/matrix/connect", async (c) => handleMatrixConnect(c.req.raw, c.env));
-app.post("/api/matrix/send", async (c) => handleMatrixSendMessage(c.req.raw, c.env));
-app.get("/api/matrix/rooms", async (c) => handleMatrixRoomsList(c.req.raw, c.env));
-app.delete("/api/matrix/disconnect", async (c) => handleMatrixDisconnect(c.req.raw, c.env));
-app.post("/api/matrix/bridge", async (c) => handleMatrixBridgeMessages(c.req.raw, c.env));
+app.post("/api/matrix/connect", async (c) =>
+	handleMatrixConnect(c.req.raw, c.env),
+);
+app.post("/api/matrix/send", async (c) =>
+	handleMatrixSendMessage(c.req.raw, c.env),
+);
+app.get("/api/matrix/rooms", async (c) =>
+	handleMatrixRoomsList(c.req.raw, c.env),
+);
+app.delete("/api/matrix/disconnect", async (c) =>
+	handleMatrixDisconnect(c.req.raw, c.env),
+);
+app.post("/api/matrix/bridge", async (c) =>
+	handleMatrixBridgeMessages(c.req.raw, c.env),
+);
 
 // ─── API: Webhook System ──────────────────────────────────
-app.post("/api/webhooks/create", async (c) => handleWebhookCreate(c.req.raw, c.env));
-app.post("/api/webhooks/test", async (c) => handleWebhookTest(c.req.raw, c.env));
+app.post("/api/webhooks/create", async (c) =>
+	handleWebhookCreate(c.req.raw, c.env),
+);
+app.post("/api/webhooks/test", async (c) =>
+	handleWebhookTest(c.req.raw, c.env),
+);
 app.get("/api/webhooks", async (c) => handleWebhookList(c.req.raw, c.env));
 app.delete("/api/webhooks", async (c) => handleWebhookDelete(c.req.raw, c.env));
-app.post("/api/webhooks/trigger", async (c) => handleWebhookTrigger(c.req.raw, c.env));
+app.post("/api/webhooks/trigger", async (c) =>
+	handleWebhookTrigger(c.req.raw, c.env),
+);
 
 // ─── API: GitHub Integration ─────────────────────────────
-app.post("/api/github/connect", async (c) => handleGitHubConnect(c.req.raw, c.env));
-app.post("/api/github/repo-activity", async (c) => handleGitHubRepoActivity(c.req.raw, c.env));
-app.delete("/api/github/disconnect", async (c) => handleGitHubDisconnect(c.req.raw, c.env));
-app.get("/api/github/accounts", async (c) => handleGitHubConnectedAccounts(c.req.raw, c.env));
-app.post("/api/github/bridge", async (c) => handleGitHubBridgeActivity(c.req.raw, c.env));
+app.post("/api/github/connect", async (c) =>
+	handleGitHubConnect(c.req.raw, c.env),
+);
+app.post("/api/github/repo-activity", async (c) =>
+	handleGitHubRepoActivity(c.req.raw, c.env),
+);
+app.delete("/api/github/disconnect", async (c) =>
+	handleGitHubDisconnect(c.req.raw, c.env),
+);
+app.get("/api/github/accounts", async (c) =>
+	handleGitHubConnectedAccounts(c.req.raw, c.env),
+);
+app.post("/api/github/bridge", async (c) =>
+	handleGitHubBridgeActivity(c.req.raw, c.env),
+);
 
 // ─── API: Digest (Daily) ───────────────────────────────────
 app.all("/api/digest/today", async (c) => handleDigestToday(c.req.raw, c.env));
@@ -2322,6 +2379,63 @@ app.all("/v1/newsletter/digest", async (c) =>
 	handleNewsletterDigest(c.req.raw, c.env),
 );
 
+// ─── V1: Newsletter Send ──────────────────────────────────
+app.post("/v1/newsletter/send", async (c) => handleNewsletterSend(c.req.raw, c.env));
+app.get("/v1/newsletter/subscribers", async (c) =>
+	handleNewsletterSubscribersList(c.req.raw, c.env),
+);
+app.delete("/v1/newsletter/subscriber", async (c) =>
+	handleNewsletterSubscriberRemove(c.req.raw, c.env),
+);
+app.post("/v1/newsletter/draft", async (c) => handleNewsletterCreateDraft(c.req.raw, c.env));
+app.post("/v1/newsletter/test", async (c) => handleNewsletterSendTest(c.req.raw, c.env));
+
+// ─── V1: Newsletter Bridge (Substack/Ghost) ───────────────
+app.post("/v1/newsletter/bridge/connect", async (c) =>
+	handleNewsletterBridgeConnect(c.req.raw, c.env),
+);
+app.delete("/v1/newsletter/bridge/disconnect", async (c) =>
+	handleNewsletterBridgeDisconnect(c.req.raw, c.env),
+);
+app.get("/v1/newsletter/bridge/list", async (c) => handleNewsletterBridgeList(c.req.raw, c.env));
+app.post("/v1/newsletter/bridge/poll", async (c) => handleNewsletterBridgePoll(c.req.raw, c.env));
+app.post("/v1/newsletter/bridge/auto-poll", async (c) =>
+	handleNewsletterBridgeAutoPoll(c.req.raw, c.env),
+);
+app.get("/v1/newsletter/bridge/stats", async (c) =>
+	handleNewsletterBridgeStats(c.req.raw, c.env),
+);
+
+// ─── V1: Discord Integration ─────────────────────────────
+app.post("/v1/discord/connect", async (c) => handleDiscordConnect(c.req.raw, c.env));
+app.post("/v1/discord/channel/announce", async (c) =>
+	handleDiscordChannelAnnounce(c.req.raw, c.env),
+);
+app.get("/v1/discord/channels", async (c) => handleDiscordChannelsList(c.req.raw, c.env));
+app.delete("/v1/discord/disconnect", async (c) => handleDiscordDisconnect(c.req.raw, c.env));
+app.post("/v1/discord/bridge", async (c) => handleDiscordBridgeMessage(c.req.raw, c.env));
+
+// ─── V1: Matrix Integration ───────────────────────────────
+app.post("/v1/matrix/connect", async (c) => handleMatrixConnect(c.req.raw, c.env));
+app.post("/v1/matrix/send", async (c) => handleMatrixSendMessage(c.req.raw, c.env));
+app.get("/v1/matrix/rooms", async (c) => handleMatrixRoomsList(c.req.raw, c.env));
+app.delete("/v1/matrix/disconnect", async (c) => handleMatrixDisconnect(c.req.raw, c.env));
+app.post("/v1/matrix/bridge", async (c) => handleMatrixBridgeMessages(c.req.raw, c.env));
+
+// ─── V1: Webhook System ──────────────────────────────────
+app.post("/v1/webhooks/create", async (c) => handleWebhookCreate(c.req.raw, c.env));
+app.post("/v1/webhooks/test", async (c) => handleWebhookTest(c.req.raw, c.env));
+app.get("/v1/webhooks", async (c) => handleWebhookList(c.req.raw, c.env));
+app.delete("/v1/webhooks", async (c) => handleWebhookDelete(c.req.raw, c.env));
+app.post("/v1/webhooks/trigger", async (c) => handleWebhookTrigger(c.req.raw, c.env));
+
+// ─── V1: GitHub Integration ─────────────────────────────
+app.post("/v1/github/connect", async (c) => handleGitHubConnect(c.req.raw, c.env));
+app.post("/v1/github/repo-activity", async (c) => handleGitHubRepoActivity(c.req.raw, c.env));
+app.delete("/v1/github/disconnect", async (c) => handleGitHubDisconnect(c.req.raw, c.env));
+app.get("/v1/github/accounts", async (c) => handleGitHubConnectedAccounts(c.req.raw, c.env));
+app.post("/v1/github/bridge", async (c) => handleGitHubBridgeActivity(c.req.raw, c.env));
+
 // ─── V1: Digest ──────────────────────────────────────────────
 app.all("/v1/digest/today", async (c) => handleDigestToday(c.req.raw, c.env));
 app.all("/v1/digest/yesterday", async (c) =>
@@ -2858,7 +2972,20 @@ app.post("/v1/cross-protocol-bridge/stream/start", async (c) => {
 		};
 		if (!body.streamId)
 			return jsonResponse({ error: "streamId required" }, 400);
-		startBridge(c.env, body.streamId, (body.announcementResults ?? {}) as Record<string, { ok: boolean; protocol: string; id?: string; url?: string; error?: string }>);
+		startBridge(
+			c.env,
+			body.streamId,
+			(body.announcementResults ?? {}) as Record<
+				string,
+				{
+					ok: boolean;
+					protocol: string;
+					id?: string;
+					url?: string;
+					error?: string;
+				}
+			>,
+		);
 		return jsonResponse({ ok: true, streamId: body.streamId });
 	} catch (err) {
 		return jsonResponse(

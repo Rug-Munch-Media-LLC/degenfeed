@@ -167,7 +167,7 @@ export class ThreadsStreamBridge {
 					return { ok: false, error: "No access token" };
 				}
 
-				const status = stream.isLive ? "still live" : "ended";
+				const _status = stream.isLive ? "still live" : "ended";
 				let text: string;
 
 				if (stream.isLive) {
@@ -511,7 +511,7 @@ export class ThreadsStreamBridge {
 
 	// ─── Helpers ─────────────────────────────────────────────────────
 
-	private async recordSuccess(operation: string): Promise<void> {
+	private async recordSuccess(_operation: string): Promise<void> {
 		try {
 			await recordBridgeOperation(this.env, "threads", true, 0);
 		} catch {

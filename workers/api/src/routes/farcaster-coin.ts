@@ -230,10 +230,10 @@ async function wrapForZora(opts: {
 
 async function postToFarcaster(
 	_fid: number,
-	text: string,
+	_text: string,
 ): Promise<string | null> {
-  // In production, builds + signs a Farcaster cast using the user's signer.
-  return null;
+	// In production, builds + signs a Farcaster cast using the user's signer.
+	return null;
 }
 
 function generateSymbol(username: string): string {

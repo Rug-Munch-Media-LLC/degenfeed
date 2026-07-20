@@ -23,7 +23,7 @@
 import type { Env } from "../index";
 import { broadcastToAll } from "../ws-broadcast";
 import { CHANNELS } from "../ws-channels";
-import { recordBridgeOperation, withReliability } from "./bridge-reliability";
+import { withReliability } from "./bridge-reliability";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 

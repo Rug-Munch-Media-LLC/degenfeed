@@ -106,7 +106,9 @@ async function readBehavior(
 	try {
 		const raw = await env.CACHE?.get(behaviorKey(address));
 		if (raw) return JSON.parse(raw) as UserBehaviorProfile;
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 	return emptyBehaviorProfile();
 }
 
@@ -376,11 +378,11 @@ async function generateForYouFeed(
 		const personalized: Array<UnifiedPost & { _personalizationScore: number }> =
 			ranked.map((post) => {
 				// A. Legacy personalizeScore (backward compat)
-				let legacyBoost = 0;
+				let _legacyBoost = 0;
 				let legacyReasons: string[] = [];
 				if (behaviorProfile) {
 					const result = personalizeScore(post, behaviorProfile);
-					legacyBoost = result.boost;
+					_legacyBoost = result.boost;
 					legacyReasons = result.reasons;
 				}
 
@@ -513,12 +515,12 @@ async function generateForYouFeed(
 		}
 
 		// Find the least-seen category with high-quality posts
-		const sortedCats = [...seenCategories.entries()]
+		const _sortedCats = [...seenCategories.entries()]
 			.sort((a, b) => a[1] - b[1])
 			.map(([cat]) => cat);
 
 		// Build boredom breaker injection list
-		const injected: UnifiedPost[] = [];
+		const _injected: UnifiedPost[] = [];
 		const unseenPool = finalRanked.filter((post) => {
 			const cat = ensureCategory(post);
 			const count = seenCategories.get(cat) ?? 0;

@@ -3,65 +3,71 @@
 /**
  * @pages/shorts — Full-screen TikTok-style vertical video feed.
  *
- * Uses the modular shorts component system:
- *   - ShortsFeed: vertical swipe container with snap scrolling
- *   - useShorts: SWR-like fetch + infinite scroll hook
- *   - ShortVideoCard: full-featured video overlay card
+ * Fetches from the unified multi-protocol shorts API aggregating content
+ * from ALL protocols: ActivityPub (Loops), AT Protocol (Flashes), Nostr,
+ * Farcaster, Lens, Zora (NFT), PeerTube, and DegenFeed.
+ *
+ * Features:
+ *   - SourceBar showing protocol breakdown at top
+ *   - Vertical swipe, snap-scroll, auto-play
+ *   - Source badge on every short
+ *   - Zora NFT mint badge (with mint price / edition progress)
+ *   - Cross-platform tip buttons (ETH Base, SOL Solana, Lightning)
+ *   - Infinite scroll with cursor-based pagination
  *
  * Design: Immersive dark cyberpunk with neon-green degen accents.
  */
 
 import { ErrorBoundary } from '@degenfeed/ui';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { ShortVideoCard } from '../../components/ShortVideoCard';
-import { useShorts } from '../../components/shorts/useShorts';
+import { ShortsSourceBar } from '../../components/shorts/ShortsSourceBar';
+import { useUnifiedShorts } from '../../hooks/useUnifiedShorts';
 import { CreateShortModal } from '../../components/shorts/CreateShortModal';
-import type { ShortVideoItem } from '../../components/shorts/useShorts';
+import type { UnifiedShortItem, ShortSource } from '../../hooks/useUnifiedShorts';
+import { sourceBadgeData } from '../../components/shorts/ShortsSourceBadge';
 
-// ─── Adapter: ShortVideoItem → UnifiedPost-like shape ──────────────────
+// ─── Adapter: UnifiedShortItem → ShortVideoCard post shape ──────────────
 
-function shortToUnifiedPost(video: ShortVideoItem, idx: number) {
-  const id = `short:${video.source}:${video.id}`;
+function unifiedShortToPost(short: UnifiedShortItem, idx: number) {
+  const badge = sourceBadgeData(short.source);
   return {
-    id,
-    protocol: video.source === 'youtube' ? 'youtube' : video.source === 'peertube' ? 'peertube' : 'rss',
+    id: `short:${short.source}:${short.id}`,
+    protocol: short.source,
     author: {
-      id: `${video.source}:${video.authorName.replace(/[^a-zA-Z0-9]/g, '_')}`,
-      primary: {
-        protocol: (video.source === 'youtube' ? 'youtube' : video.source === 'peertube' ? 'peertube' : 'rss') as string,
-        id: video.authorName,
-      },
+      id: `${short.source}:${short.authorHandle}`,
+      primary: { protocol: short.source, id: short.authorHandle },
       handles: {} as Record<string, string | null>,
-      displayName: video.authorName,
+      displayName: short.authorName,
       bio: '',
-      avatarUrl: video.authorAvatar ?? '',
+      avatarUrl: short.authorAvatar ?? '',
       verified: [],
       followerCount: 0,
       followingCount: 0,
       links: [],
       keys: {},
     },
-    text: video.title,
+    text: short.caption || short.title,
     html: undefined,
     embeds: [
       {
         kind: 'video' as const,
-        url: video.videoUrl,
-        meta: { thumbnail: video.thumbnailUrl, duration: video.duration },
+        url: short.videoUrl,
+        meta: { thumbnail: short.thumbnailUrl, duration: short.duration },
       },
-      { kind: 'link' as const, url: video.sourceUrl },
+      { kind: 'link' as const, url: short.sourceUrl },
     ],
-    createdAt: video.publishedAt,
-    metrics: { likes: video.likes, reposts: 0, replies: 0, quotes: 0, views: video.views },
+    createdAt: short.publishedAt,
+    metrics: { likes: short.likes, reposts: 0, replies: 0, quotes: 0, views: short.views },
     engagement: {
       viewerLiked: false,
       viewerReposted: false,
       viewerBookmarked: false,
-      raw: { likes: video.likes, reposts: 0, replies: 0, quotes: 0 },
+      raw: { likes: short.likes, reposts: 0, replies: 0, quotes: 0 },
     },
-    raw: video,
-    niches: video.topics,
-    dfUri: `df://shorts/${video.source}/${idx}`,
+    raw: short,
+    niches: short.topics,
+    dfUri: `df://shorts/${short.source}/${idx}`,
     contentType: 'video',
     tipCount: 0,
   };
@@ -77,25 +83,37 @@ export default function ShortsPage() {
     return topics ? topics.split(',').filter(Boolean) : [];
   });
 
-  const shortsFeed = useShorts({
-    endpoint: '/api/shorts/feed',
-    topics: topicFilter.length > 0 ? topicFilter : undefined,
+  const [sourceFilter, setSourceFilter] = useState<ShortSource | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+
+  const unifiedFeed = useUnifiedShorts({
+    source: sourceFilter ?? undefined,
+    category: topicFilter.length > 0 ? topicFilter[0] : undefined,
   });
 
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const handleSourceClick = useCallback(
+    (source: ShortSource | null) => {
+      setSourceFilter(source);
+    },
+    [],
+  );
+
+  const handleRefresh = useCallback(() => {
+    unifiedFeed.refresh();
+  }, [unifiedFeed]);
 
   return (
     <ErrorBoundary>
-      {/* Video feed */}
+      {/* ── Video feed container ── */}
       <section
         className="fixed inset-0 z-40 overflow-y-scroll snap-y snap-mandatory overscroll-none"
         style={{ backgroundColor: '#000', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        aria-label="Shorts video feed"
+        aria-label="Shorts unified video feed"
       >
         <style>{`div::-webkit-scrollbar { display: none; }`}</style>
 
         {/* Loading */}
-        {shortsFeed.loading && shortsFeed.videos.length === 0 && (
+        {unifiedFeed.isLoading && unifiedFeed.shorts.length === 0 && (
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center bg-black">
             <div className="mb-6 flex items-center gap-2">
               <span className="text-lg text-degen-400">◆</span>
@@ -107,7 +125,7 @@ export default function ShortsPage() {
         )}
 
         {/* Error */}
-        {!shortsFeed.loading && shortsFeed.error && shortsFeed.videos.length === 0 && (
+        {!unifiedFeed.isLoading && unifiedFeed.error && unifiedFeed.shorts.length === 0 && (
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center gap-4 bg-black px-6">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -120,10 +138,12 @@ export default function ShortsPage() {
               </svg>
             </div>
             <p className="text-sm text-[var(--color-muted)]">Couldn&apos;t load shorts</p>
-            <p className="max-w-xs text-center text-xs text-[var(--color-muted)]">{shortsFeed.error}</p>
+            <p className="max-w-xs text-center text-xs text-[var(--color-muted)]">
+              {unifiedFeed.error.message}
+            </p>
             <button
               type="button"
-              onClick={shortsFeed.refresh}
+              onClick={handleRefresh}
               className="rounded-lg bg-degen-500 px-5 py-2 text-xs font-semibold text-black transition-all hover:bg-degen-400 hover:shadow-[0_0_12px_rgba(0,255,65,0.25)]"
             >
               Try again
@@ -132,7 +152,7 @@ export default function ShortsPage() {
         )}
 
         {/* Empty */}
-        {!shortsFeed.loading && !shortsFeed.error && shortsFeed.videos.length === 0 && (
+        {unifiedFeed.isEmpty && (
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center gap-4 bg-black px-6">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border border-degen-500/30 bg-degen-500/10">
               <svg
@@ -149,12 +169,13 @@ export default function ShortsPage() {
             </div>
             <p className="text-sm text-[var(--color-muted)]">No shorts yet</p>
             <p className="max-w-xs text-center text-xs text-[var(--color-muted)]">
-              No shorts available. Check back later — they appear here as they&apos;re discovered
-              from YouTube, TikTok, Instagram, PeerTube, and other protocols.
+              {sourceFilter
+                ? `No shorts from ${sourceFilter}. Try a different source.`
+                : 'No shorts available. Check back later — they appear here as they&apos;re discovered from ActivityPub, AT Protocol, Nostr, Farcaster, Lens, Zora, PeerTube, and more.'}
             </p>
             <button
               type="button"
-              onClick={shortsFeed.refresh}
+              onClick={handleRefresh}
               className="rounded-lg border border-white/10 bg-white/5 px-5 py-2 text-xs font-medium text-[var(--color-muted)] transition-colors hover:bg-white/10 hover:text-white"
             >
               Refresh
@@ -163,14 +184,14 @@ export default function ShortsPage() {
         )}
 
         {/* Video cards */}
-        {shortsFeed.videos.length > 0 &&
-          shortsFeed.videos.map((video, idx) => {
-            const post = shortToUnifiedPost(video, idx);
+        {unifiedFeed.shorts.length > 0 &&
+          unifiedFeed.shorts.map((short, idx) => {
+            const post = unifiedShortToPost(short, idx);
             return (
               <div
-                key={video.id}
+                key={short.id}
                 className="relative h-screen w-full snap-start snap-always"
-                aria-label={`Video by ${video.authorName}`}
+                aria-label={`Video by ${short.authorName}`}
               >
                 <ShortVideoCard
                   post={post}
@@ -183,7 +204,7 @@ export default function ShortsPage() {
           })}
 
         {/* Loading more */}
-        {shortsFeed.loadingMore && (
+        {unifiedFeed.isLoadingMore && unifiedFeed.shorts.length > 0 && (
           <div className="flex h-screen w-full snap-start items-center justify-center bg-black">
             <div className="flex flex-col items-center gap-3">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-degen-500/30 border-t-degen-400" />
@@ -193,7 +214,7 @@ export default function ShortsPage() {
         )}
 
         {/* End */}
-        {!shortsFeed.hasMore && shortsFeed.videos.length > 0 && (
+        {!unifiedFeed.hasMore && unifiedFeed.shorts.length > 0 && (
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center gap-3 bg-black px-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-full border border-degen-500/20 bg-degen-500/5">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-400/60">
@@ -205,7 +226,7 @@ export default function ShortsPage() {
             <p className="text-xs text-[var(--color-muted)]">More shorts coming soon</p>
             <button
               type="button"
-              onClick={shortsFeed.refresh}
+              onClick={handleRefresh}
               className="rounded-lg border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-[var(--color-muted)] transition-colors hover:bg-white/10 hover:text-white"
             >
               Refresh
@@ -215,53 +236,69 @@ export default function ShortsPage() {
       </section>
 
       {/* ── Persistent UI chrome ── */}
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between px-4 pt-4">
-        <a
-          href="/feed"
-          className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] backdrop-blur-lg transition-all hover:border-degen-500/30 hover:text-degen-400"
-          aria-label="Back to feed"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="hidden sm:inline">Feed</span>
-        </a>
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex flex-col gap-1.5 px-4 pt-3">
+        {/* Top bar */}
+        <div className="pointer-events-auto flex items-center justify-between">
+          <a
+            href="/feed"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] backdrop-blur-lg transition-all hover:border-degen-500/30 hover:text-degen-400"
+            aria-label="Back to feed"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="hidden sm:inline">Feed</span>
+          </a>
 
-        <div className="pointer-events-auto flex items-center gap-2">
-          <span className="text-[13px] font-bold tracking-wide text-white/70 drop-shadow-lg">
-            <span className="text-degen-400">◆</span> Shorts
-          </span>
-          {Object.entries(shortsFeed.sourceCounts).map(([src, count]) => {
-            if (count === 0) return null;
-            return (
+          <div className="flex items-center gap-2">
+            <span className="text-[13px] font-bold tracking-wide text-white/70 drop-shadow-lg">
+              <span className="text-degen-400">◆</span> Shorts
+            </span>
+            {/* Source badge count in header */}
+            {unifiedFeed.sources && !sourceFilter && (
+              <span className="hidden rounded-full border border-white/10 bg-black/40 px-2 py-0.5 text-[10px] font-medium text-white/50 backdrop-blur-sm sm:inline-flex items-center gap-1 sm:inline-flex">
+                {Object.values(unifiedFeed.sources).reduce((a, b) => a + b, 0)} videos
+              </span>
+            )}
+            {sourceFilter && (
               <span
-                key={src}
-                className="hidden sm:inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium backdrop-blur-sm"
                 style={{
-                  borderColor: `var(--source-${src}-color, rgba(255,255,255,0.1))`,
-                  backgroundColor: `var(--source-${src}-bg, rgba(255,255,255,0.05))`,
-                  color: `var(--source-${src}-text, rgba(255,255,255,0.6))`,
+                  backgroundColor: `${sourceBadgeData(sourceFilter).color}18`,
+                  borderColor: `${sourceBadgeData(sourceFilter).color}40`,
+                  color: sourceBadgeData(sourceFilter).color,
                 }}
               >
-                {src} {count}
+                {sourceBadgeData(sourceFilter).label}
               </span>
-            );
-          })}
+            )}
+          </div>
+
+          {/* Create button */}
+          <button
+            type="button"
+            onClick={() => setCreateModalOpen(true)}
+            className="pointer-events-auto rounded-full border border-degen-500/30 bg-degen-500/10 px-3 py-1.5 text-xs font-medium text-degen-400 backdrop-blur-lg transition-all hover:bg-degen-500/20 hover:shadow-[0_0_12px_rgba(0,255,65,0.2)]"
+            aria-label="Create short"
+          >
+            + Upload
+          </button>
         </div>
 
-        {/* Create button */}
-        <button
-          type="button"
-          onClick={() => setCreateModalOpen(true)}
-          className="pointer-events-auto rounded-full border border-degen-500/30 bg-degen-500/10 px-3 py-1.5 text-xs font-medium text-degen-400 backdrop-blur-lg transition-all hover:bg-degen-500/20 hover:shadow-[0_0_12px_rgba(0,255,65,0.2)]"
-          aria-label="Create short"
-        >
-          + Upload
-        </button>
+        {/* ── Source bar — protocol breakdown ── */}
+        {unifiedFeed.sources && unifiedFeed.shorts.length > 0 && (
+          <div className="pointer-events-auto overflow-x-auto">
+            <ShortsSourceBar
+              sources={unifiedFeed.sources}
+              activeSource={sourceFilter}
+              onSourceClick={handleSourceClick}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── Topic filter chips ── */}
-      {shortsFeed.videos.length > 0 && (
+      {unifiedFeed.shorts.length > 0 && (
         <ShortTopicsBar topics={topicFilter} onChange={setTopicFilter} />
       )}
 
@@ -270,7 +307,7 @@ export default function ShortsPage() {
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onCreated={() => {
-          shortsFeed.refresh();
+          handleRefresh();
         }}
       />
     </ErrorBoundary>
@@ -289,7 +326,7 @@ function ShortTopicsBar({
   const topicOptions = ['defi', 'nft', 'trading', 'bitcoin', 'memecoin', 'ai'];
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-14 z-50 flex items-center justify-center gap-1.5 px-4">
+    <div className="pointer-events-none fixed inset-x-0 top-[5.5rem] z-50 flex items-center justify-center gap-1.5 px-4">
       <div className="pointer-events-auto flex max-w-full gap-1.5 overflow-x-auto scrollbar-none">
         {topicOptions.map((topic) => {
           const active = topics.includes(topic);

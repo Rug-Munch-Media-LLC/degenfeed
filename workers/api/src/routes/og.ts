@@ -19,7 +19,9 @@ export async function handlePostOg(
 	try {
 		const stored = await env.CACHE?.get(`post:${decoded}`);
 		if (stored) post = JSON.parse(stored) as UnifiedPost;
-	} catch { /* empty -- error deliberately ignored */ }
+	} catch {
+		/* empty -- error deliberately ignored */
+	}
 
 	if (!post) {
 		return new Response("<html><body><p>Post not found</p></body></html>", {

@@ -11,7 +11,7 @@ import type { Env } from "../index";
 const mockKvStore = new Map<string, string>();
 
 // Mock fetch globally for DID resolution tests
-const originalFetch = globalThis.fetch;
+const _originalFetch = globalThis.fetch;
 
 // ─── Helpers ───────────────────────────────────────────────────────────
 

@@ -51,7 +51,7 @@ const registerAll = new Hono<{ Bindings: Env }>();
 
 // ─── GET /api/register/plans — List available plans ──────────────────────
 
-registerAll.get("/plans", async (c) => {
+registerAll.get("/plans", async (_c) => {
 	return jsonResponse({
 		plans: REGISTRATION_PLANS.map((p) => ({
 			...p,
@@ -163,10 +163,10 @@ registerAll.post("/all", async (c) => {
 
 	// Check if already registered — allow re-registration but warn
 	const identityKeyVal = identityKey(walletAddress);
-	let existingIdentity: CrossProtocolIdentity | null = null;
+	let _existingIdentity: CrossProtocolIdentity | null = null;
 	try {
 		const raw = await c.env.IDENTITIES?.get(identityKeyVal);
-		if (raw) existingIdentity = JSON.parse(raw) as CrossProtocolIdentity;
+		if (raw) _existingIdentity = JSON.parse(raw) as CrossProtocolIdentity;
 	} catch {
 		// No existing record
 	}
@@ -211,7 +211,7 @@ registerAll.post("/all", async (c) => {
 				// Account may already exist — still count it as ok
 			};
 		}
-	} catch (e) {
+	} catch (_e) {
 		// Fallback: username might already exist
 		const gtsUsername = deriveGtsHandle(walletAddress);
 		results.activitypub = {
@@ -321,7 +321,7 @@ registerAll.post("/all", async (c) => {
 					redirectUrl: "https://warpcast.com/~/signup",
 				};
 			}
-		} catch (e) {
+		} catch (_e) {
 			results.farcaster = {
 				ok: false,
 				error: "Farcaster registration failed — try Warpcast redirect",
@@ -358,7 +358,7 @@ registerAll.post("/all", async (c) => {
 					error: lens.error || "Lens registration failed — try manual signup",
 				};
 			}
-		} catch (e) {
+		} catch (_e) {
 			results.lens = {
 				ok: false,
 				error: "Lens registration failed — try manual signup",
@@ -384,7 +384,7 @@ registerAll.post("/all", async (c) => {
 			typeof storeAllIdentities
 		>[2];
 		await storeAllIdentities(c.env, walletAddress, typedResults);
-	} catch (e) {
+	} catch (_e) {
 		// Non-fatal — registration succeeded even if KV storage failed
 	}
 
@@ -448,16 +448,16 @@ registerAll.get("/status", async (c) => {
 		if (raw) {
 			const identity = JSON.parse(raw) as CrossProtocolIdentity;
 
-			const mastodonData = (identity as unknown as Record<string, unknown>)[
-				"mastodon"
-			] as { handle?: string; verified?: boolean } | undefined;
+			const mastodonData = (identity as unknown as Record<string, unknown>)
+				.mastodon as { handle?: string; verified?: boolean } | undefined;
 			if (mastodonData?.verified) {
 				activitypub = { registered: true, handle: mastodonData.handle };
 			}
 
-			const atprotoData = (identity as unknown as Record<string, unknown>)[
-				"atproto"
-			] as { did?: string; handle?: string; verified?: boolean } | undefined;
+			const atprotoData = (identity as unknown as Record<string, unknown>)
+				.atproto as
+				| { did?: string; handle?: string; verified?: boolean }
+				| undefined;
 			if (atprotoData?.verified) {
 				atproto = {
 					registered: true,
@@ -466,16 +466,16 @@ registerAll.get("/status", async (c) => {
 				};
 			}
 
-			const nostrData = (identity as unknown as Record<string, unknown>)[
-				"nostr"
-			] as { npub?: string; verified?: boolean } | undefined;
+			const nostrData = (identity as unknown as Record<string, unknown>)
+				.nostr as { npub?: string; verified?: boolean } | undefined;
 			if (nostrData?.verified) {
 				nostr = { registered: true, npub: nostrData.npub };
 			}
 
-			const fcData = (identity as unknown as Record<string, unknown>)[
-				"farcaster"
-			] as { fid?: number; username?: string; verified?: boolean } | undefined;
+			const fcData = (identity as unknown as Record<string, unknown>)
+				.farcaster as
+				| { fid?: number; username?: string; verified?: boolean }
+				| undefined;
 			if (fcData?.verified) {
 				farcaster = {
 					registered: true,
@@ -484,9 +484,7 @@ registerAll.get("/status", async (c) => {
 				};
 			}
 
-			const lensData = (identity as unknown as Record<string, unknown>)[
-				"lens"
-			] as
+			const lensData = (identity as unknown as Record<string, unknown>).lens as
 				| { profileId?: string; handle?: string; verified?: boolean }
 				| undefined;
 			if (lensData?.verified) {
@@ -602,7 +600,7 @@ registerAll.post("/farcaster", async (c) => {
 			},
 			400,
 		);
-	} catch (e) {
+	} catch (_e) {
 		return jsonResponse(
 			{
 				ok: false,
@@ -661,7 +659,7 @@ registerAll.post("/lens", async (c) => {
 			},
 			400,
 		);
-	} catch (e) {
+	} catch (_e) {
 		return jsonResponse(
 			{
 				ok: false,
@@ -693,7 +691,7 @@ registerAll.get("/export", async (c) => {
 			exportedAt: new Date().toISOString(),
 			data: JSON.parse(raw),
 		});
-	} catch (err) {
+	} catch (_err) {
 		return jsonResponse({ error: "Failed to export registration data" }, 500);
 	}
 });
