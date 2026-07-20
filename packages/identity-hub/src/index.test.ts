@@ -196,8 +196,8 @@ describe('IdentityHub', () => {
       const hub = new IdentityHub({ kv });
 
       const results = await hub.autoCreateAccounts('0xabc', ['atproto']);
-      expect(results[0].ok).toBe(false);
-      expect(results[0].error).toContain('Premium');
+      expect(results[0]?.ok).toBe(false);
+      expect(results[0]?.error).toContain('Premium');
     });
 
     it('should return not-supported for unknown protocols', async () => {
@@ -206,8 +206,8 @@ describe('IdentityHub', () => {
       await hub.setPremiumStatus('0xabc', 'premium');
 
       const results = await hub.autoCreateAccounts('0xabc', ['nostr']);
-      expect(results[0].ok).toBe(false);
-      expect(results[0].error).toContain('not supported');
+      expect(results[0]?.ok).toBe(false);
+      expect(results[0]?.error).toContain('not supported');
     });
   });
 });

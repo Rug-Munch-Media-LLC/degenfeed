@@ -812,6 +812,9 @@ importers:
       '@degenfeed/source-discovery':
         specifier: workspace:*
         version: link:../../packages/source-discovery
+      '@degenfeed/telegram-sdk':
+        specifier: workspace:*
+        version: link:../../packages/telegram-sdk
       '@degenfeed/threads-sdk':
         specifier: workspace:*
         version: link:../../packages/threads-sdk
@@ -827,6 +830,9 @@ importers:
       '@degenfeed/youtube-provider':
         specifier: workspace:*
         version: link:../../packages/youtube-provider
+      '@degenfeed/zora-sdk':
+        specifier: workspace:*
+        version: link:../../packages/zora-sdk
       '@noble/curves':
         specifier: ^1.9.7
         version: 1.9.7

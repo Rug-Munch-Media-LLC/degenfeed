@@ -7,27 +7,11 @@
  *
  * ## Usage
  * ```ts
- * import { CreatorTokenSDK } from '@degenfeed/zora-sdk';
+ * import { CreatorTokenSDK, getDynamicPrice, getEraName } from '@degenfeed/zora-sdk';
  *
- * // Solana
- * const solResult = await sdk.createToken({
- *   chain: 'solana',
- *   name: 'My Coin',
- *   symbol: 'MYC',
- *   uri: 'https://arweave.net/...',
- *   creatorAllocationBps: 500,
- *   creatorFeeBps: 100,
- * });
- *
- * // EVM (when implemented)
- * const evmResult = await sdk.createToken({
- *   chain: 'base',
- *   name: 'My Coin',
- *   symbol: 'MYC',
- *   uri: 'https://arweave.net/...',
- *   creatorAllocationBps: 500,
- *   creatorFeeBps: 100,
- * });
+ * // Get the dynamic bonding curve price at a given supply
+ * const price = getDynamicPrice(currentSupply);
+ * const era = getEraName(currentSupply); // "Steal Deal" | "Early Bird" | ...
  * ```
  */
 
@@ -60,14 +44,74 @@ export type {
   KVStore,
 } from './cross-chain/registry';
 
-// ─── Bonding Curve Math (for frontend previews) ─────────────────────────────
+// ─── Dynamic Bonding Curve ─────────────────────────────────────────────────
+export {
+  getDynamicPrice,
+  getCurrentEra,
+  getEraName,
+  getEraColor,
+  calculateTokensOut,
+  calculateEthOut,
+  applyFlashSaleDiscount,
+  calculateFlashSaleDiscount,
+  applyCreatorEventDiscount,
+  getStreakMultiplier,
+  calculateStreakBonus,
+  isStreakAlive,
+  predictPriceAfterBuys,
+  buysUntilPriceTarget,
+  getGraduationProgress,
+  getProgressPercent,
+  formatCurvePrice,
+  calculateMarketCap,
+  CURVE_ERAS,
+  TOTAL_SUPPLY,
+  GRADUATION_SUPPLY,
+  MIN_PRICE,
+  MAX_PRICE,
+} from './bonding-curve';
+
+export type {
+  CurveEra,
+  FlashSale,
+  CreatorEvent,
+  ReferralBoost,
+  CurveState,
+} from './bonding-curve';
+
+// ─── Anti-Exploit & Gamification ──────────────────────────────────────────
+export {
+  getPhaseLimits,
+  checkBuyLimit,
+  computeBadges,
+  classifyWhale,
+  getReachedMilestones,
+  getNextMilestone,
+  generateShareLink,
+  calculateBurnEffect,
+  BADGE_DEFINITIONS,
+  BONDING_MILESTONES,
+} from './anti-exploit';
+
+export type {
+  PhaseLimit,
+  BadgeType,
+  BadgeInfo,
+  WhaleAlert,
+  MilestoneReached,
+  SocialProofData,
+  ReferralData,
+  OneClickBuyState,
+  RecurringBuy,
+  PriceAlert,
+  BurnEvent,
+} from './anti-exploit';
+
+// ─── Legacy Math Functions (keep for backwards compat) ─────────────────────
 
 /**
- * Calculate the expected token price at a given supply level.
- * Mirrors the Solana program's `get_current_price`.
- *
- * @param totalSupplyIssued - Current supply issued (9 decimal precision)
- * @returns Price per token unit in lamports
+ * @deprecated Use `getDynamicPrice` from the new bonding curve module.
+ * This linear function is kept for backward compatibility.
  */
 export function getCurrentPrice(totalSupplyIssued: bigint): bigint {
   const TOTAL_SUPPLY = 1_000_000_000_000_000_000n;
@@ -83,26 +127,16 @@ export function getCurrentPrice(totalSupplyIssued: bigint): bigint {
 }
 
 /**
- * Calculate expected tokens out for a given SOL amount and price.
- * Mirrors the Solana program's `calculate_tokens_out`.
- *
- * @param amountSol - SOL amount in lamports
- * @param price - Current price per token unit in lamports
- * @returns Expected tokens out (9 decimal precision)
+ * @deprecated Use `calculateTokensOut` from the bonding curve module.
  */
-export function calculateTokensOut(amountSol: bigint, price: bigint): bigint {
+export function calculateTokensOutLegacy(amountSol: bigint, price: bigint): bigint {
   const SCALING = 1_000_000_000n;
   if (price === 0n) return 0n;
   return (amountSol * SCALING) / price;
 }
 
 /**
- * Calculate expected SOL out for a given token amount and price.
- * Includes 0.5% platform fee deduction.
- *
- * @param tokensIn - Token amount to sell (9 decimal precision)
- * @param price - Current price per token unit in lamports
- * @returns Object with netSolOut and platformFee
+ * @deprecated Use `calculateEthOut` from the bonding curve module.
  */
 export function calculateSolOut(
   tokensIn: bigint,
@@ -112,27 +146,24 @@ export function calculateSolOut(
   if (price === 0n) return { netSolOut: 0n, platformFee: 0n };
 
   const grossSol = (tokensIn * price) / SCALING;
-  const platformFee = (grossSol * 50n) / 10_000n; // 0.5%
+  const platformFee = (grossSol * 50n) / 10_000n;
   const netSolOut = grossSol - platformFee;
 
   return { netSolOut, platformFee };
 }
 
 /**
- * Get the anti-snipe phase limit.
- *
- * @param elapsedSeconds - Seconds since token creation
- * @returns Maximum buy amount in bps (e.g., 200 = 2%)
+ * @deprecated Use `getPhaseLimits` from the anti-exploit module.
  */
 export function getPhaseLimit(elapsedSeconds: number): number {
-  if (elapsedSeconds < 300) return 200;       // 2% — first 5 min
-  if (elapsedSeconds < 1_800) return 500;     // 5% — 5-30 min
-  if (elapsedSeconds < 86_400) return 1_000;   // 10% — 30 min to 24h
-  return 1_500;                                // 15% — after 24h
+  if (elapsedSeconds < 300) return 200;
+  if (elapsedSeconds < 1_800) return 500;
+  if (elapsedSeconds < 86_400) return 1_000;
+  return 1_500;
 }
 
 /**
- * Compute the maximum buy amount in lamports for the current phase.
+ * @deprecated Use `getPhaseLimits` from the anti-exploit module.
  */
 export function getPhaseMaxBuy(elapsedSeconds: number): bigint {
   const GRADUATION_SUPPLY = 800_000_000_000_000_000n;

@@ -16,6 +16,26 @@ interface BuySellInterfaceProps {
   onBuy?: (amount: string) => void;
   onSell?: (amount: string) => void;
   className?: string;
+
+  // ── New Features ──────────────────────────────────────
+
+  /** Flash sale active */
+  flashSaleDiscount?: number;
+  /** Creator event info */
+  creatorEventDiscount?: number;
+  creatorEventMessage?: string;
+  /** User's streak days */
+  streakDays?: number;
+  /** Price 24h ago (for "buy the dip" calculation) */
+  price24hAgo?: number;
+  /** Whether one-click buy is enabled */
+  oneClickEnabled?: boolean;
+  /** Toggle one-click buy */
+  onToggleOneClick?: () => void;
+  /** Schedule recurring buy */
+  onScheduleRecurring?: (amount: string, interval: 'daily' | 'weekly' | 'monthly') => void;
+  /** Set price alert */
+  onSetAlert?: (targetPrice: number, above: boolean) => void;
 }
 
 const PRESET_AMOUNTS = ['0.01', '0.05', '0.1', '0.5', '1'];
@@ -32,6 +52,15 @@ export default function BuySellInterface({
   onBuy,
   onSell,
   className = '',
+  flashSaleDiscount,
+  creatorEventDiscount,
+  creatorEventMessage,
+  streakDays,
+  price24hAgo,
+  oneClickEnabled,
+  onToggleOneClick,
+  onScheduleRecurring,
+  onSetAlert,
 }: BuySellInterfaceProps) {
   const isMobile = useIsMobile();
   const keyboardHeight = useKeyboardHeight();
@@ -106,17 +135,60 @@ export default function BuySellInterface({
       </div>
 
       <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-        {/* Phase badge */}
-        <div className="flex items-center justify-between">
+        {/* Phase badge + Streak + Social proof */}
+        <div className="flex items-center justify-between flex-wrap gap-1">
           <span className="rounded-full bg-[var(--color-accent-glow)] px-2.5 sm:px-3 py-1 text-[9px] sm:text-[10px] font-medium text-degen-400">
             ⚡ {phaseLabel}
           </span>
-          {!graduated && maxPerWallet && (
-            <span className="text-[9px] sm:text-[10px] text-[var(--color-muted)]">
-              Max: {maxPerWallet}
-            </span>
-          )}
+
+          <div className="flex items-center gap-1.5">
+            {/* Streak badge */}
+            {streakDays !== undefined && streakDays >= 2 && (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-500/10 px-1.5 py-0.5 text-[7px] sm:text-[8px] font-medium text-orange-400">
+                <span className="animate-streak">🔥</span> {streakDays}d
+                {streakDays >= 7 && <span className="text-[6px] ml-0.5 text-degen-400">2x</span>}
+              </span>
+            )}
+
+            {!graduated && maxPerWallet && (
+              <span className="text-[9px] sm:text-[10px] text-[var(--color-muted)]">
+                Max: {maxPerWallet}
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Flash sale banner */}
+        {flashSaleDiscount !== undefined && flashSaleDiscount > 0 && (
+          <div className="rounded-lg border border-yellow-500/20 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-2.5 animate-whale-alert">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⚡</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-yellow-400">Flash Sale Active!</p>
+                <p className="text-[9px] text-yellow-400/70">
+                  {flashSaleDiscount}% off — limited time only!
+                </p>
+              </div>
+              <span className="text-[10px] font-bold text-yellow-400 animate-pulse">{flashSaleDiscount}% OFF</span>
+            </div>
+          </div>
+        )}
+
+        {/* Creator event banner */}
+        {creatorEventDiscount !== undefined && creatorEventDiscount > 0 && (
+          <div className="rounded-lg border border-degen-500/20 bg-gradient-to-r from-degen-500/10 to-purple-500/10 p-2.5">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⭐</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-degen-400">Creator Event!</p>
+                <p className="text-[9px] text-degen-400/70 truncate">
+                  {creatorEventMessage || 'Special discount from the creator!'}
+                </p>
+              </div>
+              <span className="text-[10px] font-bold text-degen-400">{creatorEventDiscount}% OFF</span>
+            </div>
+          </div>
+        )}
 
         {/* Amount input */}
         <div>
@@ -197,6 +269,63 @@ export default function BuySellInterface({
             </div>
           </div>
         </div>
+
+        {/* Buy the Dip button */}
+        {mode === 'buy' && price24hAgo !== undefined && price24hAgo > 0 && price !== null && price < price24hAgo * 0.95 && (
+          <button
+            type="button"
+            onClick={() => onBuy?.('0.05')}
+            disabled={disabled || loading}
+            className="w-full rounded-xl py-2.5 text-xs font-bold transition-all touch-target bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-cyan-400 hover:from-cyan-500/30 hover:to-blue-500/30"
+          >
+            📉 Buy the Dip! Price is {(price24hAgo && price) ? `${Math.round((1 - price / price24hAgo) * 100)}%` : ''} below 24h high
+          </button>
+        )}
+
+        {/* One-click toggle */}
+        {mode === 'buy' && onToggleOneClick && (
+          <div className="flex items-center justify-between rounded-lg bg-[var(--color-muted-bg)] px-2.5 py-2">
+            <span className="text-[10px] text-[var(--color-muted)]">⚡ One-click buy</span>
+            <button
+              type="button"
+              onClick={onToggleOneClick}
+              className={`relative h-5 w-9 rounded-full transition-colors ${
+                oneClickEnabled ? 'bg-degen-500' : 'bg-[var(--color-border)]'
+              }`}
+              aria-label="Toggle one-click buy"
+            >
+              <span
+                className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform shadow-sm ${
+                  oneClickEnabled ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
+        )}
+
+        {/* Recurring / Price alert buttons */}
+        {mode === 'buy' && !graduated && (
+          <div className="flex gap-1.5">
+            {onScheduleRecurring && (
+              <button
+                type="button"
+                onClick={() => onScheduleRecurring(amount || '0.01', 'weekly')}
+                className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-1.5 text-[9px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] touch-target"
+              >
+                🔄 Recurring
+              </button>
+            )}
+            {onSetAlert && (
+              <button
+                type="button"
+                onClick={() => onSetAlert(price ?? 0, true)}
+                className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-1.5 text-[9px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] touch-target"
+              >
+                🔔 Price Alert
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Error */}
         {error && (
