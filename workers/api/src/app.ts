@@ -253,6 +253,15 @@ import {
   handlePermanenceStore,
   handlePermanenceVerify,
 } from './routes/permanence';
+import {
+  handleDiscoverRecommendations,
+  handlePersonalizedTrending,
+  handleRecordInteraction,
+  handleRelatedRecommendations,
+  handleShortsRecommendations,
+  handleStreamRecommendations,
+  handleVideoRecommendations,
+} from './routes/recommendations';
 import { handlePostById } from './routes/post';
 import { handlePreferences } from './routes/preferences';
 import { handleFeedPresets } from './routes/presets';
@@ -282,7 +291,14 @@ import { handleRssFeed } from './routes/rss';
 import { handleRssXml } from './routes/rss-xml';
 import { handleListScheduledPosts, handleSchedulePost } from './routes/scheduled';
 import { handleSearch, handleSearchIdentity, handleSearchIndex } from './routes/search';
-import { handleShortsFeed } from './routes/shorts';
+import {
+  handleShortsFeed,
+  handleShortsTrending,
+  handleShortsForYou,
+  handleShortsBySource,
+  handleCreateShort,
+} from './routes/shorts';
+import youtubeRoutes from './routes/youtube';
 import {
   handleSourcesApprove,
   handleSourcesDiscover,
@@ -322,6 +338,7 @@ import {
 import { handleTokenGateResolve, handleTokenGateVerify } from './routes/token-gate';
 import tokenCommunity from './routes/token-community';
 import peertubeStreams from './routes/peertube-streams';
+import videoHub from './routes/video-hub';
 import streams from './routes/streams';
 import { handleTokenWebSocket, handleTokenSSE } from './routes/token-websocket';
 import { handleTranslate } from './routes/translate';
@@ -334,6 +351,7 @@ import {
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleX402Paywall, handleX402Verify } from './routes/x402';
 import { creatorConfig } from './routes/creator-config';
+import { creatorVideos } from './routes/creator-videos';
 import feddyCommunities from './routes/feddy-communities';
 import { crossProtocolCoin } from './routes/cross-protocol-coin';
 
@@ -600,6 +618,14 @@ app.get('/api/analytics', (c) => handleAnalytics(c.req.raw, c.env));
 
 // ─── API: Shorts ─────────────────────────────────────────
 app.get('/api/shorts', async (c) => handleShortsFeed(c.req.raw, c.env));
+app.get('/api/shorts/feed', async (c) => handleShortsFeed(c.req.raw, c.env));
+app.get('/api/shorts/trending', async (c) => handleShortsTrending(c.req.raw, c.env));
+app.get('/api/shorts/for-you', async (c) => handleShortsForYou(c.req.raw, c.env));
+app.get('/api/shorts/source/:source', async (c) => handleShortsBySource(c.req.raw, c.env));
+app.post('/api/shorts/create', async (c) => handleCreateShort(c.req.raw, c.env));
+
+// ─── API: YouTube ────────────────────────────────────────
+app.route('/api/youtube', youtubeRoutes);
 
 // ─── API: Feed (specific routes before parameterized) ──────
 app.all('/api/feed/home', async (c) => handleHomeFeed(c.req.raw, c.env, c.executionCtx));
@@ -1021,11 +1047,17 @@ app.post('/api/token-gate/resolve', async (c) => handleTokenGateResolve(c.req.ra
 // ─── API: Creator Config (vesting, fees, cross-chain) ───────
 app.route('/api/creator', creatorConfig);
 
+// ─── API: Creator Videos (upload, manage, analytics) ───────
+app.route('/api/creator/videos', creatorVideos);
+
 // ─── API: Token Community (engagement layer) ────────────────
 app.route('/api/token', tokenCommunity);
 
 // ─── API: PeerTube Livestreams (creator token streaming) ───
 app.route('/api/token', peertubeStreams);
+
+// ─── API: Video Hub (categorized video discovery across all sources) ───
+app.route('/api/video', videoHub);
 
 // ─── API: DegenFeed Multi-type Streaming (solo, spaces, collab, coin-launch) ───
 app.route('/api/streams', streams);
@@ -1099,6 +1131,29 @@ app.get('/api/discover/people', async (c) => handleDiscoverPeople(c.req.raw, c.e
 app.get('/api/discover/topics', async (c) => handleDiscoverTopics(c.req.raw, c.env));
 app.get('/api/discover/featured', async (c) => handleDiscoverFeatured(c.req.raw, c.env));
 app.get('/api/discover/new', async (c) => handleDiscoverNew(c.req.raw, c.env));
+
+// ─── API: Recommendations ─────────────────────────────────────
+app.get('/api/recommendations/videos', async (c) =>
+  handleVideoRecommendations(c.req.raw, c.env),
+);
+app.get('/api/recommendations/shorts', async (c) =>
+  handleShortsRecommendations(c.req.raw, c.env),
+);
+app.get('/api/recommendations/streams', async (c) =>
+  handleStreamRecommendations(c.req.raw, c.env),
+);
+app.get('/api/recommendations/related', async (c) =>
+  handleRelatedRecommendations(c.req.raw, c.env),
+);
+app.get('/api/recommendations/trending', async (c) =>
+  handlePersonalizedTrending(c.req.raw, c.env),
+);
+app.get('/api/recommendations/discover', async (c) =>
+  handleDiscoverRecommendations(c.req.raw, c.env),
+);
+app.post('/api/recommendations/interaction', async (c) =>
+  handleRecordInteraction(c.req.raw, c.env),
+);
 
 // ─── API: Push ─────────────────────────────────────────────
 app.all('/api/push/subscribe', async (c) =>
@@ -1240,26 +1295,67 @@ app.get('/api/scheduled', (c) => handleListScheduledPosts(c.req.raw, c.env));
 
 // ─── API: Audio Spaces ───────────────────────────────────────────
 import {
+  handleSpaceAcceptSpeaker,
   handleSpaceCreate,
+  handleSpaceDetails,
   handleSpaceEnd,
+  handleSpaceInviteSpeaker,
   handleSpaceJoin,
+  handleSpaceLeave,
+  handleSpaceMuteSpeaker,
+  handleSpaceRaiseHand,
   handleSpaceReact,
+  handleSpaceRecording,
+  handleSpaceRemoveSpeaker,
   handleSpaceRequestSpeak,
   handleSpacesLive,
+  handleSpacesPast,
+  handleSpaceStart,
+  handleSpacesTrending,
   handleSpacesUpcoming,
+  handleSpaceTranscript,
 } from './routes/spaces';
 
-app.post('/api/spaces/create', async (c) => handleSpaceCreate(c.req.raw, c.env));
+// Write routes first (no path params)
 app.get('/api/spaces/live', async (c) => handleSpacesLive(c.req.raw, c.env));
 app.get('/api/spaces/upcoming', async (c) => handleSpacesUpcoming(c.req.raw, c.env));
+app.get('/api/spaces/past', async (c) => handleSpacesPast(c.req.raw, c.env));
+app.get('/api/spaces/trending', async (c) => handleSpacesTrending(c.req.raw, c.env));
+app.post('/api/spaces/create', async (c) => handleSpaceCreate(c.req.raw, c.env));
+
+// Parameterized routes
+app.get('/api/spaces/:id', async (c) => handleSpaceDetails(c.req.raw, c.env, c.req.param('id')));
+app.post('/api/spaces/:id/start', async (c) => handleSpaceStart(c.req.raw, c.env, c.req.param('id')));
+app.post('/api/spaces/:id/end', async (c) => handleSpaceEnd(c.req.raw, c.env, c.req.param('id')));
 app.post('/api/spaces/:id/join', async (c) => handleSpaceJoin(c.req.raw, c.env, c.req.param('id')));
+app.post('/api/spaces/:id/leave', async (c) => handleSpaceLeave(c.req.raw, c.env, c.req.param('id')));
 app.post('/api/spaces/:id/request-speak', async (c) =>
   handleSpaceRequestSpeak(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/api/spaces/:id/invite-speaker', async (c) =>
+  handleSpaceInviteSpeaker(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/api/spaces/:id/accept-speaker', async (c) =>
+  handleSpaceAcceptSpeaker(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/api/spaces/:id/remove-speaker', async (c) =>
+  handleSpaceRemoveSpeaker(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/api/spaces/:id/mute-speaker', async (c) =>
+  handleSpaceMuteSpeaker(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/api/spaces/:id/raise-hand', async (c) =>
+  handleSpaceRaiseHand(c.req.raw, c.env, c.req.param('id')),
 );
 app.post('/api/spaces/:id/react', async (c) =>
   handleSpaceReact(c.req.raw, c.env, c.req.param('id')),
 );
-app.post('/api/spaces/:id/end', async (c) => handleSpaceEnd(c.req.raw, c.env, c.req.param('id')));
+app.get('/api/spaces/:id/recording', async (c) =>
+  handleSpaceRecording(c.req.raw, c.env, c.req.param('id')),
+);
+app.all('/api/spaces/:id/transcript', async (c) =>
+  handleSpaceTranscript(c.req.raw, c.env, c.req.param('id')),
+);
 
 // ─── API: Translate ─────────────────────────────────────────
 app.post('/api/translate', async (c) => handleTranslate(c.req.raw, c.env));
@@ -1747,17 +1843,43 @@ app.get('/v1/reputation/:userId', async (c) =>
 );
 
 // ─── V1: Audio Spaces ──────────────────────────────────────
-app.post('/v1/spaces/create', async (c) => handleSpaceCreate(c.req.raw, c.env));
 app.get('/v1/spaces/live', async (c) => handleSpacesLive(c.req.raw, c.env));
 app.get('/v1/spaces/upcoming', async (c) => handleSpacesUpcoming(c.req.raw, c.env));
+app.get('/v1/spaces/past', async (c) => handleSpacesPast(c.req.raw, c.env));
+app.get('/v1/spaces/trending', async (c) => handleSpacesTrending(c.req.raw, c.env));
+app.post('/v1/spaces/create', async (c) => handleSpaceCreate(c.req.raw, c.env));
+app.get('/v1/spaces/:id', async (c) => handleSpaceDetails(c.req.raw, c.env, c.req.param('id')));
+app.post('/v1/spaces/:id/start', async (c) => handleSpaceStart(c.req.raw, c.env, c.req.param('id')));
+app.post('/v1/spaces/:id/end', async (c) => handleSpaceEnd(c.req.raw, c.env, c.req.param('id')));
 app.post('/v1/spaces/:id/join', async (c) => handleSpaceJoin(c.req.raw, c.env, c.req.param('id')));
+app.post('/v1/spaces/:id/leave', async (c) => handleSpaceLeave(c.req.raw, c.env, c.req.param('id')));
 app.post('/v1/spaces/:id/request-speak', async (c) =>
   handleSpaceRequestSpeak(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/v1/spaces/:id/invite-speaker', async (c) =>
+  handleSpaceInviteSpeaker(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/v1/spaces/:id/accept-speaker', async (c) =>
+  handleSpaceAcceptSpeaker(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/v1/spaces/:id/remove-speaker', async (c) =>
+  handleSpaceRemoveSpeaker(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/v1/spaces/:id/mute-speaker', async (c) =>
+  handleSpaceMuteSpeaker(c.req.raw, c.env, c.req.param('id')),
+);
+app.post('/v1/spaces/:id/raise-hand', async (c) =>
+  handleSpaceRaiseHand(c.req.raw, c.env, c.req.param('id')),
 );
 app.post('/v1/spaces/:id/react', async (c) =>
   handleSpaceReact(c.req.raw, c.env, c.req.param('id')),
 );
-app.post('/v1/spaces/:id/end', async (c) => handleSpaceEnd(c.req.raw, c.env, c.req.param('id')));
+app.get('/v1/spaces/:id/recording', async (c) =>
+  handleSpaceRecording(c.req.raw, c.env, c.req.param('id')),
+);
+app.all('/v1/spaces/:id/transcript', async (c) =>
+  handleSpaceTranscript(c.req.raw, c.env, c.req.param('id')),
+);
 
 // ─── V1: Leaderboard refresh ──────────────────────────────
 app.post('/v1/leaderboard/refresh', async (c) => handleRefreshLeaderboards(c.req.raw, c.env));

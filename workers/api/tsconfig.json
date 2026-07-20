@@ -30,7 +30,9 @@
       "@degenfeed/crossplatform-register": ["packages/crossplatform-register/src"],
       "@degenfeed/source-discovery": ["packages/source-discovery/src"],
       "@degenfeed/source-discovery/*": ["packages/source-discovery/src/*"],
-      "@degenfeed/crossplatform-register/*": ["packages/crossplatform-register/src/*"]
+      "@degenfeed/crossplatform-register/*": ["packages/crossplatform-register/src/*"],
+      "@degenfeed/peertube-provider": ["packages/peertube-provider/src"],
+      "@degenfeed/peertube-provider/*": ["packages/peertube-provider/src/*"]
     }
   },
   "include": ["src"],

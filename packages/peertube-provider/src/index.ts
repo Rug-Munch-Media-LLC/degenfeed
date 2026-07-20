@@ -73,6 +73,17 @@ export type {
 } from './livestream';
 export { PeerTubeLiveError, PeerTubeLiveStream } from './livestream';
 
+// ─── Upload / Creator Video Management ───────────────────────────────
+
+export type {
+  ShortUploadResult,
+  UploadProgress,
+  UploadResult,
+  UploadVideoOptions,
+  VideoUpdateOptions,
+} from './upload';
+export { PeerTubeUploader, PeerTubeUploadError, createPeerTubeUploader } from './upload';
+
 // ─── Constants ───────────────────────────────────────────────────────
 
 /** Default PeerTube instance (our self-hosted). */
