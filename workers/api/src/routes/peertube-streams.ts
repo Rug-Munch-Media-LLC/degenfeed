@@ -30,6 +30,7 @@ import { jsonResponse, noCacheJsonResponse } from '../index';
 import { requireSession } from '../session';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
+import { announceStreamToAllProtocols as crossAnnounceStream } from '../lib/stream-announcer';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -185,179 +186,7 @@ async function getPeerTubeAccess(env: Env): Promise<{
   return { accessToken, instanceUrl };
 }
 
-// ─── Announce stream to all protocols ────────────────────────────────────
-
-/**
- * Cross-announce a stream start to all connected protocols.
- *
- * When a creator goes live, we broadcast to:
- *   1. ActivityPub (GoToSocial) — Post with stream embed
- *   2. Nostr — Kind 30311 live event
- *   3. AT Protocol (Bluesky) — Post with external embed card
- *   4. Farcaster — Cast with live frame
- *   5. Telegram — Message to token channel
- *   6. DegenFeed WebSocket — Push to all subscribers
- */
-async function announceStreamToAllProtocols(
-  stream: PeerTubeStreamRecord,
-  env: Env,
-): Promise<void> {
-  const announcement = [
-    `🔴 LIVE: ${stream.title}`,
-    `Watch the stream for $${stream.tokenSymbol} holders!`,
-    ``,
-    `📺 ${stream.embedUrl}`,
-  ].join('\n');
-
-  const shortAnnounce = `🔴 LIVE: ${stream.title} — Watch on PeerTube 📺`;
-
-  // ── 1. ActivityPub (GoToSocial) ───────────────────────────────────
-  const activityPubPost = async () => {
-    try {
-      const gtsToken = await env.CACHE?.get('gts:access_token');
-      if (gtsToken && env.GTS_API_BASE && env.GTS_CLIENT_ID) {
-        const statusBody = {
-          status: `${announcement}\n\n#LiveStream #${stream.tokenSymbol} #DegenFeed`,
-          visibility: 'public',
-        };
-        await fetch(`${env.GTS_API_BASE}/api/v1/statuses`, {
-          method: 'POST',
-          headers: {
-            authorization: `Bearer ${gtsToken}`,
-            'content-type': 'application/json',
-            'idempotency-key': `stream-${stream.id}`,
-          },
-          body: JSON.stringify(statusBody),
-        });
-      }
-    } catch {
-      // Non-critical
-    }
-  };
-
-  // ── 2. Nostr Kind 30311 Live Event ───────────────────────────────
-  const nostrPost = async () => {
-    try {
-      const relayUrl = env.RELAY_URLS?.split(',')[0] ?? 'wss://relay.damus.io';
-      if (env.NOSTR_PRIVATE_KEY) {
-        // In production, construct a Kind 30311 live event
-        // and publish it to relays. Placeholder for now.
-        await fetch(`https://${new URL(relayUrl).host}/live-event`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            kind: 30311,
-            tags: [
-              ['d', `degenfeed-${stream.id}`],
-              ['title', stream.title],
-              ['streaming', stream.playbackUrl],
-              ['token', stream.tokenAddress],
-            ],
-            content: shortAnnounce,
-          }),
-        }).catch(() => {});
-      }
-    } catch {
-      // Non-critical
-    }
-  };
-
-  // ── 3. AT Protocol (Bluesky) ─────────────────────────────────────
-  const atProtoPost = async () => {
-    try {
-      const bskyToken = await env.CACHE?.get('bsky:access_token');
-      if (bskyToken && env.BSKY_SOCIAL_URL) {
-        const embed = {
-          $type: 'app.bsky.embed.external',
-          external: {
-            uri: stream.embedUrl,
-            title: stream.title,
-            description: `$${stream.tokenSymbol} creator is live on PeerTube!`,
-          },
-        };
-        const record = {
-          $type: 'app.bsky.feed.post',
-          text: shortAnnounce,
-          createdAt: new Date().toISOString(),
-          embed,
-        };
-        await fetch(`${env.BSKY_SOCIAL_URL}/xrpc/com.atproto.repo.createRecord`, {
-          method: 'POST',
-          headers: {
-            authorization: `Bearer ${bskyToken}`,
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            repo: env.BSKY_DID ?? '',
-            collection: 'app.bsky.feed.post',
-            record,
-          }),
-        }).catch(() => {});
-      }
-    } catch {
-      // Non-critical
-    }
-  };
-
-  // ── 4. Farcaster (Cast with Frame) ───────────────────────────────
-  const farcasterPost = async () => {
-    try {
-      const neynarKey = env.NEYNAR_API_KEY;
-      const signerUuid = await env.CACHE?.get('farcaster:signer_uuid');
-      if (neynarKey && signerUuid) {
-        await fetch('https://api.neynar.com/v2/farcaster/cast', {
-          method: 'POST',
-          headers: {
-            accept: 'application/json',
-            'content-type': 'application/json',
-            'x-api-key': neynarKey,
-          },
-          body: JSON.stringify({
-            signer_uuid: signerUuid,
-            text: shortAnnounce,
-            embeds: [{ url: stream.embedUrl }],
-          }),
-        }).catch(() => {});
-      }
-    } catch {
-      // Non-critical
-    }
-  };
-
-  // ── 5. Telegram ──────────────────────────────────────────────────
-  const telegramPost = async () => {
-    try {
-      const botToken = env.TELEGRAM_BOT_TOKEN;
-      const channelId = await env.CACHE?.get(`telegram:channel:${stream.tokenSymbol}`);
-      if (botToken && channelId) {
-        await fetch(
-          `https://api.telegram.org/bot${botToken}/sendMessage`,
-          {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: channelId,
-              text: announcement,
-              parse_mode: 'HTML',
-              disable_web_page_preview: false,
-            }),
-          },
-        ).catch(() => {});
-      }
-    } catch {
-      // Non-critical
-    }
-  };
-
-  // ── Execute all announcements in parallel ────────────────────────
-  await Promise.allSettled([
-    activityPubPost(),
-    nostrPost(),
-    atProtoPost(),
-    farcasterPost(),
-    telegramPost(),
-  ]);
-}
+// ─── Announce stream end to all protocols ────────────────────────────────
 
 /**
  * Announce stream end to all protocols.
@@ -533,8 +362,18 @@ peertubeStreams.post('/:address/peertube/start', async (c) => {
       },
     });
 
-    // Cross-announce to all protocols (non-blocking)
-    c.executionCtx?.waitUntil?.(announceStreamToAllProtocols(streamRecord, c.env));
+    // Cross-announce to all protocols using the stream announcer (non-blocking)
+    c.executionCtx?.waitUntil?.(
+      crossAnnounceStream(c.env, {
+        streamId: streamRecord.id,
+        creator: streamRecord.creator,
+        creatorHandle: streamRecord.tokenSymbol,
+        title: streamRecord.title,
+        streamType: 'live',
+        streamUrl: streamRecord.embedUrl || streamRecord.playbackUrl,
+        thumbnail: undefined,
+      }),
+    );
 
     return noCacheJsonResponse({
       stream: {

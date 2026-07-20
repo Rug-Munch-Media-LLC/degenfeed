@@ -6,9 +6,7 @@
  * This is the core engine powering the unified visual feed.
  */
 
-import type { Embed, UnifiedPost } from '@degenfeed/types';
-import type { PdsClient } from '@degenfeed/bluesky-sdk';
-import { GtSClient, type GtSStatus, statusToUnifiedPost } from '@degenfeed/mastodon-sdk';
+import { GtSClient, type GtSStatus } from '@degenfeed/mastodon-sdk';
 import type { VisualFeedOptions, VisualPost, VisualSource } from '@degenfeed/types';
 import type { Env } from '../index';
 
@@ -102,7 +100,6 @@ async function fetchPixelfedContent(env: Env, limit: number): Promise<VisualPost
   } catch (err) {
     console.warn('[visual-feed] GtS timeline fetch failed:', err);
   }
-  }
 
   // Option B: Query popular Pixelfed instances directly
   if (results.length < limit) {
@@ -117,14 +114,18 @@ async function fetchPixelfedContent(env: Env, limit: number): Promise<VisualPost
         if (!res.ok) return [];
         const data = (await res.json()) as GtSStatus[];
         const pfBadgeForInstance = badgeFor('pixelfed');
-        return (Array.isArray(data) ? data : []).map((s) => ({
-          ...normalizeGtSStatusToVisual(s, instance),
-          source: 'pixelfed' as VisualSource,
-          protocol: 'mastodon',
-          sourceBadge: pfBadgeForInstance.emoji,
-          sourceColor: pfBadgeForInstance.color,
-          sourceLabel: pfBadgeForInstance.label,
-        }));
+        return (Array.isArray(data) ? data : []).flatMap((s) => {
+          const normalized = normalizeGtSStatusToVisual(s, instance);
+          if (!normalized) return [];
+          return [{
+            ...normalized,
+            source: 'pixelfed' as VisualSource,
+            protocol: 'mastodon',
+            sourceBadge: pfBadgeForInstance.emoji,
+            sourceColor: pfBadgeForInstance.color,
+            sourceLabel: pfBadgeForInstance.label,
+          }];
+        });
       }),
     );
     for (const r of instanceResults) {
@@ -186,9 +187,9 @@ function normalizeGtSStatusToVisual(status: GtSStatus, instanceUrl: string): Vis
     createdAt: new Date(status.created_at).getTime(),
     metrics: makeMetrics(status.favourites_count, status.reblogs_count, status.replies_count),
     engagement: makeEngagement(status.favourites_count, status.reblogs_count, status.replies_count),
-    sourceBadge: badge.emoji,
-    sourceColor: badge.color,
-    sourceLabel: badge.label,
+    sourceBadge: pfBadge.emoji,
+    sourceColor: pfBadge.color,
+    sourceLabel: pfBadge.label,
     raw: status,
     url: status.url,
     tipUrl: undefined,

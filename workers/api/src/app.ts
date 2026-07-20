@@ -322,6 +322,7 @@ import {
 import { handleTokenGateResolve, handleTokenGateVerify } from './routes/token-gate';
 import tokenCommunity from './routes/token-community';
 import peertubeStreams from './routes/peertube-streams';
+import streams from './routes/streams';
 import { handleTokenWebSocket, handleTokenSSE } from './routes/token-websocket';
 import { handleTranslate } from './routes/translate';
 import {
@@ -334,6 +335,7 @@ import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleX402Paywall, handleX402Verify } from './routes/x402';
 import { creatorConfig } from './routes/creator-config';
 import feddyCommunities from './routes/feddy-communities';
+import { crossProtocolCoin } from './routes/cross-protocol-coin';
 
 // ─── App ────────────────────────────────────────────────────
 
@@ -631,6 +633,8 @@ app.all('/api/feed/newsletters', async (c) => handleNewsletterFeed(c.req.raw, c.
 app.all('/api/feed/related', async (c) => handleRelatedPosts(c.req.raw, c.env));
 app.all('/api/feed/presets', async (c) => handleFeedPresets(c.req.raw, c.env));
 app.all('/api/feed/stream', async (c) => handleStreamFeed(c.req.raw, c.env));
+
+
 app.all('/api/feed/curated', async (c) => handleCuratedFeed(c.req.raw, c.env, c.executionCtx));
 app.all('/api/feed/scroll-depth', async (c) => handleScrollDepth(c.req.raw, c.env));
 app.all('/api/feed/seen', async (c) => handleMarkSeen(c.req.raw, c.env));
@@ -876,6 +880,10 @@ app.post('/api/lens/coin/:profileId/tip', async (c) =>
   withSession(c, () => handleLensCoinTip(c.req.raw, c.env)),
 );
 
+// ─── API: Cross-Protocol Creator Coins ─────────────────────────
+// Any user from ANY protocol can launch a creator coin via /api/coin/launch
+app.route('/api/coin', crossProtocolCoin);
+
 // ─── API: Cross-Chain Tip Routing ─────────────────────────────
 // Handles tips that originate on one chain/protocol and must be
 // settled on another (e.g. Solana tip → Farcaster coin on Base)
@@ -1018,6 +1026,10 @@ app.route('/api/token', tokenCommunity);
 
 // ─── API: PeerTube Livestreams (creator token streaming) ───
 app.route('/api/token', peertubeStreams);
+
+// ─── API: DegenFeed Multi-type Streaming (solo, spaces, collab, coin-launch) ───
+app.route('/api/streams', streams);
+app.route('/v1/streams', streams);
 
 // ─── WebSocket: Token real-time updates ────────────────────
 app.get('/ws/token/:address', async (c) => {

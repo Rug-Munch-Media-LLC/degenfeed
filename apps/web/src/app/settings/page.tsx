@@ -37,6 +37,7 @@ type Section =
   | 'privacy'
   | 'content'
   | 'subscription'
+  | 'streaming'
   | 'api';
 
 const SECTION_LABELS: Record<Section, { label: string; icon: string; desc: string }> = {
@@ -69,6 +70,11 @@ const SECTION_LABELS: Record<Section, { label: string; icon: string; desc: strin
     label: 'Subscription',
     icon: 'M13 10V3L4 14h7v7l9-11h-7z',
     desc: 'Plan, billing, and premium features',
+  },
+  streaming: {
+    label: 'Streaming',
+    icon: 'M5 3l14 9-14 9V3z',
+    desc: 'Live streaming settings, OBS setup, and stream history',
   },
   api: {
     label: 'API & Developers',
