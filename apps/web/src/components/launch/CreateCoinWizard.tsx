@@ -7,8 +7,15 @@ import FeeConfigPanel from './FeeConfigPanel';
 import type { RevenueRecipient } from './RecipientSplitEditor';
 import RecipientSplitEditor from './RecipientSplitEditor';
 import ShareModal from './ShareModal';
+import VestingConfigPanel from './VestingConfigPanel';
 
 /* ─── Types ──────────────────────────────────────────── */
+
+interface VestingConfig {
+  initialUnlockBps: number;
+  cliffDuration: number;
+  vestingDuration: number;
+}
 
 interface CreatorCoinParams {
   name: string;
@@ -19,9 +26,10 @@ interface CreatorCoinParams {
   creatorAllocation: number;
   feeBps: number;
   revenueSplits: RevenueRecipient[];
+  vestingConfig: VestingConfig;
 }
 
-type StepId = 1 | 2 | 3 | 4 | 5;
+type StepId = 1 | 2 | 3 | 4 | 5 | 6;
 
 interface StepConfig {
   id: StepId;
@@ -32,9 +40,10 @@ interface StepConfig {
 const STEPS: StepConfig[] = [
   { id: 1, label: 'Coin Details', icon: '📝' },
   { id: 2, label: 'Tokenomics', icon: '📊' },
-  { id: 3, label: 'Revenue Sharing', icon: '🤝' },
-  { id: 4, label: 'Review & Deploy', icon: '✅' },
-  { id: 5, label: 'Success!', icon: '🚀' },
+  { id: 3, label: 'Vesting', icon: '🔒' },
+  { id: 4, label: 'Revenue Sharing', icon: '🤝' },
+  { id: 5, label: 'Review & Deploy', icon: '✅' },
+  { id: 6, label: 'Success!', icon: '🚀' },
 ];
 
 /* ─── Helpers ────────────────────────────────────────── */
@@ -467,9 +476,16 @@ function StepReviewDeploy({
           </div>
           <div>
             <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
-              Creator Locked
+              Vesting Schedule
             </span>
-            <p className="text-sm font-bold text-degen-400">✅ Yes (Vested)</p>
+            <p className="text-sm font-bold text-degen-400">
+              {params.vestingConfig.initialUnlockBps / 100}% initial
+              {params.vestingConfig.cliffDuration > 0
+                ? ` · ${Math.round(params.vestingConfig.cliffDuration / 86400)}d cliff`
+                : ' · no cliff'}
+              {' · '}
+              {Math.round(params.vestingConfig.vestingDuration / 86400)}d linear vest
+            </p>
           </div>
         </div>
 
@@ -665,6 +681,7 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
     creatorAllocation: 10,
     feeBps: 100,
     revenueSplits: [],
+    vestingConfig: { initialUnlockBps: 0, cliffDuration: 2_592_000, vestingDuration: 7_776_000 },
   });
 
   const updateParams = useCallback((updates: Partial<CreatorCoinParams>) => {
@@ -684,8 +701,12 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
     else if (symbolSanitized.length > 10) errors[1] = 'Symbol must be 10 characters or less';
     if (params.supply < 1000) errors[2] = 'Minimum supply is 1,000';
     if (params.creatorAllocation < 0) errors[2] = 'Allocation must be 0 or more';
+    const vc = params.vestingConfig;
+    if (vc.initialUnlockBps < 0 || vc.initialUnlockBps > 3000) errors[3] = 'Initial unlock must be 0-30%';
+    if (vc.cliffDuration < 0 || vc.cliffDuration > 7_776_000) errors[3] = 'Cliff must be 0-90 days';
+    if (vc.vestingDuration < 604_800 || vc.vestingDuration > 63_072_000) errors[3] = 'Vesting must be 7 days-2 years';
     const totalSplit = params.revenueSplits.reduce((s, r) => s + r.percentage, 0);
-    if (totalSplit > 100) errors[3] = 'Revenue splits exceed 100%';
+    if (totalSplit > 100) errors[4] = 'Revenue splits exceed 100%';
     return errors;
   }, [params]);
 
@@ -702,11 +723,19 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
         return (
           params.supply >= 1000 && params.creatorAllocation >= 0 && params.creatorAllocation <= 30
         );
-      case 3:
-        return params.revenueSplits.reduce((s, r) => s + r.percentage, 0) <= 100;
+      case 3: {
+        const vc = params.vestingConfig;
+        return (
+          vc.initialUnlockBps >= 0 && vc.initialUnlockBps <= 3000 &&
+          vc.cliffDuration >= 0 && vc.cliffDuration <= 7_776_000 &&
+          vc.vestingDuration >= 604_800 && vc.vestingDuration <= 63_072_000
+        );
+      }
       case 4:
-        return true;
+        return params.revenueSplits.reduce((s, r) => s + r.percentage, 0) <= 100;
       case 5:
+        return true;
+      case 6:
         return true;
     }
   }, [step, params]);
@@ -716,10 +745,16 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
     setDeployError(null);
 
     try {
+      // Build deploy payload with vesting config
+      const deployPayload = {
+        ...params,
+        vestingConfig: params.vestingConfig,
+      };
+
       const res = await fetch('/api/creator/coin/deploy', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(params),
+        body: JSON.stringify(deployPayload),
       });
 
       const data = (await res.json()) as { address?: string; error?: string };
@@ -746,13 +781,13 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
   }, [step]);
 
   const handleNext = useCallback(() => {
-    if (step < 4 && canProceed) {
+    if (step < 5 && canProceed) {
       setStep((step + 1) as StepId);
     }
   }, [step, canProceed]);
 
-  // Step 5 is terminal — no wizard navigation
-  if (step === 5) {
+  // Step 6 is terminal — no wizard navigation
+  if (step === 6) {
     return (
       <div className={`mx-auto max-w-lg ${className}`}>
         <StepSuccess symbol={params.symbol} coinAddress={deployedAddress || '0x...'} />
@@ -765,7 +800,7 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
       {/* Step indicators */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
-          {STEPS.slice(0, 4).map((s, i) => (
+          {STEPS.slice(0, 5).map((s, i) => (
             <div key={s.id} className="flex items-center">
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
@@ -778,7 +813,7 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
               >
                 {step > s.id ? '✓' : s.id}
               </div>
-              {i < 3 && (
+              {i < 4 && (
                 <div
                   className={`mx-2 h-0.5 w-12 transition-colors sm:w-20 ${
                     step > s.id ? 'bg-degen-500/40' : 'bg-[var(--color-border)]'
@@ -789,7 +824,7 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
           ))}
         </div>
         <div className="mt-2 flex justify-between text-[10px] font-medium text-[var(--color-muted)]">
-          {STEPS.slice(0, 4).map((s) => (
+          {STEPS.slice(0, 5).map((s) => (
             <span key={s.id} className={step === s.id ? 'text-degen-400' : ''}>
               {s.label}
             </span>
@@ -801,8 +836,16 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
       <div className="min-h-[300px]">
         {step === 1 && <StepCoinDetails params={params} onChange={updateParams} />}
         {step === 2 && <StepTokenomics params={params} onChange={updateParams} />}
-        {step === 3 && <StepRevenueSharing params={params} onChange={updateParams} />}
-        {step === 4 && (
+        {step === 3 && (
+          <VestingConfigPanel
+            config={params.vestingConfig}
+            onChange={(vc) => updateParams({ vestingConfig: vc })}
+            creatorAllocation={params.creatorAllocation}
+            supply={params.supply}
+          />
+        )}
+        {step === 4 && <StepRevenueSharing params={params} onChange={updateParams} />}
+        {step === 5 && (
           <StepReviewDeploy
             params={params}
             deploying={deploying}
@@ -819,8 +862,8 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
         </div>
       )}
 
-      {/* Navigation buttons (hidden on step 4, which has its own deploy button) */}
-      {step < 4 && (
+      {/* Navigation buttons (hidden on step 5, which has its own deploy button) */}
+      {step < 5 && (
         <div className="mt-8 flex items-center justify-between">
           <button
             type="button"
@@ -831,7 +874,7 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
             ← Back
           </button>
           <span className="text-[10px] tabular-nums text-[var(--color-muted)]">
-            Step {step} of 4
+            Step {step} of 5
           </span>
           <button
             type="button"
@@ -839,7 +882,7 @@ export default function CreateCoinWizard({ className = '' }: CreateCoinWizardPro
             disabled={!canProceed}
             className="btn-primary text-sm disabled:opacity-40"
           >
-            {step === 3 ? 'Review →' : 'Continue →'}
+            {step === 4 ? 'Review →' : 'Continue →'}
           </button>
         </div>
       )}

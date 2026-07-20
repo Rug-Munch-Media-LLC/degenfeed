@@ -111,6 +111,11 @@ import {
 import { handleEmbedPost, handleEmbedResolve } from './routes/embed';
 import { handleEngage } from './routes/engage';
 import { handleFarcasterFeed } from './routes/farcaster-feed';
+import {
+  handleFarcasterCoinDeploy,
+  handleFarcasterCoinGet,
+  handleFarcasterCoinTip,
+} from './routes/farcaster-coin';
 import { handleFeatures } from './routes/features';
 import {
   handleFeedCacheInvalidate,
@@ -182,6 +187,11 @@ import {
   handleRefreshLeaderboards,
 } from './routes/leaderboard';
 import { handleLemmyDiscover } from './routes/lemmy-discover';
+import {
+  handleLensCoinDeploy,
+  handleLensCoinGet,
+  handleLensCoinTip,
+} from './routes/lens-coin';
 import {
   handleLemmyTipCreate,
   handleLemmyTipLeaderboard,
@@ -320,6 +330,7 @@ import {
 } from './routes/unified-tip';
 import { handleWalletNonce, handleWalletVerify } from './routes/wallet';
 import { handleX402Paywall, handleX402Verify } from './routes/x402';
+import { creatorConfig } from './routes/creator-config';
 
 // ─── App ────────────────────────────────────────────────────
 
@@ -821,6 +832,32 @@ app.post('/api/mastodon/tip', async (c) =>
 app.get('/api/mastodon/tip/stats', async (c) => handleMastodonTipStats(c.req.raw, c.env));
 app.get('/api/mastodon/tip/leaderboard', async (c) => handleMastodonLeaderboard(c.req.raw, c.env));
 
+// ─── API: Farcaster Creator Coins ─────────────────────────────
+app.post('/api/farcaster/coin/deploy', async (c) =>
+  withSession(c, () => handleFarcasterCoinDeploy(c.req.raw, c.env)),
+);
+app.get('/api/farcaster/coin/:fid', async (c) => handleFarcasterCoinGet(c.req.raw, c.env));
+app.post('/api/farcaster/coin/:fid/tip', async (c) =>
+  withSession(c, () => handleFarcasterCoinTip(c.req.raw, c.env)),
+);
+
+// ─── API: Lens Protocol Creator Coins ─────────────────────────
+app.post('/api/lens/coin/deploy', async (c) =>
+  withSession(c, () => handleLensCoinDeploy(c.req.raw, c.env)),
+);
+app.get('/api/lens/coin/:profileId', async (c) => handleLensCoinGet(c.req.raw, c.env));
+app.post('/api/lens/coin/:profileId/tip', async (c) =>
+  withSession(c, () => handleLensCoinTip(c.req.raw, c.env)),
+);
+
+// ─── API: Cross-Chain Tip Routing ─────────────────────────────
+// Handles tips that originate on one chain/protocol and must be
+// settled on another (e.g. Solana tip → Farcaster coin on Base)
+app.post('/api/tip/cross-chain', async (c) => {
+  const { handleCrossChainTip } = await import('./routes/unified-tip');
+  return withSession(c, () => handleCrossChainTip(c.req.raw, c.env));
+});
+
 // ─── API: Notifications ──────────────────────────────────────
 app.all('/api/notifications', async (c) => handleNotifications(c.req.raw, c.env));
 app.post('/api/notifications/mark-all-read', async (c) => handleMarkAllRead(c.req.raw, c.env));
@@ -946,6 +983,9 @@ app.all('/api/x402/verify', async (c) => handleX402Verify(c.req.raw, c.env));
 // ─── API: Token Gate ─────────────────────────────────────────
 app.post('/api/token-gate/verify', async (c) => handleTokenGateVerify(c.req.raw, c.env));
 app.post('/api/token-gate/resolve', async (c) => handleTokenGateResolve(c.req.raw, c.env));
+
+// ─── API: Creator Config (vesting, fees, cross-chain) ───────
+app.route('/api/creator', creatorConfig);
 
 // ─── API: Token Community (engagement layer) ────────────────
 app.route('/api/token', tokenCommunity);
@@ -1595,6 +1635,30 @@ app.post('/v1/moderation/ban', (c) => handleBanUser(c.req.raw, c.env));
 app.get('/v1/moderation/stats', (c) => handleModerationStats(c.req.raw, c.env));
 app.get('/v1/moderation/banned', (c) => handleCheckBanned(c.req.raw, c.env));
 app.all('/v1/moderation/sync', (c) => handleBlockSync(c.req.raw, c.env));
+
+// ─── V1: Farcaster Creator Coins ─────────────────────────────
+app.post('/v1/farcaster/coin/deploy', async (c) =>
+  withSession(c, () => handleFarcasterCoinDeploy(c.req.raw, c.env)),
+);
+app.get('/v1/farcaster/coin/:fid', async (c) => handleFarcasterCoinGet(c.req.raw, c.env));
+app.post('/v1/farcaster/coin/:fid/tip', async (c) =>
+  withSession(c, () => handleFarcasterCoinTip(c.req.raw, c.env)),
+);
+
+// ─── V1: Lens Protocol Creator Coins ─────────────────────────
+app.post('/v1/lens/coin/deploy', async (c) =>
+  withSession(c, () => handleLensCoinDeploy(c.req.raw, c.env)),
+);
+app.get('/v1/lens/coin/:profileId', async (c) => handleLensCoinGet(c.req.raw, c.env));
+app.post('/v1/lens/coin/:profileId/tip', async (c) =>
+  withSession(c, () => handleLensCoinTip(c.req.raw, c.env)),
+);
+
+// ─── V1: Cross-Chain Tip Routing ─────────────────────────
+app.post('/v1/tip/cross-chain', async (c) => {
+  const { handleCrossChainTip } = await import('./routes/unified-tip');
+  return withSession(c, () => handleCrossChainTip(c.req.raw, c.env));
+});
 
 // ─── V1: Lemmy Tips ──────────────────────────────────────
 app.all('/v1/lemmy/tip/leaderboard', async (c) => handleLemmyTipLeaderboard(c.req.raw, c.env));

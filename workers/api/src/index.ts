@@ -117,6 +117,17 @@ export interface Env {
   /** KV namespace for content permanence proofs */
   PERMANENCE?: KVNamespace;
 
+  /** KV namespace for Farcaster creator coin records */
+  FARCASTER_COINS?: KVNamespace;
+  /** KV namespace for Lens Protocol creator coin records */
+  LENS_COINS?: KVNamespace;
+  /** KV namespace for cross-chain token registrations */
+  XCHAIN_REGISTRY?: KVNamespace;
+  /** Zora wrapper factory contract address (Base) */
+  ZORA_WRAPPER_FACTORY?: string;
+  /** Wormhole bridge address for cross-chain tips */
+  WORMHOLE_BRIDGE?: string;
+
   /** KV namespace for custom feed storage */
   CUSTOM_FEEDS?: KVNamespace;
 

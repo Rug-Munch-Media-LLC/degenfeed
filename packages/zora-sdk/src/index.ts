@@ -51,6 +51,15 @@ export { EvmCreatorTokenClient } from './evm';
 // ─── Types ──────────────────────────────────────────────────────────────────
 export type * from './types';
 
+// ─── Cross-Chain Registry ────────────────────────────────────────────────────
+export { CrossChainRegistry, createCrossChainRegistry } from './cross-chain/registry';
+export type {
+  CrossChainMapping,
+  CrossChainToken,
+  UnifiedCreatorProfile,
+  KVStore,
+} from './cross-chain/registry';
+
 // ─── Bonding Curve Math (for frontend previews) ─────────────────────────────
 
 /**

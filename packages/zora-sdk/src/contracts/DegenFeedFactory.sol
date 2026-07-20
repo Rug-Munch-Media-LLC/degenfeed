@@ -18,9 +18,10 @@ import {DegenFeedCoin} from "./DegenFeedCoin.sol";
  * - Platform fee capped at 2% (200 bps)
  * - Two-step ownership transfer
  * - No selfdestruct, no delegatecall
+ * - Vesting config is validated and immutable on-chain
  *
  * @dev Off-chain indexing via CoinCreated events.
- * @notice Runtime bytecode ~13.8KB — well under Ethereum 24KB limit and Base 48KB limit.
+ * @notice Runtime bytecode ~14.5KB — well under Ethereum 24KB limit and Base 48KB limit.
  */
 contract DegenFeedFactory {
     // ── Storage ──────────────────────────────────────────────────────────
@@ -52,13 +53,17 @@ contract DegenFeedFactory {
 
     // ── CREATE2 Coin Creation ────────────────────────────────────────────
     /**
-     * @notice Create a new DegenFeedCoin via CREATE2.
+     * @notice Create a new DegenFeedCoin via CREATE2 with customizable vesting.
      * @param name_                Token name.
      * @param symbol_              Token symbol.
      * @param uri_                 Metadata URI.
      * @param creatorAllocationBps Creator allocation (0-1500 bps = 0-15%).
      * @param creatorFeeBps        Creator fee (0-200 bps = 0-2%).
      * @param referrer_            Referrer address (zero = none).
+     * @param vestingConfig_       Custom vesting parameters:
+     *                             initialUnlockBps: 0-3000 (0-30%)
+     *                             cliffDuration: 0-90 days in seconds
+     *                             vestingDuration: 7 days to 2 years in seconds
      * @return coin Address of the created DegenFeedCoin.
      */
     function createCoin(
@@ -67,7 +72,8 @@ contract DegenFeedFactory {
         string memory uri_,
         uint256 creatorAllocationBps,
         uint256 creatorFeeBps,
-        address referrer_
+        address referrer_,
+        DegenFeedCoin.VestingConfig memory vestingConfig_
     ) external payable notPaused returns (address coin) {
         require(msg.value >= MIN_INITIAL_BUY, "Min 0.05 ETH initial buy");
         require(bytes(name_).length > 0, "Name required");
@@ -81,7 +87,8 @@ contract DegenFeedFactory {
             name_, symbol_, uri_, msg.sender,
             creatorAllocationBps, creatorFeeBps,
             platformFeeBps, platformFeeReceiver,
-            referrer_
+            referrer_,
+            vestingConfig_
         ));
 
         unchecked { totalCoins++; }
