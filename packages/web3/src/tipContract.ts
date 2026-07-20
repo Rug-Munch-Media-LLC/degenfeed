@@ -66,6 +66,11 @@ type ethersProvider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
   on: (event: string, handler: (...args: unknown[]) => void) => void;
   removeListener: (event: string, handler: (...args: unknown[]) => void) => void;
+  selectedAddress?: string;
+  isMetaMask?: boolean;
+  isRabby?: boolean;
+  isRainbow?: boolean;
+  isCoinbaseWallet?: boolean;
 };
 
 // ─── Chain switching ──────────────────────────────────────────────────────

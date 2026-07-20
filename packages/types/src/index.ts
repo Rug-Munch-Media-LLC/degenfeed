@@ -30,7 +30,10 @@ export type Protocol =
   | 'github'
   | 'newsletter-bridge'
   | 'mirror'
-  | 'paragraph';
+  | 'paragraph'
+  | 'email'
+  | 'google'
+  | 'twitter';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */
@@ -204,7 +207,9 @@ export interface UnifiedPost {
     /** Resolved symbol (set server-side when creating the post) */
     displaySymbol?: string;
     /** Resolved NFT name (set server-side when creating) */
-    displayName?: string;
+  displayName?: string;
+  /** Optional user biography */
+  bio?: string;
   };
   /** Number of tips received on this post */
   tipCount?: number;

@@ -93,6 +93,10 @@ export interface FeedListProps {
    */
   endOfFeedSuggestions?: DiscoverSuggestion[];
   /**
+   * Right-click / long-press context menu handler.
+   */
+  onContextMenu?: (e: React.MouseEvent, postId: string) => void;
+  /**
    * Custom end-of-feed slot rendered below the last post when hasMore is false.
    * Overrides the built-in discovery cards if provided.
    */
@@ -340,6 +344,7 @@ export const FeedList = memo(function FeedList({
   categoryBreakSlot,
   onShowMoreLikeThis,
   onShowLessLikeThis,
+  onContextMenu,
 }: FeedListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -643,6 +648,7 @@ export const FeedList = memo(function FeedList({
                 onWhyThisPost={onWhyThisPost}
                 onShowMoreLikeThis={onShowMoreLikeThis}
                 onShowLessLikeThis={onShowLessLikeThis}
+                onContextMenu={onContextMenu}
               />
             </article>,
           );

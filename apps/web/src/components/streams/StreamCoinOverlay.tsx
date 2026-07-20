@@ -8,7 +8,15 @@ import type { LiveStream } from './useLiveStreams';
 /* === Types ==================================================== */
 
 interface StreamCoinOverlayProps {
-  stream: LiveStream;
+  stream?: LiveStream;
+  /** Coin address for standalone use */
+  coinAddress?: string;
+  /** Stream ID for coin context */
+  streamId?: string;
+  /** Token symbol for display */
+  tokenSymbol?: string;
+  /** Callback when buy button is clicked */
+  onBuy?: () => void;
 }
 
 /* === Mini bonding curve sparkline SVG ========================= */
@@ -70,7 +78,7 @@ function BondingCurveChart({ progress }: { progress: number }) {
 
 /* === Main Component =========================================== */
 
-export function StreamCoinOverlay({ stream }: StreamCoinOverlayProps) {
+export function StreamCoinOverlay({ stream, coinAddress, streamId, tokenSymbol, onBuy }: StreamCoinOverlayProps) {
   const { showToast } = useToast();
   const { ready, signedInProtocols } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);

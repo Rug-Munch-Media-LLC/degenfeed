@@ -1391,24 +1391,29 @@ export async function getFollowerCommunities(
 		const communities = await Promise.all(
 			ids.slice(0, limit).map((id) => getCommunityById(env, id)),
 		);
-		return communities.filter(Boolean).map((c) => ({
-			id: c?.id,
-			name: c?.name,
-			displayName: c?.displayName,
-			description: c?.description.slice(0, 200),
-			category: c?.category,
-			tags: c?.tags,
-			memberCount: c?.memberCount,
-			postCount: c?.totalPosts,
-			createdAt: c?.createdAt,
-			avatarUrl: c?.avatarUrl,
-			federationStatus: c?.federationStatus,
-			linkedCoin: c?.linkedCoin,
-			trendingScore: c?.totalPosts * 2 + c?.memberCount,
-			communityTokenSymbol: c?.communityTokenSymbol ?? null,
-			featuredPosition: c?.featuredPosition,
-			remoteInstance: c?.remoteInstance ?? null,
-		}));
+		return communities.filter(Boolean).map((c) => {
+			if (!c) throw new Error('Unexpected undefined community after filter');
+			const totalPosts = c.totalPosts ?? 0;
+			const memberCount = c.memberCount ?? 0;
+			return {
+				id: c.id ?? '',
+				name: c.name ?? '',
+				displayName: c.displayName ?? '',
+				description: (c.description ?? '').slice(0, 200),
+				category: c.category ?? ('other' as FeddyCategory),
+				tags: c.tags ?? [],
+				memberCount,
+				postCount: totalPosts,
+				createdAt: c.createdAt ?? 0,
+				avatarUrl: c.avatarUrl ?? '',
+				federationStatus: c.federationStatus ?? 'unknown',
+				linkedCoin: c.linkedCoin ?? null,
+				trendingScore: totalPosts * 2 + memberCount,
+				communityTokenSymbol: c.communityTokenSymbol ?? null,
+				featuredPosition: c.featuredPosition,
+				remoteInstance: c.remoteInstance ?? null,
+			};
+		});
 	} catch {
 		return [];
 	}

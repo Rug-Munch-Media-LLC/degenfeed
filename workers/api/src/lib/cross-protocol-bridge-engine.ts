@@ -1388,56 +1388,55 @@ async function fetchRepliesFromNostr(
 	_auth: Record<string, string>,
 	env: Env,
 ): Promise<CrossProtocolReply[]> {
-	return (
-		reliableFetch<CrossProtocolReply[]>(
-			"nostr",
-			"fetchRepliesFromNostr",
-			async () => {
-				const relayUrls = (
-					env.RELAY_URLS ||
-					"wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net"
-				)
-					.split(",")
-					.map((u) => u.trim())
-					.filter(Boolean);
-				const bandRes = await fetch(
-					`https://api.nostr.band/thread?ids=${encodeURIComponent(nativeId)}`,
-				);
-				if (bandRes.ok) {
-					const bandData = (await bandRes.json()) as {
-						thread?: Array<{
-							id?: string;
-							content?: string;
-							pubkey?: string;
-							created_at?: number;
-						}>;
-					};
-					const replies = bandData.thread ?? [];
-					return replies.slice(1).map((reply): CrossProtocolReply => ({
-						parentUri: `df://nostr:${nativeId}`,
-						sourceProtocol: "nostr",
-						replyNativeId: reply.id ?? "",
-						text: reply.content ?? "",
-						createdAt: (reply.created_at ?? 0) * 1000,
-					}));
-				}
-				const nostr = await import("@degenfeed/nostr-sdk");
-				const pool = new nostr.RelayPool(relayUrls, { eoseTimeout: 3000 });
-				const events = await pool.list([{ "#e": [nativeId], kinds: [1] }]);
-				pool.disconnectAll();
-				return events.map(
-					(ev: { id?: string; content?: string; created_at?: number }): CrossProtocolReply => ({
-						parentUri: `df://nostr:${nativeId}`,
-						sourceProtocol: "nostr",
-						replyNativeId: ev.id ?? "",
-						text: ev.content ?? "",
-						createdAt: (ev.created_at ?? 0) * 1000,
-					}),
-				);
-			},
-			env,
-		) ?? []
+	const result = await reliableFetch<CrossProtocolReply[]>(
+		"nostr",
+		"fetchRepliesFromNostr",
+		async () => {
+			const relayUrls = (
+				env.RELAY_URLS ||
+				"wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net"
+			)
+				.split(",")
+				.map((u) => u.trim())
+				.filter(Boolean);
+			const bandRes = await fetch(
+				`https://api.nostr.band/thread?ids=${encodeURIComponent(nativeId)}`,
+			);
+			if (bandRes.ok) {
+				const bandData = (await bandRes.json()) as {
+					thread?: Array<{
+						id?: string;
+						content?: string;
+						pubkey?: string;
+						created_at?: number;
+					}>;
+				};
+				const replies = bandData.thread ?? [];
+				return replies.slice(1).map((reply): CrossProtocolReply => ({
+					parentUri: `df://nostr:${nativeId}`,
+					sourceProtocol: "nostr",
+					replyNativeId: reply.id ?? "",
+					text: reply.content ?? "",
+					createdAt: (reply.created_at ?? 0) * 1000,
+				}));
+			}
+			const nostr = await import("@degenfeed/nostr-sdk");
+			const pool = new nostr.RelayPool(relayUrls, { eoseTimeout: 3000 });
+			const events = await pool.list([{ "#e": [nativeId], kinds: [1] }]);
+			pool.disconnectAll();
+			return events.map(
+				(ev: { id?: string; content?: string; created_at?: number }): CrossProtocolReply => ({
+					parentUri: `df://nostr:${nativeId}`,
+					sourceProtocol: "nostr",
+					replyNativeId: ev.id ?? "",
+					text: ev.content ?? "",
+					createdAt: (ev.created_at ?? 0) * 1000,
+				}),
+			);
+		},
+		env,
 	);
+	return result ?? [];
 }
 
 async function fetchRepliesFromFarcaster(
@@ -1447,37 +1446,36 @@ async function fetchRepliesFromFarcaster(
 ): Promise<CrossProtocolReply[]> {
 	const hubUrl =
 		env.FARCASTER_HUB_URL || "https://hub.farcaster.standardcrypto.vc:2281";
-	return (
-		reliableFetch(
-			"farcaster",
-			"fetchRepliesFromFarcaster",
-			async () => {
-				const res = await fetch(
-					`${hubUrl}/v1/castsByParent?parentHash=0x${nativeId.replace("0x", "")}`,
-				);
-				if (!res.ok) return [] as CrossProtocolReply[];
-				const data = (await res.json()) as {
-					messages?: Array<{
-						data?: {
-							castAddBody?: { text?: string };
-							metadata?: { timestamp?: number };
-						};
-						hash?: string;
-					}>;
-				};
-				return (data.messages ?? []).map((msg): CrossProtocolReply => ({
-					parentUri: `df://farcaster:${nativeId}`,
-					sourceProtocol: "farcaster",
-					replyNativeId: msg.hash ?? "",
-					text: msg.data?.castAddBody?.text ?? "",
-					createdAt: msg.data?.metadata?.timestamp
-						? msg.data.metadata.timestamp * 1000
-						: Date.now(),
-				}));
-			},
-			env,
-		) ?? []
+	const result = await reliableFetch<CrossProtocolReply[]>(
+		"farcaster",
+		"fetchRepliesFromFarcaster",
+		async () => {
+			const res = await fetch(
+				`${hubUrl}/v1/castsByParent?parentHash=0x${nativeId.replace("0x", "")}`,
+			);
+			if (!res.ok) return [] as CrossProtocolReply[];
+			const data = (await res.json()) as {
+				messages?: Array<{
+					data?: {
+						castAddBody?: { text?: string };
+						metadata?: { timestamp?: number };
+					};
+					hash?: string;
+				}>;
+			};
+			return (data.messages ?? []).map((msg): CrossProtocolReply => ({
+				parentUri: `df://farcaster:${nativeId}`,
+				sourceProtocol: "farcaster",
+				replyNativeId: msg.hash ?? "",
+				text: msg.data?.castAddBody?.text ?? "",
+				createdAt: msg.data?.metadata?.timestamp
+					? msg.data.metadata.timestamp * 1000
+					: Date.now(),
+			}));
+		},
+		env,
 	);
+	return result ?? [];
 }
 
 async function fetchRepliesFromLens(
@@ -1486,38 +1484,37 @@ async function fetchRepliesFromLens(
 	env: Env,
 ): Promise<CrossProtocolReply[]> {
 	const lensApi = env.LENS_API_URL || "https://api-v2.lens.dev/graphql";
-	return (
-		reliableFetch(
-			"lens",
-			"fetchRepliesFromLens",
-			async () => {
-				const res = await fetch(lensApi, {
-					method: "POST",
-					headers: { "content-type": "application/json" },
-					body: JSON.stringify({
-						query: `query Comments($request: PublicationQueryRequest!) { publications(request: $request) { items { ... on Post { id metadata { content } } } } }`,
-						variables: { request: { commentsOf: nativeId, limit: 25 } },
-					}),
-				});
-				if (!res.ok) return [] as CrossProtocolReply[];
-				const data = (await res.json()) as {
-					data?: {
-						publications?: {
-							items?: Array<{ id: string; metadata?: { content?: string } }>;
-						};
+	const result = await reliableFetch<CrossProtocolReply[]>(
+		"lens",
+		"fetchRepliesFromLens",
+		async () => {
+			const res = await fetch(lensApi, {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({
+					query: `query Comments($request: PublicationQueryRequest!) { publications(request: $request) { items { ... on Post { id metadata { content } } } } }`,
+					variables: { request: { commentsOf: nativeId, limit: 25 } },
+				}),
+			});
+			if (!res.ok) return [] as CrossProtocolReply[];
+			const data = (await res.json()) as {
+				data?: {
+					publications?: {
+						items?: Array<{ id: string; metadata?: { content?: string } }>;
 					};
 				};
-				return (data.data?.publications?.items ?? []).map((pub): CrossProtocolReply => ({
-					parentUri: `df://lens:${nativeId}`,
-					sourceProtocol: "lens",
-					replyNativeId: pub.id,
-					text: pub.metadata?.content ?? "",
-					createdAt: Date.now(),
-				}));
-			},
-			env,
-		) ?? []
+			};
+			return (data.data?.publications?.items ?? []).map((pub): CrossProtocolReply => ({
+				parentUri: `df://lens:${nativeId}`,
+				sourceProtocol: "lens",
+				replyNativeId: pub.id,
+				text: pub.metadata?.content ?? "",
+				createdAt: Date.now(),
+			}));
+		},
+		env,
 	);
+	return result ?? [];
 }
 
 async function fetchRepliesFromTelegram(
@@ -1529,43 +1526,42 @@ async function fetchRepliesFromTelegram(
 	const chatId = auth.telegram_chat_id || auth.chat_id;
 	if (!botToken || !chatId) return [];
 
-	return (
-		reliableFetch(
-			"telegram",
-			"fetchRepliesFromTelegram",
-			async () => {
-				const res = await fetch(
-					`https://api.telegram.org/bot${botToken}/getUpdates?offset=-100&allowed_updates=["message"]`,
-				);
-				if (!res.ok) return [] as CrossProtocolReply[];
-				const data = (await res.json()) as {
-					result?: Array<{
-						message?: {
-							message_id: number;
-							text?: string;
-							reply_to_message?: { message_id: number };
-							from?: { first_name?: string; username?: string };
-							date?: number;
-						};
-					}>;
-				};
-				return (data.result ?? [])
-					.filter(
-						(u) => u.message?.reply_to_message?.message_id === Number(nativeId),
-					)
-					.map((u) => ({
-						parentUri: `df://telegram:${nativeId}`,
-						sourceProtocol: "telegram",
-						replyNativeId: String(u.message?.message_id ?? ""),
-						text: u.message?.text ?? "",
-						authorName:
-							u.message?.from?.first_name ?? u.message?.from?.username,
-						createdAt: (u.message?.date ?? 0) * 1000,
-					}));
-			},
-			env,
-		) ?? []
+	const result = await reliableFetch<CrossProtocolReply[]>(
+		"telegram",
+		"fetchRepliesFromTelegram",
+		async () => {
+			const res = await fetch(
+				`https://api.telegram.org/bot${botToken}/getUpdates?offset=-100&allowed_updates=["message"]`,
+			);
+			if (!res.ok) return [] as CrossProtocolReply[];
+			const data = (await res.json()) as {
+				result?: Array<{
+					message?: {
+						message_id: number;
+						text?: string;
+						reply_to_message?: { message_id: number };
+						from?: { first_name?: string; username?: string };
+						date?: number;
+					};
+				}>;
+			};
+			return (data.result ?? [])
+				.filter(
+					(u) => u.message?.reply_to_message?.message_id === Number(nativeId),
+				)
+				.map((u) => ({
+					parentUri: `df://telegram:${nativeId}`,
+					sourceProtocol: "telegram",
+					replyNativeId: String(u.message?.message_id ?? ""),
+					text: u.message?.text ?? "",
+					authorName:
+						u.message?.from?.first_name ?? u.message?.from?.username,
+					createdAt: (u.message?.date ?? 0) * 1000,
+				}));
+		},
+		env,
 	);
+	return result ?? [];
 }
 
 // ─── HELPERS ───────────────────────────────────────────────────────────────

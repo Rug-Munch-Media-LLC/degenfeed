@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /features
+Allow: /faq
+Allow: /docs
+Allow: /feed
+Allow: /discover
+Allow: /trending
+Allow: /news
+Allow: /articles
+Allow: /waitlist
+Allow: /developers
+Allow: /premium
+Allow: /status
+Disallow: /api/
+Disallow: /admin/
+Disallow: /settings/
+Disallow: /auth/
+Disallow: /embed/
+Disallow: /offline
+Disallow: /health
+
+# Sitemaps
+Sitemap: https://app.degenfeed.xyz/sitemap.xml

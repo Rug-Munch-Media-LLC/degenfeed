@@ -3,26 +3,39 @@ import type { Metadata } from 'next';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy',
+  title: 'Privacy Policy — DegenFeed',
   description:
-    'Privacy policy for DegenFeed, operated by Rug Munch Media LLC. No tracking, no ads, no data sales.',
+    'Privacy policy for DegenFeed, operated by Rug Munch Media LLC. No tracking, no ads, no data sales. We collect only wallet addresses and encrypted protocol credentials. Full GDPR and CCPA compliance.',
+  keywords: [
+    'degenfeed privacy',
+    'web3 social media privacy',
+    'decentralized social data ownership',
+    'gdpr crypto platform',
+    'ccpa social media',
+    'no tracking social network',
+  ],
   openGraph: {
-    title: 'Privacy Policy — DegenFeed',
-    description: 'Privacy policy for DegenFeed. No tracking, no ads, no data sales.',
+    title: 'Privacy Policy — DegenFeed | No Tracking, No Ads, No Data Sales',
+    description:
+      'Privacy-first web3 social platform. Wallet-only auth, encrypted credentials, no tracking, no ads, no data sales. GDPR and CCPA compliant.',
     url: 'https://app.degenfeed.xyz/privacy',
+    siteName: 'DegenFeed',
+    type: 'website',
     images: [
       {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed Privacy Policy',
+        alt: 'DegenFeed Privacy Policy — No tracking, no ads, no data sales',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Privacy Policy — DegenFeed',
-    description: 'Privacy policy for DegenFeed.',
+    title: 'Privacy Policy — DegenFeed | No Tracking, No Ads',
+    description:
+      'Privacy-first web3 social platform. Wallet-only auth. No tracking. No data sales.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/privacy' },
 };

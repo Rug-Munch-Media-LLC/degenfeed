@@ -279,6 +279,14 @@ export interface Env {
 	PARAGRAPH_API_URL?: string;
 	/** Paragraph API key */
 	PARAGRAPH_API_KEY?: string;
+
+	// ─── Unified Shorts ──────────────────────────────────────────────────
+	/** KV namespace for unified shorts (cross-protocol short-form video) */
+	SHORTS?: KVNamespace;
+	/** Zora video NFT contract address */
+	ZORA_VIDEO_CONTRACT?: string;
+	/** CDN base URL for short video content */
+	DEGENFEED_CDN_URL?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

@@ -150,7 +150,7 @@ export class GtSClient {
     return res.json() as Promise<T>;
   }
 
-  private async get<T>(path: string, params?: Record<string, string | number>): Promise<T> {
+  async get<T>(path: string, params?: Record<string, string | number>): Promise<T> {
     return this.api<T>('GET', path, undefined, params);
   }
 

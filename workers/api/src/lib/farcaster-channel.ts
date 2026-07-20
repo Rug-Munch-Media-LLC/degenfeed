@@ -158,7 +158,8 @@ export function getRelevantChannels(
 
 	if (allTerms.length === 0) {
 		// Default: suggest the general live channel
-		return [CHANNEL_REGISTRY[0]?.channel];
+		const defaultChannel = CHANNEL_REGISTRY[0]?.channel;
+		return defaultChannel ? [defaultChannel] : [];
 	}
 
 	const scored = CHANNEL_REGISTRY.map((entry) => {
@@ -175,7 +176,8 @@ export function getRelevantChannels(
 		.slice(0, 3);
 
 	if (scored.length === 0) {
-		return [CHANNEL_REGISTRY[0]?.channel];
+		const defaultChannel = CHANNEL_REGISTRY[0]?.channel;
+		return defaultChannel ? [defaultChannel] : [];
 	}
 
 	return scored.map((s) => s.channel);

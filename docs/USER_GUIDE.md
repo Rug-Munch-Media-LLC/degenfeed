@@ -1,6 +1,9 @@
 # DegenFeed User Guide
 
-Your guide to the unified open social web. From first login to cross-platform posting, tipping, and live streaming — everything you need to get started.
+**Your guide to the unified open social web.**  
+From first login to cross-platform posting, tipping, creator coins, and live streaming — everything you need to master decentralized social media.
+
+> **Live at [app.degenfeed.xyz](https://app.degenfeed.xyz) | No account required to browse.**
 
 ---
 

@@ -142,6 +142,9 @@ export async function generateTOTP(
 
 	// Step 4: Dynamic truncation (RFC 4226 §5.3)
 	const offset = hmac[hmac.length - 1] & OFFSET_MASK;
+	if (hmac[offset] === undefined || hmac[offset + 1] === undefined || hmac[offset + 2] === undefined || hmac[offset + 3] === undefined) {
+		throw new Error('TOTP: offset out of bounds');
+	}
 	const binaryCode =
 		((hmac[offset] & DYNAMIC_TRUNCATION_MASK) << 24) |
 		((hmac[offset + 1] & 0xff) << 16) |
@@ -181,7 +184,7 @@ async function hmacSha1(
 		false,
 		["sign"],
 	);
-	const signature = await crypto.subtle.sign("HMAC", cryptoKey, data);
+	const signature = await crypto.subtle.sign("HMAC", cryptoKey, data as BufferSource);
 	return new Uint8Array(signature);
 }
 

@@ -1,7 +1,11 @@
 # DegenFeed API Reference
 
-**Base URL:** `https://degenfeed.xyz/v1/`
-**Status:** Stable | **Legacy `/api/` routes deprecated, sunset November 1, 2026**
+**Base URL:** `https://degenfeed.xyz/v1/`  
+**Status:** Stable  
+**Legacy `/api/` routes deprecated — sunset November 1, 2026**  
+**Authentication:** All v1 endpoints require an API key in the `Authorization` header
+
+Access the full power of DegenFeed programmatically: feed aggregation, cross-protocol posting, identity resolution, tipping, creator coins, livestreaming, community management, analytics, and more.
 
 All endpoints return JSON. Timestamps are in milliseconds since Unix epoch unless noted.
 

@@ -3,13 +3,16 @@ import type { Metadata } from 'next';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: 'Terms of Service',
+  title: 'Terms of Service — DegenFeed',
   description:
-    'Terms of Service for DegenFeed, operated by Rug Munch Media LLC, a Wyoming limited liability company.',
+    'Terms of Service for DegenFeed, operated by Rug Munch Media LLC, a Wyoming limited liability company. Open source (AGPL-3.0), wallet-based authentication, community guidelines.',
   openGraph: {
-    title: 'Terms of Service — DegenFeed',
-    description: 'Terms of Service for DegenFeed.',
+    title: 'Terms of Service — DegenFeed | Rug Munch Media LLC',
+    description:
+      'Terms of Service for DegenFeed. Open source web3 social platform operated by Rug Munch Media LLC.',
     url: 'https://app.degenfeed.xyz/terms',
+    siteName: 'DegenFeed',
+    type: 'website',
     images: [
       {
         url: 'https://app.degenfeed.xyz/og-image.png',
@@ -22,7 +25,9 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Terms of Service — DegenFeed',
-    description: 'Terms of Service for DegenFeed.',
+    description:
+      'Terms of Service for DegenFeed, operated by Rug Munch Media LLC.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/terms' },
 };
