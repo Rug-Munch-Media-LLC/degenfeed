@@ -28,7 +28,9 @@ export type Protocol =
   | 'matrix'
   | 'webhook'
   | 'github'
-  | 'newsletter-bridge';
+  | 'newsletter-bridge'
+  | 'mirror'
+  | 'paragraph';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */

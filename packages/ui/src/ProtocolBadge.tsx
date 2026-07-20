@@ -16,9 +16,19 @@ export const PROTOCOL_COLORS: Record<string, string> = {
   reddit: '#ff4500',
   lemmy: '#00b868',
   activitypub: '#6364ff',
+  atproto: '#1185fe',
   rss: '#ffa500',
   peertube: '#d22d23',
   youtube: '#ff0000',
+  mirror: '#0a0a0a',
+  paragraph: '#6b21a8',
+  zora: '#7c3aed',
+  ghost: '#15171a',
+  kbin: '#6364ff',
+  discord: '#5865f2',
+  telegram: '#26a5e4',
+  matrix: '#000000',
+  github: '#333',
 };
 
 export const PROTOCOL_LABELS: Record<string, string> = {
@@ -31,9 +41,19 @@ export const PROTOCOL_LABELS: Record<string, string> = {
   reddit: 'Reddit',
   lemmy: 'Lemmy',
   activitypub: 'Mastodon',
+  atproto: 'AT Protocol',
   rss: 'RSS',
   peertube: 'PeerTube',
   youtube: 'YouTube',
+  mirror: 'Mirror.xyz',
+  paragraph: 'Paragraph',
+  zora: 'Zora',
+  ghost: 'Ghost',
+  kbin: 'Kbin',
+  discord: 'Discord',
+  telegram: 'Telegram',
+  matrix: 'Matrix',
+  github: 'GitHub',
 };
 
 export const PROTOCOL_ICONS: Record<string, string> = {
@@ -46,9 +66,19 @@ export const PROTOCOL_ICONS: Record<string, string> = {
   reddit: 'R',
   lemmy: '\uD83C\uDF4B',
   activitypub: 'M',
+  atproto: '\u2601',
   rss: 'A',
   peertube: '\u25B6',
   youtube: '\u25B6',
+  mirror: 'M',
+  paragraph: 'P',
+  zora: 'Z',
+  ghost: 'G',
+  kbin: 'K',
+  discord: 'D',
+  telegram: 'T',
+  matrix: 'M',
+  github: 'G',
 };
 
 export interface ProtocolBadgeProps {

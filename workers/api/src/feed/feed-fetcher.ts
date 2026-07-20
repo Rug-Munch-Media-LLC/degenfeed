@@ -77,6 +77,8 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
 	webhook: 3000,
 	github: 5000,
 	"newsletter-bridge": 5000,
+	mirror: 5000,
+	paragraph: 5000,
 };
 
 // ─── Per-provider fetch timer ────────────────────────────────────

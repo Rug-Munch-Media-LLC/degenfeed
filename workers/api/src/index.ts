@@ -177,6 +177,22 @@ export interface Env {
 	/** Mastodon instance URL for account creation */
 	MASTODON_INSTANCE_URL?: string;
 
+	// ─── Self-hosted infrastructure URLs ────────────────────────────────────
+	/** AT Protocol PDS instance URL — pds.degenfeed.xyz */
+	PDS_INSTANCE_URL?: string;
+	/** Nostr relay instance URL — relay.degenfeed.xyz */
+	RELAY_INSTANCE_URL?: string;
+	/** Matrix homeserver URL — matrix.degenfeed.xyz */
+	MATRIX_INSTANCE_URL?: string;
+	/** Ghost CMS instance URL — articles.degenfeed.xyz */
+	GHOST_INSTANCE_URL?: string;
+	/** WriteFreely instance URL — blog.degenfeed.xyz */
+	WRITEFREELY_INSTANCE_URL?: string;
+	/** Owncast instance URL — live.degenfeed.xyz */
+	OWNCAST_INSTANCE_URL?: string;
+	/** Mobilizon instance URL — events.degenfeed.xyz */
+	MOBILIZON_INSTANCE_URL?: string;
+
 	// ─── Content permanence (Pinata IPFS) ────────────────────────────────
 	/** Pinata API key for IPFS pinning (Content Permanence API) */
 	PINATA_API_KEY?: string;
@@ -226,6 +242,20 @@ export interface Env {
 	BSKY_BOT_PASSWORD?: string;
 	/** Farcaster bot mnemonic for publishing casts */
 	FARCASTER_BOT_MNEMONIC?: string;
+
+	// ─── Mirror.xyz Bridge ───────────────────────────────────────────────
+	/** Mirror.xyz GraphQL API URL (default: https://mirror.xyz/graphql) */
+	MIRROR_GRAPHQL_URL?: string;
+	/** Arweave gateway URL (default: https://arweave.net) */
+	MIRROR_ARWEAVE_GATEWAY?: string;
+	/** Optimism RPC URL for Writing NFT minting (default: https://mainnet.optimism.io) */
+	MIRROR_OPTIMISM_RPC?: string;
+
+	// ─── Paragraph.xyz Bridge ────────────────────────────────────────────
+	/** Paragraph.xyz API URL (default: https://paragraph.xyz/api) */
+	PARAGRAPH_API_URL?: string;
+	/** Paragraph API key */
+	PARAGRAPH_API_KEY?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────

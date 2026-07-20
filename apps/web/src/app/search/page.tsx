@@ -199,6 +199,18 @@ export default function SearchPage() {
   const [hasMore, setHasMore] = useState(true);
   const loadCountRef = useRef(1);
   const inputRef = useRef<HTMLInputElement>(null);
+  // ── Autocomplete ──
+  interface AutocompleteSuggestion {
+    text: string;
+    type: 'query' | 'creator' | 'community' | 'coin' | 'trending';
+    source?: string;
+    score: number;
+  }
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<AutocompleteSuggestion[]>([]);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [acLoading, setAcLoading] = useState(false);
+  const autocompleteRef = useRef<AbortController | null>(null);
+
   // ── Recent & trending searches ──
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [trendingSearches] = useState<string[]>([
@@ -406,15 +418,57 @@ export default function SearchPage() {
     }
   }, [error, retryCount, doSearch, query]);
 
+  // Fetch autocomplete suggestions
+  const fetchAutocomplete = useCallback(async (q: string) => {
+    if (q.length < 2) {
+      setAutocompleteSuggestions([]);
+      setShowAutocomplete(false);
+      return;
+    }
+    // Cancel previous request
+    if (autocompleteRef.current) {
+      autocompleteRef.current.abort();
+    }
+    const controller = new AbortController();
+    autocompleteRef.current = controller;
+    setAcLoading(true);
+    try {
+      const res = await fetch(`/api/search/autocomplete?q=${encodeURIComponent(q)}`, {
+        signal: controller.signal,
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { suggestions: AutocompleteSuggestion[] };
+      setAutocompleteSuggestions(data.suggestions ?? []);
+      setShowAutocomplete(data.suggestions?.length > 0);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      // ignore other errors
+    } finally {
+      setAcLoading(false);
+    }
+  }, []);
+
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const handleChange = useCallback(
     (val: string) => {
       setQuery(val);
+      // Show autocomplete immediately on typing
+      fetchAutocomplete(val);
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
         updateUrl(val);
         doSearch(val);
-      }, 200);
+      }, 250);
+    },
+    [doSearch, updateUrl, fetchAutocomplete],
+  );
+
+  const handleAutocompleteSelect = useCallback(
+    (suggestion: AutocompleteSuggestion) => {
+      setShowAutocomplete(false);
+      setQuery(suggestion.text);
+      updateUrl(suggestion.text);
+      doSearch(suggestion.text);
     },
     [doSearch, updateUrl],
   );
@@ -462,6 +516,38 @@ export default function SearchPage() {
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-muted)]">
             {loading ? '⟳' : '⌕'}
           </span>
+          {/* Autocomplete dropdown */}
+          {showAutocomplete && autocompleteSuggestions.length > 0 && (
+            <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-lg">
+              {autocompleteSuggestions.map((s, i) => {
+                const typeIcon =
+                  s.type === 'creator' ? '👤' :
+                  s.type === 'community' ? '🏘️' :
+                  s.type === 'coin' ? '🪙' :
+                  s.type === 'trending' ? '🔥' : '⌕';
+                return (
+                  <button
+                    key={`${s.text}-${i}`}
+                    type="button"
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-[var(--color-overlay)]"
+                    onClick={() => handleAutocompleteSelect(s)}
+                  >
+                    <span className="text-base">{typeIcon}</span>
+                    <span className="flex-1 text-[var(--color-fg)]">{s.text}</span>
+                    {s.source && (
+                      <span
+                        className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
+                        style={{ backgroundColor: `${getProtocolColor(s.source)}18`, color: getProtocolColor(s.source) }}
+                      >
+                        {s.source}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-[var(--color-muted)]">{s.type}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
