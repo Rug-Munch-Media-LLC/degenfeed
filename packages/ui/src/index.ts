@@ -187,3 +187,6 @@ export type {
 export { VotingPanel } from './VotingPanel';
 export type { YouTubeVideoCardItem, YouTubeVideoCardProps } from './YouTubeVideoCard';
 export { YouTubeVideoCard } from './YouTubeVideoCard';
+export { CHANNEL_LIST, CHANNELS } from '@degenfeed/realtime';
+export { useRealtime } from '@degenfeed/realtime';
+export { RealtimeStatusDot, useRealtimeContext, WebSocketProvider } from '@degenfeed/realtime';

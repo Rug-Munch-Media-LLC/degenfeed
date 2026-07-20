@@ -1,6 +1,6 @@
 'use client';
 
-import { CHANNELS, useRealtime } from '@degenfeed/realtime';
+import { CHANNELS, useRealtime } from '@degenfeed/ui';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';

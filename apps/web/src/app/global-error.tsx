@@ -24,7 +24,13 @@ export default function GlobalError({
 
   return (
     <html lang="en">
-      <body>
+      <body style={{
+        margin: 0,
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        background: '#000',
+        color: '#e7e9ea',
+        WebkitFontSmoothing: 'antialiased',
+      }}>
         <div
           style={{
             display: 'flex',
@@ -33,9 +39,6 @@ export default function GlobalError({
             alignItems: 'center',
             justifyContent: 'center',
             padding: '20px',
-            fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-            background: '#000',
-            color: '#e7e9ea',
           }}
         >
           <div
@@ -45,104 +48,120 @@ export default function GlobalError({
               textAlign: 'center',
             }}
           >
-            {/* Icon */}
+            {/* Premium illustration */}
             <div
               style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '16px',
-                background: 'rgba(239,68,68,0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                width: '80px',
+                height: '80px',
                 margin: '0 auto 24px',
+                borderRadius: '20px',
+                background: 'rgba(0, 255, 65, 0.08)',
+                border: '1px solid rgba(0, 255, 65, 0.15)',
               }}
+              aria-hidden="true"
             >
-              <span style={{ fontSize: '28px', color: '#f87171' }}>⚡</span>
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="16" r="8" stroke="#00ff41" strokeWidth="1.5" opacity="0.5" />
+                <path d="M10 32c0-6 4-9 10-9s10 3 10 9" stroke="#00ff41" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+                <path d="M16 13l8 8M24 13l-8 8" stroke="#00ff41" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+              </svg>
             </div>
 
-            <h1
-              style={{
-                fontSize: '22px',
-                fontWeight: 700,
-                margin: '0 0 8px',
-                color: '#e7e9ea',
-              }}
-            >
+            <h1 style={{
+              fontSize: '1.5rem',
+              fontWeight: 700,
+              margin: '0 0 8px',
+              letterSpacing: '-0.02em',
+            }}>
               Critical error
             </h1>
 
-            <p
-              style={{
-                fontSize: '14px',
-                color: '#71717a',
-                margin: '0 0 24px',
-                lineHeight: 1.5,
-              }}
-            >
-              A critical error occurred. Our team has been automatically notified.
+            <p style={{
+              fontSize: '0.875rem',
+              lineHeight: '1.6',
+              color: '#71767b',
+              margin: '0 0 4px',
+            }}>
+              Something went very wrong. Our team has been notified.
             </p>
 
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                alignItems: 'center',
-              }}
-            >
+            <p style={{
+              fontSize: '0.75rem',
+              color: '#53575b',
+              fontFamily: 'JetBrains Mono, monospace',
+              margin: '0 0 24px',
+              opacity: 0.5,
+            }}>
+              {errorCode}
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
               <button
-                type="button"
                 onClick={reset}
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
                   padding: '10px 24px',
-                  borderRadius: '10px',
+                  borderRadius: '9999px',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: '#000',
+                  background: '#00ff41',
                   border: 'none',
-                  background: 'rgba(34,197,94,0.2)',
-                  color: '#4ade80',
-                  fontSize: '14px',
-                  fontWeight: 600,
                   cursor: 'pointer',
-                  transition: 'background 0.2s',
-                  width: '100%',
+                  lineHeight: 1,
                 }}
               >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8a5 5 0 019.9-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M13 3v4H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
                 Try Again
               </button>
 
               <a
                 href="/"
                 style={{
-                  padding: '10px 24px',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 20px',
+                  borderRadius: '9999px',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  color: '#71767b',
                   background: 'transparent',
-                  color: '#a1a1aa',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  textDecoration: 'none',
+                  border: '1px solid #2f3336',
                   cursor: 'pointer',
-                  transition: 'color 0.2s',
-                  width: '100%',
-                  boxSizing: 'border-box' as const,
-                  textAlign: 'center' as const,
+                  textDecoration: 'none',
+                  lineHeight: 1,
                 }}
               >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 8l7-6 7 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 6v7h3v-4h4v4h3V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
                 Go Home
               </a>
             </div>
 
-            <p
-              style={{
-                marginTop: '24px',
-                fontSize: '11px',
-                fontFamily: 'ui-monospace, monospace',
-                color: '#52525b',
-                letterSpacing: '0.5px',
-              }}
-            >
-              {errorCode}
-            </p>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              marginTop: '40px',
+              fontSize: '0.75rem',
+              color: '#53575b',
+            }}>
+              <a href="/status" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationStyle: 'dotted' }}>System Status</a>
+              <span style={{ opacity: 0.3 }}>·</span>
+              <a href="/faq" style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '2px', textDecorationStyle: 'dotted' }}>FAQ</a>
+            </div>
           </div>
         </div>
       </body>

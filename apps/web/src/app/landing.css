@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
- * LANDING PAGE — Premium dark, X-inspired
+ * LANDING PAGE — Premium dark, X-inspired with DegenFeed green accent
  *
  * Uses CSS custom properties for theme-aware colors.
  * Dark: #000 bg, #e7e9ea text. Light: #fff bg, #171717 text.
@@ -26,6 +26,25 @@
   --landing-border: #e0e0e0;
   --landing-muted: #737373;
   --landing-stats: #6b7280;
+}
+
+/* ── Hero background glow ── */
+.hero-bg-glow {
+  position: fixed;
+  top: -50%;
+  left: 50%;
+  width: 800px;
+  height: 800px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(0, 255, 65, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: hero-glow-pulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes hero-glow-pulse {
+  0% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1.1); }
 }
 
 /* ── Reset / Base ─────────────────────────────────────────── */
@@ -261,6 +280,24 @@
 
 .feature-card:hover {
   background: var(--landing-card-hover, #1d1f23);
+}
+
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #000;
+  transition: transform var(--duration-fast) ease-out;
+}
+
+.feature-card:hover .feature-icon {
+  transform: scale(1.05) rotate(-3deg);
 }
 
 .feature-title {
@@ -524,6 +561,14 @@
   font-size: 0.75rem;
   color: #3a3c40;
   line-height: 1.5;
+}
+
+/* ── Landing scroll-reveal overrides (respect reduced motion) ─ */
+@media (prefers-reduced-motion: no-preference) {
+  .landing-page .scroll-reveal {
+    opacity: 0;
+    animation: scroll-reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 }
 
 /* ── Reduced Motion ───────────────────────────────────────── */

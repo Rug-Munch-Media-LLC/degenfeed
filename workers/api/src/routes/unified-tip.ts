@@ -417,7 +417,67 @@ export async function recordUnifiedTip(
     console.warn('[unified-tip] activity feed failed:', String(err));
   }
 
+  // 6. Fire real-time sync event for the tip
+  fireTipSyncEvent(env, event, activity).catch((err) =>
+    console.error('[unified-tip] realtime sync failed:', err),
+  );
+
   return activity;
+}
+
+/**
+ * Fire a real-time sync event when a tip is recorded.
+ * Propagates the tip notification to all linked protocols
+ * so the tipper gets recognized everywhere.
+ */
+async function fireTipSyncEvent(
+  env: Env,
+  event: UnifiedTipEvent,
+  activity: ActivityItem,
+): Promise<void> {
+  try {
+    const { createEvent, onEvent } = await import('../lib/realtime-sync');
+
+    // Map platform to Protocol
+    const protocolMap: Record<string, string> = {
+      degenfeed: 'nostr',
+      lemmy: 'mastodon',
+      peertube: 'peertube',
+      bluesky: 'bluesky',
+      mastodon: 'mastodon',
+      farcaster: 'farcaster',
+      lens: 'lens',
+      solana: 'solana',
+    };
+
+    const sourceProtocol = (protocolMap[event.platform] ?? 'nostr') as Protocol;
+
+    const syncEvent = createEvent(
+      sourceProtocol,
+      'tip',
+      activity.id,
+      {
+        id: event.fromUserId ?? 'anonymous',
+        handle: event.fromLabel,
+      },
+      {
+        text: `Tip of $${event.amountUsd} on ${event.entityType}`,
+        subjectId: event.entityId,
+        tipAmountUsd: event.amountUsd,
+        raw: {
+          platform: event.platform,
+          entityType: event.entityType,
+          toUserId: event.toUserId,
+          toLabel: event.toLabel,
+          method: event.method,
+        },
+      },
+    );
+
+    await onEvent(sourceProtocol, syncEvent, env);
+  } catch (e) {
+    console.error('[unified-tip] fireTipSyncEvent error:', e);
+  }
 }
 
 // ─── POST /api/tip/unified — route to the correct platform handler ───────

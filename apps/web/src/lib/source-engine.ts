@@ -18,7 +18,7 @@ import {
   type Platform,
   type SourceHealth,
   type TrendingSource,
-} from '@degenfeed/source-discovery';
+} from '@degenfeed/feed-providers';
 
 // ─── Persistent storage (file-backed) ──────────────────────────────────
 

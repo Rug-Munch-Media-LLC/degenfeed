@@ -18,7 +18,7 @@ import {
   isRelevantPost,
   isSpamPost,
 } from '@degenfeed/feed-core';
-import { computeTrendingTopics } from '@degenfeed/ranking';
+import { computeTrendingTopics } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, rmiUrl } from '@degenfeed/utils';
 import { type Env, jsonResponse, noCacheJsonResponse } from '../index';

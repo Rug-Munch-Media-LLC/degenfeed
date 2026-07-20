@@ -23,7 +23,7 @@ import {
   isSpamPost,
 } from '@degenfeed/feed-core';
 import { getNewsletterFeeds, RmiDataBusProvider, RssProvider } from '@degenfeed/feed-providers';
-import { computeTrendingTopics, rankDiverse } from '@degenfeed/ranking';
+import { computeTrendingTopics, rankDiverse } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { getProtocolColor, rmiUrl } from '@degenfeed/utils';
 import { authenticateApiKey } from '../admin';

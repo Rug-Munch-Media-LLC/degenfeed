@@ -20,7 +20,7 @@
  * is unavailable.
  */
 
-import { CHANNELS, useRealtime } from '@degenfeed/realtime';
+import { CHANNELS, useRealtime } from '@degenfeed/ui';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────

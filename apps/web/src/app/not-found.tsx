@@ -31,31 +31,55 @@ export default function NotFound() {
   );
 
   return (
-    <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-4 py-20 text-center">
-      <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-500/10">
-        <span className="text-4xl text-amber-400" aria-hidden="true">
-          🔍
-        </span>
+    <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 py-20 text-center">
+      {/* Premium illustration */}
+      <div className="mb-8 flex items-center justify-center">
+        <svg
+          width="80"
+          height="80"
+          viewBox="0 0 80 80"
+          fill="none"
+          aria-hidden="true"
+          className="opacity-80"
+        >
+          <rect x="8" y="8" width="64" height="64" rx="16" stroke="currentColor" strokeWidth="1.5" opacity="0.12" />
+          <circle cx="40" cy="34" r="10" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
+          <path
+            d="M26 56c0-8 5-12 14-12s14 4 14 12"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            opacity="0.2"
+          />
+          <path
+            d="M36 30l8 8M44 30l-8 8"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            opacity="0.35"
+          />
+        </svg>
       </div>
+
       <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">Page not found</h1>
       <p className="mb-8 text-sm text-[var(--color-muted)]">
         The page you&apos;re looking for doesn&apos;t exist or has been moved.
       </p>
 
-      {/* Search bar */}
+      {/* Search bar — premium styled */}
       <form onSubmit={handleSearch} className="mb-8 w-full max-w-sm">
-        <div className="relative">
+        <div className="relative group">
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search DegenFeed…"
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 pl-10 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-muted)] outline-none transition-colors focus:border-degen-500/40"
+            className="input pl-10"
             aria-label="Search DegenFeed"
           />
           <span
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] transition-colors group-focus-within:text-degen-400"
             aria-hidden="true"
           >
             ⌕
@@ -64,6 +88,10 @@ export default function NotFound() {
       </form>
 
       <Link href="/" className="btn-primary mb-10">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M1 8l7-6 7 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3 6v7h3v-4h4v4h3V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
         Go Home
       </Link>
 
@@ -77,7 +105,7 @@ export default function NotFound() {
             <Link
               key={page.href}
               href={page.href}
-              className="flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-left transition-all hover:border-degen-500/30 hover:shadow-[0_0_20px_-8px_rgba(34,197,94,0.15)]"
+              className="card-hover flex items-start gap-3 p-4"
             >
               <span className="mt-0.5 text-lg" aria-hidden="true">
                 {page.label.split(' ')[0]}
