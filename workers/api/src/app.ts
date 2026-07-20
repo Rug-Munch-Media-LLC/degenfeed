@@ -266,6 +266,7 @@ import {
   handleRegisterPlatform,
   handleRegisterPlatformStatus,
 } from './routes/register-platform';
+import registerAll from './routes/register-all';
 import { handleRelatedPosts } from './routes/related';
 import { handlePostReplies } from './routes/replies';
 import {
@@ -1015,6 +1016,9 @@ app.get('/api/register-platform/bluesky-pool', async (c) =>
   handleBlueskyPoolStats(c.req.raw, c.env),
 );
 
+// ─── API: Concierge Registration (register-all) ──────────────
+app.route('/api/register', registerAll);
+
 // ─── V1: Cross-Platform Registration ─────────────────────
 app.post('/v1/register-platform', async (c) =>
   withSession(c, () => handleRegisterPlatform(c.req.raw, c.env)),
@@ -1025,6 +1029,9 @@ app.get('/v1/register-platform/status', async (c) =>
 app.get('/v1/register-platform/bluesky-pool', async (c) =>
   handleBlueskyPoolStats(c.req.raw, c.env),
 );
+
+// ─── V1: Concierge Registration (register-all) ────────────
+app.route('/v1/register', registerAll);
 
 // ─── API: Permanence (Arweave/IPFS) ───────────────────────
 app.post('/api/permanence/store', async (c) =>
