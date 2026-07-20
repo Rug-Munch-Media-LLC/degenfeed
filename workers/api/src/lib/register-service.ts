@@ -10,8 +10,8 @@
  *
  * Plans:
  *   free      — GtS + ATProto + Nostr + RSS only (self-serve Farcaster/Lens via redirect)
- *   standard  — everything including Farcaster ($5) + Lens ($2) — user pays $8 total
- *   complete  — standard + custom Lens handle + ENS domain — user pays $15 total
+ *   standard  — Farcaster ($5 gas) + Lens ($2 gas) + $3 service — user pays $10 total
+ *   complete  — standard + custom Lens handle (up to 8 chars, $10 gas) + ENS ($10) — user pays $20 (bundle saves $7)
  *   premium   — everything covered by $10/mo subscription
  */
 
@@ -126,7 +126,7 @@ export function calculateCharges(
   switch (plan) {
     case 'standard':
       return {
-        total: '$8',
+        total: '$10',
         totalCents: 800,
         breakdown: [
           { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
@@ -138,7 +138,7 @@ export function calculateCharges(
       };
     case 'complete':
       return {
-        total: '$15',
+        total: '$20',
         totalCents: 1500,
         breakdown: [
           { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
