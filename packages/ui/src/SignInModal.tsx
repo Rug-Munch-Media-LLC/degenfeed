@@ -32,66 +32,9 @@ export interface SignInModalProps {
   availableWallets?: WalletOption[];
 }
 
-const PROTOCOLS: ProtocolOption[] = [
-  {
-    id: 'nostr',
-    label: 'Nostr',
-    color: '#8e30eb',
-    icon: '☰',
-    description: 'npub/nsec key or browser extension',
-    method: 'key',
-  },
-  {
-    id: 'farcaster',
-    label: 'Farcaster',
-    color: '#8a63d2',
-    icon: '◈',
-    description: 'FID + signer key (or Warpcast)',
-    method: 'key',
-  },
-  {
-    id: 'lens',
-    label: 'Lens',
-    color: '#abfe2c',
-    icon: '◎',
-    description: 'Connect wallet (MetaMask, Rainbow)',
-    method: 'extension',
-  },
-  {
-    id: 'bluesky',
-    label: 'Bluesky',
-    color: '#1185fe',
-    icon: '☁',
-    description: 'Handle + app password',
-    method: 'password',
-  },
-  {
-    id: 'mastodon',
-    label: 'Mastodon',
-    color: '#6364ff',
-    icon: '🐘',
-    description: 'Any Mastodon/GotoSocial server',
-    method: 'oauth',
-    authUrl: '/api/auth/gotosocial/authorize',
-  },
-  {
-    id: 'ethereum',
-    label: 'Ethereum',
-    color: '#627eea',
-    icon: '◆',
-    description: 'Sign in with Ethereum wallet',
-    method: 'wallet',
-  },
-  {
-    id: 'solana',
-    label: 'Solana',
-    color: '#9945ff',
-    icon: '◎',
-    description: 'Sign in with Solana wallet',
-    method: 'wallet',
-  },
-];
-
+// =========================================================================
+// OAuth providers — shown FIRST, most user-friendly
+// =========================================================================
 const OAUTH_PROTOCOLS: ProtocolOption[] = [
   {
     id: 'google',
@@ -101,6 +44,15 @@ const OAUTH_PROTOCOLS: ProtocolOption[] = [
     description: 'Sign in with your Google account',
     method: 'oauth',
     authUrl: '/api/auth/google/authorize',
+  },
+  {
+    id: 'twitter',
+    label: 'Twitter / X',
+    color: '#1da1f2',
+    icon: '𝕏',
+    description: 'Sign in with your Twitter account',
+    method: 'oauth',
+    authUrl: '/api/auth/twitter/authorize',
   },
   {
     id: 'github',
@@ -121,13 +73,13 @@ const OAUTH_PROTOCOLS: ProtocolOption[] = [
     authUrl: '/api/auth/discord/authorize',
   },
   {
-    id: 'twitter',
-    label: 'Twitter / X',
-    color: '#1da1f2',
-    icon: '𝕏',
-    description: 'Sign in with your Twitter account',
+    id: 'farcaster',
+    label: 'Farcaster',
+    color: '#8a63d2',
+    icon: '◈',
+    description: 'Sign in via Warpcast',
     method: 'oauth',
-    authUrl: '/api/auth/twitter/authorize',
+    authUrl: '/api/auth/warpcast/authorize',
   },
   {
     id: 'telegram',
@@ -137,6 +89,53 @@ const OAUTH_PROTOCOLS: ProtocolOption[] = [
     description: 'Sign in with Telegram',
     method: 'oauth',
     authUrl: '/api/auth/telegram/authorize',
+  },
+  {
+    id: 'email',
+    label: 'Email',
+    color: '#22c55e',
+    icon: '✉',
+    description: 'Sign in with email and password',
+    method: 'password',
+  },
+];
+
+// =========================================================================
+// Social / federated protocols
+// =========================================================================
+const PROTOCOLS: ProtocolOption[] = [
+  {
+    id: 'mastodon',
+    label: 'Mastodon / GoToSocial',
+    color: '#6364ff',
+    icon: '🐘',
+    description: 'Any Mastodon or GoToSocial server',
+    method: 'oauth',
+    authUrl: '/api/auth/gotosocial/authorize',
+  },
+  {
+    id: 'bluesky',
+    label: 'Bluesky',
+    color: '#1185fe',
+    icon: '☁',
+    description: 'Handle + app password',
+    method: 'password',
+  },
+  {
+    id: 'nostr',
+    label: 'Nostr',
+    color: '#8e30eb',
+    icon: '☰',
+    description: 'npub/nsec key or browser extension',
+    method: 'key',
+  },
+  {
+    id: 'lens',
+    label: 'Lens',
+    color: '#abfe2c',
+    icon: '◎',
+    description: 'Connect wallet (MetaMask, Rainbow)',
+    method: 'extension',
   },
   {
     id: 'reddit',
@@ -156,16 +155,11 @@ const OAUTH_PROTOCOLS: ProtocolOption[] = [
     method: 'oauth',
     authUrl: '/api/auth/threads/authorize',
   },
-  {
-    id: 'email',
-    label: 'Email',
-    color: '#22c55e',
-    icon: '✉',
-    description: 'Sign in with email and password',
-    method: 'password',
-  },
 ];
 
+// =========================================================================
+// Nostr form
+// =========================================================================
 function NostrForm({
   onSignIn,
   onBack,
@@ -311,6 +305,9 @@ function NostrForm({
   );
 }
 
+// =========================================================================
+// Farcaster form
+// =========================================================================
 function FarcasterForm({
   onSignIn,
   onBack,
@@ -329,21 +326,6 @@ function FarcasterForm({
       <div className="space-y-3">
         <button
           type="button"
-          onClick={() => setMode('form')}
-          className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-left hover:border-gray-600"
-        >
-          <span className="text-lg">🔐</span>
-          <div>
-            <div className="text-sm font-semibold text-[var(--color-fg)]">
-              Enter FID + signer key
-            </div>
-            <div className="text-xs text-[var(--color-muted)]">
-              For self-custody Farcaster signers
-            </div>
-          </div>
-        </button>
-        <button
-          type="button"
           onClick={() => onSignIn({ method: 'warpcast' })}
           className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-left hover:border-gray-600"
         >
@@ -354,6 +336,21 @@ function FarcasterForm({
             </div>
             <div className="text-xs text-[var(--color-muted)]">
               Use your Warpcast account via OAuth
+            </div>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('form')}
+          className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-left hover:border-gray-600"
+        >
+          <span className="text-lg">🔐</span>
+          <div>
+            <div className="text-sm font-semibold text-[var(--color-fg)]">
+              Enter FID + signer key
+            </div>
+            <div className="text-xs text-[var(--color-muted)]">
+              For self-custody Farcaster signers
             </div>
           </div>
         </button>
@@ -435,6 +432,9 @@ function FarcasterForm({
   );
 }
 
+// =========================================================================
+// Bluesky form
+// =========================================================================
 function BlueskyForm({
   onSignIn,
   onBack,
@@ -515,6 +515,9 @@ function BlueskyForm({
   );
 }
 
+// =========================================================================
+// Lens form
+// =========================================================================
 function LensForm({
   onSignIn,
   onBack,
@@ -552,6 +555,9 @@ function LensForm({
   );
 }
 
+// =========================================================================
+// Mastodon / GoToSocial form
+// =========================================================================
 function MastodonForm({
   onSignIn,
   onBack,
@@ -631,6 +637,9 @@ function MastodonForm({
   );
 }
 
+// =========================================================================
+// Router: pick the right form component
+// =========================================================================
 function ProtocolForm({
   protocol,
   onSignIn,
@@ -667,6 +676,9 @@ function ProtocolForm({
   }
 }
 
+// =========================================================================
+// Email / password form
+// =========================================================================
 function EmailForm({
   onSignIn,
   onBack,
@@ -766,6 +778,9 @@ function EmailForm({
   );
 }
 
+// =========================================================================
+// Generic OAuth redirect form
+// =========================================================================
 function OAuthProtocolForm({ protocol, onBack }: { protocol: ProtocolOption; onBack: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -851,6 +866,9 @@ function OAuthProtocolForm({ protocol, onBack }: { protocol: ProtocolOption; onB
   );
 }
 
+// =========================================================================
+// Wallet section — MOVED TO BOTTOM, presented as one option among many
+// =========================================================================
 function WalletSection({
   onSignIn,
   walletAddress,
@@ -869,10 +887,6 @@ function WalletSection({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
-        Web3 Wallets
-      </h3>
-
       {/* Connected wallet display */}
       {walletAddress ? (
         <div className="rounded-xl border border-degen-500/30 bg-degen-500/10 px-4 py-3">
@@ -885,7 +899,7 @@ function WalletSection({
       {hasDetection && detectedWallets.length > 0 ? (
         <div className="space-y-1.5">
           {availableWallets.map((w) => {
-            if (w.id === 'walletconnect') return null; // rendered separately below
+            if (w.id === 'walletconnect') return null; // rendered separately
             return (
               <button
                 key={w.id}
@@ -917,7 +931,7 @@ function WalletSection({
           })}
         </div>
       ) : (
-        /* Fallback: simple Ethereum / Solana buttons (backward compatible) */
+        /* Fallback: simple Ethereum / Solana buttons */
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => onSignIn('ethereum')}
@@ -940,34 +954,29 @@ function WalletSection({
         </div>
       )}
 
-      {/* WalletConnect QR placeholder */}
+      {/* WalletConnect — functional, no "Coming soon" badge */}
       <button
         type="button"
         onClick={() => onSignIn('ethereum')}
         disabled={walletSigningIn}
-        className="flex w-full items-center gap-3 rounded-xl border border-dashed border-[#3b99fc]/40 bg-[#3b99fc]/5 px-4 py-2.5 text-left transition-all hover:border-[#3b99fc]/60 hover:bg-[#3b99fc]/10"
+        className="flex w-full items-center gap-3 rounded-xl border border-[#3b99fc]/40 bg-[#3b99fc]/5 px-4 py-2.5 text-left transition-all hover:border-[#3b99fc]/60 hover:bg-[#3b99fc]/10"
       >
         <span className="text-lg">🔗</span>
         <div className="flex-1">
           <div className="text-sm font-medium text-[#3b99fc]">WalletConnect</div>
           <div className="text-xs text-[var(--color-muted)]">
-            Scan QR with your mobile wallet
-            <span className="ml-1.5 rounded bg-[#3b99fc]/20 px-1.5 py-0.5 text-[10px] text-[#3b99fc]">
-              Coming soon
-            </span>
+            Connect using WalletConnect-compatible wallet
           </div>
         </div>
+        <span className="text-xs text-[#3b99fc]">Connect →</span>
       </button>
-
-      <p className="text-center text-xs text-gray-600">
-        {walletAddress
-          ? 'Signed in. You can also link social protocols below.'
-          : 'No emails, no passwords. Sign in with your wallet.'}
-      </p>
     </div>
   );
 }
 
+// =========================================================================
+// SignInModal — MAIN COMPONENT
+// =========================================================================
 export const SignInModal = memo(function SignInModal({
   open,
   onClose,
@@ -1008,20 +1017,21 @@ export const SignInModal = memo(function SignInModal({
       role="dialog"
     >
       <div
-        className="mx-4 w-full max-w-lg rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
+        className="mx-4 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="dialog"
       >
-        <div className="mb-6 flex items-center justify-between">
-          <div>
+        {/* ---- Header ---- */}
+        <div className="mb-6 flex items-start justify-between">
+          <div className="pr-4">
             <h2 className="text-lg font-bold text-[var(--color-fg)]">
-              {selectedProtocol ? `Sign in with ${selectedProtocol.label}` : 'Sign In'}
+              {selectedProtocol ? `Sign in with ${selectedProtocol.label}` : 'Sign in to DegenFeed'}
             </h2>
-            <p className="text-sm text-[var(--color-muted)]">
+            <p className="text-sm text-[var(--color-muted)] mt-1">
               {selectedProtocol
                 ? selectedProtocol.description
-                : 'Sign in with your wallet to post, tip, and cross-post across the open social graph.'}
+                : 'Choose how you want to connect. Browse freely — no account needed to read.'}
             </p>
           </div>
           <button
@@ -1029,7 +1039,7 @@ export const SignInModal = memo(function SignInModal({
               setSelectedProtocol(null);
               onClose();
             }}
-            className="rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+            className="shrink-0 rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             aria-label="Close"
             type="button"
           >
@@ -1053,6 +1063,7 @@ export const SignInModal = memo(function SignInModal({
         </div>
 
         {selectedProtocol ? (
+          /* ---- Protocol-specific form ---- */
           <ProtocolForm
             protocol={selectedProtocol}
             onSignIn={(creds) => onSignIn(selectedProtocol.id, creds)}
@@ -1060,70 +1071,96 @@ export const SignInModal = memo(function SignInModal({
           />
         ) : (
           <>
-            <div className="mb-6">
-              <WalletSection
-                onSignIn={(p) => onSignIn(p)}
-                walletAddress={walletAddress}
-                walletSigningIn={walletSigningIn}
-                availableWallets={availableWallets}
-              />
-            </div>
-
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[var(--color-border)]" />
+            {/* ================================================================ */}
+            {/* SECTION 1: Popular OAuth providers (TOP — first class citizens) */}
+            {/* ================================================================ */}
+            <div className="mb-5">
+              <h3 className="mb-3 text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+                Continue with
+              </h3>
+              <div className="space-y-2">
+                {OAUTH_PROTOCOLS.map((proto) => {
+                  // Keep layout compact — single row per option
+                  if (proto.id === 'email') {
+                    return (
+                      <button
+                        key={proto.id}
+                        onClick={() => handleProtocolClick(proto)}
+                        className="flex w-full items-center gap-3 rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-left transition-all hover:border-gray-500 group"
+                        type="button"
+                      >
+                        <span
+                          className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold"
+                          style={{ backgroundColor: `${proto.color}18`, color: proto.color }}
+                        >
+                          {proto.icon}
+                        </span>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-[var(--color-fg)] group-hover:text-degen-400 transition-colors">
+                            {proto.label}
+                          </div>
+                          <div className="text-xs text-[var(--color-muted)]">
+                            {proto.description}
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-600">→</span>
+                      </button>
+                    );
+                  }
+                  return (
+                    <button
+                      key={proto.id}
+                      onClick={() => handleProtocolClick(proto)}
+                      className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-left transition-all hover:border-gray-600 group"
+                      type="button"
+                    >
+                      <span
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold"
+                        style={{ backgroundColor: `${proto.color}18`, color: proto.color }}
+                      >
+                        {proto.icon}
+                      </span>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-[var(--color-fg)] group-hover:text-degen-400 transition-colors">
+                          {proto.label}
+                        </div>
+                        <div className="text-xs text-[var(--color-muted)]">
+                          {proto.description}
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-600">→</span>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="relative flex justify-center">
-                <span className="bg-[var(--color-card)] px-3 text-xs text-gray-600">
-                  or sign in with
-                </span>
-              </div>
             </div>
 
-            <div className="mb-4 space-y-1.5">
-              {OAUTH_PROTOCOLS.map((proto) => (
-                <button
-                  key={proto.id}
-                  onClick={() => handleProtocolClick(proto)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-left transition-all hover:border-gray-600 hover:bg-[var(--color-muted)] group"
-                  type="button"
-                >
-                  <span
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold"
-                    style={{ backgroundColor: `${proto.color}18`, color: proto.color }}
-                  >
-                    {proto.icon}
-                  </span>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-[var(--color-fg)] group-hover:text-degen-400 transition-colors">
-                      {proto.label}
-                    </div>
-                  </div>
-                  <span className="text-xs text-gray-600">→</span>
-                </button>
-              ))}
-            </div>
-
+            {/* ================================================================ */}
+            {/* SEPARATOR — more options */}
+            {/* ================================================================ */}
             <div className="relative mb-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-[var(--color-border)]" />
               </div>
               <div className="relative flex justify-center">
                 <span className="bg-[var(--color-card)] px-3 text-xs text-gray-600">
-                  or link a social protocol
+                  More options
                 </span>
               </div>
             </div>
 
-            <div className="mb-6 space-y-2">
-              {PROTOCOLS.filter((p) => p.method !== 'wallet').map((proto) => (
+            {/* ================================================================ */}
+            {/* SECTION 2: Social / federated protocols */}
+            {/* ================================================================ */}
+            <div className="mb-5 space-y-2">
+              {PROTOCOLS.map((proto) => (
                 <button
                   key={proto.id}
                   onClick={() => handleProtocolClick(proto)}
-                  className="flex w-full items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-left transition-all hover:border-gray-600 hover:bg-[var(--color-muted)] group"
+                  className="flex w-full items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-2.5 text-left transition-all hover:border-gray-600 hover:bg-[var(--color-muted)] group"
                   type="button"
                 >
-                  <span className="text-2xl" style={{ color: proto.color }}>
+                  <span className="text-xl" style={{ color: proto.color }}>
                     {proto.icon}
                   </span>
                   <div className="flex-1">
@@ -1137,27 +1174,64 @@ export const SignInModal = memo(function SignInModal({
               ))}
             </div>
 
-            <a
-              href="/api/auth/gotosocial/register"
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-degen-500/30 bg-degen-500/10 px-4 py-3 text-sm font-semibold text-degen-400 transition-all hover:bg-degen-500/20 hover:border-degen-500/50"
-            >
-              <span>✦</span>
-              Create free @degenfeed.xyz account
-              <span className="text-xs text-degen-600">(30 seconds)</span>
-            </a>
-            <p className="mt-2 text-center text-xs text-gray-600">
-              Powered by GotoSocial. No email required.
-            </p>
-          </>
-        )}
+            {/* ================================================================ */}
+            {/* SEPARATOR — wallet */}
+            {/* ================================================================ */}
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[var(--color-border)]" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-[var(--color-card)] px-3 text-xs text-gray-600">
+                  Connect a wallet
+                </span>
+              </div>
+            </div>
 
-        {!selectedProtocol && (
-          <p className="mt-6 text-center text-xs text-gray-600">
-            No account needed to browse.{' '}
-            <a href="/home" className="text-degen-500 hover:underline">
-              Start reading now
-            </a>
-          </p>
+            {/* ================================================================ */}
+            {/* SECTION 3: Wallet (BOTTOM — least intrusive) */}
+            {/* ================================================================ */}
+            <div className="mb-5">
+              <WalletSection
+                onSignIn={(p) => onSignIn(p)}
+                walletAddress={walletAddress}
+                walletSigningIn={walletSigningIn}
+                availableWallets={availableWallets}
+              />
+            </div>
+
+            {/* ================================================================ */}
+            {/* BROWSE ANONYMOUSLY — prominent call to action */}
+            {/* ================================================================ */}
+            <button
+              type="button"
+              onClick={() => onClose()}
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3 text-sm font-semibold text-[var(--color-fg)] transition-all hover:border-degen-500/50 hover:text-degen-400 hover:bg-degen-500/5"
+            >
+              <span className="text-lg">👀</span>
+              Browse Anonymously — No Sign-In Needed
+            </button>
+
+            {/* ================================================================ */}
+            {/* FOOTER */}
+            {/* ================================================================ */}
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+              <a
+                href="/api/auth/gotosocial/register"
+                className="text-xs text-degen-500 hover:underline"
+              >
+                Create free @degenfeed.xyz account
+              </a>
+              <span className="text-xs text-gray-600">·</span>
+              <a href="/terms" className="text-xs text-gray-600 hover:underline">
+                Terms
+              </a>
+              <span className="text-xs text-gray-600">·</span>
+              <a href="/privacy" className="text-xs text-gray-600 hover:underline">
+                Privacy
+              </a>
+            </div>
+          </>
         )}
       </div>
     </section>

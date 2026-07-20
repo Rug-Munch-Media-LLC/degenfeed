@@ -213,6 +213,128 @@ function LiveIcon({ active, hasLive }: { active: boolean; hasLive: boolean }) {
   );
 }
 
+function DiscoverIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+    </svg>
+  );
+}
+
+function VideoIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <polygon points="10 8 16 12 10 16 10 8" fill={active ? 'currentColor' : 'none'} />
+    </svg>
+  );
+}
+
+function VisualIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
+    </svg>
+  );
+}
+
+function LaunchIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 00-2.91-.09z" />
+      <path d="M12 15l-3-3a22 22 0 012-3.95A12.88 12.88 0 0122 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 01-4 2z" />
+      <path d="M9 12H4s.55-3.03 2-4c1.33-1.17 4-1 4-1" />
+      <path d="M12 15v5s3.03-.55 4-2c1.17-1.33 1-4 1-4" />
+    </svg>
+  );
+}
+
+function FeddyIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  );
+}
+
+function ArticlesIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2.5 : 1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
+    </svg>
+  );
+}
+
 function SettingsIcon() {
   return (
     <svg
@@ -281,12 +403,17 @@ interface SidebarItem {
 }
 
 const PRIMARY_NAV: SidebarItem[] = [
-  { href: '/feed', label: 'Feed', icon: null },
+  { href: '/feed', label: 'Home / Feed', icon: null },
   { href: '/trending', label: 'Trending', icon: null },
-  { href: '/live', label: 'Streams', icon: null },
-  { href: '/live-shorts', label: 'Live Shorts', icon: null },
+  { href: '/discover', label: 'Discover', icon: null },
   { href: '/spaces', label: 'Spaces', icon: null },
-  { href: '/shorts', label: 'Videos', icon: null },
+  { href: '/live', label: 'Live', icon: null },
+  { href: '/video', label: 'Video', icon: null },
+  { href: '/shorts', label: 'Shorts', icon: null },
+  { href: '/visual', label: 'Visual', icon: null },
+  { href: '/launch', label: 'Launch', icon: null },
+  { href: '/feddy', label: 'Feddy', icon: null },
+  { href: '/articles', label: 'Articles', icon: null },
   { href: '/messages', label: 'Messages', icon: null, requiresAuth: true },
   { href: '/notifications', label: 'Notifications', icon: null, requiresAuth: true },
   { href: '/profile', label: 'Profile', icon: null, requiresAuth: true },
@@ -308,14 +435,26 @@ function iconFor(href: string, active: boolean, hasLive?: boolean): React.ReactN
       return <HomeIcon active={active} />;
     case '/trending':
       return <TrendingIcon active={active} />;
-    case '/live':
-      return <LiveIcon active={active} hasLive={hasLive ?? false} />;
-    case '/live-shorts':
-      return <LiveShortsIcon active={active} />;
+    case '/discover':
+      return <DiscoverIcon active={active} />;
     case '/spaces':
       return <SpacesIcon active={active} />;
+    case '/live':
+      return <LiveIcon active={active} hasLive={hasLive ?? false} />;
+    case '/video':
+      return <VideoIcon active={active} />;
+    case '/live-shorts':
+      return <LiveShortsIcon active={active} />;
     case '/shorts':
       return <VideosIcon active={active} />;
+    case '/visual':
+      return <VisualIcon active={active} />;
+    case '/launch':
+      return <LaunchIcon active={active} />;
+    case '/feddy':
+      return <FeddyIcon active={active} />;
+    case '/articles':
+      return <ArticlesIcon active={active} />;
     case '/messages':
       return <MsgIcon active={active} />;
     case '/notifications':
