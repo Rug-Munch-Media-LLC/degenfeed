@@ -190,7 +190,9 @@ export async function handleSubscriptionTiers(
 	try {
 		const raw = await env.SUBSCRIPTIONS?.get(key);
 		if (raw) config = JSON.parse(raw) as TierConfig;
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	if (!config) {
 		return jsonResponse({
@@ -497,7 +499,9 @@ export async function handleSubscriptionConfirm(
 		try {
 			const nonceRaw = await env.CACHE?.get(nonceKey);
 			if (nonceRaw) nonceRec = JSON.parse(nonceRaw) as NonceRecord;
-		} catch { /* KV operation failed -- non-critical, continue */ }
+		} catch {
+			/* KV operation failed -- non-critical, continue */
+		}
 		if (nonceRec?.nonce !== record.nonce || nonceRec?.nonce !== providedNonce) {
 			return jsonResponse({ error: "Invalid nonce" }, 400);
 		}
@@ -603,7 +607,9 @@ export async function handleSubscriptionStatus(
 	try {
 		const raw = await env.SUBSCRIPTIONS?.get(subKey);
 		if (raw) record = JSON.parse(raw) as SubscriptionRecord;
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	if (!record) {
 		return jsonResponse({ error: "Not found" }, 404);
@@ -731,7 +737,9 @@ export async function handleSubscriptionContentCheck(
 	try {
 		const raw = await env.SUBSCRIPTIONS?.get(subKey);
 		if (raw) record = JSON.parse(raw) as SubscriptionRecord;
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	if (record?.status !== "active" || !record.expiryDate) {
 		return jsonResponse({ hasAccess: false });
@@ -760,7 +768,9 @@ export async function handleSubscriptionMy(
 	try {
 		const raw = await env.SUBSCRIPTIONS?.get(listKey);
 		if (raw) creatorWallets = JSON.parse(raw) as string[];
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	if (creatorWallets.length === 0) {
 		return jsonResponse({ subscriptions: [] });

@@ -237,10 +237,10 @@ async function wrapForZora(opts: {
 
 async function announceToLens(
 	_profileId: string,
-	text: string,
+	_text: string,
 ): Promise<string | null> {
-  // In production, posts via Lens API using the user's Lens signer.
-  return null;
+	// In production, posts via Lens API using the user's Lens signer.
+	return null;
 }
 
 function generateSymbol(handle: string): string {

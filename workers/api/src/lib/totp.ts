@@ -148,7 +148,7 @@ export async function generateTOTP(
 		((hmac[offset + 2] & 0xff) << 8) |
 		(hmac[offset + 3] & 0xff);
 
-	const otp = binaryCode % Math.pow(10, OTP_DIGITS);
+	const otp = binaryCode % 10 ** OTP_DIGITS;
 	return otp.toString().padStart(OTP_DIGITS, "0");
 }
 

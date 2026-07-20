@@ -40,7 +40,7 @@ const ALLOWED_WS_ORIGINS = new Set([
 	"https://api.degenfeed.xyz",
 ]);
 
-const WS_IDLE_TIMEOUT_MS = 300_000; // 5 min
+const _WS_IDLE_TIMEOUT_MS = 300_000; // 5 min
 const PING_INTERVAL_MS = 30_000; // 30s
 const MAX_CONCURRENT_CONNS = 100;
 const IP_RATE_LIMIT = 20; // connections per minute per IP
@@ -125,7 +125,7 @@ function getTopicsFromQuery(url: string): Set<SyncTopic> {
  */
 export function handleRealtimeWebSocket(
 	request: Request,
-	env: Env,
+	_env: Env,
 ): Response | null {
 	// Only handle WebSocket upgrades
 	if (request.headers.get("upgrade") !== "websocket") {

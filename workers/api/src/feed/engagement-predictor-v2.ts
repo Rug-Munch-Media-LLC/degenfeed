@@ -123,13 +123,13 @@ export function predictEngagementV2(
 
 	// ─── 0. Recency score (NEW v2.1 — highest weight at 40%) ────
 	const recencyScore = computeRecencyScore(post.createdAt, now);
-	let recencyBoostApplied = false;
+	let _recencyBoostApplied = false;
 	if (recencyScore >= 0.8) {
 		algorithmReasons.push("Fresh content — posted within the last hour");
-		recencyBoostApplied = true;
+		_recencyBoostApplied = true;
 	} else if (recencyScore >= 0.5) {
 		algorithmReasons.push("Recent — posted today");
-		recencyBoostApplied = true;
+		_recencyBoostApplied = true;
 	}
 	factors.push({
 		name: "recency",

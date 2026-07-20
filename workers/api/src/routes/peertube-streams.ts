@@ -120,7 +120,7 @@ async function checkTokenBalance(
 	_tokenAddress: string,
 	_wallet: string,
 ): Promise<{ amount: string; isCreator: boolean } | null> {
-  // On-chain balance check — currently uses wallet detection (not live RPC)
+	// On-chain balance check — currently uses wallet detection (not live RPC)
 	return { amount: "1000000", isCreator: false };
 }
 

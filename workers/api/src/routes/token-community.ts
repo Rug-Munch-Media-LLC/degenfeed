@@ -33,7 +33,6 @@ import {
 	getTokenComments,
 	getUserBadges,
 	incrementViewerCount,
-	updateOnlineHeartbeat,
 } from "../lib/community-store";
 import {
 	parseSessionCookie,
@@ -486,7 +485,7 @@ async function checkTokenBalance(
 	_tokenAddress: string,
 	_wallet: string,
 ): Promise<{ amount: string; isCreator: boolean } | null> {
-  // On-chain balance check — currently uses token gate resolver (not live RPC)
+	// On-chain balance check — currently uses token gate resolver (not live RPC)
 	// For now, return a mock that always passes (enables development)
 	return { amount: "1000000", isCreator: false };
 }

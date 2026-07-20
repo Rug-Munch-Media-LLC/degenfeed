@@ -68,18 +68,12 @@ async function storeChallenge(
 	});
 }
 
-async function getChallenge(
-	env: Env,
-	wallet: string,
-): Promise<string | null> {
+async function getChallenge(env: Env, wallet: string): Promise<string | null> {
 	if (!env.CACHE) return null;
 	return env.CACHE.get(challengeKey(wallet));
 }
 
-async function deleteChallenge(
-	env: Env,
-	wallet: string,
-): Promise<void> {
+async function deleteChallenge(env: Env, wallet: string): Promise<void> {
 	if (!env.CACHE) return;
 	await env.CACHE.delete(challengeKey(wallet));
 }
@@ -222,7 +216,8 @@ export async function handleWebAuthnRegisterBegin(
 
 		return jsonResponse(options);
 	} catch (err) {
-		const message = err instanceof Error ? err.message : "Registration begin failed";
+		const message =
+			err instanceof Error ? err.message : "Registration begin failed";
 		log("error", "[webauthn] register begin error", { error: message });
 		return jsonResponse({ error: message }, 500);
 	}
@@ -264,7 +259,9 @@ export async function handleWebAuthnRegisterComplete(
 		await deleteChallenge(env, wallet);
 
 		const verification = await verifyRegistrationResponse({
-			response: body.response as Parameters<typeof verifyRegistrationResponse>[0]["response"],
+			response: body.response as Parameters<
+				typeof verifyRegistrationResponse
+			>[0]["response"],
 			expectedChallenge,
 			expectedOrigin: ORIGIN,
 			expectedRPID: RP_ID,
@@ -283,7 +280,9 @@ export async function handleWebAuthnRegisterComplete(
 			credentialID,
 			publicKey: registrationInfo.credentialPublicKey as Uint8Array,
 			counter: registrationInfo.counter,
-			transports: (body.response as Record<string, unknown>).transports as string[] | undefined,
+			transports: (body.response as Record<string, unknown>).transports as
+				| string[]
+				| undefined,
 			name: body.name || `Passkey (${new Date().toLocaleDateString()})`,
 			createdAt: Date.now(),
 			lastUsed: Date.now(),
@@ -302,7 +301,8 @@ export async function handleWebAuthnRegisterComplete(
 			name: credential.name,
 		});
 	} catch (err) {
-		const message = err instanceof Error ? err.message : "Registration complete failed";
+		const message =
+			err instanceof Error ? err.message : "Registration complete failed";
 		log("error", "[webauthn] register complete error", { error: message });
 		return jsonResponse({ error: message }, 500);
 	}
@@ -353,7 +353,8 @@ export async function handleWebAuthnAuthenticateBegin(
 
 		return jsonResponse(options);
 	} catch (err) {
-		const message = err instanceof Error ? err.message : "Authentication begin failed";
+		const message =
+			err instanceof Error ? err.message : "Authentication begin failed";
 		log("error", "[webauthn] authenticate begin error", { error: message });
 		return jsonResponse({ error: message }, 500);
 	}
@@ -412,7 +413,9 @@ export async function handleWebAuthnAuthenticateComplete(
 		await deleteChallenge(env, wallet);
 
 		const verification = await verifyAuthenticationResponse({
-			response: credentialResponse as Parameters<typeof verifyAuthenticationResponse>[0]["response"],
+			response: credentialResponse as Parameters<
+				typeof verifyAuthenticationResponse
+			>[0]["response"],
 			expectedChallenge,
 			expectedOrigin: ORIGIN,
 			expectedRPID: RP_ID,
@@ -442,7 +445,11 @@ export async function handleWebAuthnAuthenticateComplete(
 			return jsonResponse({ error: "Auth secret not configured" }, 500);
 		}
 
-		const { setCookie, payload } = await createSession(wallet, "ethereum", secret);
+		const { setCookie, payload } = await createSession(
+			wallet,
+			"ethereum",
+			secret,
+		);
 
 		log("info", "[webauthn] authenticate complete", {
 			wallet: wallet.slice(0, 12),
@@ -465,7 +472,8 @@ export async function handleWebAuthnAuthenticateComplete(
 			},
 		);
 	} catch (err) {
-		const message = err instanceof Error ? err.message : "Authentication complete failed";
+		const message =
+			err instanceof Error ? err.message : "Authentication complete failed";
 		log("error", "[webauthn] authenticate complete error", { error: message });
 		return jsonResponse({ error: message }, 500);
 	}
@@ -495,7 +503,8 @@ export async function handleWebAuthnListCredentials(
 			})),
 		);
 	} catch (err) {
-		const message = err instanceof Error ? err.message : "List credentials failed";
+		const message =
+			err instanceof Error ? err.message : "List credentials failed";
 		return jsonResponse({ error: message }, 500);
 	}
 }
@@ -523,7 +532,8 @@ export async function handleWebAuthnDeleteCredential(
 
 		return jsonResponse({ removed: true });
 	} catch (err) {
-		const message = err instanceof Error ? err.message : "Delete credential failed";
+		const message =
+			err instanceof Error ? err.message : "Delete credential failed";
 		return jsonResponse({ error: message }, 500);
 	}
 }
@@ -554,7 +564,8 @@ export async function handleWebAuthnRenameCredential(
 
 		return jsonResponse({ renamed: true, name });
 	} catch (err) {
-		const message = err instanceof Error ? err.message : "Rename credential failed";
+		const message =
+			err instanceof Error ? err.message : "Rename credential failed";
 		return jsonResponse({ error: message }, 500);
 	}
 }

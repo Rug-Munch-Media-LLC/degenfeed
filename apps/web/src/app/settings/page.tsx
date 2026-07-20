@@ -16,18 +16,15 @@ import {
 } from '@degenfeed/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
-import SecuritySettings from '../../components/auth/SecuritySettings';
+import { HardwareWalletVerify } from '../../components/auth/HardwareWalletVerify';
 import {
   CredentialCard,
   CredentialSecurityNote,
   CredentialsProgressBanner,
   registrationToCredential,
 } from '../../components/CredentialsDisplay';
-import { HardwareWalletVerify } from '../../components/auth/HardwareWalletVerify';
-import { PasskeySetup } from '../../components/auth/PasskeySetup';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { useToast } from '../../components/Toast';
-import { useWeb3 } from '../../components/Web3Provider';
 import { useHardwareWallet2FA } from '../../hooks/useHardwareWallet2FA';
 import type { FontSize, NotificationType, Theme } from '../../hooks/usePreferences';
 import { usePreferences } from '../../hooks/usePreferences';
@@ -77,11 +74,7 @@ const SECTION_LABELS: Record<Section, { label: string; icon: string; desc: strin
     icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
     desc: 'Passkeys, 2FA, hardware wallet',
   },
-  security: {
-    label: 'Security',
-    icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
-    desc: 'Two-factor authentication (TOTP)',
-  },
+
   subscription: {
     label: 'Subscription',
     icon: 'M13 10V3L4 14h7v7l9-11h-7z',
@@ -437,12 +430,7 @@ export default function SettingsPage() {
   const [emailSaved, setEmailSaved] = useState(false);
 
   // ── Hardware Wallet 2FA ──────────────────────────────────────
-  const web3 = useWeb3();
-  const {
-    status: hw2FA,
-    fetchStatus: fetchHw2FA,
-    toggle2FA,
-  } = useHardwareWallet2FA();
+  const { status: hw2FA, fetchStatus: fetchHw2FA, toggle2FA } = useHardwareWallet2FA();
   const [hw2faLoading, setHw2faLoading] = useState(true);
 
   // Load 2FA status on mount
@@ -454,7 +442,10 @@ export default function SettingsPage() {
     const newState = !hw2FA?.enabled;
     const ok = await toggle2FA(newState);
     if (ok) {
-      showToast('success', newState ? 'Hardware wallet 2FA enabled' : 'Hardware wallet 2FA disabled');
+      showToast(
+        'success',
+        newState ? 'Hardware wallet 2FA enabled' : 'Hardware wallet 2FA disabled',
+      );
     } else {
       showToast('error', 'Failed to toggle hardware wallet 2FA');
     }
@@ -875,13 +866,52 @@ export default function SettingsPage() {
             isOpen={openSections.includes('security')}
             onToggle={() => toggleSection('security')}
           >
-            {/* Hardware Wallet 2FA */}
-            <div className="border-b border-[var(--color-glass-border)] pb-4">
-              <HardwareWalletVerify walletAddress={walletAddress} />
-            </div>
-
-            {/* Passkeys / WebAuthn */}
-            <PasskeySetup />
+            <p className="text-xs text-[var(--color-muted)] leading-relaxed">
+              Manage all security settings: passkeys (biometric sign-in), authenticator app (TOTP),
+              hardware wallet verification, recovery codes, active sessions, and security event log.
+            </p>
+            <a
+              href="/settings/security"
+              className="flex items-center justify-between rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-3 transition-colors hover:bg-[var(--color-card-hover)] group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-degen-500/10 text-degen-400">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-[var(--color-fg)]">
+                    Open full security page
+                  </span>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    2FA, passkeys, sessions, and more
+                  </p>
+                </div>
+              </div>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="text-[var(--color-muted)] group-hover:text-[var(--color-fg)] transition-colors"
+                aria-hidden="true"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </a>
           </SettingsSection>
 
           {/* ─────────── CONTENT ─────────── */}

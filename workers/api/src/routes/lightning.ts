@@ -94,7 +94,9 @@ function extractLnurl(metadataStr: string): string | null {
 			// Convert user@domain.com to lnurl
 			return lnaddressToLnurl(raw.nip05);
 		}
-	} catch { /* empty -- error deliberately ignored */ }
+	} catch {
+		/* empty -- error deliberately ignored */
+	}
 	return null;
 }
 
@@ -140,7 +142,9 @@ function fetchLnurlFromRelay(
 					settled = true;
 					try {
 						ws.close();
-					} catch { /* KV operation failed -- non-critical, continue */ }
+					} catch {
+						/* KV operation failed -- non-critical, continue */
+					}
 				}
 			};
 

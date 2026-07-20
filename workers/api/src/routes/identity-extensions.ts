@@ -344,7 +344,7 @@ export async function handleLinkZora(
 	}
 
 	const coinAddress = body.coinAddress || "";
-	if (!coinAddress || !coinAddress.startsWith("0x")) {
+	if (!coinAddress?.startsWith("0x")) {
 		return jsonResponse(
 			{ error: "Missing or invalid coinAddress parameter" },
 			400,

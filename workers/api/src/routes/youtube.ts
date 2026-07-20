@@ -346,7 +346,7 @@ interface SessionInfo {
 
 async function getOptionalSession(
 	request: Request,
-	env: Env,
+	_env: Env,
 ): Promise<SessionInfo | null> {
 	try {
 		const cookie = request.headers.get("cookie") ?? "";

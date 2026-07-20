@@ -12,7 +12,7 @@
  * that improve with every user action.
  */
 
-import type { Protocol, UnifiedIdentity, UnifiedPost } from "@degenfeed/types";
+import type { Protocol, UnifiedPost } from "@degenfeed/types";
 import type { Env } from "../index";
 
 // ─── Public types ────────────────────────────────────────────────────────
@@ -179,7 +179,7 @@ function profileKey(wallet: string): string {
 	return `${PROFILE_PREFIX}${wallet.toLowerCase()}`;
 }
 
-function scoredCacheKey(group: string): string {
+function _scoredCacheKey(group: string): string {
 	return `${SCORED_CACHE_PREFIX}${group}`;
 }
 
@@ -191,7 +191,7 @@ function relatedKey(source: ContentSource, contentId: string): string {
 
 const MAX_INTERACTIONS = 500;
 const PROFILE_TTL = 60 * 60 * 24 * 7; // 7 days
-const SCORED_CACHE_TTL = 60 * 15; // 15 minutes
+const _SCORED_CACHE_TTL = 60 * 15; // 15 minutes
 const RELATED_CACHE_TTL = 60 * 60; // 1 hour
 const FRESHNESS_BOOST_HOURS = 48;
 const DEFAULT_LIMIT = 20;
@@ -233,7 +233,9 @@ async function loadInteractions(
 	try {
 		const raw = await env.CACHE?.get(interactionsKey(wallet));
 		if (raw) return JSON.parse(raw) as StoredInteraction[];
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 	return [];
 }
 
@@ -665,7 +667,7 @@ export class RecommendationEngine {
 
 	private buildProfileFromInteractions(
 		interactions: StoredInteraction[],
-		wallet: string,
+		_wallet: string,
 	): UserInterestProfile {
 		const categoryWeights = new Map<
 			string,
@@ -820,7 +822,7 @@ export class RecommendationEngine {
 				totalInteractions > 0 ? positiveInteractions / totalInteractions : 0.1,
 			lastActive:
 				interactions.length > 0
-					? interactions[interactions.length - 1]!.timestamp
+					? interactions[interactions.length - 1]?.timestamp
 					: Date.now(),
 			recentWatched,
 			skippedContent,
@@ -833,7 +835,7 @@ export class RecommendationEngine {
 	// ─── Content pool building ──────────────────────────────────────────
 
 	private async buildContentPool(
-		profile: UserInterestProfile,
+		_profile: UserInterestProfile,
 		filters: {
 			shortFilter?: boolean;
 			liveFilter?: boolean;
@@ -1016,7 +1018,9 @@ export class RecommendationEngine {
 		try {
 			const raw = await this.env.CACHE?.get(profileKey(wallet));
 			if (raw) return JSON.parse(raw) as UserInterestProfile;
-		} catch { /* KV operation failed -- non-critical, continue */ }
+		} catch {
+			/* KV operation failed -- non-critical, continue */
+		}
 		return null;
 	}
 
@@ -1050,7 +1054,9 @@ export class RecommendationEngine {
 		try {
 			const raw = await this.env.CACHE?.get(relatedKey(source, contentId));
 			if (raw) return JSON.parse(raw) as RankedContent[];
-		} catch { /* KV operation failed -- non-critical, continue */ }
+		} catch {
+			/* KV operation failed -- non-critical, continue */
+		}
 		return null;
 	}
 
@@ -1095,7 +1101,9 @@ export class RecommendationEngine {
 		try {
 			const cached = await this.env.CACHE?.get(cacheKey);
 			if (cached) return JSON.parse(cached) as ContentItem[];
-		} catch { /* KV operation failed -- non-critical, continue */ }
+		} catch {
+			/* KV operation failed -- non-critical, continue */
+		}
 
 		// For now, return empty array — the actual content fetching is done
 		// by the existing provider infrastructure. This engine scores
@@ -1115,7 +1123,9 @@ export class RecommendationEngine {
 		try {
 			const raw = await this.env.CACHE?.get(`rec:content:${source}:${id}`);
 			if (raw) return JSON.parse(raw) as ContentItem;
-		} catch { /* KV operation failed -- non-critical, continue */ }
+		} catch {
+			/* KV operation failed -- non-critical, continue */
+		}
 		return null;
 	}
 
@@ -1123,9 +1133,9 @@ export class RecommendationEngine {
 	 * Fetch similar content based on a reference item.
 	 */
 	private async fetchSimilarContent(
-		source: ContentSource,
-		content: ContentItem,
-		limit: number,
+		_source: ContentSource,
+		_content: ContentItem,
+		_limit: number,
 	): Promise<ContentItem[]> {
 		// In production, query a similarity index or tag-based search.
 		// For now, return empty — the route handler provides the pool.
@@ -1137,21 +1147,23 @@ export class RecommendationEngine {
 	 */
 	private async fetchTrendingContent(
 		category?: string,
-		limit: number = 50,
+		_limit: number = 50,
 	): Promise<ContentItem[]> {
 		// In production, query trending indices or provider APIs
 		const cacheKey = `rec:trending:${category ?? "all"}`;
 		try {
 			const cached = await this.env.CACHE?.get(cacheKey);
 			if (cached) return JSON.parse(cached) as ContentItem[];
-		} catch { /* KV operation failed -- non-critical, continue */ }
+		} catch {
+			/* KV operation failed -- non-critical, continue */
+		}
 		return [];
 	}
 
 	/**
 	 * Fetch diverse content outside user's bubble for discovery.
 	 */
-	private async fetchDiverseContent(opts: {
+	private async fetchDiverseContent(_opts: {
 		excludeCreators: Set<string>;
 		excludeCategories: string[];
 		limit: number;

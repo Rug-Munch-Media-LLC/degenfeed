@@ -194,7 +194,9 @@ export async function handleBillingStatus(
 	try {
 		const raw = await env.SUBSCRIPTIONS?.get(identityId);
 		if (raw) record = JSON.parse(raw) as SubscriptionRecord;
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const active = Boolean(record && record.expiresAt > Date.now());
 	const tier = active && record ? record.tier : "free";
@@ -282,7 +284,9 @@ export async function handleBillingSubscribe(
 				});
 			}
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const amountCents =
 		firstMonth && tier === "pro" ? 1000 : TIER_PRICES_CENTS[tier];
@@ -332,7 +336,9 @@ export async function handleBillingCancel(
 	try {
 		const raw = await env.SUBSCRIPTIONS?.get(key);
 		if (raw) record = JSON.parse(raw) as PlatformPremiumRecord;
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	if (!record) {
 		return jsonResponse({ error: "No active subscription found" }, 404);
@@ -369,7 +375,9 @@ export async function handleBillingMyStatus(
 	try {
 		const raw = await env.SUBSCRIPTIONS?.get(key);
 		if (raw) record = JSON.parse(raw) as PlatformPremiumRecord;
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	if (record?.status !== "active" || record.expiresAt <= Date.now()) {
 		return jsonResponse({

@@ -756,7 +756,9 @@ export async function handleDigestUnsubscribeEmail(
 		await env.CACHE?.put("digest:subscribers", [...set].join("\n"), {
 			expirationTtl: 60 * 60 * 24 * 400,
 		});
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return jsonResponse({ ok: true, email, action: "unsubscribed" });
 }

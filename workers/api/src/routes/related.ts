@@ -48,7 +48,9 @@ export async function handleRelatedPosts(
 						await env.CACHE?.put(`post:${postId}`, JSON.stringify(original), {
 							expirationTtl: 3600,
 						});
-					} catch { /* KV operation failed -- non-critical, continue */ }
+					} catch {
+						/* KV operation failed -- non-critical, continue */
+					}
 				}
 			}
 		}

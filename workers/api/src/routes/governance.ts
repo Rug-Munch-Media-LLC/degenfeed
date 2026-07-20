@@ -119,7 +119,9 @@ async function getMemberCount(env: Env, slug: string): Promise<number> {
 			const community = JSON.parse(communityRaw) as { memberCount: number };
 			return community.memberCount ?? 0;
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 	return 0;
 }
 

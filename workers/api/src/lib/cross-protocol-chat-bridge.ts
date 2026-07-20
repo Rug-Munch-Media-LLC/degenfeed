@@ -68,12 +68,13 @@ async function resolvePlatformAuth(
 
 	try {
 		// Try to use IdentityHub for per-creator credentials
+		if (!env.IDENTITIES) return auth;
 		const { IdentityHub } = await import("@degenfeed/identity-hub");
 		const hub = new IdentityHub({ kv: env.IDENTITIES });
 		const resolved = await hub.resolveWallet(creatorWallet);
 
 		// ActivityPub
-		const apInfo = resolved.protocols["mastodon"];
+		const apInfo = resolved.protocols.mastodon;
 		if (apInfo?.linked) {
 			const creds = await hub.getCredentials(creatorWallet, "mastodon");
 			auth.activitypub = {
@@ -83,7 +84,7 @@ async function resolvePlatformAuth(
 		}
 
 		// AT Protocol
-		const bskyInfo = resolved.protocols["bluesky"];
+		const bskyInfo = resolved.protocols.bluesky;
 		if (bskyInfo?.linked) {
 			const creds = await hub.getCredentials(creatorWallet, "bluesky");
 			auth.atproto = {
@@ -419,7 +420,7 @@ export async function startBridge(
 
 	// If we have announcement results, store records for the bridge
 	if (announcementResults) {
-		const apResult = announcementResults["activitypub"];
+		const apResult = announcementResults.activitypub;
 		if (apResult?.ok && apResult.id) {
 			await env.CONTENT_STORE?.put(
 				`bridge:ap:announcement:${streamId}`,
@@ -435,7 +436,7 @@ export async function startBridge(
 			).catch(() => {});
 		}
 
-		const bskyResult = announcementResults["atproto"];
+		const bskyResult = announcementResults.atproto;
 		if (bskyResult?.ok && bskyResult.id) {
 			const postUri = bskyResult.id;
 			const parts = postUri.split("/");
@@ -457,7 +458,7 @@ export async function startBridge(
 		}
 
 		// Store Nostr announcement record for reply bridging
-		const nostrResult = announcementResults["nostr"];
+		const nostrResult = announcementResults.nostr;
 		if (nostrResult?.ok && nostrResult.id) {
 			await env.CONTENT_STORE?.put(
 				`bridge:nostr:announcement:${streamId}`,

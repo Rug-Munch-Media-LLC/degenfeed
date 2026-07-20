@@ -104,7 +104,6 @@ import {
 	buildGtsHandle,
 	CATEGORY_META,
 	type CommunityEvent,
-	type CommunityMember,
 	type CommunityPoll,
 	type CommunityPost,
 	checkTokenGate,
@@ -128,7 +127,6 @@ import {
 	getAppeals,
 	getBadges,
 	getBotKeys,
-	getCommunityById,
 	getCommunityByName,
 	getCommunityEvents,
 	getCommunityMembers,
@@ -144,7 +142,6 @@ import {
 	getMemberRole,
 	getModLog,
 	getPinnedPosts,
-	getPollVotes,
 	getReports,
 	getSimilarCommunities,
 	getTokenConfig,
@@ -158,19 +155,15 @@ import {
 	hashKey,
 	isBanned,
 	isCommunityMember,
-	isOwnerOrMod,
 	type KeywordFilter,
 	listDirectory,
 	type MemberRole,
-	PREMIUM_FEATURES,
 	pinPost,
 	REPORT_CATEGORIES,
 	type Report,
 	type ReportCategory,
-	ROLE_HIERARCHY,
 	releaseName,
 	removeCommunityMember,
-	removeFedBlocklistEntry,
 	reserveName,
 	resolveAppeal,
 	rsvpEvent,
@@ -185,7 +178,6 @@ import {
 	unbanMember,
 	unpinPost,
 	updateCommunity,
-	updateMemberBadges,
 	updateMemberTokenBalance,
 	updateReportStatus,
 	VALID_CATEGORIES,
@@ -420,7 +412,7 @@ feddy.post("/create", async (c) => {
 	}
 
 	try {
-		const gtsClient = getGtsClient(c.env, c.env.GTS_CLIENT_SECRET);
+		const _gtsClient = getGtsClient(c.env, c.env.GTS_CLIENT_SECRET);
 		let gtsAccount;
 		try {
 			gtsAccount = {
@@ -529,7 +521,7 @@ feddy.get("/directory", async (c) => {
 
 // ─── GET /api/feddy/directory/categories — Category list ───────────
 
-feddy.get("/directory/categories", async (c) => {
+feddy.get("/directory/categories", async (_c) => {
 	return noCacheJsonResponse({
 		categories: VALID_CATEGORIES.map((cat) => ({
 			id: cat,
@@ -1652,7 +1644,7 @@ feddy.post("/:name/polls/:pid/vote", async (c) => {
 	if (session instanceof Response) return session;
 
 	const pollId = sanitizeString(c.req.param("pid"), 64);
-	const member = await isCommunityMember(
+	const _member = await isCommunityMember(
 		c.env,
 		"polls-community-check",
 		session.address,

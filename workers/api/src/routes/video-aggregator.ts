@@ -21,25 +21,26 @@
  */
 
 import { Hono } from "hono";
+import { VideoAggregator } from "../feed/video-aggregator";
 import type { Env } from "../index";
 import { jsonResponse, noCacheJsonResponse } from "../index";
-import { requireSession } from "../session";
-import { VideoAggregator } from "../feed/video-aggregator";
-import { CreatorResolver } from "../lib/creator-resolver";
 import type { VideoPlatform } from "../lib/creator-resolver";
+import { CreatorResolver } from "../lib/creator-resolver";
+import { requireSession } from "../session";
 
 // ─── Badge colors for all supported platforms ──────────────────────────────
 
-export const PLATFORM_BADGES: Record<string, { label: string; color: string }> = {
-	youtube: { label: "YouTube", color: "#FF0000" },
-	twitch: { label: "Twitch", color: "#9146FF" },
-	rumble: { label: "Rumble", color: "#85C742" },
-	peertube: { label: "PeerTube", color: "#F1680D" },
-	tiktok: { label: "TikTok", color: "#010101" },
-	instagram: { label: "Instagram", color: "#E1306C" },
-	odysee: { label: "Odysee", color: "#FF6A00" },
-	zora: { label: "Zora", color: "#0052FF" },
-};
+export const PLATFORM_BADGES: Record<string, { label: string; color: string }> =
+	{
+		youtube: { label: "YouTube", color: "#FF0000" },
+		twitch: { label: "Twitch", color: "#9146FF" },
+		rumble: { label: "Rumble", color: "#85C742" },
+		peertube: { label: "PeerTube", color: "#F1680D" },
+		tiktok: { label: "TikTok", color: "#010101" },
+		instagram: { label: "Instagram", color: "#E1306C" },
+		odysee: { label: "Odysee", color: "#FF6A00" },
+		zora: { label: "Zora", color: "#0052FF" },
+	};
 
 // ─── Router ────────────────────────────────────────────────────────────────
 
@@ -52,7 +53,10 @@ const videoAggregator = new Hono<{ Bindings: Env }>();
 videoAggregator.get("/creator/:id", async (c) => {
 	const creatorId = c.req.param("id");
 	const limit = Math.min(Math.max(Number(c.req.query("limit")) || 20, 1), 100);
-	const sort = (c.req.query("sort") || "recent") as "recent" | "trending" | "popular";
+	const sort = (c.req.query("sort") || "recent") as
+		| "recent"
+		| "trending"
+		| "popular";
 
 	if (!creatorId || creatorId.length < 2) {
 		return jsonResponse({ error: "Invalid creator identifier" }, 400);
@@ -66,7 +70,10 @@ videoAggregator.get("/creator/:id", async (c) => {
 		const creator = await resolver.resolveCreator(creatorId);
 
 		// Fetch videos from all resolved platforms
-		const allVideos = await aggregator.getCreatorVideos(creatorId, { limit, sort });
+		const allVideos = await aggregator.getCreatorVideos(creatorId, {
+			limit,
+			sort,
+		});
 
 		return noCacheJsonResponse({
 			creator: {
@@ -81,7 +88,10 @@ videoAggregator.get("/creator/:id", async (c) => {
 		});
 	} catch (e) {
 		const msg = e instanceof Error ? e.message : String(e);
-		return jsonResponse({ error: `Failed to fetch creator videos: ${msg}` }, 500);
+		return jsonResponse(
+			{ error: `Failed to fetch creator videos: ${msg}` },
+			500,
+		);
 	}
 });
 
@@ -127,15 +137,24 @@ videoAggregator.get("/feed", async (c) => {
 
 	const wallet = session.address?.toLowerCase();
 	if (!wallet) {
-		return jsonResponse({ error: "Wallet required for personalized feed" }, 401);
+		return jsonResponse(
+			{ error: "Wallet required for personalized feed" },
+			401,
+		);
 	}
 
 	const limit = Math.min(Math.max(Number(c.req.query("limit")) || 20, 1), 100);
-	const sort = (c.req.query("sort") || "recent") as "recent" | "trending" | "popular";
+	const sort = (c.req.query("sort") || "recent") as
+		| "recent"
+		| "trending"
+		| "popular";
 
 	try {
 		const aggregator = new VideoAggregator(c.env);
-		const videos = await aggregator.getPersonalizedFeed(wallet, { limit, sort });
+		const videos = await aggregator.getPersonalizedFeed(wallet, {
+			limit,
+			sort,
+		});
 		const feed = await aggregator.buildFeed(videos, { limit });
 
 		return noCacheJsonResponse(feed);
@@ -152,7 +171,10 @@ videoAggregator.get("/feed", async (c) => {
 videoAggregator.get("/search", async (c) => {
 	const query = c.req.query("q")?.trim();
 	if (!query || query.length < 2) {
-		return jsonResponse({ error: "Search query is required (min 2 chars)" }, 400);
+		return jsonResponse(
+			{ error: "Search query is required (min 2 chars)" },
+			400,
+		);
 	}
 
 	const limit = Math.min(Math.max(Number(c.req.query("limit")) || 20, 1), 100);
@@ -203,7 +225,9 @@ videoAggregator.post("/follow", async (c) => {
 		// Store in follows KV list
 		const followKey = `follow:${wallet}`;
 		const existingRaw = await c.env.CACHE?.get(followKey);
-		const existing: string[] = existingRaw ? (JSON.parse(existingRaw) as string[]) : [];
+		const existing: string[] = existingRaw
+			? (JSON.parse(existingRaw) as string[])
+			: [];
 
 		if (!existing.includes(creatorId)) {
 			existing.push(creatorId);
@@ -269,7 +293,13 @@ videoAggregator.get("/following", async (c) => {
 						unifiedFollowerCount: presence.unifiedFollowerCount,
 					};
 				} catch {
-					return { identifier: id, name: id, avatar: "", platforms: 0, unifiedFollowerCount: 0 };
+					return {
+						identifier: id,
+						name: id,
+						avatar: "",
+						platforms: 0,
+						unifiedFollowerCount: 0,
+					};
 				}
 			}),
 		);
@@ -310,7 +340,10 @@ videoAggregator.get("/resolve/:id", async (c) => {
 					isLive: p.isLive,
 					verified: p.verified,
 					url: p.url,
-					badge: PLATFORM_BADGES[p.platform] ?? { label: p.platform, color: "#666" },
+					badge: PLATFORM_BADGES[p.platform] ?? {
+						label: p.platform,
+						color: "#666",
+					},
 				})),
 			},
 		});
@@ -332,7 +365,9 @@ videoAggregator.get("/badges", (_c) => {
 // Helpers
 // ═══════════════════════════════════════════════════════════════════════════
 
-function countByPlatform(videos: Array<{ platform: string }>): Record<string, number> {
+function countByPlatform(
+	videos: Array<{ platform: string }>,
+): Record<string, number> {
 	const counts: Record<string, number> = {};
 	for (const v of videos) {
 		counts[v.platform] = (counts[v.platform] ?? 0) + 1;

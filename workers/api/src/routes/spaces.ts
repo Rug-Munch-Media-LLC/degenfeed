@@ -892,7 +892,7 @@ export async function handleSpaceInviteSpeaker(
 
 		// Check if user is already a speaker
 		const alreadySpeaker = space.speakers.some(
-			(s) => s.id.toLowerCase() === body.userId!.toLowerCase(),
+			(s) => s.id.toLowerCase() === body.userId?.toLowerCase(),
 		);
 		if (alreadySpeaker) {
 			return jsonResponse({ error: "User is already a speaker" }, 400);
@@ -924,7 +924,7 @@ export async function handleSpaceInviteSpeaker(
 
 		// Remove from hand raise queue if they raised hand
 		space.handRaised = space.handRaised.filter(
-			(h) => h.userId.toLowerCase() !== body.userId!.toLowerCase(),
+			(h) => h.userId.toLowerCase() !== body.userId?.toLowerCase(),
 		);
 
 		await saveSpace(env, space);

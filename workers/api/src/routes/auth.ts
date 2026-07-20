@@ -8,7 +8,7 @@ import {
 } from "./oauth-state";
 
 const STATE_KEY_PREFIX = "gts:state:";
-const STATE_TTL_SECONDS = 600;
+const _STATE_TTL_SECONDS = 600;
 const THREADS_STATE_PREFIX = "threads:state:";
 
 function generateState(): string {

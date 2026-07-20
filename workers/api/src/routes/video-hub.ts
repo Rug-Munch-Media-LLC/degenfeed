@@ -143,7 +143,7 @@ function timeAgo(ms: number): string {
 	return `${days}d ago`;
 }
 
-function formatViews(views: number): string {
+function _formatViews(views: number): string {
 	if (views >= 1_000_000) return `${(views / 1_000_000).toFixed(1)}M`;
 	if (views >= 1_000) return `${(views / 1_000).toFixed(1)}K`;
 	return String(views);
@@ -237,7 +237,7 @@ async function getUnifiedVideoFeed(params: {
 		? await categorizer.getUserCategories(wallet, env)
 		: [];
 
-  // Generate videos from real feeds; fall back to mock data if all providers fail.
+	// Generate videos from real feeds; fall back to mock data if all providers fail.
 	const videos = generateMockVideos(limit, { source, category, sort, page });
 
 	// Sort
@@ -540,7 +540,7 @@ videoHub.get("/search", async (c) => {
 // GET /api/video/sources — Available video sources with health status
 // ═══════════════════════════════════════════════════════════════════════════
 
-videoHub.get("/sources", async (c) => {
+videoHub.get("/sources", async (_c) => {
 	const sources = Object.entries(VIDEO_SOURCES).map(([id, meta]) => {
 		return {
 			id,

@@ -406,7 +406,9 @@ export async function handleTrendingSidebar(
 		if (cached) {
 			return jsonResponse(JSON.parse(cached));
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	// Fetch all sections in parallel
 	const postsPromise = fetchRecentPosts(env, 200)
@@ -453,7 +455,9 @@ export async function handleTrendingSidebar(
 		await env.CACHE?.put(CACHE_KEY, JSON.stringify(response), {
 			expirationTtl: SIDEBAR_CACHE_TTL,
 		});
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return jsonResponse(response);
 }

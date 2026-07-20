@@ -102,7 +102,7 @@ async function fetchPixelfedContent(
 	try {
 		const gtsUrl = env.GTS_INSTANCE_URL || "https://social.degenfeed.xyz";
 		const gts = new GtSClient(gtsUrl);
-		const timeline = await gts["get"]<GtSStatus[]>("/api/v1/timelines/public", {
+		const timeline = await gts.get<GtSStatus[]>("/api/v1/timelines/public", {
 			limit: Math.min(limit, 40),
 			only_media: "true",
 		});
@@ -238,7 +238,7 @@ function normalizeGtSStatusToVisual(
 
 const ZORA_API_URL = "https://api.zora.co/graphql";
 
-async function fetchZoraNFTs(env: Env, limit: number): Promise<VisualPost[]> {
+async function fetchZoraNFTs(_env: Env, limit: number): Promise<VisualPost[]> {
 	const results: VisualPost[] = [];
 
 	const query = `
@@ -509,7 +509,7 @@ async function fetchGoToSocialMedia(
 
 	try {
 		const gts = new GtSClient(instanceUrl);
-		const timeline = await gts["get"]<GtSStatus[]>("/api/v1/timelines/public", {
+		const timeline = await gts.get<GtSStatus[]>("/api/v1/timelines/public", {
 			limit: Math.min(limit, 40),
 			only_media: "true",
 		});
@@ -541,12 +541,12 @@ async function fetchNostrMedia(env: Env, limit: number): Promise<VisualPost[]> {
 		.filter(Boolean);
 
 	// Use a Nostr relay search for kind 1 posts with image URLs
-	const searchTerms = ["https://", ".jpg", ".png", ".gif", ".webp", "http://"];
+	const _searchTerms = ["https://", ".jpg", ".png", ".gif", ".webp", "http://"];
 
 	for (const relay of relays.slice(0, 3)) {
 		try {
 			// Request kind 1 events with media via a relay query
-			const sub = JSON.stringify([
+			const _sub = JSON.stringify([
 				"REQ",
 				`media-${Date.now()}`,
 				{
@@ -555,7 +555,7 @@ async function fetchNostrMedia(env: Env, limit: number): Promise<VisualPost[]> {
 					"#t": ["photography", "art", "nft"],
 				},
 			]);
-			const wsUrl = relay.replace("http", "ws");
+			const _wsUrl = relay.replace("http", "ws");
 			// Fallback: try REST-based relay if available
 			const restUrl = relay
 				.replace("wss://", "https://")
@@ -747,7 +747,7 @@ function stripHtml(html: string): string {
 // ─── Ranking and merging ───────────────────────────────────────────────
 
 function rankPosts(posts: VisualPost[], sort: string): VisualPost[] {
-	const now = Date.now();
+	const _now = Date.now();
 	return [...posts].sort((a, b) => {
 		switch (sort) {
 			case "trending": {
@@ -760,7 +760,6 @@ function rankPosts(posts: VisualPost[], sort: string): VisualPost[] {
 			}
 			case "top":
 				return b.metrics.likes - a.metrics.likes;
-			case "newest":
 			default:
 				return b.createdAt - a.createdAt;
 		}

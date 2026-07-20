@@ -9,7 +9,6 @@ import type { Env } from "../index";
 import {
 	type ContentItem,
 	RecommendationEngine,
-	type UserInterestProfile,
 } from "../lib/recommendation-engine";
 
 // ─── Mock KV ──────────────────────────────────────────────────────────────
@@ -34,7 +33,7 @@ function createMockEnv(): Env {
 
 // ─── Sample content ───────────────────────────────────────────────────────
 
-function createSampleContent(
+function _createSampleContent(
 	overrides: Partial<ContentItem> = {},
 ): ContentItem {
 	return {
@@ -160,7 +159,7 @@ describe("RecommendationEngine", () => {
 
 			const profile = await engine.getUserProfile("0xabc");
 			expect(profile.topCategories.length).toBeGreaterThan(0);
-			expect(profile.topCategories[0]!.category).toBe("crypto");
+			expect(profile.topCategories[0]?.category).toBe("crypto");
 			expect(profile.engagementRate).toBeGreaterThan(0);
 			expect(profile.watchTimeByCategory.crypto).toBeGreaterThan(0);
 		});
@@ -187,7 +186,7 @@ describe("RecommendationEngine", () => {
 			const cryptoCat = profile.topCategories.find(
 				(c) => c.category === "crypto",
 			);
-			const oldCat = profile.topCategories.find(
+			const _oldCat = profile.topCategories.find(
 				(c) => c.category === "old-category",
 			);
 			expect(cryptoCat).toBeDefined();

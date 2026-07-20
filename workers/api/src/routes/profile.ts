@@ -29,7 +29,9 @@ export async function handleIdentityProfile(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const linked: LinkedAccount[] = [];
 	const posts: UnifiedPost[] = [];
@@ -88,7 +90,9 @@ export async function handleIdentityProfile(
 								handle: meta.nip05,
 							});
 						}
-					} catch { /* KV operation failed -- non-critical, continue */ }
+					} catch {
+						/* KV operation failed -- non-critical, continue */
+					}
 				}
 				const noteEvents = await pool.list(
 					{ kinds: [1], authors: [hex], limit: 5 },
@@ -133,7 +137,9 @@ export async function handleIdentityProfile(
 					);
 				}
 				pool.disconnectAll();
-			} catch { /* KV operation failed -- non-critical, continue */ }
+			} catch {
+				/* KV operation failed -- non-critical, continue */
+			}
 		}
 
 		if (/^\d+$/.test(handle)) {
@@ -166,9 +172,13 @@ export async function handleIdentityProfile(
 						avatarUrl: profile.pfp,
 					});
 				}
-			} catch { /* KV operation failed -- non-critical, continue */ }
+			} catch {
+				/* KV operation failed -- non-critical, continue */
+			}
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const response = {
 		handle,
@@ -182,7 +192,9 @@ export async function handleIdentityProfile(
 		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 			expirationTtl: 300,
 		});
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return jsonResponse(response);
 }

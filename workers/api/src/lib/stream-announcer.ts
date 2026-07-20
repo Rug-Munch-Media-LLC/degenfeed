@@ -298,7 +298,7 @@ async function fireStreamSyncEvents(
 			if (!result.ok) continue;
 
 			const proto = normalizeProtocolForACL(protocol);
-			const eventType =
+			const _eventType =
 				stream.streamType === "live"
 					? "stream_started"
 					: ("stream_started" as const);
@@ -369,7 +369,7 @@ async function resolveIdentity(
 	};
 
 	// ── ActivityPub (Mastodon / GoToSocial) ──────────────────────────
-	const apInfo = resolved.protocols["mastodon"];
+	const apInfo = resolved.protocols.mastodon;
 	if (apInfo?.linked) {
 		identity.linkedProtocols.push("activitypub");
 		const creds = await hub.getCredentials(creator, "mastodon" as Protocol);
@@ -383,8 +383,7 @@ async function resolveIdentity(
 	}
 
 	// ── AT Protocol (Bluesky) ────────────────────────────────────────
-	const bskyInfo =
-		resolved.protocols["bluesky"] || resolved.protocols["atproto"];
+	const bskyInfo = resolved.protocols.bluesky || resolved.protocols.atproto;
 	if (bskyInfo?.linked) {
 		identity.linkedProtocols.push("atproto");
 		const creds = await hub.getCredentials(creator, "bluesky" as Protocol);
@@ -399,7 +398,7 @@ async function resolveIdentity(
 	}
 
 	// ── Nostr ────────────────────────────────────────────────────────
-	const nostrInfo = resolved.protocols["nostr"];
+	const nostrInfo = resolved.protocols.nostr;
 	if (nostrInfo?.linked) {
 		identity.linkedProtocols.push("nostr");
 		const creds = await hub.getCredentials(creator, "nostr" as Protocol);
@@ -413,7 +412,7 @@ async function resolveIdentity(
 	}
 
 	// ── Farcaster ────────────────────────────────────────────────────
-	const fcInfo = resolved.protocols["farcaster"];
+	const fcInfo = resolved.protocols.farcaster;
 	if (fcInfo?.linked) {
 		identity.linkedProtocols.push("farcaster");
 		const creds = await hub.getCredentials(creator, "farcaster" as Protocol);
@@ -427,7 +426,7 @@ async function resolveIdentity(
 	}
 
 	// ── Lens ─────────────────────────────────────────────────────────
-	const lensInfo = resolved.protocols["lens"];
+	const lensInfo = resolved.protocols.lens;
 	if (lensInfo?.linked) {
 		identity.linkedProtocols.push("lens");
 		const creds = await hub.getCredentials(creator, "lens" as Protocol);
@@ -440,7 +439,7 @@ async function resolveIdentity(
 	}
 
 	// ── Telegram ─────────────────────────────────────────────────────
-	const tgInfo = resolved.protocols["telegram"];
+	const tgInfo = resolved.protocols.telegram;
 	if (tgInfo?.linked) {
 		identity.linkedProtocols.push("telegram");
 		const creds = await hub.getCredentials(creator, "telegram" as Protocol);
@@ -467,7 +466,7 @@ async function resolveIdentity(
 	// federation. If the creator has a Threads-linked identity, we mark
 	// them for Threads bridge. Actual posting happens through the
 	// existing ActivityPub path since Threads speaks ActivityPub.
-	const threadsInfo = resolved.protocols["threads"];
+	const threadsInfo = resolved.protocols.threads;
 	if (threadsInfo?.linked) {
 		identity.linkedProtocols.push("threads");
 	}

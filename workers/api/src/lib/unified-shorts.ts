@@ -23,7 +23,7 @@
 import type { Protocol } from "@degenfeed/types";
 import type { Env } from "../index";
 import { orchestratePublish, type PublishReport } from "./publish-orchestrator";
-import { ZoraVideoIntegration, type ZoraVideoNFT } from "./zora-video";
+import { ZoraVideoIntegration } from "./zora-video";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -194,7 +194,7 @@ export class UnifiedShortsPipeline {
 
 	async publishShort(opts: PublishShortOptions): Promise<UnifiedShortResult> {
 		const id = this.generateShortId();
-		const startedAt = Date.now();
+		const _startedAt = Date.now();
 		const protocolStates: ProtocolState[] = [];
 		const errors: Partial<Record<ShortProtocol, string>> = {};
 
@@ -210,7 +210,9 @@ export class UnifiedShortsPipeline {
 					urls: {},
 					degenfeedUrl: "",
 					tipLink: "",
-					errors: { degenfeed: `Video upload failed: ${err instanceof Error ? err.message : String(err)}` },
+					errors: {
+						degenfeed: `Video upload failed: ${err instanceof Error ? err.message : String(err)}`,
+					},
 				};
 			}
 		}
@@ -250,13 +252,25 @@ export class UnifiedShortsPipeline {
 						break;
 					case "zora":
 						if (opts.mintOnZora) {
-							const result = await this.publishToZora(opts, videoUrl, thumbnailUrl, contentHash, id);
+							const result = await this.publishToZora(
+								opts,
+								videoUrl,
+								thumbnailUrl,
+								contentHash,
+								id,
+							);
 							url = result.url;
 							protocolStates.push(result.state);
 						}
 						break;
 					case "degenfeed":
-						url = await this.publishToDegenFeed(opts, videoUrl, thumbnailUrl, id, contentHash);
+						url = await this.publishToDegenFeed(
+							opts,
+							videoUrl,
+							thumbnailUrl,
+							id,
+							contentHash,
+						);
 						break;
 				}
 
@@ -333,7 +347,13 @@ export class UnifiedShortsPipeline {
 				title: short.title,
 				targets: ["mastodon" as Protocol],
 				images: short.thumbnailUrl
-					? [{ url: short.thumbnailUrl, alt: short.title, mimeType: "image/jpeg" }]
+					? [
+							{
+								url: short.thumbnailUrl,
+								alt: short.title,
+								mimeType: "image/jpeg",
+							},
+						]
 					: undefined,
 				links: [short.videoUrl],
 				hashtags: short.hashtags,
@@ -342,7 +362,7 @@ export class UnifiedShortsPipeline {
 			this.env,
 		);
 
-		const result = report.results["mastodon"];
+		const result = report.results.mastodon;
 		if (!result?.ok || !result.nativeId) {
 			throw new Error(result?.error || "ActivityPub publish failed silently");
 		}
@@ -352,7 +372,9 @@ export class UnifiedShortsPipeline {
 			this.env.GTS_INSTANCE_URL ||
 			"https://social.degenfeed.xyz";
 		return {
-			url: result.nativeUri || `${instanceBase}/@${short.creator.handle}/${result.nativeId}`,
+			url:
+				result.nativeUri ||
+				`${instanceBase}/@${short.creator.handle}/${result.nativeId}`,
 			nativeId: result.nativeId,
 		};
 	}
@@ -363,9 +385,14 @@ export class UnifiedShortsPipeline {
 	): Promise<{ url: string; nativeId: string }> {
 		// AT Protocol: post with a video embed (app.bsky.embed.video)
 		const text = this.formatShortCaption(short);
-		const embedVideo = {
+		const _embedVideo = {
 			$type: "app.bsky.embed.video",
-			video: { $type: "blob", ref: { $link: short.videoUrl }, mimeType: "video/mp4", size: 0 },
+			video: {
+				$type: "blob",
+				ref: { $link: short.videoUrl },
+				mimeType: "video/mp4",
+				size: 0,
+			},
 			captions: [],
 		};
 
@@ -375,7 +402,13 @@ export class UnifiedShortsPipeline {
 				title: short.title,
 				targets: ["bluesky" as Protocol],
 				images: short.thumbnailUrl
-					? [{ url: short.thumbnailUrl, alt: short.title, mimeType: "image/jpeg" }]
+					? [
+							{
+								url: short.thumbnailUrl,
+								alt: short.title,
+								mimeType: "image/jpeg",
+							},
+						]
 					: undefined,
 				links: [short.videoUrl],
 				hashtags: short.hashtags,
@@ -384,7 +417,7 @@ export class UnifiedShortsPipeline {
 			this.env,
 		);
 
-		const result = report.results["bluesky"];
+		const result = report.results.bluesky;
 		if (!result?.ok || !result.nativeId) {
 			throw new Error(result?.error || "AT Protocol publish failed silently");
 		}
@@ -406,7 +439,13 @@ export class UnifiedShortsPipeline {
 				title: short.title,
 				targets: ["nostr" as Protocol],
 				images: short.thumbnailUrl
-					? [{ url: short.thumbnailUrl, alt: short.title, mimeType: "image/jpeg" }]
+					? [
+							{
+								url: short.thumbnailUrl,
+								alt: short.title,
+								mimeType: "image/jpeg",
+							},
+						]
 					: undefined,
 				links: [short.videoUrl],
 				hashtags: short.hashtags,
@@ -415,7 +454,7 @@ export class UnifiedShortsPipeline {
 			this.env,
 		);
 
-		const result = report.results["nostr"];
+		const result = report.results.nostr;
 		if (!result?.ok || !result.nativeId) {
 			throw new Error(result?.error || "Nostr publish failed silently");
 		}
@@ -441,7 +480,7 @@ export class UnifiedShortsPipeline {
 			this.env,
 		);
 
-		const result = report.results["farcaster"];
+		const result = report.results.farcaster;
 		if (!result?.ok || !result.nativeId) {
 			throw new Error(result?.error || "Farcaster publish failed silently");
 		}
@@ -462,7 +501,13 @@ export class UnifiedShortsPipeline {
 				title: short.title,
 				targets: ["lens" as Protocol],
 				images: short.thumbnailUrl
-					? [{ url: short.thumbnailUrl, alt: short.title, mimeType: "image/jpeg" }]
+					? [
+							{
+								url: short.thumbnailUrl,
+								alt: short.title,
+								mimeType: "image/jpeg",
+							},
+						]
 					: undefined,
 				links: [short.videoUrl],
 				hashtags: short.hashtags,
@@ -471,7 +516,7 @@ export class UnifiedShortsPipeline {
 			this.env,
 		);
 
-		const result = report.results["lens"];
+		const result = report.results.lens;
 		if (!result?.ok || !result.nativeId) {
 			throw new Error(result?.error || "Lens publish failed silently");
 		}
@@ -511,7 +556,8 @@ export class UnifiedShortsPipeline {
 			nftResult.tokenId,
 			{
 				tokenId: nftResult.tokenId,
-				contractAddress: nftResult.contractAddress || this.env.ZORA_VIDEO_CONTRACT || "",
+				contractAddress:
+					nftResult.contractAddress || this.env.ZORA_VIDEO_CONTRACT || "",
 				name: opts.title,
 				description: opts.caption,
 				videoUrl,
@@ -535,9 +581,10 @@ export class UnifiedShortsPipeline {
 	async publishToPeerTube(
 		opts: PublishShortOptions,
 		videoUrl: string,
-		shortId: string,
+		_shortId: string,
 	): Promise<string> {
-		const instanceUrl = this.env.PEERTUBE_INSTANCE_URL || "https://video.degenfeed.xyz";
+		const instanceUrl =
+			this.env.PEERTUBE_INSTANCE_URL || "https://video.degenfeed.xyz";
 		const clientId = this.env.PEERTUBE_CLIENT_ID;
 		const clientSecret = this.env.PEERTUBE_CLIENT_SECRET;
 
@@ -581,7 +628,9 @@ export class UnifiedShortsPipeline {
 
 		if (!importRes.ok) {
 			const errText = await importRes.text().catch(() => "");
-			throw new Error(`PeerTube import failed: ${importRes.status} ${errText.slice(0, 200)}`);
+			throw new Error(
+				`PeerTube import failed: ${importRes.status} ${errText.slice(0, 200)}`,
+			);
 		}
 
 		const importData = (await importRes.json()) as { video: { uuid: string } };
@@ -631,7 +680,12 @@ export class UnifiedShortsPipeline {
 		// Route the tip through the appropriate protocol
 		const short = await this.getShort(shortId);
 		if (!short) {
-			return { success: false, protocol, amount: String(amount), error: "Short not found" };
+			return {
+				success: false,
+				protocol,
+				amount: String(amount),
+				error: "Short not found",
+			};
 		}
 
 		try {
@@ -664,11 +718,21 @@ export class UnifiedShortsPipeline {
 
 			if (!tipRes.ok) {
 				const errText = await tipRes.text().catch(() => "");
-				return { success: false, protocol, amount: String(amount), error: errText };
+				return {
+					success: false,
+					protocol,
+					amount: String(amount),
+					error: errText,
+				};
 			}
 
 			const tipData = (await tipRes.json()) as { txHash?: string };
-			return { success: true, txHash: tipData.txHash, protocol, amount: String(amount) };
+			return {
+				success: true,
+				txHash: tipData.txHash,
+				protocol,
+				amount: String(amount),
+			};
 		} catch (err) {
 			return {
 				success: false,
@@ -679,16 +743,21 @@ export class UnifiedShortsPipeline {
 		}
 	}
 
-	async likeShort(shortId: string, protocol: ShortProtocol = "degenfeed"): Promise<void> {
+	async likeShort(
+		shortId: string,
+		protocol: ShortProtocol = "degenfeed",
+	): Promise<void> {
 		// Record like in KV; cross-protocol sync handled by realtime-sync
-		await this.env.SHORTS?.put(
-			`shorts:${shortId}:likes`,
-			String(Date.now()),
-			{ metadata: { protocol } },
-		);
+		await this.env.SHORTS?.put(`shorts:${shortId}:likes`, String(Date.now()), {
+			metadata: { protocol },
+		});
 	}
 
-	async commentOnShort(shortId: string, text: string, protocol: ShortProtocol = "degenfeed"): Promise<void> {
+	async commentOnShort(
+		shortId: string,
+		text: string,
+		protocol: ShortProtocol = "degenfeed",
+	): Promise<void> {
 		const comment = {
 			id: crypto.randomUUID(),
 			shortId,
@@ -702,7 +771,10 @@ export class UnifiedShortsPipeline {
 		);
 	}
 
-	async shareShort(shortId: string, targetProtocol: ShortProtocol): Promise<{ url?: string }> {
+	async shareShort(
+		shortId: string,
+		targetProtocol: ShortProtocol,
+	): Promise<{ url?: string }> {
 		const short = await this.getShort(shortId);
 		if (!short) throw new Error("Short not found");
 
@@ -712,7 +784,10 @@ export class UnifiedShortsPipeline {
 		}
 
 		// Otherwise, publish to the new protocol
-		const auth = await this.getProtocolAuth(targetProtocol, short.creator.address);
+		const auth = await this.getProtocolAuth(
+			targetProtocol,
+			short.creator.address,
+		);
 		let result: { url: string; nativeId: string };
 
 		switch (targetProtocol) {
@@ -744,7 +819,9 @@ export class UnifiedShortsPipeline {
 		return { url: result.url };
 	}
 
-	async mintZoraShort(shortId: string): Promise<{ tokenId: string; zoraUrl: string }> {
+	async mintZoraShort(
+		shortId: string,
+	): Promise<{ tokenId: string; zoraUrl: string }> {
 		const short = await this.getShort(shortId);
 		if (!short) throw new Error("Short not found");
 
@@ -773,7 +850,8 @@ export class UnifiedShortsPipeline {
 		const zoraUrl = `https://zora.co/collect/${nftResult.contractAddress || this.env.ZORA_VIDEO_CONTRACT || "base"}:${nftResult.tokenId}`;
 
 		short.zoraTokenId = nftResult.tokenId;
-		short.zoraContractAddress = nftResult.contractAddress || this.env.ZORA_VIDEO_CONTRACT || "";
+		short.zoraContractAddress =
+			nftResult.contractAddress || this.env.ZORA_VIDEO_CONTRACT || "";
 		short.zoraUrl = zoraUrl;
 		short.protocols.zora = zoraUrl;
 		await this.env.SHORTS?.put(`shorts:${shortId}`, JSON.stringify(short));
@@ -854,7 +932,9 @@ export class UnifiedShortsPipeline {
 	private async uploadToPermanentStorage(_file: File): Promise<string> {
 		// Upload to IPFS via web3.storage or Pinata, or to Arweave
 		// For now, return placeholder — real upload requires SDK integration
-		throw new Error("Direct file upload not yet implemented — provide a videoUrl instead");
+		throw new Error(
+			"Direct file upload not yet implemented — provide a videoUrl instead",
+		);
 	}
 
 	private async computeContentHash(videoUrl: string): Promise<string> {
@@ -865,7 +945,10 @@ export class UnifiedShortsPipeline {
 		return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 	}
 
-	private buildUniversalTipLink(shortId: string, _creatorAddress: string): string {
+	private buildUniversalTipLink(
+		shortId: string,
+		_creatorAddress: string,
+	): string {
 		// x402 payment URL for tipping this short
 		return `https://api.degenfeed.xyz/x402/shorts/${shortId}/tip`;
 	}
@@ -902,7 +985,9 @@ export class UnifiedShortsPipeline {
 	): Promise<Record<string, string>> {
 		// Retrieve stored auth tokens for this creator from KV
 		try {
-			const raw = await this.env.IDENTITIES?.get(`auth:${creatorAddress}:${protocol}`);
+			const raw = await this.env.IDENTITIES?.get(
+				`auth:${creatorAddress}:${protocol}`,
+			);
 			return raw ? (JSON.parse(raw) as Record<string, string>) : {};
 		} catch {
 			return {};

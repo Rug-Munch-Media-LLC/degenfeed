@@ -371,7 +371,6 @@ export function calculateCharges(
 				serviceFeeCents: ourProfit * 100,
 			};
 		}
-		case "free":
 		default:
 			return {
 				total: "$0",
@@ -450,7 +449,7 @@ export async function storeAllIdentities(
 
 	// ActivityPub (GoToSocial / Mastodon)
 	if (results.activitypub?.ok && results.activitypub.identifier) {
-		updatable["mastodon"] = {
+		updatable.mastodon = {
 			handle: results.activitypub.identifier,
 			instance: "social.degenfeed.xyz",
 			verified: true,
@@ -460,7 +459,7 @@ export async function storeAllIdentities(
 
 	// AT Protocol (Bluesky PDS)
 	if (results.atproto?.ok && results.atproto.identifier) {
-		updatable["atproto"] = {
+		updatable.atproto = {
 			did: results.atproto.identifier,
 			handle: results.atproto.handle || "",
 			pdsUrl: "https://pds.degenfeed.xyz",
@@ -471,7 +470,7 @@ export async function storeAllIdentities(
 
 	// Nostr
 	if (results.nostr?.ok && results.nostr.identifier) {
-		updatable["nostr"] = {
+		updatable.nostr = {
 			npub: results.nostr.identifier,
 			relays: [],
 			verified: true,
@@ -481,7 +480,7 @@ export async function storeAllIdentities(
 
 	// RSS
 	if (results.rss?.ok && results.rss.identifier) {
-		updatable["rss"] = {
+		updatable.rss = {
 			url: results.rss.identifier,
 			verified: true,
 			autoCreated: true,
@@ -490,7 +489,7 @@ export async function storeAllIdentities(
 
 	// Farcaster
 	if (results.farcaster?.ok && results.farcaster.identifier) {
-		updatable["farcaster"] = {
+		updatable.farcaster = {
 			fid: Number(results.farcaster.identifier.replace("fid:", "")),
 			username: results.farcaster.username || results.farcaster.handle || "",
 			custodyAddress: walletAddress,
@@ -500,7 +499,7 @@ export async function storeAllIdentities(
 
 	// Lens
 	if (results.lens?.ok && results.lens.identifier) {
-		updatable["lens"] = {
+		updatable.lens = {
 			profileId: results.lens.identifier,
 			handle: results.lens.handle || "",
 			verified: true,

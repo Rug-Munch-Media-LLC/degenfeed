@@ -20,10 +20,10 @@
  * the existing cross-protocol announcement system.
  */
 
-import { Hono } from 'hono';
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
-import { requireSession } from '../session';
+import { Hono } from "hono";
+import type { Env } from "../index";
+import { jsonResponse, noCacheJsonResponse } from "../index";
+import { requireSession } from "../session";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -45,7 +45,7 @@ export interface ZoraVideoMintRequest {
 	/** Linked creator coin address (optional) */
 	linkedCreatorCoin?: string;
 	/** Chain to mint on */
-	chain?: 'base' | 'ethereum' | 'optimism' | 'arbitrum' | 'zora';
+	chain?: "base" | "ethereum" | "optimism" | "arbitrum" | "zora";
 	/** Mint price in ETH string (e.g. "0.001") */
 	mintPrice?: string;
 	/** Referrer address for fee split */
@@ -83,7 +83,7 @@ export interface ZoraVideoAnnounceRequest {
 
 // ─── KV Key patterns ───────────────────────────────────────────────────────
 
-function trendingKey(chain: string): string {
+function _trendingKey(chain: string): string {
 	return `zora:video:trending:${chain}`;
 }
 
@@ -107,52 +107,52 @@ const zoraVideo = new Hono<{ Bindings: Env }>();
 // POST /api/zora/video/mint — Mint a video as Zora NFT
 // ═════════════════════════════════════════════════════════════════════════════
 
-zoraVideo.post('/mint', async (c) => {
+zoraVideo.post("/mint", async (c) => {
 	const session = await requireSession(c.req.raw, c.env);
 	if (session instanceof Response) return session;
 
 	const creatorAddress = session.address?.toLowerCase();
 	if (!creatorAddress) {
-		return jsonResponse({ error: 'Creator wallet address not found' }, 401);
+		return jsonResponse({ error: "Creator wallet address not found" }, 401);
 	}
 
 	try {
 		const body = (await c.req.json()) as ZoraVideoMintRequest;
 
 		// Validate required fields
-		if (!body.name || !body.name.trim()) {
-			return jsonResponse({ error: 'Name is required' }, 400);
+		if (!body.name?.trim()) {
+			return jsonResponse({ error: "Name is required" }, 400);
 		}
 		if (!body.videoUri) {
-			return jsonResponse({ error: 'videoUri is required' }, 400);
+			return jsonResponse({ error: "videoUri is required" }, 400);
 		}
 		if (!body.duration || body.duration < 1) {
-			return jsonResponse({ error: 'Duration must be >= 1 second' }, 400);
+			return jsonResponse({ error: "Duration must be >= 1 second" }, 400);
 		}
 
-		const chain = body.chain ?? 'base';
+		const chain = body.chain ?? "base";
 		const royaltyBps = body.royaltyBps ?? 500;
 		const editionSize = body.editionSize ?? 1;
 
 		// Get Pinata JWT from env
 		const pinataJwt = c.env.PINATA_API_KEY
-			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
-			: '';
+			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ""}`
+			: "";
 
 		if (!pinataJwt) {
-			return jsonResponse({ error: 'PINATA_API_KEY not configured' }, 500);
+			return jsonResponse({ error: "PINATA_API_KEY not configured" }, 500);
 		}
 
 		// Generate thumbnail if not provided
 		let thumbnailUri = body.thumbnailUri;
 		if (!thumbnailUri) {
-			const { keccak256, stringToHex } = await import('viem');
+			const { keccak256, stringToHex } = await import("viem");
 			const hash = keccak256(stringToHex(body.videoUri)).slice(0, 10);
 			thumbnailUri = `https://picsum.photos/seed/${hash}/640/360`;
 		}
 
 		// Use the ZoraVideoSDK to mint
-		const { ZoraVideoSDK } = await import('@degenfeed/zora-sdk/video');
+		const { ZoraVideoSDK } = await import("@degenfeed/zora-sdk/video");
 
 		const sdk = new ZoraVideoSDK({
 			pinataJwt,
@@ -162,14 +162,16 @@ zoraVideo.post('/mint', async (c) => {
 
 		const result = await sdk.mintVideoNFT({
 			name: body.name.trim(),
-			description: body.description?.trim() ?? '',
+			description: body.description?.trim() ?? "",
 			videoUri: body.videoUri,
 			thumbnailUri,
 			duration: body.duration,
 			creator: creatorAddress as `0x${string}`,
 			editionSize,
 			royaltyBps,
-			linkedCreatorCoin: (body.linkedCreatorCoin || undefined) as `0x${string}` | undefined,
+			linkedCreatorCoin: (body.linkedCreatorCoin || undefined) as
+				| `0x${string}`
+				| undefined,
 			referrer: (body.referrer || undefined) as `0x${string}` | undefined,
 			chain,
 		});
@@ -180,7 +182,7 @@ zoraVideo.post('/mint', async (c) => {
 				tokenId: result.tokenId,
 				contractAddress: result.contractAddress,
 				name: body.name.trim(),
-				description: body.description?.trim() ?? '',
+				description: body.description?.trim() ?? "",
 				videoUri: body.videoUri,
 				thumbnailUri,
 				duration: body.duration,
@@ -189,7 +191,7 @@ zoraVideo.post('/mint', async (c) => {
 				royaltyBps,
 				linkedCreatorCoin: body.linkedCreatorCoin ?? null,
 				chain,
-				mintPrice: body.mintPrice ?? '0',
+				mintPrice: body.mintPrice ?? "0",
 				createdAt: new Date().toISOString(),
 				metadataUri: result.metadataUri,
 			};
@@ -214,16 +216,19 @@ zoraVideo.post('/mint', async (c) => {
 			// Non-critical — caching is best-effort
 		}
 
-		return noCacheJsonResponse({
-			ok: true,
-			nft: {
-				tokenId: result.tokenId,
-				contractAddress: result.contractAddress,
-				txHash: result.txHash,
-				explorerUrl: result.explorerUrl,
-				metadataUri: result.metadataUri,
+		return noCacheJsonResponse(
+			{
+				ok: true,
+				nft: {
+					tokenId: result.tokenId,
+					contractAddress: result.contractAddress,
+					txHash: result.txHash,
+					explorerUrl: result.explorerUrl,
+					metadataUri: result.metadataUri,
+				},
 			},
-		}, 201);
+			201,
+		);
 	} catch (e) {
 		const msg = e instanceof Error ? e.message : String(e);
 		return jsonResponse({ error: `Mint failed: ${msg}` }, 500);
@@ -234,13 +239,13 @@ zoraVideo.post('/mint', async (c) => {
 // GET /api/zora/video/:id — Get video NFT details
 // ═════════════════════════════════════════════════════════════════════════════
 
-zoraVideo.get('/:id', async (c) => {
-	const tokenId = c.req.param('id');
-	const chain = c.req.query('chain') ?? 'base';
-	const contract = c.req.query('contract');
+zoraVideo.get("/:id", async (c) => {
+	const tokenId = c.req.param("id");
+	const chain = c.req.query("chain") ?? "base";
+	const contract = c.req.query("contract");
 
 	if (!tokenId || tokenId.length < 1) {
-		return jsonResponse({ error: 'Invalid token ID' }, 400);
+		return jsonResponse({ error: "Invalid token ID" }, 400);
 	}
 
 	try {
@@ -253,14 +258,14 @@ zoraVideo.get('/:id', async (c) => {
 
 		// If contract address provided, fetch on-chain
 		if (contract) {
-			const { ZoraVideoSDK } = await import('@degenfeed/zora-sdk/video');
+			const { ZoraVideoSDK } = await import("@degenfeed/zora-sdk/video");
 			const pinataJwt = c.env.PINATA_API_KEY
-				? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
-				: '';
+				? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ""}`
+				: "";
 
 			const sdk = new ZoraVideoSDK({
-				pinataJwt: pinataJwt || 'placeholder',
-				defaultChain: chain as 'base' | 'ethereum' | 'zora',
+				pinataJwt: pinataJwt || "placeholder",
+				defaultChain: chain as "base" | "ethereum" | "zora",
 			});
 
 			const video = await sdk.getVideoNFT(
@@ -272,7 +277,7 @@ zoraVideo.get('/:id', async (c) => {
 			return noCacheJsonResponse({ video });
 		}
 
-		return jsonResponse({ error: 'Video NFT not found' }, 404);
+		return jsonResponse({ error: "Video NFT not found" }, 404);
 	} catch (e) {
 		const msg = e instanceof Error ? e.message : String(e);
 		return jsonResponse({ error: `Failed to fetch video: ${msg}` }, 500);
@@ -283,27 +288,30 @@ zoraVideo.get('/:id', async (c) => {
 // GET /api/zora/video/trending — Trending video NFTs
 // ═════════════════════════════════════════════════════════════════════════════
 
-zoraVideo.get('/trending', async (c) => {
-	const chain = c.req.query('chain') ?? 'base';
-	const limit = Math.min(Number(c.req.query('limit')) || 30, 100);
-	const cursor = c.req.query('cursor');
+zoraVideo.get("/trending", async (c) => {
+	const chain = c.req.query("chain") ?? "base";
+	const limit = Math.min(Number(c.req.query("limit")) || 30, 100);
+	const cursor = c.req.query("cursor");
 
 	try {
-		const { ZoraVideoSDK } = await import('@degenfeed/zora-sdk/video');
+		const { ZoraVideoSDK } = await import("@degenfeed/zora-sdk/video");
 		const pinataJwt = c.env.PINATA_API_KEY
-			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
-			: '';
+			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ""}`
+			: "";
 
 		const sdk = new ZoraVideoSDK({
-			pinataJwt: pinataJwt || 'placeholder',
-			defaultChain: chain as 'base' | 'ethereum' | 'zora',
+			pinataJwt: pinataJwt || "placeholder",
+			defaultChain: chain as "base" | "ethereum" | "zora",
 		});
 
-		const videos = await sdk.getTrendingVideoNFTs({
-			limit,
-			network: chain as 'base' | 'ethereum' | 'zora',
-			cursor,
-		}, { CACHE: c.env.CACHE });
+		const videos = await sdk.getTrendingVideoNFTs(
+			{
+				limit,
+				network: chain as "base" | "ethereum" | "zora",
+				cursor,
+			},
+			{ CACHE: c.env.CACHE },
+		);
 
 		return noCacheJsonResponse({
 			videos,
@@ -321,22 +329,22 @@ zoraVideo.get('/trending', async (c) => {
 // GET /api/zora/video/creator/:address — Creator's video NFTs
 // ═════════════════════════════════════════════════════════════════════════════
 
-zoraVideo.get('/creator/:address', async (c) => {
-	const creatorAddress = c.req.param('address').toLowerCase();
-	const limit = Math.min(Number(c.req.query('limit')) || 50, 200);
+zoraVideo.get("/creator/:address", async (c) => {
+	const creatorAddress = c.req.param("address").toLowerCase();
+	const limit = Math.min(Number(c.req.query("limit")) || 50, 200);
 
 	if (!creatorAddress || creatorAddress.length < 10) {
-		return jsonResponse({ error: 'Invalid creator address' }, 400);
+		return jsonResponse({ error: "Invalid creator address" }, 400);
 	}
 
 	try {
-		const { ZoraVideoSDK } = await import('@degenfeed/zora-sdk/video');
+		const { ZoraVideoSDK } = await import("@degenfeed/zora-sdk/video");
 		const pinataJwt = c.env.PINATA_API_KEY
-			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
-			: '';
+			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ""}`
+			: "";
 
 		const sdk = new ZoraVideoSDK({
-			pinataJwt: pinataJwt || 'placeholder',
+			pinataJwt: pinataJwt || "placeholder",
 		});
 
 		const videos = await sdk.getCreatorVideoNFTs(
@@ -352,7 +360,9 @@ zoraVideo.get('/creator/:address', async (c) => {
 				// Merge SDK results with cached, preferring cached
 				const merged = [...cached];
 				for (const v of videos) {
-					if (!merged.find((m: { tokenId: string }) => m.tokenId === v.tokenId)) {
+					if (
+						!merged.find((m: { tokenId: string }) => m.tokenId === v.tokenId)
+					) {
 						merged.push(v);
 					}
 				}
@@ -371,7 +381,10 @@ zoraVideo.get('/creator/:address', async (c) => {
 		});
 	} catch (e) {
 		const msg = e instanceof Error ? e.message : String(e);
-		return jsonResponse({ error: `Failed to fetch creator videos: ${msg}` }, 500);
+		return jsonResponse(
+			{ error: `Failed to fetch creator videos: ${msg}` },
+			500,
+		);
 	}
 });
 
@@ -379,36 +392,39 @@ zoraVideo.get('/creator/:address', async (c) => {
 // POST /api/zora/video/:id/collect — Collect/buy a video NFT
 // ═════════════════════════════════════════════════════════════════════════════
 
-zoraVideo.post('/:id/collect', async (c) => {
+zoraVideo.post("/:id/collect", async (c) => {
 	const session = await requireSession(c.req.raw, c.env);
 	if (session instanceof Response) return session;
 
 	const walletAddress = session.address?.toLowerCase();
 	if (!walletAddress) {
-		return jsonResponse({ error: 'Wallet address not found' }, 401);
+		return jsonResponse({ error: "Wallet address not found" }, 401);
 	}
 
-	const tokenId = c.req.param('id');
-	const chain = c.req.query('chain') ?? 'base';
-	const contract = c.req.query('contract');
+	const tokenId = c.req.param("id");
+	const chain = c.req.query("chain") ?? "base";
+	const contract = c.req.query("contract");
 
 	if (!tokenId || !contract) {
-		return jsonResponse({ error: 'tokenId and contract query params required' }, 400);
+		return jsonResponse(
+			{ error: "tokenId and contract query params required" },
+			400,
+		);
 	}
 
 	try {
 		const body = (await c.req.json()) as ZoraVideoCollectRequest;
-		const amount = body.amount ?? '0.001';
+		const amount = body.amount ?? "0.001";
 		const recipient = (body.recipient ?? walletAddress) as `0x${string}`;
 
-		const { ZoraVideoSDK } = await import('@degenfeed/zora-sdk/video');
+		const { ZoraVideoSDK } = await import("@degenfeed/zora-sdk/video");
 		const pinataJwt = c.env.PINATA_API_KEY
-			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
-			: '';
+			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ""}`
+			: "";
 
 		const sdk = new ZoraVideoSDK({
-			pinataJwt: pinataJwt || 'placeholder',
-			defaultChain: chain as 'base' | 'ethereum' | 'zora',
+			pinataJwt: pinataJwt || "placeholder",
+			defaultChain: chain as "base" | "ethereum" | "zora",
 		});
 
 		const result = await sdk.collectVideoNFT(
@@ -433,41 +449,43 @@ zoraVideo.post('/:id/collect', async (c) => {
 // POST /api/zora/video/:id/tip — Tip via creator coin on video
 // ═════════════════════════════════════════════════════════════════════════════
 
-zoraVideo.post('/:id/tip', async (c) => {
+zoraVideo.post("/:id/tip", async (c) => {
 	const session = await requireSession(c.req.raw, c.env);
 	if (session instanceof Response) return session;
 
 	const tipperAddress = session.address?.toLowerCase();
 	if (!tipperAddress) {
-		return jsonResponse({ error: 'Wallet address not found' }, 401);
+		return jsonResponse({ error: "Wallet address not found" }, 401);
 	}
 
-	const tokenId = c.req.param('id');
-	const chain = c.req.query('chain') ?? 'base';
-	const contract = c.req.query('contract');
+	const tokenId = c.req.param("id");
+	const chain = c.req.query("chain") ?? "base";
+	const contract = c.req.query("contract");
 
 	if (!tokenId || !contract) {
-		return jsonResponse({ error: 'tokenId and contract query params required' }, 400);
+		return jsonResponse(
+			{ error: "tokenId and contract query params required" },
+			400,
+		);
 	}
 
 	try {
 		const body = (await c.req.json()) as ZoraVideoTipRequest;
-		const amountWei = BigInt(body.amount)
-			?? 1000000000000000n; // Default 0.001 ETH
+		const _amountWei = BigInt(body.amount) ?? 1000000000000000n; // Default 0.001 ETH
 
-		const { parseEther } = await import('viem');
+		const { parseEther } = await import("viem");
 		const parsedAmount = body.amount
 			? parseEther(body.amount)
 			: 1000000000000000n;
 
-		const { ZoraVideoSDK } = await import('@degenfeed/zora-sdk/video');
+		const { ZoraVideoSDK } = await import("@degenfeed/zora-sdk/video");
 		const pinataJwt = c.env.PINATA_API_KEY
-			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
-			: '';
+			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ""}`
+			: "";
 
 		const sdk = new ZoraVideoSDK({
-			pinataJwt: pinataJwt || 'placeholder',
-			defaultChain: chain as 'base' | 'ethereum' | 'zora',
+			pinataJwt: pinataJwt || "placeholder",
+			defaultChain: chain as "base" | "ethereum" | "zora",
 		});
 
 		const result = await sdk.tipVideo(
@@ -492,34 +510,37 @@ zoraVideo.post('/:id/tip', async (c) => {
 // POST /api/zora/video/:id/announce — Announce to all protocols
 // ═════════════════════════════════════════════════════════════════════════════
 
-zoraVideo.post('/:id/announce', async (c) => {
+zoraVideo.post("/:id/announce", async (c) => {
 	const session = await requireSession(c.req.raw, c.env);
 	if (session instanceof Response) return session;
 
 	const walletAddress = session.address?.toLowerCase();
 	if (!walletAddress) {
-		return jsonResponse({ error: 'Wallet address not found' }, 401);
+		return jsonResponse({ error: "Wallet address not found" }, 401);
 	}
 
-	const tokenId = c.req.param('id');
-	const chain = c.req.query('chain') ?? 'base';
-	const contract = c.req.query('contract');
+	const tokenId = c.req.param("id");
+	const chain = c.req.query("chain") ?? "base";
+	const contract = c.req.query("contract");
 
 	if (!tokenId || !contract) {
-		return jsonResponse({ error: 'tokenId and contract query params required' }, 400);
+		return jsonResponse(
+			{ error: "tokenId and contract query params required" },
+			400,
+		);
 	}
 
 	try {
 		const body = (await c.req.json()) as ZoraVideoAnnounceRequest;
 
-		const { ZoraVideoSDK } = await import('@degenfeed/zora-sdk/video');
+		const { ZoraVideoSDK } = await import("@degenfeed/zora-sdk/video");
 		const pinataJwt = c.env.PINATA_API_KEY
-			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ''}`
-			: '';
+			? `${c.env.PINATA_API_KEY}:${c.env.PINATA_SECRET_KEY ?? ""}`
+			: "";
 
 		const sdk = new ZoraVideoSDK({
-			pinataJwt: pinataJwt || 'placeholder',
-			defaultChain: chain as 'base' | 'ethereum' | 'zora',
+			pinataJwt: pinataJwt || "placeholder",
+			defaultChain: chain as "base" | "ethereum" | "zora",
 		});
 
 		const result = await sdk.announceToAllProtocols(
@@ -528,28 +549,32 @@ zoraVideo.post('/:id/announce', async (c) => {
 			chain,
 			{ CACHE: c.env.CACHE },
 			{
-				activityPub: body.activityPubToken && body.activityPubInstance
-					? { instanceUrl: body.activityPubInstance, accessToken: body.activityPubToken }
-					: undefined,
-				atProtocol: body.blueskyIdentifier && body.blueskyPassword
-					? { did: body.blueskyIdentifier, appPassword: body.blueskyPassword }
-					: undefined,
+				activityPub:
+					body.activityPubToken && body.activityPubInstance
+						? {
+								instanceUrl: body.activityPubInstance,
+								accessToken: body.activityPubToken,
+							}
+						: undefined,
+				atProtocol:
+					body.blueskyIdentifier && body.blueskyPassword
+						? { did: body.blueskyIdentifier, appPassword: body.blueskyPassword }
+						: undefined,
 				nostr: body.nostrPrivateKey
 					? { privateKey: body.nostrPrivateKey }
 					: undefined,
-				farcaster: body.farcasterSigner && body.farcasterFid
-					? { fid: body.farcasterFid, mnemonic: body.farcasterSigner }
-					: undefined,
+				farcaster:
+					body.farcasterSigner && body.farcasterFid
+						? { fid: body.farcasterFid, mnemonic: body.farcasterSigner }
+						: undefined,
 			},
 		);
 
 		// Cache the result
 		try {
-			await c.env.CACHE?.put(
-				announceKey(tokenId),
-				JSON.stringify(result),
-				{ expirationTtl: 86400 },
-			);
+			await c.env.CACHE?.put(announceKey(tokenId), JSON.stringify(result), {
+				expirationTtl: 86400,
+			});
 		} catch {
 			// Non-critical
 		}
@@ -568,50 +593,55 @@ zoraVideo.post('/:id/announce', async (c) => {
 // POST /api/zora/video/upload — Upload video to IPFS (pre-mint step)
 // ═════════════════════════════════════════════════════════════════════════════
 
-zoraVideo.post('/upload', async (c) => {
+zoraVideo.post("/upload", async (c) => {
 	const session = await requireSession(c.req.raw, c.env);
 	if (session instanceof Response) return session;
 
 	try {
 		const formData = await c.req.parseBody({ all: true });
-		const file = formData['file'] as File | Blob | undefined;
+		const file = formData.file as File | Blob | undefined;
 
 		if (!file) {
-			return jsonResponse({ error: 'Video file is required' }, 400);
+			return jsonResponse({ error: "Video file is required" }, 400);
 		}
 
 		// Max 500MB
 		if (file.size > 500 * 1024 * 1024) {
-			return jsonResponse({ error: 'Video file must be under 500MB' }, 400);
+			return jsonResponse({ error: "Video file must be under 500MB" }, 400);
 		}
 
 		const pinataSecret = c.env.PINATA_SECRET_KEY;
 		const pinataKey = c.env.PINATA_API_KEY;
 
 		if (!pinataKey || !pinataSecret) {
-			return jsonResponse({ error: 'Pinata credentials not configured' }, 500);
+			return jsonResponse({ error: "Pinata credentials not configured" }, 500);
 		}
 
 		const pinataJwt = `${pinataKey}:${pinataSecret}`;
 
 		// Use the ZoraVideoSDK to upload
-		const { ZoraVideoSDK, uploadToIpfs } = await import('@degenfeed/zora-sdk/video');
+		const { ZoraVideoSDK, uploadToIpfs } = await import(
+			"@degenfeed/zora-sdk/video"
+		);
 		const result = await uploadToIpfs(
 			file,
-			(formData['fileName'] as string) || `video-${Date.now()}.mp4`,
+			(formData.fileName as string) || `video-${Date.now()}.mp4`,
 			{ jwt: pinataJwt },
-			{ pinToArweave: formData['pinToArweave'] === 'true' },
+			{ pinToArweave: formData.pinToArweave === "true" },
 		);
 
-		return noCacheJsonResponse({
-			ok: true,
-			upload: {
-				ipfsUri: result.ipfsUri,
-				ipfsCid: result.ipfsCid,
-				arweaveUri: result.arweaveUri ?? null,
-				gatewayUrl: `https://gateway.pinata.cloud/ipfs/${result.ipfsCid}`,
+		return noCacheJsonResponse(
+			{
+				ok: true,
+				upload: {
+					ipfsUri: result.ipfsUri,
+					ipfsCid: result.ipfsCid,
+					arweaveUri: result.arweaveUri ?? null,
+					gatewayUrl: `https://gateway.pinata.cloud/ipfs/${result.ipfsCid}`,
+				},
 			},
-		}, 201);
+			201,
+		);
 	} catch (e) {
 		const msg = e instanceof Error ? e.message : String(e);
 		return jsonResponse({ error: `Upload failed: ${msg}` }, 500);

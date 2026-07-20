@@ -66,7 +66,9 @@ export async function handlePostById(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 	// Try the feed-level post KV store first (populated by handleHomeFeed).
 	try {
 		const stored = await env.CACHE?.get(`post:${decoded}`);
@@ -77,10 +79,14 @@ export async function handlePostById(
 				await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 					expirationTtl: 300,
 				});
-			} catch { /* KV operation failed -- non-critical, continue */ }
+			} catch {
+				/* KV operation failed -- non-critical, continue */
+			}
 			return jsonResponse(response);
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	for (const protocol of ALL_PROTOCOLS) {
 		const provider = providerFor(protocol, env);
@@ -101,7 +107,9 @@ export async function handlePostById(
 					await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 						expirationTtl: 300,
 					});
-				} catch { /* KV operation failed -- non-critical, continue */ }
+				} catch {
+					/* KV operation failed -- non-critical, continue */
+				}
 				return jsonResponse(response);
 			}
 		} catch {
@@ -122,10 +130,14 @@ export async function handlePostById(
 				await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 					expirationTtl: 300,
 				});
-			} catch { /* KV operation failed -- non-critical, continue */ }
+			} catch {
+				/* KV operation failed -- non-critical, continue */
+			}
 			return jsonResponse(response);
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return jsonResponse({ error: "Post not found", id: decoded }, 404);
 }

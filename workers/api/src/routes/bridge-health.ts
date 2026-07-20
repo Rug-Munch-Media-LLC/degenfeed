@@ -61,7 +61,9 @@ export async function handleBridgeHealth(
 					await env.CACHE.put(cacheKey, JSON.stringify(report), {
 						expirationTtl: 30,
 					});
-				} catch { /* KV operation failed -- non-critical, continue */ }
+				} catch {
+					/* KV operation failed -- non-critical, continue */
+				}
 			})().catch(() => {});
 		}
 

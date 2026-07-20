@@ -33,9 +33,8 @@ import { UnifiedShortsFeed } from "../feed/shorts-unified";
 import type { Env } from "../index";
 import { jsonResponse, noCacheJsonResponse } from "../index";
 import {
-	UnifiedShortsPipeline,
 	type ShortProtocol,
-	type PublishShortOptions,
+	UnifiedShortsPipeline,
 } from "../lib/unified-shorts";
 import { ZoraVideoIntegration } from "../lib/zora-video";
 import { requireSession } from "../session";
@@ -111,7 +110,7 @@ async function loadUserProfile(
 	_request: Request,
 	_env: Env,
 ): Promise<UserInterestProfile> {
-  // Load from KV-based user preferences (falls back to defaults if no session)
+	// Load from KV-based user preferences (falls back to defaults if no session)
 	return DEFAULT_USER_PROFILE;
 }
 
@@ -238,7 +237,7 @@ export async function handleShortsBySource(
 
 export async function handleCreateShort(
 	request: Request,
-	env: Env,
+	_env: Env,
 ): Promise<Response> {
 	if (request.method !== "POST") {
 		return jsonResponse({ error: "Method not allowed" }, 405);
@@ -256,7 +255,7 @@ export async function handleCreateShort(
 			return jsonResponse({ error: "title and videoUrl are required" }, 400);
 		}
 
-    // Upload to PeerTube instance — pending PeerTube API integration
+		// Upload to PeerTube instance — pending PeerTube API integration
 		// This requires PeerTube OAuth credentials configured in env
 		// For now, return a placeholder response indicating the flow
 
@@ -323,12 +322,19 @@ export async function handleUnifiedPublish(
 		}
 
 		const validProtocols: ShortProtocol[] = [
-			"activitypub", "atproto", "nostr", "farcaster",
-			"lens", "zora", "peertube", "degenfeed",
+			"activitypub",
+			"atproto",
+			"nostr",
+			"farcaster",
+			"lens",
+			"zora",
+			"peertube",
+			"degenfeed",
 		];
 
-		const protocols = (body.protocols ?? ["degenfeed"])
-			.filter((p): p is ShortProtocol => validProtocols.includes(p as ShortProtocol));
+		const protocols = (body.protocols ?? ["degenfeed"]).filter(
+			(p): p is ShortProtocol => validProtocols.includes(p as ShortProtocol),
+		);
 
 		const pipeline = new UnifiedShortsPipeline(env);
 		const result = await pipeline.publishShort({
@@ -412,12 +418,21 @@ export async function handleUnifiedFeed(
 	const url = new URL(request.url);
 	const sourcesParam = url.searchParams.get("sources") || "";
 	const sources = sourcesParam
-		? (sourcesParam.split(",").filter(Boolean) as ReturnType<typeof getFeedSources>)
+		? (sourcesParam.split(",").filter(Boolean) as ReturnType<
+				typeof getFeedSources
+			>)
 		: undefined;
-	const sort = (url.searchParams.get("sort") || "trending") as "trending" | "newest" | "for-you";
-	const limit = Math.min(Math.max(1, Number(url.searchParams.get("limit")) || 20), 50);
+	const sort = (url.searchParams.get("sort") || "trending") as
+		| "trending"
+		| "newest"
+		| "for-you";
+	const limit = Math.min(
+		Math.max(1, Number(url.searchParams.get("limit")) || 20),
+		50,
+	);
 	const cursor = url.searchParams.get("cursor") || undefined;
-	const excludeIds = url.searchParams.get("exclude")?.split(",").filter(Boolean) || [];
+	const excludeIds =
+		url.searchParams.get("exclude")?.split(",").filter(Boolean) || [];
 
 	const feed = new UnifiedShortsFeed(env);
 	const result = await feed.getFeed({
@@ -443,14 +458,30 @@ export async function handleUnifiedFeedBySource(
 
 	const url = new URL(request.url);
 	const source = url.pathname.split("/").pop() as string;
-	const sort = (url.searchParams.get("sort") || "newest") as "trending" | "newest" | "for-you";
-	const limit = Math.min(Math.max(1, Number(url.searchParams.get("limit")) || 20), 50);
+	const sort = (url.searchParams.get("sort") || "newest") as
+		| "trending"
+		| "newest"
+		| "for-you";
+	const limit = Math.min(
+		Math.max(1, Number(url.searchParams.get("limit")) || 20),
+		50,
+	);
 	const cursor = url.searchParams.get("cursor") || undefined;
-	const excludeIds = url.searchParams.get("exclude")?.split(",").filter(Boolean) || [];
+	const excludeIds =
+		url.searchParams.get("exclude")?.split(",").filter(Boolean) || [];
 
 	const validSources = [
-		"activitypub", "atproto", "nostr", "farcaster",
-		"lens", "zora", "peertube", "youtube", "tiktok", "instagram", "degenfeed",
+		"activitypub",
+		"atproto",
+		"nostr",
+		"farcaster",
+		"lens",
+		"zora",
+		"peertube",
+		"youtube",
+		"tiktok",
+		"instagram",
+		"degenfeed",
 	];
 
 	if (!validSources.includes(source)) {
@@ -581,7 +612,10 @@ export async function handleZoraTrending(
 	}
 
 	const url = new URL(request.url);
-	const limit = Math.min(Math.max(1, Number(url.searchParams.get("limit")) || 20), 50);
+	const limit = Math.min(
+		Math.max(1, Number(url.searchParams.get("limit")) || 20),
+		50,
+	);
 
 	const zora = new ZoraVideoIntegration(env);
 	const nfts = await zora.getTrendingVideoNFTs(limit);
@@ -616,8 +650,17 @@ export async function handleZoraCreator(
 
 function getFeedSources(raw: string): string[] {
 	const validSources = [
-		"activitypub", "atproto", "nostr", "farcaster",
-		"lens", "zora", "peertube", "youtube", "tiktok", "instagram", "degenfeed",
+		"activitypub",
+		"atproto",
+		"nostr",
+		"farcaster",
+		"lens",
+		"zora",
+		"peertube",
+		"youtube",
+		"tiktok",
+		"instagram",
+		"degenfeed",
 	];
 	return raw.split(",").filter((s) => validSources.includes(s.trim()));
 }

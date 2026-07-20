@@ -141,7 +141,9 @@ export async function handleDiscoverTrending(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const windowHours = period === "week" ? 168 : period === "day" ? 24 : 1;
 	const now = Date.now();
@@ -169,7 +171,9 @@ export async function handleDiscoverTrending(
 		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 			expirationTtl: 300,
 		});
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return jsonResponse(response);
 }
@@ -186,7 +190,9 @@ export async function handleDiscoverCommunities(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const communities: DiscoverCommunity[] = [];
 
@@ -259,7 +265,9 @@ export async function handleDiscoverCommunities(
 				activityLevel: "medium",
 			});
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	// 3. Lemmy communities from feed data
 	try {
@@ -283,7 +291,9 @@ export async function handleDiscoverCommunities(
 				});
 			}
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	communities.sort((a, b) => b.memberCount - a.memberCount);
 
@@ -296,7 +306,9 @@ export async function handleDiscoverCommunities(
 		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 			expirationTtl: 300,
 		});
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return jsonResponse(response);
 }
@@ -313,7 +325,9 @@ export async function handleDiscoverPeople(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	try {
 		const posts = await fetchRecentPosts(env, 200);
@@ -388,7 +402,9 @@ export async function handleDiscoverPeople(
 			await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 				expirationTtl: 300,
 			});
-		} catch { /* KV operation failed -- non-critical, continue */ }
+		} catch {
+			/* KV operation failed -- non-critical, continue */
+		}
 
 		return jsonResponse(response);
 	} catch {
@@ -408,7 +424,9 @@ export async function handleDiscoverTopics(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const posts = await fetchRecentPosts(env, 200);
 	const now = Date.now();
@@ -449,7 +467,9 @@ export async function handleDiscoverTopics(
 		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 			expirationTtl: 300,
 		});
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return jsonResponse(response);
 }
@@ -466,7 +486,9 @@ export async function handleDiscoverFeatured(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	// Fetch live spaces
 	const spaces: FeaturedSpace[] = [];
@@ -612,7 +634,9 @@ export async function handleDiscoverFeatured(
 		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 			expirationTtl: 300,
 		});
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return jsonResponse(response);
 }
@@ -629,7 +653,9 @@ export async function handleDiscoverNew(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	// 1. Recently created cross-protocol communities
 	const newCommunities: DiscoverCommunity[] = [];
@@ -723,7 +749,9 @@ export async function handleDiscoverNew(
 		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 			expirationTtl: 300,
 		});
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	return jsonResponse(response);
 }

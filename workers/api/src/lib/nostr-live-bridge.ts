@@ -599,7 +599,7 @@ export class NostrLiveBridge {
 	 */
 	private parseReactions(
 		events: NostrEvent[],
-		parentEventId: string,
+		_parentEventId: string,
 	): NostrStreamReaction[] {
 		const reactions: NostrStreamReaction[] = [];
 
@@ -648,7 +648,7 @@ export class NostrLiveBridge {
 	private parseZapAmount(event: NostrEvent): number | null {
 		const tags = Array.isArray(event.tags) ? event.tags : [];
 		const amountTag = tags.find((t) => t[0] === "amount");
-		if (amountTag && amountTag[1]) {
+		if (amountTag?.[1]) {
 			const parsed = parseInt(amountTag[1], 10);
 			return Number.isFinite(parsed) ? parsed : null;
 		}
@@ -709,7 +709,7 @@ export class NostrLiveBridge {
 
 	// ─── Recording ───────────────────────────────────────────────────
 
-	private async recordSuccess(operation: string): Promise<void> {
+	private async recordSuccess(_operation: string): Promise<void> {
 		try {
 			await recordBridgeOperation(this.env, "nostr", true, 0);
 		} catch {

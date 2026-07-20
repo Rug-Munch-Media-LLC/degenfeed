@@ -54,7 +54,7 @@ export async function handleVideoRecommendations(
 			data: results,
 			meta: {
 				total: results.length,
-				wallet: wallet.slice(0, 6) + "..." + wallet.slice(-4),
+				wallet: `${wallet.slice(0, 6)}...${wallet.slice(-4)}`,
 				fetchedAt: Date.now(),
 			},
 		});

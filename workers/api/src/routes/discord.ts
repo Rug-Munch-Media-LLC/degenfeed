@@ -12,16 +12,16 @@
  *   POST   /api/discord/bridge           { channelId, messageId, streamId }
  */
 
-import type { Env } from '../index';
-import { jsonResponse, noCacheJsonResponse } from '../index';
+import type { Env } from "../index";
+import { jsonResponse, noCacheJsonResponse } from "../index";
 
 function safeKey(s: string): string {
-	return s.replace(/[^a-zA-Z0-9:_-]/g, '_').toLowerCase();
+	return s.replace(/[^a-zA-Z0-9:_-]/g, "_").toLowerCase();
 }
 
 /** Discovers the session wallet from cookie. Falls back to 'anon'. */
 function getUserId(request: Request, env: Env): string | null {
-	const cookie = request.headers.get('cookie') ?? '';
+	const cookie = request.headers.get("cookie") ?? "";
 	const m = cookie.match(/session=([^;]+)/);
 	if (m?.[1] && env.AUTH_SECRET) return m[1];
 	return null;
@@ -29,18 +29,28 @@ function getUserId(request: Request, env: Env): string | null {
 
 // ─── POST /api/discord/connect ────────────────────────────────
 
-export async function handleDiscordConnect(request: Request, env: Env): Promise<Response> {
-	if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+export async function handleDiscordConnect(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	if (request.method !== "POST")
+		return jsonResponse({ error: "Method not allowed" }, 405);
 	const userId = getUserId(request, env);
-	if (!userId) return jsonResponse({ error: 'Session required' }, 401);
+	if (!userId) return jsonResponse({ error: "Session required" }, 401);
 
-	let body: { guildId?: string; channelId: string; webhookId?: string; webhookToken?: string };
+	let body: {
+		guildId?: string;
+		channelId: string;
+		webhookId?: string;
+		webhookToken?: string;
+	};
 	try {
 		body = (await request.json()) as typeof body;
 	} catch {
-		return jsonResponse({ error: 'Invalid JSON' }, 400);
+		return jsonResponse({ error: "Invalid JSON" }, 400);
 	}
-	if (!body.channelId) return jsonResponse({ error: 'channelId required' }, 400);
+	if (!body.channelId)
+		return jsonResponse({ error: "channelId required" }, 400);
 
 	const record = {
 		guildId: body.guildId ?? null,
@@ -52,19 +62,23 @@ export async function handleDiscordConnect(request: Request, env: Env): Promise<
 
 	const key = `discord:connect:${safeKey(userId)}:${body.channelId}`;
 	try {
-		await env.CACHE?.put(key, JSON.stringify(record), { expirationTtl: 60 * 60 * 24 * 365 });
+		await env.CACHE?.put(key, JSON.stringify(record), {
+			expirationTtl: 60 * 60 * 24 * 365,
+		});
 	} catch {
-		return jsonResponse({ error: 'Storage failed' }, 500);
+		return jsonResponse({ error: "Storage failed" }, 500);
 	}
 
 	// Index in user's channel list
 	const listKey = `discord:user:${safeKey(userId)}`;
 	try {
-		const raw = (await env.CACHE?.get(listKey)) ?? '[]';
+		const raw = (await env.CACHE?.get(listKey)) ?? "[]";
 		const list = JSON.parse(raw) as string[];
 		if (!list.includes(body.channelId)) {
 			list.push(body.channelId);
-			await env.CACHE?.put(listKey, JSON.stringify(list), { expirationTtl: 60 * 60 * 24 * 365 });
+			await env.CACHE?.put(listKey, JSON.stringify(list), {
+				expirationTtl: 60 * 60 * 24 * 365,
+			});
 		}
 	} catch {
 		/* best-effort index */
@@ -75,19 +89,23 @@ export async function handleDiscordConnect(request: Request, env: Env): Promise<
 
 // ─── POST /api/discord/channel/announce ──────────────────────
 
-export async function handleDiscordChannelAnnounce(request: Request, env: Env): Promise<Response> {
-	if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+export async function handleDiscordChannelAnnounce(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	if (request.method !== "POST")
+		return jsonResponse({ error: "Method not allowed" }, 405);
 	const userId = getUserId(request, env);
-	if (!userId) return jsonResponse({ error: 'Session required' }, 401);
+	if (!userId) return jsonResponse({ error: "Session required" }, 401);
 
 	let body: { channelId: string; content: string; embeds?: unknown[] };
 	try {
 		body = (await request.json()) as typeof body;
 	} catch {
-		return jsonResponse({ error: 'Invalid JSON' }, 400);
+		return jsonResponse({ error: "Invalid JSON" }, 400);
 	}
 	if (!body.channelId || !body.content) {
-		return jsonResponse({ error: 'channelId and content required' }, 400);
+		return jsonResponse({ error: "channelId and content required" }, 400);
 	}
 
 	// Load connection record to get webhook credentials
@@ -101,7 +119,10 @@ export async function handleDiscordChannelAnnounce(request: Request, env: Env): 
 	}
 
 	if (!record?.webhookId || !record?.webhookToken) {
-		return jsonResponse({ error: 'No webhook configured for this channel. Connect first.' }, 400);
+		return jsonResponse(
+			{ error: "No webhook configured for this channel. Connect first." },
+			400,
+		);
 	}
 
 	// Execute the Discord webhook
@@ -112,17 +133,23 @@ export async function handleDiscordChannelAnnounce(request: Request, env: Env): 
 		const res = await fetch(
 			`https://discord.com/api/v10/webhooks/${record.webhookId}/${record.webhookToken}?wait=true`,
 			{
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
+				method: "POST",
+				headers: { "content-type": "application/json" },
 				body: JSON.stringify(payload),
 			},
 		);
 		if (!res.ok) {
-			const err = await res.text().catch(() => 'unknown');
-			return jsonResponse({ error: `Discord webhook failed: ${res.status} ${err}` }, 502);
+			const err = await res.text().catch(() => "unknown");
+			return jsonResponse(
+				{ error: `Discord webhook failed: ${res.status} ${err}` },
+				502,
+			);
 		}
 		const result = await res.json();
-		return jsonResponse({ ok: true, messageId: (result as Record<string, unknown>).id ?? null });
+		return jsonResponse({
+			ok: true,
+			messageId: (result as Record<string, unknown>).id ?? null,
+		});
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
 		return jsonResponse({ error: `Discord request failed: ${msg}` }, 502);
@@ -131,10 +158,14 @@ export async function handleDiscordChannelAnnounce(request: Request, env: Env): 
 
 // ─── GET /api/discord/channels ────────────────────────────────
 
-export async function handleDiscordChannelsList(request: Request, env: Env): Promise<Response> {
-	if (request.method !== 'GET') return jsonResponse({ error: 'Method not allowed' }, 405);
+export async function handleDiscordChannelsList(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	if (request.method !== "GET")
+		return jsonResponse({ error: "Method not allowed" }, 405);
 	const userId = getUserId(request, env);
-	if (!userId) return jsonResponse({ error: 'Session required' }, 401);
+	if (!userId) return jsonResponse({ error: "Session required" }, 401);
 
 	const listKey = `discord:user:${safeKey(userId)}`;
 	try {
@@ -143,7 +174,9 @@ export async function handleDiscordChannelsList(request: Request, env: Env): Pro
 
 		const channels = await Promise.all(
 			channelIds.map(async (cid) => {
-				const rec = await env.CACHE?.get(`discord:connect:${safeKey(userId)}:${cid}`);
+				const rec = await env.CACHE?.get(
+					`discord:connect:${safeKey(userId)}:${cid}`,
+				);
 				return rec ? (JSON.parse(rec) as Record<string, unknown>) : null;
 			}),
 		);
@@ -156,16 +189,20 @@ export async function handleDiscordChannelsList(request: Request, env: Env): Pro
 
 // ─── DELETE /api/discord/disconnect ──────────────────────────
 
-export async function handleDiscordDisconnect(request: Request, env: Env): Promise<Response> {
-	if (request.method !== 'DELETE') return jsonResponse({ error: 'Method not allowed' }, 405);
+export async function handleDiscordDisconnect(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	if (request.method !== "DELETE")
+		return jsonResponse({ error: "Method not allowed" }, 405);
 	const userId = getUserId(request, env);
-	if (!userId) return jsonResponse({ error: 'Session required' }, 401);
+	if (!userId) return jsonResponse({ error: "Session required" }, 401);
 
 	let body: { channelId?: string };
 	try {
 		body = (await request.json()) as typeof body;
 	} catch {
-		return jsonResponse({ error: 'Invalid JSON' }, 400);
+		return jsonResponse({ error: "Invalid JSON" }, 400);
 	}
 
 	if (body.channelId) {
@@ -178,10 +215,12 @@ export async function handleDiscordDisconnect(request: Request, env: Env): Promi
 		}
 		const listKey = `discord:user:${safeKey(userId)}`;
 		try {
-			const raw = await env.CACHE?.get(listKey) ?? '[]';
+			const raw = (await env.CACHE?.get(listKey)) ?? "[]";
 			const list = JSON.parse(raw) as string[];
 			const updated = list.filter((c) => c !== body.channelId);
-			await env.CACHE?.put(listKey, JSON.stringify(updated), { expirationTtl: 60 * 60 * 24 * 365 });
+			await env.CACHE?.put(listKey, JSON.stringify(updated), {
+				expirationTtl: 60 * 60 * 24 * 365,
+			});
 		} catch {
 			/* ignore */
 		}
@@ -189,7 +228,7 @@ export async function handleDiscordDisconnect(request: Request, env: Env): Promi
 		// Remove all
 		try {
 			const listKey = `discord:user:${safeKey(userId)}`;
-			const raw = await env.CACHE?.get(listKey) ?? '[]';
+			const raw = (await env.CACHE?.get(listKey)) ?? "[]";
 			const list = JSON.parse(raw) as string[];
 			for (const cid of list) {
 				await env.CACHE?.delete(`discord:connect:${safeKey(userId)}:${cid}`);
@@ -205,30 +244,39 @@ export async function handleDiscordDisconnect(request: Request, env: Env): Promi
 
 // ─── POST /api/discord/bridge ────────────────────────────────
 
-export async function handleDiscordBridgeMessage(request: Request, env: Env): Promise<Response> {
-	if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+export async function handleDiscordBridgeMessage(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	if (request.method !== "POST")
+		return jsonResponse({ error: "Method not allowed" }, 405);
 	const userId = getUserId(request, env);
-	if (!userId) return jsonResponse({ error: 'Session required' }, 401);
+	if (!userId) return jsonResponse({ error: "Session required" }, 401);
 
 	let body: { channelId: string; messageId: string; streamId: string };
 	try {
 		body = (await request.json()) as typeof body;
 	} catch {
-		return jsonResponse({ error: 'Invalid JSON' }, 400);
+		return jsonResponse({ error: "Invalid JSON" }, 400);
 	}
 	if (!body.channelId || !body.streamId) {
-		return jsonResponse({ error: 'channelId and streamId required' }, 400);
+		return jsonResponse({ error: "channelId and streamId required" }, 400);
 	}
 
 	// Record bridge mapping in KV
 	const bridgeKey = `discord:bridge:stream:${body.streamId}`;
 	try {
-		const raw = await env.CACHE?.get(bridgeKey) ?? '[]';
-		const mappings = JSON.parse(raw) as Array<{ channelId: string; messageId?: string }>;
+		const raw = (await env.CACHE?.get(bridgeKey)) ?? "[]";
+		const mappings = JSON.parse(raw) as Array<{
+			channelId: string;
+			messageId?: string;
+		}>;
 		mappings.push({ channelId: body.channelId, messageId: body.messageId });
-		await env.CACHE?.put(bridgeKey, JSON.stringify(mappings), { expirationTtl: 60 * 60 * 24 * 7 });
+		await env.CACHE?.put(bridgeKey, JSON.stringify(mappings), {
+			expirationTtl: 60 * 60 * 24 * 7,
+		});
 	} catch {
-		return jsonResponse({ error: 'Storage failed' }, 500);
+		return jsonResponse({ error: "Storage failed" }, 500);
 	}
 
 	return jsonResponse({ ok: true, streamId: body.streamId });

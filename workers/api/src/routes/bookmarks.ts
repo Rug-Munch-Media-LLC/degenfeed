@@ -11,8 +11,8 @@
  */
 
 import { type Env, jsonResponse, noCacheJsonResponse } from "../index";
-import { requireSession } from "../session";
 import { bookmarksKey } from "../kv-key-patterns";
+import { requireSession } from "../session";
 
 // ─── Types ───────────────────────────────────────────────────
 

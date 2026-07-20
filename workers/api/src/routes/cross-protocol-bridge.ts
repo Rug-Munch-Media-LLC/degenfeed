@@ -18,7 +18,6 @@ import {
 	ALLOWED_PROTOCOLS,
 	hasSuspiciousPayload,
 	sanitizeString,
-	sanitizeStringArray,
 } from "../sanitize";
 
 // ─── Types ────────────────────────────────────────────────────────────────

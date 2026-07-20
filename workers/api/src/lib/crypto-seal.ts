@@ -12,7 +12,7 @@ import type { Env } from "../index";
 
 const ALGORITHM = { name: "AES-GCM", length: 256 } as const;
 const ITERATIONS = 100_000;
-const SALT_LENGTH = 16;
+const _SALT_LENGTH = 16;
 const IV_LENGTH = 12;
 
 function encodeBase64Url(buffer: ArrayBuffer): string {

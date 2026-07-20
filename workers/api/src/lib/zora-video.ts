@@ -16,7 +16,6 @@
  */
 
 import type { Env } from "../index";
-import { orchestratePublish } from "./publish-orchestrator";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -68,7 +67,12 @@ export interface TipResult {
 
 const CHAIN_CONFIG: Record<
 	string,
-	{ rpcUrl: string; explorerUrl: string; zoraCoUrl: string; zoraContract: string }
+	{
+		rpcUrl: string;
+		explorerUrl: string;
+		zoraCoUrl: string;
+		zoraContract: string;
+	}
 > = {
 	base: {
 		rpcUrl: "https://mainnet.base.org",
@@ -99,13 +103,13 @@ const CHAIN_CONFIG: Record<
 // ─── ABI Signatures (4-byte selectors) ────────────────────────────────────
 
 /** createEdition(string,string,uint256,uint256,uint256,address) */
-const CREATE_EDITION_SIG = "0x8f5e6b8a";
+const _CREATE_EDITION_SIG = "0x8f5e6b8a";
 
 /** mint(address,uint256,uint256,bytes) */
-const MINT_SIG = "0x731133e9";
+const _MINT_SIG = "0x731133e9";
 
 /** balanceOf(address,uint256) */
-const BALANCE_OF_SIG = "0x00fdd58e";
+const _BALANCE_OF_SIG = "0x00fdd58e";
 
 // ─── Video NFT Integration ───────────────────────────────────────────────
 
@@ -271,8 +275,12 @@ export class ZoraVideoIntegration {
 			const config = CHAIN_CONFIG[chain];
 
 			return nodes
-				.filter((n): n is NonNullable<typeof n> & { token: NonNullable<typeof n.token> } =>
-					n?.token != null && n.token.content?.mimeType?.startsWith("video/")
+				.filter(
+					(
+						n,
+					): n is NonNullable<typeof n> & {
+						token: NonNullable<typeof n.token>;
+					} => n?.token?.content?.mimeType?.startsWith("video/"),
 				)
 				.map((n) => ({
 					tokenId: n.token.tokenId,
@@ -351,11 +359,15 @@ export class ZoraVideoIntegration {
 			};
 
 			const nodes = data?.data?.tokens?.nodes ?? [];
-			const config = CHAIN_CONFIG["base"];
+			const config = CHAIN_CONFIG.base;
 
 			return nodes
-				.filter((n): n is NonNullable<typeof n> & { token: NonNullable<typeof n.token> } =>
-					n?.token != null && n.token.content?.mimeType?.startsWith("video/")
+				.filter(
+					(
+						n,
+					): n is NonNullable<typeof n> & {
+						token: NonNullable<typeof n.token>;
+					} => n?.token?.content?.mimeType?.startsWith("video/"),
 				)
 				.map((n) => ({
 					tokenId: n.token.tokenId,
@@ -406,7 +418,10 @@ export class ZoraVideoIntegration {
 
 			if (!relayRes.ok) {
 				const errBody = await relayRes.text().catch(() => "");
-				return { success: false, error: `Relayer error: ${errBody.slice(0, 200)}` };
+				return {
+					success: false,
+					error: `Relayer error: ${errBody.slice(0, 200)}`,
+				};
 			}
 
 			const data = (await relayRes.json()) as { txHash?: string };
@@ -424,16 +439,14 @@ export class ZoraVideoIntegration {
 	 * This makes the NFT discoverable everywhere.
 	 */
 	async announceNFTToAllProtocols(
-		tokenId: string,
+		_tokenId: string,
 		nft: ZoraVideoNFT,
 		shortId: string,
 	): Promise<void> {
 		const announcement = `🎬 New video NFT on Zora!\n\n${nft.name}\n\nCollect it: ${nft.zoraUrl}\n\nWatch on DegenFeed: https://app.degenfeed.xyz/shorts/${shortId}`;
 
 		// Announce in parallel — fail-open
-		await Promise.allSettled([
-			this.postToProtocols(announcement, nft),
-		]);
+		await Promise.allSettled([this.postToProtocols(announcement, nft)]);
 	}
 
 	/**
@@ -451,7 +464,10 @@ export class ZoraVideoIntegration {
 
 	// ── Private helpers ────────────────────────────────────────────────
 
-	private async postToProtocols(text: string, _nft: ZoraVideoNFT): Promise<void> {
+	private async postToProtocols(
+		text: string,
+		_nft: ZoraVideoNFT,
+	): Promise<void> {
 		// Post announcement to our tracking KV
 		try {
 			await this.env.SHORTS?.put(
@@ -488,9 +504,9 @@ export class ZoraVideoIntegration {
 				{ trait_type: "Edition Size", value: String(opts.editionSize) },
 				{ trait_type: "Created At", value: new Date().toISOString() },
 				{ trait_type: "Content Hash", value: opts.contentHash.slice(0, 16) },
-				...opts.creatorCoin
+				...(opts.creatorCoin
 					? [{ trait_type: "Creator Coin", value: opts.creatorCoin }]
-					: [],
+					: []),
 			],
 			properties: {
 				protocol: "DegenFeed Shorts",

@@ -6,19 +6,29 @@
  * Thumbnail card with title, duration badge, source badge, channel info,
  * and view count. Used in horizontal scrollable rows and grid layouts.
  * Hover reveals a play button overlay.
+ *
+ * Multi-platform aggregator aware:
+ * - Color-coded source badge (YouTube/Invidious, Twitch, Rumble, PeerTube, Zora)
+ * - Creator platform presence indicators
+ * - "Follow on All Platforms" action
  */
 
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import { VideoSourceBadge } from './VideoSourceBadge';
-import type { UnifiedVideo } from './useVideoHub';
+import { CreatorPresence } from './CreatorPresence';
+import type { UnifiedVideo, CreatorProfile } from './useVideoHub';
 
 interface VideoCardProps {
   video: UnifiedVideo;
   size?: 'sm' | 'md' | 'lg';
   onPlay?: (video: UnifiedVideo) => void;
   onSave?: (video: UnifiedVideo) => void;
+  onFollow?: (creatorId: string) => void;
+  onUnfollow?: (creatorId: string) => void;
+  isFollowing?: boolean;
   showChannel?: boolean;
+  showCreatorPresence?: boolean;
   className?: string;
 }
 
@@ -27,7 +37,11 @@ export function VideoCard({
   size = 'md',
   onPlay,
   onSave,
+  onFollow,
+  onUnfollow,
+  isFollowing = false,
   showChannel = true,
+  showCreatorPresence = true,
   className = '',
 }: VideoCardProps) {
   const [hovered, setHovered] = useState(false);
@@ -79,6 +93,21 @@ export function VideoCard({
 
   const cfg = sizeConfig[size];
 
+  // Build a mini creator profile from video data if platforms exist
+  const miniCreator: CreatorProfile | null =
+    video.creatorPlatforms && video.creatorPlatforms.length > 0
+      ? {
+          id: video.channelId,
+          name: video.channelName,
+          avatar: video.channelAvatar,
+          platforms: video.creatorPlatforms,
+          totalFollowers: video.creatorPlatforms.reduce(
+            (sum, p) => sum + (p.subscriberCount ?? p.followerCount),
+            0,
+          ),
+        }
+      : null;
+
   return (
     <Link
       href={`/video/${video.id}`}
@@ -110,12 +139,12 @@ export function VideoCard({
           </span>
         )}
 
-        {/* Source badge */}
-        <div className="absolute left-1.5 top-1.5">
-          {!video.isLive && (
+        {/* Source badge (top-left, not shown when live) */}
+        {!video.isLive && (
+          <div className="absolute left-1.5 top-1.5">
             <VideoSourceBadge source={video.source} size="sm" />
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Play overlay on hover */}
         <div
@@ -153,16 +182,31 @@ export function VideoCard({
           >
             {video.title}
           </h3>
+
           {showChannel && (
             <p className={`${cfg.channel} mt-0.5 text-[var(--color-muted)] truncate`}>
               {video.channelName}
             </p>
           )}
+
           <div className={`${cfg.meta} flex items-center gap-2 text-[var(--color-muted)]`}>
             <span>{formatViews(video.views)} views</span>
             <span>·</span>
             <span>{video.publishedLabel}</span>
           </div>
+
+          {/* Creator platform presence (compact) */}
+          {showCreatorPresence && miniCreator && (
+            <div className="mt-1.5">
+              <CreatorPresence
+                creator={miniCreator}
+                compact
+                isFollowing={isFollowing}
+                onFollow={onFollow}
+                onUnfollow={onUnfollow}
+              />
+            </div>
+          )}
         </div>
 
         {/* Save button */}

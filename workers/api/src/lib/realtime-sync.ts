@@ -27,7 +27,7 @@ import type { Env } from "../index";
 import { broadcastToAll } from "../ws-broadcast";
 import { getSiblingUris } from "./cross-post-store";
 import type { SyncAction, SyncActionType } from "./sync-queue";
-import { enqueueSyncAction, generateSyncId } from "./sync-queue";
+import { enqueueSyncAction } from "./sync-queue";
 
 // ─── Exported Types ───────────────────────────────────────────────────────
 

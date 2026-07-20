@@ -95,9 +95,9 @@ function countTokenConns(tokenAddress: string): number {
 // Cleanup idle connections periodically
 function setupIdleTimeout(
 	server: WebSocket,
-	subId: string,
-	tokenAddress: string,
-	env: Env,
+	_subId: string,
+	_tokenAddress: string,
+	_env: Env,
 ): void {
 	let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -106,7 +106,9 @@ function setupIdleTimeout(
 		timeoutId = setTimeout(() => {
 			try {
 				server.close(1001, "Idle timeout");
-			} catch { /* KV operation failed -- non-critical, continue */ }
+			} catch {
+				/* KV operation failed -- non-critical, continue */
+			}
 		}, IDLE_TIMEOUT_MS);
 	};
 
@@ -242,7 +244,7 @@ export async function handleTokenWebSocket(
 
 	// Check for WebSocket upgrade header
 	const upgradeHeader = request.headers.get("upgrade");
-	if (!upgradeHeader || upgradeHeader.toLowerCase() !== "websocket") {
+	if (upgradeHeader?.toLowerCase() !== "websocket") {
 		return new Response(
 			JSON.stringify({ error: "Expected WebSocket upgrade" }),
 			{

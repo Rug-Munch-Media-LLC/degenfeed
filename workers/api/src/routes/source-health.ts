@@ -151,7 +151,9 @@ export async function handleSourcesTrending(
 			const parsed = JSON.parse(cached) as TrendingSource[];
 			return jsonResponse({ trending: parsed });
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const healthEntries = await getAllHealth(env);
 	const allSources = await getAllSources(env);
@@ -270,7 +272,9 @@ export async function handleSourcesStats(
 			const parsed = JSON.parse(raw) as typeof runHistory;
 			runHistory.push(...parsed);
 		}
-	} catch { /* KV operation failed -- non-critical, continue */ }
+	} catch {
+		/* KV operation failed -- non-critical, continue */
+	}
 
 	const lastRunRaw = await env.CACHE?.get(LAST_RUN_KEY);
 

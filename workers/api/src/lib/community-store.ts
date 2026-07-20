@@ -447,7 +447,7 @@ export async function getOnlineCount(
 export async function getRecentBuyCount(
 	env: Env,
 	tokenAddress: string,
-	windowSeconds = 3600,
+	_windowSeconds = 3600,
 ): Promise<number> {
 	try {
 		const prefix = key("buy", "recent", tokenAddress);

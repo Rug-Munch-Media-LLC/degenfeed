@@ -728,7 +728,7 @@ const PROTOCOL_HEALTH_CHECKS: Record<
 	},
 	nostr: async (env) => {
 		// Check multiple relays, first one that responds wins
-		const relays = (
+		const _relays = (
 			env.RELAY_URLS ||
 			"wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net"
 		)
@@ -767,7 +767,7 @@ const PROTOCOL_HEALTH_CHECKS: Record<
 	zora: async () => {
 		return pingUrl("https://api.zora.co/");
 	},
-	threads: async (env) => {
+	threads: async (_env) => {
 		return pingUrl(
 			"https://graph.threads.net/v1.0/me?fields=id&access_token=health",
 		);

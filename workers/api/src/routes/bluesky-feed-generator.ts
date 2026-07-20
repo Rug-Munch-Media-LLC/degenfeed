@@ -15,12 +15,10 @@
  */
 
 import {
-	DEGENFEED_FEED_DESCRIPTION,
 	DEGENFEED_FEED_DISPLAY_NAME,
 	DEGENFEED_FEED_GENERATOR_DID,
 	DEGENFEED_FEED_URI,
 	FeedGenEndpoint,
-	type GetFeedSkeletonRequest,
 	registerFeedGenerator,
 	type StreamFeedEntry,
 	skeletonFromStreams,
@@ -38,7 +36,7 @@ const blueskyFeedGen = new Hono<{ Bindings: Env }>();
 // ═══════════════════════════════════════════════════════════════════════
 // Called by Bluesky to get feed generator metadata (DID, name, description).
 
-blueskyFeedGen.get("/describe", async (c) => {
+blueskyFeedGen.get("/describe", async (_c) => {
 	const endpoint = new FeedGenEndpoint();
 	const description = endpoint.describeFeedGenerator();
 	return jsonResponse(description);
@@ -51,9 +49,9 @@ blueskyFeedGen.get("/describe", async (c) => {
 // post URIs. Accepts optional cursor and limit parameters.
 
 blueskyFeedGen.get("/skeleton", async (c) => {
-	const feed = c.req.query("feed") || DEGENFEED_FEED_URI;
+	const _feed = c.req.query("feed") || DEGENFEED_FEED_URI;
 	const cursor = c.req.query("cursor") ?? undefined;
-	const limit = Math.min(
+	const _limit = Math.min(
 		Math.max(parseInt(c.req.query("limit") ?? "20", 10) || 20, 1),
 		50,
 	);
