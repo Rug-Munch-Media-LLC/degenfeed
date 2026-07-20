@@ -110,6 +110,7 @@ export interface EvmBuyInput {
 
 /**
  * Result from deploying a creator coin via ZoraFactory.
+ * All coins pair against ETH — never ZORA.
  */
 export interface DeployResult {
   /** The deployed coin contract address */
@@ -118,26 +119,38 @@ export interface DeployResult {
   txHash: `0x${string}`;
   /** Explorer URL */
   explorerUrl: string;
+  /** Zora.co URL — users can login to zora.co and see their coin */
+  zoraUrl?: string;
   /** The mint/buy transaction for the initial supply */
   initialBuyTx?: `0x${string}`;
+  /** Pair currency — always 'ETH' for our fork */
+  pairCurrency: string;
+  /** Pair currency symbol — always 'ETH' for our fork */
+  pairCurrencySymbol: string;
 }
 
 /**
  * Result from buying/selling a creator coin.
+ * All trades settle in ETH — never ZORA.
  */
 export interface TradeResult {
-  /** Transaction signature */
-  signature: string;
-  /** Amount of tokens received/sold */
-  amount: string;
-  /** USD equivalent (if price feed available) */
-  usdValue?: string;
+  /** Transaction hash */
+  txHash: string;
+  /** Tokens received (for buys) or sold (for sells) */
+  tokensReceived?: string;
+  /** ETH spent (for buys) */
+  ethSpent?: string;
+  /** ETH received (for sells) */
+  ethReceived?: string;
+  /** Platform fee taken in ETH (0.5%) */
+  platformFee?: string;
   /** Explorer URL */
   explorerUrl: string;
 }
 
 /**
  * Information about a creator coin from the Zora Coins API.
+ * All prices in ETH — never ZORA.
  */
 export interface CoinInfo {
   /** Coin address */
@@ -170,6 +183,10 @@ export interface CoinInfo {
   poolAddress?: `0x${string}`;
   /** Chain */
   chain: 'base';
+  /** Pair currency — always 'ETH' for our fork */
+  pairCurrency: string;
+  /** Pair currency symbol — always 'ETH' for our fork */
+  pairCurrencySymbol: string;
 }
 
 export interface CoinPrice {
@@ -213,16 +230,20 @@ export interface DeployCoinInput {
   name: string;
   /** Coin symbol (e.g. "ALICE") */
   symbol: string;
-  /** Metadata URI */
+  /** Metadata URI (IPFS or HTTP) */
   uri: string;
   /** Creator allocation in basis points (0-1500 = 0-15%) */
-  creatorAllocationBps: number;
+  creatorAllocationBps?: number;
   /** Platform fee in bps (0-50 = 0-0.5%) — replaces Zora's default platform fee */
   platformFeeBps?: number;
   /** Creator fee on buys in bps (0-200 = 0-2%) */
-  creatorFeeBps: number;
-  /** Referrer address */
+  creatorFeeBps?: number;
+  /** Platform referrer address (receives 0.5% fee on trades) */
+  platformReferrer?: `0x${string}`;
+  /** Referrer address (trade referrer) */
   referrer?: `0x${string}`;
+  /** Starting market cap tier (LOW or HIGH, default LOW) */
+  startingMarketCap?: 'LOW' | 'HIGH';
   /** Initial buy amount in wei (defaults to 0.05 ETH minimum) */
   initialBuyWei?: bigint;
 }

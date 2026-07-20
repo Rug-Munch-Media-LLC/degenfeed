@@ -274,8 +274,9 @@ export class SolanaCreatorTokenSDK {
       .rpc();
 
     return {
-      signature,
-      amount: opts.minTokensOut.toString(),
+      txHash: signature,
+      tokensReceived: opts.minTokensOut.toString(),
+      ethSpent: opts.amountLamports.toString(),
       explorerUrl: getExplorerUrl(signature),
     };
   }
@@ -311,8 +312,8 @@ export class SolanaCreatorTokenSDK {
       .rpc();
 
     return {
-      signature,
-      amount: opts.amountTokens.toString(),
+      txHash: signature,
+      tokensReceived: opts.amountTokens.toString(),
       explorerUrl: getExplorerUrl(signature),
     };
   }

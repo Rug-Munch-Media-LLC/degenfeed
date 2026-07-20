@@ -194,6 +194,13 @@ export default function BuySellInterface({
         <div>
           <label className="mb-1 block text-[11px] font-medium text-[var(--color-muted)]">
             Amount ({mode === 'buy' ? 'ETH' : symbol})
+            <span
+              className="ml-1.5 inline-flex cursor-help items-center rounded-full border border-[var(--color-border)] px-1.5 py-0.5 text-[8px] font-medium text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 transition-colors"
+              title="Paired with ETH on Base for simpler trading. No ZORA token needed."
+              aria-label="Paired with ETH on Base for simpler trading. No ZORA token needed."
+            >
+              ⓘ
+            </span>
           </label>
           <div className="relative">
             <input
