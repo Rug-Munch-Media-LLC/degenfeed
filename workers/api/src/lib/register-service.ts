@@ -50,6 +50,14 @@ export interface ChargeBreakdown {
   totalCents: number;
   breakdown: { item: string; cost: string; covered: boolean }[];
   serviceFeeCents: number;
+  /** Minimum profit we always make ($3). Shown transparently to the user. */
+  ourProfit: number;
+  /** Whether gas costs exceed the plan budget, requiring user confirmation */
+  requiresConfirmation: boolean;
+  /** Human-readable explanation of the overage, if any */
+  overageReason?: string;
+  /** The overage amount in USD (gas cost - budget) */
+  overage?: number;
 }
 
 export interface AccountResult {
@@ -81,6 +89,67 @@ export interface RecoveryPackage {
   }[];
   exportDate: string;
   dataExportUrl: string;
+}
+
+// ─── Profit Guarantee — Gas Budget System ────────────────────────────────
+
+/**
+ * Minimum profit we must make per registration.
+ * This ensures we NEVER lose money on a registration, no matter what gas costs.
+ */
+const MINIMUM_SERVICE_FEE = 3; // $3 minimum profit
+
+/**
+ * Gas budgets per plan — the maximum gas cost WE absorb.
+ * If actual gas exceeds this, the overage is charged to the user (with confirmation).
+ *
+ * Standard ($10):  $7 gas budget → $3 minimum profit
+ * Complete ($20):  $17 gas budget → $3 minimum profit
+ * Premium ($10/mo): All gas covered — profitable over subscription lifetime
+ */
+type GasBudgetEntry = { farcaster?: number; lens?: number; ens?: number; total: number };
+
+const GAS_BUDGETS: { standard: GasBudgetEntry; complete: GasBudgetEntry; premium: GasBudgetEntry } & Record<string, GasBudgetEntry | undefined> = {
+  standard: { farcaster: 5, lens: 2, total: 7 },
+  complete: { farcaster: 5, lens: 12, ens: 10, total: 17 }, // covers up to 7-8 char Lens handle
+  premium: { total: Infinity }, // all gas covered by subscription
+};
+
+/**
+ * Check if actual gas costs fit within the plan's gas budget.
+ * Returns the budget assessment — overage means the user needs to confirm before proceeding.
+ */
+export function checkGasBudget(
+  plan: string,
+  farcasterGas: number,
+  lensGas: number,
+  ensGas?: number,
+): {
+  withinBudget: boolean;
+  actualCost: number;
+  budgetTotal: number;
+  overage: number;
+  proposedTotal: number;
+  ourProfit: number;
+} {
+  const budget = GAS_BUDGETS[plan];
+  if (!budget) {
+    // Free plan — no gas costs
+    return { withinBudget: true, actualCost: 0, budgetTotal: 0, overage: 0, proposedTotal: 0, ourProfit: 0 };
+  }
+
+  const actualCost = farcasterGas + lensGas + (ensGas || 0);
+  const overage = Math.max(0, actualCost - budget.total);
+  const ourProfit = MINIMUM_SERVICE_FEE;
+
+  return {
+    withinBudget: overage === 0,
+    actualCost,
+    budgetTotal: budget.total,
+    overage,
+    proposedTotal: budget.total + MINIMUM_SERVICE_FEE + overage,
+    ourProfit, // Always at least $3
+  };
 }
 
 // ─── Plan helpers ─────────────────────────────────────────────────────────
@@ -150,35 +219,68 @@ export function calculateCharges(
         { item: 'RSS feed', cost: '$0', covered: true },
       ],
       serviceFeeCents: 0,
+      ourProfit: 0, // Profit comes from subscription
+      requiresConfirmation: false,
+      overage: 0,
     };
   }
 
   switch (plan) {
     case 'standard': {
       const handleUpcharge = Math.max(0, handleCost.gasCost - 2); // Standard covers $2 base handle
-      const totalUsd = 10 + handleUpcharge;
+      const fcGas = 5;
+      const lensGas = handleCost.gasCost;
+      const totalGas = fcGas + lensGas;
+      const gasBudget = GAS_BUDGETS.standard.total; // $7
+      const overage = Math.max(0, totalGas - gasBudget);
+      const ourProfit = MINIMUM_SERVICE_FEE; // $3
+      const totalUsd = totalGas + ourProfit;
+      const requiresConfirmation = overage > 0;
       return {
         total: `$${totalUsd}`,
         totalCents: totalUsd * 100,
+        ourProfit,
+        requiresConfirmation,
+        overage,
+        overageReason: requiresConfirmation
+          ? `Gas costs ($${totalGas}) exceed plan budget ($${gasBudget}). +$${overage.toFixed(2)} extra required.`
+          : undefined,
         breakdown: [
           { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
           { item: `Lens Profile — ${handleCost.label} ($${handleCost.gasCost} gas)`, cost: `$${handleCost.gasCost}`, covered: false },
-          { item: 'Service fee', cost: '$3', covered: false },
+          { item: 'Service fee (our profit)', cost: `$${ourProfit}`, covered: false },
           ...(handleUpcharge > 0
             ? [{ item: `Short handle premium ($${handleUpcharge} upcharge)`, cost: `$${handleUpcharge}`, covered: false }]
             : []),
+          ...(overage > 0
+            ? [{ item: `Gas overage (exceeds plan budget)`, cost: `$${overage}`, covered: false }]
+            : []),
           { item: 'GoToSocial + PDS + Nostr + RSS', cost: '$0', covered: true },
         ],
-        serviceFeeCents: 300,
+        serviceFeeCents: ourProfit * 100,
       };
     }
     case 'complete': {
       // Complete plan covers handle gas up to ~$10 (7-8 char range)
       const handleUpcharge = Math.max(0, handleCost.gasCost - 10);
-      const totalUsd = 20 + handleUpcharge;
+      const fcGas = 5;
+      const lensGas = handleCost.gasCost;
+      const ensGas = 10;
+      const totalGas = fcGas + lensGas + ensGas - 7; // $7 bundle discount
+      const gasBudget = GAS_BUDGETS.complete.total; // $17
+      const overage = Math.max(0, totalGas - gasBudget);
+      const ourProfit = MINIMUM_SERVICE_FEE; // $3
+      const totalUsd = totalGas + ourProfit;
+      const requiresConfirmation = overage > 0;
       return {
         total: `$${totalUsd}`,
         totalCents: totalUsd * 100,
+        ourProfit,
+        requiresConfirmation,
+        overage,
+        overageReason: requiresConfirmation
+          ? `Gas costs ($${totalGas}) exceed plan budget ($${gasBudget}). +$${overage.toFixed(2)} extra required.`
+          : undefined,
         breakdown: [
           { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
           { item: `Lens Profile — ${handleCost.label} ($${handleCost.gasCost} gas)`, cost: `$${handleCost.gasCost}`, covered: false },
@@ -186,10 +288,14 @@ export function calculateCharges(
           ...(handleUpcharge > 0
             ? [{ item: `Premium handle upcharge ($${handleUpcharge})`, cost: `$${handleUpcharge}`, covered: false }]
             : []),
+          { item: 'Service fee (our profit)', cost: `$${ourProfit}`, covered: false },
           { item: 'Bundle discount', cost: '-$7', covered: false },
+          ...(overage > 0
+            ? [{ item: `Gas overage (exceeds plan budget)`, cost: `$${overage}`, covered: false }]
+            : []),
           { item: 'GoToSocial + PDS + Nostr + RSS', cost: '$0', covered: true },
         ],
-        serviceFeeCents: 300,
+        serviceFeeCents: ourProfit * 100,
       };
     }
     case 'free':
@@ -204,6 +310,9 @@ export function calculateCharges(
           { item: 'RSS feed', cost: '$0', covered: true },
         ],
         serviceFeeCents: 0,
+        ourProfit: 0,
+        requiresConfirmation: false,
+        overage: 0,
       };
   }
 }
