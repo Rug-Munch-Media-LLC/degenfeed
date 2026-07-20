@@ -3,7 +3,7 @@
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from '@degenfeed/ui';
 import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-/* ─── Props ─────────────────────────────────────────────────── */
+/* === Props =================================================== */
 
 export interface ComposeBarProps {
   /** Current text in the compose input */
@@ -39,7 +39,7 @@ const MAX_CHARS: Record<string, number> = {
   mastodon: 500,
 };
 
-/* ─── Component ─────────────────────────────────────────────── */
+/* === Component =============================================== */
 
 export function ComposeBar({
   value,

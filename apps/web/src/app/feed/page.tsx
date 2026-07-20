@@ -100,7 +100,7 @@ const PROTOCOL_META: Record<string, { label: string; color: string; emoji: strin
   rss: { label: 'News', color: '#ffa500', emoji: '📰' },
 };
 
-// ─── Admin wallets ──────────────────────────────────────────────────
+// === Admin wallets ==================================================
 const ADMIN_WALLETS_RAW =
   typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_ADMIN_WALLETS || '' : '';
 const ADMIN_WALLETS = new Set(
@@ -216,51 +216,51 @@ export default function FeedPage() {
   const [minEngagement, setMinEngagement] = useState(0);
   const [maxPerNiche, setMaxPerNiche] = useState(5);
   const [protocolFilter, setProtocolFilter] = useState<string | null>(null);
-  // ── Algorithm transparency ────────────────────────────────────
+  // == Algorithm transparency ====================================
   const [algorithmTransparent, setAlgorithmTransparent] = useState(false);
-  // ── Content freshness slider (0-100, 0=evergreen, 100=bleeding-edge) ──
+  // == Content freshness slider (0-100, 0=evergreen, 100=bleeding-edge) ==
   const [freshnessPreference, setFreshnessPreference] = useState(50);
-  // ── Creator diversity (1-10, max posts per creator per page) ──
+  // == Creator diversity (1-10, max posts per creator per page) ==
   const [creatorDiversity, setCreatorDiversity] = useState(5);
-  // ── Explore vs Exploit (0-100, 0=only familiar, 100=only discovery) ──
+  // == Explore vs Exploit (0-100, 0=only familiar, 100=only discovery) ==
   const [exploreRatio, setExploreRatio] = useState(30);
-  // ── Active feed preset ────────────────────────────────────────
+  // == Active feed preset ========================================
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const { notifications, unreadCount, fetchNotifications, markRead } =
     useNotifications(hasSignedIn);
   const { layout, setLayout, isCompact } = useFeedLayout();
 
-  // ── Feed position restore ("Resume where you left off")
+  // == Feed position restore ("Resume where you left off")
   const feedContainerRef = useRef<HTMLDivElement>(null);
   useFeedPosition(feedContainerRef);
 
-  // ── Swipe between tabs on mobile
+  // == Swipe between tabs on mobile
   const swipeHandlers = useSwipeTabs(
     () => setActiveTab('following'),
     () => setActiveTab('for-you'),
   );
 
-  // ── Edge swipe back gesture
+  // == Edge swipe back gesture
   useEdgeSwipeBack(() => {
     window.history.back();
   });
 
-  // ── 2026 Social UX: Haptic feedback for engagement actions ──
+  // == 2026 Social UX: Haptic feedback for engagement actions ==
   const haptic = useHapticFeedback();
 
-  // ── 2026 Social UX: Share sheet state ──
+  // == 2026 Social UX: Share sheet state ==
   const [sharePost, setSharePost] = useState<UnifiedPost | null>(null);
 
-  // ── 2026 Social UX: Reading progress tracking (expanded long posts) ──
+  // == 2026 Social UX: Reading progress tracking (expanded long posts) ==
   const [readingPostId, setReadingPostId] = useState<string | null>(null);
 
-  // ── 2026 Social UX: Category break state ──
+  // == 2026 Social UX: Category break state ==
   const [categoryNiches, setCategoryNiches] = useState<string[]>([]);
   // Track which break index we've computed niches for
   const _lastBreakIdxRef = useRef<number>(-1);
 
-  // ── 2026 Social UX: First-visit detection for onboarding suggestions ──
+  // == 2026 Social UX: First-visit detection for onboarding suggestions ==
   const [isFirstVisit, setIsFirstVisit] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -275,7 +275,7 @@ export default function FeedPage() {
     }
   }, []);
 
-  // ── 2026 Social UX: Toast for share sheet ──
+  // == 2026 Social UX: Toast for share sheet ==
   const handleShareToast = useCallback((message: string) => {
     window.dispatchEvent(
       new CustomEvent('df-toast', {
@@ -284,7 +284,7 @@ export default function FeedPage() {
     );
   }, []);
 
-  // ── Feed preloading: prefetch post routes when cards enter viewport ──
+  // == Feed preloading: prefetch post routes when cards enter viewport ==
   useViewportPrefetch([
     { href: '/feed', priority: 1 },
     { href: '/trending', priority: 1 },
@@ -293,7 +293,7 @@ export default function FeedPage() {
     { href: '/search', priority: 2 },
   ]);
 
-  // ── Tab hover preloading: prefetch feed data when hovering over tabs ──
+  // == Tab hover preloading: prefetch feed data when hovering over tabs ==
   const hoverPrefetch = useHoverPrefetch(200);
   const tabPrefetchMap = useMemo(
     () => ({
@@ -304,15 +304,15 @@ export default function FeedPage() {
     [],
   );
 
-  // ── Right-click context menu
+  // == Right-click context menu
   const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
 
-  // ── Topic weights ──────────────────────────────────────────────
+  // == Topic weights ==============================================
   const [topicWeights, setTopicWeights] = useState<Record<string, number>>(getDefaultWeights());
   const [showTuner, setShowTuner] = useState(false);
   const tuneTopicWeightsDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // ── Feed Mix Config ────────────────────────────────────────────
+  // == Feed Mix Config ============================================
   const [feedMixConfig, setFeedMixConfig] = useState<FeedMixConfig>(() => {
     if (typeof window === 'undefined') return getDefaultFeedMixConfig();
     return loadFeedMixConfig();
@@ -354,7 +354,7 @@ export default function FeedPage() {
     persistTopicWeights(defaults);
   }, [persistTopicWeights]);
 
-  // ── Debounced persistence ─────────────────────────────────────
+  // == Debounced persistence =====================================
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const persistPrefs = useCallback((patch: Record<string, unknown>) => {
@@ -369,7 +369,7 @@ export default function FeedPage() {
     }, 300);
   }, []);
 
-  // ── Feed mix handlers ──────────────────────────────────────────
+  // == Feed mix handlers ==========================================
   const handleFeedMixChange = useCallback((config: FeedMixConfig) => {
     setFeedMixConfig(config);
   }, []);
@@ -615,7 +615,7 @@ export default function FeedPage() {
     });
   }, [persistPrefs]);
 
-  // ── "Why this post?" panel state ──────────────────────────────
+  // == "Why this post?" panel state ==============================
   const [explainPost, setExplainPost] = useState<UnifiedPost | null>(null);
   const explainRef = useRef<HTMLDivElement>(null);
 
@@ -641,11 +641,11 @@ export default function FeedPage() {
     setLoadedLimit((prev) => Math.min(prev + 25, 200));
   }, []);
 
-  // ── "While you were away" — detects return after >30min ──────
+  // == "While you were away" — detects return after >30min ======
   const returning = useReturningUser();
   const [showReturnCard, setShowReturnCard] = useState(true);
 
-  // ── Boredom detection via scroll velocity ────────────────────
+  // == Boredom detection via scroll velocity ====================
   const scrollVel = useScrollVelocity(800, 2000);
   const [injectedExplore, setInjectedExplore] = useState(0);
   const lastPaceRef = useRef<string>('idle');
@@ -667,7 +667,7 @@ export default function FeedPage() {
     setInjectedExplore(0);
   }, []);
 
-  // ── End-of-feed discovery suggestions ────────────────────────
+  // == End-of-feed discovery suggestions ========================
   const endOfFeedSuggestions = useMemo(
     () => [
       {
@@ -1022,7 +1022,7 @@ export default function FeedPage() {
     setProtocolFilter((current) => (current === id ? null : id));
   }, []);
 
-  /* ── Pull-to-refresh (spring animation) ─────────────────── */
+  /* == Pull-to-refresh (spring animation) =================== */
   const PULL_THRESHOLD = 80;
   const PULL_MAX = 140;
   const pullStartY = useRef(0);
@@ -1171,7 +1171,7 @@ export default function FeedPage() {
     };
   }, []);
 
-  // ── Compute category break niches when posts change ─────────────
+  // == Compute category break niches when posts change =============
   useEffect(() => {
     if (posts.length === 0) return;
     // Aggregate niches from first batch for the first category break (at index 12)
@@ -1229,7 +1229,7 @@ export default function FeedPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {/* ── Tune Feed button ── */}
+                {/* == Tune Feed button == */}
                 <button
                   type="button"
                   onClick={() => setShowTuner(true)}
@@ -1582,7 +1582,7 @@ export default function FeedPage() {
               </span>
             </div>
 
-            {/* ── Custom Mix: Pre-built mix quick pick ── */}
+            {/* == Custom Mix: Pre-built mix quick pick == */}
             {activeTab === 'custom-mix' && (
               <div className="border-t border-[var(--color-glass-border)] px-4 py-2.5">
                 <p className="text-[10px] font-medium text-[var(--color-muted)] uppercase tracking-wider mb-2">
@@ -1603,7 +1603,7 @@ export default function FeedPage() {
               </div>
             )}
 
-            {/* ── Feed Health section (collapsed by default) ── */}
+            {/* == Feed Health section (collapsed by default) == */}
             {state === 'loaded' && (
               <FeedHealthSection
                 perProtocol={feedMeta.perProtocol}
@@ -1613,7 +1613,7 @@ export default function FeedPage() {
             )}
           </div>
 
-          {/* ── Pull-to-refresh indicator with spring animation ── */}
+          {/* == Pull-to-refresh indicator with spring animation == */}
           {(pullDistance > 0 || isRefreshing) && (
             <div
               className={`flex items-center justify-center gap-2 py-2.5 text-sm transition-all ${
@@ -1759,7 +1759,7 @@ export default function FeedPage() {
           <div className="relative">
             <PostCardPrefetcher />
 
-            {/* ── "While you were away" card ── */}
+            {/* == "While you were away" card == */}
             {returning.showCard && showReturnCard && state === 'loaded' && posts.length > 0 && (
               <WhileYouWereAwayCard
                 awayMinutes={Math.round(returning.awayDurationMs / 60000)}
@@ -1772,7 +1772,7 @@ export default function FeedPage() {
               />
             )}
 
-            {/* ── Boredom-breaker explore cards injected when fast-scrolling ── */}
+            {/* == Boredom-breaker explore cards injected when fast-scrolling == */}
             {injectedExplore > 0 && state === 'loaded' && posts.length > 0 && (
               <div className="space-y-0">
                 {Array.from({ length: injectedExplore }).map((_, idx) => (
@@ -1943,7 +1943,7 @@ export default function FeedPage() {
                 />
               )}
 
-              {/* ── "You're all caught up!" divider ── */}
+              {/* == "You're all caught up!" divider == */}
               {state === 'loaded' && posts.length > 0 && hasMore && (
                 <div className="flex items-center gap-3 px-4 py-8 select-none">
                   <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
@@ -1970,7 +1970,7 @@ export default function FeedPage() {
             </div>
           )}
 
-          {/* ── "Why this post?" explain panel ── */}
+          {/* == "Why this post?" explain panel == */}
           {explainPost && activeTab === 'for-you' && (
             <div
               ref={explainRef}
@@ -2039,10 +2039,10 @@ export default function FeedPage() {
           />
         )}
 
-        {/* ── Floating "Back to Top" button — appears after ~3 pages ── */}
+        {/* == Floating "Back to Top" button — appears after ~3 pages == */}
         <ScrollToTop />
 
-        {/* ── FeedTuner modal ── */}
+        {/* == FeedTuner modal == */}
         {showTuner && (
           <FeedTuner
             weights={topicWeights}
@@ -2076,7 +2076,7 @@ export default function FeedPage() {
   );
 }
 
-// ─── Feed Health sub-component ─────────────────────────────────────
+// === Feed Health sub-component =====================================
 
 function FeedHealthSection({
   perProtocol,
@@ -2226,7 +2226,7 @@ function FeedHealthSection({
   );
 }
 
-// ─── "While you were away" card ───────────────────────────────────
+// === "While you were away" card ===================================
 
 function WhileYouWereAwayCard({
   awayMinutes,

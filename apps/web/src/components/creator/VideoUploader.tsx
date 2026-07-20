@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useCreatorVideoActions } from './useCreatorVideos';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 interface VideoUploaderProps {
   mode: 'video' | 'short';
@@ -13,7 +13,7 @@ interface VideoUploaderProps {
 
 type UploadStage = 'select' | 'uploading' | 'done' | 'error';
 
-// ─── Video Uploader Modal ────────────────────────────────────────────────
+// === Video Uploader Modal ================================================
 
 export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploaderProps) {
   const { uploadVideo, uploadShort } = useCreatorVideoActions();

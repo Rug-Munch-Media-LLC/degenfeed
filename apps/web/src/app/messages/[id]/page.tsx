@@ -14,7 +14,7 @@ import { getCached } from '../../../lib/fetchWithCache';
 import { retryFetchJson } from '../../../lib/retryFetch';
 import { ChatView } from '../ChatView';
 
-/* ─── Page ──────────────────────────────────────────────────── */
+/* === Page ==================================================== */
 
 export default function ConversationPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,7 +44,7 @@ export default function ConversationPage() {
     [tokens],
   );
 
-  // ── Fetch conversation metadata ──────────────────────────
+  // == Fetch conversation metadata ==========================
   useEffect(() => {
     if (!conversationId) return;
 
@@ -82,7 +82,7 @@ export default function ConversationPage() {
     fetchAll();
   }, [conversationId]);
 
-  // ── Realtime: incoming messages ──────────────────────────
+  // == Realtime: incoming messages ==========================
   useEffect(() => {
     if (!subscribe || !conversationId) return;
     return subscribe(CHANNELS.DM_NEW, (data: unknown) => {
@@ -96,7 +96,7 @@ export default function ConversationPage() {
     });
   }, [subscribe, conversationId]);
 
-  // ── Send message ─────────────────────────────────────────
+  // == Send message =========================================
   const handleSend = useCallback(async () => {
     const text = composeText.trim();
     if (!text || sending || !convMeta) return;
@@ -137,14 +137,14 @@ export default function ConversationPage() {
     }
   }, [composeText, sending, convMeta, tokens, announce]);
 
-  // ── Typing ───────────────────────────────────────────────
+  // == Typing ===============================================
   const handleTyping = useCallback(() => {
     if (conversationId) {
       sendTyping(conversationId);
     }
   }, [conversationId, sendTyping]);
 
-  // ── Guard ────────────────────────────────────────────────
+  // == Guard ================================================
   if (!conversationId) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">

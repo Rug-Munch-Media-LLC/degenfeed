@@ -7,7 +7,7 @@ import { CategoryBrowser } from '../../components/feddy/CategoryBrowser';
 import { FeddyHeader } from '../../components/feddy/FeddyHeader';
 import type { FeddyCategory } from '../../components/feddy/types';
 
-// ─── Types ─────────────────────────────────────────────────────────────
+// === Types =============================================================
 
 interface DirectoryEntry {
   id: string;
@@ -32,7 +32,7 @@ interface DirectoryResult {
   total: number;
 }
 
-// ─── Skeleton ──────────────────────────────────────────────────────────
+// === Skeleton ==========================================================
 
 function DirectorySkeleton() {
   return (
@@ -60,7 +60,7 @@ function DirectorySkeleton() {
   );
 }
 
-// ─── Empty State ───────────────────────────────────────────────────────
+// === Empty State =======================================================
 
 function EmptyDirectory({ category, search }: { category?: string; search?: string }) {
   return (
@@ -84,7 +84,7 @@ function EmptyDirectory({ category, search }: { category?: string; search?: stri
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────
+// === Main Page =========================================================
 
 export default function FeddyDirectoryPage() {
   const [entries, setEntries] = useState<DirectoryEntry[]>([]);

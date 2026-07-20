@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, useAuth } from './AuthProvider';
 
-// ─── Mock external dependencies ──────────────────────────────────────
+// === Mock external dependencies ======================================
 
 vi.mock('@degenfeed/storage', () => ({
   getAllIdentities: vi.fn(),
@@ -82,7 +82,7 @@ vi.mock('./Toast', () => ({
   Toast: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
-// ─── Storage mock helpers ────────────────────────────────────────────
+// === Storage mock helpers ============================================
 
 import * as storage from '@degenfeed/storage';
 
@@ -135,7 +135,7 @@ function mockWalletAddress(address: string, chain = 'ethereum') {
   localStorage.setItem('df_active_wallet_idx', '0');
 }
 
-// ─── Consumer helper ─────────────────────────────────────────────────
+// === Consumer helper =================================================
 
 function TestConsumer({ onReady }: { onReady?: (val: ReturnType<typeof useAuth>) => void }) {
   const auth = useAuth();
@@ -159,7 +159,7 @@ function TestConsumer({ onReady }: { onReady?: (val: ReturnType<typeof useAuth>)
   );
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────
+// === Tests ============================================================
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -424,7 +424,7 @@ describe('AuthProvider', () => {
   });
 });
 
-// ─── useAuth standalone (no provider) ─────────────────────────────────
+// === useAuth standalone (no provider) =================================
 
 describe('useAuth without AuthProvider', () => {
   it('should throw a descriptive error when used outside AuthProvider', () => {

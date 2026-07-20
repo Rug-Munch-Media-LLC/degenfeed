@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 interface VestingConfigValue {
   presetId: string;
@@ -31,7 +31,7 @@ interface PresetData {
   lockedReason?: string;
 }
 
-/* ─── Presets ────────────────────────────────────────── */
+/* === Presets ========================================== */
 
 const PRESET_DEFINITIONS: Array<{
   id: string;
@@ -75,7 +75,7 @@ const PRESET_DEFINITIONS: Array<{
   },
 ];
 
-/* ─── Helpers ────────────────────────────────────────── */
+/* === Helpers ========================================== */
 
 function formatDate(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString('en-US', {
@@ -91,7 +91,7 @@ function formatCompact(n: number): string {
   return String(n);
 }
 
-/* ─── Preset Card ────────────────────────────────────── */
+/* === Preset Card ====================================== */
 
 function VestingPresetCard({
   preset,
@@ -159,7 +159,7 @@ function VestingPresetCard({
   );
 }
 
-/* ─── Timeline Visualization ─────────────────────────── */
+/* === Timeline Visualization =========================== */
 
 function VestingTimeline({
   initialUnlockPercent,
@@ -227,7 +227,7 @@ function VestingTimeline({
   );
 }
 
-/* ─── Supply Allocation Slider ───────────────────────── */
+/* === Supply Allocation Slider ========================= */
 
 function SupplyAllocationSlider({
   value,
@@ -295,7 +295,7 @@ function SupplyAllocationSlider({
   );
 }
 
-/* ─── Main Component ─────────────────────────────────── */
+/* === Main Component =================================== */
 
 export default function VestingConfig({
   value,
@@ -401,7 +401,7 @@ export default function VestingConfig({
     }
   }
 
-  // ── Render ────────────────────────────────────────────
+  // == Render ============================================
 
   return (
     <div className="vesting-config space-y-6">
@@ -631,7 +631,7 @@ export default function VestingConfig({
   );
 }
 
-// ─── Helpers (scoped) ──────────────────────────────────
+// === Helpers (scoped) ==================================
 
 function getRequiredRep(presetId: string): number {
   switch (presetId) {

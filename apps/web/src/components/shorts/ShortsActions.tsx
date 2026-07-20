@@ -13,7 +13,7 @@
 
 import { memo } from 'react';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+// === Helpers ==============================================================
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -21,7 +21,7 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 interface ShortsActionsProps {
   liked: boolean;
@@ -48,7 +48,7 @@ interface ShortsActionsProps {
   visible: boolean;
 }
 
-// ─── Individual action button ─────────────────────────────────────────────
+// === Individual action button =============================================
 
 interface ActionBtnProps {
   icon: React.ReactNode;
@@ -106,13 +106,13 @@ const ActionButton = memo(function ActionButton({
   );
 });
 
-// ─── Separator ─────────────────────────────────────────────────────────────
+// === Separator =============================================================
 
 function ActionSeparator() {
   return <div className="my-1 h-px w-6 bg-white/10" aria-hidden="true" />;
 }
 
-// ─── Main component ──────────────────────────────────────────────────────
+// === Main component ======================================================
 
 export function ShortsActions({
   liked,
@@ -142,7 +142,7 @@ export function ShortsActions({
         visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
       }`}
     >
-      {/* ── Core actions ── */}
+      {/* == Core actions == */}
       {/* Like */}
       <ActionButton
         icon={
@@ -232,7 +232,7 @@ export function ShortsActions({
         tooltip={bookmarked ? 'Unsave' : 'Save'}
       />
 
-      {/* ── Creator Coin ── */}
+      {/* == Creator Coin == */}
       {showCreatorCoin && creatorCoinSymbol && (
         <ActionButton
           icon={
@@ -253,10 +253,10 @@ export function ShortsActions({
         />
       )}
 
-      {/* ── Separator ── */}
+      {/* == Separator == */}
       {(hasEthTip || hasSolTip || hasZoraNft || hasLightningTip) && <ActionSeparator />}
 
-      {/* ── Cross-platform tip actions ── */}
+      {/* == Cross-platform tip actions == */}
 
       {/* Tip via ETH (Base) */}
       {hasEthTip && (

@@ -13,7 +13,7 @@ const FeedBuilderModalDynamic = dynamic(
   { ssr: false, loading: () => null },
 );
 
-// ─── Constants ────────────────────────────────────────────────
+// === Constants ================================================
 
 const SOURCE_EMOJIS: Record<string, string> = {
   nostr: '⚡',
@@ -47,7 +47,7 @@ function toast(kind: 'success' | 'error' | 'info', message: string) {
   window.dispatchEvent(new CustomEvent('df-toast', { detail: { kind, message } }));
 }
 
-// ─── Recipe to query params ───────────────────────────────────
+// === Recipe to query params ===================================
 
 function recipeToParams(config: FeedRecipe): URLSearchParams {
   const params = new URLSearchParams();
@@ -67,7 +67,7 @@ function recipeToParams(config: FeedRecipe): URLSearchParams {
   return params;
 }
 
-// ─── Page ─────────────────────────────────────────────────────
+// === Page =====================================================
 
 export default function FeedDetailPage() {
   const params = useParams();
@@ -244,7 +244,7 @@ export default function FeedDetailPage() {
     setModalOpen(false);
   }, []);
 
-  // ─── Render states ─────────────────────────────────────────
+  // === Render states =========================================
 
   if (loading) {
     return (

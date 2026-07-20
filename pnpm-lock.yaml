@@ -231,6 +231,9 @@ importers:
 
   packages/auth:
     dependencies:
+      '@degenfeed/identity-hub':
+        specifier: workspace:*
+        version: link:../identity-hub
       '@degenfeed/mastodon-sdk':
         specifier: workspace:*
         version: link:../mastodon-sdk
@@ -375,6 +378,9 @@ importers:
       '@degenfeed/feed-core':
         specifier: workspace:*
         version: link:../feed-core
+      '@degenfeed/source-discovery':
+        specifier: workspace:*
+        version: link:../source-discovery
       '@degenfeed/types':
         specifier: workspace:*
         version: link:../types

@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────
+// === Types ========================================================
 
 interface Speaker {
   id: string;
@@ -30,7 +30,7 @@ interface SpaceControlsProps {
   isSpeaker: boolean;
 }
 
-// ─── Host Controls Panel ──────────────────────────────────────────
+// === Host Controls Panel ==========================================
 
 function HostControlsPanel({
   speakers,
@@ -158,7 +158,7 @@ function HostControlsPanel({
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────
+// === Main Component ===============================================
 
 export function SpaceControls({
   speakers,

@@ -10,7 +10,7 @@
  *   await share({ url: 'https://app.degenfeed.xyz/post/abc', title: 'Check this out' });
  */
 
-// ── Types ──────────────────────────────────────────────────────
+// == Types ======================================================
 
 export interface ShareOptions {
   /** URL to share. */
@@ -29,7 +29,7 @@ export type ShareResult =
   | { completed: true; method: 'native' | 'web' }
   | { completed: false; method?: 'native' | 'web'; error?: string };
 
-// ── Environment detection ──────────────────────────────────────
+// == Environment detection ======================================
 
 function isNative(): boolean {
   if (typeof window === 'undefined') return false;
@@ -41,7 +41,7 @@ function isWebShareSupported(): boolean {
   return typeof navigator !== 'undefined' && !!navigator.share;
 }
 
-// ── Share ───────────────────────────────────────────────────────
+// == Share =======================================================
 
 /**
  * Share content using the native share sheet (Capacitor) or the
@@ -69,7 +69,7 @@ export async function share(options: ShareOptions): Promise<ShareResult> {
   };
 }
 
-// ── Native (Capacitor) ─────────────────────────────────────────
+// == Native (Capacitor) =========================================
 
 async function shareNative(options: ShareOptions): Promise<ShareResult> {
   try {
@@ -101,7 +101,7 @@ async function shareNative(options: ShareOptions): Promise<ShareResult> {
   }
 }
 
-// ── Web (navigator.share) ─────────────────────────────────────
+// == Web (navigator.share) =====================================
 
 async function shareWeb(options: ShareOptions): Promise<ShareResult> {
   try {

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
-// ── Types ─────────────────────────────────────────────────────────────────
+// == Types =================================================================
 
 type CommunityType = 'lemmy' | 'peertube' | 'mastodon';
 
@@ -34,7 +34,7 @@ interface SubmitState {
   communityType?: string;
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────
+// == Constants =============================================================
 
 const COMMUNITY_TYPES: { value: CommunityType; label: string; icon: string }[] = [
   { value: 'lemmy', label: 'Community (Lemmy)', icon: '💬' },
@@ -42,7 +42,7 @@ const COMMUNITY_TYPES: { value: CommunityType; label: string; icon: string }[] =
   { value: 'mastodon', label: 'Social (Mastodon)', icon: '🐘' },
 ];
 
-// ── Validation ────────────────────────────────────────────────────────────
+// == Validation ============================================================
 
 function validate(form: FormData): FormErrors {
   const errors: FormErrors = {};
@@ -82,7 +82,7 @@ function validate(form: FormData): FormErrors {
   return errors;
 }
 
-// ── Form Input Component ──────────────────────────────────────────────────
+// == Form Input Component ==================================================
 
 function Field({
   label,
@@ -102,7 +102,7 @@ function Field({
   );
 }
 
-// ── Success View ──────────────────────────────────────────────────────────
+// == Success View ==========================================================
 
 function SuccessView({ state }: { state: SubmitState }) {
   return (
@@ -163,7 +163,7 @@ function SuccessView({ state }: { state: SubmitState }) {
   );
 }
 
-// ── Main Form ─────────────────────────────────────────────────────────────
+// == Main Form =============================================================
 
 export default function DeployRequestPage() {
   const searchParams = useSearchParams();
@@ -252,7 +252,7 @@ export default function DeployRequestPage() {
     [form],
   );
 
-  // ── Success state ───────────────────────────────────────────────────────
+  // == Success state =======================================================
 
   if (submitState.status === 'success') {
     return (
@@ -262,7 +262,7 @@ export default function DeployRequestPage() {
     );
   }
 
-  // ── Form ─────────────────────────────────────────────────────────────────
+  // == Form =================================================================
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:py-12">

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────
+// === Types ========================================================
 
 interface Speaker {
   id: string;
@@ -21,7 +21,7 @@ interface SpaceStageProps {
   tippingEnabled: boolean;
 }
 
-// ─── Ring colors ──────────────────────────────────────────────────
+// === Ring colors ==================================================
 
 const RING_GRADIENTS = [
   'from-pink-500 via-purple-500 to-indigo-500',
@@ -34,7 +34,7 @@ const RING_GRADIENTS = [
   'from-yellow-400 via-amber-500 to-red-500',
 ];
 
-// ─── Speaker Card ─────────────────────────────────────────────────
+// === Speaker Card =================================================
 
 function SpeakerCard({
   speaker,
@@ -145,7 +145,7 @@ function SpeakerCard({
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────
+// === Main Component ===============================================
 
 export function SpaceStage({ speakers, currentUserId, onTip, tippingEnabled }: SpaceStageProps) {
   // Sort: host first, then co-hosts, then speakers

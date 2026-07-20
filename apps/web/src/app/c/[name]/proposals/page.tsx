@@ -265,7 +265,7 @@ export default function ProposalsPage() {
   );
 }
 
-// ─── Proposal Card ─────────────────────────────────────────────────
+// === Proposal Card =================================================
 
 function ProposalCard({
   proposal,

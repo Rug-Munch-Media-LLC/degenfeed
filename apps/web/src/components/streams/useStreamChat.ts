@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 export interface ChatMessage {
   id: string;
@@ -29,7 +29,7 @@ export interface UseStreamChatResult {
   clearMessages: () => void;
 }
 
-/* ─── Fallback generator for mock chat ───────────────────────── */
+/* === Fallback generator for mock chat ========================= */
 
 const MOCK_NAMES = [
   'degen_maxi',
@@ -102,7 +102,7 @@ function generateMockChatMessage(_existing: ChatMessage[]): ChatMessage {
   };
 }
 
-/* ─── Hook ───────────────────────────────────────────────────── */
+/* === Hook ===================================================== */
 
 export function useStreamChat({
   streamId,

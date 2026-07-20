@@ -30,13 +30,13 @@ import {
   writeLimiter,
 } from '@/lib/rate-limit';
 
-// ── Matcher: all /api/* routes ─────────────────────────────────────────────
+// == Matcher: all /api/* routes =============================================
 
 export const config = {
   matcher: ['/api/:path*'],
 };
 
-// ── Rate-limit helpers ────────────────────────────────────────────────────
+// == Rate-limit helpers ====================================================
 
 /**
  * Best-effort client IP extraction.  Cloudflare sets `cf-connecting-ip` when
@@ -94,7 +94,7 @@ function setRateLimitHeaders(headers: Headers, limit: number, result: RateLimitR
   headers.set('X-RateLimit-Reset', String(result.resetTime));
 }
 
-// ── Auth constants ─────────────────────────────────────────────────────────
+// == Auth constants =========================================================
 
 const COOKIE_NAME = '__Host-dfid';
 const AUTH_TOKEN_PREFIX = 'Bearer ';
@@ -105,7 +105,7 @@ const SKIP_PATHS = ['/api/auth', '/api/health', '/api/status'];
 /** State-mutating HTTP methods that require auth. */
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-// ── Session payload shape (mirrors workers/api/src/session.ts) ────────────
+// == Session payload shape (mirrors workers/api/src/session.ts) ============
 
 interface SessionPayload {
   address: string;
@@ -114,7 +114,7 @@ interface SessionPayload {
   nonce: string;
 }
 
-// ── Inline hex helpers (no external deps — edge-safe) ───────────────────
+// == Inline hex helpers (no external deps — edge-safe) ===================
 
 function hexToBytes(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);
@@ -124,7 +124,7 @@ function hexToBytes(hex: string): Uint8Array {
   return bytes;
 }
 
-// ── HMAC key import (mirrors workers/api/src/session.ts) ────────────────
+// == HMAC key import (mirrors workers/api/src/session.ts) ================
 
 async function importKey(secret: string): Promise<CryptoKey> {
   const keyBytes =
@@ -140,7 +140,7 @@ async function importKey(secret: string): Promise<CryptoKey> {
   );
 }
 
-// ── Session verification (mirrors workers/api/src/session.ts) ───────────
+// == Session verification (mirrors workers/api/src/session.ts) ===========
 
 async function verifySessionCookie(value: string, secret: string): Promise<SessionPayload | null> {
   const [data, signature] = value.split('.');
@@ -184,7 +184,7 @@ function parseSessionCookie(cookieHeader: string | null): string | null {
   return null;
 }
 
-// ── CORS helpers ────────────────────────────────────────────────────────
+// == CORS helpers ========================================================
 
 const ALLOWED_ORIGINS = [
   'https://degenfeed.xyz',
@@ -213,7 +213,7 @@ function applyHeaders(response: NextResponse, headers: Record<string, string>): 
   return response;
 }
 
-// ── Route helpers ───────────────────────────────────────────────────────
+// == Route helpers =======================================================
 
 function isSkipPath(pathname: string): boolean {
   return SKIP_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -223,7 +223,7 @@ function isAdminPath(pathname: string): boolean {
   return pathname.startsWith('/api/admin/');
 }
 
-// ── Error responses ───────────────────────────────────────────────────
+// == Error responses ===================================================
 
 function unauthorizedResponse(corsHeaders: Record<string, string>): NextResponse {
   return NextResponse.json(
@@ -239,7 +239,7 @@ function forbiddenResponse(corsHeaders: Record<string, string>): NextResponse {
   );
 }
 
-// ── Middleware ──────────────────────────────────────────────────────────
+// == Middleware ==========================================================
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
@@ -247,7 +247,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   const ip = getClientIp(request);
   const corsHeaders = getCorsHeaders(request);
 
-  // ── Step 1: Rate limiting (applies to ALL /api/* before anything else) ──
+  // == Step 1: Rate limiting (applies to ALL /api/* before anything else) ==
   const picked = pickLimiter(method, pathname);
   let rateLimitMeta: { limit: number; result: RateLimitResult } | null = null;
 
@@ -275,22 +275,22 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return response;
   };
 
-  // ── Step 2: CORS preflight ────────────────────────────────────
+  // == Step 2: CORS preflight ====================================
   if (method === 'OPTIONS') {
     return new NextResponse(null, { status: 204, headers: corsHeaders });
   }
 
-  // ── Step 3: Public paths pass through ──────────────────────────
+  // == Step 3: Public paths pass through ==========================
   if (isSkipPath(pathname)) {
     return stamp(applyHeaders(NextResponse.next(), corsHeaders));
   }
 
-  // ── Step 4: GET requests are public (read-only) ────────────────
+  // == Step 4: GET requests are public (read-only) ================
   if (!MUTATING_METHODS.has(method)) {
     return stamp(applyHeaders(NextResponse.next(), corsHeaders));
   }
 
-  // ── Step 5: Session verification for mutating methods ──────────
+  // == Step 5: Session verification for mutating methods ==========
   const secret = process.env.AUTH_SECRET;
   if (!secret) {
     console.error('[middleware] AUTH_SECRET environment variable is not set');
@@ -322,7 +322,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return stamp(unauthorizedResponse(corsHeaders));
   }
 
-  // ── Step 6: Admin route check ──────────────────────────────────
+  // == Step 6: Admin route check ==================================
   if (isAdminPath(pathname)) {
     const adminWallets = process.env.ADMIN_WALLETS ?? '';
     if (!adminWallets) {
@@ -334,6 +334,6 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // ── Step 7: Proceed ────────────────────────────────────────────
+  // == Step 7: Proceed ============================================
   return stamp(applyHeaders(NextResponse.next(), corsHeaders));
 }

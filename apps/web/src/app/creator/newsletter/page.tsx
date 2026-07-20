@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// ─── Types ─────────────────────────────────────────────────
+// === Types =================================================
 
 interface Subscriber {
   email: string;
@@ -48,7 +48,7 @@ interface SendResult {
 
 type TabId = 'compose' | 'subscribers' | 'analytics' | 'templates';
 
-// ─── Helpers ───────────────────────────────────────────────
+// === Helpers ===============================================
 
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -64,7 +64,7 @@ function pluralize(n: number, singular: string, plural?: string): string {
   return n === 1 ? singular : (plural ?? `${singular}s`);
 }
 
-// ─── Stat Card ─────────────────────────────────────────────
+// === Stat Card =============================================
 
 function StatCard({
   label,
@@ -92,7 +92,7 @@ function StatCard({
   );
 }
 
-// ─── Mini Progress ─────────────────────────────────────────
+// === Mini Progress =========================================
 
 function MiniProgress({ value, total, color, label }: {
   value: number;
@@ -117,7 +117,7 @@ function MiniProgress({ value, total, color, label }: {
   );
 }
 
-// ─── Main Component ────────────────────────────────────────
+// === Main Component ========================================
 
 export default function CreatorNewsletterPage() {
   const [activeTab, setActiveTab] = useState<TabId>('compose');
@@ -137,7 +137,7 @@ export default function CreatorNewsletterPage() {
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<SendResult | null>(null);
 
-  // ─── Load subscriber counts ────────────────────────────────
+  // === Load subscriber counts ================================
 
   useEffect(() => {
     mountedRef.current = true;
@@ -172,7 +172,7 @@ export default function CreatorNewsletterPage() {
     return () => { mountedRef.current = false; };
   }, []);
 
-  // ─── Load more subscribers ────────────────────────────────
+  // === Load more subscribers ================================
 
   const loadMore = useCallback(async () => {
     const nextPage = page + 1;
@@ -189,7 +189,7 @@ export default function CreatorNewsletterPage() {
     }
   }, [page]);
 
-  // ─── Load analytics stats for a post ──────────────────────
+  // === Load analytics stats for a post ======================
 
   const loadStats = useCallback(async (postId: string) => {
     try {
@@ -203,7 +203,7 @@ export default function CreatorNewsletterPage() {
     }
   }, []);
 
-  // ─── Send newsletter ──────────────────────────────────────
+  // === Send newsletter ======================================
 
   const handleSend = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -242,7 +242,7 @@ export default function CreatorNewsletterPage() {
     }
   }, [subject, content, tier]);
 
-  // ─── Aggregate dashboard values ───────────────────────────
+  // === Aggregate dashboard values ===========================
 
   const dashboard = useMemo(() => ({
     totalSubscribers: counts.total,
@@ -254,7 +254,7 @@ export default function CreatorNewsletterPage() {
     clickRate: stats ? formatPercent(stats.clickRate) : '—',
   }), [counts, stats]);
 
-  // ─── Tabs ─────────────────────────────────────────────────
+  // === Tabs =================================================
 
   const TABS: { id: TabId; label: string; icon: string }[] = [
     { id: 'compose', label: 'Compose', icon: '✉' },
@@ -263,7 +263,7 @@ export default function CreatorNewsletterPage() {
     { id: 'templates', label: 'Templates', icon: '🎨' },
   ];
 
-  // ─── Loading State ────────────────────────────────────────
+  // === Loading State ========================================
 
   if (loading) {
     return (

@@ -11,7 +11,7 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import type { SourcePlatform } from './types';
 
-/* ─── Constants ─────────────────────────────────────────────────── */
+/* === Constants =================================================== */
 
 const REFERRER_PATTERNS: ReadonlyArray<{
   pattern: RegExp;
@@ -42,7 +42,7 @@ const REFERRER_PATTERNS: ReadonlyArray<{
 
 const PLATFORM_PARAM_KEYS = ['ref', 'source', 'utm_source', 'platform'] as const;
 
-/* ─── Snapshot store for document.referrer ─────────────────────── */
+/* === Snapshot store for document.referrer ======================= */
 
 function getReferrer(): string {
   if (typeof document === 'undefined') return '';
@@ -60,7 +60,7 @@ function subscribeToReferrer(callback: () => void): () => void {
   };
 }
 
-/* ─── Hook ──────────────────────────────────────────────────────── */
+/* === Hook ======================================================== */
 
 export interface UseSourcePlatformResult {
   /** The detected source platform, or `'direct'` if none found. */
@@ -157,7 +157,7 @@ export function useSourcePlatform(): UseSourcePlatformResult {
   return { ...result, reset };
 }
 
-/* ─── Helpers ────────────────────────────────────────────────────── */
+/* === Helpers ====================================================== */
 
 function extractDomain(url: string): string {
   try {
@@ -209,7 +209,7 @@ function detectFromUserAgent(ua: string): SourcePlatform | null {
   return null;
 }
 
-/* ─── Standalone helper for non-hook usage ──────────────────────── */
+/* === Standalone helper for non-hook usage ======================== */
 
 export function detectSourcePlatform(): SourcePlatform {
   const ref = typeof document !== 'undefined' ? document.referrer : '';

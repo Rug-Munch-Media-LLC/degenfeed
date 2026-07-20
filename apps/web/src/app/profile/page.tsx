@@ -31,7 +31,7 @@ import { GoLiveModal } from '../../components/streams/GoLiveModal';
 
 export const dynamic = 'force-dynamic';
 
-/* ─── Constants ──────────────────────────────────────────────── */
+/* === Constants ================================================ */
 
 const PROTOCOL_COLORS: Record<string, string> = {
   nostr: '#8b5cf6',
@@ -55,7 +55,7 @@ const PROTOCOL_LABELS: Record<string, string> = {
   solana: 'Solana',
 };
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface ResolvedIdentity {
   id: string;
@@ -78,7 +78,7 @@ interface ProfileStats {
 
 type ProfileTab = 'posts' | 'replies' | 'media' | 'likes';
 
-/* ─── Helpers ────────────────────────────────────────────────── */
+/* === Helpers ================================================== */
 
 function shortenAddress(addr: string): string {
   if (addr.length < 10) return addr;
@@ -106,7 +106,7 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-/* ─── Skeleton ───────────────────────────────────────────────── */
+/* === Skeleton ================================================= */
 
 function ProfileSkeleton() {
   return (
@@ -137,7 +137,7 @@ function ProfileSkeleton() {
   );
 }
 
-/* ─── Stats Grid ─────────────────────────────────────────────── */
+/* === Stats Grid =============================================== */
 
 function StatsBar({ stats }: { stats: ProfileStats }) {
   const items: Array<{ label: string; value: number; icon: string }> = [
@@ -182,7 +182,7 @@ function StatsBar({ stats }: { stats: ProfileStats }) {
   );
 }
 
-/* ─── Protocol Badges ────────────────────────────────────────── */
+/* === Protocol Badges ========================================== */
 
 function ProtocolBadgesRow({ identities }: { identities: ResolvedIdentity[] }) {
   if (identities.length === 0) return null;
@@ -227,7 +227,7 @@ function ProtocolBadgesRow({ identities }: { identities: ResolvedIdentity[] }) {
   );
 }
 
-/* ─── Achievement Badges ─────────────────────────────────────── */
+/* === Achievement Badges ======================================= */
 
 const ACHIEVEMENTS = [
   { id: 'early', label: 'Early Adopter', icon: '🌅', color: 'from-amber-400 to-orange-500' },
@@ -268,7 +268,7 @@ function AchievementBadges({ earned }: { earned: string[] }) {
   );
 }
 
-/* ─── Tabs ───────────────────────────────────────────────────── */
+/* === Tabs ===================================================== */
 
 const TABS: Array<{ id: ProfileTab; label: string; icon: string }> = [
   {
@@ -346,7 +346,7 @@ function ProfileTabs({
   );
 }
 
-/* ─── Empty State for Tabs ───────────────────────────────────── */
+/* === Empty State for Tabs ===================================== */
 
 function TabEmptyState({ tab }: { tab: ProfileTab }) {
   const messages: Record<ProfileTab, { title: string; desc: string }> = {
@@ -373,7 +373,7 @@ function TabEmptyState({ tab }: { tab: ProfileTab }) {
   );
 }
 
-/* ─── Main Profile Page ──────────────────────────────────────── */
+/* === Main Profile Page ======================================== */
 
 export default function ProfilePage() {
   const {
@@ -451,7 +451,7 @@ export default function ProfilePage() {
 
   const earnedAchievements = ['early', 'streak'];
 
-  /* ─── Data loading ────────────────────────────────────────── */
+  /* === Data loading ========================================== */
 
   useEffect(() => {
     let cancelled = false;
@@ -569,7 +569,7 @@ export default function ProfilePage() {
       <div className="mx-auto max-w-2xl px-4 py-6 animate-page-enter">
         {!hasSignedIn ? (
           <>
-            {/* ── Hero ── */}
+            {/* == Hero == */}
             <div className="mb-8 flex flex-col items-center py-12">
               <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 via-purple-500/20 to-fuchsia-500/30 shadow-[0_0_40px_rgba(34,197,94,0.15)]">
                 <span className="text-4xl font-bold text-[var(--color-fg)]">?</span>
@@ -585,7 +585,7 @@ export default function ProfilePage() {
               </button>
             </div>
 
-            {/* ── How it works ── */}
+            {/* == How it works == */}
             <div className="grid gap-4 sm:grid-cols-3">
               {[
                 {
@@ -1156,10 +1156,10 @@ export default function ProfilePage() {
           </>
         )}
 
-        {/* ── Edit Profile Modal ── */}
+        {/* == Edit Profile Modal == */}
         <EditProfileModal open={showEditModal} onClose={() => setShowEditModal(false)} />
 
-        {/* ── Premium Upgrade Modal ── */}
+        {/* == Premium Upgrade Modal == */}
         <PremiumPaymentModal
           open={showUpgradeModal}
           onClose={() => {
@@ -1173,7 +1173,7 @@ export default function ProfilePage() {
   );
 }
 
-// ─── Portable Credentials Section for Profile ─────────────────────────────
+// === Portable Credentials Section for Profile =============================
 
 function ProfileCredentialsSection({ walletAddress }: { walletAddress?: string }) {
   const [accounts, setAccounts] = useState<PlatformAccount[]>([]);

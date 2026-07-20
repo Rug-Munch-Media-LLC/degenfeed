@@ -1,0 +1,10 @@
+/* ── Features page inherits .landing-page classes from landing.css ── */
+
+/* Already using the classes from landing.css:
+   .landing-page, .features-hero, .features-nav, .feature-detail-section,
+   .feature-detail-grid, .feature-detail-card, .pricing-grid, .pricing-card,
+   .cta-section, .cta-heading, .cta-sub, .hero-ctas, .cta-primary,
+   .cta-secondary, .cta-footer-nav, .footer-link, .cta-copyright
+
+   All defined in landing.css
+*/

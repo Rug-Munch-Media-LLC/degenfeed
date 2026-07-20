@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import type { LiveStream } from './useLiveStreams';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface SpacesHubProps {
   spaces: LiveStream[];
   isLoading?: boolean;
 }
 
-/* ─── Speaker bubbles for a space card ───────────────────────── */
+/* === Speaker bubbles for a space card ========================= */
 
 function SpeakerBubbles({
   speakers,
@@ -59,7 +59,7 @@ function SpeakerBubbles({
   );
 }
 
-/* ─── Single space card ──────────────────────────────────────── */
+/* === Single space card ======================================== */
 
 function SpaceCard({ space }: { space: LiveStream }) {
   const speakers = space.space?.speakers ?? [];
@@ -104,7 +104,7 @@ function SpaceCard({ space }: { space: LiveStream }) {
   );
 }
 
-/* ─── Skeleton ───────────────────────────────────────────────── */
+/* === Skeleton ================================================= */
 
 function SpacesSkeleton() {
   return (
@@ -130,7 +130,7 @@ function SpacesSkeleton() {
   );
 }
 
-/* ─── Main Component ─────────────────────────────────────────── */
+/* === Main Component =========================================== */
 
 export function SpacesHub({ spaces, isLoading = false }: SpacesHubProps) {
   if (isLoading) {

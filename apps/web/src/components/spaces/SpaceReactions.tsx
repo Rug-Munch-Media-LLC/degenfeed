@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────
+// === Types ========================================================
 
 interface Reaction {
   userId: string;
@@ -17,7 +17,7 @@ interface SpaceReactionsProps {
   onSendReaction?: (emoji: string) => void;
 }
 
-// ─── Floating emoji animation ─────────────────────────────────────
+// === Floating emoji animation =====================================
 
 interface FloatingEmoji {
   id: string;
@@ -75,11 +75,11 @@ function FloatingEmojiBubble({
   );
 }
 
-// ─── Quick emojis ─────────────────────────────────────────────────
+// === Quick emojis =================================================
 
 const QUICK_EMOJIS = ['🔥', '❤️', '🚀', '💎', '🙌', '😂', '🎙️', '🤯', '👏', '💯'];
 
-// ─── Main Component ───────────────────────────────────────────────
+// === Main Component ===============================================
 
 export function SpaceReactions({
   spaceId: _spaceId,

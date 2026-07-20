@@ -4,7 +4,7 @@
  * LiveShortsViewer — Full-screen immersive live short viewer.
  *
  * Layout:
- *   ┌──────────────────────────────┐
+ *   ┌==============================┐
  *   │ 🔴 LIVE  👁️ 1.2K  [Chat]   │ ← Top overlay (creator, viewers)
  *   │                              │
  *   │       ▼ VIDEO PLAYER ▼       │ ← HLS video
@@ -13,7 +13,7 @@
  *   │    🔥🔥💀🔥💎                │ ← Emoji reactions
  *   │                              │
  *   │ [Tip] [💬] [Share] ⏱️ 02:30  │ ← Bottom action bar
- *   └──────────────────────────────┘
+ *   └==============================┘
  *
  * Supports: HLS playback, fullscreen, keyboard controls.
  */
@@ -34,7 +34,7 @@ interface LiveShortsViewerProps {
   onShare?: () => void;
 }
 
-/* ─── Helpers ─────────────────────────────────────────────────── */
+/* === Helpers =================================================== */
 
 function formatViewers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -42,7 +42,7 @@ function formatViewers(n: number): string {
   return String(n);
 }
 
-/* ─── Top Overlay ─────────────────────────────────────────────── */
+/* === Top Overlay =============================================== */
 
 function TopOverlay({
   session,
@@ -146,7 +146,7 @@ function TopOverlay({
   );
 }
 
-/* ─── Bottom Action Bar ────────────────────────────────────────── */
+/* === Bottom Action Bar ========================================== */
 
 function BottomBar({
   session,
@@ -211,7 +211,7 @@ function BottomBar({
   );
 }
 
-/* ─── HLS Video Player ─────────────────────────────────────────── */
+/* === HLS Video Player =========================================== */
 
 function VideoPlayer({
   playbackUrl,
@@ -258,7 +258,7 @@ function VideoPlayer({
   );
 }
 
-/* ─── Main Viewer ──────────────────────────────────────────────── */
+/* === Main Viewer ================================================ */
 
 export function LiveShortsViewer({ session, onClose, onShare }: LiveShortsViewerProps) {
   const [chatOpen, setChatOpen] = useState(false);

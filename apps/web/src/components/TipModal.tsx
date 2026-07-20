@@ -152,13 +152,13 @@ export function TipModal({
     return () => window.removeEventListener('keydown', handleTabTrap);
   }, [open, handleClose]);
 
-  // ── handleSend ──────────────────────────────────────────────────────
+  // == handleSend ======================================================
 
   const handleSend = useCallback(async () => {
     if (!selectedMethod || !amount) return;
 
     try {
-      // ── Direct on-chain tipping (bypasses backend) ──────────────
+      // == Direct on-chain tipping (bypasses backend) ==============
       if (selectedMethod === 'onchain_tip') {
         let ethAccount = account;
         if (!ethAccount) ethAccount = await connectWallet();
@@ -187,7 +187,7 @@ export function TipModal({
         return;
       }
 
-      // ── Ethereum / Base (backend-routed) ──────────────────────
+      // == Ethereum / Base (backend-routed) ======================
       if (selectedMethod === 'ethereum' || selectedMethod === 'base') {
         let ethAccount = account;
         if (!ethAccount) ethAccount = await connectWallet();
@@ -243,7 +243,7 @@ export function TipModal({
         return;
       }
 
-      // ── Solana ─────────────────────────────────────────────────
+      // == Solana =================================================
       if (selectedMethod === 'solana') {
         let solAccount = solanaAccount;
         if (!solAccount) solAccount = await connectSolana();
@@ -272,7 +272,7 @@ export function TipModal({
         return;
       }
 
-      // ── Lightning Zap ──────────────────────────────────────────
+      // == Lightning Zap ==========================================
       if (selectedMethod === 'lightning_zap') {
         setTipStatus('creating');
         const result = await fetchLightningInvoice(recipientAuthorId, amount, 'Tip from DegenFeed');
@@ -286,7 +286,7 @@ export function TipModal({
         return;
       }
 
-      // ── Lens Collect ───────────────────────────────────────────
+      // == Lens Collect ===========================================
       if (selectedMethod === 'lens_collect') {
         const intent = await createTip(
           recipientAuthorId,
@@ -336,7 +336,7 @@ export function TipModal({
         return;
       }
 
-      // ── Fallback ───────────────────────────────────────────────
+      // == Fallback ===============================================
       const intent = await createTip(
         recipientAuthorId,
         recipientProtocol,
@@ -374,7 +374,7 @@ export function TipModal({
     announce,
   ]);
 
-  // ── Fiat amount equivalents ─────────────────────────────────────────────
+  // == Fiat amount equivalents =============================================
   const fiatEquivalents: Record<string, string> = {
     '0.001': '≈ $1',
     '0.005': '≈ $5',
@@ -393,7 +393,7 @@ export function TipModal({
       ? ['1000', '5000', '10000', '50000', '100000']
       : ['0.001', '0.005', '0.01', '0.05', '0.1'];
 
-  // ── Confetti trigger for large tips ─────────────────────────────────────
+  // == Confetti trigger for large tips =====================================
   const confettiAmount = useMemo(() => {
     const fiatValue = fiatEquivalents[amount];
     if (!fiatValue) return 0;
@@ -500,7 +500,7 @@ export function TipModal({
             </div>
           ) : (
             <>
-              {/* ── Method selector ─────────────────────────────────── */}
+              {/* == Method selector =================================== */}
               <div className="mb-4">
                 <label
                   htmlFor="tip-method"
@@ -546,7 +546,7 @@ export function TipModal({
                 </div>
               </div>
 
-              {/* ── Amount ──────────────────────────────────────────── */}
+              {/* == Amount ============================================ */}
               <div className="mb-4">
                 <label
                   htmlFor="tip-amount"
@@ -599,7 +599,7 @@ export function TipModal({
                 </div>
               </div>
 
-              {/* ── Tip message (optional) ──────────────────────────── */}
+              {/* == Tip message (optional) ============================ */}
               <div className="mb-4">
                 <label
                   htmlFor="tip-message"
@@ -626,14 +626,14 @@ export function TipModal({
                 </div>
               </div>
 
-              {/* ── Fiat equivalent hint ── */}
+              {/* == Fiat equivalent hint == */}
               {fiatEquivalents[amount] && (
                 <p className="mb-3 text-[10px] text-[var(--color-muted)]">
                   {fiatEquivalents[amount]} USD equivalent at current rates
                 </p>
               )}
 
-              {/* ── Confetti overlay ── */}
+              {/* == Confetti overlay == */}
               {showConfetti && (
                 <div className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center">
                   {Array.from({ length: 16 }).map((_, i) => (
@@ -654,7 +654,7 @@ export function TipModal({
                 </div>
               )}
 
-              {/* ── Chain selector (on-chain only) ──────────────────── */}
+              {/* == Chain selector (on-chain only) ==================== */}
               {isOnchain && (
                 <div className="mb-4">
                   <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
@@ -687,7 +687,7 @@ export function TipModal({
                 </div>
               )}
 
-              {/* ── Wallet connect reminders ─────────────────────────── */}
+              {/* == Wallet connect reminders =========================== */}
               {selectedMethod === 'ethereum' && !account && (
                 <div className="mb-4 rounded-lg border border-yellow-900/50 bg-yellow-900/10 p-3">
                   <p className="text-xs text-yellow-400">
@@ -711,7 +711,7 @@ export function TipModal({
                 </div>
               )}
 
-              {/* ── Solana Blink share ───────────────────────────────── */}
+              {/* == Solana Blink share ================================= */}
               {selectedMethod === 'solana' && (
                 <button
                   type="button"
@@ -729,7 +729,7 @@ export function TipModal({
                 </button>
               )}
 
-              {/* ── Send button ──────────────────────────────────────── */}
+              {/* == Send button ======================================== */}
               <button
                 type="button"
                 disabled={
@@ -759,7 +759,7 @@ export function TipModal({
                 <p className="mt-2 text-xs text-red-400 text-center">{state.error}</p>
               )}
 
-              {/* ── Success view ─────────────────────────────────────── */}
+              {/* == Success view ======================================= */}
               {state.status === 'sent' && state.txHash && (
                 <div className="mt-3 rounded-lg bg-green-900/20 border border-green-900/50 p-3">
                   {selectedMethod === 'lightning_zap' ? (

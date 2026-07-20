@@ -11,7 +11,7 @@ import { memo, useState } from 'react';
 import { formatYouTubeCount, formatYouTubeTimeAgo } from './useYouTube';
 import type { YouTubeShort } from './useYouTube';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export interface YouTubeShortsCardProps {
   short: YouTubeShort;
@@ -19,7 +19,7 @@ export interface YouTubeShortsCardProps {
   onLike?: (short: YouTubeShort) => void;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────
+// === Component ===========================================================
 
 export const YouTubeShortsCard = memo(function YouTubeShortsCard({
   short,

@@ -7,7 +7,7 @@
 
 /* biome-ignore lint/correctness/noUnknownPseudoClass: CSS Modules :global() syntax */
 :global(.layout-media-grid) {
-  /* ── Post cards: hide text, show media only ── */
+  /* == Post cards: hide text, show media only == */
   & .post-card {
     padding: 8px;
     border-bottom: 1px solid var(--color-border);
@@ -48,7 +48,7 @@
     display: none;
   }
 
-  /* ── Image grid: masonry-style ── */
+  /* == Image grid: masonry-style == */
   & .post-card .image-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -71,7 +71,7 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
 
-  /* ── Single image ── */
+  /* == Single image == */
   & .post-card .image-grid img,
   & .post-card .image-grid video {
     width: 100%;
@@ -79,7 +79,7 @@
     object-fit: cover;
   }
 
-  /* ── Feed header should be compact ── */
+  /* == Feed header should be compact == */
   & .feed-header {
     padding-top: 0;
   }
@@ -89,7 +89,7 @@
     display: none;
   }
 
-  /* ── Increase main feed width for grid ── */
+  /* == Increase main feed width for grid == */
   & .main-feed {
     max-width: 100%;
   }

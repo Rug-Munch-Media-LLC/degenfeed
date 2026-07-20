@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { type StreamExtended, type StreamQuality, QUALITY_OPTIONS } from './types';
 
-/* ─── Internal HLS/Mock Player ───────────────────────────────── */
+/* === Internal HLS/Mock Player ================================= */
 
 function VideoDisplay({ stream }: { stream: StreamExtended }) {
   const gradients: Record<string, string> = {
@@ -46,7 +46,7 @@ function VideoDisplay({ stream }: { stream: StreamExtended }) {
   );
 }
 
-/* ─── Control Icons ──────────────────────────────────────────── */
+/* === Control Icons ============================================ */
 
 function IconPlay({ size = 20 }: { size?: number }) {
   return (
@@ -125,7 +125,7 @@ function IconSettings() {
   );
 }
 
-/* ─── StreamPlayer ───────────────────────────────────────────── */
+/* === StreamPlayer ============================================= */
 
 interface StreamPlayerProps {
   stream: StreamExtended;
@@ -381,7 +381,7 @@ export function StreamPlayer({ stream, onClose, onTheaterToggle, isTheater = fal
   );
 }
 
-/* ─── Helpers ────────────────────────────────────────────────── */
+/* === Helpers ================================================== */
 
 function formatDuration(_pct: number): string {
   const totalSec = Math.floor(_pct * 60); // sim: 60 min full

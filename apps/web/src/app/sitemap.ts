@@ -11,7 +11,7 @@ const BASE_URL = 'https://app.degenfeed.xyz';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  // ── 1. Static high-value pages ──────────────────────────────────────
+  // == 1. Static high-value pages ======================================
   const staticRoutes: Array<{
     path: string;
     changefreq: MetadataRoute.Sitemap[number]['changeFrequency'];
@@ -52,7 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/home/funding', changefreq: 'hourly', priority: 0.7 },
   ];
 
-  // ── 2. Per-protocol home sections ───────────────────────────────────
+  // == 2. Per-protocol home sections ===================================
   const protocolSections = [
     'nostr',
     'farcaster',
@@ -65,7 +65,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'lemmy',
   ];
 
-  // ── 3. Niches (topic filter pages) ──────────────────────────────────
+  // == 3. Niches (topic filter pages) ==================================
   const niches = [
     'bitcoin',
     'ethereum',
@@ -78,7 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'layer2',
   ];
 
-  // ── 4. Dynamic data from the API ────────────────────────────────────
+  // == 4. Dynamic data from the API ====================================
   let dynamicCommunities: string[] = [];
   let dynamicTokens: string[] = [];
 

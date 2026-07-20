@@ -306,7 +306,7 @@ export interface BotApiKey {
   isActive: boolean;
 }
 
-// ─── Constants ─────────────────────────────────────────────────────────
+// === Constants =========================================================
 
 export const CATEGORY_LABELS: Record<FeddyCategory, string> = {
   crypto: 'Crypto',

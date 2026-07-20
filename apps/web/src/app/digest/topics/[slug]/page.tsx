@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 interface TopicPost {
   id: string;
@@ -24,7 +24,7 @@ interface TopicDigest {
   newsletterCount: number;
 }
 
-// ─── Topic Metadata ─────────────────────────────────────────────────────────
+// === Topic Metadata =========================================================
 
 const TOPIC_META: Record<
   string,
@@ -115,7 +115,7 @@ function formatTime(ts: number): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
-// ─── Topic Page ────────────────────────────────────────────────────────────
+// === Topic Page ============================================================
 
 export default function TopicDigestPage() {
   const params = useParams();

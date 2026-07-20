@@ -11,7 +11,7 @@
 import { useCallback, useMemo } from 'react';
 import useSWRInfinite from 'swr/infinite';
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 export type ShortSource =
   | 'activitypub'
@@ -93,7 +93,7 @@ export interface UseUnifiedShortsResult {
   isEmpty: boolean;
 }
 
-// ─── Fetcher ───────────────────────────────────────────────────────────────
+// === Fetcher ===============================================================
 
 const fetcher = async (url: string): Promise<UnifiedShortsResponse> => {
   const res = await fetch(url, {
@@ -106,7 +106,7 @@ const fetcher = async (url: string): Promise<UnifiedShortsResponse> => {
   return res.json() as Promise<UnifiedShortsResponse>;
 };
 
-// ─── Hook ──────────────────────────────────────────────────────────────────
+// === Hook ==================================================================
 
 export function useUnifiedShorts(opts: UseUnifiedShortsOptions = {}): UseUnifiedShortsResult {
   const { source, category, limit = 20 } = opts;

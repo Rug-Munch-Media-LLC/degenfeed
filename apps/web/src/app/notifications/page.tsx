@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { useNotifications } from '../../hooks/useNotifications';
 
-/* ─── Type helpers ─────────────────────────────────────────── */
+/* === Type helpers =========================================== */
 
 const TYPE_ICON: Record<string, string> = {
   like: '❤️',
@@ -40,7 +40,7 @@ const PROTOCOLS = [
   { id: 'tip', label: 'Tips' },
 ] as const;
 
-/* ─── Helpers ──────────────────────────────────────────────── */
+/* === Helpers ================================================ */
 
 function getTypeIcon(type: string): string {
   return TYPE_ICON[type] || '💬';
@@ -76,7 +76,7 @@ function getActorInitials(name: string): string {
   );
 }
 
-/* ─── Loading Skeleton ─────────────────────────────────────── */
+/* === Loading Skeleton ======================================= */
 
 function NotificationSkeleton() {
   return (
@@ -92,7 +92,7 @@ function NotificationSkeleton() {
   );
 }
 
-/* ─── Notification Row ────────────────────────────────────── */
+/* === Notification Row ====================================== */
 
 interface NotificationRowProps {
   id: string;
@@ -222,7 +222,7 @@ function NotificationRow({
   );
 }
 
-/* ─── Empty State ──────────────────────────────────────────── */
+/* === Empty State ============================================ */
 
 function EmptyState({ hasSignedIn }: { hasSignedIn: boolean }) {
   return (
@@ -244,7 +244,7 @@ function EmptyState({ hasSignedIn }: { hasSignedIn: boolean }) {
   );
 }
 
-/* ─── Not Signed-in State ──────────────────────────────────── */
+/* === Not Signed-in State ==================================== */
 
 function SignInPrompt({ onSignIn }: { onSignIn: () => void }) {
   return (
@@ -264,7 +264,7 @@ function SignInPrompt({ onSignIn }: { onSignIn: () => void }) {
   );
 }
 
-/* ─── Notification Preferences Panel ───────────────────────── */
+/* === Notification Preferences Panel ========================= */
 
 // biome-ignore lint/suspicious/noExplicitAny: notification prefs are a dynamic key/value map
 type PrefsRecord = Record<string, any>;
@@ -517,7 +517,7 @@ function NotificationPrefsPanel({ prefs, onSave, onClose }: NotificationPrefsPan
   );
 }
 
-/* ─── Page ─────────────────────────────────────────────────── */
+/* === Page =================================================== */
 
 export default function NotificationsPage() {
   const { ready, signedInProtocols, openSignIn } = useAuth();
@@ -538,7 +538,7 @@ export default function NotificationsPage() {
   const [showPrefs, setShowPrefs] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
 
-  /* ── Filter ─────────────────────────────────────────────── */
+  /* == Filter =============================================== */
   const filtered = useMemo(
     () =>
       activeProtocol === 'all'
@@ -550,7 +550,7 @@ export default function NotificationsPage() {
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 
-  /* ── Unread counts per protocol ─────────────────────────── */
+  /* == Unread counts per protocol =========================== */
   const unreadByProtocol = useMemo(() => {
     const map: Record<string, number> = {};
     for (const p of PROTOCOLS) {
@@ -562,7 +562,7 @@ export default function NotificationsPage() {
 
   const filteredUnread = filtered.filter((n) => !n.read).length;
 
-  /* ── Infinite scroll ────────────────────────────────────── */
+  /* == Infinite scroll ====================================== */
   useEffect(() => {
     const el = loaderRef.current;
     if (!el) return;
@@ -578,7 +578,7 @@ export default function NotificationsPage() {
     return () => observer.disconnect();
   }, [hasMore, loading]);
 
-  /* ── Handlers ───────────────────────────────────────────── */
+  /* == Handlers ============================================= */
   const handleProtocolClick = useCallback((id: string) => {
     setActiveProtocol((prev) => {
       if (prev === id) return 'all';

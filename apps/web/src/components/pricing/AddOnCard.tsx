@@ -8,7 +8,7 @@
  * fee actually covers (gas, DNS, registration).
  */
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 export interface AddOn {
   name: string;
@@ -84,7 +84,7 @@ export const ADD_ONS: AddOn[] = [
   },
 ];
 
-// ─── Frequency Badge ───────────────────────────────────────────────────────
+// === Frequency Badge =======================================================
 
 function FrequencyBadge({ freq }: { freq: 'one-time' | 'yearly' }) {
   const styles = {
@@ -101,7 +101,7 @@ function FrequencyBadge({ freq }: { freq: 'one-time' | 'yearly' }) {
   );
 }
 
-// ─── Single Add-On Card ───────────────────────────────────────────────────
+// === Single Add-On Card ===================================================
 
 function AddOnCardItem({ addOn }: { addOn: AddOn }) {
   return (
@@ -134,7 +134,7 @@ function AddOnCardItem({ addOn }: { addOn: AddOn }) {
   );
 }
 
-// ─── Add-Ons Section ──────────────────────────────────────────────────────
+// === Add-Ons Section ======================================================
 
 export function AddOnsSection({ addOns = ADD_ONS }: { addOns?: AddOn[] }) {
   return (
@@ -187,7 +187,7 @@ export function AddOnsSection({ addOns = ADD_ONS }: { addOns?: AddOn[] }) {
   );
 }
 
-// ─── Cost Breakdown (for signup flow) ─────────────────────────────────────
+// === Cost Breakdown (for signup flow) =====================================
 
 export function CostBreakdown() {
   return (

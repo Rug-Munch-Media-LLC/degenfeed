@@ -16,7 +16,7 @@ import Image from 'next/image';
 import type { CrossChainTip, ShortSource, ZoraNftInfo } from '../../hooks/useUnifiedShorts';
 import { ShortsSourceBadge } from './ShortsSourceBadge';
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// === Helpers ===============================================================
 
 function formatTimeAgo(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -44,7 +44,7 @@ function formatMintPrice(price: string, currency: string): string {
   return `${price} ${currency}`;
 }
 
-// ─── Props ─────────────────────────────────────────────────────────────────
+// === Props =================================================================
 
 interface ShortsOverlayProps {
   source: ShortSource;
@@ -72,7 +72,7 @@ interface ShortsOverlayProps {
   onTipLightning?: () => void;
 }
 
-// ─── Component ─────────────────────────────────────────────────────────────
+// === Component =============================================================
 
 export function ShortsOverlay({
   source,
@@ -111,7 +111,7 @@ export function ShortsOverlay({
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
       <div className="relative z-10 px-4 pb-5 pt-16">
-        {/* ── Creator row ── */}
+        {/* == Creator row == */}
         <div className="mb-2 flex items-center gap-2">
           {onProfileClick ? (
             <button
@@ -163,7 +163,7 @@ export function ShortsOverlay({
           <ShortsSourceBadge source={source} label={sourceLabel} color={sourceColor} size="sm" />
         </div>
 
-        {/* ── Caption ── */}
+        {/* == Caption == */}
         <div className="mb-1">
           <button
             type="button"
@@ -183,7 +183,7 @@ export function ShortsOverlay({
           </button>
         </div>
 
-        {/* ── Hashtags ── */}
+        {/* == Hashtags == */}
         {hashtags.length > 0 && (
           <div className="mb-1.5 flex flex-wrap gap-1.5">
             {hashtags.map((tag) => (
@@ -199,7 +199,7 @@ export function ShortsOverlay({
           </div>
         )}
 
-        {/* ── Niche + Time ── */}
+        {/* == Niche + Time == */}
         <div className="mb-2 flex items-center gap-1.5">
           <svg
             width="12"
@@ -224,7 +224,7 @@ export function ShortsOverlay({
           </span>
         </div>
 
-        {/* ── Zora NFT mint badge ── */}
+        {/* == Zora NFT mint badge == */}
         {nft && (
           <div className="mb-2">
             <button
@@ -266,7 +266,7 @@ export function ShortsOverlay({
           </div>
         )}
 
-        {/* ── Cross-platform tip buttons ── */}
+        {/* == Cross-platform tip buttons == */}
         {showCollectSection && (
           <div className="flex flex-wrap items-center gap-1.5">
             {/* Tip via ETH (Base) */}
@@ -390,7 +390,7 @@ export function ShortsOverlay({
           </div>
         )}
 
-        {/* ── Swipe up hint ── */}
+        {/* == Swipe up hint == */}
         <div className="mt-3 flex items-center gap-1.5 opacity-40">
           <svg
             width="12"

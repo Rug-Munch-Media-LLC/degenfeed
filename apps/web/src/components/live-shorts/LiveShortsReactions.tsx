@@ -31,7 +31,7 @@ const QUICK_REACTIONS = ['🔥', '💎', '🚀', '💀', '❤️', '👀', '🎉
 const FLOAT_DURATION = 3000;
 const MAX_FLOATING = 15;
 
-// ─── Mock reaction generator ──────────────────────────────────────────
+// === Mock reaction generator ==========================================
 
 const MOCK_EMOJIS = ['🔥', '💎', '🚀', '💀', '❤️', '👀', '🎉', '💯', '🦍', '🌙'];
 

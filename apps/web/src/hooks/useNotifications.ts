@@ -17,7 +17,7 @@
 import { useContext } from 'react';
 import { NotificationContext, type NotificationContextValue } from './NotificationProvider';
 
-/* ─── Hook ─────────────────────────────────────────────────── */
+/* === Hook =================================================== */
 
 export function useNotifications(_enabled?: boolean): NotificationContextValue {
   const ctx = useContext(NotificationContext);

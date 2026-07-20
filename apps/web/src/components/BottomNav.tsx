@@ -13,7 +13,7 @@ interface NavItem {
   requiresAuth?: boolean;
 }
 
-/* ─── SVG Icon Components ──────────────────────────────────── */
+/* === SVG Icon Components ==================================== */
 
 function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
   const sw = active ? 2.5 : 1.5;
@@ -118,7 +118,7 @@ function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
   }
 }
 
-/* ─── Compose FAB Icon ─────────────────────────────────────── */
+/* === Compose FAB Icon ======================================= */
 
 function ComposeFABIcon() {
   return (
@@ -139,7 +139,7 @@ function ComposeFABIcon() {
   );
 }
 
-/* ─── Nav config ───────────────────────────────────────────── */
+/* === Nav config ============================================= */
 
 const AUTH_NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: 'home' },
@@ -160,7 +160,7 @@ const GUEST_NAV: NavItem[] = [
   { href: '/notifications', label: 'Notifs', icon: 'notifs' },
 ];
 
-/* ─── Local storage key for first visit hint ───────────────── */
+/* === Local storage key for first visit hint ================= */
 
 const FIRST_VISIT_KEY = 'df_bottomnav_first_visit';
 

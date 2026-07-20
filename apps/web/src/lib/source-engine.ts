@@ -20,7 +20,7 @@ import {
   type TrendingSource,
 } from '@degenfeed/feed-providers';
 
-// ─── Persistent storage (file-backed) ──────────────────────────────────
+// === Persistent storage (file-backed) ==================================
 
 const STORAGE_PATH = '/tmp/degenfeed-sources.json';
 
@@ -70,7 +70,7 @@ function saveData(data: PersistedData): void {
   }
 }
 
-// ─── Known existing sources ──────────────────────────────────────────
+// === Known existing sources ==========================================
 
 const KNOWN_REDDIT_SUBS = [
   'cryptocurrency',
@@ -108,7 +108,7 @@ function getExistingSources(data: PersistedData): Record<string, string[]> {
   };
 }
 
-// ─── Public API ───────────────────────────────────────────────────────
+// === Public API =======================================================
 
 export interface DiscoveryResult {
   success: boolean;

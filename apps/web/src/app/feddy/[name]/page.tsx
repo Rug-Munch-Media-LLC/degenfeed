@@ -15,7 +15,7 @@ import { usePremium } from '../../../hooks/usePremium';
 import { GoLiveModal } from '../../../components/streams/GoLiveModal';
 import type { FeddyCommunity, CommunityMember as Member, CommunityPost as Post, CommunityStats, MemberRole } from '../../../components/feddy/types';
 
-// ─── Skeleton ──────────────────────────────────────────────────────────
+// === Skeleton ==========================================================
 
 function CommunitySkeleton() {
   return (
@@ -38,7 +38,7 @@ function CommunitySkeleton() {
   );
 }
 
-// ─── Community Page ────────────────────────────────────────────────────
+// === Community Page ====================================================
 
 export default function CommunityPage({
   params,

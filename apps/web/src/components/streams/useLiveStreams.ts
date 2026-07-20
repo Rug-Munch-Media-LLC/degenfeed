@@ -2,7 +2,7 @@
 
 import useSWR from 'swr';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 export type StreamType = 'solo' | 'spaces' | 'collab' | 'launch';
 
@@ -39,7 +39,7 @@ export interface LiveStreamsResponse {
   total: number;
 }
 
-/* ─── Fetcher ────────────────────────────────────────────────── */
+/* === Fetcher ================================================== */
 
 const fetcher = async (url: string): Promise<LiveStreamsResponse> => {
   const res = await fetch(url);
@@ -47,7 +47,7 @@ const fetcher = async (url: string): Promise<LiveStreamsResponse> => {
   return res.json() as Promise<LiveStreamsResponse>;
 };
 
-/* ─── Fallback mock data ─────────────────────────────────────── */
+/* === Fallback mock data ======================================= */
 
 function generateMockStreams(): LiveStreamsResponse {
   const now = Date.now();
@@ -147,7 +147,7 @@ function generateMockStreams(): LiveStreamsResponse {
   return { streams, featured, total: streams.length };
 }
 
-/* ─── Hook ───────────────────────────────────────────────────── */
+/* === Hook ===================================================== */
 
 export function useLiveStreams() {
   const { data, error, isLoading, mutate, isValidating } = useSWR<LiveStreamsResponse>(

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { memo } from 'react';
 
-// ─── Types ───────────────────────────────────────────────────────────
+// === Types ===========================================================
 
 interface SidebarItem {
   label: string;
@@ -20,7 +20,7 @@ interface SidebarWidget {
   items: SidebarItem[];
 }
 
-// ─── Farcaster ───────────────────────────────────────────────────────
+// === Farcaster =======================================================
 
 const FARCASTER_WIDGETS: SidebarWidget[] = [
   {
@@ -48,7 +48,7 @@ const FARCASTER_WIDGETS: SidebarWidget[] = [
   },
 ];
 
-// ─── Lens ────────────────────────────────────────────────────────────
+// === Lens ============================================================
 
 const LENS_WIDGETS: SidebarWidget[] = [
   {
@@ -76,7 +76,7 @@ const LENS_WIDGETS: SidebarWidget[] = [
   },
 ];
 
-// ─── Bluesky ─────────────────────────────────────────────────────────
+// === Bluesky =========================================================
 
 const BLUESKY_WIDGETS: SidebarWidget[] = [
   {
@@ -103,7 +103,7 @@ const BLUESKY_WIDGETS: SidebarWidget[] = [
   },
 ];
 
-// ─── Nostr ───────────────────────────────────────────────────────────
+// === Nostr ===========================================================
 
 const NOSTR_WIDGETS: SidebarWidget[] = [
   {
@@ -131,7 +131,7 @@ const NOSTR_WIDGETS: SidebarWidget[] = [
   },
 ];
 
-// ─── Mastodon ────────────────────────────────────────────────────────
+// === Mastodon ========================================================
 
 const MASTODON_WIDGETS: SidebarWidget[] = [
   {
@@ -160,7 +160,7 @@ const MASTODON_WIDGETS: SidebarWidget[] = [
   },
 ];
 
-// ─── Registry ────────────────────────────────────────────────────────
+// === Registry ========================================================
 
 const PROTOCOL_WIDGETS: Record<string, SidebarWidget[]> = {
   farcaster: FARCASTER_WIDGETS,
@@ -170,7 +170,7 @@ const PROTOCOL_WIDGETS: Record<string, SidebarWidget[]> = {
   mastodon: MASTODON_WIDGETS,
 };
 
-// ─── Quick actions ───────────────────────────────────────────────────
+// === Quick actions ===================================================
 
 const PROTOCOL_QUICK_ACTIONS: Record<string, { label: string; href: string; icon: string }[]> = {
   farcaster: [
@@ -195,7 +195,7 @@ const PROTOCOL_QUICK_ACTIONS: Record<string, { label: string; href: string; icon
   ],
 };
 
-// ─── Widget card ─────────────────────────────────────────────────────
+// === Widget card =====================================================
 
 function WidgetCard({ widget, color }: { widget: SidebarWidget; color: string }) {
   return (
@@ -262,7 +262,7 @@ function WidgetCard({ widget, color }: { widget: SidebarWidget; color: string })
   );
 }
 
-// ─── Quick actions ───────────────────────────────────────────────────
+// === Quick actions ===================================================
 
 function QuickActions({ protocol, color }: { protocol: string; color: string }) {
   const actions = PROTOCOL_QUICK_ACTIONS[protocol] ?? [];
@@ -298,7 +298,7 @@ function QuickActions({ protocol, color }: { protocol: string; color: string }) 
   );
 }
 
-// ─── Main export ─────────────────────────────────────────────────────
+// === Main export =====================================================
 
 interface ProtocolSidebarProps {
   protocol: string;

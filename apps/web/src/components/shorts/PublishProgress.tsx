@@ -9,7 +9,7 @@
 
 import { PROTOCOL_META, type ShortProtocol } from './protocolMeta';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 export interface PublishResult {
   ok: boolean;
@@ -27,7 +27,7 @@ interface PublishProgressProps {
   totalProtocols?: number;
 }
 
-// ─── Protocol badge icon ──────────────────────────────────────────────────
+// === Protocol badge icon ==================================================
 
 function ProtocolIcon({ protocol, color }: { protocol: string; color: string }) {
   const icon = PROTOCOL_META[protocol as ShortProtocol]?.icon ?? protocol;
@@ -42,7 +42,7 @@ function ProtocolIcon({ protocol, color }: { protocol: string; color: string }) 
   );
 }
 
-// ─── Progress Indicator ───────────────────────────────────────────────────
+// === Progress Indicator ===================================================
 
 function ProgressDot({ state }: { state: 'pending' | 'success' | 'error' }) {
   switch (state) {
@@ -69,7 +69,7 @@ function ProgressDot({ state }: { state: 'pending' | 'success' | 'error' }) {
   }
 }
 
-// ─── Main Component ──────────────────────────────────────────────────────
+// === Main Component ======================================================
 
 export function PublishProgress({
   results,

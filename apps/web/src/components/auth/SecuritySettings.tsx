@@ -108,7 +108,7 @@ export default function SecuritySettings({ onStateChange }: SecuritySettingsProp
     setView('idle');
   }, []);
 
-  // ─── Render ────────────────────────────────────────────────
+  // === Render ================================================
 
   if (view === 'loading') {
     return (

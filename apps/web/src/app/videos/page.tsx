@@ -21,14 +21,14 @@ import {
 } from '@degenfeed/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// ─── Constants ──────────────────────────────────────────────────────────
+// === Constants ==========================================================
 
 const PEERTUBE_INSTANCE = 'video.degenfeed.xyz';
 const YOUTUBE_FEED_LIMIT = 30;
 const PEERTUBE_API_LIMIT = 20;
 const FEDERATED_INSTANCE_COUNT = 15;
 
-// ─── PeerTube API types ─────────────────────────────────────────────────
+// === PeerTube API types =================================================
 
 interface PeerTubeApiVideo {
   uuid: string;
@@ -48,7 +48,7 @@ interface PeerTubeApiResponse {
   next?: string;
 }
 
-// ─── Category mapping ───────────────────────────────────────────────────
+// === Category mapping ===================================================
 
 function detectCategory(title: string, description?: string): string {
   const text = `${title} ${description ?? ''}`.toLowerCase();
@@ -119,7 +119,7 @@ function peerTubeCategoryToId(category: number): string {
   return map[category] ?? 'crypto';
 }
 
-// ─── Time duration formatting ───────────────────────────────────────────
+// === Time duration formatting ===========================================
 
 function formatDuration(seconds?: number): string {
   if (seconds == null || seconds <= 0) return '';
@@ -131,7 +131,7 @@ function formatDuration(seconds?: number): string {
   return `0:${String(s).padStart(2, '0')}`;
 }
 
-// ─── Fetch Federated PeerTube feed ──────────────────────────────────────
+// === Fetch Federated PeerTube feed ======================================
 
 async function fetchFederatedFeed(
   sort: string = 'trending',
@@ -162,7 +162,7 @@ async function fetchFederatedFeed(
   }
 }
 
-// ─── Fetch YouTube feed ─────────────────────────────────────────────────
+// === Fetch YouTube feed =================================================
 
 async function fetchYouTubeFeed(
   category?: string,
@@ -202,7 +202,7 @@ async function fetchYouTubeFeedFallback(
   }
 }
 
-// ─── Fetch PeerTube feed ────────────────────────────────────────────────
+// === Fetch PeerTube feed ================================================
 
 async function fetchPeerTubeFeed(
   category?: string,
@@ -246,7 +246,7 @@ async function fetchPeerTubeFeed(
   }
 }
 
-// ─── Page Components ────────────────────────────────────────────────────
+// === Page Components ====================================================
 
 export default function VideosPage() {
   const [videos, setVideos] = useState<YouTubeVideoCardItem[]>([]);
@@ -279,7 +279,7 @@ export default function VideosPage() {
     setPipSupported(!!document.pictureInPictureEnabled);
   }, []);
 
-  // ── Load data ──
+  // == Load data ==
   const loadVideos = useCallback(
     async (append = false) => {
       if (loadingRef.current) return;
@@ -448,7 +448,7 @@ export default function VideosPage() {
       <div
         className={`mx-auto transition-all duration-300 ${theaterMode ? 'max-w-full px-0' : 'max-w-7xl px-4'} py-6`}
       >
-        {/* ── Header ── */}
+        {/* == Header == */}
         <header className={`mb-6 ${theaterMode ? 'px-4' : ''}`}>
           <div className="flex items-center justify-between">
             <div>
@@ -593,7 +593,7 @@ export default function VideosPage() {
           </div>
         </header>
 
-        {/* ── Filter Bar ── */}
+        {/* == Filter Bar == */}
         <div className={theaterMode ? 'px-4' : ''}>
           <VideoFilterBar
             activeTab={activeTab}
@@ -605,7 +605,7 @@ export default function VideosPage() {
           />
         </div>
 
-        {/* ── Stats Line ── */}
+        {/* == Stats Line == */}
         {!initialLoad && !loading && videos.length > 0 && (
           <p className={`mb-3 text-xs text-[var(--color-muted)] ${theaterMode ? 'px-4' : ''}`}>
             <span className="tabular-nums">{videos.length}</span> videos loaded
@@ -618,7 +618,7 @@ export default function VideosPage() {
           </p>
         )}
 
-        {/* ── Video Grid ── */}
+        {/* == Video Grid == */}
         <MixedVideoGrid
           videos={sortedVideos}
           activeTab={activeTab}
@@ -632,7 +632,7 @@ export default function VideosPage() {
           error={error}
         />
 
-        {/* ── Theater mode hint ── */}
+        {/* == Theater mode hint == */}
         {theaterMode && videos.length > 0 && (
           <div className="mx-auto mt-4 flex max-w-3xl items-center justify-center gap-4 px-4">
             <button
@@ -652,7 +652,7 @@ export default function VideosPage() {
           </div>
         )}
 
-        {/* ── PeerTube Tip Overlay ── */}
+        {/* == PeerTube Tip Overlay == */}
         {tipVideo && tipVideo.source === 'peertube' && (
           <div className="fixed bottom-6 right-6 z-50">
             <PeerTubeTipOverlay
@@ -673,7 +673,7 @@ export default function VideosPage() {
           </div>
         )}
 
-        {/* ── Footer ── */}
+        {/* == Footer == */}
         {!loading && videos.length > 0 && (
           <footer className={`mt-8 text-center ${theaterMode ? 'px-4' : ''}`}>
             <p className="text-[11px] text-[var(--color-muted)]">

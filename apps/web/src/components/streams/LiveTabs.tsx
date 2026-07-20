@@ -2,7 +2,7 @@
 
 import type { StreamType } from './useLiveStreams';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface Tab {
   id: StreamType | 'all';
@@ -24,7 +24,7 @@ interface LiveTabsProps {
   counts?: Partial<Record<StreamType | 'all', number>>;
 }
 
-/* ─── Component ──────────────────────────────────────────────── */
+/* === Component ================================================ */
 
 export function LiveTabs({ activeTab, onTabChange, counts }: LiveTabsProps) {
   return (

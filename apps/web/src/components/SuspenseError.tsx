@@ -16,7 +16,7 @@ interface SuspenseErrorProps {
   key?: string;
 }
 
-/* ─── Feed Skeleton (matches actual feed item layout) ──────── */
+/* === Feed Skeleton (matches actual feed item layout) ======== */
 
 export function FeedSkeleton({ count = 3 }: { count?: number }) {
   return (
@@ -35,7 +35,7 @@ export function FeedSkeleton({ count = 3 }: { count?: number }) {
   );
 }
 
-/* ─── Card Skeleton ────────────────────────────────────────── */
+/* === Card Skeleton ========================================== */
 
 export function CardSkeleton({ count = 3 }: { count?: number }) {
   return (
@@ -56,7 +56,7 @@ export function CardSkeleton({ count = 3 }: { count?: number }) {
   );
 }
 
-/* ─── Loading Timeout ──────────────────────────────────────── */
+/* === Loading Timeout ======================================== */
 
 function LoadingTimeout({ onRetry }: { onRetry?: () => void }) {
   return (
@@ -89,7 +89,7 @@ function LoadingTimeout({ onRetry }: { onRetry?: () => void }) {
   );
 }
 
-/* ─── SuspenseError ────────────────────────────────────────── */
+/* === SuspenseError ========================================== */
 
 export function SuspenseError({
   children,

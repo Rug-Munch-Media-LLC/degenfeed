@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-/* ─── Types ─────────────────────────────────────────────────── */
+/* === Types =================================================== */
 
 export interface SecurityEvent {
   id: string;
@@ -17,7 +17,7 @@ export interface SecurityEvent {
   metadata?: Record<string, string>;
 }
 
-/* ─── Severity styles ──────────────────────────────────────── */
+/* === Severity styles ======================================== */
 
 const SEVERITY_CONFIG: Record<string, { dot: string; label: string }> = {
   low: { dot: 'bg-blue-400', label: 'Info' },
@@ -26,7 +26,7 @@ const SEVERITY_CONFIG: Record<string, { dot: string; label: string }> = {
   critical: { dot: 'bg-red-400', label: 'Critical' },
 };
 
-/* ─── Event icon map ───────────────────────────────────────── */
+/* === Event icon map ========================================= */
 
 function getEventIcon(type: string): string {
   if (type.startsWith('login')) return '🔑';
@@ -44,7 +44,7 @@ function getEventIcon(type: string): string {
   return '🔔';
 }
 
-/* ─── Format helpers ────────────────────────────────────────── */
+/* === Format helpers ========================================== */
 
 function formatTimestamp(ts: number): string {
   const date = new Date(ts);
@@ -87,7 +87,7 @@ function maskIp(ip: string): string {
   return ip;
 }
 
-/* ─── Day separator ─────────────────────────────────────────── */
+/* === Day separator =========================================== */
 
 function DaySeparator({ date }: { date: Date }) {
   const now = new Date();
@@ -128,7 +128,7 @@ function DaySeparator({ date }: { date: Date }) {
   );
 }
 
-/* ─── Event row ─────────────────────────────────────────────── */
+/* === Event row =============================================== */
 
 function EventRow({ event }: { event: SecurityEvent }) {
   const severity = SEVERITY_CONFIG[event.severity];
@@ -159,7 +159,7 @@ function EventRow({ event }: { event: SecurityEvent }) {
   );
 }
 
-/* ─── Security Log ──────────────────────────────────────────── */
+/* === Security Log ============================================ */
 
 export function SecurityLog() {
   const [events, setEvents] = useState<SecurityEvent[]>([]);
@@ -194,7 +194,7 @@ export function SecurityLog() {
     fetchEvents();
   }, [fetchEvents]);
 
-  /* ─── Loading skeleton ────────────────────────────────── */
+  /* === Loading skeleton ================================== */
 
   if (loading) {
     return (
@@ -212,7 +212,7 @@ export function SecurityLog() {
     );
   }
 
-  /* ─── Error state ─────────────────────────────────────── */
+  /* === Error state ======================================= */
 
   if (error) {
     return (
@@ -229,7 +229,7 @@ export function SecurityLog() {
     );
   }
 
-  /* ─── Empty state ─────────────────────────────────────── */
+  /* === Empty state ======================================= */
 
   if (events.length === 0) {
     return (
@@ -243,7 +243,7 @@ export function SecurityLog() {
     );
   }
 
-  /* ─── Group events by day ─────────────────────────────── */
+  /* === Group events by day =============================== */
 
   const groups: { date: Date; events: SecurityEvent[] }[] = [];
   for (const event of events) {

@@ -3,7 +3,7 @@
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from '@degenfeed/ui';
 import { formatMessageTime } from '../../hooks/useMessages';
 
-/* ─── Props ─────────────────────────────────────────────────── */
+/* === Props =================================================== */
 
 export interface MessageBubbleProps {
   content: string;
@@ -16,7 +16,7 @@ export interface MessageBubbleProps {
   showSender?: boolean;
 }
 
-/* ─── Component ─────────────────────────────────────────────── */
+/* === Component =============================================== */
 
 export function MessageBubble({
   content,
@@ -97,7 +97,7 @@ export function MessageBubble({
   );
 }
 
-/* ─── Typing Indicator ──────────────────────────────────────── */
+/* === Typing Indicator ======================================== */
 
 export function TypingIndicator() {
   return (

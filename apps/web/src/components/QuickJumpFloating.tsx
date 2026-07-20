@@ -10,7 +10,7 @@ interface JumpItem {
   icon: React.ReactNode;
 }
 
-/* ─── SVG Icons ────────────────────────────────────────────── */
+/* === SVG Icons ============================================== */
 
 function FeedIcon() {
   return (

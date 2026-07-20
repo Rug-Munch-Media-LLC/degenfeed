@@ -8,7 +8,7 @@ interface JumpItem {
   icon: React.ReactNode;
 }
 
-/* ─── SVG Icons ────────────────────────────────────────────── */
+/* === SVG Icons ============================================== */
 
 function TrendingIcon() {
   return (

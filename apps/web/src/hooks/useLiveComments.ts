@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useSWR from 'swr';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 export interface TokenComment {
   id: string;
@@ -35,7 +35,7 @@ interface CommentsResponse {
   total: number;
 }
 
-/* ─── Hook ───────────────────────────────────────────── */
+/* === Hook ============================================= */
 
 const WS_BASE =
   typeof window !== 'undefined' &&

@@ -21,7 +21,7 @@ import {
   type ShortProtocol,
 } from './protocolMeta';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 interface CreateShortModalProps {
   open: boolean;
@@ -47,7 +47,7 @@ interface PublishResponse {
   errors: Partial<Record<ShortProtocol, string>>;
 }
 
-// ─── Available protocols for selection (user-facing) ──────────────────────
+// === Available protocols for selection (user-facing) ======================
 
 const AVAILABLE_PROTOCOLS: { key: ShortProtocol; label: string; color: string; description: string }[] = [
   { key: 'activitypub', label: 'ActivityPub', color: '#6364ff', description: 'Mastodon, Pixelfed, PeerTube' },
@@ -58,7 +58,7 @@ const AVAILABLE_PROTOCOLS: { key: ShortProtocol; label: string; color: string; d
   { key: 'zora', label: 'Zora', color: '#f5a623', description: 'Zora Network' },
 ];
 
-// ─── Reach estimate (conservative — real data would come from API) ────────
+// === Reach estimate (conservative — real data would come from API) ========
 
 const REACH_ESTIMATES: Record<string, number> = {
   activitypub: 2_500_000,
@@ -70,7 +70,7 @@ const REACH_ESTIMATES: Record<string, number> = {
   degenfeed: 50_000,
 };
 
-// ─── Component ────────────────────────────────────────────────────────────
+// === Component ============================================================
 
 export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalProps) {
   // Form state
@@ -95,7 +95,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // ── Derived ───────────────────────────────────────────────────────────
+  // == Derived ===========================================================
 
   const protocolList = useMemo(
     () => AVAILABLE_PROTOCOLS.filter((p) => selectedProtocols.has(p.key)),
@@ -112,7 +112,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
 
   const hasZora = selectedProtocols.has('zora');
 
-  // ── Toggle protocol selection ─────────────────────────────────────────
+  // == Toggle protocol selection =========================================
 
   const toggleProtocol = useCallback((protocol: ShortProtocol) => {
     setSelectedProtocols((prev) => {
@@ -126,7 +126,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     });
   }, []);
 
-  // ── Reset form ────────────────────────────────────────────────────────
+  // == Reset form ========================================================
 
   const resetForm = useCallback(() => {
     setTitle('');
@@ -147,7 +147,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     setUploadProgress(0);
   }, []);
 
-  // ── Parse hashtags from string ────────────────────────────────────────
+  // == Parse hashtags from string ========================================
 
   const parseHashtags = useCallback(() => {
     return hashtags
@@ -156,7 +156,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
       .filter(Boolean);
   }, [hashtags]);
 
-  // ── Submit: upload + publish ─────────────────────────────────────────
+  // == Submit: upload + publish =========================================
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -179,7 +179,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
       const protocols = [...selectedProtocols];
       const parsedTags = parseHashtags();
 
-      // ── Stage 1: Uploading ──
+      // == Stage 1: Uploading ==
       setStage('uploading');
       setUploadProgress(0);
 
@@ -194,7 +194,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
       clearInterval(progressSim);
       setUploadProgress(100);
 
-      // ── Stage 2: Publishing ──
+      // == Stage 2: Publishing ==
       setStage('publishing');
       setPublishPending(protocols);
 
@@ -289,7 +289,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     ],
   );
 
-  // ── Render blocks ────────────────────────────────────────────────────
+  // == Render blocks ====================================================
 
   if (!open) return null;
 
@@ -308,7 +308,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     }
   };
 
-  // ── Form ──────────────────────────────────────────────────────────────
+  // == Form ==============================================================
 
   function renderForm() {
     return (
@@ -390,7 +390,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
           />
         </div>
 
-        {/* ── Protocol Selector ── */}
+        {/* == Protocol Selector == */}
         <div>
           <label className="mb-2 block text-xs font-medium text-white/70">
             Publish to
@@ -431,7 +431,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
           </p>
         </div>
 
-        {/* ── Mint as Zora NFT toggle ── */}
+        {/* == Mint as Zora NFT toggle == */}
         {hasZora && (
           <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5">
             <button
@@ -488,7 +488,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     );
   }
 
-  // ── Uploading ──────────────────────────────────────────────────────────
+  // == Uploading ==========================================================
 
   function renderUploading() {
     return (
@@ -516,7 +516,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     );
   }
 
-  // ── Publishing ─────────────────────────────────────────────────────────
+  // == Publishing =========================================================
 
   function renderPublishing() {
     return (
@@ -544,7 +544,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     );
   }
 
-  // ── Done ───────────────────────────────────────────────────────────────
+  // == Done ===============================================================
 
   function renderDone() {
     const allResults = { ...publishResults };
@@ -583,7 +583,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
           />
         </div>
 
-        {/* ── Share section ── */}
+        {/* == Share section == */}
         {publishId && (
           <div>
             <p className="mb-2 text-xs font-medium text-white/60">Share your short</p>
@@ -698,7 +698,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     );
   }
 
-  // ── Error ──────────────────────────────────────────────────────────────
+  // == Error ==============================================================
 
   function renderError() {
     return (
@@ -743,7 +743,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
     );
   }
 
-  // ─── Main Render ───────────────────────────────────────────────────────
+  // === Main Render =======================================================
 
   return (
     <div

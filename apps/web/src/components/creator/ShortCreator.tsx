@@ -9,7 +9,7 @@ import {
   type ShortProtocol,
 } from '../shorts/protocolMeta';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 interface ShortCreatorProps {
   onClose: () => void;
@@ -37,7 +37,7 @@ interface PublishResponse {
   errors: Partial<Record<ShortProtocol, string>>;
 }
 
-// ─── Available protocols for selection ───────────────────────────────────
+// === Available protocols for selection ===================================
 
 const AVAILABLE_PROTOCOLS: { key: ShortProtocol; label: string; color: string }[] = [
   { key: 'activitypub', label: 'ActivityPub', color: '#6364ff' },
@@ -48,7 +48,7 @@ const AVAILABLE_PROTOCOLS: { key: ShortProtocol; label: string; color: string }[
   { key: 'zora', label: 'Zora', color: '#f5a623' },
 ];
 
-// ─── Reach estimate ──────────────────────────────────────────────────────
+// === Reach estimate ======================================================
 
 const REACH_ESTIMATES: Record<string, number> = {
   activitypub: 2_500_000,
@@ -60,7 +60,7 @@ const REACH_ESTIMATES: Record<string, number> = {
   degenfeed: 50_000,
 };
 
-// ─── Short Creator (Mobile-First) ────────────────────────────────────────
+// === Short Creator (Mobile-First) ========================================
 
 export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) {
   const { uploadShort } = useCreatorVideoActions();
@@ -97,7 +97,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
   const MAX_DURATION = 60;
   const hasZora = selectedProtocols.has('zora');
 
-  // ── Derived ──────────────────────────────────────────────────────────
+  // == Derived ==========================================================
 
   const protocolList = useMemo(
     () => AVAILABLE_PROTOCOLS.filter((p) => selectedProtocols.has(p.key)),
@@ -112,7 +112,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     return total;
   }, [selectedProtocols]);
 
-  // ── Toggle protocol ──────────────────────────────────────────────────
+  // == Toggle protocol ==================================================
 
   const toggleProtocol = useCallback((protocol: ShortProtocol) => {
     setSelectedProtocols((prev) => {
@@ -123,7 +123,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     });
   }, []);
 
-  // ── Parse hashtags ───────────────────────────────────────────────────
+  // == Parse hashtags ===================================================
 
   const parseHashtags = useCallback(() => {
     return hashtags
@@ -132,7 +132,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
       .filter(Boolean);
   }, [hashtags]);
 
-  // ── Start camera ─────────────────────────────────────────────────────
+  // == Start camera =====================================================
 
   const startCamera = useCallback(async () => {
     try {
@@ -160,7 +160,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     }
   }, [cameraFacing]);
 
-  // ── Start recording ─────────────────────────────────────────────────
+  // == Start recording =================================================
 
   const handleStartRecording = useCallback(async () => {
     setError(null);
@@ -215,7 +215,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     }
   }, [startCamera]);
 
-  // ── Stop recording ──────────────────────────────────────────────────
+  // == Stop recording ==================================================
 
   const handleStopRecording = useCallback(() => {
     if (timerRef.current) {
@@ -228,13 +228,13 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     }
   }, []);
 
-  // ── Toggle camera ───────────────────────────────────────────────────
+  // == Toggle camera ===================================================
 
   const toggleCamera = useCallback(() => {
     setCameraFacing((prev) => (prev === 'user' ? 'environment' : 'user'));
   }, []);
 
-  // ── Go to protocol selection (after preview) ────────────────────────
+  // == Go to protocol selection (after preview) ========================
 
   const handleGoToProtocols = useCallback(() => {
     if (!title.trim()) {
@@ -245,7 +245,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     setError(null);
   }, [title]);
 
-  // ── Publish (upload then distribute) ────────────────────────────────
+  // == Publish (upload then distribute) ================================
 
   const handlePublish = useCallback(async () => {
     if (!recordedBlob) return;
@@ -345,7 +345,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     uploadShort, onSuccess,
   ]);
 
-  // ── Reset ───────────────────────────────────────────────────────────
+  // == Reset ===========================================================
 
   const handleReset = useCallback(() => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -372,7 +372,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     if (previewUrl) URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
 
-  // ── Render helpers ─────────────────────────────────────────────────
+  // == Render helpers =================================================
 
   function closeButton() {
     if (stage === 'done') return null;
@@ -390,7 +390,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
     );
   }
 
-  // ── Render ──────────────────────────────────────────────────────────
+  // == Render ==========================================================
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">

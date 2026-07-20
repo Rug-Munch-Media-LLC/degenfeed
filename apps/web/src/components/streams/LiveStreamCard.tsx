@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { LiveStream } from './useLiveStreams';
 
-/* ─── Helpers ────────────────────────────────────────────────── */
+/* === Helpers ================================================== */
 
 function formatViewers(n: number): string {
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
@@ -18,7 +18,7 @@ function formatDuration(startedAt: number): string {
   return `${hours}h ${minutes % 60}m`;
 }
 
-/* ─── Stream type config ─────────────────────────────────────── */
+/* === Stream type config ======================================= */
 
 const STREAM_TYPE_CONFIG: Record<
   string,
@@ -50,7 +50,7 @@ const STREAM_TYPE_CONFIG: Record<
   },
 };
 
-/* ─── Thumbnail placeholder by type ──────────────────────────── */
+/* === Thumbnail placeholder by type ============================ */
 
 function StreamThumbnail({ stream }: { stream: LiveStream }) {
   const config = STREAM_TYPE_CONFIG[stream.streamType] ?? STREAM_TYPE_CONFIG.solo;
@@ -106,7 +106,7 @@ function StreamThumbnail({ stream }: { stream: LiveStream }) {
   );
 }
 
-/* ─── Mini bonding curve bar ─────────────────────────────────── */
+/* === Mini bonding curve bar =================================== */
 
 function BondingCurveBar({ progress }: { progress: number }) {
   return (
@@ -125,7 +125,7 @@ function BondingCurveBar({ progress }: { progress: number }) {
   );
 }
 
-/* ─── Main Card ──────────────────────────────────────────────── */
+/* === Main Card ================================================ */
 
 interface LiveStreamCardProps {
   stream: LiveStream;

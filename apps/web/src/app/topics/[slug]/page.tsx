@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 interface UnifiedPost {
   id: string;
@@ -24,7 +24,7 @@ interface UnifiedPost {
   image?: string | null;
 }
 
-// ─── Topic Metadata ─────────────────────────────────────────────────────────
+// === Topic Metadata =========================================================
 
 const TOPIC_META: Record<
   string,
@@ -139,7 +139,7 @@ const RELATED_TOPICS: Record<string, string[]> = {
 
 const DEFAULT_RELATED = ['crypto', 'defi', 'ethereum', 'bitcoin'];
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// === Helpers ===============================================================
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -178,7 +178,7 @@ function getDefaultMeta(slug: string): {
   };
 }
 
-// ─── Post Row ──────────────────────────────────────────────────────────────
+// === Post Row ==============================================================
 
 function PostRow({ post, onClick }: { post: UnifiedPost; onClick: (id: string) => void }) {
   const protocolColor = getProtocolColor(post.protocol);
@@ -245,7 +245,7 @@ function PostRow({ post, onClick }: { post: UnifiedPost; onClick: (id: string) =
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────────
+// === Main Page =============================================================
 
 export default function TopicPage() {
   const params = useParams();

@@ -9,7 +9,7 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 
-// ─── Categories definition ───────────────────────────────────────────────
+// === Categories definition ===============================================
 
 export interface CategoryPill {
   id: string;

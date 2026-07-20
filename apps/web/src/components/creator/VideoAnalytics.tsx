@@ -3,7 +3,7 @@
 import type { CreatorVideoMeta, VideoAnalytics as VideoAnalyticsData } from './useCreatorVideos';
 import { useCreatorVideo } from './useCreatorVideos';
 
-// ─── Helpers ─────────────────────────────────────────────────────────────
+// === Helpers =============================================================
 
 function formatCompact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -22,7 +22,7 @@ function formatDuration(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
-// ─── Mini bar chart ──────────────────────────────────────────────────────
+// === Mini bar chart ======================================================
 
 function MiniBarChart({
   data,
@@ -64,7 +64,7 @@ function MiniBarChart({
   );
 }
 
-// ─── Stat card ───────────────────────────────────────────────────────────
+// === Stat card ===========================================================
 
 function StatCard({
   label,
@@ -94,7 +94,7 @@ function StatCard({
   );
 }
 
-// ─── Protocol breakdown ──────────────────────────────────────────────────
+// === Protocol breakdown ==================================================
 
 function ProtocolBar({ label, value, max, color }: {
   label: string;
@@ -119,7 +119,7 @@ function ProtocolBar({ label, value, max, color }: {
   );
 }
 
-// ─── Main Analytics Panel ────────────────────────────────────────────────
+// === Main Analytics Panel ================================================
 
 interface VideoAnalyticsProps {
   video: CreatorVideoMeta;

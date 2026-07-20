@@ -16,7 +16,7 @@ interface ProgressBarProps {
   action?: ReactNode;
   className?: string;
 
-  // ── Gamification additions ────────────────────────────
+  // == Gamification additions ============================
 
   /** Current bonding curve era name for display */
   eraName?: string;
@@ -90,7 +90,7 @@ export default function ProgressBar({
   const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
   const isGraduated = clamped >= 100;
 
-  // ── Fireworks state ────────────────────────────────────
+  // == Fireworks state ====================================
   const [showFireworkEffect, setShowFireworkEffect] = useState(false);
   const prevMilestoneRef = useRef<number | undefined>(undefined);
 

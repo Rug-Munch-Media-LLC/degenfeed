@@ -116,7 +116,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             ].join(''),
           }}
         />
-        {/* ── PWA platform tags ── */}
+        {/* == PWA platform tags == */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="DegenFeed" />
@@ -127,7 +127,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
 
-        {/* ── LCP: Preconnect to critical origins ── */}
+        {/* == LCP: Preconnect to critical origins == */}
         <link rel="preconnect" href="https://app.degenfeed.xyz" />
         <link rel="preconnect" href="https://degenfeed.xyz" />
         <link rel="preconnect" href="https://community.degenfeed.xyz" />
@@ -139,11 +139,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="dns-prefetch" href="https://pbs.twimg.com" />
         <link rel="dns-prefetch" href="https://cdn.bsky.app" />
 
-        {/* ── LCP: Defer non-critical third-party scripts ── */}
+        {/* == LCP: Defer non-critical third-party scripts == */}
         <link rel="preload" href="/icon.svg" as="image" fetchPriority="high" />
         <link rel="preload" href="/icon-192.png" as="image" fetchPriority="high" />
 
-        {/* ── Critical CSS inlining — above-the-fold styles (<14KB) ── */}
+        {/* == Critical CSS inlining — above-the-fold styles (<14KB) == */}
         <style data-critical="1">
           {[
             'body{--bg:#000;--fg:#e7e9ea;background:var(--bg);color:var(--fg);margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}',

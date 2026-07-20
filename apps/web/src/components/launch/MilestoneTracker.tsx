@@ -3,7 +3,7 @@
 import { useTokenProgress } from '../../hooks/useTokenCommunity';
 import type { TokenMilestone } from '../../hooks/useTokenCommunity';
 
-/* ─── Milestone definitions ─────────────────────────── */
+/* === Milestone definitions =========================== */
 
 interface MilestoneDef {
   type: 'holders' | 'volume' | 'days_alive';
@@ -25,7 +25,7 @@ const MILESTONES: MilestoneDef[] = [
   { type: 'days_alive', value: 30, reward: 'OG status unlocked', icon: '👑' },
 ];
 
-/* ─── Component ─────────────────────────────────────── */
+/* === Component ======================================= */
 
 interface MilestoneTrackerProps {
   tokenAddress: string;
@@ -134,7 +134,7 @@ export default function MilestoneTracker({
   );
 }
 
-/* ─── Milestone Badge ───────────────────────────────── */
+/* === Milestone Badge ================================= */
 
 function MilestoneBadge({
   milestone,

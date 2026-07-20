@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────
+// === Types ============================================================
 
 interface PlatformStatus {
   id: string;
@@ -28,7 +28,7 @@ interface ConfigSetting {
   description: string;
 }
 
-// ─── Default data ─────────────────────────────────────────────────────
+// === Default data =====================================================
 
 const DEFAULT_PLATFORMS: PlatformStatus[] = [
   {
@@ -204,7 +204,7 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-// ─── Component ────────────────────────────────────────────────────────
+// === Component ========================================================
 
 export default function AdminPlatformsPage() {
   const [platforms, setPlatforms] = useState<PlatformStatus[]>(DEFAULT_PLATFORMS);

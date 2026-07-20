@@ -9,7 +9,7 @@ import { StreamReportButton } from './StreamReportButton';
 import { StreamClipButton } from './StreamClipButton';
 import { StreamShareButton } from './StreamShareButton';
 
-/* ─── StreamInfo Component ───────────────────────────────────── */
+/* === StreamInfo Component ===================================== */
 
 interface StreamInfoProps {
   stream: StreamExtended;
@@ -132,7 +132,7 @@ export function StreamInfo({ stream }: StreamInfoProps) {
   );
 }
 
-/* ─── Helper ─────────────────────────────────────────────────── */
+/* === Helper =================================================== */
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;

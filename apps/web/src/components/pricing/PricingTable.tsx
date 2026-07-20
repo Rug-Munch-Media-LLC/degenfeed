@@ -7,7 +7,7 @@
  * Fully responsive: horizontal scroll on mobile, full table on desktop.
  */
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 export interface PricingTier {
   name: string;
@@ -20,7 +20,7 @@ export interface PricingTier {
   badge?: string;
 }
 
-// ─── Icons ─────────────────────────────────────────────────────────────────
+// === Icons =================================================================
 
 function CheckIcon({ highlight }: { highlight?: boolean }) {
   return (
@@ -47,7 +47,7 @@ function DashIcon() {
   );
 }
 
-// ─── Tier Badge ────────────────────────────────────────────────────────────
+// === Tier Badge ============================================================
 
 function TierBadge({ tier }: { tier: PricingTier }) {
   if (tier.name === 'Basic') {
@@ -83,7 +83,7 @@ function TierBadge({ tier }: { tier: PricingTier }) {
   );
 }
 
-// ─── Pricing Card ──────────────────────────────────────────────────────────
+// === Pricing Card ==========================================================
 
 function PricingCard({
   tier,
@@ -196,7 +196,7 @@ function PricingCard({
   );
 }
 
-// ─── Full Comparison Table ────────────────────────────────────────────────
+// === Full Comparison Table ================================================
 
 interface ComparisonRow {
   category?: string;
@@ -412,7 +412,7 @@ function ComparisonTable() {
   );
 }
 
-// ─── Exports ───────────────────────────────────────────────────────────────
+// === Exports ===============================================================
 
 export const getDefaultTiers = (): PricingTier[] => [
   {

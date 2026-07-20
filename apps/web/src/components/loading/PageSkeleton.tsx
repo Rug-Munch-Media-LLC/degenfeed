@@ -7,7 +7,7 @@
 
 import type { ReactNode } from 'react';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+// === Helpers ==============================================================
 
 function SkeletonBlock({ className }: { className?: string }) {
   return (
@@ -18,7 +18,7 @@ function SkeletonBlock({ className }: { className?: string }) {
   );
 }
 
-// ─── Atoms ────────────────────────────────────────────────────────────────
+// === Atoms ================================================================
 
 export function Line({ width = 'w-full', height = 'h-4' }: { width?: string; height?: string }) {
   return <SkeletonBlock className={`${width} ${height}`} />;
@@ -36,7 +36,7 @@ export function AspectRatio({ className }: { className?: string }) {
   return <SkeletonBlock className={`w-full aspect-video ${className || ''}`} />;
 }
 
-// ─── Composed Patterns ────────────────────────────────────────────────────
+// === Composed Patterns ====================================================
 
 export function CardSkeleton({ children }: { children?: ReactNode }) {
   return (
@@ -92,7 +92,7 @@ export function MetricCardSkeleton() {
   );
 }
 
-// ─── Grid helpers ─────────────────────────────────────────────────────────
+// === Grid helpers =========================================================
 
 export function GridSkeleton({
   cols = 'sm:grid-cols-2 lg:grid-cols-3',
@@ -120,7 +120,7 @@ export function ListSkeleton({ count = 5 }: { count?: number }) {
   );
 }
 
-// ─── Header skeleton (title + subtitle) ───────────────────────────────────
+// === Header skeleton (title + subtitle) ===================================
 
 export function HeaderSkeleton({
   titleWidth = 'w-48',
@@ -139,7 +139,7 @@ export function HeaderSkeleton({
   );
 }
 
-// ─── Sidebar + main layout ───────────────────────────────────────────────
+// === Sidebar + main layout ===============================================
 
 export function ContentShellSkeleton({
   sidebar,

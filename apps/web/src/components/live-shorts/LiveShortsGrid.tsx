@@ -22,7 +22,7 @@ interface LiveShortsGridProps {
   onTip?: (session: LiveShortSession) => void;
 }
 
-/* ─── Skeleton card ───────────────────────────────────────────── */
+/* === Skeleton card ============================================= */
 
 function CardSkeleton() {
   return (
@@ -44,7 +44,7 @@ function CardSkeleton() {
   );
 }
 
-/* ─── Empty state ─────────────────────────────────────────────── */
+/* === Empty state =============================================== */
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -70,7 +70,7 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-/* ─── Main Grid ────────────────────────────────────────────────── */
+/* === Main Grid ================================================== */
 
 export function LiveShortsGrid({
   sessions,

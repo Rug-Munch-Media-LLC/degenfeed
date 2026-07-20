@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../components/AuthProvider';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export type PremiumTier = 'basic' | 'pro' | 'platinum' | 'enterprise';
 
@@ -21,7 +21,7 @@ export interface PremiumStatus {
   error: string | null;
 }
 
-// ─── Tier config ─────────────────────────────────────────────────────────
+// === Tier config =========================================================
 
 export interface TierConfig {
   id: PremiumTier;
@@ -124,7 +124,7 @@ export const TIERS: TierConfig[] = [
   },
 ];
 
-// ─── Hook ─────────────────────────────────────────────────────────────────
+// === Hook =================================================================
 
 export function usePremium(): PremiumStatus & { refresh: () => Promise<void> } {
   const { walletAddress } = useAuth();

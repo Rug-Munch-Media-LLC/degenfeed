@@ -17,7 +17,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LiveShortProtocol } from './useLiveShorts';
 
-// ─── Types ─────────────────────────────────────────────────────────────
+// === Types =============================================================
 
 interface GoLiveShortForm {
   title: string;
@@ -34,7 +34,7 @@ interface GoLiveShortModalProps {
   onStart: (data: GoLiveShortForm) => void;
 }
 
-// ─── Duration presets ──────────────────────────────────────────────────
+// === Duration presets ==================================================
 
 const DURATION_PRESETS = [
   { value: 30, label: '30s' },
@@ -43,7 +43,7 @@ const DURATION_PRESETS = [
   { value: 120, label: '2 min' },
 ] as const;
 
-// ─── Protocol options ──────────────────────────────────────────────────
+// === Protocol options ==================================================
 
 const PROTOCOL_OPTIONS: Array<{
   value: LiveShortProtocol;
@@ -67,7 +67,7 @@ const PROTOCOL_OPTIONS: Array<{
   { value: 'rtmp', label: 'RTMP', description: 'Legacy, widest tool support', color: '#ec4899' },
 ];
 
-// ─── Duration selector ─────────────────────────────────────────────────
+// === Duration selector =================================================
 
 function DurationSelector({
   selected,
@@ -111,7 +111,7 @@ function DurationSelector({
   );
 }
 
-// ─── Protocol selector ─────────────────────────────────────────────────
+// === Protocol selector =================================================
 
 function ProtocolSelector({
   selected,
@@ -183,7 +183,7 @@ function ProtocolSelector({
   );
 }
 
-// ─── Token gate section ────────────────────────────────────────────────
+// === Token gate section ================================================
 
 function TokenGateSection({
   address,
@@ -279,7 +279,7 @@ function TokenGateSection({
   );
 }
 
-// ─── Main Modal ────────────────────────────────────────────────────────
+// === Main Modal ========================================================
 
 export function GoLiveShortModal({ isOpen, onClose, onStart }: GoLiveShortModalProps) {
   const [form, setForm] = useState<GoLiveShortForm>({

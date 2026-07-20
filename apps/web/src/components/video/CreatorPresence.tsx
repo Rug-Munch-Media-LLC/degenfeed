@@ -16,7 +16,7 @@ import { useCallback, useState } from 'react';
 import type { CreatorPlatform, CreatorProfile } from './useVideoHub';
 import { VideoSourceBadge } from './VideoSourceBadge';
 
-// ─── Platform display config ─────────────────────────────────────────────
+// === Platform display config =============================================
 
 const PLATFORM_META: Record<string, { label: string; metric: string; icon: string }> = {
   youtube: { label: 'YouTube', metric: 'subs', icon: '▶' },
@@ -61,7 +61,7 @@ export function CreatorPresence({
     }
   }, [creator.id, isFollowing, onFollow, onUnfollow, followLoading]);
 
-  // ── Compact inline variant (for VideoCard) ──────────────────────────
+  // == Compact inline variant (for VideoCard) ==========================
 
   if (compact) {
     return (
@@ -104,7 +104,7 @@ export function CreatorPresence({
     );
   }
 
-  // ── Full card variant ───────────────────────────────────────────────
+  // == Full card variant ===============================================
 
   return (
     <div
@@ -170,7 +170,7 @@ export function CreatorPresence({
   );
 }
 
-// ─── Platform row sub-component ──────────────────────────────────────────
+// === Platform row sub-component ==========================================
 
 function CreatorPlatformRow({ platform }: { platform: CreatorPlatform }) {
   const meta = PLATFORM_META[platform.platform] ?? {
@@ -209,7 +209,7 @@ function CreatorPlatformRow({ platform }: { platform: CreatorPlatform }) {
   );
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────
+// === Helpers =============================================================
 
 function getFollowerCount(p: CreatorPlatform): number {
   return p.subscriberCount ?? p.followerCount;

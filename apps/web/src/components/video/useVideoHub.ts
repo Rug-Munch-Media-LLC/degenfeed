@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// ─── Types matching the API responses ────────────────────────────────────
+// === Types matching the API responses ====================================
 
 export interface CreatorPlatform {
   platform: 'youtube' | 'twitch' | 'rumble' | 'peertube' | 'zora';
@@ -114,7 +114,7 @@ export interface SourcesResponse {
   sources: VideoSource[];
 }
 
-// ─── Base fetch hook ─────────────────────────────────────────────────────
+// === Base fetch hook =====================================================
 
 interface FetchState<T> {
   data: T | null;
@@ -170,7 +170,7 @@ function useApiFetch<T>(url: string | null): FetchState<T> & { refetch: () => vo
   return { ...state, refetch: fetchData };
 }
 
-// ─── Video Hub Hook ──────────────────────────────────────────────────────
+// === Video Hub Hook ======================================================
 
 export function useVideoHub(params: {
   category?: string;
@@ -190,7 +190,7 @@ export function useVideoHub(params: {
   return useApiFetch<UnifiedVideoFeed>(url);
 }
 
-// ─── Video Categories Hook ───────────────────────────────────────────────
+// === Video Categories Hook ===============================================
 
 export function useVideoCategories() {
   return useApiFetch<{
@@ -199,7 +199,7 @@ export function useVideoCategories() {
   }>('/api/video/categories');
 }
 
-// ─── Category Page Hook ──────────────────────────────────────────────────
+// === Category Page Hook ==================================================
 
 export function useCategoryPage(
   categoryId: string,
@@ -215,7 +215,7 @@ export function useCategoryPage(
   return useApiFetch<CategoryPage>(url);
 }
 
-// ─── Video Search Hook ───────────────────────────────────────────────────
+// === Video Search Hook ===================================================
 
 export function useVideoSearch(query: string, params?: { source?: string; limit?: number }) {
   const trimmed = query.trim();
@@ -228,13 +228,13 @@ export function useVideoSearch(query: string, params?: { source?: string; limit?
   return useApiFetch<SearchResults>(url);
 }
 
-// ─── Video Sources Hook ──────────────────────────────────────────────────
+// === Video Sources Hook ==================================================
 
 export function useVideoSources() {
   return useApiFetch<SourcesResponse>('/api/video/sources');
 }
 
-// ─── Trending Videos Hook ────────────────────────────────────────────────
+// === Trending Videos Hook ================================================
 
 export function useTrendingVideos(params?: { source?: string; cursor?: string; limit?: number }) {
   const qs = new URLSearchParams();
@@ -252,7 +252,7 @@ export function useTrendingVideos(params?: { source?: string; cursor?: string; l
   }>(url);
 }
 
-// ─── Continue Watching Hook ──────────────────────────────────────────────
+// === Continue Watching Hook ==============================================
 
 export interface ContinueWatchingItem {
   videoId: string;
@@ -310,7 +310,7 @@ export function useContinueWatching() {
   return { items, addItem, removeItem };
 }
 
-// ─── Aggregator Types ────────────────────────────────────────────────────
+// === Aggregator Types ====================================================
 
 export interface AggregatorSourceCount {
   id: string;
@@ -352,7 +352,7 @@ export interface AggregatorResolveResponse {
   matched: boolean;
 }
 
-// ─── Aggregator Hooks ────────────────────────────────────────────────────
+// === Aggregator Hooks ====================================================
 
 /**
  * Fetch aggregated trending / personalized feed.

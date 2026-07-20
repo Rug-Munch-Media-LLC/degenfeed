@@ -12,7 +12,7 @@ interface TradeFeedProps {
   onRetry?: () => void;
   className?: string;
 
-  // ── New Features ──────────────────────────────────────
+  // == New Features ======================================
 
   /** Number of people who bought in the last 60 seconds */
   boughtLast60s?: number;
@@ -45,7 +45,7 @@ function formatAmount(usd: number): string {
   return `$${usd.toFixed(2)}`;
 }
 
-// ── Whale Alert Component ────────────────────────────────
+// == Whale Alert Component ================================
 
 function WhaleAlertBanner({ usdValue, wallet }: { usdValue: number; wallet: string }) {
   const isMega = usdValue >= 10_000;
@@ -75,7 +75,7 @@ function WhaleAlertBanner({ usdValue, wallet }: { usdValue: number; wallet: stri
   );
 }
 
-// ── Social proof bar ────────────────────────────────────
+// == Social proof bar ====================================
 
 function SocialProofBar({
   boughtLast60s,
@@ -118,7 +118,7 @@ function SocialProofBar({
   );
 }
 
-// ── Activity heatmap ─────────────────────────────────────
+// == Activity heatmap =====================================
 
 function ActivityHeatmap({ data }: { data?: number[] }) {
   if (!data?.length) return null;
@@ -154,7 +154,7 @@ function ActivityHeatmap({ data }: { data?: number[] }) {
   );
 }
 
-// ── Main Component ───────────────────────────────────────
+// == Main Component =======================================
 
 export default function TradeFeed({
   trades,

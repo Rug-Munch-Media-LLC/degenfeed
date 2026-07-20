@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────
+// === Types ============================================================
 
 interface AdminUser {
   id: string;
@@ -28,7 +28,7 @@ interface UsersResponse {
   totalPages: number;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────
+// === Helpers ==========================================================
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -61,7 +61,7 @@ const PROTOCOL_ICONS: Record<string, string> = {
   rss: '📡',
 };
 
-// ─── Mock data ────────────────────────────────────────────────────────
+// === Mock data ========================================================
 
 const HANDLES = [
   'alice_web3',
@@ -132,7 +132,7 @@ const MOCK_USERS: AdminUser[] = Array.from({ length: 45 }, (_, i) => ({
   flags: i % 7 === 0 ? ['high_report_count'] : [],
 }));
 
-// ─── Component ────────────────────────────────────────────────────────
+// === Component ========================================================
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -543,7 +543,7 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* ── User detail modal ── */}
+      {/* == User detail modal == */}
       {selectedUser && (
         <section
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
@@ -645,7 +645,7 @@ export default function AdminUsersPage() {
         </section>
       )}
 
-      {/* ── Confirm action modal ── */}
+      {/* == Confirm action modal == */}
       {confirmAction && (
         <section
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
@@ -719,7 +719,7 @@ export default function AdminUsersPage() {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────
+// === Sub-components ===================================================
 
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (

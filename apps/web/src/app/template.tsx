@@ -17,7 +17,7 @@ import { LoadingBar } from '../components/LoadingBar';
  * render while the new page fades in, preventing jarring white flashes.
  */
 
-// ── Transition timing ───────────────────────────────────────────
+// == Transition timing ===========================================
 const FADE_IN_DURATION = 350; // ms — matching CSS crossfade duration
 const MIN_LOADING_MS = 300; // ms — minimum loading bar display
 
@@ -30,7 +30,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const [prevChildren, setPrevChildren] = useState<React.ReactNode>(null);
   const [exiting, setExiting] = useState(false);
 
-  // ── Crossfade: keep previous content visible while new one enters ──
+  // == Crossfade: keep previous content visible while new one enters ==
   const childrenRef = useRef(children);
   useEffect(() => {
     // When key changes, capture current children to show during exit
@@ -48,7 +48,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [children]);
 
-  // ── Coordinate LoadingBar with page transitions ────────────
+  // == Coordinate LoadingBar with page transitions ============
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;

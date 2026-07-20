@@ -11,7 +11,7 @@ import { ErrorBoundary } from '@degenfeed/ui';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 interface FederatedCommunity {
   id: string;
@@ -37,7 +37,7 @@ interface DiscoverMeta {
   fetchedAt: number;
 }
 
-// ─── Category definitions ───────────────────────────────────────────────────
+// === Category definitions ===================================================
 
 const CATEGORIES = [
   { id: '', label: 'All', emoji: '🌐' },
@@ -66,7 +66,7 @@ const SORT_OPTIONS = [
   { id: 'new', label: 'Newest' },
 ] as const;
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// === Helpers ================================================================
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -100,7 +100,7 @@ function qualityLabel(tier: string): string {
   }
 }
 
-// ─── Community Card ─────────────────────────────────────────────────────────
+// === Community Card =========================================================
 
 function CommunityCard({ community }: { community: FederatedCommunity }) {
   const qColor = qualityColor(community.qualityTier);
@@ -180,7 +180,7 @@ function CommunityCard({ community }: { community: FederatedCommunity }) {
   );
 }
 
-// ─── Skeleton ───────────────────────────────────────────────────────────────
+// === Skeleton ===============================================================
 
 function CardsSkeleton({ count = 8 }: { count?: number }) {
   return (
@@ -205,7 +205,7 @@ function CardsSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
-// ─── Main Page ──────────────────────────────────────────────────────────────
+// === Main Page ==============================================================
 
 export default function BrowseCommunitiesPage() {
   const [communities, setCommunities] = useState<FederatedCommunity[]>([]);

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../../components/AuthProvider';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 interface ConnectedAccount {
   platform: string;
@@ -148,7 +148,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   paragraph: '#ff6b6b',
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+// === Helpers ==============================================================
 
 function shortenAddress(addr: string): string {
   if (addr.length < 10) return addr;
@@ -166,7 +166,7 @@ function formatDate(iso: string): string {
   });
 }
 
-// ─── Platform Card ────────────────────────────────────────────────────────
+// === Platform Card ========================================================
 
 function PlatformCard({
   platform,
@@ -294,7 +294,7 @@ function PlatformCard({
   );
 }
 
-// ─── Quick Cross-Post Composer ────────────────────────────────────────────
+// === Quick Cross-Post Composer ============================================
 
 function CrossPostComposer({
   connectedPlatforms,
@@ -467,7 +467,7 @@ function CrossPostComposer({
   );
 }
 
-// ─── Scheduled Posts List ─────────────────────────────────────────────────
+// === Scheduled Posts List =================================================
 
 function ScheduledPostsList() {
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
@@ -627,7 +627,7 @@ function ScheduledPostsList() {
   );
 }
 
-// ─── Settings / Substack email setup modal ─────────────────────────────────
+// === Settings / Substack email setup modal =================================
 
 function SubstackSetupModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState('');

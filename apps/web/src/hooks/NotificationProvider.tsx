@@ -24,13 +24,13 @@ import { useAuth } from '../components/AuthProvider';
 import { getCached, setCache } from '../lib/fetchWithCache';
 import { retryFetch } from '../lib/retryFetch';
 
-/* ─── Constants ────────────────────────────────────────────── */
+/* === Constants ============================================== */
 
 const READ_KEY = 'degenfeed_notifications_read';
 const POLL_MS = 60000;
 const MAX_READ_IDS = 500;
 
-/* ─── Types ────────────────────────────────────────────────── */
+/* === Types ================================================== */
 
 interface NotificationAuth {
   nostr_pubkey?: string;
@@ -62,7 +62,7 @@ export interface NotificationContextValue {
   saveNotificationPrefs: (prefs: NotificationProtocolPrefs) => void;
 }
 
-/* ─── Context ──────────────────────────────────────────────── */
+/* === Context ================================================ */
 
 export const NotificationContext = createContext<NotificationContextValue | null>(null);
 
@@ -85,7 +85,7 @@ export function useNotificationContext(): NotificationContextValue {
   return ctx;
 }
 
-/* ─── Helpers ──────────────────────────────────────────────── */
+/* === Helpers ================================================ */
 
 function loadReadIds(): Set<string> {
   try {
@@ -145,7 +145,7 @@ function buildAuth(
   return auth;
 }
 
-/* ─── Provider ─────────────────────────────────────────────── */
+/* === Provider =============================================== */
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { ready, signedInProtocols } = useAuth();
@@ -247,7 +247,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     };
   }, [fetchNotifications, hasSignedIn]);
 
-  // ── WebSocket: real-time notification increment ──
+  // == WebSocket: real-time notification increment ==
   useEffect(() => {
     if (!hasSignedIn) return;
     const unsub = subscribe(CHANNELS.NOTIFICATIONS_NEW, (_data: unknown) => {
@@ -258,7 +258,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return unsub;
   }, [subscribe, fetchNotifications, hasSignedIn]);
 
-  // ── Mark read ──
+  // == Mark read ==
   const markRead = useCallback((id: string) => {
     setReadIds((prev) => {
       const next = new Set(prev);
@@ -269,7 +269,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   }, []);
 
-  // ── Mark all read ──
+  // == Mark all read ==
   const markAllRead = useCallback(() => {
     // POST to backend to persist the mark-all-read state (fire-and-forget)
     void (async () => {
@@ -298,7 +298,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }, []);
 
-  // ── Notification prefs ──
+  // == Notification prefs ==
   const fetchNotificationPrefs = useCallback(async () => {
     try {
       const res = await retryFetch('/api/preferences', {

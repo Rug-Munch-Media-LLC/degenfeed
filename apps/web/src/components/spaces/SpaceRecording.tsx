@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────
+// === Types ========================================================
 
 interface RecordingInfo {
   url?: string;
@@ -23,7 +23,7 @@ interface SpaceRecordingProps {
   transcript?: string;
 }
 
-// ─── Duration formatter ───────────────────────────────────────────
+// === Duration formatter ===========================================
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -34,7 +34,7 @@ function formatDuration(seconds: number): string {
   return `${s}s`;
 }
 
-// ─── Main Component ───────────────────────────────────────────────
+// === Main Component ===============================================
 
 export function SpaceRecording({
   spaceId: _spaceId,

@@ -6,7 +6,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { getLinkedProtocols, useCrossProtocolIdentity } from '../hooks/useCrossProtocolIdentity';
 import { useAuth } from './AuthProvider';
 
-// ─── Chain badge ──────────────────────────────────────────────
+// === Chain badge ==============================================
 
 function ChainBadge({ chain }: { chain: string }) {
   const isEth = chain === 'ethereum';
@@ -30,14 +30,14 @@ function ChainBadge({ chain }: { chain: string }) {
   );
 }
 
-// ─── Truncate helper ──────────────────────────────────────────
+// === Truncate helper ==========================================
 
 function truncateAddress(addr: string): string {
   if (!addr || addr.length < 10) return addr ?? '';
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
-// ─── Protocol badge ───────────────────────────────────────────
+// === Protocol badge ===========================================
 
 function ProtocolBadge({ protocol }: { protocol: string }) {
   const meta = PROTOCOL_ID_REGISTRY[protocol as ProtocolId];
@@ -55,7 +55,7 @@ function ProtocolBadge({ protocol }: { protocol: string }) {
   );
 }
 
-// ─── Wallet entry ─────────────────────────────────────────────
+// === Wallet entry =============================================
 
 function WalletEntry({
   address,
@@ -163,7 +163,7 @@ function WalletEntry({
   );
 }
 
-// ─── WalletSwitcher component ─────────────────────────────────
+// === WalletSwitcher component =================================
 
 export const WalletSwitcher = memo(function WalletSwitcher({
   align = 'left',

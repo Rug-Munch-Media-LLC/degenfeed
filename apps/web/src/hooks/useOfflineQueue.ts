@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 export type QueuePriority = 'high' | 'normal' | 'low';
 
@@ -63,14 +63,14 @@ export interface UseOfflineQueueOptions {
   handler?: ReplayHandler;
 }
 
-// ─── Constants ─────────────────────────────────────────────────────────────
+// === Constants =============================================================
 
 const DEFAULT_DB_NAME = 'degenfeed-offline-queue';
 const DEFAULT_STORE_NAME = 'operations';
 const DEFAULT_BATCH_SIZE = 5;
 const DEFAULT_BATCH_DELAY_MS = 1000;
 
-// ─── IndexedDB Helpers ─────────────────────────────────────────────────────
+// === IndexedDB Helpers =====================================================
 
 function openDb(dbName: string, storeName: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -208,7 +208,7 @@ async function clearAll(dbName: string, storeName: string): Promise<void> {
   });
 }
 
-// ─── Default Replay Handler ────────────────────────────────────────────────
+// === Default Replay Handler ================================================
 
 /**
  * Default handler that replays operations by making fetch requests.
@@ -255,7 +255,7 @@ const defaultHandler: ReplayHandler<{
   }
 };
 
-// ─── Hook ──────────────────────────────────────────────────────────────────
+// === Hook ==================================================================
 
 /**
  * useOfflineQueue — Client-side offline queue with IndexedDB persistence.

@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import { CATEGORY_EMOJIS, CATEGORY_LABELS, type FeddyCategory } from './types';
 
-// ─── Step definitions ──────────────────────────────────────────────────
+// === Step definitions ==================================================
 
 const STEPS = ['Name', 'Details', 'Rules', 'Appearance', 'Review'] as const;
 
@@ -17,7 +17,7 @@ const STEP_ICONS: Record<Step, string> = {
   Review: '✅',
 };
 
-// ─── Validation helpers ────────────────────────────────────────────────
+// === Validation helpers ================================================
 
 function validateName(name: string): string | null {
   const cleaned = name.toLowerCase().trim();
@@ -30,7 +30,7 @@ function validateName(name: string): string | null {
   return null;
 }
 
-// ─── Step 1: Name ──────────────────────────────────────────────────────
+// === Step 1: Name ======================================================
 
 function StepName({
   name,
@@ -99,7 +99,7 @@ function StepName({
   );
 }
 
-// ─── Step 2: Details ───────────────────────────────────────────────────
+// === Step 2: Details ===================================================
 
 function StepDetails({
   displayName,
@@ -202,7 +202,7 @@ function StepDetails({
   );
 }
 
-// ─── Step 3: Rules ─────────────────────────────────────────────────────
+// === Step 3: Rules =====================================================
 
 function StepRules({
   rulesText,
@@ -255,7 +255,7 @@ function StepRules({
   );
 }
 
-// ─── Step 4: Appearance ────────────────────────────────────────────────
+// === Step 4: Appearance ================================================
 
 function StepAppearance({
   avatarUrl,
@@ -318,7 +318,7 @@ function StepAppearance({
   );
 }
 
-// ─── Step 5: Review ────────────────────────────────────────────────────
+// === Step 5: Review ====================================================
 
 function StepReview({
   name,
@@ -434,7 +434,7 @@ function StepReview({
   );
 }
 
-// ─── Main Wizard ───────────────────────────────────────────────────────
+// === Main Wizard =======================================================
 
 export function CreateCommunityWizard({
   onCreated,

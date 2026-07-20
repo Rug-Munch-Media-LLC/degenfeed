@@ -5,13 +5,13 @@ import { useAuth } from '../AuthProvider';
 import { useToast } from '../Toast';
 import type { LiveStream } from './useLiveStreams';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface StreamCoinOverlayProps {
   stream: LiveStream;
 }
 
-/* ─── Mini bonding curve sparkline SVG ───────────────────────── */
+/* === Mini bonding curve sparkline SVG ========================= */
 
 function BondingCurveChart({ progress }: { progress: number }) {
   // Generate a simple curve path based on progress
@@ -68,7 +68,7 @@ function BondingCurveChart({ progress }: { progress: number }) {
   );
 }
 
-/* ─── Main Component ─────────────────────────────────────────── */
+/* === Main Component =========================================== */
 
 export function StreamCoinOverlay({ stream }: StreamCoinOverlayProps) {
   const { showToast } = useToast();

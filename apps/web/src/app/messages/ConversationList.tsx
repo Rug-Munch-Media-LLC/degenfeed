@@ -11,7 +11,7 @@ import {
 } from '../../hooks/useMessages';
 import { useMessagesKeyboardNav } from '../../hooks/useMessagesKeyboardNav';
 
-/* ─── Props ─────────────────────────────────────────────────── */
+/* === Props =================================================== */
 
 export interface ConversationListProps {
   conversations: ConversationListItem[];
@@ -26,7 +26,7 @@ export interface ConversationListProps {
   onRetry: () => void;
 }
 
-/* ─── Component ─────────────────────────────────────────────── */
+/* === Component =============================================== */
 
 export function ConversationList({
   conversations,
@@ -62,7 +62,7 @@ export function ConversationList({
 
   return (
     <div className="flex h-full flex-col">
-      {/* ── Search + new message ────────────────────────────── */}
+      {/* == Search + new message ============================== */}
       <div className="border-b border-[var(--color-border)] p-3 space-y-2">
         <div className="relative">
           <svg
@@ -109,7 +109,7 @@ export function ConversationList({
         </button>
       </div>
 
-      {/* ── Conversation items ──────────────────────────────── */}
+      {/* == Conversation items ================================ */}
       <div
         ref={listRef}
         className="flex-1 overflow-y-auto"
@@ -260,7 +260,7 @@ export function ConversationList({
         })}
       </div>
 
-      {/* ── Footer: unread total ────────────────────────────── */}
+      {/* == Footer: unread total ============================== */}
       {unreadTotal > 0 && (
         <div className="border-t border-[var(--color-border)] bg-[var(--color-glass-bg)] px-4 py-2 text-[10px] text-[var(--color-muted)] text-center">
           {unreadTotal} unread {unreadTotal === 1 ? 'message' : 'messages'}

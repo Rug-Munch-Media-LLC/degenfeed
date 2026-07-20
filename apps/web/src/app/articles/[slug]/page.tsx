@@ -2,11 +2,11 @@
 
 import { useAuth } from '../../../components/AuthProvider';
 import { useWeb3 } from '../../../components/Web3Provider';
-import { formatTimeAgo, truncateAddress } from '@degenfeed/utils';
+import { formatTimeAgo, shortenAddress } from '@degenfeed/utils';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
-// ─── Types ─────────────────────────────────────────────────────────
+// === Types =========================================================
 
 interface GhostPost {
   id: string;
@@ -30,7 +30,7 @@ interface GhostPost {
   };
 }
 
-// ─── Tip Modal ─────────────────────────────────────────────────────
+// === Tip Modal =====================================================
 
 function TipModal({
   isOpen,
@@ -125,7 +125,7 @@ function TipModal({
 
                 <div className="mb-4 rounded-lg bg-[#1f2937] p-3">
                   <p className="text-xs text-[#6b7280]">
-                    From: {truncateAddress(address)}
+                    From: {shortenAddress(address)}
                   </p>
                   <p className="mt-1 text-xs text-[#6b7280]">
                     You will send {amount} {currency}
@@ -156,7 +156,7 @@ function TipModal({
   );
 }
 
-// ─── Share Menu ────────────────────────────────────────────────────
+// === Share Menu ====================================================
 
 function ShareMenu({ post }: { post: GhostPost }) {
   const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -198,7 +198,7 @@ function ShareMenu({ post }: { post: GhostPost }) {
   );
 }
 
-// ─── Newsletter Subscribe CTA ──────────────────────────────────────
+// === Newsletter Subscribe CTA ======================================
 
 function NewsletterCTA() {
   const [email, setEmail] = useState('');
@@ -258,7 +258,7 @@ function NewsletterCTA() {
   );
 }
 
-// ─── Token Gate ────────────────────────────────────────────────────
+// === Token Gate ====================================================
 
 function TokenGate({ post }: { post: GhostPost }) {
   const { address } = useWeb3();
@@ -332,7 +332,7 @@ function TokenGate({ post }: { post: GhostPost }) {
   );
 }
 
-// ─── Main Article Page ─────────────────────────────────────────────
+// === Main Article Page =============================================
 
 export default function ArticlePage() {
   const params = useParams();
@@ -365,7 +365,7 @@ export default function ArticlePage() {
     fetchArticle();
   }, [slug]);
 
-  // ── Loading State ─────────────────────────────────────────────
+  // == Loading State =============================================
 
   if (loading) {
     return (
@@ -384,7 +384,7 @@ export default function ArticlePage() {
     );
   }
 
-  // ── Error State ───────────────────────────────────────────────
+  // == Error State ===============================================
 
   if (error || !post) {
     return (
@@ -406,7 +406,7 @@ export default function ArticlePage() {
     );
   }
 
-  // ── Success ───────────────────────────────────────────────────
+  // == Success ===================================================
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-8">

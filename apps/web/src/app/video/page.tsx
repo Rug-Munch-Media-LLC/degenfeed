@@ -30,7 +30,7 @@ import {
   useVideoCategories,
 } from '../../components/video/useVideoHub';
 
-// ─── Platform color mapping (matches VideoSourceBadge) ───────────────────
+// === Platform color mapping (matches VideoSourceBadge) ===================
 
 const PLATFORM_COLORS: Record<string, string> = {
   youtube: '#FF0000',
@@ -41,7 +41,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   creator: '#00FF41',
 };
 
-// ─── Page ────────────────────────────────────────────────────────────────
+// === Page ================================================================
 
 export default function VideoHubPage() {
   // URL params

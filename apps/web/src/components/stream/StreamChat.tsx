@@ -5,7 +5,7 @@ import { CHAT_BADGES, type ChatBadge, DEFAULT_EMOTES, type Emote } from './types
 import type { ChatMessage } from '../streams/useStreamChat';
 import { useStreamChat } from '../streams/useStreamChat';
 
-/* ─── Badge display ──────────────────────────────────────────── */
+/* === Badge display ============================================ */
 
 function ChatBadgeDisplay({ badge }: { badge?: ChatBadge | string }) {
   if (!badge) return null;
@@ -22,7 +22,7 @@ function ChatBadgeDisplay({ badge }: { badge?: ChatBadge | string }) {
   );
 }
 
-/* ─── Emote Picker ───────────────────────────────────────────── */
+/* === Emote Picker ============================================= */
 
 function EmotePicker({ onSelect, onClose }: { onSelect: (emote: Emote) => void; onClose: () => void }) {
   const categories = Array.from(new Set(DEFAULT_EMOTES.map((e) => e.category ?? 'other')));
@@ -66,7 +66,7 @@ function EmotePicker({ onSelect, onClose }: { onSelect: (emote: Emote) => void; 
   );
 }
 
-/* ─── Message Bubble ─────────────────────────────────────────── */
+/* === Message Bubble =========================================== */
 
 function ChatMessageBubble({ msg, isLocal }: { msg: ChatMessage; isLocal: boolean }) {
   return (
@@ -98,7 +98,7 @@ function ChatMessageBubble({ msg, isLocal }: { msg: ChatMessage; isLocal: boolea
   );
 }
 
-/* ─── Chat Input ─────────────────────────────────────────────── */
+/* === Chat Input =============================================== */
 
 function ChatInputField({ onSend, disabled, onSlowMode: onSlowModeProp }: {
   onSend: (text: string) => void;
@@ -209,7 +209,7 @@ function ChatInputField({ onSend, disabled, onSlowMode: onSlowModeProp }: {
   );
 }
 
-/* ─── Main StreamChat Component ──────────────────────────────── */
+/* === Main StreamChat Component ================================ */
 
 interface StreamChatProps {
   streamId: string;

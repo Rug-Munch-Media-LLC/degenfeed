@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import type { CreatorVideoMeta } from './useCreatorVideos';
 import { useCreatorVideoActions } from './useCreatorVideos';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 interface VideoEditorProps {
   video: CreatorVideoMeta;
@@ -12,7 +12,7 @@ interface VideoEditorProps {
   onSaved?: () => void;
 }
 
-// ─── Video Editor Modal ──────────────────────────────────────────────────
+// === Video Editor Modal ==================================================
 
 export default function VideoEditor({ video, onClose, onSaved }: VideoEditorProps) {
   const { updateVideo } = useCreatorVideoActions();

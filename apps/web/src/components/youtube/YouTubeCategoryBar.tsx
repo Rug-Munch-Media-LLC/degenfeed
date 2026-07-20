@@ -11,7 +11,7 @@
 import { memo, useRef, useState } from 'react';
 import type { YouTubeCategory } from './useYouTube';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export interface YouTubeCategoryBarProps {
   /** Available categories */
@@ -24,7 +24,7 @@ export interface YouTubeCategoryBarProps {
   showAll?: boolean;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────
+// === Component ===========================================================
 
 export const YouTubeCategoryBar = memo(function YouTubeCategoryBar({
   categories,

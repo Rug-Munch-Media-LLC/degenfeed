@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-// ─── Types ──────────────────────────────────────────────────────────────
+// === Types ==============================================================
 
 interface Props {
   params: Promise<{ type: string; id: string }>;
@@ -23,7 +23,7 @@ interface StreamData {
   startedAt?: number;
 }
 
-// ─── Protocol display info ────────────────────────────────────────────
+// === Protocol display info ============================================
 
 const PROTOCOL_INFO: Record<string, { name: string; icon: string; color: string }> = {
   farcaster: { name: 'Farcaster', icon: 'FC', color: '#8a63d2' },
@@ -35,7 +35,7 @@ const PROTOCOL_INFO: Record<string, { name: string; icon: string; color: string 
   telegram: { name: 'Telegram', icon: '✈️', color: '#0088cc' },
 };
 
-// ─── Metadata ─────────────────────────────────────────────────────────
+// === Metadata =========================================================
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { type, id } = await params;
@@ -60,7 +60,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   };
 }
 
-// ─── Server Component ─────────────────────────────────────────────────
+// === Server Component =================================================
 
 export default async function JoinPage({ params, searchParams }: Props) {
   const { type, id } = await params;
@@ -97,7 +97,7 @@ export default async function JoinPage({ params, searchParams }: Props) {
   );
 }
 
-// ─── Data fetching ────────────────────────────────────────────────────
+// === Data fetching ====================================================
 
 async function fetchStreamData(type: string, id: string): Promise<StreamData | null> {
   const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://app.degenfeed.xyz';
@@ -136,7 +136,7 @@ async function fetchStreamData(type: string, id: string): Promise<StreamData | n
   }
 }
 
-// ─── Client Component (interactive) ───────────────────────────────────
+// === Client Component (interactive) ===================================
 
 function JoinPageContent({
   type,
@@ -320,7 +320,7 @@ function JoinPageContent({
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────
+// === Helpers ==========================================================
 
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';

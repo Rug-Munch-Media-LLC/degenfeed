@@ -7,7 +7,7 @@
 import type { CustomFeed } from '@degenfeed/types';
 import type { CrossProtocolCommunity } from '@degenfeed/utils';
 
-// ─── Communities ────────────────────────────────────────────────
+// === Communities ================================================
 
 export interface FeedItem {
   id: string;
@@ -196,7 +196,7 @@ export function getMockFeed(communityName: string): FeedItem[] {
   );
 }
 
-// ─── Spaces ────────────────────────────────────────────────────
+// === Spaces ====================================================
 
 export interface SpaceItem {
   id: string;
@@ -329,7 +329,7 @@ export const MOCK_UPCOMING_SPACES: SpaceItem[] = [
   },
 ];
 
-// ─── Leaderboard ───────────────────────────────────────────────
+// === Leaderboard ===============================================
 
 export interface LeaderboardEntry {
   id: string;
@@ -750,7 +750,7 @@ export const MOCK_COMMUNITIES_LB: CommunityEntry[] = [
   },
 ];
 
-// ─── Trending Topics ───────────────────────────────────────────
+// === Trending Topics ===========================================
 
 export interface TrendingTopic {
   topic: string;
@@ -773,7 +773,7 @@ export const MOCK_TRENDING_TOPICS: TrendingTopic[] = [
   { topic: 'ETF', count: 2600, score: 21000 },
 ];
 
-// ─── Custom Feeds ──────────────────────────────────────────────
+// === Custom Feeds ==============================================
 
 export const MOCK_MY_FEEDS: CustomFeed[] = [
   {

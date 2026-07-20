@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 import { fetchWithSwr } from '../lib/fetchWithCache';
 import { getCsrfToken } from '../lib/csrf';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 export type ContentSource = 'youtube' | 'peertube' | 'tiktok' | 'instagram' | 'twitch' | 'kick' | 'rumble' | 'odysee';
 
@@ -64,14 +64,14 @@ interface InteractionPayload {
   duration?: number;
 }
 
-// ─── SWR fetcher ──────────────────────────────────────────────────────────
+// === SWR fetcher ==========================================================
 
 async function recommendationsFetcher(url: string): Promise<RankedContent[]> {
   const result = await fetchWithSwr<RecommendationsResponse>(url, url);
   return result.data.data ?? [];
 }
 
-// ─── Hooks ─────────────────────────────────────────────────────────────────
+// === Hooks =================================================================
 
 /**
  * Personalized video recommendations for the current user.
@@ -164,7 +164,7 @@ export function useDiscoverNew() {
   );
 }
 
-// ─── Interaction recording ─────────────────────────────────────────────────
+// === Interaction recording =================================================
 
 /**
  * Record a user interaction for future recommendation improvement.

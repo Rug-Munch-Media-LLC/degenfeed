@@ -3,7 +3,7 @@
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from '@degenfeed/ui';
 import { useCallback, useMemo, useState } from 'react';
 
-// ─── Constants ────────────────────────────────────────────────────
+// === Constants ====================================================
 
 const BROADCAST_PROTOCOLS = [
   { id: 'nostr', label: 'Nostr' },
@@ -15,7 +15,7 @@ const BROADCAST_PROTOCOLS = [
 const MAX_TITLE_LENGTH = 100;
 const MAX_DESC_LENGTH = 500;
 
-// ─── Types ────────────────────────────────────────────────────────
+// === Types ========================================================
 
 interface CreateSpaceModalProps {
   open: boolean;
@@ -34,7 +34,7 @@ interface CreateSpaceModalProps {
   onBroadcast?: (text: string, protocols: string[]) => Promise<void>;
 }
 
-// ─── Component ────────────────────────────────────────────────────
+// === Component ====================================================
 
 export function CreateSpaceModal({
   open,
@@ -200,7 +200,7 @@ export function CreateSpaceModal({
         onKeyDown={(e) => e.stopPropagation()}
         style={{ maxHeight: '90vh' }}
       >
-        {/* ── Header ── */}
+        {/* == Header == */}
         <div className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-5 py-3.5">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-degen-500/10">
@@ -230,7 +230,7 @@ export function CreateSpaceModal({
           </button>
         </div>
 
-        {/* ── Content ── */}
+        {/* == Content == */}
         <div className="flex-1 overflow-y-auto space-y-5 px-5 py-4">
           {/* Title */}
           <div>
@@ -404,7 +404,7 @@ export function CreateSpaceModal({
           )}
         </div>
 
-        {/* ── Create button ── */}
+        {/* == Create button == */}
         <div className="border-t border-[var(--color-glass-border)] px-5 py-3.5">
           <button
             type="button"

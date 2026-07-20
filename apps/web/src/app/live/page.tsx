@@ -11,7 +11,7 @@ import { StreamCategoriesBar } from '../../components/stream/StreamCategories';
 import { type LiveStream, type StreamType, useLiveStreams } from '../../components/streams/useLiveStreams';
 import type { StreamCategory } from '../../components/stream/types';
 
-/* ─── Count streams by type ──────────────────────────────────── */
+/* === Count streams by type ==================================== */
 
 function countByType(streams: LiveStream[]): Partial<Record<StreamType | 'all', number>> {
   const counts: Partial<Record<StreamType | 'all', number>> = { all: streams.length };
@@ -21,7 +21,7 @@ function countByType(streams: LiveStream[]): Partial<Record<StreamType | 'all', 
   return counts;
 }
 
-/* ─── Main Live Page ─────────────────────────────────────────── */
+/* === Main Live Page =========================================== */
 
 export default function LivePage() {
   const { streams, featured, total, isLoading, isValidating } = useLiveStreams();
@@ -29,7 +29,7 @@ export default function LivePage() {
   const [activeCategory, setActiveCategory] = useState<StreamCategory | 'all'>('all');
   const [goLiveOpen, setGoLiveOpen] = useState(false);
 
-  /* ─── Stream category mapping for filtering ─────────────────── */
+  /* === Stream category mapping for filtering =================== */
   const streamCategoryMap: Record<string, StreamCategory> = {
     solo: 'tech',
     spaces: 'talk',
@@ -70,7 +70,7 @@ export default function LivePage() {
           </div>
         )}
 
-        {/* ── Categories Bar (TWITCH-STYLE) ── */}
+        {/* == Categories Bar (TWITCH-STYLE) == */}
         <div className="mb-5">
           <StreamCategoriesBar
             activeCategory={activeCategory}
@@ -81,7 +81,7 @@ export default function LivePage() {
           />
         </div>
 
-        {/* ── Tabs: All / Coin Launches / Spaces / Solo / Collab ── */}
+        {/* == Tabs: All / Coin Launches / Spaces / Solo / Collab == */}
         <LiveTabsNav activeTab={activeTab} onTabChange={setActiveTab} counts={counts} />
 
         <div className="space-y-8">
@@ -158,7 +158,7 @@ export default function LivePage() {
   );
 }
 
-/* ─── Extended LiveTabs with Twitch-style design ─────────────── */
+/* === Extended LiveTabs with Twitch-style design =============== */
 
 function LiveTabsNav({
   activeTab,
@@ -219,7 +219,7 @@ function LiveTabsNav({
   );
 }
 
-/* ─── Hero Featured Section ──────────────────────────────────── */
+/* === Hero Featured Section ==================================== */
 
 function HeroFeaturedSection({
   streams,
@@ -352,7 +352,7 @@ function HeroFeaturedSection({
   );
 }
 
-/* ─── Helper ─────────────────────────────────────────────────── */
+/* === Helper =================================================== */
 
 function formatStreamDuration(startedAt: number): string {
   const minutes = Math.floor((Date.now() - startedAt) / 60000);

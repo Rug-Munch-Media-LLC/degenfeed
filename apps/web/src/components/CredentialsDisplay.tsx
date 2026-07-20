@@ -11,7 +11,7 @@
 import { useCallback, useState } from 'react';
 import { useToast } from './Toast';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 export interface PlatformCredential {
   platform: string;
@@ -38,7 +38,7 @@ export interface RecommendedApp {
   description: string;
 }
 
-// ─── Platform registry ────────────────────────────────────────────────────
+// === Platform registry ====================================================
 
 export const PLATFORM_CREDENTIAL_META: Record<
   string,
@@ -51,7 +51,7 @@ export const PLATFORM_CREDENTIAL_META: Record<
   lens: { label: 'Lens', icon: '◎', color: '#abfe2c' },
 };
 
-// ─── Single credential field row ──────────────────────────────────────────
+// === Single credential field row ==========================================
 
 function CredentialFieldRow({ field, onCopied }: { field: CredentialField; onCopied: () => void }) {
   const [revealed, setRevealed] = useState(false);
@@ -114,7 +114,7 @@ function CredentialFieldRow({ field, onCopied }: { field: CredentialField; onCop
   );
 }
 
-// ─── Recommended apps section ─────────────────────────────────────────────
+// === Recommended apps section =============================================
 
 function RecommendedAppsSection({ apps }: { apps: RecommendedApp[] }) {
   if (apps.length === 0) return null;
@@ -157,7 +157,7 @@ function RecommendedAppsSection({ apps }: { apps: RecommendedApp[] }) {
   );
 }
 
-// ─── Single credential card ───────────────────────────────────────────────
+// === Single credential card ===============================================
 
 interface CredentialCardProps {
   credential: PlatformCredential;
@@ -172,7 +172,7 @@ export function CredentialCard({ credential }: CredentialCardProps) {
 
   const handleDownload = useCallback(() => {
     const lines: string[] = [
-      `── ${credential.label} Credentials ──`,
+      `== ${credential.label} Credentials ==`,
       `Platform:  ${credential.label}`,
       `Instance:  ${credential.instanceUrl}`,
       `Username:  ${credential.username}`,
@@ -183,12 +183,12 @@ export function CredentialCard({ credential }: CredentialCardProps) {
       lines.push(`  ${field.label}: ${field.value}`);
     }
     lines.push('');
-    lines.push('┌─────────────────────────────────────────┐');
+    lines.push('┌=========================================┐');
     lines.push('│  Your credentials are encrypted and     │');
     lines.push('│  stored securely. We never share them   │');
     lines.push('│  with third parties. You can revoke     │');
     lines.push('│  access at any time.                    │');
-    lines.push('└─────────────────────────────────────────┘');
+    lines.push('└=========================================┘');
     lines.push('');
     lines.push('Recommended apps:');
     for (const app of credential.apps ?? []) {
@@ -261,7 +261,7 @@ export function CredentialCard({ credential }: CredentialCardProps) {
   );
 }
 
-// ─── Portal-style credential info banner ─────────────────────────────────
+// === Portal-style credential info banner =================================
 
 interface CredentialsInfoBannerProps {
   connectedCount: number;
@@ -347,7 +347,7 @@ export function CredentialsProgressBanner({
   );
 }
 
-// ─── Security note banner ────────────────────────────────────────────────
+// === Security note banner ================================================
 
 export function CredentialSecurityNote() {
   return (
@@ -370,7 +370,7 @@ export function CredentialSecurityNote() {
   );
 }
 
-// ─── Recommended apps by platform ─────────────────────────────────────────
+// === Recommended apps by platform =========================================
 
 export function getRecommendedApps(platform: string): RecommendedApp[] {
   switch (platform) {
@@ -424,7 +424,7 @@ export function getRecommendedApps(platform: string): RecommendedApp[] {
   }
 }
 
-// ─── Build credential from registration result ────────────────────────────
+// === Build credential from registration result ============================
 
 // Re-using the local type instead of importing from @degenfeed/crossplatform-register
 // which isn't a direct dependency of apps/web. The shape matches PlatformAccount

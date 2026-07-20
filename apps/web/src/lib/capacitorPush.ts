@@ -14,7 +14,7 @@
  *   pushService.onNotification((data) => { ... });
  */
 
-// ── Types ──────────────────────────────────────────────────────
+// == Types ======================================================
 
 export interface PushToken {
   /** The push token string (APNs device token, FCM registration token, or Web Push subscription endpoint). */
@@ -36,7 +36,7 @@ export interface PushPayload {
 export type NotificationHandler = (payload: PushPayload) => void;
 export type TokenHandler = (token: PushToken) => void;
 
-// ── Environment detection ──────────────────────────────────────
+// == Environment detection ======================================
 
 function isNative(): boolean {
   if (typeof window === 'undefined') return false;
@@ -56,7 +56,7 @@ const VAPID_PUBLIC_KEY: string | undefined =
     ? (process.env as Record<string, string | undefined>).NEXT_PUBLIC_VAPID_KEY
     : undefined;
 
-// ── Push service singleton ─────────────────────────────────────
+// == Push service singleton =====================================
 
 class CapacitorPushService {
   private token: PushToken | null = null;
@@ -89,7 +89,7 @@ class CapacitorPushService {
     return this.registerWeb();
   }
 
-  // ── Native (Capacitor) registration ───────────────────────
+  // == Native (Capacitor) registration =======================
 
   private async registerNative(): Promise<PushToken | null> {
     try {
@@ -147,7 +147,7 @@ class CapacitorPushService {
     return this.token;
   }
 
-  // ── Web (PWA) registration ────────────────────────────────
+  // == Web (PWA) registration ================================
 
   private async registerWeb(): Promise<PushToken | null> {
     if (!isWebPushSupported()) {
@@ -202,7 +202,7 @@ class CapacitorPushService {
     }
   }
 
-  // ── Event handlers ────────────────────────────────────────
+  // == Event handlers ========================================
 
   /** Called when a push notification is received (foreground or tap-to-open). */
   onNotification(handler: NotificationHandler): () => void {
@@ -259,7 +259,7 @@ class CapacitorPushService {
     return isNative() || isWebPushSupported();
   }
 
-  // ── Helpers ───────────────────────────────────────────────
+  // == Helpers ===============================================
 
   private detectPlatform(): 'ios' | 'android' {
     const ua = navigator.userAgent.toLowerCase();

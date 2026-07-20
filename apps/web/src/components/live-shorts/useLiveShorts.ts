@@ -16,7 +16,7 @@ import { useCallback } from 'react';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 
-// ─── Types ─────────────────────────────────────────────────────────────
+// === Types =============================================================
 
 export type LiveShortProtocol = 'hls' | 'webrtc' | 'srt' | 'rtmp';
 
@@ -109,7 +109,7 @@ export interface StartLiveShortResponse {
   ingestUrl: string;
 }
 
-// ─── Fetcher ───────────────────────────────────────────────────────────
+// === Fetcher ===========================================================
 
 const fetcher = async <T>(url: string): Promise<T> => {
   const res = await fetch(url, {
@@ -120,7 +120,7 @@ const fetcher = async <T>(url: string): Promise<T> => {
   return res.json() as Promise<T>;
 };
 
-// ─── Mock generators (dev/fallback) ────────────────────────────────────
+// === Mock generators (dev/fallback) ====================================
 
 function generateMockSession(idx: number): LiveShortSession {
   const now = Date.now();
@@ -264,7 +264,7 @@ function generateMockTips(count = 20): LiveShortTip[] {
   }));
 }
 
-// ─── Hooks ─────────────────────────────────────────────────────────────
+// === Hooks =============================================================
 
 /**
  * Fetch all currently-active live short sessions.

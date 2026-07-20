@@ -4,7 +4,7 @@ import type { StoredBlockedUser } from '@degenfeed/storage';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// ─── Local types (mirroring @degenfeed/storage internals) ─────────────
+// === Local types (mirroring @degenfeed/storage internals) =============
 
 interface MutedUserEntry {
   targetId: string;
@@ -33,7 +33,7 @@ interface MuteConfig {
   blockedCommunities: BlockedCommunityEntry[];
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────
+// === Helpers ========================================================
 
 const PROTOCOL_ICONS: Record<string, string> = {
   nostr: '⚡',
@@ -57,7 +57,7 @@ function formatDate(ts: number): string {
   });
 }
 
-// ─── UI Components ──────────────────────────────────────────────────
+// === UI Components ==================================================
 
 function EmptyState({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
   return (
@@ -85,7 +85,7 @@ function WordChip({ word, onRemove }: { word: string; onRemove: (w: string) => v
   );
 }
 
-// ─── Main Page ──────────────────────────────────────────────────────
+// === Main Page ======================================================
 
 export default function MutedSettingsPage() {
   const [config, setConfig] = useState<MuteConfig>({

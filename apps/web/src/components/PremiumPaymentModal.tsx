@@ -15,7 +15,7 @@ import { type PremiumTier, TIERS, type TierConfig } from '../hooks/usePremium';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 type PaymentStep = 'select-tier' | 'payment-method' | 'confirm' | 'processing' | 'success';
 
@@ -26,7 +26,7 @@ interface StepProps {
   onSelect: (tier: PremiumTier) => void;
 }
 
-// ─── Close icon ──────────────────────────────────────────────────────────
+// === Close icon ==========================================================
 
 function CloseIcon({ onClick }: { onClick: () => void }) {
   return (
@@ -51,7 +51,7 @@ function CloseIcon({ onClick }: { onClick: () => void }) {
   );
 }
 
-// ─── Step indicator ──────────────────────────────────────────────────────
+// === Step indicator ======================================================
 
 function StepDots({ current, total }: { current: number; total: number }) {
   return (
@@ -68,7 +68,7 @@ function StepDots({ current, total }: { current: number; total: number }) {
   );
 }
 
-// ─── Step 1: Select Tier ─────────────────────────────────────────────────
+// === Step 1: Select Tier =================================================
 
 function StepSelectTier({ onSelect }: { onSelect: (tier: PremiumTier) => void }) {
   const paidTiers = TIERS.filter((t) => t.id !== 'free' && t.id !== 'enterprise');
@@ -139,7 +139,7 @@ function StepSelectTier({ onSelect }: { onSelect: (tier: PremiumTier) => void })
   );
 }
 
-// ─── Step 2: Payment Method ──────────────────────────────────────────────
+// === Step 2: Payment Method ==============================================
 
 function StepPaymentMethod({
   tier,
@@ -206,7 +206,7 @@ function StepPaymentMethod({
   );
 }
 
-// ─── Step 3: Confirm ─────────────────────────────────────────────────────
+// === Step 3: Confirm =====================================================
 
 function StepConfirm({
   tier,
@@ -279,7 +279,7 @@ function StepConfirm({
   );
 }
 
-// ─── Step 4: Processing ──────────────────────────────────────────────────
+// === Step 4: Processing ==================================================
 
 function StepProcessing({
   txHash,
@@ -313,7 +313,7 @@ function StepProcessing({
   );
 }
 
-// ─── Step 5: Success ─────────────────────────────────────────────────────
+// === Step 5: Success =====================================================
 
 function StepSuccess({ tier, onClose }: { tier: TierConfig; onClose: () => void }) {
   return (
@@ -365,7 +365,7 @@ function StepSuccess({ tier, onClose }: { tier: TierConfig; onClose: () => void 
   );
 }
 
-// ─── Main Modal ──────────────────────────────────────────────────────────
+// === Main Modal ==========================================================
 
 interface PremiumPaymentModalProps {
   open: boolean;

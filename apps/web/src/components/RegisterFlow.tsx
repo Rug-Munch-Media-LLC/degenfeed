@@ -17,7 +17,7 @@ import { usePremium } from '../hooks/usePremium';
 import { useToast } from './Toast';
 import { PremiumPaymentModal } from './PremiumPaymentModal';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 type PlanId = 'free' | 'standard' | 'complete';
 
@@ -94,7 +94,7 @@ interface RegistrationStatus {
   premiumTier: string | null;
 }
 
-// ─── Lens Handle Pricing Tiers ────────────────────────────────────────────
+// === Lens Handle Pricing Tiers ============================================
 
 function getHandleTier(length: number): {
   label: string;
@@ -174,7 +174,7 @@ function HandlePriceIndicator({ length, premium }: { length: number; premium: bo
   );
 }
 
-// ─── Plan data ────────────────────────────────────────────────────────────
+// === Plan data ============================================================
 
 const PLANS: PlanInfo[] = [
   {
@@ -220,7 +220,7 @@ const PLANS: PlanInfo[] = [
   },
 ];
 
-// ─── Step indicator ───────────────────────────────────────────────────────
+// === Step indicator =======================================================
 
 function StepIndicator({
   steps,
@@ -264,7 +264,7 @@ function StepIndicator({
   );
 }
 
-// ─── Plan card ────────────────────────────────────────────────────────────
+// === Plan card ============================================================
 
 function PlanCard({
   plan,
@@ -322,7 +322,7 @@ function PlanCard({
   );
 }
 
-// ─── Step 1: Pick plan ────────────────────────────────────────────────────
+// === Step 1: Pick plan ====================================================
 
 function Step1_PickPlan({
   selectedPlan,
@@ -382,7 +382,7 @@ function Step1_PickPlan({
   );
 }
 
-// ─── Step 2: Choose usernames ─────────────────────────────────────────────
+// === Step 2: Choose usernames =============================================
 
 function Step2_ChooseUsernames({
   plan,
@@ -521,7 +521,7 @@ function Step2_ChooseUsernames({
   );
 }
 
-// ─── Cost breakdown row ───────────────────────────────────────────────────
+// === Cost breakdown row ===================================================
 
 function CostRow({
   label,
@@ -546,7 +546,7 @@ function CostRow({
   );
 }
 
-// ─── Step 3: Review costs ─────────────────────────────────────────────────
+// === Step 3: Review costs =================================================
 
 function Step3_ReviewCosts({
   plan,
@@ -758,7 +758,7 @@ function Step3_ReviewCosts({
   );
 }
 
-// ─── Step 4: Wallet signature ─────────────────────────────────────────────
+// === Step 4: Wallet signature =============================================
 
 function Step4_WalletSignature({
   onBack,
@@ -829,7 +829,7 @@ function Step4_WalletSignature({
   );
 }
 
-// ─── Step 5: Processing animation ─────────────────────────────────────────
+// === Step 5: Processing animation =========================================
 
 interface ProcessingStep {
   id: string;
@@ -962,7 +962,7 @@ function Step5_Processing({
   );
 }
 
-// ─── Recovery account card ────────────────────────────────────────────────
+// === Recovery account card ================================================
 
 function RecoveryCard({ account }: { account: RecoveryAccount }) {
   return (
@@ -980,7 +980,7 @@ function RecoveryCard({ account }: { account: RecoveryAccount }) {
   );
 }
 
-// ─── Step 6: Success + Recovery keys ──────────────────────────────────────
+// === Step 6: Success + Recovery keys ======================================
 
 function Step6_Success_RecoveryKeys({
   results,
@@ -1094,7 +1094,7 @@ function Step6_Success_RecoveryKeys({
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────
+// === Main component =======================================================
 
 const STEPS = ['Plan', 'Usernames', 'Review', 'Sign', 'Processing', 'Success'];
 
@@ -1110,7 +1110,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
   const { isPremium, loading: premiumLoading } = usePremium();
   const { showToast } = useToast();
 
-  // ── State ───────────────────────────────────────────
+  // == State ===========================================
   const [step, setStep] = useState(0);
   const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
   const [farcasterUsername, setFarcasterUsername] = useState('');
@@ -1145,7 +1145,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
       });
   }, []);
 
-  // ── Computed charges ────────────────────────────────
+  // == Computed charges ================================
   const handleGasCost = getLensHandleGasCost(lensHandle);
   const handleLabel = getHandleTier(lensHandle.length).label;
 
@@ -1254,7 +1254,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     }
   }, [selectedPlan, isPremium, handleGasCost, handleLabel]);
 
-  // ── Handle plan selection ───────────────────────────
+  // == Handle plan selection ===========================
   const handlePlanSelect = useCallback(
     (id: PlanId) => {
       setSelectedPlan(id);
@@ -1268,7 +1268,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     [compact],
   );
 
-  // ── Handle confirm (moves to sign step) ─────────────
+  // == Handle confirm (moves to sign step) =============
   const handleConfirm = useCallback(
     async (planOverride?: PlanId) => {
       const plan = planOverride || selectedPlan;
@@ -1284,12 +1284,12 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     [selectedPlan, compact, walletAddress, executeRegistration],
   );
 
-  // ── Handle overage confirmation ─────────────────────
+  // == Handle overage confirmation =====================
   const handleConfirmOverage = useCallback(() => {
     setConfirmedOverage(true);
   }, []);
 
-  // ── Execute registration ────────────────────────────
+  // == Execute registration ============================
   const executeRegistration = useCallback(
     async (plan: PlanId, skipSign: boolean = false) => {
       if (!walletAddress) {
@@ -1378,13 +1378,13 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     [walletAddress, farcasterUsername, lensHandle, ensName, confirmedOverage, signMessage, showToast, onComplete, compact],
   );
 
-  // ── Handle sign + submit ────────────────────────────
+  // == Handle sign + submit ============================
   const handleSign = useCallback(async () => {
     if (!selectedPlan) return;
     await executeRegistration(selectedPlan, false);
   }, [selectedPlan, executeRegistration]);
 
-  // ── Reset ───────────────────────────────────────────
+  // == Reset ===========================================
   const handleRestart = useCallback(() => {
     setStep(0);
     setSelectedPlan(null);
@@ -1400,7 +1400,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     setPendingOverageInfo(null);
   }, []);
 
-  // ── Not connected ──────────────────────────────────
+  // == Not connected ==================================
   if (!walletAddress) {
     return (
       <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6 text-center">
@@ -1417,7 +1417,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     );
   }
 
-  // ── Compact mode (just plan selection + result) ─────
+  // == Compact mode (just plan selection + result) =====
   if (compact) {
     return (
       <div className="space-y-4">
@@ -1471,7 +1471,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     );
   }
 
-  // ── Full flow ───────────────────────────────────────
+  // == Full flow =======================================
   return (
     <div className="mx-auto max-w-2xl">
       {/* Premium status note */}

@@ -11,7 +11,7 @@
 import useSWR from 'swr';
 import useSWRInfinite from 'swr/infinite';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export interface YouTubeVideo {
   id: string;
@@ -79,7 +79,7 @@ interface ChannelResponse {
   meta: { count: number; source: string; sourceLabel: string };
 }
 
-// ─── Fetcher ─────────────────────────────────────────────────────────────
+// === Fetcher =============================================================
 
 const fetcher = async <T>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -89,7 +89,7 @@ const fetcher = async <T>(url: string): Promise<T> => {
   return res.json() as Promise<T>;
 };
 
-// ─── Hooks ───────────────────────────────────────────────────────────────
+// === Hooks ===============================================================
 
 /**
  * Fetch trending YouTube videos in a category.
@@ -267,7 +267,7 @@ export function useYouTubeTrendingInfinite(category = 'all', limit = 20) {
   };
 }
 
-// ─── Utility helpers ────────────────────────────────────────────────────
+// === Utility helpers ====================================================
 
 export function formatYouTubeCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;

@@ -7,7 +7,7 @@ import { CrossPlatformSignup } from './CrossPlatformSignup';
 import { resetTour } from './GuidedTour';
 import { useToast } from './Toast';
 
-/* ── Types ───────────────────────────────────────────────── */
+/* == Types ================================================= */
 
 interface Protocol {
   id: string;
@@ -26,7 +26,7 @@ interface Suggestion {
   protocol: string;
 }
 
-/* ── Constants ───────────────────────────────────────────── */
+/* == Constants ============================================= */
 
 const PROTOCOLS: Protocol[] = [
   {
@@ -100,7 +100,7 @@ const INTERESTS = [
   { id: 'gaming', label: 'Gaming', emoji: '🎮' },
 ];
 
-/* ── Step components ─────────────────────────────────────── */
+/* == Step components ======================================= */
 
 function StepDots({ current, total }: { current: number; total: number }) {
   const percent = Math.round(((current + 1) / total) * 100);
@@ -128,7 +128,7 @@ function StepDots({ current, total }: { current: number; total: number }) {
   );
 }
 
-/* ── Main component ──────────────────────────────────────── */
+/* == Main component ======================================== */
 
 export function OnboardingModal() {
   const { show, close, complete } = useOnboarding();
@@ -385,7 +385,7 @@ export function OnboardingModal() {
                 animation: `onboarding-slide-${direction === 'forward' ? 'in' : 'out'} 0.3s ease-out`,
               }}
             >
-              {/* ── Step 0: Welcome ── */}
+              {/* == Step 0: Welcome == */}
               {step === 0 && (
                 <div className="text-center">
                   <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent text-4xl shadow-[0_0_30px_rgba(0,255,65,0.15)]">
@@ -418,7 +418,7 @@ export function OnboardingModal() {
                 </div>
               )}
 
-              {/* ── Step 1: Protocol picker ── */}
+              {/* == Step 1: Protocol picker == */}
               {step === 1 && (
                 <div>
                   <div className="mb-6 text-center">
@@ -523,7 +523,7 @@ export function OnboardingModal() {
                 </div>
               )}
 
-              {/* ── Step 2: Interest picker ── */}
+              {/* == Step 2: Interest picker == */}
               {step === 2 && (
                 <div>
                   <div className="mb-6 text-center">
@@ -562,7 +562,7 @@ export function OnboardingModal() {
                 </div>
               )}
 
-              {/* ── Step 3: Follow suggestions ── */}
+              {/* == Step 3: Follow suggestions == */}
               {step === 3 && (
                 <div>
                   <div className="mb-6 text-center">
@@ -628,7 +628,7 @@ export function OnboardingModal() {
                 </div>
               )}
 
-              {/* ── Step 4: Create accounts ── */}
+              {/* == Step 4: Create accounts == */}
               {step === 4 && (
                 <div>
                   <div className="mb-4 text-center">
@@ -645,7 +645,7 @@ export function OnboardingModal() {
                 </div>
               )}
 
-              {/* ── Step 5: Done ── */}
+              {/* == Step 5: Done == */}
               {step === 5 && (
                 <div className="text-center">
                   <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/20 via-degen-500/10 to-transparent shadow-[0_0_40px_rgba(0,255,65,0.15)]">

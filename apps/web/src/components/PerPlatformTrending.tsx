@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { retryFetch } from '../lib/retryFetch';
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// === Types =================================================================
 
 interface TrendingPost {
   id: string;
@@ -61,7 +61,7 @@ interface TimeFilter {
   windowHours: number;
 }
 
-// ─── Constants ─────────────────────────────────────────────────────────────
+// === Constants =============================================================
 
 const TIME_FILTERS: TimeFilter[] = [
   { id: 'now', label: 'Now', windowHours: 1 },
@@ -91,7 +91,7 @@ const PROTOCOL_META: Record<
   mastodon: { color: '#6364ff', icon: 'M', name: 'Mastodon', postNoun: 'toot' },
 };
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// === Helpers ===============================================================
 
 function timeAgo(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -127,7 +127,7 @@ function getCategoryColor(catId: string): string {
   return map[catId] ?? '#888';
 }
 
-// ─── Skeleton ──────────────────────────────────────────────────────────────
+// === Skeleton ==============================================================
 
 function TrendingSkeleton({ color }: { color: string }) {
   return (
@@ -150,13 +150,13 @@ function TrendingSkeleton({ color }: { color: string }) {
   );
 }
 
-// ─── Props ─────────────────────────────────────────────────────────────────
+// === Props =================================================================
 
 interface Props {
   protocol: string;
 }
 
-// ─── Component ─────────────────────────────────────────────────────────────
+// === Component =============================================================
 
 export function PerPlatformTrending({ protocol }: Props) {
   const meta = PROTOCOL_META[protocol] ?? PROTOCOL_META.farcaster!;
@@ -210,7 +210,7 @@ export function PerPlatformTrending({ protocol }: Props) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
-      {/* ── Header ── */}
+      {/* == Header == */}
       <div className="mb-6">
         <div className="mb-2 flex items-center gap-3">
           <span
@@ -282,7 +282,7 @@ export function PerPlatformTrending({ protocol }: Props) {
         </div>
       </div>
 
-      {/* ── Loading / Error / Empty states ── */}
+      {/* == Loading / Error / Empty states == */}
       {state === 'loading' && <TrendingSkeleton color={color} />}
 
       {state === 'error' && (
@@ -309,7 +309,7 @@ export function PerPlatformTrending({ protocol }: Props) {
         </div>
       )}
 
-      {/* ── Loaded Content ── */}
+      {/* == Loaded Content == */}
       {state === 'loaded' && data && (
         <div className="space-y-10">
           {/* ═══ Trending posts ═══ */}
@@ -596,7 +596,7 @@ export function PerPlatformTrending({ protocol }: Props) {
             </section>
           )}
 
-          {/* ── Footer note ── */}
+          {/* == Footer note == */}
           <p className="text-center text-xs text-[var(--color-muted)]">
             Trending computed from{' '}
             {TIME_FILTERS.find((f) => f.id === activeTime.id)?.label.toLowerCase()} activity on{' '}

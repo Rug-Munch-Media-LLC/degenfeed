@@ -1,4 +1,4 @@
-/* ─── Barrel Exports for Stream Components ────────────────────── */
+/* === Barrel Exports for Stream Components ====================== */
 
 export { type StreamExtended, type StreamCategory, type StreamQuality, type ChatBadge, type Emote, type VOD, type Clip, type StreamSchedule as StreamScheduleType, type ViewerAnalytics, STREAM_CATEGORIES, getCategoryInfo, QUALITY_OPTIONS, CHAT_BADGES, DEFAULT_EMOTES, generateMockStream, generateMockVODs, generateMockClips, generateMockSchedule } from './types';
 

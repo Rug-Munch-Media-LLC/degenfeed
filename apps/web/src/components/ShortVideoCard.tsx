@@ -24,7 +24,7 @@ const TipModal = dynamic(() => import('./TipModal').then((m) => ({ default: m.Ti
   ssr: false,
 });
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+// === Helpers ==============================================================
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -42,7 +42,7 @@ function truncateText(text: string, maxLen = 100): string {
   return `${text.slice(0, maxLen)}…`;
 }
 
-// ─── Props ────────────────────────────────────────────────────────────────
+// === Props ================================================================
 
 interface ShortVideoCardProps {
   post: UnifiedPost;
@@ -51,7 +51,7 @@ interface ShortVideoCardProps {
   onPlayStateChange?: (paused: boolean) => void;
 }
 
-// ─── Action Button ────────────────────────────────────────────────────────
+// === Action Button ========================================================
 
 interface ActionBtnProps {
   icon: React.ReactNode;
@@ -95,7 +95,7 @@ const ActionButton = memo(function ActionButton({
   );
 });
 
-// ─── Heart Burst ──────────────────────────────────────────────────────────
+// === Heart Burst ==========================================================
 
 function HeartBurst({ visible }: { visible: boolean }) {
   if (!visible) return null;
@@ -142,7 +142,7 @@ function HeartBurst({ visible }: { visible: boolean }) {
   );
 }
 
-// ─── Video Info Panel ─────────────────────────────────────────────────────
+// === Video Info Panel =====================================================
 
 function VideoInfoPanel({ post, visible }: { post: UnifiedPost; visible: boolean }) {
   const hashtags = useMemo(() => extractHashtags(post.text), [post.text]);
@@ -239,7 +239,7 @@ function VideoInfoPanel({ post, visible }: { post: UnifiedPost; visible: boolean
   );
 }
 
-// ─── Main Component ──────────────────────────────────────────────────────
+// === Main Component ======================================================
 
 export const ShortVideoCard = memo(function ShortVideoCard({
   post,
@@ -269,7 +269,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   const pullStartY = useRef(0);
   const emoteIdCounter = useRef(0);
 
-  // ── Video detection ───────────────────────────────────────────────────
+  // == Video detection ===================================================
   const videoInfo = useMemo<VideoInfo | null>(() => {
     for (const embed of post.embeds) {
       const info = parseVideoUrl(embed.url);
@@ -293,13 +293,13 @@ export const ShortVideoCard = memo(function ShortVideoCard({
   const authorHandle = post.author.handles[post.protocol] ?? post.author.id.slice(0, 16);
   const protocolColor = getProtocolColor(post.protocol);
 
-  // ── Heart burst animation ─────────────────────────────────────────────
+  // == Heart burst animation =============================================
   const showHeart = useCallback(() => {
     setHeartVisible(true);
     setTimeout(() => setHeartVisible(false), 900);
   }, []);
 
-  // ── Overlay auto-hide after 3s ────────────────────────────────────────
+  // == Overlay auto-hide after 3s ========================================
   const resetOverlayTimer = useCallback(() => {
     setShowOverlay(true);
     if (overlayTimer.current) clearTimeout(overlayTimer.current);
@@ -308,7 +308,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     }, 3000);
   }, [showInfoPanel]);
 
-  // ── Custom event listeners ────────────────────────────────────────────
+  // == Custom event listeners ============================================
   useEffect(() => {
     if (!isActive) return;
 
@@ -381,7 +381,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     };
   }, [isActive, resetOverlayTimer]);
 
-  // ── Tap area management ───────────────────────────────────────────────
+  // == Tap area management ===============================================
   const handleContainerClick = useCallback(
     (e: React.MouseEvent) => {
       const rect = e.currentTarget.getBoundingClientRect();
@@ -412,7 +412,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     [showOverlay, resetOverlayTimer, showInfoPanel],
   );
 
-  // ── Double-tap to like ─────────────────────────────────────────────────
+  // == Double-tap to like =================================================
   const handleTap = useCallback(() => {
     const now = Date.now();
     if (now - lastTapTime.current < 350) {
@@ -425,7 +425,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     }
   }, [onDoubleTap, showHeart]);
 
-  // ── Long press to pause ───────────────────────────────────────────────
+  // == Long press to pause ===============================================
   const handlePointerDown = useCallback(() => {
     longPressTimer.current = setTimeout(() => {
       onPlayStateChange?.(true);
@@ -440,7 +440,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     onPlayStateChange?.(false);
   }, [onPlayStateChange]);
 
-  // ── Progress bar ──────────────────────────────────────────────────────
+  // == Progress bar ======================================================
   useEffect(() => {
     if (!isActive) {
       if (progressTimer.current) {
@@ -472,7 +472,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     };
   }, [isActive]);
 
-  // ── Fetch PeerTube tip data ──
+  // == Fetch PeerTube tip data ==
   useEffect(() => {
     if (!isPeertube || !videoInfo || videoInfo.platform !== 'peertube') return;
     let cancelled = false;
@@ -487,7 +487,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     };
   }, [isPeertube, videoInfo]);
 
-  // ── Pull-down to dismiss ────────────────────────────────────────────────
+  // == Pull-down to dismiss ================================================
   const handlePullStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     if ('touches' in e) {
       pullStartY.current = e.touches[0].clientY;
@@ -519,7 +519,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     }
   }, [pullDismissProgress]);
 
-  // ── Emote reactions (floating emojis over video like Twitch bits) ─────────
+  // == Emote reactions (floating emojis over video like Twitch bits) =========
   const addEmote = useCallback((emoji: string) => {
     const id = ++emoteIdCounter.current;
     const x = 15 + Math.random() * 70; // random horizontal position (%)
@@ -539,7 +539,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     return () => window.removeEventListener('shorts-emote', handler);
   }, [isActive, addEmote]);
 
-  // ── Like ──
+  // == Like ==
   const handleLike = useCallback(() => {
     setLiked((prev) => {
       const next = !prev;
@@ -549,7 +549,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     window.dispatchEvent(new CustomEvent('shorts-like-current'));
   }, []);
 
-  // ── Bookmark ──
+  // == Bookmark ==
   const handleBookmark = useCallback(async () => {
     setBookmarked((prev) => !prev);
     try {
@@ -571,7 +571,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     window.dispatchEvent(new CustomEvent('shorts-bookmark-current'));
   }, [bookmarked, post.id, post.dfUri, post.protocol, post.text, post.author.displayName]);
 
-  // ── Share ──
+  // == Share ==
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}/post/${encodeURIComponent(post.id)}`;
     try {
@@ -587,24 +587,24 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     }
   }, [post.id, post.text]);
 
-  // ── Comment ──
+  // == Comment ==
   const handleComment = useCallback(() => {
     window.location.href = `/post/${encodeURIComponent(post.id)}`;
   }, [post.id]);
 
-  // ── Tip ──
+  // == Tip ==
   const handleTip = useCallback(() => {
     window.dispatchEvent(new CustomEvent('shorts-tip-current'));
     setTipModalOpen(true);
   }, []);
 
-  // ── Mute ──
+  // == Mute ==
   const handleMute = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
     setMuted((prev) => !prev);
   }, []);
 
-  // ── Info panel toggle — swipe up gesture on bottom area ──
+  // == Info panel toggle — swipe up gesture on bottom area ==
   const handleInfoDrag = useCallback(
     (_e: React.TouchEvent | React.MouseEvent, deltaY: number) => {
       if (deltaY < -40 && !showInfoPanel) setShowInfoPanel(true);
@@ -626,7 +626,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
     [handleInfoDrag],
   );
 
-  // ── Render ─────────────────────────────────────────────────────────────
+  // == Render =============================================================
 
   return (
     <section
@@ -636,7 +636,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       onPointerLeave={handlePointerUp}
       aria-label={`Video by ${post.author.displayName}`}
     >
-      {/* ── Progress Bar (thin, at very top) ── */}
+      {/* == Progress Bar (thin, at very top) == */}
       <div className="pointer-events-none absolute left-0 right-0 top-0 z-30 h-0.5">
         <div className="h-full w-full bg-white/10">
           <div
@@ -651,7 +651,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         </div>
       </div>
 
-      {/* ── Video Player ── */}
+      {/* == Video Player == */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive video overlay container with role="presentation" */}
       <div
         className="absolute inset-0 cursor-pointer"
@@ -737,12 +737,12 @@ export const ShortVideoCard = memo(function ShortVideoCard({
           </div>
         )}
 
-        {/* ── Gradient overlays ── */}
+        {/* == Gradient overlays == */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[15%] bg-gradient-to-b from-black/40 to-transparent" />
       </div>
 
-      {/* ── Pull-to-dismiss overlay ── */}
+      {/* == Pull-to-dismiss overlay == */}
       {pullDismissProgress > 0 && (
         <div
           className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center"
@@ -771,7 +771,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         </div>
       )}
 
-      {/* ── Floating Emote Reactions (Twitch-style) ── */}
+      {/* == Floating Emote Reactions (Twitch-style) == */}
       {emotes.map((emote) => (
         <div
           key={emote.id}
@@ -787,10 +787,10 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         </div>
       ))}
 
-      {/* ── Heart burst animation ── */}
+      {/* == Heart burst animation == */}
       <HeartBurst visible={heartVisible} />
 
-      {/* ── Seek hint overlays (shown briefly on tap) ── */}
+      {/* == Seek hint overlays (shown briefly on tap) == */}
       {/* Left seek zone */}
       <div className="pointer-events-none absolute left-0 top-0 z-20 flex h-full w-[25%] items-center justify-start pl-3">
         <span className="text-2xl text-white/30 drop-shadow-lg opacity-0 transition-opacity duration-200">
@@ -804,7 +804,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         </span>
       </div>
 
-      {/* ── Mute/Unmute button ── */}
+      {/* == Mute/Unmute button == */}
       <button
         type="button"
         onClick={handleMute}
@@ -844,7 +844,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         )}
       </button>
 
-      {/* ── Right-side action rail ── */}
+      {/* == Right-side action rail == */}
       <div
         className={`absolute bottom-24 right-3 z-30 flex flex-col items-center gap-3 transition-all duration-300 sm:bottom-28 ${
           showOverlay && !showInfoPanel
@@ -990,7 +990,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         />
       </div>
 
-      {/* ── Bottom info overlay ── */}
+      {/* == Bottom info overlay == */}
       <div
         className={`absolute bottom-0 left-0 right-0 z-30 px-4 pb-6 pt-20 transition-all duration-300 ${
           showOverlay && !showInfoPanel
@@ -1129,10 +1129,10 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         )}
       </div>
 
-      {/* ── Video Info Panel ── */}
+      {/* == Video Info Panel == */}
       <VideoInfoPanel post={post} visible={showInfoPanel} />
 
-      {/* ── Close info panel button ── */}
+      {/* == Close info panel button == */}
       {showInfoPanel && (
         <button
           type="button"
@@ -1161,7 +1161,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         </button>
       )}
 
-      {/* ── PeerTube external link ── */}
+      {/* == PeerTube external link == */}
       {isPeertube && !showInfoPanel && (
         <a
           href={videoInfo?.platform === 'peertube' ? videoInfo.url : '#'}
@@ -1186,7 +1186,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         </a>
       )}
 
-      {/* ── TipModal ── */}
+      {/* == TipModal == */}
       <TipModal
         open={tipModalOpen}
         onClose={() => setTipModalOpen(false)}
@@ -1204,7 +1204,7 @@ export const ShortVideoCard = memo(function ShortVideoCard({
         }}
       />
 
-      {/* ── Animations ── */}
+      {/* == Animations == */}
       <style>{`
         @keyframes shorts-heart-pop {
           0% { transform: scale(0.3); opacity: 0; }

@@ -3,7 +3,7 @@
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from '@degenfeed/ui';
 import { useCallback, useRef, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────
+// === Types ========================================================
 
 interface SpaceShareProps {
   spaceId: string;
@@ -14,7 +14,7 @@ interface SpaceShareProps {
   scheduledAt?: string;
 }
 
-// ─── Main Component ───────────────────────────────────────────────
+// === Main Component ===============================================
 
 export function SpaceShare({
   spaceId,

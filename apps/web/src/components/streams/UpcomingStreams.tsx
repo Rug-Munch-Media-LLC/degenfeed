@@ -2,7 +2,7 @@
 
 import type { LiveStream } from './useLiveStreams';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface UpcomingStream {
   id: string;
@@ -19,7 +19,7 @@ interface UpcomingStreamsProps {
   isLoading?: boolean;
 }
 
-/* ─── Mock data ──────────────────────────────────────────────── */
+/* === Mock data ================================================ */
 
 const MOCK_UPCOMING: UpcomingStream[] = [
   {
@@ -57,7 +57,7 @@ const MOCK_UPCOMING: UpcomingStream[] = [
   },
 ];
 
-/* ─── Helpers ────────────────────────────────────────────────── */
+/* === Helpers ================================================== */
 
 function formatScheduled(iso: string): string {
   const date = new Date(iso);
@@ -88,7 +88,7 @@ function formatDate(iso: string): string {
   });
 }
 
-/* ─── Stream type config ─────────────────────────────────────── */
+/* === Stream type config ======================================= */
 
 const TYPE_ICONS: Record<string, string> = {
   solo: '🎥',
@@ -97,7 +97,7 @@ const TYPE_ICONS: Record<string, string> = {
   launch: '🪙',
 };
 
-/* ─── Single upcoming card ───────────────────────────────────── */
+/* === Single upcoming card ===================================== */
 
 function UpcomingCard({ stream }: { stream: UpcomingStream }) {
   return (
@@ -132,7 +132,7 @@ function UpcomingCard({ stream }: { stream: UpcomingStream }) {
   );
 }
 
-/* ─── Skeleton ───────────────────────────────────────────────── */
+/* === Skeleton ================================================= */
 
 function UpcomingSkeleton() {
   return (
@@ -153,7 +153,7 @@ function UpcomingSkeleton() {
   );
 }
 
-/* ─── Main Component ─────────────────────────────────────────── */
+/* === Main Component =========================================== */
 
 export function UpcomingStreams({
   streams = MOCK_UPCOMING,

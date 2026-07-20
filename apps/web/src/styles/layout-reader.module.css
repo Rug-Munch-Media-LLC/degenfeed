@@ -7,7 +7,7 @@
 
 /* biome-ignore lint/correctness/noUnknownPseudoClass: CSS Modules :global() syntax */
 :global(.layout-reader) {
-  /* ── Post cards: clean reading cards ── */
+  /* == Post cards: clean reading cards == */
   & .post-card {
     max-width: 680px;
     margin-left: auto;
@@ -27,7 +27,7 @@
     background: transparent;
   }
 
-  /* ── Full content, no truncation ── */
+  /* == Full content, no truncation == */
   & .post-card .content-text {
     -webkit-line-clamp: unset;
     display: block;
@@ -38,13 +38,13 @@
     max-width: 100%;
   }
 
-  /* ── Larger avatar ── */
+  /* == Larger avatar == */
   & .post-card .avatar {
     width: 56px;
     height: 56px;
   }
 
-  /* ── Author info ── */
+  /* == Author info == */
   & .post-card .author-row {
     margin-bottom: 16px;
   }
@@ -64,7 +64,7 @@
     font-size: 13px;
   }
 
-  /* ── Image grid ── */
+  /* == Image grid == */
   & .post-card .image-grid {
     margin-top: 16px;
     margin-bottom: 16px;
@@ -78,7 +78,7 @@
     background: #000;
   }
 
-  /* ── Link previews ── */
+  /* == Link previews == */
   & .post-card .link-preview {
     border-radius: 12px;
     overflow: hidden;
@@ -89,7 +89,7 @@
     font-size: 15px;
   }
 
-  /* ── Actions centered, spacious ── */
+  /* == Actions centered, spacious == */
   & .post-card .actions {
     justify-content: center;
     gap: 32px;
@@ -108,7 +108,7 @@
     height: 20px;
   }
 
-  /* ── Engagement stats ── */
+  /* == Engagement stats == */
   & .post-card .engagement-stats {
     display: flex;
     justify-content: center;
@@ -117,13 +117,13 @@
     font-size: 14px;
   }
 
-  /* ── Niche tags ── */
+  /* == Niche tags == */
   & .post-card .niche-tags {
     justify-content: center;
     margin-bottom: 8px;
   }
 
-  /* ── Feed header ── */
+  /* == Feed header == */
   & .feed-header {
     max-width: 680px;
     margin-left: auto;
@@ -135,14 +135,14 @@
     display: none;
   }
 
-  /* ── Composer ── */
+  /* == Composer == */
   & .composer {
     max-width: 680px;
     margin-left: auto;
     margin-right: auto;
   }
 
-  /* ── Main feed ── */
+  /* == Main feed == */
   & .main-feed {
     max-width: 720px;
     margin-left: auto;

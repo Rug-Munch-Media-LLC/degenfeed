@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { rerankResults } from '@/lib/fuzzySearch';
 import { retryFetch } from '../../lib/retryFetch';
 
-// ─── Types ────────────────────────────────────────────────────
+// === Types ====================================================
 
 interface SearchResult {
   id: string;
@@ -63,7 +63,7 @@ interface FederatedSearchResponse {
 
 type SearchTab = 'top' | 'latest' | 'people' | 'communities' | 'videos';
 
-// ─── Protocol filter pills ────────────────────────────────────
+// === Protocol filter pills ====================================
 
 const PROTOCOL_FILTERS = [
   { id: 'nostr', label: 'Nostr', color: '#8e30eb' },
@@ -76,7 +76,7 @@ const PROTOCOL_FILTERS = [
   { id: 'rss', label: 'News', color: '#ffa500' },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────
+// === Helpers ==================================================
 
 function formatTime(ts: number): string {
   const diff = Date.now() - ts;
@@ -120,7 +120,7 @@ function getProfileUrl(identity: IdentityResult): string {
   }
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────
+// === Skeleton =================================================
 
 function Skeleton({ count = 3 }: { count?: number }) {
   return (
@@ -138,7 +138,7 @@ function Skeleton({ count = 3 }: { count?: number }) {
   );
 }
 
-// ─── LoadMoreButton ─────────────────────────────────────────
+// === LoadMoreButton =========================================
 
 function LoadMoreButton({
   loading,
@@ -177,7 +177,7 @@ function LoadMoreButton({
   );
 }
 
-// ─── Component ────────────────────────────────────────────────
+// === Component ================================================
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -199,7 +199,7 @@ export default function SearchPage() {
   const [hasMore, setHasMore] = useState(true);
   const loadCountRef = useRef(1);
   const inputRef = useRef<HTMLInputElement>(null);
-  // ── Autocomplete ──
+  // == Autocomplete ==
   interface AutocompleteSuggestion {
     text: string;
     type: 'query' | 'creator' | 'community' | 'coin' | 'trending';
@@ -211,7 +211,7 @@ export default function SearchPage() {
   const [acLoading, setAcLoading] = useState(false);
   const autocompleteRef = useRef<AbortController | null>(null);
 
-  // ── Recent & trending searches ──
+  // == Recent & trending searches ==
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [trendingSearches] = useState<string[]>([
     'bitcoin',

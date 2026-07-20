@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { ChatMessage } from '../../hooks/usePeerTubeStream';
 import { useIsMobile, useKeyboardHeight } from '../../hooks/useMobileResponsive';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 interface PeerTubeChatFeedProps {
   messages: ChatMessage[];
@@ -16,7 +16,7 @@ interface PeerTubeChatFeedProps {
   maxHeight?: string;
 }
 
-/* ─── Helper ─────────────────────────────────────────── */
+/* === Helper =========================================== */
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -28,7 +28,7 @@ function shortenAddress(addr: string): string {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
 
-/* ─── Main Component ────────────────────────────────── */
+/* === Main Component ================================== */
 
 export default function PeerTubeChatFeed({
   messages,
@@ -281,7 +281,7 @@ export default function PeerTubeChatFeed({
   );
 }
 
-/* ─── Chat Bubble ───────────────────────────────────── */
+/* === Chat Bubble ===================================== */
 
 function ChatBubble({
   message,

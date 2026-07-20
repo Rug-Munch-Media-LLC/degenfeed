@@ -3,7 +3,7 @@
 import { FundingCard, type FundingRound } from '@degenfeed/ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 type StageFilter = '' | 'seed' | 'private' | 'public' | 'series-a' | 'series-b';
 
@@ -26,7 +26,7 @@ const CHAIN_LABELS: Record<string, string> = {
   arbitrum: 'Arbitrum',
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+// === Helpers ==============================================================
 
 function formatCompact(n: number): string {
   if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(1)}B`;
@@ -35,7 +35,7 @@ function formatCompact(n: number): string {
   return `$${n.toFixed(0)}`;
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────
+// === Skeleton =============================================================
 
 function FundingSkeleton() {
   return (
@@ -64,7 +64,7 @@ function FundingSkeleton() {
   );
 }
 
-// ─── Stats Mini Card ──────────────────────────────────────────────────────
+// === Stats Mini Card ======================================================
 
 function MiniStat({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
@@ -79,7 +79,7 @@ function MiniStat({ label, value, accent }: { label: string; value: string; acce
   );
 }
 
-// ─── Filter Pill ──────────────────────────────────────────────────────────
+// === Filter Pill ==========================================================
 
 function FilterPill<T extends string>({
   label,
@@ -106,7 +106,7 @@ function FilterPill<T extends string>({
   );
 }
 
-// ─── Empty State ──────────────────────────────────────────────────────────
+// === Empty State ==========================================================
 
 function EmptyFunding({
   chainFilter,
@@ -165,7 +165,7 @@ function EmptyFunding({
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────
+// === Page =================================================================
 
 export default function FundingPage() {
   const [rounds, setRounds] = useState<FundingRound[]>([]);
@@ -229,7 +229,7 @@ export default function FundingPage() {
     setStageFilter('');
   }, []);
 
-  // ── Stats ──
+  // == Stats ==
   const stats = useMemo(() => {
     if (rounds.length === 0) return null;
     const totalRaised = rounds.reduce((s, r) => {

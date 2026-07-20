@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 export interface TradeEvent {
   id: string;
@@ -75,18 +75,18 @@ export interface CurveData {
   tokenName: string;
   coingeckoId?: string;
 
-  // ── Dynamic Curve Fields ─────────────────────────────
+  // == Dynamic Curve Fields =============================
   era: number; // 0-4
   eraName: string; // "Steal Deal" | "Early Bird" | ...
   eraColor: string;
 
-  // ── Flash Sale ───────────────────────────────────────
+  // == Flash Sale =======================================
   flashSale: FlashSaleInfo | null;
 
-  // ── Creator Event ────────────────────────────────────
+  // == Creator Event ====================================
   creatorEvent: CreatorEventInfo | null;
 
-  // ── Gamification ─────────────────────────────────────
+  // == Gamification =====================================
   first100Remaining: number; // slots remaining for "first 100 buyers" badge
   topHolders: Array<{
     address: string;
@@ -95,24 +95,24 @@ export interface CurveData {
     badges: string[];
   }>;
 
-  // ── Social Proof ─────────────────────────────────────
+  // == Social Proof =====================================
   boughtLast60s: number;
   viewersNow: number;
   farcasterHolders: number;
   isTrending: boolean;
   activityHeatmap: number[]; // 24 entries (0-23 hours)
 
-  // ── Post-Graduation ──────────────────────────────────
+  // == Post-Graduation ==================================
   isVerified: boolean;
   uniswapPoolAddress?: string;
   burnTotal: number;
 
-  // ── Price Prediction ─────────────────────────────────
+  // == Price Prediction =================================
   priceAfter10Buys: number;
   priceAfter50Buys: number;
 }
 
-/* ─── Simple fetch wrapper ───────────────────────────── */
+/* === Simple fetch wrapper ============================= */
 
 const fetcher = async (url: string): Promise<CurveData> => {
   const res = await fetch(url);
@@ -123,7 +123,7 @@ const fetcher = async (url: string): Promise<CurveData> => {
   return res.json() as Promise<CurveData>;
 };
 
-/* ─── Type guard ─────────────────────────────────────── */
+/* === Type guard ======================================= */
 
 function isValidCurveData(data: unknown): data is CurveData {
   if (!data || typeof data !== 'object') return false;
@@ -136,7 +136,7 @@ function isValidCurveData(data: unknown): data is CurveData {
   );
 }
 
-/* ─── Hook ───────────────────────────────────────────── */
+/* === Hook ============================================= */
 
 export interface UseBondingCurveResult {
   curve: CurveData | null;
@@ -151,7 +151,7 @@ export interface UseBondingCurveResult {
   isLive: boolean;
   refresh: () => void;
 
-  // ── New fields ───────────────────────────────────────
+  // == New fields =======================================
   flashSale: FlashSaleInfo | null;
   creatorEvent: CreatorEventInfo | null;
   era: number | null;
@@ -165,7 +165,7 @@ export interface UseBondingCurveResult {
   priceAfter10Buys: number;
   priceAfter50Buys: number;
 
-  // ── Client-side gamification tracking ────────────────
+  // == Client-side gamification tracking ================
   streakDays: number;
   walletBadges: string[];
   walletBuyCount: number;
@@ -192,7 +192,7 @@ export function useBondingCurve(coinAddress: string | undefined): UseBondingCurv
     void mutate();
   }, [mutate]);
 
-  // ── Client-side streak tracking ──────────────────────
+  // == Client-side streak tracking ======================
 
   const [streakDays, setStreakDays] = useState(0);
   const streakRef = useRef<{ lastBuyDay: number; streak: number }>({
@@ -222,7 +222,7 @@ export function useBondingCurve(coinAddress: string | undefined): UseBondingCurv
     setStreakDays(streakRef.current.streak);
   }, [validatedData?.recentTrades]);
 
-  // ── Wallet badges (computed from trade data) ─────────
+  // == Wallet badges (computed from trade data) =========
 
   const walletBadges = useMemo(() => {
     if (!validatedData) return [];
@@ -242,7 +242,7 @@ export function useBondingCurve(coinAddress: string | undefined): UseBondingCurv
 
   const walletBuyCount = validatedData?.recentTrades.filter((t) => t.type === 'buy').length ?? 0;
 
-  // ── Wallet rank (simplified) ─────────────────────────
+  // == Wallet rank (simplified) =========================
   const walletRank = useMemo(() => {
     if (!validatedData?.holderList?.length) return null;
     // In real app, get from user context
@@ -262,7 +262,7 @@ export function useBondingCurve(coinAddress: string | undefined): UseBondingCurv
     isLive: isValidating,
     refresh,
 
-    // ── New fields ─────────────────────────────────────
+    // == New fields =====================================
     flashSale: validatedData?.flashSale ?? null,
     creatorEvent: validatedData?.creatorEvent ?? null,
     era: validatedData?.era ?? null,
@@ -276,7 +276,7 @@ export function useBondingCurve(coinAddress: string | undefined): UseBondingCurv
     priceAfter10Buys: validatedData?.priceAfter10Buys ?? 0,
     priceAfter50Buys: validatedData?.priceAfter50Buys ?? 0,
 
-    // ── Client-side gamification ───────────────────────
+    // == Client-side gamification =======================
     streakDays,
     walletBadges,
     walletBuyCount,
@@ -284,7 +284,7 @@ export function useBondingCurve(coinAddress: string | undefined): UseBondingCurv
   };
 }
 
-/* ─── Formatting helpers ─────────────────────────────── */
+/* === Formatting helpers =============================== */
 
 export function formatBondingPrice(price: number): string {
   if (price >= 1) return `$${price.toFixed(4)}`;

@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PLATFORM_CONFIG, type SourcePlatform } from './types';
 
-/* ─── Props ────────────────────────────────────────────────────── */
+/* === Props ====================================================== */
 
 interface PlatformGreetingProps {
   platform: SourcePlatform;
@@ -21,7 +21,7 @@ interface PlatformGreetingProps {
   onDismiss?: () => void;
 }
 
-/* ─── Component ────────────────────────────────────────────────── */
+/* === Component ================================================== */
 
 export function PlatformGreeting({
   platform,

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface FloatingEmoji {
   id: string;
@@ -16,11 +16,11 @@ interface StreamReactionsProps {
   onReact?: (emoji: string) => void;
 }
 
-/* ─── Quick-reaction emojis ──────────────────────────────────── */
+/* === Quick-reaction emojis ==================================== */
 
 const QUICK_EMOJIS = ['🔥', '🚀', '💎', '🙌', '😂', '😱', '💯', '🎯'];
 
-/* ─── Floating reaction bubble ───────────────────────────────── */
+/* === Floating reaction bubble ================================= */
 
 function FloatingEmojiBubble({ item, onDone }: { item: FloatingEmoji; onDone: () => void }) {
   const elRef = useRef<HTMLSpanElement>(null);
@@ -67,7 +67,7 @@ function FloatingEmojiBubble({ item, onDone }: { item: FloatingEmoji; onDone: ()
   );
 }
 
-/* ─── Main Component ─────────────────────────────────────────── */
+/* === Main Component =========================================== */
 
 export function StreamReactions({ streamId: _streamId, onReact }: StreamReactionsProps) {
   const [floating, setFloating] = useState<FloatingEmoji[]>([]);

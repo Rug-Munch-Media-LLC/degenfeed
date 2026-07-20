@@ -7,21 +7,21 @@
  * video from EVERY protocol simultaneously.
  *
  * Layout:
- *   ┌─────────────────────────────────────────────────┐
+ *   ┌=================================================┐
  *   │ 🔴 Live Shorts   42 live     [Go Live] [↻]     │ ← LiveShortsHeader
- *   ├─────────────────────────────────────────────────┤
- *   │ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐       │
+ *   ├=================================================┤
+ *   │ ┌=====┐ ┌=====┐ ┌=====┐ ┌=====┐ ┌=====┐       │
  *   │ │ 🔴  │ │ 🔴  │ │ 🔴  │ │ 🔴  │ │ 🔴  │       │
  *   │ │Live │ │Live │ │Live │ │Live │ │Live │       │ ← LiveShortsGrid
  *   │ │     │ │     │ │     │ │     │ │     │       │
- *   │ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘       │
- *   ├─────────────────────────────────────────────────┤
+ *   │ └=====┘ └=====┘ └=====┘ └=====┘ └=====┘       │
+ *   ├=================================================┤
  *   │ "Starting Soon" (upcoming / scheduled)          │ ← UpcomingLiveShorts
  *   │ [card] [card] [card] [card]                     │
- *   ├─────────────────────────────────────────────────┤
+ *   ├=================================================┤
  *   │ "Recent Live Shorts" (ended, recordings)        │ ← RecentLiveShorts
  *   │ [card] [card] [card] [card]                     │
- *   └─────────────────────────────────────────────────┘
+ *   └=================================================┘
  *
  * Features:
  *   - Real-time auto-refreshing grid of active live shorts (every 8s)
@@ -44,7 +44,7 @@ import type {
 } from '../../components/live-shorts/useLiveShorts';
 import { useActiveLiveShorts } from '../../components/live-shorts/useLiveShorts';
 
-// ─── Mock data for upcoming and recent sections ───────────────────────
+// === Mock data for upcoming and recent sections =======================
 
 function generateMockUpcoming(): LiveShortSession[] {
   const now = Date.now();
@@ -169,7 +169,7 @@ function generateMockRecent(): LiveShortSession[] {
   ];
 }
 
-// ─── Horizontal row component for upcoming/recent ────────────────────
+// === Horizontal row component for upcoming/recent ====================
 
 function LiveShortMiniCard({ session }: { session: LiveShortSession }) {
   const isUpcoming = session.status === 'starting';
@@ -273,7 +273,7 @@ function HorizontalScrollRow({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────
+// === Main Page ========================================================
 
 export default function LiveShortsPage() {
   const { sessions, total, isLoading, isValidating, refresh } = useActiveLiveShorts();

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCached, setCache } from '../../lib/fetchWithCache';
 import { retryFetch } from '../../lib/retryFetch';
 
-// ── Types ─────────────────────────────────────────────────────────────────
+// == Types =================================================================
 
 interface TrendingEntry {
   id: string;
@@ -56,7 +56,7 @@ type TabId = 'creators' | 'tippers' | 'trending' | 'communities';
 type Period = 'daily' | 'weekly' | 'monthly' | 'alltime';
 type Platform = 'all' | 'degenfeed' | 'lemmy' | 'peertube';
 
-// ── Constants ─────────────────────────────────────────────────────────────
+// == Constants =============================================================
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'creators', label: 'Creators' },
@@ -85,7 +85,7 @@ const PLATFORM_EMOJI: Record<string, string> = {
   peertube: '▶',
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────
+// == Helpers ===============================================================
 
 function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -103,7 +103,7 @@ function TimeAgo({ date }: { date: string }) {
   return <span>{Math.floor(hours / 24)}d ago</span>;
 }
 
-// ── Skeleton ──────────────────────────────────────────────────────────────
+// == Skeleton ==============================================================
 
 function LeaderboardSkeleton({ count = 10 }: { count?: number }) {
   return (
@@ -163,7 +163,7 @@ function CommunitiesSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
-// ── Change Badge ──────────────────────────────────────────────────────────
+// == Change Badge ==========================================================
 
 function ChangeBadge({ change }: { change: number }) {
   if (change > 0) {
@@ -193,7 +193,7 @@ function PlatformIcon({ platform }: { platform: string }) {
   return null;
 }
 
-// ── Trending Card ─────────────────────────────────────────────────────────
+// == Trending Card =========================================================
 
 function TrendingCard({ entry }: { entry: TrendingEntry }) {
   return (
@@ -236,7 +236,7 @@ function TrendingCard({ entry }: { entry: TrendingEntry }) {
   );
 }
 
-// ── Community Card ────────────────────────────────────────────────────────
+// == Community Card ========================================================
 
 function CommunityCard({ entry }: { entry: CommunityEntry }) {
   return (
@@ -276,7 +276,7 @@ function CommunityCard({ entry }: { entry: CommunityEntry }) {
   );
 }
 
-// ── Tab Button ────────────────────────────────────────────────────────────
+// == Tab Button ============================================================
 
 function TabButton({
   active,
@@ -326,7 +326,7 @@ function FilterPill<_T extends string>({
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────
+// == Main Page =============================================================
 
 export default function LeaderboardPage() {
   const [activeTab, setActiveTab] = useState<TabId>('creators');

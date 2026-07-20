@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-// ─── Feed Mix Configuration Types ─────────────────────────────
+// === Feed Mix Configuration Types =============================
 
 export interface ProtocolWeight {
   /** 0-100 weight for this protocol in the feed mix */
@@ -119,7 +119,7 @@ export const FEED_PRESETS: FeedPreset[] = [
   },
 ];
 
-// ─── Defaults ─────────────────────────────────────────────────
+// === Defaults =================================================
 
 const DEFAULT_PROTOCOL_WEIGHT = 50;
 const DEFAULT_PROTOCOL_QUALITY: Omit<ProtocolWeight, 'weight'> = {
@@ -174,7 +174,7 @@ export function getDefaultFeedMixConfig(): FeedMixConfig {
   };
 }
 
-// ─── Pre-built mixes ──────────────────────────────────────────
+// === Pre-built mixes ==========================================
 
 export const PREBUILT_MIXES: SavedMix[] = [
   {
@@ -293,7 +293,7 @@ export const PREBUILT_MIXES: SavedMix[] = [
   },
 ];
 
-// ─── Mock preview posts ───────────────────────────────────────
+// === Mock preview posts =======================================
 
 interface PreviewPost {
   protocol: string;
@@ -396,7 +396,7 @@ function generatePreviewPosts(config: FeedMixConfig): PreviewPost[] {
   });
 }
 
-// ─── Topic configuration (existing) ───────────────────────────
+// === Topic configuration (existing) ===========================
 
 export interface TopicDef {
   id: string;
@@ -447,7 +447,7 @@ export function encodeTopicWeights(weights: Record<string, number>): string {
     .join(',');
 }
 
-// ─── LocalStorage helpers ─────────────────────────────────────
+// === LocalStorage helpers =====================================
 
 const LS_FEED_MIX = 'df_feed_mix_config';
 const LS_SAVED_MIXES = 'df_saved_mixes';
@@ -500,7 +500,7 @@ export function saveSavedMixes(mixes: SavedMix[]): void {
   }
 }
 
-// ─── Color helpers ────────────────────────────────────────────
+// === Color helpers ============================================
 
 function sliderGradient(weight: number): string {
   if (weight < 50) {
@@ -528,11 +528,11 @@ function weightLabel(weight: number): string {
   return 'Max';
 }
 
-// ─── Tuner Section Types ──────────────────────────────────────
+// === Tuner Section Types ======================================
 
 type TunerTab = 'topics' | 'mix' | 'quality' | 'algorithm' | 'mixes';
 
-// ─── FeedTuner Props ──────────────────────────────────────────
+// === FeedTuner Props ==========================================
 
 interface FeedTunerProps {
   weights: Record<string, number>;
@@ -649,7 +649,7 @@ export function FeedTuner({
 
   const tunedCount = countTunedTopics(localWeights);
 
-  // ─── Topic slider handlers ─────────────────────────────────
+  // === Topic slider handlers =================================
 
   const handleSlider = useCallback(
     (topicId: string, value: number) => {
@@ -663,7 +663,7 @@ export function FeedTuner({
     [localWeights, onWeightsChange],
   );
 
-  // ─── Protocol mix handler ──────────────────────────────────
+  // === Protocol mix handler ==================================
 
   const handleProtocolWeight = useCallback((protocolId: string, weight: number) => {
     setLocalFeedMix((prev) => ({
@@ -675,7 +675,7 @@ export function FeedTuner({
     }));
   }, []);
 
-  // ─── Content type handler ──────────────────────────────────
+  // === Content type handler ==================================
 
   const handleContentTypeWeight = useCallback((type: keyof ContentTypeWeights, value: number) => {
     setLocalFeedMix((prev) => ({
@@ -684,7 +684,7 @@ export function FeedTuner({
     }));
   }, []);
 
-  // ─── Quality threshold handlers ────────────────────────────
+  // === Quality threshold handlers ============================
 
   const handleProtocolQuality = useCallback(
     (protocolId: string, field: keyof ProtocolWeight, value: number | boolean) => {
@@ -709,7 +709,7 @@ export function FeedTuner({
     [],
   );
 
-  // ─── Save/Load mix ─────────────────────────────────────────
+  // === Save/Load mix =========================================
 
   const handleSaveCurrentMix = useCallback(() => {
     const name = mixNameInput.trim() || `Custom Mix ${localSavedMixes.length + 1}`;
@@ -747,7 +747,7 @@ export function FeedTuner({
     [localSavedMixes, onDeleteMix],
   );
 
-  // ─── Feed mix apply / reset ────────────────────────────────
+  // === Feed mix apply / reset ================================
 
   const handleMixApply = useCallback(() => {
     saveFeedMixConfig(localFeedMix);
@@ -778,7 +778,7 @@ export function FeedTuner({
     onExploreRatioChange,
   ]);
 
-  // ─── Immediate mix persist ─────────────────────────────────
+  // === Immediate mix persist =================================
 
   const _persistMixImmediately = useCallback(
     (config: FeedMixConfig) => {
@@ -788,7 +788,7 @@ export function FeedTuner({
     [onFeedMixChange],
   );
 
-  // ─── Tab navigation ────────────────────────────────────────
+  // === Tab navigation ========================================
 
   const tunerTabs: { id: TunerTab; label: string; icon: string }[] = [
     { id: 'topics', label: 'Topics', icon: '🎚️' },
@@ -809,7 +809,7 @@ export function FeedTuner({
         aria-modal="true"
         aria-label="Tune your feed"
       >
-        {/* ── Header ── */}
+        {/* == Header == */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
           <div>
             <h2 className="text-base font-bold text-[var(--color-fg)]">🎛️ Feed Controls</h2>
@@ -837,7 +837,7 @@ export function FeedTuner({
           </button>
         </div>
 
-        {/* ── Sub-tabs ── */}
+        {/* == Sub-tabs == */}
         <div
           className="flex border-b border-[var(--color-border)] px-5"
           role="tablist"
@@ -862,7 +862,7 @@ export function FeedTuner({
           ))}
         </div>
 
-        {/* ── Scrollable content ── */}
+        {/* == Scrollable content == */}
         <div className="flex-1 overflow-y-auto px-5 py-3" style={{ scrollbarWidth: 'thin' }}>
           {/* ═══ TAB 1: TOPICS (original tuner) ═══ */}
           {activeTab === 'topics' && (
@@ -1715,7 +1715,7 @@ export function FeedTuner({
           </div>
         </div>
 
-        {/* ── Footer ── */}
+        {/* == Footer == */}
         <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] px-5 py-4">
           <button
             type="button"

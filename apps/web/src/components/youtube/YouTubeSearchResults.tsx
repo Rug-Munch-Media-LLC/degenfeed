@@ -12,7 +12,7 @@ import { memo, useState } from 'react';
 import { YouTubeVideoGrid } from './YouTubeVideoGrid';
 import { useYouTubeSearch } from './useYouTube';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export interface YouTubeSearchResultsProps {
   /** Current search query */
@@ -21,7 +21,7 @@ export interface YouTubeSearchResultsProps {
   onPlay?: (video: Parameters<typeof useYouTubeSearch>[0] extends string ? unknown : never) => void;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────
+// === Component ===========================================================
 
 export const YouTubeSearchResults = memo(function YouTubeSearchResults({
   query,
@@ -57,7 +57,7 @@ export const YouTubeSearchResults = memo(function YouTubeSearchResults({
   );
 });
 
-// ─── Search bar (standalone) ─────────────────────────────────────────────
+// === Search bar (standalone) =============================================
 
 export interface YouTubeSearchBarProps {
   /** Current value */

@@ -11,7 +11,7 @@ const FeedBuilderModalDynamic = dynamic(
   { ssr: false, loading: () => null },
 );
 
-// ─── Constants ────────────────────────────────────────────────
+// === Constants ================================================
 
 const SOURCE_EMOJIS: Record<string, string> = {
   nostr: '⚡',
@@ -47,7 +47,7 @@ function toast(kind: 'success' | 'error' | 'info', message: string) {
   window.dispatchEvent(new CustomEvent('df-toast', { detail: { kind, message } }));
 }
 
-// ─── Feed Card ────────────────────────────────────────────────
+// === Feed Card ================================================
 
 function FeedCard({
   feed,
@@ -101,7 +101,7 @@ function FeedCard({
   );
 }
 
-// ─── Public Feed Card ─────────────────────────────────────────
+// === Public Feed Card =========================================
 
 function PublicFeedCard({ feed }: { feed: CustomFeed }) {
   return (
@@ -135,7 +135,7 @@ function PublicFeedCard({ feed }: { feed: CustomFeed }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────
+// === Main Page ================================================
 
 export default function FeedsPage() {
   const { ready, signedInProtocols, openSignIn } = useAuth();

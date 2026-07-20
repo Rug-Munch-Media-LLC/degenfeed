@@ -133,7 +133,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
 
-  // ── Error from OAuth provider ──
+  // == Error from OAuth provider ==
   if (params.error) {
     return (
       <ErrorView
@@ -143,7 +143,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
     );
   }
 
-  // ── No code ──
+  // == No code ==
   if (!params.code) {
     return (
       <ErrorView
@@ -153,10 +153,10 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
     );
   }
 
-  // ── Exchange code for token ──
+  // == Exchange code for token ==
   const result = await exchangeCode(params.code, params.state ?? null, provider.endpoint, apiBase);
 
-  // ── Success ──
+  // == Success ==
   if (result.ok && result.data) {
     const pending = JSON.stringify({
       protocol: providerFromPath,
@@ -190,7 +190,7 @@ export default async function AuthCallbackPage({ searchParams }: AuthCallbackPro
     );
   }
 
-  // ── Exchange failed ──
+  // == Exchange failed ==
   return (
     <ErrorView provider={provider} message={result.error ?? 'Failed to complete authentication.'} />
   );

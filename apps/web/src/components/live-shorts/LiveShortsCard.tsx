@@ -26,7 +26,7 @@ interface LiveShortsCardProps {
   onTip?: (session: LiveShortSession) => void;
 }
 
-/* ─── Helpers ─────────────────────────────────────────────────── */
+/* === Helpers =================================================== */
 
 function formatViewers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -34,7 +34,7 @@ function formatViewers(n: number): string {
   return String(n);
 }
 
-/* ─── Status badge ────────────────────────────────────────────── */
+/* === Status badge ============================================== */
 
 function StatusBadge({ status }: { status: LiveShortSession['status'] }) {
   switch (status) {
@@ -64,7 +64,7 @@ function StatusBadge({ status }: { status: LiveShortSession['status'] }) {
   }
 }
 
-/* ─── Thumbnail / Preview ─────────────────────────────────────── */
+/* === Thumbnail / Preview ======================================= */
 
 function LiveShortThumbnail({ session }: { session: LiveShortSession }) {
   const gradient = useMemo(() => {
@@ -145,7 +145,7 @@ function LiveShortThumbnail({ session }: { session: LiveShortSession }) {
   );
 }
 
-/* ─── Creator info row ────────────────────────────────────────── */
+/* === Creator info row ========================================== */
 
 function CreatorRow({ creator }: { creator: LiveShortSession['creator'] }) {
   return (
@@ -187,7 +187,7 @@ function CreatorRow({ creator }: { creator: LiveShortSession['creator'] }) {
   );
 }
 
-/* ─── Mini tip counter ────────────────────────────────────────── */
+/* === Mini tip counter ========================================== */
 
 function TipCounter({ amount, count }: { amount: string; count: number }) {
   if (count === 0) return null;
@@ -215,7 +215,7 @@ function TipCounter({ amount, count }: { amount: string; count: number }) {
   );
 }
 
-/* ─── Main Card ────────────────────────────────────────────────── */
+/* === Main Card ================================================== */
 
 export function LiveShortsCard({ session, onTip }: LiveShortsCardProps) {
   return (

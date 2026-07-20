@@ -18,7 +18,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// ─── Types ────────────────────────────────────────────────────────────────
+// === Types ================================================================
 
 interface ContextualTooltipProps {
   /** Unique ID for localStorage tracking. Must be globally unique. */
@@ -35,7 +35,7 @@ interface ContextualTooltipProps {
   onDismiss?: () => void;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────
+// === Component ============================================================
 
 export function ContextualTooltip({
   id,
@@ -170,7 +170,7 @@ export function resetAllTooltips() {
   }
 }
 
-// ─── Internal helpers ─────────────────────────────────────────────────────
+// === Internal helpers =====================================================
 
 function markSeen(id: string) {
   try {

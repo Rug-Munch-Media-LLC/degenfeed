@@ -3,7 +3,7 @@
 import { LiveStreamCard } from './LiveStreamCard';
 import type { LiveStream } from './useLiveStreams';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface LiveStreamGridProps {
   streams: LiveStream[];
@@ -12,7 +12,7 @@ interface LiveStreamGridProps {
   onPlay?: (stream: LiveStream) => void;
 }
 
-/* ─── Skeleton card ──────────────────────────────────────────── */
+/* === Skeleton card ============================================ */
 
 function StreamCardSkeleton() {
   return (
@@ -30,7 +30,7 @@ function StreamCardSkeleton() {
   );
 }
 
-/* ─── Empty state ────────────────────────────────────────────── */
+/* === Empty state ============================================== */
 
 function EmptyState({ message }: { message: string }) {
   return (
@@ -57,7 +57,7 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-/* ─── Main Grid ──────────────────────────────────────────────── */
+/* === Main Grid ================================================ */
 
 export function LiveStreamGrid({
   streams,

@@ -7,7 +7,7 @@
  * @see /docs/SEO-CHECKLIST.md for the full audit checklist.
  */
 
-// ─── Primary Keywords (Homepage & Brand) ───────────────────────────────
+// === Primary Keywords (Homepage & Brand) ===============================
 export const PRIMARY_KEYWORDS = [
   'web3 social media',
   'decentralized social network',
@@ -21,7 +21,7 @@ export const PRIMARY_KEYWORDS = [
   'cross protocol social app',
 ] as const;
 
-// ─── Secondary Keywords (Feature Pages) ────────────────────────────────
+// === Secondary Keywords (Feature Pages) ================================
 export const FEATURE_KEYWORDS = {
   feed: [
     'crypto news feed',
@@ -131,7 +131,7 @@ export const FEATURE_KEYWORDS = {
   ] as const,
 } as const;
 
-// ─── Long-Tail Keywords ────────────────────────────────────────────────
+// === Long-Tail Keywords ================================================
 export const LONG_TAIL_KEYWORDS = [
   'best web3 social media platform',
   'twitter alternative for crypto',
@@ -165,7 +165,7 @@ export const LONG_TAIL_KEYWORDS = [
   'self hostable social media',
 ] as const;
 
-// ─── Protocol-Specific Keywords ────────────────────────────────────────
+// === Protocol-Specific Keywords ========================================
 export const PROTOCOL_KEYWORDS: Record<string, readonly string[]> = {
   nostr: [
     'nostr feed',
@@ -207,14 +207,14 @@ export const PROTOCOL_KEYWORDS: Record<string, readonly string[]> = {
   ] as const,
 } as const;
 
-// ─── Geo/Regional Keywords ─────────────────────────────────────────────
+// === Geo/Regional Keywords =============================================
 export const GEO_KEYWORDS = [
   'web3 social media global',
   'decentralized social network worldwide',
   'crypto social platform international',
 ] as const;
 
-// ─── Branded Keywords ──────────────────────────────────────────────────
+// === Branded Keywords ==================================================
 export const BRANDED_KEYWORDS = [
   'DegenFeed',
   'degen feed',
@@ -225,7 +225,7 @@ export const BRANDED_KEYWORDS = [
   'DegenFeed app',
 ] as const;
 
-// ─── Helper: Build a keyword-optimized meta description ────────────────
+// === Helper: Build a keyword-optimized meta description ================
 export function buildMetaDescription(
   main: string,
   keywords: readonly string[],
@@ -236,12 +236,12 @@ export function buildMetaDescription(
   return desc.length > maxLength ? `${desc.slice(0, maxLength - 1)}…` : desc;
 }
 
-// ─── Helper: Generate SEO title with brand suffix ──────────────────────
+// === Helper: Generate SEO title with brand suffix ======================
 export function seoTitle(page: string): string {
   return `${page} — DegenFeed`;
 }
 
-// ─── Export all keyword groups for easy import ─────────────────────────
+// === Export all keyword groups for easy import =========================
 export const ALL_KEYWORDS = {
   primary: PRIMARY_KEYWORDS,
   features: FEATURE_KEYWORDS,

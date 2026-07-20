@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatTimeAgo } from '@degenfeed/utils';
 
-// ─── Types ─────────────────────────────────────────────────────────
+// === Types =========================================================
 
 interface GhostPost {
   id: string;
@@ -19,7 +19,7 @@ interface GhostPost {
   subscriberOnly: boolean;
 }
 
-// ─── Props ─────────────────────────────────────────────────────────
+// === Props =========================================================
 
 interface ProfileArticlesWidgetProps {
   /** Limit number of articles shown */
@@ -30,7 +30,7 @@ interface ProfileArticlesWidgetProps {
   compact?: boolean;
 }
 
-// ─── Component ─────────────────────────────────────────────────────
+// === Component =====================================================
 
 export function ProfileArticlesWidget({
   limit = 5,

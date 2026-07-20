@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-// ─── Types ────────────────────────────────────────────────────────
+// === Types ========================================================
 
 interface HandRaise {
   userId: string;
@@ -30,7 +30,7 @@ interface SpaceListenersProps {
   onDeclineSpeaker?: (userId: string) => void;
 }
 
-// ─── Mini Avatar ──────────────────────────────────────────────────
+// === Mini Avatar ==================================================
 
 function MiniAvatar({ src, name }: { src?: string; name: string }) {
   return (
@@ -55,7 +55,7 @@ function MiniAvatar({ src, name }: { src?: string; name: string }) {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────
+// === Main Component ===============================================
 
 export function SpaceListeners({
   speakers,

@@ -7,7 +7,7 @@ import { useIsMobile, useKeyboardHeight } from '../../hooks/useMobileResponsive'
 import LiveCommentFeed from './LiveCommentFeed';
 import PeerTubeChatFeed from './PeerTubeChatFeed';
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 interface LiveStreamPlayerProps {
   tokenAddress: string;
@@ -16,7 +16,7 @@ interface LiveStreamPlayerProps {
   className?: string;
 }
 
-/* ─── Main Component ────────────────────────────────── */
+/* === Main Component ================================== */
 
 export default function LiveStreamPlayer({
   tokenAddress,
@@ -412,7 +412,7 @@ export default function LiveStreamPlayer({
   );
 }
 
-/* ─── Copy Button ──────────────────────────────────── */
+/* === Copy Button ==================================== */
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -432,7 +432,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-/* ─── Live Stream View ──────────────────────────────── */
+/* === Live Stream View ================================ */
 
 function LiveStreamView({
   stream,
@@ -679,7 +679,7 @@ function LiveStreamView({
   );
 }
 
-/* ─── Stream Offline State ──────────────────────────── */
+/* === Stream Offline State ============================ */
 
 function StreamOffline({
   tokenAddress,
@@ -773,7 +773,7 @@ function StreamOffline({
   );
 }
 
-/* ─── Skeleton Loading ──────────────────────────────── */
+/* === Skeleton Loading ================================ */
 
 function StreamSkeleton() {
   return (

@@ -5,7 +5,7 @@ import { useAuth } from '../AuthProvider';
 import { useToast } from '../Toast';
 import type { LiveStream } from './useLiveStreams';
 
-/* ─── Types ──────────────────────────────────────────────────── */
+/* === Types ==================================================== */
 
 interface StreamActionsProps {
   stream: LiveStream;
@@ -16,7 +16,7 @@ interface StreamActionsProps {
   isFollowing?: boolean;
 }
 
-/* ─── Icon components ────────────────────────────────────────── */
+/* === Icon components ========================================== */
 
 function TipIcon() {
   return (
@@ -100,7 +100,7 @@ function CoinIcon() {
   );
 }
 
-/* ─── Action Button ──────────────────────────────────────────── */
+/* === Action Button ============================================ */
 
 function ActionBtn({
   label,
@@ -133,7 +133,7 @@ function ActionBtn({
   );
 }
 
-/* ─── Main Component ─────────────────────────────────────────── */
+/* === Main Component =========================================== */
 
 export function StreamActions({
   stream,

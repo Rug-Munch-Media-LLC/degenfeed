@@ -13,7 +13,7 @@ import { StreamMiniPlayer } from '../../../components/stream/StreamMiniPlayer';
 import { generateMockStream, generateMockVODs, generateMockClips, generateMockSchedule } from '../../../components/stream/types';
 import type { StreamExtended } from '../../../components/stream/types';
 
-/* ─── Mock Creator Lookup ────────────────────────────────────── */
+/* === Mock Creator Lookup ====================================== */
 /* In production, this would use the route param to fetch stream data */
 
 function useStreamData(id: string): StreamExtended {
@@ -29,7 +29,7 @@ function useStreamData(id: string): StreamExtended {
   };
 }
 
-/* ─── Stream Page ────────────────────────────────────────────── */
+/* === Stream Page ============================================== */
 
 export default function StreamPage({ params }: { params: { creator: string } }) {
   const stream = useStreamData(params.creator);
@@ -57,7 +57,7 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
 
   return (
     <ErrorBoundary>
-      {/* ── Back navigation ── */}
+      {/* == Back navigation == */}
       <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-white/5">
         <div className="mx-auto max-w-[1800px] px-4 py-2">
           <div className="flex items-center gap-2 text-xs">
@@ -72,10 +72,10 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
         </div>
       </div>
 
-      {/* ── Main content area ── */}
+      {/* == Main content area == */}
       <div className="mx-auto max-w-[1800px]">
         <div className={`flex ${showSidebar ? 'flex-col lg:flex-row' : 'flex-col'}`}>
-          {/* ── Left: Player + Below content ── */}
+          {/* == Left: Player + Below content == */}
           <div className={`flex-1 min-w-0 ${showSidebar ? 'lg:mr-0' : ''}`}>
             {/* Player */}
             <StreamPlayer
@@ -173,7 +173,7 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
             </div>
           </div>
 
-          {/* ── Right: Chat sidebar ── */}
+          {/* == Right: Chat sidebar == */}
           {showSidebar && (
             <div className="w-full lg:w-[380px] lg:min-w-[380px] shrink-0 border-t lg:border-t-0 lg:border-l border-white/10">
               <div className="h-full flex flex-col" style={{ maxHeight: 'calc(100vh - 48px)' }}>
@@ -216,7 +216,7 @@ export default function StreamPage({ params }: { params: { creator: string } }) 
         </div>
       </div>
 
-      {/* ── Mini Player (PiP-style) ── */}
+      {/* == Mini Player (PiP-style) == */}
       {showMiniPlayer && (
         <StreamMiniPlayer
           title={stream.title}

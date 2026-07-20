@@ -26,7 +26,7 @@ import { GoLiveModal } from '../../../components/streams/GoLiveModal';
 
 const ShareModal = dynamic(() => import('../../../components/launch/ShareModal'), { ssr: false });
 
-/* ─── Types ──────────────────────────────────────────── */
+/* === Types ============================================ */
 
 interface CoinPageData {
   address: string;
@@ -48,7 +48,7 @@ interface CoinPageData {
   antiSnipeMax?: string;
 }
 
-/* ─── Helpers ────────────────────────────────────────── */
+/* === Helpers ========================================== */
 
 function shortenAddress(addr: string): string {
   if (!addr || addr.length < 10) return addr;
@@ -61,7 +61,7 @@ function formatCompact(n: number): string {
   return String(n);
 }
 
-/* ─── Metric Card ────────────────────────────────────── */
+/* === Metric Card ====================================== */
 
 function MetricCard({
   label,
@@ -87,7 +87,7 @@ function MetricCard({
   );
 }
 
-/* ─── Skeleton Loading ───────────────────────────────── */
+/* === Skeleton Loading ================================= */
 
 function CoinPageSkeleton() {
   return (
@@ -108,7 +108,7 @@ function CoinPageSkeleton() {
   );
 }
 
-/* ─── Main Page ──────────────────────────────────────── */
+/* === Main Page ======================================== */
 
 export default function CoinPage() {
   const params = useParams();

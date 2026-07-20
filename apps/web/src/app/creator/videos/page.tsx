@@ -7,7 +7,7 @@ import { useWeb3 } from '../../../components/Web3Provider';
 import type { CreatorVideoMeta } from '../../../components/creator/useCreatorVideos';
 import VideoLibrary from '../../../components/creator/VideoLibrary';
 
-// ─── Dynamic imports (heavy modals) ───────────────────────────────────────
+// === Dynamic imports (heavy modals) =======================================
 
 const VideoUploader = dynamic(
   () => import('../../../components/creator/VideoUploader'),
@@ -29,7 +29,7 @@ const ShortCreator = dynamic(
   { ssr: false },
 );
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 type TabId = 'all' | 'videos' | 'shorts';
 
@@ -39,7 +39,7 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: 'shorts', label: 'Shorts', icon: '🎬' },
 ];
 
-// ─── Page ────────────────────────────────────────────────────────────────
+// === Page ================================================================
 
 export default function CreatorVideosPage() {
   const { ready, walletAddress, openSignIn } = useAuth();
@@ -66,7 +66,7 @@ export default function CreatorVideosPage() {
     setAnalyticsVideo(video);
   }, []);
 
-  // ── Wallet Gate ────────────────────────────────────────────────────
+  // == Wallet Gate ====================================================
 
   if (!ready) {
     return (
@@ -105,7 +105,7 @@ export default function CreatorVideosPage() {
     );
   }
 
-  // ── Confirm Delete ─────────────────────────────────────────────────
+  // == Confirm Delete =================================================
 
   const [confirmDeleteUuid, setConfirmDeleteUuid] = useState<string | null>(null);
 
@@ -132,7 +132,7 @@ export default function CreatorVideosPage() {
     }
   }, [confirmDeleteUuid]);
 
-  // ── Dashboard ──────────────────────────────────────────────────────
+  // == Dashboard ======================================================
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">

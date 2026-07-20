@@ -24,7 +24,7 @@ const COMMANDS: CommandInfo[] = [
   { command: '/help', description: 'Show available commands', usage: '/help', modOnly: false },
 ];
 
-/* ─── Commands Panel ─────────────────────────────────────────── */
+/* === Commands Panel =========================================== */
 
 interface StreamCommandsProps {
   isMod?: boolean;
@@ -84,7 +84,7 @@ export function StreamCommands({ isMod = false }: StreamCommandsProps) {
   );
 }
 
-/* ─── Command Badge (inline in chat) ─────────────────────────── */
+/* === Command Badge (inline in chat) =========================== */
 
 export function CommandBadge({ command }: { command: string }) {
   return (

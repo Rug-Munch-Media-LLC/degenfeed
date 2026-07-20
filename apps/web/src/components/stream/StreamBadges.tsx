@@ -2,7 +2,7 @@
 
 import { CHAT_BADGES, type ChatBadge } from './types';
 
-/* ─── Single Badge Display ───────────────────────────────────── */
+/* === Single Badge Display ===================================== */
 
 interface StreamBadgeProps {
   badge: ChatBadge;
@@ -26,7 +26,7 @@ export function StreamBadge({ badge, size = 'sm' }: StreamBadgeProps) {
   );
 }
 
-/* ─── Badge Showcase ─────────────────────────────────────────── */
+/* === Badge Showcase =========================================== */
 
 export function BadgeShowcase() {
   return (

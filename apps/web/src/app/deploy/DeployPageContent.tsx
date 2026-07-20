@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-// ── Constants ─────────────────────────────────────────────────────────────
+// == Constants =============================================================
 
 interface DeployOption {
   id: 'lemmy' | 'peertube' | 'mastodon';
@@ -64,7 +64,7 @@ const OPTIONS: DeployOption[] = [
   },
 ];
 
-// ── Option Card ───────────────────────────────────────────────────────────
+// == Option Card ===========================================================
 
 function DeployOptionCard({ option }: { option: DeployOption }) {
   return (
@@ -160,7 +160,7 @@ function DeployOptionCard({ option }: { option: DeployOption }) {
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────
+// == Main Page =============================================================
 
 export default function DeployPage() {
   return (

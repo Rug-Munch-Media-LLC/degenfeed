@@ -12,7 +12,7 @@ import { memo } from 'react';
 import { YouTubeSourceBadge } from './YouTubeSourceBadge';
 import { formatYouTubeCount } from './useYouTube';
 
-// ─── Types ───────────────────────────────────────────────────────────────
+// === Types ===============================================================
 
 export interface YouTubeChannelData {
   name: string;
@@ -34,7 +34,7 @@ export interface YouTubeChannelHeaderProps {
   isSubscribed?: boolean;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────
+// === Component ===========================================================
 
 export const YouTubeChannelHeader = memo(function YouTubeChannelHeader({
   channel,

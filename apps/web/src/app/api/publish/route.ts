@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── Premium tier check ──────────────────────────────────────
+    // == Premium tier check ======================================
     const { isPremium, tier } = await checkUserPremium(request);
 
     if (!isPremium && targets.length > FREE_TIER_MAX_PROTOCOLS) {
