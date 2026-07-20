@@ -18,6 +18,12 @@ interface GoLiveModalProps {
   isOpen: boolean;
   onClose: () => void;
   onStart: (data: GoLiveForm) => void;
+  /** Pre-fill coin address for token-gated streams */
+  defaultCoinAddress?: string;
+  /** Pre-fill coin symbol for display */
+  defaultCoinSymbol?: string;
+  /** Pre-fill stream surfaces/platforms */
+  defaultSurfaces?: string[];
 }
 
 /* === Stream type config ======================================= */
@@ -209,13 +215,13 @@ function TokenGateConfig({
 
 /* === Main Modal =============================================== */
 
-export function GoLiveModal({ isOpen, onClose, onStart }: GoLiveModalProps) {
+export function GoLiveModal({ isOpen, onClose, onStart, defaultCoinAddress, defaultCoinSymbol, defaultSurfaces }: GoLiveModalProps) {
   const [form, setForm] = useState<GoLiveForm>({
     title: '',
     streamType: 'solo',
     description: '',
-    tokenGate: false,
-    tokenAddress: '',
+    tokenGate: !!defaultCoinAddress,
+    tokenAddress: defaultCoinAddress || '',
     minHold: 0,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);

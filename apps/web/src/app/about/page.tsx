@@ -3,27 +3,39 @@ import type { Metadata } from 'next';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: 'About — DegenFeed',
+  title: 'About — DegenFeed Web3 Social Media Aggregator',
   description:
-    'DegenFeed is an open-source multi-protocol social aggregator for web3. See posts from Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS in one unified feed.',
+    'DegenFeed is an open-source multi-protocol social aggregator for web3. Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one unified feed. Cross-post, tip in crypto, launch creator coins, and livestream — all without platform fees. Built by Rug Munch Media LLC.',
+  keywords: [
+    'about degenfeed',
+    'web3 social platform',
+    'open source social aggregator',
+    'rug munch media',
+    'decentralized social media company',
+    'cross protocol platform',
+  ],
   openGraph: {
-    title: 'About DegenFeed',
+    title: 'About DegenFeed — The Web3 Social Superapp',
     description:
-      'The open-source multi-protocol social aggregator. One feed for Nostr, Farcaster, Lens, Bluesky, Mastodon, and more.',
+      'Open-source multi-protocol social aggregator. One feed for Nostr, Farcaster, Lens, Bluesky, Mastodon. Creator coins, tipping, livestreaming. Built by Rug Munch Media LLC.',
     url: 'https://app.degenfeed.xyz/about',
+    siteName: 'DegenFeed',
+    type: 'website',
     images: [
       {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'About DegenFeed',
+        alt: 'About DegenFeed — open source web3 social media aggregator',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About DegenFeed',
-    description: 'The open-source multi-protocol social aggregator.',
+    title: 'About DegenFeed — Web3 Social Media Aggregator',
+    description:
+      'Open-source multi-protocol social aggregator. Nostr, Farcaster, Lens, Bluesky, Mastodon — one feed.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/about' },
 };

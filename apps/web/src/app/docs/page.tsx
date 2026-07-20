@@ -6,13 +6,41 @@ import { DocSearchClient } from './_components/doc-search-client';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: 'Documentation — DegenFeed',
+  title: 'Documentation — DegenFeed Web3 Social Platform',
   description:
-    'API reference, protocol guides, self-hosting, and architecture for DegenFeed — the open-source web3 social aggregator.',
+    'Complete documentation for DegenFeed: API reference, protocol integration guides, self-hosting setup, architecture overview, user guides, creator monetization guide, and developer SDKs.',
+  keywords: [
+    'degenfeed docs',
+    'web3 social platform documentation',
+    'nostr farcaster lens integration guide',
+    'decentralized social media setup',
+    'self-host social aggregator',
+    'cross protocol posting api',
+    'creator coin deployment guide',
+  ],
   alternates: { canonical: 'https://app.degenfeed.xyz/docs' },
   openGraph: {
-    title: 'DegenFeed Documentation',
-    description: 'Complete reference for the open-source multi-protocol web3 social aggregator.',
+    title: 'DegenFeed Documentation — API, Guides & Self-Hosting',
+    description:
+      'Complete documentation: API reference, protocol guides, user manual, creator monetization, and self-hosting setup.',
+    url: 'https://app.degenfeed.xyz/docs',
+    siteName: 'DegenFeed',
+    type: 'website',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed Documentation — API, protocol guides, and self-hosting',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed Documentation — API, Guides & Self-Hosting',
+    description:
+      'Complete API reference, protocol guides, and self-hosting documentation.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
   },
 };
 

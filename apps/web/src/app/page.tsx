@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Script from 'next/script';
 import { FAQItem } from '../components/landing/FAQItem';
 import { WaitlistSection } from '../components/landing/WaitlistSection';
 import './landing.css';
@@ -7,29 +8,48 @@ import './landing.css';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'DegenFeed — Own Your Social Network',
+  title: 'DegenFeed — Web3 Social Media Platform | Cross-Protocol Aggregator & Creator Coins',
   description:
-    'Post once. Reach everywhere. Earn from anywhere. No one can deplatform you. DegenFeed is the universal layer for cross-protocol social, creator coins, live streaming, and self-hosted infrastructure.',
+    'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon & more into one feed. Cross-post across 15+ protocols, launch creator coins on Base & Solana, tip in ETH/SOL/USDC/Lightning, and livestream everywhere — all without platform fees or deplatforming risk.',
+  keywords: [
+    'web3 social media',
+    'decentralized social network',
+    'cross-protocol posting',
+    'creator coin platform',
+    'nostr farcaster lens bluesky aggregator',
+    'multi protocol social feed',
+    'crypto tipping app',
+    'decentralized content creator',
+    'fediverse cross-post',
+    'web3 publishing platform',
+    'self-hosted social media',
+    'cross-chain tipping',
+    'decentralized video platform',
+    'audio spaces crypto',
+  ],
   alternates: { canonical: 'https://app.degenfeed.xyz' },
   openGraph: {
-    title: 'DegenFeed — Own Your Social Network',
-    description: 'Post once. Reach 15+ protocols. Earn from everywhere. No one can deplatform you.',
+    title: 'DegenFeed — Own Your Social Network | Web3 Cross-Protocol Aggregator',
+    description:
+      'Post once to 15+ protocols. Launch your own creator coin. Stream everywhere. Tip in any currency. No platform fees. No deplatforming. Own your social network.',
     siteName: 'DegenFeed',
     type: 'website',
     url: 'https://app.degenfeed.xyz',
+    locale: 'en_US',
     images: [
       {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed — Own Your Social Network',
+        alt: 'DegenFeed — Web3 social media aggregator connecting Nostr, Farcaster, Lens, Bluesky, Mastodon',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'DegenFeed — Own Your Social Network',
-    description: 'Post once. Reach 15+ protocols. Earn from everywhere. No one can deplatform you.',
+    title: 'DegenFeed — Web3 Social Media Platform & Cross-Protocol Aggregator',
+    description:
+      'Aggregate 15+ social protocols. Cross-post everywhere. Launch creator coins. Tip in crypto. Stream live. Zero platform fees. Own your network.',
     images: ['https://app.degenfeed.xyz/og-image.png'],
   },
 };
@@ -200,6 +220,85 @@ const faqs: FAQEntry[] = [
 export default function HomePage() {
   return (
     <div className="landing-page">
+      {/* JSON-LD Structured Data for rich search results */}
+      <Script
+        id="landing-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'WebApplication',
+                '@id': 'https://app.degenfeed.xyz/#webapp',
+                name: 'DegenFeed',
+                url: 'https://app.degenfeed.xyz',
+                description:
+                  'Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon & more into one feed. Cross-post across 15+ protocols, launch creator coins, tip in crypto, and livestream everywhere.',
+                applicationCategory: 'SocialNetworkingApplication',
+                operatingSystem: 'All',
+                browserRequirements: 'Requires modern browser with JavaScript enabled',
+                offers: [
+                  { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'USD' },
+                  { '@type': 'Offer', name: 'Premium', price: '10', priceCurrency: 'USD' },
+                  { '@type': 'Offer', name: 'Creator', price: '25', priceCurrency: 'USD' },
+                ],
+                author: {
+                  '@type': 'Organization',
+                  name: 'Rug Munch Media LLC',
+                  url: 'https://app.degenfeed.xyz',
+                },
+                featureList: [
+                  'Multi-protocol feed aggregation of 15+ decentralized social networks',
+                  'Cross-protocol posting to Nostr, Farcaster, Lens, Bluesky, Mastodon simultaneously',
+                  'Creator coin deployment on Base (ERC-20) and Solana (SPL)',
+                  'Cross-chain tipping in ETH, SOL, USDC, and Lightning Network',
+                  'Multi-protocol livestreaming and audio spaces',
+                  'Self-hosted infrastructure with full data portability',
+                  'Cross-protocol search and content discovery',
+                  'Real-time notifications and unified messaging',
+                ],
+                screenshot: {
+                  '@type': 'ImageObject',
+                  url: 'https://app.degenfeed.xyz/og-image.png',
+                },
+              },
+              {
+                '@type': 'SoftwareSourceCode',
+                '@id': 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web',
+                name: 'DegenFeed',
+                description:
+                  'Open-source multi-protocol social aggregator for web3. Aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS.',
+                codeRepository: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web',
+                programmingLanguage: 'TypeScript',
+                license: 'https://www.gnu.org/licenses/agpl-3.0.html',
+                applicationCategory: 'SocialNetworkingApplication',
+                operatingSystem: 'POSIX, macOS, Windows',
+              },
+              {
+                '@type': 'BreadcrumbList',
+                '@id': 'https://app.degenfeed.xyz/#breadcrumb',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://app.degenfeed.xyz' },
+                  { '@type': 'ListItem', position: 2, name: 'Features', item: 'https://app.degenfeed.xyz/features' },
+                  { '@type': 'ListItem', position: 3, name: 'FAQ', item: 'https://app.degenfeed.xyz/faq' },
+                ],
+              },
+              {
+                '@type': 'Organization',
+                '@id': 'https://app.degenfeed.xyz/#organization',
+                name: 'Rug Munch Media LLC',
+                url: 'https://app.degenfeed.xyz',
+                logo: 'https://app.degenfeed.xyz/icon-512.png',
+                sameAs: [
+                  'https://git.rugmunch.io/RugMunchMedia',
+                  'https://codeberg.org/degenfeed',
+                ],
+              },
+            ],
+          }),
+        }}
+      />
       {/* Background glows */}
       <div className="hero-bg-glow" aria-hidden="true" />
       <div className="hero-glow-secondary" aria-hidden="true" />

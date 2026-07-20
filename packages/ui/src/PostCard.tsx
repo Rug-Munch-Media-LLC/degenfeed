@@ -122,6 +122,10 @@ export interface PostCardProps {
    */
   reputation?: ReputationBadgeScore | null;
   /**
+   * Right-click / long-press context menu handler.
+   */
+  onContextMenu?: (e: React.MouseEvent, postId: string) => void;
+  /**
    * Optional progress data for the reputation level progress bar (shown in tooltip).
    */
   reputationProgress?: ReputationBadgeProgress | null;
@@ -203,6 +207,7 @@ function PostCardComponent({
   onShowMoreLikeThis,
   onShowLessLikeThis,
   onWhyThisPost,
+  onContextMenu,
 }: PostCardProps): React.ReactElement | null {
   const [showFullText, setShowFullText] = useState(expanded ?? false);
   const [localState, setLocalState] = useState<LocalState>({
@@ -633,6 +638,7 @@ function PostCardComponent({
       <article
         className="post-card cursor-pointer border-b border-[var(--color-border)] px-4 py-3 transition-all duration-150 hover:bg-[var(--color-overlay)] hover:border-[color-mix(in_srgb,var(--color-accent)_15%,var(--color-border))] hover:scale-[1.002] hover:shadow-sm"
         onClick={() => onClick?.(post.id)}
+        onContextMenu={(e) => onContextMenu?.(e, post.id)}
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && onClick) {
             e.preventDefault();

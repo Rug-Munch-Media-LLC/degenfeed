@@ -400,7 +400,8 @@ function categorizeByPattern(message: string): ErrorCategory {
 	);
 
 	// Return the highest-scoring category, or unknown if nothing matched
-	if (sorted[0]?.[1] > 0) return sorted[0][0];
+	const topCategory = sorted[0];
+	if (topCategory && topCategory[1] > 0) return topCategory[0];
 
 	// Check error instance type as fallback
 	if (errorIsNetworkType(message)) return "network";

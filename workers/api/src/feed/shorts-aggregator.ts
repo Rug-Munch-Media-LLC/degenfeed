@@ -60,6 +60,8 @@ export interface ShortsFeedResponse {
 // ─── Aggregator ─────────────────────────────────────────────────────────
 
 export class ShortsAggregator {
+	private env: Env;
+
 	constructor(env: Env) {
 		this.env = env;
 	}
@@ -377,13 +379,15 @@ export class ShortsAggregator {
 		const keys = Object.keys(buckets);
 		let maxLen = 0;
 		for (const k of keys) {
-			if (buckets[k]?.length > maxLen) maxLen = buckets[k]?.length;
+			const bucket = buckets[k];
+			if (bucket && bucket.length > maxLen) maxLen = bucket.length;
 		}
 
 		for (let i = 0; i < maxLen; i++) {
 			for (const key of keys) {
-				if (i < buckets[key]?.length) {
-					result.push(buckets[key]?.[i]!);
+				const bucket = buckets[key];
+				if (bucket && i < bucket.length) {
+					result.push(bucket[i]!);
 				}
 			}
 		}

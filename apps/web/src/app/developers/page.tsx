@@ -4,13 +4,40 @@ import Link from 'next/link';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: 'Developers — DegenFeed',
+  title: 'Developers — DegenFeed API, SDKs & Webhooks',
   description:
-    'Build on DegenFeed. Public API, SDKs, webhooks, and integration guides for the open social web. Aggregate 9 protocols into one feed.',
+    'Build on DegenFeed. Public REST API with 30+ endpoint categories, SDKs for Nostr/Farcaster/Lens/Bluesky/Mastodon, webhook integrations, and protocol adapter guides. Aggregate 15+ protocols programmatically.',
+  keywords: [
+    'degenfeed api',
+    'web3 social api',
+    'nostr api integration',
+    'farcaster api',
+    'social media aggregation api',
+    'cross protocol api',
+    'decentralized social developer tools',
+  ],
   alternates: { canonical: 'https://app.degenfeed.xyz/developers' },
   openGraph: {
-    title: 'Build on DegenFeed',
-    description: 'The public API for the open social web.',
+    title: 'DegenFeed for Developers — API, SDKs & Protocol Integrations',
+    description:
+      'Public REST API (30+ endpoint categories), protocol SDKs, webhooks, and integration guides for the open social web.',
+    url: 'https://app.degenfeed.xyz/developers',
+    siteName: 'DegenFeed',
+    type: 'website',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'DegenFeed for Developers — API and SDK documentation',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed for Developers — API, SDKs & Webhooks',
+    description: 'Build on the open social web. REST API, SDKs, and integration guides.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
   },
 };
 

@@ -5,24 +5,28 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: 'Legal Notice — DegenFeed',
   description:
-    'Legal notice and company information for DegenFeed, operated by Rug Munch Media LLC.',
+    'Legal notice, company information, and registered agent for DegenFeed, operated by Rug Munch Media LLC, a Wyoming limited liability company.',
   openGraph: {
-    title: 'Legal Notice — DegenFeed',
-    description: 'Legal notice and company information for DegenFeed.',
+    title: 'Legal Notice — DegenFeed | Rug Munch Media LLC',
+    description:
+      'Legal notice and company information for DegenFeed, operated by Rug Munch Media LLC.',
     url: 'https://app.degenfeed.xyz/legal',
+    siteName: 'DegenFeed',
+    type: 'website',
     images: [
       {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed Legal Notice',
+        alt: 'DegenFeed Legal Notice — Rug Munch Media LLC',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Legal Notice — DegenFeed',
-    description: 'Legal notice and company information for DegenFeed.',
+    description:
+      'Legal notice and company information for DegenFeed, operated by Rug Munch Media LLC.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/legal' },
 };

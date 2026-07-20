@@ -1,13 +1,13 @@
 {
-  "name": "DegenFeed — The social feed of web3",
+  "name": "DegenFeed — Web3 Social Superapp | Cross-Protocol Aggregator",
   "short_name": "DegenFeed",
-  "description": "See every network. Zero sign-ups. DegenFeed aggregates Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, and RSS into one window.",
-  "start_url": "/home",
+  "description": "Aggregate Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS into one unified feed. Cross-post across protocols, tip creators in crypto, and own your social network.",
+  "start_url": "/feed",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#0a0a0a",
   "theme_color": "#00ff41",
   "orientation": "portrait",
-  "categories": ["social", "news", "cryptocurrency", "productivity"],
+  "categories": ["social", "news", "cryptocurrency", "productivity", "communication"],
   "lang": "en-US",
   "dir": "ltr",
   "scope": "/",
@@ -17,7 +17,22 @@
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
-
+  "screenshots": [
+    {
+      "src": "/screenshots/feed-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "DegenFeed unified timeline showing posts from Nostr, Farcaster, Bluesky, and Lens"
+    },
+    {
+      "src": "/screenshots/feed-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "DegenFeed mobile feed with cross-protocol posts"
+    }
+  ],
   "prefer_related_applications": false,
   "related_applications": [
     {
@@ -29,13 +44,6 @@
       "url": "https://play.google.com/store/apps/details?id=xyz.degenfeed.app"
     }
   ],
-  "ios": {
-    "apple-touch-icon": "/icon-192.png",
-    "apple-touch-startup-image": "/splash.png",
-    "apple-mobile-web-app-title": "DegenFeed",
-    "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "black-translucent"
-  },
   "handle_links": "preferred",
   "edge_side_panel": {},
   "launch_handler": {

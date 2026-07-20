@@ -342,7 +342,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const record = await buildIdentityRecord({
-          protocol: effectiveProtocol,
+          protocol: effectiveProtocol as import('@degenfeed/types').Protocol,
           publicId,
           handle: handle || publicId,
           displayName: displayName || handle || publicId,
@@ -542,7 +542,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             };
             if (!resp.ok) throw new Error(data.error || 'Sign-in failed');
             const record = await buildIdentityRecord({
-              protocol: 'email',
+              protocol: 'email' as const,
               publicId: data.user?.id || (creds.email as string),
               handle: data.user?.displayName || (creds.email as string).split('@')[0] || 'user',
               displayName:

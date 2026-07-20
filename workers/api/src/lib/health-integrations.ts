@@ -212,7 +212,9 @@ async function checkNostr(env: Env): Promise<IntegrationHealth> {
 	// (simplified — full check requires WebSocket handshake)
 	try {
 		const start = performance.now();
-		const ws = new WebSocket(relays[0]);
+		const relayUrl = relays[0] ?? '';
+		if (!relayUrl) return { status: "down", latency: 0, lastChecked: Date.now(), error: "No relay URL" };
+		const ws = new WebSocket(relayUrl);
 		await new Promise<void>((resolve, reject) => {
 			ws.onopen = () => {
 				ws.close();

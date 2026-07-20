@@ -1,4 +1,4 @@
-# DegenFeed Web
+# DegenFeed — The Web3 Social Superapp
 
 [![CI](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/ci.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/ci.yml)
 [![Deploy](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/deploy.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/deploy.yml)
@@ -6,174 +6,134 @@
 [![Biome](https://img.shields.io/badge/linted%20with-Biome-60a5fa?logo=biome)](https://biomejs.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript)](https://www.typescriptlang.org)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org)
-[![Cloudflare](https://img.shields.io/badge/deployed%20on-Cloudflare-F38020?logo=cloudflare)](https://cloudflare.com)
+[![Cloudflare](https://img.shields.io/badge/edge-Cloudflare-F38020?logo=cloudflare)](https://cloudflare.com)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 
-**Status:** 🟢 Live at [app.degenfeed.xyz](https://app.degenfeed.xyz)
-**Docs:** [docs.degenfeed.xyz](https://docs.degenfeed.xyz)
-**Repo:** `git.rugmunch.io/RugMunchMedia/degenfeed-web`
+**🌐 Live at [app.degenfeed.xyz](https://app.degenfeed.xyz)**  
+**📖 Docs: [docs.degenfeed.xyz](https://docs.degenfeed.xyz)**  
+**💬 Join the waitlist: [app.degenfeed.xyz/waitlist](https://app.degenfeed.xyz/waitlist)**  
+**🏠 Self-host: one-command deploy with Docker Compose**
 
 ---
 
 ## What is DegenFeed?
 
-A multi-protocol social aggregator that unifies 15+ decentralized and federated social networks into a single timeline with cross-platform posting, creator coins, livestreaming, audio spaces, and cross-chain tipping.
+**DegenFeed** is the universal layer for decentralized social media. It aggregates content from **15+ protocols** into one unified feed, lets you **cross-post across all of them**, and gives you tools to earn — tips, creator coins, and subscriptions — without platform fees.
 
-Built with **Next.js 16** (App Router), **Hono** on Cloudflare Workers, and deployed at [app.degenfeed.xyz](https://app.degenfeed.xyz).
+| You can | Without |
+|---------|---------|
+| Browse Nostr, Farcaster, Bluesky, Lens, Mastodon in one feed | Creating an account |
+| Cross-post to 15+ protocols simultaneously | Copy-pasting |
+| Launch your own ERC-20 / SPL token | Coding or paying audit fees |
+| Tip creators in ETH, SOL, USDC, or Lightning | Platform fees |
+| Stream live to 7 platforms at once | Multiple streaming setups |
+| Self-host the entire stack | Losing your data or identity |
 
-### Why DegenFeed?
-
-- **One feed to rule them all** — Nostr, Farcaster, Bluesky, Lens, Mastodon, Threads, YouTube, RSS, Reddit, and more in a single ranked timeline
-- **Creator-first economy** — Launch your own ERC-20 / SPL creator coin, earn tips across 4 chains, monetize streams
-- **Cross-platform posting** — Write once, publish to Nostr + Farcaster + Bluesky + Mastodon + Lens simultaneously
-- **Audio Spaces** — Host live, multi-participant audio conversations with protocol bridging
-- **Livestreaming** — Go live via PeerTube with cross-protocol announcements and real-time chat
-- **Visual Feed** — Rich media grid of images and video from all protocols
-- **Short Form Video** — TikTok-style short video feed aggregated from federated sources
-- **Open protocol, open data** — No lock-in. Your identity, your content, your audience.
-
-### Integrated Protocols (21+)
-
-| Protocol | Feed | Post | Tip | Creator Coin | Livestream | Spaces | Bridge |
-|----------|------|------|-----|-------------|------------|--------|--------|
-| Nostr | ✅ | ✅ | ✅ (Lightning) | — | — | ✅ | — |
-| Farcaster / Warpcast | ✅ | ✅ | ✅ | ✅ (Base) | — | ✅ | — |
-| Bluesky (AT Protocol) | ✅ | ✅ | ✅ | — | — | ✅ | — |
-| Mastodon / GoToSocial | ✅ | ✅ | ✅ | — | ✅ | ✅ | — |
-| Threads (Instagram) | ✅ | ✅ | — | — | — | — | — |
-| Twitter / X | ✅ | — | — | — | — | — | — |
-| Reddit | ✅ | — | — | — | — | — | — |
-| RSS / Atom | ✅ (353+ sources) | — | — | — | — | — | — |
-| **PeerTube** | ✅ | ✅ | ✅ | — | ✅ | — | — |
-| **Lemmy** | ✅ | — | ✅ | — | — | — | — |
-| **YouTube** | ✅ | — | — | — | — | — | — |
-| **Lens Protocol** | ✅ | — | ✅ | ✅ (Polygon) | — | ✅ | — |
-| Telegram | ✅ | ✅ | — | — | — | — | — |
-| Zora | — | — | ✅ | ✅ (Wrap) | — | — | — |
-| Solana | — | — | ✅ | ✅ (SPL) | — | — | — |
-| **Discord** | ✅ | ✅ | — | — | — | — | ✅ |
-| **Matrix** | ✅ | ✅ | — | — | — | — | ✅ |
-| **Webhooks** | ✅ | ✅ | — | — | — | — | ✅ |
-| **Email Newsletter** | ✅ | — | — | — | — | — | ✅ |
-| **GitHub** | ✅ | ✅ | — | — | — | — | ✅ |
-| **Substack / Ghost** | ✅ | ✅ | — | — | — | — | ✅ |
+> **Post once. Reach everywhere. Earn from anywhere. No one can deplatform you.**
 
 ---
 
 ## Features
 
 ### 🗞️ Unified Feed
-- Ranked, aggregated feed from every connected protocol
+- Ranked, aggregated timeline from every connected protocol
 - Per-protocol filters (Nostr, Farcaster, Lens, Bluesky, Mastodon, Reddit, RSS, YouTube)
-- Trending, News, For You, Following tabs
-- Category filtering (DeFi, AI, Bitcoin, Ethereum, Solana, Security, Macro)
-- Smart ranking with engagement scoring and curation
+- Trending, News, For You, Following tabs with smart ranking
 - Real-time updates via Server-Sent Events
-- 353+ curated RSS news sources
+- 353+ curated RSS news sources with category filtering (DeFi, AI, Bitcoin, Ethereum, Security, Macro)
 
 ### ✍️ Cross-Platform Composer
-- Write once, publish to Nostr + Farcaster + Bluesky + Mastodon + Lens + Threads
-- Free tier: 3 protocols per post
-- Premium tier: unlimited protocols
-- Image and media attachments
-- Scheduled posting
+- Write once, publish to Nostr + Farcaster + Bluesky + Mastodon + Lens + Threads simultaneously
+- Free tier: 3 protocols per post | Premium: unlimited
+- Image/video attachments, rich media, and poll support
+- Scheduled posting with timezone-aware composer
 
 ### 🪙 Creator Coin System
-- Deploy ERC-20 tokens on **Base** (via DegenFeedFactory) and **Solana** (via Anchor program)
-- Also deploy on **Lens** (Polygon native) and wrap to **Zora**
+- Deploy ERC-20 tokens on **Base** and SPL tokens on **Solana** in one click
 - Sigmoid bonding curve with 5 eras: Steal Deal → Early Bird → Ramp Up → Fair Launch → Moonshot
-- 4 vesting presets: Trustless (0% unlock, 30d cliff, 90d), Balanced (5%, 7d, 60d), Community (10%, 0d, 30d), Fast (20%, 0d, 7d)
-- Reputation-gated vesting unlocks
-- 3-phase anti-exploit (2%/5%/10% limits, bundle detection, cooldowns)
-- Cross-chain registry for bidirectional lookups
-- Unified profile — all creator tokens in one view
-- Gamified trading with badges, milestones, referral boosts, and flash sales
+- 4 vesting presets with reputation-gated unlocks
+- 3-phase anti-exploit: per-wallet caps (2%/5%/10%), bundle detection, cooldowns
+- Cross-chain registry for bidirectional token lookups
 - Auto-announce on Farcaster via frames
+- Liquidity locked via smart contract — no rugging
 
 ### 💸 Cross-Platform Tipping
-- **Lightning Network** — Instant Bitcoin micropayments (Nostr zaps)
-- **EVM chains** — Base, Optimism, Arbitrum via DegenFeedTips contract
-- **Solana** — Native SOL and SPL tokens
-- **Collect to Tip** — Lens collects with revenue share
-- **Cross-Chain bridging** — Wormhole bridge for SOL ↔ ETH routing
-- **Creator Coins** — Tip via creator coin per FID or profile ID
-- **Split tips** — 90/10 split with community treasuries
-- **Batch tipping** — Tip up to 50 recipients in one transaction
-- **Unified ledger** — Cross-platform tip history with leaderboards
+- **Lightning Network** — instant Bitcoin micropayments (Nostr zaps)
+- **EVM chains** — Base, Optimism, Arbitrum via audited smart contract
+- **Solana** — native SOL and SPL token tips
+- **Batch tipping** — send to up to 50 recipients in one transaction
+- **Streaming payments** — pay-per-minute during livestreams
+- **Unified leaderboard** — top-tipped creators across all protocols
+- **Zero platform fees** — tips go directly wallet-to-wallet
 
 ### 🎙️ Audio Spaces
 - Host live audio conversations with up to 50 participants
-- Speaker stage with listener mode and hand-raising
+- Speaker stage, listener mode, and hand-raising
 - Cross-protocol broadcasting — join via Nostr, Farcaster, Bluesky, Lens, Mastodon
-- Real-time reactions (hearts, emojis, claps)
 - Recording with automatic transcription
 - Scheduled spaces with reminders
-- Co-host and moderator controls
 
 ### 📺 Livestreaming
 - Powered by self-hosted **PeerTube** at video.degenfeed.xyz
-- Stream types: Solo, Collab, Coin Launch Events, Spaces
+- Stream types: Solo, Collab, Coin Launch Events, Audio Spaces
 - OBS-compatible RTMP keys
-- Real-time chat via **Prosody XMPP** bridge
 - Cross-protocol announcements — ActivityPub, Nostr kind 30311, AT Protocol, Farcaster frames, Telegram
-- Featured streams carousel
-- Category browsing (Tech, Talk, Crypto, Gaming, Music)
-
-### 📊 Visual Feed
-- Rich media grid showing images and video from all protocols
-- Auto-detection and extraction of inline media
-- Lightbox viewer
+- Real-time chat via **Prosody XMPP** bridge
 
 ### 📱 Short-Form Video
-- TikTok-style vertical video feed
-- Aggregated from PeerTube federated instances
+- TikTok-style vertical video feed aggregated from federated sources
 - Infinite scroll with keyboard navigation
+- Remix & duet with attribution and revenue sharing
 
 ### 👥 Feddy Communities
-- Create and join cross-protocol communities
-- Community feeds, member lists, and moderation
-- Protocol-agnostic community membership
-- Feddy community creation page with discoverability
+- Cross-protocol communities spanning all supported networks
+- Token-gated access (EVM + Solana)
+- On-chain governance with quadratic voting
+- Cross-protocol moderation tools
 
-### 🔍 Cross-Protocol Identity
-- Link identities across Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, and more
-- Wallet-based identity hub
-- Unified profile page
-- **Identity Hub** — wallet → protocol mapping with credential encryption
-
-### 🔎 Search
+### 🔍 Cross-Protocol Identity & Search
+- Link identities across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more
+- Unified profile page showing all connected identities
 - Cross-protocol text search powered by MeiliSearch
-- Identity search (find users across protocols)
-- Category and protocol filters
+- `df://` universal resource identifiers for protocol-agnostic linking
 
 ### 🏆 Reputation & Gamification
-- 7-tier reputation system: Newcomer → Contributor → Active → Trusted → Veteran → Elite → Legend
+- 7-tier system: Newcomer → Contributor → Active → Trusted → Veteran → Elite → Legend
 - Earn reputation by posting, receiving likes, tips, follows, and bridging
-- Stake reputation on posts to boost visibility
 - Tier-based benefits: enhanced discovery, custom feeds, badge display, analytics access
-- Daily caps to prevent gaming
 
-### 🎯 Recommendations
-- Personalized "For You" feed based on engagement signals
-- Related posts by niche overlap and time proximity
-- People to follow suggestions
-- Smart refresh algorithm
+### 🔧 Admin & Moderation
+- Content moderation dashboard with flagging system
+- User management and rate limit configuration
+- System health monitoring and deployment management
+- Cross-protocol reporting and moderation
 
-### 📬 Direct Messages
-- Cross-protocol messaging
-- Conversation threads
-- Push notification support
+---
 
-### 💎 Premium Subscriptions
-- Free tier: 3 protocols per cross-post, standard rate limits
-- Premium tier: unlimited protocols, higher rate limits, analytics, custom feeds
+## Integrated Protocols (21+)
 
-### 🔧 Admin Panel
-- Content moderation and flagging
-- User management
-- Source/platform management
-- Rate limit configuration
-- System health monitoring
-- Deployment management
+| Protocol | Feed | Post | Tip | Creator Coin | Livestream | Spaces |
+|----------|------|------|-----|-------------|------------|--------|
+| Nostr | ✅ | ✅ | ✅ (Lightning) | — | — | ✅ |
+| Farcaster / Warpcast | ✅ | ✅ | ✅ | ✅ (Base) | — | ✅ |
+| Bluesky (AT Protocol) | ✅ | ✅ | ✅ | — | — | ✅ |
+| Mastodon / GoToSocial | ✅ | ✅ | ✅ | — | ✅ | ✅ |
+| Threads (Instagram) | ✅ | ✅ | — | — | — | — |
+| Twitter / X | ✅ | — | — | — | — | — |
+| Reddit | ✅ | — | — | — | — | — |
+| RSS / Atom | ✅ (353+ sources) | — | — | — | — | — |
+| PeerTube | ✅ | ✅ | ✅ | — | ✅ | — |
+| Lens Protocol | ✅ | — | ✅ | ✅ (Polygon) | — | ✅ |
+| YouTube | ✅ | — | — | — | — | — |
+| Lemmy | ✅ | — | ✅ | — | — | — |
+| Telegram | ✅ | ✅ | — | — | — | — |
+| Discord | ✅ | ✅ | — | — | — | — |
+| Matrix | ✅ | ✅ | — | — | — | — |
+| GitHub | ✅ | ✅ | — | — | — | — |
+| Substack / Ghost | ✅ | ✅ | — | — | — | — |
+| Webhooks | ✅ | ✅ | — | — | — | — |
+| Zora | — | — | ✅ | ✅ (Wrap) | — | — |
+| Solana | — | — | ✅ | ✅ (SPL) | — | — |
 
 ---
 
@@ -192,7 +152,7 @@ Built with **Next.js 16** (App Router), **Hono** on Cloudflare Workers, and depl
 │  app.degenfeed.xyz (Pages — Next.js 16)                              │
 │  19 KV namespaces for cache, identity, coins, communities, etc.     │
 ├─────────────────────────────────────────────────────────────────────┤
-│                      PACKAGES LAYER (25+)                            │
+│                      PACKAGES LAYER (30+)                            │
 │  Protocol SDKs   │  Feed Pipeline  │  Identity     │  Auth           │
 │  Creator Coins   │  Tip Engine     │  Ranking      │  Web3           │
 │  Reputation      │  Storage        │  Realtime     │  UI Components  │
@@ -200,56 +160,40 @@ Built with **Next.js 16** (App Router), **Hono** on Cloudflare Workers, and depl
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Self-Hosted Infrastructure
-
-| Service | URL | Purpose |
-|---------|-----|---------|
-| **GoToSocial** | social.degenfeed.xyz | ActivityPub / Mastodon-compatible server |
-| **AT Protocol PDS** | pds.degenfeed.xyz | Bluesky personal data server |
-| **PeerTube** | video.degenfeed.xyz | Video hosting + livestreaming |
-| **Redlib** | redlib.degenfeed.xyz | Privacy-respecting Reddit frontend |
-| **RSS-Bridge** | rss-bridge.degenfeed.xyz | RSS feed generation for sites without RSS |
-| **Prosody XMPP** | chat.degenfeed.xyz | Real-time chat for PeerTube streams |
-
-### KV Namespaces (19)
-
-| Namespace | Purpose |
-|-----------|---------|
-| `CACHE` | General cache, rate limiter, feed cache, sessions, user prefs |
-| `SUBSCRIPTIONS` | Premium subscriptions, newsletter subscribers |
-| `IDENTITIES` | Cross-protocol identity links |
-| `API_KEYS` | Scoped API key storage |
-| `CONTENT_STORE` | Token community content, livestreams, chat |
-| `FARCASTER_COINS` | Farcaster creator coin records |
-| `LENS_COINS` | Lens Protocol creator coin records |
-| `XCHAIN_REGISTRY` | Cross-chain token registration |
-| `PLATFORM_ACCOUNTS` | Platform account records for registration |
-| `BLUESKY_INVITE_POOL` | Bluesky invite code pool |
-| `COMMUNITIES` | Cross-protocol community records |
-| `SPACES` | Audio Spaces data |
-| `REPUTATION` | Reputation scores and leaderboard |
-| `BOOKMARKS` | User bookmark storage |
-| `DEPLOYMENTS` | Deployment request tracking |
-| `PERMANENCE` | Content permanence proofs |
-| `GOVERNANCE` | DAO governance (proposals, votes) |
-| `REPORTS` | Reports and moderation state |
-| `CUSTOM_FEEDS` | Custom feed configurations |
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture documentation.
 
 ---
 
-## What's Inside
+## Quick Start
 
-- **87+ SSR pages** across the Next.js app (feed, profiles, threads, discover, settings, admin, launch, spaces, live, shorts, video, etc.)
-- **500+ API routes** (Hono on Cloudflare Workers) serving `/api/*` and `/v1/*`
-- **30+ packages** — Protocol SDKs (nostr, farcaster, bluesky, mastodon, threads, lens, rss, peertube, telegram, zora, discord, matrix, github, newsletter-bridge), feed-core, ranking, identity, web3, reputation, storage, realtime, tip-contract (Solidity), identity-hub
-- **4 on-chain contracts** — DegenFeedCoin (ERC-20), DegenFeedFactory, CrossChainRegistry (Solidity/Bases), DegenFeedCreatorToken (Anchor/Solana)
-- **19 KV namespaces** on Cloudflare Workers
+```bash
+# Prerequisites: Node.js >=20, pnpm
+pnpm install
 
-### Monorepo Structure
+# Copy environment variables
+cp apps/web/.env.example apps/web/.env.local
+
+# Start development (frontend + API worker)
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Full Stack (Docker)
+
+```bash
+docker compose -f docker-compose.yml up -d
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment.
+
+---
+
+## Monorepo Structure
 
 ```
 apps/
-  web/                     Next.js 16 aggregator client
+  web/                     Next.js 16 aggregator client (87+ SSR pages)
     src/
       app/                 60+ route groups (feed, profile, discover, etc.)
       components/          16+ component directories
@@ -257,19 +201,18 @@ apps/
       middleware.ts        Auth + rate limiting middleware
 
 workers/
-  api/                     Cloudflare Worker: edge API
+  api/                     Cloudflare Worker: edge API (500+ routes)
     src/
       routes/              ~100 route modules
       feed/                Feed pipeline (scorer, curator, freshness)
       lib/                 Shared libraries (bridge engine, community store, etc.)
 
-packages/
+packages/                  30+ shared packages
   types/                   Unified protocol types
   feed-core/               Feed normalization + deduplication
-  ranking/                 Feed scoring algorithms
+  ranking/                 Transparent feed scoring algorithms
   ui/                      Shared React components
-  identity/                Identity resolution
-  identity-hub/            Wallet→protocol mapping
+  identity/ + identity-hub/ Identity resolution
   auth/                    Wallet sign-in + sessions
   web3/                    Web3 utilities
   storage/                 Client + edge storage helpers
@@ -284,14 +227,15 @@ packages/
   rss-sdk/                 RSS/Atom feed adapter
   peertube-provider/       PeerTube video + stream adapter
   telegram-sdk/            Telegram Bot API client
-  zora-sdk/                Creator token SDK (bonding curve, anti-exploit, vesting)
+  discord-sdk/             Discord Bot API & webhook client
+  matrix-sdk/              Matrix homeserver client
+  github-sdk/              GitHub API client
+  newsletter-bridge-sdk/   Substack/Ghost RSS bridge
+  zora-sdk/                Creator coin SDK (bonding curve, anti-exploit)
   shorts-provider/         Short-form video provider
-  video/                   Video hub utilities
-  tip-contract/            Solidity + Anchor smart contracts
-  crossplatform-register/  Multi-protocol account registration
-  token-gate/              Token-gated content access
+  tip-contract/            Solidity + Anchor (Solana) smart contracts
   spaces-audio/            Audio Spaces engine
-  solana-programs/         Solana on-chain programs
+  token-gate/              Token-gated content access
 
 infra/
   cloudflare/              Wrangler configs, Pages setup
@@ -301,35 +245,34 @@ infra/
 mobile/                    Capacitor mobile shell (iOS + Android)
 docs/                      VitePress documentation site
 scripts/                   Deploy, rollback, migration scripts
-design/                    Design assets and mockups
 ```
 
 ---
 
-## Quick Start
+## Smart Contracts
 
-```bash
-# Install dependencies
-pnpm install
+| Contract | Chain | Language | Purpose |
+|----------|-------|----------|---------|
+| `DegenFeedCoin.sol` | Base | Solidity | ERC-20 creator token with vesting |
+| `DegenFeedFactory.sol` | Base | Solidity | Factory-deployed coins per creator |
+| `CrossChainRegistry.sol` | Base | Solidity | Protocol→chain→token mapping |
+| `DegenFeedTips.sol` | Base / Optimism / Arbitrum | Solidity | 0% fee tipping contract |
+| `degenfeed-creator-token` | Solana | Anchor Rust | SPL token program |
+| `DegenFeedCreatorToken` | Solana | Anchor Rust | Creator token with vesting |
 
-# Copy and fill in environment variables
-cp apps/web/.env.example apps/web/.env.local
+---
 
-# Start development (frontend + API worker)
-pnpm dev
-```
+## Standards
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+This repo follows [Rug Munch Media standards](https://git.rugmunch.io/RugMunchMedia/standards).
 
-### Full Stack (Docker)
+---
 
-For the full stack including GoToSocial, PeerTube, and database:
+## License
 
-```bash
-docker compose -f docker-compose.yml up -d
-```
+**GNU Affero General Public License v3.0 (AGPL-3.0)** — see [LICENSE](LICENSE).
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment.
+DegenFeed is open source. You can inspect, fork, and self-host every line of code. Contributions welcome.
 
 ---
 
@@ -337,18 +280,20 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment.
 
 | Document | Description |
 |----------|-------------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Monorepo structure, protocol integration map, data flows |
-| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Complete v1 API reference |
-| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | End-user step-by-step guide |
-| [docs/CREATOR_GUIDE.md](docs/CREATOR_GUIDE.md) | Creator monetization and growth guide |
-| [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | How to add protocols and features |
-| [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) | Per-protocol integration details |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Cloudflare deployment guide |
-| [PRODUCT.md](PRODUCT.md) | Product charter and goals |
-| [ROADMAP.md](ROADMAP.md) | Next 90 days |
-| [CHANGELOG.md](CHANGELOG.md) | Release history |
-| [CLOUDFLARE.md](CLOUDFLARE.md) | Cloudflare-specific configuration |
-| [TESTING.md](TESTING.md) | Testing strategy and guidelines |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Monorepo structure, protocol integration map, data flows, security model |
+| [docs/API_REFERENCE.md](docs/API_REFERENCE.md) | Complete v1 API reference with all endpoints |
+| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | End-user step-by-step guide from account creation to advanced features |
+| [docs/CREATOR_GUIDE.md](docs/CREATOR_GUIDE.md) | Creator monetization: coins, tips, livestreaming, and growth strategies |
+| [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | How to add protocols, contribute features, and extend the platform |
+| [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) | Per-protocol integration details and API references |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Cloudflare Pages + Workers deployment guide |
+| [PRODUCT.md](PRODUCT.md) | Product charter, mission, and goals |
+| [ROADMAP.md](ROADMAP.md) | Next 90 days of feature development |
+| [CHANGELOG.md](CHANGELOG.md) | Release history and version notes |
+| [CLOUDFLARE.md](CLOUDFLARE.md) | Cloudflare-specific configuration and KV setup |
+| [TESTING.md](TESTING.md) | Testing strategy: unit, integration, E2E, visual regression |
+| [SECURITY.md](SECURITY.md) | Security policy and vulnerability reporting |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute code, docs, and bug reports |
 
 ### Docs Site
 
@@ -356,18 +301,10 @@ Full documentation site at **[docs.degenfeed.xyz](https://docs.degenfeed.xyz)** 
 
 ---
 
-## Smart Contracts
+## Contact
 
-| Contract | Chain | Language | Address |
-|----------|-------|----------|---------|
-| `DegenFeedCoin.sol` | Base | Solidity | Factory-deployed per creator |
-| `DegenFeedFactory.sol` | Base | Solidity | Factory |
-| `CrossChainRegistry.sol` | Base | Solidity | On-chain protocol→chain→token mapping |
-| `DegenFeedTips.sol` | Base / Optimism / Arbitrum | Solidity | 0% fee tipping contract |
-| `degenfeed-creator-token` | Solana | Anchor Rust | SPL token program |
-
----
-
-## Standards
-
-This repo follows [Rug Munch Media standards](https://git.rugmunch.io/RugMunchMedia/standards).
+- **General:** admin@rugmunch.io
+- **Legal:** legal@rugmunch.io
+- **DMCA:** dmca@degenfeed.xyz
+- **Codeberg Mirror:** [codeberg.org/degenfeed/degenfeed-web](https://codeberg.org/degenfeed/degenfeed-web)
+- **GitHub Mirror:** [github.com/RugMunchMedia/degenfeed](https://github.com/rugmunchmedia/degenfeed)

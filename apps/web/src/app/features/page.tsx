@@ -3,23 +3,44 @@ import Link from 'next/link';
 import './page.css';
 
 export const metadata: Metadata = {
-  title: 'Features',
+  title: 'Features — Creator Coins, Cross-Protocol Posting, Tipping & Livestreaming',
   description:
-    'Explore everything DegenFeed can do — universal cross-posting, creator coins, live streaming, cross-platform tipping, self-hosted infrastructure, and more.',
+    'Explore everything DegenFeed can do: universal cross-posting to 15+ protocols, one-click creator coin deployment on Base & Solana, cross-chain tipping (ETH/SOL/USDC/Lightning), multi-protocol livestreaming, audio spaces, shorts, federated communities, self-hosted infrastructure, and more.',
+  keywords: [
+    'creator coin platform',
+    'web3 content publishing',
+    'cross-platform posting tool',
+    'decentralized video platform',
+    'cross-chain tipping app',
+    'self-hosted social media',
+    'fediverse community platform',
+    'decentralized livestreaming',
+    'web3 creator monetization',
+    'multi protocol social features',
+  ],
   alternates: { canonical: 'https://app.degenfeed.xyz/features' },
   openGraph: {
-    title: 'DegenFeed Features — Own Your Social Network',
+    title: 'DegenFeed Features — Cross-Protocol Social, Creator Coins & Livestreaming',
     description:
-      'Post once to 15+ protocols. Launch your own creator coin. Stream everywhere. Tip in any currency.',
+      'Post once to 15+ protocols. Launch your own creator coin on Base & Solana. Stream to 7 platforms simultaneously. Tip in ETH, SOL, USDC, or Lightning. Zero platform fees.',
     url: 'https://app.degenfeed.xyz/features',
+    siteName: 'DegenFeed',
+    type: 'website',
     images: [
       {
         url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DegenFeed Features',
+        alt: 'DegenFeed Features — cross-protocol social media platform with creator coins and livestreaming',
       },
     ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed Features — Cross-Protocol Social & Creator Monetization',
+    description:
+      'Cross-post to 15+ protocols. Launch creator coins. Stream everywhere. Tip in any currency. Own your social network.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
   },
 };
 

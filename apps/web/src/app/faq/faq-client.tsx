@@ -65,7 +65,43 @@ const faqs = [
   },
   {
     q: 'Does DegenFeed have a mobile app?',
-    a: 'DegenFeed is a Progressive Web App (PWA). On Android, you\'ll be prompted to "Add to Home Screen" on your first visit — this installs it as a full-screen app with offline support, push notifications, and a dedicated icon. On iOS, use Safari\'s Share → "Add to Home Screen". The PWA supports all features including posting, tipping, and real-time notifications. No app store download needed.',
+    a: 'DegenFeed is a Progressive Web App (PWA). On Android, you\'ll be prompted to "Add to Home Screen" on your first visit — this installs it as a full-screen app with offline support, push notifications, and a dedicated icon. On iOS, use Safari\'s Share → "Add to Home Screen". The PWA supports all features including posting, tipping, and real-time notifications. No app store download needed. Native iOS and Android apps are on the roadmap for Q3 2026.',
+  },
+  {
+    q: 'What are Creator Coins?',
+    a: 'Creator Coins are personalized tokens (ERC-20 on Base or SPL on Solana) that creators deploy to build their own economy. Fans buy, hold, and trade creator coins to support their favorite creators. Each coin uses a sigmoid bonding curve with 5 pricing eras (Steal Deal → Early Bird → Ramp Up → Fair Launch → Moonshot) and built-in anti-exploit protection: per-wallet caps, cooldown periods, bundle detection, and anti-sniping. Creators can configure revenue splits, vesting schedules, and supply caps. Liquidity is locked via smart contract — no admin keys to drain.',
+  },
+  {
+    q: 'How much does it cost to create a coin?',
+    a: 'Creating a creator coin costs only the gas fee for deploying the smart contract — typically $5–$20 on Base or $0.01–$0.05 on Solana. There is no platform fee for coin creation. Premium subscribers ($10/mo) get priority deployment and additional features. The Creator tier ($25/mo) unlocks advanced vesting configurations and analytics.',
+  },
+  {
+    q: 'Can I be deplatformed?',
+    a: 'No. DegenFeed is built on open protocols — Nostr, Farcaster, Bluesky, Lens, and Mastodon. Your identity lives on these protocols, not on DegenFeed. Even if DegenFeed\'s hosted instance went offline, your accounts on each protocol remain independently accessible. You can self-host the entire DegenFeed stack on your own infrastructure, ensuring no single entity can ever silence you. Content moderation on DegenFeed\'s hosted instance follows our Community Guidelines, but your fundamental access to the underlying protocols is never at risk.',
+  },
+  {
+    q: 'How do I own my data?',
+    a: 'Your data ownership is baked into DegenFeed\'s architecture. Social protocol credentials (Nostr nsec, Bluesky app passwords) are encrypted in your browser and never sent to our servers. Your posts are published to open protocols where you control the keys. You can export all your data at any time via /api/account/export in JSON or CSV format. If you self-host, you have full database access. DegenFeed never sells, rents, or monetizes your data — there are no ads, no trackers, and no data brokers.',
+  },
+  {
+    q: 'How do I go live / start livestreaming?',
+    a: 'To start a livestream, navigate to the Live page and click "Go Live". Connect your OBS (or any RTMP-compatible encoder) using the provided stream key and URL. Your stream is broadcast via PeerTube and simultaneously announced on Nostr (kind 30311), Farcaster (frames), Bluesky (AT Protocol), Mastodon (ActivityPub), and Telegram. You can choose between solo streams, collaborative broadcasts with co-hosts, Spaces-style audio rooms, or coin launch events with live minting. Stream types are configured before going live.',
+  },
+  {
+    q: 'What are Feddy Communities?',
+    a: 'Feddy Communities are cross-protocol communities that span Nostr, Farcaster, Lens, Bluesky, Mastodon, and more. A member on Nostr can interact with a member on Farcaster in the same community feed. Communities support token gating (restrict access based on token/NFT ownership across EVM and Solana), on-chain governance (proposal and voting systems with quadratic voting and timelocks), and cross-protocol moderation tools. Create your community at /feddy/create with a name, description, icon, and moderation rules.',
+  },
+  {
+    q: 'When is DegenFeed launching?',
+    a: 'DegenFeed is already live at app.degenfeed.xyz! The feed is fully operational — you can browse content from all 15+ protocols right now without an account. The waitlist is for premium features: cross-protocol posting, creator coins, livestreaming, and analytics. We\'re rolling out these features gradually through Q3–Q4 2026. Join the waitlist to get early access as each feature launches.',
+  },
+  {
+    q: 'How does the algorithm rank posts?',
+    a: 'Every post is scored on a transparent 7-factor model: Recency (24%, 12-hour half-life), Engagement (35%, weighted log-scale), Relevance (18%, keyword/niche/platform matching), Quality (14%, author reputation), Diversity (10%, author variety penalty), Source (8%, protocol weight), and Velocity (12%, engagement rate-of-change). Posts under 15 minutes get a 2x freshness boost, media posts get 1.2x, and low-effort content is penalized. You can override with ?sort=new for chronological order. The algorithm is fully open source.',
+  },
+  {
+    q: 'What chains and wallets are supported?',
+    a: 'DegenFeed supports Ethereum (MetaMask, Rainbow, WalletConnect, Coinbase Wallet), Base (same EVM wallets), Optimism, Arbitrum, Solana (Phantom, Backpack, Solflare), and Lightning Network (via Nostr zaps). For creator coins, deployment is on Base (ERC-20) and Solana (SPL). Tipping works across all supported chains. Cross-chain bridging between EVM and Solana uses Wormhole.',
   },
 ];
 
