@@ -13,8 +13,8 @@
  */
 
 import Image from 'next/image';
+import type { CrossChainTip, ShortSource, ZoraNftInfo } from '../../hooks/useUnifiedShorts';
 import { ShortsSourceBadge } from './ShortsSourceBadge';
-import type { ZoraNftInfo, CrossChainTip, ShortSource } from '../../hooks/useUnifiedShorts';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -114,7 +114,11 @@ export function ShortsOverlay({
         {/* ── Creator row ── */}
         <div className="mb-2 flex items-center gap-2">
           {onProfileClick ? (
-            <button type="button" onClick={onProfileClick} className="flex items-center gap-2 group">
+            <button
+              type="button"
+              onClick={onProfileClick}
+              className="flex items-center gap-2 group"
+            >
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
@@ -128,9 +132,7 @@ export function ShortsOverlay({
                   {displayName.charAt(0).toUpperCase()}
                 </div>
               )}
-              <span className="text-sm font-semibold text-white drop-shadow-lg">
-                {displayName}
-              </span>
+              <span className="text-sm font-semibold text-white drop-shadow-lg">{displayName}</span>
               <span className="hidden text-xs text-white/60 drop-shadow-lg sm:inline">
                 @{handle}
               </span>
@@ -150,9 +152,7 @@ export function ShortsOverlay({
                   {displayName.charAt(0).toUpperCase()}
                 </div>
               )}
-              <span className="text-sm font-semibold text-white drop-shadow-lg">
-                {displayName}
-              </span>
+              <span className="text-sm font-semibold text-white drop-shadow-lg">{displayName}</span>
               <span className="hidden text-xs text-white/60 drop-shadow-lg sm:inline">
                 @{handle}
               </span>
@@ -209,14 +209,18 @@ export function ShortsOverlay({
             aria-hidden="true"
             className="text-white/50"
           >
-            <path d="M9 18V5l12-2v13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M9 18V5l12-2v13"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
             <circle cx="6" cy="18" r="3" stroke="currentColor" strokeWidth="1.5" />
             <circle cx="18" cy="16" r="3" stroke="currentColor" strokeWidth="1.5" />
           </svg>
           <span className="text-xs text-white/60 drop-shadow-lg">
-            {niche
-              ? `${niche} · ${formatTimeAgo(publishedAt)}`
-              : formatTimeAgo(publishedAt)}
+            {niche ? `${niche} · ${formatTimeAgo(publishedAt)}` : formatTimeAgo(publishedAt)}
           </span>
         </div>
 
@@ -236,9 +240,20 @@ export function ShortsOverlay({
                 color: '#0052FF',
               }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <rect x="3" y="3" width="18" height="18" rx="4" opacity=".3" />
-                <path d="M12 6v12M6 12h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M12 6v12M6 12h12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
               <span>Collect on Zora</span>
               <span className="ml-0.5 opacity-70">
@@ -269,7 +284,13 @@ export function ShortsOverlay({
                   color: '#627EEA',
                 }}
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M12 2L2 7l10 5 10-5L12 2zM2 17l10 5 10-5M2 12l10 5 10-5" />
                 </svg>
                 <span>ETH</span>
@@ -291,7 +312,13 @@ export function ShortsOverlay({
                   color: '#9945FF',
                 }}
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <circle cx="12" cy="12" r="10" opacity=".3" />
                   <path d="M12 6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z" />
                 </svg>
@@ -314,9 +341,20 @@ export function ShortsOverlay({
                   color: '#0052FF',
                 }}
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <rect x="3" y="3" width="18" height="18" rx="4" opacity=".3" />
-                  <path d="M12 6v12M6 12h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M12 6v12M6 12h12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
                 <span>Zora</span>
               </button>
@@ -337,7 +375,13 @@ export function ShortsOverlay({
                   color: '#F5A623',
                 }}
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                 </svg>
                 <span>⚡</span>
@@ -348,8 +392,21 @@ export function ShortsOverlay({
 
         {/* ── Swipe up hint ── */}
         <div className="mt-3 flex items-center gap-1.5 opacity-40">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-white/50">
-            <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+            className="text-white/50"
+          >
+            <path
+              d="M12 5v14M5 12l7 7 7-7"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           <span className="text-[9px] text-white/40">Swipe up for details</span>
         </div>

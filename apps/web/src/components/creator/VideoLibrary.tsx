@@ -268,19 +268,26 @@ export default function VideoLibrary({
     <div>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-xs text-[var(--color-muted)]">
-          {total} video{total !== 1 ? 's' : ''}
+          {processedVideos.length} video{processedVideos.length !== 1 ? 's' : ''}
+          {platformFilter ? ` · ${platformFilter}` : ''}
           {type === 'short' ? ' · Shorts' : ''}
         </p>
+        {processedVideos.length < videos.length && (
+          <span className="text-[10px] text-[var(--color-muted)]">
+            (filtered from {videos.length})
+          </span>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {videos.map((video) => (
+        {processedVideos.map((video) => (
           <VideoCard
             key={video.uuid}
             video={video}
             onEdit={onEdit}
             onDelete={onDelete}
             onAnalytics={onAnalytics}
+            onPublish={onPublish}
           />
         ))}
       </div>

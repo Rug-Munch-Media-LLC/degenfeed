@@ -27,13 +27,11 @@ interface ShortsActionsProps {
   liked: boolean;
   likeCount: number;
   commentCount?: number;
-  tipCount?: number;
   bookmarked: boolean;
   showCreatorCoin?: boolean;
   creatorCoinSymbol?: string;
   onLike: () => void;
   onComment: () => void;
-  onTip: () => void;
   onShare: () => void;
   onBookmark: () => void;
   onCreatorCoin?: () => void;
@@ -94,7 +92,9 @@ const ActionButton = memo(function ActionButton({
           {icon}
         </span>
         {count != null && count > 0 && (
-          <span className="text-[10px] font-medium tabular-nums text-white/70">{formatCount(count)}</span>
+          <span className="text-[10px] font-medium tabular-nums text-white/70">
+            {formatCount(count)}
+          </span>
         )}
       </button>
       {tooltip && (
@@ -109,9 +109,7 @@ const ActionButton = memo(function ActionButton({
 // ─── Separator ─────────────────────────────────────────────────────────────
 
 function ActionSeparator() {
-  return (
-    <div className="my-1 h-px w-6 bg-white/10" aria-hidden="true" />
-  );
+  return <div className="my-1 h-px w-6 bg-white/10" aria-hidden="true" />;
 }
 
 // ─── Main component ──────────────────────────────────────────────────────
@@ -120,13 +118,11 @@ export function ShortsActions({
   liked,
   likeCount,
   commentCount,
-  tipCount,
   bookmarked,
   showCreatorCoin,
   creatorCoinSymbol,
   onLike,
   onComment,
-  onTip,
   onShare,
   onBookmark,
   onCreatorCoin,
@@ -143,9 +139,7 @@ export function ShortsActions({
   return (
     <div
       className={`flex flex-col items-center gap-3 transition-all duration-300 ${
-        visible
-          ? 'opacity-100 translate-x-0'
-          : 'opacity-0 translate-x-4 pointer-events-none'
+        visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
       }`}
     >
       {/* ── Core actions ── */}
@@ -158,7 +152,13 @@ export function ShortsActions({
             </svg>
           ) : (
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           )
         }
@@ -174,7 +174,13 @@ export function ShortsActions({
       <ActionButton
         icon={
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         }
         label="Comment"
@@ -187,7 +193,13 @@ export function ShortsActions({
       <ActionButton
         icon={
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         }
         label="Share"
@@ -200,7 +212,11 @@ export function ShortsActions({
         icon={
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
-              d={bookmarked ? 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z' : 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z'}
+              d={
+                bookmarked
+                  ? 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z'
+                  : 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z'
+              }
               stroke="currentColor"
               strokeWidth="1.5"
               strokeLinecap="round"
@@ -222,7 +238,12 @@ export function ShortsActions({
           icon={
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M12 7v10M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M12 7v10M8 12h8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           }
           label={creatorCoinSymbol}
@@ -274,7 +295,12 @@ export function ShortsActions({
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <rect x="3" y="3" width="18" height="18" rx="4" opacity=".3" />
-              <path d="M12 6v12M6 12h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path
+                d="M12 6v12M6 12h12"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
             </svg>
           }
           label="Zora"

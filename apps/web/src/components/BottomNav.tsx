@@ -144,7 +144,8 @@ function ComposeFABIcon() {
 const AUTH_NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: 'home' },
   { href: '/search', label: 'Search', icon: 'search' },
-  { href: '/live', label: 'Live', icon: 'trending' },
+  { href: '/live-shorts', label: 'Live', icon: 'trending' },
+  { href: '/live', label: 'Streams', icon: 'trending' },
   { href: '/trending', label: 'Trending', icon: 'trending' },
   { href: '/notifications', label: 'Notifs', icon: 'notifs', requiresAuth: true },
   { href: '/messages', label: 'Messages', icon: 'messages', requiresAuth: true },
@@ -153,7 +154,8 @@ const AUTH_NAV: NavItem[] = [
 const GUEST_NAV: NavItem[] = [
   { href: '/home/all', label: 'Feed', icon: 'home' },
   { href: '/search', label: 'Search', icon: 'search' },
-  { href: '/live', label: 'Live', icon: 'trending' },
+  { href: '/live-shorts', label: 'Live', icon: 'trending' },
+  { href: '/live', label: 'Streams', icon: 'trending' },
   { href: '/trending', label: 'Trending', icon: 'trending' },
   { href: '/notifications', label: 'Notifs', icon: 'notifs' },
 ];

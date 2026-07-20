@@ -211,9 +211,7 @@ export default function VideoHubPage() {
           loading={loading}
           error={error}
           activeCategory={category}
-          activeSource={source}
           onCategoryChange={handleCategoryChange}
-          onSourceChange={handleSourceChange}
           onPlay={handlePlay}
           onSave={handleSave}
           onLoadMore={handleLoadMore}

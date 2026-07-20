@@ -12,15 +12,13 @@
  * - Trending sidebar
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import type { CategoryTrend, UnifiedVideo, UnifiedVideoFeed } from './useVideoHub';
+import { VideoCategoryPills } from './VideoCategoryPills';
+import { VideoContinueWatching } from './VideoContinueWatching';
 import { VideoHero } from './VideoHero';
 import { VideoRow } from './VideoRow';
-import { VideoCategoryPills } from './VideoCategoryPills';
 import { VideoSearchBar } from './VideoSearchBar';
-import { VideoSourceBadge } from './VideoSourceBadge';
-import { VideoContinueWatching } from './VideoContinueWatching';
-import type { UnifiedVideo, CategoryTrend } from './useVideoHub';
-import type { UnifiedVideoFeed } from './useVideoHub';
 
 // ─── Source filter options ───────────────────────────────────────────────
 
@@ -56,9 +54,7 @@ interface VideoHubLayoutProps {
   loading: boolean;
   error: string | null;
   activeCategory: string;
-  activeSource: string;
   onCategoryChange: (category: string) => void;
-  onSourceChange: (source: string) => void;
   onPlay: (video: UnifiedVideo) => void;
   onSave: (video: UnifiedVideo) => void;
   onLoadMore: () => void;
@@ -72,9 +68,7 @@ export function VideoHubLayout({
   loading,
   error,
   activeCategory,
-  activeSource,
   onCategoryChange,
-  onSourceChange,
   onPlay,
   onSave,
   onLoadMore,
@@ -85,10 +79,7 @@ export function VideoHubLayout({
   const [showSearch, setShowSearch] = useState(false);
 
   // Featured hero video — first video from the feed
-  const heroVideo = useMemo(
-    () => (feed.videos.length > 0 ? feed.videos[0] : null),
-    [feed.videos],
-  );
+  const heroVideo = useMemo(() => (feed.videos.length > 0 ? feed.videos[0] : null), [feed.videos]);
 
   // Distribute videos into themed rows
   const rows = useMemo(() => {
@@ -117,7 +108,7 @@ export function VideoHubLayout({
     for (const v of remaining.slice(12)) {
       const cat = v.category || 'entertainment';
       if (!byCategory.has(cat)) byCategory.set(cat, []);
-      byCategory.get(cat)!.push(v);
+      byCategory.get(cat)?.push(v);
     }
 
     // Sort categories by video count (descending)
@@ -186,7 +177,16 @@ export function VideoHubLayout({
     return (
       <div className={`flex flex-col items-center justify-center py-20 ${className}`}>
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-400" aria-hidden="true">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-red-400"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -212,19 +212,25 @@ export function VideoHubLayout({
       {/* Header: Title + Search toggle */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">
-            Video Hub
-          </p>
-          <h1 className="text-2xl font-bold text-[var(--color-fg)] sm:text-3xl">
-            Discover
-          </h1>
+          <p className="font-mono text-xs tracking-widest text-degen-400 uppercase">Video Hub</p>
+          <h1 className="text-2xl font-bold text-[var(--color-fg)] sm:text-3xl">Discover</h1>
         </div>
         <button
           type="button"
           onClick={() => setShowSearch((prev) => !prev)}
           className="flex items-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2 text-sm text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:border-degen-500/30 transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <circle cx="11" cy="11" r="8" />
             <path d="M21 21l-4.35-4.35" />
           </svg>
@@ -233,15 +239,10 @@ export function VideoHubLayout({
       </div>
 
       {/* Search bar (toggled) */}
-      {showSearch && (
-        <VideoSearchBar onSearch={onSearch} />
-      )}
+      {showSearch && <VideoSearchBar onSearch={onSearch} />}
 
       {/* Category pills */}
-      <VideoCategoryPills
-        activeCategory={activeCategory}
-        onCategoryChange={onCategoryChange}
-      />
+      <VideoCategoryPills activeCategory={activeCategory} onCategoryChange={onCategoryChange} />
 
       {/* Source filter tabs */}
       <div className="flex flex-wrap items-center gap-2">
@@ -311,7 +312,16 @@ export function VideoHubLayout({
       {!loading && feed.videos.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--color-glass-border)] bg-[var(--color-card)]">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--color-muted)]" aria-hidden="true">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="text-[var(--color-muted)]"
+              aria-hidden="true"
+            >
               <rect x="2" y="4" width="20" height="16" rx="3" />
               <path d="M10 9l5 3-5 3V9z" />
             </svg>
