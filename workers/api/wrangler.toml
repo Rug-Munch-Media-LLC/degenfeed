@@ -25,93 +25,93 @@ preview_id = "6c8cec9665dd44fda8c869ce1e675ae8"
 # Deploy requests KV (create with: wrangler kv:namespace create DEPLOYMENTS)
 [[kv_namespaces]]
 binding = "DEPLOYMENTS"
-id = "" # TODO: create with: wrangler kv:namespace create DEPLOYMENTS
-preview_id = "" # TODO: create with: wrangler kv:namespace create DEPLOYMENTS --preview
+id = "f40a96bde8d348108cdfb50d865345da"
+preview_id = "4b22fa4d485f426883f9d34ae2be880a"
 
 [[kv_namespaces]]
 binding = "BOOKMARKS"
-id = "" # TODO: create with: wrangler kv:namespace create BOOKMARKS
-preview_id = "" # TODO: create with: wrangler kv:namespace create BOOKMARKS --preview
+id = "b8852acd621a401b964c73fb2b4c1d40"
+preview_id = "07def07dae5146b69268bf40f7c01c1e"
 
 [[kv_namespaces]]
 binding = "API_KEYS"
-id = "" # TODO: create with: wrangler kv:namespace create API_KEYS
-preview_id = "" # TODO: create with: wrangler kv:namespace create API_KEYS --preview
+id = "b6aa8fe4841c43e0b7147d69edcf1d55"
+preview_id = "2336fc17973a48d88f63cb7def46bece"
 
 [[kv_namespaces]]
 binding = "PERMANENCE"
-id = "" # TODO: create with: wrangler kv:namespace create PERMANENCE
-preview_id = "" # TODO: create with: wrangler kv:namespace create PERMANENCE --preview
+id = "f4731f28e2c74e4c9dcfe92e019cc881"
+preview_id = "b5d77c2eb32c4194863d24e169773e03"
 
 [[kv_namespaces]]
 binding = "GOVERNANCE"
-id = "" # TODO: create with: wrangler kv:namespace create GOVERNANCE
-preview_id = "" # TODO: create with: wrangler kv:namespace create GOVERNANCE --preview
+id = "cadd3e52d980437c8967a9e8bcb55a4a"
+preview_id = "b8820c797edb4fd5bc708bb793ba1665"
 
 [[kv_namespaces]]
 binding = "IDENTITIES"
-id = "" # TODO: create with: wrangler kv:namespace create IDENTITIES
-preview_id = "" # TODO: create with: wrangler kv:namespace create IDENTITIES --preview
+id = "2aff6de1d3614d939c55e2782f6b7bba"
+preview_id = "f9a0ecc48e9946d799fd9e82257189fe"
 
 [[kv_namespaces]]
 binding = "COMMUNITIES"
-id = "" # TODO: create with: wrangler kv:namespace create COMMUNITIES
-preview_id = "" # TODO: create with: wrangler kv:namespace create COMMUNITIES --preview
+id = "f3fb279a22304458a7798b1dc9ce9d72"
+preview_id = "152a3dcf84ad4e709890096ba8454b30"
 
 [[kv_namespaces]]
 binding = "REPORTS"
-id = "" # TODO: create with: wrangler kv:namespace create REPORTS
-preview_id = "" # TODO: create with: wrangler kv:namespace create REPORTS --preview
+id = "50649c8f818b4ea3b1a9d07eb0c00a0e"
+preview_id = "5285811e3a6b4f6a89d8daed42f36fa9"
 
 [[kv_namespaces]]
 binding = "SPACES"
-id = "" # TODO: create with: wrangler kv:namespace create SPACES
-preview_id = "" # TODO: create with: wrangler kv:namespace create SPACES --preview
+id = "f4213a1750ed41e3afdbab2e4b134e7e"
+preview_id = "a2f64d3760a749548e331ac726e673e3"
 
 [[kv_namespaces]]
 binding = "REPUTATION"
-id = "" # TODO: create with: wrangler kv:namespace create REPUTATION
-preview_id = "" # TODO: create with: wrangler kv:namespace create REPUTATION --preview
+id = "858f20ae6c8d41b684f73c2d97221536"
+preview_id = "cabbdc82e1114d8dbbc7c8219ea0dbea"
 
 [[kv_namespaces]]
 binding = "CUSTOM_FEEDS"
-id = "" # TODO: create with: wrangler kv:namespace create CUSTOM_FEEDS
-preview_id = "" # TODO: create with: wrangler kv:namespace create CUSTOM_FEEDS --preview
+id = "0d1e81553bd944bd830dd6538fc4a8e7"
+preview_id = "a4bc6a5635f14f09a5d9b7c4ee51673a"
 
 [[kv_namespaces]]
 binding = "CONTENT_STORE"
-id = "" # TODO: create with: wrangler kv:namespace create CONTENT_STORE
-preview_id = "" # TODO: create with: wrangler kv:namespace create CONTENT_STORE --preview
+id = "d90aec2cd3464e83b358047858ee160f"
+preview_id = "ea70a315f00c4571b3017af300b4cd51"
 
 [[kv_namespaces]]
 binding = "FARCASTER_COINS"
-id = "" # TODO: create with: wrangler kv:namespace create FARCASTER_COINS
-preview_id = "" # TODO: create with: wrangler kv:namespace create FARCASTER_COINS --preview
+id = "5add91e310144a6d83a791a507453ebd"
+preview_id = "98af1bd284164ecd95a5f9f244d20098"
 
 [[kv_namespaces]]
 binding = "LENS_COINS"
-id = "" # TODO: create with: wrangler kv:namespace create LENS_COINS
-preview_id = "" # TODO: create with: wrangler kv:namespace create LENS_COINS --preview
+id = "8ca2b0f0d7c742d0b36a6b48e7ecdb90"
+preview_id = "a53bc2fd73734b8caf40b7bebb2983aa"
 
 [[kv_namespaces]]
 binding = "XCHAIN_REGISTRY"
-id = "" # TODO: create with: wrangler kv:namespace create XCHAIN_REGISTRY
-preview_id = "" # TODO: create with: wrangler kv:namespace create XCHAIN_REGISTRY --preview
+id = "8c624401302c46ec83dde2d45a9f854c"
+preview_id = "a9a4079eb87945a880c254b0f4343ae4"
 
 [[kv_namespaces]]
 binding = "PLATFORM_ACCOUNTS"
-id = "" # TODO: create with: wrangler kv:namespace create PLATFORM_ACCOUNTS
-preview_id = "" # TODO: create with: wrangler kv:namespace create PLATFORM_ACCOUNTS --preview
+id = "d1096039201f4bb188127c5711a001ee"
+preview_id = "d306751c07fa45da8c19992d134acf02"
 
 [[kv_namespaces]]
 binding = "BLUESKY_INVITE_POOL"
-id = "" # TODO: create with: wrangler kv:namespace create BLUESKY_INVITE_POOL
-preview_id = "" # TODO: create with: wrangler kv:namespace create BLUESKY_INVITE_POOL --preview
+id = "d1def534509645e4811be93e22c77812"
+preview_id = "bf7433f549ae4a5b9a9d922c216e4b3d"
 
 [[kv_namespaces]]
 binding = "FEDDY"
-id = "" # TODO: create with: wrangler kv:namespace create FEDDY
-preview_id = "" # TODO: create with: wrangler kv:namespace create FEDDY --preview
+id = "ab47c4c4222f4529b36c62bd801750ef"
+preview_id = "4e693a3fa9da4deba435f217c3d275ca"
 
 # Routes — main app + api on degenfeed.xyz domain
 routes = [

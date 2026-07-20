@@ -41,10 +41,13 @@ export interface ErrorCounts {
 
 const MAX_STORED_ERRORS = 50;
 const ERROR_TTL_SECONDS = 86_400; // 24h
-const SERVER_ID =
-	typeof crypto !== "undefined"
-		? ((crypto as Crypto).randomUUID?.() ?? `srv-${Date.now().toString(36)}`)
-		: `srv-${Date.now().toString(36)}`;
+function getServerId(): string {
+	try {
+		return crypto.randomUUID();
+	} catch {
+		return `srv-${Date.now().toString(36)}`;
+	}
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -119,7 +122,7 @@ export async function logError(
 async function persistToKv(env: Env, record: ErrorRecord): Promise<void> {
 	try {
 		const bucket = hourBucket();
-		const key = `error-log:v2:${SERVER_ID}:${bucket}`;
+		const key = `error-log:v2:${getServerId()}:${bucket}`;
 
 		// Read current bucket
 		const raw = await env.CACHE?.get(key);
@@ -134,7 +137,7 @@ async function persistToKv(env: Env, record: ErrorRecord): Promise<void> {
 		});
 
 		// Update running counts (best-effort TTL refresh)
-		const countsKey = `error-log:counts:${SERVER_ID}`;
+		const countsKey = `error-log:counts:${getServerId()}`;
 		const countsRaw = await env.CACHE?.get(countsKey);
 		const counts: ErrorCounts = countsRaw
 			? (JSON.parse(countsRaw) as ErrorCounts)
@@ -163,7 +166,7 @@ async function persistToKv(env: Env, record: ErrorRecord): Promise<void> {
 export async function getErrorCounts(env: Env): Promise<ErrorCounts | null> {
 	if (!env.CACHE) return null;
 	try {
-		const key = `error-log:counts:${SERVER_ID}`;
+		const key = `error-log:counts:${getServerId()}`;
 		const raw = await env.CACHE.get(key);
 		if (!raw) return null;
 		return JSON.parse(raw) as ErrorCounts;
