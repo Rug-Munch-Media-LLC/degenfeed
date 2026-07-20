@@ -40,10 +40,20 @@ export {
 export type {
   ShortVideoItem,
   ShortVideoSource,
+  ShortsFeedResult,
+  FetchShortsOptions,
   UserInterestProfile,
 } from '@degenfeed/shorts-provider';
 export {
   computeShortScore,
   fetchShortsFeed,
+  fetchPeerTubeShorts,
+  fetchYouTubeShorts,
+  fetchTikTokShorts,
+  fetchInstagramReels,
   rankShorts,
+  deduplicateVideos,
+  SOURCE_COLORS,
+  SHORTS_MAX_DURATION,
+  VERTICAL_ASPECT_RATIO,
 } from '@degenfeed/shorts-provider';
