@@ -21,8 +21,8 @@
 import type { Env } from "../../../index";
 import type { ProtocolStrategy, LiveSessionInfo, ViewerCountResult } from "../live-strategy";
 import { LIVE_SHORT_STRATEGIES } from "../protocol-strategies";
-import { broadcastToAll } from "../../ws-broadcast";
-import { CHANNELS } from "../../ws-channels";
+import { broadcastToAll } from "../../../ws-broadcast";
+import { CHANNELS } from "../../../ws-channels";
 
 const STRATEGY = LIVE_SHORT_STRATEGIES.degenfeed;
 

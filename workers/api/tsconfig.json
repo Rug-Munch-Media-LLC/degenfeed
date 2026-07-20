@@ -34,7 +34,11 @@
       "@degenfeed/peertube-provider": ["packages/peertube-provider/src"],
       "@degenfeed/peertube-provider/*": ["packages/peertube-provider/src/*"],
       "@degenfeed/atproto-shorts-provider": ["packages/atproto-shorts-provider/src"],
-      "@degenfeed/atproto-shorts-provider/*": ["packages/atproto-shorts-provider/src/*"]
+      "@degenfeed/atproto-shorts-provider/*": ["packages/atproto-shorts-provider/src/*"],
+      "@degenfeed/ghost-bridge": ["packages/ghost-bridge/src"],
+      "@degenfeed/lemmy-sdk": ["packages/lemmy-sdk/src"],
+      "@degenfeed/mirror-bridge": ["packages/mirror-bridge/src"],
+      "@degenfeed/paragraph-bridge": ["packages/paragraph-bridge/src"]
     }
   },
   "include": ["src"],

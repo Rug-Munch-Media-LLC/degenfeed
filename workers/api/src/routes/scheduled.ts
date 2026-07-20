@@ -114,6 +114,211 @@ export async function handleSchedulePost(
 
 // ─── GET /api/scheduled — List user's scheduled posts ────────────────
 
+// ─── PUT /api/schedule/:id — Update scheduled post ───────────────────────
+
+export async function handleUpdateScheduledPost(
+	request: Request,
+	env: Env,
+	postId: string,
+): Promise<Response> {
+	if (request.method !== "PUT") {
+		return jsonResponse({ error: "Method not allowed" }, 405);
+	}
+
+	const session = await requireSession(request, env);
+	if (session instanceof Response) return session;
+
+	const wallet = session.address.toLowerCase();
+
+	// Parse body
+	let body: {
+		text?: string;
+		targets?: string[];
+		scheduledAt?: string;
+	};
+	try {
+		body = (await request.json()) as {
+			text?: string;
+			targets?: string[];
+			scheduledAt?: string;
+		};
+	} catch {
+		return jsonResponse({ error: "Invalid JSON" }, 400);
+	}
+
+	// Fetch existing entry
+	try {
+		const raw = await env.CACHE?.get(scheduledKey(postId));
+		if (!raw) {
+			return jsonResponse({ error: "Scheduled post not found" }, 404);
+		}
+		const existing = JSON.parse(raw) as ScheduledEntry;
+
+		// Verify ownership
+		if (existing.wallet.toLowerCase() !== wallet) {
+			return jsonResponse({ error: "Not your scheduled post" }, 403);
+		}
+
+		if (existing.status !== "pending") {
+			return jsonResponse(
+				{ error: "Can only update pending scheduled posts" },
+				400,
+			);
+		}
+
+		// Merge updates
+		const updated: ScheduledEntry = {
+			...existing,
+			text: body.text ?? existing.text,
+			targets: body.targets ?? existing.targets,
+			scheduledAt: body.scheduledAt ?? existing.scheduledAt,
+		};
+
+		await env.CACHE?.put(scheduledKey(postId), JSON.stringify(updated), {
+			expirationTtl: 60 * 60 * 24 * 30,
+		});
+
+		return jsonResponse({ ok: true, id: postId, status: "updated" });
+	} catch {
+		return jsonResponse({ error: "Failed to update scheduled post" }, 500);
+	}
+}
+
+// ─── DELETE /api/schedule/:id — Delete scheduled post ─────────────────────
+
+export async function handleDeleteScheduledPost(
+	request: Request,
+	env: Env,
+	postId: string,
+): Promise<Response> {
+	if (request.method !== "DELETE") {
+		return jsonResponse({ error: "Method not allowed" }, 405);
+	}
+
+	const session = await requireSession(request, env);
+	if (session instanceof Response) return session;
+
+	const wallet = session.address.toLowerCase();
+
+	try {
+		const raw = await env.CACHE?.get(scheduledKey(postId));
+		if (!raw) {
+			return jsonResponse({ error: "Scheduled post not found" }, 404);
+		}
+		const existing = JSON.parse(raw) as ScheduledEntry;
+
+		if (existing.wallet.toLowerCase() !== wallet) {
+			return jsonResponse({ error: "Not your scheduled post" }, 403);
+		}
+
+		await env.CACHE?.delete(scheduledKey(postId));
+		await removeFromUserIndex(env, wallet, postId);
+
+		return jsonResponse({ ok: true, id: postId, status: "deleted" });
+	} catch {
+		return jsonResponse({ error: "Failed to delete scheduled post" }, 500);
+	}
+}
+
+// ─── POST /api/schedule/:id/publish-now — Publish immediately ────────────
+
+export async function handlePublishNow(
+	request: Request,
+	env: Env,
+	postId: string,
+): Promise<Response> {
+	if (request.method !== "POST") {
+		return jsonResponse({ error: "Method not allowed" }, 405);
+	}
+
+	const session = await requireSession(request, env);
+	if (session instanceof Response) return session;
+
+	const wallet = session.address.toLowerCase();
+
+	try {
+		const raw = await env.CACHE?.get(scheduledKey(postId));
+		if (!raw) {
+			return jsonResponse({ error: "Scheduled post not found" }, 404);
+		}
+		const entry = JSON.parse(raw) as ScheduledEntry;
+
+		if (entry.wallet.toLowerCase() !== wallet) {
+			return jsonResponse({ error: "Not your scheduled post" }, 403);
+		}
+
+		if (entry.status !== "pending") {
+			return jsonResponse({ error: "Post already published or failed" }, 400);
+		}
+
+		// Create synthetic request for the publish handler
+		const publishBody = JSON.stringify({
+			text: entry.text,
+			targets: entry.targets,
+		});
+
+		// Import and call the publish handler
+		const { handlePublish } = await import("./publish");
+		const syntheticRequest = new Request(request.url, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Cookie: request.headers.get("Cookie") || "",
+				"X-CSRF-Token": request.headers.get("X-CSRF-Token") || "",
+			},
+			body: publishBody,
+		});
+
+		const result = await handlePublish(syntheticRequest, env);
+		const resultData = (await result.json()) as {
+			ok?: boolean;
+			results?: Record<string, unknown>;
+			error?: string;
+		};
+
+		if (result.ok && resultData.ok) {
+			// Mark as published
+			entry.status = "published";
+			await env.CACHE?.put(scheduledKey(postId), JSON.stringify(entry), {
+				expirationTtl: 60 * 60 * 24 * 30,
+			});
+			await removeFromUserIndex(env, wallet, postId);
+
+			return jsonResponse({
+				ok: true,
+				id: postId,
+				status: "published",
+				results: resultData.results,
+			});
+		}
+
+		// Mark as failed
+		entry.status = "failed";
+		entry.lastError = resultData.error || "Publish returned error";
+		entry.retries = (entry.retries || 0) + 1;
+		await env.CACHE?.put(scheduledKey(postId), JSON.stringify(entry), {
+			expirationTtl: 60 * 60 * 24 * 30,
+		});
+
+		return jsonResponse(
+			{
+				ok: false,
+				id: postId,
+				status: "failed",
+				error: resultData.error || "Publish failed",
+			},
+			502,
+		);
+	} catch (err) {
+		return jsonResponse({
+			ok: false,
+			error: err instanceof Error ? err.message : "Failed to publish now",
+		});
+	}
+}
+
+// ─── POST /api/schedule — List user's scheduled posts ────────────────
+
 export async function handleListScheduledPosts(
 	request: Request,
 	env: Env,

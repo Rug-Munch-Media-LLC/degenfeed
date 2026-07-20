@@ -15,6 +15,7 @@
  */
 
 import type { NostrEvent, UnsignedEvent } from "@degenfeed/nostr-sdk";
+import * as NostrSdk from "@degenfeed/nostr-sdk";
 import type { Space } from "@degenfeed/types";
 import type { Env } from "../index";
 import { broadcastToAll } from "../ws-broadcast";
@@ -89,8 +90,7 @@ export class NostrLiveBridge {
 
 		if (this.config.nsec) {
 			try {
-				const nostr = this.getNostrSdk();
-				this.pubkey = nostr.getPublicKey(this.config.nsec);
+				this.pubkey = NostrSdk.getPublicKey(this.config.nsec);
 			} catch {
 				console.warn("[nostr-live-bridge] Failed to derive pubkey from nsec");
 			}
@@ -112,7 +112,7 @@ export class NostrLiveBridge {
 		return withReliability(
 			"nostr",
 			async () => {
-				const nostr = this.getNostrSdk();
+				const nostr = NostrSdk;
 				const pubkey = this.requirePubkey();
 
 				const tags: string[][] = [
@@ -178,7 +178,7 @@ export class NostrLiveBridge {
 		await withReliability(
 			"nostr",
 			async () => {
-				const nostr = this.getNostrSdk();
+				const nostr = NostrSdk;
 				const pubkey = this.requirePubkey();
 
 				const tags: string[][] = [
@@ -234,7 +234,7 @@ export class NostrLiveBridge {
 		await withReliability(
 			"nostr",
 			async () => {
-				const nostr = this.getNostrSdk();
+				const nostr = NostrSdk;
 				const pubkey = this.requirePubkey();
 
 				const tags: string[][] = [
@@ -281,7 +281,7 @@ export class NostrLiveBridge {
 		return withReliability(
 			"nostr",
 			async () => {
-				const nostr = this.getNostrSdk();
+				const nostr = NostrSdk;
 				const pubkey = this.requirePubkey();
 
 				const tags: string[][] = [
@@ -357,7 +357,7 @@ export class NostrLiveBridge {
 				const relayUrls = this.getRelayUrls();
 				if (relayUrls.length === 0) return [] as NostrStreamReaction[];
 
-				const nostr = this.getNostrSdk();
+				const nostr = NostrSdk;
 				const pool = new nostr.RelayPool(relayUrls, { eoseTimeout: 4000 });
 
 				// Fetch replies (kind 1), reactions (kind 7), and zaps (kind 9735)
@@ -389,7 +389,7 @@ export class NostrLiveBridge {
 		const relayUrls = this.getRelayUrls();
 		if (relayUrls.length === 0) return;
 
-		const nostr = this.getNostrSdk();
+		const nostr = NostrSdk;
 		const pool = new nostr.RelayPool(relayUrls, { eoseTimeout: 5000 });
 
 		// Track seen event IDs to avoid duplicates
@@ -491,7 +491,7 @@ export class NostrLiveBridge {
 		await withReliability(
 			"nostr",
 			async () => {
-				const nostr = this.getNostrSdk();
+				const nostr = NostrSdk;
 				const pubkey = this.requirePubkey();
 
 				const tags: string[][] = [
@@ -672,7 +672,7 @@ export class NostrLiveBridge {
 	 * Publish a signed event to all configured relays + the DegenFeed relay.
 	 */
 	private async publishToRelays(event: NostrEvent): Promise<void> {
-		const nostr = this.getNostrSdk();
+		const nostr = NostrSdk;
 		const allRelays = [
 			...new Set([...this.getRelayUrls(), this.config.degenfeedRelay]),
 		].filter(Boolean);
@@ -684,10 +684,10 @@ export class NostrLiveBridge {
 
 	// ─── SDK Helpers ─────────────────────────────────────────────────
 
-	private getNostrSdk(): typeof import("@degenfeed/nostr-sdk") {
-		// Use require() for sync import in a module context
+	private async getNostrSdk(): Promise<typeof import("@degenfeed/nostr-sdk")> {
+		// Dynamic import in ESM context
 		// In practice, @degenfeed/nostr-sdk is always available at runtime
-		return require("@degenfeed/nostr-sdk");
+		return import("@degenfeed/nostr-sdk");
 	}
 
 	private requirePubkey(): string {
