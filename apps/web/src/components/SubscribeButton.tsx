@@ -33,7 +33,7 @@ const SUB_TIERS: Array<{
   {
     id: 'pro',
     name: 'Fan',
-    price: '$5/mo',
+    price: '$10/mo',
     color: '#1aff6e',
     bg: 'rgba(0,255,65,0.08)',
     benefits: ['Subscriber badge', 'Exclusive posts', 'Ad-free browsing'],
@@ -41,7 +41,7 @@ const SUB_TIERS: Array<{
   {
     id: 'creator',
     name: 'Supporter',
-    price: '$15/mo',
+    price: '$25/mo',
     color: '#8a63d2',
     bg: 'rgba(138,99,210,0.08)',
     benefits: ['Everything in Fan', 'Early access to content', 'Priority replies'],
@@ -241,7 +241,7 @@ export default function SubscribeButton({
             <span>Subscribe</span>
             {/* Hover tooltip */}
             <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[var(--color-card)] px-2 py-1 text-[10px] text-[var(--color-muted)] opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-              Fan $5 · Supporter $15 · Patron $50
+              Fan $10 · Supporter $25 · Patron $50
             </span>
           </>
         )}

@@ -62,7 +62,7 @@ export function PremiumUpsell({ feature }: { feature: string }) {
 
         {/* Pricing */}
         <div className="mb-6">
-          <div className="text-3xl font-bold text-degen-400">$5/month</div>
+          <div className="text-3xl font-bold text-degen-400">$10/month</div>
           <div className="mt-1 text-sm text-[var(--color-muted)]">
             or <span className="font-semibold text-[var(--color-fg)]">$50/year</span> (save 17%)
           </div>

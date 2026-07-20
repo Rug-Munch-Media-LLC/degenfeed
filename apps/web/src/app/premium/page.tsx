@@ -103,7 +103,7 @@ function TierCard({
       {tier.firstMonthPrice && (
         <div className="mt-3 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
           <p className="text-[11px] text-amber-400 leading-relaxed">
-            <strong>$10 first month</strong> covers the Farcaster ($5) registration fee + 30%
+            <strong>$10/month</strong> covers the Farcaster ($5) registration fee + all platform features. No hidden costs.
             platform fee. Standard <strong>{tier.price}</strong> after.
           </p>
         </div>
@@ -176,7 +176,7 @@ const FAQS = [
   },
   {
     q: 'What does the first-month fee cover?',
-    a: 'For Pro ($10 first month), $5 covers the Farcaster on-chain registration (your own Farcaster ID on OP Mainnet). The rest covers platform fees and your first month. After month 1, it drops to $5/mo with no additional registration costs.',
+    a: 'For Pro ($10/mo), the price covers Farcaster on-chain registration (your own Farcaster ID on OP Mainnet), Fediverse hosting, and platform fees. No hidden costs.',
   },
   {
     q: 'Can I cancel anytime?',
@@ -258,7 +258,7 @@ export default function PremiumPage() {
             <p className="mt-1 text-sm text-[var(--color-muted)] leading-relaxed">
               The first month of Pro includes the{' '}
               <strong>Farcaster on-chain registration fee ($5)</strong> plus the 30% platform fee
-              (~$3). After that it drops to <strong>$5/month</strong> with no additional
+              (~$3). After that, <strong>$10/month</strong> with no additional
               registration costs. You get a fully registered Farcaster account with your own
               on-chain identity.
             </p>

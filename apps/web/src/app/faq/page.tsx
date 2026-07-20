@@ -89,7 +89,7 @@ const faqStructuredData = {
       name: 'Is DegenFeed free?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. Browsing the feed is completely free and requires no account. Premium ($5/mo) adds advanced filtering, custom feeds, noise reduction, and priority support. Creator ($15/mo) unlocks analytics, cross-posting analytics, post scheduling, and API access.',
+        text: 'Yes. Browsing the feed is completely free and requires no account. Premium ($10/mo) adds cross-platform posting, Feddy Communities, creator coins, livestreaming, and priority support. Creator ($25/mo) unlocks advanced analytics, custom domains, post scheduling, and API access.',
       },
     },
     {
