@@ -67,7 +67,7 @@ export function PremiumGate({
 
   const tierNames: Record<PremiumTier, string> = {
     free: 'Free',
-    pro: 'Pro',
+    pro: 'Premium',
     creator: 'Creator',
     enterprise: 'Enterprise',
   };

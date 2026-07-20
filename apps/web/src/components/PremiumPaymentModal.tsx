@@ -103,28 +103,15 @@ function StepSelectTier({ onSelect }: { onSelect: (tier: PremiumTier) => void })
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-[var(--color-fg)]">{tier.name}</h3>
               </div>
-              <div className="mt-1 flex items-baseline gap-2">
-                {tier.firstMonthPrice ? (
-                  <>
-                    <span className="text-2xl font-bold text-degen-400">
-                      {tier.firstMonthPrice}
-                    </span>
-                    <span className="text-xs text-[var(--color-muted)]">first month</span>
-                    <span className="text-xs text-[var(--color-muted)]">then</span>
-                    <span className="text-sm font-semibold text-[var(--color-fg)]">
-                      {tier.price}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-2xl font-bold text-degen-400">{tier.price}</span>
-                )}
+              <div className="mt-1">
+                <span className="text-2xl font-bold text-degen-400">{tier.price}</span>
               </div>
-              {/* First-month promo tooltip */}
-              {tier.firstMonthPrice && (
-                <div className="mt-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5">
-                  <p className="text-[11px] text-amber-400 leading-relaxed">
-                    💡 <strong>$10/month</strong> covers the Farcaster ($5) registration fee + all platform features
-                    30% platform fee. After that it&apos;s {tier.price}/month.
+              {/* Cost breakdown tooltip */}
+              {tier.id === 'pro' && (
+                <div className="mt-1.5 rounded-lg bg-degen-500/5 border border-degen-500/10 px-3 py-1.5">
+                  <p className="text-[11px] text-degen-400/80 leading-relaxed">
+                    💡 Covers Farcaster ($5) + Lens ($2) registration fees. 
+                    No hidden costs.
                   </p>
                 </div>
               )}
@@ -254,29 +241,23 @@ function StepConfirm({
           <span className="font-semibold text-[var(--color-fg)]">{methodLabels[method ?? '']}</span>
         </div>
         <div className="border-t border-[var(--color-border)] pt-3">
-          {tier.firstMonthPrice ? (
-            <>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[var(--color-muted)]">First month</span>
-                <span className="text-lg font-bold text-degen-400">{tier.firstMonthPrice}</span>
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-sm text-[var(--color-muted)]">After that</span>
-                <span className="text-sm font-semibold text-[var(--color-fg)]">{tier.price}</span>
-              </div>
-            </>
-          ) : (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--color-muted)]">Amount</span>
-              <span className="text-lg font-bold text-degen-400">{tier.price}</span>
-            </div>
-          )}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[var(--color-muted)]">Amount</span>
+            <span className="text-lg font-bold text-degen-400">{tier.price}</span>
+          </div>
         </div>
+        {tier.id === 'pro' && (
+          <div className="rounded-lg bg-degen-500/5 border border-degen-500/10 px-3 py-2">
+            <p className="text-[11px] text-degen-400/80 leading-relaxed">
+              💡 Your subscription covers the <strong>Farcaster ($5)</strong> and{' '}
+              <strong>Lens ($2)</strong> protocol registration fees.
+            </p>
+          </div>
+        )}
       </div>
 
       <p className="text-center text-xs text-[var(--color-muted)]">
-        Cancel anytime. Your subscription will auto-renew at the standard rate after the first
-        month.
+        Cancel anytime. Your subscription auto-renews monthly at {tier.price}.
       </p>
 
       <button
@@ -345,10 +326,7 @@ function StepSuccess({ tier, onClose }: { tier: TierConfig; onClose: () => void 
           You&apos;re now a {tier.name} subscriber!
         </h2>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          {tier.firstMonthPrice
-            ? `Your first month is ${tier.firstMonthPrice}. After that ${tier.price}.`
-            : `Billing at ${tier.price}.`}{' '}
-          Cancel anytime from Settings.
+          Billing at {tier.price}. Cancel anytime from Settings.
         </p>
       </div>
 
@@ -356,18 +334,24 @@ function StepSuccess({ tier, onClose }: { tier: TierConfig; onClose: () => void 
         <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)] mb-2">
           What&apos;s next
         </h3>
-        <ul className="space-y-2">
-          <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
-            <span className="text-degen-400 mt-0.5">✦</span>
-            {tier.features.slice(1, 4).join(' · ')}
-          </li>
-          {tier.id === 'pro' && (
+          <ul className="space-y-2">
             <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
               <span className="text-degen-400 mt-0.5">✦</span>
-              Your Farcaster registration fee is covered — register at /farcaster
+              {tier.features.slice(1, 4).join(' · ')}
             </li>
-          )}
-        </ul>
+            {tier.id === 'pro' && (
+              <>
+                <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
+                  <span className="text-degen-400 mt-0.5">✦</span>
+                  Your Farcaster ($5) and Lens ($2) registration fees are covered
+                </li>
+                <li className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
+                  <span className="text-degen-400 mt-0.5">✦</span>
+                  Register at /settings to create your accounts
+                </li>
+              </>
+            )}
+          </ul>
       </div>
 
       <button
@@ -456,7 +440,6 @@ export function PremiumPaymentModal({
         body: JSON.stringify({
           tier: selectedTier.id,
           paymentMethod,
-          firstMonth: !!selectedTier.firstMonthPrice,
         }),
       });
 

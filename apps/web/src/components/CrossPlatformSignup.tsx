@@ -356,6 +356,39 @@ export function CrossPlatformSignup({
         </p>
       </div>
 
+      {/* ── Transparent cost breakdown ── */}
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] overflow-hidden">
+        <div className="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-4 py-2.5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-fg)]">
+            Registering Your Identity — Transparent Costs
+          </h3>
+        </div>
+        <div className="divide-y divide-[var(--color-border)]">
+          <CostRow label="GoToSocial (Fediverse)" cost="Free" note="✓ Auto-created" />
+          <CostRow label="AT Protocol (Bluesky)" cost="Free" note="✓ Auto-created" />
+          <CostRow label="Nostr" cost="Free" note="✓ Keypair generated" />
+          <CostRow label="Farcaster Registration" cost="$5 gas" note="Covered by Premium ★" />
+          <CostRow label="Lens Protocol Registration" cost="$2 gas" note="Covered by Premium ★" />
+          <CostRow label="Custom Lens Handle (optional)" cost="$10" note="One-time add-on" />
+          <CostRow label="Custom Farcaster Username (optional)" cost="$5" note="One-time add-on" />
+        </div>
+        <div className="border-t border-[var(--color-border)] bg-degen-500/[0.03] px-4 py-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium text-[var(--color-fg)]">
+              Total one-time costs with Premium
+            </span>
+            <span className="font-bold text-degen-400">$0</span>
+          </div>
+          <p className="mt-0.5 text-[11px] text-[var(--color-muted)]">
+            Premium is <strong>$10/month</strong> — covers Farcaster ($5) + Lens ($2) gas fees.
+            We pass through gas at cost.{' '}
+            <a href="/premium" className="text-degen-400 hover:underline font-medium">
+              See full pricing →
+            </a>
+          </p>
+        </div>
+      </div>
+
       {/* ── Premium status bar ── */}
       {!premiumLoading && !isPremium && (
         <div className="rounded-xl border border-amber-500/10 bg-amber-500/[0.03] px-4 py-3">
@@ -365,11 +398,11 @@ export function CrossPlatformSignup({
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-[var(--color-fg)]">
-                Some platforms require Pro
+                Farcaster & Lens require Premium
               </p>
               <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-                Bluesky, Farcaster, and Lens registration require a Pro subscription ($10/mo).
-                Mastodon and Nostr are free.
+                Farcaster ($5 gas) and Lens ($2 gas) registration fees are covered by your Premium
+                subscription ($10/mo). Mastodon, Bluesky, and Nostr are free.
               </p>
             </div>
             <a
@@ -515,6 +548,31 @@ export function CrossPlatformSignup({
           fetchStatus();
         }}
       />
+    </div>
+  );
+}
+
+// ─── Cost row helper (for transparent pricing table) ───────────────────────
+
+function CostRow({ label, cost, note }: { label: string; cost: string; note: string }) {
+  const isFree = cost === 'Free';
+  return (
+    <div className="flex items-center justify-between px-4 py-2.5">
+      <div className="min-w-0 flex-1">
+        <span className="text-sm text-[var(--color-fg)]">{label}</span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0 ml-3">
+        <span
+          className={`text-sm font-semibold ${
+            isFree || note.includes('Covered')
+              ? 'text-degen-400'
+              : 'text-[var(--color-fg)]'
+          }`}
+        >
+          {cost}
+        </span>
+        <span className="text-[10px] text-[var(--color-muted)] whitespace-nowrap">{note}</span>
+      </div>
     </div>
   );
 }
