@@ -113,6 +113,17 @@ import {
   handleDiscoverTrending,
 } from './routes/discover';
 import {
+  handleGhostNewsletterSend,
+  handleGhostPostBySlug,
+  handleGhostPostCreate,
+  handleGhostPosts,
+  handleGhostCrossPost,
+  handleGhostSubscribe,
+  handleGhostSubscribers,
+  handleGhostTip,
+  handleGhostUnsubscribe,
+} from './routes/ghost';
+import {
   handleEmailRegister,
   handleEmailSignIn,
   handleEmailStatus,
@@ -212,7 +223,21 @@ import {
   handleLeaderboardTrending,
   handleRefreshLeaderboards,
 } from './routes/leaderboard';
+import {
+  handleLemmyBridgeCrossPost,
+  handleLemmyBridgeShare,
+  handleLemmyBridgeStatus,
+} from './routes/lemmy-bridge';
 import { handleLemmyDiscover } from './routes/lemmy-discover';
+import {
+  handleLemmyCommentCreate,
+  handleLemmyCommunity,
+  handleLemmyFeed,
+  handleLemmyInstances,
+  handleLemmyPostById,
+  handleLemmyPostCreate,
+  handleLemmyTrending,
+} from './routes/lemmy';
 import {
   handleLemmyTipCreate,
   handleLemmyTipLeaderboard,
@@ -270,6 +295,16 @@ import {
   handleNewsletterSubscriberRemove,
   handleNewsletterSubscribersList,
 } from './routes/newsletter-send';
+import {
+  handleCreatorNewsletterCount,
+  handleCreatorNewsletterHealth,
+  handleCreatorNewsletterSend,
+  handleCreatorNewsletterStats,
+  handleCreatorNewsletterSubscribe,
+  handleCreatorNewsletterSubscribers,
+  handleCreatorNewsletterUnsubscribe,
+  handleMailgunWebhook,
+} from './routes/newsletter-creator';
 import { handleMarkAllRead, handleNotifications } from './routes/notifications';
 import { handleNotify } from './routes/notify';
 import {
@@ -1059,6 +1094,34 @@ app.all('/api/lemmy/tip', async (c) =>
   withSession(c, () => handleLemmyTipCreate(c.req.raw, c.env)),
 );
 
+// ─── API: Lemmy Feed & Community ─────────────────────────────
+app.get('/api/lemmy/feed', async (c) => handleLemmyFeed(c.req.raw, c.env));
+app.get('/api/lemmy/trending', async (c) => handleLemmyTrending(c.req.raw, c.env));
+app.get('/api/lemmy/instances', async (c) => handleLemmyInstances(c.req.raw, c.env));
+app.get('/api/lemmy/community/:name', async (c) =>
+  handleLemmyCommunity(c.req.raw, c.env, c.req.param('name')),
+);
+app.get('/api/lemmy/post/:id', async (c) =>
+  handleLemmyPostById(c.req.raw, c.env, c.req.param('id')),
+);
+
+// ─── API: Lemmy Write (session-gated) ────────────────────────
+app.post('/api/lemmy/post', async (c) =>
+  withSession(c, () => handleLemmyPostCreate(c.req.raw, c.env)),
+);
+app.post('/api/lemmy/comment', async (c) =>
+  withSession(c, () => handleLemmyCommentCreate(c.req.raw, c.env)),
+);
+
+// ─── API: Lemmy Bridge (cross-post & share) ──────────────────
+app.post('/api/lemmy/bridge/cross-post', async (c) =>
+  withSession(c, () => handleLemmyBridgeCrossPost(c.req.raw, c.env)),
+);
+app.post('/api/lemmy/bridge/share', async (c) =>
+  withSession(c, () => handleLemmyBridgeShare(c.req.raw, c.env)),
+);
+app.get('/api/lemmy/bridge/status', async (c) => handleLemmyBridgeStatus(c.req.raw, c.env));
+
 // ─── API: PeerTube Tips ──────────────────────────────────────
 app.post('/api/peertube/tip', async (c) =>
   withSession(c, () => handlePeerTubeTipCreate(c.req.raw, c.env)),
@@ -1266,6 +1329,11 @@ import { videoAggregator } from './routes/video-aggregator';
 
 app.route('/api/video/aggregator', videoAggregator);
 
+// ─── API: Video Bridges (per-platform content endpoints) ───────────────
+import { videoBridges } from './routes/video-bridges';
+
+app.route('/api/video/bridges', videoBridges);
+
 // ─── API: Video Hub (categorized video discovery across all sources) ───
 app.route('/api/video', videoHub);
 
@@ -1407,6 +1475,43 @@ app.post('/api/newsletter/bridge/auto-poll', async (c) =>
   handleNewsletterBridgeAutoPoll(c.req.raw, c.env),
 );
 app.get('/api/newsletter/bridge/stats', async (c) => handleNewsletterBridgeStats(c.req.raw, c.env));
+
+// ─── API: Ghost CMS Headless ──────────────────────────────
+app.get('/api/ghost/posts', async (c) => handleGhostPosts(c.req.raw, c.env));
+app.get('/api/ghost/posts/:slug', async (c) => handleGhostPostBySlug(c.req.raw, c.env));
+app.post('/api/ghost/posts', async (c) => handleGhostPostCreate(c.req.raw, c.env));
+app.post('/api/ghost/posts/:id/tip', async (c) => handleGhostTip(c.req.raw, c.env));
+app.post('/api/ghost/posts/:id/cross-post', async (c) => handleGhostCrossPost(c.req.raw, c.env));
+app.post('/api/ghost/newsletter/send', async (c) => handleGhostNewsletterSend(c.req.raw, c.env));
+app.post('/api/ghost/subscribe', async (c) => handleGhostSubscribe(c.req.raw, c.env));
+app.post('/api/ghost/unsubscribe', async (c) => handleGhostUnsubscribe(c.req.raw, c.env));
+app.get('/api/ghost/subscribers', async (c) => handleGhostSubscribers(c.req.raw, c.env));
+
+// ─── API: Creator Newsletter (EmailEngine) ────────────────
+app.post('/api/newsletter/creator/send', async (c) =>
+  handleCreatorNewsletterSend(c.req.raw, c.env),
+);
+app.get('/api/newsletter/creator/subscribers', async (c) =>
+  handleCreatorNewsletterSubscribers(c.req.raw, c.env),
+);
+app.post('/api/newsletter/creator/subscribe', async (c) =>
+  handleCreatorNewsletterSubscribe(c.req.raw, c.env),
+);
+app.delete('/api/newsletter/creator/subscribe', async (c) =>
+  handleCreatorNewsletterUnsubscribe(c.req.raw, c.env),
+);
+app.get('/api/newsletter/creator/count', async (c) =>
+  handleCreatorNewsletterCount(c.req.raw, c.env),
+);
+app.get('/api/newsletter/creator/stats/*', async (c) =>
+  handleCreatorNewsletterStats(c.req.raw, c.env),
+);
+app.post('/api/newsletter/creator/webhook/mailgun', async (c) =>
+  handleMailgunWebhook(c.req.raw, c.env),
+);
+app.get('/api/newsletter/creator/health', async (c) =>
+  handleCreatorNewsletterHealth(c.req.raw, c.env),
+);
 
 // ─── API: Discord Integration ─────────────────────────────
 app.post('/api/discord/connect', async (c) => handleDiscordConnect(c.req.raw, c.env));

@@ -40,6 +40,11 @@ export const PLATFORM_BADGES: Record<string, { label: string; color: string }> =
 		instagram: { label: "Instagram", color: "#E1306C" },
 		odysee: { label: "Odysee", color: "#FF6A00" },
 		zora: { label: "Zora", color: "#0052FF" },
+		dtube: { label: "DTube", color: "#FF0000" },
+		bitchute: { label: "BitChute", color: "#8B0000" },
+		dailymotion: { label: "Dailymotion", color: "#0066FF" },
+		vimeo: { label: "Vimeo", color: "#1AB7EA" },
+		lbry: { label: "LBRY", color: "#FF6A00" },
 	};
 
 // ─── Router ────────────────────────────────────────────────────────────────

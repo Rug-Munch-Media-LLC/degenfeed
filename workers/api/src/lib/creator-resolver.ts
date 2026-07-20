@@ -41,6 +41,11 @@ export const VIDEO_PLATFORM_COLORS: Record<string, string> = {
 	instagram: "#E1306C",
 	odysee: "#FF6A00",
 	zora: "#0052FF",
+	dtube: "#FF0000",
+	bitchute: "#8B0000",
+	dailymotion: "#0066FF",
+	vimeo: "#1AB7EA",
+	lbry: "#FF6A00",
 };
 
 export const VIDEO_PLATFORM_LABELS: Record<string, string> = {
@@ -52,6 +57,11 @@ export const VIDEO_PLATFORM_LABELS: Record<string, string> = {
 	instagram: "Instagram",
 	odysee: "Odysee",
 	zora: "Zora",
+	dtube: "DTube",
+	bitchute: "BitChute",
+	dailymotion: "Dailymotion",
+	vimeo: "Vimeo",
+	lbry: "LBRY",
 };
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -64,7 +74,12 @@ export type VideoPlatform =
 	| "tiktok"
 	| "instagram"
 	| "odysee"
-	| "zora";
+	| "zora"
+	| "dtube"
+	| "bitchute"
+	| "dailymotion"
+	| "vimeo"
+	| "lbry";
 
 export interface PlatformPresence {
 	platform: VideoPlatform;
@@ -169,6 +184,10 @@ export class CreatorResolver {
 			searchPromises.push(this.resolveTwitch(identifier));
 			searchPromises.push(this.resolveRumble(identifier));
 			searchPromises.push(this.resolveTikTok(identifier));
+			searchPromises.push(this.resolveDTube(identifier));
+			searchPromises.push(this.resolveBitChute(identifier));
+			searchPromises.push(this.resolveDailymotion(identifier));
+			searchPromises.push(this.resolveVimeo(identifier));
 			if (isWallet) {
 				searchPromises.push(this.resolveZora(identifier));
 			}
@@ -623,6 +642,237 @@ export class CreatorResolver {
 				channelName: username,
 				followerCount: 0,
 				url: `https://www.tiktok.com/@${username}`,
+				verified: false,
+				relevanceScore: 5,
+			});
+		}
+
+		return results;
+	}
+
+	/**
+	 * Resolve a DTube creator by Steem username.
+	 * Checks Steem blockchain for dtube-tagged posts by the user.
+	 */
+	async resolveDTube(search: string): Promise<CreatorSearchResult[]> {
+		const results: CreatorSearchResult[] = [];
+		const username = search
+			.replace(/^@/, "")
+			.replace(/d\.tube\//i, "")
+			.replace(/[^a-zA-Z0-9_-]/g, "")
+			.toLowerCase();
+		if (!username || username.length < 2) return results;
+
+		try {
+			// Query Steem API for account info
+			const body = JSON.stringify({
+				jsonrpc: "2.0",
+				method: "condenser_api.get_accounts",
+				params: [[username]],
+				id: 1,
+			});
+			const res = await fetch("https://api.steemit.com", {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body,
+			});
+			if (res.ok) {
+				const data = (await res.json()) as {
+					result?: Array<{
+						name: string;
+						followers_count?: number;
+						post_count?: number;
+					}>;
+				};
+				const account = data?.result?.[0];
+				if (account) {
+					results.push({
+						platform: "dtube",
+						channelId: account.name,
+						channelName: account.name,
+						followerCount: account.followers_count ?? 0,
+						url: `https://d.tube/#!/c/${account.name}`,
+						verified: (account.post_count ?? 0) > 50,
+						relevanceScore: 10,
+					});
+				}
+			}
+		} catch {
+			// Steem API unavailable
+		}
+
+		// Fallback
+		if (results.length === 0) {
+			results.push({
+				platform: "dtube",
+				channelId: username,
+				channelName: username,
+				followerCount: 0,
+				url: `https://d.tube/#!/c/${username}`,
+				verified: false,
+				relevanceScore: 5,
+			});
+		}
+
+		return results;
+	}
+
+	/**
+	 * Resolve a BitChute channel by name.
+	 * Checks BitChute's public RSS feeds.
+	 */
+	async resolveBitChute(search: string): Promise<CreatorSearchResult[]> {
+		const results: CreatorSearchResult[] = [];
+		const channelName = search
+			.replace(/^@/, "")
+			.replace(/bitchute\.com\/(channel\/)?/i, "")
+			.replace(/[^a-zA-Z0-9_-]/g, "");
+		if (!channelName || channelName.length < 2) return results;
+
+		try {
+			const url = `https://www.bitchute.com/channel/${channelName}`;
+			const res = await fetch(url, {
+				headers: { accept: "text/html", "user-agent": "DegenFeed/1.0" },
+			});
+			if (res.ok) {
+				const html = await res.text();
+				const nameMatch = html.match(/<title>([^<]+?)<\/title>/);
+				const avatarMatch = html.match(
+					/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/,
+				);
+
+				results.push({
+					platform: "bitchute",
+					channelId: channelName,
+					channelName: nameMatch?.[1]?.trim() ?? channelName,
+					avatarUrl: avatarMatch?.[1],
+					followerCount: 0,
+					url: `https://www.bitchute.com/channel/${channelName}`,
+					verified: false,
+					relevanceScore: 8,
+				});
+			}
+		} catch {
+			// BitChute unavailable
+		}
+
+		if (results.length === 0) {
+			results.push({
+				platform: "bitchute",
+				channelId: channelName,
+				channelName,
+				followerCount: 0,
+				url: `https://www.bitchute.com/channel/${channelName}`,
+				verified: false,
+				relevanceScore: 5,
+			});
+		}
+
+		return results;
+	}
+
+	/**
+	 * Resolve a Dailymotion channel by username.
+	 * Uses Dailymotion's public API.
+	 */
+	async resolveDailymotion(search: string): Promise<CreatorSearchResult[]> {
+		const results: CreatorSearchResult[] = [];
+		const username = search
+			.replace(/^@/, "")
+			.replace(/dailymotion\.com\//i, "")
+			.replace(/[^a-zA-Z0-9_-]/g, "")
+			.toLowerCase();
+		if (!username || username.length < 2) return results;
+
+		try {
+			const url = `https://api.dailymotion.com/user/${encodeURIComponent(username)}?fields=id,username,screenname,avatar_url,url,videos_total`;
+			const res = await fetch(url, {
+				headers: { accept: "application/json" },
+			});
+			if (res.ok) {
+				const data = (await res.json()) as {
+					id: string;
+					username: string;
+					screenname: string;
+					avatar_url?: string;
+					url: string;
+					videos_total?: number;
+				};
+				results.push({
+					platform: "dailymotion",
+					channelId: data.id,
+					channelName: data.screenname || data.username,
+					followerCount: 0,
+					avatarUrl: data.avatar_url,
+					url: data.url || `https://www.dailymotion.com/${username}`,
+					verified: (data.videos_total ?? 0) > 50,
+					relevanceScore: 10,
+				});
+			}
+		} catch {
+			// Dailymotion API unavailable
+		}
+
+		if (results.length === 0) {
+			results.push({
+				platform: "dailymotion",
+				channelId: username,
+				channelName: username,
+				followerCount: 0,
+				url: `https://www.dailymotion.com/${username}`,
+				verified: false,
+				relevanceScore: 5,
+			});
+		}
+
+		return results;
+	}
+
+	/**
+	 * Resolve a Vimeo user by username or channel name.
+	 * Uses Vimeo API (requires token) or oEmbed fallback.
+	 */
+	async resolveVimeo(search: string): Promise<CreatorSearchResult[]> {
+		const results: CreatorSearchResult[] = [];
+		const username = search
+			.replace(/^@/, "")
+			.replace(/vimeo\.com\//i, "")
+			.replace(/[^a-zA-Z0-9_-]/g, "")
+			.toLowerCase();
+		if (!username || username.length < 2) return results;
+
+		try {
+			// Try oEmbed as public fallback
+			const oembedUrl = `https://vimeo.com/api/oembed.json?url=https://vimeo.com/${encodeURIComponent(username)}`;
+			const res = await fetch(oembedUrl, {
+				headers: { accept: "application/json" },
+			});
+			if (res.ok) {
+				const data = (await res.json()) as {
+					author_name: string;
+					author_url: string;
+				};
+				results.push({
+					platform: "vimeo",
+					channelId: username,
+					channelName: data.author_name || username,
+					followerCount: 0,
+					url: data.author_url || `https://vimeo.com/${username}`,
+					verified: false,
+					relevanceScore: 8,
+				});
+			}
+		} catch {
+			// Vimeo API unavailable
+		}
+
+		if (results.length === 0) {
+			results.push({
+				platform: "vimeo",
+				channelId: username,
+				channelName: username,
+				followerCount: 0,
+				url: `https://vimeo.com/${username}`,
 				verified: false,
 				relevanceScore: 5,
 			});

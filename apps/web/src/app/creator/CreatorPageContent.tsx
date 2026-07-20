@@ -31,13 +31,14 @@ interface CreatorStats {
   error: string | null;
 }
 
-type TabId = 'overview' | 'content' | 'analytics' | 'monetization' | 'publishing';
+type TabId = 'overview' | 'content' | 'analytics' | 'monetization' | 'publishing' | 'articles';
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: 'overview', label: 'Overview', icon: '◆' },
   { id: 'content', label: 'Content', icon: '📝' },
   { id: 'analytics', label: 'Analytics', icon: '📊' },
   { id: 'monetization', label: 'Monetization', icon: '✦' },
+  { id: 'articles', label: 'Articles', icon: '📄' },
   { id: 'publishing', label: 'Publishing', icon: '📤' },
 ];
 
@@ -617,6 +618,12 @@ export default function CreatorDashboard() {
                   💰 Manage Monetization
                 </Link>
                 <Link
+                  href="/creator/newsletter"
+                  className="rounded-lg bg-degen-500/20 px-4 py-2 text-xs font-medium text-degen-400 hover:bg-degen-500/30 transition-colors"
+                >
+                  ✉ Newsletter
+                </Link>
+                <Link
                   href="/profile"
                   className="rounded-lg bg-[var(--color-muted)] px-4 py-2 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
                 >
@@ -1169,6 +1176,99 @@ export default function CreatorDashboard() {
               <Link href="/profile/analytics" className="btn-secondary text-xs">
                 View in Analytics
               </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────── ARTICLES ─────── */}
+      {activeTab === 'articles' && (
+        <div className="space-y-6">
+          {/* Article Stats */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-4 backdrop-blur-xl">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">Published</p>
+              <p className="mt-1 text-xl font-semibold text-[var(--color-fg)]">--</p>
+            </div>
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-4 backdrop-blur-xl">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">Total Tips</p>
+              <p className="mt-1 text-xl font-semibold text-[var(--color-fg)]">--</p>
+            </div>
+            <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-4 backdrop-blur-xl">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">Subscribers</p>
+              <p className="mt-1 text-xl font-semibold text-[var(--color-fg)]">--</p>
+            </div>
+          </div>
+
+          {/* Write Article CTA */}
+          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-4 backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-[var(--color-fg)]">Ghost CMS Articles</h3>
+                <p className="text-xs text-[var(--color-muted)]">
+                  Write and publish long-form articles via our headless Ghost CMS.
+                  Articles appear on the DegenFeed Articles page and can be sent as newsletters.
+                </p>
+              </div>
+              <a href="/articles" className="btn-primary shrink-0 text-xs">
+                View Articles
+              </a>
+            </div>
+          </div>
+
+          {/* Article List */}
+          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[var(--color-fg)]">Recent Articles</h3>
+              <a
+                href="/articles"
+                className="text-xs text-[var(--color-accent)] hover:underline"
+              >
+                View All
+              </a>
+            </div>
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-overlay)] text-sm text-[var(--color-muted)]">
+                📄
+              </div>
+              <p className="text-xs text-[var(--color-muted)]">
+                Articles from Ghost CMS will appear here. Subscribe to the newsletter to get notified
+                of new articles.
+              </p>
+              <div className="mt-4 flex justify-center gap-3">
+                <a href="/articles" className="btn-secondary text-xs">
+                  Browse Articles
+                </a>
+                <a
+                  href="/api/ghost/subscribe"
+                  className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted)] hover:border-[var(--color-accent)]"
+                >
+                  Subscribe to Newsletter
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Newsletter Settings */}
+          <div className="card border-[var(--color-border)] bg-[var(--color-overlay)] p-5 backdrop-blur-xl">
+            <h3 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Newsletter Settings</h3>
+            <div className="space-y-4 text-xs text-[var(--color-muted)]">
+              <div className="flex items-center justify-between">
+                <span>Free newsletter tier</span>
+                <span className="rounded-full bg-degen-500/10 px-2 py-0.5 text-degen-400">Active</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Premium newsletter tier</span>
+                <span className="rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[var(--color-muted)]">Not configured</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Cross-platform announcements</span>
+                <span className="rounded-full bg-degen-500/10 px-2 py-0.5 text-degen-400">Active</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Email provider</span>
+                <span className="text-[var(--color-fg)]">SendGrid / Mailgun</span>
+              </div>
             </div>
           </div>
         </div>

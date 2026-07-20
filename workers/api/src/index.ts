@@ -66,6 +66,21 @@ export interface Env {
 	MEILI_SEARCH_KEY?: string;
 	/** Optional Postmark server token for transactional email delivery */
 	POSTMARK_SERVER_TOKEN?: string;
+
+	// ─── Email Engine (Newsletter) ──────────────────────────────────────
+	/** Mailgun API key for primary email delivery */
+	MAILGUN_API_KEY?: string;
+	/** Mailgun sending domain */
+	MAILGUN_DOMAIN?: string;
+	/** SendGrid API key for backup email delivery */
+	SENDGRID_API_KEY?: string;
+	/** From address for all newsletter emails */
+	EMAIL_FROM_ADDRESS?: string;
+	/** From name for all newsletter emails */
+	EMAIL_FROM_NAME?: string;
+	/** Base URL for generating absolute links in emails */
+	EMAIL_BASE_URL?: string;
+
 	ALLOW_DEV_OAUTH?: string;
 	/** KV namespace for cross-protocol community records */
 	COMMUNITIES?: KVNamespace;
@@ -179,6 +194,38 @@ export interface Env {
 	LENS_ACCESS_TOKEN?: string;
 	/** Livepeer Studio API key for Livepeer-backed streaming (Zora, generic) */
 	LIVEPEER_API_KEY?: string;
+
+	// ─── Ghost CMS headless ──────────────────────────────────────────────
+	/** Ghost CMS site URL (e.g. https://blog.degenfeed.xyz) */
+	GHOST_URL?: string;
+	/** Ghost Admin API key (id:secret format) */
+	GHOST_ADMIN_KEY?: string;
+	/** Ghost Content API key (optional, falls back to Admin key) */
+	GHOST_CONTENT_KEY?: string;
+	/** KV namespace for Ghost subscriber data */
+	GHOST_SUBSCRIBERS?: KVNamespace;
+	/** KV namespace for Ghost tip records */
+	GHOST_TIPS?: KVNamespace;
+	/** SendGrid or Mailgun API key for email delivery */
+	EMAIL_API_KEY?: string;
+	/** Email provider: 'sendgrid' | 'mailgun' */
+	EMAIL_PROVIDER?: string;
+	/** From address for newsletter emails */
+	EMAIL_FROM?: string;
+
+	// ─── Lemmy Bridge ───────────────────────────────────────────────────────
+	/** JWT for the DegenFeed Lemmy bot account (for cross-posting & commenting) */
+	LEMMY_BOT_JWT?: string;
+	/** GoToSocial/Mastodon bot token for sharing Lemmy posts */
+	GTS_BOT_TOKEN?: string;
+	/** Nostr bot nsec for sharing Lemmy posts as kind 1 notes */
+	NOSTR_BOT_NSEC?: string;
+	/** Bluesky/ATProtocol bot identifier (handle or email) */
+	BSKY_BOT_IDENTIFIER?: string;
+	/** Bluesky/ATProtocol bot password */
+	BSKY_BOT_PASSWORD?: string;
+	/** Farcaster bot mnemonic for publishing casts */
+	FARCASTER_BOT_MNEMONIC?: string;
 }
 
 // ─── Shared constants ────────────────────────────────────────────────
