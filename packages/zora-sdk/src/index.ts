@@ -37,8 +37,33 @@ export {
 export type { ZoraComment } from './zora-api';
 
 // ─── Cross-Network Deployer ─────────────────────────────────────────────────
-export { deployCrossNetwork, deployWormholeWrapper, registerForZoraVisibility } from './cross-network';
-export type { PrimaryChain, CrossNetworkOpts, CrossNetworkResult } from './cross-network';
+export {
+  deployCrossNetwork,
+  deployWormholeWrapper,
+  registerForZoraVisibility,
+  deployDualChainCoin,
+  getDualChainPrice,
+  getDeploymentCostBreakdown,
+} from './cross-network';
+export type {
+  PrimaryChain,
+  CrossNetworkOpts,
+  CrossNetworkResult,
+} from './cross-network';
+
+// ─── Dual-Chain (One Coin, Two Networks) ────────────────────────────────────
+export {
+  TOKEN_GENERATION_FEE_USD,
+  TOKEN_GENERATION_FEE_SOL,
+  TOKEN_GENERATION_FEE_ETH,
+  getTokenGenerationFee,
+  verifyTokenGenerationFee,
+  collectTokenGenerationFee,
+  getFeePaymentStatus,
+  PLATFORM_FEE_WALLET_SOLANA,
+  PLATFORM_FEE_WALLET_EVM,
+} from './token-fees';
+export type { FeePaymentStatus } from './types';
 
 // ─── Platform Fee Collection (all fees in ETH, never ZORA) ─────────────────
 export {
@@ -73,6 +98,13 @@ export { EvmCreatorTokenClient } from './evm';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export type * from './types';
+export type {
+  DualChainCoinConfig,
+  DualChainDeployResult,
+  DualChainPrice,
+  DualChainCoin,
+  CostBreakdown,
+} from './types';
 
 // ─── Zora Video NFT SDK ──────────────────────────────────────────────────────
 export { ZoraVideoSDK, buildVideoMetadata, uploadToIpfs, uploadMetadataToIpfs, metadataToDataUri } from './video';

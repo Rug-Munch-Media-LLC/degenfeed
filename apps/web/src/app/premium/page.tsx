@@ -3,9 +3,6 @@
 import { useCallback, useState } from 'react';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import {
-  AddOnsSection,
-} from '../../components/pricing/AddOnCard';
-import {
   ComparisonTable,
   PricingCard,
   getDefaultTiers,
@@ -38,142 +35,132 @@ function FreeForeverBanner() {
   );
 }
 
-/* ─── Upfront costs explainer ───────────────────────────────── */
+/* ─── Token generation fee explainer ────────────────────────── */
 
-function UpfrontCostExplainer() {
+function TokenGenerationFeeExplainer() {
   return (
     <div className="rounded-2xl border border-amber-500/10 bg-gradient-to-r from-amber-500/[0.03] to-transparent p-5">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
-          <span className="text-base" aria-hidden="true">⛽</span>
+          <span className="text-base" aria-hidden="true">🪙</span>
         </div>
         <div>
           <h3 className="text-sm font-bold text-[var(--color-fg)]">
-            Here&apos;s What It Actually Costs to Register Your Identity
+            Creator Coin Token Generation Fee
           </h3>
           <p className="mt-1 text-xs text-[var(--color-muted)] leading-relaxed">
-            Registering on protocols like Farcaster and Lens requires on-chain transaction fees
-            (gas). We pass these costs through at exactly what they cost us — <strong>we don&apos;t
-            profit on gas</strong>. Premium membership covers the initial Farcaster ($5) and Lens
-            ($2) registration fees. After that, your subscription is just{' '}
-            <strong>$10/month</strong> with no hidden costs.
+            Pro plans get <strong>1 free creator coin</strong>. Each additional coin requires a
+            one-time <strong>$20 fee</strong> that covers smart contract deployment gas on Base + Solana
+            and platform infrastructure. Platinum and Enterprise subscribers get{' '}
+            <strong>unlimited coins at no extra cost</strong>.
           </p>
         </div>
       </div>
 
-      {/* Cost breakdown table */}
       <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--color-border)]">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-overlay)]">
               <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-muted)]">
-                Service
+                Plan
               </th>
               <th className="px-4 py-2 text-center text-xs font-medium uppercase tracking-wider text-[var(--color-muted)]">
-                Cost
+                Free Coins
               </th>
               <th className="px-4 py-2 text-center text-xs font-medium uppercase tracking-wider text-[var(--color-muted)]">
-                Coverage
+                Additional Coins
+              </th>
+              <th className="px-4 py-2 text-center text-xs font-medium uppercase tracking-wider text-[var(--color-muted)]">
+                Limit
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">
-            <CostRow service="GoToSocial (Fediverse)" cost="Free" coverage="✓ Included" highlight />
-            <CostRow service="AT Protocol (Bluesky)" cost="Free" coverage="✓ Included" highlight />
-            <CostRow service="Nostr" cost="Free" coverage="✓ Included" highlight />
-            <CostRow service="RSS Feed" cost="Free" coverage="✓ Included" highlight />
-            <CostRow service="Farcaster Registration" cost="$5 gas" coverage="Covered by Premium" />
-            <CostRow service="Lens Protocol Registration" cost="$2 gas" coverage="Covered by Premium" />
-            <CostRow service="Custom Lens Handle (9+ chars)" cost="Included" coverage="All plans" highlight />
-            <CostRow service="Custom Lens Handle (7-8 chars)" cost="+$5–8 gas" coverage="Complete plan + add-on" />
-            <CostRow service="Custom Lens Handle (5-6 chars)" cost="+$15–25 gas" coverage="À la carte add-on" />
-            <CostRow service="Custom Lens Handle (3-4 chars)" cost="+$50–200 gas" coverage="À la carte add-on" />
-            <CostRow service="Custom Farcaster Username" cost="$5 one-time" coverage="Optional add-on" />
-            <CostRow service="ENS Domain" cost="$10 one-time" coverage="Optional add-on" />
+            <tr>
+              <td className="px-4 py-2.5 text-sm text-[var(--color-fg)]">Basic</td>
+              <td className="px-4 py-2.5 text-center text-sm text-[var(--color-muted)]">—</td>
+              <td className="px-4 py-2.5 text-center text-sm text-[var(--color-muted)]">—</td>
+              <td className="px-4 py-2.5 text-center text-sm text-[var(--color-muted)]">0</td>
+            </tr>
+            <tr className="bg-degen-500/[0.02]">
+              <td className="px-4 py-2.5 text-sm font-medium text-degen-400">Pro</td>
+              <td className="px-4 py-2.5 text-center text-sm text-degen-400">1 included</td>
+              <td className="px-4 py-2.5 text-center text-sm text-[var(--color-fg)]">$20 each</td>
+              <td className="px-4 py-2.5 text-center text-sm text-[var(--color-muted)]">Unlimited</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2.5 text-sm text-[var(--color-fg)]">Platinum</td>
+              <td className="px-4 py-2.5 text-center text-sm text-degen-400" colSpan={2}>
+                Unlimited — no additional fees
+              </td>
+              <td className="px-4 py-2.5 text-center text-sm text-[var(--color-muted)]">∞</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2.5 text-sm text-[var(--color-fg)]">Enterprise</td>
+              <td className="px-4 py-2.5 text-center text-sm text-degen-400" colSpan={2}>
+                Unlimited — no additional fees
+              </td>
+              <td className="px-4 py-2.5 text-center text-sm text-[var(--color-muted)]">∞</td>
+            </tr>
           </tbody>
         </table>
       </div>
-
-      <div className="mt-4 rounded-lg bg-degen-500/[0.04] border border-degen-500/10 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-sm font-medium text-[var(--color-fg)]">Total upfront costs</span>
-            <p className="text-xs text-[var(--color-muted)]">with Premium subscription</p>
-          </div>
-          <div className="text-right">
-            <span className="text-xl font-bold text-degen-400">$0</span>
-            <p className="text-[10px] text-[var(--color-muted)]">
-              Premium is $10/month — Farcaster + Lens covered
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <p className="mt-3 text-[11px] text-[var(--color-muted)] text-center">
-        💡 You can also register these yourself directly on-chain if you prefer to manage your own keys.
-      </p>
     </div>
   );
 }
 
-function CostRow({
-  service,
-  cost,
-  coverage,
-  highlight,
-}: {
-  service: string;
-  cost: string;
-  coverage: string;
-  highlight?: boolean;
-}) {
-  return (
-    <tr className={highlight ? 'bg-degen-500/[0.02]' : ''}>
-      <td className="px-4 py-2.5 text-sm text-[var(--color-fg)]">{service}</td>
-      <td className={`px-4 py-2.5 text-center text-sm font-semibold ${
-        cost === 'Free' ? 'text-degen-400' : 'text-[var(--color-fg)]'
-      }`}>
-        {cost}
-      </td>
-      <td className={`px-4 py-2.5 text-center text-xs ${
-        highlight ? 'text-degen-400' : 'text-[var(--color-muted)]'
-      }`}>
-        {coverage}
-      </td>
-    </tr>
-  );
-}
+/* ─── Enterprise contact section ────────────────────────────── */
 
-/* ─── Handle tier row ───────────────────────────────────────── */
-
-function HandleTierRow({
-  lengthLabel,
-  price,
-  color,
-}: {
-  lengthLabel: string;
-  price: string;
-  color: 'green' | 'yellow' | 'orange' | 'red';
-}) {
-  const colorStyles = {
-    green: 'border-degen-500/20 bg-degen-500/[0.03]',
-    yellow: 'border-yellow-500/20 bg-yellow-500/[0.03]',
-    orange: 'border-orange-500/20 bg-orange-500/[0.03]',
-    red: 'border-red-500/20 bg-red-500/[0.03]',
-  };
-  const dotStyles = {
-    green: 'bg-degen-500',
-    yellow: 'bg-yellow-500',
-    orange: 'bg-orange-500',
-    red: 'bg-red-500',
-  };
+function EnterpriseSection() {
   return (
-    <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${colorStyles[color]}`}>
-      <div className="flex items-center gap-2">
-        <span className={`h-2 w-2 rounded-full ${dotStyles[color]}`} />
-        <span className="text-xs text-[var(--color-fg)]">{lengthLabel}</span>
+    <div className="rounded-2xl border border-[var(--color-border)] bg-gradient-to-r from-degen-500/[0.02] to-transparent p-6 sm:p-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        <div className="flex-1">
+          <div className="inline-flex items-center gap-2 rounded-full bg-degen-500/10 border border-degen-500/20 px-3 py-1 mb-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-degen-400">
+              Enterprise
+            </span>
+          </div>
+          <h3 className="text-xl font-bold text-[var(--color-fg)]">
+            Need something custom?
+          </h3>
+          <p className="mt-2 text-sm text-[var(--color-muted)] leading-relaxed max-w-lg">
+            Self-hosted, white-label, dedicated infrastructure, custom protocol integrations,
+            team management, SSO/SAML, and SLA guarantees. We work with organizations of all sizes.
+          </p>
+          <ul className="mt-4 space-y-2">
+            {[
+              'Self-host option — run DegenFeed on your own infrastructure',
+              'White-label — brand it as your own',
+              'Custom protocol integrations — connect any network',
+              'Dedicated infrastructure with SLA guarantee',
+              'Team management with SSO / SAML',
+              'Custom contract & pricing',
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-2 text-xs text-[var(--color-muted)]">
+                <span className="mt-0.5 text-degen-400 shrink-0">✓</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="shrink-0 w-full sm:w-64">
+          <a
+            href="mailto:biz@degenfeed.xyz"
+            className="flex flex-col items-center justify-center rounded-xl border-2 border-degen-500/30 bg-degen-500/[0.04] px-6 py-6 text-center transition-all hover:bg-degen-500/[0.08] hover:border-degen-500/50 group"
+          >
+            <span className="text-2xl font-bold text-degen-400 group-hover:scale-105 transition-transform">
+              Contact Us
+            </span>
+            <span className="mt-1 text-xs text-[var(--color-muted)]">
+              biz@degenfeed.xyz
+            </span>
+            <span className="mt-3 text-[10px] text-[var(--color-muted)]">
+              Usually responds within 24 hours
+            </span>
+          </a>
+        </div>
       </div>
-      <span className="text-xs font-semibold text-[var(--color-fg)]">{price}</span>
     </div>
   );
 }
@@ -182,20 +169,24 @@ function HandleTierRow({
 
 const FAQS = [
   {
-    q: 'What does Premium actually cover?',
-    a: 'Premium ($10/month) unlocks posting to all 12 supported protocols, creator coin launch, Feddy Community creation, PeerTube livestreaming, scheduled posts, community analytics, NFT gallery, ad-free browsing, and priority support. Your subscription also covers the Farcaster ($5) and Lens ($2) on-chain registration fees.',
+    q: 'Can I use DegenFeed for free?',
+    a: 'Absolutely. The Basic tier costs $0 forever and includes a verified badge, posting to 3 protocols, browsing all content, joining communities, free tipping, and a basic profile. No credit card required.',
   },
   {
-    q: 'Why do some services have one-time fees?',
-    a: 'One-time fees are pass-through costs for on-chain transactions — gas fees for registering a custom Lens handle on Polygon, a Farcaster username on Base, or an ENS domain on Ethereum. We charge exactly what the network charges. You can also register these yourself directly on-chain.',
+    q: 'What does the Pro tier give me?',
+    a: 'Pro ($10/mo) unlocks posting to all 12+ protocols, creator coins (1 free, $20 each additional), live streaming solo and spaces, basic analytics, scheduled posts, Feddy Community creation (up to 3), token-gated content, and a custom profile.',
+  },
+  {
+    q: 'How is Platinum different from Pro?',
+    a: 'Platinum ($25/mo) gives you everything in Pro plus UNLIMITED creator coins, multi-creator collab streams, an advanced analytics dashboard, cross-network posting to X/YouTube/Reddit, Buffer-style scheduling with queue and calendar, Telegram/Discord community integration, UNLIMITED Feddy Communities, custom community domain, priority support, API access, and early access to new protocols.',
+  },
+  {
+    q: 'What is the $20 token generation fee?',
+    a: 'Pro subscribers get 1 free creator coin deployment. Each additional coin costs a one-time $20 fee that covers smart contract deployment on Base and Solana (gas costs) plus platform infrastructure. Platinum and Enterprise get unlimited coins at no additional cost. This fee creates a quality gate and ensures coins are launched by serious creators.',
   },
   {
     q: 'Can I cancel my subscription?',
     a: 'Yes. Cancel anytime from Settings. Your premium features stay active until the end of the current billing period. No questions asked, no lock-in.',
-  },
-  {
-    q: 'Is browsing DegenFeed really free?',
-    a: 'Absolutely. Browsing all protocols, joining communities, cross-protocol tipping, and creating your GoToSocial, Bluesky, Nostr, and RSS accounts cost $0. Free users can also post to 3 protocols of their choice.',
   },
   {
     q: 'What payment methods do you accept?',
@@ -203,15 +194,19 @@ const FAQS = [
   },
   {
     q: 'How does the yearly billing discount work?',
-    a: 'Yearly billing gives you 17% off the monthly rate. Premium is $100/year (vs $120/year monthly) and Creator is $250/year (vs $300/year monthly). You save two months every year.',
+    a: 'Yearly billing gives you 17% off the monthly rate. Pro is $100/year (vs $120/year monthly) and Platinum is $250/year (vs $300/year monthly). You save two months every year.',
   },
   {
-    q: 'What if I only need one specific add-on?',
-    a: 'Add-ons are available a la carte on any tier, including Free. If you want a custom Lens handle or ENS domain without subscribing to Premium, you can purchase just the add-on. However, protocol registration (Farcaster, Lens) requires a Premium subscription.',
+    q: 'What if I only need one specific feature?',
+    a: 'Some features are available à la carte — for example, custom Lens handles and ENS domains can be purchased as one-time add-ons without a subscription. However, protocol registration (Farcaster, Lens), creator coins, and advanced features require a Pro or higher subscription.',
   },
   {
     q: 'Is my data portable?',
-    a: 'Yes. All paid features are open source and available in our self-hosted build. Creator tier includes GDPR-ready data export. Your identity on each protocol is always yours — we just help you manage it.',
+    a: 'Yes. All paid features are open source and available in our self-hosted build. Enterprise tier includes GDPR-ready data export. Your identity on each protocol is always yours — we just help you manage it.',
+  },
+  {
+    q: 'How do I contact Enterprise sales?',
+    a: 'Email us at biz@degenfeed.xyz. We typically respond within 24 hours. Tell us about your use case and we\'ll put together a custom proposal including self-host, white-label, dedicated infrastructure, and SLA options.',
   },
 ];
 
@@ -221,32 +216,33 @@ const TESTIMONIALS = [
   {
     name: 'CryptoNomad',
     handle: '@cryptonomad',
-    tier: 'Creator',
+    tier: 'Pro',
     quote:
       'The cross-protocol scheduling alone is worth it. I post to Farcaster, Lens, and Bluesky at once. Analytics actually help me understand where my audience is.',
   },
   {
     name: 'DeFi_Degen',
     handle: '@defi_degen',
-    tier: 'Premium',
+    tier: 'Platinum',
     quote:
-      'Posting to all 12 protocols from one place changed my workflow. The creator coins let me monetize directly — no middleman, no platform risk.',
+      'Unlimited creator coins changed everything. I launched 3 community coins in one week. The collab streaming feature is incredible for cross-promotion with other creators.',
   },
   {
     name: 'NFTCollector',
     handle: '@nftcollector',
-    tier: 'Creator',
+    tier: 'Platinum',
     quote:
-      'The transparent pricing is what sold me. I know exactly what I\'m paying for — gas fees, DNS, nothing hidden. And my community domain looks professional.',
+      'The transparent pricing is what sold me. I know exactly what I\'m paying for — and unlimited coins with no per-token fee means I can experiment freely.',
   },
 ];
 
 /* ─── Page ───────────────────────────────────────────────────── */
 
 const TIER_ID_MAP: Record<string, PremiumTier> = {
-  Free: 'free',
-  Premium: 'pro',
-  Creator: 'creator',
+  Basic: 'basic',
+  Pro: 'pro',
+  Platinum: 'platinum',
+  Enterprise: 'enterprise',
 };
 
 export default function PremiumPage() {
@@ -259,18 +255,16 @@ export default function PremiumPage() {
 
   const handleSelect = useCallback((tierName: string) => {
     const mapped = TIER_ID_MAP[tierName];
-    if (!mapped || mapped === 'free') return;
+    if (!mapped || mapped === 'basic') return;
     setSubscribeTier(mapped);
     setShowModal(true);
   }, []);
 
   const getCurrentPlanName = (): string => {
-    if (loading) return 'Free';
+    if (loading) return 'Basic';
     const tier = TIERS.find((t) => t.id === currentTier);
-    return tier?.displayName ?? 'Free';
+    return tier?.displayName ?? 'Basic';
   };
-
-  const priceDisplay = annualBilling ? 'yearly' : 'monthly';
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12 animate-page-enter">
@@ -283,14 +277,14 @@ export default function PremiumPage() {
           </span>
         </div>
         <h1 className="text-3xl font-bold text-[var(--color-fg)] sm:text-4xl tracking-tight">
-          Own Your Social Network
+          Choose Your Plan
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-sm text-[var(--color-muted)] leading-relaxed">
           DegenFeed connects you to the decentralized social web — across protocols, blockchains,
           and communities. Every price is transparent. Every fee is pass-through.
-          <strong className="text-[var(--color-fg)]"> You own your identity.</strong>
+          <strong className="text-[var(--color-fg)]"> Upgrade anytime.</strong>
         </p>
-        {!loading && currentTier !== 'free' && (
+        {!loading && currentTier !== 'basic' && (
           <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-degen-500/15 px-4 py-1.5">
             <span className="text-degen-400 text-sm" aria-hidden="true">✓</span>
             <span className="text-sm font-medium text-[var(--color-fg)]">
@@ -334,8 +328,8 @@ export default function PremiumPage() {
         <FreeForeverBanner />
       </div>
 
-      {/* ── Three-Tier Grid ── */}
-      <div className="mb-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* ── Four-Tier Grid ── */}
+      <div className="mb-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {pricingTiers.map((tier) => (
           <PricingCard
             key={tier.name}
@@ -346,7 +340,7 @@ export default function PremiumPage() {
         ))}
       </div>
 
-      {/* ── Pricing callout ── */}
+      {/* ── Pricing summary callout ── */}
       <div className="mb-12 rounded-2xl border border-degen-500/10 bg-gradient-to-r from-degen-500/[0.03] to-transparent p-5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
@@ -354,79 +348,40 @@ export default function PremiumPage() {
               Everything included. Nothing hidden.
             </h3>
             <p className="mt-1 text-xs text-[var(--color-muted)] leading-relaxed">
-              Your Premium subscription covers protocol registration, platform features, and
-              priority support. The only extra costs are optional — custom handles, extra domains,
-              and additional creator coins — and those are <strong>pass-through fees</strong> at
-              exactly what the blockchain charges us.
+              Your subscription covers all platform features and priority support. The only extra
+              costs are optional — additional creator coins ($20/ea on Pro, free on Platinum+) and
+              custom on-chain handles — and those are <strong>pass-through fees</strong> at exactly
+              what the blockchain charges us.
             </p>
           </div>
           <div className="shrink-0 rounded-xl border border-degen-500/20 bg-degen-500/5 px-4 py-3 text-center">
-            <div className="text-2xl font-bold text-degen-400">$10</div>
-            <div className="text-[10px] text-[var(--color-muted)]">/month · everything included</div>
+            <div className="text-lg font-bold text-degen-400">From $10</div>
+            <div className="text-[10px] text-[var(--color-muted)]">/month · cancel anytime</div>
           </div>
         </div>
       </div>
 
-      {/* ── What&apos;s Included — Full Comparison Table ── */}
+      {/* ── Token Generation Fee Explainer ── */}
       <div className="mb-12">
         <div className="mb-4 flex items-center gap-3">
-          <h2 className="text-lg font-bold text-[var(--color-fg)]">What&apos;s Included</h2>
+          <h2 className="text-lg font-bold text-[var(--color-fg)]">Creator Coin Pricing</h2>
+          <div className="flex-1 border-t border-[var(--color-border)]" />
+        </div>
+        <TokenGenerationFeeExplainer />
+      </div>
+
+      {/* ── Full Comparison Table ── */}
+      <div className="mb-12">
+        <div className="mb-4 flex items-center gap-3">
+          <h2 className="text-lg font-bold text-[var(--color-fg)]">Compare All Features</h2>
           <div className="flex-1 border-t border-[var(--color-border)]" />
         </div>
         <ComparisonTable />
       </div>
 
-      {/* ── Upfront Costs Explainer ── */}
+      {/* ── Enterprise Section ── */}
       <div className="mb-12">
-        <div className="mb-4 flex items-center gap-3">
-          <h2 className="text-lg font-bold text-[var(--color-fg)]">Upfront Costs Explained</h2>
-          <div className="flex-1 border-t border-[var(--color-border)]" />
-        </div>
-        <p className="mb-4 text-xs text-[var(--color-muted)]">
-          Here&apos;s exactly what it costs us to register your identity on each protocol. We pass
-          these on at cost — <strong>zero markup on gas fees</strong>.
-        </p>
-        <UpfrontCostExplainer />
-      </div>
-
-      {/* ── Lens Handle Cost Estimator ── */}
-      <div className="mb-12">
-        <div className="mb-4 flex items-center gap-3">
-          <h2 className="text-lg font-bold text-[var(--color-fg)]">Custom Lens Handle Pricing</h2>
-          <div className="flex-1 border-t border-[var(--color-border)]" />
-        </div>
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
-          <p className="mb-4 text-xs text-[var(--color-muted)]">
-            Lens handles are priced by length — shorter handles cost more gas on Polygon.
-            Type your desired handle below to see the cost. We pass through the exact gas cost.
-          </p>
-
-          <div className="mb-5 flex items-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-3">
-            <span className="text-sm font-medium text-[var(--color-muted)]">@</span>
-            <input
-              type="text"
-              placeholder="yourname"
-              className="flex-1 bg-transparent text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none"
-              maxLength={20}
-              id="handle-estimator-input"
-            />
-            <span className="text-sm font-medium text-[var(--color-muted)]">.lens</span>
-          </div>
-
-          <div className="space-y-2">
-            <HandleTierRow lengthLabel="9+ characters" price="Included free" color="green" />
-            <HandleTierRow lengthLabel="7–8 characters" price="+$5–8 gas" color="yellow" />
-            <HandleTierRow lengthLabel="5–6 characters" price="+$15–25 gas" color="orange" />
-            <HandleTierRow lengthLabel="3–4 characters" price="+$50–200 gas" color="red" />
-          </div>
-
-          <p className="mt-4 text-[11px] text-[var(--color-muted)] leading-relaxed">
-            These are Polygon gas costs for Lens profile creation.{' '}
-            <strong>We don&apos;t mark these up</strong> — you pay what the blockchain charges.
-            Standard handles (9+ chars) are always included free in all registration plans.
-            Premium subscribers get all handle lengths covered.
-          </p>
-        </div>
+        <EnterpriseSection />
       </div>
 
       {/* ── Profit Transparency ── */}
@@ -437,17 +392,27 @@ export default function PremiumPage() {
         </div>
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
           <p className="mb-4 text-xs text-[var(--color-muted)] leading-relaxed">
-            We're transparent about our pricing. Here's exactly how we stay profitable while keeping
+            We&apos;re transparent about our pricing. Here&apos;s exactly how we stay profitable while keeping
             things fair for you.
           </p>
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-[10px] text-degen-400 font-bold">$</span>
               <div>
-                <span className="text-sm font-medium text-[var(--color-fg)]">$3 service fee</span>
+                <span className="text-sm font-medium text-[var(--color-fg)]">Subscription revenue</span>
                 <p className="text-xs text-[var(--color-muted)] leading-relaxed">
-                  Our minimum profit per paid registration. Covers account setup, key generation,
-                  and handoff. This is our margin — we never go below it.
+                  Pro ($10/mo) and Platinum ($25/mo) subscriptions cover platform infrastructure,
+                  development, and support. No hidden fees.
+                </p>
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-[10px] text-degen-400 font-bold">🪙</span>
+              <div>
+                <span className="text-sm font-medium text-[var(--color-fg)]">Token generation fees</span>
+                <p className="text-xs text-[var(--color-muted)] leading-relaxed">
+                  $20 per additional creator coin on Pro tier. Covers smart contract deployment gas
+                  and platform costs. Platinum and Enterprise get unlimited coins included.
                 </p>
               </div>
             </li>
@@ -457,17 +422,7 @@ export default function PremiumPage() {
                 <span className="text-sm font-medium text-[var(--color-fg)]">Gas costs — pass-through</span>
                 <p className="text-xs text-[var(--color-muted)] leading-relaxed">
                   Blockchain transaction fees (gas) are passed through at exact network rates.
-                  We don't mark up gas. Standard handles (9+ chars) always included.
-                </p>
-              </div>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-degen-500/20 text-[10px] text-degen-400 font-bold">🔄</span>
-              <div>
-                <span className="text-sm font-medium text-[var(--color-fg)]">Premium subscriptions</span>
-                <p className="text-xs text-[var(--color-muted)] leading-relaxed">
-                  $10/mo covers all gas fees. Profitable over customer lifetime through recurring
-                  subscription revenue.
+                  We don&apos;t mark up gas. Standard handles (9+ chars) always included.
                 </p>
               </div>
             </li>
@@ -486,23 +441,10 @@ export default function PremiumPage() {
           <div className="mt-4 rounded-lg bg-degen-500/[0.04] border border-degen-500/10 px-4 py-3">
             <p className="text-xs text-[var(--color-muted)] text-center">
               We never lose money on a registration. Every paid plan has a built-in gas budget and
-              a guaranteed $3 minimum profit. If gas spikes, you decide whether to proceed.
+              a guaranteed minimum profit. If gas spikes, you decide whether to proceed.
             </p>
           </div>
         </div>
-      </div>
-
-      {/* ── Add-Ons Section ── */}
-      <div className="mb-12">
-        <div className="mb-4 flex items-center gap-3">
-          <h2 className="text-lg font-bold text-[var(--color-fg)]">Optional Add-Ons</h2>
-          <div className="flex-1 border-t border-[var(--color-border)]" />
-        </div>
-        <p className="mb-4 text-xs text-[var(--color-muted)]">
-          One-time purchases for custom handles, extra domains, and additional coins.
-          Available on any tier. <strong>We pass through the exact gas cost.</strong>
-        </p>
-        <AddOnsSection />
       </div>
 
       {/* ── Testimonials ── */}

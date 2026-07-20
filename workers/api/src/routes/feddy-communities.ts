@@ -238,7 +238,7 @@ async function checkPremium(env: Env, address: string): Promise<boolean> {
 		const record = JSON.parse(raw) as PremiumRecord;
 		if (record.status !== "active") return false;
 		if (record.expiresAt && record.expiresAt < Date.now()) return false;
-		return record.tier === "pro" || record.tier === "creator";
+		return record.tier === "pro" || record.tier === "platinum" || record.tier === "enterprise";
 	} catch {
 		return false;
 	}

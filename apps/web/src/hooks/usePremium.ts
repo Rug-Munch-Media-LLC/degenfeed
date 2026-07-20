@@ -5,7 +5,7 @@ import { useAuth } from '../components/AuthProvider';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
-export type PremiumTier = 'free' | 'pro' | 'creator' | 'enterprise';
+export type PremiumTier = 'basic' | 'pro' | 'platinum' | 'enterprise';
 
 export interface PremiumStatus {
   tier: PremiumTier;
@@ -38,72 +38,67 @@ export interface TierConfig {
 
 export const TIERS: TierConfig[] = [
   {
-    id: 'free',
-    name: 'Free',
-    displayName: 'Free',
+    id: 'basic',
+    name: 'Basic',
+    displayName: 'Basic',
     price: '$0',
     priceCents: 0,
-    description: 'Browse everything, join communities, and tip across protocols.',
+    description: 'Browse everything, join communities, tip creators — free forever.',
     features: [
-      'Browse all protocols',
+      'Verified badge',
       'Post to 3 protocols',
-      'Join Feddy Communities',
-      'Comment, like, repost everywhere',
-      'Cross-protocol tipping',
-      'GoToSocial (Fediverse) account',
-      'AT Protocol / Bluesky account',
-      'Nostr keypair',
-      'RSS feed',
-      'Read-only creator coin access',
-      'Tip widget embedding',
+      'Browse all content',
+      'Join communities',
+      'Tip creators (free)',
+      'Basic profile',
     ],
     cta: 'Get Started Free',
     popular: false,
   },
   {
     id: 'pro',
-    name: 'Premium',
-    displayName: 'Premium',
+    name: 'Pro',
+    displayName: 'Pro',
     price: '$10/mo',
     priceCents: 1000,
-    description: 'Full cross-protocol power. Post everywhere, launch coins, livestream.',
+    description: 'Full creator toolkit. Post everywhere, launch coins, livestream.',
     features: [
-      'Everything in Free',
-      'Post to ALL 12 protocols',
-      'Launch Creator Coins (Base + Solana)',
-      'Create Feddy Communities',
-      'Customizable vesting schedules',
-      'Revenue sharing (multiple recipients)',
-      'PeerTube livestreaming',
-      'Community analytics',
+      'Everything in Basic',
+      'Post to ALL 12+ protocols',
+      'Creator coins (1 free, $20/ea)',
+      'Live streaming (solo, spaces)',
+      'Basic analytics',
       'Scheduled posts',
-      'NFT gallery on profile',
-      'Ad-free experience',
-      'Priority support',
+      'Feddy Communities (create 3)',
+      'Token-gated content',
+      'Custom profile',
     ],
-    cta: 'Upgrade to Premium',
+    cta: 'Upgrade to Pro',
     popular: true,
     badge: 'MOST POPULAR',
   },
   {
-    id: 'creator',
-    name: 'Creator',
-    displayName: 'Creator',
+    id: 'platinum',
+    name: 'Platinum',
+    displayName: 'Platinum',
     price: '$25/mo',
     priceCents: 2500,
-    description: 'Build your brand. Custom domains, analytics, API access, and team tools.',
+    description: 'Power user. Unlimited coins, advanced analytics, cross-network scheduling.',
     features: [
-      'Everything in Premium',
-      'Custom community domain (degenfeed.xyz)',
+      'Everything in Pro',
+      'UNLIMITED creator coins',
+      'Multi-creator collab streams',
       'Advanced analytics dashboard',
-      'API access (bots & apps)',
-      'Up to 10 communities',
-      'Custom branding on community page',
-      'Team management (add moderators)',
-      'Data export (GDPR-ready)',
-      'Early access to new protocols',
+      'Cross-network posting (X, YouTube, Reddit)',
+      'Buffer-style scheduling (queue, calendar)',
+      'Telegram/Discord community integration',
+      'UNLIMITED Feddy Communities',
+      'Custom community domain',
+      'Priority support',
+      'API access',
+      'Early protocol access',
     ],
-    cta: 'Go Creator',
+    cta: 'Go Platinum',
     popular: false,
   },
   {
@@ -112,15 +107,17 @@ export const TIERS: TierConfig[] = [
     displayName: 'Enterprise',
     price: 'Custom',
     priceCents: 0,
-    description: 'White-label, API access, and custom infrastructure for organizations.',
+    description: 'Self-host, white-label, dedicated infrastructure for organizations.',
     features: [
-      'Everything in Creator',
-      'White-label embeddable feed',
-      'API access with SLA and rate limits',
-      'Custom domains and branding',
-      'Dedicated support channel',
-      'Team seats (up to 10)',
-      'Self-hosted deployment support',
+      'Everything in Platinum',
+      'Self-host option',
+      'White-label',
+      'Custom protocol integrations',
+      'Dedicated infrastructure',
+      'SLA guarantee',
+      'Team management',
+      'SSO / SAML',
+      'Custom contract & pricing',
     ],
     cta: 'Contact us',
     popular: false,
@@ -132,7 +129,7 @@ export const TIERS: TierConfig[] = [
 export function usePremium(): PremiumStatus & { refresh: () => Promise<void> } {
   const { walletAddress } = useAuth();
   const [status, setStatus] = useState<PremiumStatus>({
-    tier: 'free',
+    tier: 'basic',
     isPremium: false,
     expiresAt: null,
     firstMonthPromo: false,
@@ -144,7 +141,7 @@ export function usePremium(): PremiumStatus & { refresh: () => Promise<void> } {
 
   const fetchStatus = useCallback(async () => {
     if (!walletAddress) {
-      setStatus((prev) => ({ ...prev, loading: false, tier: 'free', isPremium: false }));
+      setStatus((prev) => ({ ...prev, loading: false, tier: 'basic', isPremium: false }));
       return;
     }
 
@@ -159,7 +156,7 @@ export function usePremium(): PremiumStatus & { refresh: () => Promise<void> } {
           setStatus((prev) => ({
             ...prev,
             loading: false,
-            tier: 'free' as PremiumTier,
+            tier: 'basic' as PremiumTier,
             isPremium: false,
             error: null,
           }));
@@ -176,10 +173,10 @@ export function usePremium(): PremiumStatus & { refresh: () => Promise<void> } {
         daysRemaining?: number;
       };
 
-      const tier = (data.tier as PremiumTier) || 'free';
+      const tier = (data.tier as PremiumTier) || 'basic';
       setStatus({
         tier,
-        isPremium: tier !== 'free',
+        isPremium: tier !== 'basic',
         expiresAt: data.expiresAt ?? null,
         firstMonthPromo: data.firstMonthPromo ?? false,
         nextBillingAmount: data.nextBillingAmount ?? null,

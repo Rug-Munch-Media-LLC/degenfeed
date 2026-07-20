@@ -2,7 +2,7 @@ import { type Env, jsonResponse, noCacheJsonResponse } from "../index";
 import { isValidSolanaAddress, sanitizeString } from "../sanitize";
 import { requireSession } from "../session";
 
-export type SubscriptionTier = "pro" | "creator";
+export type SubscriptionTier = "pro" | "platinum";
 
 interface SubscriptionRecord {
 	tier: SubscriptionTier;
@@ -26,13 +26,13 @@ export interface PlatformPremiumRecord {
 }
 
 const TIER_PRICES: Record<SubscriptionTier, number> = {
-	pro: 5,
-	creator: 15,
+	pro: 10,
+	platinum: 25,
 };
 
 const TIER_PRICES_CENTS: Record<SubscriptionTier, number> = {
-	pro: 500,
-	creator: 1500,
+	pro: 1000,
+	platinum: 2500,
 };
 
 const PREMIUM_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -63,7 +63,7 @@ export async function handleBillingCheckout(
 		currency: "SOL",
 		blinkUrl,
 		action: {
-			title: `DegenFeed ${tier === "pro" ? "Pro" : "Creator"}`,
+			title: `DegenFeed ${tier === "pro" ? "Pro" : "Platinum"}`,
 			icon: `${origin}/favicon.ico`,
 			description: `Subscribe to DegenFeed ${tier} for ${amount} SOL/month`,
 			label: `Pay ${amount} SOL`,
@@ -209,11 +209,11 @@ export async function handleBillingStatus(
 }
 
 export function isPremiumTier(tier?: string): boolean {
-	return tier === "pro" || tier === "creator";
+	return tier === "pro" || tier === "platinum" || tier === "enterprise";
 }
 
-export function isCreatorTier(tier?: string): boolean {
-	return tier === "creator";
+export function isPlatinumTier(tier?: string): boolean {
+	return tier === "platinum" || tier === "enterprise";
 }
 
 // ─── KV key helpers ────────────────────────────────────────────────────

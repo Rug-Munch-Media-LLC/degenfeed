@@ -11,6 +11,7 @@
     "./evm": "./src/evm.ts",
     "./cross-chain": "./src/cross-chain/registry.ts",
     "./cross-network": "./src/cross-network.ts",
+    "./token-fees": "./src/token-fees.ts",
     "./platform-fees": "./src/platform-fees.ts",
     "./video": "./src/video.ts",
     "./zora-api": "./src/zora-api.ts"
