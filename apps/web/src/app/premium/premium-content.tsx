@@ -8,7 +8,7 @@ import {
   getDefaultTiers,
   type PricingTier,
 } from '../../components/pricing/PricingTable';
-import { type PremiumTier, TIERS, usePremium } from '../../hooks/usePremium';
+import { type PremiumTier, usePremium } from '../../hooks/usePremium';
 
 /* === Free forever callback ===================================== */
 
@@ -53,19 +53,21 @@ export function PremiumContent() {
       </div>
 
       {/* Pricing Cards */}
-      <div className="mb-16">
-        <PricingCard
-          tiers={getDefaultTiers() as PricingTier[]}
-          currentTier={tier ?? undefined}
-          statusLoading={statusLoading}
-          onSubscribe={handleSubscribe}
-        />
+      <div className="mb-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {getDefaultTiers().map((t) => (
+          <PricingCard
+            key={t.name}
+            tier={t}
+            isCurrent={tier === t.name.toLowerCase()}
+            onSelect={(name) => handleSubscribe(name as PremiumTier)}
+          />
+        ))}
       </div>
 
       {/* Comparison Table */}
       <div className="mb-16">
         <h2 className="mb-6 text-2xl font-bold text-[var(--color-fg)]">Detailed Comparison</h2>
-        <ComparisonTable currentTier={tier ?? undefined} />
+        <ComparisonTable />
       </div>
 
       {/* FAQ */}

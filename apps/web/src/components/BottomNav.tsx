@@ -3,13 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { useNotifications } from '../hooks/useNotifications';
 import { useAuth } from './AuthProvider';
 
 interface NavItem {
   href: string;
   label: string;
-  icon: 'home' | 'search' | 'trending' | 'notifs' | 'messages';
+  icon: 'home' | 'trending' | 'discover' | 'spaces' | 'profile';
   requiresAuth?: boolean;
 }
 
@@ -38,23 +37,6 @@ function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
           <path d="M21 20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.49a1 1 0 01.386-.79l8-6.222a1 1 0 011.228 0l8 6.222a1 1 0 01.386.79V20z" />
         </svg>
       );
-    case 'search':
-      return (
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={sw}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-      );
     case 'trending':
       return (
         <svg
@@ -72,16 +54,46 @@ function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
           <polyline points="17 6 23 6 23 12" />
         </svg>
       );
-    case 'notifs':
+    case 'discover':
+      return (
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={sw}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+        </svg>
+      );
+    case 'spaces':
+      return (
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={sw}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+          <path d="M19 10v2a7 7 0 01-14 0v-2" />
+          <line x1="12" y1="19" x2="12" y2="23" />
+          <line x1="8" y1="23" x2="16" y2="23" />
+        </svg>
+      );
+    case 'profile':
       return active ? (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M11.996 2c-4.062 0-7 2.692-7 6v3.089c0 1.036-.633 1.965-1.516 2.355C2.685 13.997 2 14.996 2 16.05v.698c0 .832.538 1.252 1.184 1.252h17.632c.646 0 1.184-.42 1.184-1.252v-.699c0-1.052-.685-2.052-1.48-2.506-.883-.39-1.516-1.319-1.516-2.355V8c0-3.308-2.938-6-7.004-6z" />
-          <path
-            d="M15 19a3 3 0 11-6 0"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
+          <path d="M12 12c3.314 0 6-2.686 6-6s-2.686-6-6-6-6 2.686-6 6 2.686 6 6 6zm0 2c-4.418 0-8 2.686-8 6v2h16v-2c0-3.314-3.582-6-8-6z" />
         </svg>
       ) : (
         <svg
@@ -95,24 +107,8 @@ function NavIcon({ type, active }: { type: NavItem['icon']; active: boolean }) {
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 01-3.46 0" />
-        </svg>
-      );
-    case 'messages':
-      return (
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={sw}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+          <circle cx="12" cy="8" r="4" />
+          <path d="M20 21a8 8 0 00-16 0" />
         </svg>
       );
   }
@@ -142,22 +138,19 @@ function ComposeFABIcon() {
 /* === Nav config ============================================= */
 
 const AUTH_NAV: NavItem[] = [
-  { href: '/home/all', label: 'Feed', icon: 'home' },
-  { href: '/search', label: 'Search', icon: 'search' },
-  { href: '/live-shorts', label: 'Live', icon: 'trending' },
-  { href: '/live', label: 'Streams', icon: 'trending' },
+  { href: '/feed', label: 'Home', icon: 'home' },
   { href: '/trending', label: 'Trending', icon: 'trending' },
-  { href: '/notifications', label: 'Notifs', icon: 'notifs', requiresAuth: true },
-  { href: '/messages', label: 'Messages', icon: 'messages', requiresAuth: true },
+  { href: '/discover', label: 'Discover', icon: 'discover' },
+  { href: '/spaces', label: 'Spaces', icon: 'spaces' },
+  { href: '/profile', label: 'Profile', icon: 'profile', requiresAuth: true },
 ];
 
 const GUEST_NAV: NavItem[] = [
-  { href: '/home/all', label: 'Feed', icon: 'home' },
-  { href: '/search', label: 'Search', icon: 'search' },
-  { href: '/live-shorts', label: 'Live', icon: 'trending' },
-  { href: '/live', label: 'Streams', icon: 'trending' },
+  { href: '/feed', label: 'Home', icon: 'home' },
   { href: '/trending', label: 'Trending', icon: 'trending' },
-  { href: '/notifications', label: 'Notifs', icon: 'notifs' },
+  { href: '/discover', label: 'Discover', icon: 'discover' },
+  { href: '/spaces', label: 'Spaces', icon: 'spaces' },
+  { href: '/profile', label: 'Profile', icon: 'profile' },
 ];
 
 /* === Local storage key for first visit hint ================= */
@@ -169,32 +162,8 @@ export function BottomNav() {
   const { ready, signedInProtocols, openCompose, openSignIn } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const signedIn = ready && hasSignedIn;
-  const { unreadCount: notifCount } = useNotifications(hasSignedIn);
-  const [dmCount, setDmCount] = useState(0);
   const [showFabHint, setShowFabHint] = useState(false);
-  const dmIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fabHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Poll DM unread count
-  useEffect(() => {
-    if (!hasSignedIn) return;
-    const pollDm = async () => {
-      try {
-        const res = await fetch('/api/messages/conversations', { credentials: 'include' });
-        if (!res.ok) return;
-        const data = (await res.json()) as { conversations?: Array<{ unreadCount?: number }> };
-        const total = (data.conversations ?? []).reduce((s, c) => s + (c.unreadCount ?? 0), 0);
-        setDmCount(total);
-      } catch {
-        /* ignore */
-      }
-    };
-    pollDm();
-    dmIntervalRef.current = setInterval(pollDm, 60000);
-    return () => {
-      if (dmIntervalRef.current) clearInterval(dmIntervalRef.current);
-    };
-  }, [hasSignedIn]);
 
   // Show pulsing hint on first visit (dismisses after 5s or on interaction)
   useEffect(() => {
@@ -264,7 +233,7 @@ export function BottomNav() {
       >
         <div className="flex items-center justify-around px-2">
           {items.map((item) => {
-            const isHome = item.href === '/home/all';
+            const isHome = item.href === '/feed';
             const active =
               pathname === item.href ||
               pathname.startsWith(`${item.href}/`) ||
@@ -306,24 +275,7 @@ export function BottomNav() {
                     <NavIcon type={item.icon} active={active} />
                   )}
                 </span>
-                {signedIn && dmCount > 0 && item.href === '/messages' && (
-                  <span
-                    role="status"
-                    className="absolute -top-0.5 right-1/2 translate-x-[14px] bg-degen-500 text-black text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm"
-                    aria-label={`${dmCount} unread messages`}
-                  >
-                    {dmCount > 9 ? '9+' : dmCount}
-                  </span>
-                )}
-                {signedIn && notifCount > 0 && item.href === '/notifications' && (
-                  <span
-                    role="status"
-                    className="absolute -top-0.5 right-1/2 translate-x-[14px] bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[1rem] h-4 flex items-center justify-center px-[3px] leading-none shadow-sm"
-                    aria-label={`${notifCount} unread notifications`}
-                  >
-                    {notifCount > 9 ? '9+' : notifCount}
-                  </span>
-                )}
+
                 <span className="leading-tight truncate max-w-[3rem] text-[9px]">{item.label}</span>
               </Link>
             );
