@@ -78,6 +78,86 @@ interface RegistrationStatus {
   premiumTier: string | null;
 }
 
+// ─── Lens Handle Pricing Tiers ────────────────────────────────────────────
+
+function getHandleTier(length: number): {
+  label: string;
+  price: string;
+  color: 'green' | 'yellow' | 'orange' | 'red' | 'muted';
+} {
+  if (length === 0) return { label: 'Type a handle to see price', price: '—', color: 'muted' };
+  if (length >= 9) return { label: 'Standard (included)', price: '$0', color: 'green' };
+  if (length >= 7) return { label: 'Short handle', price: '+$5–8', color: 'yellow' };
+  if (length >= 5) return { label: 'Premium short', price: '+$15–25', color: 'orange' };
+  return { label: 'Rare handle', price: '+$50–200', color: 'red' };
+}
+
+function getLensHandleGasCost(handle: string): number {
+  if (!handle) return 2;
+  const len = handle.length;
+  if (len >= 9) return 2;
+  if (len >= 7) return 7;
+  if (len >= 5) return 17;
+  if (len >= 3) return 55;
+  return 2;
+}
+
+function HandlePriceIndicator({ length, premium }: { length: number; premium: boolean }) {
+  const tier = getHandleTier(length);
+  const colorMap = {
+    green: 'border-degen-500 bg-degen-500/[0.06] text-degen-400',
+    yellow: 'border-yellow-500/30 bg-yellow-500/[0.06] text-yellow-400',
+    orange: 'border-orange-500/30 bg-orange-500/[0.06] text-orange-400',
+    red: 'border-red-500/30 bg-red-500/[0.06] text-red-400',
+    muted: 'border-[var(--color-glass-border)] bg-[var(--color-overlay)] text-[var(--color-muted)]',
+  };
+
+  return (
+    <div className="mt-2 space-y-2">
+      {/* Length bar */}
+      <div className="flex items-center gap-1">
+        {[9, 7, 5, 3].map((threshold) => (
+          <div
+            key={threshold}
+            className={`flex-1 h-1.5 rounded-full transition-all ${
+              length >= threshold
+                ? 'bg-degen-500'
+                : length > 0 && length >= threshold - 2
+                  ? 'bg-degen-500/30'
+                  : 'bg-[var(--color-glass-border)]'
+            }`}
+          />
+        ))}
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${colorMap[tier.color]}`}
+          >
+            {length > 0 && <span className="mr-1">{tier.color === 'green' ? '✓' : tier.color === 'yellow' ? '●' : tier.color === 'orange' ? '●' : tier.color === 'red' ? '◆' : '·'}</span>}
+            {tier.label}
+          </span>
+        </div>
+        <span
+          className={`text-sm font-bold ${
+            tier.color === 'green' || tier.color === 'muted'
+              ? 'text-[var(--color-muted)]'
+              : colorMap[tier.color].split(' ').pop()
+          }`}
+        >
+          {premium && length > 0 ? '✓ Covered' : tier.price}
+        </span>
+      </div>
+      {tier.color !== 'green' && tier.color !== 'muted' && (
+        <p className="text-[10px] text-[var(--color-muted)] leading-relaxed">
+          These are Polygon gas costs for Lens profile creation — we pass through at cost.
+          Standard handles (9+ chars) are always included free.
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ─── Plan data ────────────────────────────────────────────────────────────
 
 const PLANS: PlanInfo[] = [
@@ -293,6 +373,7 @@ function Step2_ChooseUsernames({
   farcasterUsername,
   lensHandle,
   ensName,
+  isPremium,
   onFarcasterChange,
   onLensChange,
   onEnsChange,
@@ -301,6 +382,7 @@ function Step2_ChooseUsernames({
   farcasterUsername: string;
   lensHandle: string;
   ensName: string;
+  isPremium: boolean;
   onFarcasterChange: (v: string) => void;
   onLensChange: (v: string) => void;
   onEnsChange: (v: string) => void;
@@ -372,11 +454,11 @@ function Step2_ChooseUsernames({
               htmlFor="lens-handle"
               className="mb-1.5 block text-sm font-medium text-[var(--color-fg)]"
             >
-              Lens Handle
+              Lens Handle @<span className="font-mono">yourname</span>.lens
             </label>
             <p className="mb-2 text-xs text-[var(--color-muted)]">
-              Leave blank for auto-generated. Standard plan = basic handle. Complete plan = custom
-              handle.
+              Leave blank for auto-generated. Pricing is based on handle length — shorter = more
+              gas. {isPremium ? 'Premium covers all handle lengths.' : 'Standard (9+ chars) always included.'}
             </p>
             <input
               id="lens-handle"
@@ -388,6 +470,7 @@ function Step2_ChooseUsernames({
               pattern="[a-zA-Z0-9_\-.]{2,31}"
               className="w-full rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-3 py-2 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] focus:border-degen-500 focus:outline-none"
             />
+            <HandlePriceIndicator length={lensHandle.length} premium={isPremium} />
           </div>
         )}
 
@@ -456,6 +539,7 @@ function Step3_ReviewCosts({
   farcasterUsername,
   lensHandle,
   ensName,
+  handleGasCost,
   onBack,
   onConfirm,
 }: {
@@ -465,6 +549,7 @@ function Step3_ReviewCosts({
   farcasterUsername: string;
   lensHandle: string;
   ensName: string;
+  handleGasCost: number;
   onBack: () => void;
   onConfirm: () => void;
 }) {
@@ -496,7 +581,7 @@ function Step3_ReviewCosts({
               />
               <CostRow
                 label={`Lens: @${lensHandle || 'auto'}.lens`}
-                cost="$2 gas"
+                cost={`$${handleGasCost} gas`}
                 covered={isPremium}
               />
             </>
@@ -978,6 +1063,9 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
   }, []);
 
   // ── Computed charges ────────────────────────────────
+  const handleGasCost = getLensHandleGasCost(lensHandle);
+  const handleLabel = getHandleTier(lensHandle.length).label;
+
   const computedCharges = useMemo((): ChargeBreakdown | null => {
     if (!selectedPlan) return null;
 
@@ -987,7 +1075,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
         totalCents: 0,
         breakdown: [
           { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: true },
-          { item: 'Lens Profile ($2 gas)', cost: '$2', covered: true },
+          { item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`, cost: `$${handleGasCost}`, covered: true },
           { item: 'GoToSocial account', cost: '$0', covered: true },
           { item: 'AT Protocol PDS', cost: '$0', covered: true },
           { item: 'Nostr keypair', cost: '$0', covered: true },
@@ -998,31 +1086,43 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     }
 
     switch (selectedPlan) {
-      case 'standard':
+      case 'standard': {
+        const handleUpcharge = Math.max(0, handleGasCost - 2);
+        const totalUsd = 10 + handleUpcharge;
         return {
-          total: '$8',
-          totalCents: 800,
+          total: `$${totalUsd}`,
+          totalCents: totalUsd * 100,
           breakdown: [
             { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
-            { item: 'Lens Profile ($2 gas)', cost: '$2', covered: false },
-            { item: 'Service fee', cost: '$1', covered: false },
+            { item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`, cost: `$${handleGasCost}`, covered: false },
+            { item: 'Service fee', cost: '$3', covered: false },
+            ...(handleUpcharge > 0
+              ? [{ item: `Short handle premium ($${handleUpcharge} upcharge)`, cost: `$${handleUpcharge}`, covered: false }]
+              : []),
             { item: 'GoToSocial + PDS + Nostr + RSS', cost: '$0', covered: true },
           ],
-          serviceFeeCents: 100,
+          serviceFeeCents: 300,
         };
-      case 'complete':
+      }
+      case 'complete': {
+        const handleUpcharge = Math.max(0, handleGasCost - 10);
+        const totalUsd = 20 + handleUpcharge;
         return {
-          total: '$15',
-          totalCents: 1500,
+          total: `$${totalUsd}`,
+          totalCents: totalUsd * 100,
           breakdown: [
             { item: 'Farcaster ID ($5 gas)', cost: '$5', covered: false },
-            { item: 'Lens + custom handle ($10 gas)', cost: '$10', covered: false },
+            { item: `Lens Profile — ${handleLabel} ($${handleGasCost} gas)`, cost: `$${handleGasCost}`, covered: false },
             { item: 'ENS domain ($10)', cost: '$10', covered: false },
-            { item: 'Bundle discount', cost: '-$10', covered: false },
+            ...(handleUpcharge > 0
+              ? [{ item: `Premium handle upcharge ($${handleUpcharge})`, cost: `$${handleUpcharge}`, covered: false }]
+              : []),
+            { item: 'Bundle discount', cost: '-$7', covered: false },
             { item: 'GoToSocial + PDS + Nostr + RSS', cost: '$0', covered: true },
           ],
-          serviceFeeCents: 100,
+          serviceFeeCents: 300,
         };
+      }
       default:
         return {
           total: '$0',
@@ -1036,7 +1136,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
           serviceFeeCents: 0,
         };
     }
-  }, [selectedPlan, isPremium]);
+  }, [selectedPlan, isPremium, handleGasCost, handleLabel]);
 
   // ── Handle plan selection ───────────────────────────
   const handlePlanSelect = useCallback(
@@ -1271,6 +1371,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
             farcasterUsername={farcasterUsername}
             lensHandle={lensHandle}
             ensName={ensName}
+            isPremium={isPremium}
             onFarcasterChange={setFarcasterUsername}
             onLensChange={setLensHandle}
             onEnsChange={setEnsName}
@@ -1304,6 +1405,7 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
             farcasterUsername={farcasterUsername}
             lensHandle={lensHandle}
             ensName={ensName}
+            handleGasCost={handleGasCost}
             onBack={() => setStep(1)}
             onConfirm={() => handleConfirm()}
           />

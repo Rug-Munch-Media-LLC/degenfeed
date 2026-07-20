@@ -84,7 +84,10 @@ function UpfrontCostExplainer() {
             <CostRow service="RSS Feed" cost="Free" coverage="✓ Included" highlight />
             <CostRow service="Farcaster Registration" cost="$5 gas" coverage="Covered by Premium" />
             <CostRow service="Lens Protocol Registration" cost="$2 gas" coverage="Covered by Premium" />
-            <CostRow service="Custom Lens Handle" cost="$10 one-time" coverage="Optional add-on" />
+            <CostRow service="Custom Lens Handle (9+ chars)" cost="Included" coverage="All plans" highlight />
+            <CostRow service="Custom Lens Handle (7-8 chars)" cost="+$5–8 gas" coverage="Complete plan + add-on" />
+            <CostRow service="Custom Lens Handle (5-6 chars)" cost="+$15–25 gas" coverage="À la carte add-on" />
+            <CostRow service="Custom Lens Handle (3-4 chars)" cost="+$50–200 gas" coverage="À la carte add-on" />
             <CostRow service="Custom Farcaster Username" cost="$5 one-time" coverage="Optional add-on" />
             <CostRow service="ENS Domain" cost="$10 one-time" coverage="Optional add-on" />
           </tbody>
@@ -138,6 +141,40 @@ function CostRow({
         {coverage}
       </td>
     </tr>
+  );
+}
+
+/* ─── Handle tier row ───────────────────────────────────────── */
+
+function HandleTierRow({
+  lengthLabel,
+  price,
+  color,
+}: {
+  lengthLabel: string;
+  price: string;
+  color: 'green' | 'yellow' | 'orange' | 'red';
+}) {
+  const colorStyles = {
+    green: 'border-degen-500/20 bg-degen-500/[0.03]',
+    yellow: 'border-yellow-500/20 bg-yellow-500/[0.03]',
+    orange: 'border-orange-500/20 bg-orange-500/[0.03]',
+    red: 'border-red-500/20 bg-red-500/[0.03]',
+  };
+  const dotStyles = {
+    green: 'bg-degen-500',
+    yellow: 'bg-yellow-500',
+    orange: 'bg-orange-500',
+    red: 'bg-red-500',
+  };
+  return (
+    <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${colorStyles[color]}`}>
+      <div className="flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full ${dotStyles[color]}`} />
+        <span className="text-xs text-[var(--color-fg)]">{lengthLabel}</span>
+      </div>
+      <span className="text-xs font-semibold text-[var(--color-fg)]">{price}</span>
+    </div>
   );
 }
 
@@ -350,6 +387,46 @@ export default function PremiumPage() {
           these on at cost — <strong>zero markup on gas fees</strong>.
         </p>
         <UpfrontCostExplainer />
+      </div>
+
+      {/* ── Lens Handle Cost Estimator ── */}
+      <div className="mb-12">
+        <div className="mb-4 flex items-center gap-3">
+          <h2 className="text-lg font-bold text-[var(--color-fg)]">Custom Lens Handle Pricing</h2>
+          <div className="flex-1 border-t border-[var(--color-border)]" />
+        </div>
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
+          <p className="mb-4 text-xs text-[var(--color-muted)]">
+            Lens handles are priced by length — shorter handles cost more gas on Polygon.
+            Type your desired handle below to see the cost. We pass through the exact gas cost.
+          </p>
+
+          <div className="mb-5 flex items-center gap-2 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-3">
+            <span className="text-sm font-medium text-[var(--color-muted)]">@</span>
+            <input
+              type="text"
+              placeholder="yourname"
+              className="flex-1 bg-transparent text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none"
+              maxLength={20}
+              id="handle-estimator-input"
+            />
+            <span className="text-sm font-medium text-[var(--color-muted)]">.lens</span>
+          </div>
+
+          <div className="space-y-2">
+            <HandleTierRow lengthLabel="9+ characters" price="Included free" color="green" />
+            <HandleTierRow lengthLabel="7–8 characters" price="+$5–8 gas" color="yellow" />
+            <HandleTierRow lengthLabel="5–6 characters" price="+$15–25 gas" color="orange" />
+            <HandleTierRow lengthLabel="3–4 characters" price="+$50–200 gas" color="red" />
+          </div>
+
+          <p className="mt-4 text-[11px] text-[var(--color-muted)] leading-relaxed">
+            These are Polygon gas costs for Lens profile creation.{' '}
+            <strong>We don&apos;t mark these up</strong> — you pay what the blockchain charges.
+            Standard handles (9+ chars) are always included free in all registration plans.
+            Premium subscribers get all handle lengths covered.
+          </p>
+        </div>
       </div>
 
       {/* ── Add-Ons Section ── */}

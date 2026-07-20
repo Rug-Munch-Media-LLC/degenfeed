@@ -313,7 +313,7 @@ registerAll.post('/all', async (c) => {
   }
 
   // ── Generate response ────────────────────────────────────────────────
-  const charges = calculateCharges(plan, isPremium);
+  const charges = calculateCharges(plan, isPremium, body.lensHandle);
   const recoveryInfo = generateRecoveryPackage(
     results as unknown as Parameters<typeof generateRecoveryPackage>[0],
   );

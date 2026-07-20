@@ -20,11 +20,32 @@ export interface AddOn {
 
 export const ADD_ONS: AddOn[] = [
   {
-    name: 'Custom Lens Handle',
-    price: '$10',
+    name: 'Custom Lens Handle (9+ chars)',
+    price: 'Included',
     frequency: 'one-time',
-    description: 'Register @yourname.lens on Polygon',
-    covers: 'Polygon gas fees for Lens profile creation',
+    description: 'Standard-length handle — always free',
+    covers: 'Included in all registration plans',
+  },
+  {
+    name: 'Custom Lens Handle (7-8 chars)',
+    price: '+$5–8',
+    frequency: 'one-time',
+    description: 'Short handle — extra Polygon gas',
+    covers: 'Polygon gas fees for shorter handle registration',
+  },
+  {
+    name: 'Custom Lens Handle (5-6 chars)',
+    price: '+$15–25',
+    frequency: 'one-time',
+    description: 'Premium short handle',
+    covers: 'Polygon gas fees for premium short handle registration',
+  },
+  {
+    name: 'Custom Lens Handle (3-4 chars)',
+    price: '+$50–200',
+    frequency: 'one-time',
+    description: 'Rare short handle',
+    covers: 'Polygon gas fees for rare handle registration',
   },
   {
     name: 'Custom Farcaster Username',
@@ -183,7 +204,10 @@ export function CostBreakdown() {
         <CostRow label="RSS Feed" cost="Free" note="Auto-generated" />
         <CostRow label="Farcaster Registration" cost="$5 gas" note="Covered by Premium" />
         <CostRow label="Lens Protocol Registration" cost="$2 gas" note="Covered by Premium" />
-        <CostRow label="Custom Lens Handle (optional)" cost="$10" note="One-time, optional" />
+        <CostRow label="Custom Lens Handle 9+ chars (optional)" cost="Included" note="Free in all plans" />
+        <CostRow label="Custom Lens Handle 7-8 chars (optional)" cost="+$5–8" note="Extra gas" />
+        <CostRow label="Custom Lens Handle 5-6 chars (optional)" cost="+$15–25" note="Extra gas" />
+        <CostRow label="Custom Lens Handle 3-4 chars (optional)" cost="+$50–200" note="Extra gas" />
         <CostRow label="Custom Farcaster Username (optional)" cost="$5" note="One-time, optional" />
       </div>
       <div className="border-t border-[var(--color-border)] bg-degen-500/[0.03] px-4 py-3">
