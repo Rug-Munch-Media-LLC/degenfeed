@@ -9,29 +9,34 @@
  * synchronous checks, and `requireAdminFromRequest` for async session checks.
  */
 
-import type { Env } from '../index';
-import { jsonResponse } from '../index';
+import type { Env } from "../index";
+import { jsonResponse } from "../index";
 
 /**
  * Parse ADMIN_WALLETS env var into a lowercase Set for efficient lookup.
  */
-export function getAdminWalletSet(adminWalletsEnv: string | undefined): Set<string> {
-  if (!adminWalletsEnv) return new Set<string>();
-  return new Set(
-    adminWalletsEnv
-      .split(',')
-      .map((w) => w.trim().toLowerCase())
-      .filter(Boolean),
-  );
+export function getAdminWalletSet(
+	adminWalletsEnv: string | undefined,
+): Set<string> {
+	if (!adminWalletsEnv) return new Set<string>();
+	return new Set(
+		adminWalletsEnv
+			.split(",")
+			.map((w) => w.trim().toLowerCase())
+			.filter(Boolean),
+	);
 }
 
 /**
  * Pure check — is the given wallet address in the admin list?
  */
-export function isAdmin(walletAddress: string, adminWalletsEnv: string | undefined): boolean {
-  if (!walletAddress || !adminWalletsEnv) return false;
-  const admins = getAdminWalletSet(adminWalletsEnv);
-  return admins.has(walletAddress.toLowerCase());
+export function isAdmin(
+	walletAddress: string,
+	adminWalletsEnv: string | undefined,
+): boolean {
+	if (!walletAddress || !adminWalletsEnv) return false;
+	const admins = getAdminWalletSet(adminWalletsEnv);
+	return admins.has(walletAddress.toLowerCase());
 }
 
 /**
@@ -39,19 +44,19 @@ export function isAdmin(walletAddress: string, adminWalletsEnv: string | undefin
  * Returns `{ allowed: true }` or `{ allowed: false, error: string }`.
  */
 export function requireAdmin(
-  walletAddress: string | undefined | null,
-  adminWalletsEnv: string | undefined,
+	walletAddress: string | undefined | null,
+	adminWalletsEnv: string | undefined,
 ): { allowed: boolean; error?: string } {
-  if (!walletAddress) {
-    return { allowed: false, error: 'No wallet address provided' };
-  }
-  if (!adminWalletsEnv) {
-    return { allowed: false, error: 'ADMIN_WALLETS not configured' };
-  }
-  if (!isAdmin(walletAddress, adminWalletsEnv)) {
-    return { allowed: false, error: 'Not an admin wallet' };
-  }
-  return { allowed: true };
+	if (!walletAddress) {
+		return { allowed: false, error: "No wallet address provided" };
+	}
+	if (!adminWalletsEnv) {
+		return { allowed: false, error: "ADMIN_WALLETS not configured" };
+	}
+	if (!isAdmin(walletAddress, adminWalletsEnv)) {
+		return { allowed: false, error: "Not an admin wallet" };
+	}
+	return { allowed: true };
 }
 
 /**
@@ -59,18 +64,21 @@ export function requireAdmin(
  * Returns the session address on success, or a 403 Response on failure.
  */
 export async function requireAdminFromSession(
-  request: Request,
-  env: Env,
+	request: Request,
+	env: Env,
 ): Promise<{ address: string } | Response> {
-  const { requireSession } = await import('../session');
-  const session = await requireSession(request, env);
-  if (session instanceof Response) return session;
+	const { requireSession } = await import("../session");
+	const session = await requireSession(request, env);
+	if (session instanceof Response) return session;
 
-  const check = requireAdmin(session.address, env.ADMIN_WALLETS);
-  if (!check.allowed) {
-    return jsonResponse({ error: check.error || 'Forbidden: admin access required' }, 403);
-  }
-  return { address: session.address };
+	const check = requireAdmin(session.address, env.ADMIN_WALLETS);
+	if (!check.allowed) {
+		return jsonResponse(
+			{ error: check.error || "Forbidden: admin access required" },
+			403,
+		);
+	}
+	return { address: session.address };
 }
 
 /**
@@ -78,18 +86,23 @@ export async function requireAdminFromSession(
  * Returns the wallet address on success, or a 403 Response on failure.
  */
 export function requireAdminFromHeader(
-  request: Request,
-  adminWalletsEnv: string | undefined,
+	request: Request,
+	adminWalletsEnv: string | undefined,
 ): { address: string } | Response {
-  const walletAddress = request.headers.get('x-wallet-address') || '';
-  const check = requireAdmin(walletAddress, adminWalletsEnv);
-  if (!check.allowed) {
-    return new Response(JSON.stringify({ error: check.error || 'Forbidden: admin access required' }), {
-      status: 403,
-      headers: { 'content-type': 'application/json' },
-    });
-  }
-  return { address: walletAddress };
+	const walletAddress = request.headers.get("x-wallet-address") || "";
+	const check = requireAdmin(walletAddress, adminWalletsEnv);
+	if (!check.allowed) {
+		return new Response(
+			JSON.stringify({
+				error: check.error || "Forbidden: admin access required",
+			}),
+			{
+				status: 403,
+				headers: { "content-type": "application/json" },
+			},
+		);
+	}
+	return { address: walletAddress };
 }
 
 /**
@@ -97,11 +110,11 @@ export function requireAdminFromHeader(
  * Works with both NextResponse and standard Response.
  */
 export function addAdminValidatedHeader(response: Response): Response {
-  const headers = new Headers(response.headers);
-  headers.set('X-Admin-Validated', 'true');
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
+	const headers = new Headers(response.headers);
+	headers.set("X-Admin-Validated", "true");
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers,
+	});
 }

@@ -4,7 +4,7 @@
  */
 
 export function handleLinksPage(_request: Request, _env: unknown): Response {
-  const html = `<!DOCTYPE html>
+	const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -155,11 +155,11 @@ body { font-family: 'Inter', system-ui, sans-serif; background: #000; color: #ff
 </div>
 </body>
 </html>`;
-  return new Response(html, {
-    status: 200,
-    headers: {
-      'content-type': 'text/html',
-      'cache-control': 'public, max-age=3600',
-    },
-  });
+	return new Response(html, {
+		status: 200,
+		headers: {
+			"content-type": "text/html",
+			"cache-control": "public, max-age=3600",
+		},
+	});
 }

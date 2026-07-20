@@ -5,11 +5,16 @@
  * matching CSRF token. See session.ts for the token validation logic
  * (dev-mode fallback: if env.CACHE is undefined, any token passes).
  */
-import type { Env } from '../index';
-import { createSession, generateCsrfToken, parseSessionCookie, storeCsrfToken } from '../session';
+import type { Env } from "../index";
+import {
+	createSession,
+	generateCsrfToken,
+	parseSessionCookie,
+	storeCsrfToken,
+} from "../session";
 
-const TEST_SECRET = 'test-secret-must-be-at-least-32-bytes';
-const TEST_WALLET = '0xAbCd';
+const TEST_SECRET = "test-secret-must-be-at-least-32-bytes";
+const TEST_WALLET = "0xAbCd";
 
 /**
  * Create a session and a CSRF token.
@@ -22,10 +27,19 @@ const TEST_WALLET = '0xAbCd';
  * token is generated but not stored — `validateCsrfToken` treats a
  * missing CACHE as dev mode and returns true for any non-null token.
  */
-export async function sessionWithCsrf(env: Env): Promise<{ cookie: string; token: string }> {
-  const { setCookie } = await createSession(TEST_WALLET, 'ethereum', TEST_SECRET);
-  const cookieValue = parseSessionCookie(setCookie);
-  if (!cookieValue) throw new Error('sessionWithCsrf: failed to parse session cookie');
-  const token = env.CACHE ? await storeCsrfToken(cookieValue, env) : generateCsrfToken();
-  return { cookie: `__Host-dfid=${cookieValue}`, token };
+export async function sessionWithCsrf(
+	env: Env,
+): Promise<{ cookie: string; token: string }> {
+	const { setCookie } = await createSession(
+		TEST_WALLET,
+		"ethereum",
+		TEST_SECRET,
+	);
+	const cookieValue = parseSessionCookie(setCookie);
+	if (!cookieValue)
+		throw new Error("sessionWithCsrf: failed to parse session cookie");
+	const token = env.CACHE
+		? await storeCsrfToken(cookieValue, env)
+		: generateCsrfToken();
+	return { cookie: `__Host-dfid=${cookieValue}`, token };
 }

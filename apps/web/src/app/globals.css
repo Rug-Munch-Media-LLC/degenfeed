@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════
- * DESIGN TOKENS — Font stack, spacing, radius, z-index scale
+ * DESIGN TOKENS — Font stack, spacing, radius, z-index, animation
  * ═══════════════════════════════════════════════════════════════ */
 
 :root {
   /* ── Font families ── */
-  --font-heading: "Sora", "Inter", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-heading: 'Sora', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* ── Heading sizes (h1-h6) ── */
   --text-h1: 2rem;
@@ -62,6 +62,32 @@
   --ring-width: 2px;
   --ring-offset: 2px;
 
+  /* ── Duration tokens ── */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  /* ── Safe area insets ── */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  /* ── Z-Index Scale ── */
+  --z-base: 1;
+  --z-sticky: 10;
+  --z-feed-header: 30;
+  --z-dropdown: 40;
+  --z-bottom-nav: 45;
+  --z-scroll-top: 48;
+  --z-mini-player: 48;
+  --z-drawer-backdrop: 50;
+  --z-drawer: 60;
+  --z-modal-backdrop: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+  --z-loading-bar: 100;
+
   /* ── Protocol colors (as CSS vars) ── */
   --color-protocol-nostr: #8b5cf6;
   --color-protocol-farcaster: #8a63d2;
@@ -72,6 +98,29 @@
   --color-protocol-reddit: #ff4500;
   --color-protocol-lemmy: #00b868;
   --color-protocol-rss: #ffa500;
+
+  /* ── Font size scale (reader) ── */
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.0625rem;
+  --font-size-lg: 1.125rem;
+
+  /* ── Line spacing scale (reader) ── */
+  --line-spacing-compact: 1.4;
+  --line-spacing-comfortable: 1.6;
+  --line-spacing-relaxed: 1.8;
+
+  /* Active reader values */
+  --reader-font-size: var(--font-size-base);
+  --reader-line-height: var(--line-spacing-comfortable);
+
+  /* Reading progress bar */
+  --progress-bar-height: 3px;
+
+  /* Message bubble colors */
+  --color-msg-sent: rgba(22, 163, 74, 0.15);
+  --color-msg-received: rgba(255, 255, 255, 0.08);
+  --color-compose-bg: rgba(0, 0, 0, 0.02);
 }
 
 @layer base {
@@ -714,35 +763,6 @@
   }
 }
 
-/* ── Transition Duration Tokens ─────────────────────────────────── */
-
-:root {
-  --duration-fast: 150ms;
-  --duration-normal: 250ms;
-  --duration-slow: 400ms;
-
-  /* ── Safe area insets (env works in iOS Safari) ── */
-  --sat: env(safe-area-inset-top, 0px);
-  --sab: env(safe-area-inset-bottom, 0px);
-  --sal: env(safe-area-inset-left, 0px);
-  --sar: env(safe-area-inset-right, 0px);
-
-  /* ── Z-Index Scale ── */
-  --z-base: 1;
-  --z-sticky: 10;
-  --z-feed-header: 30;
-  --z-dropdown: 40;
-  --z-bottom-nav: 45;
-  --z-scroll-top: 48;
-  --z-mini-player: 48;
-  --z-drawer-backdrop: 50;
-  --z-drawer: 60;
-  --z-modal-backdrop: 60;
-  --z-modal: 70;
-  --z-toast: 80;
-  --z-loading-bar: 100;
-}
-
 /* ── Animation Utility Classes ──────────────────────────────────── */
 
 @layer utilities {
@@ -1060,30 +1080,10 @@
  * ═══════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════════
- * UI POLISH — Reading experience / Font size + line spacing
+ * READER SETTINGS — Font size + line spacing classes
  * ═══════════════════════════════════════════════════════════════ */
 
-:root {
-  /* Font size scale */
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-md: 1.0625rem;
-  --font-size-lg: 1.125rem;
-
-  /* Line spacing scale */
-  --line-spacing-compact: 1.4;
-  --line-spacing-comfortable: 1.6;
-  --line-spacing-relaxed: 1.8;
-
-  /* Active values (applied to content areas) */
-  --reader-font-size: var(--font-size-base);
-  --reader-line-height: var(--line-spacing-comfortable);
-
-  /* Reading progress bar */
-  --progress-bar-height: 3px;
-}
-
-/* Reader size classes */
+/* Tokens set in :root above */
 .reader-sm {
   --reader-font-size: var(--font-size-sm);
 }
@@ -2016,40 +2016,24 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
- * DARK MODE REFINEMENTS — Premium contrast, depth, glass
+ * DARK MODE REFINEMENTS
  * ═══════════════════════════════════════════════════════════════ */
 
 .dark {
-  /* Glass card - frosted, ethereal */
-  --color-glass-bg: rgba(22, 24, 28, 0.65);
-  --color-glass-border: rgba(255, 255, 255, 0.08);
-
-  /* Brighter text for superior contrast */
   --color-fg: #f0f2f5;
   --color-muted: #8b8fa3;
-
-  /* Card with consistent dark card color */
-  --color-card: #16181c;
-  --color-card-hover: #1d1f23;
-
-  /* Accent glow refinement — punchier */
   --color-accent-glow: rgba(0, 255, 65, 0.18);
-
-  /* Border refinement — subtle but present */
-  --color-border: #2f3336;
-}
-
-/* Post card hover glow in dark */
-.dark .post-card:hover {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  --color-msg-sent: rgba(0, 255, 65, 0.12);
+  --color-msg-received: rgba(255, 255, 255, 0.06);
+  --color-compose-bg: rgba(255, 255, 255, 0.02);
 }
 
 /* Dark glass card with backdrop blur */
 .dark .card-glass-deep {
-  background: rgba(10, 10, 20, 0.5);
+  background: var(--color-glass-bg);
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-glass-border);
   box-shadow:
     0 4px 32px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -2057,18 +2041,18 @@
 
 /* Feed header glass refinement */
 .dark .glass {
-  background: rgba(22, 24, 28, 0.75);
+  background: var(--color-glass-bg);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  border-bottom-color: rgba(47, 51, 54, 0.8);
+  border-bottom: 1px solid var(--color-glass-border);
 }
 
 /* Bottom nav glass */
 .bottom-nav {
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--color-glass-bg);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-top-color: rgba(0, 0, 0, 0.08);
+  border-top: 1px solid var(--color-glass-border);
 }
 .dark .bottom-nav {
   background: rgba(22, 24, 28, 0.85);
@@ -2249,7 +2233,7 @@
 }
 
 .sidebar-compose-btn:hover {
-  background: #00e63a;
+  background: color-mix(in srgb, var(--color-accent) 90%, #000);
   box-shadow: 0 0 30px color-mix(in srgb, var(--color-accent, #00ff41) 30%, transparent);
 }
 
@@ -2300,18 +2284,7 @@
  * MESSAGES / CHAT — Bubble colors, animations, compose bar
  * ═══════════════════════════════════════════════════════════════ */
 
-:root {
-  /* Message bubble colors — light mode */
-  --color-msg-sent: rgba(22, 163, 74, 0.15);
-  --color-msg-received: rgba(255, 255, 255, 0.08);
-  --color-compose-bg: rgba(0, 0, 0, 0.02);
-}
-
-.dark {
-  --color-msg-sent: rgba(0, 255, 65, 0.12);
-  --color-msg-received: rgba(255, 255, 255, 0.06);
-  --color-compose-bg: rgba(255, 255, 255, 0.02);
-}
+/* Color tokens are set in :root and .dark above */
 
 /* ── Message enter animation ── */
 @keyframes message-enter {

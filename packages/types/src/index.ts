@@ -23,7 +23,12 @@ export type Protocol =
   | 'tildes'
   | 'atproto'
   | 'zora'
-  | 'telegram';
+  | 'telegram'
+  | 'discord'
+  | 'matrix'
+  | 'webhook'
+  | 'github'
+  | 'newsletter-bridge';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */
@@ -57,6 +62,24 @@ export interface UnifiedIdentity {
     zoraCoinAddress?: string;
     /** Telegram user ID */
     telegramUserId?: string;
+    /** Discord guild (server) ID */
+    discordGuildId?: string;
+    /** Discord channel ID */
+    discordChannelId?: string;
+    /** Matrix homeserver URL */
+    matrixHomeserver?: string;
+    /** Matrix room ID */
+    matrixRoomId?: string;
+    /** GitHub username */
+    githubUsername?: string;
+    /** GitHub repository full name (owner/repo) */
+    githubRepo?: string;
+    /** Webhook URL for custom integration */
+    webhookUrl?: string;
+    /** Substack newsletter URL */
+    substackUrl?: string;
+    /** Ghost blog API URL */
+    ghostUrl?: string;
   };
 }
 

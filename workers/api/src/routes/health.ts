@@ -1,4 +1,6 @@
-import { DEFAULT_RELAYS, type Env, jsonResponse } from '../index';
+import { DEFAULT_RELAYS, type Env, jsonResponse, noCacheJsonResponse } from '../index';
+import { getQueueStats } from '../lib/offline-queue';
+import { getTxMonitorStats } from '../lib/transaction-monitor';
 
 /**
  * GET /api/health — Legacy relay health
@@ -213,3 +215,87 @@ async function writeProtocolsCache(
     // Non-critical cache write — log and continue
   }
 }
+
+// ═════════════════════════════════════════════════════════════════════════
+// GET /api/health/full — Full integration health check
+// ═════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /api/health/full — Comprehensive health check for ALL integrations.
+ *
+ * Tests every external dependency:
+ *   - ActivityPub / Mastodon
+ *   - AT Protocol (Bluesky)
+ *   - Nostr (relays)
+ *   - Farcaster (Hub)
+ *   - Lens Protocol
+ *   - Telegram Bot API
+ *   - Zora API
+ *   - Wormhole Bridge
+ *   - PeerTube instance
+ *   - EVM RPCs (Ethereum, Base, Polygon)
+ *   - Solana RPC
+ *   - RSS
+ *   - Threads
+ *
+ * Also includes:
+ *   - Offline queue stats
+ *   - Transaction monitor stats
+ *   - Error counts from the error-logger
+ *
+ * Returns a full health report with per-integration status, latency,
+ * and error information. NEVER cached — always fresh.
+ *
+ * Designed for the status dashboard and automated alerting.
+ */
+export async function handleFullHealth(env: Env): Promise<Response> {
+  const start = performance.now();
+
+  // Run all health checks in parallel
+  const { getFullHealthReport } = await import('../lib/health-integrations');
+  const report = await getFullHealthReport(env);
+
+  // Gather system stats in parallel
+  const [queueStats, txStats, errorCounts] = await Promise.all([
+    getQueueStats(env).catch(() => null),
+    getTxMonitorStats(env).catch(() => null),
+    (getErrorCounts ? getErrorCounts(env) : Promise.resolve(null)).catch(() => null),
+  ]);
+
+  const body = {
+    ...report,
+    system: {
+      offlineQueue: queueStats ?? {
+        total: 0,
+        pending: 0,
+        completed: 0,
+        failed: 0,
+        deadLetter: 0,
+        oldestPending: null,
+      },
+      transactionMonitor: txStats ?? {
+        total: 0,
+        pending: 0,
+        confirmed: 0,
+        failed: 0,
+        stuck: 0,
+        replaced: 0,
+        escalated: 0,
+      },
+      errors: errorCounts
+        ? {
+            total: errorCounts.total,
+            byRoute: errorCounts.byRoute,
+            since: errorCounts.since,
+            recentErrors: errorCounts.errors?.slice(0, 10) ?? [],
+          }
+        : null,
+    },
+    overallLatency: Math.round(performance.now() - start),
+  };
+
+  return noCacheJsonResponse(body);
+}
+
+// Import getErrorCounts lazily — depends on error-logger module
+import { getErrorCounts } from '../error-logger';

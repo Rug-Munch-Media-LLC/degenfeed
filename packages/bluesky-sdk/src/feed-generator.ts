@@ -235,3 +235,99 @@ export class LiveFeedGenerator {
     ).catch(() => {});
   }
 }
+
+// ─── Feed Generator Types (Route Compatibility) ────────────────────────────
+
+export interface StreamFeedEntry {
+  id: string;
+  title: string;
+  creator: string;
+  creatorHandle: string;
+  thumbnail?: string;
+  streamUrl: string;
+  isLive: boolean;
+  viewerCount: number;
+  startedAt: number;
+  type: 'solo' | 'duo' | 'space' | 'event';
+}
+
+export interface GetFeedSkeletonRequest {
+  feed: string;
+  cursor?: string;
+  limit?: number;
+}
+
+export const DEGENFEED_FEED_GENERATOR_DID = 'did:web:live.degenfeed.xyz';
+export const DEGENFEED_FEED_URI = 'at://live.degenfeed.xyz/app.bsky.feed.generator/degenfeed-live';
+export const DEGENFEED_FEED_DISPLAY_NAME = 'DegenFeed Live';
+export const DEGENFEED_FEED_DESCRIPTION = 'Live streams and spaces on DegenFeed — crypto, web3, defi, and more';
+
+/**
+ * FeedGenEndpoint wraps LiveFeedGenerator for route compatibility.
+ */
+export class FeedGenEndpoint {
+  describeFeedGenerator(): FeedGeneratorDescription {
+    return describeFeedGenerator();
+  }
+}
+
+/**
+ * Build a feed skeleton directly from an array of stream feed entries.
+ */
+export function skeletonFromStreams(
+  streams: StreamFeedEntry[],
+  _baseUrl: string,
+  cursor?: string,
+): FeedSkeleton {
+  const liveItems = streams.filter((s) => s.isLive);
+  liveItems.sort((a, b) => b.viewerCount - a.viewerCount);
+
+  let startIndex = 0;
+  if (cursor) {
+    const cursorIdx = liveItems.findIndex((item) => item.id === cursor);
+    if (cursorIdx >= 0) startIndex = cursorIdx + 1;
+  }
+
+  const page = liveItems.slice(startIndex, startIndex + 50);
+  const nextCursor = page.length === 50 ? page[page.length - 1]?.id : undefined;
+
+  return {
+    feed: page.map((item) => ({ post: `at://${item.creator}/app.bsky.feed.post/${item.id}` })),
+    cursor: nextCursor,
+  };
+}
+
+/**
+ * Register a feed generator on a Bluesky PDS.
+ */
+export async function registerFeedGenerator(opts: {
+  did: string;
+  password: string;
+  pdsUrl?: string;
+  displayName?: string;
+  description?: string;
+}): Promise<{ uri: string }> {
+  // Simplified registration — creates the feed generator record on the PDS
+  const pds = opts.pdsUrl || 'https://pds.degenfeed.xyz';
+  const res = await fetch(`${pds}/xrpc/com.atproto.repo.createRecord`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      repo: opts.did,
+      collection: 'app.bsky.feed.generator',
+      rkey: 'degenfeed-live',
+      record: {
+        did: opts.did,
+        displayName: opts.displayName || FEED_GENERATOR_DISPLAY_NAME,
+        description: opts.description || FEED_GENERATOR_DESCRIPTION,
+        createdAt: new Date().toISOString(),
+      },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => 'Unknown error');
+    throw new Error(`Feed generator registration failed: ${err.slice(0, 200)}`);
+  }
+  const data = (await res.json()) as { uri: string };
+  return data;
+}
