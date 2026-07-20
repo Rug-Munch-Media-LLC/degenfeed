@@ -1,0 +1,76 @@
+# DegenFeed Self-Hosted — Caddy reverse proxy configuration
+# Automatic TLS via Let's Encrypt. No manual cert management.
+# Place at: ./data/caddy/Caddyfile (auto-mounted by docker-compose)
+
+{$DOMAIN} {
+    # Security headers
+    header {
+        X-Frame-Options "DENY"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+    }
+
+    # ── Ghost Blog ──
+    # Route /articles/* to Ghost, stripping the prefix
+    handle_path /articles/* {
+        reverse_proxy ghost:2368
+    }
+
+    # ── GoToSocial (ActivityPub) ──
+    # Route /.well-known/webfinger, /.well-known/nodeinfo, /api/* to GoToSocial
+    handle_path /.well-known/* {
+        reverse_proxy gotosocial:8080
+    }
+
+    handle_path /api/v1/* {
+        reverse_proxy gotosocial:8080
+    }
+
+    handle_path /api/v2/* {
+        reverse_proxy gotosocial:8080
+    }
+
+    # OAuth and auth endpoints for GoToSocial
+    handle_path /auth/* {
+        reverse_proxy gotosocial:8080
+    }
+
+    handle_path /oauth/* {
+        reverse_proxy gotosocial:8080
+    }
+
+    # ActivityPub inbox/outbox
+    handle_path /users/* {
+        reverse_proxy gotosocial:8080
+    }
+
+    # NodeInfo
+    handle_path /.well-known/nodeinfo {
+        reverse_proxy gotosocial:8080
+    }
+
+    handle_path /nodeinfo/* {
+        reverse_proxy gotosocial:8080
+    }
+
+    # Files/media from GoToSocial
+    handle_path /fileserver/* {
+        reverse_proxy gotosocial:8080
+    }
+
+    # ── DegenFeed Web ──
+    # Everything else goes to the main Next.js app
+    handle {
+        reverse_proxy degenfeed:3000
+    }
+
+    # Logging
+    log {
+        output file /data/access.log {
+            roll_size 50mb
+            roll_keep 5
+        }
+    }
+}

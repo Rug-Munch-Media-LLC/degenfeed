@@ -1,0 +1,205 @@
+# DegenFeed Self-Hosted — One-command creator platform
+# =====================================================
+# Start:   docker compose up -d
+# Stop:    docker compose down
+# Logs:    docker compose logs -f
+# Update:  docker compose pull && docker compose up -d
+#
+# Prerequisites:
+#   - Docker + Docker Compose v2 installed
+#   - Domain pointed to this server (A record)
+#   - Ports 80/443 and optionally 8080/2368 open
+#
+# After starting:
+#   - DegenFeed UI:   https://${DOMAIN} (nginx proxy on :443)
+#   - Ghost blog:     https://${DOMAIN}/articles
+#   - Ghost admin:    https://${DOMAIN}/articles/ghost
+#   - ActivityPub:    @${CREATOR_USERNAME}@${DOMAIN}
+#   - Creator coin:   https://${DOMAIN}/coin
+#   - Live streams:   https://${DOMAIN}/live
+
+version: "3.8"
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # ── Reverse Proxy (Caddy) ────────────────────────────────────────────
+  # Automatic TLS via Let's Encrypt. Handles routing to all sub-services.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN:?DOMAIN is required — set it in .env or pass via environment}
+    volumes:
+      - ./data/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./data/caddy/data:/data
+      - ./data/caddy/config:/config
+    logging: *default-logging
+    depends_on:
+      degenfeed:
+        condition: service_started
+      ghost:
+        condition: service_started
+      gotosocial:
+        condition: service_started
+    networks:
+      - degenfeed
+
+  # ── DegenFeed Web (Next.js 16) ──────────────────────────────────────
+  degenfeed:
+    image: degenfeed/self-host:latest
+    build:
+      context: ../..
+      dockerfile: scripts/self-host/Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: "https://${DOMAIN}"
+        NEXT_PUBLIC_API_BASE: "https://${DOMAIN}"
+        NEXT_PUBLIC_API_URL: "https://${DOMAIN}"
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - DOMAIN=${DOMAIN}
+      - CREATOR_WALLET=${CREATOR_WALLET:?CREATOR_WALLET is required — your wallet address for the creator coin}
+      - CREATOR_USERNAME=${CREATOR_USERNAME:-creator}
+      - CREATOR_COIN_ADDRESS=${CREATOR_COIN_ADDRESS:-}
+      - CREATOR_COIN_CHAIN=${CREATOR_COIN_CHAIN:-base}
+      - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
+      - NEXT_PUBLIC_APP_URL=https://${DOMAIN}
+      - NEXT_PUBLIC_API_BASE=https://${DOMAIN}
+      - NEXT_PUBLIC_API_URL=https://${DOMAIN}
+      - SELF_HOSTED=true
+      - DATA_DIR=/app/data
+    volumes:
+      - ./data/degenfeed:/app/data
+      - ./articles:/app/articles:ro
+    logging: *default-logging
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    depends_on:
+      - redis
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=100M
+
+  # ── Redis (Caching & Queues) ────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    expose:
+      - "6379"
+    volumes:
+      - ./data/redis:/data
+    logging: *default-logging
+    networks:
+      - degenfeed
+    command: redis-server --appendonly yes --save 60 1 --loglevel warning
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # ── Ghost Blog (Long-form publishing) ──────────────────────────────
+  ghost:
+    image: ghost:5-alpine
+    restart: unless-stopped
+    expose:
+      - "2368"
+    environment:
+      - url=https://${DOMAIN}/articles
+      - database__client=sqlite3
+      - database__connection__filename=/var/lib/ghost/content/data/ghost.db
+      - mail__transport=Direct
+      - mail__from="\"${CREATOR_USERNAME:-Creator}\" <noreply@${DOMAIN}>"
+      - privacy__useRpcPing=false
+      - privacy__useUpdateCheck=false
+    volumes:
+      - ./data/ghost:/var/lib/ghost/content
+    logging: *default-logging
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:2368/ghost/api/admin/ping/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # ── GoToSocial (ActivityPub / Fediverse) ──────────────────────────
+  gotosocial:
+    image: superseriousbusiness/gotosocial:latest
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      - GTS_HOST=${DOMAIN}
+      - GTS_ACCOUNT_DOMAIN=${DOMAIN}
+      - GTS_PORT=8080
+      - GTS_TRUSTED_PROXIES=caddy
+      - GTS_PROTOCOL=https
+      - GTS_LETS_ENCRYPT_ENABLED=false
+      - GTS_LANDING_PAGE_USER=${CREATOR_USERNAME:-creator}
+      - GTS_APPLICATION_NAME=DegenFeed (@${CREATOR_USERNAME:-creator}@${DOMAIN})
+      - GTS_STORAGE_BACKEND=local
+    volumes:
+      - ./data/gotosocial:/gotosocial/storage
+    logging: *default-logging
+    networks:
+      - degenfeed
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/api/v1/instance"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # ── Periodic maintenance (daily) ───────────────────────────────────
+  maintenance:
+    image: degenfeed/self-host:latest
+    restart: "no"
+    profiles:
+      - maintenance
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "[maintenance] Running DegenFeed daily tasks..."
+        # Clean up old sessions
+        wget -qO- http://degenfeed:3000/api/maintenance/cleanup || true
+        # Sync creator coin data
+        wget -qO- http://degenfeed:3000/api/maintenance/sync-coin || true
+        echo "[maintenance] Done."
+    networks:
+      - degenfeed
+    depends_on:
+      - degenfeed
+
+networks:
+  degenfeed:
+    driver: bridge
