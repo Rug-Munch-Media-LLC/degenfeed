@@ -1520,6 +1520,12 @@ app.route("/api/token", tokenCommunity);
 // ─── API: PeerTube Livestreams (creator token streaming) ───
 app.route("/api/token", peertubeStreams);
 
+// ─── API: Live Shorts (60s cross-protocol live broadcasting) ───
+import liveShorts from "./routes/live-shorts";
+
+app.route("/api/live-shorts", liveShorts);
+app.route("/v1/live-shorts", liveShorts);
+
 // ─── API: Video Aggregator (cross-platform creator following) ──────────
 import { videoAggregator } from "./routes/video-aggregator";
 

@@ -2,30 +2,29 @@
  * @components/shorts — Barrel export for all shorts components.
  */
 
-export { ShortsFeed } from './ShortsFeed';
-export { ShortsOverlay } from './ShortsOverlay';
-export { ShortsSourceBadge, sourceBadgeData } from './ShortsSourceBadge';
-export type { SourceBadgeData } from './ShortsSourceBadge';
-export { ShortsSourceBar } from './ShortsSourceBar';
-export type { SourceCountItem } from './ShortsSourceBar';
-export { ShortsCreatorInfo } from './ShortsCreatorInfo';
-export { ShortsActions } from './ShortsActions';
-export { ShortsProgress } from './ShortsProgress';
-export { CreateShortModal } from './CreateShortModal';
-export { PublishProgress } from './PublishProgress';
-export type { PublishResult } from './PublishProgress';
-export { PROTOCOL_META, buildShareUrl } from './protocolMeta';
-export type { ShortProtocol } from './protocolMeta';
-export { useShorts } from './useShorts';
-export type { UseShortsOptions, UseShortsResult, ShortsResponse } from './useShorts';
-
 // Re-export unified types
 export type {
+  CrossChainTip,
+  ShortSource,
   UnifiedShortItem,
   UnifiedShortsResponse,
   UseUnifiedShortsOptions,
   UseUnifiedShortsResult,
-  ShortSource,
   ZoraNftInfo,
-  CrossChainTip,
 } from '../../hooks/useUnifiedShorts';
+export { CreateShortModal } from './CreateShortModal';
+export type { PublishResult } from './PublishProgress';
+export { PublishProgress } from './PublishProgress';
+export type { ShortProtocol } from './protocolMeta';
+export { buildShareUrl, PROTOCOL_META } from './protocolMeta';
+export { ShortsActions } from './ShortsActions';
+export { ShortsCreatorInfo } from './ShortsCreatorInfo';
+export { ShortsFeed } from './ShortsFeed';
+export { ShortsOverlay } from './ShortsOverlay';
+export { ShortsProgress } from './ShortsProgress';
+export type { SourceBadgeData } from './ShortsSourceBadge';
+export { ShortsSourceBadge, sourceBadgeData } from './ShortsSourceBadge';
+export type { SourceCountItem } from './ShortsSourceBar';
+export { ShortsSourceBar } from './ShortsSourceBar';
+export type { ShortsResponse, UseShortsOptions, UseShortsResult } from './useShorts';
+export { useShorts } from './useShorts';

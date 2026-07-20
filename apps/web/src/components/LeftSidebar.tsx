@@ -160,6 +160,33 @@ function ProfileIcon({ active }: { active: boolean }) {
   );
 }
 
+function LiveShortsIcon({ active }: { active: boolean }) {
+  return (
+    <span className="relative inline-flex">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={active ? 2.5 : 1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect x="2" y="4" width="20" height="16" rx="2" />
+        <polygon points="10 9 16 12 10 15 10 9" fill={active ? 'currentColor' : 'none'} />
+      </svg>
+      {active && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+        </span>
+      )}
+    </span>
+  );
+}
+
 function LiveIcon({ active, hasLive }: { active: boolean; hasLive: boolean }) {
   return (
     <span className="relative inline-flex">
@@ -256,7 +283,8 @@ interface SidebarItem {
 const PRIMARY_NAV: SidebarItem[] = [
   { href: '/feed', label: 'Feed', icon: null },
   { href: '/trending', label: 'Trending', icon: null },
-  { href: '/live', label: 'Live', icon: null },
+  { href: '/live', label: 'Streams', icon: null },
+  { href: '/live-shorts', label: 'Live Shorts', icon: null },
   { href: '/spaces', label: 'Spaces', icon: null },
   { href: '/shorts', label: 'Videos', icon: null },
   { href: '/messages', label: 'Messages', icon: null, requiresAuth: true },
@@ -282,6 +310,8 @@ function iconFor(href: string, active: boolean, hasLive?: boolean): React.ReactN
       return <TrendingIcon active={active} />;
     case '/live':
       return <LiveIcon active={active} hasLive={hasLive ?? false} />;
+    case '/live-shorts':
+      return <LiveShortsIcon active={active} />;
     case '/spaces':
       return <SpacesIcon active={active} />;
     case '/shorts':

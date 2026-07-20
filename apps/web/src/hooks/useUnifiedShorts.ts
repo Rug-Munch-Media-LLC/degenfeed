@@ -8,7 +8,7 @@
  * Nostr, Farcaster, Lens, Zora, PeerTube, DegenFeed) with source breakdowns.
  */
 
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import useSWRInfinite from 'swr/infinite';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -108,9 +108,7 @@ const fetcher = async (url: string): Promise<UnifiedShortsResponse> => {
 
 // ─── Hook ──────────────────────────────────────────────────────────────────
 
-export function useUnifiedShorts(
-  opts: UseUnifiedShortsOptions = {},
-): UseUnifiedShortsResult {
+export function useUnifiedShorts(opts: UseUnifiedShortsOptions = {}): UseUnifiedShortsResult {
   const { source, category, limit = 20 } = opts;
 
   const getKey = useCallback(
@@ -139,25 +137,15 @@ export function useUnifiedShorts(
       errorRetryCount: 3,
     });
 
-  const shorts = useMemo(
-    () => data?.flatMap((page) => page.shorts) ?? [],
-    [data],
-  );
+  const shorts = useMemo(() => data?.flatMap((page) => page.shorts) ?? [], [data]);
 
-  const sources = useMemo(
-    () => (data?.[0]?.sources ? { ...data[0].sources } : null),
-    [data],
-  );
+  const sources = useMemo(() => (data?.[0]?.sources ? { ...data[0].sources } : null), [data]);
 
-  const hasMore = useMemo(
-    () => data?.[data.length - 1]?.hasMore ?? true,
-    [data],
-  );
+  const hasMore = useMemo(() => data?.[data.length - 1]?.hasMore ?? true, [data]);
 
   const isLoadingInitial = !data && !error;
   const isLoadingMore =
-    isLoadingInitial ||
-    (size > 0 && data && typeof data[size - 1] === 'undefined');
+    isLoadingInitial || (size > 0 && data && typeof data[size - 1] === 'undefined');
 
   const loadMore = useCallback(() => {
     if (hasMore && !isValidating) {

@@ -10,8 +10,8 @@
  *   🟠 12 Loops  🔵 8 Flashes  🟣 5 Nostr  🟢 3 Lens  🔷 2 Zora
  */
 
-import { sourceBadgeData } from './ShortsSourceBadge';
 import type { ShortSource } from '../../hooks/useUnifiedShorts';
+import { sourceBadgeData } from './ShortsSourceBadge';
 
 export interface SourceCountItem {
   source: ShortSource;
@@ -107,10 +107,7 @@ export function ShortsSourceBar({
                 aria-hidden="true"
               />
               {!compact && <span>{label}</span>}
-              <span
-                className="tabular-nums"
-                style={{ opacity: isActive ? 1 : 0.7 }}
-              >
+              <span className="tabular-nums" style={{ opacity: isActive ? 1 : 0.7 }}>
                 {formatCount(count)}
               </span>
             </span>

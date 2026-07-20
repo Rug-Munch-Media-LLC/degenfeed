@@ -19,24 +19,41 @@
  */
 
 import { ErrorBoundary } from '@degenfeed/ui';
-import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { ShortVideoCard } from '../../components/ShortVideoCard';
-import { ShortsSourceBar } from '../../components/shorts/ShortsSourceBar';
-import { useUnifiedShorts } from '../../hooks/useUnifiedShorts';
 import { CreateShortModal } from '../../components/shorts/CreateShortModal';
-import type { UnifiedShortItem, ShortSource } from '../../hooks/useUnifiedShorts';
 import { sourceBadgeData } from '../../components/shorts/ShortsSourceBadge';
+import { ShortsSourceBar } from '../../components/shorts/ShortsSourceBar';
+import type { ShortSource, UnifiedShortItem } from '../../hooks/useUnifiedShorts';
+import { useUnifiedShorts } from '../../hooks/useUnifiedShorts';
 
 // ─── Adapter: UnifiedShortItem → ShortVideoCard post shape ──────────────
 
+/**
+ * Map unified source names (used by the API) to the Protocol union
+ * accepted by UnifiedPost (from @degenfeed/types).
+ */
+function mapSourceToProtocol(source: string): string {
+  const map: Record<string, string> = {
+    activitypub: 'peertube',
+    atprotocol: 'atproto',
+    loops: 'peertube',
+    flashes: 'atproto',
+    degenfeed: 'rss',
+    direct: 'rss',
+  };
+  return map[source] ?? source;
+}
+
 function unifiedShortToPost(short: UnifiedShortItem, idx: number) {
-  const badge = sourceBadgeData(short.source);
+  const _badge = sourceBadgeData(short.source);
+  const protocol = mapSourceToProtocol(short.source) as import('@degenfeed/types').Protocol;
   return {
     id: `short:${short.source}:${short.id}`,
-    protocol: short.source,
+    protocol,
     author: {
       id: `${short.source}:${short.authorHandle}`,
-      primary: { protocol: short.source, id: short.authorHandle },
+      primary: { protocol, id: short.authorHandle },
       handles: {} as Record<string, string | null>,
       displayName: short.authorName,
       bio: '',
@@ -68,7 +85,7 @@ function unifiedShortToPost(short: UnifiedShortItem, idx: number) {
     raw: short,
     niches: short.topics,
     dfUri: `df://shorts/${short.source}/${idx}`,
-    contentType: 'video',
+    contentType: 'video' as const,
     tipCount: 0,
   };
 }
@@ -91,12 +108,9 @@ export default function ShortsPage() {
     category: topicFilter.length > 0 ? topicFilter[0] : undefined,
   });
 
-  const handleSourceClick = useCallback(
-    (source: ShortSource | null) => {
-      setSourceFilter(source);
-    },
-    [],
-  );
+  const handleSourceClick = useCallback((source: ShortSource | null) => {
+    setSourceFilter(source);
+  }, []);
 
   const handleRefresh = useCallback(() => {
     unifiedFeed.refresh();
@@ -163,7 +177,15 @@ export default function ShortsPage() {
                 aria-hidden="true"
                 className="text-degen-400"
               >
-                <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                <rect
+                  x="4"
+                  y="4"
+                  width="16"
+                  height="16"
+                  rx="3"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
                 <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
               </svg>
             </div>
@@ -188,7 +210,7 @@ export default function ShortsPage() {
           unifiedFeed.shorts.map((short, idx) => {
             const post = unifiedShortToPost(short, idx);
             return (
-              <div
+              <section
                 key={short.id}
                 className="relative h-screen w-full snap-start snap-always"
                 aria-label={`Video by ${short.authorName}`}
@@ -199,7 +221,7 @@ export default function ShortsPage() {
                   onDoubleTap={() => {}}
                   onPlayStateChange={() => {}}
                 />
-              </div>
+              </section>
             );
           })}
 
@@ -217,12 +239,29 @@ export default function ShortsPage() {
         {!unifiedFeed.hasMore && unifiedFeed.shorts.length > 0 && (
           <div className="flex h-screen w-full snap-start flex-col items-center justify-center gap-3 bg-black px-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-full border border-degen-500/20 bg-degen-500/5">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-degen-400/60">
-                <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="text-degen-400/60"
+              >
+                <rect
+                  x="4"
+                  y="4"
+                  width="16"
+                  height="16"
+                  rx="3"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
                 <path d="M10 9L16 12L10 15V9Z" fill="currentColor" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-[var(--color-muted)]">You&apos;re all caught up</p>
+            <p className="text-sm font-medium text-[var(--color-muted)]">
+              You&apos;re all caught up
+            </p>
             <p className="text-xs text-[var(--color-muted)]">More shorts coming soon</p>
             <button
               type="button"
@@ -245,7 +284,13 @@ export default function ShortsPage() {
             aria-label="Back to feed"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M15 18l-6-6 6-6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             <span className="hidden sm:inline">Feed</span>
           </a>
@@ -273,6 +318,19 @@ export default function ShortsPage() {
               </span>
             )}
           </div>
+
+          {/* Go Live button */}
+          <a
+            href="/live-shorts"
+            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-red-600 to-red-500 px-3 py-1.5 text-xs font-bold text-white shadow-lg transition-all hover:from-red-500 hover:to-red-400 hover:shadow-[0_0_12px_rgba(255,0,0,0.3)]"
+            aria-label="Go live"
+          >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+            </span>
+            Go Live
+          </a>
 
           {/* Create button */}
           <button
