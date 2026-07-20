@@ -25,6 +25,76 @@ import {
 	VIDEO_PLATFORM_LABELS,
 } from "../lib/creator-resolver";
 
+// ─── Video bridge imports ─────────────────────────────────────────────────
+
+import {
+	fetchRumbleChannelVideos,
+	fetchRumbleTrending,
+} from "./video-bridges/rumble";
+
+import {
+	fetchOdyseeChannelVideos,
+	fetchOdyseeTrending,
+} from "./video-bridges/odysee";
+
+import {
+	fetchDTubeChannelVideos,
+	fetchDTubeTrending,
+} from "./video-bridges/dtube";
+
+import {
+	fetchBitchuteChannelVideos,
+	fetchBitchuteTrending,
+} from "./video-bridges/bitchute";
+
+import {
+	fetchPeerTubeChannelVideos,
+	fetchPeerTubeTrending,
+} from "./video-bridges/peertube";
+
+import {
+	fetchDailymotionChannelVideos,
+	fetchDailymotionTrending,
+} from "./video-bridges/dailymotion";
+
+import {
+	fetchVimeoChannelVideos,
+	fetchVimeoTrending,
+} from "./video-bridges/vimeo";
+
+import {
+	fetchTwitchChannelVideos,
+	fetchTwitchTrending,
+} from "./video-bridges/twitch";
+
+import {
+	searchRumble,
+} from "./video-bridges/rumble";
+
+import {
+	searchOdysee,
+} from "./video-bridges/odysee";
+
+import {
+	searchDTube,
+} from "./video-bridges/dtube";
+
+import {
+	searchBitchute,
+} from "./video-bridges/bitchute";
+
+import {
+	searchDailymotion,
+} from "./video-bridges/dailymotion";
+
+import {
+	searchVimeo,
+} from "./video-bridges/vimeo";
+
+import {
+	searchTwitch,
+} from "./video-bridges/twitch";
+
 // ─── Invidious/Piped instances for YouTube (no API key needed) ──────────────
 
 const INVIDIOUS_INSTANCES = [
@@ -158,6 +228,14 @@ export class VideoAggregator {
 		// Search PeerTube for this creator
 		fetchers.push(this.fetchPeerTubeCreatorVideos(creatorId));
 
+		// Search all other platforms for this creator
+		fetchers.push(fetchRumbleChannelVideos(creatorId));
+		fetchers.push(fetchOdyseeChannelVideos(creatorId));
+		fetchers.push(fetchDTubeChannelVideos(creatorId));
+		fetchers.push(fetchBitchuteChannelVideos(creatorId));
+		fetchers.push(fetchDailymotionChannelVideos(creatorId));
+		fetchers.push(fetchVimeoChannelVideos(creatorId));
+
 		// Run all fetchers in parallel
 		const results = await Promise.allSettled(fetchers);
 		const allVideos: UnifiedVideo[] = [];
@@ -193,10 +271,25 @@ export class VideoAggregator {
 
 		// Add platform-specific fetchers
 		if (!opts.platforms || opts.platforms.includes("rumble")) {
-			fetchers.push(this.fetchRumbleTrending(category));
+			fetchers.push(fetchRumbleTrending(category));
 		}
 		if (!opts.platforms || opts.platforms.includes("odysee")) {
-			fetchers.push(this.fetchOdyseeTrending(category));
+			fetchers.push(fetchOdyseeTrending(category));
+		}
+		if (!opts.platforms || opts.platforms.includes("dtube")) {
+			fetchers.push(fetchDTubeTrending(category));
+		}
+		if (!opts.platforms || opts.platforms.includes("bitchute")) {
+			fetchers.push(fetchBitchuteTrending(category));
+		}
+		if (!opts.platforms || opts.platforms.includes("dailymotion")) {
+			fetchers.push(fetchDailymotionTrending(category));
+		}
+		if (!opts.platforms || opts.platforms.includes("vimeo")) {
+			fetchers.push(fetchVimeoTrending(category));
+		}
+		if (!opts.platforms || opts.platforms.includes("twitch")) {
+			fetchers.push(fetchTwitchTrending(category));
 		}
 
 		const results = await Promise.allSettled(fetchers);
@@ -280,6 +373,29 @@ export class VideoAggregator {
 			this.searchYouTube(query),
 			this.searchPeerTube(query),
 		];
+
+		// Add platform searches based on opts.platforms filter
+		if (!opts.platforms || opts.platforms.includes("rumble")) {
+			fetchers.push(searchRumble(query));
+		}
+		if (!opts.platforms || opts.platforms.includes("odysee")) {
+			fetchers.push(searchOdysee(query));
+		}
+		if (!opts.platforms || opts.platforms.includes("dtube")) {
+			fetchers.push(searchDTube(query));
+		}
+		if (!opts.platforms || opts.platforms.includes("bitchute")) {
+			fetchers.push(searchBitchute(query));
+		}
+		if (!opts.platforms || opts.platforms.includes("dailymotion")) {
+			fetchers.push(searchDailymotion(query));
+		}
+		if (!opts.platforms || opts.platforms.includes("vimeo")) {
+			fetchers.push(searchVimeo(query));
+		}
+		if (!opts.platforms || opts.platforms.includes("twitch")) {
+			fetchers.push(searchTwitch(query));
+		}
 
 		const results = await Promise.allSettled(fetchers);
 		const allVideos: UnifiedVideo[] = [];
