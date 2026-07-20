@@ -12,12 +12,7 @@
 
 import { type Env, jsonResponse, noCacheJsonResponse } from "../index";
 import { requireSession } from "../session";
-
-// ─── KV key helpers ──────────────────────────────────────────
-
-function kvKey(address: string): string {
-	return `bookmarks:${address.toLowerCase()}`;
-}
+import { bookmarksKey } from "../kv-key-patterns";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -65,7 +60,7 @@ export async function handleBookmarkAdd(
 			return jsonResponse({ error: "Bookmarks storage not configured" }, 500);
 		}
 
-		const key = kvKey(session.address);
+		const key = bookmarksKey(session.address);
 		let bookmarks: BookmarkEntry[] = [];
 
 		const existingRaw = await env.BOOKMARKS.get(key);
@@ -120,7 +115,7 @@ export async function handleBookmarkRemove(
 		return jsonResponse({ error: "Bookmarks storage not configured" }, 500);
 	}
 
-	const key = kvKey(session.address);
+	const key = bookmarksKey(session.address);
 	const existingRaw = await env.BOOKMARKS.get(key);
 
 	if (!existingRaw) {
@@ -160,7 +155,7 @@ export async function handleBookmarkList(
 		return noCacheJsonResponse({ bookmarks: [] });
 	}
 
-	const key = kvKey(session.address);
+	const key = bookmarksKey(session.address);
 	const raw = await env.BOOKMARKS.get(key);
 
 	if (!raw) {
@@ -208,7 +203,7 @@ export async function handleBookmarkCheck(
 		return noCacheJsonResponse({ bookmarked: false });
 	}
 
-	const key = kvKey(session.address);
+	const key = bookmarksKey(session.address);
 	const raw = await env.BOOKMARKS.get(key);
 
 	if (!raw) {

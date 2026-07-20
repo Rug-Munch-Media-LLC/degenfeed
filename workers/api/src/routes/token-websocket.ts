@@ -106,9 +106,7 @@ function setupIdleTimeout(
 		timeoutId = setTimeout(() => {
 			try {
 				server.close(1001, "Idle timeout");
-			} catch {
-				/* ignore */
-			}
+			} catch { /* KV operation failed -- non-critical, continue */ }
 		}, IDLE_TIMEOUT_MS);
 	};
 

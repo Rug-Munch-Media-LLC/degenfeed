@@ -203,9 +203,7 @@ async function farcasterSections(
 		let domain = "";
 		try {
 			domain = frameEmbed ? new URL(frameEmbed.url).hostname : "";
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 		return {
 			id: p.id,
 			label: snippet(p.text) || domain || "Frame",

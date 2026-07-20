@@ -98,9 +98,7 @@ export async function handleStreamFeed(
 		const interval = setInterval(async () => {
 			try {
 				await poll();
-			} catch {
-				/* ignore */
-			}
+			} catch { /* KV operation failed -- non-critical, continue */ }
 		}, 30_000);
 
 		// Clean up on disconnect

@@ -52,6 +52,13 @@ export const VIDEO_SOURCES: Record<string, { label: string; color: string }> = {
 	peertube: { label: "PeerTube", color: "#F1680D" },
 	shorts: { label: "Shorts", color: "#FF0050" },
 	livestream: { label: "Live", color: "#9146FF" },
+	// ─── Cross-platform video sources ──
+	twitch: { label: "Twitch", color: "#9146FF" },
+	rumble: { label: "Rumble", color: "#85C742" },
+	tiktok: { label: "TikTok", color: "#010101" },
+	instagram: { label: "Instagram", color: "#E1306C" },
+	odysee: { label: "Odysee", color: "#FF6A00" },
+	zora: { label: "Zora", color: "#0052FF" },
 };
 
 // ─── Keyword maps for auto-categorization ─────────────────────────────────

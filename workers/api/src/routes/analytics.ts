@@ -1030,9 +1030,7 @@ async function loadGrowthHistory(
 		await env.CACHE?.put(growthKey, JSON.stringify(history), {
 			expirationTtl: 86400 * ttlDays,
 		});
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	// Use last lookbackDays labels (most recent)
 	const recentLabels = labels.slice(-lookbackDays);

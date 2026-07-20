@@ -386,9 +386,7 @@ export async function handleNewsletterSubscribe(
 			await env.CACHE?.put(listKey, [...set].join("\n"), {
 				expirationTtl: 60 * 60 * 24 * 400,
 			});
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 		return jsonResponse({ ok: true, email, action: "unsubscribed" });
 	}
 
@@ -403,9 +401,7 @@ export async function handleNewsletterSubscribe(
 		await env.CACHE?.put(listKey, [...set].join("\n"), {
 			expirationTtl: 60 * 60 * 24 * 400,
 		});
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 	return jsonResponse({
 		ok: true,
 		email,
@@ -441,9 +437,7 @@ export async function handleNewsletterDigest(
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached && fmt === "json")
 			return noCacheJsonResponse(JSON.parse(cached));
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	const posts = await gatherDigestPosts(env, protocols, niches);
 	const trending = computeTrendingTopics(posts, Date.now());
@@ -495,9 +489,7 @@ export async function handleNewsletterDigest(
 		await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 			expirationTtl: 300,
 		});
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 	return noCacheJsonResponse(response);
 }
 

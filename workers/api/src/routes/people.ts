@@ -16,9 +16,7 @@ export async function handleDiscoverPeople(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	// Reuse feed data to discover trending authors
 	try {
@@ -102,9 +100,7 @@ export async function handleDiscoverPeople(
 			await env.CACHE?.put(cacheKey, JSON.stringify(response), {
 				expirationTtl: 300,
 			});
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 
 		return jsonResponse(response);
 	} catch {

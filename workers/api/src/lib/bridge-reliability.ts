@@ -1070,6 +1070,7 @@ export async function getProtocolStats(
 		successOps,
 		failedOps: totalOps - successOps,
 		successRate: totalOps > 0 ? successOps / totalOps : 1,
+		totalLatency,
 		avgLatencyMs: totalOps > 0 ? Math.round(totalLatency / totalOps) : 0,
 		circuitBreakerTripped: circuitState.state === "open",
 		lastError,
@@ -1127,6 +1128,7 @@ function emptyStats(): ProtocolStats {
 		successOps: 0,
 		failedOps: 0,
 		successRate: 1,
+		totalLatency: 0,
 		avgLatencyMs: 0,
 		circuitBreakerTripped: false,
 	};

@@ -50,9 +50,7 @@ export async function handleEmbedResolve(
 	try {
 		const cached = await env.CACHE?.get(cacheKey);
 		if (cached) return jsonResponse(JSON.parse(cached));
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	if (!isValidFetchUrl(url)) return jsonResponse({ error: "Invalid URL" }, 400);
 
@@ -90,9 +88,7 @@ export async function handleEmbedResolve(
 			await env.CACHE?.put(cacheKey, JSON.stringify(embed), {
 				expirationTtl: 86400,
 			});
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 
 		return jsonResponse(embed);
 	} catch {
@@ -159,9 +155,7 @@ async function fetchPostById(
 			const post = JSON.parse(stored) as UnifiedPost;
 			if (!isSpamPost(post)) return post;
 		}
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	// 2. Try the native protocol provider
 	const provider = providerFor(protocol, env);
@@ -198,9 +192,7 @@ async function fetchPostById(
 			enriched.dfUri = `df://${protocol}:${found.id.replace(`${protocol}:`, "")}`;
 			return enriched;
 		}
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	return null;
 }
@@ -368,9 +360,7 @@ export async function handleEmbedPost(
 				},
 			});
 		}
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	// Fetch the post
 	const post = await fetchPostById(canonicalId, protocol, env);
@@ -403,9 +393,7 @@ export async function handleEmbedPost(
 	// Cache the generated HTML
 	try {
 		await env.CACHE?.put(htmlCacheKey, html, { expirationTtl: 300 });
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 
 	return new Response(html, {
 		status: 200,

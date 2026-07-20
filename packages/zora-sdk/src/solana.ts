@@ -59,21 +59,24 @@ export const PROGRAM_ID = new PublicKey(
 );
 
 // PDA seed constants (must match Rust program)
-const SEED_TOKEN_STATE = Buffer.from('token-state');
-const SEED_TOKEN_MINT = Buffer.from('token-mint');
-const SEED_MINT_AUTHORITY = Buffer.from('mint-authority');
-const SEED_TOKEN_VAULT = Buffer.from('token-vault');
-const SEED_BUYER_STATE = Buffer.from('buyer-state');
-const SEED_VESTING_VAULT = Buffer.from('vesting-vault');
-const SEED_RECIPIENT_STATE = Buffer.from('recipient-state');
-const PLATFORM_FEE_VAULT_SEED = Buffer.from('platform-fee-vault');
+// Use TextEncoder instead of Buffer for workers compat
+const _enc = new TextEncoder();
+const SEED_TOKEN_STATE = _enc.encode('token-state');
+const SEED_TOKEN_MINT = _enc.encode('token-mint');
+const SEED_MINT_AUTHORITY = _enc.encode('mint-authority');
+const SEED_TOKEN_VAULT = _enc.encode('token-vault');
+const SEED_BUYER_STATE = _enc.encode('buyer-state');
+const SEED_VESTING_VAULT = _enc.encode('vesting-vault');
+const SEED_RECIPIENT_STATE = _enc.encode('recipient-state');
+const PLATFORM_FEE_VAULT_SEED = _enc.encode('platform-fee-vault');
 
 // ─── PDA Derivation ─────────────────────────────────────────────────────────
 
 /** Derive the TokenState PDA */
 export function deriveTokenState(creator: PublicKey, tokenSeed: bigint): [PublicKey, number] {
-  const seedBuf = Buffer.alloc(8);
-  seedBuf.writeBigUInt64LE(tokenSeed);
+  const seedBuf = new Uint8Array(8);
+  const dv = new DataView(seedBuf.buffer);
+  dv.setBigUint64(0, tokenSeed, true);
   return PublicKey.findProgramAddressSync(
     [SEED_TOKEN_STATE, creator.toBytes(), seedBuf],
     PROGRAM_ID,

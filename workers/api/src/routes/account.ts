@@ -39,9 +39,7 @@ export async function handleAccountExport(
 			data.follows = follows ? JSON.parse(follows) : null;
 			data.mutedAuthors = mutedAuthors ? JSON.parse(mutedAuthors) : null;
 			data.mutedWords = mutedWords ? JSON.parse(mutedWords) : null;
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 	}
 
 	if (env.SUBSCRIPTIONS) {
@@ -53,18 +51,14 @@ export async function handleAccountExport(
 				if (raw) subs[prefix] = JSON.parse(raw);
 			}
 			data.subscriptions = subs;
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 	}
 
 	if (env.BOOKMARKS) {
 		try {
 			const raw = await env.BOOKMARKS.get(`bookmarks:${session.address}`);
 			if (raw) data.bookmarks = JSON.parse(raw);
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 	}
 
 	return noCacheJsonResponse({ data });
@@ -92,9 +86,7 @@ export async function handleAccountDelete(
 				await env.CACHE.delete(key);
 				keysDeleted.push(key);
 			}
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 	}
 
 	if (env.SUBSCRIPTIONS) {
@@ -107,9 +99,7 @@ export async function handleAccountDelete(
 					keysDeleted.push(key);
 				}
 			}
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 	}
 
 	return new Response(JSON.stringify({ ok: true, deleted: keysDeleted }), {

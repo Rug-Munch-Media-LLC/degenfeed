@@ -366,6 +366,14 @@ import {
 	handleShortsFeed,
 	handleShortsForYou,
 	handleShortsTrending,
+	handleShortsShare,
+	handleShortsTip,
+	handleUnifiedFeed,
+	handleUnifiedFeedBySource,
+	handleUnifiedMint,
+	handleUnifiedPublish,
+	handleZoraCreator,
+	handleZoraTrending,
 } from "./routes/shorts";
 import {
 	handleSourcesApprove,
@@ -443,6 +451,7 @@ import {
 	handleWebAuthnRenameCredential,
 } from "./routes/webauthn";
 import youtubeRoutes from "./routes/youtube";
+import zoraVideoRoutes from "./routes/zora-video";
 
 // ─── App ────────────────────────────────────────────────────
 
@@ -759,6 +768,38 @@ app.post("/api/shorts/create", async (c) =>
 	handleCreateShort(c.req.raw, c.env),
 );
 
+// ── Unified multi-protocol publish & mint ─────────
+app.post("/api/shorts/publish", async (c) =>
+	handleUnifiedPublish(c.req.raw, c.env),
+);
+app.post("/api/shorts/mint", async (c) =>
+	handleUnifiedMint(c.req.raw, c.env),
+);
+
+// ── Unified multi-protocol feed ──────────────────
+app.get("/api/shorts/unified/feed", async (c) =>
+	handleUnifiedFeed(c.req.raw, c.env),
+);
+app.get("/api/shorts/unified/:source", async (c) =>
+	handleUnifiedFeedBySource(c.req.raw, c.env),
+);
+
+// ── Cross-platform actions on shorts ─────────────
+app.post("/api/shorts/:id/tip", async (c) =>
+	handleShortsTip(c.req.raw, c.env),
+);
+app.post("/api/shorts/:id/share", async (c) =>
+	handleShortsShare(c.req.raw, c.env),
+);
+
+// ── Zora video NFT endpoints ─────────────────────
+app.get("/api/shorts/zora/trending", async (c) =>
+	handleZoraTrending(c.req.raw, c.env),
+);
+app.get("/api/shorts/zora/creator", async (c) =>
+	handleZoraCreator(c.req.raw, c.env),
+);
+
 // ─── API: YouTube ────────────────────────────────────────
 app.route("/api/youtube", youtubeRoutes);
 
@@ -896,7 +937,7 @@ app.post("/api/cross-protocol-bridge/stream/start", async (c) => {
 		if (!body.streamId) {
 			return jsonResponse({ error: "streamId required" }, 400);
 		}
-		startBridge(c.env, body.streamId, body.announcementResults ?? {});
+		startBridge(c.env, body.streamId, (body.announcementResults ?? {}) as Record<string, { ok: boolean; protocol: string; id?: string; url?: string; error?: string }>);
 		return jsonResponse({ ok: true, streamId: body.streamId });
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
@@ -904,13 +945,13 @@ app.post("/api/cross-protocol-bridge/stream/start", async (c) => {
 	}
 });
 app.post("/api/cross-protocol-bridge/stream/stop", async (c) => {
-	const { stopBridge } = await import("./lib/cross-protocol-chat-bridge");
-	try {
-		const body = (await c.req.json()) as { streamId: string };
-		if (!body.streamId) {
-			return jsonResponse({ error: "streamId required" }, 400);
-		}
-		stopBridge(body.streamId);
+		const { stopBridge } = await import("./lib/cross-protocol-chat-bridge");
+		try {
+			const body = (await c.req.json()) as { streamId: string };
+			if (!body.streamId) {
+				return jsonResponse({ error: "streamId required" }, 400);
+			}
+			stopBridge(c.env, body.streamId);
 		return jsonResponse({ ok: true, streamId: body.streamId });
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
@@ -1468,15 +1509,24 @@ app.route("/api/token", tokenCommunity);
 // ─── API: PeerTube Livestreams (creator token streaming) ───
 app.route("/api/token", peertubeStreams);
 
+// ─── API: Video Aggregator (cross-platform creator following) ──────────
+import { videoAggregator } from "./routes/video-aggregator";
+
+app.route("/api/video/aggregator", videoAggregator);
+
 // ─── API: Video Hub (categorized video discovery across all sources) ───
 app.route("/api/video", videoHub);
+
+// ─── API: Zora Video NFTs (mint, collect, tip, announce) ─────────────────
+app.route("/api/zora/video", zoraVideoRoutes);
 
 // ─── API: DegenFeed Multi-type Streaming (solo, spaces, collab, coin-launch) ───
 app.route("/api/streams", streams);
 app.route("/v1/streams", streams);
 
 // ─── API: Bluesky Feed Generator (DegenFeed Live) ──────────
-app.route("/api/bsky-feed", feedGen);
+// feedGen route handled by bluesky-feed-generator import below
+// app.route("/api/bsky-feed", feedGen);
 
 // ─── WebSocket: Token real-time updates ────────────────────
 app.get("/ws/token/:address", async (c) => {
@@ -2808,7 +2858,7 @@ app.post("/v1/cross-protocol-bridge/stream/start", async (c) => {
 		};
 		if (!body.streamId)
 			return jsonResponse({ error: "streamId required" }, 400);
-		startBridge(c.env, body.streamId, body.announcementResults ?? {});
+		startBridge(c.env, body.streamId, (body.announcementResults ?? {}) as Record<string, { ok: boolean; protocol: string; id?: string; url?: string; error?: string }>);
 		return jsonResponse({ ok: true, streamId: body.streamId });
 	} catch (err) {
 		return jsonResponse(
@@ -2823,7 +2873,7 @@ app.post("/v1/cross-protocol-bridge/stream/stop", async (c) => {
 		const body = (await c.req.json()) as { streamId: string };
 		if (!body.streamId)
 			return jsonResponse({ error: "streamId required" }, 400);
-		stopBridge(body.streamId);
+		stopBridge(c.env, body.streamId);
 		return jsonResponse({ ok: true, streamId: body.streamId });
 	} catch (err) {
 		return jsonResponse(

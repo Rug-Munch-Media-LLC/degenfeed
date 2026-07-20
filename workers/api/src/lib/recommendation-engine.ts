@@ -233,9 +233,7 @@ async function loadInteractions(
 	try {
 		const raw = await env.CACHE?.get(interactionsKey(wallet));
 		if (raw) return JSON.parse(raw) as StoredInteraction[];
-	} catch {
-		/* ignore */
-	}
+	} catch { /* KV operation failed -- non-critical, continue */ }
 	return [];
 }
 
@@ -1018,9 +1016,7 @@ export class RecommendationEngine {
 		try {
 			const raw = await this.env.CACHE?.get(profileKey(wallet));
 			if (raw) return JSON.parse(raw) as UserInterestProfile;
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 		return null;
 	}
 
@@ -1054,9 +1050,7 @@ export class RecommendationEngine {
 		try {
 			const raw = await this.env.CACHE?.get(relatedKey(source, contentId));
 			if (raw) return JSON.parse(raw) as RankedContent[];
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 		return null;
 	}
 
@@ -1101,9 +1095,7 @@ export class RecommendationEngine {
 		try {
 			const cached = await this.env.CACHE?.get(cacheKey);
 			if (cached) return JSON.parse(cached) as ContentItem[];
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 
 		// For now, return empty array — the actual content fetching is done
 		// by the existing provider infrastructure. This engine scores
@@ -1123,9 +1115,7 @@ export class RecommendationEngine {
 		try {
 			const raw = await this.env.CACHE?.get(`rec:content:${source}:${id}`);
 			if (raw) return JSON.parse(raw) as ContentItem;
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 		return null;
 	}
 
@@ -1154,9 +1144,7 @@ export class RecommendationEngine {
 		try {
 			const cached = await this.env.CACHE?.get(cacheKey);
 			if (cached) return JSON.parse(cached) as ContentItem[];
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 		return [];
 	}
 

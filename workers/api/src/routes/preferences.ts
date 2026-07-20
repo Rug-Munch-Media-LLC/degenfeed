@@ -228,9 +228,7 @@ export async function handlePreferences(
 				const parsed = JSON.parse(raw) as Partial<StoredPreferences>;
 				return noCacheJsonResponse({ ...DEFAULT_PREFS, ...parsed });
 			}
-		} catch {
-			/* ignore */
-		}
+		} catch { /* KV operation failed -- non-critical, continue */ }
 		return noCacheJsonResponse(DEFAULT_PREFS);
 	}
 
