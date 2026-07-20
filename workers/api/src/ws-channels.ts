@@ -9,6 +9,8 @@ export const CHANNELS = {
   DM_TYPING: 'dm:typing',
   SPACE_UPDATE: 'space:update',
   TIP_RECEIVED: 'tip:received',
+  /** Real-time cross-platform bridged chat for streams */
+  STREAM_CHAT: 'stream:chat',
 } as const;
 
 export type ChannelName = (typeof CHANNELS)[keyof typeof CHANNELS];

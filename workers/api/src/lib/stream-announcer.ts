@@ -5,7 +5,12 @@
  * Each protocol runs independently — one failure never blocks others.
  *
  * Supports: ActivityPub (Mastodon/GoToSocial), AT Protocol (Bluesky),
- * Nostr (Kind 30311 live events), Farcaster, Lens, Telegram.
+ * Nostr (Kind 30311 live events via NostrLiveBridge), Farcaster,
+ * Lens, Telegram, RSS, Threads (via GoToSocial ActivityPub federation).
+ *
+ * Threads integration works through our GoToSocial instance:
+ * Threads users who follow @degenfeed@social.degenfeed.xyz see our
+ * stream announcements in their Threads feed with plain-text URLs.
  *
  * Uses the existing @degenfeed/* SDKs for real API calls.
  */
@@ -84,6 +89,13 @@ interface AnnouncementTexts {
   farcaster: string;
   lens: string;
   telegram: string;
+  rss: {
+    title: string;
+    description: string;
+    enclosureUrl: string;
+    enclosureType: string;
+  };
+  threads: string;
 }
 
 interface ProtocolAuth {
@@ -110,6 +122,8 @@ interface ResolvedCreatorIdentity {
   farcaster?: ProtocolAuth;
   lens?: ProtocolAuth;
   telegram?: ProtocolAuth;
+  rss?: ProtocolAuth;
+  threads?: ProtocolAuth;
 }
 
 // ─── Main Entry Point ─────────────────────────────────────────────────────
@@ -135,7 +149,7 @@ export async function announceStreamToAllProtocols(
   } catch (err) {
     // If we can't even resolve the identity, mark every protocol as failed
     const msg = err instanceof Error ? err.message : String(err);
-    for (const proto of ['activitypub', 'atproto', 'nostr', 'farcaster', 'lens', 'telegram']) {
+    for (const proto of ['activitypub', 'atproto', 'nostr', 'farcaster', 'lens', 'telegram', 'rss', 'threads']) {
       results[proto] = { ok: false, protocol: proto, error: `Identity resolution failed: ${msg}` };
     }
     return results;
@@ -183,6 +197,24 @@ export async function announceStreamToAllProtocols(
     });
   }
 
+  // RSS is always available
+  if (identity.rss) {
+    tasks.push({
+      protocol: 'rss',
+      fn: () => announceToRss(env, identity.rss!, announcement),
+    });
+  }
+
+  // Threads (Meta's Threads platform via ActivityPub federation)
+  // Actual posting goes through GoToSocial ActivityPub path, but we
+  // add a separate protocol record for tracking and reply polling.
+  if (identity.threads || identity.activitypub) {
+    tasks.push({
+      protocol: 'threads',
+      fn: () => announceToThreads(env, identity.activitypub!, announcement),
+    });
+  }
+
   if (tasks.length === 0) {
     // No linked protocols — nothing to announce
     return results;
@@ -208,6 +240,16 @@ export async function announceStreamToAllProtocols(
   fireStreamSyncEvents(stream, results, env).catch((err) =>
     console.error('[stream-announcer] realtime sync event failed:', err),
   );
+
+  // ── Start cross-protocol chat bridge ──────────────────────────────
+  // Bridges comments/replies from external protocol posts back into
+  // the DegenFeed stream chat, labeled with "via {Protocol}".
+  try {
+    const { startBridge } = await import('./cross-protocol-chat-bridge');
+    startBridge(env, stream.streamId, results);
+  } catch (err) {
+    console.error('[stream-announcer] failed to start chat bridge:', err);
+  }
 
   return results;
 }
@@ -377,6 +419,25 @@ async function resolveIdentity(
     };
   }
 
+  // ── RSS ─────────────────────────────────────────────────────────
+  // RSS is always available — no per-creator auth needed. We use the
+  // server-level DegenFeed RSS feed to publish live stream items.
+  identity.linkedProtocols.push('rss');
+  identity.rss = {
+    handle: 'degenfeed',
+    identifier: 'https://app.degenfeed.xyz/feed/live/rss.xml',
+  };
+
+  // ── Threads / ActivityPub auto-federation ───────────────────────
+  // Threads (Meta's fediverse platform) is reached via ActivityPub
+  // federation. If the creator has a Threads-linked identity, we mark
+  // them for Threads bridge. Actual posting happens through the
+  // existing ActivityPub path since Threads speaks ActivityPub.
+  const threadsInfo = resolved.protocols['threads'];
+  if (threadsInfo?.linked) {
+    identity.linkedProtocols.push('threads');
+  }
+
   // Derive a display handle if we have one
   const firstLinked = identity.activitypub
     ?? identity.atproto
@@ -452,6 +513,15 @@ function buildAnnouncement(stream: StreamAnnouncement): AnnouncementTexts {
     lens: `🔴 ${stream.title}\n${stream.creatorHandle} is streaming on DegenFeed 🎥\n\n${stream.streamUrl}`,
 
     telegram: `<b>🔴 LIVE NOW</b>\n\n<b>${stream.title}</b>\n${stream.creatorHandle} is streaming!\n\n<a href="${stream.streamUrl}">Watch here</a>`,
+
+    rss: {
+      title: `🔴 LIVE: ${stream.title} — ${stream.creatorHandle} on DegenFeed`,
+      description: `${stream.creatorHandle} is ${stream.streamType} on DegenFeed. Watch live: ${stream.streamUrl}`,
+      enclosureUrl: stream.thumbnail || stream.streamUrl,
+      enclosureType: stream.thumbnail ? 'image/jpeg' : 'text/html',
+    },
+
+    threads: `🔴 LIVE NOW: ${stream.title}\n\n${stream.creatorHandle} is streaming ${stream.streamType}\n\n📺 Watch: ${stream.streamUrl}\n\n#Live #${stream.streamType} #DegenFeed`,
   };
 }
 
@@ -787,6 +857,64 @@ async function announceToLens(
   }
 }
 
+// ─── Protocol: RSS Feed Enclosure ──────────────────────────────────────────
+
+/**
+ * Announce the stream as an RSS feed item with enclosure.
+ *
+ * Adds the stream to the DegenFeed master RSS feed so any RSS
+ * reader can pick it up. The enclosure field allows podcast
+ * apps to treat streams as episodes.
+ */
+async function announceToRss(
+  env: Env,
+  _identity: ProtocolAuth,
+  announcement: AnnouncementTexts,
+): Promise<AnnouncementResult> {
+  try {
+    const rssKey = 'rss:live:items';
+    const rssEntry = {
+      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      title: announcement.rss.title,
+      description: announcement.rss.description,
+      enclosureUrl: announcement.rss.enclosureUrl,
+      enclosureType: announcement.rss.enclosureType,
+      pubDate: new Date().toISOString(),
+    };
+
+    // Append to a live RSS items list in KV
+    const existing = await env.CONTENT_STORE?.get(rssKey).catch(() => null);
+    const items: Array<typeof rssEntry> = existing ? JSON.parse(existing) : [];
+    items.unshift(rssEntry);
+    // Keep only the 50 most recent items
+    const trimmed = items.slice(0, 50);
+
+    await env.CONTENT_STORE?.put(rssKey, JSON.stringify(trimmed), {
+      expirationTtl: 86400 * 7,
+    }).catch(() => {});
+
+    // Also update the standard RSS feed cache
+    const rssFeedKey = 'feed:rss:live';
+    await env.CONTENT_STORE?.put(rssFeedKey, JSON.stringify(trimmed), {
+      expirationTtl: 86400,
+    }).catch(() => {});
+
+    return {
+      ok: true,
+      protocol: 'rss',
+      id: rssEntry.id,
+      url: `https://app.degenfeed.xyz/feed/live/rss.xml`,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      ok: false,
+      protocol: 'rss',
+      error: `RSS publish failed: ${msg}`,
+    };
+  }
+}
+
 // ─── Protocol: Telegram ──────────────────────────────────────────────────
 
 /**
@@ -837,6 +965,65 @@ async function announceToTelegram(
       ok: false,
       protocol: 'telegram',
       error: `Telegram send failed: ${msg}`,
+    };
+  }
+}
+
+// ─── Protocol: Threads (Meta via ActivityPub Federation) ────────────────────
+
+/**
+ * Announce the stream to Threads users via ActivityPub federation.
+ *
+ * Threads is Meta's fediverse platform. Integration works through our
+ * GoToSocial (GtS) instance:
+ *   1. We post a status to GoToSocial with Threads-optimized text
+ *   2. Threads users following @degenfeed@social.degenfeed.xyz see it
+ *   3. Threads users can reply (replies appear in GtS context)
+ *   4. We poll those replies via ThreadsStreamBridge.fetchThreadsReplies()
+ *
+ * Threads does NOT support rich embeds — links appear as plain text URLs.
+ */
+async function announceToThreads(
+  env: Env,
+  identity: ProtocolAuth,
+  announcement: AnnouncementTexts,
+): Promise<AnnouncementResult> {
+  const { GtSClient } = await import('@degenfeed/mastodon-sdk');
+
+  const instanceUrl = identity.instanceUrl || env.GTS_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const accessToken = identity.credential || (env as Record<string, string | undefined>).GTS_ACCESS_TOKEN;
+
+  if (!accessToken) {
+    return {
+      ok: false,
+      protocol: 'threads',
+      error: 'No ActivityPub/GoToSocial access token available for Threads bridge',
+    };
+  }
+
+  try {
+    const result = await reliableAnnounce('threads', async () => {
+      const client = new GtSClient(instanceUrl, accessToken);
+
+      // Post with Threads-optimized formatting (no rich embeds, clear URLs)
+      const publishResult = await client.publish(announcement.threads, {
+        visibility: 'public',
+      });
+      return publishResult;
+    }, env);
+
+    return {
+      ok: true,
+      protocol: 'threads',
+      id: result.id,
+      url: result.url,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      ok: false,
+      protocol: 'threads',
+      error: `Threads bridge publish failed: ${msg}`,
     };
   }
 }
