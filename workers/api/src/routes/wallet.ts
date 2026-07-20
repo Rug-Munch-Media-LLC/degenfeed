@@ -9,6 +9,8 @@ import {
 	parseSessionCookie,
 	storeCsrfToken,
 } from "../session";
+import { extractRequestMetadata, logSecurityEvent } from "../lib/security-log";
+import { storeSessionMeta } from "./sessions";
 
 const GTS_SCOPES = "read write follow push";
 const BASE58_ALPHABET =
@@ -286,6 +288,19 @@ export async function handleWalletVerify(
 			body.chain,
 			env.AUTH_SECRET,
 		);
+
+		// Store session metadata for the Sessions List UI (best-effort).
+		await storeSessionMeta(env, payload, request).catch(() => {});
+
+		// Log the login event to security log.
+		const meta = extractRequestMetadata(request);
+		await logSecurityEvent(env, {
+			type: "login_success",
+			address: payload.address,
+			ip: meta.ip,
+			location: meta.location,
+			userAgent: meta.userAgent,
+		}).catch(() => {});
 
 		// Generate and store CSRF token for the new session.
 		// IMPORTANT: parse the cookie value from the Set-Cookie header so the KV key

@@ -16,14 +16,19 @@ import {
 } from '@degenfeed/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
+import SecuritySettings from '../../components/auth/SecuritySettings';
 import {
   CredentialCard,
   CredentialSecurityNote,
   CredentialsProgressBanner,
   registrationToCredential,
 } from '../../components/CredentialsDisplay';
+import { HardwareWalletVerify } from '../../components/auth/HardwareWalletVerify';
+import { PasskeySetup } from '../../components/auth/PasskeySetup';
 import { PremiumPaymentModal } from '../../components/PremiumPaymentModal';
 import { useToast } from '../../components/Toast';
+import { useWeb3 } from '../../components/Web3Provider';
+import { useHardwareWallet2FA } from '../../hooks/useHardwareWallet2FA';
 import type { FontSize, NotificationType, Theme } from '../../hooks/usePreferences';
 import { usePreferences } from '../../hooks/usePreferences';
 import { usePremium } from '../../hooks/usePremium';
@@ -36,6 +41,7 @@ type Section =
   | 'notifications'
   | 'privacy'
   | 'content'
+  | 'security'
   | 'subscription'
   | 'streaming'
   | 'api';
@@ -65,6 +71,16 @@ const SECTION_LABELS: Record<Section, { label: string; icon: string; desc: strin
     label: 'Content',
     icon: 'M4 6h16M4 10h16M4 14h16M4 18h16',
     desc: 'Default feed, muted words, muted & blocked users',
+  },
+  security: {
+    label: 'Security',
+    icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+    desc: 'Passkeys, 2FA, hardware wallet',
+  },
+  security: {
+    label: 'Security',
+    icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+    desc: 'Two-factor authentication (TOTP)',
   },
   subscription: {
     label: 'Subscription',
@@ -420,6 +436,30 @@ export default function SettingsPage() {
   const [email, setEmail] = useState('');
   const [emailSaved, setEmailSaved] = useState(false);
 
+  // ── Hardware Wallet 2FA ──────────────────────────────────────
+  const web3 = useWeb3();
+  const {
+    status: hw2FA,
+    fetchStatus: fetchHw2FA,
+    toggle2FA,
+  } = useHardwareWallet2FA();
+  const [hw2faLoading, setHw2faLoading] = useState(true);
+
+  // Load 2FA status on mount
+  useEffect(() => {
+    fetchHw2FA().finally(() => setHw2faLoading(false));
+  }, [fetchHw2FA]);
+
+  const handleHw2FAToggle = useCallback(async () => {
+    const newState = !hw2FA?.enabled;
+    const ok = await toggle2FA(newState);
+    if (ok) {
+      showToast('success', newState ? 'Hardware wallet 2FA enabled' : 'Hardware wallet 2FA disabled');
+    } else {
+      showToast('error', 'Failed to toggle hardware wallet 2FA');
+    }
+  }, [hw2FA, toggle2FA, showToast]);
+
   // Toast feedback on save to server
   useEffect(() => {
     if (saveStatus === 'saved') {
@@ -547,6 +587,87 @@ export default function SettingsPage() {
                 </button>
               </div>
             </div>
+
+            {/* Hardware Wallet 2FA */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium text-[var(--color-fg)]">
+                    Hardware Wallet 2FA
+                  </div>
+                  <p className="text-xs text-[var(--color-muted)] mt-0.5">
+                    Most secure auth method. Your private key never leaves your hardware device.
+                  </p>
+                </div>
+                {!hw2faLoading && (
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={hw2FA?.enabled ?? false}
+                    data-checked={hw2FA?.enabled ?? false}
+                    onClick={handleHw2FAToggle}
+                    disabled={hw2faLoading}
+                    className="toggle-track shrink-0"
+                  >
+                    <span className="toggle-thumb" />
+                  </button>
+                )}
+              </div>
+
+              {hw2FA?.enabled && (
+                <div className="flex items-start gap-2.5 rounded-lg border border-degen-500/20 bg-degen-500/5 px-3 py-2.5">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="mt-0.5 shrink-0 text-degen-400"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="M9 12l2 2 4-4" />
+                  </svg>
+                  <div>
+                    <p className="text-xs font-medium text-degen-400">Active</p>
+                    <p className="text-xs text-[var(--color-muted)]">
+                      You'll be prompted to sign a challenge on login.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {hw2FA?.enabled && hw2FA.lastVerifiedAt && (
+                <p className="text-[10px] text-[var(--color-muted)]">
+                  Last verified: {new Date(hw2FA.lastVerifiedAt).toLocaleString()}
+                </p>
+              )}
+
+              {!hw2FA?.enabled && walletAddress && (
+                <HardwareWalletVerify
+                  mode="inline"
+                  walletType={walletAddress?.startsWith('0x') ? 'ethereum' : 'solana'}
+                  onVerified={() => {
+                    showToast('success', 'Hardware wallet verified');
+                    toggle2FA(true);
+                    fetchHw2FA();
+                  }}
+                />
+              )}
+
+              {!walletAddress && (
+                <p className="text-xs text-amber-400">
+                  Connect a wallet to enable hardware wallet 2FA.
+                </p>
+              )}
+
+              {hw2faLoading && (
+                <div className="h-5 w-24 animate-pulse rounded bg-[var(--color-overlay)]" />
+              )}
+            </div>
+
+            <hr className="border-[var(--color-glass-border)]" />
 
             {/* Connected Protocols */}
             <div>
@@ -746,6 +867,21 @@ export default function SettingsPage() {
               onChange={(v) => setPrivacy({ ...prefs.privacy, showFollowers: v })}
               label="Show followers"
             />
+          </SettingsSection>
+
+          {/* ─────────── SECURITY ─────────── */}
+          <SettingsSection
+            section="security"
+            isOpen={openSections.includes('security')}
+            onToggle={() => toggleSection('security')}
+          >
+            {/* Hardware Wallet 2FA */}
+            <div className="border-b border-[var(--color-glass-border)] pb-4">
+              <HardwareWalletVerify walletAddress={walletAddress} />
+            </div>
+
+            {/* Passkeys / WebAuthn */}
+            <PasskeySetup />
           </SettingsSection>
 
           {/* ─────────── CONTENT ─────────── */}
