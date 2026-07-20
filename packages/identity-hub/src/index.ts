@@ -115,8 +115,8 @@ export class IdentityHub {
     try {
       const raw = await this.config.kv.get(key);
       if (raw) record = JSON.parse(raw) as CrossProtocolIdentity;
-    } catch {
-      // No existing record
+    } catch (err) {
+      console.warn('[IdentityHub] No existing record — creating new:', err);
     }
 
     // Build protocol-specific identity data
@@ -171,8 +171,8 @@ export class IdentityHub {
     try {
       const raw = await this.config.kv.get(idxKey);
       if (raw) protocolList = JSON.parse(raw) as Protocol[];
-    } catch {
-      // No existing index
+    } catch (err) {
+      console.warn('[IdentityHub] No existing index — creating new:', err);
     }
     if (!protocolList.includes(protocol)) {
       protocolList.push(protocol);
@@ -228,8 +228,8 @@ export class IdentityHub {
           protocols[p] = { linked: false, autoCreated: false };
         }
       }
-    } catch {
-      // KV error — return empty
+    } catch (err) {
+      console.error('[IdentityHub] resolveWallet KV error:', err);
     }
 
     const premium = await this.getPremiumStatus(wallet);
@@ -250,7 +250,8 @@ export class IdentityHub {
     try {
       const raw = await this.config.kv.get(revKey);
       return raw;
-    } catch {
+    } catch (err) {
+      console.error('[IdentityHub] resolveToWallet failed:', err);
       return null;
     }
   }
@@ -272,7 +273,8 @@ export class IdentityHub {
       const raw = await this.config.kv.get(key);
       if (!raw) return null;
       return JSON.parse(raw) as ProtocolCredentials;
-    } catch {
+    } catch (err) {
+      console.error('[IdentityHub] getCredentials failed:', err);
       return null;
     }
   }
@@ -298,8 +300,8 @@ export class IdentityHub {
     try {
       const raw = await this.config.kv.get(idxKey);
       if (raw) return JSON.parse(raw) as Protocol[];
-    } catch {
-      // No index
+    } catch (err) {
+      console.warn('[IdentityHub] No index found:', err);
     }
 
     // Fallback: scan the identity record
@@ -357,8 +359,8 @@ export class IdentityHub {
       if (raw === 'premium') {
         return { isPremium: true, tier: 'premium' };
       }
-    } catch {
-      // KV unavailable — assume free
+    } catch (err) {
+      console.warn('[IdentityHub] KV unavailable for premium check:', err);
     }
     return { isPremium: false, tier: 'free' };
   }
@@ -369,8 +371,8 @@ export class IdentityHub {
     } else {
       try {
         await this.config.kv.delete(premiumKey(wallet));
-      } catch {
-        // Ignore delete failure
+      } catch (err) {
+        console.error('[IdentityHub] Failed to delete premium status:', err);
       }
     }
   }
@@ -462,5 +464,5 @@ export function createIdentityHub(
   return new IdentityHub({ kv, encryptionSecret });
 }
 
-export type { Protocol, CrossProtocolIdentity } from '@degenfeed/utils';
+export type { ProtocolId, CrossProtocolIdentity } from '@degenfeed/utils';
 export { identityKey } from '@degenfeed/utils';

@@ -111,6 +111,9 @@ export interface Env {
   /** KV namespace for DAO governance data (proposals, votes) */
   GOVERNANCE?: KVNamespace;
 
+  /** KV namespace for Feddy Communities — ActivityPub federated groups */
+  FEDDY?: KVNamespace;
+
   /** KV namespace for reputation scores, history, and leaderboard */
   REPUTATION?: KVNamespace;
 

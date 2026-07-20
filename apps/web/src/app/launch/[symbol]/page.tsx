@@ -60,6 +60,32 @@ function formatCompact(n: number): string {
   return String(n);
 }
 
+/* ─── Metric Card ────────────────────────────────────── */
+
+function MetricCard({
+  label,
+  value,
+  accent,
+  sub,
+  subUp,
+}: { label: string; value: string; accent?: boolean; sub?: string; subUp?: boolean }) {
+  return (
+    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-2.5 sm:p-3">
+      <span className="text-[9px] sm:text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+        {label}
+      </span>
+      <p className={`mt-0.5 text-sm sm:text-base font-bold tabular-nums ${accent ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}>
+        {value}
+      </p>
+      {sub && (
+        <p className={`text-[9px] sm:text-[10px] tabular-nums ${subUp === undefined ? '' : subUp ? 'text-degen-400' : 'text-red-400'}`}>
+          {sub}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /* ─── Skeleton Loading ───────────────────────────────── */
 
 function CoinPageSkeleton() {
@@ -156,7 +182,8 @@ export default function CoinPage() {
             });
           }
         }
-      } catch {
+      } catch (err) {
+        console.error('[CoinPage] Failed to load coin metadata:', err);
         if (!cancelled) {
           setPageData(null);
           setPageError('Failed to load coin data');
@@ -175,8 +202,8 @@ export default function CoinPage() {
   const handleBuy = useCallback(
     (amount: string) => {
       setTxError(null);
-      // TODO: Integrate with wallet/web3 for actual transaction
-      console.log(`Buy ${amount} ${symbol}`);
+      // TODO(#137): Integrate with wallet/web3 for actual transaction
+      console.info('[CoinPage] Buy intent:', { symbol, amount });
     },
     [symbol],
   );
@@ -184,8 +211,8 @@ export default function CoinPage() {
   const handleSell = useCallback(
     (amount: string) => {
       setTxError(null);
-      // TODO: Integrate with wallet/web3 for actual transaction
-      console.log(`Sell ${amount} ${symbol}`);
+      // TODO(#137): Integrate with wallet/web3 for actual transaction
+      console.info('[CoinPage] Sell intent:', { symbol, amount });
     },
     [symbol],
   );
@@ -359,47 +386,17 @@ export default function CoinPage() {
           />
 
           {/* Price + Market data */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-3">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
-                Price
-              </span>
-              <p className="mt-1 text-sm font-bold tabular-nums text-degen-400">
-                {price ? formatBondingPrice(price) : '—'}
-              </p>
-              {curve?.priceChange24h !== undefined && (
-                <p
-                  className={`text-[10px] tabular-nums ${curve.priceChange24h >= 0 ? 'text-degen-400' : 'text-red-400'}`}
-                >
-                  {curve.priceChange24h >= 0 ? '+' : ''}
-                  {curve.priceChange24h.toFixed(2)}% (24h)
-                </p>
-              )}
-            </div>
-            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-3">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
-                Total Raised
-              </span>
-              <p className="mt-1 text-sm font-bold tabular-nums text-[var(--color-fg)]">
-                {totalRaised !== null ? formatBondingUsd(totalRaised) : '—'}
-              </p>
-            </div>
-            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-3">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
-                Holders
-              </span>
-              <p className="mt-1 text-sm font-bold tabular-nums text-[var(--color-fg)]">
-                {holderCount !== null ? formatCompact(holderCount) : '—'}
-              </p>
-            </div>
-            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-3">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
-                Market Cap
-              </span>
-              <p className="mt-1 text-sm font-bold tabular-nums text-[var(--color-fg)]">
-                {curve?.marketCap ? formatBondingUsd(curve.marketCap) : '—'}
-              </p>
-            </div>
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
+            <MetricCard
+              label="Price"
+              value={price ? formatBondingPrice(price) : '—'}
+              accent
+              sub={curve?.priceChange24h !== undefined ? `${curve.priceChange24h >= 0 ? '+' : ''}${curve.priceChange24h.toFixed(2)}% (24h)` : undefined}
+              subUp={curve?.priceChange24h ? curve.priceChange24h >= 0 : undefined}
+            />
+            <MetricCard label="Total Raised" value={totalRaised !== null ? formatBondingUsd(totalRaised) : '—'} />
+            <MetricCard label="Holders" value={holderCount !== null ? formatCompact(holderCount) : '—'} />
+            <MetricCard label="Market Cap" value={curve?.marketCap ? formatBondingUsd(curve.marketCap) : '—'} />
           </div>
 
           {/* Social proof banner */}

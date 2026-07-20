@@ -238,13 +238,14 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
               type="button"
               onClick={() => selectPreset(preset)}
               disabled={preset.locked}
-              className={`relative rounded-xl border p-3 text-left transition-all ${
+              className={`relative rounded-xl border p-3 sm:p-3 text-left transition-all touch-target ${
                 activePreset === preset.id
                   ? 'border-degen-500 bg-degen-500/10 shadow-[0_0_12px_rgba(0,255,65,0.15)]'
                   : preset.locked
                     ? 'border-[var(--color-border)] bg-[var(--color-overlay)]/50 opacity-50 cursor-not-allowed'
                     : 'border-[var(--color-border)] bg-[var(--color-overlay)] hover:border-degen-500/30'
               }`}
+              style={{ minHeight: 48 }}
             >
               <div className="flex items-start justify-between">
                 <span
@@ -397,7 +398,7 @@ export default function VestingConfigPanel({ config, onChange, creatorAllocation
       </div>
 
       {/* Token breakdown */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] p-3">
           <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
             Initial Unlock

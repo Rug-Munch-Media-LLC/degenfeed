@@ -9,6 +9,7 @@ interface CreatorInfoProps {
     socials?: Record<string, string>;
   };
   showSocials?: boolean;
+  loading?: boolean;
   className?: string;
 }
 
@@ -34,11 +35,27 @@ function reputationBadge(score: number): string {
 export default function CreatorInfo({
   creator,
   showSocials = true,
+  loading = false,
   className = '',
 }: CreatorInfoProps) {
+  // Loading state
+  if (loading) {
+    return (
+      <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
+        <div className="flex items-start gap-3">
+          <div className="skeleton h-10 w-10 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <div className="skeleton h-4 w-32 rounded" />
+            <div className="skeleton h-3 w-24 rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 ${className}`}
+      className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}
     >
       <div className="flex items-start gap-3">
         {/* Avatar */}
@@ -59,17 +76,17 @@ export default function CreatorInfo({
 
         {/* Info */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="truncate text-sm font-semibold text-[var(--color-fg)]">
               {creator.name}
             </span>
-            <span className="shrink-0 font-mono text-[10px] text-[var(--color-muted)]">
+            <span className="shrink-0 font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)]">
               {shortenAddress(creator.address)}
             </span>
           </div>
 
           {/* Reputation */}
-          <div className="mt-1 flex items-center gap-2">
+          <div className="mt-1 flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-1">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -87,16 +104,16 @@ export default function CreatorInfo({
                   </svg>
                 ))}
               </div>
-              <span className={`text-[10px] font-semibold ${reputationColor(creator.reputation)}`}>
+              <span className={`text-[9px] sm:text-[10px] font-semibold ${reputationColor(creator.reputation)}`}>
                 {creator.reputation}/100
               </span>
             </div>
-            <span className="rounded bg-[var(--color-accent-glow)] px-1.5 py-0.5 text-[9px] font-medium text-degen-400">
+            <span className="rounded bg-[var(--color-accent-glow)] px-1.5 py-0.5 text-[8px] sm:text-[9px] font-medium text-degen-400">
               {reputationBadge(creator.reputation)}
             </span>
           </div>
 
-          {/* Social links */}
+          {/* Social links — scrollable on mobile */}
           {showSocials && creator.socials && Object.keys(creator.socials).length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {Object.entries(creator.socials).map(([platform, url]) => (
@@ -105,7 +122,7 @@ export default function CreatorInfo({
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
+                  className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-2 py-1 sm:py-0.5 text-[9px] sm:text-[10px] font-medium text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-degen-400 touch-target"
                 >
                   {platform === 'twitter' || platform === 'x'
                     ? '𝕏'
@@ -122,7 +139,7 @@ export default function CreatorInfo({
                               : platform === 'website'
                                 ? '🌐'
                                 : '🔗'}
-                  {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                  <span className="hidden sm:inline">{platform.charAt(0).toUpperCase() + platform.slice(1)}</span>
                 </a>
               ))}
             </div>

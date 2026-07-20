@@ -93,8 +93,8 @@ export default function LaunchPage() {
             });
           }
         }
-      } catch {
-        // Network error — use mock data
+      } catch (err) {
+        console.error('[LaunchPage] Failed to fetch creator coins:', err);
         if (!cancelled) {
           setCoins(generateMockCoins());
           setStats({ totalLaunched: 47, totalVolume: 284_000, activePrebonding: 12 });

@@ -27,9 +27,9 @@ export default function PrebondingLeaderboard({
     return (
       <section className={className}>
         <h2 className="mb-4 text-lg font-bold text-[var(--color-fg)]">{title}</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="skeleton h-44 rounded-xl" />
+            <div key={i} className="skeleton h-36 sm:h-44 rounded-xl" />
           ))}
         </div>
       </section>

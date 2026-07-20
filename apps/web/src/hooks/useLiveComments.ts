@@ -102,8 +102,8 @@ export function useLiveComments(tokenAddress: string): UseLiveCommentsResult {
           try {
             const msg = JSON.parse(event.data);
             handleMessage(msg);
-          } catch {
-            // Ignore malformed messages
+          } catch (err) {
+            console.warn('[useLiveComments] Malformed WS message:', err);
           }
         };
 

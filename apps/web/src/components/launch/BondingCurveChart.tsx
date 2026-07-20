@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import type { TradeEvent } from '../../hooks/useBondingCurve';
+import { useIsMobile } from '../../hooks/useMobileResponsive';
 
 interface BondingCurveChartProps {
   /** Current price in USD */
@@ -14,13 +15,16 @@ interface BondingCurveChartProps {
   compact?: boolean;
   /** Whether data is still loading */
   loading?: boolean;
+  /** Error message */
+  error?: string | null;
+  /** Retry callback */
+  onRetry?: () => void;
   className?: string;
 }
 
 /**
  * Bonding curve chart — lightweight SVG-based price visualization
- * that updates in real-time. Uses a mathematical bonding curve
- * approximation when no trade history is available.
+ * that updates in real-time. Fully responsive across all breakpoints.
  */
 export default function BondingCurveChart({
   price,
@@ -28,60 +32,56 @@ export default function BondingCurveChart({
   priceHistory,
   compact = false,
   loading = false,
+  error = null,
+  onRetry,
   className = '',
 }: BondingCurveChartProps) {
-  // Generate curve points from price history or trades, or use ideal bonding curve
-  const points = useMemo(() => {
-    // If we have explicit price history, use it
-    if (priceHistory && priceHistory.length >= 2) {
-      return priceHistory;
-    }
+  const isMobile = useIsMobile();
 
-    // If we have trades, derive price points from them
+  // Responsive dimensions
+  const height = useMemo(() => {
+    if (compact) return isMobile ? 64 : 80;
+    return isMobile ? 140 : 200;
+  }, [compact, isMobile]);
+
+  const width = 500; // Fixed coordinate space — SVG will scale to fill
+
+  // Generate curve points
+  const points = useMemo(() => {
+    if (priceHistory && priceHistory.length >= 2) return priceHistory;
     if (trades.length >= 2) {
       const sorted = [...trades].sort(
         (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       );
-
       const derived: Array<[number, number]> = [];
-      let runningPrice = 0.0001; // starting price
-
+      let runningPrice = 0.0001;
       for (const trade of sorted) {
         if (trade.type === 'buy') {
-          runningPrice *= 1 + (Math.random() * 0.05 + 0.01); // Simulate price increase on buys
+          runningPrice *= 1 + (Math.random() * 0.05 + 0.01);
         } else {
-          runningPrice *= 1 - (Math.random() * 0.03 + 0.005); // Slight decrease on sells
+          runningPrice *= 1 - (Math.random() * 0.03 + 0.005);
         }
         derived.push([new Date(trade.timestamp).getTime(), runningPrice]);
       }
-
       return derived;
     }
-
-    // No data — generate ideal bonding curve from current price
     if (price && price > 0) {
-      // Generate 20 points following a bonding curve shape: P(x) = P₀ * e^(k*x)
-      const p0 = price * 0.1; // Starting price (10% of current)
-      const k = Math.log(price / p0); // Growth factor
+      const p0 = price * 0.1;
+      const k = Math.log(price / p0);
       return Array.from({ length: 20 }, (_, i) => {
-        const t = i / 19; // 0–1
+        const t = i / 19;
         const curvePrice = p0 * Math.exp(k * t);
         return [t * Date.now(), curvePrice] as [number, number];
       });
     }
-
     return [];
   }, [price, trades, priceHistory]);
 
-  const height = compact ? 80 : 200;
-  const width = compact ? 200 : 500;
-
-  // Calculate SVG path
+  // SVG path calculation
   const { pathDef, gradientId, maxPrice, minPrice } = useMemo(() => {
     if (points.length < 2) {
       return { pathDef: '', gradientId: 'curve-grad', maxPrice: 0, minPrice: 0 };
     }
-
     const prices = points.map(([, p]) => p);
     const maxP = Math.max(...prices, 0.0001);
     const minP = Math.min(...prices, 0.0001);
@@ -89,7 +89,6 @@ export default function BondingCurveChart({
     const padding = range * 0.1;
     const paddedMax = maxP + padding;
     const paddedMin = Math.max(0, minP - padding);
-
     const times = points.map(([t]) => t);
     const minT = Math.min(...times);
     const maxT = Math.max(...times);
@@ -112,16 +111,39 @@ export default function BondingCurveChart({
       maxPrice: maxP,
       minPrice: minP,
     };
-  }, [points, height, width]);
+  }, [points, height]);
 
-  // Loading skeleton
+  // Loading skeleton — mobile friendly
   if (loading) {
     return (
       <div
         className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] ${className}`}
-        style={{ height: compact ? 80 : 200 }}
       >
-        <div className="skeleton h-full w-full rounded-xl" />
+        <div
+          className="skeleton w-full rounded-xl"
+          style={{ height: compact ? (isMobile ? 64 : 80) : isMobile ? 140 : 200 }}
+        />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div
+        className={`flex flex-col items-center justify-center rounded-xl border border-red-500/20 bg-red-500/5 ${className}`}
+        style={{ minHeight: compact ? (isMobile ? 64 : 80) : isMobile ? 140 : 200 }}
+      >
+        <p className="text-xs text-red-400 text-center px-4">{error}</p>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-2 rounded-lg bg-red-500/20 px-3 py-1.5 text-[10px] font-medium text-red-400 hover:bg-red-500/30 touch-target"
+          >
+            Retry
+          </button>
+        )}
       </div>
     );
   }
@@ -131,9 +153,9 @@ export default function BondingCurveChart({
     return (
       <div
         className={`flex items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-card)] ${className}`}
-        style={{ height: compact ? 80 : 200 }}
+        style={{ height: compact ? (isMobile ? 64 : 80) : isMobile ? 140 : 200 }}
       >
-        <span className="text-xs text-[var(--color-muted)]">
+        <span className="text-[10px] sm:text-xs text-[var(--color-muted)]">
           {price ? 'Insufficient trade data' : 'Awaiting first trade...'}
         </span>
       </div>
@@ -147,14 +169,20 @@ export default function BondingCurveChart({
 
   return (
     <div className={`relative ${className}`}>
-      {/* Current price badge */}
+      {/* Current price badge — responsive positioning */}
       {price !== null && !compact && (
-        <div className="absolute right-3 top-3 z-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-glass-bg)] px-3 py-1.5 backdrop-blur-xl">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
-            Current Price
+        <div
+          className={`absolute z-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-glass-bg)] px-2 sm:px-3 py-1 sm:py-1.5 backdrop-blur-xl ${
+            isMobile
+              ? 'left-1/2 -translate-x-1/2 top-1.5'
+              : 'right-3 top-3'
+          }`}
+        >
+          <span className="text-[8px] sm:text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted)]">
+            Price
           </span>
           <div
-            className={`text-lg font-bold tabular-nums ${isUp ? 'text-degen-400' : 'text-red-400'}`}
+            className={`text-sm sm:text-lg font-bold tabular-nums ${isUp ? 'text-degen-400' : 'text-red-400'}`}
           >
             ${price.toFixed(price < 0.01 ? 8 : price < 1 ? 6 : 4)}
           </div>
@@ -165,8 +193,8 @@ export default function BondingCurveChart({
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="w-full rounded-xl"
-        style={{ height: compact ? 80 : 200 }}
-        preserveAspectRatio="none"
+        style={{ height }}
+        preserveAspectRatio="xMidYMid meet"
         aria-label={`Bonding curve chart — ${isUp ? 'upward' : 'downward'} trend, current price ${price ? `$${price}` : 'unknown'}`}
         role="img"
       >
@@ -177,7 +205,7 @@ export default function BondingCurveChart({
           </linearGradient>
         </defs>
 
-        {/* Grid lines (subtle) */}
+        {/* Grid lines */}
         {!compact && (
           <g opacity="0.08">
             {[0.25, 0.5, 0.75].map((frac) => (
@@ -225,9 +253,9 @@ export default function BondingCurveChart({
         )}
       </svg>
 
-      {/* Axis labels (compact mode only shows price) */}
+      {/* Axis labels */}
       {!compact && (
-        <div className="mt-1 flex justify-between text-[10px] text-[var(--color-muted)] tabular-nums">
+        <div className="mt-1 flex justify-between text-[8px] sm:text-[10px] text-[var(--color-muted)] tabular-nums">
           <span>${minPrice.toFixed(6)}</span>
           <span>${maxPrice.toFixed(4)}</span>
         </div>

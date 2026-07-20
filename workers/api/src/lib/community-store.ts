@@ -108,8 +108,9 @@ export async function checkCommentRateLimit(
       expirationTtl: 60,
     });
     return true;
-  } catch {
-    return true;
+  } catch (err) {
+    console.error('[community-store] Comment rate limit check failed:', err);
+    return false; // Fail closed — deny on error
   }
 }
 
@@ -126,8 +127,9 @@ export async function checkPublishRateLimit(
       expirationTtl: 60,
     });
     return true;
-  } catch {
-    return true;
+  } catch (err) {
+    console.error('[community-store] Publish rate limit check failed:', err);
+    return false; // Fail closed — deny on error
   }
 }
 
@@ -144,8 +146,9 @@ export async function checkStreamStartRateLimit(
       expirationTtl: 3600,
     });
     return true;
-  } catch {
-    return true;
+  } catch (err) {
+    console.error('[community-store] Stream rate limit check failed:', err);
+    return false; // Fail closed — deny on error
   }
 }
 
@@ -162,8 +165,9 @@ export async function checkIdentityLinkRateLimit(
       expirationTtl: 3600,
     });
     return true;
-  } catch {
-    return true;
+  } catch (err) {
+    console.error('[community-store] Identity rate limit check failed:', err);
+    return false; // Fail closed — deny on error
   }
 }
 
@@ -199,7 +203,8 @@ export async function getTokenComments(
       nextCursor: hasMore ? (list as unknown as { cursor: string }).cursor : undefined,
       total: enriched.length,
     };
-  } catch {
+  } catch (err) {
+    console.error('[community-store] getTokenComments failed:', err);
     return { comments: [], total: 0 };
   }
 }
@@ -242,8 +247,8 @@ async function calculateBadges(
     if (Number(comment.holderAmount) > 1_000_000) badges.push('whale');
     if (comment.isCreator) badges.push('creator');
     if (stats.totalComments > 50) badges.push('superfan');
-  } catch {
-    // Badges aren't critical — continue without them
+  } catch (err) {
+    console.error('[community-store] Badge calculation failed:', err);
   }
   return badges;
 }
@@ -257,7 +262,8 @@ export async function getUserBadges(
     const badgeKey = key('badge', tokenAddress, wallet.toLowerCase());
     const raw = await getStore(env).get(badgeKey);
     return raw ? (JSON.parse(raw) as UserBadge[]) : [];
-  } catch {
+  } catch (err) {
+    console.error('[community-store] getUserBadges failed:', err);
     return [];
   }
 }
@@ -329,7 +335,8 @@ export async function getActiveStream(
     const stream = JSON.parse(raw) as TokenStream;
     if (!stream.isActive) return null;
     return stream;
-  } catch {
+  } catch (err) {
+    console.error('[community-store] getActiveStream failed:', err);
     return null;
   }
 }
@@ -408,8 +415,8 @@ export async function updateOnlineHeartbeat(
     await getStore(env).put(onlineKey, String(Date.now()), {
       expirationTtl: 60, // 60s TTL — auto-cleanup when user leaves
     });
-  } catch {
-    // Non-critical
+  } catch (err) {
+    console.error('[community-store] Heartbeat failed:', err);
   }
 }
 
@@ -421,7 +428,8 @@ export async function getOnlineCount(
     const prefix = key('online', tokenAddress);
     const list = await getStore(env).list({ prefix });
     return list.keys.length;
-  } catch {
+  } catch (err) {
+    console.error('[community-store] getOnlineCount failed:', err);
     return 0;
   }
 }
@@ -437,7 +445,8 @@ export async function getRecentBuyCount(
     const prefix = key('buy', 'recent', tokenAddress);
     const list = await getStore(env).list({ prefix });
     return list.keys.length;
-  } catch {
+  } catch (err) {
+    console.error('[community-store] getRecentBuyCount failed:', err);
     return 0;
   }
 }
@@ -452,7 +461,8 @@ export async function getMilestones(
     const milestoneKey = key('milestones', tokenAddress);
     const raw = await getStore(env).get(milestoneKey);
     return raw ? (JSON.parse(raw) as TokenMilestone[]) : [];
-  } catch {
+  } catch (err) {
+    console.error('[community-store] getMilestones failed:', err);
     return [];
   }
 }
@@ -563,7 +573,8 @@ export async function getHolderLeaderboard(
     // Sort by amount descending
     entries.sort((a, b) => Number(b.amount) - Number(a.amount));
     return entries.slice(0, limit);
-  } catch {
+  } catch (err) {
+    console.error('[community-store] getHolderLeaderboard failed:', err);
     return [];
   }
 }

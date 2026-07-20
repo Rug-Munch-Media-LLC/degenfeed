@@ -119,7 +119,7 @@ export interface EvmBuyInput {
 
 // ─── Unified types ─────────────────────────────────────────────────────────
 
-export type Chain = 'solana' | 'base' | 'optimism' | 'arbitrum';
+export type Chain = 'solana' | 'ethereum' | 'base' | 'optimism' | 'arbitrum' | 'polygon';
 
 export interface CreateTokenOptions {
   chain: Chain;

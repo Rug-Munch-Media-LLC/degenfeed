@@ -42,20 +42,20 @@ export default function MilestoneTracker({
 
   if (compact) {
     return (
-      <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 ${className}`}>
+      <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
         <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           🏆 Community Progress
         </h3>
 
         {/* Next milestone progress bar */}
         <div className="mb-2">
-          <div className="flex items-center justify-between text-xs text-[var(--color-muted)] mb-1">
-            <span>
+          <div className="flex items-center justify-between text-[11px] sm:text-xs text-[var(--color-muted)] mb-1">
+            <span className="truncate">
               {nextMilestone.progress >= 100
                 ? 'All milestones reached!'
                 : `${stats.holders}/${nextMilestone.target} ${nextMilestone.type}`}
             </span>
-            <span>{nextMilestone.progress}%</span>
+            <span className="shrink-0">{nextMilestone.progress}%</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-overlay)]">
             <div
@@ -64,14 +64,14 @@ export default function MilestoneTracker({
             />
           </div>
           {nextMilestone.reward && nextMilestone.progress < 100 && (
-            <p className="mt-1 text-[10px] text-[var(--color-muted)]">
+            <p className="mt-1 text-[9px] sm:text-[10px] text-[var(--color-muted)]">
               Next: {nextMilestone.reward}
             </p>
           )}
         </div>
 
-        {/* Milestone grid */}
-        <div className="flex flex-wrap gap-1.5">
+        {/* Milestone badges — scrollable on mobile */}
+        <div className="flex flex-wrap gap-1 sm:gap-1.5">
           {MILESTONES.map((m) => (
             <MilestoneBadge
               key={`${m.type}-${m.value}`}
@@ -87,38 +87,38 @@ export default function MilestoneTracker({
   }
 
   return (
-    <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 ${className}`}>
-      <h3 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+    <div className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 sm:p-4 ${className}`}>
+      <h3 className="mb-2 sm:mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
         🏆 Community Goals
       </h3>
 
       {/* Next milestone progress */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between text-sm mb-1.5">
-          <span className="text-[var(--color-fg)] font-medium">
+      <div className="mb-3 sm:mb-4">
+        <div className="flex items-center justify-between text-xs sm:text-sm mb-1 sm:mb-1.5">
+          <span className="text-[var(--color-fg)] font-medium truncate">
             {nextMilestone.progress >= 100
               ? '🎉 All milestones reached!'
               : `${stats.holders} / ${nextMilestone.target} ${nextMilestone.type}`}
           </span>
-          <span className="text-xs font-bold tabular-nums text-degen-400">
+          <span className="text-[11px] sm:text-xs font-bold tabular-nums text-degen-400 shrink-0">
             {nextMilestone.progress}%
           </span>
         </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-[var(--color-overlay)]">
+        <div className="h-2 sm:h-3 w-full overflow-hidden rounded-full bg-[var(--color-overlay)]">
           <div
             className="h-full rounded-full bg-gradient-to-r from-degen-500 via-fuchsia-500 to-purple-500 transition-all duration-1000 ease-out"
             style={{ width: `${Math.min(100, nextMilestone.progress)}%` }}
           />
         </div>
         {nextMilestone.reward && nextMilestone.progress < 100 && (
-          <p className="mt-1.5 text-xs text-[var(--color-muted)]">
+          <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-[var(--color-muted)]">
             Next reward: <span className="font-medium text-degen-400">{nextMilestone.reward}</span>
           </p>
         )}
       </div>
 
-      {/* Milestone grid */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      {/* Milestone grid — responsive */}
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2">
         {MILESTONES.map((m) => (
           <MilestoneBadge
             key={`${m.type}-${m.value}`}
@@ -147,19 +147,19 @@ function MilestoneBadge({
 }) {
   return (
     <div
-      className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 transition-all ${
+      className={`inline-flex items-center gap-1 rounded-lg border px-1.5 sm:px-2 py-1 transition-all ${
         reached
           ? 'border-degen-500/20 bg-degen-500/10 text-degen-400'
           : 'border-[var(--color-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] opacity-60'
       }`}
       title={milestone.reward}
     >
-      <span className="text-sm">{milestone.icon}</span>
-      <span className="text-[10px] font-medium">
+      <span className="text-[10px] sm:text-sm">{milestone.icon}</span>
+      <span className="text-[9px] sm:text-[10px] font-medium">
         {milestone.value}{milestone.type === 'holders' ? 'H' : milestone.type === 'volume' ? 'ETH' : 'D'}
       </span>
       {showLabel && (
-        <span className="text-[9px] text-[var(--color-muted)] truncate max-w-[80px]">
+        <span className="text-[8px] sm:text-[9px] text-[var(--color-muted)] truncate max-w-[60px] sm:max-w-[80px]">
           {milestone.reward}
         </span>
       )}

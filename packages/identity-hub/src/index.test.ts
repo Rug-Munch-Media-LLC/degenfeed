@@ -7,20 +7,22 @@ import { IdentityHub, createIdentityHub } from './index';
 
 // ─── Mock KV ───────────────────────────────────────────────────────────
 
-function createMockKv(): {
-  get: ReturnType<typeof vi.fn>;
-  put: ReturnType<typeof vi.fn>;
-  delete: ReturnType<typeof vi.fn>;
-} {
+type MockKv = {
+  get: (key: string) => Promise<string | null>;
+  put: (key: string, value: string, options?: { expirationTtl?: number }) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+};
+
+function createMockKv(): MockKv {
   const store = new Map<string, string>();
   return {
-    get: vi.fn().mockImplementation(async (key: string) => store.get(key) ?? null),
+    get: vi.fn().mockImplementation(async (key: string) => store.get(key) ?? null) as MockKv['get'],
     put: vi.fn().mockImplementation(async (key: string, value: string) => {
       store.set(key, value);
-    }),
+    }) as MockKv['put'],
     delete: vi.fn().mockImplementation(async (key: string) => {
       store.delete(key);
-    }),
+    }) as MockKv['delete'],
   };
 }
 

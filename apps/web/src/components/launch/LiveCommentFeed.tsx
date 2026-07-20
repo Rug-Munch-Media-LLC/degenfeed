@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLiveComments } from '../../hooks/useLiveComments';
 import type { TokenComment } from '../../hooks/useLiveComments';
+import { useIsMobile, useKeyboardHeight } from '../../hooks/useMobileResponsive';
 
 /* ─── Config ─────────────────────────────────────────── */
 
@@ -37,10 +38,14 @@ export default function LiveCommentFeed({
   compact = false,
   className = '',
 }: LiveCommentFeedProps) {
+  const isMobile = useIsMobile();
+  const keyboardHeight = useKeyboardHeight();
+
   const { comments, sendComment, isConnected, onlineCount, isLoading } =
     useLiveComments(tokenAddress);
 
   const [text, setText] = useState('');
+  const [collapsed, setCollapsed] = useState(isMobile && compact);
   const [soundEnabled, setSoundEnabled] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(SOUND_ENABLED_KEY) !== 'false';
@@ -50,6 +55,7 @@ export default function LiveCommentFeed({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Auto-scroll on new comments
   useEffect(() => {
@@ -59,11 +65,14 @@ export default function LiveCommentFeed({
     prevLengthRef.current = comments.length;
   }, [comments.length]);
 
-  // Play sound on new comments (only from others)
+  // Scroll input into view when keyboard appears
   useEffect(() => {
-    if (!soundEnabled || comments.length === 0) return;
-    // Sound effect handled by CSS animation instead of audio to avoid autoplay restrictions
-  }, [soundEnabled, comments.length]);
+    if (keyboardHeight > 0 && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [keyboardHeight]);
 
   const handleSend = async () => {
     const trimmed = text.trim();
@@ -96,12 +105,54 @@ export default function LiveCommentFeed({
     localStorage.setItem(SOUND_ENABLED_KEY, String(next));
   };
 
+  // Touch-to-retry for error state
+  const handleRetry = useCallback(() => {
+    setError(null);
+    // Force re-fetch handled by parent
+  }, []);
+
+  // Error state
+  if (error) {
+    return (
+      <div
+        className={`flex flex-col items-center justify-center rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-center ${className}`}
+      >
+        <p className="text-xs text-red-400">{error}</p>
+        <button
+          type="button"
+          onClick={handleRetry}
+          className="mt-2 rounded-lg bg-red-500/20 px-3 py-1.5 text-[10px] font-medium text-red-400 hover:bg-red-500/30 touch-target"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] ${className}`}
+      style={keyboardHeight > 0 && isMobile ? { paddingBottom: keyboardHeight } : undefined}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-3 py-2">
+      {/* Header — collapsible on mobile */}
+      <div
+        className={`flex items-center justify-between border-b border-[var(--color-border)] px-3 py-2 ${
+          isMobile ? 'collapsible-mobile-header' : ''
+        }`}
+        onClick={() => {
+          if (isMobile) setCollapsed(!collapsed);
+        }}
+        onKeyDown={(e) => {
+          if (isMobile && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            setCollapsed(!collapsed);
+          }
+        }}
+        role={isMobile ? 'button' : undefined}
+        tabIndex={isMobile ? 0 : undefined}
+        aria-label={collapsed ? 'Expand comments' : 'Collapse comments'}
+        aria-expanded={!collapsed}
+      >
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
             <span
@@ -122,10 +173,12 @@ export default function LiveCommentFeed({
           {!compact && (
             <button
               type="button"
-              onClick={toggleSound}
-              className="rounded p-1 text-[11px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleSound();
+              }}
+              className="rounded p-1.5 text-[11px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors touch-target"
               aria-label={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
-              title={soundEnabled ? 'Mute sounds' : 'Enable sounds'}
             >
               {soundEnabled ? '🔊' : '🔇'}
             </button>
@@ -133,64 +186,92 @@ export default function LiveCommentFeed({
           <span className="text-[10px] tabular-nums text-[var(--color-muted)]">
             {comments.length}
           </span>
+          {isMobile && (
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className={`text-[var(--color-muted)] transition-transform ${collapsed ? '' : 'rotate-180'}`}
+            >
+              <polyline points="18 15 12 9 6 15" />
+            </svg>
+          )}
         </div>
       </div>
 
-      {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2"
-        style={{ maxHeight: compact ? 240 : 400, minHeight: compact ? 120 : 200 }}
-      >
-        {isLoading && comments.length === 0 && (
-          <div className="flex items-center justify-center py-8">
-            <div className="flex flex-col items-center gap-2">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-degen-500 border-t-transparent" />
-              <span className="text-xs text-[var(--color-muted)]">Loading comments...</span>
+      {/* Messages — hidden when collapsed */}
+      {!collapsed && (
+        <>
+          <div
+            ref={scrollRef}
+            className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2"
+            style={{ maxHeight: isMobile ? '40vh' : compact ? 240 : 400, minHeight: compact ? 80 : 120 }}
+          >
+            {isLoading && comments.length === 0 && (
+              <div className="space-y-2 py-4">
+                {Array.from({ length: isMobile ? 2 : 3 }).map((_, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <div className="skeleton h-5 w-5 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-1">
+                      <div className="skeleton h-3 w-24 rounded" />
+                      <div className="skeleton h-4 w-full rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!isLoading && comments.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-6 sm:py-8 text-center">
+                <div className="mb-2 text-xl opacity-30">💬</div>
+                <span className="text-xs text-[var(--color-muted)]">
+                  No comments yet. Be the first to shill!
+                </span>
+              </div>
+            )}
+
+            {comments.map((c) => (
+              <CommentBubble key={c.id} comment={c} />
+            ))}
+          </div>
+
+          {/* Error toast */}
+          {sendError && (
+            <div className="mx-3 mb-1 rounded-md bg-red-500/10 px-2 py-1 text-[10px] text-red-400">
+              {sendError}
             </div>
+          )}
+
+          {/* Input */}
+          <div className="flex items-center gap-2 border-t border-[var(--color-border)] px-3 py-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Shill this coin! 🚀"
+              maxLength={1000}
+              disabled={isSending}
+              className="min-w-0 flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2.5 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none transition-colors focus:border-degen-500/30 disabled:opacity-50"
+              autoComplete="off"
+            />
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={!text.trim() || isSending}
+              className="btn-primary shrink-0 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-50 touch-target"
+              style={{ minHeight: 44 }}
+            >
+              {isSending ? '...' : 'Send'}
+            </button>
           </div>
-        )}
-
-        {!isLoading && comments.length === 0 && (
-          <div className="flex items-center justify-center py-8 text-xs text-[var(--color-muted)]">
-            No comments yet. Be the first to shill!
-          </div>
-        )}
-
-        {comments.map((c) => (
-          <CommentBubble key={c.id} comment={c} />
-        ))}
-      </div>
-
-      {/* Error toast */}
-      {sendError && (
-        <div className="mx-3 mb-1 rounded-md bg-red-500/10 px-2 py-1 text-[10px] text-red-400">
-          {sendError}
-        </div>
+        </>
       )}
-
-      {/* Input */}
-      <div className="flex items-center gap-2 border-t border-[var(--color-border)] px-3 py-2">
-        <input
-          ref={inputRef}
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Shill this coin! 🚀"
-          maxLength={1000}
-          disabled={isSending}
-          className="min-w-0 flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-1.5 text-sm text-[var(--color-fg)] placeholder-[var(--color-muted)] outline-none transition-colors focus:border-degen-500/30 disabled:opacity-50"
-        />
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={!text.trim() || isSending}
-          className="btn-primary shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-50"
-        >
-          {isSending ? '...' : 'Send'}
-        </button>
-      </div>
     </div>
   );
 }
@@ -209,7 +290,7 @@ function CommentBubble({ comment }: { comment: TokenComment }) {
 
   return (
     <div
-      className={`group flex items-start gap-2 rounded-md px-2 py-1 transition-colors hover:bg-[var(--color-overlay)] ${creatorClass}`}
+      className={`group flex items-start gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-[var(--color-overlay)] ${creatorClass}`}
     >
       {/* Avatar */}
       <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-degen-500/20">
@@ -228,7 +309,7 @@ function CommentBubble({ comment }: { comment: TokenComment }) {
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
           <span
             className={`text-[11px] font-semibold ${comment.isCreator ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}
           >
@@ -262,14 +343,3 @@ function formatTimeAgo(timestamp: number): string {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
   return `${Math.floor(seconds / 3600)}h`;
 }
-
-/* ─── Badge Styles ────────────────────────────────────── */
-/* These need to be included in your global CSS or module CSS:
-
-.badge-creator { background: rgba(0, 255, 65, 0.15); color: #00ff41; }
-.badge-og      { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
-.badge-early   { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-.badge-first   { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
-.badge-whale   { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
-.badge-superfan { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
-*/

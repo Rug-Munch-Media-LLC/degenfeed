@@ -46,12 +46,12 @@ export default function ProgressBar({
   return (
     <div className={`space-y-1.5 ${className}`}>
       {/* Label row */}
-      <div className={`flex items-center justify-between ${textSize}`}>
-        <span className="font-medium text-[var(--color-fg)]">
+      <div className={`flex items-center justify-between gap-2 ${size === 'sm' ? 'text-[11px] sm:text-xs' : 'text-xs sm:text-sm'}`}>
+        <span className="font-medium text-[var(--color-fg)] truncate">
           {isGraduated ? '🚀 Graduated!' : label || `${Math.round(clamped)}% to graduation`}
         </span>
         {isGraduated && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-degen-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-degen-400">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-degen-500/20 px-2 py-0.5 text-[9px] sm:text-[11px] font-semibold text-degen-400">
             <span className="h-1.5 w-1.5 rounded-full bg-degen-500 animate-pulse" />
             Trading Live
           </span>
