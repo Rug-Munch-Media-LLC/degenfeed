@@ -81,13 +81,13 @@ function getActorInitials(name: string): string {
 function NotificationSkeleton() {
   return (
     <div className="flex items-start gap-3 border-b border-[var(--color-border)] px-4 py-3.5">
-      <div className="h-10 w-10 flex-shrink-0 animate-pulse rounded-full bg-[var(--color-card)]" />
+      <div className="skeleton-shimmer h-10 w-10 flex-shrink-0 rounded-full" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-32 animate-pulse rounded bg-[var(--color-card)]" />
-        <div className="h-2.5 w-48 animate-pulse rounded bg-[var(--color-card)]" />
-        <div className="h-2 w-20 animate-pulse rounded bg-[var(--color-card)]" />
+        <div className="skeleton-shimmer h-3 w-32 rounded" />
+        <div className="skeleton-shimmer h-2.5 w-48 rounded" />
+        <div className="skeleton-shimmer h-2 w-20 rounded" />
       </div>
-      <div className="h-5 w-14 animate-pulse rounded-full bg-[var(--color-card)]" />
+      <div className="skeleton-shimmer h-5 w-14 rounded-full" />
     </div>
   );
 }

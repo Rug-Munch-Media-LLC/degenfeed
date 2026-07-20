@@ -1,7 +1,8 @@
 # DegenFeed Web — Architecture
 
 **Status:** canonical  
-**Last updated:** 2026-07-20
+**Last updated:** 2026-07-20  
+**Protocols:** 18 (Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Twitter/X, Reddit, RSS, PeerTube, Lemmy, YouTube, Discord, Matrix, Webhooks, Email Newsletter, GitHub, Substack/Ghost)
 
 ## Overview
 
@@ -74,6 +75,10 @@ packages/
   rss-sdk/                RSS/Atom feed adapter
   peertube-provider/      PeerTube video API adapter + federated instance discovery
   telegram-sdk/           Telegram Bot API client (Workers-compatible, fetch()-only)
+  discord-sdk/            Discord Bot API & webhook client (Workers-compatible, fetch()-only)
+  matrix-sdk/             Matrix homeserver client for room bridging
+  github-sdk/             GitHub API client for dev activity bridging
+  newsletter-bridge-sdk/  Substack/Ghost RSS bridge for cross-protocol cross-posting
   zora-sdk/               Zora creator coin SDK (sigmoid bonding curve, anti-exploit)
   shorts-provider/        Short-form video provider (integrates PeerTube federated)
   utils/                  Cross-protocol identity utils, video detection, Sentry wrapper
@@ -96,20 +101,26 @@ scripts/                  Deploy, rollback, migration scripts
 
 Each protocol has a corresponding SDK package and worker route handler(s).
 
-| Protocol | SDK Package | Worker Routes | Feed | Post | Tip | Coin | Stream |
-|----------|-------------|---------------|------|------|-----|------|--------|
-| Nostr | `nostr-sdk` | `routes/feed.ts`, `routes/post.ts`, `routes/tip.ts` | ✅ | ✅ | ✅ | — | — |
-| Farcaster | `farcaster-sdk` | `routes/farcaster-feed.ts`, `routes/farcaster-coin.ts` | ✅ | ✅ | ✅ | ✅ | — |
-| Bluesky | `bluesky-sdk` | `routes/feed.ts`, `routes/post.ts`, `routes/bluesky-tip.ts` | ✅ | ✅ | ✅ | — | — |
-| Mastodon | `mastodon-sdk` | `routes/feed.ts`, `routes/mastodon-tip.ts` | ✅ | ✅ | ✅ | — | — |
-| Threads | `threads-sdk` | `routes/feed.ts`, `routes/post.ts` | ✅ | ✅ | — | — | — |
-| Twitter/X | `workers/api/src/...` | `routes/feed.ts` | ✅ | — | — | — | — |
-| Reddit | `workers/api/src/...` | `routes/feed.ts` | ✅ | — | — | — | — |
-| RSS/Atom | `rss-sdk` | `routes/rss.ts`, `routes/news.ts` | ✅ | — | — | — | — |
-| PeerTube | `peertube-provider` | `routes/peertube-streams.ts`, `routes/peertube-tip.ts` | ✅ | ✅ | ✅ | — | ✅ |
-| Lemmy | `workers/api/src/...` | `routes/lemmy-discover.ts`, `routes/lemmy-tip.ts` | ✅ | — | ✅ | — | — |
-| YouTube | `workers/api/src/...` | `routes/feed.ts` | ✅ | — | — | — | — |
-| Lens | `lens-sdk` | `routes/lens.ts`, `routes/lens-coin.ts` | ✅ | — | ✅ | ✅ | — |
+| Protocol | SDK Package | Worker Routes | Feed | Post | Tip | Coin | Stream | Bridge |
+|----------|-------------|---------------|------|------|-----|------|--------|--------|
+| Nostr | `nostr-sdk` | `routes/feed.ts`, `routes/post.ts`, `routes/tip.ts` | ✅ | ✅ | ✅ | — | — | — |
+| Farcaster | `farcaster-sdk` | `routes/farcaster-feed.ts`, `routes/farcaster-coin.ts` | ✅ | ✅ | ✅ | ✅ | — | — |
+| Bluesky | `bluesky-sdk` | `routes/feed.ts`, `routes/post.ts`, `routes/bluesky-tip.ts` | ✅ | ✅ | ✅ | — | — | — |
+| Mastodon | `mastodon-sdk` | `routes/feed.ts`, `routes/mastodon-tip.ts` | ✅ | ✅ | ✅ | — | — | — |
+| Threads | `threads-sdk` | `routes/feed.ts`, `routes/post.ts` | ✅ | ✅ | — | — | — | — |
+| Twitter/X | `workers/api/src/...` | `routes/feed.ts` | ✅ | — | — | — | — | — |
+| Reddit | `workers/api/src/...` | `routes/feed.ts` | ✅ | — | — | — | — | — |
+| RSS/Atom | `rss-sdk` | `routes/rss.ts`, `routes/news.ts` | ✅ | — | — | — | — | — |
+| PeerTube | `peertube-provider` | `routes/peertube-streams.ts`, `routes/peertube-tip.ts` | ✅ | ✅ | ✅ | — | ✅ | — |
+| Lemmy | `workers/api/src/...` | `routes/lemmy-discover.ts`, `routes/lemmy-tip.ts` | ✅ | — | ✅ | — | — | — |
+| YouTube | `workers/api/src/...` | `routes/feed.ts` | ✅ | — | — | — | — | — |
+| Lens | `lens-sdk` | `routes/lens.ts`, `routes/lens-coin.ts` | ✅ | — | ✅ | ✅ | — | — |
+| **Discord** | `discord-sdk` | `routes/discord.ts` | ✅ | ✅ | — | — | — | ✅ |
+| **Matrix** | `matrix-sdk` | `routes/matrix.ts` | ✅ | ✅ | — | — | — | ✅ |
+| **Webhooks** | — | `routes/webhooks.ts` | ✅ | — | — | — | — | ✅ |
+| **Email Newsletter** | — | `routes/newsletter.ts`, `routes/newsletter-send.ts` | ✅ | — | — | — | — | ✅ |
+| **GitHub** | `github-sdk` | `routes/github-connect.ts` | ✅ | ✅ | — | — | — | ✅ |
+| **Substack/Ghost** | `newsletter-bridge-sdk` | `routes/newsletter-bridge.ts` | ✅ | ✅ | — | — | — | ✅ |
 
 ## Data Flow Diagrams
 

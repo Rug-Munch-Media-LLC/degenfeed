@@ -792,7 +792,7 @@ export default function ProfilePage() {
                             className="h-full rounded-full transition-all duration-500"
                             style={{
                               width: `${Math.round((repProgress.progress || 0) * 100)}%`,
-                              background: 'linear-gradient(90deg, #00ff41, #22c55e, #4ade80)',
+                              background: 'linear-gradient(90deg, var(--color-accent), #22c55e, #4ade80)',
                             }}
                           />
                         </div>

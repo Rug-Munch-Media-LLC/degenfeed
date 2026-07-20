@@ -68,13 +68,13 @@ function formatScore(score: number): string {
 function TrendingSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-8 w-48 animate-pulse rounded-lg bg-[var(--color-overlay)]" />
+      <div className="skeleton-shimmer h-8 w-48 rounded-lg" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="card h-32 animate-pulse p-5">
-            <div className="mb-3 h-4 w-3/4 rounded bg-[var(--color-overlay)]" />
-            <div className="mb-2 h-3 w-1/2 rounded bg-[var(--color-overlay)]" />
-            <div className="h-2 w-full rounded bg-[var(--color-overlay)]" />
+          <div key={i} className="card p-5">
+            <div className="skeleton-shimmer mb-3 h-4 w-3/4 rounded-md" />
+            <div className="skeleton-shimmer mb-2 h-3 w-1/2 rounded-md" />
+            <div className="skeleton-shimmer h-2 w-full rounded-md" />
           </div>
         ))}
       </div>

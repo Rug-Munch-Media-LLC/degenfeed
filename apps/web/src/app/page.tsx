@@ -170,7 +170,7 @@ export default function HomePage() {
             {/* Logo */}
             <div className="hero-logo">
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <rect width="40" height="40" rx="10" fill="#00ff41" />
+                <rect width="40" height="40" rx="10" fill="var(--color-accent)" />
                 <text
                   x="20"
                   y="27"

@@ -5,13 +5,13 @@
  */
 
 export function liveIndexKey(): string {
-  return 'spaces:live';
+	return "spaces:live";
 }
 
 export function upcomingIndexKey(): string {
-  return 'spaces:upcoming';
+	return "spaces:upcoming";
 }
 
 export function spaceKey(id: string): string {
-  return `spaces:${id}`;
+	return `spaces:${id}`;
 }

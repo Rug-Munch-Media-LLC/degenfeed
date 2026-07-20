@@ -12,29 +12,32 @@
  *   cursor — pagination cursor (Lemmy page_cursor)
  */
 
-import { buildUnifiedFeed } from '../feed/unified-feed';
-import type { Env } from '../index';
-import { jsonResponse } from '../index';
+import { buildUnifiedFeed } from "../feed/unified-feed";
+import type { Env } from "../index";
+import { jsonResponse } from "../index";
 
-export async function handleUnifiedFeed(request: Request, env: Env): Promise<Response> {
-  const params = new URL(request.url).searchParams;
-  const sources = params.get('sources') ?? 'all';
-  const mix = (params.get('mix') ?? 'balanced') as
-    | 'balanced'
-    | 'social-heavy'
-    | 'video-heavy'
-    | 'discussion-heavy';
-  const section = params.get('section') ?? 'hot';
-  const limit = Math.min(Number(params.get('limit')) || 50, 100);
-  const cursor = params.get('cursor') ?? undefined;
+export async function handleUnifiedFeed(
+	request: Request,
+	env: Env,
+): Promise<Response> {
+	const params = new URL(request.url).searchParams;
+	const sources = params.get("sources") ?? "all";
+	const mix = (params.get("mix") ?? "balanced") as
+		| "balanced"
+		| "social-heavy"
+		| "video-heavy"
+		| "discussion-heavy";
+	const section = params.get("section") ?? "hot";
+	const limit = Math.min(Number(params.get("limit")) || 50, 100);
+	const cursor = params.get("cursor") ?? undefined;
 
-  const result = await buildUnifiedFeed(env, {
-    sources,
-    mix,
-    section,
-    limit,
-    cursor,
-  });
+	const result = await buildUnifiedFeed(env, {
+		sources,
+		mix,
+		section,
+		limit,
+		cursor,
+	});
 
-  return jsonResponse({ data: result.posts, meta: result.meta });
+	return jsonResponse({ data: result.posts, meta: result.meta });
 }

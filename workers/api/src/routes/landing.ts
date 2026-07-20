@@ -59,7 +59,7 @@ export const LANDING_HTML = `<!doctype html>
         <div class="hero-grid" aria-hidden="true"></div>
         <div class="hero-inner">
           <div class="hero-badges">
-            <span class="badge badge-green">✦ Now live — 8 networks</span>
+            <span class="badge badge-green">✦ Now live — 14 networks</span>
             <span class="badge badge-gray">Open source</span>
             <span class="badge badge-blue">No sign-up needed</span>
           </div>
@@ -67,8 +67,8 @@ export const LANDING_HTML = `<!doctype html>
             One window. <span class="accent">Every</span> network.
           </h1>
           <p class="hero-pitch">
-            Browse Nostr, Farcaster, Lens, Bluesky, Threads, <strong>Mastodon</strong>, Reddit, and RSS<br />
-            from a single interface. <strong class="accent">Zero accounts required</strong> to read everything.
+            Browse Nostr, Farcaster, Lens, Bluesky, Threads, <strong>Mastodon</strong>, Reddit, RSS,<br />
+            PeerTube, YouTube, Discord, Matrix, GitHub, and more — from one interface.
           </p>
           <div class="hero-cta">
             <a href="https://app.degenfeed.xyz" class="btn btn-primary btn-large">Open the feed →</a>
@@ -85,7 +85,7 @@ export const LANDING_HTML = `<!doctype html>
             <div class="ps-item" style="--pcolor: #ffa500"><span class="ps-dot"></span>RSS</div>
           </div>
           <div class="stats-row">
-            <div class="stat"><span class="stat-value">7</span><span class="stat-label">Protocols</span></div>
+            <div class="stat"><span class="stat-value">14</span><span class="stat-label">Protocols</span></div>
             <div class="stat"><span class="stat-value">353</span><span class="stat-label">RSS sources</span></div>
             <div class="stat"><span class="stat-value">10M+</span><span class="stat-label">Reachable users</span></div>
             <div class="stat"><span class="stat-value">∞</span><span class="stat-label">Free reads</span></div>
@@ -100,7 +100,7 @@ export const LANDING_HTML = `<!doctype html>
           <article class="card">
             <div class="card-num" aria-hidden="true">01</div>
             <h3>Open the app. See everything.</h3>
-            <p>No sign-up, no wallet, no key. All 7 protocols and RSS feeds load immediately. <strong>Zero friction.</strong></p>
+            <p>No sign-up, no wallet, no key. All 14 protocols and RSS feeds load immediately. <strong>Zero friction.</strong></p>
           </article>
           <article class="card">
             <div class="card-num" aria-hidden="true">02</div>
@@ -143,7 +143,7 @@ export const LANDING_HTML = `<!doctype html>
       </section>
       <section class="protocol-details" aria-labelledby="pd-title">
         <h2 id="pd-title" class="section-title">
-          <span class="bracket" aria-hidden="true">[</span>7 protocols, 1 feed<span class="bracket" aria-hidden="true">]</span>
+          <span class="bracket" aria-hidden="true">[</span>14 protocols, 1 feed<span class="bracket" aria-hidden="true">]</span>
         </h2>
         <div class="pd-grid">
           <article class="pd-card" style="--pcolor:#8e30eb"><div class="pd-icon">☰</div><h3>Nostr</h3><p class="pd-desc">Decentralized relay-based notes. Keys, not accounts.</p><span class="pd-stat">500K+ pubkeys</span></article>
@@ -154,6 +154,14 @@ export const LANDING_HTML = `<!doctype html>
           <article class="pd-card" style="--pcolor:#6364ff"><div class="pd-icon">M</div><h3>Mastodon</h3><p class="pd-desc">Self-hosted GotoSocial. Create a free @degenfeed.xyz account in 30 seconds.</p><span class="pd-stat"><a href="https://social.degenfeed.xyz" target="_blank" rel="noopener" style="color:#6364ff;text-decoration:underline">Create account →</a></span></article>
           <article class="pd-card" style="--pcolor:#ff4500"><div class="pd-icon">R</div><h3>Reddit</h3><p class="pd-desc">Free RSS feeds. No API key required.</p><span class="pd-stat">137 subs</span></article>
           <article class="pd-card" style="--pcolor:#ffa500"><div class="pd-icon">A</div><h3>RSS + Articles</h3><p class="pd-desc">Mirror, Substack, Medium, Paragraph, and any feed URL.</p><span class="pd-stat">353 sources</span></article>
+          <article class="pd-card" style="--pcolor:#e74ccc"><div class="pd-icon">▶</div><h3>YouTube</h3><p class="pd-desc">Video content from creator channels.</p><span class="pd-stat">Feeds + discovery</span></article>
+          <article class="pd-card" style="--pcolor:#f96854"><div class="pd-icon">P</div><h3>PeerTube</h3><p class="pd-desc">Federated video + livestreaming.</p><span class="pd-stat">Self-hosted instance</span></article>
+          <article class="pd-card" style="--pcolor:#5865f2"><div class="pd-icon">#</div><h3>Discord</h3><p class="pd-desc">Connect servers, bridge announcements, cross-post to channels.</p><span class="pd-stat">Webhook bridge</span></article>
+          <article class="pd-card" style="--pcolor:#0dbd8b"><div class="pd-icon">M</div><h3>Matrix</h3><p class="pd-desc">Open federation messaging bridge to rooms.</p><span class="pd-stat">Decentralized chat</span></article>
+          <article class="pd-card" style="--pcolor:#f1502f"><div class="pd-icon">◆</div><h3>GitHub</h3><p class="pd-desc">Dev-focused: repo releases, PRs, stars → DegenFeed.</p><span class="pd-stat">Post releases</span></article>
+          <article class="pd-card" style="--pcolor:#333"><div class="pd-icon">☐</div><h3>Webhooks</h3><p class="pd-desc">Connect any service. Custom triggers for posts, tips, streams.</p><span class="pd-stat">Any service</span></article>
+          <article class="pd-card" style="--pcolor:#ee4c2c"><div class="pd-icon">✉</div><h3>Email Newsletter</h3><p class="pd-desc">Send digests to subscribers via SendGrid/Mailgun/SMTP.</p><span class="pd-stat">Send &amp; manage</span></article>
+          <article class="pd-card" style="--pcolor:#ff6719"><div class="pd-icon">S</div><h3>Substack / Ghost</h3><p class="pd-desc">Auto-cross-post newsletter articles to all protocols.</p><span class="pd-stat">RSS bridge</span></article>
         </div>
       </section>
       <section class="stack" aria-labelledby="stack-title">
@@ -462,43 +470,43 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 console.log('[DegenFeed] Landing page loaded');`;
 
 function htmlResponse(body: string, cacheSeconds = 300): Response {
-  return new Response(body, {
-    status: 200,
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'cache-control': `public, max-age=${cacheSeconds}`,
-    },
-  });
+	return new Response(body, {
+		status: 200,
+		headers: {
+			"content-type": "text/html; charset=utf-8",
+			"cache-control": `public, max-age=${cacheSeconds}`,
+		},
+	});
 }
 
 function cssResponse(body: string): Response {
-  return new Response(body, {
-    status: 200,
-    headers: {
-      'content-type': 'text/css; charset=utf-8',
-      'cache-control': 'public, max-age=3600',
-    },
-  });
+	return new Response(body, {
+		status: 200,
+		headers: {
+			"content-type": "text/css; charset=utf-8",
+			"cache-control": "public, max-age=3600",
+		},
+	});
 }
 
 function jsResponse(body: string): Response {
-  return new Response(body, {
-    status: 200,
-    headers: {
-      'content-type': 'application/javascript; charset=utf-8',
-      'cache-control': 'public, max-age=3600',
-    },
-  });
+	return new Response(body, {
+		status: 200,
+		headers: {
+			"content-type": "application/javascript; charset=utf-8",
+			"cache-control": "public, max-age=3600",
+		},
+	});
 }
 
 export function handleLandingHtml(_request: Request, _env: unknown): Response {
-  return htmlResponse(LANDING_HTML);
+	return htmlResponse(LANDING_HTML);
 }
 
 export function handleLandingCss(_request: Request, _env: unknown): Response {
-  return cssResponse(LANDING_CSS);
+	return cssResponse(LANDING_CSS);
 }
 
 export function handleLandingJs(_request: Request, _env: unknown): Response {
-  return jsResponse(LANDING_JS);
+	return jsResponse(LANDING_JS);
 }
