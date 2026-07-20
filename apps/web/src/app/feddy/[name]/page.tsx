@@ -12,6 +12,7 @@ import { JoinButton } from '../../../components/feddy/JoinButton';
 import { ModPanel } from '../../../components/feddy/ModPanel';
 import { PremiumUpsell } from '../../../components/feddy/PremiumUpsell';
 import { usePremium } from '../../../hooks/usePremium';
+import { GoLiveModal } from '../../../components/streams/GoLiveModal';
 import type { FeddyCommunity, CommunityMember as Member, CommunityPost as Post, CommunityStats, MemberRole } from '../../../components/feddy/types';
 
 // ─── Skeleton ──────────────────────────────────────────────────────────
@@ -57,6 +58,7 @@ export default function CommunityPage({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'feed' | 'members' | 'rules' | 'about'>('feed');
   const [showModPanel, setShowModPanel] = useState(false);
+  const [showGoLiveModal, setShowGoLiveModal] = useState(false);
 
   const fetchCommunity = useCallback(async () => {
     setLoading(true);
@@ -138,10 +140,17 @@ export default function CommunityPage({
           >
             Create Community
           </Link>
-        </div>
       </div>
-    );
-  }
+
+      {/* Go Live Modal */}
+      <GoLiveModal
+        isOpen={showGoLiveModal}
+        onClose={() => setShowGoLiveModal(false)}
+        defaultSurfaces={['community', 'visual-feed', 'discover']}
+      />
+    </div>
+  );
+}
 
   const isOwner = viewerRole === 'owner';
   const isMod = viewerRole === 'moderator' || isOwner;
@@ -173,12 +182,25 @@ export default function CommunityPage({
             </button>
           ))}
 
+          {/* Go Live button */}
+          <button
+            type="button"
+            onClick={() => setShowGoLiveModal(true)}
+            className="ml-auto flex items-center gap-1.5 px-3 py-3 text-sm font-medium transition-all border-b-2 border-transparent text-[var(--color-muted)] hover:text-degen-400"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-degen-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-degen-500" />
+            </span>
+            Go Live
+          </button>
+
           {/* Mod button */}
           {(isMod) && (
             <button
               type="button"
               onClick={() => setShowModPanel(!showModPanel)}
-              className={`ml-auto px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${
+              className={`px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${
                 showModPanel
                   ? 'border-degen-500 text-degen-400'
                   : 'border-transparent text-[var(--color-muted)] hover:text-[var(--color-fg)]'

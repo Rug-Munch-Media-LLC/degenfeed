@@ -904,7 +904,9 @@ export async function setMemberRole(
     const members: CommunityMember[] = JSON.parse(raw);
     const idx = members.findIndex((m) => m.wallet === wallet);
     if (idx === -1) return false;
-    members[idx] = { ...members[idx], role };
+    const member = members[idx];
+    if (!member) return false;
+    member.role = role;
     await getStore(env).put(key, JSON.stringify(members));
     return true;
   } catch {
@@ -925,7 +927,9 @@ export async function updateMemberBadges(
     const members: CommunityMember[] = JSON.parse(raw);
     const idx = members.findIndex((m) => m.wallet === wallet);
     if (idx === -1) return false;
-    members[idx] = { ...members[idx], badgeIds };
+    const member = members[idx];
+    if (!member) return false;
+    member.badgeIds = badgeIds;
     await getStore(env).put(key, JSON.stringify(members));
     return true;
   } catch {
@@ -946,7 +950,9 @@ export async function updateMemberTokenBalance(
     const members: CommunityMember[] = JSON.parse(raw);
     const idx = members.findIndex((m) => m.wallet === wallet);
     if (idx === -1) return false;
-    members[idx] = { ...members[idx], tokenBalance: balance };
+    const member = members[idx];
+    if (!member) return false;
+    member.tokenBalance = balance;
     await getStore(env).put(key, JSON.stringify(members));
     return true;
   } catch {
@@ -1037,7 +1043,7 @@ export async function getCommunityPosts(
 
     return {
       posts,
-      cursor: hasMore && postKeys.length > 0 ? postKeys[postKeys.length - 1] : null,
+      cursor: hasMore && postKeys.length > 0 ? (postKeys[postKeys.length - 1] ?? null) : null,
       hasMore,
     };
   } catch {

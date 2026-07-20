@@ -16,6 +16,7 @@
 
 import type { Protocol } from '@degenfeed/types';
 import type { Env } from '../index';
+import type { BlobRef } from '@degenfeed/bluesky-sdk';
 import type { MediaAttachment } from './format-translator';
 import { formatForActivityPub, formatForTelegram } from './format-translator';
 
@@ -270,7 +271,7 @@ async function publishToAtProtocol(
       );
 
       const validUploads = uploads.filter(Boolean) as Array<{
-        image: { $type: string; ref: { $link: string }; mimeType: string; size: number };
+        image: BlobRef;
         alt: string;
       }>;
       if (validUploads.length > 0) {
@@ -300,7 +301,7 @@ async function publishToAtProtocol(
       : formatted.embed
         ? {
             $type: 'app.bsky.embed.images' as const,
-            images: (formatted.embed as { images?: Array<{ image: { $type: string; ref: { $link: string }; mimeType: string; size: number }; alt: string }> }).images?.map((img) => ({
+            images: (formatted.embed as { images?: Array<{ image: BlobRef; alt: string }> }).images?.map((img) => ({
               image: img.image,
               alt: img.alt,
             })) ?? [],

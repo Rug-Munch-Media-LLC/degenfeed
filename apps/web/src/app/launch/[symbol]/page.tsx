@@ -22,6 +22,7 @@ import {
   useBondingCurve,
 } from '../../../hooks/useBondingCurve';
 import { useTokenCommunity } from '../../../hooks/useTokenCommunity';
+import { GoLiveModal } from '../../../components/streams/GoLiveModal';
 
 const ShareModal = dynamic(() => import('../../../components/launch/ShareModal'), { ssr: false });
 
@@ -133,6 +134,7 @@ export default function CoinPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showGoLiveModal, setShowGoLiveModal] = useState(false);
   const [txError, setTxError] = useState<string | null>(null);
 
   // Community engagement data
@@ -530,6 +532,27 @@ export default function CoinPage() {
             onSell={handleSell}
           />
 
+          {/* Go Live / Watch Live */}
+          <div className="flex gap-2">
+            <Link
+              href={`/launch/${symbol}/live`}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-degen-500 to-emerald-500 px-4 py-2.5 text-sm font-bold text-black shadow-lg shadow-degen-500/20 transition-all hover:from-degen-400 hover:to-emerald-400 active:scale-[0.97]"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-black opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-black" />
+              </span>
+              Watch Live Stream
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShowGoLiveModal(true)}
+              className="flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2.5 text-sm font-medium text-[var(--color-fg)] transition-all hover:border-degen-500/30 active:scale-[0.97]"
+            >
+              🎥
+            </button>
+          </div>
+
           {/* Live Trade Feed */}
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]">
             <TradeFeed
@@ -590,6 +613,15 @@ export default function CoinPage() {
         creatorAddress={displayData.address}
         open={showShare}
         onClose={() => setShowShare(false)}
+      />
+
+      {/* Go Live Modal */}
+      <GoLiveModal
+        isOpen={showGoLiveModal}
+        onClose={() => setShowGoLiveModal(false)}
+        defaultCoinAddress={curve?.tokenAddress ?? displayData.address}
+        defaultCoinSymbol={coinSymbol}
+        defaultSurfaces={['coin-page', 'profile', 'visual-feed', 'discover']}
       />
     </div>
   );

@@ -126,6 +126,9 @@ export interface Env {
   LENS_COINS?: KVNamespace;
   /** KV namespace for cross-chain token registrations */
   XCHAIN_REGISTRY?: KVNamespace;
+
+  /** KV namespace for DegenFeed multi-type streaming system — solo, spaces, collab, coin-launch */
+  STREAMS?: KVNamespace;
   /** Zora wrapper factory contract address (Base) */
   ZORA_WRAPPER_FACTORY?: string;
   /** Wormhole bridge address for cross-chain tips */

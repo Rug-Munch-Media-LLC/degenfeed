@@ -363,11 +363,8 @@ export class PdsClient {
       features: Array<{ $type: string; [key: string]: unknown }>;
     }>;
     embed?: {
-      $type: 'app.bsky.embed.images';
-      images: Array<{
-        image: BlobRef;
-        alt: string;
-      }>;
+      $type: string;
+      [key: string]: unknown;
     };
     langs?: string[];
     reply?: {

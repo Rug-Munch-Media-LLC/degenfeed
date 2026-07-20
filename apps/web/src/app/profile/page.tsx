@@ -27,6 +27,7 @@ import { useWeb3 } from '../../components/Web3Provider';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { usePremium } from '../../hooks/usePremium';
 import { type SubscriptionStatus, useSubscription } from '../../hooks/useSubscription';
+import { GoLiveModal } from '../../components/streams/GoLiveModal';
 
 export const dynamic = 'force-dynamic';
 
@@ -399,6 +400,7 @@ export default function ProfilePage() {
   const [showCrossPlatformSetup, setShowCrossPlatformSetup] = useState(false);
   const [crossPlatformKey, setCrossPlatformKey] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showGoLiveModal, setShowGoLiveModal] = useState(false);
   const { showToast } = useToast();
   const { refresh: refreshPremium } = usePremium();
 
@@ -704,7 +706,7 @@ export default function ProfilePage() {
             {/* ════════════════════════════════════════════════════
                 ACTION BUTTONS
             ════════════════════════════════════════════════════ */}
-            <div className="mb-6 flex justify-center gap-3">
+            <div className="mb-6 flex flex-wrap justify-center gap-3">
               <button
                 type="button"
                 onClick={() => setShowEditModal(true)}
@@ -712,10 +714,28 @@ export default function ProfilePage() {
               >
                 Edit Profile
               </button>
+              <button
+                type="button"
+                onClick={() => setShowGoLiveModal(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-degen-500 to-emerald-500 px-4 py-2 text-sm font-bold text-black shadow-lg shadow-degen-500/20 transition-all hover:from-degen-400 hover:to-emerald-400 active:scale-[0.97]"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-black opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-black" />
+                </span>
+                Go Live
+              </button>
               <button type="button" onClick={openSignIn} className="btn-secondary text-sm">
                 Link Account
               </button>
             </div>
+
+            {/* Go Live Modal */}
+            <GoLiveModal
+              isOpen={showGoLiveModal}
+              onClose={() => setShowGoLiveModal(false)}
+              defaultSurfaces={['profile', 'visual-feed', 'discover']}
+            />
 
             {/* ════════════════════════════════════════════════════
                ACHIEVEMENT BADGES

@@ -281,14 +281,14 @@ async function requireOwnerOrResponse(
 }
 
 /** Common CSRF check pattern */
-async function csrfCheck(c: {
-  req: { raw: Request; header: (n: string) => string | null };
-  env: Env;
-}): Promise<Response | null> {
-  const cookieVal = parseSessionCookie(c.req.raw.headers.get('cookie'));
-  const csrfToken = c.req.header('X-CSRF-Token');
+async function csrfCheck(
+  req: Request,
+  env: Env,
+): Promise<Response | null> {
+  const cookieVal = parseSessionCookie(req.headers.get('cookie'));
+  const csrfToken = req.headers.get('X-CSRF-Token');
   if (cookieVal) {
-    const csrfOk = await validateCsrfToken(cookieVal, csrfToken ?? null, c.env);
+    const csrfOk = await validateCsrfToken(cookieVal, csrfToken, env);
     if (!csrfOk) {
       return jsonResponse({ error: 'Invalid CSRF token' }, 403);
     }
@@ -302,7 +302,7 @@ feddy.post('/create', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
@@ -651,7 +651,7 @@ feddy.post('/:name/join', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -715,7 +715,7 @@ feddy.post('/:name/leave', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -749,7 +749,7 @@ feddy.post('/:name/post', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
@@ -848,8 +848,8 @@ feddy.post('/:name/post', async (c) => {
       communityId: community.id,
       author: session.address,
       authorDisplayName:
-        (session as Record<string, string>).displayName ?? shortenWallet(session.address),
-      authorAvatarUrl: (session as Record<string, string>).avatarUrl,
+        session.displayName ?? shortenWallet(session.address),
+      authorAvatarUrl: session.avatarUrl,
       text,
       embeds: body.embeds,
       gtsStatusId: gtsPost.id,
@@ -881,7 +881,7 @@ feddy.post('/:name/cross-post', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -924,8 +924,8 @@ feddy.post('/:name/cross-post', async (c) => {
       communityId: community.id,
       author: session.address,
       authorDisplayName:
-        (session as Record<string, string>).displayName ?? shortenWallet(session.address),
-      authorAvatarUrl: (session as Record<string, string>).avatarUrl,
+        session.displayName ?? shortenWallet(session.address),
+      authorAvatarUrl: session.avatarUrl,
       text,
       embeds: body.embeds,
       gtsStatusId: gtsPost.id,
@@ -993,7 +993,7 @@ feddy.post('/:name/mod', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1053,7 +1053,7 @@ feddy.post('/:name/ban', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1112,7 +1112,7 @@ feddy.post('/:name/unban', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1147,7 +1147,7 @@ feddy.put('/:name/settings', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1229,7 +1229,7 @@ feddy.delete('/:name', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
 
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1259,7 +1259,7 @@ feddy.delete('/:name', async (c) => {
 feddy.post('/:name/pin', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1297,7 +1297,7 @@ feddy.post('/:name/pin', async (c) => {
 feddy.post('/:name/unpin', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1337,7 +1337,7 @@ feddy.get('/:name/pinned', async (c) => {
 feddy.post('/:name/events', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1438,7 +1438,7 @@ feddy.post('/:name/events/:eid/rsvp', async (c) => {
 
   await rsvpEvent(c.env, eventId, {
     wallet: session.address,
-    displayName: (session as Record<string, string>).displayName,
+    displayName: session.displayName,
     status,
     respondedAt: Date.now(),
   });
@@ -1457,7 +1457,7 @@ feddy.get('/:name/events/:eid/rsvps', async (c) => {
 feddy.post('/:name/polls', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1564,7 +1564,7 @@ feddy.get('/:name/wiki', async (c) => {
 feddy.put('/:name/wiki', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1607,7 +1607,7 @@ feddy.put('/:name/wiki', async (c) => {
 feddy.post('/:name/badges', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1660,7 +1660,7 @@ feddy.get('/:name/badges', async (c) => {
 feddy.post('/:name/role', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1728,7 +1728,7 @@ feddy.get('/:name/treasury', async (c) => {
 feddy.post('/:name/treasury/deposit', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1782,7 +1782,7 @@ feddy.post('/:name/treasury/deposit', async (c) => {
 feddy.post('/:name/treasury/withdraw', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1851,7 +1851,7 @@ feddy.get('/:name/treasury/tx', async (c) => {
 feddy.post('/:name/token-config', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1914,7 +1914,7 @@ feddy.get('/:name/token-config', async (c) => {
 feddy.post('/:name/token-gates', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -1978,7 +1978,7 @@ feddy.get('/:name/token-gates/check', async (c) => {
 feddy.post('/:name/reward', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -2099,7 +2099,7 @@ feddy.get('/:name/reports', async (c) => {
 feddy.put('/:name/reports/:rid', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -2196,7 +2196,7 @@ feddy.get('/:name/appeals', async (c) => {
 feddy.put('/:name/appeals/:aid', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -2266,7 +2266,7 @@ feddy.get('/:name/mod-log', async (c) => {
 feddy.post('/:name/auto-mod', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -2317,7 +2317,7 @@ feddy.get('/:name/auto-mod', async (c) => {
 feddy.post('/:name/blocklist', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -2356,7 +2356,7 @@ feddy.get('/:name/blocklist', async (c) => {
 feddy.post('/:name/fed-blocklist', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -2431,7 +2431,7 @@ feddy.get('/:name/federation-health', async (c) => {
 feddy.post('/:name/federation/sync', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -2469,7 +2469,7 @@ feddy.post('/:name/federation/sync', async (c) => {
 feddy.post('/:name/webhooks', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -2551,7 +2551,7 @@ feddy.get('/:name/webhooks', async (c) => {
 feddy.delete('/:name/webhooks/:hid', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -2571,7 +2571,7 @@ feddy.delete('/:name/webhooks/:hid', async (c) => {
 feddy.post('/:name/bot-keys', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();
@@ -2710,7 +2710,7 @@ feddy.get('/:name/rss', async (c) => {
 feddy.post('/:name/links', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
   if (session instanceof Response) return session;
-  const csrfRes = await csrfCheck(c);
+  const csrfRes = await csrfCheck(c.req.raw, c.env);
   if (csrfRes) return csrfRes;
 
   const name = sanitizeString(c.req.param('name'), 30).toLowerCase();

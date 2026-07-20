@@ -8,6 +8,7 @@ import { usePathname } from 'next/navigation';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { getLinkedProtocols, useCrossProtocolIdentity } from '../hooks/useCrossProtocolIdentity';
 import { useNotifications } from '../hooks/useNotifications';
+import { useLiveStreams } from '../components/streams/useLiveStreams';
 import { useAuth } from './AuthProvider';
 import { useToast } from './Toast';
 
@@ -159,6 +160,32 @@ function ProfileIcon({ active }: { active: boolean }) {
   );
 }
 
+function LiveIcon({ active, hasLive }: { active: boolean; hasLive: boolean }) {
+  return (
+    <span className="relative inline-flex">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={active ? 2.5 : 1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <polygon points="5 3 19 12 5 21 5 3" />
+      </svg>
+      {hasLive && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+        </span>
+      )}
+    </span>
+  );
+}
+
 function SettingsIcon() {
   return (
     <svg
@@ -229,6 +256,7 @@ interface SidebarItem {
 const PRIMARY_NAV: SidebarItem[] = [
   { href: '/feed', label: 'Feed', icon: null },
   { href: '/trending', label: 'Trending', icon: null },
+  { href: '/live', label: 'Live', icon: null },
   { href: '/spaces', label: 'Spaces', icon: null },
   { href: '/shorts', label: 'Videos', icon: null },
   { href: '/messages', label: 'Messages', icon: null, requiresAuth: true },
@@ -246,12 +274,14 @@ const MORE_SUB_ITEMS = [
   { href: '/newsletter', label: 'Newsletter' },
 ];
 
-function iconFor(href: string, active: boolean): React.ReactNode {
+function iconFor(href: string, active: boolean, hasLive?: boolean): React.ReactNode {
   switch (href) {
     case '/feed':
       return <HomeIcon active={active} />;
     case '/trending':
       return <TrendingIcon active={active} />;
+    case '/live':
+      return <LiveIcon active={active} hasLive={hasLive ?? false} />;
     case '/spaces':
       return <SpacesIcon active={active} />;
     case '/shorts':
@@ -567,6 +597,10 @@ export const LeftSidebar = memo(function LeftSidebar({
   const hasSignedIn = Object.values(signedInProtocols).some(Boolean);
   const { unreadCount } = useNotifications(hasSignedIn);
 
+  // Live streams — check if any are active for the pulsing dot
+  const { total: liveTotal } = useLiveStreams();
+  const hasLiveStreams = liveTotal > 0;
+
   const isActive = (href: string) => {
     if (href === '/feed')
       return (
@@ -629,8 +663,20 @@ export const LeftSidebar = memo(function LeftSidebar({
               aria-current={active ? 'page' : undefined}
               title={collapsed ? item.label : undefined}
             >
-              <span className="sidebar-nav-icon">{iconFor(item.href, active)}</span>
+              <span className="sidebar-nav-icon">{iconFor(item.href, active, hasLiveStreams)}</span>
               {!collapsed && <span className="sidebar-nav-label">{item.label}</span>}
+              {!collapsed && item.label === 'Live' && hasLiveStreams && (
+                <span
+                  role="status"
+                  className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[9px] font-bold text-white"
+                  aria-label="Live streams active"
+                >
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+                  </span>
+                </span>
+              )}
               {!collapsed && item.label === 'Notifications' && unreadCount > 0 && (
                 <span
                   role="status"
