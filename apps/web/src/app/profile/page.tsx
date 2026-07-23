@@ -650,9 +650,9 @@ export default function ProfilePage() {
                 {joinDate && (
                   <p className="mt-1 text-xs text-[var(--color-muted)]">Joined {joinDate}</p>
                 )}
-                {primaryIdentity?.bio && (
+                {(primaryIdentity as { bio?: string })?.bio && (
                   <p className="mx-auto mt-2 max-w-md text-sm text-[var(--color-muted)]">
-                    {primaryIdentity.bio}
+                    {(primaryIdentity as { bio?: string }).bio ?? ''}
                   </p>
                 )}
               </div>

@@ -115,7 +115,7 @@ function makeIdentity(
 
 function mockStorageIdentities(identities: StubIdentity[]) {
   vi.mocked(storage.getAllIdentities).mockResolvedValue(identities as any);
-  vi.mocked(storage.getPrimaryIdentity).mockResolvedValue(identities[0] ?? undefined);
+  vi.mocked(storage.getPrimaryIdentity).mockResolvedValue((identities[0] ?? undefined) as any);
 }
 
 /** Pre-populate wallet storage in localStorage so walletAddress is non-empty */

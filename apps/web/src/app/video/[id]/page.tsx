@@ -23,7 +23,7 @@ import type { UnifiedVideo } from '../../../components/video/useVideoHub';
 
 // === Mock data for demonstration ==========================================
 
-function getMockVideo(id: string): UnifiedVideo | null {
+function getMockVideo(id: string): UnifiedVideo {
   const idx = Number(id.split('-').pop()) || 0;
   const categories = [
     'crypto', 'gaming', 'music', 'tech', 'art',
@@ -40,8 +40,8 @@ function getMockVideo(id: string): UnifiedVideo | null {
     youtube: '#FF0000', peertube: '#F1680D', shorts: '#FF0050', livestream: '#9146FF',
   };
 
-  const cat = categories[idx % categories.length];
-  const source = sources[idx % sources.length];
+  const cat = categories[idx % categories.length]!;
+  const source = sources[idx % sources.length]!;
   const publishedAt = Date.now() - idx * 3600000 * 2;
   const views = Math.round(Math.random() * 50000 + 100);
   const duration = Math.round(Math.random() * 600 + 30);
@@ -73,6 +73,7 @@ function getMockVideo(id: string): UnifiedVideo | null {
     sourceLabel: sourceLabels[source] ?? source,
     sourceColor: sourceColors[source] ?? '#888',
     channelName: `Channel ${String.fromCharCode(65 + (idx % 26))}`,
+    channelId: `ch-${source}-${idx}`,
     channelUrl: `https://example.com/channel/${source}/${idx}`,
     channelAvatar: `https://picsum.photos/seed/avatar${idx}/100/100`,
     publishedAt,
@@ -263,7 +264,7 @@ export default function VideoDetailPage() {
               title={video.title}
               embedUrl={video.embedUrl}
               videoUrl={video.videoUrl}
-              source={video.source}
+              source={video.source as 'youtube' | 'peertube' | 'shorts' | 'livestream'}
               poster={video.thumbnailUrl}
               className="w-full"
             />

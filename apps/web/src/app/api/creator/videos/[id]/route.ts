@@ -11,12 +11,13 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!params.id || params.id.length < 8) {
+  const { id } = await params;
+  if (!id || id.length < 8) {
     return NextResponse.json({ error: 'Invalid video ID' }, { status: 400 });
   }
-  return proxyGet(`/api/creator/videos/${params.id}`, request);
+  return proxyGet(`/api/creator/videos/${id}`, request);
 }
 
 /**
@@ -27,9 +28,10 @@ export async function GET(
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!params.id || params.id.length < 8) {
+  const { id } = await params;
+  if (!id || id.length < 8) {
     return NextResponse.json({ error: 'Invalid video ID' }, { status: 400 });
   }
 
@@ -46,7 +48,7 @@ export async function PUT(
     if (auth) forwardedHeaders['Authorization'] = auth;
 
     const body = await request.blob();
-    const res = await fetch(`${baseUrl}/api/creator/videos/${params.id}`, {
+    const res = await fetch(`${baseUrl}/api/creator/videos/${id}`, {
       method: 'PUT',
       headers: {
         ...forwardedHeaders,
@@ -76,9 +78,10 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!params.id || params.id.length < 8) {
+  const { id } = await params;
+  if (!id || id.length < 8) {
     return NextResponse.json({ error: 'Invalid video ID' }, { status: 400 });
   }
 
@@ -94,7 +97,7 @@ export async function DELETE(
     const auth = request.headers.get('authorization');
     if (auth) forwardedHeaders['Authorization'] = auth;
 
-    const res = await fetch(`${baseUrl}/api/creator/videos/${params.id}`, {
+    const res = await fetch(`${baseUrl}/api/creator/videos/${id}`, {
       method: 'DELETE',
       headers: forwardedHeaders,
     });

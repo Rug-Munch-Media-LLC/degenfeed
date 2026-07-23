@@ -43,8 +43,10 @@ export function PremiumGate({
 
   const tierRank: Record<PremiumTier, number> = {
     free: 0,
+    basic: 0,
     pro: 1,
     creator: 2,
+    platinum: 2,
     enterprise: 3,
   };
 
@@ -67,15 +69,19 @@ export function PremiumGate({
 
   const tierNames: Record<PremiumTier, string> = {
     free: 'Free',
+    basic: 'Basic',
     pro: 'Premium',
     creator: 'Creator',
+    platinum: 'Platinum',
     enterprise: 'Enterprise',
   };
 
   const tierPricing: Record<PremiumTier, string> = {
     free: '$0',
+    basic: '$0',
     pro: '$10/mo',
     creator: '$25/mo',
+    platinum: '$25/mo',
     enterprise: 'Custom',
   };
 

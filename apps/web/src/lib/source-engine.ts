@@ -456,8 +456,9 @@ export function recordEngagement(
   if (result.lifecycle === 'culled') {
     const idx = data.allSources.findIndex((s) => s.id === sourceId);
     if (idx !== -1) {
+      const existing = data.allSources[idx] as DiscoveredSource;
       data.allSources[idx] = {
-        ...data.allSources[idx],
+        ...existing,
         lifecycle: 'culled',
         lifecycleCheckedAt: Date.now(),
       };
@@ -482,9 +483,10 @@ export function cullLowQualitySources(): { culled: number; ids: string[] } {
 
     if (result.score < 0.3 && daysSinceLastPost >= 14) {
       const idx = data.allSources.findIndex((s) => s.id === sourceId);
-      if (idx !== -1 && data.allSources[idx].status === 'approved') {
+      if (idx !== -1 && (data.allSources[idx] as DiscoveredSource)?.status === 'approved') {
+        const existing = data.allSources[idx] as DiscoveredSource;
         data.allSources[idx] = {
-          ...data.allSources[idx],
+          ...existing,
           lifecycle: 'culled',
           lifecycleCheckedAt: Date.now(),
           status: 'rejected',
@@ -522,8 +524,9 @@ export function runHealthCheck(): { checked: number; stale: number; culled: numb
       culledCount++;
       const idx = data.allSources.findIndex((s) => s.id === health.sourceId);
       if (idx !== -1) {
+        const existing = data.allSources[idx] as DiscoveredSource;
         data.allSources[idx] = {
-          ...data.allSources[idx],
+          ...existing,
           lifecycle: 'culled',
           lifecycleCheckedAt: now,
         };

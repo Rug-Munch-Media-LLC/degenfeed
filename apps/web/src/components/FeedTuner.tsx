@@ -670,7 +670,7 @@ export function FeedTuner({
       ...prev,
       protocols: {
         ...prev.protocols,
-        [protocolId]: { ...prev.protocols[protocolId], weight },
+        [protocolId]: { ...prev.protocols[protocolId]!, weight },
       },
     }));
   }, []);
@@ -692,7 +692,7 @@ export function FeedTuner({
         ...prev,
         protocols: {
           ...prev.protocols,
-          [protocolId]: { ...prev.protocols[protocolId], [field]: value },
+          [protocolId]: { ...prev.protocols[protocolId]!, [field]: value },
         },
       }));
     },

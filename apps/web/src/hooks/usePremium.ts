@@ -5,7 +5,7 @@ import { useAuth } from '../components/AuthProvider';
 
 // === Types ===============================================================
 
-export type PremiumTier = 'basic' | 'pro' | 'platinum' | 'enterprise';
+export type PremiumTier = 'free' | 'basic' | 'pro' | 'platinum' | 'enterprise' | 'creator';
 
 export interface PremiumStatus {
   tier: PremiumTier;
@@ -34,6 +34,7 @@ export interface TierConfig {
   cta: string;
   popular: boolean;
   badge?: string;
+  firstMonthPrice?: string;
 }
 
 export const TIERS: TierConfig[] = [

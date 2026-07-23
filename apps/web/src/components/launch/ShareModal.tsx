@@ -114,7 +114,7 @@ export default function ShareModal({
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
       if (!isMobile) return;
-      touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      touchStartRef.current = { x: e.touches[0]!.clientX, y: e.touches[0]!.clientY };
     },
     [isMobile],
   );
@@ -122,7 +122,7 @@ export default function ShareModal({
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       if (!isMobile || !touchStartRef.current) return;
-      const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+      const dy = e.changedTouches[0]!.clientY - touchStartRef.current.y;
       if (dy > 100) {
         onClose();
       }

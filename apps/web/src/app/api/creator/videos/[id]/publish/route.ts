@@ -15,10 +15,11 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    if (!params.id || params.id.length < 8) {
+    const { id } = await params;
+    if (!id || id.length < 8) {
       return NextResponse.json({ error: 'Invalid video ID' }, { status: 400 });
     }
 
@@ -45,7 +46,7 @@ export async function POST(
     if (auth) forwardedHeaders['Authorization'] = auth;
 
     // Get video metadata for the announcement
-    const videoRes = await fetch(`${baseUrl}/api/creator/videos/${params.id}`, {
+    const videoRes = await fetch(`${baseUrl}/api/creator/videos/${id}`, {
       headers: forwardedHeaders,
     });
 

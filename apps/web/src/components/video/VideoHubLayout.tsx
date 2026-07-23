@@ -12,7 +12,7 @@
  * - Trending sidebar
  */
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { CategoryTrend, UnifiedVideo, UnifiedVideoFeed } from './useVideoHub';
 import { VideoCategoryPills } from './VideoCategoryPills';
 import { VideoContinueWatching } from './VideoContinueWatching';
@@ -77,6 +77,8 @@ export function VideoHubLayout({
   className = '',
 }: VideoHubLayoutProps) {
   const [showSearch, setShowSearch] = useState(false);
+  const [activeSource, setActiveSource] = useState<string>('all');
+  const onSourceChange = useCallback((id: string) => setActiveSource(id), []);
 
   // Featured hero video — first video from the feed
   const heroVideo = useMemo(() => (feed.videos.length > 0 ? feed.videos[0] : null), [feed.videos]);
@@ -259,12 +261,12 @@ export function VideoHubLayout({
                   : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
               }`}
               style={
-                isActive && sf.color
-                  ? { borderColor: `${sf.color}40`, backgroundColor: `${sf.color}10` }
+                isActive && 'color' in sf && sf.color
+                  ? { borderColor: `${sf.color}40`, backgroundColor: `${sf.color}10` as string }
                   : undefined
               }
             >
-              {sf.color && (
+              {'color' in sf && sf.color && (
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: sf.color }} />
               )}
               {sf.label}

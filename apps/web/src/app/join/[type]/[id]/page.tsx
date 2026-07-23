@@ -42,7 +42,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const { ref } = await searchParams;
 
   const baseTitle = type === 'space' ? 'Audio Space' : 'Live Stream';
-  const protocol = ref ? PROTOCOL_INFO[ref] : null;
+  const protocol = ref ? (PROTOCOL_INFO[ref] ?? null) : null;
   const titleSuffix = protocol ? ` via ${protocol.name}` : '';
 
   return {
@@ -51,7 +51,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     openGraph: {
       title: `${baseTitle} on DegenFeed${titleSuffix}`,
       description: `Join this ${type} on DegenFeed.`,
-      type: type === 'space' ? 'music' : 'video.other',
+      type: 'video.other' as const,
       siteName: 'DegenFeed',
     },
     twitter: {
@@ -85,7 +85,7 @@ export default async function JoinPage({ params, searchParams }: Props) {
   // Try to fetch stream data server-side
   const streamData = await fetchStreamData(type, id);
 
-  const protocol = ref ? PROTOCOL_INFO[ref] : null;
+  const protocol = ref ? (PROTOCOL_INFO[ref] ?? null) : null;
 
   return (
     <JoinPageContent

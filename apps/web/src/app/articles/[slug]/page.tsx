@@ -41,9 +41,9 @@ function TipModal({
   onClose: () => void;
   postTitle: string;
 }) {
-  const { address, sendTransaction } = useWeb3();
+  const { account: address } = useWeb3();
   const [amount, setAmount] = useState('0.01');
-  const [currency, setCurrency] = useState<'ETH' | 'SOL'>('ETH');
+  const [currency, setCurrency] = useState<'ETH' | 'SOL' | 'BTC'>('ETH');
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -261,7 +261,7 @@ function NewsletterCTA() {
 // === Token Gate ====================================================
 
 function TokenGate({ post }: { post: GhostPost }) {
-  const { address } = useWeb3();
+  const { account: address } = useWeb3();
   const [hasToken, setHasToken] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -337,7 +337,7 @@ function TokenGate({ post }: { post: GhostPost }) {
 export default function ArticlePage() {
   const params = useParams();
   const slug = params.slug as string;
-  const { address } = useWeb3();
+  const { account: address } = useWeb3();
 
   const [post, setPost] = useState<GhostPost | null>(null);
   const [loading, setLoading] = useState(true);

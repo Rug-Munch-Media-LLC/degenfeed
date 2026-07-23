@@ -17,7 +17,7 @@ interface GoLiveForm {
 interface GoLiveModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onStart: (data: GoLiveForm) => void;
+  onStart?: (data: GoLiveForm) => void;
   /** Pre-fill coin address for token-gated streams */
   defaultCoinAddress?: string;
   /** Pre-fill coin symbol for display */
@@ -275,7 +275,7 @@ export function GoLiveModal({ isOpen, onClose, onStart, defaultCoinAddress, defa
       setIsSubmitting(true);
       // Simulate API call
       await new Promise((r) => setTimeout(r, 800));
-      onStart(form);
+      onStart?.(form);
       setIsSubmitting(false);
       onClose();
     },

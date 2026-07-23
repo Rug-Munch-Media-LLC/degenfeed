@@ -122,7 +122,8 @@ export function PremiumContent() {
       {/* Payment Modal */}
       {showPayment && (
         <PremiumPaymentModal
-          tier={tier ?? 'free'}
+          open={showPayment}
+          initialTier={tier ?? 'free'}
           onClose={() => setShowPayment(false)}
         />
       )}

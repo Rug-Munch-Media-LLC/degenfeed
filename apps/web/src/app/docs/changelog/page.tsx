@@ -156,7 +156,7 @@ const versions: VersionEntry[] = [
 ];
 
 export default function ChangelogPage() {
-  const latest = versions[0];
+  const latest = versions[0]!;
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 lg:px-10">

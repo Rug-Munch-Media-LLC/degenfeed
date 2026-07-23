@@ -8,10 +8,11 @@ import { PremiumUpsell } from '../../../components/feddy/PremiumUpsell';
 import { usePremium } from '../../../hooks/usePremium';
 
 export default function CreateCommunityPage() {
-  const { walletAddress, loading: authLoading } = useAuth();
+  const { walletAddress, ready } = useAuth();
   const { tier, loading: premiumLoading } = usePremium();
   const router = useRouter();
 
+  const authLoading = !ready;
   const isPremium = tier !== 'free';
   const loading = authLoading || premiumLoading;
 

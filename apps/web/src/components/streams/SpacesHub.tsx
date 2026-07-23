@@ -16,7 +16,7 @@ function SpeakerBubbles({
   speakers,
   max = 5,
 }: {
-  speakers: LiveStream['space']['speakers'];
+  speakers: NonNullable<LiveStream['space']>['speakers'];
   max?: number;
 }) {
   const visible = speakers.slice(0, max);

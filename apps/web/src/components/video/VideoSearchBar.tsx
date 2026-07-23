@@ -47,7 +47,7 @@ export function VideoSearchBar({
   const inputRef = useRef<HTMLInputElement>(null);
   const sourceMenuRef = useRef<HTMLDivElement>(null);
 
-  const activeSource = SEARCH_SOURCES.find((s) => s.id === source) ?? SEARCH_SOURCES[0];
+  const activeSource = SEARCH_SOURCES.find((s) => s.id === source) ?? SEARCH_SOURCES[0] as SearchSourceOption;
 
   // Close source menu on outside click
   useEffect(() => {

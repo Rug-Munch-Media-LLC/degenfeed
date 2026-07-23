@@ -202,12 +202,12 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
 
   // == Swipe to dismiss ==
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    startXRef.current = e.touches[0]?.clientX;
+    startXRef.current = e.touches[0]?.clientX ?? 0;
     setIsSwiping(true);
   }, []);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    currentXRef.current = e.touches[0]?.clientX;
+    currentXRef.current = e.touches[0]?.clientX ?? 0;
     const diff = currentXRef.current - startXRef.current;
     if (diff > 0) {
       setSwipeOffset(diff);

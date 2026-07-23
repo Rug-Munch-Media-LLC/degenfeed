@@ -24,16 +24,16 @@ export function levenshtein(a: string, b: string): number {
     for (let j = 1; j <= bn; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
       const val = Math.min(
-        matrix[j] + 1, // deletion
+        (matrix[j] as number) + 1, // deletion
         prev + 1, // insertion
-        matrix[j - 1] + cost, // substitution
+        (matrix[j - 1] as number) + cost, // substitution
       );
       matrix[j - 1] = prev;
       prev = val;
     }
     matrix[bn] = prev;
   }
-  return matrix[bn];
+  return matrix[bn] as number;
 }
 
 // ═══════════════════════════════════════════════════════════════════

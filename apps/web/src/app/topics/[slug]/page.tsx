@@ -229,7 +229,7 @@ function PostRow({ post, onClick }: { post: UnifiedPost; onClick: (id: string) =
         {post.image && (
           <Image
             src={post.image}
-            alt={`Post image for topic ${params?.slug || 'crypto'}`}
+            alt={`Post image for topic ${post.protocol || 'crypto'}`}
             width={320}
             height={180}
             className="mt-2 max-h-32 w-full rounded-lg object-cover"

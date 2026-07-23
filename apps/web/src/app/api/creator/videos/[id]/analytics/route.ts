@@ -12,12 +12,13 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!params.id || params.id.length < 8) {
+  const { id } = await params;
+  if (!id || id.length < 8) {
     return NextResponse.json({ error: 'Invalid video ID' }, { status: 400 });
   }
 
   const days = Math.min(Math.max(Number(new URL(request.url).searchParams.get('days')) || 30, 1), 365);
-  return proxyGet(`/api/creator/videos/${params.id}/analytics?days=${days}`, request);
+  return proxyGet(`/api/creator/videos/${id}/analytics?days=${days}`, request);
 }

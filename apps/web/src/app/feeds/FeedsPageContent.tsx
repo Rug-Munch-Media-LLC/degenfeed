@@ -301,10 +301,26 @@ export default function FeedsPage() {
       {showBuilder && (
         <FeedBuilderModalDynamic
           open={showBuilder}
-          onClose={() => setShowBuilder(false)}
-          onCreated={() => {
+          onClose={() => {
             setShowBuilder(false);
             fetchFeeds();
+          }}
+          onSave={async (feed) => {
+            try {
+              const res = await fetch('/api/feeds', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify(feed),
+              });
+              if (res.ok) {
+                setShowBuilder(false);
+                fetchFeeds();
+                return { ok: true };
+              }
+              return { ok: false, error: 'Failed to save feed' };
+            } catch {
+              return { ok: false, error: 'Network error' };
+            }
           }}
         />
       )}

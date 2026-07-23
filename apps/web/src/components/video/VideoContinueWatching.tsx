@@ -57,6 +57,7 @@ export function VideoContinueWatching({
     publishedLabel: timeAgo(item.watchedAt),
     views: 0,
     category: 'all',
+    channelId: '',
     tags: [],
     isLive: false,
   }));

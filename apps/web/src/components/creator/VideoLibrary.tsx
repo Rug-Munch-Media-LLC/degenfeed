@@ -15,13 +15,15 @@ function formatDuration(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-function formatCompact(n: number): string {
+function formatCompact(n: number | undefined): string {
+  if (!n) return '0';
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
 }
 
-function formatDate(iso: string): string {
+function formatDate(iso: string | undefined): string {
+  if (!iso) return '';
   const d = new Date(iso);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
@@ -60,7 +62,7 @@ function VideoCard({
   onAnalytics: (v: CreatorVideoMeta) => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
-  const state = stateLabel(video.state);
+  const state = stateLabel(video.state!);
 
   return (
     <div className="group relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] transition-all duration-200 hover:border-degen-500/20 hover:shadow-[0_0_20px_rgba(0,255,65,0.04)]">
@@ -82,9 +84,9 @@ function VideoCard({
         )}
 
         {/* Duration badge */}
-        {video.duration > 0 && (
+        {(video.duration ?? 0) > 0 && (
           <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-white">
-            {formatDuration(video.duration)}
+            {formatDuration(video.duration ?? 0)}
           </span>
         )}
 
@@ -108,14 +110,8 @@ function VideoCard({
         </h3>
 
         <div className="mt-1.5 flex items-center gap-3 text-[10px] text-[var(--color-muted)]">
-          <span>{formatCompact(video.views)} views</span>
-          {video.likes > 0 && <span>{formatCompact(video.likes)} likes</span>}
-          {video.tipsUsdCents > 0 && (
-            <span className="text-degen-400">
-              ${(video.tipsUsdCents / 100).toFixed(2)}
-            </span>
-          )}
-          <span className="ml-auto">{formatDate(video.publishedAt)}</span>
+          <span>{formatCompact(video.views ?? 0)} views</span>
+          <span className="ml-auto">{video.createdAt ? formatDate(video.createdAt) : ''}</span>
         </div>
 
         {/* Tags */}
@@ -268,11 +264,10 @@ export default function VideoLibrary({
     <div>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-xs text-[var(--color-muted)]">
-          {processedVideos.length} video{processedVideos.length !== 1 ? 's' : ''}
-          {platformFilter ? ` · ${platformFilter}` : ''}
+          {videos.length} video{videos.length !== 1 ? 's' : ''}
           {type === 'short' ? ' · Shorts' : ''}
         </p>
-        {processedVideos.length < videos.length && (
+        {videos.length > 0 && (
           <span className="text-[10px] text-[var(--color-muted)]">
             (filtered from {videos.length})
           </span>
@@ -280,14 +275,13 @@ export default function VideoLibrary({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {processedVideos.map((video) => (
+        {videos.map((video) => (
           <VideoCard
             key={video.uuid}
             video={video}
             onEdit={onEdit}
             onDelete={onDelete}
             onAnalytics={onAnalytics}
-            onPublish={onPublish}
           />
         ))}
       </div>

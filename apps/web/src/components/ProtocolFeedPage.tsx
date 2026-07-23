@@ -151,7 +151,7 @@ const SORT_TAB_IDS = new Set(['hot', 'quality', 'new', 'trending']);
 function hexToRgb(hex: string): string {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return '0,0,0';
-  return `${Number.parseInt(result[1], 16)},${Number.parseInt(result[2], 16)},${Number.parseInt(result[3], 16)}`;
+  return `${Number.parseInt(result[1]!, 16)},${Number.parseInt(result[2]!, 16)},${Number.parseInt(result[3]!, 16)}`;
 }
 
 // === Shared component ======================================================

@@ -97,6 +97,9 @@ export const PLATFORM_TIER: Record<Protocol, number> = {
   "newsletter-bridge": 0.5,
   mirror: 0.8,
   paragraph: 0.8,
+  email: 0.5,
+  google: 0.5,
+  twitter: 0.5,
 };
 
 export interface UserAlgorithmPreferences {

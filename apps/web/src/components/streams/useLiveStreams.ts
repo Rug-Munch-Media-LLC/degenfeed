@@ -81,13 +81,13 @@ function generateMockStreams(): LiveStreamsResponse {
   const streams: LiveStream[] = [];
 
   for (let i = 0; i < 12; i++) {
-    const creator = creators[i % creators.length];
-    const type = types[i % types.length];
+    const creator = creators[i % creators.length]!;
+    const type = types[i % types.length]!;
     const isFeatured = i < 4;
 
     const stream: LiveStream = {
       id: `stream-${i + 1}`,
-      title: titles[i % titles.length],
+      title: titles[i % titles.length]!,
       creatorId: creator.id,
       creatorHandle: creator.handle,
       creatorAvatar: creator.avatar,
@@ -98,9 +98,9 @@ function generateMockStreams(): LiveStreamsResponse {
       startedAt: now - Math.floor(Math.random() * 7200000),
       tokenAddress: type === 'launch' ? `0x${Math.random().toString(16).slice(2, 42)}` : undefined,
       tokenSymbol:
-        type === 'launch' ? ['DEGEN', 'MEME', 'SOL', 'PEPE', 'DOGE', 'BONK'][i % 6] : undefined,
+        type === 'launch' ? (['DEGEN', 'MEME', 'SOL', 'PEPE', 'DOGE', 'BONK'][i % 6] ?? 'DEGEN') : undefined,
       bondingCurveProgress: type === 'launch' ? Math.floor(Math.random() * 100) : undefined,
-      tags: ['crypto', 'defi', type].filter(Boolean),
+      tags: ['crypto', 'defi', type],
     };
 
     if (type === 'spaces') {
@@ -141,7 +141,9 @@ function generateMockStreams(): LiveStreamsResponse {
   // Shuffle streams for variety
   for (let i = streams.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [streams[i], streams[j]] = [streams[j], streams[i]];
+    const tmp = streams[i] as LiveStream;
+    streams[i] = streams[j] as LiveStream;
+    streams[j] = tmp;
   }
 
   return { streams, featured, total: streams.length };

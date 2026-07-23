@@ -68,6 +68,19 @@ const LINK_FIELDS: Record<
     { key: 'channelId', label: 'Channel ID (optional)', placeholder: '12345' },
     { key: 'instance', label: 'Instance', placeholder: 'video.degenfeed.xyz' },
   ],
+  telegram: [
+    { key: 'userId', label: 'Telegram User ID', placeholder: '123456789' },
+    { key: 'username', label: 'Telegram Username (optional)', placeholder: '@alice' },
+  ],
+  atproto: [
+    { key: 'did', label: 'AT Protocol DID', placeholder: 'did:plc:abc123' },
+    { key: 'handle', label: 'Handle', placeholder: 'alice.bsky.social' },
+    { key: 'pdsUrl', label: 'PDS URL', placeholder: 'https://bsky.social' },
+  ],
+  zora: [
+    { key: 'coinAddress', label: 'Creator Coin Address', placeholder: '0x...' },
+    { key: 'network', label: 'Network', placeholder: 'base' },
+  ],
 };
 
 export function IdentityLinker() {
@@ -280,7 +293,7 @@ export function IdentityLinker() {
           ][]
         ).map(([protocol, meta]) => {
           const linkedHandle = getLinkedHandle(protocol);
-          const linked = isLinked(protocol);
+          const isLinkedProtocol = isLinked(protocol);
           const formOpen = form.open === protocol;
 
           return (
@@ -302,12 +315,12 @@ export function IdentityLinker() {
                     <span className="text-sm font-medium text-[var(--color-fg)]">
                       {meta.displayName}
                     </span>
-                    {linked && (
+                    {isLinkedProtocol && (
                       <>
                         <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[10px] font-medium text-degen-400">
                           ✓ Linked
                         </span>
-                        {linked.find((l) => l.protocol === protocol)?.manualLinking && (
+                        {linked.find((l: LinkedIdentity) => l.protocol === protocol)?.manualLinking && (
                           <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-[10px] font-medium text-yellow-400">
                             Manual
                           </span>
@@ -345,7 +358,7 @@ export function IdentityLinker() {
               </div>
 
               {/* Link form */}
-              {formOpen && !linked && (
+              {formOpen && !isLinkedProtocol && (
                 <div className="border-t border-[var(--color-glass-border)] px-4 py-3 space-y-3">
                   {LINK_FIELDS[protocol].map((field) => (
                     <div key={field.key}>

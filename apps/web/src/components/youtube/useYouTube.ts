@@ -253,7 +253,7 @@ export function useYouTubeTrendingInfinite(category = 'all', limit = 20) {
   );
 
   const allVideos = data?.flatMap((page) => page.data) ?? [];
-  const hasMore = data ? data[data.length - 1]?.data.length >= limit : true;
+  const hasMore = data ? (data[data.length - 1] as typeof data[number])?.data.length >= limit : true;
 
   return {
     videos: allVideos,
