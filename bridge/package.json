@@ -1,0 +1,17 @@
+{
+  "name": "@degenfeed/local-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@degenfeed/types": "workspace:*",
+    "@degenfeed/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4",
+    "typescript": "^5.5.0"
+  }
+}
