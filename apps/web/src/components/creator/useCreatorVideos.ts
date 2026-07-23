@@ -2,9 +2,42 @@
 
 import { useCallback } from 'react';
 import useSWR, { mutate } from 'swr';
-import type { CreatorVideoMeta, VideoAnalytics } from '@degenfeed/api-worker';
 
 // === Types ===============================================================
+
+/** Video metadata from the creator API. */
+export interface CreatorVideoMeta {
+  uuid: string;
+  title: string;
+  description?: string;
+  url?: string;
+  embedUrl?: string;
+  thumbnailUrl?: string;
+  duration?: number;
+  views?: number;
+  state?: string;
+  isShort?: boolean;
+  createdAt?: string;
+  privacy?: number;
+  tags: string[];
+  category?: number;
+  isLive?: boolean;
+  source?: string;
+}
+
+/** Analytics data for a single video. */
+export interface VideoAnalytics {
+  totalViews: number;
+  totalLikes: number;
+  totalTips: number;
+  totalTipsUsdCents: number;
+  avgWatchTimeS: number;
+  completionRate: number;
+  viewsOverTime: Array<{ date: string; count: number }>;
+  tipsOverTime: Array<{ date: string; count: number }>;
+  sourceBreakdown: Record<string, number>;
+  protocolBreakdown: Record<string, number>;
+}
 
 export interface UploadVideoInput {
   file: File | Blob;

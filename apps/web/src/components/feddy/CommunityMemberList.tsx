@@ -5,6 +5,9 @@ import type { CommunityMember, MemberRole } from './types';
 const ROLE_BADGES: Record<MemberRole, { label: string; color: string }> = {
   owner: { label: 'Owner', color: 'text-amber-400 bg-amber-500/15' },
   moderator: { label: 'Mod', color: 'text-blue-400 bg-blue-500/15' },
+  contributor: { label: 'Contributor', color: 'text-green-400 bg-green-500/15' },
+  vip: { label: 'VIP', color: 'text-purple-400 bg-purple-500/15' },
+  og: { label: 'OG', color: 'text-orange-400 bg-orange-500/15' },
   member: { label: '', color: '' },
 };
 
@@ -142,8 +145,8 @@ export function CommunityMemberList({
 
   // Sort: owners first, then mods, then members
   const sorted = [...members].sort((a, b) => {
-    const rank = { owner: 0, moderator: 1, member: 2 };
-    return rank[a.role] - rank[b.role];
+    const rank: Record<MemberRole, number> = { owner: 0, moderator: 1, contributor: 2, vip: 2, og: 2, member: 3 };
+    return (rank[a.role] ?? 3) - (rank[b.role] ?? 3);
   });
 
   if (members.length === 0) {

@@ -294,7 +294,7 @@ function StepProcessing({
     confirmed: { text: 'Transaction confirmed!', icon: '✅' },
   };
 
-  const msg = statusMessages[status];
+  const msg = statusMessages[status] ?? { text: 'Processing…', icon: '⏳' };
 
   return (
     <div className="flex flex-col items-center justify-center py-6 space-y-4">

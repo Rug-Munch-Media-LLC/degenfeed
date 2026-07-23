@@ -53,7 +53,7 @@ const STREAM_TYPE_CONFIG: Record<
 /* === Thumbnail placeholder by type ============================ */
 
 function StreamThumbnail({ stream }: { stream: LiveStream }) {
-  const config = STREAM_TYPE_CONFIG[stream.streamType] ?? STREAM_TYPE_CONFIG.solo;
+  const config = (STREAM_TYPE_CONFIG[stream.streamType] ?? STREAM_TYPE_CONFIG.solo)!;
 
   // Gradient backgrounds per type
   const gradients: Record<string, string> = {

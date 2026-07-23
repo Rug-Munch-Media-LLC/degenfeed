@@ -92,8 +92,7 @@ const nextConfig = {
     ];
   },
 
-  typescript: { ignoreBuildErrors: true }, // TODO: Remove by 2026-08-01 — 67 TS errors across 29 files to fix
-  eslint: { ignoreDuringBuilds: true },    // TODO: Remove by 2026-08-01
+  eslint: { ignoreDuringBuilds: true },    // TODO: Remove by 2026-08-01 — gradually fix lint errors
 };
 
 export default nextConfig;

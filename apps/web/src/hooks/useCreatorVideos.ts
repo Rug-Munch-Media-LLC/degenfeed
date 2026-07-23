@@ -1,19 +1,12 @@
 /**
  * Creator Video hooks.
  *
- * Central exports for managing creator video content:
- * listing, uploading, editing, deleting, analytics, and cross-platform publishing.
- *
- * All hooks are re-exported from the component-level implementation
- * for convenient access from both pages and components.
+ * Re-exports the creator video hooks from the component-level implementation.
  */
 export {
   useCreatorVideos,
   useCreatorVideo,
   useCreatorVideoActions,
-  useVideoAnalytics,
-  useCrossPublish,
-  useVideoDelete,
 } from '../components/creator/useCreatorVideos';
 
 export type {
@@ -21,8 +14,6 @@ export type {
   UploadResult,
   VideosResponse,
   VideoDetailResponse,
-  AnalyticsResponse,
-  PublishTarget,
-  PublishResponse,
-  CrossPublishInput,
+  CreatorVideoMeta,
+  VideoAnalytics,
 } from '../components/creator/useCreatorVideos';

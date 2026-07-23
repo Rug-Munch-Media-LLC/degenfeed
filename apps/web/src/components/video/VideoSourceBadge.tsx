@@ -129,7 +129,7 @@ export function VideoSourceBadge({
   showIcon = false,
   className = '',
 }: VideoSourceBadgeProps) {
-  const style = SOURCE_STYLES[source] ?? SOURCE_STYLES.youtube;
+  const style = (SOURCE_STYLES[source] ?? SOURCE_STYLES.youtube)! as { label: string; bg: string; text: string; border: string };
   const displayLabel = label ?? style.label;
 
   const sizeClasses = {

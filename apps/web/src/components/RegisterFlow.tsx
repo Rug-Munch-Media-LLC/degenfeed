@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthProvider';
+import { useWeb3 } from './Web3Provider';
 import { usePremium } from '../hooks/usePremium';
 import { useToast } from './Toast';
 import { PremiumPaymentModal } from './PremiumPaymentModal';
@@ -858,10 +859,11 @@ function Step5_Processing({
   const steps: ProcessingStep[] = useMemo(() => {
     const doneKeys = new Set(Object.keys(results));
     return PROCESSING_STEPS.map((step) => {
-      if (results[step.id]) {
+      const result = results[step.id];
+      if (result) {
         return {
           ...step,
-          status: results[step.id].ok ? ('done' as const) : ('failed' as const),
+          status: result.ok ? ('done' as const) : ('failed' as const),
         };
       }
       // Skip ENS if not in complete plan
@@ -1106,7 +1108,8 @@ interface RegisterFlowProps {
 }
 
 export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps) {
-  const { walletAddress, signMessage } = useAuth();
+  const { walletAddress } = useAuth();
+  const { signMessage } = useWeb3();
   const { isPremium, loading: premiumLoading } = usePremium();
   const { showToast } = useToast();
 
@@ -1268,27 +1271,6 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     [compact],
   );
 
-  // == Handle confirm (moves to sign step) =============
-  const handleConfirm = useCallback(
-    async (planOverride?: PlanId) => {
-      const plan = planOverride || selectedPlan;
-      if (!plan) return;
-
-      if (!compact) {
-        setStep(3); // Sign step
-        return;
-      }
-      // In compact mode, skip sign and go straight to processing
-      await executeRegistration(plan, true);
-    },
-    [selectedPlan, compact, walletAddress, executeRegistration],
-  );
-
-  // == Handle overage confirmation =====================
-  const handleConfirmOverage = useCallback(() => {
-    setConfirmedOverage(true);
-  }, []);
-
   // == Execute registration ============================
   const executeRegistration = useCallback(
     async (plan: PlanId, skipSign: boolean = false) => {
@@ -1377,6 +1359,27 @@ export function RegisterFlow({ onComplete, compact = false }: RegisterFlowProps)
     },
     [walletAddress, farcasterUsername, lensHandle, ensName, confirmedOverage, signMessage, showToast, onComplete, compact],
   );
+
+  // == Handle confirm (moves to sign step) =============
+  const handleConfirm = useCallback(
+    async (planOverride?: PlanId) => {
+      const plan = planOverride || selectedPlan;
+      if (!plan) return;
+
+      if (!compact) {
+        setStep(3); // Sign step
+        return;
+      }
+      // In compact mode, skip sign and go straight to processing
+      await executeRegistration(plan, true);
+    },
+    [selectedPlan, compact, walletAddress, executeRegistration],
+  );
+
+  // == Handle overage confirmation =====================
+  const handleConfirmOverage = useCallback(() => {
+    setConfirmedOverage(true);
+  }, []);
 
   // == Handle sign + submit ============================
   const handleSign = useCallback(async () => {

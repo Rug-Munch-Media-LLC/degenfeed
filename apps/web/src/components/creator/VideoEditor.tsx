@@ -19,8 +19,8 @@ export default function VideoEditor({ video, onClose, onSaved }: VideoEditorProp
   const [title, setTitle] = useState(video.title);
   const [description, setDescription] = useState(video.description);
   const [tags, setTags] = useState(video.tags.join(', '));
-  const [privacy, setPrivacy] = useState<1 | 2 | 3>(video.privacy);
-  const [category, setCategory] = useState<number>(video.category);
+  const [privacy, setPrivacy] = useState<1 | 2 | 3>((video.privacy ?? 1) as 1 | 2 | 3);
+  const [category, setCategory] = useState<number>(video.category ?? 0);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +43,7 @@ export default function VideoEditor({ video, onClose, onSaved }: VideoEditorProp
 
       await updateVideo(video.uuid, {
         title: title.trim(),
-        description: description.trim(),
+        description: (description ?? '').trim(),
         tags: tagsList,
         privacy,
         category: category || undefined,

@@ -148,7 +148,7 @@ export function SpaceShare({
       {showShareMenu && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+          <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
           {/* Menu */}
           <div className="absolute bottom-full right-0 z-50 mb-2 w-64 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-2 shadow-2xl">
             {/* Copy link */}
@@ -167,7 +167,7 @@ export function SpaceShare({
             </button>
 
             {/* Native share */}
-            {typeof navigator !== 'undefined' && navigator.share && (
+            {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
               <button
                 type="button"
                 onClick={handleNativeShare}

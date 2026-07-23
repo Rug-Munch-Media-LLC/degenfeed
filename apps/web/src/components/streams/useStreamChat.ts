@@ -86,8 +86,8 @@ const MOCK_MSGS = [
 ];
 
 function generateMockChatMessage(_existing: ChatMessage[]): ChatMessage {
-  const name = MOCK_NAMES[Math.floor(Math.random() * MOCK_NAMES.length)];
-  const text = MOCK_MSGS[Math.floor(Math.random() * MOCK_MSGS.length)];
+  const name = MOCK_NAMES[Math.floor(Math.random() * MOCK_NAMES.length)] ?? 'anonymous';
+  const text = MOCK_MSGS[Math.floor(Math.random() * MOCK_MSGS.length)] ?? '';
   const badgePool: Array<'mod' | 'sub' | 'host' | 'verified'> = ['mod', 'sub', 'host', 'verified'];
   const badge =
     Math.random() > 0.7 ? badgePool[Math.floor(Math.random() * badgePool.length)] : undefined;

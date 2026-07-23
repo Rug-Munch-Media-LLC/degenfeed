@@ -133,7 +133,7 @@ function NewsCard({ post }: { post: UnifiedPost }) {
         >
           <Image
             src={imageEmbed.url}
-            alt={post.title || 'News article image'}
+            alt={post.text?.slice(0, 100) || 'News article image'}
             width={800}
             height={450}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

@@ -334,8 +334,8 @@ export default function VideosPage() {
           const maxLen = Math.max(ytItems.length, ptResult.items.length);
           const interleaved: YouTubeVideoCardItem[] = [];
           for (let i = 0; i < maxLen; i++) {
-            if (ytItems[i]) interleaved.push(ytItems[i]);
-            if (ptResult.items[i]) interleaved.push(ptResult.items[i]);
+            if (ytItems[i]) interleaved.push(ytItems[i]!);
+            if (ptResult.items[i]) interleaved.push(ptResult.items[i]!);
           }
           combined = interleaved;
         }

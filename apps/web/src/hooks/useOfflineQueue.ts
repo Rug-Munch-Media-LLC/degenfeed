@@ -442,7 +442,7 @@ export function useOfflineQueue<T = unknown>(options: UseOfflineQueueOptions = {
         const results = await Promise.allSettled(
           batch.map(async (op) => {
             try {
-              const success = await handlerRef.current(op);
+              const success = await (handlerRef.current as (op: QueuedOperation<T>) => Promise<boolean>)(op as QueuedOperation<T>);
 
               if (success) {
                 // Successful — remove from queue

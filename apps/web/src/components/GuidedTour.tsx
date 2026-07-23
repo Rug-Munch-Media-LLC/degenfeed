@@ -136,7 +136,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
   const stepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const step = STEPS[currentStep];
+  const step = STEPS[currentStep]!;
 
   // == Initialize tour =================================================
   useEffect(() => {
@@ -157,7 +157,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     if (tourState !== 'active') return;
 
     // Initial position attempt
-    const rect = getTargetRect(STEPS[currentStep].targetSelector);
+    const rect = getTargetRect(STEPS[currentStep]!.targetSelector);
     if (rect) {
       setTargetRect(rect);
       setVisible(true);
@@ -168,7 +168,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     let attempts = 0;
     pollRef.current = setInterval(() => {
       attempts++;
-      const r = getTargetRect(STEPS[currentStep].targetSelector);
+      const r = getTargetRect(STEPS[currentStep]!.targetSelector);
       if (r) {
         setTargetRect(r);
         setVisible(true);
@@ -192,7 +192,7 @@ export function GuidedTour({ forceShow = false, onComplete }: GuidedTourProps) {
     if (tourState !== 'active') return;
 
     const recalc = () => {
-      const r = getTargetRect(STEPS[currentStep].targetSelector);
+      const r = getTargetRect(STEPS[currentStep]!.targetSelector);
       if (r) setTargetRect(r);
     };
 

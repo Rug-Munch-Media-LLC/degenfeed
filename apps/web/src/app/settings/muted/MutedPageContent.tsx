@@ -369,15 +369,15 @@ export default function MutedSettingsPage() {
                 <div className="space-y-2">
                   {config.blockedUsers.map((u) => (
                     <div
-                      key={u.blockedTargetId}
+                      key={u.targetId}
                       className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4"
                     >
                       <p className="text-sm font-medium text-[var(--color-fg)]">
-                        {u.blockedTargetHandle || u.blockedTargetId}
+                        {u.targetHandle || u.targetId}
                       </p>
                       <button
                         type="button"
-                        onClick={() => unblockUser(u.blockedTargetId)}
+                        onClick={() => unblockUser(u.targetId)}
                         className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:text-red-400 transition-colors"
                       >
                         Unblock

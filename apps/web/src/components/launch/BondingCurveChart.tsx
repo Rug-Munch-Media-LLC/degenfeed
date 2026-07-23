@@ -92,9 +92,9 @@ export default function BondingCurveChart({
 
     const idx = TIMEFRAMES.indexOf(timeframe);
     if (dx > 0 && idx > 0) {
-      onTimeframeChange?.(TIMEFRAMES[idx - 1]);
+      onTimeframeChange?.(TIMEFRAMES[idx - 1]!);
     } else if (dx < 0 && idx < TIMEFRAMES.length - 1) {
-      onTimeframeChange?.(TIMEFRAMES[idx + 1]);
+      onTimeframeChange?.(TIMEFRAMES[idx + 1]!);
     }
   }, [timeframe, onTimeframeChange]);
 

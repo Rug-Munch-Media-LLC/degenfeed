@@ -12,7 +12,7 @@ import { useCallback, useRef } from 'react';
  */
 export function useDoubleTap(onDoubleTap?: () => void, delay = 300) {
   const lastTap = useRef(0);
-  const tapTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const tapTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const onTap = useCallback(
     (e: React.TouchEvent | React.MouseEvent) => {
@@ -26,7 +26,7 @@ export function useDoubleTap(onDoubleTap?: () => void, delay = 300) {
         // Double-tap detected
         if (tapTimeout.current) {
           clearTimeout(tapTimeout.current);
-          tapTimeout.current = undefined;
+          tapTimeout.current = undefined as unknown as ReturnType<typeof setTimeout>;
         }
         lastTap.current = 0;
         onDoubleTap?.();

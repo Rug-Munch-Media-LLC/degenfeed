@@ -23,7 +23,7 @@ const variantClasses: Record<NonNullable<SubscribeButtonProps['variant']>, strin
 };
 
 const SUB_TIERS: Array<{
-  id: PremiumTier;
+  id: string;
   name: string;
   price: string;
   color: string;
@@ -112,7 +112,7 @@ function TierPickerModal({
               key={tier.id}
               type="button"
               onClick={() => {
-                onSelect(tier.id);
+                onSelect(tier.id as PremiumTier);
                 onClose();
               }}
               className="group w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)]/50 p-4 text-left transition-all hover:border-degen-500/30"
