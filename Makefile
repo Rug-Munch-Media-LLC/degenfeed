@@ -14,8 +14,15 @@ precommit: ## Install pre-commit hooks
 	pre-commit install
 	pre-commit install --hook-type pre-push
 
-dev: ## Run dev servers via Turbo
-	pnpm dev
+bridge: ## Start local API bridge (replaces Cloudflare Worker)
+	@echo "Starting DegenFeed Bridge on port 8787..."
+	@WORKER_URL=http://127.0.0.1:8787 scripts/start-bridge.sh
+
+dev: ## Run dev servers via Turbo (starts bridge first)
+	@echo "Starting local API bridge..."
+	@scripts/start-bridge.sh --daemon
+	@echo "Starting Next.js dev server with WORKER_URL=http://127.0.0.1:8787..."
+	@cd apps/web && WORKER_URL=http://127.0.0.1:8787 pnpm dev
 
 build: ## Build all packages/apps via Turbo
 	pnpm build
