@@ -282,9 +282,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
-      className="fixed inset-0 z-[65] flex items-start justify-center bg-black/60 pt-[15vh] backdrop-blur-sm"
+      className="fixed inset-0 z-[65] flex items-end sm:items-start justify-center bg-black/60 pt-0 sm:pt-[15vh] backdrop-blur-sm animate-fade-in"
     >
-      <div className="w-full max-w-xl px-4">
+      <div className="w-full max-w-xl px-4 pb-4 sm:pb-0 animate-slide-up sm:animate-none rounded-t-2xl sm:rounded-none bg-[var(--color-bg)] sm:bg-transparent pt-4 sm:pt-0">
         {/* Search Input */}
         <div className="relative mb-2">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-muted)] pointer-events-none">

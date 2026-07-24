@@ -1,6 +1,9 @@
 /**
  * Landing page assets — served by the Worker at degenfeed.xyz/
  * and www.degenfeed.xyz/ to bypass the tunnel/port-80 mismatch.
+ *
+ * Redesigned: 2026-07-25 — "One Feed. Every Protocol. Your Rules."
+ * Cyberpunk vision page with aurora gradient, feature grid, protocol marquee.
  */
 
 export const LANDING_HTML = `<!doctype html>
@@ -10,201 +13,302 @@ export const LANDING_HTML = `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
     <meta name="color-scheme" content="dark" />
-    <title>DegenFeed — The social feed of web3</title>
-    <meta name="description" content="Browse Nostr, Farcaster, Lens, Bluesky, Threads, Mastodon, Reddit, and RSS from one window. Zero sign-ups required. Sign in with one key to like and reply. Compose once, cross-post everywhere." />
-    <meta property="og:title" content="DegenFeed — The social feed of web3" />
-    <meta property="og:description" content="Browse 7 protocols + RSS from one window. Zero sign-ups. One composer, all networks." />
+
+    <title>DegenFeed — The Web3 Social Aggregator</title>
+    <meta
+      name="description"
+      content="One feed. Every protocol. Your rules. DegenFeed unifies 18 decentralized networks into a single, beautiful timeline. Own your identity. Control your feed. Bridge every protocol."
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="DegenFeed — The Web3 Social Aggregator" />
+    <meta property="og:description" content="One feed. Every protocol. Your rules." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://degenfeed.xyz" />
     <meta property="og:image" content="https://degenfeed.xyz/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@degenfeed" />
+    <meta name="twitter:title" content="DegenFeed — The Web3 Social Aggregator" />
+    <meta name="twitter:description" content="One feed. Every protocol. Your rules." />
+    <meta name="twitter:image" content="https://degenfeed.xyz/og-image.png" />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- Google Fonts: Syne (headings) + Plus Jakarta Sans (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "DegenFeed",
         "url": "https://degenfeed.xyz",
-        "description": "Open-source multi-protocol social aggregator for web3. Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, RSS in one feed. Zero sign-ups required.",
+        "description": "Open-source multi-protocol social aggregator for web3. Nostr, Farcaster, Lens, Bluesky, Mastodon, and more in one feed. Zero sign-ups to read. One composer to post everywhere.",
         "applicationCategory": "SocialNetworkingApplication",
         "operatingSystem": "Web",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "author": { "@type": "Organization", "name": "Rug Munch Media LLC", "url": "https://degenfeed.xyz" }
       }
     </script>
+
     <link rel="stylesheet" href="/styles.css" />
     <script defer data-domain="degenfeed.xyz" src="https://plausible.rugmunch.io/js/script.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    <header class="topbar" role="banner">
+
+    <!-- ═══ HEADER ═══ -->
+    <header class="navbar" role="banner">
       <a href="/" class="brand" aria-label="DegenFeed home">
         <span class="brand-mark" aria-hidden="true">&gt;_</span>
         <span class="brand-name">DegenFeed</span>
       </a>
       <nav class="nav" aria-label="Primary">
-        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
         <a href="#protocols">Protocols</a>
+        <a href="#stats">Stats</a>
         <a href="/docs">Docs</a>
-        <a href="/newsletter">Newsletter</a>
-        <a href="/premium">Premium</a>
-        <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">Mastodon</a>
-        <a href="https://app.degenfeed.xyz" class="nav-cta">Open feed →</a>
+        <a href="https://app.degenfeed.xyz" class="nav-cta">Open App →</a>
       </nav>
     </header>
+
     <main id="main">
+
+      <!-- ═══════════════ HERO SECTION ═══════════════ -->
       <section class="hero" aria-labelledby="hero-title">
+        <!-- Aurora background layers -->
+        <div class="aurora-bg" aria-hidden="true">
+          <div class="aurora-layer aurora-1"></div>
+          <div class="aurora-layer aurora-2"></div>
+          <div class="aurora-layer aurora-3"></div>
+        </div>
+        <!-- Grid overlay -->
         <div class="hero-grid" aria-hidden="true"></div>
-        <div class="hero-inner">
-          <div class="hero-badges">
-            <span class="badge badge-green">✦ Now live — 14 networks</span>
-            <span class="badge badge-gray">Open source</span>
-            <span class="badge badge-blue">No sign-up needed</span>
+
+        <div class="hero-content">
+          <!-- Badge -->
+          <div class="hero-badge">
+            <span class="badge-dot"></span>
+            Live — 18 Protocols · 38 Self-Hosted Nodes
           </div>
+
+          <!-- Headline -->
           <h1 id="hero-title" class="hero-title">
-            One window. <span class="accent">Every</span> network.
+            <span class="hero-gradient-line">One Feed.</span>
+            <span class="hero-fg-line">Every Protocol.</span>
+            <span class="hero-gradient-line">Your Rules.</span>
           </h1>
-          <p class="hero-pitch">
-            Browse Nostr, Farcaster, Lens, Bluesky, Threads, <strong>Mastodon</strong>, Reddit, RSS,<br />
-            PeerTube, YouTube, Discord, Matrix, GitHub, and more — from one interface.
+
+          <!-- Subheadline -->
+          <p class="hero-sub">
+            DegenFeed unifies 18 decentralized networks into a single, beautiful timeline.
+            Own your identity. Control your feed. Bridge every protocol.
           </p>
+
+          <!-- CTA Buttons -->
           <div class="hero-cta">
-            <a href="https://app.degenfeed.xyz" class="btn btn-primary btn-large">Open the feed →</a>
-            <a href="#how" class="btn btn-secondary">How it works</a>
+            <a href="https://app.degenfeed.xyz" class="btn-glow">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M9 9l6 3-6 3V9z"/></svg>
+              Connect Wallet
+            </a>
+            <a href="https://app.degenfeed.xyz" class="btn-outline">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Browse Anonymously
+            </a>
           </div>
-          <div class="protocol-strip" id="protocols">
-            <div class="ps-item" style="--pcolor: #8e30eb"><span class="ps-dot"></span>Nostr</div>
-            <div class="ps-item" style="--pcolor: #8a63d2"><span class="ps-dot"></span>Farcaster</div>
-            <div class="ps-item" style="--pcolor: #abfe2c"><span class="ps-dot"></span>Lens</div>
-            <div class="ps-item" style="--pcolor: #1185fe"><span class="ps-dot"></span>Bluesky</div>
-            <div class="ps-item" style="--pcolor: #888"><span class="ps-dot"></span>Threads</div>
-            <div class="ps-item" style="--pcolor: #6364ff"><span class="ps-dot"></span>Mastodon</div>
-            <div class="ps-item" style="--pcolor: #ff4500"><span class="ps-dot"></span>Reddit</div>
-            <div class="ps-item" style="--pcolor: #ffa500"><span class="ps-dot"></span>RSS</div>
-          </div>
-          <div class="stats-row">
-            <div class="stat"><span class="stat-value">14</span><span class="stat-label">Protocols</span></div>
-            <div class="stat"><span class="stat-value">353</span><span class="stat-label">RSS sources</span></div>
-            <div class="stat"><span class="stat-value">10M+</span><span class="stat-label">Reachable users</span></div>
-            <div class="stat"><span class="stat-value">∞</span><span class="stat-label">Free reads</span></div>
+
+          <!-- Live Stats -->
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <span class="hero-stat-value">18</span>
+              <span class="hero-stat-label">Protocols</span>
+            </div>
+            <div class="hero-stat">
+              <span class="hero-stat-value">38</span>
+              <span class="hero-stat-label">Self-Hosted Nodes</span>
+            </div>
+            <div class="hero-stat">
+              <span class="hero-stat-value">100%</span>
+              <span class="hero-stat-label">Open Source</span>
+            </div>
           </div>
         </div>
       </section>
-      <section class="how" id="how" aria-labelledby="how-title">
-        <h2 id="how-title" class="section-title">
-          <span class="bracket" aria-hidden="true">[</span>How it works<span class="bracket" aria-hidden="true">]</span>
-        </h2>
-        <div class="how-grid">
-          <article class="card">
-            <div class="card-num" aria-hidden="true">01</div>
-            <h3>Open the app. See everything.</h3>
-            <p>No sign-up, no wallet, no key. All 14 protocols and RSS feeds load immediately. <strong>Zero friction.</strong></p>
+
+      <!-- ═══════════════ FEATURES GRID ═══════════════ -->
+      <section class="features" id="features" aria-labelledby="features-title">
+        <div class="section-header">
+          <h2 id="features-title" class="section-title">
+            The Unified <span class="gradient-text">Social Layer</span>
+          </h2>
+          <p class="section-sub">
+            One protocol is limiting. Eighteen is liberation. Every network, every identity, every post — in one place.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <article class="f-card">
+            <div class="f-card-icon" style="--fc-accent:#8b5cf6">🔗</div>
+            <h3 class="f-card-title">Cross-Protocol Identity</h3>
+            <p class="f-card-desc">One wallet. Every identity. Link your Nostr npub, Farcaster FID, Bluesky DID, Mastodon handle, and Lens profile — all owned by you.</p>
           </article>
-          <article class="card">
-            <div class="card-num" aria-hidden="true">02</div>
-            <h3>Connect your identity.</h3>
-            <p>Nostr key, Farcaster signer, Lens wallet, Bluesky password, Mastodon token — whatever you have. Sign in to like, reply, repost natively on that network. Your key <strong>never leaves your browser.</strong></p>
+
+          <article class="f-card">
+            <div class="f-card-icon" style="--fc-accent:#00ff41">📡</div>
+            <h3 class="f-card-title">Unified Feed</h3>
+            <p class="f-card-desc">No more checking 8 apps. See every post from every protocol in one timeline. Smart deduplication means no repeats.</p>
           </article>
-          <article class="card">
-            <div class="card-num" aria-hidden="true">03</div>
-            <h3>Cross-post everywhere.</h3>
-            <p>Link multiple accounts and compose once. DegenFeed publishes the same post to Nostr, Farcaster, Lens, Bluesky, Threads, and Mastodon in parallel. Partial success? Failed networks retry in the background.</p>
+
+          <article class="f-card">
+            <div class="f-card-icon" style="--fc-accent:#f59e0b">💰</div>
+            <h3 class="f-card-title">Creator Coins</h3>
+            <p class="f-card-desc">Launch your own token across Base and Solana. Let fans tip you from ANY protocol. Vesting schedules, bonding curves, anti-exploit protection.</p>
           </article>
-          <article class="card">
-            <div class="card-num" aria-hidden="true">04</div>
-            <h3>Ranked, transparent, yours.</h3>
-            <p>Every post is scored with a public algorithm — recency, engagement, source quality, niche relevance. No black box. You can override any weight.</p>
+
+          <article class="f-card">
+            <div class="f-card-icon" style="--fc-accent:#00ba7c">🔒</div>
+            <h3 class="f-card-title">Data Sovereignty</h3>
+            <p class="f-card-desc">We self-host Farcaster Hubble, Nostr relay, PeerTube, GoToSocial, and more. Your data lives on our infrastructure, not theirs.</p>
+          </article>
+
+          <article class="f-card">
+            <div class="f-card-icon" style="--fc-accent:#6364ff">🌉</div>
+            <h3 class="f-card-title">Protocol Bridging</h3>
+            <p class="f-card-desc">Post once, publish everywhere. Reply to a Farcaster cast from Nostr. DM a Bluesky user from Matrix. The bridges work.</p>
+          </article>
+
+          <article class="f-card">
+            <div class="f-card-icon" style="--fc-accent:#f91880">🎨</div>
+            <h3 class="f-card-title">Beautiful &amp; Fast</h3>
+            <p class="f-card-desc">Designed like the best social apps. Dark mode by default. Sub-100ms feed loads. Mobile-first with native-feel gestures.</p>
           </article>
         </div>
       </section>
-      <section class="what" aria-labelledby="what-title">
-        <h2 id="what-title" class="section-title">
-          <span class="bracket" aria-hidden="true">[</span>What we are<span class="bracket" aria-hidden="true">]</span>
-        </h2>
-        <div class="what-grid">
-          <div class="what-card">
-            <div class="what-icon">⊞</div>
-            <h3>A client, not a network</h3>
-            <p>We don't own your data. We don't host your posts. DegenFeed is a window onto the existing open social graph — we read from public APIs and sign actions with your keys.</p>
-          </div>
-          <div class="what-card">
-            <div class="what-icon">🐘</div>
-            <h3>Mastodon-compatible server</h3>
-            <p>We run a <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">GotoSocial instance</a> at <code>social.degenfeed.xyz</code>. <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener" style="color:#6364ff;text-decoration:underline">Create a free @degenfeed.xyz account</a> in 30 seconds. Username + password, no email required. Your posts federate with the wider fediverse automatically.</p>
-          </div>
-          <div class="what-card">
-            <div class="what-icon">◆</div>
-            <h3>Open source &amp; free</h3>
-            <p>Licensed under MIT. Self-hostable. Public API. No tokens, no ads, no tracking. Operating cost at scale is minimal — <strong>DegenFeed can run forever without charging.</strong></p>
-          </div>
+
+      <!-- ═══════════════ PROTOCOL SHOWCASE ═══════════════ -->
+      <section class="protocols" id="protocols" aria-labelledby="protocols-title">
+        <div class="section-header">
+          <h2 id="protocols-title" class="section-title">
+            Every Protocol. <span class="gradient-text">One Window.</span>
+          </h2>
+          <p class="section-sub">
+            18 decentralized networks. One unified timeline. The social graph belongs to the protocols — the window belongs to you.
+          </p>
         </div>
-      </section>
-      <section class="protocol-details" aria-labelledby="pd-title">
-        <h2 id="pd-title" class="section-title">
-          <span class="bracket" aria-hidden="true">[</span>14 protocols, 1 feed<span class="bracket" aria-hidden="true">]</span>
-        </h2>
-        <div class="pd-grid">
-          <article class="pd-card" style="--pcolor:#8e30eb"><div class="pd-icon">☰</div><h3>Nostr</h3><p class="pd-desc">Decentralized relay-based notes. Keys, not accounts.</p><span class="pd-stat">500K+ pubkeys</span></article>
-          <article class="pd-card" style="--pcolor:#8a63d2"><div class="pd-icon">◈</div><h3>Farcaster</h3><p class="pd-desc">Sufficiently decentralized social with hubs.</p><span class="pd-stat">700K+ FIDs</span></article>
-          <article class="pd-card" style="--pcolor:#abfe2c"><div class="pd-icon">◎</div><h3>Lens</h3><p class="pd-desc">User-owned social graph on Polygon.</p><span class="pd-stat">100K+ profiles</span></article>
-          <article class="pd-card" style="--pcolor:#1185fe"><div class="pd-icon">☁</div><h3>Bluesky</h3><p class="pd-desc">AT Protocol social. Public AppView API.</p><span class="pd-stat">5M+ users</span></article>
-          <article class="pd-card" style="--pcolor:#888"><div class="pd-icon">+</div><h3>Threads</h3><p class="pd-desc">Instagram's AT Protocol network. Free reads.</p><span class="pd-stat">200M+ reachable</span></article>
-          <article class="pd-card" style="--pcolor:#6364ff"><div class="pd-icon">M</div><h3>Mastodon</h3><p class="pd-desc">Self-hosted GotoSocial. Create a free @degenfeed.xyz account in 30 seconds.</p><span class="pd-stat"><a href="https://social.degenfeed.xyz" target="_blank" rel="noopener" style="color:#6364ff;text-decoration:underline">Create account →</a></span></article>
-          <article class="pd-card" style="--pcolor:#ff4500"><div class="pd-icon">R</div><h3>Reddit</h3><p class="pd-desc">Free RSS feeds. No API key required.</p><span class="pd-stat">137 subs</span></article>
-          <article class="pd-card" style="--pcolor:#ffa500"><div class="pd-icon">A</div><h3>RSS + Articles</h3><p class="pd-desc">Mirror, Substack, Medium, Paragraph, and any feed URL.</p><span class="pd-stat">353 sources</span></article>
-          <article class="pd-card" style="--pcolor:#e74ccc"><div class="pd-icon">▶</div><h3>YouTube</h3><p class="pd-desc">Video content from creator channels.</p><span class="pd-stat">Feeds + discovery</span></article>
-          <article class="pd-card" style="--pcolor:#f96854"><div class="pd-icon">P</div><h3>PeerTube</h3><p class="pd-desc">Federated video + livestreaming.</p><span class="pd-stat">Self-hosted instance</span></article>
-          <article class="pd-card" style="--pcolor:#5865f2"><div class="pd-icon">#</div><h3>Discord</h3><p class="pd-desc">Connect servers, bridge announcements, cross-post to channels.</p><span class="pd-stat">Webhook bridge</span></article>
-          <article class="pd-card" style="--pcolor:#0dbd8b"><div class="pd-icon">M</div><h3>Matrix</h3><p class="pd-desc">Open federation messaging bridge to rooms.</p><span class="pd-stat">Decentralized chat</span></article>
-          <article class="pd-card" style="--pcolor:#f1502f"><div class="pd-icon">◆</div><h3>GitHub</h3><p class="pd-desc">Dev-focused: repo releases, PRs, stars → DegenFeed.</p><span class="pd-stat">Post releases</span></article>
-          <article class="pd-card" style="--pcolor:#333"><div class="pd-icon">☐</div><h3>Webhooks</h3><p class="pd-desc">Connect any service. Custom triggers for posts, tips, streams.</p><span class="pd-stat">Any service</span></article>
-          <article class="pd-card" style="--pcolor:#ee4c2c"><div class="pd-icon">✉</div><h3>Email Newsletter</h3><p class="pd-desc">Send digests to subscribers via SendGrid/Mailgun/SMTP.</p><span class="pd-stat">Send &amp; manage</span></article>
-          <article class="pd-card" style="--pcolor:#ff6719"><div class="pd-icon">S</div><h3>Substack / Ghost</h3><p class="pd-desc">Auto-cross-post newsletter articles to all protocols.</p><span class="pd-stat">RSS bridge</span></article>
-        </div>
-      </section>
-      <section class="stack" aria-labelledby="stack-title">
-        <h2 id="stack-title" class="section-title">
-          <span class="bracket" aria-hidden="true">[</span>Built with<span class="bracket" aria-hidden="true">]</span>
-        </h2>
-        <div class="stack-grid">
-          <span class="stack-item">TypeScript</span>
-          <span class="stack-item">Next.js 15</span>
-          <span class="stack-item">Cloudflare Workers</span>
-          <span class="stack-item">Cloudflare Pages</span>
-          <span class="stack-item">GotoSocial</span>
-          <span class="stack-item">SQLite</span>
-          <span class="stack-item">Tailwind</span>
-          <span class="stack-item">pnpm monorepo</span>
-          <span class="stack-item">RMI DataBus</span>
-          <span class="stack-item">IndexedDB</span>
-          <span class="stack-item">16 SDK packages</span>
-          <span class="stack-item">16 test suites</span>
-        </div>
-      </section>
-      <section class="manifesto" aria-labelledby="manifesto-title">
-        <h2 id="manifesto-title" class="section-title">
-          <span class="bracket" aria-hidden="true">[</span>Why this exists<span class="bracket" aria-hidden="true">]</span>
-        </h2>
-        <div class="manifesto-content">
-          <p>The open social graph is fractured across a dozen protocols, each with its own app, its own feed, its own set of accounts to manage.</p>
-          <p><strong>DegenFeed is the window that sees them all.</strong></p>
-          <p>One UI. One composer. One ranked feed. 10 protocols. 353 RSS sources. Zero accounts required to read. Sign in with what you already have to write.</p>
-          <p class="manifesto-tagline">The graph belongs to the protocols. The window belongs to you.</p>
-        </div>
-      </section>
-      <section class="cta-final" id="launch" aria-labelledby="cta-title">
-        <div class="cta-card">
-          <h2 id="cta-title" class="cta-title">Ready to use it?</h2>
-          <p class="cta-sub">The feed is live. No waitlist. No tokens. No sign-up required.</p>
-          <div class="cta-buttons">
-            <a href="https://app.degenfeed.xyz" class="btn btn-primary btn-large">Open feed →</a>
-            <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener" class="btn btn-secondary">Create @degenfeed.xyz account</a>
+
+        <div class="marquee-wrapper">
+          <div class="marquee-edge left"></div>
+          <div class="marquee-edge right"></div>
+          <div class="marquee-track">
+            <div class="marquee-content">
+              <span class="p-chip" style="--pc:#8b5cf6">🌩 Nostr</span>
+              <span class="p-chip" style="--pc:#8a63d2">⚡ Farcaster</span>
+              <span class="p-chip" style="--pc:#abfe2c">🔮 Lens</span>
+              <span class="p-chip" style="--pc:#1185fe">🦋 Bluesky</span>
+              <span class="p-chip" style="--pc:#6364ff">🐘 Mastodon</span>
+              <span class="p-chip" style="--pc:#ff4500">🤖 Reddit</span>
+              <span class="p-chip" style="--pc:#e74c3c">🎬 PeerTube</span>
+              <span class="p-chip" style="--pc:#c44a8b">📸 PixelFed</span>
+              <span class="p-chip" style="--pc:#888">🧵 Threads</span>
+              <span class="p-chip" style="--pc:#0dbd8b">💬 Matrix</span>
+              <span class="p-chip" style="--pc:#5865f2">💜 Discord</span>
+              <span class="p-chip" style="--pc:#ff0000">▶ YouTube</span>
+              <span class="p-chip" style="--pc:#f1502f">🐙 GitHub</span>
+              <span class="p-chip" style="--pc:#ffa500">📡 RSS</span>
+              <span class="p-chip" style="--pc:#00b868">🍋 Lemmy</span>
+              <span class="p-chip" style="--pc:#ff6719">✉ Substack</span>
+              <span class="p-chip" style="--pc:#e74c3c">🎥 PeerTube</span>
+              <span class="p-chip" style="--pc:#6364ff">🐘 GoToSocial</span>
+            </div>
+            <div class="marquee-content" aria-hidden="true">
+              <span class="p-chip" style="--pc:#8b5cf6">🌩 Nostr</span>
+              <span class="p-chip" style="--pc:#8a63d2">⚡ Farcaster</span>
+              <span class="p-chip" style="--pc:#abfe2c">🔮 Lens</span>
+              <span class="p-chip" style="--pc:#1185fe">🦋 Bluesky</span>
+              <span class="p-chip" style="--pc:#6364ff">🐘 Mastodon</span>
+              <span class="p-chip" style="--pc:#ff4500">🤖 Reddit</span>
+              <span class="p-chip" style="--pc:#e74c3c">🎬 PeerTube</span>
+              <span class="p-chip" style="--pc:#c44a8b">📸 PixelFed</span>
+              <span class="p-chip" style="--pc:#888">🧵 Threads</span>
+              <span class="p-chip" style="--pc:#0dbd8b">💬 Matrix</span>
+              <span class="p-chip" style="--pc:#5865f2">💜 Discord</span>
+              <span class="p-chip" style="--pc:#ff0000">▶ YouTube</span>
+              <span class="p-chip" style="--pc:#f1502f">🐙 GitHub</span>
+              <span class="p-chip" style="--pc:#ffa500">📡 RSS</span>
+              <span class="p-chip" style="--pc:#00b868">🍋 Lemmy</span>
+              <span class="p-chip" style="--pc:#ff6719">✉ Substack</span>
+              <span class="p-chip" style="--pc:#e74c3c">🎥 PeerTube</span>
+              <span class="p-chip" style="--pc:#6364ff">🐘 GoToSocial</span>
+            </div>
           </div>
         </div>
       </section>
+
+      <!-- ═══════════════ STATS SECTION ═══════════════ -->
+      <section class="stats" id="stats" aria-labelledby="stats-title">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">✧</div>
+            <div class="stat-value" data-count="10427">10,427+</div>
+            <div class="stat-label">Tweets Posted</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⬡</div>
+            <div class="stat-value">18</div>
+            <div class="stat-label">Protocols Bridged</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">◈</div>
+            <div class="stat-value">2,847+</div>
+            <div class="stat-label">Identities Linked</div>
+          </div>
+        </div>
+        <div class="stats-cta-wrapper">
+          <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener" class="stats-built-in-public">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+            Built in public — star on Forgejo
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+          </a>
+        </div>
+      </section>
+
+      <!-- ═══════════════ CTA FOOTER ═══════════════ -->
+      <section class="cta-section" aria-labelledby="cta-title">
+        <div class="cta-glow" aria-hidden="true"></div>
+        <div class="cta-content">
+          <div class="cta-icon">⚡</div>
+          <h2 id="cta-title" class="cta-title">Ready to unify your social web?</h2>
+          <p class="cta-sub">
+            One feed. Every protocol. Your rules. Join thousands of users already bridging
+            the decentralized social graph.
+          </p>
+          <a href="https://app.degenfeed.xyz" class="btn-glow btn-glow-large">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Connect Wallet
+          </a>
+          <p class="cta-assurance">No email required. No phone number. Just your wallet.</p>
+          <div class="cta-checkmarks">
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Non-custodial</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Open source</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> No tracking</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Free forever</span>
+          </div>
+        </div>
+      </section>
+
     </main>
+
+    <!-- ═══ FOOTER ═══ -->
     <footer class="footer" role="contentinfo">
       <div class="footer-inner">
         <div class="footer-brand">
@@ -213,7 +317,8 @@ export const LANDING_HTML = `<!doctype html>
         </div>
         <p class="footer-tag">The social feed of web3.</p>
         <p class="footer-meta">Built by <strong>Rug Munch Media LLC</strong> · Wyoming, USA · Open source (MIT)</p>
-        <nav class="footer-links" aria-label="Footer">
+
+        <nav class="footer-links" aria-label="Footer pages">
           <a href="/about">About</a>
           <span aria-hidden="true">·</span>
           <a href="/faq">FAQ</a>
@@ -226,10 +331,9 @@ export const LANDING_HTML = `<!doctype html>
           <span aria-hidden="true">·</span>
           <a href="/terms">Terms</a>
           <span aria-hidden="true">·</span>
-          <a href="/legal">Legal</a>
-          <span aria-hidden="true">·</span>
           <a href="/community-guidelines">Rules</a>
         </nav>
+
         <nav class="footer-links footer-social" aria-label="Source code">
           <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener">Forgejo</a>
           <span aria-hidden="true">·</span>
@@ -239,47 +343,80 @@ export const LANDING_HTML = `<!doctype html>
         </nav>
       </div>
     </footer>
+
     <script src="/app.js" defer></script>
   </body>
 </html>`;
 
-export const LANDING_CSS = `* { box-sizing: border-box; margin: 0; padding: 0; }
+export const LANDING_CSS = `*,
+*::before,
+*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 :root {
-  --bg: #0a0a0a;
-  --fg: #e5e7eb;
+  --bg: #000000;
+  --fg: #e7e9ea;
+  --fg-secondary: #b0b3b8;
   --accent: #00ff41;
-  --accent-2: #10b981;
-  --muted: #6b7280;
-  --card: #111827;
-  --border: #1f2937;
+  --accent-soft: rgba(0,255,65,0.15);
+  --accent-glow: rgba(0,255,65,0.12);
+  --accent-glow-strong: rgba(0,255,65,0.25);
+  --accent-secondary: #8b5cf6;
+  --muted: #8b8f93;
+  --border: #2f3336;
+  --card: #0a0a0a;
+  --card-hover: #111113;
+
+  --font-heading: "Syne", "Inter", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
 }
-html { scroll-behavior: smooth; }
+
+html { scroll-behavior: smooth; color-scheme: dark; }
+
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--fg);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
+
+/* ═══ Skip Link ═══ */
 .skip-link {
   position: absolute; left: -9999px; top: 0; z-index: 100;
   background: var(--accent); color: #000; padding: 8px 16px; font-weight: 600;
+  border-radius: 0 0 var(--radius-sm) 0;
 }
 .skip-link:focus { left: 8px; top: 8px; }
+
+/* ═══ Links ═══ */
 a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
-a:hover { color: var(--accent-2); }
-.topbar {
+a:hover { color: #10b981; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--radius-sm); }
+
+/* ═══ Navbar ═══ */
+.navbar {
   position: sticky; top: 0; z-index: 50;
-  background: rgba(10,10,10,0.85);
-  backdrop-filter: blur(12px);
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
-  padding: 16px 24px;
+  padding: 14px 24px;
   display: flex; justify-content: space-between; align-items: center;
   max-width: 1200px; margin: 0 auto;
 }
+
 .brand { display: flex; align-items: center; gap: 8px; color: var(--fg); font-weight: 700; font-size: 1.1rem; }
 .brand-mark {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   color: var(--accent);
   background: #000;
   border: 1px solid var(--accent);
@@ -287,159 +424,597 @@ a:hover { color: var(--accent-2); }
   border-radius: 4px;
   font-size: 0.9rem;
 }
-.nav { display: flex; gap: 24px; align-items: center; }
-.nav a { color: var(--muted); font-size: 0.95rem; }
+
+.nav { display: flex; gap: 20px; align-items: center; }
+.nav a { color: var(--muted); font-size: 0.9rem; font-weight: 500; }
 .nav a:hover { color: var(--fg); }
 .nav-cta {
   background: var(--accent) !important;
   color: #000 !important;
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-weight: 600 !important;
+  padding: 7px 16px;
+  border-radius: var(--radius-full);
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
 }
-.nav-cta:hover { background: var(--accent-2) !important; }
-main { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-.section-title {
-  font-size: 2rem;
-  font-weight: 700;
+.nav-cta:hover { background: #00cc34 !important; color: #000 !important; }
+
+/* ═══ Section Common ═══ */
+.section-header {
   text-align: center;
-  margin: 80px 0 40px;
-  color: var(--fg);
+  max-width: 640px;
+  margin: 0 auto 48px;
+  padding: 0 24px;
 }
-.section-title .bracket { color: var(--accent); margin: 0 8px; }
-.hero { padding: 80px 0 60px; position: relative; }
+
+.section-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 12px;
+  letter-spacing: -0.03em;
+}
+
+.section-sub {
+  color: var(--fg-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary), #f91880);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ═══════════════ HERO ═══════════════ */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 80px 24px 60px;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Aurora background */
+.aurora-bg {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.aurora-layer {
+  position: absolute; inset: -100px;
+  filter: blur(80px);
+  will-change: transform;
+}
+
+.aurora-1 {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(0,255,65,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 40% 80%, rgba(0,255,65,0.04) 0%, transparent 50%);
+  animation: aurora-pan-1 20s ease-in-out infinite;
+}
+
+.aurora-2 {
+  background:
+    radial-gradient(ellipse at 60% 30%, rgba(139,92,246,0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 10% 70%, rgba(0,255,65,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 60%, rgba(249,24,128,0.04) 0%, transparent 50%);
+  animation: aurora-pan-2 25s ease-in-out infinite;
+}
+
+.aurora-3 {
+  background:
+    radial-gradient(ellipse at 30% 60%, rgba(0,255,65,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(139,92,246,0.06) 0%, transparent 50%);
+  animation: aurora-pan-1 30s ease-in-out infinite;
+  opacity: 0.5;
+}
+
+@keyframes aurora-pan-1 {
+  0%, 100% { transform: translateX(-20%) translateY(-10%) rotate(0deg); }
+  50% { transform: translateX(10%) translateY(5%) rotate(2deg); }
+}
+
+@keyframes aurora-pan-2 {
+  0%, 100% { transform: translateX(10%) translateY(-5%) rotate(0deg); }
+  50% { transform: translateX(-15%) translateY(10%) rotate(-3deg); }
+}
+
+/* Grid overlay */
 .hero-grid {
   position: absolute; inset: 0;
   background-image:
-    linear-gradient(rgba(0,255,65,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,255,65,0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(rgba(0,255,65,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,65,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
   mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
   -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
   pointer-events: none;
 }
-.hero-inner { position: relative; }
-.hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-.badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 800px;
+}
+
+/* Badge */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
   font-size: 0.8rem;
-  font-weight: 500;
-  border: 1px solid var(--border);
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(0,255,65,0.2);
+  margin-bottom: 24px;
+  animation: fade-slide-up 0.6s var(--ease-out-expo, cubic-bezier(0.16,1,0.3,1)) both;
 }
-.badge-green { background: rgba(0,255,65,0.1); color: var(--accent); border-color: rgba(0,255,65,0.3); }
-.badge-gray { background: #1f2937; color: var(--muted); }
-.badge-blue { background: rgba(59,130,246,0.1); color: #60a5fa; border-color: rgba(59,130,246,0.3); }
+
+.badge-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--accent); }
+  50% { opacity: 0.5; box-shadow: 0 0 12px var(--accent); }
+}
+
+/* Title */
 .hero-title {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  animation: fade-slide-up 0.6s var(--ease-out-expo, cubic-bezier(0.16,1,0.3,1)) 0.15s both;
+}
+
+.hero-gradient-line {
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
   font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 20px;
-  letter-spacing: -0.02em;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary), #f91880);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
-.accent { color: var(--accent); }
-.hero-pitch {
+
+.hero-fg-line {
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  color: var(--fg);
+}
+
+/* Sub */
+.hero-sub {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: var(--fg-secondary);
+  max-width: 560px;
+  line-height: 1.6;
+  margin-top: 20px;
+  animation: fade-slide-up 0.6s var(--ease-out-expo, cubic-bezier(0.16,1,0.3,1)) 0.3s both;
+}
+
+/* CTA Row */
+.hero-cta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 32px;
+  animation: fade-slide-up 0.6s var(--ease-out-expo, cubic-bezier(0.16,1,0.3,1)) 0.45s both;
+}
+
+/* Glow Button */
+.btn-glow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: var(--radius-xl);
+  font-weight: 700;
+  font-size: 1rem;
+  color: #000;
+  background: linear-gradient(135deg, var(--accent), #00cc34);
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px var(--accent-glow-strong), 0 0 60px var(--accent-glow);
+}
+
+.btn-glow:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.btn-glow-large {
+  padding: 18px 40px;
   font-size: 1.15rem;
-  color: var(--muted);
-  max-width: 640px;
-  margin-bottom: 32px;
+  border-radius: var(--radius-xl);
 }
-.hero-pitch strong { color: var(--fg); }
-.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 40px; }
-.btn {
-  display: inline-block;
-  padding: 12px 24px;
-  border-radius: 8px;
+
+/* Outline Button */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: var(--radius-xl);
   font-weight: 600;
   font-size: 1rem;
+  color: var(--fg);
+  background: transparent;
+  border: 1.5px solid var(--border);
   cursor: pointer;
-  transition: all 0.15s;
-  border: none;
+  transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  text-decoration: none;
 }
-.btn-primary { background: var(--accent); color: #000; }
-.btn-primary:hover { background: var(--accent-2); transform: translateY(-1px); }
-.btn-secondary { background: #1f2937; color: var(--fg); border: 1px solid var(--border); }
-.btn-secondary:hover { background: #374151; }
-.btn-large { padding: 16px 32px; font-size: 1.1rem; }
-.protocol-strip {
-  display: flex; gap: 16px; flex-wrap: wrap;
-  padding: 20px 0; border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 24px;
+
+.btn-outline:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+  transform: translateY(-1px);
 }
-.ps-item {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 0.85rem; color: var(--pcolor, var(--muted));
-  font-weight: 500;
+
+.btn-outline:active {
+  transform: translateY(0) scale(0.97);
 }
-.ps-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--pcolor, var(--muted));
-  box-shadow: 0 0 8px var(--pcolor, transparent);
+
+/* Hero Stats */
+.hero-stats {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  margin-top: 48px;
+  animation: fade-slide-up 0.6s var(--ease-out-expo, cubic-bezier(0.16,1,0.3,1)) 0.6s both;
 }
-.stats-row { display: flex; gap: 32px; flex-wrap: wrap; }
-.stat { display: flex; flex-direction: column; }
-.stat-value { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
-.stat-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.how-grid, .what-grid, .pd-grid, .stack-grid { display: grid; gap: 16px; }
-.how-grid, .pd-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-.what-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-.stack-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px;
-  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-}
-.card:hover {
-  border-color: rgba(0,255,65,0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-.card-num { font-family: ui-monospace, monospace; color: var(--accent); font-size: 0.8rem; margin-bottom: 8px; }
-.card h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--fg); }
-.card p { color: var(--muted); font-size: 0.95rem; }
-.card p strong { color: var(--fg); }
-.what-icon { font-size: 2rem; margin-bottom: 12px; }
-.pd-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-.pd-icon { font-size: 1.8rem; margin-bottom: 8px; color: var(--pcolor, var(--accent)); }
-.pd-card h3 { font-size: 1rem; margin-bottom: 4px; }
-.pd-desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
-.pd-stat { font-size: 0.8rem; color: var(--pcolor, var(--accent)); font-weight: 600; }
-.pd-stat a { color: var(--pcolor, var(--accent)); }
-.stack-item {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 16px;
+
+.hero-stat {
   text-align: center;
-  font-size: 0.85rem;
+}
+
+.hero-stat-value {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-stat-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--muted);
-  font-family: ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
 }
-.manifesto-content { max-width: 640px; margin: 0 auto; }
-.manifesto-content p { margin-bottom: 16px; color: var(--muted); font-size: 1.05rem; }
-.manifesto-content p strong { color: var(--accent); }
-.manifesto-tagline { color: var(--fg); font-size: 1.2rem !important; font-weight: 600; text-align: center; margin-top: 32px !important; }
-.cta-final { padding: 60px 0 80px; text-align: center; }
-.cta-card {
-  background: linear-gradient(135deg, rgba(0,255,65,0.08), rgba(16,185,129,0.05));
-  border: 1px solid rgba(0,255,65,0.2);
-  border-radius: 16px;
+
+/* ═══════════════ FEATURES ═══════════════ */
+.features {
+  padding: 80px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 0;
+}
+
+.f-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+  overflow: hidden;
+}
+
+.f-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0,255,65,0.25);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 0 30px var(--accent-glow);
+}
+
+.f-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  background: color-mix(in srgb, var(--fc-accent, var(--accent)) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fc-accent, var(--accent)) 25%, transparent);
+  transition: transform 0.3s ease;
+}
+
+.f-card:hover .f-card-icon {
+  transform: scale(1.1);
+}
+
+.f-card-title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--fg);
+}
+
+.f-card-desc {
+  font-size: 0.9rem;
+  color: var(--fg-secondary);
+  line-height: 1.6;
+}
+
+/* ═══════════════ PROTOCOL MARQUEE ═══════════════ */
+.protocols {
+  padding: 80px 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.marquee-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.marquee-edge {
+  position: absolute; inset: 0;
+  width: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.marquee-edge.left {
+  left: 0;
+  background: linear-gradient(to right, #000, transparent);
+}
+
+.marquee-edge.right {
+  right: 0;
+  background: linear-gradient(to left, #000, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  gap: 0;
+  overflow: hidden;
+  padding: 12px 0;
+}
+
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-content {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  animation: marquee-scroll 50s linear infinite;
+  will-change: transform;
+  padding: 0 5px;
+}
+
+.marquee-wrapper:hover .marquee-content {
+  animation-play-state: paused;
+}
+
+.p-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--pc, var(--accent)) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pc, var(--accent)) 25%, transparent);
+  color: var(--pc, var(--accent));
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.p-chip:hover {
+  transform: scale(1.08);
+  filter: brightness(1.2);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--pc, var(--accent)) 20%, transparent);
+}
+
+/* ═══════════════ STATS ═══════════════ */
+.stats {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   padding: 48px 24px;
-  max-width: 640px; margin: 0 auto;
+  max-width: 1200px;
+  margin: 0 auto;
 }
-.cta-title { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
-.cta-sub { color: var(--muted); margin-bottom: 24px; }
-.cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto 24px;
+}
+
+.stat-card {
+  text-align: center;
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+
+.stat-value {
+  font-family: var(--font-heading);
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+.stats-cta-wrapper {
+  text-align: center;
+}
+
+.stats-built-in-public {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--fg-secondary);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.stats-built-in-public:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ═══════════════ CTA SECTION ═══════════════ */
+.cta-section {
+  position: relative;
+  overflow: hidden;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.cta-glow {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 50%, var(--accent-glow) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 80%, rgba(139,92,246,0.1) 0%, transparent 60%);
+}
+
+.cta-content {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.cta-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xl);
+  font-size: 1.5rem;
+  margin: 0 auto 24px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(0,255,65,0.2);
+  color: var(--accent);
+}
+
+.cta-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+
+.cta-sub {
+  color: var(--fg-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.cta-assurance {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 16px;
+}
+
+.cta-checkmarks {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.cta-checkmarks span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cta-checkmarks svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ═══════════════ FOOTER ═══════════════ */
 .footer {
   border-top: 1px solid var(--border);
   padding: 48px 0 40px;
   text-align: center;
-  background: linear-gradient(to top, rgba(0,255,65,0.03), transparent);
+  background: linear-gradient(to top, rgba(0,255,65,0.02), transparent);
 }
+
 .footer-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 .footer-brand { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; font-weight: 700; }
 .footer-tag { color: var(--accent); font-size: 0.9rem; margin-bottom: 4px; }
@@ -449,12 +1024,46 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 .footer-links a { color: var(--muted); }
 .footer-links a:hover { color: var(--accent); }
 .footer-social { margin-top: 8px; font-size: 0.8rem; }
-@media (max-width: 640px) {
-  .topbar { flex-direction: column; gap: 12px; }
-  .nav { flex-wrap: wrap; justify-content: center; }
-  .section-title { font-size: 1.5rem; margin: 48px 0 24px; }
-  .stats-row { gap: 16px; }
-  .stat-value { font-size: 1.4rem; }
+
+/* ═══════════════ ANIMATIONS ═══════════════ */
+@keyframes fade-slide-up {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ═══════════════ RESPONSIVE ═══════════════ */
+@media (max-width: 768px) {
+  .navbar { flex-direction: column; gap: 12px; }
+  .nav { flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .hero { padding: 60px 16px 40px; min-height: auto; }
+  .hero-stats { gap: 24px; margin-top: 32px; flex-wrap: wrap; }
+  .features-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr; gap: 32px; }
+  .cta-checkmarks { gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .hero-cta { flex-direction: column; align-items: stretch; }
+  .btn-glow, .btn-outline { justify-content: center; }
+  .f-card { padding: 20px; }
+}
+
+/* ═══ Reduced Motion ═══ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .aurora-layer { display: none; }
+  .hero-grid { mask-image: none; -webkit-mask-image: none; }
+  .marquee-content { animation: none; }
+  .gradient-text { background: none; -webkit-text-fill-color: var(--accent); }
 }`;
 
 export const LANDING_JS = `// DegenFeed landing page — minimal vanilla JS

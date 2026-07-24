@@ -2,7 +2,7 @@ import { ed25519 } from '@noble/curves/ed25519';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
-import { type Env, jsonResponse, rateLimit } from '../index';
+import { type Env, jsonResponse, log, rateLimit } from '../index';
 import { extractRequestMetadata, logSecurityEvent } from '../lib/security-log';
 import { createSession, generateCsrfToken, parseSessionCookie, storeCsrfToken } from '../session';
 import { storeSessionMeta } from './sessions';
@@ -268,6 +268,10 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
       userAgent: meta.userAgent,
     }).catch(() => {});
 
+    // Fire-and-forget: trigger identity discovery in the background
+    // This does not block the login response. Discovery results are cached
+    // and can be picked up by the frontend on the next page load.
+    triggerPostLoginDiscovery(payload.address, env).catch(() => {});
     // Generate and store CSRF token for the new session.
     // IMPORTANT: parse the cookie value from the Set-Cookie header so the KV key
     // matches what validateCsrfToken looks up (the cookie value only, not the
@@ -303,5 +307,43 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
     );
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
+  }
+}
+
+// ─── Post-login identity discovery trigger (fire-and-forget) ──
+
+/**
+ * Called after a successful wallet login to trigger identity discovery
+ * in the background. This is fire-and-forget — errors are logged but
+ * never propagated to the login response.
+ *
+ * Checks if enough time has passed since last discovery before re-running.
+ */
+async function triggerPostLoginDiscovery(walletAddress: string, env: Env): Promise<void> {
+  try {
+    const wallet = walletAddress.toLowerCase();
+
+    // Check if we've run discovery recently (skip if < 1 hour)
+    const lastDiscoveryKey = `identity:discovery:ts:${wallet}`;
+    const lastTs = await env.CACHE?.get(lastDiscoveryKey);
+    if (lastTs) {
+      const elapsed = Date.now() - Number(lastTs);
+      if (elapsed < 3_600_000) {
+        // Less than 1 hour since last discovery — skip
+        return;
+      }
+    }
+
+    const { discoverIdentities } = await import('./lib/identity-discovery');
+    await discoverIdentities(wallet, env, { forceRefresh: false });
+
+    log('info', 'Post-login identity discovery completed', {
+      wallet: wallet.slice(0, 8),
+    });
+  } catch (err) {
+    // Non-fatal — discovery failure should never break login
+    log('warn', 'Post-login identity discovery failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }

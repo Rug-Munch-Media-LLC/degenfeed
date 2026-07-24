@@ -43,28 +43,16 @@ const SOURCE_LABELS: Record<string, string> = {
   youtube: 'YouTube',
 };
 
+type SortMode = 'trending' | 'recent' | 'top';
+
+const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: 'trending', label: 'Trending' },
+  { value: 'recent', label: 'Recent' },
+  { value: 'top', label: 'Top' },
+];
+
 function toast(kind: 'success' | 'error' | 'info', message: string) {
   window.dispatchEvent(new CustomEvent('df-toast', { detail: { kind, message } }));
-}
-
-// === Recipe to query params ===================================
-
-function recipeToParams(config: FeedRecipe): URLSearchParams {
-  const params = new URLSearchParams();
-  params.set('protocols', config.sources.join(','));
-  if (config.minEngagement > 0) params.set('minEngagement', String(config.minEngagement));
-  if (config.contentTypes.length > 0 && config.contentTypes.length < 5) {
-    params.set('type', config.contentTypes.join(','));
-  }
-  // Boost topics as niche filter
-  const boostedTopics = Object.entries(config.topics)
-    .filter(([, w]) => w > 0)
-    .map(([t]) => t);
-  if (boostedTopics.length > 0) {
-    params.set('niches', boostedTopics.join(','));
-  }
-  if (config.language) params.set('lang', config.language);
-  return params;
 }
 
 // === Page =====================================================
@@ -75,16 +63,19 @@ export default function FeedDetailPage() {
   const id = params?.id as string;
   const { walletAddress, ready, openSignIn } = useAuth();
 
+  // Feed metadata
   const [feed, setFeed] = useState<CustomFeed | null>(null);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
 
-  // Feed preview state
+  // Feed posts
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
   const [feedState, setFeedState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
   const [feedError, setFeedError] = useState<string>();
+  const [sort, setSort] = useState<SortMode>('trending');
+  const [cursor, setCursor] = useState<string | undefined>();
+  const [hasMore, setHasMore] = useState(false);
 
   // Edit modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -93,21 +84,31 @@ export default function FeedDetailPage() {
   const hasSignedIn = ready && !!walletAddress;
   const isCreator = hasSignedIn && feed?.creator.toLowerCase() === walletAddress?.toLowerCase();
 
-  // Fetch feed details
+  // Fetch feed details (with preview)
   const fetchFeed = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/custom-feeds/${id}`, { credentials: 'include' });
+      const res = await fetch(`/api/custom-feeds/${id}?preview=true`, { credentials: 'include' });
       if (res.status === 404) {
         setNotFound(true);
         setLoading(false);
         return;
       }
       if (!res.ok) throw new Error('Failed to load feed');
-      const data = (await res.json()) as { feed: CustomFeed; subscriberCount?: number };
+      const data = (await res.json()) as {
+        feed: CustomFeed;
+        subscriberCount?: number;
+        preview?: UnifiedPost[];
+      };
       setFeed(data.feed);
       setSubscriberCount(data.subscriberCount ?? 0);
+      // Use preview posts as initial display while execute loads
+      if (data.preview && data.preview.length > 0) {
+        setPosts(data.preview);
+        setFeedState('loaded');
+        setHasMore(data.preview.length >= 5);
+      }
     } catch {
       setNotFound(true);
     } finally {
@@ -115,49 +116,70 @@ export default function FeedDetailPage() {
     }
   }, [id]);
 
-  // Fetch preview posts from unified feed API
-  const fetchPreview = useCallback(async (config: FeedRecipe) => {
-    setFeedState('loading');
-    try {
-      const url = new URL('/api/feed/unified', window.location.origin);
-      const rParams = recipeToParams(config);
-      rParams.forEach((v, k) => url.searchParams.set(k, v));
-      url.searchParams.set('limit', '25');
+  // Execute feed with recipe filters via the dedicated endpoint
+  const executeFeed = useCallback(
+    async (mode: SortMode, pageCursor?: string, replace = false) => {
+      if (!id) return;
+      setFeedState('loading');
+      try {
+        const params = new URLSearchParams();
+        params.set('sort', mode);
+        params.set('limit', '50');
+        if (pageCursor) params.set('cursor', pageCursor);
 
-      const res = await fetch(url.toString(), { credentials: 'include' });
-      if (!res.ok) throw new Error(`Feed returned ${res.status}`);
-      const data = (await res.json()) as { data?: UnifiedPost[]; meta?: { total?: number } };
-      const p = data.data ?? [];
-      setPosts(p);
-      setFeedState(p.length ? 'loaded' : 'empty');
-    } catch (err) {
-      setFeedError(err instanceof Error ? err.message : 'Failed');
-      setFeedState('error');
-    }
-  }, []);
+        const res = await fetch(`/api/custom-feeds/${id}/execute?${params.toString()}`, {
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          const body = (await res.json()) as { error?: string };
+          throw new Error(body.error || `Feed returned ${res.status}`);
+        }
+        const data = (await res.json()) as {
+          data?: UnifiedPost[];
+          meta?: { total?: number; nextCursor?: string };
+        };
 
+        const newPosts = data.data ?? [];
+        if (replace) {
+          setPosts(newPosts);
+        } else {
+          setPosts((prev) => [...prev, ...newPosts]);
+        }
+        setCursor(data.meta?.nextCursor);
+        setHasMore(!!data.meta?.nextCursor && newPosts.length > 0);
+        setFeedState(newPosts.length ? 'loaded' : 'empty');
+      } catch (err) {
+        setFeedError(err instanceof Error ? err.message : 'Failed to load feed');
+        setFeedState('error');
+      }
+    },
+    [id],
+  );
+
+  // Load feed metadata on mount
   useEffect(() => {
     if (id) void fetchFeed();
   }, [id, fetchFeed]);
 
+  // Execute feed when sort changes (replace posts)
   useEffect(() => {
-    if (feed) void fetchPreview(feed.config);
-  }, [feed, fetchPreview]);
+    if (feed) void executeFeed(sort, undefined, true);
+  }, [feed, sort, executeFeed]);
 
-  // Check subscription status
-  useEffect(() => {
-    if (!hasSignedIn || !feed) return;
-    fetch(`/api/custom-feeds`, { credentials: 'include' })
-      .then((r) => r.json() as Promise<{ feeds?: CustomFeed[] }>)
-      .then((data) => {
-        // Simple check: if feed is in user's list, they're subscribed
-        const _myIds = new Set((data.feeds || []).map((f) => f.id));
-        // Actually, we can't easily check subscription vs ownership from list.
-        // For now just show subscribe button for non-creators.
-      })
-      .catch(() => {});
-  }, [hasSignedIn, feed]);
+  const handleSortChange = useCallback((newSort: SortMode) => {
+    setSort(newSort);
+    setCursor(undefined);
+  }, []);
 
+  const handleLoadMore = useCallback(() => {
+    if (cursor) void executeFeed(sort, cursor, false);
+  }, [cursor, sort, executeFeed]);
+
+  const handleRetry = useCallback(() => {
+    void executeFeed(sort, undefined, true);
+  }, [sort, executeFeed]);
+
+  // Edit handlers
   const handleEdit = useCallback(() => {
     setModalOpen(true);
   }, []);
@@ -180,12 +202,12 @@ export default function FeedDetailPage() {
       if (data.ok && data.feed) {
         setFeed(data.feed);
         toast('success', 'Feed updated');
-        void fetchPreview(data.feed.config);
+        void executeFeed(sort, undefined, true);
         return { ok: true };
       }
       return { ok: false, error: data.error || 'Failed to update' };
     },
-    [feed, fetchPreview],
+    [feed, executeFeed, sort],
   );
 
   const handleDelete = useCallback(async () => {
@@ -233,12 +255,20 @@ export default function FeedDetailPage() {
       }
       const data = (await res.json()) as { subscribers?: number };
       toast('success', 'Subscribed!');
-      setSubscribed(true);
       if (data.subscribers !== undefined) setSubscriberCount(data.subscribers);
     } catch {
       toast('error', 'Failed to subscribe');
     }
   }, [hasSignedIn, feed, openSignIn]);
+
+  const handleShare = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast('success', 'Link copied to clipboard');
+    } catch {
+      toast('error', 'Failed to copy link');
+    }
+  }, []);
 
   const closeModal = useCallback(() => {
     setModalOpen(false);
@@ -348,16 +378,19 @@ export default function FeedDetailPage() {
                   <button
                     type="button"
                     onClick={handleSubscribe}
-                    className={`rounded-full px-4 py-2 text-xs font-medium transition-colors ${
-                      subscribed
-                        ? 'bg-degen-500/15 text-degen-400 border border-degen-500/30'
-                        : 'bg-degen-500 text-black hover:bg-degen-400'
-                    }`}
+                    className="rounded-full bg-degen-500 px-4 py-2 text-xs font-medium text-black hover:bg-degen-400 transition-colors"
                   >
-                    {subscribed ? 'Subscribed ✓' : 'Subscribe'}
+                    Subscribe
                   </button>
                 )
               )}
+              <button
+                type="button"
+                onClick={handleShare}
+                className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)] transition-colors"
+              >
+                Share
+              </button>
             </div>
           </div>
 
@@ -402,7 +435,7 @@ export default function FeedDetailPage() {
 
             {/* Filters summary */}
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--color-muted)]">
-              <span>Content: {feed.config.contentTypes.join(', ')}</span>
+              <span>Content: {feed.config.contentTypes.join(', ') || 'all'}</span>
               {feed.config.minEngagement > 0 && (
                 <span>Min engagement: {feed.config.minEngagement}</span>
               )}
@@ -417,19 +450,48 @@ export default function FeedDetailPage() {
           </div>
         </div>
 
-        {/* Feed preview */}
+        {/* Sort controls */}
+        <div className="flex items-center gap-2 mb-3">
+          <h2 className="text-sm font-semibold text-[var(--color-fg)] mr-2">Feed</h2>
+          {SORT_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => handleSortChange(opt.value)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                sort === opt.value
+                  ? 'bg-degen-500/15 text-degen-400'
+                  : 'text-[var(--color-muted)] hover:bg-[var(--color-overlay)]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Feed posts */}
         <div>
-          <h2 className="text-sm font-semibold text-[var(--color-fg)] mb-3">Feed Preview</h2>
           <FeedList
             state={feedState}
             posts={posts}
             error={feedError}
-            onRetry={() => fetchPreview(feed.config)}
+            onRetry={handleRetry}
             onPostClick={(postId: string) => router.push(`/post/${encodeURIComponent(postId)}`)}
             onEngage={async () => ({ ok: true })}
             onSignIn={openSignIn}
-            hasMore={false}
+            hasMore={hasMore}
+            onLoadMore={handleLoadMore}
           />
+
+          {/* Empty state */}
+          {feedState === 'empty' && (
+            <div className="rounded-2xl border border-dashed border-white/10 py-16 text-center">
+              <p className="text-3xl mb-2">📭</p>
+              <p className="text-sm text-[var(--color-muted)]">
+                No posts match this feed&apos;s criteria. Try broadening your filters.
+              </p>
+            </div>
+          )}
         </div>
 
         {modalOpen && (

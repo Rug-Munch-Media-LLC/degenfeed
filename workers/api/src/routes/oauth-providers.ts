@@ -437,11 +437,13 @@ export async function handleTwitterAuthorize(request: Request, env: Env): Promis
   const state = generateOAuthState();
   await storeState(env, state, TWITTER_STATE_PREFIX);
 
-  // Use PKCE for Twitter OAuth 2.0
+  // Use PKCE for Twitter OAuth 2.0 — SHA-256 code challenge per RFC 7636
   const codeVerifier = crypto.randomUUID() + crypto.randomUUID();
-  const codeChallenge = btoa(
-    String.fromCharCode(...new TextEncoder().encode(codeVerifier).slice(0, 32)),
-  )
+  const codeVerifierHash = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(codeVerifier),
+  );
+  const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(codeVerifierHash)))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');

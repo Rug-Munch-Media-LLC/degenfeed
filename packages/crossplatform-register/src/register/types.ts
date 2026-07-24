@@ -22,6 +22,8 @@ export interface PlatformRegistration {
 }
 
 export interface RegisterOptions {
+  /** Optional callback to encrypt secrets before storing in KV. */
+  sealSecret?: (plaintext: string) => Promise<string>;
   storage?: KVNamespace;
   walletAddress: string;
   identity?: UnifiedIdentity;

@@ -1,6 +1,15 @@
 /**
  * @degenfeed/feed-core — FeedAlgorithm: User-Controlled Feed Algorithm Engine
  *
+ * @deprecated This file is superseded by scorePost() from @degenfeed/ranking.
+ * Use `import { scorePost } from '@degenfeed/ranking'` instead.
+ * The class-based FeedAlgorithm and its component scorers remain available
+ * for backward compatibility, but all new development should target the
+ * unified scoring function in packages/ranking/src/unified-scorer.ts.
+ *
+ * Migration: replace `new FeedAlgorithm(prefs).scorePost(post, ctx)` with
+ *   `scorePost(post, { mode: prefs.mode, userWeights: prefs.weights, ... })`.
+ *
  * A pluggable scoring engine that lets users control how their feed is ranked.
  * Each scoring factor (recency, popularity, relevance, niche, protocol) is a
  * pluggable function with a user-configurable weight (0-100).

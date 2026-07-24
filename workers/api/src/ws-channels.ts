@@ -1,4 +1,5 @@
 export const CHANNELS = {
+  // Existing channels
   FEED_NEW: 'feed:new',
   FEED_UPDATE: 'feed:update',
   FEED_FRESHNESS: 'feed:freshness',
@@ -11,6 +12,16 @@ export const CHANNELS = {
   TIP_RECEIVED: 'tip:received',
   /** Real-time cross-platform bridged chat for streams */
   STREAM_CHAT: 'stream:chat',
+
+  // ── Feed real-time events (DegenFeed timeline) ──
+  /** Emitted when a new post is available from any protocol */
+  FEED_NEW_POST: 'feed:new-post',
+  /** Emitted when trending topics change */
+  FEED_TRENDING_UPDATE: 'feed:trending-update',
+  /** Emitted when a post's engagement metrics change */
+  FEED_ENGAGEMENT_UPDATE: 'feed:engagement-update',
+  /** Emitted when a protocol's health status changes */
+  FEED_PROTOCOL_STATUS: 'feed:protocol-status',
 } as const;
 
 export const SYNC_TOPICS = Object.values(CHANNELS);
@@ -18,3 +29,16 @@ export const SYNC_TOPICS = Object.values(CHANNELS);
 export type SyncTopic = (typeof SYNC_TOPICS)[number];
 
 export type ChannelName = (typeof CHANNELS)[keyof typeof CHANNELS];
+
+// ─── Feed subscription topic patterns ─────────────────────────────
+
+export type FeedScope = 'for-you' | 'home' | 'trending';
+
+/** Topic strings clients can subscribe to via subscribe:feed:* messages */
+export const FEED_SUBSCRIBE_TOPICS = {
+  FOR_YOU: 'subscribe:feed:for-you',
+  HOME: 'subscribe:feed:home',
+  TRENDING: 'subscribe:feed:trending',
+  /** Per-protocol: subscribe:protocol:{name} */
+  PROTOCOL_PREFIX: 'subscribe:protocol:',
+} as const;

@@ -33,7 +33,8 @@ export type Protocol =
   | 'paragraph'
   | 'email'
   | 'google'
-  | 'twitter';
+  | 'twitter'
+  | 'pixelfed';
 
 export interface UnifiedIdentity {
   /** Stable canonical identifier: `${protocol}:${id}` */

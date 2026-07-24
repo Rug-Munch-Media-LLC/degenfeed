@@ -21,7 +21,7 @@
   --color-accent-secondary-glow: rgba(139, 92, 246, 0.15);
   --color-accent-tertiary: #f59e0b;
   --color-accent-tertiary-glow: rgba(245, 158, 11, 0.15);
-  --color-muted: #71767b;
+  --color-muted: #8b8f93;
   --color-muted-bg: #141414;
   --color-border: #2f3336;
   --color-border-light: rgba(255, 255, 255, 0.06);
@@ -229,6 +229,28 @@
   --color-protocol-pixelfed: #c44a8b;
   --color-protocol-youtube: #ff0000;
   --color-protocol-twitch: #9146ff;
+
+  /* ═══ Protocol Background Tints (TASK 2) ═══ */
+  --color-bg-protocol-nostr: rgba(139, 92, 246, 0.04);
+  --color-bg-protocol-farcaster: rgba(138, 99, 210, 0.04);
+  --color-bg-protocol-lens: rgba(171, 254, 44, 0.03);
+  --color-bg-protocol-bluesky: rgba(17, 133, 254, 0.03);
+  --color-bg-protocol-mastodon: rgba(99, 100, 255, 0.04);
+  --color-bg-protocol-reddit: rgba(255, 69, 0, 0.04);
+  --color-bg-protocol-rss: rgba(255, 165, 0, 0.04);
+  --color-bg-protocol-threads: rgba(136, 136, 136, 0.03);
+  --color-bg-protocol-lemmy: rgba(0, 184, 104, 0.04);
+  --color-bg-protocol-peertube: rgba(231, 76, 60, 0.04);
+  --color-bg-protocol-youtube: rgba(255, 0, 0, 0.04);
+  --color-bg-protocol-twitch: rgba(145, 70, 255, 0.04);
+  --color-bg-protocol-pixelfed: rgba(196, 74, 139, 0.04);
+
+  /* ═══ Protocol Avatar Ring Colors (TASK 2) ═══ */
+  --color-ring-protocol-farcaster: linear-gradient(135deg, #8a63d2, #6a3fc2);
+  --color-ring-protocol-lens: linear-gradient(135deg, #abfe2c, #7ad100);
+  --color-ring-protocol-nostr: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  --color-ring-protocol-bluesky: linear-gradient(135deg, #1185fe, #60a5fa);
+  --color-ring-protocol-mastodon: linear-gradient(135deg, #6364ff, #8b8cff);
 
   /* ═══ Misc ══════════════════════════════════════════════════════════════ */
 

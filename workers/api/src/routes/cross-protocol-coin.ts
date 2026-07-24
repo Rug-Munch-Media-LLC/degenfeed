@@ -423,6 +423,36 @@ crossProtocolCoin.get('/:symbol/cross-chain', async (c) => {
   });
 });
 
+// ─── GET /api/coin/deploy/status ────────────────────────────────────────────
+
+crossProtocolCoin.get('/deploy/status', async (c) => {
+  const env = c.env;
+  const txHash = c.req.query('txHash');
+  const creator = c.req.query('creator');
+
+  if (!txHash && !creator) {
+    return jsonResponse({ error: 'Provide txHash or creator query parameter' }, 400);
+  }
+
+  try {
+    const { getDeployStatus } = await import('../lib/coin-deployer');
+    const result = await getDeployStatus(env, {
+      txHash: txHash || undefined,
+      creator: creator || undefined,
+      limit: 10,
+    });
+
+    if (!result || (Array.isArray(result) && result.length === 0)) {
+      return noCacheJsonResponse({ found: false, deployments: [] });
+    }
+
+    return noCacheJsonResponse({ found: true, deployments: result });
+  } catch (err) {
+    console.warn('[cross-protocol-coin] Deploy status query failed:', String(err));
+    return jsonResponse({ error: 'Failed to query deployment status' }, 500);
+  }
+});
+
 // ─── GET /api/coin/protocol/:protocol/:creatorId ───────────────────────────
 
 crossProtocolCoin.get('/protocol/:protocol/:creatorId', async (c) => {
@@ -481,7 +511,9 @@ crossProtocolCoin.get('/protocol/:protocol/:creatorId', async (c) => {
 // ─── Token Deployment ───────────────────────────────────────────────────────
 
 /**
- * Deploy a creator coin on Base (EVM) via the Zora/Base creator coin factory.
+ * Deploy a creator coin using the real deployer service.
+ * Gates behind ENABLE_REAL_DEPLOYMENTS env var.
+ * When disabled, returns a clear "coming soon" message.
  */
 async function deployBaseCoin(
   creator: string,
@@ -493,30 +525,31 @@ async function deployBaseCoin(
     cliffDays: number;
   },
   feeConfig: { creatorFeeBps: number; platformFeeBps: number },
-  _env: Env,
+  env: Env,
 ): Promise<{ coinAddress: string; tokenId: string }> {
-  // In production, calls the Zora/Base creator coin factory contract on Base.
-  // Deterministic address derived from creator + symbol for consistency.
-  const input = `${creator}:${symbol}:${BASE_CHAIN_ID}:${Date.now()}`;
-  const hashBytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
-  const hashArr = Array.from(new Uint8Array(hashBytes));
-  const addr =
-    '0x' +
-    hashArr
-      .slice(0, 20)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
+  const { deployCoin } = await import('../lib/coin-deployer');
 
-  console.log(
-    `[cross-protocol-coin] Deployed on Base: ${name} ($${symbol}) at ${addr}`,
-    JSON.stringify({ vestingConfig, feeConfig }),
+  const result = await deployCoin(
+    {
+      creator,
+      name,
+      symbol,
+      chain: 'base',
+      protocol: 'universal',
+      metadataUri: `https://app.degenfeed.xyz/coin/${symbol.toLowerCase()}`,
+      vestingConfig,
+      feeConfig,
+    },
+    env,
   );
 
-  return { coinAddress: addr, tokenId: '1' };
+  return { coinAddress: result.coinAddress, tokenId: result.tokenId };
 }
 
 /**
- * Deploy a creator coin on Solana via the custom Anchor program.
+ * Deploy a creator coin on Solana using the real deployer service.
+ * Gates behind ENABLE_REAL_DEPLOYMENTS env var.
+ * When disabled, returns a clear "coming soon" message.
  */
 async function deploySolanaToken(
   creator: string,
@@ -528,25 +561,25 @@ async function deploySolanaToken(
     cliffDays: number;
   },
   feeConfig: { creatorFeeBps: number; platformFeeBps: number },
-  _env: Env,
+  env: Env,
 ): Promise<{ coinAddress: string; tokenId: string }> {
-  // In production, calls the Solana Anchor program to create an SPL token
-  // with bonding curve. The deployed mint address is the "coinAddress".
-  // Deterministic PDA-derived address for consistency.
-  const seed = `${creator.slice(0, 8)}:${symbol}:${Date.now()}`;
-  const hashBytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(seed));
-  const hashArr = Array.from(new Uint8Array(hashBytes));
-  const addr = hashArr
-    .slice(0, 32)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  const { deployCoin } = await import('../lib/coin-deployer');
 
-  console.log(
-    `[cross-protocol-coin] Deployed on Solana: ${name} ($${symbol}) at ${addr}`,
-    JSON.stringify({ vestingConfig, feeConfig }),
+  const result = await deployCoin(
+    {
+      creator,
+      name,
+      symbol,
+      chain: 'solana',
+      protocol: 'universal',
+      metadataUri: `https://app.degenfeed.xyz/coin/${symbol.toLowerCase()}`,
+      vestingConfig,
+      feeConfig,
+    },
+    env,
   );
 
-  return { coinAddress: addr, tokenId: '1' };
+  return { coinAddress: result.coinAddress, tokenId: result.tokenId };
 }
 
 // ─── Protocol Identity Resolution ──────────────────────────────────────────
@@ -958,7 +991,7 @@ async function postActivityPub(
 ): Promise<Record<string, unknown> | null> {
   // Try GotoSocial instance first (our managed Mastodon-compatible server)
   const instanceUrl =
-    env.MASTODON_INSTANCE_URL || env.GTS_API_BASE || 'https://social.degenfeed.xyz';
+    env.GOTOSOCIAL_INSTANCE_URL || env.GTS_API_BASE || 'https://social.degenfeed.xyz';
   const accessToken = env.PREMIUM_WALLET_KEY;
   if (!accessToken) return null;
 

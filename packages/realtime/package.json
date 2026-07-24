@@ -9,7 +9,8 @@
     ".": "./src/index.ts",
     "./channels": "./src/channels.ts",
     "./context": "./src/websocket-context.tsx",
-    "./useRealtime": "./src/useRealtime.ts"
+    "./useRealtime": "./src/useRealtime.ts",
+    "./message-bridge": "./src/message-bridge.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

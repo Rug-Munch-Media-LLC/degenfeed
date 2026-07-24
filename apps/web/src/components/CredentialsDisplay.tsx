@@ -520,7 +520,7 @@ export function registrationToCredential(reg: RegistrationResultData): PlatformC
           {
             key: 'nsec',
             label: 'Private Key (nsec)',
-            value: reg.accountInfo._encryptedNsec ?? '(encrypted)',
+            value: reg.accountInfo._sealedNsec ?? '(encrypted)',
             sensitive: true,
             monospace: true,
           },

@@ -56,6 +56,7 @@ export {
   TRENDING_INSTANCES,
 } from './providers/mastodon';
 export { DEFAULT_RELAYS, NostrProvider } from './providers/nostr';
+export { PixelfedProvider, type PixelfedProviderOptions } from './providers/pixelfed';
 export { PonderProvider } from './providers/ponder';
 export {
   CRYPTO_SUBREDDIT_CONFIGS,

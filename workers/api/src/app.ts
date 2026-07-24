@@ -32,8 +32,14 @@ import { requireAdminFromSession } from './lib/admin-guard';
 
 // ─── Route handlers ──────────────────────────────────────────
 
-import { handleAccountDelete, handleAccountExport } from './routes/account';
+import { handleAccountExport } from './routes/account';
+import {
+  handleAccountDelete,
+  handleAccountDeleteV1,
+  handleCancelAccountDelete,
+} from './routes/account-delete';
 import { handleAnalytics } from './routes/analytics';
+import { handleApiDocs, handleOpenApiJson } from './routes/api-docs';
 import {
   handleGtSAuthorize,
   handleGtSCallback,
@@ -91,6 +97,7 @@ import {
 import {
   handleCustomFeedCreate,
   handleCustomFeedDelete,
+  handleCustomFeedExecute,
   handleCustomFeedGet,
   handleCustomFeedList,
   handleCustomFeedPublic,
@@ -226,7 +233,10 @@ import {
 } from './routes/identity';
 import {
   handleCreateAtproto,
+  handleIdentityDiscover,
+  handleIdentityDiscoveryStatus,
   handleStatus as handleIdentityExtensionsStatus,
+  handleIdentityLinkAll,
   handleLinkAtproto,
   handleLinkTelegram,
   handleLinkZora,
@@ -285,7 +295,10 @@ import {
   handleConversationMessages,
   handleConversations,
   handleDeleteMessage,
+  handleInbox,
+  handleMarkRead,
   handleSendMessage,
+  handleThread,
   handleUnreadCount,
 } from './routes/messages';
 import {
@@ -374,6 +387,12 @@ import {
   handlePermanenceStore,
   handlePermanenceVerify,
 } from './routes/permanence';
+import {
+  handlePixelfedFeed,
+  handlePixelfedHealth,
+  handlePixelfedTag,
+  handlePixelfedTrending,
+} from './routes/pixelfed';
 import { handlePostById } from './routes/post';
 import { handlePreferences } from './routes/preferences';
 import { handleFeedPresets } from './routes/presets';
@@ -844,6 +863,12 @@ app.post('/api/feed/dwell', async (c) => handleRecordDwell(c.req.raw, c.env));
 app.post('/api/feed/feedback', async (c) => handleFeedback(c.req.raw, c.env));
 app.all('/api/feed/trending', async (c) => handleTrendingFeed(c.req.raw, c.env, c.executionCtx));
 app.all('/api/feed/health', async (c) => handleFeedHealth(c.req.raw, c.env));
+app.all('/api/feed/pixelfed', async (c) => handlePixelfedFeed(c.req.raw, c.env));
+app.all('/api/pixelfed/trending', async (c) => handlePixelfedTrending(c.req.raw, c.env));
+app.all('/api/pixelfed/tags/:tag', async (c) =>
+  handlePixelfedTag(c.req.raw, c.env, c.req.param('tag')),
+);
+app.all('/api/pixelfed/health', async (c) => handlePixelfedHealth(c.req.raw, c.env));
 app.all('/api/feed/rss.xml', async (c) => handleRssXml(c.req.raw, c.env));
 app.all('/api/feed/atom.xml', async (c) => handleRssXml(c.req.raw, c.env));
 app.all('/api/feed/news', async (c) => handleNewsFeed(c.req.raw, c.env));
@@ -1106,6 +1131,9 @@ app.get('/api/custom-feeds/public', async (c) => handleCustomFeedPublic(c.req.ra
 app.post('/api/custom-feeds/:id/subscribe', async (c) =>
   withSession(c, () => handleCustomFeedSubscribe(c.req.raw, c.env, c.req.param('id'))),
 );
+app.get('/api/custom-feeds/:id/execute', async (c) =>
+  handleCustomFeedExecute(c.req.raw, c.env, c.req.param('id')),
+);
 app.get('/api/custom-feeds/:id', async (c) =>
   handleCustomFeedGet(c.req.raw, c.env, c.req.param('id')),
 );
@@ -1162,6 +1190,7 @@ app.get('/api/auth/security-log', async (c) => {
 // ─── API: Account ────────────────────────────────────────────
 app.all('/api/account/export', async (c) => handleAccountExport(c.req.raw, c.env));
 app.all('/api/account/delete', async (c) => handleAccountDelete(c.req.raw, c.env));
+app.post('/api/account/delete/cancel', async (c) => handleCancelAccountDelete(c.req.raw, c.env));
 
 // ─── API: Account Sovereignty (deplatform-proof verification) ──
 app.get('/api/account/sovereignty', async (c) => {
@@ -1315,8 +1344,13 @@ app.all('/api/notify', async (c) => handleNotify(c.req.raw, c.env));
 // ─── API: Messages (DM) ─────────────────────────────────────
 app.get('/api/messages/unread', async (c) => handleUnreadCount(c.req.raw, c.env));
 app.get('/api/messages/conversations', async (c) => handleConversations(c.req.raw, c.env));
+app.get('/api/messages/inbox', async (c) => withSession(c, () => handleInbox(c.req.raw, c.env)));
 app.post('/api/messages/send', async (c) =>
   withSession(c, () => handleSendMessage(c.req.raw, c.env)),
+);
+app.post('/api/messages/read', async (c) => withSession(c, () => handleMarkRead(c.req.raw, c.env)));
+app.get('/api/messages/thread/:peerId', async (c) =>
+  withSession(c, () => handleThread(c.req.raw, c.env, c.req.param('peerId'))),
 );
 app.all('/api/messages/:id', async (c) => {
   if (c.req.method === 'GET') {
@@ -1364,6 +1398,26 @@ app.get('/api/identity/extensions/resolve/wallet', async (c) =>
 );
 app.get('/api/identity/extensions/status', async (c) =>
   handleIdentityExtensionsStatus(c.req.raw, c.env),
+);
+
+// ─── API: Identity Auto-Discovery ──────────────────────────────
+app.post('/api/identity/discover', async (c) =>
+  withSession(c, () => handleIdentityDiscover(c.req.raw, c.env)),
+);
+app.post('/api/identity/link-all', async (c) =>
+  withSession(c, () => handleIdentityLinkAll(c.req.raw, c.env)),
+);
+app.get('/api/identity/discovery/status', async (c) =>
+  handleIdentityDiscoveryStatus(c.req.raw, c.env),
+);
+app.get('/v1/identity/discovery/status', async (c) =>
+  handleIdentityDiscoveryStatus(c.req.raw, c.env),
+);
+app.post('/v1/identity/discover', async (c) =>
+  withSession(c, () => handleIdentityDiscover(c.req.raw, c.env)),
+);
+app.post('/v1/identity/link-all', async (c) =>
+  withSession(c, () => handleIdentityLinkAll(c.req.raw, c.env)),
 );
 
 // ─── API: Blink ─────────────────────────────────────────────
@@ -1768,6 +1822,14 @@ app.all('/api/embed/*', async (c) => handleEmbedPost(c.req.raw, c.env));
 // ─── API: Frame ─────────────────────────────────────────────
 app.all('/api/frame/resolve', async (c) => handleFrameResolve(c.req.raw, c.env));
 app.all('/api/frame/action', async (c) => handleFrameAction(c.req.raw, c.env));
+
+// ─── API: Documentation (OpenAPI spec + Swagger UI) ──────
+app.get('/api/docs/openapi.json', async (c) => handleOpenApiJson(c.req.raw, c.env));
+app.get('/api/docs', async (c) => handleApiDocs(c.req.raw));
+
+// ─── V1: Documentation (versioned paths) ─────────────────
+app.get('/v1/docs/openapi.json', async (c) => handleOpenApiJson(c.req.raw, c.env));
+app.get('/v1/docs', async (c) => handleApiDocs(c.req.raw));
 
 import blueskyFeedGen from './routes/bluesky-feed-generator';
 // ─── API: Farcaster Frames ─────────────────────────────────
@@ -2690,7 +2752,8 @@ app.post('/v1/cross-protocol-bridge/stream/stop', async (c) => {
 app.all('/v1/deploy/request', async (c) => handleDeployRequest(c.req.raw, c.env));
 app.all('/v1/deploy/status', async (c) => handleDeployStatus(c.req.raw, c.env));
 app.all('/v1/account/export', async (c) => handleAccountExport(c.req.raw, c.env));
-app.all('/v1/account/delete', async (c) => handleAccountDelete(c.req.raw, c.env));
+app.delete('/v1/account', async (c) => handleAccountDeleteV1(c.req.raw, c.env));
+app.all('/v1/account/delete', async (c) => handleAccountDeleteV1(c.req.raw, c.env));
 app.get('/v1/account/sovereignty', async (c) => {
   const { requireSession } = await import('./session');
   const { verifyUserOwnership } = await import('./lib/account-sovereignty');

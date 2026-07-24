@@ -4,7 +4,16 @@ import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
 
 interface Notification {
   id: string;
-  type: 'like' | 'repost' | 'reply' | 'follow' | 'mention' | 'mirror' | 'collect' | 'tip';
+  type:
+    | 'like'
+    | 'repost'
+    | 'reply'
+    | 'follow'
+    | 'mention'
+    | 'mirror'
+    | 'collect'
+    | 'tip'
+    | 'new_message';
   protocol: string;
   sourceProtocol?: string;
   actorName: string;
@@ -12,6 +21,8 @@ interface Notification {
   actorAvatar?: string;
   postId?: string;
   postText?: string;
+  preview?: string;
+  messageId?: string;
   createdAt: number;
   read: boolean;
   /** Tip-specific fields */
@@ -49,14 +60,62 @@ const TYPE_TO_PREF_KEY: Record<string, 'likes' | 'reposts' | 'replies' | 'follow
   mention: 'mentions',
 };
 
+/**
+ * Create a DM notification and store it in KV.
+ * Called by the message bridge when a message is received via any protocol.
+ */
+export async function createDmNotification(
+  env: Env,
+  recipientWallet: string,
+  fromWallet: string,
+  preview: string,
+  protocol: string,
+  messageId: string,
+): Promise<void> {
+  if (!env.CACHE) return;
+  try {
+    const key = `notifications:${recipientWallet}`;
+    const raw = await env.CACHE.get(key);
+    const notifs: Notification[] = raw ? JSON.parse(raw) : [];
+
+    const notification: Notification = {
+      id: `dm:${messageId}`,
+      type: 'new_message',
+      protocol,
+      sourceProtocol: protocol,
+      actorName: fromWallet.slice(0, 10),
+      actorHandle: fromWallet,
+      preview: preview.slice(0, 100),
+      messageId,
+      createdAt: Date.now(),
+      read: false,
+    };
+
+    notifs.push(notification);
+    const trimmed = notifs.slice(-100);
+    await env.CACHE.put(key, JSON.stringify(trimmed), { expirationTtl: 86400 * 30 });
+
+    // Broadcast real-time notification
+    broadcastToUser(recipientWallet, 'notifications:new', {
+      notification,
+      timestamp: Date.now(),
+    });
+  } catch (err) {
+    console.error(
+      '[notifications] createDmNotification failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
 function typeEnabled(n: Notification, prefs: NotificationProtocolPrefs): boolean {
   // Tips have their own boolean toggle
   if (n.type === 'tip') {
     const tipPref = prefs.tip;
     return tipPref === undefined || tipPref === true;
   }
-  // Collects are not in the preferences UI — always show
-  if (n.type === 'collect' || n.type === 'mirror') return true;
+  // Collects, mirrors, and new_message are not in the preferences UI — always show
+  if (n.type === 'collect' || n.type === 'mirror' || n.type === 'new_message') return true;
   // Look up protocol-level prefs (e.g. nostr, farcaster, lens, bluesky, mastodon)
   const protocolPref = prefs[n.protocol];
   if (protocolPref === undefined || protocolPref === true) return true; // default: enabled

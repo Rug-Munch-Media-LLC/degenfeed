@@ -27,7 +27,7 @@ import { type Env, jsonResponse } from '../index';
 import { processSyncAction } from '../lib/realtime-sync';
 import { processQueue } from '../lib/sync-queue';
 import type { SyncTopic } from '../ws-channels';
-import { SYNC_TOPICS } from '../ws-channels';
+import { CHANNELS, FEED_SUBSCRIBE_TOPICS, SYNC_TOPICS } from '../ws-channels';
 
 // ─── Constants ────────────────────────────────────────────────────────────
 
@@ -58,6 +58,13 @@ interface ClientConnection {
   userId?: string;
   /** Per-client ping interval handle */
   pingInterval?: ReturnType<typeof setInterval>;
+  /**
+   * Feed-specific subscriptions for timeline updates.
+   * Clients can subscribe to specific feed scopes or protocols.
+   * Format: 'subscribe:feed:for-you' | 'subscribe:feed:home' | 'subscribe:feed:trending'
+   *         'subscribe:protocol:{name}'
+   */
+  feedSubscriptions: Set<string>;
 }
 
 const connections = new Map<string, ClientConnection>();
@@ -171,6 +178,7 @@ export function handleRealtimeWebSocket(request: Request, _env: Env): Response |
     connectedAt: Date.now(),
     lastActivity: Date.now(),
     userId,
+    feedSubscriptions: new Set(),
   };
   connections.set(connId, conn);
 
@@ -258,6 +266,68 @@ export function handleRealtimeWebSocket(request: Request, _env: Env): Response |
           }
           break;
 
+        // ── Feed subscription topics (DegenFeed timeline) ──
+        case 'subscribe:feed:for-you':
+          c.feedSubscriptions.add(FEED_SUBSCRIBE_TOPICS.FOR_YOU);
+          c.server.send(
+            JSON.stringify({
+              type: 'subscribed',
+              topic: FEED_SUBSCRIBE_TOPICS.FOR_YOU,
+            }),
+          );
+          break;
+
+        case 'subscribe:feed:home':
+          c.feedSubscriptions.add(FEED_SUBSCRIBE_TOPICS.HOME);
+          c.server.send(
+            JSON.stringify({
+              type: 'subscribed',
+              topic: FEED_SUBSCRIBE_TOPICS.HOME,
+            }),
+          );
+          break;
+
+        case 'subscribe:feed:trending':
+          c.feedSubscriptions.add(FEED_SUBSCRIBE_TOPICS.TRENDING);
+          c.server.send(
+            JSON.stringify({
+              type: 'subscribed',
+              topic: FEED_SUBSCRIBE_TOPICS.TRENDING,
+            }),
+          );
+          break;
+
+        case 'subscribe:protocol': {
+          // Expected payload: { type: 'subscribe:protocol', protocol: 'nostr' }
+          const proto = data.protocol as string | undefined;
+          if (proto && typeof proto === 'string') {
+            const subTopic = `${FEED_SUBSCRIBE_TOPICS.PROTOCOL_PREFIX}${proto}`;
+            c.feedSubscriptions.add(subTopic);
+            c.server.send(
+              JSON.stringify({
+                type: 'subscribed',
+                topic: subTopic,
+              }),
+            );
+          }
+          break;
+        }
+
+        case 'unsubscribe:feed': {
+          // Remove feed subscription: { type: 'unsubscribe:feed', topic: 'subscribe:feed:for-you' }
+          const feedTopic = data.topic as string | undefined;
+          if (feedTopic && typeof feedTopic === 'string') {
+            c.feedSubscriptions.delete(feedTopic);
+            c.server.send(
+              JSON.stringify({
+                type: 'unsubscribed',
+                topic: feedTopic,
+              }),
+            );
+          }
+          break;
+        }
+
         default:
           c.server.send(
             JSON.stringify({
@@ -305,13 +375,52 @@ function cleanupConnection(connId: string): void {
 
 /**
  * Broadcast an event to all connected clients whose topic filter matches.
+ * Also checks feed-specific subscriptions for feed:* event types.
  * Call this from the sync engine after an event is processed.
  */
 export function broadcastToTopic(topic: SyncTopic, data: Record<string, unknown>): number {
   let sentCount = 0;
 
   for (const conn of connections.values()) {
-    if (conn.topics.has(topic) || conn.topics.has('all' as SyncTopic)) {
+    // Check classic topic subscription
+    const hasClassicTopic = conn.topics.has(topic) || conn.topics.has('all' as SyncTopic);
+
+    // Check feed-specific subscriptions for feed event types
+    let hasFeedMatch = false;
+    if (topic === CHANNELS.FEED_NEW_POST || topic === CHANNELS.FEED_TRENDING_UPDATE) {
+      // If the client subscribed to any feed:* topic, they get all feed events
+      for (const sub of conn.feedSubscriptions) {
+        if (sub.startsWith('subscribe:feed:')) {
+          hasFeedMatch = true;
+          break;
+        }
+      }
+    }
+    // For protocol-status events, check if client subscribed to that specific protocol
+    if (topic === CHANNELS.FEED_PROTOCOL_STATUS) {
+      const protocol = (data?.protocol as string) ?? '';
+      if (protocol && conn.feedSubscriptions.has(`subscribe:protocol:${protocol}`)) {
+        hasFeedMatch = true;
+      }
+      // Also deliver to general feed subscribers
+      for (const sub of conn.feedSubscriptions) {
+        if (sub.startsWith('subscribe:feed:')) {
+          hasFeedMatch = true;
+          break;
+        }
+      }
+    }
+    // Engagement updates go to anyone subscribed to feed topics
+    if (topic === CHANNELS.FEED_ENGAGEMENT_UPDATE) {
+      for (const sub of conn.feedSubscriptions) {
+        if (sub.startsWith('subscribe:feed:')) {
+          hasFeedMatch = true;
+          break;
+        }
+      }
+    }
+
+    if (hasClassicTopic || hasFeedMatch) {
       try {
         conn.server.send(JSON.stringify(data));
         sentCount++;

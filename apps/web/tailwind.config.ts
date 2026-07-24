@@ -182,6 +182,7 @@ const config: Config = {
         'ptr-spring': 'ptr-spring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
         'ptr-spin': 'ptr-spin 0.8s linear infinite',
         'slide-tab': 'slide-tab 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        'slide-down': 'new-posts-slide 0.35s ease-out',
       },
     },
   },

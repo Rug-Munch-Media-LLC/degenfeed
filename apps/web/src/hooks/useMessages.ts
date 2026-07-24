@@ -9,16 +9,33 @@ import { retryFetch, retryFetchJson } from '../lib/retryFetch';
 
 /* === Types =================================================== */
 
+export interface DeliveryBadge {
+  protocol: string;
+  ok: boolean;
+  nativeId?: string;
+  error?: string;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
   fromId: string;
   toId: string;
-  protocol: 'nostr' | 'farcaster' | 'lens' | 'mastodon' | 'bluesky';
+  protocol:
+    | 'nostr'
+    | 'farcaster'
+    | 'lens'
+    | 'mastodon'
+    | 'bluesky'
+    | 'matrix'
+    | 'discord'
+    | 'telegram';
   content: string;
   createdAt: number;
   read: boolean;
   encrypted: boolean;
+  nativeId?: string;
+  deliveryStatus?: DeliveryBadge[];
 }
 
 export interface ConversationListItem {
@@ -34,6 +51,21 @@ export interface ConversationListItem {
   } | null;
   unreadCount: number;
   updatedAt: number;
+}
+
+export interface InboxThread {
+  peerId: string;
+  peerDisplayName?: string;
+  peerAvatar?: string;
+  lastMessage?: {
+    id: string;
+    content: string;
+    createdAt: number;
+    protocol: string;
+  };
+  unreadCount: number;
+  lastActivity: number;
+  protocols: string[];
 }
 
 export interface TypingUser {
@@ -232,9 +264,9 @@ export function useMessages() {
             headers: { 'content-type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({
-              toId,
-              protocol,
-              content: text,
+              to: toId,
+              body: text,
+              preferredProtocol: protocol,
               nostrPubkey: tokens.nostr_pubkey,
               auth: tokens,
             }),

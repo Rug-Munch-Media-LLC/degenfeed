@@ -51,7 +51,7 @@ const VALID_PROTOCOLS = new Set([
   'tildes',
 ]);
 
-const DEFAULT_MASTODON_INSTANCE = 'https://social.degenfeed.xyz';
+const DEFAULT_GTS_INSTANCE = 'https://social.degenfeed.xyz';
 
 // ─── KV key helpers ──────────────────────────────────────────
 
@@ -81,7 +81,7 @@ async function mastodonFollowAction(
   auth: Record<string, string> | undefined,
 ): Promise<void> {
   const token = auth?.mastodon;
-  const instance = auth?.mastodon_instance || DEFAULT_MASTODON_INSTANCE;
+  const instance = auth?.mastodon_instance || DEFAULT_GTS_INSTANCE;
   if (!token) return; // No token = KV-only tracking (user can link Mastodon later)
 
   const client = new GtSClient(instance, token);

@@ -30,7 +30,6 @@ import {
   cachedJsonResponse,
   coldStartReasons,
   collectProviderResults,
-  computeAllAuthorStats,
   computeDwellBoost,
   computeFeedbackBoost,
   computeFreshnessMeta,
@@ -45,15 +44,12 @@ import {
   filterSuppressedPosts,
   findUnderservedCategories,
   getCategoryCounts,
-  getDwellWeightedCreators,
-  getDwellWeightedNiches,
   getFeedCache,
   getLastSync,
   loadDwellProfile,
   loadFeedbackProfile,
   loadUserRankingContext,
   ProviderTimer,
-  predictEngagementV2,
   prefersEnglish,
   prepareBasePosts,
   recordDwellEvent,
@@ -81,15 +77,12 @@ import {
   emptyBehaviorProfile,
   getLearnedTopics,
   isOnboardingMode,
-  personalizeScore,
   type UserBehaviorProfile,
 } from '@degenfeed/feed-core';
+import { scorePost as unifiedScorePost } from '@degenfeed/ranking';
 import {
   BOREDOM_BREAKER_INTERVAL,
   BOREDOM_BREAKER_QUALITY_FLOOR,
-  computeEngagementScore,
-  computeRecencyScore,
-  computeRelevanceScore,
   FRESH_CONTENT_BOOST,
   FRESH_CONTENT_WINDOW_MS,
   isCryptoContent,
@@ -167,7 +160,6 @@ async function generateForYouFeed(
   const category = params.get('category')?.toLowerCase() ?? '';
   const cursor = Number(params.get('cursor')) || 0;
   const direction = params.get('direction') === 'asc' ? 'asc' : 'desc';
-  const _cookieHeader = request.headers.get('cookie') ?? '';
   const now = Date.now();
   const feedStartTime = Date.now();
 
@@ -233,13 +225,7 @@ async function generateForYouFeed(
   const filtered = filterSuppressedPosts(relevant, feedbackProfile);
 
   // 6. Compute trending
-  const computedTrendingSet = new Set<string>();
   const trending = await computeTrending(filtered, Number(params.get('trending')) || 24);
-  for (const t of trending) {
-    computedTrendingSet.add(t.topic.toLowerCase());
-  }
-
-  const _authorStats = computeAllAuthorStats(filtered);
 
   // 7. Cold start: if onboarding, mix high-engagement across all categories
   let coldStartPosts: UnifiedPost[] = [];
@@ -315,7 +301,6 @@ async function generateForYouFeed(
     if (behaviorProfile) {
       const learnedTopics = getLearnedTopics(behaviorProfile);
       for (const { topic } of learnedTopics) userNiches.add(topic.toLowerCase());
-      // Also add topics from the behavior profile directly
       for (const topic of Object.keys(behaviorProfile.topics ?? {})) {
         userNiches.add(topic.toLowerCase());
       }
@@ -323,107 +308,41 @@ async function generateForYouFeed(
     for (const niche of userCtx.preferences?.preferredNiches ?? []) {
       userNiches.add(niche.toLowerCase());
     }
-    // Also add dwell-weighted niches
-    const dwellWeightedNiches = getDwellWeightedNiches(dwellProfile);
-    const dwellWeightedCreators = getDwellWeightedCreators(dwellProfile);
 
-    const userContentTypes = new Set<string>();
-    if (behaviorProfile) {
-      for (const type of Object.keys(behaviorProfile.contentTypes ?? {})) {
-        userContentTypes.add(type);
-      }
-    }
+    const personalized: Array<UnifiedPost & { _unifiedScore: number; _transparency: string[] }> =
+      ranked.map((post) => {
+        // Use unified scorer (merges recency, engagement, relevance, quality,
+        // reputation, diversity, source, velocity + dwell/feedback/behavior)
+        const dwellMultiplier = computeDwellBoost(post, dwellProfile).multiplier;
+        const fbMultiplier = computeFeedbackBoost(post, feedbackProfile).multiplier;
 
-    const personalized: Array<UnifiedPost & { _personalizationScore: number }> = ranked.map(
-      (post) => {
-        // A. Legacy personalizeScore (backward compat)
-        let _legacyBoost = 0;
-        let legacyReasons: string[] = [];
-        if (behaviorProfile) {
-          const result = personalizeScore(post, behaviorProfile);
-          _legacyBoost = result.boost;
-          legacyReasons = result.reasons;
-        }
-
-        // B. Engagement prediction v2 (includes recency as top factor)
-        const v2Pred = predictEngagementV2({
-          post,
+        const { total, transparency } = unifiedScorePost(post, {
+          mode: 'for-you',
           userNiches,
-          userCreators: userCtx.followed,
-          userContentTypes,
-          dwellWeightedNiches,
-          dwellWeightedCreators,
-          feedbackProfile,
-          behaviorProfile: undefined,
           followedCreators: userCtx.followed,
+          mutedNiches: new Set(userCtx.preferences?.mutedNiches ?? []),
+          userBehavior: behaviorProfile ?? undefined,
+          dwellMs: dwellMultiplier,
+          feedbackScore: fbMultiplier,
+          isPersonalized: true,
           now,
         });
 
-        // C. Dwell boost
-        const dwellResult = computeDwellBoost(post, dwellProfile);
-
-        // D. Feedback boost
-        const feedbackResult = computeFeedbackBoost(post, feedbackProfile);
-
-        // E. V3.1 explicit weight formula:
-        //    recency(40%) + engagement(30%) + relevance(20%) + diversity(10%)
-        //    Combined with v2 prediction + dwell + feedback signals
-        const recencyComponent = computeRecencyScore(post.createdAt, now) * 0.4;
-        const engagementComponent =
-          computeEngagementScore(
-            post.metrics.likes,
-            post.metrics.reposts,
-            post.metrics.replies,
-            post.metrics.quotes ?? 0,
-          ) * 0.3;
-        const relevanceComponent =
-          computeRelevanceScore(post.niches, userNiches, userCtx.followed, post.author.id) * 0.2;
-        // Diversity component from v2 prediction's diversity bonus
-        const diversityComponent = v2Pred.normalizedScore * 0.1;
-
-        // Combine: explicit weights(60%) + v2 prediction(20%) + dwell(10%) + feedback(10%)
-        const combinedBoost =
-          (recencyComponent + engagementComponent + relevanceComponent + diversityComponent) * 0.6 +
-          v2Pred.normalizedScore * 0.2 +
-          (dwellResult.multiplier - 1.0) * 0.1 +
-          (feedbackResult.multiplier - 1.0) * 0.1;
-
         // Collect algorithm reasons
-        const reasons = [
-          ...v2Pred.algorithmReasons,
-          ...dwellResult.factors,
-          ...feedbackResult.factors,
-          ...legacyReasons,
-        ];
-        // Add recency reason
-        if (recencyComponent > 0.3) {
-          reasons.push('Fresh content boost');
-        }
-        // Add crypto niche reason
+        const reasons: string[] = [...transparency];
         if (isCryptoContent(post.niches, post.text)) {
           reasons.push('Matched your crypto interests');
         }
+        algorithmReasons.set(post.id, [...new Set(reasons)]);
 
-        // Dedup reasons
-        const uniqueReasons = [...new Set(reasons)];
-        algorithmReasons.set(post.id, uniqueReasons.length > 0 ? uniqueReasons : []);
+        return { ...post, _unifiedScore: total, _transparency: transparency };
+      });
 
-        return {
-          ...post,
-          _personalizationScore: combinedBoost,
-        };
-      },
-    );
-
-    // Sort by combined score
-    personalized.sort((a, b) => {
-      const baseA = a.score?.total ?? 0;
-      const baseB = b.score?.total ?? 0;
-      return baseB + b._personalizationScore * 10 - (baseA + a._personalizationScore * 10);
-    });
+    // Sort by unified score directly
+    personalized.sort((a, b) => b._unifiedScore - a._unifiedScore);
 
     personalizationApplied = true;
-    finalRanked = personalized.map(({ _personalizationScore, ...clean }) => clean);
+    finalRanked = personalized.map(({ _unifiedScore, _transparency, ...clean }) => clean);
   }
 
   // 10. V3.1 Fresh content boost: posts <1hr old get +20% score multiplier
@@ -456,13 +375,7 @@ async function generateForYouFeed(
       seenCategories.set(cat, (seenCategories.get(cat) ?? 0) + 1);
     }
 
-    // Find the least-seen category with high-quality posts
-    const _sortedCats = [...seenCategories.entries()]
-      .sort((a, b) => a[1] - b[1])
-      .map(([cat]) => cat);
-
     // Build boredom breaker injection list
-    const _injected: UnifiedPost[] = [];
     const unseenPool = finalRanked.filter((post) => {
       const cat = ensureCategory(post);
       const count = seenCategories.get(cat) ?? 0;

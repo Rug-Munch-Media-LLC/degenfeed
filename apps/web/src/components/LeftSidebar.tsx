@@ -174,6 +174,7 @@ export const LeftSidebar = memo(function LeftSidebar({
       return pathname === '/notifications' || pathname.startsWith('/notifications/');
     if (href === '/settings') return pathname === '/settings' || pathname.startsWith('/settings/');
     if (href === '/search') return pathname === '/search';
+    if (href === '/status') return pathname === '/status';
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
@@ -403,6 +404,34 @@ export const LeftSidebar = memo(function LeftSidebar({
             <SettingsIcon />
           </span>
           {!collapsed && <span className="sidebar-nav-label">Settings</span>}
+        </Link>
+
+        {/* Status / Health */}
+        <Link
+          href="/status"
+          onClick={handleClick}
+          className={`sidebar-nav-item ${isActive('/status') ? 'sidebar-nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
+          aria-current={isActive('/status') ? 'page' : undefined}
+          title={collapsed ? 'Status' : undefined}
+        >
+          <span className="sidebar-nav-icon">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={isActive('/status') ? 2.5 : 1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 20V10" />
+              <path d="M18 20V4" />
+              <path d="M6 20v-4" />
+            </svg>
+          </span>
+          {!collapsed && <span className="sidebar-nav-label">Status</span>}
         </Link>
 
         {/* Divider */}

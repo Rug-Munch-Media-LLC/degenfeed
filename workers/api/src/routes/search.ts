@@ -37,7 +37,7 @@ const DEFAULT_SOURCES: SearchSource[] = [...SEARCHABLE_SOURCES];
 // Own instances — trusted, no rate limiting needed.
 const LEMMY_OWN_URL = 'https://community.degenfeed.xyz';
 const PEERTUBE_OWN_URL = 'https://video.degenfeed.xyz';
-const MASTODON_OWN_URL = 'https://social.degenfeed.xyz';
+const GTS_OWN_URL = 'https://social.degenfeed.xyz';
 
 const USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
 const FETCHER_TIMEOUT_MS = 3500;
@@ -463,7 +463,7 @@ async function searchMastodon(query: string): Promise<FederatedPost[]> {
       }>;
     }>;
   }>(
-    `${MASTODON_OWN_URL}/api/v2/search?q=${encodeURIComponent(query)}&type=statuses&limit=20&resolve=true`,
+    `${GTS_OWN_URL}/api/v2/search?q=${encodeURIComponent(query)}&type=statuses&limit=20&resolve=true`,
   );
   const posts: FederatedPost[] = [];
   for (const s of data?.statuses ?? []) {

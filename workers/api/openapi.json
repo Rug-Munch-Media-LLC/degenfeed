@@ -1,0 +1,1561 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DegenFeed API",
+    "version": "1.0.0",
+    "description": "The DegenFeed API provides a unified interface to the decentralized social graph. It aggregates content from 25+ protocols (Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, RSS, Lemmy, PeerTube, YouTube, and more) into a single feed pipeline with cross-protocol identities, tipping, publishing, and engagement.\n\n## Key Concepts\n\n- **Unified Feed** — A single API that blends content from every connected network into ranked, personalized timelines.\n- **Cross-Protocol Identities** — Link your wallet or accounts across Nostr, Farcaster, Lens, Bluesky, Mastodon, and more under a single identity.\n- **Federated Search** — Search across all protocols in parallel with deduplication and relevance ranking.\n- **Engagement** — Like, repost, reply, and bookmark content on any protocol from a single API.\n- **Publishing** — Cross-post to multiple protocols simultaneously.\n- **Tipping** — Send crypto tips across chains (Base, Solana, Ethereum, Lightning) to any creator.\n\n## Authentication\n\nDegenFeed uses three authentication methods:\n\n1. **Session Cookie** (`__Host-dfid`) — Set after wallet or email login. Used for browser-based requests. Requires `X-CSRF-Token` header for state-changing operations.\n2. **API Key** (`X-API-Key` or `Authorization: Bearer <key>`) — For server-to-server integration. Scoped to specific resource groups (`read:feed`, `write:publish`, etc.).\n3. **Wallet Signature** — EIP-4361 (Ethereum) or Solana wallet signature for direct wallet auth without a session.\n\n## Base URLs\n\nAll API endpoints are available under `/api/` (legacy, with deprecation headers) and `/v1/` (stable, versioned). New integrations should use `/v1/`.",
+    "contact": {
+      "name": "DegenFeed Engineering",
+      "email": "engineering@degenfeed.xyz",
+      "url": "https://degenfeed.xyz"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.degenfeed.xyz/v1",
+      "description": "Production API"
+    },
+    {
+      "url": "http://localhost:8787/v1",
+      "description": "Local development"
+    }
+  ],
+  "security": [{ "sessionCookie": [] }, { "apiKey": [] }, { "walletSignature": [] }],
+  "components": {
+    "parameters": {
+      "walletParam": {
+        "name": "wallet",
+        "in": "query",
+        "description": "Wallet address for personalization (optional — anonymous requests get trending fallback)",
+        "schema": { "type": "string" },
+        "example": "0x1234...5678"
+      },
+      "sortParam": {
+        "name": "sort",
+        "in": "query",
+        "description": "Sort order for feed results",
+        "schema": {
+          "type": "string",
+          "enum": ["trending", "newest", "curated", "for-you"],
+          "default": "trending"
+        }
+      },
+      "limitParam": {
+        "name": "limit",
+        "in": "query",
+        "description": "Maximum number of results to return (max 200)",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 }
+      },
+      "cursorParam": {
+        "name": "cursor",
+        "in": "query",
+        "description": "Opaque pagination cursor for the next page of results",
+        "schema": { "type": "string" }
+      }
+    },
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-dfid",
+        "description": "Session cookie set after wallet/email authentication. For state-changing requests (POST/PUT/DELETE), also provide `X-CSRF-Token` header matching the session."
+      },
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for server-to-server integration. Alternatively, use `Authorization: Bearer <key>`. Generate keys via `POST /v1/api-keys`."
+      },
+      "walletSignature": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Direct wallet authentication via EIP-4361 (Ethereum) or Solana signed message. Used in combination with `POST /v1/auth/wallet/nonce` and `POST /v1/auth/wallet/verify`."
+      }
+    },
+    "schemas": {
+      "UnifiedIdentity": {
+        "type": "object",
+        "description": "Cross-protocol identity object normalizing a user's presence across all connected networks.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable canonical identifier in format `${protocol}:${id}`",
+            "example": "nostr:npub1..."
+          },
+          "primary": {
+            "type": "object",
+            "description": "Primary protocol and identifier",
+            "properties": {
+              "protocol": { "type": "string", "example": "ethereum" },
+              "id": { "type": "string", "example": "0x1234...5678" }
+            }
+          },
+          "handles": {
+            "type": "object",
+            "description": "Handles per protocol (null if not linked)",
+            "additionalProperties": { "type": "string", "nullable": true },
+            "example": { "nostr": "npub1...", "farcaster": "fname", "bluesky": "user.bsky.social" }
+          },
+          "displayName": { "type": "string", "example": "Alice" },
+          "bio": { "type": "string", "example": "Crypto enthusiast & builder" },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://img.degenfeed.xyz/avatar.png"
+          },
+          "bannerUrl": { "type": "string", "format": "uri" },
+          "verified": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "protocol": { "type": "string" },
+                "badge": { "type": "string" }
+              }
+            }
+          },
+          "followerCount": { "type": "integer", "example": 420 },
+          "followingCount": { "type": "integer", "example": 69 },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": { "type": "string" },
+                "url": { "type": "string", "format": "uri" }
+              }
+            }
+          },
+          "keys": {
+            "type": "object",
+            "description": "Raw protocol-specific identifiers",
+            "properties": {
+              "nostrPubkey": { "type": "string" },
+              "fid": { "type": "integer" },
+              "lensProfileId": { "type": "string" },
+              "did": { "type": "string" },
+              "evmAddress": { "type": "string" },
+              "solanaAddress": { "type": "string" }
+            }
+          }
+        }
+      },
+      "Embed": {
+        "type": "object",
+        "description": "Embedded media or link within a post.",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["image", "video", "link", "frame", "quote", "code"],
+            "example": "image"
+          },
+          "url": { "type": "string", "format": "uri" },
+          "meta": { "type": "object", "description": "Protocol-specific extra data" }
+        }
+      },
+      "EngagementMetrics": {
+        "type": "object",
+        "description": "Engagement counts for a post.",
+        "properties": {
+          "likes": { "type": "integer", "example": 42 },
+          "reposts": { "type": "integer", "example": 12 },
+          "replies": { "type": "integer", "example": 7 },
+          "quotes": { "type": "integer", "example": 3 },
+          "views": { "type": "integer", "example": 1500 }
+        }
+      },
+      "EngagementVector": {
+        "type": "object",
+        "description": "Viewer-specific engagement state for a post.",
+        "properties": {
+          "viewerLiked": { "type": "boolean" },
+          "viewerReposted": { "type": "boolean" },
+          "viewerBookmarked": { "type": "boolean" },
+          "raw": { "$ref": "#/components/schemas/EngagementMetrics" }
+        }
+      },
+      "FeedDebug": {
+        "type": "object",
+        "description": "Transparency debug data explaining why a post appeared in a feed.",
+        "properties": {
+          "spamScore": {
+            "type": "number",
+            "description": "Spam detection result 0-1 (lower = cleaner)"
+          },
+          "qualityScore": { "type": "number", "description": "Content quality 0-1" },
+          "authorReputation": { "type": "number" },
+          "topicMatch": { "type": "number", "description": "Topic interest match 0-1" },
+          "velocity": { "type": "number", "description": "Engagement velocity boost" },
+          "freshness": { "type": "number" },
+          "sourceProtocol": { "type": "string" },
+          "isFollowed": { "type": "boolean" },
+          "isMutedOrBlocked": { "type": "boolean" }
+        }
+      },
+      "UnifiedPost": {
+        "type": "object",
+        "description": "The core post object normalizing content from any protocol into a unified shape.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Canonical ID: `${protocol}:${nativeId}`",
+            "example": "nostr:note1abc123"
+          },
+          "protocol": { "type": "string", "description": "Source protocol", "example": "nostr" },
+          "author": { "$ref": "#/components/schemas/UnifiedIdentity" },
+          "text": {
+            "type": "string",
+            "description": "Plain text content",
+            "example": "gm degenfeed!"
+          },
+          "html": { "type": "string", "description": "Protocol-specific rich HTML if present" },
+          "embeds": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Embed" }
+          },
+          "parentId": { "type": "string", "description": "Parent post ID for replies" },
+          "rootId": { "type": "string", "description": "Root post ID for thread tracking" },
+          "createdAt": { "type": "integer", "description": "Unix timestamp in milliseconds" },
+          "metrics": { "$ref": "#/components/schemas/EngagementMetrics" },
+          "engagement": { "$ref": "#/components/schemas/EngagementVector" },
+          "niches": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Content-derived niche tags"
+          },
+          "score": {
+            "type": "object",
+            "description": "Per-post ranking score breakdown",
+            "properties": {
+              "total": { "type": "number" },
+              "recency": { "type": "number" },
+              "engagement": { "type": "number" },
+              "relevance": { "type": "number" },
+              "quality": { "type": "number" },
+              "diversity": { "type": "number" },
+              "source": { "type": "number" },
+              "velocity": { "type": "number" },
+              "reasons": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "feedDebug": { "$ref": "#/components/schemas/FeedDebug" },
+          "contentType": {
+            "type": "string",
+            "enum": ["article", "video", "image", "thread", "link", "text"],
+            "example": "text"
+          },
+          "crossPostedTo": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Protocols this post was also cross-posted to"
+          },
+          "tipCount": { "type": "integer", "description": "Number of tips received" },
+          "dfUri": {
+            "type": "string",
+            "description": "Universal df:// URI for cross-protocol addressing"
+          },
+          "community": {
+            "type": "object",
+            "description": "Community context (Lemmy, Reddit, etc.)",
+            "properties": {
+              "name": { "type": "string" },
+              "title": { "type": "string" },
+              "actorId": { "type": "string" },
+              "icon": { "type": "string" },
+              "instance": { "type": "string" },
+              "subscriberCount": { "type": "integer" }
+            }
+          }
+        }
+      },
+      "FeedMeta": {
+        "type": "object",
+        "description": "Metadata for paginated feed responses.",
+        "properties": {
+          "total": { "type": "integer", "example": 50 },
+          "nextCursor": {
+            "type": "string",
+            "description": "Opaque cursor for the next page. Absent when no more results.",
+            "example": "eyJwb3N0IjogIm5vc3Ry..."
+          },
+          "sourceBreakdown": {
+            "type": "object",
+            "description": "Post count per protocol source",
+            "additionalProperties": { "type": "integer" },
+            "example": { "nostr": 20, "farcaster": 15, "bluesky": 10, "lens": 5 }
+          },
+          "generatedAt": { "type": "integer", "description": "Feed generation timestamp" }
+        }
+      },
+      "FeedResponse": {
+        "type": "object",
+        "description": "Paginated feed response with an array of unified posts.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UnifiedPost" }
+          },
+          "meta": { "$ref": "#/components/schemas/FeedMeta" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Standard error response for all API endpoints.",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Human-readable error message",
+            "example": "Invalid or expired nonce"
+          },
+          "code": {
+            "type": "string",
+            "description": "Machine-readable error code",
+            "example": "DF-401"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "description": "API health status response.",
+        "properties": {
+          "status": { "type": "string", "enum": ["ok"], "example": "ok" },
+          "service": { "type": "string", "example": "degenfeed-api" },
+          "version": { "type": "string", "example": "1.0.0" },
+          "relays": {
+            "type": "object",
+            "description": "Nostr relay health status",
+            "additionalProperties": { "type": "string", "enum": ["ok", "error"] }
+          },
+          "healthy": { "type": "integer", "description": "Count of healthy relays" },
+          "errors": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "total": { "type": "integer" },
+              "byRoute": { "type": "object", "additionalProperties": { "type": "integer" } },
+              "since": { "type": "integer" }
+            }
+          },
+          "checkedAt": { "type": "integer", "description": "Timestamp of health check" }
+        }
+      },
+      "ProtocolHealthStatus": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["up", "degraded", "down"] },
+          "latency": { "type": "integer", "description": "Latency in milliseconds" },
+          "lastChecked": { "type": "integer" },
+          "circuitBreakerOpen": { "type": "boolean" },
+          "error": { "type": "string", "nullable": true }
+        }
+      },
+      "ProtocolsHealthResponse": {
+        "type": "object",
+        "properties": {
+          "protocols": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/components/schemas/ProtocolHealthStatus" }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "total": { "type": "integer" },
+              "up": { "type": "integer" },
+              "degraded": { "type": "integer" },
+              "down": { "type": "integer" }
+            }
+          },
+          "checkedAt": { "type": "integer" }
+        }
+      },
+      "SessionResponse": {
+        "type": "object",
+        "description": "Authentication session verification response.",
+        "properties": {
+          "authenticated": { "type": "boolean" },
+          "address": {
+            "type": "string",
+            "description": "Wallet address",
+            "example": "0x1234...5678"
+          },
+          "chain": { "type": "string", "enum": ["ethereum", "solana"] },
+          "sessionId": { "type": "string" },
+          "createdAt": { "type": "integer" },
+          "expiresAt": { "type": "integer" }
+        }
+      },
+      "IdentityResponse": {
+        "type": "object",
+        "description": "Cross-protocol identity linking response.",
+        "properties": {
+          "data": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "walletAddress": { "type": "string" },
+              "linkedAt": { "type": "integer" },
+              "lastVerified": { "type": "integer" }
+            },
+            "additionalProperties": {
+              "type": "object",
+              "description": "Protocol-specific identity data keyed by protocol name"
+            }
+          },
+          "wallet": { "type": "string", "description": "Queried wallet address" },
+          "cached": {
+            "type": "boolean",
+            "description": "Whether the response was served from cache"
+          }
+        }
+      },
+      "NonceResponse": {
+        "type": "object",
+        "properties": {
+          "nonce": { "type": "string", "description": "One-time nonce for wallet signature" }
+        }
+      },
+      "WalletVerifyResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "walletAddress": { "type": "string" },
+          "chain": { "type": "string" },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "protocol": { "type": "string" },
+              "id": { "type": "string" },
+              "displayName": { "type": "string" },
+              "handle": { "type": "string" },
+              "avatarUrl": { "type": "string", "nullable": true }
+            }
+          }
+        }
+      },
+      "PublishResult": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "error": { "type": "string" },
+          "hash": { "type": "string" },
+          "via": { "type": "string", "description": "Publishing backend used (e.g. 'postiz')" }
+        }
+      },
+      "PublishRequest": {
+        "type": "object",
+        "required": ["text", "targets"],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Post content (max 10,000 chars)",
+            "example": "gm from the API! 🤖"
+          },
+          "targets": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Target protocols to publish to",
+            "example": ["nostr", "farcaster", "bluesky"]
+          },
+          "auth": {
+            "type": "object",
+            "description": "Protocol-specific auth tokens per target",
+            "example": { "bluesky_jwt": "...", "farcaster_message": "0x..." }
+          }
+        }
+      },
+      "EngageRequest": {
+        "type": "object",
+        "required": ["action", "postId", "protocol"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "like",
+              "unlike",
+              "repost",
+              "unrepost",
+              "bookmark",
+              "unbookmark",
+              "reply",
+              "react"
+            ],
+            "example": "like"
+          },
+          "postId": {
+            "type": "string",
+            "description": "Canonical post ID",
+            "example": "nostr:note1abc..."
+          },
+          "protocol": { "type": "string", "description": "Target protocol", "example": "nostr" },
+          "content": { "type": "string", "description": "Reply content (for reply action)" },
+          "reaction": { "type": "string", "description": "Reaction emoji (for react action)" },
+          "auth": {
+            "type": "object",
+            "description": "Protocol-specific auth tokens"
+          }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["like", "repost", "reply", "follow", "mention", "mirror", "collect", "tip"]
+          },
+          "protocol": { "type": "string" },
+          "sourceProtocol": { "type": "string" },
+          "actorName": { "type": "string" },
+          "actorHandle": { "type": "string" },
+          "actorAvatar": { "type": "string" },
+          "postId": { "type": "string" },
+          "postText": { "type": "string" },
+          "createdAt": { "type": "integer" },
+          "read": { "type": "boolean" },
+          "amount": { "type": "string", "description": "Tip amount (for tip type)" },
+          "currency": { "type": "string", "description": "Tip currency (for tip type)" }
+        }
+      },
+      "NotificationsResponse": {
+        "type": "object",
+        "properties": {
+          "notifications": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Notification" }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": { "type": "integer" }
+            }
+          }
+        }
+      },
+      "DiscoverPerson": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "displayName": { "type": "string" },
+          "handle": { "type": "string" },
+          "avatarUrl": { "type": "string", "format": "uri" },
+          "protocol": { "type": "string" },
+          "protocols": { "type": "array", "items": { "type": "string" } },
+          "postCount": { "type": "integer" },
+          "totalEngagement": { "type": "integer" },
+          "topNiches": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "DiscoverCommunity": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "displayName": { "type": "string" },
+          "description": { "type": "string" },
+          "icon": { "type": "string" },
+          "memberCount": { "type": "integer" },
+          "protocols": { "type": "array", "items": { "type": "string" } },
+          "activityLevel": { "type": "string", "enum": ["high", "medium", "low"] }
+        }
+      },
+      "CustomFeed": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "creator": { "type": "string" },
+          "isPublic": { "type": "boolean" },
+          "config": {
+            "type": "object",
+            "properties": {
+              "sources": { "type": "array", "items": { "type": "string" } },
+              "topics": { "type": "object", "additionalProperties": { "type": "integer" } },
+              "minEngagement": { "type": "integer" },
+              "language": { "type": "string" }
+            }
+          },
+          "createdAt": { "type": "integer" },
+          "updatedAt": { "type": "integer" },
+          "subscribers": { "type": "integer" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/feed/unified": {
+      "get": {
+        "summary": "Get unified feed from all protocols",
+        "description": "Returns a blended feed of content from ALL connected protocols (Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, RSS, etc.). Content is ranked by relevance, recency, and engagement velocity. Supports cursor-based pagination and filtering by source, protocol, and category.",
+        "operationId": "getUnifiedFeed",
+        "parameters": [
+          { "$ref": "#/components/parameters/walletParam" },
+          { "$ref": "#/components/parameters/sortParam" },
+          { "$ref": "#/components/parameters/limitParam" },
+          { "$ref": "#/components/parameters/cursorParam" },
+          {
+            "name": "sources",
+            "in": "query",
+            "description": "Comma-separated feed source keys to include (e.g. 'activitypub,nostr,farcaster')",
+            "schema": { "type": "string" },
+            "example": "nostr,farcaster,bluesky"
+          },
+          {
+            "name": "protocols",
+            "in": "query",
+            "description": "Comma-separated protocol names to filter by",
+            "schema": { "type": "string" },
+            "example": "nostr,farcaster"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unified feed with posts and pagination metadata",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FeedResponse" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        },
+        "x-hono-handler": "handleContentPipelineFeed in routes/feed-unified.ts"
+      }
+    },
+    "/feed/for-you": {
+      "get": {
+        "summary": "Get personalized feed",
+        "description": "Returns a personalized feed based on the user's wallet address. Uses behavior profiles (likes, reposts, dwell time, follows) to curate content. Falls back to trending content for anonymous users.",
+        "operationId": "getForYouFeed",
+        "parameters": [
+          { "$ref": "#/components/parameters/walletParam" },
+          { "$ref": "#/components/parameters/limitParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Personalized feed with source badges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/FeedResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "total": { "type": "integer" },
+                            "wallet": { "type": "string" },
+                            "note": {
+                              "type": "string",
+                              "description": "Note when falling back to trending for anonymous users"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feed/home": {
+      "get": {
+        "summary": "Get home feed with protocol sections",
+        "description": "Returns the main home feed organized by protocol sections. Blends content from all supported protocols into a sectioned layout optimized for the home screen. Supports hot/trending/newest sort orders.",
+        "operationId": "getHomeFeed",
+        "parameters": [
+          { "$ref": "#/components/parameters/limitParam" },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["hot", "trending", "newest"] },
+            "example": "hot"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Home feed response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FeedResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "summary": "Federated search across all protocols",
+        "description": "Searches ALL supported protocols in parallel (Nostr, Farcaster, Lens, Bluesky, Mastodon, Lemmy, PeerTube, RSS) plus the local MeiliSearch index. Results are deduplicated and ranked by relevance using a multi-factor scoring model (exact match +10, engagement up to +5, recency +3, verified +2).",
+        "operationId": "search",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Search query (minimum 2 characters)",
+            "schema": { "type": "string" },
+            "example": "bitcoin ethereum solana"
+          },
+          { "$ref": "#/components/parameters/limitParam" },
+          {
+            "name": "protocols",
+            "in": "query",
+            "description": "Comma-separated protocols to search (default: all)",
+            "schema": { "type": "string" },
+            "example": "nostr,farcaster,lemmy,peertube"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Federated search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "Ranked post results",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "protocol": { "type": "string" },
+                          "author": {
+                            "type": "object",
+                            "properties": {
+                              "displayName": { "type": "string" },
+                              "avatarUrl": { "type": "string", "nullable": true }
+                            }
+                          },
+                          "text": { "type": "string" },
+                          "url": { "type": "string", "nullable": true },
+                          "image": { "type": "string", "nullable": true },
+                          "niches": { "type": "array", "items": { "type": "string" } },
+                          "createdAt": { "type": "integer" },
+                          "metrics": { "$ref": "#/components/schemas/EngagementMetrics" },
+                          "score": { "type": "number", "description": "Relevance score" }
+                        }
+                      }
+                    },
+                    "identities": {
+                      "type": "array",
+                      "description": "Matching identity results"
+                    },
+                    "communities": {
+                      "type": "array",
+                      "description": "Matching community results"
+                    },
+                    "videos": {
+                      "type": "array",
+                      "description": "Matching PeerTube video results"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "total": { "type": "integer" },
+                        "query": { "type": "string" },
+                        "limit": { "type": "integer" },
+                        "protocols": { "type": "array", "items": { "type": "string" } },
+                        "sources": {
+                          "type": "object",
+                          "additionalProperties": { "type": "integer" },
+                          "description": "Result counts per source"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Query too short",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/search/identity": {
+      "get": {
+        "summary": "Search identities across protocols",
+        "description": "Searches for identities (users/creators) across all connected protocols by display name or bio. Uses MeiliSearch local index with fallback to direct handle resolution.",
+        "operationId": "searchIdentity",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "vitalik"
+          },
+          { "$ref": "#/components/parameters/limitParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identity search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "protocol": { "type": "string" },
+                          "displayName": { "type": "string" },
+                          "handle": { "type": "string", "nullable": true },
+                          "avatarUrl": { "type": "string", "nullable": true },
+                          "bio": { "type": "string" },
+                          "postCount": { "type": "integer" }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "query": { "type": "string" },
+                        "total": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/identity/resolve": {
+      "get": {
+        "summary": "Resolve a handle to a protocol identity",
+        "description": "Resolves a handle (e.g. 'vitalik.eth', 'npub1...', '@username') to a cross-protocol identity. Checks KV cache first (5-minute TTL) before performing resolution. Returns the resolved identity with all linked protocols.",
+        "operationId": "resolveIdentity",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "query",
+            "required": true,
+            "description": "Handle, address, or DID to resolve",
+            "schema": { "type": "string" },
+            "example": "npub1a2c... or vitalik.eth or @alice"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resolved identity data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "description": "Resolved identity with cross-protocol links"
+                    },
+                    "cached": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Handle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "example": "Handle not found" },
+                    "handle": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/identity/link": {
+      "post": {
+        "summary": "Link a protocol identity to your wallet",
+        "description": "Links a protocol account (Nostr npub, Farcaster FID, Lens profile, Bluesky DID, etc.) to the authenticated wallet address. Requires a valid session. The linked identity appears in the user's cross-protocol profile.",
+        "operationId": "linkIdentity",
+        "security": [{ "sessionCookie": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["protocol", "identity"],
+                "properties": {
+                  "protocol": {
+                    "type": "string",
+                    "description": "Protocol to link",
+                    "enum": [
+                      "nostr",
+                      "farcaster",
+                      "lens",
+                      "bluesky",
+                      "mastodon",
+                      "reddit",
+                      "lemmy",
+                      "threads",
+                      "rss",
+                      "peertube",
+                      "atproto",
+                      "zora",
+                      "telegram"
+                    ],
+                    "example": "farcaster"
+                  },
+                  "identity": {
+                    "type": "object",
+                    "description": "Protocol-specific identity data",
+                    "example": { "fid": 12345, "username": "fname" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Identity linked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "protocol": { "type": "string" },
+                    "identity": { "type": "object" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid parameters",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unlink a protocol identity from your wallet",
+        "description": "Removes a protocol link from the authenticated wallet's cross-protocol identity. Requires a valid session.",
+        "operationId": "unlinkIdentity",
+        "security": [{ "sessionCookie": [] }],
+        "parameters": [
+          {
+            "name": "protocol",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Protocol to unlink"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identity unlinked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "protocol": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/wallet/nonce": {
+      "post": {
+        "summary": "Get a wallet authentication nonce",
+        "description": "Generates a one-time nonce for wallet signature-based authentication. The nonce must be signed by the wallet and submitted to `POST /auth/wallet/verify`. Nonces expire after 5 minutes and are single-use (consumed on verify).",
+        "operationId": "getWalletNonce",
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "required": true,
+            "description": "Wallet address to generate nonce for",
+            "schema": { "type": "string" },
+            "example": "0x1234...5678"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nonce generated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NonceResponse" }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (max 20 nonces per minute per IP)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        },
+        "x-rate-limit": "20 per 60s per IP"
+      }
+    },
+    "/auth/wallet/verify": {
+      "post": {
+        "summary": "Verify wallet signature and create session",
+        "description": "Verifies a signed message from the wallet and creates an authenticated session. Supports both Ethereum (EIP-4361 / personal_sign) and Solana (ed25519) signatures. On success, returns a `Set-Cookie` header with the session cookie (`__Host-dfid`) and an `X-CSRF-Token` header for subsequent state-changing requests.",
+        "operationId": "verifyWallet",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["address", "signature", "message", "chain", "nonce"],
+                "properties": {
+                  "address": { "type": "string", "example": "0x1234...5678" },
+                  "signature": { "type": "string", "description": "Hex-encoded signature" },
+                  "message": {
+                    "type": "string",
+                    "description": "The message that was signed (includes nonce)"
+                  },
+                  "chain": { "type": "string", "enum": ["ethereum", "solana"] },
+                  "nonce": {
+                    "type": "string",
+                    "description": "Nonce obtained from POST /auth/wallet/nonce"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Wallet verified, session created. Set-Cookie and X-CSRF-Token headers set.",
+            "headers": {
+              "Set-Cookie": {
+                "schema": { "type": "string" },
+                "description": "Session cookie (__Host-dfid)"
+              },
+              "X-CSRF-Token": {
+                "schema": { "type": "string" },
+                "description": "CSRF token for subsequent state-changing requests"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WalletVerifyResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired nonce, or invalid signature",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "429": {
+            "description": "Rate limited (max 5 verifications per minute per address)",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        },
+        "x-rate-limit": "5 per 60s per address"
+      }
+    },
+    "/publish": {
+      "post": {
+        "summary": "Publish content to one or more protocols",
+        "description": "Cross-posts content to multiple protocols simultaneously. Supports Postiz integration for premium users (Pro+ tier) with fallback to per-protocol publishing. Requires authentication and CSRF token. Rate limited to 30 publishes per minute.",
+        "operationId": "publish",
+        "security": [{ "sessionCookie": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PublishRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Publish results per target protocol",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "object",
+                      "description": "Per-protocol publish results keyed by protocol name",
+                      "additionalProperties": { "$ref": "#/components/schemas/PublishResult" }
+                    },
+                    "via": {
+                      "type": "string",
+                      "description": "Backend used ('postiz' or omitted for per-protocol)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid text or targets",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "403": {
+            "description": "Invalid CSRF token or Premium required",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        },
+        "x-rate-limit": "30 per minute per user"
+      }
+    },
+    "/engage": {
+      "post": {
+        "summary": "Engage with a post (like, repost, reply, etc.)",
+        "description": "Performs an engagement action (like, unlike, repost, unrepost, bookmark, unbookmark, reply, react) on a post across supported protocols. Requires authentication. Also tracks user behavior for personalization.",
+        "operationId": "engage",
+        "security": [{ "sessionCookie": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EngageRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Engagement action successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid parameters",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          },
+          "401": {
+            "description": "Authentication or protocol account required",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "summary": "Get unified notifications",
+        "description": "Returns aggregated notifications from all connected protocols (Nostr, Farcaster, Lens, Bluesky, Mastodon) plus internal DegenFeed notifications (tips, follows). Supports per-protocol auth tokens in the request body for fetching protocol-native notifications. Results are deduplicated, filtered by user preferences, and sorted newest-first.",
+        "operationId": "getNotifications",
+        "security": [{ "sessionCookie": [] }],
+        "responses": {
+          "200": {
+            "description": "Aggregated notifications",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NotificationsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "API health check",
+        "description": "Returns the current health status of the API, including Nostr relay connectivity, error counts, and overall service status. Lightweight endpoint suitable for monitoring and uptime checks.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Health status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" }
+              }
+            }
+          }
+        },
+        "x-cache-ttl": "30s (KV-backed)"
+      }
+    },
+    "/health/protocols": {
+      "get": {
+        "summary": "Get health status of all connected protocols",
+        "description": "Returns detailed health data for every protocol DegenFeed connects to. Each protocol has a 3-tier status (up/degraded/down) based on health check results and circuit breaker state. Cached in KV for 30 seconds.",
+        "operationId": "getProtocolHealth",
+        "responses": {
+          "200": {
+            "description": "Per-protocol health data",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProtocolsHealthResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coin/launch": {
+      "post": {
+        "summary": "Launch a creator coin",
+        "description": "Launches a new creator coin via the cross-protocol coin management system. Supports Farcaster and Lens protocol coins. Requires authentication. The coin is registered across chains and can be tipped, traded, and collected.",
+        "operationId": "launchCoin",
+        "security": [{ "sessionCookie": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "protocol": {
+                    "type": "string",
+                    "description": "Protocol to launch coin on",
+                    "example": "farcaster"
+                  },
+                  "name": { "type": "string", "description": "Coin name" },
+                  "symbol": { "type": "string", "description": "Ticker symbol" },
+                  "initialSupply": { "type": "string", "description": "Initial supply" }
+                },
+                "required": ["protocol"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Coin launched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "coin": {
+                      "type": "object",
+                      "properties": {
+                        "contractAddress": { "type": "string" },
+                        "protocol": { "type": "string" },
+                        "name": { "type": "string" },
+                        "symbol": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tip/create": {
+      "post": {
+        "summary": "Send a tip to a creator",
+        "description": "Sends a crypto tip to a creator across supported chains (Base, Solana, Ethereum, Lightning). Tips can be protocol-native or cross-chain via Wormhole bridge. Requires authentication.",
+        "operationId": "createTip",
+        "security": [{ "sessionCookie": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["recipient", "amount", "chain"],
+                "properties": {
+                  "recipient": { "type": "string", "description": "Recipient address or handle" },
+                  "amount": { "type": "string", "description": "Tip amount" },
+                  "chain": {
+                    "type": "string",
+                    "enum": ["base", "solana", "ethereum", "lightning"]
+                  },
+                  "postId": { "type": "string", "description": "Optional: tip a specific post" },
+                  "protocol": { "type": "string", "description": "Protocol context for the tip" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tip created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "txHash": { "type": "string", "description": "Transaction hash" },
+                    "amount": { "type": "string" },
+                    "chain": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/discover/trending": {
+      "get": {
+        "summary": "Get trending content",
+        "description": "Returns trending posts across all networks ranked by engagement velocity. Uses a multi-factor trending algorithm considering likes, reposts, replies, quote velocity, and time decay. Cached in KV for 5 minutes.",
+        "operationId": "getTrending",
+        "parameters": [{ "$ref": "#/components/parameters/limitParam" }],
+        "responses": {
+          "200": {
+            "description": "Trending content",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FeedResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/discover/people": {
+      "get": {
+        "summary": "Get people to follow",
+        "description": "Returns suggested people/creators to follow based on cross-protocol engagement metrics, niche relevance, and verification status. Includes handles, avatar, bio, and protocol presence across all connected networks.",
+        "operationId": "getDiscoverPeople",
+        "parameters": [{ "$ref": "#/components/parameters/limitParam" }],
+        "responses": {
+          "200": {
+            "description": "Suggested people to follow",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/DiscoverPerson" }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "total": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/delete": {
+      "post": {
+        "summary": "Initiate account deletion",
+        "description": "Initiates the account deletion process (GDPR-compliant). After requesting deletion, there is a 24-hour grace period during which the deletion can be cancelled via `POST /account/delete/cancel`. After the grace period, all associated data is permanently removed.",
+        "operationId": "deleteAccount",
+        "security": [{ "sessionCookie": [] }],
+        "responses": {
+          "200": {
+            "description": "Deletion process initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": {
+                      "type": "string",
+                      "description": "Instructions about the 24h grace period"
+                    },
+                    "scheduledFor": {
+                      "type": "integer",
+                      "description": "Unix timestamp of scheduled deletion"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/custom-feeds/{id}/execute": {
+      "get": {
+        "summary": "Execute a custom feed",
+        "description": "Executes a custom feed recipe and returns the blended results. Custom feeds are user-defined content pipelines with specific protocol sources, topic boost weights, content type filters, and minimum engagement thresholds.",
+        "operationId": "executeCustomFeed",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Custom feed ID",
+            "schema": { "type": "string" }
+          },
+          { "$ref": "#/components/parameters/limitParam" },
+          { "$ref": "#/components/parameters/cursorParam" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Custom feed results",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FeedResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/newsletter/digest": {
+      "get": {
+        "summary": "Get newsletter digest",
+        "description": "Returns the daily newsletter digest content — a curated selection of top posts, trending topics, and notable activity from across all connected protocols. The digest is generated daily and cached for performance.",
+        "operationId": "getNewsletterDigest",
+        "responses": {
+          "200": {
+            "description": "Newsletter digest content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "digest": {
+                      "type": "object",
+                      "properties": {
+                        "title": { "type": "string" },
+                        "date": { "type": "string" },
+                        "sections": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "heading": { "type": "string" },
+                              "posts": {
+                                "type": "array",
+                                "items": { "$ref": "#/components/schemas/UnifiedPost" }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Feed",
+      "description": "Content feed endpoints — unified, personalized, per-protocol, and category-based feeds"
+    },
+    {
+      "name": "Search",
+      "description": "Federated search across all protocols with identity and creator discovery"
+    },
+    {
+      "name": "Identity",
+      "description": "Cross-protocol identity resolution, linking, and profile management"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication — wallet (EIP-4361/Solana), email, OAuth, and session management"
+    },
+    { "name": "Publishing", "description": "Content publishing, cross-posting, and scheduling" },
+    {
+      "name": "Engagement",
+      "description": "Social actions — likes, reposts, replies, bookmarks, and reactions"
+    },
+    { "name": "Notifications", "description": "Unified notification inbox across all protocols" },
+    { "name": "Tips & Coins", "description": "Creator coins, tipping, and cross-chain payments" },
+    {
+      "name": "Discovery",
+      "description": "Content and people discovery — trending, communities, recommendations"
+    },
+    {
+      "name": "Account",
+      "description": "Account management, deletion, export, and data sovereignty"
+    },
+    {
+      "name": "Admin",
+      "description": "Moderation, billing, infrastructure health, and system management"
+    },
+    { "name": "Health", "description": "API and protocol health monitoring endpoints" }
+  ]
+}

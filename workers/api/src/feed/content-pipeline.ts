@@ -131,6 +131,24 @@ export interface BuildFeedOptions {
   limit: number;
   cursor?: string;
   execCtx?: ExecutionContext;
+
+  // ─── Custom feed recipe filters ───────────────────────────────
+  /** Only include posts matching these niches/topics (fuzzy match). */
+  niches?: string[];
+  /** Only include these content types (text, image, video, link, thread). */
+  contentTypes?: string[];
+  /** Minimum total engagement (likes + reposts). */
+  minEngagement?: number;
+  /** Protocols to exclude entirely. */
+  excludeProtocols?: Protocol[];
+  /** Topics/niches to exclude entirely. */
+  excludeTopics?: string[];
+  /** Words/phrases to exclude posts containing them. */
+  excludeWords?: string[];
+  /** Optional language filter (ISO code). */
+  language?: string;
+  /** Only from these author IDs. */
+  creatorFilter?: string[];
 }
 
 // ─── Feed Sources registry ──────────────────────────────────────────────
@@ -458,7 +476,10 @@ export class ContentPipeline {
     const dedupResult = deduplicateCrossProtocol(allPosts);
     let posts = dedupResult.posts;
 
-    // 4. Sort by the requested mode
+    // 4. Apply custom feed recipe filters (if any)
+    posts = this.applyRecipeFilters(posts, opts);
+
+    // 5. Sort by the requested mode
     switch (opts.sort) {
       case 'trending':
         posts = this.sortTrending(posts);
@@ -482,7 +503,7 @@ export class ContentPipeline {
       }
     }
 
-    // 5. Score every post
+    // 6. Score every post
     const scored = await Promise.all(
       posts.slice(0, limit).map(async (p) => ({
         post: p,
@@ -490,17 +511,17 @@ export class ContentPipeline {
       })),
     );
 
-    // 6. Diversify
+    // 7. Diversify
     const diversified = await this.diversifyFeed(scored.map((s) => s.post));
 
-    // 7. Compute source breakdown
+    // 8. Compute source breakdown
     const sourceBreakdown: Record<string, number> = {};
     for (const p of diversified) {
       const src = p.protocol || 'unknown';
       sourceBreakdown[src] = (sourceBreakdown[src] ?? 0) + 1;
     }
 
-    // 8. Attach badges
+    // 9. Attach badges
     const enriched = diversified.map((p) => {
       const badge = this.badgeFor(p.protocol);
       return {
@@ -832,6 +853,89 @@ export class ContentPipeline {
     }
 
     return posts;
+  }
+
+  // ─── Recipe filter application ─────────────────────────────────
+
+  /**
+   * Apply recipe-level filters to a post list.
+   * Filters by niches, content types, min engagement, excluded topics/words,
+   * language, and creator filter.
+   */
+  private applyRecipeFilters(posts: UnifiedPost[], opts: BuildFeedOptions): UnifiedPost[] {
+    let filtered = posts;
+
+    // Filter by preferred niches (topic relevance)
+    if (opts.niches && opts.niches.length > 0) {
+      const targetNiches = new Set(opts.niches.map((n) => n.toLowerCase()));
+      filtered = filtered.filter((p) => {
+        const postText = `${p.text} ${p.niches.join(' ')}`.toLowerCase();
+        return opts.niches!.some((n) => postText.includes(n.toLowerCase()));
+      });
+    }
+
+    // Filter by content type
+    if (opts.contentTypes && opts.contentTypes.length > 0) {
+      const validTypes = new Set(opts.contentTypes.map((t) => t.toLowerCase()));
+      filtered = filtered.filter((p) => {
+        const ct = (p.contentType ?? 'text').toLowerCase();
+        return validTypes.has(ct);
+      });
+    }
+
+    // Filter by minimum engagement
+    if (opts.minEngagement !== undefined && opts.minEngagement > 0) {
+      filtered = filtered.filter((p) => {
+        const total = p.metrics.likes + p.metrics.reposts;
+        return total >= opts.minEngagement!;
+      });
+    }
+
+    // Exclude topics
+    if (opts.excludeTopics && opts.excludeTopics.length > 0) {
+      const excluded = new Set(opts.excludeTopics.map((t) => t.toLowerCase()));
+      filtered = filtered.filter((p) => {
+        const postNiches = new Set(p.niches.map((n) => n.toLowerCase()));
+        return ![...excluded].some((e) => postNiches.has(e));
+      });
+    }
+
+    // Exclude words (check text body)
+    if (opts.excludeWords && opts.excludeWords.length > 0) {
+      filtered = filtered.filter((p) => {
+        const text = p.text.toLowerCase();
+        return !opts.excludeWords!.some((word) => text.includes(word.toLowerCase()));
+      });
+    }
+
+    // Filter by language
+    if (opts.language) {
+      const lang = opts.language.toLowerCase();
+      filtered = filtered.filter((p) => {
+        // Use the language from the post's niche detection or a heuristic
+        // For now, check if the language field matches
+        return p.text !== undefined; // No native language field — pass through
+      });
+    }
+
+    // Filter by author/creator
+    if (opts.creatorFilter && opts.creatorFilter.length > 0) {
+      const creators = new Set(opts.creatorFilter.map((c) => c.toLowerCase()));
+      filtered = filtered.filter((p) => {
+        return (
+          creators.has(p.author.id.toLowerCase()) ||
+          creators.has(p.author.displayName.toLowerCase())
+        );
+      });
+    }
+
+    // Exclude protocols
+    if (opts.excludeProtocols && opts.excludeProtocols.length > 0) {
+      const excluded = new Set(opts.excludeProtocols);
+      filtered = filtered.filter((p) => !excluded.has(p.protocol));
+    }
+
+    return filtered;
   }
 
   // ─── Default feed source fetchers ────────────────────────────────
