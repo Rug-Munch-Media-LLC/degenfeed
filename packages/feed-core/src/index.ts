@@ -1065,7 +1065,8 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     }
 
     // LEVENSHTEIN near-duplicate detection for short/medium text
-    if (!matchedProtocol && p.text.length > 15 && p.text.length < 300) {
+    // Skip for quoted/RT posts (they intentionally share content)
+    if (!matchedProtocol && !qid && p.text.length > 15 && p.text.length < 300) {
       const cleanText = p.text
         .toLowerCase()
         .replace(/https?:\/\/\S+/g, '')

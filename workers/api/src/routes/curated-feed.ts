@@ -155,9 +155,8 @@ export async function handleCuratedFeed(
   }
 
   // 5. Curate with all the new algorithms
-  const preferredNiches = new Set(
-    (mergedPrefs?.preferredNiches ?? []).map((n: string) => n.toLowerCase()),
-  );
+  const rawNiches: string[] = ((mergedPrefs as any)?.preferredNiches ?? []);
+  const preferredNiches: Set<string> = new Set(rawNiches.map((n: string) => n.toLowerCase()));
   const preferredContentTypes = new Set(params.get('contentTypes')?.split(',') ?? []);
 
   const previousEngagement = wallet
