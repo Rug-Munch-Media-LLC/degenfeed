@@ -17,7 +17,7 @@ describe('IdentityResolver', () => {
   it('should resolve a single protocol identity', async () => {
     const profile = await resolver.resolve('nostr', 'npub1abc');
     expect(profile).toBeDefined();
-    expect(profile.primaryProtocol).toBe('nostr');
+    expect(profile!.primaryProtocol).toBe('nostr');
     expect(profile.handles).toHaveLength(1);
     expect(profile.handles[0].protocol).toBe('nostr');
     expect(profile.handles[0].userId).toBe('npub1abc');

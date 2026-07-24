@@ -80,7 +80,7 @@ describe('CrossProtocolThread', () => {
     const thread = registerReply('mastodon', 'post-1', reply);
 
     expect(thread).toBeDefined();
-    expect(thread.replies).toHaveLength(1);
+    expect(thread!.replies).toHaveLength(1);
     expect(thread.replies[0].id).toBe('reply-1');
   });
 
