@@ -12,7 +12,7 @@
  */
 import { detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import {
   buildUrl,
   DEFAULT_TIMEOUT_MS,
@@ -184,6 +184,8 @@ export interface RmiDataBusProviderOptions {
 
 export class RmiDataBusProvider implements FeedProvider {
   readonly protocol: Protocol = 'rss';
+
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly backendUrl: string;
   private readonly apiKey?: string;
   private readonly feedPath: string;

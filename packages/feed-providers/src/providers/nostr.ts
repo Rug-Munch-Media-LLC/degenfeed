@@ -7,7 +7,7 @@ import {
 } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { isNostrEvent } from '../schemas';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import {
   buildUrl,
   DEFAULT_TIMEOUT_MS,
@@ -252,6 +252,8 @@ export interface NostrProviderOptions {
 
 export class NostrProvider implements FeedProvider {
   readonly protocol: Protocol = 'nostr';
+
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly relays: string[];
 
   private readonly breaker = new CircuitBreaker('nostr');

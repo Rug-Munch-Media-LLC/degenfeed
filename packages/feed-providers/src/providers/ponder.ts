@@ -1,6 +1,6 @@
 import { buildUnifiedPost, detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import { DEFAULT_TIMEOUT_MS, fetchJson, withTimeout } from '../utils';
 
 interface PonderTransfer {
@@ -92,6 +92,8 @@ function transferToUnifiedPost(t: PonderTransfer): UnifiedPost {
 
 export class PonderProvider implements FeedProvider {
   readonly protocol: Protocol = 'ponder' as Protocol;
+
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly baseUrl: string;
 
   constructor(baseUrl = 'http://127.0.0.1') {

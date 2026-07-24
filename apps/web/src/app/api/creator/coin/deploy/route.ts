@@ -14,7 +14,7 @@ export async function POST(request: Request): Promise<Response> {
     const body = await request.json();
 
     // Basic server-side validation
-    const { name, symbol, description, image, supply, creatorAllocation, feeBps, revenueSplits } =
+    const { name, symbol, description, supply, creatorAllocation } =
       body as Record<string, unknown>;
 
     if (!name || typeof name !== 'string' || name.length < 1 || name.length > 64) {

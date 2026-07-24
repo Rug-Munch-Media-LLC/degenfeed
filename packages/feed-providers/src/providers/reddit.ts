@@ -14,7 +14,7 @@
 
 import { CircuitBreaker, CircuitBreakerError, detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import {
   buildUrl,
   DEFAULT_TIMEOUT_MS,
@@ -642,6 +642,8 @@ export interface RedditProviderOptions {
 
 export class RedditProvider implements FeedProvider {
   readonly protocol: Protocol = 'reddit';
+
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly configs: SubredditConfig[];
   private readonly sort: 'hot' | 'new' | 'top';
   private readonly frontends: string[];

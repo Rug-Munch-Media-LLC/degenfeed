@@ -5,7 +5,7 @@ import {
   detectNiches,
 } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import {
   buildUrl,
   DEFAULT_TIMEOUT_MS,
@@ -1056,6 +1056,7 @@ function misskeyNoteToGtS(note: MisskeyNote): GtSStatus {
 
 export class MastodonProvider implements FeedProvider {
   readonly protocol: Protocol = 'mastodon';
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly primaryUrl: string;
   private readonly fallbackUrls: string[];
   private readonly breaker = new CircuitBreaker('mastodon');

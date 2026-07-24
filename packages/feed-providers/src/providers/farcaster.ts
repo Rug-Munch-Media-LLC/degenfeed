@@ -18,7 +18,7 @@ import {
   enrichPostNiches,
 } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
 
 export const DEFAULT_HUB_URL = 'https://hub.pinata.cloud';
@@ -42,6 +42,8 @@ export interface FarcasterProviderOptions {
 
 export class FarcasterProvider implements FeedProvider {
   readonly protocol: Protocol = 'farcaster';
+
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly primaryUrl: string;
   private readonly publicApiUrl: string;
   private readonly curatedFids: number[];
@@ -281,12 +283,12 @@ export class FarcasterProvider implements FeedProvider {
     };
 
     const results = await Promise.allSettled(hubUrls.map(probe));
-    const anyOk = results.some((r) => r.status === 'fulfilled' && r.value);
+    const anyHealthy = results.some((r) => r.status === 'fulfilled' && r.value);
 
     return {
-      healthy: anyOk,
+      healthy: anyHealthy,
       latencyMs: Math.round(performance.now() - start),
-      error: anyOk ? undefined : 'All Farcaster hubs unreachable',
+      error: anyHealthy ? undefined : 'All Farcaster hubs unreachable',
     };
   }
 }

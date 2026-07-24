@@ -20,7 +20,7 @@ import {
   subscriberTier,
 } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
 
 /**
@@ -38,6 +38,7 @@ import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeou
  */
 export const LEMMY_INSTANCES = [
   'https://community.degenfeed.xyz',
+  'https://talk.degenfeed.xyz',
   'https://lemmy.ml',
   'https://programming.dev',
 ];
@@ -487,8 +488,8 @@ export function adaptLemmyPost(raw: LemmyPostRaw, instanceDomain: string): Unifi
     },
     embeds,
     url: p.url
-      ? `https://community.degenfeed.xyz/post/${p.id}`
-      : `https://community.degenfeed.xyz/c/${communityName}`,
+      ? `https://community.degenfeed.xyz,https://talk.degenfeed.xyz/post/${p.id}`
+      : `https://community.degenfeed.xyz,https://talk.degenfeed.xyz/c/${communityName}`,
     dfUri: `df://lemmy/${instance}/c/${communityName}/${p.id}`,
     contentType,
     niches: [],
@@ -502,6 +503,8 @@ export function adaptLemmyPost(raw: LemmyPostRaw, instanceDomain: string): Unifi
 
 export class LemmyProvider implements FeedProvider {
   readonly protocol: Protocol = 'lemmy';
+
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly instances: string[];
   private readonly communities: Array<{ community: string; niche: string }>;
   private readonly breaker = new CircuitBreaker('lemmy');

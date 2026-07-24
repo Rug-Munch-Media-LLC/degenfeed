@@ -32,7 +32,7 @@
 
 import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import { DEFAULT_TIMEOUT_MS, fetchJson, withTimeout } from '../utils';
 
 // ─── Configuration ───────────────────────────────────────────────────
@@ -338,6 +338,8 @@ export interface ThreadsProviderOptions {
 
 export class ThreadsProvider implements FeedProvider {
   readonly protocol: Protocol = 'threads';
+
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly curatedHandles: string[];
   private readonly instanceUrl: string;
 

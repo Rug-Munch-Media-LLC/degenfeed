@@ -5,7 +5,8 @@ import {
   enrichPostNiches,
 } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import { isBskyPostView } from '../schemas';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import {
   buildUrl,
   DEFAULT_TIMEOUT_MS,
@@ -160,9 +161,7 @@ async function fetchAuthorFeed(
   });
   const headers: Record<string, string> = {};
   if (accessJwt) headers.authorization = `Bearer ${accessJwt}`;
-  const data = await fetchJson<{ feed?: { post: BskyPostView }[]; cursor?: string }>(url, {
-    headers,
-  });
+  const data = await fetchJson<{ feed?: Array<{ post: BskyPostView }> }>(url, { headers });
   return (data.feed ?? []).map((f) => f.post);
 }
 
@@ -192,6 +191,7 @@ export interface BlueskyProviderOptions {
 
 export class BlueskyProvider implements FeedProvider {
   readonly protocol: Protocol = 'bluesky';
+  readonly schema: SchemaGuard = isBskyPostView;
   private readonly primaryUrl: string;
   private readonly fallbackUrl: string;
   private readonly accessJwt?: string;
@@ -205,67 +205,70 @@ export class BlueskyProvider implements FeedProvider {
     this.curatedActors = options.curatedActors ?? CURATED_BSKY_ACTORS;
   }
 
+  async fetch(opts: FetchOptions = {}): Promise<unknown> {
+    const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const limit = 50;
+    return withRetry(async () => {
+      const all: BskyPostView[] = [];
+
+      const queries = CRYPTO_SEARCH_QUERIES.slice(0, 4);
+      const searchResults = await withConcurrencyLimit(
+        queries,
+        Math.min(2, queries.length),
+        async (q) => {
+          try {
+            return await withTimeout(
+              searchPosts(
+                this.primaryUrl,
+                q,
+                Math.max(5, Math.ceil(limit / queries.length)),
+                this.accessJwt,
+              ),
+              timeoutMs,
+              `bluesky:search:${q}`,
+            );
+          } catch {
+            return [] as BskyPostView[];
+          }
+        },
+      );
+      for (const r of searchResults) all.push(...r);
+
+      if (all.length < limit / 2) {
+        const actors = this.curatedActors.slice(0, 8);
+        const actorResults = await withConcurrencyLimit(actors, 3, async (actor) => {
+          try {
+            return await withTimeout(
+              fetchAuthorFeed(
+                this.primaryUrl,
+                actor,
+                Math.max(3, Math.ceil(limit / actors.length)),
+                this.accessJwt,
+              ),
+              timeoutMs,
+              `bluesky:${actor}`,
+            );
+          } catch {
+            return [] as BskyPostView[];
+          }
+        });
+        for (const r of actorResults) all.push(...r);
+      }
+
+      return all;
+    });
+  }
+
+  transform(raw: unknown): UnifiedPost[] {
+    const posts = Array.isArray(raw) ? (raw as BskyPostView[]) : [];
+    return posts.map((p) => enrichPostNiches(postToUnifiedPost(p)));
+  }
+
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     try {
       return await this.breaker.execute(async () => {
-        const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-        const limit = 50;
-        const posts = await withRetry(async () => {
-          const all: BskyPostView[] = [];
-
-          // Primary strategy: search crypto terms in parallel. We bound
-          // concurrency so a slow relay doesn't multiply latency.
-          const queries = CRYPTO_SEARCH_QUERIES.slice(0, 4);
-          const searchResults = await withConcurrencyLimit(
-            queries,
-            Math.min(2, queries.length),
-            async (q) => {
-              try {
-                return await withTimeout(
-                  searchPosts(
-                    this.primaryUrl,
-                    q,
-                    Math.max(5, Math.ceil(limit / queries.length)),
-                    this.accessJwt,
-                  ),
-                  timeoutMs,
-                  `bluesky:search:${q}`,
-                );
-              } catch {
-                return [];
-              }
-            },
-          );
-          for (const r of searchResults) all.push(...r);
-
-          // Fallback: curated crypto actors (only if searches were thin)
-          if (all.length < limit / 2) {
-            const actors = this.curatedActors.slice(0, 8);
-            const actorResults = await withConcurrencyLimit(actors, 3, async (actor) => {
-              try {
-                return await withTimeout(
-                  fetchAuthorFeed(
-                    this.primaryUrl,
-                    actor,
-                    Math.max(3, Math.ceil(limit / actors.length)),
-                    this.accessJwt,
-                  ),
-                  timeoutMs,
-                  `bluesky:${actor}`,
-                );
-              } catch {
-                return [];
-              }
-            });
-            for (const r of actorResults) all.push(...r);
-          }
-
-          return all;
-        });
-
-        return {
-          posts: posts.map((p) => enrichPostNiches(postToUnifiedPost(p))),
-        };
+        const posts = this.transform(await this.fetch(opts));
+        return { posts };
       });
     } catch (err) {
       if (err instanceof CircuitBreakerError) {
