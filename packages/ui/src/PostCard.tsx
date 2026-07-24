@@ -515,7 +515,7 @@ function PostCardComponent({
   return (
     <>
       <article
-        className="post-card cursor-pointer border-b border-[var(--color-border)] px-4 py-3 transition-all duration-150 hover:bg-[var(--color-overlay)] hover:border-[color-mix(in_srgb,var(--color-accent)_15%,var(--color-border))] hover:scale-[1.002] hover:shadow-sm"
+        className="post-card cursor-pointer border-b border-[var(--color-border)] px-4 py-3 transition-all duration-150 hover:bg-[var(--color-overlay)] hover:border-[color-mix(in_srgb,var(--color-accent)_15%,var(--color-border))] hover:shadow-sm"
         onClick={() => onClick?.(post.id)}
         onContextMenu={(e) => onContextMenu?.(e, post.id)}
         onKeyDown={(e) => {

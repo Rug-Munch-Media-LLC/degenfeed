@@ -22,7 +22,7 @@ import { useAuth } from '../AuthProvider';
 import { ContentFilterBar, type ContentType } from '../ContentFilterBar';
 import { type DensityMode, DensityToggle } from '../DensityToggle';
 import { FeedPollerBanner } from '../FeedPollerBanner';
-import { useAlgorithmTransparency, WhyButton } from './AlgorithmTransparency';
+import { useAlgorithmTransparency } from './AlgorithmTransparency';
 import { PROTOCOLS, type ProtocolConfig } from './feed-protocols';
 import { type AlgorithmUserPreferences, loadAlgorithmPrefs } from './feed-tuner-types';
 
@@ -36,7 +36,10 @@ const TipModal = dynamic(() => import('../TipModal').then((m) => ({ default: m.T
 function hexToRgb(hex: string): string {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return '0,0,0';
-  return `${Number.parseInt(result[1]!, 16)},${Number.parseInt(result[2]!, 16)},${Number.parseInt(result[3]!, 16)}`;
+  const r = Number.parseInt(result[1] ?? '00', 16);
+  const g = Number.parseInt(result[2] ?? '00', 16);
+  const b = Number.parseInt(result[3] ?? '00', 16);
+  return `${r},${g},${b}`;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -75,7 +78,7 @@ export function ProtocolFeed({
 }: ProtocolFeedProps) {
   const config: ProtocolConfig | undefined = PROTOCOLS[source];
   const router = useRouter();
-  const { engage, openComposeReply, walletAddress } = useAuth();
+  const { engage, openComposeReply } = useAuth();
 
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
   const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
@@ -93,7 +96,7 @@ export function ProtocolFeed({
   const [algoPrefs, setAlgoPrefs] = useState<AlgorithmUserPreferences>(
     () => externalPrefs ?? loadAlgorithmPrefs(),
   );
-  const { showWhy, TransparencyOverlay } = useAlgorithmTransparency();
+  const { TransparencyOverlay } = useAlgorithmTransparency();
 
   // Initialize algorithm with saved preferences
   useEffect(() => {
@@ -124,7 +127,9 @@ export function ProtocolFeed({
 
         // Record audit entries for transparency
         for (let i = 0; i < Math.min(annotated.length, 20); i++) {
-          const entry = algo.createAuditEntry(annotated[i], ctx, i + 1);
+          const post = annotated[i];
+          if (!post) continue;
+          const entry = algo.createAuditEntry(post, ctx, i + 1);
           globalAuditLog.record(entry);
         }
 
@@ -405,17 +410,6 @@ export function ProtocolFeed({
             onTip={(post) => setTipPost(post)}
             onRetry={handleRetry}
             onCrossReplyOpen={handleCrossReplyOpen}
-            // Inject "Why am I seeing this?" button into each post
-            renderAfter={() => (
-              <div className="mt-1 flex items-center gap-2">
-                <WhyButton onClick={() => showWhy(posts[0])} />
-                {algoPrefs.mode !== 'standard' && (
-                  <span className="text-[10px] text-[var(--color-muted)]">
-                    {algoPrefs.mode.replace('-', ' ')}
-                  </span>
-                )}
-              </div>
-            )}
           />
         </div>
 
@@ -469,7 +463,7 @@ export function ProtocolFeed({
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
-                key={i}
+                key={`skeleton-${source}-${i}`}
                 className="animate-pulse rounded-xl border p-4"
                 style={{ borderColor: `${accentColor}10`, backgroundColor: 'var(--color-card)' }}
               >

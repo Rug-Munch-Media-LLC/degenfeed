@@ -191,7 +191,10 @@ export function BottomNav() {
                 className="relative flex flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium transition-colors h-full flex-1 max-w-[72px] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-2 text-[var(--color-muted)] hover:text-[var(--color-fg)]"
                 aria-label={signedIn ? 'Create new post' : 'Sign in to post'}
               >
-                <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent)] text-black shadow-lg transition-all hover:scale-105 active:scale-95">
+                <span
+                  className="relative flex items-center justify-center rounded-full bg-[var(--color-accent)] text-black shadow-lg transition-all hover:scale-105 active:scale-95"
+                  style={{ minHeight: '44px', minWidth: '44px' }}
+                >
                   <NavIcon type="compose" active={false} />
                 </span>
                 <span className="leading-tight truncate max-w-[3rem] text-[9px]">Post</span>

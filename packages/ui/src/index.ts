@@ -121,7 +121,7 @@ export { PostCard } from './PostCard';
 export type { PostCardEmptyProps } from './PostCardEmpty';
 export { PostCardEmpty } from './PostCardEmpty';
 export type { PostCardSkeletonProps } from './PostCardSkeleton';
-export { PostCardSkeleton } from './PostCardSkeleton';
+export { InlineSkeleton, PostCardSkeleton } from './PostCardSkeleton';
 export { PricePill, usePricesForText } from './PricePill';
 export type { ProposalModalProps, ProposalType as UIModalProposalType } from './ProposalModal';
 export { ProposalModal } from './ProposalModal';
