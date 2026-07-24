@@ -55,7 +55,8 @@ export function RealtimeStatusDot() {
   const { connected } = useRealtimeContext();
 
   return (
-    <span
+    <div
+      role="status"
       aria-label={connected ? 'Real-time connection active' : 'Real-time connection unavailable'}
       title={
         connected
@@ -67,15 +68,13 @@ export function RealtimeStatusDot() {
       <span
         className="inline-block h-2 w-2 rounded-full"
         style={{
-          backgroundColor: connected
-            ? 'var(--color-accent)'
-            : 'var(--color-danger)',
+          backgroundColor: connected ? 'var(--color-accent)' : 'var(--color-danger)',
           boxShadow: connected
             ? '0 0 6px color-mix(in srgb, var(--color-accent) 40%, transparent)'
             : '0 0 6px color-mix(in srgb, var(--color-danger) 40%, transparent)',
         }}
       />
       <span className="hidden sm:inline">{connected ? 'Live' : 'Live'}</span>
-    </span>
+    </div>
   );
 }

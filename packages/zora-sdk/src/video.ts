@@ -7,8 +7,26 @@
 //   upload.ts    — uploadToIpfs, uploadMetadataToIpfs
 //   index.ts     — ZoraVideoSDK class
 
-export type { PinataConfig, VideoUploadResult, MintVideoOptions, MintResult, ZoraVideoNFT, CollectResult, TipResult, AnnounceResult, TrendingQuery, ZoraVideoSDKConfig } from './video-sdk/types';
-export { ZORA_NFT_ABI, ZORA_COIN_ABI, ZORA_NFT_CONTRACTS, CHAIN_EXPLORERS, CHAIN_RPC_URLS } from './video-sdk/constants';
-export { buildVideoMetadata, metadataToDataUri } from './video-sdk/metadata';
-export { uploadToIpfs, uploadMetadataToIpfs } from './video-sdk/upload';
+export {
+  CHAIN_EXPLORERS,
+  CHAIN_RPC_URLS,
+  ZORA_COIN_ABI,
+  ZORA_NFT_ABI,
+  ZORA_NFT_CONTRACTS,
+} from './video-sdk/constants';
 export { ZoraVideoSDK } from './video-sdk/index';
+export { buildVideoMetadata, metadataToDataUri } from './video-sdk/metadata';
+export type {
+  AnnounceResult,
+  CollectResult,
+  MintResult,
+  MintVideoOptions,
+  PinataConfig,
+  TipResult,
+  TrendingQuery,
+  VideoMetadata,
+  VideoUploadResult,
+  ZoraVideoNFT,
+  ZoraVideoSDKConfig,
+} from './video-sdk/types';
+export { uploadMetadataToIpfs, uploadToIpfs } from './video-sdk/upload';
