@@ -35,40 +35,47 @@
  * - **Live Stream**: PeerTube/Owncast integration for live boosts
  */
 
-export { CreatorCoinClient } from './client';
-export type { CreatorCoinClientConfig } from './client';
-
-export { CreatorCoinEVMClient } from './evm/client';
-export { CreatorCoinSolanaClient } from './solana/client';
 export {
-  deriveTokenState,
-  deriveTokenMint,
-  deriveMintAuthority,
-  deriveTokenVault,
-  deriveBuyerState,
-  derivePlatformFeeVault,
-} from './solana/client';
-
-export { CrossChainBridge, getCrossChainMapping, resolveBaseAddress } from './cross-chain/bridge';
-export { RegistryClient } from './cross-chain/registry';
-
-export { LiveStreamMonitor, LIVE_BOOST_BPS, SUPPORTED_PLATFORMS, applyLiveBoost } from './live-stream';
-
-export {
-  getDynamicPrice,
+  CURVE_ERAS,
+  calculateMarketCap,
+  calculateNativeOut,
+  calculateTokensOut,
+  formatPrice,
+  GRADUATION_SUPPLY,
   getCurrentEra,
+  getDynamicPrice,
   getEraName,
   getProgressPercent,
-  calculateTokensOut,
-  calculateNativeOut,
-  formatPrice,
-  calculateMarketCap,
   predictPriceAfterBuys,
-  GRADUATION_SUPPLY,
   TOTAL_SUPPLY,
-  CURVE_ERAS,
 } from './bonding-curve';
+export type { CreatorCoinClientConfig } from './client';
+export { CreatorCoinClient } from './client';
+export { CrossChainBridge, getCrossChainMapping, resolveBaseAddress } from './cross-chain/bridge';
+export { RegistryClient } from './cross-chain/registry';
+export { CreatorCoinEVMClient } from './evm/client';
+export {
+  calculateFeeSplit,
+  DEFAULT_FEES,
+  formatFee,
+  getDeploymentCost,
+  getFeeSummary,
+} from './fees';
 
-export { calculateFeeSplit, getDeploymentCost, formatFee, getFeeSummary, DEFAULT_FEES } from './fees';
+export {
+  applyLiveBoost,
+  LIVE_BOOST_BPS,
+  LiveStreamMonitor,
+  SUPPORTED_PLATFORMS,
+} from './live-stream';
+export {
+  CreatorCoinSolanaClient,
+  deriveBuyerState,
+  deriveMintAuthority,
+  derivePlatformFeeVault,
+  deriveTokenMint,
+  deriveTokenState,
+  deriveTokenVault,
+} from './solana/client';
 
 export type * from './types';

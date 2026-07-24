@@ -1,20 +1,3 @@
-import {
-  buildUnifiedPost,
-  CircuitBreaker,
-  CircuitBreakerError,
-  detectNiches,
-} from '@degenfeed/feed-core';
-import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
-import {
-  buildUrl,
-  DEFAULT_TIMEOUT_MS,
-  DEFAULT_USER_AGENT,
-  fetchJson,
-  withConcurrencyLimit,
-  withTimeout,
-} from '../utils';
-
 export const DEFAULT_GTS_INSTANCE = 'https://social.degenfeed.xyz';
 
 // ─── Software type detection ──────────────────────────────────────────

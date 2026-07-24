@@ -51,9 +51,7 @@ function AuditEntryCard({ entry }: { entry: AlgorithmAuditEntry }) {
             </span>
             <span className="text-[10px] text-[var(--color-muted)]">{entry.protocol}</span>
           </div>
-          <p className="text-xs text-[var(--color-muted)] truncate mt-0.5">
-            {entry.postPreview}
-          </p>
+          <p className="text-xs text-[var(--color-muted)] truncate mt-0.5">{entry.postPreview}</p>
         </div>
 
         {/* Score */}
@@ -89,7 +87,7 @@ function AuditEntryCard({ entry }: { entry: AlgorithmAuditEntry }) {
             <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
               Score Breakdown
             </h4>
-            {(Object.entries(entry.breakdown) as [string, number][]])
+            {(Object.entries(entry.breakdown) as [string, number][])
               .filter(([key]) => key !== 'total' && key !== 'reasons')
               .map(([key, value]) => {
                 const color = FACTOR_COLORS[key] ?? '#888';
@@ -107,7 +105,10 @@ function AuditEntryCard({ entry }: { entry: AlgorithmAuditEntry }) {
                         }}
                       />
                     </div>
-                    <span className="w-10 text-right text-[10px] tabular-nums font-medium" style={{ color }}>
+                    <span
+                      className="w-10 text-right text-[10px] tabular-nums font-medium"
+                      style={{ color }}
+                    >
                       {(value * 100).toFixed(0)}%
                     </span>
                   </div>
@@ -161,11 +162,7 @@ function AuditEntryCard({ entry }: { entry: AlgorithmAuditEntry }) {
 
 // ─── Main Audit Log Component ─────────────────────────────────────────
 
-export function AlgorithmAuditLogPanel({
-  onClose,
-}: {
-  onClose?: () => void;
-}) {
+export function AlgorithmAuditLogPanel({ onClose }: { onClose?: () => void }) {
   const [entries, setEntries] = useState<AlgorithmAuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
@@ -185,7 +182,9 @@ export function AlgorithmAuditLogPanel({
       try {
         const raw = localStorage.getItem('df_algorithm_audit');
         if (raw) setEntries(JSON.parse(raw) as AlgorithmAuditEntry[]);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     } finally {
       setLoading(false);
     }
@@ -198,9 +197,7 @@ export function AlgorithmAuditLogPanel({
   const filtered = entries
     .filter((e) => filter === 'all' || e.protocol === filter)
     .sort((a, b) =>
-      sortOrder === 'newest'
-        ? b.timestamp - a.timestamp
-        : b.totalScore - a.totalScore,
+      sortOrder === 'newest' ? b.timestamp - a.timestamp : b.totalScore - a.totalScore,
     );
 
   const protocols = [...new Set(entries.map((e) => e.protocol))];
@@ -237,7 +234,9 @@ export function AlgorithmAuditLogPanel({
         >
           <option value="all">All Protocols</option>
           {protocols.map((p) => (
-            <option key={p} value={p}>{p}</option>
+            <option key={p} value={p}>
+              {p}
+            </option>
           ))}
         </select>
         <select
@@ -262,10 +261,7 @@ export function AlgorithmAuditLogPanel({
       {loading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-16 animate-pulse rounded-xl bg-[var(--color-overlay)]"
-            />
+            <div key={i} className="h-16 animate-pulse rounded-xl bg-[var(--color-overlay)]" />
           ))}
         </div>
       ) : filtered.length === 0 ? (

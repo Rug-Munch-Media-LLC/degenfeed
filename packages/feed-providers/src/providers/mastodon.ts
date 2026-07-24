@@ -4,37 +4,6 @@
  * Barrel file — re-exports for backward compatibility.
  */
 
-// Re-export data (values)
-export {
-  DEFAULT_GTS_INSTANCE,
-  TRENDING_INSTANCES,
-  PUBLIC_MASTODON_INSTANCES,
-  CRYPTO_KEYWORDS,
-  TECH_KEYWORDS,
-  CRYPTO_HASHTAGS,
-  TECH_HASHTAGS,
-  FEDIVERSE_KEYWORDS,
-  scoreFediverseRelevance,
-  RELEVANCE_THRESHOLD,
-} from './mastodon-data';
-
-// Re-export types from data
-export type { FediverseSoftware, FediverseInstance } from './mastodon-data';
-
-// Re-export adapter (values)
-export {
-  stripHtml,
-  accountToIdentity,
-  statusToUnifiedPost,
-  instanceHealth,
-  recordInstanceSuccess,
-  recordInstanceFailure,
-  instanceHealthScore,
-  getFediverseStats,
-  misskeyNoteToGtS,
-} from './mastodon-adapter';
-export { MastodonProviderOptions } from './mastodon-adapter';
-
 // Re-export types from adapter
 export type {
   GtSAccount,
@@ -45,6 +14,34 @@ export type {
   MisskeyNote,
   MisskeyNotesResponse,
 } from './mastodon-adapter';
+// Re-export adapter (values)
+export {
+  accountToIdentity,
+  getFediverseStats,
+  instanceHealth,
+  instanceHealthScore,
+  MastodonProviderOptions,
+  misskeyNoteToGtS,
+  recordInstanceFailure,
+  recordInstanceSuccess,
+  statusToUnifiedPost,
+  stripHtml,
+} from './mastodon-adapter';
+// Re-export types from data
+export type { FediverseInstance, FediverseSoftware } from './mastodon-data';
+// Re-export data (values)
+export {
+  CRYPTO_HASHTAGS,
+  CRYPTO_KEYWORDS,
+  DEFAULT_GTS_INSTANCE,
+  FEDIVERSE_KEYWORDS,
+  PUBLIC_MASTODON_INSTANCES,
+  RELEVANCE_THRESHOLD,
+  scoreFediverseRelevance,
+  TECH_HASHTAGS,
+  TECH_KEYWORDS,
+  TRENDING_INSTANCES,
+} from './mastodon-data';
 
 // Provider class
 export { MastodonProvider } from './mastodon-provider';

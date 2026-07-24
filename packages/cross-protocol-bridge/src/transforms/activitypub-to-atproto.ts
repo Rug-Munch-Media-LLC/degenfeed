@@ -1,3 +1,4 @@
+import { getEnv } from '../env';
 /**
  * @degenfeed/cross-protocol-bridge — ActivityPub → AT Protocol Bridge
  *
@@ -23,7 +24,7 @@ function mapContentToBskyPost(content: NormalizedContent): Record<string, unknow
   const now = new Date().toISOString();
 
   // Build text with hashtags and mentions preserved
-  let text = content.text;
+  const text = content.text;
 
   // AT Protocol facets for rich text
   const facets: Array<{
@@ -37,7 +38,7 @@ function mapContentToBskyPost(content: NormalizedContent): Record<string, unknow
     const idx = text.indexOf(tagStr);
     if (idx >= 0) {
       const encoder = new TextEncoder();
-      const bytes = encoder.encode(text);
+      const _bytes = encoder.encode(text);
       const byteStart = encoder.encode(text.slice(0, idx)).byteLength;
       const byteEnd = byteStart + encoder.encode(tagStr).byteLength;
 
@@ -84,7 +85,11 @@ function mapContentToBskyPost(content: NormalizedContent): Record<string, unknow
       const video = content.media.find((m) => m.kind === 'video')!;
       embed = {
         $type: 'app.bsky.embed.video',
-        video: { $type: 'blob', ref: { $link: video.url }, mimeType: video.mimeType ?? 'video/mp4' },
+        video: {
+          $type: 'blob',
+          ref: { $link: video.url },
+          mimeType: video.mimeType ?? 'video/mp4',
+        },
         alt: video.alt ?? '',
       };
     }
@@ -133,9 +138,9 @@ export const activityPubToAtProto: BridgeAdapter = {
   },
 
   async publish(payload: unknown, config?: Record<string, string>) {
-    const pdsUrl = config?.pdsUrl ?? process.env.ATPROTO_PDS_URL ?? 'https://bsky.social';
-    const jwt = config?.accessJwt ?? process.env.BLUESKY_CROSSPOST_JWT ?? '';
-    const did = config?.did ?? process.env.BLUESKY_CROSSPOST_DID ?? '';
+    const pdsUrl = config?.pdsUrl ?? getEnv('ATPROTO_PDS_URL') ?? 'https://bsky.social';
+    const jwt = config?.accessJwt ?? getEnv('BLUESKY_CROSSPOST_JWT') ?? '';
+    const did = config?.did ?? getEnv('BLUESKY_CROSSPOST_DID') ?? '';
 
     if (!jwt || !did) {
       return { success: false, error: 'Bluesky auth not configured', retryable: false };
@@ -158,17 +163,27 @@ export const activityPubToAtProto: BridgeAdapter = {
 
       if (!res.ok) {
         const errText = await res.text().catch(() => 'unknown');
-        return { success: false, error: `Bluesky publish failed: ${res.status} ${errText}`, retryable: res.status >= 500 };
+        return {
+          success: false,
+          error: `Bluesky publish failed: ${res.status} ${errText}`,
+          retryable: res.status >= 500,
+        };
       }
 
       const data = (await res.json()) as { uri?: string; cid?: string };
       return {
         success: true,
         nativeId: data.uri ?? data.cid ?? `bsky:${Date.now()}`,
-        url: data.uri ? `https://bsky.app/profile/${did}/post/${data.uri.split('/').pop()}` : undefined,
+        url: data.uri
+          ? `https://bsky.app/profile/${did}/post/${data.uri.split('/').pop()}`
+          : undefined,
       };
     } catch (err) {
-      return { success: false, error: `Bluesky publish error: ${(err as Error).message}`, retryable: true };
+      return {
+        success: false,
+        error: `Bluesky publish error: ${(err as Error).message}`,
+        retryable: true,
+      };
     }
   },
 

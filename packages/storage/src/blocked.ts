@@ -56,11 +56,27 @@ export async function syncBlockedFromServer(): Promise<void> {
     const res = await fetch('/api/moderation/sync');
     if (!res.ok) return;
     const data: {
-      blocked?: Array<{ targetId: string; targetHandle?: string; blockedBy?: string; protocol?: string; blockedAt?: number }>;
+      blocked?: Array<{
+        targetId: string;
+        targetHandle?: string;
+        blockedBy?: string;
+        protocol?: string;
+        blockedAt?: number;
+      }>;
       muted?: Array<{ targetId: string; targetHandle?: string; mutedBy?: string }>;
       mutedWords?: Array<{ word: string }>;
-      mutedCommunities?: Array<{ communityId: string; communityName?: string; instance?: string; mutedAt?: number }>;
-      blockedCommunities?: Array<{ communityId: string; communityName?: string; instance?: string; blockedAt?: number }>;
+      mutedCommunities?: Array<{
+        communityId: string;
+        communityName?: string;
+        instance?: string;
+        mutedAt?: number;
+      }>;
+      blockedCommunities?: Array<{
+        communityId: string;
+        communityName?: string;
+        instance?: string;
+        blockedAt?: number;
+      }>;
     } = await res.json();
     const db = await getDb();
 

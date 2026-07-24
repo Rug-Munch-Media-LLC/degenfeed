@@ -7,9 +7,14 @@
 
 // ─── Algorithm types ───────────────────────────────────────────────
 
-import type { AlgorithmWeights, NicheSelection, ProtocolWeights, AlgorithmMode } from '@degenfeed/feed-core';
+import type {
+  AlgorithmMode,
+  AlgorithmWeights,
+  NicheSelection,
+  ProtocolWeights,
+} from '@degenfeed/feed-core';
 
-export type { AlgorithmWeights, NicheSelection, ProtocolWeights, AlgorithmMode };
+export type { AlgorithmMode, AlgorithmWeights, NicheSelection, ProtocolWeights };
 
 // ─── Feed Mix types (existing) ────────────────────────────────────
 

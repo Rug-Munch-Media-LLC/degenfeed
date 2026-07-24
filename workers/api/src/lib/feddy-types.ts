@@ -1,5 +1,3 @@
-import type { Env } from '../index';
-
 // ─── Types ──────────────────────────────────────────────────────────────
 
 export type FeddyCategory =

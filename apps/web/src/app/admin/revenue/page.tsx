@@ -48,7 +48,12 @@ function formatTime(ts: number): string {
 }
 
 function formatUsd(n: number): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(n);
 }
 
 function formatCount(n: number): string {
@@ -65,7 +70,14 @@ function shortAddr(addr: string): string {
 // === Default Data =====================================================
 
 const PROTOCOL_ICONS: Record<string, string> = {
-  nostr: '⚡', farcaster: '🟣', lens: '🌿', bluesky: '🦋', mastodon: '🐘', threads: '🧵', reddit: '🔴', rss: '📡',
+  nostr: '⚡',
+  farcaster: '🟣',
+  lens: '🌿',
+  bluesky: '🦋',
+  mastodon: '🐘',
+  threads: '🧵',
+  reddit: '🔴',
+  rss: '📡',
 };
 
 const DEFAULT_STATS: RevenueStats = {
@@ -87,14 +99,86 @@ const DEFAULT_STATS: RevenueStats = {
     { protocol: 'reddit', icon: '🔴', amount: 3800, percentage: 4.5 },
   ],
   recentTransactions: [
-    { id: 'tx1', type: 'tip', protocol: 'farcaster', amount: 0.5, usdValue: 1650, user: '0x8f3E…bD91', timestamp: Date.now() - 60000, status: 'completed' },
-    { id: 'tx2', type: 'subscription', protocol: 'nostr', amount: 9.99, usdValue: 9.99, user: 'npub1…4x7t', timestamp: Date.now() - 300000, status: 'completed' },
-    { id: 'tx3', type: 'fee', protocol: 'bluesky', amount: 0.01, usdValue: 32, user: 'did:plc:…abc1', timestamp: Date.now() - 600000, status: 'completed' },
-    { id: 'tx4', type: 'tip', protocol: 'lens', amount: 0.1, usdValue: 330, user: '0x7B2f…9E34', timestamp: Date.now() - 1800000, status: 'completed' },
-    { id: 'tx5', type: 'subscription', protocol: 'mastodon', amount: 4.99, usdValue: 4.99, user: '@alice…odon.social', timestamp: Date.now() - 3600000, status: 'pending' },
-    { id: 'tx6', type: 'fee', protocol: 'nostr', amount: 0.005, usdValue: 16, user: 'npub1…k9f2', timestamp: Date.now() - 7200000, status: 'completed' },
-    { id: 'tx7', type: 'creator_coin', protocol: 'farcaster', amount: 5, usdValue: 5, user: '0x4D1e…F782', timestamp: Date.now() - 10800000, status: 'completed' },
-    { id: 'tx8', type: 'tip', protocol: 'reddit', amount: 0.05, usdValue: 165, user: 'u/degod_42', timestamp: Date.now() - 14400000, status: 'failed' },
+    {
+      id: 'tx1',
+      type: 'tip',
+      protocol: 'farcaster',
+      amount: 0.5,
+      usdValue: 1650,
+      user: '0x8f3E…bD91',
+      timestamp: Date.now() - 60000,
+      status: 'completed',
+    },
+    {
+      id: 'tx2',
+      type: 'subscription',
+      protocol: 'nostr',
+      amount: 9.99,
+      usdValue: 9.99,
+      user: 'npub1…4x7t',
+      timestamp: Date.now() - 300000,
+      status: 'completed',
+    },
+    {
+      id: 'tx3',
+      type: 'fee',
+      protocol: 'bluesky',
+      amount: 0.01,
+      usdValue: 32,
+      user: 'did:plc:…abc1',
+      timestamp: Date.now() - 600000,
+      status: 'completed',
+    },
+    {
+      id: 'tx4',
+      type: 'tip',
+      protocol: 'lens',
+      amount: 0.1,
+      usdValue: 330,
+      user: '0x7B2f…9E34',
+      timestamp: Date.now() - 1800000,
+      status: 'completed',
+    },
+    {
+      id: 'tx5',
+      type: 'subscription',
+      protocol: 'mastodon',
+      amount: 4.99,
+      usdValue: 4.99,
+      user: '@alice…odon.social',
+      timestamp: Date.now() - 3600000,
+      status: 'pending',
+    },
+    {
+      id: 'tx6',
+      type: 'fee',
+      protocol: 'nostr',
+      amount: 0.005,
+      usdValue: 16,
+      user: 'npub1…k9f2',
+      timestamp: Date.now() - 7200000,
+      status: 'completed',
+    },
+    {
+      id: 'tx7',
+      type: 'creator_coin',
+      protocol: 'farcaster',
+      amount: 5,
+      usdValue: 5,
+      user: '0x4D1e…F782',
+      timestamp: Date.now() - 10800000,
+      status: 'completed',
+    },
+    {
+      id: 'tx8',
+      type: 'tip',
+      protocol: 'reddit',
+      amount: 0.05,
+      usdValue: 165,
+      user: 'u/degod_42',
+      timestamp: Date.now() - 14400000,
+      status: 'failed',
+    },
   ],
   subscriptionTiers: [
     { name: 'Degen Basic', subscribers: 742, revenue: 3705.58, price: 4.99 },
@@ -102,8 +186,12 @@ const DEFAULT_STATS: RevenueStats = {
     { name: 'Degen Whale', subscribers: 121, revenue: 3629.99, price: 29.99 },
   ],
   dailyRevenue: [
-    { date: 'Jul 18', amount: 1240 }, { date: 'Jul 19', amount: 1380 }, { date: 'Jul 20', amount: 1120 },
-    { date: 'Jul 21', amount: 1560 }, { date: 'Jul 22', amount: 1420 }, { date: 'Jul 23', amount: 1280 },
+    { date: 'Jul 18', amount: 1240 },
+    { date: 'Jul 19', amount: 1380 },
+    { date: 'Jul 20', amount: 1120 },
+    { date: 'Jul 21', amount: 1560 },
+    { date: 'Jul 22', amount: 1420 },
+    { date: 'Jul 23', amount: 1280 },
     { date: 'Jul 24', amount: 980 },
   ],
 };
@@ -113,7 +201,9 @@ const DEFAULT_STATS: RevenueStats = {
 export default function AdminRevenuePage() {
   const [stats, setStats] = useState<RevenueStats>(DEFAULT_STATS);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'subscriptions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'subscriptions'>(
+    'overview',
+  );
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('7d');
   const [toast, setToast] = useState<{ message: string; kind: 'success' | 'error' } | null>(null);
 
@@ -129,7 +219,9 @@ export default function AdminRevenuePage() {
         const data = (await res.json()) as { stats: RevenueStats };
         if (data.stats) setStats(data.stats);
       }
-    } catch { /* use defaults */ }
+    } catch {
+      /* use defaults */
+    }
   }, [dateRange]);
 
   useEffect(() => {
@@ -195,23 +287,41 @@ export default function AdminRevenuePage() {
       {/* Top metrics */}
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="rounded-xl border border-degen-500/20 bg-degen-500/5 px-4 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Total Revenue</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Total Revenue
+          </p>
           <p className="text-xl font-bold text-degen-400">{formatUsd(stats.totalFees)}</p>
-          <p className="text-[10px] text-[var(--color-muted)]">+{formatUsd(stats.feesToday)} today</p>
+          <p className="text-[10px] text-[var(--color-muted)]">
+            +{formatUsd(stats.feesToday)} today
+          </p>
         </div>
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Tipping Volume</p>
-          <p className="text-xl font-bold text-[var(--color-fg)]">{formatUsd(stats.tippingVolumeUsd)}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Tipping Volume
+          </p>
+          <p className="text-xl font-bold text-[var(--color-fg)]">
+            {formatUsd(stats.tippingVolumeUsd)}
+          </p>
           <p className="text-[10px] text-[var(--color-muted)]">Across all protocols</p>
         </div>
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Subscriptions</p>
-          <p className="text-xl font-bold text-[var(--color-fg)]">{formatCount(stats.activeSubscriptions)}</p>
-          <p className="text-[10px] text-[var(--color-muted)]">+{stats.newSubscriptionsToday} today</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Subscriptions
+          </p>
+          <p className="text-xl font-bold text-[var(--color-fg)]">
+            {formatCount(stats.activeSubscriptions)}
+          </p>
+          <p className="text-[10px] text-[var(--color-muted)]">
+            +{stats.newSubscriptionsToday} today
+          </p>
         </div>
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Churn Rate</p>
-          <p className={`text-xl font-bold ${stats.churnRate > 5 ? 'text-red-400' : 'text-[var(--color-fg)]'}`}>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            Churn Rate
+          </p>
+          <p
+            className={`text-xl font-bold ${stats.churnRate > 5 ? 'text-red-400' : 'text-[var(--color-fg)]'}`}
+          >
             {stats.churnRate}%
           </p>
           <p className="text-[10px] text-[var(--color-muted)]">Monthly</p>
@@ -220,11 +330,13 @@ export default function AdminRevenuePage() {
 
       {/* Tabs */}
       <div className="mb-6 flex gap-2 border-b border-[var(--color-border)] pb-2">
-        {([
-          { key: 'overview', label: '📊 Overview' },
-          { key: 'transactions', label: '💳 Transactions' },
-          { key: 'subscriptions', label: '📋 Subscriptions' },
-        ] as const).map((tab) => (
+        {(
+          [
+            { key: 'overview', label: '📊 Overview' },
+            { key: 'transactions', label: '💳 Transactions' },
+            { key: 'subscriptions', label: '📋 Subscriptions' },
+          ] as const
+        ).map((tab) => (
           <button
             key={tab.key}
             type="button"
@@ -245,7 +357,9 @@ export default function AdminRevenuePage() {
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Revenue by Protocol */}
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
-            <h2 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Revenue by Protocol</h2>
+            <h2 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+              Revenue by Protocol
+            </h2>
             <div className="space-y-3">
               {stats.revenueByProtocol.map((p) => (
                 <div key={p.protocol}>
@@ -254,7 +368,9 @@ export default function AdminRevenuePage() {
                       <span>{p.icon}</span>
                       <span className="text-[var(--color-fg)]">{p.protocol}</span>
                     </span>
-                    <span className="font-medium text-[var(--color-fg)]">{formatUsd(p.amount)}</span>
+                    <span className="font-medium text-[var(--color-fg)]">
+                      {formatUsd(p.amount)}
+                    </span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-[var(--color-muted)]">
                     <div
@@ -287,17 +403,26 @@ export default function AdminRevenuePage() {
 
           {/* Subscription Tiers */}
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
-            <h2 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Subscription Tiers</h2>
+            <h2 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">
+              Subscription Tiers
+            </h2>
             <div className="space-y-3">
               {stats.subscriptionTiers.map((tier) => (
-                <div key={tier.name} className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3">
+                <div
+                  key={tier.name}
+                  className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] px-4 py-3"
+                >
                   <div>
                     <p className="text-sm font-medium text-[var(--color-fg)]">{tier.name}</p>
-                    <p className="text-[10px] text-[var(--color-muted)]">{formatCount(tier.subscribers)} subscribers</p>
+                    <p className="text-[10px] text-[var(--color-muted)]">
+                      {formatCount(tier.subscribers)} subscribers
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-degen-400">${tier.price.toFixed(2)}</p>
-                    <p className="text-[10px] text-[var(--color-muted)]">{formatUsd(tier.revenue)}/mo</p>
+                    <p className="text-[10px] text-[var(--color-muted)]">
+                      {formatUsd(tier.revenue)}/mo
+                    </p>
                   </div>
                 </div>
               ))}
@@ -308,10 +433,26 @@ export default function AdminRevenuePage() {
           <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
             <h2 className="mb-4 text-sm font-semibold text-[var(--color-fg)]">Revenue Actions</h2>
             <div className="grid grid-cols-2 gap-3">
-              <ActionButton icon="📄" label="Export Report" onClick={() => showToast('Revenue report export started')} />
-              <ActionButton icon="📊" label="View Analytics" onClick={() => showToast('Opening full analytics…')} />
-              <ActionButton icon="🏷️" label="Manage Tiers" onClick={() => setActiveTab('subscriptions')} />
-              <ActionButton icon="📋" label="Payouts" onClick={() => showToast('Opening payout dashboard…')} />
+              <ActionButton
+                icon="📄"
+                label="Export Report"
+                onClick={() => showToast('Revenue report export started')}
+              />
+              <ActionButton
+                icon="📊"
+                label="View Analytics"
+                onClick={() => showToast('Opening full analytics…')}
+              />
+              <ActionButton
+                icon="🏷️"
+                label="Manage Tiers"
+                onClick={() => setActiveTab('subscriptions')}
+              />
+              <ActionButton
+                icon="📋"
+                label="Payouts"
+                onClick={() => showToast('Opening payout dashboard…')}
+              />
             </div>
           </div>
         </div>
@@ -321,7 +462,9 @@ export default function AdminRevenuePage() {
       {activeTab === 'transactions' && (
         <div>
           <div className="mb-4 flex items-center justify-between">
-            <p className="text-xs text-[var(--color-muted)]">{stats.recentTransactions.length} recent transactions</p>
+            <p className="text-xs text-[var(--color-muted)]">
+              {stats.recentTransactions.length} recent transactions
+            </p>
             <button
               type="button"
               onClick={() => showToast('Exporting transactions…')}
@@ -334,13 +477,27 @@ export default function AdminRevenuePage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Type</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Protocol</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Amount</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">USD Value</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">User</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Status</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Time</th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Type
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Protocol
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    USD Value
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    User
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Time
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border)]">
@@ -348,23 +505,44 @@ export default function AdminRevenuePage() {
                   <tr key={tx.id} className="bg-[var(--color-card)]">
                     <td className="px-4 py-3">
                       <span className="text-xs">
-                        {tx.type === 'tip' ? '💸' : tx.type === 'subscription' ? '📋' : tx.type === 'fee' ? '💳' : '🪙'} {tx.type.replace('_', ' ')}
+                        {tx.type === 'tip'
+                          ? '💸'
+                          : tx.type === 'subscription'
+                            ? '📋'
+                            : tx.type === 'fee'
+                              ? '💳'
+                              : '🪙'}{' '}
+                        {tx.type.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs">{PROTOCOL_ICONS[tx.protocol] || ''} {tx.protocol}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-[var(--color-fg)]">{tx.amount}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-[var(--color-fg)]">{formatUsd(tx.usdValue)}</td>
-                    <td className="px-4 py-3 font-mono text-[10px] text-[var(--color-muted)]">{shortAddr(tx.user)}</td>
+                    <td className="px-4 py-3 text-xs">
+                      {PROTOCOL_ICONS[tx.protocol] || ''} {tx.protocol}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-[var(--color-fg)]">
+                      {tx.amount}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-[var(--color-fg)]">
+                      {formatUsd(tx.usdValue)}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-[10px] text-[var(--color-muted)]">
+                      {shortAddr(tx.user)}
+                    </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        tx.status === 'completed' ? 'bg-green-500/15 text-green-400'
-                          : tx.status === 'pending' ? 'bg-yellow-500/15 text-yellow-400'
-                            : 'bg-red-500/15 text-red-400'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          tx.status === 'completed'
+                            ? 'bg-green-500/15 text-green-400'
+                            : tx.status === 'pending'
+                              ? 'bg-yellow-500/15 text-yellow-400'
+                              : 'bg-red-500/15 text-red-400'
+                        }`}
+                      >
                         {tx.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[10px] text-[var(--color-muted)]">{formatTime(tx.timestamp)}</td>
+                    <td className="px-4 py-3 text-[10px] text-[var(--color-muted)]">
+                      {formatTime(tx.timestamp)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -378,16 +556,28 @@ export default function AdminRevenuePage() {
         <div>
           <div className="mb-4 flex items-center gap-4">
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase text-[var(--color-muted)]">Active</p>
-              <p className="text-lg font-bold text-[var(--color-fg)]">{formatCount(stats.activeSubscriptions)}</p>
+              <p className="text-[10px] font-semibold uppercase text-[var(--color-muted)]">
+                Active
+              </p>
+              <p className="text-lg font-bold text-[var(--color-fg)]">
+                {formatCount(stats.activeSubscriptions)}
+              </p>
             </div>
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase text-[var(--color-muted)]">New Today</p>
+              <p className="text-[10px] font-semibold uppercase text-[var(--color-muted)]">
+                New Today
+              </p>
               <p className="text-lg font-bold text-degen-400">+{stats.newSubscriptionsToday}</p>
             </div>
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase text-[var(--color-muted)]">Monthly Churn</p>
-              <p className={`text-lg font-bold ${stats.churnRate > 5 ? 'text-red-400' : 'text-[var(--color-fg)]'}`}>{stats.churnRate}%</p>
+              <p className="text-[10px] font-semibold uppercase text-[var(--color-muted)]">
+                Monthly Churn
+              </p>
+              <p
+                className={`text-lg font-bold ${stats.churnRate > 5 ? 'text-red-400' : 'text-[var(--color-fg)]'}`}
+              >
+                {stats.churnRate}%
+              </p>
             </div>
           </div>
 
@@ -395,20 +585,36 @@ export default function AdminRevenuePage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
                 <tr>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Tier</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Price</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Subscribers</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Monthly Revenue</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">Actions</th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Tier
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Price
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Subscribers
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Monthly Revenue
+                  </th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border)]">
                 {stats.subscriptionTiers.map((tier) => (
                   <tr key={tier.name} className="bg-[var(--color-card)]">
                     <td className="px-4 py-3 font-medium text-[var(--color-fg)]">{tier.name}</td>
-                    <td className="px-4 py-3 font-mono text-[var(--color-fg)]">${tier.price.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-[var(--color-muted)]">{formatCount(tier.subscribers)}</td>
-                    <td className="px-4 py-3 font-mono text-degen-400">{formatUsd(tier.revenue)}</td>
+                    <td className="px-4 py-3 font-mono text-[var(--color-fg)]">
+                      ${tier.price.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3 text-[var(--color-muted)]">
+                      {formatCount(tier.subscribers)}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-degen-400">
+                      {formatUsd(tier.revenue)}
+                    </td>
                     <td className="px-4 py-3">
                       <button
                         type="button"
@@ -425,19 +631,29 @@ export default function AdminRevenuePage() {
           </div>
 
           <div className="mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-5">
-            <h3 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">🎯 Subscription Insights</h3>
+            <h3 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">
+              🎯 Subscription Insights
+            </h3>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-xl bg-[var(--color-muted)] p-4 text-center">
                 <p className="text-2xl font-bold text-degen-400">
-                  {((stats.subscriptionTiers.reduce((s, t) => s + t.subscribers, 0) > 0)
-                    ? (stats.subscriptionTiers[1]?.subscribers ?? 0) / stats.subscriptionTiers.reduce((s, t) => s + t.subscribers, 0) * 100
-                    : 0).toFixed(0)}%
+                  {(stats.subscriptionTiers.reduce((s, t) => s + t.subscribers, 0) > 0
+                    ? ((stats.subscriptionTiers[1]?.subscribers ?? 0) /
+                        stats.subscriptionTiers.reduce((s, t) => s + t.subscribers, 0)) *
+                      100
+                    : 0
+                  ).toFixed(0)}
+                  %
                 </p>
                 <p className="text-[10px] text-[var(--color-muted)]">on Pro plan or higher</p>
               </div>
               <div className="rounded-xl bg-[var(--color-muted)] p-4 text-center">
                 <p className="text-2xl font-bold text-[var(--color-fg)]">
-                  ${(stats.subscriptionTiers.reduce((s, t) => s + t.revenue, 0) / stats.subscriptionTiers.reduce((s, t) => s + t.subscribers, 0)).toFixed(2)}
+                  $
+                  {(
+                    stats.subscriptionTiers.reduce((s, t) => s + t.revenue, 0) /
+                    stats.subscriptionTiers.reduce((s, t) => s + t.subscribers, 0)
+                  ).toFixed(2)}
                 </p>
                 <p className="text-[10px] text-[var(--color-muted)]">Avg Revenue Per User</p>
               </div>
@@ -455,7 +671,15 @@ export default function AdminRevenuePage() {
 
 // === Sub-components ===================================================
 
-function ActionButton({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
+function ActionButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: string;
+  label: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"

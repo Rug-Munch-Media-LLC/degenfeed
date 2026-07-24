@@ -14,11 +14,11 @@
 
 import {
   ALL_NICHES,
+  type AlgorithmMode,
+  type AlgorithmWeights,
   DEFAULT_WEIGHTS,
   MODE_LABELS,
   NICHE_LABELS,
-  type AlgorithmMode,
-  type AlgorithmWeights,
   type NicheSelection,
   type ProtocolWeights,
 } from '@degenfeed/feed-core';
@@ -99,16 +99,18 @@ function Slider({
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {icon && <span className="text-lg" aria-hidden="true">{icon}</span>}
+          {icon && (
+            <span className="text-lg" aria-hidden="true">
+              {icon}
+            </span>
+          )}
           <label className="text-sm font-medium text-[var(--color-fg)]">{label}</label>
         </div>
         <span className="text-sm font-bold tabular-nums text-degen-400 min-w-[3ch] text-right">
           {value}
         </span>
       </div>
-      {description && (
-        <p className="text-xs text-[var(--color-muted)] -mt-1">{description}</p>
-      )}
+      {description && <p className="text-xs text-[var(--color-muted)] -mt-1">{description}</p>}
       <input
         type="range"
         min={min}
@@ -148,12 +150,21 @@ function NicheChip({
       className={`
         inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium
         transition-all border
-        ${selected
-          ? 'border-degen-500/40 bg-degen-500/15 text-degen-400 shadow-sm'
-          : 'border-[var(--color-glass-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:border-degen-500/20'
+        ${
+          selected
+            ? 'border-degen-500/40 bg-degen-500/15 text-degen-400 shadow-sm'
+            : 'border-[var(--color-glass-border)] bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:border-degen-500/20'
         }
       `}
-      style={selected ? { borderColor: `${meta.color}50`, backgroundColor: `${meta.color}15`, color: meta.color } : undefined}
+      style={
+        selected
+          ? {
+              borderColor: `${meta.color}50`,
+              backgroundColor: `${meta.color}15`,
+              color: meta.color,
+            }
+          : undefined
+      }
     >
       <span aria-hidden="true">{meta.icon}</span>
       <span>{meta.label}</span>
@@ -183,7 +194,9 @@ function ProtocolWeightRow({
         style={{ backgroundColor: `${color}20` }}
         aria-hidden="true"
       >
-        <span className="font-bold" style={{ color }}>{label[0]}</span>
+        <span className="font-bold" style={{ color }}>
+          {label[0]}
+        </span>
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
@@ -213,12 +226,10 @@ function ProtocolWeightRow({
 
 function ProtocolPieChart({ weights }: { weights: ProtocolWeights }) {
   const total = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
-  const segments = PROTOCOLS_FOR_WEIGHTING
-    .map((p) => ({
-      ...p,
-      percentage: ((weights[p.id] ?? 50) / total) * 100,
-    }))
-    .filter((s) => s.percentage > 0);
+  const segments = PROTOCOLS_FOR_WEIGHTING.map((p) => ({
+    ...p,
+    percentage: ((weights[p.id] ?? 50) / total) * 100,
+  })).filter((s) => s.percentage > 0);
 
   // SVG pie chart
   const cx = 80;
@@ -251,7 +262,9 @@ function ProtocolPieChart({ weights }: { weights: ProtocolWeights }) {
         stroke="var(--color-card)"
         strokeWidth="1.5"
       >
-        <title>{seg.label}: {Math.round(seg.percentage)}%</title>
+        <title>
+          {seg.label}: {Math.round(seg.percentage)}%
+        </title>
       </path>
     );
   });
@@ -264,12 +277,17 @@ function ProtocolPieChart({ weights }: { weights: ProtocolWeights }) {
       </svg>
       <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
         {segments.map((seg) => (
-          <div key={seg.id} className="flex items-center gap-1.5 text-[10px] text-[var(--color-muted)]">
+          <div
+            key={seg.id}
+            className="flex items-center gap-1.5 text-[10px] text-[var(--color-muted)]"
+          >
             <span
               className="inline-block h-2 w-2 rounded-full"
               style={{ backgroundColor: seg.color }}
             />
-            <span>{seg.label}: {Math.round(seg.percentage)}%</span>
+            <span>
+              {seg.label}: {Math.round(seg.percentage)}%
+            </span>
           </div>
         ))}
       </div>
@@ -292,17 +310,20 @@ function LivePreview({ weights }: { weights: AlgorithmWeights }) {
   if (weights.recency > 70) descriptions.push('Fresh content will dominate your feed');
   else if (weights.recency < 30) descriptions.push('Older posts get a fair chance');
 
-  if (weights.popularity > 70) descriptions.push('Viral and trending posts will surface prominently');
+  if (weights.popularity > 70)
+    descriptions.push('Viral and trending posts will surface prominently');
   else if (weights.popularity < 30) descriptions.push('Engagement numbers matter less');
 
   if (weights.relevance > 70) descriptions.push('Your niche interests drive the feed');
-  else if (weights.relevance < 30) descriptions.push('You\'ll see more diverse content outside your niches');
+  else if (weights.relevance < 30)
+    descriptions.push("You'll see more diverse content outside your niches");
 
   if (weights.protocolDiversity > 70) descriptions.push('Protocols are heavily mixed in your feed');
-  else if (weights.protocolDiversity < 30) descriptions.push('Your preferred protocols will dominate');
+  else if (weights.protocolDiversity < 30)
+    descriptions.push('Your preferred protocols will dominate');
 
   if (weights.nicheFocus > 70) descriptions.push('Niche-specific content is heavily prioritized');
-  else if (weights.nicheFocus < 30) descriptions.push('You\'ll see more content across all niches');
+  else if (weights.nicheFocus < 30) descriptions.push("You'll see more content across all niches");
 
   return (
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] p-4 space-y-3">
@@ -311,7 +332,9 @@ function LivePreview({ weights }: { weights: AlgorithmWeights }) {
       </h4>
       {dominant && (
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-lg" aria-hidden="true">{dominant.emoji}</span>
+          <span className="text-lg" aria-hidden="true">
+            {dominant.emoji}
+          </span>
           <span className="text-[var(--color-fg)] font-medium">
             Dominant factor: <span className="text-degen-400">{dominant.label}</span>
           </span>
@@ -368,7 +391,9 @@ export default function AlgorithmSettingsPage() {
         if (data.mode) setMode(data.mode);
         if (data.niches) setNicheSelection(data.niches);
         if (data.protocolWeights) setProtocolWeights(data.protocolWeights);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     load();
   }, []);
@@ -377,21 +402,27 @@ export default function AlgorithmSettingsPage() {
   const markChanged = useCallback(() => setHasChanges(true), []);
 
   // Niche toggle
-  const toggleNiche = useCallback((id: string) => {
-    setNicheSelection((prev) => {
-      const active = prev.active.includes(id)
-        ? prev.active.filter((n) => n !== id)
-        : [...prev.active, id];
-      return { ...prev, active };
-    });
-    markChanged();
-  }, [markChanged]);
+  const toggleNiche = useCallback(
+    (id: string) => {
+      setNicheSelection((prev) => {
+        const active = prev.active.includes(id)
+          ? prev.active.filter((n) => n !== id)
+          : [...prev.active, id];
+        return { ...prev, active };
+      });
+      markChanged();
+    },
+    [markChanged],
+  );
 
   // Reset to defaults
   const handleReset = useCallback(() => {
     setWeights(DEFAULT_WEIGHTS);
     setMode('standard');
-    setNicheSelection({ active: ['crypto', 'bitcoin', 'ethereum', 'defi', 'ai', 'tech'], discoverNew: true });
+    setNicheSelection({
+      active: ['crypto', 'bitcoin', 'ethereum', 'defi', 'ai', 'tech'],
+      discoverNew: true,
+    });
     const pw: ProtocolWeights = {};
     for (const p of PROTOCOLS_FOR_WEIGHTING) pw[p.id] = 50;
     setProtocolWeights(pw);
@@ -434,29 +465,35 @@ export default function AlgorithmSettingsPage() {
           Choose a preset that changes how the algorithm behaves throughout the day.
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          {(Object.entries(MODE_LABELS) as [AlgorithmMode, typeof MODE_LABELS[AlgorithmMode]][]).map(
-            ([id, meta]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => { setMode(id); markChanged(); }}
-                className={`
+          {(
+            Object.entries(MODE_LABELS) as [AlgorithmMode, (typeof MODE_LABELS)[AlgorithmMode]][]
+          ).map(([id, meta]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                setMode(id);
+                markChanged();
+              }}
+              className={`
                   flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 text-center transition-all
-                  ${mode === id
-                    ? 'border-degen-500 bg-degen-500/10'
-                    : 'border-[var(--color-glass-border)] bg-[var(--color-overlay)] hover:border-degen-500/30'
+                  ${
+                    mode === id
+                      ? 'border-degen-500 bg-degen-500/10'
+                      : 'border-[var(--color-glass-border)] bg-[var(--color-overlay)] hover:border-degen-500/30'
                   }
                 `}
-                aria-pressed={mode === id}
-              >
-                <span className="text-2xl" aria-hidden="true">{meta.icon}</span>
-                <span className="text-xs font-medium text-[var(--color-fg)]">{meta.label}</span>
-                <span className="text-[10px] text-[var(--color-muted)] leading-tight">
-                  {meta.description}
-                </span>
-              </button>
-            ),
-          )}
+              aria-pressed={mode === id}
+            >
+              <span className="text-2xl" aria-hidden="true">
+                {meta.icon}
+              </span>
+              <span className="text-xs font-medium text-[var(--color-fg)]">{meta.label}</span>
+              <span className="text-[10px] text-[var(--color-muted)] leading-tight">
+                {meta.description}
+              </span>
+            </button>
+          ))}
         </div>
         {mode !== 'standard' && (
           <div className="mt-3 rounded-lg border border-degen-500/20 bg-degen-500/5 px-3 py-2">
@@ -475,21 +512,24 @@ export default function AlgorithmSettingsPage() {
         <p className="mb-4 text-xs text-[var(--color-muted)]">
           Adjust how much each factor influences your feed. Higher values = more influence.
         </p>
-        {(Object.entries(FACTOR_META) as [keyof AlgorithmWeights, typeof FACTOR_META[keyof AlgorithmWeights]][]).map(
-          ([key, meta]) => (
-            <Slider
-              key={key}
-              label={meta.label}
-              icon={meta.icon}
-              description={meta.description}
-              value={weights[key]}
-              onChange={(v) => {
-                setWeights((prev) => ({ ...prev, [key]: v }));
-                markChanged();
-              }}
-            />
-          ),
-        )}
+        {(
+          Object.entries(FACTOR_META) as [
+            keyof AlgorithmWeights,
+            (typeof FACTOR_META)[keyof AlgorithmWeights],
+          ][]
+        ).map(([key, meta]) => (
+          <Slider
+            key={key}
+            label={meta.label}
+            icon={meta.icon}
+            description={meta.description}
+            value={weights[key]}
+            onChange={(v) => {
+              setWeights((prev) => ({ ...prev, [key]: v }));
+              markChanged();
+            }}
+          />
+        ))}
 
         <LivePreview weights={weights} />
       </section>
@@ -498,8 +538,8 @@ export default function AlgorithmSettingsPage() {
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold text-[var(--color-fg)]">Your Niches</h2>
         <p className="mb-4 text-xs text-[var(--color-muted)]">
-          Select which topics you want to prioritize in your feed. Selected niches get boosted
-          by the Niche Focus factor.
+          Select which topics you want to prioritize in your feed. Selected niches get boosted by
+          the Niche Focus factor.
         </p>
         <div className="flex flex-wrap gap-2">
           {ALL_NICHES.map((niche) => (
@@ -539,8 +579,8 @@ export default function AlgorithmSettingsPage() {
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold text-[var(--color-fg])">Protocol Mix</h2>
         <p className="mb-4 text-xs text-[var(--color-muted)]">
-          Control how much content you see from each protocol. Increase a protocol&apos;s weight
-          to see more from it, decrease to see less.
+          Control how much content you see from each protocol. Increase a protocol&apos;s weight to
+          see more from it, decrease to see less.
         </p>
 
         <div className="mb-6">
@@ -581,9 +621,7 @@ export default function AlgorithmSettingsPage() {
         >
           {saving ? 'Saving...' : 'Save Preferences'}
         </button>
-        {!hasChanges && (
-          <span className="text-[10px] text-[var(--color-muted)]">No changes</span>
-        )}
+        {!hasChanges && <span className="text-[10px] text-[var(--color-muted)]">No changes</span>}
       </div>
     </div>
   );

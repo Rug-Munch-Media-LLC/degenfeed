@@ -1,3 +1,4 @@
+import { getEnv } from '../env';
 /**
  * @degenfeed/cross-protocol-bridge — Nostr → Farcaster Bridge
  *
@@ -12,7 +13,10 @@ import type { BridgeAdapter, NormalizedContent } from '../types';
  * Map Nostr content to a Farcaster cast.
  * Farcaster casts have a 320-character limit.
  */
-function mapNostrToFarcasterCast(content: NormalizedContent): { text: string; embeds: Array<{ url: string }> } {
+function mapNostrToFarcasterCast(content: NormalizedContent): {
+  text: string;
+  embeds: Array<{ url: string }>;
+} {
   let text = content.text;
 
   // Farcaster 320-char limit
@@ -37,7 +41,7 @@ function mapNostrToFarcasterCast(content: NormalizedContent): { text: string; em
   // Truncate if needed
   const availableSpace = maxLength - attribution.length;
   if (text.length > availableSpace) {
-    text = text.slice(0, availableSpace - 3) + '...';
+    text = `${text.slice(0, availableSpace - 3)}...`;
   }
 
   text += attribution;
@@ -67,8 +71,8 @@ export const nostrToFarcaster: BridgeAdapter = {
   },
 
   async publish(payload: unknown, config?: Record<string, string>) {
-    const apiKey = config?.neynarApiKey ?? process.env.NEYNAR_API_KEY ?? '';
-    const signerUuid = config?.signerUuid ?? process.env.FARCASTER_SIGNER_UUID ?? '';
+    const apiKey = config?.neynarApiKey ?? getEnv('NEYNAR_API_KEY') ?? '';
+    const signerUuid = config?.signerUuid ?? getEnv('FARCASTER_SIGNER_UUID') ?? '';
 
     if (!apiKey || !signerUuid) {
       // Fallback: log and simulate (for development)
@@ -99,7 +103,11 @@ export const nostrToFarcaster: BridgeAdapter = {
 
       if (!res.ok) {
         const errText = await res.text().catch(() => 'unknown');
-        return { success: false, error: `Farcaster publish failed: ${res.status} ${errText}`, retryable: res.status >= 500 };
+        return {
+          success: false,
+          error: `Farcaster publish failed: ${res.status} ${errText}`,
+          retryable: res.status >= 500,
+        };
       }
 
       const data = (await res.json()) as { cast?: { hash?: string } };
@@ -109,7 +117,11 @@ export const nostrToFarcaster: BridgeAdapter = {
         url: data.cast?.hash ? `https://warpcast.com/0x/${data.cast.hash}` : undefined,
       };
     } catch (err) {
-      return { success: false, error: `Farcaster publish error: ${(err as Error).message}`, retryable: true };
+      return {
+        success: false,
+        error: `Farcaster publish error: ${(err as Error).message}`,
+        retryable: true,
+      };
     }
   },
 

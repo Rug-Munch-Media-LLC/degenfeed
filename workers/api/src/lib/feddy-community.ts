@@ -1,6 +1,6 @@
 import type { Env } from '../index';
-import { k, getStore, ROLE_HIERARCHY } from './feddy-constants';
-import type { FeddyCommunity, CommunityMember, MemberRole, CommunityPost } from './feddy-types';
+import { getStore, k, ROLE_HIERARCHY } from './feddy-constants';
+import type { CommunityMember, FeddyCommunity, MemberRole } from './feddy-types';
 
 export async function createCommunity(env: Env, community: FeddyCommunity): Promise<void> {
   const store = getStore(env);

@@ -17,8 +17,6 @@ export interface RegistryEntry {
 }
 
 export class RegistryClient {
-  private registryAddress: Address;
-
   constructor(registryAddress: Address) {
     this.registryAddress = registryAddress;
   }
@@ -26,7 +24,7 @@ export class RegistryClient {
   /**
    * Look up the Solana mint for a Base wrapped token.
    */
-  async getSolanaMint(baseToken: Address): Promise<`0x${string}` | null> {
+  async getSolanaMint(_baseToken: Address): Promise<`0x${string}` | null> {
     // In production: call CrossChainRegistry.getTokenOrigin()
     return null;
   }
@@ -34,7 +32,7 @@ export class RegistryClient {
   /**
    * Look up the Base token for a Solana mint.
    */
-  async getBaseToken(solanaMint: `0x${string}`): Promise<Address | null> {
+  async getBaseToken(_solanaMint: `0x${string}`): Promise<Address | null> {
     // In production: call CrossChainRegistry.getLocalToken()
     return null;
   }
@@ -42,7 +40,7 @@ export class RegistryClient {
   /**
    * Get all tokens for a creator across chains.
    */
-  async getCreatorTokens(creator: Address): Promise<RegistryEntry[]> {
+  async getCreatorTokens(_creator: Address): Promise<RegistryEntry[]> {
     // In production: query registry events for this creator
     return [];
   }

@@ -9,17 +9,17 @@ import { type Address, createPublicClient, createWalletClient, http, parseEther 
 import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
 import type {
+  BuyInput,
   CreatorCoinConfig,
   DeployResult,
-  BuyInput,
   SellInput,
-  TradeResult,
   TokenInfo,
+  TradeResult,
 } from '../types';
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-const BASE_CHAIN_ID = 8453;
+const _BASE_CHAIN_ID = 8453;
 const ZORA_FACTORY = '0x777777751622c0d3258f214F9DF38E35BF45baF3' as const;
 
 export class CreatorCoinEVMClient {
@@ -53,36 +53,40 @@ export class CreatorCoinEVMClient {
         {
           type: 'function',
           name: 'deploy',
-          inputs: [{
-            type: 'tuple',
-            components: [
-              { name: 'creator', type: 'address' },
-              { name: 'name', type: 'string' },
-              { name: 'symbol', type: 'string' },
-              { name: 'uri', type: 'string' },
-              { name: 'creatorAllocationBps', type: 'uint256' },
-              { name: 'creatorFeeBps', type: 'uint256' },
-              { name: 'platformFeeBps', type: 'uint256' },
-              { name: 'referrer', type: 'address' },
-            ],
-          }],
+          inputs: [
+            {
+              type: 'tuple',
+              components: [
+                { name: 'creator', type: 'address' },
+                { name: 'name', type: 'string' },
+                { name: 'symbol', type: 'string' },
+                { name: 'uri', type: 'string' },
+                { name: 'creatorAllocationBps', type: 'uint256' },
+                { name: 'creatorFeeBps', type: 'uint256' },
+                { name: 'platformFeeBps', type: 'uint256' },
+                { name: 'referrer', type: 'address' },
+              ],
+            },
+          ],
           outputs: [{ name: 'coin', type: 'address' }],
           stateMutability: 'payable',
         },
       ],
       functionName: 'deploy',
-      args: [{
-        creator: config.creator as Address,
-        name: config.name,
-        symbol: config.symbol,
-        uri: config.uri,
-        creatorAllocationBps: BigInt(config.creatorAllocationBps),
-        creatorFeeBps: BigInt(config.creatorFeeBps ?? 100),
-        platformFeeBps: BigInt(config.platformFeeBps ?? 50),
-        referrer: (config.referrer as Address) ?? '0x0000000000000000000000000000000000000000',
-      }],
+      args: [
+        {
+          creator: config.creator as Address,
+          name: config.name,
+          symbol: config.symbol,
+          uri: config.uri,
+          creatorAllocationBps: BigInt(config.creatorAllocationBps),
+          creatorFeeBps: BigInt(config.creatorFeeBps ?? 100),
+          platformFeeBps: BigInt(config.platformFeeBps ?? 50),
+          referrer: (config.referrer as Address) ?? '0x0000000000000000000000000000000000000000',
+        },
+      ],
       value: parseEther('0.05'),
-      account: this.walletClient.account!.address,
+      account: this.walletClient.account?.address,
     });
 
     const hash = await this.walletClient.writeContract(call);
@@ -113,9 +117,7 @@ export class CreatorCoinEVMClient {
         {
           type: 'function',
           name: 'buy',
-          inputs: [
-            { name: 'minAmount', type: 'uint256' },
-          ],
+          inputs: [{ name: 'minAmount', type: 'uint256' }],
           outputs: [{ name: 'amount', type: 'uint256' }],
           stateMutability: 'payable',
         },
@@ -123,7 +125,7 @@ export class CreatorCoinEVMClient {
       functionName: 'buy',
       args: [opts.minTokensOut],
       value: opts.amountIn,
-      account: this.walletClient.account!.address,
+      account: this.walletClient.account?.address,
     });
 
     const hash = await this.walletClient.writeContract(request);
@@ -156,7 +158,7 @@ export class CreatorCoinEVMClient {
       ],
       functionName: 'sell',
       args: [opts.amountIn, opts.minOut ?? 0n],
-      account: this.walletClient.account!.address,
+      account: this.walletClient.account?.address,
     });
 
     const hash = await this.walletClient.writeContract(request);
@@ -172,12 +174,36 @@ export class CreatorCoinEVMClient {
 
   async getTokenInfo(tokenAddress: string): Promise<TokenInfo> {
     const [name, symbol, totalSupply, price, creator, createdAt] = await Promise.all([
-      this.publicClient.readContract({ address: tokenAddress as Address, abi: [coinAbi.name], functionName: 'name' }),
-      this.publicClient.readContract({ address: tokenAddress as Address, abi: [coinAbi.symbol], functionName: 'symbol' }),
-      this.publicClient.readContract({ address: tokenAddress as Address, abi: [coinAbi.totalSupply], functionName: 'totalSupply' }),
-      this.publicClient.readContract({ address: tokenAddress as Address, abi: [coinAbi.getPrice], functionName: 'getPrice' }),
-      this.publicClient.readContract({ address: tokenAddress as Address, abi: [coinAbi.creator], functionName: 'creator' }),
-      this.publicClient.readContract({ address: tokenAddress as Address, abi: [coinAbi.createdAt], functionName: 'createdAt' }),
+      this.publicClient.readContract({
+        address: tokenAddress as Address,
+        abi: [coinAbi.name],
+        functionName: 'name',
+      }),
+      this.publicClient.readContract({
+        address: tokenAddress as Address,
+        abi: [coinAbi.symbol],
+        functionName: 'symbol',
+      }),
+      this.publicClient.readContract({
+        address: tokenAddress as Address,
+        abi: [coinAbi.totalSupply],
+        functionName: 'totalSupply',
+      }),
+      this.publicClient.readContract({
+        address: tokenAddress as Address,
+        abi: [coinAbi.getPrice],
+        functionName: 'getPrice',
+      }),
+      this.publicClient.readContract({
+        address: tokenAddress as Address,
+        abi: [coinAbi.creator],
+        functionName: 'creator',
+      }),
+      this.publicClient.readContract({
+        address: tokenAddress as Address,
+        abi: [coinAbi.createdAt],
+        functionName: 'createdAt',
+      }),
     ] as any);
 
     return {
@@ -198,10 +224,46 @@ export class CreatorCoinEVMClient {
 }
 
 const coinAbi = {
-  name: { type: 'function' as const, name: 'name', inputs: [], outputs: [{ type: 'string' }], stateMutability: 'view' as const },
-  symbol: { type: 'function' as const, name: 'symbol', inputs: [], outputs: [{ type: 'string' }], stateMutability: 'view' as const },
-  totalSupply: { type: 'function' as const, name: 'totalSupply', inputs: [], outputs: [{ type: 'uint256' }], stateMutability: 'view' as const },
-  getPrice: { type: 'function' as const, name: 'getCurrentPrice', inputs: [], outputs: [{ type: 'uint256' }], stateMutability: 'view' as const },
-  creator: { type: 'function' as const, name: 'owner', inputs: [], outputs: [{ type: 'address' }], stateMutability: 'view' as const },
-  createdAt: { type: 'function' as const, name: 'createdAt', inputs: [], outputs: [{ type: 'uint256' }], stateMutability: 'view' as const },
+  name: {
+    type: 'function' as const,
+    name: 'name',
+    inputs: [],
+    outputs: [{ type: 'string' }],
+    stateMutability: 'view' as const,
+  },
+  symbol: {
+    type: 'function' as const,
+    name: 'symbol',
+    inputs: [],
+    outputs: [{ type: 'string' }],
+    stateMutability: 'view' as const,
+  },
+  totalSupply: {
+    type: 'function' as const,
+    name: 'totalSupply',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'view' as const,
+  },
+  getPrice: {
+    type: 'function' as const,
+    name: 'getCurrentPrice',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'view' as const,
+  },
+  creator: {
+    type: 'function' as const,
+    name: 'owner',
+    inputs: [],
+    outputs: [{ type: 'address' }],
+    stateMutability: 'view' as const,
+  },
+  createdAt: {
+    type: 'function' as const,
+    name: 'createdAt',
+    inputs: [],
+    outputs: [{ type: 'uint256' }],
+    stateMutability: 'view' as const,
+  },
 } as const;

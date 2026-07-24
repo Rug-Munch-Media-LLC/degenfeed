@@ -100,9 +100,8 @@ export class HealthMonitor {
 
     return {
       pathId: path.id,
-      healthy: cbState?.state === 'closed' && total > 0
-        ? record.successCount / total > 0.5
-        : path.enabled,
+      healthy:
+        cbState?.state === 'closed' && total > 0 ? record.successCount / total > 0.5 : path.enabled,
       state: cbState?.state ?? 'closed',
       uptimeMs: Date.now() - record.startedAt,
       lastCheckedAt: record.lastCheckedAt,
@@ -112,9 +111,8 @@ export class HealthMonitor {
       totalRequests: total,
       totalSuccesses: record.successCount,
       totalFailures: record.failureCount,
-      avgLatencyMs: record.requestCount > 0
-        ? Math.round(record.totalLatencyMs / record.requestCount)
-        : 0,
+      avgLatencyMs:
+        record.requestCount > 0 ? Math.round(record.totalLatencyMs / record.requestCount) : 0,
     };
   }
 
@@ -142,7 +140,7 @@ export class HealthMonitor {
   }
 
   private async runChecks(): Promise<void> {
-    const results = await Promise.allSettled(
+    const _results = await Promise.allSettled(
       BRIDGE_PATHS.map(async (path) => {
         if (!path.enabled) return;
         try {
@@ -172,7 +170,11 @@ export class HealthMonitor {
     // Notify listeners
     const health = this.getAllHealth();
     for (const listener of this.listeners) {
-      try { listener(health); } catch { /* ignore */ }
+      try {
+        listener(health);
+      } catch {
+        /* ignore */
+      }
     }
   }
 

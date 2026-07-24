@@ -1,7 +1,7 @@
 import type { Env } from '../index';
-import { k, getStore } from './feddy-constants';
-import type { ModLogEntry, Report, Appeal, KeywordFilter, FedBlocklistEntry, ReportCategory } from './feddy-types';
-import { removeCommunityMember, getCommunityMembers, getAllCommunityMembers } from './feddy-community';
+import { removeCommunityMember } from './feddy-community';
+import { getStore, k } from './feddy-constants';
+import type { Appeal, FedBlocklistEntry, KeywordFilter, ModLogEntry, Report } from './feddy-types';
 
 export async function banMember(env: Env, communityId: string, wallet: string): Promise<boolean> {
   try {
@@ -54,7 +54,6 @@ export async function isBanned(env: Env, communityId: string, wallet: string): P
 }
 
 // ─── Events ────────────────────────────────────────────────────────────
-
 
 export async function addModLogEntry(env: Env, entry: ModLogEntry): Promise<void> {
   const store = getStore(env);

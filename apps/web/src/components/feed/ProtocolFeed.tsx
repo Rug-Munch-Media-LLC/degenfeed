@@ -12,16 +12,7 @@
 
 'use client';
 
-import {
-  DEFAULT_WEIGHTS,
-  FeedAlgorithm,
-  type AlgorithmContext,
-  type AlgorithmMode,
-  type AlgorithmWeights,
-  type NicheSelection,
-  type ProtocolWeights,
-  globalAuditLog,
-} from '@degenfeed/feed-core';
+import { type AlgorithmContext, FeedAlgorithm, globalAuditLog } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, FeedList } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
@@ -31,16 +22,9 @@ import { useAuth } from '../AuthProvider';
 import { ContentFilterBar, type ContentType } from '../ContentFilterBar';
 import { type DensityMode, DensityToggle } from '../DensityToggle';
 import { FeedPollerBanner } from '../FeedPollerBanner';
-import {
-  useAlgorithmTransparency,
-  WhyButton,
-} from './AlgorithmTransparency';
+import { useAlgorithmTransparency, WhyButton } from './AlgorithmTransparency';
 import { PROTOCOLS, type ProtocolConfig } from './feed-protocols';
-import {
-  loadAlgorithmPrefs,
-  saveAlgorithmPrefs,
-  type AlgorithmUserPreferences,
-} from './feed-tuner-types';
+import { type AlgorithmUserPreferences, loadAlgorithmPrefs } from './feed-tuner-types';
 
 const TipModal = dynamic(() => import('../TipModal').then((m) => ({ default: m.TipModal })), {
   ssr: false,
@@ -360,10 +344,7 @@ export function ProtocolFeed({
                 {algoPrefs.mode !== 'standard' && ` · ${algoPrefs.mode.replace('-', ' ')} mode`}
               </span>
             </div>
-            <a
-              href="/settings/algorithm"
-              className="text-[10px] underline hover:text-degen-300"
-            >
+            <a href="/settings/algorithm" className="text-[10px] underline hover:text-degen-300">
               Adjust
             </a>
           </div>

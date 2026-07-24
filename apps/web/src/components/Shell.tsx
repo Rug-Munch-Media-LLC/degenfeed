@@ -117,7 +117,7 @@ function DesktopHeader({
           <button
             type="button"
             onClick={onSearchOpen}
-            className="flex w-full items-center gap-2 rounded-full border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2 text-sm text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-[var(--color-fg)]"
+            className="flex w-full items-center gap-2 rounded-full border border-[var(--color-glass-border)] bg-[var(--color-card)] px-4 py-2 text-sm text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-[var(--color-fg)] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-2"
             aria-label="Open search"
           >
             <svg
@@ -209,7 +209,7 @@ function MobileTopBar({
   return (
     <div
       className="flex items-center justify-between border-b border-[var(--color-glass-border)] px-4 py-2 lg:hidden"
-      style={{ zIndex: 'var(--z-sticky, 10)' }}
+      style={{ zIndex: 10 }}
     >
       <div className="flex items-center gap-1">
         {showBack ? (
@@ -339,14 +339,14 @@ function MobileDrawer({
         onTouchStart={handleDrawerTouchStart}
         onTouchEnd={handleDrawerTouchEnd}
         aria-hidden="true"
-        style={{ zIndex: 'var(--z-drawer-backdrop, 50)' }}
+        style={{ zIndex: 50 }}
       />
       <div
         ref={drawerRef}
         className="fixed inset-y-0 left-0 w-[280px] max-w-[80vw] border-r border-[var(--color-glass-border)] bg-[var(--color-bg)] shadow-2xl lg:hidden animate-slide-in-left"
         onTouchStart={handleDrawerTouchStart}
         onTouchEnd={handleDrawerTouchEnd}
-        style={{ zIndex: 'var(--z-drawer, 60)' }}
+        style={{ zIndex: 60 }}
       >
         <LeftSidebar
           onNavClick={onClose}
@@ -451,7 +451,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     const nowProtocol = PROTOCOL_ROUTES.find((r) => pathname === r || pathname.startsWith(`${r}/`));
     if (wasProtocol && nowProtocol && wasProtocol !== nowProtocol) {
       const color =
-        getComputedStyle(document.documentElement).getPropertyValue('--protocol-accent').trim() ||
+        getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() ||
         '#00ff41';
       const overlay = document.createElement('div');
       overlay.className = 'protocol-transition-overlay';

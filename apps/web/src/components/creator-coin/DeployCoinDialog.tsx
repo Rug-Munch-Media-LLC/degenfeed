@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
 import type { CreatorChain } from '@degenfeed/creator-coin/types';
+import { useState } from 'react';
 
 interface DeployCoinDialogProps {
   open: boolean;
@@ -24,7 +24,7 @@ interface DeployCoinDialogProps {
 export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogProps) {
   const [name, setName] = useState('');
   const [symbol, setSymbol] = useState('');
-  const [uri, setUri] = useState('');
+  const [uri, _setUri] = useState('');
   const [chain, setChain] = useState<CreatorChain>('solana');
   const [creatorAlloc, setCreatorAlloc] = useState(500);
   const [creatorFee, setCreatorFee] = useState(100);
@@ -63,9 +63,8 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
     }
   };
 
-  const estimatedCost = chain === 'solana'
-    ? '$21 (~$20 fee + ~0.002 SOL gas)'
-    : '$23 (~$20 fee + ~0.001 ETH gas)';
+  const estimatedCost =
+    chain === 'solana' ? '$21 (~$20 fee + ~0.002 SOL gas)' : '$23 (~$20 fee + ~0.001 ETH gas)';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -217,7 +216,9 @@ export function DeployCoinDialog({ open, onClose, onDeploy }: DeployCoinDialogPr
             disabled={deploying}
             className="w-full rounded-lg bg-gradient-to-r from-degen-500 to-purple-600 py-3 font-bold text-white transition-all hover:from-degen-400 hover:to-purple-500 disabled:opacity-50"
           >
-            {deploying ? 'Deploying...' : `Create ${symbol || 'Coin'} on ${chain === 'solana' ? 'Solana' : 'Base'}`}
+            {deploying
+              ? 'Deploying...'
+              : `Create ${symbol || 'Coin'} on ${chain === 'solana' ? 'Solana' : 'Base'}`}
           </button>
         </div>
       </div>

@@ -92,6 +92,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    transition: background-color var(--duration-normal) ease-out;
+    background-color: var(--color-bg);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   /* == Heading hierarchy == */
@@ -256,7 +260,7 @@
     background-color: var(--color-card);
     border-radius: var(--radius-lg);
     padding: var(--space-md);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-card, 0 4px 24px rgba(0, 0, 0, 0.08));
     transition:
       border-color var(--duration-fast) ease-out,
       box-shadow var(--duration-fast) ease-out,
@@ -264,15 +268,24 @@
   }
   .card:hover {
     border-color: color-mix(in srgb, var(--color-accent) 25%, var(--color-border));
+    box-shadow: var(--shadow-card-hover, 0 8px 32px rgba(0, 0, 0, 0.12));
+  }
+  .card:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
   .dark .card {
     background-color: var(--color-card);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-card, 0 4px 24px rgba(0, 0, 0, 0.3));
     border-color: var(--color-border);
   }
   .dark .card:hover {
     border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
-    box-shadow: 0 0 24px var(--color-accent-glow);
+    box-shadow: var(--shadow-card-glow, 0 0 24px var(--color-accent-glow));
+  }
+  .dark .card:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
   .card-hover {
     border: 1px solid var(--color-border);
@@ -437,23 +450,14 @@
   border: 1px solid rgba(234, 179, 8, 0.2);
 }
 
-/* == Protocol transition overlay == */
-.protocol-transition-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  pointer-events: none;
-  animation: protocol-flash 0.7s ease-out forwards;
-}
-
-@keyframes protocol-flash {
-  0% { opacity: 0.25; }
-  100% { opacity: 0; }
-}
-
 /* == Page enter animation == */
 .animate-page-enter {
-  animation: page-enter 0.25s ease-out;
+  animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* == Content fade-in (used for dynamic content) == */
+.animate-content-enter {
+  animation: fade-in 0.25s ease-out both;
 }
 
 /* == Feed density layouts == */
@@ -567,6 +571,15 @@
   }
   100% {
     background-position: 200% 0;
+  }
+}
+
+/* Prevent iOS auto-zoom on input focus */
+@supports (-webkit-touch-callout: none) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
   }
 }
 
@@ -1599,6 +1612,19 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
+ * RESPONSIVE — Prevent horizontal scroll on any viewport
+ * ═══════════════════════════════════════════════════════════════ */
+
+html {
+  overflow-x: hidden;
+}
+body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════════════════════════
  * UI POLISH — Button press micro-interaction
  * ═══════════════════════════════════════════════════════════════ */
 
@@ -2320,6 +2346,27 @@
 .feed-item-enter:nth-child(8) {
   animation-delay: 140ms;
 }
+.feed-item-enter:nth-child(9) {
+  animation-delay: 160ms;
+}
+.feed-item-enter:nth-child(10) {
+  animation-delay: 180ms;
+}
+.feed-item-enter:nth-child(11) {
+  animation-delay: 200ms;
+}
+.feed-item-enter:nth-child(12) {
+  animation-delay: 220ms;
+}
+.feed-item-enter:nth-child(13) {
+  animation-delay: 240ms;
+}
+.feed-item-enter:nth-child(14) {
+  animation-delay: 260ms;
+}
+.feed-item-enter:nth-child(15) {
+  animation-delay: 280ms;
+}
 .feed-item-enter:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
@@ -2330,7 +2377,11 @@
 .post-card {
   transition:
     box-shadow var(--duration-fast) ease-out,
-    border-color var(--duration-fast) ease-out;
+    border-color var(--duration-fast) ease-out,
+    transform var(--duration-fast) ease-out;
+}
+.post-card:active {
+  transform: scale(0.995);
 }
 .post-card:focus-visible {
   outline: 2px solid var(--color-accent);

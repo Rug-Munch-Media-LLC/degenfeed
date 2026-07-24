@@ -9,9 +9,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const explorerUrl = chain === 'solana'
-      ? `https://solscan.io/tx/placeholder_${Date.now()}`
-      : `https://basescan.org/tx/placeholder_${Date.now()}`;
+    const explorerUrl =
+      chain === 'solana'
+        ? `https://solscan.io/tx/placeholder_${Date.now()}`
+        : `https://basescan.org/tx/placeholder_${Date.now()}`;
 
     return NextResponse.json({
       txHash: `placeholder_${Date.now()}`,

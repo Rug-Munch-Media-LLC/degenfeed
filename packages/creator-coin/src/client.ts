@@ -5,26 +5,22 @@
  * Automatically routes to the correct chain implementation.
  */
 
-import { AnchorProvider, type Provider } from '@coral-xyz/anchor';
+import { AnchorProvider } from '@coral-xyz/anchor';
 import { Connection, type Keypair } from '@solana/web3.js';
 import type { Address } from 'viem';
+import { CrossChainBridge } from './cross-chain/bridge';
+import { CreatorCoinEVMClient } from './evm/client';
+import { LiveStreamMonitor } from './live-stream';
+import { CreatorCoinSolanaClient } from './solana/client';
 import type {
+  BuyInput,
+  CreatorChain,
   CreatorCoinConfig,
   DeployResult,
-  BuyInput,
   SellInput,
-  TradeResult,
   TokenInfo,
-  CreatorChain,
-  ChainInfo,
-  CHAIN_CONFIG,
+  TradeResult,
 } from './types';
-import { CreatorCoinEVMClient } from './evm/client';
-import { CreatorCoinSolanaClient } from './solana/client';
-import { CrossChainBridge } from './cross-chain/bridge';
-import { LiveStreamMonitor, LIVE_BOOST_BPS } from './live-stream';
-import { calculateFeeSplit } from './fees';
-import { getDynamicPrice, getProgressPercent } from './bonding-curve';
 
 export interface CreatorCoinClientConfig {
   solanaRpcUrl?: string;
@@ -38,7 +34,6 @@ export interface CreatorCoinClientConfig {
 export class CreatorCoinClient {
   private evmClient: CreatorCoinEVMClient | null = null;
   private solanaClient: CreatorCoinSolanaClient | null = null;
-  private bridge: CrossChainBridge | null = null;
   private liveMonitor: LiveStreamMonitor;
   private kv: any;
 
@@ -76,10 +71,7 @@ export class CreatorCoinClient {
    * If crossChain is true and deploying on Solana, a wrapped
    * version will be created on Base automatically.
    */
-  async deployCoin(
-    config: CreatorCoinConfig,
-    crossChain: boolean = false,
-  ): Promise<DeployResult> {
+  async deployCoin(config: CreatorCoinConfig, crossChain: boolean = false): Promise<DeployResult> {
     let result: DeployResult;
 
     if (config.chain === 'base') {
@@ -150,7 +142,10 @@ export class CreatorCoinClient {
   /**
    * Get cross-chain price info for a dual-chain coin.
    */
-  async getCrossChainPrice(solanaMint: string, baseWrapped: Address): Promise<{
+  async getCrossChainPrice(
+    solanaMint: string,
+    baseWrapped: Address,
+  ): Promise<{
     solana: { price: string; usd: number };
     base: { price: string; usd: number };
     diffPercent: number;
@@ -182,14 +177,9 @@ export class CreatorCoinClient {
     streamUrl: string,
     onStatusChange?: (isLive: boolean, boostBps: number) => void,
   ): void {
-    this.liveMonitor.startMonitoring(
-      creatorId,
-      platform,
-      streamUrl,
-      (info) => {
-        onStatusChange?.(info.isLive, info.boostDiscountBps);
-      },
-    );
+    this.liveMonitor.startMonitoring(creatorId, platform, streamUrl, (info) => {
+      onStatusChange?.(info.isLive, info.boostDiscountBps);
+    });
   }
 
   stopLiveMonitor(creatorId: string, platform: string): void {
@@ -199,7 +189,10 @@ export class CreatorCoinClient {
   /**
    * Get the current live boost data for a creator.
    */
-  getLiveBoost(creatorId: string, platform: string): {
+  getLiveBoost(
+    creatorId: string,
+    platform: string,
+  ): {
     isLive: boolean;
     boostBps: number;
     streamUrl?: string;
@@ -221,10 +214,10 @@ export class CreatorCoinClient {
 
 // ─── Re-exports for convenience ────────────────────────────────────────────
 
-export { CreatorCoinEVMClient } from './evm/client';
-export { CreatorCoinSolanaClient } from './solana/client';
-export { CrossChainBridge } from './cross-chain/bridge';
-export { LiveStreamMonitor, LIVE_BOOST_BPS } from './live-stream';
-export { calculateFeeSplit } from './fees';
 export { getDynamicPrice, getProgressPercent } from './bonding-curve';
+export { CrossChainBridge } from './cross-chain/bridge';
+export { CreatorCoinEVMClient } from './evm/client';
+export { calculateFeeSplit } from './fees';
+export { LIVE_BOOST_BPS, LiveStreamMonitor } from './live-stream';
+export { CreatorCoinSolanaClient } from './solana/client';
 export * from './types';

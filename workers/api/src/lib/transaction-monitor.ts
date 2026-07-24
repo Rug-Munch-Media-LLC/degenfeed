@@ -190,7 +190,7 @@ export async function pollPendingTransactions(
 
   try {
     // List tracked transactions
-    
+
     const listed = await env.CACHE.list({ prefix: TX_PREFIX });
     if (!listed?.keys?.length) return result;
 
@@ -496,7 +496,6 @@ export async function getTxMonitorStats(env?: Env): Promise<TxMonitorStats> {
   };
 
   try {
-    
     const listed = await env.CACHE.list({ prefix: TX_PREFIX });
     if (!listed?.keys) return stats;
 
@@ -548,7 +547,6 @@ export async function cleanupOldTransactions(env?: Env, maxAgeMs = 86_400_000): 
   const cutoff = Date.now() - maxAgeMs;
 
   try {
-    
     const listed = await env.CACHE.list({ prefix: TX_PREFIX });
     if (!listed?.keys) return 0;
 

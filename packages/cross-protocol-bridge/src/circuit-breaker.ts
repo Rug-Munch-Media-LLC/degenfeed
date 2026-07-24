@@ -5,7 +5,7 @@
  * Prevents cascading failures by halting bridges that are failing.
  */
 
-import type { CircuitBreakerConfig, CircuitBreakerState, CircuitState } from './types';
+import type { CircuitBreakerConfig, CircuitBreakerState } from './types';
 import { DEFAULT_CIRCUIT_CONFIG } from './types';
 
 export class CircuitBreaker {

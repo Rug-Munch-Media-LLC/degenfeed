@@ -11,7 +11,7 @@ import type { LiveStreamInfo } from './types';
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 const LIVE_BOOST_BPS = 200; // 2% discount when live
-const AUTO_EXPIRE_MS = 2 * 60 * 60 * 1000; // 2 hours
+const _AUTO_EXPIRE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 // ─── Supported Platforms ───────────────────────────────────────────────────
 
@@ -72,7 +72,7 @@ export class LiveStreamMonitor {
     checkFn();
 
     // Interval checks
-    const platformCfg = SUPPORTED_PLATFORMS.find(p => p.id === platform);
+    const platformCfg = SUPPORTED_PLATFORMS.find((p) => p.id === platform);
     const interval = setInterval(checkFn, platformCfg?.checkInterval ?? 60_000);
     this.checkIntervals.set(key, interval);
   }
@@ -100,10 +100,7 @@ export class LiveStreamMonitor {
   /**
    * Check if a creator is currently live on their platform.
    */
-  private async checkLiveStatus(
-    platform: string,
-    streamUrl: string,
-  ): Promise<LiveStreamInfo> {
+  private async checkLiveStatus(platform: string, streamUrl: string): Promise<LiveStreamInfo> {
     switch (platform) {
       case 'peertube':
         return this.checkPeerTube(streamUrl);
@@ -135,9 +132,16 @@ export class LiveStreamMonitor {
       const apiUrl = `${base}/api/v1/videos?isLive=true&sort=-publishedAt&count=1`;
 
       const res = await fetch(apiUrl, { headers: { Accept: 'application/json' } });
-      if (!res.ok) return { isLive: false, platform: 'peertube', streamUrl: instanceUrl, title: '', boostDiscountBps: 0 };
+      if (!res.ok)
+        return {
+          isLive: false,
+          platform: 'peertube',
+          streamUrl: instanceUrl,
+          title: '',
+          boostDiscountBps: 0,
+        };
 
-      const data = await res.json() as any;
+      const data = (await res.json()) as any;
       const liveVideos = data?.data ?? [];
 
       if (liveVideos.length > 0) {
@@ -153,9 +157,21 @@ export class LiveStreamMonitor {
         };
       }
 
-      return { isLive: false, platform: 'peertube', streamUrl: instanceUrl, title: '', boostDiscountBps: 0 };
+      return {
+        isLive: false,
+        platform: 'peertube',
+        streamUrl: instanceUrl,
+        title: '',
+        boostDiscountBps: 0,
+      };
     } catch {
-      return { isLive: false, platform: 'peertube', streamUrl: instanceUrl, title: '', boostDiscountBps: 0 };
+      return {
+        isLive: false,
+        platform: 'peertube',
+        streamUrl: instanceUrl,
+        title: '',
+        boostDiscountBps: 0,
+      };
     }
   }
 
@@ -167,9 +183,16 @@ export class LiveStreamMonitor {
     try {
       const base = instanceUrl.replace(/\/+$/, '');
       const res = await fetch(`${base}/api/status`, { headers: { Accept: 'application/json' } });
-      if (!res.ok) return { isLive: false, platform: 'owncast', streamUrl: instanceUrl, title: '', boostDiscountBps: 0 };
+      if (!res.ok)
+        return {
+          isLive: false,
+          platform: 'owncast',
+          streamUrl: instanceUrl,
+          title: '',
+          boostDiscountBps: 0,
+        };
 
-      const data = await res.json() as any;
+      const data = (await res.json()) as any;
 
       if (data?.online === true || data?.streamOnline === true) {
         return {
@@ -183,9 +206,21 @@ export class LiveStreamMonitor {
         };
       }
 
-      return { isLive: false, platform: 'owncast', streamUrl: instanceUrl, title: '', boostDiscountBps: 0 };
+      return {
+        isLive: false,
+        platform: 'owncast',
+        streamUrl: instanceUrl,
+        title: '',
+        boostDiscountBps: 0,
+      };
     } catch {
-      return { isLive: false, platform: 'owncast', streamUrl: instanceUrl, title: '', boostDiscountBps: 0 };
+      return {
+        isLive: false,
+        platform: 'owncast',
+        streamUrl: instanceUrl,
+        title: '',
+        boostDiscountBps: 0,
+      };
     }
   }
 
@@ -194,7 +229,13 @@ export class LiveStreamMonitor {
    */
   private async checkTwitch(_channelUrl: string): Promise<LiveStreamInfo> {
     // Requires Twitch API key — stub for now
-    return { isLive: false, platform: 'twitch', streamUrl: _channelUrl, title: '', boostDiscountBps: 0 };
+    return {
+      isLive: false,
+      platform: 'twitch',
+      streamUrl: _channelUrl,
+      title: '',
+      boostDiscountBps: 0,
+    };
   }
 
   /**
@@ -202,7 +243,13 @@ export class LiveStreamMonitor {
    */
   private async checkYouTube(_channelUrl: string): Promise<LiveStreamInfo> {
     // Requires YouTube Data API key — stub for now
-    return { isLive: false, platform: 'youtube', streamUrl: _channelUrl, title: '', boostDiscountBps: 0 };
+    return {
+      isLive: false,
+      platform: 'youtube',
+      streamUrl: _channelUrl,
+      title: '',
+      boostDiscountBps: 0,
+    };
   }
 
   /**

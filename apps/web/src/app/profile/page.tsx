@@ -50,7 +50,7 @@ function GuestView({ onOpenSignIn }: { onOpenSignIn: () => void }) {
         <p className="mb-6 text-sm text-[var(--color-muted)]">
           Connect accounts to build your unified identity
         </p>
-        <button onClick={onOpenSignIn} className="btn-primary" type="button">
+        <button onClick={onOpenSignIn} className="btn-primary press-effect" type="button">
           Connect an account
         </button>
       </div>

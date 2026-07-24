@@ -1,7 +1,16 @@
 import type { Env } from '../index';
-import { k, getStore } from './feddy-constants';
-import type { TreasuryState, TreasuryTx, CommunityTokenConfig, TokenGate, WebhookConfig, WebhookEvent, BotApiKey, BotScope, FederationHealth, RemoteCommunity } from './feddy-types';
-import { getCommunityById, getAllCommunityMembers } from './feddy-community';
+import { getAllCommunityMembers, getCommunityById } from './feddy-community';
+import { getStore, k } from './feddy-constants';
+import type {
+  BotApiKey,
+  CommunityTokenConfig,
+  FederationHealth,
+  RemoteCommunity,
+  TokenGate,
+  TreasuryState,
+  TreasuryTx,
+  WebhookConfig,
+} from './feddy-types';
 
 export async function setTreasury(env: Env, state: TreasuryState): Promise<void> {
   await getStore(env).put(k('feddy', 'treasury', state.communityId), JSON.stringify(state));
@@ -119,7 +128,6 @@ export async function checkTokenGate(
 }
 
 // ─── Mod Log ───────────────────────────────────────────────────────────
-
 
 export async function createWebhook(env: Env, hook: WebhookConfig): Promise<void> {
   const store = getStore(env);
@@ -343,4 +351,3 @@ export async function trackFollowerCommunity(
     await store.put(key, JSON.stringify(ids));
   }
 }
-

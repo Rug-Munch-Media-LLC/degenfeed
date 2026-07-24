@@ -196,7 +196,7 @@ export function ProtocolFeedPage({ protocol }: Props) {
   const [, startTransition] = useTransition();
 
   const [activeTab, setActiveTab] = useState(config?.tabs[0]?.id ?? 'hot');
-  const [tabDirection, setTabDirection] = useState<'left' | 'right'>('right');
+  const [_tabDirection, setTabDirection] = useState<'left' | 'right'>('right');
   const [posts, setPosts] = useState<UnifiedPost[]>([]);
   const [featuredPosts, setFeaturedPosts] = useState<UnifiedPost[]>([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);

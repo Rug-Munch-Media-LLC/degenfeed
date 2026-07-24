@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import type { TokenInfo, CreatorChain } from '@degenfeed/creator-coin/types';
+import type { TokenInfo } from '@degenfeed/creator-coin/types';
 
 interface CoinCardProps {
   token: TokenInfo;
@@ -40,12 +39,16 @@ export function CoinCard({ token, onClick, isLive, liveBoostBps }: CoinCardProps
 
       {/* Chain badge */}
       <div className="mb-2 flex items-center justify-between">
-        <span className={`
+        <span
+          className={`
           inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
-          ${token.chain === 'solana'
-            ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-cyan-400'
-            : 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-400'}
-        `}>
+          ${
+            token.chain === 'solana'
+              ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-cyan-400'
+              : 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-400'
+          }
+        `}
+        >
           {token.chain === 'solana' ? '◎ Solana' : '⧫ Base'}
         </span>
         {token.graduated && (
@@ -69,15 +72,11 @@ export function CoinCard({ token, onClick, isLive, liveBoostBps }: CoinCardProps
         </div>
         <div className="flex items-baseline justify-between">
           <span className="text-xs text-gray-500">Market Cap</span>
-          <span className="text-sm font-medium text-gray-300">
-            ${marketCap.toFixed(2)}
-          </span>
+          <span className="text-sm font-medium text-gray-300">${marketCap.toFixed(2)}</span>
         </div>
         <div className="flex items-baseline justify-between">
           <span className="text-xs text-gray-500">Holders</span>
-          <span className="text-sm font-medium text-gray-300">
-            {token.uniqueBuyers}
-          </span>
+          <span className="text-sm font-medium text-gray-300">{token.uniqueBuyers}</span>
         </div>
       </div>
 
@@ -85,7 +84,11 @@ export function CoinCard({ token, onClick, isLive, liveBoostBps }: CoinCardProps
       <div className="mt-3">
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>Bonding Curve</span>
-          <span>{token.graduated ? '100%' : `${Math.min(100, (supplyNum / 800_000_000) * 100).toFixed(0)}%`}</span>
+          <span>
+            {token.graduated
+              ? '100%'
+              : `${Math.min(100, (supplyNum / 800_000_000) * 100).toFixed(0)}%`}
+          </span>
         </div>
         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-700">
           <div
@@ -94,7 +97,9 @@ export function CoinCard({ token, onClick, isLive, liveBoostBps }: CoinCardProps
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500'
                 : 'bg-gradient-to-r from-degen-500 to-yellow-500'
             }`}
-            style={{ width: `${token.graduated ? 100 : Math.min(100, (supplyNum / 800_000_000) * 100)}%` }}
+            style={{
+              width: `${token.graduated ? 100 : Math.min(100, (supplyNum / 800_000_000) * 100)}%`,
+            }}
           />
         </div>
       </div>

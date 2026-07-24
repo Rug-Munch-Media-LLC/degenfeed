@@ -398,10 +398,9 @@ export default function FeedPage() {
           setNewAvailable(true);
           return;
         }
-        if (feed.length > 0)
-          if (feed.length > 0) {
-            lastPostIdRef.current = (feed[0]?.id as string) ?? '';
-          }
+        if (feed.length > 0) {
+          lastPostIdRef.current = (feed[0]?.id as string) ?? '';
+        }
         setPosts(feed);
         setFeedMeta(data.meta || {});
         setState(feed.length ? 'loaded' : 'empty');
@@ -633,9 +632,13 @@ export default function FeedPage() {
 
           {state === 'loaded' && (
             <>
-              <div className="space-y-4">
-                {memoizedFeed.map((post) => (
-                  <div key={post.id} className="relative">
+              <div className="space-y-4 stagger-enter">
+                {memoizedFeed.map((post, i) => (
+                  <div
+                    key={post.id}
+                    className="relative"
+                    style={{ '--stagger-i': i } as React.CSSProperties}
+                  >
                     {/* Protocol source indicator */}
                     {post.protocol && (
                       <div className="mb-1.5 flex items-center gap-2">

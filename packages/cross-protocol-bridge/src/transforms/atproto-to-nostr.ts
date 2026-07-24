@@ -1,3 +1,4 @@
+import { getEnv } from '../env';
 /**
  * @degenfeed/cross-protocol-bridge — AT Protocol → Nostr Bridge
  *
@@ -65,7 +66,7 @@ export const atProtoToNostr: BridgeAdapter = {
   },
 
   async publish(payload: unknown, config?: Record<string, string>) {
-    const relayUrl = config?.relayUrl ?? process.env.NOSTR_RELAY_URL ?? 'ws://127.0.0.1:8085';
+    const relayUrl = config?.relayUrl ?? getEnv('NOSTR_RELAY_URL') ?? 'ws://127.0.0.1:8085';
 
     return new Promise((resolve) => {
       try {
@@ -87,7 +88,9 @@ export const atProtoToNostr: BridgeAdapter = {
               ws.close();
               resolve({ success: true, nativeId: msg[1] ?? `nostr:${Date.now()}`, url: undefined });
             }
-          } catch { /* skip */ }
+          } catch {
+            /* skip */
+          }
         });
 
         ws.addEventListener('error', () => {
@@ -107,13 +110,18 @@ export const atProtoToNostr: BridgeAdapter = {
 
   async healthCheck() {
     return new Promise((resolve) => {
-      const relayUrl = process.env.NOSTR_RELAY_URL ?? 'ws://127.0.0.1:8085';
+      const relayUrl = getEnv('NOSTR_RELAY_URL') ?? 'ws://127.0.0.1:8085';
       try {
         const ws = new WebSocket(relayUrl);
-        ws.addEventListener('open', () => { ws.close(); resolve(true); });
+        ws.addEventListener('open', () => {
+          ws.close();
+          resolve(true);
+        });
         ws.addEventListener('error', () => resolve(false));
         setTimeout(() => resolve(false), 4000);
-      } catch { resolve(false); }
+      } catch {
+        resolve(false);
+      }
     });
   },
 };

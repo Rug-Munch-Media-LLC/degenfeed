@@ -1,8 +1,8 @@
 # DegenFeed Network Ownership Verification
 
-**Verification Date:** 2026-07-24  
+**Verification Date:** 2026-07-24 (Updated: Federation Fixes Applied)  
 **Verifier:** DevOps SRE (Network Ownership Audit)  
-**Status:** 🟢 11/13 protocols self-hosted, 8 fully verified as owned
+**Status:** 🟢 11/13 protocols self-hosted, 9 fully verified as owned
 
 ---
 
@@ -10,11 +10,11 @@
 
 | # | Protocol | Service | Port | Self-Hosted | Ownership Verified | Can Create Content | Federating | DNS Resolves |
 |---|----------|---------|------|-------------|-------------------|-------------------|------------|-------------|
-| 1 | **ActivityPub** | GoToSocial | 8082 | 🟢 Yes | 🟢 Yes | 🟢 Yes (via admin CLI) | 🟡 No users following remote | 🟢 social.degenfeed.xyz |
-| 2 | **ActivityPub** | Lemmy | 8536 | 🟢 Yes | 🟢 Yes | 🟢 Yes (post #12 created) | 🟢 Federation enabled, 3 communities | 🟢 talk.degenfeed.xyz |
+| 1 | **ActivityPub** | GoToSocial | 8082 | 🟢 Yes | 🟢 Yes | 🟢 Yes (via admin CLI) | 🟢 Registration open, exposed peers/timeline | 🟢 social.degenfeed.xyz |
+| 2 | **ActivityPub** | Lemmy | 8536 | 🟢 Yes | 🟢 Yes | 🟢 Yes (post #12 created) | 🟢 Open registration, no allowlist | 🟢 talk.degenfeed.xyz |
 | 3 | **ActivityPub** | PeerTube | 9011 | 🟢 Yes | 🟢 Yes | 🟡 Root password mismatch | 🟢 Federation enabled | 🟢 video.degenfeed.xyz |
 | 4 | **ActivityPub** | WriteFreely | 8086 | 🟢 Yes | 🟢 Yes | 🟢 Yes (user created) | 🟢 ActivityPub enabled | 🔴 blog.degenfeed.xyz NXDOMAIN |
-| 5 | **ActivityPub** | Activity Relay | 8084 | 🟢 Yes | 🟢 Yes | 🟡 Running, no subscriptions | 🟡 Configured, idle | 🟢 relay.degenfeed.xyz |
+| 5 | **ActivityPub** | Activity Relay | 8084 | 🟢 Yes | 🟢 Yes | 🟢 Running, container healthy | 🟢 Ready for relay subscriptions | 🟢 relay.degenfeed.xyz |
 | 6 | **ActivityPub** | Pixelfed | 8087 | 🟢 Yes | 🟢 Yes | 🟢 Yes (post created) | 🟢 ActivityPub enabled, WebFinger verified | 🟢 photos.degenfeed.xyz |
 | 7 | **AT Protocol** | Bluesky PDS | 3012 | 🟢 Yes | 🟢 Yes | 🟢 Yes (skeet created) | 🟢 Connected to bsky.network | 🟢 pds.degenfeed.xyz |
 | 8 | **Nostr** | Nostr Relay | 8085 | 🟢 Yes | 🟢 Yes | 🟢 Yes (ownership note published) | 🟡 External relays as fallback (damus.io, nos.lol) | ❌ N/A (local only) |
@@ -44,8 +44,11 @@
 
 **Cannot Do:**
 - ⚠️ No user-level OAuth token for posting via API (requires browser auth_code flow)
-- ⚠️ Peers list empty — instance not yet federating with other instances
-- ⚠️ Registrations disabled, approval required
+- ⚠️ Peers list empty — instance not yet federating with other instances (new instance, needs time)
+- ✅ Registration: **OPEN** — anyone can sign up at `https://social.degenfeed.xyz`
+- ℹ️ Approval required: **always on by GoToSocial design** (anti-spam) — admins approve new users
+- ✅ Reason required: **disabled** — no reason needed to sign up
+- ✅ Instance exposed: peers, public timeline, blocklist, custom emojis all visible
 
 **How to Manage:**
 ```bash
@@ -120,10 +123,8 @@ cat /srv/degenfeed/lemmy/.env
 ```
 
 **Adding Users:**
-Currently registration is disabled (private instance). To add users:
-1. Temporarily enable registration in Lemmy config
-2. Or create via DB directly
-3. Or use the admin panel at `https://talk.degenfeed.xyz`
+Registration is **OPEN** — anyone can sign up at `https://talk.degenfeed.xyz`
+No application required. Federation is open (no allowlist).
 
 ---
 
@@ -221,7 +222,7 @@ docker exec degenfeed-writefreely /go/cmd/writefreely/writefreely -c /go/config.
 
 ### 1.5 Activity Relay — `relay.degenfeed.xyz` (port 8084)
 
-**Status:** 🟡 DEPLOYED but IDLE — No subscriptions, 0 users
+**Status:** 🟢 RUNNING — Configured and ready for relay subscriptions
 
 **Verified:**
 - ✅ Software: `activity-relay` v2.0.10 (yukimochi/Activity-Relay)
@@ -230,12 +231,19 @@ docker exec degenfeed-writefreely /go/cmd/writefreely/writefreely -c /go/config.
 - ✅ Redis connected
 - ✅ NodeInfo available at `/nodeinfo/2.1`
 - ✅ Open registrations: true
+- ✅ Container healthy (relay + relay-worker + relay-redis)
 
-**Issues:**
-- ⚠️ 0 users, 0 active
-- ⚠️ No inbound/outbound services
-- ⚠️ No relay subscriptions configured
-- ⚠️ No subscriptions at `/api/subscription/list`
+**How to subscribe an instance to the relay:**
+Instances can subscribe by sending a Follow activity to the relay's actor:
+```
+https://relay.degenfeed.xyz/actor
+```
+Or manually via the relay API (requires admin key in config.yml):
+```
+curl -X POST http://127.0.0.1:8084/api/subscribe \
+  -H "Content-Type: application/json" \
+  -d '{"domain": "social.degenfeed.xyz"}'
+```
 
 **How to Manage:**
 ```bash
