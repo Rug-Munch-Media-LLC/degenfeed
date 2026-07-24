@@ -25,7 +25,7 @@ import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeou
 
 /**
  * Priority-ordered list of Lemmy instances to query.
- * Our self-hosted community.degenfeed.xyz comes first so we
+ * Our self-hosted talk.degenfeed.xyz comes first so we
  * prioritize local content, then fall through to the fediverse.
  * 12 instances total covering the broadest federated network.
  */
@@ -488,8 +488,8 @@ export function adaptLemmyPost(raw: LemmyPostRaw, instanceDomain: string): Unifi
     },
     embeds,
     url: p.url
-      ? `https://community.degenfeed.xyz,https://talk.degenfeed.xyz/post/${p.id}`
-      : `https://community.degenfeed.xyz,https://talk.degenfeed.xyz/c/${communityName}`,
+      ? `https://talk.degenfeed.xyz/post/${p.id}`
+      : `https://talk.degenfeed.xyz/c/${communityName}`,
     dfUri: `df://lemmy/${instance}/c/${communityName}/${p.id}`,
     contentType,
     niches: [],
