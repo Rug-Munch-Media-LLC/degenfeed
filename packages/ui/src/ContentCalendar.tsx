@@ -56,11 +56,21 @@ const PROTOCOL_ICONS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  scheduled: '#00ff41',
+  scheduled: 'var(--color-accent)',
   published: '#627eea',
-  draft: '#71767b',
-  failed: '#f4212e',
+  draft: 'var(--color-muted)',
+  failed: 'var(--color-danger)',
 };
+
+/** Returns a semi-transparent version of a color, handling both hex and CSS var values. */
+function alpha(color: string, opacity: number): string {
+  if (color.startsWith('var(')) {
+    return `color-mix(in srgb, ${color} ${opacity * 100}%, transparent)`;
+  }
+  // Hex: append two-char hex alpha
+  const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0');
+  return `${color}${alphaHex}`;
+}
 
 /* ─── Helpers ─── */
 
@@ -109,7 +119,8 @@ function PostChip({
   compact?: boolean;
 }) {
   const primaryProtocol = post.protocol || post.targets[0] || 'unknown';
-  const color = PROTOCOL_COLORS[primaryProtocol] || '#666';
+  const protocolColor = PROTOCOL_COLORS[primaryProtocol];
+  const color = protocolColor || 'var(--color-muted)';
   const icon = PROTOCOL_ICONS[primaryProtocol] || '📝';
   const statusColor = STATUS_COLORS[post.status || 'scheduled'];
 
@@ -120,7 +131,12 @@ function PostChip({
         onClick={() => onEdit?.(post)}
         title={`${post.text.slice(0, 60)} — ${formatTime(post.scheduledAt)}`}
         className="group relative w-full rounded px-1 py-0.5 text-[10px] font-medium text-left truncate transition-opacity hover:opacity-80"
-        style={{ backgroundColor: `${color}18`, color }}
+        style={{
+          backgroundColor: protocolColor
+            ? `${protocolColor}18`
+            : 'color-mix(in srgb, var(--color-muted) 10%, transparent)',
+          color,
+        }}
       >
         {icon} {post.text.slice(0, 20)}
       </button>
@@ -130,7 +146,11 @@ function PostChip({
   return (
     <div
       className="group relative rounded-xl border bg-[var(--color-card)] p-3 text-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
-      style={{ borderColor: `${color}33` }}
+      style={{
+        borderColor: protocolColor
+          ? `${protocolColor}33`
+          : 'color-mix(in srgb, var(--color-muted) 20%, transparent)',
+      }}
     >
       {/* Protocol bar */}
       <div
@@ -149,7 +169,7 @@ function PostChip({
           </span>
           <span
             className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium"
-            style={{ backgroundColor: `${statusColor}18`, color: statusColor }}
+            style={{ backgroundColor: alpha(statusColor, 0.1), color: statusColor }}
           >
             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
             {post.status || 'scheduled'}
@@ -169,8 +189,10 @@ function PostChip({
                 key={t}
                 className="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium"
                 style={{
-                  backgroundColor: `${PROTOCOL_COLORS[t] || '#666'}18`,
-                  color: PROTOCOL_COLORS[t] || '#666',
+                  backgroundColor: PROTOCOL_COLORS[t]
+                    ? `${PROTOCOL_COLORS[t]}18`
+                    : 'color-mix(in srgb, var(--color-muted) 10%, transparent)',
+                  color: PROTOCOL_COLORS[t] || 'var(--color-muted)',
                 }}
               >
                 {PROTOCOL_ICONS[t] || '?'} {t}

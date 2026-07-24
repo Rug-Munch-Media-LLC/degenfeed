@@ -1,93 +1,56 @@
 /**
- * Lens Protocol Provider
+ * Lens Protocol Provider — Self-hosted Lens Indexer
  *
- * Fetches posts from the Lens v2 GraphQL API.
- * Endpoint: https://api.lens.xyz/graphql
+ * Reads Lens publications from our local Lens indexer (port 8088) instead of
+ * the external api.lens.xyz GraphQL API.
  *
- * Uses Lens v2 `posts` query to fetch recent content from Lens network.
- * The API is public and does not require authentication for reads.
+ * This gives DegenFeed ownership of its Lens data — no dependency on
+ * the public Lens API for reads.
+ *
+ * The local indexer runs at /srv/degenfeed/lens-indexer/ and polls
+ * api.lens.xyz every 30s, storing results in SQLite.
+ *
+ * Endpoint: http://127.0.0.1:8088/api/publications
  */
 
 import type { UnifiedPost } from '../server';
 
 // ─── Configuration ────────────────────────────────────────────────────
 
-const LENS_GRAPHQL_URL = 'https://api.lens.xyz/graphql';
+const LENS_INDEXER_URL = process.env.LENS_INDEXER_URL || 'http://127.0.0.1:8099';
 
-// ─── Lens v2 GraphQL Types ────────────────────────────────────────────
+// ─── Interface ────────────────────────────────────────────────────────
 
-interface LensAccountMetadata {
-  name?: string | null;
-  bio?: string | null;
-  picture?: string | null; // URI scalar
-}
-
-interface LensUsername {
-  localName?: string | null;
-}
-
-interface LensAccount {
-  address: string;
-  username: LensUsername | null;
-  metadata?: LensAccountMetadata | null;
-}
-
-interface LensPostStats {
-  reactions: number;
-  comments: number;
-  reposts: number;
-  quotes: number;
-}
-
-interface LensPostOperations {
-  hasReacted: boolean;
-  hasBookmarked: boolean;
-  hasReposted?: { optimistic: boolean; onChain: boolean } | null;
-}
-
-interface LensTextMetadata {
-  __typename: 'TextOnlyMetadata';
-  content?: string | null;
-}
-
-interface LensImageMetadata {
-  __typename: 'ImageMetadata';
-  content?: string | null;
-  image?: { item?: string | null } | null;
-}
-
-interface LensVideoMetadata {
-  __typename: 'VideoMetadata';
-  content?: string | null;
-  title?: string | null;
-  video?: { item?: string | null } | null;
-}
-
-interface LensLinkMetadata {
-  __typename: 'LinkMetadata';
-  content?: string | null;
-  sharingLink?: string | null;
-}
-
-type LensAnyMetadata = LensTextMetadata | LensImageMetadata | LensVideoMetadata | LensLinkMetadata;
-
-interface LensPost {
+interface IndexerPublication {
   id: string;
   slug: string;
-  author: LensAccount;
+  author_address: string;
+  author_username: string | null;
+  author_name: string | null;
+  author_bio: string | null;
+  author_avatar: string | null;
   timestamp: string;
-  metadata: LensAnyMetadata | null;
-  stats: LensPostStats | null;
-  operations: LensPostOperations | null;
+  content: string;
+  metadata_type: string | null;
+  image_url: string | null;
+  video_url: string | null;
+  sharing_link: string | null;
+  stats_reactions: number;
+  stats_comments: number;
+  stats_reposts: number;
+  stats_quotes: number;
+  raw_json: string | null;
 }
 
-interface LensPostsResponse {
-  data?: {
-    posts?: {
-      items: Array<{ __typename: string } & LensPost>;
-    };
+interface IndexerResponse {
+  data: IndexerPublication[];
+  meta: {
+    total: number;
+    returned: number;
+    offset: number;
+    limit: number;
+    source: string;
   };
-  errors?: Array<{ message: string }>;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -113,41 +76,20 @@ function guessNiches(text: string): string[] {
   return niches;
 }
 
-// ─── Mapping ──────────────────────────────────────────────────────────
-
-function postToUnified(post: LensPost): UnifiedPost | null {
-  const metadata = post.metadata;
-
-  let content = '';
-  let title = '';
-
-  if (metadata) {
-    content = metadata.content || '';
-    if ('title' in metadata) {
-      title = (metadata as LensVideoMetadata).title || '';
-    }
-  }
-
-  if (!content.trim() && !title.trim()) return null;
-  if (!content.trim() && title.trim()) {
-    content = title;
-  }
+function mapPublication(pub: IndexerPublication): UnifiedPost | null {
+  const content = pub.content || '';
+  if (!content.trim()) return null;
 
   const embeds: Array<{ kind: string; url: string; meta?: Record<string, unknown> }> = [];
 
-  // Check for image in ImageMetadata
-  if (metadata?.__typename === 'ImageMetadata' && metadata.image?.item) {
-    embeds.push({ kind: 'image', url: metadata.image.item });
+  if (pub.image_url) {
+    embeds.push({ kind: 'image', url: pub.image_url });
   }
-
-  // Check for video in VideoMetadata
-  if (metadata?.__typename === 'VideoMetadata' && metadata.video?.item) {
-    embeds.push({ kind: 'video', url: metadata.video.item });
+  if (pub.video_url) {
+    embeds.push({ kind: 'video', url: pub.video_url });
   }
-
-  // Check for sharing link in LinkMetadata
-  if (metadata?.__typename === 'LinkMetadata' && metadata.sharingLink) {
-    embeds.push({ kind: 'link', url: metadata.sharingLink });
+  if (pub.sharing_link) {
+    embeds.push({ kind: 'link', url: pub.sharing_link });
   }
 
   // Extract URLs from content
@@ -162,171 +104,84 @@ function postToUnified(post: LensPost): UnifiedPost | null {
     }
   }
 
-  const stats = post.stats;
-  const ops = post.operations;
-
-  // Display name from metadata or username
-  const displayName =
-    post.author.metadata?.name ||
-    post.author.username?.localName ||
-    post.author.address.slice(0, 10);
-  const avatarUri = post.author.metadata?.picture || '';
-  const bio = post.author.metadata?.bio || '';
+  const displayName = pub.author_name || pub.author_username || pub.author_address.slice(0, 10);
 
   return {
-    id: `lens:${post.id}`,
+    id: `lens:${pub.id}`,
     protocol: 'lens',
     author: {
-      id: `lens:${post.author.address}`,
-      primary: { protocol: 'lens', id: post.author.address },
-      handles: { lens: post.author.username?.localName || post.author.address },
+      id: `lens:${pub.author_address}`,
+      primary: { protocol: 'lens', id: pub.author_address },
+      handles: { lens: pub.author_username || pub.author_address },
       displayName,
-      bio,
-      avatarUrl: avatarUri,
+      bio: pub.author_bio || '',
+      avatarUrl: pub.author_avatar || '',
       followerCount: 0,
       followingCount: 0,
       links: [],
-      keys: { address: post.author.address },
+      keys: { address: pub.author_address },
     },
     text: content,
     embeds,
-    createdAt: new Date(post.timestamp).getTime(),
+    createdAt: new Date(pub.timestamp).getTime(),
     metrics: {
-      likes: stats?.reactions ?? 0,
-      reposts: stats?.reposts ?? 0,
-      replies: stats?.comments ?? 0,
-      quotes: stats?.quotes ?? 0,
+      likes: pub.stats_reactions ?? 0,
+      reposts: pub.stats_reposts ?? 0,
+      replies: pub.stats_comments ?? 0,
+      quotes: pub.stats_quotes ?? 0,
     },
     engagement: {
-      viewerLiked: ops?.hasReacted ?? false,
-      viewerReposted: ops?.hasReposted?.optimistic ?? false,
-      viewerBookmarked: ops?.hasBookmarked ?? false,
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
       raw: {
-        likes: stats?.reactions ?? 0,
-        reposts: stats?.reposts ?? 0,
-        replies: stats?.comments ?? 0,
-        quotes: stats?.quotes ?? 0,
+        likes: pub.stats_reactions ?? 0,
+        reposts: pub.stats_reposts ?? 0,
+        replies: pub.stats_comments ?? 0,
+        quotes: pub.stats_quotes ?? 0,
       },
     },
-    raw: post,
+    raw: pub,
     niches: guessNiches(content),
   };
 }
 
-// ─── GraphQL Query (Lens v2) ──────────────────────────────────────────
-
-const POSTS_QUERY = `
-query Posts {
-  posts(request: {
-    filter: {
-      metadata: {
-        mainContentFocus: [TEXT_ONLY, IMAGE, VIDEO, LINK]
-      }
-    }
-    pageSize: FIFTY
-  }) {
-    items {
-      __typename
-      ... on Post {
-        id
-        slug
-        author {
-          address
-          username {
-            localName
-          }
-          metadata {
-            name
-            bio
-            picture
-          }
-        }
-        timestamp
-        metadata {
-          ... on TextOnlyMetadata {
-            content
-          }
-          ... on ImageMetadata {
-            content
-            image {
-              item
-            }
-          }
-          ... on VideoMetadata {
-            content
-            title
-            video {
-              item
-            }
-          }
-          ... on LinkMetadata {
-            content
-            sharingLink
-          }
-        }
-        stats {
-          reactions
-          comments
-          reposts
-          quotes
-        }
-        operations {
-          hasReacted
-          hasBookmarked
-          hasReposted {
-            optimistic
-          }
-        }
-      }
-    }
-  }
-}
-`;
-
-// ─── Fetch from Lens API ──────────────────────────────────────────────
+// ─── Fetch from Local Indexer ─────────────────────────────────────────
 
 async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
+  const url = `${LENS_INDEXER_URL}/api/publications?limit=${limit}`;
+
   try {
-    const res = await fetch(LENS_GRAPHQL_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'DegenFeed-Bridge/0.1',
-      },
-      body: JSON.stringify({ query: POSTS_QUERY }),
-      signal: AbortSignal.timeout(10000),
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!res.ok) {
-      console.warn(`[bridge] Lens: API returned ${res.status} ${res.statusText}`);
+      console.warn(`[bridge] Lens Indexer: HTTP ${res.status} ${res.statusText}`);
       return [];
     }
 
-    const data = (await res.json()) as LensPostsResponse;
+    const data = (await res.json()) as IndexerResponse;
 
-    if (data.errors) {
-      for (const err of data.errors) {
-        console.warn('[bridge] Lens: GraphQL error:', err.message);
-      }
-      return [];
-    }
-
-    const items = data.data?.posts?.items;
-    if (!items || items.length === 0) {
-      console.warn('[bridge] Lens: No posts returned');
+    if (!data.data || data.data.length === 0) {
+      console.warn('[bridge] Lens Indexer: No publications returned');
       return [];
     }
 
     const posts: UnifiedPost[] = [];
-    for (const item of items) {
-      if (item.__typename !== 'Post') continue;
-      const post = postToUnified(item);
+    for (const pub of data.data) {
+      const post = mapPublication(pub);
       if (post) posts.push(post);
     }
 
+    console.log(`[bridge] Lens Indexer: ${posts.length} posts (from ${data.meta.total} local)`);
     return posts.slice(0, limit);
   } catch (err) {
-    console.warn('[bridge] Lens: Error fetching posts:', err instanceof Error ? err.message : err);
+    console.warn(
+      '[bridge] Lens Indexer: Error fetching posts:',
+      err instanceof Error ? err.message : err,
+    );
     return [];
   }
 }
@@ -335,6 +190,5 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
 
 export async function fetchLensPosts(limit = 20): Promise<UnifiedPost[]> {
   const posts = await fetchPosts(limit);
-  console.log(`[bridge] Lens: ${posts.length} posts`);
   return posts;
 }

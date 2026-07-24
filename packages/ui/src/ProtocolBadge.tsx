@@ -88,7 +88,7 @@ export interface ProtocolBadgeProps {
 }
 
 export function getProtocolColor(protocol: string): string {
-  return PROTOCOL_COLORS[protocol] ?? '#666';
+  return PROTOCOL_COLORS[protocol] ?? 'var(--color-muted)';
 }
 
 export function getProtocolLabel(protocol: string): string {
@@ -100,7 +100,7 @@ export function getProtocolIcon(protocol: string): string {
 }
 
 export function ProtocolBadge({ protocol, size = 'sm', showLabel = true }: ProtocolBadgeProps) {
-  const color = PROTOCOL_COLORS[protocol] ?? '#666';
+  const color = PROTOCOL_COLORS[protocol] ?? 'var(--color-muted)';
   const label = PROTOCOL_LABELS[protocol] ?? protocol;
   const icon = PROTOCOL_ICONS[protocol] ?? '?';
   const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-3 py-1 text-sm';

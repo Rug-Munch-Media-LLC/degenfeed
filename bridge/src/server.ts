@@ -75,7 +75,23 @@ export interface UnifiedPost {
   };
   raw: unknown;
   niches: string[];
+  contentType?: string;
 }
+
+/**
+ * SchemaGuard — provider metadata and validation contract.
+ * Every provider module MUST export a `schema` of this type.
+ */
+export interface SchemaGuard {
+  id: string;
+  name: string;
+  description: string;
+  endpoint: string;
+  requiresAuth: boolean;
+  authEnvVar?: string;
+  contentType?: string;
+}
+
 
 // ─── Protocol -> Provider mapping ─────────────────────────────────────
 
@@ -169,6 +185,7 @@ async function buildFeed(
         perProtocol,
         errors: errors.length > 0 ? errors : undefined,
         notices,
+        page: 1,
         fetchedAt: Date.now(),
         source: 'live',
       },
@@ -299,6 +316,7 @@ const server = http.createServer(async (req, res) => {
       path === '/v1/feed/home'
     ) {
       const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
+      const page = parseInt(searchParams.get('page') || '1', 10);
       const protocolsRaw =
         searchParams.get('protocols') ||
         'mastodon,reddit,rss,lemmy,peertube,bluesky,nostr,farcaster,lens,pixelfed';
@@ -308,7 +326,8 @@ const server = http.createServer(async (req, res) => {
         .filter(Boolean);
 
       const { posts, meta } = await buildFeed(protocols, limit);
-      return jsonOk(res, { data: posts, meta });
+      meta.page = page;
+      return jsonOk(res, { posts, meta });
     }
 
     // ── Feed health ───────────────────────────────────────────
@@ -415,8 +434,8 @@ const server = http.createServer(async (req, res) => {
     if (path === '/api/feed/news') {
       const rssPosts = await fetchRssBridgePosts(10);
       return jsonOk(res, {
-        data: rssPosts,
-        meta: { total: rssPosts.length, source: 'live', fetchedAt: Date.now() },
+        posts: rssPosts,
+        meta: { total: rssPosts.length, page: 1, limit: 10, source: 'live', fetchedAt: Date.now() },
       });
     }
 
@@ -438,7 +457,7 @@ const server = http.createServer(async (req, res) => {
       ];
       if (allowedProtocols.includes(proto)) {
         const { posts, meta } = await buildFeed([proto], limit);
-        return jsonOk(res, { data: posts, meta });
+        return jsonOk(res, { posts, meta });
       }
     }
 

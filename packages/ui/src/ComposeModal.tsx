@@ -987,7 +987,7 @@ export function ComposeModal({
                         : 'border-[var(--color-border)] opacity-40 hover:opacity-70'
                     }`}
                     style={{
-                      color: isSelected ? getProtocolColor(protocol) : '#666',
+                      color: isSelected ? getProtocolColor(protocol) : 'var(--color-muted)',
                       backgroundColor: isSelected
                         ? `${getProtocolColor(protocol)}15`
                         : 'transparent',
@@ -1038,9 +1038,9 @@ export function ComposeModal({
                     style={{
                       color: target.connected
                         ? overLimit
-                          ? '#f87171'
+                          ? 'var(--color-danger)'
                           : getProtocolColor(target.id)
-                        : '#666',
+                        : 'var(--color-muted)',
                       backgroundColor: target.enabled
                         ? `${getProtocolColor(target.id)}15`
                         : 'transparent',
