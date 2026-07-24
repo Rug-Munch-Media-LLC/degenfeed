@@ -91,18 +91,12 @@ describe('Stream Cross-Protocol Bridge', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    vi.setSystemTime(10000000000);
     mockFetch.mockReset();
 
     mockKvGet.mockResolvedValue(null);
     mockKvPut.mockResolvedValue(undefined);
     mockKvDelete.mockResolvedValue(undefined);
     mockKvList.mockResolvedValue({ keys: [], list_complete: true });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   // ─── ActivityPub Stream Bridge ─────────────────────────────────────
