@@ -1,3 +1,4 @@
+import { getEnv } from '../env';
 /**
  * @degenfeed/cross-protocol-bridge — RSS → ActivityPub Bridge
  *
@@ -51,8 +52,9 @@ export const rssToActivityPub: BridgeAdapter = {
   },
 
   async publish(payload: unknown, config?: Record<string, string>) {
-    const instance = config?.instance ?? process.env.MASTODON_INSTANCE ?? 'https://social.degenfeed.xyz';
-    const token = config?.accessToken ?? process.env.MASTODON_ACCESS_TOKEN ?? '';
+    const instance =
+      config?.instance ?? getEnv('MASTODON_INSTANCE') ?? 'https://social.degenfeed.xyz';
+    const token = config?.accessToken ?? getEnv('MASTODON_ACCESS_TOKEN') ?? '';
 
     if (!token) {
       return { success: false, error: 'Mastodon auth not configured', retryable: false };
@@ -71,7 +73,11 @@ export const rssToActivityPub: BridgeAdapter = {
 
       if (!res.ok) {
         const errText = await res.text().catch(() => 'unknown');
-        return { success: false, error: `Mastodon publish failed: ${res.status} ${errText}`, retryable: res.status >= 500 };
+        return {
+          success: false,
+          error: `Mastodon publish failed: ${res.status} ${errText}`,
+          retryable: res.status >= 500,
+        };
       }
 
       const data = (await res.json()) as { id: string; url?: string };
@@ -81,12 +87,16 @@ export const rssToActivityPub: BridgeAdapter = {
         url: data.url ?? `${instance}/@feed/${data.id}`,
       };
     } catch (err) {
-      return { success: false, error: `Mastodon publish error: ${(err as Error).message}`, retryable: true };
+      return {
+        success: false,
+        error: `Mastodon publish error: ${(err as Error).message}`,
+        retryable: true,
+      };
     }
   },
 
   async healthCheck() {
-    const instance = process.env.MASTODON_INSTANCE ?? 'https://social.degenfeed.xyz';
+    const instance = getEnv('MASTODON_INSTANCE') ?? 'https://social.degenfeed.xyz';
     try {
       const res = await fetch(`${instance}/api/v1/instance`, {
         signal: AbortSignal.timeout(5000),

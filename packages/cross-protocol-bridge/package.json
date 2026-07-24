@@ -14,17 +14,18 @@
     "lint": "biome check src/"
   },
   "dependencies": {
-    "@degenfeed/types": "workspace:*",
-    "@degenfeed/identity": "workspace:*",
-    "@degenfeed/nostr-sdk": "workspace:*",
     "@degenfeed/bluesky-sdk": "workspace:*",
     "@degenfeed/farcaster-sdk": "workspace:*",
-    "@degenfeed/mastodon-sdk": "workspace:*",
+    "@degenfeed/identity": "workspace:*",
     "@degenfeed/lens-sdk": "workspace:*",
+    "@degenfeed/mastodon-sdk": "workspace:*",
+    "@degenfeed/nostr-sdk": "workspace:*",
+    "@degenfeed/types": "workspace:*",
     "@degenfeed/utils": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.2",
+    "@types/node": "^20.19.43",
     "typescript": "^5.5.0",
     "vitest": "^4.1.10"
   }

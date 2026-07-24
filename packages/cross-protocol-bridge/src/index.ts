@@ -36,55 +36,53 @@ export { CircuitBreaker, circuitBreaker } from './circuit-breaker';
 
 // ─── Health Monitor ──────────────────────────────────────────────────────
 export { HealthMonitor, healthMonitor } from './health-monitor';
-
+// ─── Identity Linking ────────────────────────────────────────────────────
+export {
+  findLinkedIdentitiesInText,
+  getCrossProtocolDisplay,
+  getLinkedProtocols,
+  hasLinkedProtocol,
+  linkIdentity,
+  resolveByHandle,
+  resolveByIdentity,
+  resolveByWallet,
+  resolveMentions,
+  unlinkIdentity,
+} from './identity-linking';
 // ─── Content Normalization ───────────────────────────────────────────────
 export {
+  extractHashtags,
+  extractLinks,
+  extractMedia,
+  extractMentions,
   normalizePost,
   normalizeText,
-  extractHashtags,
-  extractMentions,
-  extractMedia,
-  extractLinks,
   translateHashtag,
   translateHashtagsForProtocol,
 } from './normalization';
 
-// ─── Identity Linking ────────────────────────────────────────────────────
-export {
-  linkIdentity,
-  unlinkIdentity,
-  resolveByIdentity,
-  resolveByWallet,
-  resolveByHandle,
-  resolveMentions,
-  findLinkedIdentitiesInText,
-  getLinkedProtocols,
-  getCrossProtocolDisplay,
-  hasLinkedProtocol,
-} from './identity-linking';
-
 // ─── Notifications ───────────────────────────────────────────────────────
 export {
   fetchUnifiedNotifications,
-  registerNotificationFetcher,
-  getNotificationFetcher,
   generateBridgeNotifications,
+  getNotificationFetcher,
+  registerNotificationFetcher,
 } from './notifications';
 
 // ─── Search ──────────────────────────────────────────────────────────────
 export {
+  computeRelevanceScore,
   crossProtocolSearch,
-  searchProtocol,
   registerSearchProvider,
   registerSearchProviderFromPosts,
-  computeRelevanceScore,
+  searchProtocol,
 } from './search';
 
 // ─── Transform Adapters ──────────────────────────────────────────────────
 export {
-  registerAdapter,
   getAdapter,
   getAllAdapters,
+  registerAdapter,
   registerBuiltinAdapters,
 } from './transforms/index';
 

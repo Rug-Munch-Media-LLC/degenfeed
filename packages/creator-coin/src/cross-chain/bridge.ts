@@ -6,7 +6,7 @@
  */
 
 import type { Address } from 'viem';
-import type { CrossChainMapping, CrossChainPrice, CreatorChain } from '../types';
+import type { CrossChainMapping, CrossChainPrice } from '../types';
 
 export interface BridgeConfig {
   /** Solana token mint address */
@@ -149,10 +149,7 @@ export async function getCrossChainMapping(
 /**
  * Resolve a Solana mint to its Base wrapped address.
  */
-export async function resolveBaseAddress(
-  kv: any,
-  solanaMint: string,
-): Promise<Address | null> {
+export async function resolveBaseAddress(kv: any, solanaMint: string): Promise<Address | null> {
   const mapping = await getCrossChainMapping(kv, solanaMint);
   return mapping?.baseWrapped ?? null;
 }
@@ -160,10 +157,7 @@ export async function resolveBaseAddress(
 /**
  * Resolve a Base wrapped address to its Solana mint.
  */
-export async function resolveSolanaMint(
-  kv: any,
-  baseAddress: Address,
-): Promise<string | null> {
+export async function resolveSolanaMint(_kv: any, _baseAddress: Address): Promise<string | null> {
   // Iterate through known mappings (or use reverse index)
   // In production, maintain a reverse KV key
   return null;

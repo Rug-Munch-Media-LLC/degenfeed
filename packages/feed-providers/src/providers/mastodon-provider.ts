@@ -1,10 +1,5 @@
-import {
-  buildUnifiedPost,
-  CircuitBreaker,
-  CircuitBreakerError,
-  detectNiches,
-} from '@degenfeed/feed-core';
-import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import { CircuitBreaker, CircuitBreakerError } from '@degenfeed/feed-core';
+import type { Protocol } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import {
   buildUrl,
@@ -15,31 +10,22 @@ import {
   withTimeout,
 } from '../utils';
 import {
-  DEFAULT_GTS_INSTANCE,
-  TRENDING_INSTANCES,
-  PUBLIC_MASTODON_INSTANCES,
-  scoreFediverseRelevance,
-  RELEVANCE_THRESHOLD,
-} from './mastodon-data';
-import {
-  GtSAccount,
-  GtSCard,
-  GtSMediaAttachment,
-  GtSStatus,
-  stripHtml,
-  accountToIdentity,
-  statusToUnifiedPost,
-  InstanceHealth,
+  type GtSStatus,
   instanceHealth,
-  recordInstanceSuccess,
-  recordInstanceFailure,
   instanceHealthScore,
-  getFediverseStats,
-  MisskeyNote,
-  MisskeyNotesResponse,
-  misskeyNoteToGtS,
-  MastodonProviderOptions,
+  type MastodonProviderOptions,
+  recordInstanceFailure,
+  recordInstanceSuccess,
+  statusToUnifiedPost,
+  stripHtml,
 } from './mastodon-adapter';
+import {
+  DEFAULT_GTS_INSTANCE,
+  PUBLIC_MASTODON_INSTANCES,
+  RELEVANCE_THRESHOLD,
+  scoreFediverseRelevance,
+  TRENDING_INSTANCES,
+} from './mastodon-data';
 export class MastodonProvider implements FeedProvider {
   readonly protocol: Protocol = 'mastodon';
   readonly schema: SchemaGuard = (): boolean => true;

@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
 import dynamic from 'next/dynamic';
 
 const CreatorCoinDashboard = dynamic(
-  () => import('@/components/creator-coin/CreatorCoinDashboard').then((m) => ({ default: m.CreatorCoinDashboard })),
+  () =>
+    import('@/components/creator-coin/CreatorCoinDashboard').then((m) => ({
+      default: m.CreatorCoinDashboard,
+    })),
   { ssr: false, loading: () => <CoinDashboardSkeleton /> },
 );
 

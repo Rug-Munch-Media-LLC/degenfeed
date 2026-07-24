@@ -1,7 +1,11 @@
 'use client';
 
-import React from 'react';
-import { getDynamicPrice, getProgressPercent, getEraName, TOTAL_SUPPLY, GRADUATION_SUPPLY } from '@degenfeed/creator-coin/bonding-curve';
+import {
+  GRADUATION_SUPPLY,
+  getDynamicPrice,
+  getEraName,
+  getProgressPercent,
+} from '@degenfeed/creator-coin/bonding-curve';
 
 interface BondingCurveChartProps {
   currentSupply: bigint;
@@ -14,7 +18,11 @@ interface BondingCurveChartProps {
  * Shows the current price position, era, and graduation progress.
  * Uses pure SVG — no charting library needed.
  */
-export function BondingCurveChart({ currentSupply, currentPrice, className = '' }: BondingCurveChartProps) {
+export function BondingCurveChart({
+  currentSupply,
+  currentPrice,
+  className = '',
+}: BondingCurveChartProps) {
   const progress = getProgressPercent(currentSupply);
   const eraIndex = getEraIndex(currentSupply);
   const eraName = getEraName(eraIndex);
@@ -117,16 +125,48 @@ export function BondingCurveChart({ currentSupply, currentPrice, className = '' 
               <animate attributeName="r" values="5;7;5" dur="2s" repeatCount="indefinite" />
             </circle>
             {/* Dotted lines */}
-            <line x1={currentX} y1={currentY} x2={currentX} y2={height} stroke="#f59e0b" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
-            <line x1={0} y1={currentY} x2={currentX} y2={currentY} stroke="#f59e0b" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
+            <line
+              x1={currentX}
+              y1={currentY}
+              x2={currentX}
+              y2={height}
+              stroke="#f59e0b"
+              strokeWidth="1"
+              strokeDasharray="3,3"
+              opacity="0.5"
+            />
+            <line
+              x1={0}
+              y1={currentY}
+              x2={currentX}
+              y2={currentY}
+              stroke="#f59e0b"
+              strokeWidth="1"
+              strokeDasharray="3,3"
+              opacity="0.5"
+            />
           </>
         )}
 
         {/* Labels */}
-        <text x={0} y={height + 15} fill="rgba(255,255,255,0.3)" fontSize="9">0%</text>
-        <text x={width / 2} y={height + 15} fill="rgba(255,255,255,0.3)" fontSize="9" textAnchor="middle">Supply →</text>
-        <text x={width} y={height + 15} fill="rgba(255,255,255,0.3)" fontSize="9" textAnchor="end">100%</text>
-        <text x={0} y={10} fill="rgba(255,255,255,0.3)" fontSize="9">Price ↑</text>
+        <text x={0} y={height + 15} fill="rgba(255,255,255,0.3)" fontSize="9">
+          0%
+        </text>
+        <text
+          x={width / 2}
+          y={height + 15}
+          fill="rgba(255,255,255,0.3)"
+          fontSize="9"
+          textAnchor="middle"
+        >
+          Supply →
+        </text>
+        <text x={width} y={height + 15} fill="rgba(255,255,255,0.3)" fontSize="9" textAnchor="end">
+          100%
+        </text>
+        <text x={0} y={10} fill="rgba(255,255,255,0.3)" fontSize="9">
+          Price ↑
+        </text>
       </svg>
 
       {/* Stats */}
@@ -137,7 +177,9 @@ export function BondingCurveChart({ currentSupply, currentPrice, className = '' 
         </div>
         <div className="rounded-lg bg-gray-800/50 p-2 text-center">
           <div className="text-gray-500">Supply Minted</div>
-          <div className="font-semibold text-white">{(Number(currentSupply) / 1e18).toFixed(2)}M</div>
+          <div className="font-semibold text-white">
+            {(Number(currentSupply) / 1e18).toFixed(2)}M
+          </div>
         </div>
         <div className="rounded-lg bg-gray-800/50 p-2 text-center">
           <div className="text-gray-500">Era</div>

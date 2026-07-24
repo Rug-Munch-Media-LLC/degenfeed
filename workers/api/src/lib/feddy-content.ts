@@ -1,7 +1,15 @@
 import type { Env } from '../index';
-import { k, getStore } from './feddy-constants';
-import type { CommunityPost, CommunityEvent, EventRSVP, CommunityPoll, PollVote, PollOption, WikiPage, BadgeDefinition } from './feddy-types';
 import { getCommunityById } from './feddy-community';
+import { getStore, k } from './feddy-constants';
+import type {
+  BadgeDefinition,
+  CommunityEvent,
+  CommunityPoll,
+  CommunityPost,
+  EventRSVP,
+  PollVote,
+  WikiPage,
+} from './feddy-types';
 
 export async function addCommunityPost(
   env: Env,
@@ -138,7 +146,6 @@ export async function getPinnedPosts(env: Env, communityId: string): Promise<Com
 }
 
 // ─── Directory ─────────────────────────────────────────────────────────
-
 
 export async function createEvent(env: Env, event: CommunityEvent): Promise<void> {
   const store = getStore(env);
@@ -331,4 +338,3 @@ export async function getBadges(env: Env, communityId: string): Promise<BadgeDef
     return [];
   }
 }
-

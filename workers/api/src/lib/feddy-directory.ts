@@ -1,9 +1,18 @@
 import type { Env } from '../index';
-import { k, getStore } from './feddy-constants';
-import type { SortOption } from './feddy-constants';
-import type { FeddyCategory, FeddyCommunity, DirectoryEntry, DirectoryResult, AutocompleteResult, CommunityStats, FederationHealth, TreasuryState } from './feddy-types';
 import { getCommunityById, getCommunityMembers } from './feddy-community';
+import type { SortOption } from './feddy-constants';
+import { getStore, k } from './feddy-constants';
 import { getCommunityPosts } from './feddy-content';
+import type {
+  AutocompleteResult,
+  CommunityStats,
+  DirectoryEntry,
+  DirectoryResult,
+  FeddyCategory,
+  FeddyCommunity,
+  FederationHealth,
+  TreasuryState,
+} from './feddy-types';
 
 export async function listDirectory(
   env: Env,
@@ -316,4 +325,3 @@ export async function getCommunityStats(env: Env, communityId: string): Promise<
     };
   }
 }
-

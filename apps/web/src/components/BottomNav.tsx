@@ -169,11 +169,12 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="bottom-nav fixed inset-x-0 bottom-0 z-40 border-t backdrop-blur-xl lg:hidden"
+      className="bottom-nav fixed inset-x-0 bottom-0 border-t backdrop-blur-xl lg:hidden"
       style={{
         borderColor: 'var(--color-glass-border)',
         backgroundColor: 'var(--color-glass-bg)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        zIndex: 'var(--z-bottom-nav, 45)',
       }}
     >
       <div className="mx-auto flex max-w-lg items-stretch justify-around">

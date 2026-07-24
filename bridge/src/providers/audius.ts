@@ -15,7 +15,7 @@
  * Auth: API Key + Bearer Token (writes)
  */
 
-import type { ProtocolProvider, RawPost, FetchOptions, UnifiedPost } from '../types';
+import type { FetchOptions, ProtocolProvider, RawPost, UnifiedPost } from '../types';
 
 export class AudiusProvider implements ProtocolProvider {
   id = 'audius';
@@ -29,15 +29,12 @@ export class AudiusProvider implements ProtocolProvider {
 
   async fetch(options: FetchOptions): Promise<RawPost[]> {
     const limit = options.limit || 20;
-    const response = await fetch(
-      `${this.baseUrl}/tracks/trending?limit=${limit}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(this.apiKey ? { 'Authorization': `Bearer ${this.apiKey}` } : {}),
-        },
-      }
-    );
+    const response = await fetch(`${this.baseUrl}/tracks/trending?limit=${limit}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {}),
+      },
+    });
 
     if (!response.ok) {
       throw new Error(`Audius API error: ${response.status}`);
@@ -65,12 +62,8 @@ export class AudiusProvider implements ProtocolProvider {
         plays: raw.play_count || 0,
       },
       url: `https://audius.co${raw.permalink || ''}`,
-      media: raw.artwork?.url
-        ? { url: raw.artwork.url, type: 'image' }
-        : null,
-      timestamp: raw.created_at
-        ? new Date(raw.created_at).getTime()
-        : Date.now(),
+      media: raw.artwork?.url ? { url: raw.artwork.url, type: 'image' } : null,
+      timestamp: raw.created_at ? new Date(raw.created_at).getTime() : Date.now(),
       stats: {
         likes: raw.favorite_count || 0,
         plays: raw.play_count || 0,

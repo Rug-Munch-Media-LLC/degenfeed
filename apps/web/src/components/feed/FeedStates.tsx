@@ -108,20 +108,15 @@ export function FeedProtocolSummary({ meta }: { meta?: FeedMeta }) {
   return (
     <div className="mb-4 flex flex-wrap gap-2">
       {Object.entries(meta.perProtocol).map(([protocol, count]) => {
-        const colors: Record<string, string> = {
-          nostr: '#8e30eb',
-          farcaster: '#8a63d2',
-          lens: '#abfe2c',
-          bluesky: '#1185fe',
-          mastodon: '#6364ff',
-        };
+        const protocolVar = `--color-protocol-${protocol}`;
+        const fallbackColor = '#666';
         return (
           <span
             key={protocol}
             className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px]"
             style={{
-              backgroundColor: `${colors[protocol] || '#666'}18`,
-              color: colors[protocol] || '#666',
+              backgroundColor: `color-mix(in srgb, var(${protocolVar}, ${fallbackColor}) 15%, transparent)`,
+              color: `var(${protocolVar}, ${fallbackColor})`,
             }}
           >
             {protocol} {count}

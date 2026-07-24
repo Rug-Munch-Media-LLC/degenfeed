@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import type { TokenInfo } from '@degenfeed/creator-coin/types';
+import dynamic from 'next/dynamic';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const BondingCurveChart = dynamic(
-  () => import('@/components/creator-coin/BondingCurveChart').then((m) => ({ default: m.BondingCurveChart })),
+  () =>
+    import('@/components/creator-coin/BondingCurveChart').then((m) => ({
+      default: m.BondingCurveChart,
+    })),
   { ssr: false },
 );
 
@@ -20,7 +23,7 @@ export default function CoinDetailPage() {
   const address = params.address as string;
 
   const [token, setToken] = useState<TokenInfo | null>(null);
-  const [isLive, setIsLive] = useState(false);
+  const [isLive, _setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -97,14 +100,25 @@ export default function CoinDetailPage() {
             await fetch('/api/creator-coin/trade', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'buy', tokenAddress: address, chain: token.chain, amountIn: amountIn.toString(), minTokensOut: minOut.toString() }),
+              body: JSON.stringify({
+                action: 'buy',
+                tokenAddress: address,
+                chain: token.chain,
+                amountIn: amountIn.toString(),
+                minTokensOut: minOut.toString(),
+              }),
             });
           }}
           onSell={async (amountIn) => {
             await fetch('/api/creator-coin/trade', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'sell', tokenAddress: address, chain: token.chain, amountIn: amountIn.toString() }),
+              body: JSON.stringify({
+                action: 'sell',
+                tokenAddress: address,
+                chain: token.chain,
+                amountIn: amountIn.toString(),
+              }),
             });
           }}
           isLive={isLive}

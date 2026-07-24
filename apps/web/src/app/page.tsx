@@ -91,7 +91,7 @@ function TrendingCard({
 }) {
   return (
     <div
-      className="flex items-center justify-between rounded-xl border transition-all hover:border-degen-500/20 hover:bg-[var(--color-card-hover)]"
+      className="flex items-center justify-between rounded-xl border transition-all hover:border-degen-500/20 hover:bg-[var(--color-card-hover)] hover-lift"
       style={{
         borderColor: 'var(--color-glass-border)',
         backgroundColor: 'var(--color-card)',
@@ -139,7 +139,7 @@ function TrendingCard({
 function FeedPreviewCard({ item }: { item: FeedPreviewItem }) {
   return (
     <div
-      className="group rounded-xl border p-4 transition-all hover:border-degen-500/20 hover:shadow-md"
+      className="group rounded-xl border p-4 transition-all hover:border-degen-500/20 hover:shadow-md hover-lift"
       style={{
         borderColor: 'var(--color-glass-border)',
         backgroundColor: 'var(--color-card)',
@@ -240,7 +240,7 @@ export default function HomePage() {
 
           {/* Vision statement */}
           <div
-            className="mt-3 max-w-2xl rounded-2xl border p-4 md:p-5"
+            className="max-w-2xl rounded-xl border p-4 md:p-5"
             style={{
               borderColor: 'var(--color-glass-border)',
               backgroundColor: 'var(--color-card)',
@@ -265,7 +265,7 @@ export default function HomePage() {
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Link
               href="/feed"
-              className="inline-flex items-center gap-2 rounded-2xl bg-[var(--color-accent)] px-6 py-3 text-sm font-bold text-black transition-all hover:bg-[var(--color-accent)]/90 hover:shadow-lg hover:shadow-[var(--color-accent)]/20"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[var(--color-accent)] px-6 py-3 text-sm font-bold text-black transition-all hover:bg-[var(--color-accent)]/90 hover:shadow-lg hover:shadow-[var(--color-accent)]/20 press-effect focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               <svg
                 width="16"
@@ -285,7 +285,7 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => setConnectOpen(true)}
-              className="inline-flex items-center gap-2 rounded-2xl border px-6 py-3 text-sm font-semibold transition-all hover:border-degen-500/30 hover:bg-[var(--color-card-hover)]"
+              className="inline-flex items-center gap-2 rounded-2xl border px-6 py-3 text-sm font-semibold transition-all hover:border-degen-500/30 hover:bg-[var(--color-card-hover)] press-effect focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-degen-500"
               style={{
                 borderColor: 'var(--color-glass-border)',
                 backgroundColor: 'var(--color-card)',
@@ -312,10 +312,10 @@ export default function HomePage() {
         </section>
 
         {/* ══════════════ BENTO GRID — Networks, Trending, Stats ══════════════ */}
-        <div className="mb-12 grid gap-4 md:grid-cols-3">
+        <div className="mb-12 grid gap-4 grid-mobile-stack md:grid-cols-3">
           {/* Protocol connection status (span 1) */}
           <div
-            className="rounded-2xl border p-5"
+            className="rounded-xl border p-5"
             style={{
               borderColor: 'var(--color-glass-border)',
               backgroundColor: 'var(--color-card)',
@@ -365,7 +365,7 @@ export default function HomePage() {
 
           {/* Trending (span 1) */}
           <div
-            className="rounded-2xl border p-5"
+            className="rounded-xl border p-5"
             style={{
               borderColor: 'var(--color-glass-border)',
               backgroundColor: 'var(--color-card)',
@@ -389,7 +389,7 @@ export default function HomePage() {
 
           {/* Stats (span 1) */}
           <div
-            className="rounded-2xl border p-5"
+            className="rounded-xl border p-5"
             style={{
               borderColor: 'var(--color-glass-border)',
               backgroundColor: 'var(--color-card)',
@@ -447,7 +447,7 @@ export default function HomePage() {
               View full feed &rarr;
             </Link>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 grid-mobile-stack md:grid-cols-3">
             {feedPreview.map((item) => (
               <FeedPreviewCard key={item.id} item={item} />
             ))}
@@ -456,7 +456,7 @@ export default function HomePage() {
 
         {/* ══════════════ PROTOCOL ONBOARDING ══════════════ */}
         <section
-          className="mb-12 rounded-2xl border p-6 md:p-8"
+          className="mb-12 rounded-xl border p-6 md:p-8"
           style={{
             borderColor: 'var(--color-glass-border)',
             backgroundColor: 'var(--color-card)',
@@ -483,7 +483,7 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => setConnectOpen(true)}
-              className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[var(--color-accent)] px-6 py-3 text-sm font-bold text-black transition-all hover:bg-[var(--color-accent)]/90 hover:shadow-lg"
+              className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-[var(--color-accent)] px-6 py-3 text-sm font-bold text-black transition-all hover:bg-[var(--color-accent)]/90 hover:shadow-lg press-effect focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               <svg
                 width="16"
@@ -506,7 +506,7 @@ export default function HomePage() {
         </section>
 
         {/* ══════════════ VALUE PROPOSITION CARDS ══════════════ */}
-        <section className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="mb-12 grid gap-4 grid-mobile-stack sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
               icon: '✦',
@@ -547,7 +547,7 @@ export default function HomePage() {
           ].map((feature) => (
             <article
               key={feature.title}
-              className="rounded-2xl border p-5 transition-all hover:border-degen-500/20"
+              className="rounded-xl border p-5 transition-all hover:border-degen-500/20 hover-lift"
               style={{
                 borderColor: 'var(--color-glass-border)',
                 backgroundColor: 'var(--color-card)',

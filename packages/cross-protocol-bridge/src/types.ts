@@ -402,11 +402,17 @@ export interface BridgeAdapter {
     content: NormalizedContent,
   ): Promise<{ success: true; payload: unknown } | { success: false; error: string }>;
   /** Publish transformed content to target protocol */
-  publish(payload: unknown, config?: Record<string, string>): Promise<{
-    success: true;
-    nativeId: string;
-    url?: string;
-  } | { success: false; error: string; retryable: boolean }>;
+  publish(
+    payload: unknown,
+    config?: Record<string, string>,
+  ): Promise<
+    | {
+        success: true;
+        nativeId: string;
+        url?: string;
+      }
+    | { success: false; error: string; retryable: boolean }
+  >;
   /** Verify that the target connection is healthy */
   healthCheck(): Promise<boolean>;
 }

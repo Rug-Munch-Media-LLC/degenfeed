@@ -1,3 +1,4 @@
+import { getEnv } from '../env';
 /**
  * @degenfeed/cross-protocol-bridge — ActivityPub → Nostr Bridge
  *
@@ -76,7 +77,7 @@ export const activityPubToNostr: BridgeAdapter = {
   },
 
   async publish(payload: unknown, config?: Record<string, string>) {
-    const relayUrl = config?.relayUrl ?? process.env.NOSTR_RELAY_URL ?? 'ws://127.0.0.1:8085';
+    const relayUrl = config?.relayUrl ?? getEnv('NOSTR_RELAY_URL') ?? 'ws://127.0.0.1:8085';
 
     return new Promise((resolve) => {
       try {
@@ -103,7 +104,9 @@ export const activityPubToNostr: BridgeAdapter = {
                 url: undefined,
               });
             }
-          } catch { /* skip malformed */ }
+          } catch {
+            /* skip malformed */
+          }
         });
 
         ws.addEventListener('error', () => {
@@ -116,17 +119,24 @@ export const activityPubToNostr: BridgeAdapter = {
           resolve({ success: false, error: 'WebSocket closed unexpectedly', retryable: true });
         });
       } catch (err) {
-        resolve({ success: false, error: `WebSocket error: ${(err as Error).message}`, retryable: true });
+        resolve({
+          success: false,
+          error: `WebSocket error: ${(err as Error).message}`,
+          retryable: true,
+        });
       }
     });
   },
 
   async healthCheck() {
-    const relayUrl = process.env.NOSTR_RELAY_URL ?? 'ws://127.0.0.1:8085';
+    const relayUrl = getEnv('NOSTR_RELAY_URL') ?? 'ws://127.0.0.1:8085';
     return new Promise((resolve) => {
       try {
         const ws = new WebSocket(relayUrl);
-        ws.addEventListener('open', () => { ws.close(); resolve(true); });
+        ws.addEventListener('open', () => {
+          ws.close();
+          resolve(true);
+        });
         ws.addEventListener('error', () => resolve(false));
         setTimeout(() => resolve(false), 4000);
       } catch {

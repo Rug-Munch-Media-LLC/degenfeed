@@ -68,7 +68,8 @@ function parseLimit(raw: string | null, defaultVal: number = DEFAULT_FEED_LIMIT)
 
 export async function handleLemmyFeed(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const instance: string = url.searchParams.get('instance') || INSTANCES[0] || 'https://community.degenfeed.xyz';
+  const instance: string =
+    url.searchParams.get('instance') || INSTANCES[0] || 'https://community.degenfeed.xyz';
   const sort = url.searchParams.get('sort') || 'Hot';
   const limit = parseLimit(url.searchParams.get('limit'), DEFAULT_FEED_LIMIT);
 
@@ -121,7 +122,8 @@ export async function handleLemmyCommunity(
   name: string,
 ): Promise<Response> {
   const url = new URL(request.url);
-  const instance: string = url.searchParams.get('instance') || INSTANCES[0] || 'https://community.degenfeed.xyz';
+  const instance: string =
+    url.searchParams.get('instance') || INSTANCES[0] || 'https://community.degenfeed.xyz';
   const sort = url.searchParams.get('sort') || 'Hot';
   const limit = parseLimit(url.searchParams.get('limit'), 20);
 
@@ -483,7 +485,8 @@ export async function handleLemmyPostById(
   idParam: string,
 ): Promise<Response> {
   const url = new URL(request.url);
-  const instance: string = url.searchParams.get('instance') || INSTANCES[0] || 'https://community.degenfeed.xyz';
+  const instance: string =
+    url.searchParams.get('instance') || INSTANCES[0] || 'https://community.degenfeed.xyz';
   const postId = Number(idParam);
 
   if (Number.isNaN(postId) || postId < 1) {

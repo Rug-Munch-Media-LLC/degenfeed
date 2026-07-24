@@ -109,7 +109,7 @@
   animation: scale-in 0.2s ease-out both;
 }
 
-@keyframes fade-in {
+@keyframes landing-fade-in {
   from {
     opacity: 0;
   }
@@ -118,8 +118,8 @@
   }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.15s ease-out both;
+.animate-landing-fade-in {
+  animation: landing-fade-in 0.15s ease-out both;
 }
 
 /* == Reduced motion == */
@@ -134,6 +134,9 @@
     animation: none;
   }
   .animate-scale-in {
+    animation: none;
+  }
+  .animate-landing-fade-in {
     animation: none;
   }
 }

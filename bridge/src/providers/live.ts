@@ -158,10 +158,13 @@ async function fetchOwncastStreams(): Promise<LiveStreamEntry[]> {
 
 async function fetchPeerTubeLive(): Promise<LiveStreamEntry[]> {
   try {
-    const res = await fetch(`${PEERTUBE_BASE}/api/v1/videos?isLive=true&count=20&sort=-publishedAt`, {
-      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-      signal: AbortSignal.timeout(5000),
-    });
+    const res = await fetch(
+      `${PEERTUBE_BASE}/api/v1/videos?isLive=true&count=20&sort=-publishedAt`,
+      {
+        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+        signal: AbortSignal.timeout(5000),
+      },
+    );
 
     if (!res.ok) {
       console.log(`[live] PeerTube live: HTTP ${res.status}`);
@@ -333,9 +336,7 @@ async function fetchTwitchLive(): Promise<LiveStreamEntry[]> {
       creatorHandle: stream.user_login,
       viewerCount: stream.viewer_count,
       startedAt: new Date(stream.started_at).getTime(),
-      thumbnailUrl: stream.thumbnail_url
-        .replace('{width}', '640')
-        .replace('{height}', '360'),
+      thumbnailUrl: stream.thumbnail_url.replace('{width}', '640').replace('{height}', '360'),
       streamUrl: `https://www.twitch.tv/${stream.user_login}`,
       embedUrl: `https://player.twitch.tv/?channel=${stream.user_login}&parent=degenfeed.xyz`,
       isLive: true,

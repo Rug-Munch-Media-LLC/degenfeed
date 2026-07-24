@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import type { TokenInfo, CreatorChain, DeployResult } from '@degenfeed/creator-coin/types';
+import type { CreatorChain, DeployResult, TokenInfo } from '@degenfeed/creator-coin/types';
+import { useCallback, useEffect, useState } from 'react';
+import { BondingCurveChart } from './BondingCurveChart';
 import { CoinCard } from './CoinCard';
 import { DeployCoinDialog } from './DeployCoinDialog';
 import { TradePanel } from './TradePanel';
-import { BondingCurveChart } from './BondingCurveChart';
 
 interface CreatorCoinDashboardProps {
   /** Creator's wallet address */
@@ -34,74 +34,87 @@ export function CreatorCoinDashboard({
 
   // ─── Handlers ──────────────────────────────────────────────────────
 
-  const handleDeploy = useCallback(async (config: {
-    name: string; symbol: string; uri: string;
-    chain: CreatorChain; creatorAllocationBps: number;
-    creatorFeeBps: number; crossChain: boolean;
-  }) => {
-    setLoading(true);
-    try {
-      // In production: call API route that uses CreatorCoinClient
-      const res = await fetch('/api/creator-coin/deploy', {
+  const handleDeploy = useCallback(
+    async (config: {
+      name: string;
+      symbol: string;
+      uri: string;
+      chain: CreatorChain;
+      creatorAllocationBps: number;
+      creatorFeeBps: number;
+      crossChain: boolean;
+    }) => {
+      setLoading(true);
+      try {
+        // In production: call API route that uses CreatorCoinClient
+        const res = await fetch('/api/creator-coin/deploy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...config, creator, crossChain: config.crossChain }),
+        });
+        const data: DeployResult = await res.json();
+
+        const newToken: TokenInfo = {
+          address: data.primaryAddress,
+          name: config.name,
+          symbol: config.symbol,
+          price: '0',
+          totalSupply: data.totalSupply,
+          totalRaised: '0',
+          uniqueBuyers: 1,
+          graduated: false,
+          decimals: config.chain === 'solana' ? 9 : 18,
+          chain: config.chain,
+          createdAt: Date.now(),
+          creator,
+        };
+
+        setTokens((prev) => [...prev, newToken]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [creator],
+  );
+
+  const handleBuy = useCallback(
+    async (amountIn: bigint, minOut: bigint) => {
+      if (!selectedToken) return;
+      const res = await fetch('/api/creator-coin/trade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...config, creator, crossChain: config.crossChain }),
+        body: JSON.stringify({
+          action: 'buy',
+          tokenAddress: selectedToken.address,
+          chain: selectedToken.chain,
+          amountIn: amountIn.toString(),
+          minTokensOut: minOut.toString(),
+        }),
       });
-      const data: DeployResult = await res.json();
+      const data = await res.json();
+      console.log('Buy result:', data);
+    },
+    [selectedToken],
+  );
 
-      const newToken: TokenInfo = {
-        address: data.primaryAddress,
-        name: config.name,
-        symbol: config.symbol,
-        price: '0',
-        totalSupply: data.totalSupply,
-        totalRaised: '0',
-        uniqueBuyers: 1,
-        graduated: false,
-        decimals: config.chain === 'solana' ? 9 : 18,
-        chain: config.chain,
-        createdAt: Date.now(),
-        creator,
-      };
-
-      setTokens((prev) => [...prev, newToken]);
-    } finally {
-      setLoading(false);
-    }
-  }, [creator]);
-
-  const handleBuy = useCallback(async (amountIn: bigint, minOut: bigint) => {
-    if (!selectedToken) return;
-    const res = await fetch('/api/creator-coin/trade', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'buy',
-        tokenAddress: selectedToken.address,
-        chain: selectedToken.chain,
-        amountIn: amountIn.toString(),
-        minTokensOut: minOut.toString(),
-      }),
-    });
-    const data = await res.json();
-    console.log('Buy result:', data);
-  }, [selectedToken]);
-
-  const handleSell = useCallback(async (amountIn: bigint) => {
-    if (!selectedToken) return;
-    const res = await fetch('/api/creator-coin/trade', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'sell',
-        tokenAddress: selectedToken.address,
-        chain: selectedToken.chain,
-        amountIn: amountIn.toString(),
-      }),
-    });
-    const data = await res.json();
-    console.log('Sell result:', data);
-  }, [selectedToken]);
+  const handleSell = useCallback(
+    async (amountIn: bigint) => {
+      if (!selectedToken) return;
+      const res = await fetch('/api/creator-coin/trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'sell',
+          tokenAddress: selectedToken.address,
+          chain: selectedToken.chain,
+          amountIn: amountIn.toString(),
+        }),
+      });
+      const data = await res.json();
+      console.log('Sell result:', data);
+    },
+    [selectedToken],
+  );
 
   // ─── Live monitoring (simulated) ───────────────────────────────────
 
@@ -136,9 +149,7 @@ export function CreatorCoinDashboard({
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Creator Coins</h1>
-          <p className="text-sm text-gray-400">
-            Your tokens with bonding curve economics
-          </p>
+          <p className="text-sm text-gray-400">Your tokens with bonding curve economics</p>
         </div>
         <button
           onClick={() => setShowDeploy(true)}
@@ -182,9 +193,7 @@ export function CreatorCoinDashboard({
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-white">
               {selectedToken.name}
-              <span className="ml-2 text-sm font-normal text-gray-500">
-                {selectedToken.symbol}
-              </span>
+              <span className="ml-2 text-sm font-normal text-gray-500">{selectedToken.symbol}</span>
               {liveTokens.has(selectedToken.address) && (
                 <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs text-red-400">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
@@ -225,9 +234,7 @@ export function CreatorCoinDashboard({
                 <span>⧫</span>
                 <span>
                   This coin has a wrapped version on Base.{' '}
-                  <button className="underline hover:text-blue-300">
-                    View on Base
-                  </button>
+                  <button className="underline hover:text-blue-300">View on Base</button>
                 </span>
               </div>
             </div>

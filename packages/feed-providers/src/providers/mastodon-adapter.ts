@@ -1,23 +1,6 @@
+import { buildUnifiedPost, detectNiches } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import {
-  buildUnifiedPost,
-  detectNiches,
-} from '@degenfeed/feed-core';
-import {
-  buildUrl,
-  DEFAULT_TIMEOUT_MS,
-  DEFAULT_USER_AGENT,
-  fetchJson,
-} from '../utils';
-import {
-  CRYPTO_KEYWORDS,
-  CRYPTO_HASHTAGS,
-  TECH_KEYWORDS,
-  TECH_HASHTAGS,
-  FEDIVERSE_KEYWORDS,
-  scoreFediverseRelevance,
-  RELEVANCE_THRESHOLD,
-} from './mastodon-data';
+import { buildUrl, DEFAULT_USER_AGENT, fetchJson } from '../utils';
 export interface GtSAccount {
   id: string;
   username: string;
@@ -158,7 +141,7 @@ export function statusToUnifiedPost(status: GtSStatus, instanceUrl: string): Uni
   });
 }
 
-async function fetchHashtagTimeline(
+async function _fetchHashtagTimeline(
   instanceUrl: string,
   tag: string,
   limit: number,
@@ -169,7 +152,7 @@ async function fetchHashtagTimeline(
   return fetchJson<GtSStatus[]>(url, { headers: { 'user-agent': DEFAULT_USER_AGENT } });
 }
 
-async function fetchPublicTimeline(instanceUrl: string, limit: number): Promise<GtSStatus[]> {
+async function _fetchPublicTimeline(instanceUrl: string, limit: number): Promise<GtSStatus[]> {
   const url = buildUrl(instanceUrl, '/api/v1/timelines/public', {
     limit: String(limit),
     local: 'true',
@@ -177,7 +160,8 @@ async function fetchPublicTimeline(instanceUrl: string, limit: number): Promise<
   return fetchJson<GtSStatus[]>(url, { headers: { 'user-agent': DEFAULT_USER_AGENT } });
 }
 
-export export interface MastodonProviderOptions {
+export
+export interface MastodonProviderOptions {
   instanceUrl?: string;
   fallbackInstances?: string[];
 }
@@ -285,11 +269,15 @@ export interface MisskeyNote {
   visibility: 'public' | 'home' | 'followers' | 'specified';
 }
 
-export export interface MisskeyNotesResponse {
+export
+export interface MisskeyNotesResponse {
   notes: MisskeyNote[];
 }
 
-async function fetchMisskeyTrendingNotes(instanceUrl: string, limit: number): Promise<GtSStatus[]> {
+async function _fetchMisskeyTrendingNotes(
+  instanceUrl: string,
+  limit: number,
+): Promise<GtSStatus[]> {
   try {
     const res = await fetch(`${instanceUrl}/api/notes/trending`, {
       method: 'POST',
@@ -308,7 +296,10 @@ async function fetchMisskeyTrendingNotes(instanceUrl: string, limit: number): Pr
   }
 }
 
-async function fetchMisskeyLocalTimeline(instanceUrl: string, limit: number): Promise<GtSStatus[]> {
+async function _fetchMisskeyLocalTimeline(
+  instanceUrl: string,
+  limit: number,
+): Promise<GtSStatus[]> {
   try {
     const res = await fetch(`${instanceUrl}/api/notes/local-timeline`, {
       method: 'POST',

@@ -7,8 +7,8 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
-import type { LinkedIdentity, LinkedProtocolIdentity } from './types';
 import { extractMentions } from './normalization';
+import type { LinkedIdentity, LinkedProtocolIdentity } from './types';
 
 // ─── In-memory store (replaced by KV in production) ──────────────────────
 
@@ -47,9 +47,7 @@ export function linkIdentity(
 
   if (existing) {
     // Add or update protocol identity
-    const existingIdx = existing.protocols.findIndex(
-      (p) => p.protocol === protocol,
-    );
+    const existingIdx = existing.protocols.findIndex((p) => p.protocol === protocol);
     if (existingIdx >= 0) {
       existing.protocols[existingIdx] = protocolIdentity;
     } else {
@@ -96,10 +94,7 @@ export function unlinkIdentity(dfId: string, protocol: Protocol): boolean {
 /**
  * Resolve a DegenFeed user by their linked protocol identity.
  */
-export function resolveByIdentity(
-  protocol: Protocol,
-  id: string,
-): LinkedIdentity | undefined {
+export function resolveByIdentity(protocol: Protocol, id: string): LinkedIdentity | undefined {
   for (const identity of identityStore.values()) {
     if (identity.protocols.some((p) => p.protocol === protocol && p.id === id)) {
       return identity;
@@ -124,10 +119,7 @@ export function resolveByWallet(walletAddress: string): LinkedIdentity | undefin
 /**
  * Resolve a DegenFeed user by any handle across protocols.
  */
-export function resolveByHandle(
-  protocol: Protocol,
-  handle: string,
-): LinkedIdentity | undefined {
+export function resolveByHandle(protocol: Protocol, handle: string): LinkedIdentity | undefined {
   const normalized = handle.replace(/^@/, '').toLowerCase();
   for (const identity of identityStore.values()) {
     if (
@@ -179,10 +171,7 @@ export function findLinkedIdentitiesInText(text: string): LinkedIdentity[] {
   // Check for @mentions matching any linked handle
   for (const identity of identityStore.values()) {
     for (const proto of identity.protocols) {
-      const handlePattern = new RegExp(
-        `@${escapeRegex(proto.handle)}\\b`,
-        'i',
-      );
+      const handlePattern = new RegExp(`@${escapeRegex(proto.handle)}\\b`, 'i');
       if (handlePattern.test(text) && !found.has(identity.dfId)) {
         found.add(identity.dfId);
         identities.push(identity);
@@ -190,10 +179,7 @@ export function findLinkedIdentitiesInText(text: string): LinkedIdentity[] {
 
       // Also check display name
       if (proto.displayName) {
-        const namePattern = new RegExp(
-          escapeRegex(proto.displayName),
-          'i',
-        );
+        const namePattern = new RegExp(escapeRegex(proto.displayName), 'i');
         if (namePattern.test(text) && !found.has(identity.dfId)) {
           found.add(identity.dfId);
           identities.push(identity);
@@ -239,9 +225,7 @@ export function getCrossProtocolDisplay(dfId: string): {
   }
 
   const primary = identity.protocols[0];
-  const allHandles = identity.protocols.map(
-    (p) => `@${p.handle} (${p.protocol})`,
-  );
+  const allHandles = identity.protocols.map((p) => `@${p.handle} (${p.protocol})`);
   const alsoPostedOn = identity.protocols
     .filter((p) => p.protocol !== primary?.protocol)
     .map((p) => p.protocol);

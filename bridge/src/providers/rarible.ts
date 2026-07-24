@@ -15,7 +15,7 @@
  * Auth: API Key
  */
 
-import type { ProtocolProvider, RawPost, FetchOptions, UnifiedPost } from '../types';
+import type { FetchOptions, ProtocolProvider, RawPost, UnifiedPost } from '../types';
 
 export class RaribleProvider implements ProtocolProvider {
   id = 'rarible';
@@ -36,7 +36,7 @@ export class RaribleProvider implements ProtocolProvider {
           'Content-Type': 'application/json',
           ...(this.apiKey ? { 'X-API-KEY': this.apiKey } : {}),
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -68,12 +68,8 @@ export class RaribleProvider implements ProtocolProvider {
         currency: raw.price?.currency || 'ETH',
       },
       url: `https://rarible.com/token/${raw.contract}/${raw.tokenId}`,
-      media: raw.nft?.meta?.image?.url
-        ? { url: raw.nft.meta.image.url, type: 'image' }
-        : null,
-      timestamp: raw.createdAt
-        ? new Date(raw.createdAt).getTime()
-        : Date.now(),
+      media: raw.nft?.meta?.image?.url ? { url: raw.nft.meta.image.url, type: 'image' } : null,
+      timestamp: raw.createdAt ? new Date(raw.createdAt).getTime() : Date.now(),
       stats: {
         likes: 0,
         comments: 0,

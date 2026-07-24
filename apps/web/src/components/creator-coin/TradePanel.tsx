@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import type { TokenInfo, CreatorChain } from '@degenfeed/creator-coin/types';
+import type { CreatorChain, TokenInfo } from '@degenfeed/creator-coin/types';
+import { useState } from 'react';
 
 interface TradePanelProps {
   token: TokenInfo;
@@ -36,9 +36,7 @@ export function TradePanel({
   const priceNum = Number(token.price) / 1e18;
   const inputNum = parseFloat(inputAmount) || 0;
   const tokensOut = priceNum > 0 ? inputNum / priceNum : 0;
-  const displayPrice = isLive && liveBoostBps
-    ? priceNum * (1 - liveBoostBps / 10000)
-    : priceNum;
+  const displayPrice = isLive && liveBoostBps ? priceNum * (1 - liveBoostBps / 10000) : priceNum;
 
   const handleTrade = async () => {
     if (!inputAmount || inputNum <= 0) return;
@@ -105,13 +103,9 @@ export function TradePanel({
       <div className="mb-3 flex items-center justify-between">
         <span className="text-xs text-gray-500">Price</span>
         <span className="text-sm font-bold text-white">
-          {displayPrice < 0.000001
-            ? '<$0.000001'
-            : `$${displayPrice.toFixed(8)}`}
+          {displayPrice < 0.000001 ? '<$0.000001' : `$${displayPrice.toFixed(8)}`}
           {isLive && liveBoostBps && (
-            <span className="ml-1 text-xs text-red-400 line-through">
-              ${priceNum.toFixed(8)}
-            </span>
+            <span className="ml-1 text-xs text-red-400 line-through">${priceNum.toFixed(8)}</span>
           )}
         </span>
       </div>
@@ -147,7 +141,9 @@ export function TradePanel({
         </div>
         <div className="flex items-center rounded-lg border border-white/5 bg-gray-800/50 px-3 py-3">
           <span className="flex-1 text-lg font-bold text-gray-300">
-            {tokensOut > 0 ? tokensOut.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0.0'}
+            {tokensOut > 0
+              ? tokensOut.toLocaleString(undefined, { maximumFractionDigits: 2 })
+              : '0.0'}
           </span>
           <span className="text-sm font-medium text-gray-400">{token.symbol}</span>
         </div>
@@ -183,9 +179,7 @@ export function TradePanel({
             : 'bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-400 hover:to-orange-500'
         } disabled:opacity-50`}
       >
-        {trading
-          ? 'Processing...'
-          : `${mode === 'buy' ? 'Buy' : 'Sell'} ${token.symbol}`}
+        {trading ? 'Processing...' : `${mode === 'buy' ? 'Buy' : 'Sell'} ${token.symbol}`}
       </button>
 
       {/* Fee info */}

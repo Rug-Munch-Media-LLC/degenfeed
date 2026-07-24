@@ -1,5 +1,5 @@
 import type { Env } from '../index';
-import type { FeddyCategory, MemberRole, ReportCategory, AutocompleteResult } from './feddy-types';
+import type { FeddyCategory, MemberRole, ReportCategory } from './feddy-types';
 
 export const VALID_CATEGORIES: FeddyCategory[] = [
   'crypto',
@@ -111,8 +111,6 @@ export function getStore(env: Env): KVNamespace {
   if (!env.FEDDY) throw new Error('FEDDY KV namespace not bound');
   return env.FEDDY;
 }
-
-
 
 export function generateCommunityId(): string {
   return crypto.randomUUID();

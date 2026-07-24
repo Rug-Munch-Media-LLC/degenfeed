@@ -10,7 +10,7 @@
 
 'use client';
 
-import type { AlgorithmScoreBreakdown, AlgorithmMode, ReasonEntry } from '@degenfeed/feed-core';
+import type { AlgorithmMode, AlgorithmScoreBreakdown, ReasonEntry } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -57,7 +57,9 @@ function FactorBar({ reason, maxContribution }: { reason: ReasonEntry; maxContri
 
   return (
     <div className="flex items-start gap-3 py-2">
-      <span className="text-base mt-0.5" aria-hidden="true">{icon}</span>
+      <span className="text-base mt-0.5" aria-hidden="true">
+        {icon}
+      </span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-1.5">
@@ -79,9 +81,7 @@ function FactorBar({ reason, maxContribution }: { reason: ReasonEntry; maxContri
             }}
           />
         </div>
-        <p className="mt-1 text-[10px] text-[var(--color-muted)] leading-tight">
-          {reason.detail}
-        </p>
+        <p className="mt-1 text-[10px] text-[var(--color-muted)] leading-tight">{reason.detail}</p>
       </div>
     </div>
   );
@@ -136,7 +136,9 @@ export function WhyAmISeeingThis({
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--color-glass-border)] bg-[var(--color-card)] px-5 py-3">
           <div className="flex items-center gap-2">
-            <span className="text-lg" aria-hidden="true">🔍</span>
+            <span className="text-lg" aria-hidden="true">
+              🔍
+            </span>
             <h3 className="text-sm font-bold text-[var(--color-fg)]">Why am I seeing this?</h3>
           </div>
           <button
@@ -153,7 +155,9 @@ export function WhyAmISeeingThis({
           {/* Post preview */}
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] p-3">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xs font-medium text-[var(--color-fg)]">{post.author.displayName}</span>
+              <span className="text-xs font-medium text-[var(--color-fg)]">
+                {post.author.displayName}
+              </span>
               <span className="text-[10px] text-[var(--color-muted)]">· {post.protocol}</span>
             </div>
             <p className="text-xs text-[var(--color-muted)] line-clamp-3">
@@ -210,13 +214,19 @@ export function WhyAmISeeingThis({
               <div className="text-[10px] text-[var(--color-muted)]">Total Score</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold tabular-nums" style={{ color: FACTOR_COLORS.recency }}>
+              <div
+                className="text-lg font-bold tabular-nums"
+                style={{ color: FACTOR_COLORS.recency }}
+              >
                 {(breakdown.recency * 100).toFixed(0)}%
               </div>
               <div className="text-[10px] text-[var(--color-muted)]">Recency</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold tabular-nums" style={{ color: FACTOR_COLORS.popularity }}>
+              <div
+                className="text-lg font-bold tabular-nums"
+                style={{ color: FACTOR_COLORS.popularity }}
+              >
                 {(breakdown.popularity * 100).toFixed(0)}%
               </div>
               <div className="text-[10px] text-[var(--color-muted)]">Popularity</div>
@@ -225,8 +235,7 @@ export function WhyAmISeeingThis({
 
           {/* Footer note */}
           <p className="text-[10px] text-[var(--color-muted)] text-center">
-            Your feed algorithm preferences determine how these factors are weighted.
-            Adjust them in{' '}
+            Your feed algorithm preferences determine how these factors are weighted. Adjust them in{' '}
             <a href="/settings/algorithm" className="underline hover:text-degen-400">
               Settings → Feed Algorithm
             </a>
@@ -298,7 +307,12 @@ export function useAlgorithmTransparency() {
           diversity: 0,
           quality: 0,
           reasons: [
-            { factor: 'relevance', label: 'General match', detail: 'Matched your feed preferences', contribution: 0.5 },
+            {
+              factor: 'relevance',
+              label: 'General match',
+              detail: 'Matched your feed preferences',
+              contribution: 0.5,
+            },
             { factor: 'recency', label: 'Recent', detail: 'Posted recently', contribution: 0.3 },
           ],
         },
@@ -318,15 +332,16 @@ export function useAlgorithmTransparency() {
     setTransparencyData(null);
   }, []);
 
-  const TransparencyOverlay = transparencyData && activePost ? (
-    <WhyAmISeeingThis
-      post={activePost}
-      breakdown={transparencyData.breakdown}
-      mode={transparencyData.mode}
-      isFollowed={transparencyData.isFollowed}
-      onClose={closeWhy}
-    />
-  ) : null;
+  const TransparencyOverlay =
+    transparencyData && activePost ? (
+      <WhyAmISeeingThis
+        post={activePost}
+        breakdown={transparencyData.breakdown}
+        mode={transparencyData.mode}
+        isFollowed={transparencyData.isFollowed}
+        onClose={closeWhy}
+      />
+    ) : null;
 
   return {
     showWhy,

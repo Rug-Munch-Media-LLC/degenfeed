@@ -4,20 +4,20 @@
  * Client for deploying and trading creator coins on Solana via Anchor.
  */
 
-import { AnchorProvider, BN, Program } from '@coral-xyz/anchor';
+import { type AnchorProvider, BN, Program } from '@coral-xyz/anchor';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
+import { PublicKey, SYSVAR_RENT_PUBKEY, SystemProgram } from '@solana/web3.js';
 import type {
+  BuyInput,
   CreatorCoinConfig,
   DeployResult,
-  BuyInput,
   SellInput,
-  TradeResult,
   TokenInfo,
+  TradeResult,
 } from '../types';
 
 // ─── Constants ─────────────────────────────────────────────────────────────
@@ -37,10 +37,7 @@ const SEED_PLATFORM_FEE = new TextEncoder().encode('platform-fee-vault');
 export function deriveTokenState(creator: PublicKey, tokenSeed: bigint): [PublicKey, number] {
   const buf = new Uint8Array(8);
   new DataView(buf.buffer).setBigUint64(0, tokenSeed, true);
-  return PublicKey.findProgramAddressSync(
-    [SEED_TOKEN_STATE, creator.toBytes(), buf],
-    PROGRAM_ID,
-  );
+  return PublicKey.findProgramAddressSync([SEED_TOKEN_STATE, creator.toBytes(), buf], PROGRAM_ID);
 }
 
 export function deriveTokenMint(tokenState: PublicKey): [PublicKey, number] {
@@ -213,7 +210,7 @@ export class CreatorCoinSolanaClient {
 
     if (accounts.length === 0) throw new Error(`Token not found: ${mint}`);
 
-    const data = accounts[0]!.account as any;
+    const data = accounts[0]?.account as any;
     return {
       address: mint,
       name: data.name as string,
@@ -230,7 +227,9 @@ export class CreatorCoinSolanaClient {
     };
   }
 
-  private async resolveTokenState(mint: PublicKey): Promise<{ tokenState: PublicKey; creator: PublicKey; seed: bigint }> {
+  private async resolveTokenState(
+    mint: PublicKey,
+  ): Promise<{ tokenState: PublicKey; creator: PublicKey; seed: bigint }> {
     const accounts = await this.program.account.tokenState.all([
       { memcmp: { offset: 32, bytes: mint.toBase58() } },
     ]);
@@ -260,18 +259,77 @@ function getIdl(): any {
         discriminator: [175, 58, 225, 88, 32, 20, 77, 143],
         accounts: [
           { name: 'creator', writable: true, signer: true },
-          { name: 'tokenState', writable: true, pda: { seeds: [{ kind: 'const', value: [116, 111, 107, 101, 110, 45, 115, 116, 97, 116, 101] }, { kind: 'account', path: 'creator' }, { kind: 'arg', path: 'token_seed' }] } },
-          { name: 'mint', writable: true, pda: { seeds: [{ kind: 'const', value: [116, 111, 107, 101, 110, 45, 109, 105, 110, 116] }, { kind: 'account', path: 'token_state' }] } },
-          { name: 'mintAuthority', writable: false, pda: { seeds: [{ kind: 'const', value: [109, 105, 110, 116, 45, 97, 117, 116, 104, 111, 114, 105, 116, 121] }, { kind: 'account', path: 'mint' }] } },
-          { name: 'tokenVault', writable: true, pda: { seeds: [{ kind: 'const', value: [116, 111, 107, 101, 110, 45, 118, 97, 117, 108, 116] }, { kind: 'account', path: 'mint' }] } },
-          { name: 'vestingVault', writable: true, pda: { seeds: [{ kind: 'const', value: [118, 101, 115, 116, 105, 110, 103, 45, 118, 97, 117, 108, 116] }, { kind: 'account', path: 'mint' }] } },
+          {
+            name: 'tokenState',
+            writable: true,
+            pda: {
+              seeds: [
+                { kind: 'const', value: [116, 111, 107, 101, 110, 45, 115, 116, 97, 116, 101] },
+                { kind: 'account', path: 'creator' },
+                { kind: 'arg', path: 'token_seed' },
+              ],
+            },
+          },
+          {
+            name: 'mint',
+            writable: true,
+            pda: {
+              seeds: [
+                { kind: 'const', value: [116, 111, 107, 101, 110, 45, 109, 105, 110, 116] },
+                { kind: 'account', path: 'token_state' },
+              ],
+            },
+          },
+          {
+            name: 'mintAuthority',
+            writable: false,
+            pda: {
+              seeds: [
+                {
+                  kind: 'const',
+                  value: [109, 105, 110, 116, 45, 97, 117, 116, 104, 111, 114, 105, 116, 121],
+                },
+                { kind: 'account', path: 'mint' },
+              ],
+            },
+          },
+          {
+            name: 'tokenVault',
+            writable: true,
+            pda: {
+              seeds: [
+                { kind: 'const', value: [116, 111, 107, 101, 110, 45, 118, 97, 117, 108, 116] },
+                { kind: 'account', path: 'mint' },
+              ],
+            },
+          },
+          {
+            name: 'vestingVault',
+            writable: true,
+            pda: {
+              seeds: [
+                {
+                  kind: 'const',
+                  value: [118, 101, 115, 116, 105, 110, 103, 45, 118, 97, 117, 108, 116],
+                },
+                { kind: 'account', path: 'mint' },
+              ],
+            },
+          },
           { name: 'vestingVaultTokenAccount', writable: true },
           { name: 'platformFeeVault', writable: true },
-          { name: 'tokenProgram' }, { name: 'associatedTokenProgram' }, { name: 'systemProgram' }, { name: 'rent' },
+          { name: 'tokenProgram' },
+          { name: 'associatedTokenProgram' },
+          { name: 'systemProgram' },
+          { name: 'rent' },
         ],
         args: [
-          { name: 'tokenSeed', type: 'u64' }, { name: 'name', type: 'string' }, { name: 'symbol', type: 'string' },
-          { name: 'uri', type: 'string' }, { name: 'creatorAllocationBps', type: 'u16' }, { name: 'creatorFeeBps', type: 'u16' },
+          { name: 'tokenSeed', type: 'u64' },
+          { name: 'name', type: 'string' },
+          { name: 'symbol', type: 'string' },
+          { name: 'uri', type: 'string' },
+          { name: 'creatorAllocationBps', type: 'u16' },
+          { name: 'creatorFeeBps', type: 'u16' },
           { name: 'referrer', type: { option: 'publicKey' } },
         ],
       },
@@ -289,9 +347,14 @@ function getIdl(): any {
           { name: 'creator', writable: true },
           { name: 'platformFeeVault', writable: true },
           { name: 'referrer', writable: true, optional: true },
-          { name: 'tokenProgram' }, { name: 'systemProgram' }, { name: 'rent' },
+          { name: 'tokenProgram' },
+          { name: 'systemProgram' },
+          { name: 'rent' },
         ],
-        args: [{ name: 'amountSol', type: 'u64' }, { name: 'minTokensOut', type: 'u64' }],
+        args: [
+          { name: 'amountSol', type: 'u64' },
+          { name: 'minTokensOut', type: 'u64' },
+        ],
       },
       {
         name: 'sellTokens',
@@ -304,7 +367,9 @@ function getIdl(): any {
           { name: 'tokenVault', writable: true },
           { name: 'sellerTokenAccount', writable: true },
           { name: 'platformFeeVault', writable: true },
-          { name: 'tokenProgram' }, { name: 'systemProgram' }, { name: 'rent' },
+          { name: 'tokenProgram' },
+          { name: 'systemProgram' },
+          { name: 'rent' },
         ],
         args: [{ name: 'amountTokens', type: 'u64' }],
       },
@@ -314,25 +379,37 @@ function getIdl(): any {
         name: 'TokenState',
         discriminator: [163, 64, 31, 111, 7, 129, 65, 152],
         fields: [
-          { name: 'creator', type: 'publicKey' }, { name: 'mint', type: 'publicKey' },
-          { name: 'tokenSeed', type: 'u64' }, { name: 'name', type: 'string' },
-          { name: 'symbol', type: 'string' }, { name: 'uri', type: 'string' },
-          { name: 'createdAt', type: 'i64' }, { name: 'creatorAllocationBps', type: 'u16' },
-          { name: 'creatorFeeBps', type: 'u16' }, { name: 'platformFeeBps', type: 'u16' },
+          { name: 'creator', type: 'publicKey' },
+          { name: 'mint', type: 'publicKey' },
+          { name: 'tokenSeed', type: 'u64' },
+          { name: 'name', type: 'string' },
+          { name: 'symbol', type: 'string' },
+          { name: 'uri', type: 'string' },
+          { name: 'createdAt', type: 'i64' },
+          { name: 'creatorAllocationBps', type: 'u16' },
+          { name: 'creatorFeeBps', type: 'u16' },
+          { name: 'platformFeeBps', type: 'u16' },
           { name: 'referrer', type: { option: 'publicKey' } },
-          { name: 'totalSupplyIssued', type: 'u64' }, { name: 'totalSolRaised', type: 'u64' },
-          { name: 'uniqueBuyers', type: 'u32' }, { name: 'graduated', type: 'bool' },
-          { name: 'bump', type: 'u8' }, { name: 'mintBump', type: 'u8' },
-          { name: 'vaultBump', type: 'u8' }, { name: 'authorityBump', type: 'u8' },
+          { name: 'totalSupplyIssued', type: 'u64' },
+          { name: 'totalSolRaised', type: 'u64' },
+          { name: 'uniqueBuyers', type: 'u32' },
+          { name: 'graduated', type: 'bool' },
+          { name: 'bump', type: 'u8' },
+          { name: 'mintBump', type: 'u8' },
+          { name: 'vaultBump', type: 'u8' },
+          { name: 'authorityBump', type: 'u8' },
         ],
       },
       {
         name: 'BuyerState',
         discriminator: [13, 236, 245, 45, 168, 211, 230, 253],
         fields: [
-          { name: 'buyer', type: 'publicKey' }, { name: 'tokenMint', type: 'publicKey' },
-          { name: 'totalBought', type: 'u64' }, { name: 'totalSolSpent', type: 'u64' },
-          { name: 'lastBuy', type: 'i64' }, { name: 'buyCount', type: 'u32' },
+          { name: 'buyer', type: 'publicKey' },
+          { name: 'tokenMint', type: 'publicKey' },
+          { name: 'totalBought', type: 'u64' },
+          { name: 'totalSolSpent', type: 'u64' },
+          { name: 'lastBuy', type: 'i64' },
+          { name: 'buyCount', type: 'u32' },
           { name: 'bump', type: 'u8' },
         ],
       },

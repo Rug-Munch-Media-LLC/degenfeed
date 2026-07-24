@@ -23,7 +23,7 @@ export function Toggle({
         aria-checked={checked}
         data-checked={checked}
         onClick={() => onChange(!checked)}
-        className="toggle-track"
+        className="toggle-track focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-2"
       >
         <span className="toggle-thumb" />
       </button>

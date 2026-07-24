@@ -16,11 +16,11 @@ export function SettingsSection({
 }) {
   const meta = SECTION_LABELS[section];
   return (
-    <div className="overflow-hidden rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] transition-all">
+    <div className="overflow-hidden rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] transition-all">
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-[var(--color-overlay)]"
+        className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-[var(--color-overlay)] focus-visible:outline-2 focus-visible:outline-degen-500 focus-visible:outline-offset-2"
         aria-expanded={isOpen}
       >
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-degen-500/10 text-degen-400">
