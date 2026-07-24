@@ -127,39 +127,44 @@ describe('Bridge Paths', () => {
 
 describe('Circuit Breaker', () => {
   it('should start in closed state', () => {
-    const cb = new CircuitBreaker('test-path', DEFAULT_CIRCUIT_CONFIG);
-    expect(cb.getState().state).toBe('closed');
-    expect(cb.getState().failureCount).toBe(0);
+    const cb = new CircuitBreaker();
+    cb.configure('test-path', DEFAULT_CIRCUIT_CONFIG);
+    const state = cb.getState('test-path');
+    expect(state).toBeDefined();
+    expect(state!.state).toBe('closed');
   });
 
   it('should open after threshold failures', () => {
-    const cb = new CircuitBreaker('test-path', { failureThreshold: 3, resetTimeoutMs: 30000, halfOpenMaxRequests: 3 });
-    expect(cb.canProceed()).toBe(true);
-    cb.recordFailure();
-    cb.recordFailure();
-    cb.recordFailure(); // 3rd failure
-    expect(cb.canProceed()).toBe(false);
-    expect(cb.getState().state).toBe('open');
+    const cb = new CircuitBreaker();
+    cb.configure('test-path', { failureThreshold: 3, resetTimeoutMs: 30000, halfOpenMaxRequests: 3 });
+    expect(cb.isAllowed('test-path')).toBe(true);
+    cb.recordFailure('test-path');
+    cb.recordFailure('test-path');
+    cb.recordFailure('test-path'); // 3rd failure
+    expect(cb.isAllowed('test-path')).toBe(false);
+    expect(cb.getState('test-path')!.state).toBe('open');
   });
 
   it('should go half-open after reset timeout', () => {
     vi.useFakeTimers();
-    const cb = new CircuitBreaker('test-path', { failureThreshold: 2, resetTimeoutMs: 10000, halfOpenMaxRequests: 2 });
-    cb.recordFailure();
-    cb.recordFailure();
-    expect(cb.canProceed()).toBe(false);
+    const cb = new CircuitBreaker();
+    cb.configure('test-path', { failureThreshold: 2, resetTimeoutMs: 10000, halfOpenMaxRequests: 2 });
+    cb.recordFailure('test-path');
+    cb.recordFailure('test-path');
+    expect(cb.isAllowed('test-path')).toBe(false);
     // Advance past reset timeout
     vi.advanceTimersByTime(11000);
-    expect(cb.canProceed()).toBe(true); // half-open allows first request
+    expect(cb.isAllowed('test-path')).toBe(true); // half-open allows first request
     vi.useRealTimers();
   });
 
   it('should reset on success', () => {
-    const cb = new CircuitBreaker('test-path', { failureThreshold: 3, resetTimeoutMs: 30000, halfOpenMaxRequests: 3 });
-    cb.recordFailure();
-    cb.recordFailure();
-    cb.recordSuccess();
-    expect(cb.getState().state).toBe('closed');
-    expect(cb.getState().failureCount).toBe(0);
+    const cb = new CircuitBreaker();
+    cb.configure('test-path', { failureThreshold: 3, resetTimeoutMs: 30000, halfOpenMaxRequests: 3 });
+    cb.recordFailure('test-path');
+    cb.recordFailure('test-path');
+    cb.recordSuccess('test-path');
+    expect(cb.getState('test-path')!.state).toBe('closed');
+    expect(cb.getState('test-path')!.failureCount).toBe(0);
   });
 });
