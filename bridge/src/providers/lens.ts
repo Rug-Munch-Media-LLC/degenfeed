@@ -14,6 +14,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+
 const $fetch = globalThis.fetch;
 
 // ─── Configuration ────────────────────────────────────────────────────
@@ -125,11 +126,11 @@ function mapPublication(pub: IndexerPublication): UnifiedPost | null {
     text: content,
     embeds,
     contentType:
-      metadata?.__typename === 'ImageMetadata'
+      pub.metadata_type === 'ImageMetadata'
         ? 'image'
-        : metadata?.__typename === 'VideoMetadata'
+        : pub.metadata_type === 'VideoMetadata'
           ? 'video'
-          : metadata?.__typename === 'LinkMetadata'
+          : pub.metadata_type === 'LinkMetadata'
             ? 'link'
             : 'text',
     createdAt: new Date(pub.timestamp).getTime(),
