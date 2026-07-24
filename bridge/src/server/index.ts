@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { startCrossPoster } from '../crossposter';
+import { startIndexer, reindex, getIndexerStatus, indexPosts } from '../search-indexer';
 import { buildFeed, DEFAULT_PREFERENCES, PROVIDERS } from './feeds';
 
 // Catch unhandled rejections to prevent process crashes
@@ -162,6 +163,8 @@ interface UnifiedSearchResult {
   data: Array<{
     id: string;
     protocol: string;
+    sourceLabel?: string;
+    contentType?: string;
     text: string;
     author: {
       displayName: string;
@@ -173,11 +176,14 @@ interface UnifiedSearchResult {
     metrics: Record<string, number>;
     niches: string[];
     url?: string;
+    imageUrl?: string;
   }>;
   meta: {
     total: number;
     q: string;
     sources: string[];
+    types?: string[];
+    niches?: string[];
     page: number;
     limit: number;
   };
@@ -379,7 +385,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ── Unified Search (cross-protocol) ─────────────────────────
-    // GET /api/search?q=bitcoin&sources=mastodon,bluesky,nostr&page=1&limit=20
+    // GET /api/search?q=bitcoin&sources=mastodon,bluesky,nostr&type=post,article&niches=defi,ai&page=1&limit=20
     if (path.startsWith('/api/search')) {
       const q = searchParams.get('q') || '';
       const sourcesRaw = searchParams.get('sources') || 'all';
@@ -390,6 +396,10 @@ const server = http.createServer(async (req, res) => {
               .split(',')
               .map((s) => s.trim())
               .filter(Boolean);
+      const typesRaw = searchParams.get('type') || '';
+      const types = typesRaw ? typesRaw.split(',').map((t) => t.trim()).filter(Boolean) : undefined;
+      const nichesRaw = searchParams.get('niches') || '';
+      const niches = nichesRaw ? nichesRaw.split(',').map((n) => n.trim()).filter(Boolean) : undefined;
       const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
       const limit = Math.min(100, parseInt(searchParams.get('limit') || '20', 10));
 
@@ -397,12 +407,30 @@ const server = http.createServer(async (req, res) => {
         return jsonOk(res, {
           data: [],
           identities: [],
-          meta: { total: 0, q: '', sources, page, limit },
+          meta: { total: 0, q: '', sources, types, niches, page, limit },
         });
       }
 
-      const results = await crossProtocolSearch(q, sources, page, limit);
+      const results = await crossProtocolSearch(q, sources, page, limit, types, niches);
       return jsonOk(res, results);
+    }
+
+    // ── Indexer Management ────────────────────────────────────
+    // GET /api/search/indexer/status
+    // POST /api/search/indexer/reindex
+    if (path.startsWith('/api/search/indexer')) {
+      if (path.endsWith('/status')) {
+        return jsonOk(res, getIndexerStatus());
+      }
+      if (path.endsWith('/reindex') && req.method === 'POST') {
+        try {
+          const result = await reindex();
+          return jsonOk(res, { ok: true, ...result });
+        } catch (err) {
+          res.writeHead(409, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ error: (err as Error).message }));
+        }
+      }
     }
 
     // ── Unified Notifications (cross-protocol) ──────────────────
@@ -740,5 +768,13 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log('[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, Lemmy→Nostr');
   console.log('[bridge] Cross-protocol search: Meilisearch unified index + direct fallback');
   console.log('[bridge] Cross-protocol notifications: unified stream from all protocols');
+  // Start cross-poster and search indexer
   startCrossPoster();
+  
+  // Start search indexer (initializes Meilisearch, indexes all content)
+  startIndexer().then(() => {
+    console.log('[bridge] Search indexer started');
+  }).catch((err) => {
+    console.error('[bridge] Search indexer failed to start:', err);
+  });
 });

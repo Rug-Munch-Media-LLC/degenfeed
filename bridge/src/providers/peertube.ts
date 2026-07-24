@@ -9,6 +9,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+const $fetch = globalThis.fetch;
 
 const PEERTUBE_BASE = 'http://127.0.0.1:9011';
 
@@ -142,7 +143,7 @@ export const schema: SchemaGuard = {
 export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
   try {
     const url = `${PEERTUBE_BASE}/api/v1/videos?count=${Math.min(limit, 50)}&sort=-publishedAt`;
-    const res = await fetch(url, {
+    const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
     });

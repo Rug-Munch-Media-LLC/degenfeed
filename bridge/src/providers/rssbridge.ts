@@ -11,6 +11,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+const $fetch = globalThis.fetch;
 
 const RSS_BRIDGE_BASE = 'http://127.0.0.1:8282';
 const USER_AGENT = 'DegenFeed-Bridge/0.1';
@@ -91,7 +92,7 @@ async function fetchFromBridge(
     });
     const url = `${RSS_BRIDGE_BASE}/?${query.toString()}`;
 
-    const res = await fetch(url, {
+    const res = await $fetch(url, {
       headers: { 'User-Agent': USER_AGENT },
       signal: AbortSignal.timeout(8000),
     });
@@ -177,7 +178,7 @@ async function fetchRssFeed(
   limit: number,
 ): Promise<UnifiedPost[]> {
   try {
-    const res = await fetch(url, {
+    const res = await $fetch(url, {
       headers: { 'User-Agent': USER_AGENT },
       signal: AbortSignal.timeout(8000),
     });

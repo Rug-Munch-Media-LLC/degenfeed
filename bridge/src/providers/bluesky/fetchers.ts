@@ -1,6 +1,7 @@
 import type { UnifiedPost } from '../../../server';
 import { postToUnified } from './mapper';
 import type { BskyFeedResponse } from './types';
+const $fetch = globalThis.fetch;
 
 const PDS_BASE = 'http://127.0.0.1:3012';
 const BSKY_PUBLIC = 'https://public.api.bsky.app';
@@ -34,13 +35,13 @@ const TRENDING_QUERY = 'crypto OR bitcoin OR ethereum OR solana OR defi';
 
 async function fetchFromPds(_limit: number): Promise<UnifiedPost[]> {
   try {
-    const infoRes = await fetch(`${PDS_BASE}/xrpc/com.atproto.server.describeServer`, {
+    const infoRes = await $fetch(`${PDS_BASE}/xrpc/com.atproto.server.describeServer`, {
       signal: AbortSignal.timeout(3000),
     });
     if (!infoRes.ok) return [];
     const info = (await infoRes.json()) as { did?: string };
     if (!info.did) return [];
-    const syncRes = await fetch(
+    const syncRes = await $fetch(
       `${PDS_BASE}/xrpc/com.atproto.sync.getLatestCommit?did=${encodeURIComponent(info.did)}`,
       { signal: AbortSignal.timeout(3000) },
     );
@@ -54,7 +55,7 @@ async function fetchFromPds(_limit: number): Promise<UnifiedPost[]> {
 async function fetchAuthorFeed(actor: string, limit: number): Promise<UnifiedPost[]> {
   try {
     const url = `${BSKY_PUBLIC}/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(actor)}&limit=${Math.min(limit, 50)}`;
-    const res = await fetch(url, {
+    const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
     });
@@ -75,7 +76,7 @@ async function fetchAuthorFeed(actor: string, limit: number): Promise<UnifiedPos
 async function searchPosts(query: string, limit: number): Promise<UnifiedPost[]> {
   try {
     const url = `${BSKY_PUBLIC}/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(query)}&limit=${Math.min(limit, 50)}&sort=latest`;
-    const res = await fetch(url, {
+    const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
     });

@@ -14,6 +14,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+const $fetch = globalThis.fetch;
 
 // ─── Configuration ────────────────────────────────────────────────────
 
@@ -160,7 +161,7 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
   const url = `${LENS_INDEXER_URL}/api/publications?limit=${limit}`;
 
   try {
-    const res = await fetch(url, {
+    const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(5000),
     });

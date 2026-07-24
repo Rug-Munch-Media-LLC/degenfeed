@@ -16,6 +16,7 @@
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 import { getRedditOAuth } from './reddit-auth';
+const $fetch = globalThis.fetch;
 
 const REDDIT_RSS = 'https://www.reddit.com';
 
@@ -141,7 +142,7 @@ async function fetchFromRedlib(_subreddit: string, _limit: number): Promise<Unif
 
 async function fetchFromRedditRss(subreddit: string, limit: number): Promise<UnifiedPost[]> {
   try {
-    const res = await fetch(
+    const res = await $fetch(
       `${REDDIT_RSS}/r/${encodeURIComponent(subreddit)}/hot/.rss?limit=${limit}`,
       {
         headers: {
@@ -334,7 +335,7 @@ async function fetchFromRedditJson(subreddit: string, limit: number): Promise<Un
   try {
     const url = `${REDDIT_RSS}/r/${encodeURIComponent(subreddit)}/hot.json?limit=${Math.min(limit, 25)}`;
     const headers = await getRedditOAuth().getAuthHeaders();
-    const res = await fetch(url, {
+    const res = await $fetch(url, {
       headers,
       signal: AbortSignal.timeout(8000),
     });

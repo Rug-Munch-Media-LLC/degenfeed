@@ -12,6 +12,7 @@
  */
 
 import type { SchemaGuard } from '../server/types';
+const $fetch = globalThis.fetch;
 
 const OWNCAST_BASE = 'http://127.0.0.1:8092';
 const PEERTUBE_BASE = 'http://127.0.0.1:9011';
@@ -91,7 +92,7 @@ interface PeerTubeResponse {
 
 async function fetchOwncastStreams(): Promise<LiveStreamEntry[]> {
   try {
-    const statusRes = await fetch(`${OWNCAST_BASE}/api/status`, {
+    const statusRes = await $fetch(`${OWNCAST_BASE}/api/status`, {
       signal: AbortSignal.timeout(3000),
     });
 
@@ -109,7 +110,7 @@ async function fetchOwncastStreams(): Promise<LiveStreamEntry[]> {
     // Get viewer count from chat endpoint
     let viewerCount = status.viewerCount || 0;
     try {
-      const chatRes = await fetch(`${OWNCAST_BASE}/api/chat/clients`, {
+      const chatRes = await $fetch(`${OWNCAST_BASE}/api/chat/clients`, {
         signal: AbortSignal.timeout(2000),
       });
       if (chatRes.ok) {
@@ -158,7 +159,7 @@ async function fetchOwncastStreams(): Promise<LiveStreamEntry[]> {
 
 async function fetchPeerTubeLive(): Promise<LiveStreamEntry[]> {
   try {
-    const res = await fetch(
+    const res = await $fetch(
       `${PEERTUBE_BASE}/api/v1/videos?isLive=true&count=20&sort=-publishedAt`,
       {
         headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
@@ -234,7 +235,7 @@ async function fetchYouTubeLive(): Promise<LiveStreamEntry[]> {
     const results = await Promise.allSettled(
       channelIds.map(async (channelId) => {
         const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`;
-        const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+        const res = await $fetch(url, { signal: AbortSignal.timeout(5000) });
         if (!res.ok) return [];
 
         const data = (await res.json()) as {
@@ -295,7 +296,7 @@ async function fetchTwitchLive(): Promise<LiveStreamEntry[]> {
 
   try {
     // Get app access token
-    const tokenRes = await fetch(
+    const tokenRes = await $fetch(
       `https://id.twitch.tv/oauth2/token?client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`,
       { method: 'POST', signal: AbortSignal.timeout(5000) },
     );
@@ -305,7 +306,7 @@ async function fetchTwitchLive(): Promise<LiveStreamEntry[]> {
 
     // Check which users are live
     const userParam = twitchUsers.join('&user_login=');
-    const res = await fetch(`https://api.twitch.tv/helix/streams?user_login=${userParam}`, {
+    const res = await $fetch(`https://api.twitch.tv/helix/streams?user_login=${userParam}`, {
       headers: {
         'Client-ID': clientId,
         Authorization: `Bearer ${tokenData.access_token}`,
