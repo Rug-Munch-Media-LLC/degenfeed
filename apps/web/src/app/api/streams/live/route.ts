@@ -1,67 +1,24 @@
-/**
- * Live Streams API Route
- *
- * Proxies to the bridge live provider (Owncast + PeerTube + YouTube + Twitch).
- * Returns unified live stream data for the /live page.
- *
- * GET /api/streams/live
- */
-
 import { NextResponse } from 'next/server';
+import { getLiveSpaces } from '@degenfeed/spaces-bridge';
 
-const BRIDGE_URL = process.env.BRIDGE_URL || 'http://127.0.0.1:8787';
+export const dynamic = 'force-dynamic';
 
-export interface LiveStreamEntry {
-  id: string;
-  source: 'owncast' | 'peertube' | 'youtube' | 'twitch';
-  title: string;
-  creatorName: string;
-  creatorHandle: string;
-  creatorAvatar?: string;
-  viewerCount: number;
-  startedAt: number;
-  thumbnailUrl?: string;
-  streamUrl: string;
-  embedUrl?: string;
-  chatUrl?: string;
-  isLive: boolean;
-  description?: string;
-  tags?: string[];
-  metadata?: Record<string, unknown>;
-}
-
-export interface LiveStreamsResponse {
-  streams: LiveStreamEntry[];
-  featured: LiveStreamEntry[];
-  total: number;
-  sources: Record<string, boolean>;
-}
-
-export async function GET(): Promise<NextResponse> {
+/**
+ * GET /api/streams/live
+ * Legacy endpoint — returns all live streams/spaces from all platforms.
+ * Maintained for backward compatibility with existing bridge consumers.
+ */
+export async function GET() {
   try {
-    const res = await fetch(`${BRIDGE_URL}/api/live`, {
-      signal: AbortSignal.timeout(8000),
-      headers: { 'User-Agent': 'DegenFeed-Web/0.1' },
-    });
-
-    if (!res.ok) {
-      console.error(`[api/live] Bridge returned ${res.status}`);
-      return NextResponse.json(
-        { error: 'Live stream service unavailable', status: 503 },
-        { status: 503 },
-      );
-    }
-
-    const data = (await res.json()) as LiveStreamsResponse;
-    return NextResponse.json(data);
-  } catch (err) {
-    console.error(`[api/live] Error: ${(err as Error).message}`);
-    // Fall back to empty response
+    const spaces = await getLiveSpaces({ timeout: 5000 });
     return NextResponse.json({
-      streams: [],
-      featured: [],
-      total: 0,
-      sources: { owncast: false, peertube: false, youtube: false, twitch: false },
+      streams: spaces,
+      total: spaces.length,
+      platforms: [...new Set(spaces.flatMap((s) => s.platforms.map((p) => p.platform)))],
+      fetchedAt: Date.now(),
     });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return NextResponse.json({ error: message, streams: [], total: 0 }, { status: 200 });
   }
 }

@@ -1,5 +1,5 @@
+import { endSpace, getLiveSpaces } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
-import { getLiveSpaces, endSpace } from '@degenfeed/spaces-bridge';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,10 +8,7 @@ export const dynamic = 'force-dynamic';
  * Ends the space across all platforms it's active on.
  * Saves the recording URL if available.
  */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const body = await request.json();

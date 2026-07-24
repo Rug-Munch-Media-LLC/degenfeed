@@ -22,6 +22,17 @@ const SPAM_PATTERNS: RegExp[] = [
   /\b(casino|lottery|gift card|free crypto|free bitcoin|airdrop scam|claim now)\b/gi,
   /\b(viagra|cialis|escort|onlyfans)\b/gi,
   /🚀{4,}|💰{4,}|🔥{4,}|🌙{4,}/gu,
+  // Engagement bait patterns
+  /\b(like\s*and\s*(share|follow|retweet)|follow\s*for\s*(more|daily|signal)|tag\s*(a|your)\s*friend|upvote\s*if|comment\s*(below|your|done))\b/gi,
+  /\b(retweet\s*to\s*(win|enter|get|earn|receive))\b/gi,
+  /\b(follow\s*(back|4follow|forfollow|me\s*and\s*i))\b/gi,
+  // Crypto pump group patterns
+  /\b(pump\s*(and|&)\s*dump|pump\s*group|signal\s*group|alpha\s*group|whale\s*group|insider\s*group)\b/gi,
+  /\b(guaranteed\s*(profit|return|x100|x1000|100x))\b/gi,
+  /\b(minimum\s*(deposit|investment|buy\s*in)|presale\s*(live|now|open))\b/gi,
+  // Cross-posting spam: same message on every protocol
+  /^(same\s*(content|message|post)\s*(on|across|cross))(?![\s\S]{0,100}quality)/i,
+  /^(check\s*(out|my)\s*(profile|link|bio|page))/i,
 ];
 
 /** Additional crypto/web3-specific scam patterns. */
@@ -36,6 +47,16 @@ const SCAM_PATTERNS: RegExp[] = [
   /\b(double\s+(your|the)\s+(eth|btc|crypto|money|investment))\b/i,
   /\b(deposit\s+\d+.*(get|earn|make)\s+\d+)\b/i,
   /\b(rekt|rug\s*pull|honeypot).*\b(补偿|refund|recover|claim)\b/i,
+  // Modern crypto scam patterns
+  /\b(mint\s+(now|your|free)|whitelist\s+(mint|spot|access))\b.*\b(get|join|click|claim)\b/i,
+  /\b(approve\s*(this|contract|transaction|spend))\b.*\b(sign|confirm|validate)\b/i,
+  /\b(validate\s*(your|wallet|account|identity))\b.*\b(phrase|key|seed|password)\b/i,
+  /\b(recovery\s*(phrase|seed|key|wallet))\b.*\b(send|share|enter|input)\b/i,
+  /\b(claim\s*(your|the|free)\s*(nft|token|airdrop|reward))\b.*\b(wallet|connect|link)\b/i,
+  /\b(pump\s*fun|deploy|launch)\b.*\b(token|coin|meme|shitcoin).*\b(free|airdrop|presale)\b/i,
+  /\b(bot|automated|auto\s*trade)\b.*\b(trading|profit|earn).*(daily|guaranteed)\b/i,
+  /\b(phishing|malicious|fraud|scam)\b.*\b(report|block|avoid)\b/i,
+  /\b(KYC|verify)\b.*\b(required|needed|mandatory).*\b(deposit|send|pay)\b/i,
 ];
 
 const REPEATED_CHAR_RE = /(.)\1{8,}/;

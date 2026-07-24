@@ -32,7 +32,9 @@ import type { StoredUserPreferences } from './feed-cache';
 
 // ─── Preference parsing & merging ──────────────────────────────────
 
-export function parsePrefsFromQuery(params: URLSearchParams): Partial<UserAlgorithmPreferences> | null {
+export function parsePrefsFromQuery(
+  params: URLSearchParams,
+): Partial<UserAlgorithmPreferences> | null {
   const niches = params.get('niches');
   const platforms = params.get('platforms');
   const recencyWeight = Number(params.get('recencyWeight'));
@@ -42,7 +44,12 @@ export function parsePrefsFromQuery(params: URLSearchParams): Partial<UserAlgori
   return {
     niches: niches ? { active: niches.split(',').filter(Boolean), discoverNew: true } : undefined,
     protocolWeights: platforms
-      ? Object.fromEntries(platforms.split(',').filter(Boolean).map((p) => [p, 100]))
+      ? Object.fromEntries(
+          platforms
+            .split(',')
+            .filter(Boolean)
+            .map((p) => [p, 100]),
+        )
       : undefined,
   };
 }
@@ -96,7 +103,10 @@ export function mergePreferences(
     };
   }
   if (cookiePrefs?.protocolWeights) {
-    mergedPrefs.protocolWeights = { ...cookiePrefs.protocolWeights, ...mergedPrefs.protocolWeights };
+    mergedPrefs.protocolWeights = {
+      ...cookiePrefs.protocolWeights,
+      ...mergedPrefs.protocolWeights,
+    };
   }
   // Stored prefs (highest priority — override cookie + query gaps)
   if (storedPrefs) {
@@ -127,7 +137,7 @@ export function buildRankingContext(
     viewerNiches: new Set(prefs?.niches?.active ?? []),
     followed: followed ?? new Set(prefs?.followedIds ?? []),
     now,
-    preferences: prefs ?? null,
+    preferences: (prefs ?? null) as UserAlgorithmPreferences | null,
   };
 }
 

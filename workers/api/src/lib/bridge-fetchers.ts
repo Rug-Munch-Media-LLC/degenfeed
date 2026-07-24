@@ -36,11 +36,11 @@ async function _reliableBridgePublish<T>(
   const start = performance.now();
   try {
     const result = await withReliability(protocol, operation, { env });
-    recordBridgeOperation(protocol, 'publish', true, performance.now() - start, env);
+    recordBridgeOperation(env, protocol, true, performance.now() - start);
     return result;
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    recordBridgeOperation(protocol, 'publish', false, performance.now() - start, env, errorMsg);
+    recordBridgeOperation(env, protocol, false, performance.now() - start, errorMsg);
     return null;
   }
 }
@@ -104,7 +104,7 @@ export async function fetchFromAtProtocol(
       let rkey = nativeId;
       const parts = nativeId.split('/');
       if (parts.length >= 3) {
-        repo = parts[0] || did;
+        repo = (parts[0] || did)!;
         collection = parts[1] || collection;
         rkey = parts[2] || nativeId;
       }

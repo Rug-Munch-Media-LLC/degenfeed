@@ -169,7 +169,9 @@ export const atProtoLiveStrategy: ProtocolStrategy = {
       const threadRes = await fetch(
         `https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=${encodeURIComponent(protocolId)}&depth=0`,
       );
-      const threadData = threadRes.ok ? (await threadRes.json()) as { thread?: { post?: Record<string, unknown> } } : { thread: undefined };
+      const threadData = threadRes.ok
+        ? ((await threadRes.json()) as { thread?: { post?: Record<string, unknown> } })
+        : { thread: undefined };
       const post = threadData.thread?.post;
       const likeCount = (post?.likeCount as number) ?? 0;
       const repostCount = (post?.repostCount as number) ?? 0;

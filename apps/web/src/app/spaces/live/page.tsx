@@ -5,12 +5,7 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../../components/AuthProvider';
 import { ANIM_STYLES, LiveDot, SpacesIcon } from '../_animations';
-import {
-  EmptyState,
-  LiveSkeleton,
-  LiveSpaceCard,
-  SectionHeader,
-} from '../_components';
+import { EmptyState, LiveSkeleton, LiveSpaceCard, SectionHeader } from '../_components';
 import type { SpaceItem } from '../_types';
 
 const TipModal = dynamic(
@@ -53,9 +48,7 @@ export default function LiveSpacesPage() {
 
   const filteredSpaces = useMemo(() => {
     if (platformFilter === 'all') return spaces;
-    return spaces.filter((s) =>
-      s.platforms?.some((p) => p.platform === platformFilter),
-    );
+    return spaces.filter((s) => s.platforms?.some((p) => p.platform === platformFilter));
   }, [spaces, platformFilter]);
 
   const platformCounts = useMemo(() => {
@@ -181,9 +174,7 @@ export default function LiveSpacesPage() {
               className="rounded-lg border border-[var(--color-glass-border)] bg-[var(--color-card)] px-3 py-2 text-xs font-medium text-[var(--color-muted)] transition-all hover:border-degen-500/30 hover:text-degen-400 disabled:opacity-50"
               aria-label="Refresh spaces"
             >
-              <span className={`inline-block ${loading ? 'animate-spin' : ''}`}>
-                ↻
-              </span>
+              <span className={`inline-block ${loading ? 'animate-spin' : ''}`}>↻</span>
               <span className="ml-1.5 hidden sm:inline">Refresh</span>
             </button>
           </div>
@@ -214,9 +205,7 @@ export default function LiveSpacesPage() {
         </div>
 
         {/* Loading */}
-        {loading && (
-          <SectionHeader icon={<LiveDot />} title="Loading live spaces..." />
-        )}
+        {loading && <SectionHeader icon={<LiveDot />} title="Loading live spaces..." />}
         {loading && (
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -229,7 +218,9 @@ export default function LiveSpacesPage() {
         {error && !loading && (
           <div className="mb-6 rounded-2xl border border-red-900/40 bg-red-950/20 px-5 py-4 backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              <span className="text-lg text-red-400" aria-hidden="true">⚠</span>
+              <span className="text-lg text-red-400" aria-hidden="true">
+                ⚠
+              </span>
               <p className="text-sm text-red-400">{error}</p>
               <button
                 type="button"
@@ -285,10 +276,7 @@ export default function LiveSpacesPage() {
                       const chip = PLATFORM_CHIPS.find((c) => c.id === platform);
                       if (!chip || count === 0) return null;
                       return (
-                        <div
-                          key={platform}
-                          className="flex items-center gap-2 text-xs"
-                        >
+                        <div key={platform} className="flex items-center gap-2 text-xs">
                           <span
                             className="inline-block h-2.5 w-2.5 rounded-full"
                             style={{ backgroundColor: chip.color }}

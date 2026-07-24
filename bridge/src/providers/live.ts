@@ -5,8 +5,8 @@
  * for the bridge server's /api/streams/live endpoint.
  */
 
-import { getLiveSpaces } from '@degenfeed/spaces-bridge';
 import type { SpaceItem } from '@degenfeed/spaces-bridge';
+import { getLiveSpaces } from '@degenfeed/spaces-bridge';
 
 export interface LiveStreamResult {
   streams: SpaceItem[];

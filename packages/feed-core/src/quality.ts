@@ -232,14 +232,62 @@ export function computeQualityScore(post: UnifiedPost, context: QualityContext):
   const length = computeContentLengthScore(post);
   const media = hasMedia(post) ? 2 : 0;
 
-  // Weighted composite (each sub-score normalized to 0-1 range)
+  // Additional quality signals (added v4.0)
+  const text = (post.text ?? '').trim();
+
+  // Penalty for all-caps titles (clickbait indicator)
+  const firstWords = text.slice(0, 80);
+  const capsRatio = (firstWords.match(/[A-Z]/g) ?? []).length / Math.max(firstWords.length, 1);
+  const clickbaitPenalty = capsRatio > 0.6 && text.length > 30 ? 0.15 : 0;
+
+  // Penalty for excessive punctuation (!!!, ???, etc.)
+  const excessivePunct = (text.match(/[!?]{3,}/g) ?? []).length;
+  const punctPenalty = Math.min(excessivePunct * 0.05, 0.15);
+
+  // Bonus for substantive text with diverse vocabulary
+  const words = text.split(/\s+/).filter(w => w.length > 0);
+  const uniqueWords = new Set(words.map(w => w.toLowerCase())).size;
+  const vocabDiversity = words.length > 10 ? uniqueWords / words.length : 0.5;
+  const vocabBonus = vocabDiversity > 0.7 ? 0.1 : 0;
+
+  // Penalty for posts that are just links with no commentary
+  const urlFree = text.replace(/https?:\/\/\S+/g, '').trim();
+  const linkOnly = urlFree.length < 20 && (text.match(/https?:\/\//g) ?? []).length > 0;
+  const linkOnlyPenalty = linkOnly ? 0.1 : 0;
+
+  // Bonus for original content (cross-post detection)
+  const crossPostPattern = /^\s*(cross.?post|also (on|via|from)|re.?posted|syndicated)/i;
+  const originalContent = !crossPostPattern.test(text) ? 0.05 : 0;
+
+  // Spam penalty with enhanced sensitivity
+  const spamComponent = (1 - spam) * 30;
+
+  // Engagement quality with cross-protocol consideration
+  const engagementComponent = (density / 10) * 20;
+
+  // Author quality
+  const authorComponent = (author / 12) * 20;
+
+  // Uniqueness
+  const uniquenessComponent = (uniqueness / 10) * 15;
+
+  // Content depth with penalty
+  const depthComponent = (length / 10) * 10;
+
+  // Media bonus
+  const mediaComponent = (media / 2) * 5;
+
+  // New quality components
+  const bonusComponent = (vocabBonus + originalContent - clickbaitPenalty - punctPenalty - linkOnlyPenalty) * 100;
+
   const score =
-    (1 - spam) * 30 + // Spam penalty (30%)
-    (density / 10) * 20 + // Engagement quality (20%)
-    (author / 12) * 20 + // Author quality (20%)
-    (uniqueness / 10) * 15 + // Uniqueness (15%)
-    (length / 10) * 10 + // Content depth (10%)
-    (media / 2) * 5; // Media bonus (5%)
+    spamComponent +
+    engagementComponent +
+    authorComponent +
+    uniquenessComponent +
+    depthComponent +
+    mediaComponent +
+    bonusComponent;
 
   return Math.round(Math.max(0, Math.min(100, score)));
 }

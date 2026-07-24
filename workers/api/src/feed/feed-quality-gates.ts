@@ -252,6 +252,9 @@ export interface CrossProtocolDedupResult {
   deduped: number;
   crossProtocol: number;
   urlDedup: number;
+  rssDedup: number;
+  aggregatorDedup: number;
+  canonicalUrlDedup: number;
 }
 
 /**
@@ -271,6 +274,9 @@ export function applyCrossProtocolDedup(posts: UnifiedPost[]): {
       deduped: result.deduped,
       crossProtocol: result.crossProtocol,
       urlDedup: result.urlDedup,
+      rssDedup: result.rssDedup,
+      aggregatorDedup: result.aggregatorDedup,
+      canonicalUrlDedup: result.canonicalUrlDedup,
     },
   };
 }
@@ -643,6 +649,9 @@ export function applyQualityPipeline(
             deduped: 0,
             crossProtocol: 0,
             urlDedup: 0,
+            rssDedup: 0,
+            aggregatorDedup: 0,
+            canonicalUrlDedup: 0,
           },
         };
   output = dedup.posts;

@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { getLiveSpaces } from '@degenfeed/spaces-bridge';
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,10 +7,7 @@ export const dynamic = 'force-dynamic';
  * GET /api/spaces/[id] — Get space details
  * Searches across all platforms for the space.
  */
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const spaces = await getLiveSpaces({ timeout: 3000 });
@@ -28,10 +25,7 @@ export async function GET(
 /**
  * POST /api/spaces/[id] — Update space metadata
  */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const body = await request.json();

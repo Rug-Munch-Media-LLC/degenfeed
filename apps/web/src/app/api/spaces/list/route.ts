@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { getLiveSpaces } from '@degenfeed/spaces-bridge';
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +13,9 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const platformParam = url.searchParams.get('platform');
     const platforms = platformParam
-      ? (platformParam.split(',').filter(Boolean) as Array<'nostr' | 'peertube' | 'owncast' | 'livepeer'>)
+      ? (platformParam.split(',').filter(Boolean) as Array<
+          'nostr' | 'peertube' | 'owncast' | 'livepeer'
+        >)
       : undefined;
 
     const spaces = await getLiveSpaces({ platforms, timeout: 5000 });

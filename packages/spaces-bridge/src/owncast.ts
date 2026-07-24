@@ -134,9 +134,7 @@ export const owncastBridge: PlatformBridge = {
       ]);
 
       const status = (await statusRes.json()) as OwncastStatus;
-      const config = configRes
-        ? ((await configRes.json()) as OwncastConfig)
-        : null;
+      const config = configRes ? ((await configRes.json()) as OwncastConfig) : null;
 
       if (!status.online) return [];
 

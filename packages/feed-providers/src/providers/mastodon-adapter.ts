@@ -152,7 +152,10 @@ export async function fetchHashtagTimeline(
   return fetchJson<GtSStatus[]>(url, { headers: { 'user-agent': DEFAULT_USER_AGENT } });
 }
 
-export async function fetchPublicTimeline(instanceUrl: string, limit: number): Promise<GtSStatus[]> {
+export async function fetchPublicTimeline(
+  instanceUrl: string,
+  limit: number,
+): Promise<GtSStatus[]> {
   const url = buildUrl(instanceUrl, '/api/v1/timelines/public', {
     limit: String(limit),
     local: 'true',

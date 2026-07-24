@@ -8,13 +8,20 @@
  *   - Configurable polling intervals per source
  */
 
-import type { UnifiedPost } from './server/types';
-import { RateLimiter, FailureTracker } from './lib/rate-limiter';
-import { TRANSFORMS } from './lib/crossposter-transforms';
+import { DEFAULT_CONFIG } from './lib/crossposter-config';
 import { PUBLISHERS } from './lib/crossposter-publishers';
 import { SOURCE_POLLERS } from './lib/crossposter-sources';
-import { DEFAULT_CONFIG } from './lib/crossposter-config';
-import type { CrossPairConfig, PairStats, ProtocolName, PublishResult, TransformResult } from './lib/crossposter-types';
+import { TRANSFORMS } from './lib/crossposter-transforms';
+import type {
+  CrossPairConfig,
+  PairStats,
+  ProtocolName,
+  PublishResult,
+  TransformResult,
+} from './lib/crossposter-types';
+import { FailureTracker, RateLimiter } from './lib/rate-limiter';
+import type { UnifiedPost } from './server/types';
+
 export type { CrossPairConfig, PairStats, ProtocolName, PublishResult };
 
 // ─── State ──────────────────────────────────────────────────────────────

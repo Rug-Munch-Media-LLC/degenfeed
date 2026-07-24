@@ -262,13 +262,13 @@ async function moveToDeadLetter<T>(
   env: Env,
 ): Promise<void> {
   try {
-    await env.CACHE.put(
+    await env.CACHE?.put(
       `${DEAD_LETTER_PREFIX}${key}`,
       JSON.stringify(record),
       { expirationTtl: DEFAULT_TTL * 7 }, // Keep dead letters for 7 days
     );
     // Remove from active ops
-    await env.CACHE.delete(`${OP_PREFIX}${key}`);
+    await env.CACHE?.delete(`${OP_PREFIX}${key}`);
   } catch {
     // Non-critical
   }
@@ -327,6 +327,7 @@ async function listDeadLetterKeys(env: Env, max: number): Promise<string[]> {
   // Use KV list (available in Cloudflare Workers with wrangler)
   // Fallback: iterate prefix keys
   try {
+    if (!env.CACHE) return [];
     const listed = await env.CACHE.list({
       prefix: DEAD_LETTER_PREFIX,
       limit: max,

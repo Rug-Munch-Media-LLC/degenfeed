@@ -30,7 +30,8 @@ export function guessNiches(text: string, extraKeywords?: string[]): string[] {
   if (/\b(btc|bitcoin|satoshi|halving)\b/.test(lower)) niches.push('bitcoin');
   if (/\b(eth|ethereum|vitalik|pectra)\b/.test(lower)) niches.push('ethereum');
   if (/\b(sol|solana|spl)\b/.test(lower)) niches.push('solana');
-  if (/\b(defi|liquidity|yield|farm|lp|lending|compound|aave|uniswap)\b/.test(lower)) niches.push('defi');
+  if (/\b(defi|liquidity|yield|farm|lp|lending|compound|aave|uniswap)\b/.test(lower))
+    niches.push('defi');
   if (/\b(nft|art|collectible|punk|bored|ape)\b/.test(lower)) niches.push('nft');
   if (/\b(ai|artificial|intelligence|llm|agent)\b/.test(lower)) niches.push('ai');
   if (/\b(sec|regulation|sec\.|etf|compliance)\b/.test(lower)) niches.push('regulation');

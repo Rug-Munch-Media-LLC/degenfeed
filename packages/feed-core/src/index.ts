@@ -634,28 +634,25 @@ function levenshteinDistance(a: string, b: string): number {
   const bn = b.length;
   if (an === 0) return bn;
   if (bn === 0) return an;
-
-  // Use the shorter string as columns for memory efficiency
   if (an < bn) return levenshteinDistance(b, a);
 
-  let prev: number[] = new Array(bn + 1);
-  let curr: number[] = new Array(bn + 1);
+  const prev: number[] = new Array(bn + 1);
+  const curr: number[] = new Array(bn + 1);
 
-  for (let j = 0; j <= bn; j++) prev[j] = j;
+  for (let j = 0; j <= bn; j++) { prev[j] = j; curr[j] = 0; }
 
   for (let i = 1; i <= an; i++) {
     curr[0] = i;
     for (let j = 1; j <= bn; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curr[j] = Math.min(
-        prev[j] + 1,       // deletion
-        curr[j - 1] + 1,   // insertion
-        prev[j - 1] + cost // substitution
-      );
+      const pj = prev[j] as number;
+      const cj1 = curr[j - 1] as number;
+      const pj1 = prev[j - 1] as number;
+      curr[j] = Math.min(pj + 1, cj1 + 1, pj1 + cost);
     }
-    [prev, curr] = [curr, prev];
+    for (let j = 0; j <= bn; j++) prev[j] = curr[j] as number;
   }
-  return prev[bn];
+  return prev[bn] as number;
 }
 
 /**
@@ -667,8 +664,20 @@ function normalizedLevenshtein(a: string, b: string): number {
   const maxLen = Math.max(a.length, b.length);
   if (maxLen === 0) return 1.0;
   const dist = levenshteinDistance(
-    a.toLowerCase().replace(/https?:\/\/\S+/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200),
-    b.toLowerCase().replace(/https?:\/\/\S+/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200)
+    a
+      .toLowerCase()
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 200),
+    b
+      .toLowerCase()
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 200),
   );
   return 1.0 - dist / Math.max(maxLen, 1);
 }
@@ -694,7 +703,11 @@ function imagePerceptualFingerprint(post: UnifiedPost): string | null {
       if (!['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'svg', 'bmp'].includes(ext)) continue;
 
       // Use path name (filename without extension) as base fingerprint
-      const name = path.split('/').pop()?.replace(/\.[^.]+$/, '') || '';
+      const name =
+        path
+          .split('/')
+          .pop()
+          ?.replace(/\.[^.]+$/, '') || '';
       // Check for resized variants (common CDN pattern: /resize/ or _small, _thumb)
       const strippedName = name
         .replace(/[-_]?(small|thumb|tiny|medium|large|original|full|resize|crop)[-_]?/gi, '')
@@ -702,10 +715,8 @@ function imagePerceptualFingerprint(post: UnifiedPost): string | null {
 
       if (strippedName && strippedName.length > 3) {
         // Use the image dimensions from metadata if available
-        const meta = img.meta as Record<string, unknown> | undefined;
-        const dims = meta?.width && meta?.height
-          ? `${meta.width}x${meta.height}`
-          : '';
+        const meta = img.meta as unknown as Record<string, unknown> | undefined;
+        const dims = meta?.width && meta?.height ? `${meta.width}x${meta.height}` : '';
         fingerprints.push(`phash:${strippedName.toLowerCase()}|${dims}`);
       } else {
         // Fallback: use full path minus query
@@ -745,8 +756,8 @@ function isCrossPost(text: string): boolean {
  */
 const AGGREGATOR_DOMAINS = [
   'reddit.com',
-  'redlib.',  // Redlib instances
-  'lemmy',    // Lemmy instances
+  'redlib.', // Redlib instances
+  'lemmy', // Lemmy instances
   'news.google.com',
   'news.ycombinator.com',
   'medium.com',
@@ -802,7 +813,6 @@ function extractCanonicalUrl(post: UnifiedPost): string | null {
 
   return null;
 }
-
 
 function primaryUrl(post: UnifiedPost): string | null {
   const urls = post.text.match(URL_RE);
@@ -945,9 +955,9 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     if (curl && seen.canonicalUrl.has(curl)) {
       const matched = out.find((o) => extractCanonicalUrl(o) === curl);
       if (matched) {
-        const cross = (matched as Record<string, unknown>).crossPostedTo as string[] ?? [];
+        const cross = ((matched as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
         if (!cross.includes(p.protocol)) cross.push(p.protocol);
-        (matched as Record<string, unknown>).crossPostedTo = cross;
+        (matched as unknown as Record<string, unknown>).crossPostedTo = cross;
       }
       continue;
     }
@@ -1001,9 +1011,9 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
             return `rss:${ed}:${et.toLowerCase().slice(0, 80)}` === rssKey;
           });
           if (existing) {
-            const cross = (existing as Record<string, unknown>).crossPostedTo as string[] ?? [];
+            const cross = ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
             if (!cross.includes(p.protocol)) cross.push(p.protocol);
-            (existing as Record<string, unknown>).crossPostedTo = cross;
+            (existing as unknown as Record<string, unknown>).crossPostedTo = cross;
             // Keep the version with more content (likely the original)
             if ((p.text?.length ?? 0) > (existing.text?.length ?? 0)) {
               const idx = out.indexOf(existing);
@@ -1017,24 +1027,24 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     }
 
     // AGGREGATOR DEDUP: prefer original source over Redlib/Lemmy aggregator
+    let matchedAggregator = false;
     if (isFromAggregator(p)) {
       const curl2 = extractCanonicalUrl(p);
       if (curl2) {
         const normalCurl = normalizeUrlForDedup(curl2);
-        let matchedOriginal = false;
         for (const existing of out) {
           const existingUrl = extractCanonicalUrl(existing);
           if (existingUrl && normalizeUrlForDedup(existingUrl) === normalCurl) {
-            matchedOriginal = true;
-            const cross = (existing as Record<string, unknown>).crossPostedTo as string[] ?? [];
+            matchedAggregator = true;
+            const cross = ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
             if (!cross.includes(p.protocol)) cross.push(p.protocol);
-            (existing as Record<string, unknown>).crossPostedTo = cross;
+            (existing as unknown as Record<string, unknown>).crossPostedTo = cross;
             break;
           }
         }
       }
-      if (matchedOriginal) continue;
     }
+    if (matchedAggregator) continue;
 
     // JACCARD similarity for near-duplicates
     const ws = wordSet(p.text);
@@ -1046,9 +1056,9 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
           const existing = out[cand.index];
           if (!existing) continue;
           matchedProtocol = existing.protocol;
-          const cross = (existing as Record<string, unknown>).crossPostedTo as string[] ?? [];
+          const cross = ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
           if (!cross.includes(p.protocol)) cross.push(p.protocol);
-          (existing as Record<string, unknown>).crossPostedTo = cross;
+          (existing as unknown as Record<string, unknown>).crossPostedTo = cross;
           break;
         }
       }
@@ -1056,7 +1066,8 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
 
     // LEVENSHTEIN near-duplicate detection for short/medium text
     if (!matchedProtocol && p.text.length > 15 && p.text.length < 300) {
-      const cleanText = p.text.toLowerCase()
+      const cleanText = p.text
+        .toLowerCase()
         .replace(/https?:\/\/\S+/g, '')
         .replace(/[^a-z0-9\s]/g, ' ')
         .replace(/\s+/g, ' ')
@@ -1068,9 +1079,9 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
             const existing = out[cand.index];
             if (!existing) continue;
             matchedProtocol = existing.protocol;
-            const cross = (existing as Record<string, unknown>).crossPostedTo as string[] ?? [];
+            const cross = ((existing as unknown as Record<string, unknown>).crossPostedTo as string[]) ?? [];
             if (!cross.includes(p.protocol)) cross.push(p.protocol);
-            (existing as Record<string, unknown>).crossPostedTo = cross;
+            (existing as unknown as Record<string, unknown>).crossPostedTo = cross;
             break;
           }
         }
@@ -1093,7 +1104,8 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
     if (imgFp) seen.imageFp.add(imgFp);
     if (phash) seen.perceptualHash.add(phash);
     candidates.push({ words: ws, index: out.length });
-    const cleanText = p.text.toLowerCase()
+    const cleanText = p.text
+      .toLowerCase()
       .replace(/https?:\/\/\S+/g, '')
       .replace(/[^a-z0-9\s]/g, ' ')
       .replace(/\s+/g, ' ')
@@ -1112,7 +1124,7 @@ export function deduplicatePosts(posts: UnifiedPost[]): UnifiedPost[] {
  */
 function postTitle(post: UnifiedPost): string | null {
   for (const embed of post.embeds) {
-    const meta = embed.meta as Record<string, unknown> | undefined;
+    const meta = embed.meta as unknown as Record<string, unknown> | undefined;
     if (meta?.title && typeof meta.title === 'string' && meta.title.length > 5) {
       return meta.title;
     }
@@ -1121,7 +1133,8 @@ function postTitle(post: UnifiedPost): string | null {
     const firstLine = post.text.trim().split('\n')[0]?.trim();
     if (firstLine && firstLine.length > 5 && firstLine.length < 200) return firstLine;
     const firstSentence = post.text.trim().split(/[.!?]/)[0]?.trim();
-    if (firstSentence && firstSentence.length > 5 && firstSentence.length < 200) return firstSentence;
+    if (firstSentence && firstSentence.length > 5 && firstSentence.length < 200)
+      return firstSentence;
   }
   return null;
 }
@@ -1138,7 +1151,6 @@ function extractDomain(post: UnifiedPost): string | null {
     return null;
   }
 }
-
 
 export function enrichPostNiches(post: UnifiedPost): UnifiedPost {
   const textParts = [post.text, post.html ?? '', post.author.displayName, post.author.bio];
@@ -1311,13 +1323,12 @@ export {
 
 // ─── Enhanced Dedup & Quality Functions ─────────────────────────────────
 export {
-  levenshteinDistance,
-  normalizedLevenshtein,
+  extractCanonicalUrl,
+  extractDomain,
   imagePerceptualFingerprint,
   isCrossPost,
   isFromAggregator,
-  extractCanonicalUrl,
+  levenshteinDistance,
+  normalizedLevenshtein,
   postTitle,
-  extractDomain,
-}
-
+};

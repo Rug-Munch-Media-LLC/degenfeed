@@ -178,7 +178,9 @@ export function FeedShell({ children }: FeedShellProps) {
                 : undefined
             }
           >
-            <span className="flex h-6 w-6 items-center justify-center text-sm" aria-hidden="true">🎨</span>
+            <span className="flex h-6 w-6 items-center justify-center text-sm" aria-hidden="true">
+              🎨
+            </span>
             <span className="flex-1 truncate">Media Hub</span>
           </Link>
 
@@ -195,9 +197,14 @@ export function FeedShell({ children }: FeedShellProps) {
                 : undefined
             }
           >
-            <span className="flex h-6 w-6 items-center justify-center text-sm" aria-hidden="true">●</span>
+            <span className="flex h-6 w-6 items-center justify-center text-sm" aria-hidden="true">
+              ●
+            </span>
             <span className="flex-1 truncate">Live</span>
-            <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full" style={{ backgroundColor: '#ef4444' }} />
+            <span
+              className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full"
+              style={{ backgroundColor: '#ef4444' }}
+            />
           </Link>
 
           <div className="h-px bg-[var(--color-glass-border)] my-2" />
@@ -279,7 +286,11 @@ export function FeedShell({ children }: FeedShellProps) {
                 ? 'text-[var(--color-fg)] bg-[#ff6b9d]18'
                 : 'text-[var(--color-muted)] hover:text-[var(--color-fg)] bg-[var(--color-overlay)]'
             }`}
-            style={pathname === '/feed/media' ? { backgroundColor: '#ff6b9d18', color: '#ff6b9d' } : undefined}
+            style={
+              pathname === '/feed/media'
+                ? { backgroundColor: '#ff6b9d18', color: '#ff6b9d' }
+                : undefined
+            }
           >
             🎨 Media
           </Link>
@@ -291,7 +302,11 @@ export function FeedShell({ children }: FeedShellProps) {
                 ? 'text-[var(--color-fg)]'
                 : 'text-[var(--color-muted)] hover:text-[var(--color-fg)] bg-[var(--color-overlay)]'
             }`}
-            style={pathname === '/feed/live' ? { backgroundColor: '#ef444418', color: '#ef4444' } : undefined}
+            style={
+              pathname === '/feed/live'
+                ? { backgroundColor: '#ef444418', color: '#ef4444' }
+                : undefined
+            }
           >
             ● Live
           </Link>

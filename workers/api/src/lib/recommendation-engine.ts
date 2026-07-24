@@ -753,7 +753,7 @@ export class RecommendationEngine {
       watchTimeByCategory,
       engagementRate: totalInteractions > 0 ? positiveInteractions / totalInteractions : 0.1,
       lastActive:
-        interactions.length > 0 ? interactions[interactions.length - 1]?.timestamp : Date.now(),
+        interactions.length > 0 ? (interactions[interactions.length - 1]?.timestamp ?? Date.now()) : Date.now(),
       recentWatched,
       skippedContent,
       likedContent,

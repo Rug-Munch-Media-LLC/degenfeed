@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import { checkAllGates } from '@degenfeed/spaces-bridge';
 import type { SpaceGating } from '@degenfeed/spaces-bridge';
+import { checkAllGates } from '@degenfeed/spaces-bridge';
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,10 +9,7 @@ export const dynamic = 'force-dynamic';
  * Body: { userId, userAddress (optional) }
  * Response: { allowed, reason, gates }
  */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const body = await request.json();

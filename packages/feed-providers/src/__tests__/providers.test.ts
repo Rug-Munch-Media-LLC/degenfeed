@@ -111,9 +111,7 @@ describe('feed providers', () => {
 
   describe('MastodonProvider', () => {
     it('falls back to public instance when primary fails', async () => {
-      const fetchCalls: string[] = [];
       (globalThis.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
-        fetchCalls.push(url);
         if (url.includes('social.degenfeed.xyz')) {
           return Promise.resolve(
             mockResponse({ ok: false, status: 503, statusText: 'Unavailable' }),
@@ -157,14 +155,8 @@ describe('feed providers', () => {
           }),
         );
       });
-      // Verify mock works by directly fetch-checking
-      const directResult = await (globalThis.fetch as unknown as ReturnType<typeof vi.fn>)('https://mastodon.social/api/v1/trends/statuses?limit=8');
-      const directJson = await directResult.json();
-      console.log('Direct fetch test: ok=', directResult.ok, 'jsonLength=', Array.isArray(directJson) ? directJson.length : 'not-array');
-      
       const provider = new MastodonProvider();
       const result = await provider.fetchFeed({ timeoutMs: 1000 });
-      console.log('MastodonProvider debug: posts=', result.posts.length, 'notice=', result.notice, 'calls=', fetchCalls.length, 'firstCall=', fetchCalls[0]?.substring(0, 80));
       expect(result.posts.length).toBeGreaterThan(0);
       expect(result.posts[0]?.protocol).toBe('mastodon');
     });

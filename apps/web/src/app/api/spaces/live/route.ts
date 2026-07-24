@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { getLiveSpaces } from '@degenfeed/spaces-bridge';
+import { NextResponse } from 'next/server';
 import { proxyGet } from '../../_proxy';
 
 export const dynamic = 'force-dynamic';

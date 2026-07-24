@@ -35,7 +35,10 @@ function getAccessToken(): string {
 
 // ─── Map PeerTube stream → SpaceItem ───────────────────────────────────
 
-async function mapPeerTubeStreamToSpace(videoId: string, client: PeerTubeLiveStream): Promise<SpaceItem | null> {
+async function mapPeerTubeStreamToSpace(
+  videoId: string,
+  client: PeerTubeLiveStream,
+): Promise<SpaceItem | null> {
   try {
     const status = await client.getStreamStatus(videoId);
     if (!status.isLive) return null;
@@ -118,9 +121,10 @@ export const peertubeBridge: PlatformBridge = {
     const client = new PeerTubeLiveStream({ accessToken, instanceUrl: PEERTUBE_INSTANCE });
 
     // Use token info if provided, otherwise create a generic channel
-    const channelName = options.peertubeTokenSymbol?.toLowerCase()
-      ?? options.hostName.toLowerCase().replace(/[^a-z0-9]/g, '_')
-      ?? 'degenfeed-space';
+    const channelName =
+      options.peertubeTokenSymbol?.toLowerCase() ??
+      options.hostName.toLowerCase().replace(/[^a-z0-9]/g, '_') ??
+      'degenfeed-space';
 
     const result = await client.createStream({
       title: options.title,
@@ -132,7 +136,7 @@ export const peertubeBridge: PlatformBridge = {
       creatorAddress: options.peertubeCreatorAddress,
       tokenGated: options.gating?.type === 'token',
       category: 13, // Tech
-      privacy: 1,   // Public
+      privacy: 1, // Public
     });
 
     return {
