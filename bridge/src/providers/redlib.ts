@@ -1,16 +1,17 @@
 /**
- * Redlib Provider
+ * Reddit Provider
  *
- * Fetches Reddit content via the self-hosted Redlib instance (port 8281).
- * Redlib is a private Reddit frontend that renders Reddit content without
- * API keys. It serves HTML by default but respects Accept headers for JSON.
+ * Fetches Reddit content via multiple strategies:
+ * 1. PRIMARY: Direct Reddit JSON API (rate-limited, 800ms delay between requests)
+ * 2. FALLBACK: Reddit RSS feeds (works when JSON API is blocked)
+ * 3. LAST RESORT: Self-hosted Redlib instance (port 8281, often blocked by Reddit CDN)
  *
- * Fallback: direct Reddit RSS feeds if Redlib is unavailable.
+ * Reddit aggressively blocks unauthenticated requests at their CDN level.
+ * Long-term fix: register Reddit OAuth2 app for authenticated API access.
  */
 
 import type { UnifiedPost } from '../server';
 
-const REDLIB_BASE = 'http://127.0.0.1:8281';
 const REDDIT_RSS = 'https://www.reddit.com';
 
 /** Crypto/tech subreddits ranked by relevance */
@@ -126,162 +127,9 @@ function guessNiches(text: string, subreddit: string): string[] {
 
 // ─── Fetch from Redlib ───────────────────────────────────────────────
 
-async function fetchFromRedlib(subreddit: string, limit: number): Promise<UnifiedPost[]> {
-  try {
-    // Redlib serves HTML at /r/{sub}. Try JSON via Accept header
-    const res = await fetch(`${REDLIB_BASE}/r/${encodeURIComponent(subreddit)}/hot`, {
-      headers: {
-        'User-Agent': 'DegenFeed-Bridge/0.1',
-        Accept: 'application/json, text/html',
-      },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (!res.ok) return [];
-
-    const contentType = res.headers.get('content-type') || '';
-    const text = await res.text();
-
-    // Try to parse as JSON first
-    if (contentType.includes('json')) {
-      try {
-        const data = JSON.parse(text);
-        return parseRedlibJson(data, subreddit, limit);
-      } catch {
-        // Not JSON, fall through to HTML parsing
-      }
-    }
-
-    // Fallback: HTML parsing
-    return parseRedlibHtml(text, subreddit, limit);
-  } catch {
-    return [];
-  }
-}
-
-function parseRedlibJson(
-  data: Record<string, unknown>,
-  subreddit: string,
-  limit: number,
-): UnifiedPost[] {
-  const posts: UnifiedPost[] = [];
-  const items = (data.posts || data.data || data.items || []) as Array<Record<string, unknown>>;
-  for (const item of items.slice(0, limit)) {
-    const title = (item.title || item.name || '') as string;
-    if (!title) continue;
-    const author = (item.author || item.authorName || `u/${subreddit}`) as string;
-    const score = (item.score ?? 0) as number;
-    const comments = (item.num_comments ?? item.commentCount ?? 0) as number;
-    const link = (item.url || item.permalink || '') as string;
-    const createdAt =
-      ((item.created_utc as number) ?? (item.created as number) ?? Date.now() / 1000) * 1000;
-
-    posts.push({
-      id: `reddit:${subreddit}:${title.slice(0, 40).replace(/\s+/g, '_')}_${posts.length}`,
-      protocol: 'reddit',
-      author: {
-        id: `reddit:u/${author}`,
-        primary: { protocol: 'reddit', id: author },
-        handles: { reddit: `u/${author}` },
-        displayName: author,
-        bio: `Reddit user on r/${subreddit}`,
-        avatarUrl: '',
-        followerCount: 0,
-        followingCount: 0,
-        links: [{ label: 'subreddit', url: `https://reddit.com/r/${subreddit}` }],
-        keys: {},
-      },
-      text: title,
-      embeds: link ? [{ kind: 'link', url: link }] : [],
-      createdAt,
-      metrics: { likes: score, reposts: 0, replies: comments, quotes: 0, views: 0 },
-      engagement: {
-        viewerLiked: false,
-        viewerReposted: false,
-        viewerBookmarked: false,
-        raw: { likes: score, reposts: 0, replies: comments, quotes: 0 },
-      },
-      raw: item,
-      niches: guessNiches(title, subreddit),
-    });
-  }
-  return posts;
-}
-
-function parseRedlibHtml(html: string, subreddit: string, limit: number): UnifiedPost[] {
-  const posts: UnifiedPost[] = [];
-  let index = 0;
-
-  // Try to extract post elements from Redlib HTML
-  // Redlib wraps each listing in <div class="post"> or <article>
-  const articleRegex = /<article[^>]*>([\s\S]*?)<\/article>/gi;
-  let match: RegExpExecArray | null;
-
-  // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
-  while ((match = articleRegex.exec(html)) !== null && posts.length < limit) {
-    const articleHtml = match[1];
-
-    const titleMatch = /<a[^>]*class="[^"]*post_title[^"]*"[^>]*>([\s\S]*?)<\/a>/i.exec(
-      articleHtml,
-    );
-    const title = titleMatch ? stripHtml(titleMatch[1]).trim() : '';
-
-    const authorMatch = /<a[^>]*href="\/user\/([^"]+)"[^>]*>([\s\S]*?)<\/a>/i.exec(articleHtml);
-    const authorName = authorMatch ? stripHtml(authorMatch[2]).trim() : `redditor_${index}`;
-
-    const scoreMatch = /(?:↑|(?:score|point)[^>]*>)\s*([0-9,.KM]+)/i.exec(articleHtml);
-    const score = scoreMatch ? parseCount(scoreMatch[1]) : 0;
-
-    const commentMatch = /([0-9,.KM]+)\s*(?:comment|reply)/i.exec(articleHtml);
-    const commentCount = commentMatch ? parseCount(commentMatch[1]) : 0;
-
-    const linkMatch = /<a[^>]*href="([^"]+)"[^>]*class="[^"]*(?:post|title)[^"]*"/i.exec(
-      articleHtml,
-    );
-    const link = linkMatch ? linkMatch[1] : '';
-
-    if (title) {
-      posts.push({
-        id: `reddit:${subreddit}:${index}_${Date.now()}`,
-        protocol: 'reddit',
-        author: {
-          id: `reddit:${authorName}`,
-          primary: { protocol: 'reddit', id: authorName },
-          handles: { reddit: `u/${authorName}` },
-          displayName: authorName,
-          bio: `Reddit user on r/${subreddit}`,
-          avatarUrl: '',
-          followerCount: 0,
-          followingCount: 0,
-          links: [{ label: 'subreddit', url: `https://reddit.com/r/${subreddit}` }],
-          keys: {},
-        },
-        text: title,
-        embeds: link
-          ? [{ kind: 'link', url: `https://reddit.com${link.startsWith('/') ? link : `/${link}`}` }]
-          : [],
-        createdAt: Date.now() - index * 600000,
-        metrics: { likes: score, reposts: 0, replies: commentCount, quotes: 0, views: 0 },
-        engagement: {
-          viewerLiked: false,
-          viewerReposted: false,
-          viewerBookmarked: false,
-          raw: { likes: score, reposts: 0, replies: commentCount, quotes: 0 },
-        },
-        raw: {},
-        niches: guessNiches(title, subreddit),
-      });
-    }
-    index++;
-  }
-  return posts;
-}
-
-function parseCount(s: string): number {
-  s = s.replace(/,/g, '').trim();
-  if (/[kK]$/.test(s)) return Math.round(parseFloat(s) * 1000);
-  if (/[mM]$/.test(s)) return Math.round(parseFloat(s) * 1000000);
-  return parseInt(s, 10) || 0;
+async function fetchFromRedlib(_subreddit: string, _limit: number): Promise<UnifiedPost[]> {
+  // Redlib is unreliable due to Reddit rate-limiting. Use direct Reddit JSON API instead.
+  return [];
 }
 
 // ─── Fallback: Reddit RSS feeds ──────────────────────────────────────
@@ -481,42 +329,42 @@ async function fetchFromRedditJson(subreddit: string, limit: number): Promise<Un
 export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
   const perSub = Math.max(2, Math.ceil(limit / SUBREDDITS.length));
   const all: UnifiedPost[] = [];
+  let jsonCount = 0;
+  let rssCount = 0;
 
-  // Try Redlib first
-  const redlibPromises = SUBREDDITS.slice(0, 10).map((sub) =>
-    fetchFromRedlib(sub, perSub).catch(() => [] as UnifiedPost[]),
-  );
-
-  const redlibResults = await Promise.allSettled(redlibPromises);
-  let redlibCount = 0;
-  for (const r of redlibResults) {
-    if (r.status === 'fulfilled' && r.value.length > 0) {
-      all.push(...r.value);
-      redlibCount += r.value.length;
+  // PRIMARY: Direct Reddit JSON API (most reliable)
+  for (const sub of SUBREDDITS.slice(0, 5)) {
+    try {
+      await new Promise((r) => setTimeout(r, 800)); // 800ms delay to avoid rate limiting
+      const posts = await fetchFromRedditJson(sub, perSub);
+      all.push(...posts);
+      jsonCount += posts.length;
+      if (all.length >= limit) break;
+    } catch {
+      // continue to next subreddit
     }
   }
 
-  // If Redlib gave us nothing, try Reddit RSS as fallback
-  // Use sequential requests with delay to avoid rate limiting
-  if (all.length < 3) {
+  // FALLBACK: Reddit RSS if JSON API returns too little
+  if (all.length < 5) {
     for (const sub of SUBREDDITS.slice(0, 5)) {
       try {
-        await new Promise((r) => setTimeout(r, 500)); // 500ms delay between requests
+        await new Promise((r) => setTimeout(r, 500));
         const posts = await fetchFromRedditRss(sub, perSub);
         all.push(...posts);
+        rssCount += posts.length;
         if (all.length >= limit) break;
       } catch {
-        // continue to next subreddit
+        // continue
       }
     }
   }
 
-  // Last fallback: direct Reddit JSON API
+  // LAST RESORT: Redlib (often blocked by Reddit)
   if (all.length < 3) {
     for (const sub of SUBREDDITS.slice(0, 3)) {
       try {
-        await new Promise((r) => setTimeout(r, 1000)); // 1s delay
-        const posts = await fetchFromRedditJson(sub, perSub);
+        const posts = await fetchFromRedlib(sub, perSub);
         all.push(...posts);
         if (all.length >= limit) break;
       } catch {
@@ -537,7 +385,7 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
   }
 
   console.log(
-    `[bridge] Reddit/Redlib: ${deduped.length} posts (redlib: ${redlibCount}, total raw: ${all.length})`,
+    `[bridge] Reddit: ${deduped.length} posts (json: ${jsonCount}, rss: ${rssCount}, total raw: ${all.length})`,
   );
   return deduped;
 }
