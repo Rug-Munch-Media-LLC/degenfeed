@@ -1,0 +1,65 @@
+'use client';
+
+import { formatCompact } from './types';
+
+export function PieChart({
+  data,
+  colorMap,
+  size = 140,
+}: {
+  data: Record<string, number>;
+  colorMap: Record<string, string>;
+  size?: number;
+}) {
+  const total = Object.values(data).reduce((s, v) => s + v, 0);
+  if (total === 0)
+    return (
+      <div
+        className="flex items-center justify-center text-xs text-[var(--color-muted)]"
+        style={{ width: size, height: size }}
+      >
+        No data
+      </div>
+    );
+  const segments = Object.entries(data).filter(([, v]) => v > 0);
+  const conic = segments
+    .reduce(
+      (acc, [_key, val], i) => {
+        const pct = (val / total) * 360;
+        const start = i === 0 ? 0 : acc.reduce((s, [, p]) => s + p, 0);
+        const end = start + pct;
+        acc.push([pct, start, end] as [number, number, number]);
+        return acc;
+      },
+      [] as [number, number, number][],
+    )
+    .map(
+      ([_pct, start, end], i) =>
+        `${colorMap[segments[i]?.[0] || ''] || '#666'} ${start}deg ${end}deg`,
+    )
+    .join(', ');
+  return (
+    <div className="flex items-center gap-4">
+      <div
+        className="shrink-0 rounded-full"
+        style={{ width: size, height: size, background: `conic-gradient(${conic})` }}
+        role="img"
+        aria-label={`Pie chart with ${segments.length} segments`}
+      />
+      <div className="flex flex-col gap-1.5">
+        {segments.map(([key, val]) => (
+          <div key={key} className="flex items-center gap-2">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-sm"
+              style={{ backgroundColor: colorMap[key] || '#666' }}
+            />
+            <span className="text-xs text-[var(--color-muted)] capitalize">{key}</span>
+            <span className="ml-auto text-xs font-medium tabular-nums text-[var(--color-fg)]">
+              {formatCompact(val)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

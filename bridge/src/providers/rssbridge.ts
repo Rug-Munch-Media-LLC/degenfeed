@@ -44,7 +44,7 @@ const RSS_FEEDS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, ' ')
@@ -58,7 +58,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-function guessNiches(text: string, baseNiches: string[]): string[] {
+export function guessNiches(text: string, baseNiches: string[]): string[] {
   const niches = new Set(baseNiches);
   const lower = text.toLowerCase();
   if (/\b(btc|bitcoin|satoshi|halving)\b/.test(lower)) niches.add('bitcoin');
@@ -116,7 +116,7 @@ async function fetchFromBridge(
   }
 }
 
-function parseBridgeJson(data: Record<string, unknown>, limit: number): UnifiedPost[] {
+export function parseBridgeJson(data: Record<string, unknown>, limit: number): UnifiedPost[] {
   const items = (data.items || []) as Array<Record<string, unknown>>;
   if (items.length === 0) return [];
 
@@ -189,7 +189,7 @@ async function fetchRssFeed(
   }
 }
 
-function parseRssXml(
+export function parseRssXml(
   xml: string,
   label: string,
   baseNiches: string[],

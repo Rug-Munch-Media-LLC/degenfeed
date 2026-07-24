@@ -5,8 +5,14 @@
  */
 
 export type {
-  ApiResponse, PaginatedResponse,
-  AsyncState, LoadingState,
-  FeedTab, FeedMeta, ProtocolMeta, ProtocolSummary,
-  FeedPreferences, PostAction,
+  ApiResponse,
+  AsyncState,
+  FeedMeta,
+  FeedPreferences,
+  FeedTab,
+  LoadingState,
+  PaginatedResponse,
+  PostAction,
+  ProtocolMeta,
+  ProtocolSummary,
 } from './api';

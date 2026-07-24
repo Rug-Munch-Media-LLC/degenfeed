@@ -83,7 +83,7 @@ interface BskyFeedResponse {
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
-function guessNiches(text: string): string[] {
+export function guessNiches(text: string): string[] {
   const niches: string[] = [];
   const lower = text.toLowerCase();
   if (/\b(btc|bitcoin|satoshi|halving)\b/.test(lower)) niches.push('bitcoin');
@@ -104,7 +104,7 @@ function guessNiches(text: string): string[] {
 
 // ─── Mapping ─────────────────────────────────────────────────────────
 
-function postToUnified(post: BskyPostView): UnifiedPost {
+export function postToUnified(post: BskyPostView): UnifiedPost {
   const embeds: Array<{ kind: string; url: string; meta?: Record<string, unknown> }> = [];
 
   if (post.record.embed?.external) {
