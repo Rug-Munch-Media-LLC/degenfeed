@@ -181,6 +181,12 @@ describe('loaded state', () => {
     const scrollIntoViewMock = vi.fn();
     Element.prototype.scrollIntoView = scrollIntoViewMock;
 
+    // Mock requestAnimationFrame to execute callbacks synchronously
+    const rafMock = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+      cb(0);
+      return 0;
+    });
+
     sessionStorage.setItem('df_scroll', JSON.stringify({ y: 500, id: 'p2' }));
 
     const posts = [makePost('p1'), makePost('p2'), makePost('p3')];
@@ -188,6 +194,8 @@ describe('loaded state', () => {
 
     // FeedList tries to scroll to the post with matching id
     expect(scrollIntoViewMock).toHaveBeenCalled();
+
+    rafMock.mockRestore();
   });
 });
 

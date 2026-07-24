@@ -11,6 +11,7 @@
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
+
 const $fetch = globalThis.fetch;
 
 const RSS_BRIDGE_BASE = 'http://127.0.0.1:8282';
@@ -55,7 +56,9 @@ export function stripHtml(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ +\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
@@ -69,7 +72,7 @@ export function guessNiches(text: string, baseNiches: string[]): string[] {
   if (/\b(nft|art|collectible|punk)\b/.test(lower)) niches.add('nft');
   if (/\b(ai|artificial|intelligence|llm|agent)\b/.test(lower)) niches.add('ai');
   if (/\b(sec|regulation|etf|compliance)\b/.test(lower)) niches.add('regulation');
-  if (/\b(meme|pepe|dog|shib)\b/.test(lower)) niches.add('memecoin');
+  if (/\b(meme|pepe|dog|doge|shib)\b/.test(lower)) niches.add('memecoin');
   if (/\b(layer2|l2|arbitrum|optimism|base)\b/.test(lower)) niches.add('layer2');
   if (/\b(security|hack|exploit|audit)\b/.test(lower)) niches.add('security');
   if (niches.size === 0) niches.add('crypto');

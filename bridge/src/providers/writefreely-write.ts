@@ -81,7 +81,7 @@ async function apiFetch<T>(
       // Not JSON
     }
 
-    if (!res.ok || (parsed?.code && parsed.code >= 400)) {
+    if (!res.ok || (parsed && parsed.code && parsed.code >= 400)) {
       return {
         ok: false,
         error: parsed?.error_msg || `HTTP ${res.status}: ${text.slice(0, 200)}`,
@@ -210,7 +210,7 @@ export async function publishUnifiedPost(
       : `Cross-posted from ${post.protocol}${sourceLine}`;
 
   // Truncate to WriteFreely max body (configurable, default ~1MB)
-  const truncatedBody = body.length > 500000 ? `${body.slice(0, 499990)}\n\n[truncated]` : body;
+  const truncatedBody = body.length > 500000 ? body.slice(0, 499990) + '\n\n[truncated]' : body;
 
   // Generate title from content
   const firstLine = post.text.split('\n')[0] || '';

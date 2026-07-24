@@ -2,12 +2,16 @@
  * @degenfeed/ui — ProtocolBadge
  *
  * Colored badge showing which protocol a post comes from.
- * Design: rounded-pill, brand color fill, protocol icon + name.
- * Uses CSS custom properties for protocol colors so they're theme-aware.
+ * Expanded for ALL platforms: audio, video, social, photos.
  */
 
 export const PROTOCOL_COLORS: Record<string, string> = {
+  // Audio Spaces
   nostr: '#8b5cf6',
+  peertube: '#d22d23',
+  owncast: '#06b6d4',
+  livepeer: '#10b981',
+  // Social / Announce
   farcaster: '#8a63d2',
   lens: '#abfe2c',
   bluesky: '#1185fe',
@@ -18,23 +22,34 @@ export const PROTOCOL_COLORS: Record<string, string> = {
   activitypub: '#6364ff',
   atproto: '#1185fe',
   rss: '#ffa500',
-  peertube: '#d22d23',
-  owncast: '#06b6d4',
-  livepeer: '#10b981',
+  discord: '#5865f2',
+  telegram: '#26a5e4',
+  twitter: '#1da1f2',
+  matrix: '#000000',
+  // Video
   youtube: '#ff0000',
+  twitch: '#9146ff',
+  kick: '#53fc18',
+  // Photos
+  'nostr-pictures': '#8b5cf6',
+  'bluesky-photos': '#1185fe',
+  pixelfed: '#ff0066',
+  // Publishing
   mirror: '#0a0a0a',
   paragraph: '#6b21a8',
   zora: '#7c3aed',
   ghost: '#15171a',
   kbin: '#6364ff',
-  discord: '#5865f2',
-  telegram: '#26a5e4',
-  matrix: '#000000',
   github: '#333',
 };
 
 export const PROTOCOL_LABELS: Record<string, string> = {
+  // Audio
   nostr: 'Nostr',
+  peertube: 'PeerTube',
+  owncast: 'Owncast',
+  livepeer: 'LivePeer',
+  // Social
   farcaster: 'Farcaster',
   lens: 'Lens',
   bluesky: 'Bluesky',
@@ -45,43 +60,62 @@ export const PROTOCOL_LABELS: Record<string, string> = {
   activitypub: 'Mastodon',
   atproto: 'AT Protocol',
   rss: 'RSS',
-  peertube: 'PeerTube',
-  owncast: 'Owncast',
-  livepeer: 'LivePeer',
+  discord: 'Discord',
+  telegram: 'Telegram',
+  twitter: 'X',
+  matrix: 'Matrix',
+  // Video
   youtube: 'YouTube',
+  twitch: 'Twitch',
+  kick: 'Kick',
+  // Photos
+  'nostr-pictures': 'Nostr Pic',
+  'bluesky-photos': 'Bsky Pic',
+  pixelfed: 'Pixelfed',
+  // Publishing
   mirror: 'Mirror.xyz',
   paragraph: 'Paragraph',
   zora: 'Zora',
   ghost: 'Ghost',
   kbin: 'Kbin',
-  discord: 'Discord',
-  telegram: 'Telegram',
-  matrix: 'Matrix',
   github: 'GitHub',
 };
 
 export const PROTOCOL_ICONS: Record<string, string> = {
-  nostr: '\u2630',
+  // Audio
+  nostr: '\u26A1',
+  peertube: '\u25B6',
+  owncast: '\uD83D\uDD34',
+  livepeer: '\uD83C\uDFAC',
+  // Social
   farcaster: '\u25C8',
   lens: '\u25CE',
-  bluesky: '\u2601',
+  bluesky: '\uD83E\uDD8B',
   threads: '\u25A3',
-  mastodon: 'M',
+  mastodon: '\uD83D\uDC18',
   reddit: 'R',
   lemmy: '\uD83C\uDF4B',
   activitypub: 'M',
   atproto: '\u2601',
   rss: 'A',
-  peertube: '\u25B6',
+  discord: 'D',
+  telegram: 'T',
+  twitter: 'X',
+  matrix: 'M',
+  // Video
   youtube: '\u25B6',
+  twitch: 'T',
+  kick: 'K',
+  // Photos
+  'nostr-pictures': '\uD83D\uDCF8',
+  'bluesky-photos': '\uD83E\uDD8B',
+  pixelfed: '\uD83D\uDCF7',
+  // Publishing
   mirror: 'M',
   paragraph: 'P',
   zora: 'Z',
   ghost: 'G',
   kbin: 'K',
-  discord: 'D',
-  telegram: 'T',
-  matrix: 'M',
   github: 'G',
 };
 

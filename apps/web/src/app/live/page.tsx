@@ -25,12 +25,249 @@ function countByType(streams: LiveStream[]): Partial<Record<StreamType | 'all', 
   return counts;
 }
 
+/* ─── Filter Types ────────────────────────────────────────────── */
+
+type MediaFilter = 'all' | 'audio' | 'video';
+type PlatformFilter = 'all' | 'farcaster' | 'nostr' | 'lens' | 'bluesky' | 'mastodon' | 'youtube';
+
+/* ═══════════════════════════════════════════════════════════════
+   Notification: Followed Creators Live
+   ═══════════════════════════════════════════════════════════════ */
+
+function FollowedCreatorsNotification() {
+  return (
+    <div className="mb-5 rounded-2xl border border-degen-500/20 bg-gradient-to-r from-degen-500/[0.05] via-purple-500/[0.03] to-transparent p-4">
+      <div className="flex items-start gap-3 sm:items-center sm:flex-row flex-col">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-degen-500/15">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-degen-500/20" />
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="text-degen-400"
+            >
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 01-3.46 0" />
+            </svg>
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-[var(--color-fg)]">
+              Your followed creators are live
+            </p>
+            <p className="text-xs text-[var(--color-muted)]">
+              3 creators you follow are streaming right now
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <div className="flex -space-x-2">
+            {['A', 'B', 'C'].map((letter, i) => (
+              <span
+                key={i}
+                className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--color-card)] bg-degen-500/20 text-[9px] font-bold text-degen-400"
+                style={{ zIndex: 3 - i }}
+              >
+                {letter}
+              </span>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="rounded-full bg-degen-500/15 px-3 py-1.5 text-[10px] font-semibold text-degen-400 transition-colors hover:bg-degen-500/25"
+          >
+            Watch Now
+          </button>
+          <button
+            type="button"
+            className="rounded-full border border-[var(--color-glass-border)] px-3 py-1.5 text-[10px] font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-fg)]"
+            aria-label="Dismiss"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Filter Bar ──────────────────────────────────────────────── */
+
+function FilterBar({
+  activeMedia,
+  activePlatform,
+  onMediaChange,
+  onPlatformChange,
+}: {
+  activeMedia: MediaFilter;
+  activePlatform: PlatformFilter;
+  onMediaChange: (f: MediaFilter) => void;
+  onPlatformChange: (f: PlatformFilter) => void;
+}) {
+  return (
+    <div className="mb-5 flex flex-wrap items-center gap-3">
+      {/* Media Type Filter */}
+      <div
+        className="flex gap-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1"
+        role="group"
+        aria-label="Media type"
+      >
+        {[
+          { id: 'all' as MediaFilter, label: 'All', icon: '📡' },
+          { id: 'video' as MediaFilter, label: 'Video', icon: '🎥' },
+          { id: 'audio' as MediaFilter, label: 'Audio', icon: '🎙️' },
+        ].map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            role="radio"
+            aria-checked={activeMedia === f.id}
+            onClick={() => onMediaChange(f.id)}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+              activeMedia === f.id
+                ? 'bg-degen-500/15 text-degen-400 shadow-sm'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+            }`}
+          >
+            <span aria-hidden="true">{f.icon}</span>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Platform Filter */}
+      <div
+        className="flex gap-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1 overflow-x-auto scrollbar-none"
+        role="group"
+        aria-label="Platform"
+      >
+        {(
+          [
+            { id: 'all' as PlatformFilter, label: 'All', icon: '🌐' },
+            { id: 'farcaster' as PlatformFilter, label: 'Farcaster', icon: 'F' },
+            { id: 'nostr' as PlatformFilter, label: 'Nostr', icon: 'N' },
+            { id: 'lens' as PlatformFilter, label: 'Lens', icon: 'L' },
+            { id: 'bluesky' as PlatformFilter, label: 'Bluesky', icon: 'B' },
+            { id: 'youtube' as PlatformFilter, label: 'YouTube', icon: '▶' },
+          ] as const
+        ).map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            role="radio"
+            aria-checked={activePlatform === f.id}
+            onClick={() => onPlatformChange(f.id)}
+            className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+              activePlatform === f.id
+                ? 'bg-degen-500/15 text-degen-400 shadow-sm'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Starting Soon Section ───────────────────────────────────── */
+
+function StartingSoonSection() {
+  const STARTING_SOON = [
+    {
+      id: 's1',
+      title: 'DeFi Yield Strategies — Q3 Outlook',
+      creator: 'yield_farmer',
+      time: 'In 15m',
+      type: 'solo',
+    },
+    {
+      id: 's2',
+      title: 'Meme Coin Watch Party 🐸',
+      creator: 'meme_lord',
+      time: 'In 45m',
+      type: 'launch',
+    },
+    {
+      id: 's3',
+      title: 'Building on Base — Live Workshop',
+      creator: 'base_builder',
+      time: 'In 2h',
+      type: 'collab',
+    },
+  ];
+
+  return (
+    <section aria-label="Starting soon" className="mb-8">
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500/20 to-yellow-500/10 text-sm"
+          aria-hidden="true"
+        >
+          ⏰
+        </span>
+        <div>
+          <h2 className="text-base font-bold text-[var(--color-fg)]">Starting Soon</h2>
+          <p className="text-[10px] text-[var(--color-muted)]">
+            Streams beginning in the next few hours
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {STARTING_SOON.map((s, i) => (
+          <div
+            key={s.id}
+            className="group rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3.5 transition-all hover:border-amber-500/20 animate-fade-in"
+            style={{ animationDelay: `${i * 80}ms` }}
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-semibold text-amber-400">
+                {s.time}
+              </span>
+              <span className="text-[10px] text-[var(--color-muted)]">@{s.creator}</span>
+            </div>
+            <p className="text-sm font-medium text-[var(--color-fg)] line-clamp-1 group-hover:text-degen-400 transition-colors">
+              {s.title}
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-full border border-[var(--color-glass-border)] px-3 py-1 text-[9px] font-medium text-[var(--color-muted)] transition-colors hover:border-degen-500/30 hover:text-degen-400"
+              >
+                Set Reminder
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 /* === Main Live Page =========================================== */
 
 export default function LivePage() {
   const { streams, featured, total, isLoading, isValidating } = useLiveStreams();
   const [activeTab, setActiveTab] = useState<StreamType | 'all'>('all');
   const [activeCategory, setActiveCategory] = useState<StreamCategory | 'all'>('all');
+  const [activeMedia, setActiveMedia] = useState<MediaFilter>('all');
+  const [activePlatform, setActivePlatform] = useState<PlatformFilter>('all');
   const [goLiveOpen, setGoLiveOpen] = useState(false);
 
   /* === Stream category mapping for filtering =================== */
@@ -42,12 +279,21 @@ export default function LivePage() {
   };
 
   const filtered = useMemo(() => {
-    let result = activeTab === 'all' ? streams : streams.filter((s) => s.streamType === activeTab);
+    let result =
+      activeTab === 'all' ? [...streams] : streams.filter((s) => s.streamType === activeTab);
     if (activeCategory !== 'all') {
       result = result.filter((s) => (streamCategoryMap[s.streamType] ?? 'tech') === activeCategory);
     }
+    if (activeMedia === 'audio') {
+      result = result.filter((s) => s.streamType === 'spaces');
+    }
+    if (activeMedia === 'video') {
+      result = result.filter(
+        (s) => s.streamType === 'solo' || s.streamType === 'collab' || s.streamType === 'launch',
+      );
+    }
     return result;
-  }, [streams, activeTab, activeCategory, streamCategoryMap]);
+  }, [streams, activeTab, activeCategory, activeMedia, streamCategoryMap]);
 
   const spaces = useMemo(() => streams.filter((s) => s.streamType === 'spaces'), [streams]);
   const counts = useMemo(() => countByType(streams), [streams]);
@@ -74,7 +320,18 @@ export default function LivePage() {
           </div>
         )}
 
-        {/* == Categories Bar (TWITCH-STYLE) == */}
+        {/* Followed creators notification */}
+        <FollowedCreatorsNotification />
+
+        {/* Media + Platform Filters */}
+        <FilterBar
+          activeMedia={activeMedia}
+          activePlatform={activePlatform}
+          onMediaChange={setActiveMedia}
+          onPlatformChange={setActivePlatform}
+        />
+
+        {/* == Categories Bar == */}
         <div className="mb-5">
           <StreamCategoriesBar
             activeCategory={activeCategory}
@@ -93,6 +350,9 @@ export default function LivePage() {
           {activeTab === 'all' && activeCategory === 'all' && (
             <HeroFeaturedSection streams={featured} isLoading={isLoading} onPlay={handlePlay} />
           )}
+
+          {/* Starting Soon section */}
+          {activeTab === 'all' && activeCategory === 'all' && <StartingSoonSection />}
 
           {/* Active audio spaces (only on "All" tab) */}
           {activeTab === 'all' && activeCategory === 'all' && (
@@ -120,8 +380,10 @@ export default function LivePage() {
                   </svg>
                 </span>
                 <div>
-                  <h2 className="text-base font-bold text-white">Recommended for You</h2>
-                  <p className="text-[10px] text-white/40">Based on what you watch</p>
+                  <h2 className="text-base font-bold text-[var(--color-fg)]">
+                    Recommended for You
+                  </h2>
+                  <p className="text-[10px] text-[var(--color-muted)]">Based on what you watch</p>
                 </div>
               </div>
               <LiveStreamGrid
@@ -135,14 +397,14 @@ export default function LivePage() {
           {/* Main stream grid */}
           <section aria-label="All live streams">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-bold text-white">
+              <h2 className="text-base font-bold text-[var(--color-fg)]">
                 {activeCategory !== 'all'
                   ? `${activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)} Streams`
                   : activeTab !== 'all'
                     ? `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Streams`
                     : 'All Live Streams'}
               </h2>
-              <span className="text-[10px] text-white/30 tabular-nums">
+              <span className="text-[10px] text-[var(--color-muted)] tabular-nums">
                 {filtered.length} stream{filtered.length !== 1 ? 's' : ''}
               </span>
             </div>

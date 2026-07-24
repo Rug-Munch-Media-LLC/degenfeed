@@ -48,37 +48,41 @@ describe('Feed Service — fetchFeedPosts', () => {
   });
 
   it('should encode cursor parameter', async () => {
+    mockGet.mockReset();
     mockGet.mockResolvedValue({ success: true, data: { data: [], meta: {} } });
 
     const { fetchFeedPosts } = await import('../../apps/web/src/services/feed');
     await fetchFeedPosts({ tab: 'for-you', cursor: 'abc123' });
 
-    const url = mockGet.mock.calls[0]?.[0] as string;
+    const url = mockGet.mock.lastCall?.[0] as string;
     expect(url).toContain('cursor=abc123');
   });
 
   it('should include protocol filter when provided', async () => {
+    mockGet.mockReset();
     mockGet.mockResolvedValue({ success: true, data: { data: [], meta: {} } });
 
     const { fetchFeedPosts } = await import('../../apps/web/src/services/feed');
     await fetchFeedPosts({ tab: 'for-you', protocolFilter: 'nostr' });
 
-    const url = mockGet.mock.calls[0]?.[0] as string;
+    const url = mockGet.mock.lastCall?.[0] as string;
     expect(url).toContain('protocol=nostr');
   });
 
   it('should include hideLowQuality flag when enabled', async () => {
+    mockGet.mockReset();
     mockGet.mockResolvedValue({ success: true, data: { data: [], meta: {} } });
 
     const { fetchFeedPosts } = await import('../../apps/web/src/services/feed');
     await fetchFeedPosts({ tab: 'for-you', hideLowQuality: true, hideThreshold: 2.5 });
 
-    const url = mockGet.mock.calls[0]?.[0] as string;
+    const url = mockGet.mock.lastCall?.[0] as string;
     expect(url).toContain('hideLowQuality=true');
     expect(url).toContain('hideThreshold=2.5');
   });
 
   it('should include freshness and diversity params', async () => {
+    mockGet.mockReset();
     mockGet.mockResolvedValue({ success: true, data: { data: [], meta: {} } });
 
     const { fetchFeedPosts } = await import('../../apps/web/src/services/feed');
@@ -89,19 +93,20 @@ describe('Feed Service — fetchFeedPosts', () => {
       exploreRatio: 50,
     });
 
-    const url = mockGet.mock.calls[0]?.[0] as string;
+    const url = mockGet.mock.lastCall?.[0] as string;
     expect(url).toContain('freshness=80');
     expect(url).toContain('diversity=3');
     expect(url).toContain('exploreRatio=50');
   });
 
   it('should exclude optional params when not set', async () => {
+    mockGet.mockReset();
     mockGet.mockResolvedValue({ success: true, data: { data: [], meta: {} } });
 
     const { fetchFeedPosts } = await import('../../apps/web/src/services/feed');
     await fetchFeedPosts({ tab: 'for-you' });
 
-    const url = mockGet.mock.calls[0]?.[0] as string;
+    const url = mockGet.mock.lastCall?.[0] as string;
     expect(url).not.toContain('cursor');
     expect(url).not.toContain('protocol');
     expect(url).not.toContain('hideLowQuality');

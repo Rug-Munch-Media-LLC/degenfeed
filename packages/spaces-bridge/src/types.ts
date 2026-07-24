@@ -1,9 +1,55 @@
 /**
  * @degenfeed/spaces-bridge — Shared types for cross-platform Spaces
+ *
+ * BROADCAST PLATFORMS (actual streaming destinations):
+ *   nostr, peertube, owncast, livepeer, youtube, twitch, kick
+ *
+ * ANNOUNCEMENT PLATFORMS (social posts when space goes live):
+ *   farcaster, lens, bluesky, mastodon, discord, telegram, twitter
+ *
+ * LIVE PHOTOS (ephemeral image content):
+ *   nostr-pictures, bluesky-photos, pixelfed
+ *
+ * CONTENT TYPE:
+ *   audio   → Voice-based spaces (Twitter Spaces clone)
+ *   video   → Live video streams (YouTube Live, Twitch, etc.)
+ *   photos  → Ephemeral photo sharing (stories-like)
  */
 
-export type SpacePlatform = 'nostr' | 'peertube' | 'owncast' | 'livepeer';
+export type SpacePlatform =
+  // ── Audio (existing) ──
+  | 'nostr'
+  | 'peertube'
+  | 'owncast'
+  | 'livepeer'
+  // ── Social Announcement ──
+  | 'farcaster'
+  | 'lens'
+  | 'bluesky'
+  | 'mastodon'
+  | 'discord'
+  | 'telegram'
+  | 'twitter'
+  // ── Live Video ──
+  | 'youtube'
+  | 'twitch'
+  | 'kick'
+  // ── Live Photos ──
+  | 'nostr-pictures'
+  | 'bluesky-photos'
+  | 'pixelfed';
+
+export type SpaceContentType = 'audio' | 'video' | 'photos' | 'announcement';
 export type SpaceStatus = 'live' | 'scheduled' | 'ended';
+
+export type AnnouncePlatform =
+  | 'farcaster'
+  | 'lens'
+  | 'bluesky'
+  | 'mastodon'
+  | 'discord'
+  | 'telegram'
+  | 'twitter';
 
 export interface SpaceSpeaker {
   id: string;
@@ -43,7 +89,7 @@ export interface SpacePlatformData {
   nativeId: string;
   /** Platform-specific URL */
   url?: string;
-  /** RTMP/HLS/embed URL for audio */
+  /** RTMP/HLS/embed URL for audio/video */
   streamUrl?: string;
   /** Chat URL or channel */
   chatUrl?: string;
@@ -59,6 +105,8 @@ export interface SpaceItem {
   hostName: string;
   hostAvatarUrl?: string;
   coHosts: string[];
+  /** Content type: audio | video | photos */
+  contentType?: SpaceContentType;
   /** Platforms the space is broadcast on */
   platforms: SpacePlatformData[];
   status: SpaceStatus;
@@ -78,6 +126,10 @@ export interface SpaceItem {
   canAccess?: boolean;
   /** Tags for discoverability */
   tags?: string[];
+  /** Thumbnail / cover image URL for video streams */
+  thumbnailUrl?: string;
+  /** Photo URLs for live photo content */
+  photoUrls?: string[];
 }
 
 /** Unified create options accepted by all platforms */
@@ -94,12 +146,22 @@ export interface CreateSpaceOptions {
   tipTokenAddress?: string;
   gating?: SpaceGating;
   tags?: string[];
+  /** Content type */
+  contentType?: SpaceContentType;
+  /** Photo URLs (for live photos content type) */
+  photoUrls?: string[];
   /** PeerTube-specific: channel / token info */
   peertubeTokenAddress?: string;
   peertubeTokenSymbol?: string;
   peertubeCreatorAddress?: string;
   /** Owncast-specific: stream key override */
   owncastStreamKey?: string;
+  /** YouTube-specific: API key, privacy */
+  youTubePrivacy?: 'public' | 'unlisted' | 'private';
+  /** Twitch-specific: game/category */
+  twitchGame?: string;
+  /** Kick-specific: category */
+  kickCategory?: string;
 }
 
 export interface CreateSpaceResult {
@@ -114,6 +176,21 @@ export interface CreateSpaceResult {
   }>;
 }
 
+/** Announcement content for social platforms */
+export interface SpaceAnnouncement {
+  text: string;
+  spaceUrl: string;
+  platform: AnnouncePlatform;
+  /** Native-looking card data for rich embeds */
+  embed?: {
+    title: string;
+    description?: string;
+    hostName: string;
+    imageUrl?: string;
+    url: string;
+  };
+}
+
 export interface PlatformBridge {
   platform: SpacePlatform;
   /** Create a space on this platform */
@@ -126,6 +203,16 @@ export interface PlatformBridge {
   endSpace(space: SpaceItem): Promise<void>;
   /** Update space status (listener count, speakers) */
   updateSpace(space: SpaceItem): Promise<void>;
+}
+
+/** Bridge for announcement-only platforms */
+export interface AnnounceBridge {
+  platform: AnnouncePlatform;
+  /** Post a space announcement */
+  announce(
+    space: SpaceItem,
+    announcement: SpaceAnnouncement,
+  ): Promise<{ ok: boolean; nativeId?: string; url?: string; error?: string }>;
 }
 
 export interface LiveKitTokenResponse {

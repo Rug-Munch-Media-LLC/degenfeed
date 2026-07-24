@@ -571,6 +571,24 @@ export default function SettingsPage() {
             isOpen={openSections.includes('subscription')}
             onToggle={() => toggleSection('subscription')}
           >
+            <a
+              href="/settings/subscription"
+              className="mb-3 flex items-center gap-2 rounded-lg border border-degen-500/20 bg-degen-500/5 px-3 py-2 text-xs font-medium text-degen-400 hover:bg-degen-500/10 transition-colors"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13 12H3" />
+              </svg>
+              Manage subscription details →
+            </a>
             {premiumLoading ? (
               <div className="flex items-center gap-3 py-2">
                 <div className="h-4 w-24 animate-pulse rounded bg-[var(--color-overlay)]" />
@@ -721,6 +739,20 @@ export default function SettingsPage() {
               onRevoke={() => showToast('success', 'Key revoked')}
             />
             <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-3">
+              <div className="text-xs font-medium text-[var(--color-fg)] mb-1">
+                Webhook Endpoints
+              </div>
+              <p className="text-xs text-[var(--color-muted)] mb-2">
+                Receive real-time events for new posts, tips, and stream activity.
+              </p>
+              <button
+                type="button"
+                className="rounded-lg border border-dashed border-[var(--color-glass-border)] px-3 py-2 text-xs text-[var(--color-muted)] hover:border-degen-500/30 hover:text-degen-400 transition-colors w-full"
+              >
+                + Add webhook endpoint
+              </button>
+            </div>
+            <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-3">
               <div className="text-xs font-medium text-[var(--color-fg)] mb-1">Developer Mode</div>
               <Toggle
                 id="dev-mode"
@@ -728,6 +760,302 @@ export default function SettingsPage() {
                 onChange={() => showToast('info', 'Developer mode toggled')}
                 label="Enable Developer Mode"
               />
+            </div>
+          </SettingsSection>
+
+          {/* ALGORITHM PREFERENCES */}
+          <SettingsSection
+            section="streaming"
+            isOpen={openSections.includes('streaming')}
+            onToggle={() => toggleSection('streaming')}
+          >
+            <div className="space-y-4">
+              <div>
+                <span className="mb-2 block text-xs font-medium text-[var(--color-fg)]">
+                  Feed Algorithm
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    {
+                      value: 'chronological',
+                      label: 'Chronological',
+                      desc: 'Recent first',
+                      icon: '🕐',
+                    },
+                    { value: 'trending', label: 'Trending', desc: "What's hot", icon: '🔥' },
+                    {
+                      value: 'personalized',
+                      label: 'Personalized',
+                      desc: 'AI curated',
+                      icon: '🧠',
+                    },
+                    { value: 'community', label: 'Community', desc: 'From circles', icon: '👥' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      aria-pressed={prefs.content.defaultFeed === opt.value}
+                      onClick={() =>
+                        setContent({
+                          ...prefs.content,
+                          defaultFeed: opt.value as 'following' | 'for-you' | 'trending',
+                        })
+                      }
+                      className={`rounded-xl border-2 p-3 text-left transition-all ${
+                        prefs.content.defaultFeed === opt.value
+                          ? 'border-degen-500 bg-degen-500/10'
+                          : 'border-[var(--color-glass-border)] bg-[var(--color-overlay)] hover:border-degen-500/30'
+                      }`}
+                    >
+                      <div className="text-lg mb-1">{opt.icon}</div>
+                      <div className="text-xs font-semibold text-[var(--color-fg)]">
+                        {opt.label}
+                      </div>
+                      <div className="text-[10px] text-[var(--color-muted)]">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="border-t border-[var(--color-glass-border)] pt-3">
+                <Toggle
+                  id="algo-show-tips"
+                  checked={true}
+                  onChange={() => showToast('info', 'Preference updated')}
+                  label="Prioritize posts from creators you tip"
+                />
+                <Toggle
+                  id="algo-hide-spam"
+                  checked={true}
+                  onChange={() => showToast('info', 'Preference updated')}
+                  label="Auto-filter suspected spam"
+                />
+                <Toggle
+                  id="algo-cross-protocol"
+                  checked={false}
+                  onChange={() => showToast('info', 'Preference updated')}
+                  label="Show cross-protocol replies in feed"
+                />
+              </div>
+            </div>
+          </SettingsSection>
+
+          {/* CONNECTED PROTOCOLS */}
+          <div className="overflow-hidden rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] transition-all">
+            <button
+              type="button"
+              onClick={() => toggleSection('account')}
+              className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-[var(--color-overlay)]"
+              aria-expanded={openSections.includes('account')}
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-[var(--color-fg)]">
+                  Connected Protocols
+                </div>
+                <div className="text-xs text-[var(--color-muted)] truncate">
+                  Manage protocol connections and preferences
+                </div>
+              </div>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className={`shrink-0 text-[var(--color-muted)] transition-transform duration-200 ${openSections.includes('account') ? 'rotate-180' : ''}`}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {openSections.includes('account') && (
+              <div className="border-t border-[var(--color-glass-border)] px-5 py-4 space-y-4">
+                {/* Protocol connection cards */}
+                {PROTOCOLS.map((p) => {
+                  const linked = connectedProtocols.includes(p);
+                  return (
+                    <div
+                      key={p}
+                      className="flex items-center gap-3 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-3"
+                    >
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${linked ? 'bg-degen-500/20 text-degen-400' : 'bg-[var(--color-muted-bg)] text-[var(--color-muted)]'}`}
+                      >
+                        {p.charAt(0).toUpperCase()}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-[var(--color-fg)] capitalize">
+                            {p}
+                          </span>
+                          {linked && (
+                            <span className="rounded-full bg-degen-500/15 px-1.5 py-0.5 text-[9px] font-medium text-degen-400">
+                              Connected
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-[var(--color-muted)]">
+                          {linked ? 'Active and syncing' : 'Not connected'}
+                        </p>
+                      </div>
+                      {linked ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            className="rounded-lg border border-[var(--color-glass-border)] px-2.5 py-1.5 text-[10px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+                          >
+                            Configure
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-lg border border-red-500/20 px-2.5 py-1.5 text-[10px] font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+                          >
+                            Disconnect
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={openSignIn}
+                          className="rounded-lg bg-degen-500/15 px-3 py-1.5 text-[10px] font-medium text-degen-400 hover:bg-degen-500/25 transition-colors"
+                        >
+                          Connect
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* DATA EXPORT */}
+          <div className="overflow-hidden rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] transition-all">
+            <button
+              type="button"
+              onClick={() =>
+                setOpenSections((prev) =>
+                  prev.includes('streaming')
+                    ? prev.filter((x) => x !== 'streaming')
+                    : [...prev, 'streaming'],
+                )
+              }
+              className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-[var(--color-overlay)]"
+              aria-expanded={false}
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-[var(--color-fg)]">Data Export</div>
+                <div className="text-xs text-[var(--color-muted)] truncate">
+                  Download your data, export posts, or request account deletion
+                </div>
+              </div>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="shrink-0 text-[var(--color-muted)]"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+          </div>
+
+          {/* STREAMING SETTINGS */}
+          <SettingsSection
+            section="streaming"
+            isOpen={openSections.includes('streaming')}
+            onToggle={() => toggleSection('streaming')}
+          >
+            <div className="space-y-4">
+              <Toggle
+                id="stream-auto-record"
+                checked={true}
+                onChange={() => showToast('info', 'Stream setting updated')}
+                label="Auto-record streams to VOD"
+              />
+              <Toggle
+                id="stream-chat-replay"
+                checked={false}
+                onChange={() => showToast('info', 'Stream setting updated')}
+                label="Include chat replay in VOD"
+              />
+              <div className="border-t border-[var(--color-glass-border)] pt-3">
+                <span className="mb-1.5 block text-xs font-medium text-[var(--color-fg)]">
+                  OBS Stream Key
+                </span>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-overlay)] px-4 py-2.5 font-mono text-xs text-[var(--color-muted)]">
+                    ••••••••••••••••
+                  </code>
+                  <button
+                    type="button"
+                    className="rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+                  >
+                    Show
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-lg border border-[var(--color-glass-border)] px-3 py-2 text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+              <div className="border-t border-[var(--color-glass-border)] pt-3">
+                <span className="mb-2 block text-xs font-medium text-[var(--color-fg)]">
+                  Stream Destinations
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {['Farcaster', 'Nostr', 'Lens', 'Bluesky', 'YouTube', 'PeerTube'].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      className="flex items-center gap-1.5 rounded-full border border-degen-500/30 bg-degen-500/10 px-3 py-1.5 text-[10px] font-medium text-degen-400"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z" />
+                      </svg>
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </SettingsSection>
         </section>

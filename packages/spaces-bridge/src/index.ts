@@ -1,45 +1,84 @@
 /**
  * @degenfeed/spaces-bridge — Unified Cross-Platform Spaces Aggregator
  *
- * Aggregates audio spaces from ALL supported platforms into a single
+ * Aggregates live content from ALL supported platforms into a single
  * unified feed. Handles create/read/update/end across all bridges.
  *
- * Supported platforms:
- *   - Nostr (NIP-53/Kind 30311 live events)  ← ALREADY DEPLOYED
- *   - PeerTube (audio-only live streams)      ← ALREADY DEPLOYED
- *   - Owncast (self-hosted HLS streaming)     ← ALREADY DEPLOYED ✅
- *   - LivePeer (decentralized video network)  ← Configurable
+ * CONTENT TYPES:
+ *   Audio Spaces  → Voice-based rooms (Twitter Spaces clone)
+ *   Live Video    → Video streams (YouTube, Twitch, Kick)
+ *   Live Photos   → Ephemeral photo sharing (stories-like)
+ *   Announcements → Social posts when content goes live
+ *
+ * SUPPORTED PLATFORMS:
+ *   ┌─────────────────┬──────────┬──────────────┐
+ *   │ Platform        │ Type     │ Status       │
+ *   ├─────────────────┼──────────┼──────────────┤
+ *   │ Nostr NIP-53    │ Audio    │ ✅ Deployed  │
+ *   │ PeerTube        │ Audio    │ ✅ Deployed  │
+ *   │ Owncast         │ Audio    │ ✅ Deployed  │
+ *   │ LivePeer        │ Audio    │ ✅ Deployed  │
+ *   │ YouTube Live    │ Video    │ 🆕 Added     │
+ *   │ Twitch          │ Video    │ 🆕 Added     │
+ *   │ Kick            │ Video    │ 🆕 Added     │
+ *   │ Nostr Pictures  │ Photos   │ 🆕 Added     │
+ *   │ Pixelfed        │ Photos   │ 🆕 Added     │
+ *   │ Farcaster       │ Announce │ 🆕 Added     │
+ *   │ Lens            │ Announce │ 🆕 Added     │
+ *   │ Bluesky         │ Announce │ 🆕 Added     │
+ *   │ Mastodon        │ Announce │ 🆕 Added     │
+ *   │ Discord         │ Announce │ 🆕 Added     │
+ *   │ Telegram        │ Announce │ 🆕 Added     │
+ *   │ Twitter/X       │ Announce │ 🆕 Added     │
+ *   └─────────────────┴──────────┴──────────────┘
  *
  * Usage:
  *   import { spacesAggregator } from '@degenfeed/spaces-bridge';
  *
- *   // Get all live spaces
- *   const spaces = await spacesAggregator.getLiveSpaces({ platforms: ['nostr', 'peertube'] });
+ *   // Get all live content
+ *   const items = await getLiveSpaces({ platforms: ['nostr', 'youtube'] });
  *
- *   // Create a space across multiple platforms
- *   const result = await spacesAggregator.create({ ... });
+ *   // Announce a space on social platforms
+ *   await announceSpace(space, ['farcaster', 'bluesky']);
  */
 
+import { announceSpace, getAnnounceBridge, getConfiguredAnnouncePlatforms } from './announce';
+import { kickBridge } from './kick';
 import { livepeerBridge } from './livepeer';
+import { livePhotosBridge } from './livephotos';
 import { nostrBridge } from './nostr';
 import { owncastBridge } from './owncast';
 import { peertubeBridge } from './peertube';
 import { checkAllGates } from './premium';
+import { twitchBridge } from './twitch';
 import type {
+  AnnouncePlatform,
   CreateSpaceOptions,
   CreateSpaceResult,
   PlatformBridge,
+  SpaceAnnouncement,
+  SpaceContentType,
   SpaceItem,
   SpacePlatform,
 } from './types';
+import { youTubeBridge } from './youtube';
 
 // ─── Exports ─────────────────────────────────────────────────────────────
 
+export {
+  announceSpace,
+  getAnnounceBridge,
+  getConfiguredAnnouncePlatforms,
+} from './announce';
 export { checkAllGates, checkTokenGate, getGateLabel } from './premium';
+
 export type {
+  AnnouncePlatform,
   CreateSpaceOptions,
   CreateSpaceResult,
   PlatformBridge,
+  SpaceAnnouncement,
+  SpaceContentType,
   SpaceGating,
   SpaceItem,
   SpacePlatform,
@@ -48,21 +87,82 @@ export type {
   SpaceSpeaker,
   SpaceStatus,
 } from './types';
-export { livepeerBridge, nostrBridge, owncastBridge, peertubeBridge };
+
+export {
+  kickBridge,
+  livePhotosBridge,
+  livepeerBridge,
+  nostrBridge,
+  owncastBridge,
+  peertubeBridge,
+  twitchBridge,
+  youTubeBridge,
+};
 
 // ─── Bridge Registry ────────────────────────────────────────────────────
 
 const BRIDGES: Record<SpacePlatform, PlatformBridge> = {
+  // Audio
   nostr: nostrBridge,
   peertube: peertubeBridge,
   owncast: owncastBridge,
   livepeer: livepeerBridge,
+  // Video
+  youtube: youTubeBridge,
+  twitch: twitchBridge,
+  kick: kickBridge,
+  // Photos
+  'nostr-pictures': livePhotosBridge,
+  'bluesky-photos': livePhotosBridge,
+  pixelfed: livePhotosBridge,
+  // Announcement platforms (no live spaces to aggregate, but registered for completeness)
+  farcaster: null as any,
+  lens: null as any,
+  bluesky: null as any,
+  mastodon: null as any,
+  discord: null as any,
+  telegram: null as any,
+  twitter: null as any,
 };
 
+const BRIDGE_PLATFORMS = Object.keys(BRIDGES) as SpacePlatform[];
+
+/**
+ * Get the live-space-fetching bridge for a platform.
+ * Announce-only platforms (farcaster, lens, etc.) will throw.
+ */
 export function getBridge(platform: SpacePlatform): PlatformBridge {
   const bridge = BRIDGES[platform];
   if (!bridge) throw new Error(`Unknown platform: ${platform}`);
+  if (isAnnouncePlatform(platform)) {
+    throw new Error(`${platform} is an announce-only platform — use getAnnounceBridge()`);
+  }
   return bridge;
+}
+
+function isAnnouncePlatform(platform: string): platform is AnnouncePlatform {
+  return ['farcaster', 'lens', 'bluesky', 'mastodon', 'discord', 'telegram', 'twitter'].includes(
+    platform,
+  );
+}
+
+// ─── Content Type Helpers ───────────────────────────────────────────────
+
+const CONTENT_TYPE_MAP: Partial<Record<SpacePlatform, SpaceContentType>> = {
+  nostr: 'audio',
+  peertube: 'audio',
+  owncast: 'audio',
+  livepeer: 'audio',
+  youtube: 'video',
+  twitch: 'video',
+  kick: 'video',
+  'nostr-pictures': 'photos',
+  'bluesky-photos': 'photos',
+  pixelfed: 'photos',
+};
+
+export function getContentType(platform: SpacePlatform): SpaceContentType {
+  return CONTENT_TYPE_MAP[platform] ?? 'announcement';
 }
 
 // ─── Aggregator Options ─────────────────────────────────────────────────
@@ -74,6 +174,8 @@ export interface AggregatorOptions {
   timeout?: number;
   /** Include ended spaces (for history) */
   includeEnded?: boolean;
+  /** Filter by content type */
+  contentType?: SpaceContentType;
 }
 
 // ─── Aggregator ─────────────────────────────────────────────────────────
@@ -92,15 +194,15 @@ async function fetchWithTimeout<T>(
 }
 
 /**
- * Get all live audio spaces from all configured platforms.
+ * Get all live content from all configured platforms.
  * Timeout per platform prevents one failing bridge from blocking the rest.
  */
 export async function getLiveSpaces(options?: AggregatorOptions): Promise<SpaceItem[]> {
-  const platforms = options?.platforms ?? (Object.keys(BRIDGES) as SpacePlatform[]);
+  const platformList = options?.platforms ?? BRIDGE_PLATFORMS.filter((p) => !isAnnouncePlatform(p));
   const timeout = options?.timeout ?? 8000;
   const results: SpaceItem[] = [];
 
-  const fetches = platforms.map(async (platform) => {
+  const fetches = platformList.map(async (platform) => {
     try {
       const bridge = getBridge(platform);
       const spaces = await fetchWithTimeout(
@@ -128,11 +230,17 @@ export async function getLiveSpaces(options?: AggregatorOptions): Promise<SpaceI
     seen.set(space.id, space);
   }
 
-  // Sort: most listeners first, then most recent
-  return [...seen.values()].sort((a, b) => {
+  let sorted = [...seen.values()].sort((a, b) => {
     if (a.listeners !== b.listeners) return b.listeners - a.listeners;
     return b.createdAt - a.createdAt;
   });
+
+  // Filter by content type if specified
+  if (options?.contentType) {
+    sorted = sorted.filter((s) => s.contentType === options.contentType);
+  }
+
+  return sorted;
 }
 
 /**
@@ -143,8 +251,15 @@ export async function createSpace(options: CreateSpaceOptions): Promise<CreateSp
   const id = `space-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const platformResults: CreateSpaceResult['platformResults'] = [];
 
+  // Separate broadcast platforms from announce-only platforms
+  const broadcastPlatforms = options.platforms.filter((p) => !isAnnouncePlatform(p));
+  const announcePlatforms = options.platforms.filter((p) =>
+    isAnnouncePlatform(p),
+  ) as AnnouncePlatform[];
+
+  // Create on broadcast platforms
   await Promise.allSettled(
-    options.platforms.map(async (platform) => {
+    broadcastPlatforms.map(async (platform) => {
       try {
         const bridge = getBridge(platform);
         const platformData = await bridge.create({ ...options });
@@ -165,6 +280,47 @@ export async function createSpace(options: CreateSpaceOptions): Promise<CreateSp
     }),
   );
 
+  // Announce on social platforms
+  if (announcePlatforms.length > 0) {
+    const spaceItem: SpaceItem = {
+      id,
+      title: options.title,
+      description: options.description,
+      hostId: options.hostId,
+      hostName: options.hostName,
+      hostAvatarUrl: options.hostAvatarUrl,
+      coHosts: options.coHosts ?? [],
+      platforms: platformResults
+        .filter((r) => !r.error)
+        .map((r) => ({
+          platform: r.platform,
+          nativeId: r.nativeId,
+          url: r.url,
+          streamUrl: r.streamUrl,
+          chatUrl: r.chatUrl,
+        })),
+      status: options.scheduledAt ? 'scheduled' : 'live',
+      contentType: options.contentType ?? 'audio',
+      createdAt: Date.now(),
+      scheduledAt: options.scheduledAt,
+      listeners: 1,
+      speakers: [],
+      reactions: [],
+      tippingEnabled: options.tippingEnabled ?? true,
+      tags: options.tags,
+    };
+
+    const announceResults = await announceSpace(spaceItem, announcePlatforms);
+    for (const [platform, result] of Object.entries(announceResults)) {
+      platformResults.push({
+        platform: platform as SpacePlatform,
+        nativeId: result.nativeId ?? '',
+        url: result.url,
+        error: result.ok ? undefined : result.error,
+      });
+    }
+  }
+
   return { id, platformResults };
 }
 
@@ -175,6 +331,7 @@ export async function endSpace(space: SpaceItem): Promise<void> {
   const platforms = space.platforms.map((p) => p.platform);
   await Promise.allSettled(
     platforms.map(async (platform) => {
+      if (isAnnouncePlatform(platform)) return; // Announcements can't be "ended"
       try {
         const bridge = getBridge(platform);
         await bridge.endSpace(space);
@@ -191,6 +348,7 @@ export async function endSpace(space: SpaceItem): Promise<void> {
 export async function updateSpace(space: SpaceItem): Promise<void> {
   await Promise.allSettled(
     space.platforms.map(async (p) => {
+      if (isAnnouncePlatform(p.platform)) return;
       try {
         const bridge = getBridge(p.platform);
         await bridge.updateSpace(space);
@@ -205,9 +363,8 @@ export async function updateSpace(space: SpaceItem): Promise<void> {
  * Get a single space by its ID, searching all platforms.
  */
 export async function getSpaceById(id: string): Promise<SpaceItem | null> {
-  // Parse platform from ID prefix
   const prefix = id.split(':')[0] as SpacePlatform;
-  if (prefix && BRIDGES[prefix]) {
+  if (prefix && BRIDGES[prefix] && !isAnnouncePlatform(prefix)) {
     const nativeId = id.slice(prefix.length + 1);
     try {
       return await BRIDGES[prefix].getSpace(nativeId);
@@ -218,6 +375,7 @@ export async function getSpaceById(id: string): Promise<SpaceItem | null> {
 
   // Fallback: search all bridges
   for (const [, bridge] of Object.entries(BRIDGES)) {
+    if (!bridge || !bridge.getLiveSpaces) continue;
     try {
       const spaces = await bridge.getLiveSpaces();
       const found = spaces.find((s) => s.id === id);
@@ -233,6 +391,7 @@ export async function getSpaceById(id: string): Promise<SpaceItem | null> {
 export async function getListenerCount(space: SpaceItem): Promise<number> {
   let total = space.listeners;
   for (const platform of space.platforms) {
+    if (isAnnouncePlatform(platform.platform)) continue;
     try {
       const bridge = getBridge(platform.platform);
       const updated = await bridge.getSpace(platform.nativeId);
