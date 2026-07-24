@@ -253,7 +253,10 @@ export class IdentityResolver {
     if (!handle.includes('@') || handle.startsWith('@')) return null;
 
     try {
-      const [username, domain] = handle.split('@');
+      const atIdx = handle.indexOf('@');
+      if (atIdx <= 0) return null;
+      const uname = handle.slice(0, atIdx);
+      const domain = handle.slice(atIdx + 1);
       const url = `https://${domain}/.well-known/webfinger?resource=acct:${encodeURIComponent(handle)}`;
       const res = await fetchFn(url, {
         headers: { Accept: 'application/jrd+json, application/json' },
@@ -299,7 +302,6 @@ export class IdentityResolver {
    */
   async resolveNip05(nip05: string, fetchFn: typeof fetch = fetch): Promise<ProtocolHandle | null> {
     try {
-      const parts = nip05.split('@');
       const username = parts[0] ?? '';
       const domain = parts[1] ?? '';
       const url = `https://${domain}/.well-known/nostr.json?name=${encodeURIComponent(username)}`;
