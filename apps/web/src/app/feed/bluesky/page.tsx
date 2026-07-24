@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import { ProtocolFeed } from '../../../components/feed/ProtocolFeed';
+import { BlueskyMediaView } from './BlueskyMediaView';
 
 const blueskyBreadcrumb = {
   '@context': 'https://schema.org',
@@ -18,24 +18,48 @@ const blueskyBreadcrumb = {
 };
 
 export const metadata: Metadata = {
-  title: 'Bluesky Feed — AT Protocol Skeets | DegenFeed',
+  title: 'Bluesky Media — AT Protocol Photos & Videos | DegenFeed',
   description:
-    'Browse Bluesky skeets and AT Protocol custom feeds aggregated from the network. Follow crypto content across the Bluesky ecosystem.',
-  keywords: ['bluesky feed', 'at protocol feed', 'bluesky skeets', 'bluesky crypto'],
+    'Instagram-style media gallery for Bluesky. Browse crypto photos, videos, and trending content from the AT Protocol network in a beautiful grid layout.',
+  keywords: [
+    'bluesky media',
+    'bluesky photos',
+    'bluesky images',
+    'bluesky videos',
+    'at protocol feed',
+    'bluesky skeets',
+    'bluesky crypto',
+    'decentralized social media',
+  ],
   openGraph: {
-    title: 'Bluesky Feed — DegenFeed',
-    description: 'AT Protocol skeets and custom feeds from Bluesky, in your unified timeline.',
+    title: 'Bluesky Media — DegenFeed',
+    description:
+      'Photos, videos, and trending content from Bluesky. Instagram-style gallery for the AT Protocol.',
+    url: 'https://app.degenfeed.xyz/feed/bluesky',
+    images: [
+      {
+        url: 'https://app.degenfeed.xyz/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Bluesky Media Gallery on DegenFeed',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Bluesky Media — DegenFeed',
+    description: 'Beautiful media gallery for Bluesky content. Photos, videos, trending.',
   },
   alternates: { canonical: 'https://app.degenfeed.xyz/feed/bluesky' },
 };
 
-export default function BlueskyFeedPage() {
+export default function BlueskyMediaPage() {
   return (
     <>
-      <Script id="breadcrumb-bluesky-feed" type="application/ld+json">
+      <Script id="breadcrumb-bluesky-media" type="application/ld+json">
         {JSON.stringify(blueskyBreadcrumb)}
       </Script>
-      <ProtocolFeed source="bluesky" />
+      <BlueskyMediaView />
     </>
   );
 }

@@ -1,15 +1,14 @@
 /**
  * Bluesky / PDS Provider
  *
- * Fetches posts from the local Bluesky PDS instance (port 3012).
- * Uses the AT Protocol (XRPc) to get posts from the local PDS and from
+ * Fetches posts from the local Bluesky PDS instance (port 3012) and
  * the public Bluesky API (public.api.bsky.app).
  *
- * The local PDS is a self-hosted Personal Data Server that handles
- * account data for bluesky users on our domain.
- *
- * Since local PDS may have limited content, also fetch from the public
- * Bluesky API for trending crypto/tech content.
+ * Enhanced with:
+ *  - Image-only feed (Instagram-style)
+ *  - Video/external feed
+ *  - Trending crypto search
+ *  - Image URL extraction with alt text, dimensions, aspect ratios
  */
 
 import type { UnifiedPost } from '../server';
@@ -46,6 +45,9 @@ const SEARCH_QUERIES = [
   'web3',
 ];
 
+// Trending crypto query (single high-volume search)
+const TRENDING_QUERY = 'crypto OR bitcoin OR ethereum OR solana OR defi';
+
 // ─── Types ───────────────────────────────────────────────────────────
 
 interface BskyAuthor {
@@ -53,6 +55,31 @@ interface BskyAuthor {
   handle: string;
   displayName?: string;
   avatar?: string;
+}
+
+interface BskyImageView {
+  thumb: string;
+  fullsize: string;
+  alt: string;
+  aspectRatio?: { width: number; height: number };
+}
+
+interface BskyExternalView {
+  uri: string;
+  title?: string;
+  description?: string;
+  thumb?: string;
+}
+
+interface BskyEmbedView {
+  $type?: string;
+  images?: BskyImageView[];
+  external?: BskyExternalView;
+  record?: Record<string, unknown>;
+  // video embed (Bluesky native video)
+  playlist?: string;
+  thumbnail?: string;
+  duration?: number;
 }
 
 interface BskyPostView {
@@ -65,10 +92,16 @@ interface BskyPostView {
     embed?: {
       $type?: string;
       external?: { uri: string; title?: string; description?: string };
-      images?: Array<{ image: { ref: { link: string } }; alt: string }>;
+      images?: Array<{
+        image: { ref: { link: string } };
+        alt: string;
+        aspectRatio?: { width: number; height: number };
+      }>;
     };
     reply?: { parent: { uri: string }; root: { uri: string } };
   };
+  /** The post's embed view (includes resolved URLs, not just CIDs) */
+  embed?: BskyEmbedView;
   likeCount?: number;
   repostCount?: number;
   replyCount?: number;
@@ -102,12 +135,136 @@ export function guessNiches(text: string): string[] {
   return niches;
 }
 
+/**
+ * Determine the content type based on embeds present.
+ */
+function detectContentType(post: BskyPostView): UnifiedPost['contentType'] {
+  if (post.embed?.images && post.embed.images.length > 0) return 'image';
+  if (post.record.embed?.images && post.record.embed.images.length > 0) return 'image';
+  if (post.embed?.playlist || post.embed?.thumbnail) return 'video';
+  if (post.embed?.external?.uri) {
+    const url = post.embed.external.uri;
+    if (/\.(mp4|webm|mov|avi)$/i.test(url) || /youtube|youtu\.be|vimeo|twitch/i.test(url)) {
+      return 'video';
+    }
+    return 'link';
+  }
+  return 'text';
+}
+
+/**
+ * Extract media URLs from a Bluesky post with alt text and dimensions.
+ */
+export function extractMediaFromPost(post: BskyPostView): Array<{
+  url: string;
+  thumb?: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  aspectRatio?: number;
+}> {
+  const media: Array<{
+    url: string;
+    thumb?: string;
+    alt: string;
+    width?: number;
+    height?: number;
+    aspectRatio?: number;
+  }> = [];
+
+  // Check embed view (has resolved URLs)
+  const embedView = post.embed;
+  if (embedView?.images && embedView.images.length > 0) {
+    for (const img of embedView.images) {
+      const ar = img.aspectRatio ? img.aspectRatio.width / img.aspectRatio.height : undefined;
+      media.push({
+        url: img.fullsize || img.thumb,
+        thumb: img.thumb,
+        alt: img.alt || '',
+        width: img.aspectRatio?.width,
+        height: img.aspectRatio?.height,
+        aspectRatio: ar,
+      });
+    }
+    return media;
+  }
+
+  // Fallback: check record embed and construct URLs from CIDs
+  if (post.record.embed?.images && post.record.embed.images.length > 0) {
+    for (const img of post.record.embed.images) {
+      const cid = img.image?.ref?.link;
+      if (!cid) continue;
+      const did = post.author.did;
+      const ar = img.aspectRatio ? img.aspectRatio.width / img.aspectRatio.height : undefined;
+      media.push({
+        url: `https://cdn.bsky.app/img/feed_fullsize/plain/${did}/${cid}@jpeg`,
+        thumb: `https://cdn.bsky.app/img/feed_thumbnail/plain/${did}/${cid}@jpeg`,
+        alt: img.alt || '',
+        width: img.aspectRatio?.width,
+        height: img.aspectRatio?.height,
+        aspectRatio: ar,
+      });
+    }
+  }
+
+  // Check for video thumbnail
+  if (embedView?.thumbnail) {
+    media.push({
+      url: embedView.thumbnail,
+      alt: 'Video thumbnail',
+      aspectRatio: 16 / 9,
+    });
+  }
+
+  // External embed might have a thumbnail too (link card)
+  if (embedView?.external?.thumb && media.length === 0) {
+    media.push({
+      url: embedView.external.thumb,
+      thumb: embedView.external.thumb,
+      alt: embedView.external.title || 'Link preview',
+      aspectRatio: 1.91, // standard link card ratio
+    });
+  }
+
+  return media;
+}
+
 // ─── Mapping ─────────────────────────────────────────────────────────
 
 export function postToUnified(post: BskyPostView): UnifiedPost {
   const embeds: Array<{ kind: string; url: string; meta?: Record<string, unknown> }> = [];
 
-  if (post.record.embed?.external) {
+  // Extract image embeds
+  const mediaItems = extractMediaFromPost(post);
+  for (const media of mediaItems) {
+    embeds.push({
+      kind: 'image',
+      url: media.url,
+      meta: {
+        thumb: media.thumb,
+        alt: media.alt,
+        width: media.width,
+        height: media.height,
+        aspectRatio: media.aspectRatio,
+      },
+    });
+  }
+
+  // Extract external link embeds (cards, video links)
+  if (post.embed?.external) {
+    embeds.push({
+      kind: 'link',
+      url: post.embed.external.uri,
+      meta: {
+        title: post.embed.external.title,
+        description: post.embed.external.description,
+        thumb: post.embed.external.thumb,
+      },
+    });
+  }
+
+  // Also check record embed for external (backup)
+  if (!embeds.length && post.record.embed?.external) {
     embeds.push({
       kind: 'link',
       url: post.record.embed.external.uri,
@@ -117,6 +274,8 @@ export function postToUnified(post: BskyPostView): UnifiedPost {
       },
     });
   }
+
+  const contentType = detectContentType(post);
 
   return {
     id: `bluesky:${post.uri}`,
@@ -134,6 +293,7 @@ export function postToUnified(post: BskyPostView): UnifiedPost {
       keys: { did: post.author.did },
     },
     text: post.record.text,
+    contentType,
     embeds,
     createdAt: new Date(post.record.createdAt).getTime(),
     metrics: {
@@ -162,7 +322,6 @@ export function postToUnified(post: BskyPostView): UnifiedPost {
 
 async function fetchFromPds(_limit: number): Promise<UnifiedPost[]> {
   try {
-    // First get the PDS info
     const infoRes = await fetch(`${PDS_BASE}/xrpc/com.atproto.server.describeServer`, {
       signal: AbortSignal.timeout(3000),
     });
@@ -171,15 +330,12 @@ async function fetchFromPds(_limit: number): Promise<UnifiedPost[]> {
     const info = (await infoRes.json()) as { did?: string };
     if (!info.did) return [];
 
-    // Try to get recent posts via the sync endpoint
     const syncRes = await fetch(
       `${PDS_BASE}/xrpc/com.atproto.sync.getLatestCommit?did=${encodeURIComponent(info.did)}`,
       { signal: AbortSignal.timeout(3000) },
     );
     if (!syncRes.ok) return [];
 
-    // PDS is running - try to get timeline-like data
-    // The PDS may not have bsky endpoints; try the public API instead
     return [];
   } catch {
     return [];
@@ -228,7 +384,139 @@ async function searchPosts(query: string, limit: number): Promise<UnifiedPost[]>
   }
 }
 
-// ─── Main ────────────────────────────────────────────────────────────
+/**
+ * Fetch from all curated actors and merge results.
+ */
+async function fetchAllCuratedPosts(limit: number): Promise<UnifiedPost[]> {
+  const all: UnifiedPost[] = [];
+  const actorsToFetch = CURATED_ACTORS.slice(0, 8);
+  const perActor = Math.max(3, Math.ceil(limit / actorsToFetch.length));
+  const promises = actorsToFetch.map((actor) => fetchAuthorFeed(actor, perActor));
+  const results = await Promise.allSettled(promises);
+  for (const r of results) {
+    if (r.status === 'fulfilled') all.push(...r.value);
+  }
+
+  // Deduplicate
+  const seen = new Set<string>();
+  const deduped: UnifiedPost[] = [];
+  for (const p of all) {
+    const key = p.text.slice(0, 60);
+    if (!seen.has(key) && deduped.length < limit) {
+      seen.add(key);
+      deduped.push(p);
+    }
+  }
+  return deduped;
+}
+
+// ─── Specialized feed fetchers ──────────────────────────────────────
+
+/**
+ * Image-only feed: returns posts that contain at least one image embed.
+ * Fetches from curated actors + expands with image-focused search.
+ */
+export async function fetchBlueskyImageFeed(limit = 30): Promise<UnifiedPost[]> {
+  const all: UnifiedPost[] = [];
+
+  // Fetch curated actors
+  const curated = await fetchAllCuratedPosts(Math.ceil(limit * 2));
+  all.push(...curated);
+
+  // If we need more, search for image-related crypto content
+  if (all.filter((p) => p.embeds.some((e) => e.kind === 'image')).length < limit) {
+    const imageQueries = [
+      'crypto crypto',
+      'bitcoin chart',
+      'nft art',
+      'memecoin',
+      'defi dashboard',
+    ];
+    const searchPromises = imageQueries
+      .slice(0, 3)
+      .map((q) => searchPosts(q, Math.ceil(limit / 2)));
+    const results = await Promise.allSettled(searchPromises);
+    for (const r of results) {
+      if (r.status === 'fulfilled') all.push(...r.value);
+    }
+  }
+
+  // Filter for image-only
+  const withImages = all.filter((p) => p.embeds.some((e) => e.kind === 'image'));
+
+  // Deduplicate
+  const seen = new Set<string>();
+  const deduped: UnifiedPost[] = [];
+  for (const p of withImages) {
+    const key = p.text.slice(0, 60);
+    if (!seen.has(key) && deduped.length < limit) {
+      seen.add(key);
+      deduped.push(p);
+    }
+  }
+
+  console.log(`[bridge] Bluesky Image Feed: ${deduped.length} posts`);
+  return deduped;
+}
+
+/**
+ * Video/external feed: returns posts with video embeds or link cards.
+ */
+export async function fetchBlueskyVideoFeed(limit = 20): Promise<UnifiedPost[]> {
+  const all = await fetchAllCuratedPosts(Math.ceil(limit * 2));
+
+  // Filter for posts with external embeds (likely video/link cards)
+  const withMedia = all.filter((p) =>
+    p.embeds.some((e) => e.kind === 'link' || e.kind === 'video'),
+  );
+
+  // Deduplicate
+  const seen = new Set<string>();
+  const deduped: UnifiedPost[] = [];
+  for (const p of withMedia) {
+    const key = p.text.slice(0, 60);
+    if (!seen.has(key) && deduped.length < limit) {
+      seen.add(key);
+      deduped.push(p);
+    }
+  }
+
+  console.log(`[bridge] Bluesky Video Feed: ${deduped.length} posts`);
+  return deduped;
+}
+
+/**
+ * Trending feed: search for trending crypto content.
+ */
+export async function fetchBlueskyTrending(limit = 20): Promise<UnifiedPost[]> {
+  const all: UnifiedPost[] = [];
+
+  // Primary: search trending crypto query
+  const trending = await searchPosts(TRENDING_QUERY, Math.ceil(limit * 1.5));
+  all.push(...trending);
+
+  // Supplement from curated actors (for variety when search result is thin)
+  if (all.length < limit / 2) {
+    const curated = await fetchAllCuratedPosts(Math.ceil(limit / 2));
+    all.push(...curated);
+  }
+
+  // Deduplicate
+  const seen = new Set<string>();
+  const deduped: UnifiedPost[] = [];
+  for (const p of all) {
+    const key = p.text.slice(0, 60);
+    if (!seen.has(key) && deduped.length < limit) {
+      seen.add(key);
+      deduped.push(p);
+    }
+  }
+
+  console.log(`[bridge] Bluesky Trending: ${deduped.length} posts`);
+  return deduped;
+}
+
+// ─── Main ───────────────────────────────────────────────────────────
 
 export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
   const all: UnifiedPost[] = [];
