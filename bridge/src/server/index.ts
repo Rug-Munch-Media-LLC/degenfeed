@@ -63,7 +63,7 @@ interface CrossProtocolNotification {
  * For now, we generate sample cross-protocol notifications.
  */
 function generateCrossProtocolNotifications(
-  walletAddress?: string,
+  _walletAddress?: string,
   count = 20,
 ): CrossProtocolNotification[] {
   const now = Date.now();

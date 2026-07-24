@@ -39,7 +39,7 @@ function hexToRgb(hex: string): string {
   return `${Number.parseInt(result[1]!, 16)},${Number.parseInt(result[2]!, 16)},${Number.parseInt(result[3]!, 16)}`;
 }
 
-function timeAgo(ts: number): string {
+function _timeAgo(ts: number): string {
   const seconds = Math.floor((Date.now() - ts) / 1000);
   if (seconds < 60) return 'just now';
   const minutes = Math.floor(seconds / 60);

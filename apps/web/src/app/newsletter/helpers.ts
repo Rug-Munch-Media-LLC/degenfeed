@@ -24,7 +24,7 @@ export function protocolEmoji(p: string): string {
 
 export function computeNewTodayStats(
   allNewsletters: NewsletterEntry[],
-  newslettersByTopic: Record<string, NewsletterEntry[]>,
+  _newslettersByTopic: Record<string, NewsletterEntry[]>,
 ): { categoryCounts: Record<string, number>; totalDaily: number } {
   const daily = allNewsletters.filter((n) => n.schedule === 'daily');
   const categoryCounts: Record<string, number> = {

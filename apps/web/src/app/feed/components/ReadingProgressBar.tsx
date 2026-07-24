@@ -11,13 +11,17 @@ import { useReadingProgress } from '../../../hooks/useReadingProgress';
 export function ReadingProgressBar({
   postId,
   enabled = true,
+  progress: externalProgress,
 }: {
   /** The DOM id of the post element (without the #) */
-  postId: string;
+  postId?: string;
   /** Enable tracking — set to false when post is in feed (not expanded) */
   enabled?: boolean;
+  /** External progress value (0-1) — overrides useReadingProgress when set */
+  progress?: number;
 }) {
-  const progress = useReadingProgress(enabled ? `post-${postId}` : null, enabled);
+  const hookProgress = useReadingProgress(postId && enabled ? `post-${postId}` : null, enabled);
+  const progress = externalProgress ?? (postId ? hookProgress : 0);
 
   if (!enabled || progress <= 0) return null;
 

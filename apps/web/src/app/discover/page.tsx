@@ -1,7 +1,6 @@
 'use client';
 
 import { ErrorBoundary } from '@degenfeed/ui';
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CATEGORIES, CategoryCard } from '../../components/CategoryCard';
 import {
@@ -46,16 +45,16 @@ export default function DiscoverPage() {
   const [popularThisHourState, setPopularThisHourState] = useState<SectionState>('loading');
   const [recommendedPosts, setRecommendedPosts] = useState<TrendingPost[]>([]);
   const [recommendedState, setRecommendedState] = useState<SectionState>('loading');
-  const [trendingCreators, setTrendingCreators] = useState<DiscoverPerson[]>([]);
-  const [trendingCreatorsState, setTrendingCreatorsState] = useState<SectionState>('loading');
+  const [trendingCreators, _setTrendingCreators] = useState<DiscoverPerson[]>([]);
+  const [trendingCreatorsState, _setTrendingCreatorsState] = useState<SectionState>('loading');
   const [_recommendedCreators, _setRecommendedCreators] = useState<DiscoverPerson[]>([]);
   const [_recommendedCreatorsState, _setRecommendedCreatorsState] =
     useState<SectionState>('loading');
-  const [crossNetworkTrending, setCrossNetworkTrending] = useState<TrendingItem[]>([]);
-  const [crossTrendingState, setCrossTrendingState] = useState<SectionState>('loading');
-  const [creatorSearchQuery, setCreatorSearchQuery] = useState('');
-  const [creatorSearchResults, setCreatorSearchResults] = useState<DiscoverPerson[]>([]);
-  const [creatorSearchState, setCreatorSearchState] = useState<
+  const [_crossNetworkTrending, _setCrossNetworkTrending] = useState<TrendingItem[]>([]);
+  const [_crossTrendingState, _setCrossTrendingState] = useState<SectionState>('loading');
+  const [_creatorSearchQuery, _setCreatorSearchQuery] = useState('');
+  const [_creatorSearchResults, _setCreatorSearchResults] = useState<DiscoverPerson[]>([]);
+  const [_creatorSearchState, _setCreatorSearchState] = useState<
     'idle' | 'loading' | 'loaded' | 'empty' | 'error'
   >('idle');
 
@@ -219,7 +218,7 @@ export default function DiscoverPage() {
           <SectionHeader emoji="📂" title="Categories" subtitle="Explore by topic" href="/topics" />
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {CATEGORIES.map((cat) => (
-              <CategoryCard key={cat.slug} cat={cat} />
+              <CategoryCard key={cat.id} {...cat} />
             ))}
           </div>
         </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { getProtocolColor } from '@degenfeed/ui';
 import Image from 'next/image';
 import { ActionButton } from './ActionButton';
 

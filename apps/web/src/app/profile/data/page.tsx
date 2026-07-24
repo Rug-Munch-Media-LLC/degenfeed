@@ -8,7 +8,7 @@
  */
 
 import { ErrorBoundary } from '@degenfeed/ui';
-import { DataSection, SectionSkeleton } from './components';
+import { DataSection } from './components';
 import { DATA_CATEGORIES, HOSTED_INSTANCES } from './constants';
 import { useDataPage } from './data-operations';
 

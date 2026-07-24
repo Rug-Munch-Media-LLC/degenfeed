@@ -108,7 +108,7 @@ function fetchFromRelay(
 
       ws.addEventListener('open', () => {
         const subId = `df-sub-${Date.now()}`;
-        ws!.send(JSON.stringify(['REQ', subId, { kinds, limit }]));
+        ws?.send(JSON.stringify(['REQ', subId, { kinds, limit }]));
       });
 
       ws.addEventListener('message', (event: MessageEvent) => {

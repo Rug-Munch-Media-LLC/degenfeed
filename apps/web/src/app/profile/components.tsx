@@ -1,7 +1,4 @@
 'use client';
-
-import type { ReputationBadgeProgress, ReputationBadgeScore } from '@degenfeed/ui';
-import { ReputationBadge } from '@degenfeed/ui';
 import Image from 'next/image';
 import { formatCount, PROTOCOL_LABELS, shortenAddress } from './constants';
 import type { ProfileStats, ProfileTab, ResolvedIdentity } from './types';

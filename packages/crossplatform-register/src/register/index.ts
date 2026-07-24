@@ -10,7 +10,7 @@ export {
   platformAccountKey,
   platformAccountsIndexKey,
 } from './kv';
-export { registerOnPlatform } from './register';
+export { getSupportedProtocolsForRegistration, registerOnPlatform } from './register';
 export type {
   PlatformRegistration,
   RegisterOptions,

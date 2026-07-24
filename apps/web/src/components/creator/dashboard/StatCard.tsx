@@ -1,7 +1,5 @@
 'use client';
 
-import { formatCompact } from './types';
-
 export function StatCard({
   label,
   value,

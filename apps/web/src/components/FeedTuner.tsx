@@ -113,14 +113,14 @@ function weightLabel(weight: number): string {
 // ─── FeedTuner Props (matches feed/page.tsx) ─────────────────
 
 interface FeedTunerProps {
-  weights: Record<string, number>;
+  topicWeights: Record<string, number>;
   onWeightsChange: (weights: Record<string, number>) => void;
-  onApply: (weights: Record<string, number>) => void;
+  onApply?: (weights: Record<string, number>) => void;
   onReset: () => void;
-  onClose: () => void;
+  onClose?: () => void;
   feedMixConfig: FeedMixConfig;
   onFeedMixChange: (config: FeedMixConfig) => void;
-  onFeedMixApply: (config: FeedMixConfig) => void;
+  onFeedMixApply?: (config: FeedMixConfig) => void;
   onFeedMixReset: () => void;
   savedMixes: SavedMix[];
   onSaveMix: (mix: SavedMix) => void;
@@ -141,14 +141,14 @@ interface FeedTunerProps {
 
 export function FeedTuner(props: FeedTunerProps) {
   const {
-    weights,
+    topicWeights: weights,
     onWeightsChange,
-    onApply,
+    onApply = () => {},
     onReset,
-    onClose,
+    onClose = () => {},
     feedMixConfig,
     onFeedMixChange,
-    onFeedMixApply,
+    onFeedMixApply = () => {},
     onFeedMixReset,
     savedMixes,
     onSaveMix,

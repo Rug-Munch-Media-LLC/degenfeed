@@ -18,7 +18,7 @@ import type { UnifiedPost } from '@degenfeed/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Lightbox } from './bluesky-lightbox';
 import { EmptyState, ImageCard, TrendingTextCard, VideoCard } from './bluesky-media-card';
-import { extractMedia, formatCount, isVideoPost } from './bluesky-media-helpers';
+import { extractMedia, isVideoPost } from './bluesky-media-helpers';
 import { usePullToRefresh } from './bluesky-media-hooks';
 import type { TabId } from './bluesky-media-types';
 import { BLUESKY_BLUE, POSTS_PER_PAGE, TABS } from './bluesky-media-types';
@@ -283,8 +283,8 @@ export function BlueskyMediaView() {
       {/* Lightbox */}
       {lightboxPost && currentLightboxIndex >= 0 && mediaPosts[currentLightboxIndex] && (
         <Lightbox
-          post={mediaPosts[currentLightboxIndex]!.post}
-          media={mediaPosts[currentLightboxIndex]!.media}
+          post={mediaPosts[currentLightboxIndex]?.post}
+          media={mediaPosts[currentLightboxIndex]?.media}
           onClose={closeLightbox}
           onPrev={currentLightboxIndex > 0 ? goToPrev : undefined}
           onNext={currentLightboxIndex < mediaPosts.length - 1 ? goToNext : undefined}

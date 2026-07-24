@@ -6,7 +6,11 @@
  * GET  /api/register-platform/bluesky-pool — Get Bluesky invite pool stats (admin)
  */
 
-import { getPlatformAccounts, registerOnPlatform } from '@degenfeed/crossplatform-register';
+import {
+  getPlatformAccounts,
+  getSupportedProtocolsForRegistration,
+  registerOnPlatform,
+} from '@degenfeed/crossplatform-register';
 import { getInvitePoolStats } from '@degenfeed/crossplatform-register/bluesky-invite-pool';
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
@@ -17,7 +21,7 @@ import { requireSession } from '../session';
 // ─── POST /api/register-platform ──────────────────────────────────────
 
 const PREMIUM_PLATFORMS = new Set(['farcaster', 'lens', 'bluesky']);
-const FREE_PLATFORMS = new Set(['mastodon', 'nostr']);
+const FREE_PLATFORMS = new Set(['mastodon', 'nostr', 'lemmy', 'peertube', 'pixelfed']);
 const VALID_PLATFORMS = new Set([...PREMIUM_PLATFORMS, ...FREE_PLATFORMS]);
 
 export async function handleRegisterPlatform(request: Request, env: Env): Promise<Response> {
@@ -89,6 +93,9 @@ export async function handleRegisterPlatform(request: Request, env: Env): Promis
     polygonRpcUrl: env.POLYGON_RPC_URL,
     blueskyInvitePool: env.BLUESKY_INVITE_POOL,
     mastodonInstanceUrl: env.MASTODON_INSTANCE_URL || 'https://social.degenfeed.xyz',
+    lemmyInstanceUrl: env.LEMMY_INSTANCE_URL || 'https://community.degenfeed.xyz',
+    peertubeInstanceUrl: env.PEERTUBE_INSTANCE_URL || 'https://video.degenfeed.xyz',
+    pixelfedInstanceUrl: env.PIXELFED_INSTANCE_URL || 'https://pixelfed.social',
   });
 
   // Auto-link identity on successful registration
@@ -148,17 +155,16 @@ export async function handleRegisterPlatformStatus(request: Request, env: Env): 
 
   const premium = await checkPremiumStatus(walletAddress, env);
   const tierName = premium?.tier ?? null;
-  const platformStatus = {
-    farcaster: { registered: false, username: null as string | null },
-    lens: { registered: false, username: null as string | null },
-    bluesky: { registered: false, username: null as string | null },
-    mastodon: { registered: false, username: null as string | null },
-    nostr: { registered: false, username: null as string | null },
-  };
+
+  const supportedPlatforms = getSupportedProtocolsForRegistration();
+  const platformStatus: Record<string, { registered: boolean; username: string | null }> = {};
+  for (const p of supportedPlatforms) {
+    platformStatus[p] = { registered: false, username: null };
+  }
 
   for (const acct of accounts) {
     if (acct.platform in platformStatus) {
-      platformStatus[acct.platform as keyof typeof platformStatus] = {
+      platformStatus[acct.platform] = {
         registered: true,
         username: acct.username || null,
       };
@@ -172,7 +178,8 @@ export async function handleRegisterPlatformStatus(request: Request, env: Env): 
       accounts,
       platformStatus,
       connectedCount,
-      totalPlatforms: 5,
+      totalPlatforms: supportedPlatforms.length,
+      supportedPlatforms,
       isPremium: !!premium,
       tier: tierName,
     },
@@ -223,6 +230,28 @@ function buildIdentityLinkPayload(
     case 'nostr': {
       if (!accountInfo.npub) return null;
       return { npub: accountInfo.npub, relays: [] };
+    }
+    case 'lemmy': {
+      if (!accountInfo.username) return null;
+      return {
+        handle: accountInfo.username,
+        instance: accountInfo.instance || 'community.degenfeed.xyz',
+      };
+    }
+    case 'peertube': {
+      if (!accountInfo.username) return null;
+      return {
+        handle: accountInfo.username,
+        instance: accountInfo.instance || 'video.degenfeed.xyz',
+        userId: accountInfo.userId || '',
+      };
+    }
+    case 'pixelfed': {
+      if (!accountInfo.username) return null;
+      return {
+        handle: accountInfo.username,
+        instance: accountInfo.instance || 'pixelfed.social',
+      };
     }
     default:
       return null;

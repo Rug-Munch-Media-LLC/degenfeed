@@ -17,8 +17,6 @@
  *   // => UnifiedProfile with handles on Nostr, Mastodon, Bluesky, etc.
  */
 
-import type { UnifiedIdentity } from '@degenfeed/types';
-
 // ─── Types ──────────────────────────────────────────────────────────────
 
 export interface ProtocolHandle {
@@ -109,7 +107,7 @@ export class IdentityResolver {
   async resolve(
     protocol: string,
     userId: string,
-    fetchFn: typeof fetch = fetch,
+    _fetchFn: typeof fetch = fetch,
   ): Promise<UnifiedProfile> {
     const cacheKey = `${protocol}:${userId}`;
 
@@ -255,7 +253,7 @@ export class IdentityResolver {
     try {
       const atIdx = handle.indexOf('@');
       if (atIdx <= 0) return null;
-      const uname = handle.slice(0, atIdx);
+      const _uname = handle.slice(0, atIdx);
       const domain = handle.slice(atIdx + 1);
       const url = `https://${domain}/.well-known/webfinger?resource=acct:${encodeURIComponent(handle)}`;
       const res = await fetchFn(url, {
@@ -322,7 +320,6 @@ export class IdentityResolver {
       if (!data.names) return null;
       const pubkey = data.names[username!];
       if (!pubkey) return null;
-
 
       return {
         protocol: 'nostr',
@@ -420,7 +417,7 @@ export class IdentityResolver {
       {
         name: 'web-finger',
         priority: 80,
-        resolve: async (protocol, userId) => {
+        resolve: async (_protocol, userId) => {
           // If it's a fediverse handle, try WebFinger
           if (userId.includes('@') && !userId.startsWith('@')) {
             const result = await this.resolveWebFinger(userId);
@@ -432,7 +429,7 @@ export class IdentityResolver {
       {
         name: 'nip05',
         priority: 70,
-        resolve: async (protocol, userId) => {
+        resolve: async (protocol, _userId) => {
           if (protocol === 'nostr') {
             // Try NIP-05 lookup: check the Nostr profile metadata
             // This would require fetching kind:0 from a relay
