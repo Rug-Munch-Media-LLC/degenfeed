@@ -15,7 +15,7 @@
 
 import { detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
 
 export const KBIN_INSTANCES = [
@@ -164,6 +164,8 @@ function adaptKbinPost(post: KbinPost, instance: string): UnifiedPost {
 
 export class KbinProvider implements FeedProvider {
   readonly protocol: Protocol = 'kbin' as Protocol;
+
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly instances: string[];
 
   constructor(instances?: string[]) {

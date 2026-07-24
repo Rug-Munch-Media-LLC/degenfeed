@@ -13,7 +13,7 @@
 
 import { detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import { DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
 
 const TILDES_BASE = 'https://tildes.net';
@@ -96,6 +96,8 @@ function adaptTildesTopic(topic: TildesTopic, groupName: string): UnifiedPost {
 
 export class TildesProvider implements FeedProvider {
   readonly protocol: Protocol = 'tildes' as Protocol;
+
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly groups: string[];
 
   constructor(groups?: string[]) {

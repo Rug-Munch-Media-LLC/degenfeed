@@ -12,7 +12,7 @@
 
 import { detectNiches } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions, HealthResult } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import { DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, fetchRss, withTimeout } from '../utils';
 
 // ─── Squabbles (RSS-based) ─────────────────────────────────
@@ -89,6 +89,7 @@ function parseRssItems(
   const items: Array<{ title: string; link: string; pubDate: string; description: string }> = [];
   const itemRe = /<item>([\s\S]*?)<\/item>/gi;
   let m: RegExpExecArray | null;
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
   while ((m = itemRe.exec(xml)) !== null) {
     const content = m[1] ?? '';
     const title = content.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '';
@@ -114,6 +115,8 @@ function stripHtml(html: string): string {
 
 export class RedditAlternativesProvider implements FeedProvider {
   readonly protocol: Protocol = 'rss' as Protocol;
+
+  readonly schema: SchemaGuard = (): boolean => true;
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;

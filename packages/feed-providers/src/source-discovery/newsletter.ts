@@ -366,8 +366,9 @@ async function inspectNewsletter(
 
     const dateRegex =
       /<pubDate[^>]*>([^<]+)<\/pubDate>|<published[^>]*>([^<]+)<\/published>|<updated[^>]*>([^<]+)<\/updated>/gi;
-    let match;
-    while ((match = dateRegex.exec(text)) !== null) {
+    while (true) {
+      const match = dateRegex.exec(text);
+      if (match === null) break;
       const dateStr = match[1] ?? match[2] ?? match[3];
       if (dateStr) {
         const ts = new Date(dateStr).getTime();

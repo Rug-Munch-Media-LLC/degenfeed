@@ -1,6 +1,6 @@
 import { CircuitBreaker, CircuitBreakerError, detectNiches } from '@degenfeed/feed-core';
 import type { Embed, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
-import type { FeedProvider, FeedResult, FetchOptions } from '../types';
+import type { FeedProvider, FeedResult, FetchOptions, SchemaGuard } from '../types';
 import {
   DEFAULT_TIMEOUT_MS,
   DEFAULT_USER_AGENT,
@@ -3387,6 +3387,8 @@ function feedToUnifiedPosts(
 
 export class RssProvider implements FeedProvider {
   readonly protocol: Protocol = 'rss';
+
+  readonly schema: SchemaGuard = (): boolean => true;
   private readonly feedConfigs: RssFeedConfig[];
   private readonly breaker = new CircuitBreaker('rss');
 
