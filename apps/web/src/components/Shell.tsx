@@ -15,6 +15,8 @@ import { InstallPrompt } from './InstallPrompt';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 import { LeftSidebar } from './LeftSidebar';
 import { OfflineBanner } from './OfflineBanner';
+import { ProtocolConnectFlow } from './ProtocolConnectFlow';
+import { ProtocolQuickSwitcher } from './ProtocolQuickSwitcher';
 import { QuickJumpFloating } from './QuickJumpFloating';
 import { RightSidebar } from './RightSidebar';
 import { ScreenReaderAnnouncerProvider } from './ScreenReaderAnnouncer';
@@ -33,28 +35,6 @@ const WelcomeBackModal = dynamic(
 );
 
 const _APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
-
-/* === Logo =================================================== */
-
-function _Logo() {
-  return (
-    <Link href="/feed" className="flex items-center gap-2 group" aria-label="DegenFeed Home">
-      <Image
-        src="/icon.svg"
-        alt=""
-        width={28}
-        height={28}
-        className="h-7 w-7 rounded-lg logo-glow transition-shadow group-hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
-      />
-      <span
-        className="text-lg font-bold tracking-tight hidden sm:inline"
-        style={{ color: 'var(--color-fg)' }}
-      >
-        DegenFeed
-      </span>
-    </Link>
-  );
-}
 
 /* === Page title ============================================= */
 
@@ -163,7 +143,6 @@ function DesktopHeader({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          {/* Theme toggle placeholder */}
           <Link
             href="/notifications"
             className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
@@ -312,9 +291,19 @@ function MobileTopBar({
   );
 }
 
-/* === Mobile slide-out drawer ================================ */
+/* === Mobile drawer ========================================== */
 
-function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+function MobileDrawer({
+  open,
+  onClose,
+  onQuickSwitcherOpen,
+  onProtocolConnectOpen,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onQuickSwitcherOpen?: () => void;
+  onProtocolConnectOpen?: () => void;
+}) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const swipeStartX = useRef(0);
 
@@ -340,15 +329,6 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
     [onClose],
   );
 
-  const handleBackdropTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      const endX = e.changedTouches[0]?.clientX ?? 0;
-      const startX = swipeStartX.current;
-      if (endX - startX > 60) onClose();
-    },
-    [onClose],
-  );
-
   if (!open) return null;
 
   return (
@@ -357,7 +337,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
         className="fixed inset-0 bg-black/50 lg:hidden animate-backdrop-in"
         onClick={onClose}
         onTouchStart={handleDrawerTouchStart}
-        onTouchEnd={handleBackdropTouchEnd}
+        onTouchEnd={handleDrawerTouchEnd}
         aria-hidden="true"
         style={{ zIndex: 'var(--z-drawer-backdrop, 50)' }}
       />
@@ -368,59 +348,54 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
         onTouchEnd={handleDrawerTouchEnd}
         style={{ zIndex: 'var(--z-drawer, 60)' }}
       >
-        <LeftSidebar onNavClick={onClose} />
+        <LeftSidebar
+          onNavClick={onClose}
+          onQuickSwitcherOpen={onQuickSwitcherOpen}
+          onProtocolConnectOpen={onProtocolConnectOpen}
+        />
       </div>
     </>
   );
 }
 
-/* === Shell main component =================================== */
+/* === Shell main ============================================= */
 
 export const Shell = memo(function Shell({ children }: { children: React.ReactNode }) {
   const { showToast } = useToast();
   const pathname = usePathname();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [quickSwitcherOpen, setQuickSwitcherOpen] = useState(false);
+  const [protocolConnectOpen, setProtocolConnectOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [, setTheme] = useState<'dark' | 'light'>('dark');
   const { cycleLayout } = useFeedLayout();
   const { trackVisit } = useRecentVisited();
   const edgeSwipeStartX = useRef(0);
 
-  // == Sidebar collapse state ==
+  // Sidebar collapse state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // == Scroll-aware header visibility ==
+  // Scroll-aware header visibility
   const [showDesktopHeader, setShowDesktopHeader] = useState(true);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
-      if (currentY < 50) {
-        setShowDesktopHeader(true);
-      } else if (currentY < lastScrollY.current) {
-        // Scrolling up
-        setShowDesktopHeader(true);
-      } else {
-        // Scrolling down
-        setShowDesktopHeader(false);
-      }
+      if (currentY < 50) setShowDesktopHeader(true);
+      else if (currentY < lastScrollY.current) setShowDesktopHeader(true);
+      else setShowDesktopHeader(false);
       lastScrollY.current = currentY;
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // == Swipe from left edge to open drawer on mobile ==
+  // Swipe from left edge to open drawer on mobile
   useEffect(() => {
     if (mobileDrawerOpen) return;
-    const isTopLevel =
-      pathname === '/feed' ||
-      pathname === '/home/all' ||
-      pathname === '/home' ||
-      pathname === '/search' ||
-      pathname === '/';
+    const isTopLevel = ['/feed', '/home/all', '/home', '/search', '/'].includes(pathname);
     if (!isTopLevel) return;
 
     const handler = (e: TouchEvent) => {
@@ -430,9 +405,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     const endHandler = (e: TouchEvent) => {
       if (edgeSwipeStartX.current === 0) return;
       const endX = e.changedTouches[0]?.clientX ?? 0;
-      if (endX - edgeSwipeStartX.current > 60) {
-        setMobileDrawerOpen(true);
-      }
+      if (endX - edgeSwipeStartX.current > 60) setMobileDrawerOpen(true);
       edgeSwipeStartX.current = 0;
     };
     window.addEventListener('touchstart', handler, { passive: true });
@@ -458,7 +431,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     pathname.startsWith('/topics/') ||
     pathname.startsWith('/digest/');
 
-  // == Protocol transition flash ==
+  // Protocol transition flash
   const prevPathRef = useRef(pathname);
   useEffect(() => {
     const prev = prevPathRef.current;
@@ -491,7 +464,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     trackVisit(pathname, label || 'Home');
   }, [pathname, trackVisit]);
 
-  // Listen for custom df-toast events
+  // Toast listener
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as {
@@ -499,9 +472,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
         message: string;
         duration?: number;
       };
-      if (detail?.message) {
-        showToast(detail.kind || 'success', detail.message, detail.duration);
-      }
+      if (detail?.message) showToast(detail.kind || 'success', detail.message, detail.duration);
     };
     window.addEventListener('df-toast', handler);
     return () => window.removeEventListener('df-toast', handler);
@@ -513,11 +484,10 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     const resolved = stored === 'light' ? 'light' : 'dark';
     setTheme(resolved);
     document.documentElement.classList.toggle('dark', resolved === 'dark');
-    // biome-ignore lint/suspicious/noDocumentCookie: intentional theme persistence via cookie for SSR parity
     document.cookie = `df_theme=${resolved}; path=/; max-age=31536000; SameSite=Lax; Secure`;
   }, []);
 
-  // Global keyboard shortcuts
+  // Global keyboard shortcuts — ⌘K opens quick switcher
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'L' && e.ctrlKey && e.shiftKey) {
@@ -531,7 +501,6 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           const next = prev === 'dark' ? 'light' : 'dark';
           document.documentElement.classList.toggle('dark', next === 'dark');
           localStorage.setItem('df_theme', next);
-          // biome-ignore lint/suspicious/noDocumentCookie: intentional theme persistence via cookie for SSR parity
           document.cookie = `df_theme=${next}; path=/; max-age=31536000; SameSite=Lax; Secure`;
           return next;
         });
@@ -539,7 +508,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       }
       if ((e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        setSearchOpen(true);
+        setQuickSwitcherOpen(true);
         return;
       }
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
@@ -558,7 +527,6 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
     return () => window.removeEventListener('keydown', handler);
   }, [cycleLayout]);
 
-  // Left sidebar width: 275px expanded, 72px collapsed
   const sidebarWidth = sidebarCollapsed ? 'w-[72px]' : 'w-[275px]';
 
   return (
@@ -570,29 +538,19 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       <div className="noise-overlay" />
 
       <SkipLinks />
-
-      {/* Offline banner */}
       <OfflineBanner />
 
-      {/* ══════════════════════════════════════════════════════════
-           DESKTOP: Scroll-aware header
-      ══════════════════════════════════════════════════════════ */}
+      {/* Desktop header */}
       <div
-        className={`hidden lg:block fixed top-0 inset-x-0 z-30 border-b border-[var(--color-glass-border)] backdrop-blur-xl transition-transform duration-300 ${
-          showDesktopHeader ? 'translate-y-0' : '-translate-y-full'
-        }`}
-        style={{
-          backgroundColor: 'var(--color-glass-bg)',
-        }}
+        className={`hidden lg:block fixed top-0 inset-x-0 z-30 border-b border-[var(--color-glass-border)] backdrop-blur-xl transition-transform duration-300 ${showDesktopHeader ? 'translate-y-0' : '-translate-y-full'}`}
+        style={{ backgroundColor: 'var(--color-glass-bg)' }}
       >
         <DesktopHeader onSearchOpen={() => setSearchOpen(true)} />
       </div>
 
-      {/* ══════════════════════════════════════════════════════════
-           DESKTOP: Three-column layout
-      ══════════════════════════════════════════════════════════ */}
+      {/* Three-column layout */}
       <div className="mx-auto flex w-full max-w-[1260px] flex-1 pt-0 lg:pt-14">
-        {/* == Left Sidebar (desktop, hide on landing page) == */}
+        {/* Left Sidebar (desktop, hide on landing) */}
         {pathname !== '/' && (
           <div
             className={`hidden lg:block sticky top-14 h-[calc(100vh-3.5rem)] shrink-0 overflow-y-auto border-r border-[var(--color-glass-border)] transition-[width] duration-200 ease-in-out ${sidebarWidth}`}
@@ -600,11 +558,13 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             <LeftSidebar
               collapsed={sidebarCollapsed}
               onCollapseToggle={() => setSidebarCollapsed((v) => !v)}
+              onQuickSwitcherOpen={() => setQuickSwitcherOpen(true)}
+              onProtocolConnectOpen={() => setProtocolConnectOpen(true)}
             />
           </div>
         )}
 
-        {/* == Center: Main content == */}
+        {/* Center: Main content */}
         <main
           id="main"
           aria-label="Main content"
@@ -613,13 +573,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             relative z-10 min-h-screen animate-page-enter
             ${pathname !== '/' && !isSelfLayoutPage ? 'pb-16 lg:pb-0' : ''}
             w-full min-w-0 border-r border-[var(--color-glass-border)]
-            ${
-              pathname === '/'
-                ? 'max-w-none border-r-0'
-                : isSelfLayoutPage
-                  ? 'flex-1'
-                  : 'max-w-[600px] flex-1'
-            }
+            ${pathname === '/' ? 'max-w-none border-r-0' : isSelfLayoutPage ? 'flex-1' : 'max-w-[600px] flex-1'}
           `}
         >
           <div aria-live="polite" aria-atomic="true" className="sr-only" role="status" />
@@ -627,7 +581,18 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
             onMenuToggle={() => setMobileDrawerOpen(true)}
             onSearchOpen={() => setSearchOpen(true)}
           />
-          <MobileDrawer open={mobileDrawerOpen} onClose={() => setMobileDrawerOpen(false)} />
+          <MobileDrawer
+            open={mobileDrawerOpen}
+            onClose={() => setMobileDrawerOpen(false)}
+            onQuickSwitcherOpen={() => {
+              setMobileDrawerOpen(false);
+              setQuickSwitcherOpen(true);
+            }}
+            onProtocolConnectOpen={() => {
+              setMobileDrawerOpen(false);
+              setProtocolConnectOpen(true);
+            }}
+          />
 
           <OnboardingProvider>
             <ScreenReaderAnnouncerProvider>
@@ -638,7 +603,7 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
           </OnboardingProvider>
         </main>
 
-        {/* == Right Sidebar (desktop) == */}
+        {/* Right Sidebar (desktop) */}
         {pathname !== '/' &&
           !isSelfLayoutPage &&
           !['/farcaster', '/lens', '/bluesky', '/nostr', '/mastodon'].some(
@@ -655,10 +620,16 @@ export const Shell = memo(function Shell({ children }: { children: React.ReactNo
       {/* Mobile bottom nav */}
       <BottomNav />
 
-      {/* == Floating overlays == */}
+      {/* Floating overlays */}
       <QuickJumpFloating />
       <ScrollToTop />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <ProtocolQuickSwitcher open={quickSwitcherOpen} onClose={() => setQuickSwitcherOpen(false)} />
+      <ProtocolConnectFlow
+        open={protocolConnectOpen}
+        protocolId={null}
+        onClose={() => setProtocolConnectOpen(false)}
+      />
       <KeyboardShortcuts open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <InstallPrompt />
       <AddToHomeScreenToast />
