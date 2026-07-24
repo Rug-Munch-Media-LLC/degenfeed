@@ -29,11 +29,15 @@ describe('Subscription Tier Management', () => {
     vi.useRealTimers();
   });
 
-  it('should create a free subscription record with no expiry', () => {
+  it('should create a free subscription record with immediate expiry', () => {
+    const now = Date.now();
+    vi.setSystemTime(now);
     const record = buildSubscriptionRecord('user-1', 'free');
     expect(record.identityId).toBe('user-1');
     expect(record.tier).toBe('free');
-    expect(record.expiresAt).toBe(0);
+    // Free tier has 0 TTL, so expiresAt === startedAt
+    expect(record.expiresAt).toBe(now);
+    expect(isSubscriptionActive(record)).toBe(false);
   });
 
   it('should create a pro subscription record with 30-day expiry', () => {
