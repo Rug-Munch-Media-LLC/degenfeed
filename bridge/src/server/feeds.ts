@@ -7,8 +7,9 @@ import { fetchNostrPosts } from '../providers/nostr';
 import { fetchPeerTubePosts } from '../providers/peertube';
 import { fetchPixelfedPosts } from '../providers/pixelfed';
 import { fetchRedditPosts } from '../providers/redlib';
-import { fetchRssBridgePosts } from '../providers/rssbridge';
 import { fetch as fetchRssPosts } from '../providers/rss';
+import { fetchRssBridgePosts } from '../providers/rssbridge';
+import { fetchThreadsPosts } from '../providers/threads';
 import { fetchZoraPosts } from '../providers/zora';
 import type { UnifiedPost } from './types';
 
@@ -18,10 +19,13 @@ export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }>
   mastodon: { name: 'Mastodon/GTS', fetch: fetchMastodonPosts },
   reddit: { name: 'Reddit/Redlib', fetch: fetchRedditPosts },
   rss: { name: 'RSS+Newsletter (100+ sources)', fetch: fetchRssPosts },
-  newsletter: { name: 'Newsletters (Substack/Medium/Mirror/Paragraph/Ghost/Beehiiv)', fetch: async (limit) => {
-    const { fetchNewsletterPosts } = await import('../providers/rss');
-    return fetchNewsletterPosts(limit);
-  }},
+  newsletter: {
+    name: 'Newsletters (Substack/Medium/Mirror/Paragraph/Ghost/Beehiiv)',
+    fetch: async (limit) => {
+      const { fetchNewsletterPosts } = await import('../providers/rss');
+      return fetchNewsletterPosts(limit);
+    },
+  },
   rssbridge: { name: 'RSS-Bridge (legacy)', fetch: fetchRssBridgePosts },
   lemmy: { name: 'Lemmy', fetch: fetchLemmyPosts },
   peertube: { name: 'PeerTube', fetch: fetchPeerTubePosts },
@@ -30,6 +34,7 @@ export const PROVIDERS: Record<string, { name: string; fetch: ProviderFetcher }>
   farcaster: { name: 'Farcaster', fetch: fetchFarcasterPosts },
   lens: { name: 'Lens', fetch: fetchLensPosts },
   pixelfed: { name: 'Pixelfed', fetch: fetchPixelfedPosts },
+  threads: { name: 'Threads (Meta)', fetch: fetchThreadsPosts },
   zora: { name: 'Zora (NFT)', fetch: fetchZoraPosts },
 };
 

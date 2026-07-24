@@ -94,3 +94,44 @@ aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:internal-hostname:173
 
 # ── ethereum-private-key: test fixture (not a real key) ────────────────────
 cc6ea5035f5000a775e394dcf4388e70b9412256:workers/api/src/__tests__/integration/publish-all-protocols.test.ts:ethereum-private-key:89
+
+# ── Pre-existing documentation references (--no-git mode, no commit hash) ──
+CLOUDFLARE.md:gopass-reference:116
+GAPS.md:internal-hostname:45
+DEPLOYMENT.md:internal-hostname:565
+DEPLOYMENT.md:internal-hostname:566
+REMAINING.md:gopass-reference:25
+REMAINING.md:gopass-reference:26
+REMAINING.md:gopass-reference:27
+REMAINING.md:gopass-reference:28
+REMAINING.md:gopass-reference:29
+REMAINING.md:gopass-reference:30
+REMAINING.md:gopass-reference:36
+REMAINING.md:internal-hostname:173
+apps/web/.env.example:internal-hostname:172
+apps/web/.env.example:internal-hostname:175
+docs/ADMIN_ACCESS.md:gopass-reference:409
+docs/CLOUDFLARE_SETUP.md:gopass-reference:232
+docs/DEPLOYMENT.md:internal-hostname:565
+docs/DEPLOYMENT.md:internal-hostname:566
+docs/NETWORK_OWNERSHIP.md:ethereum-private-key:109
+docs/NETWORK_OWNERSHIP.md:ethereum-private-key:362
+infra/monitoring/deploy.sh:internal-hostname:8
+infra/monitoring/README.md:internal-hostname:50
+infra/monitoring/README.md:internal-hostname:80
+infra/monitoring/README.md:internal-hostname:81
+infra/monitoring/prometheus.yml:internal-hostname:32
+packages/spaces-bridge/src/owncast.ts:internal-hostname:10
+packages/spaces-bridge/src/owncast.ts:internal-hostname:27
+scripts/deploy/rollback.sh:gopass-reference:71
+scripts/deploy/rollback.sh:gopass-reference:72
+scripts/deploy/rollback.sh:gopass-reference:86
+scripts/deploy/rollback.sh:gopass-reference:87
+scripts/deploy/setup-cloudflare.sh:gopass-reference:50
+scripts/deploy/setup-cloudflare.sh:gopass-reference:55
+scripts/deploy/setup-cloudflare.sh:gopass-reference:66
+scripts/deploy/setup-cloudflare.sh:gopass-reference:72
+scripts/deploy/setup-cloudflare.sh:gopass-reference:73
+scripts/git/radicle-setup.sh:internal-hostname:3
+workers/api/wrangler.toml:internal-hostname:196
+workers/api/wrangler.toml:internal-hostname:197
