@@ -13,8 +13,8 @@ Part of DegenFeed Web — https://git.rugmunch.io/RugMunchMedia/degenfeed-web
 | Platform | URL |
 |----------|-----|
 | **Primary** | https://git.rugmunch.io/RugMunchMedia/degenfeed-web |
-| **GitLab mirror** | https://gitlab.com/cryptorugmuncher/degenfeed-web |
-| **Codeberg mirror** | https://codeberg.org/cryptorugmunch/degenfeed-web |
+| **GitLab mirror** | https://gitlab.com/rugmunchmedia/degenfeed-web |
+| **Codeberg mirror** | https://codeberg.org/degenfeed/degenfeed-web |
 
 PRs accepted on All platforms. Issues tracked on the primary Forgejo instance.
 

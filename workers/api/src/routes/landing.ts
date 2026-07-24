@@ -233,8 +233,6 @@ export const LANDING_HTML = `<!doctype html>
         <nav class="footer-links footer-social" aria-label="Source code">
           <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener">Forgejo</a>
           <span aria-hidden="true">·</span>
-          <a href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web" target="_blank" rel="noopener">Forgejo</a>
-          <span aria-hidden="true">·</span>
           <a href="https://codeberg.org/degenfeed/degenfeed-web" target="_blank" rel="noopener">Codeberg</a>
           <span aria-hidden="true">·</span>
           <a href="https://social.degenfeed.xyz" target="_blank" rel="noopener">degenfeed@social.degenfeed.xyz</a>
