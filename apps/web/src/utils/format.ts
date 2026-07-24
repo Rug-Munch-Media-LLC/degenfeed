@@ -1,37 +1,25 @@
 /**
  * @degenfeed/web — Formatting utilities
+ * Re-export from @degenfeed/utils with additional web-specific formatters.
  */
 
-/** Format a count number with K/M/B suffixes */
-export function formatCount(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
+export {
+  formatCount,
+  formatDate,
+  formatDuration,
+  formatTimestamp,
+} from '@degenfeed/utils';
 
-/** Truncate text with ellipsis */
+export { formatTimeAgo } from '@degenfeed/utils';
+
+import { formatTimeAgo as timeAgo } from '@degenfeed/utils';
+
 export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength).trimEnd()}…`;
 }
 
-/** Format a timestamp as relative time string */
-export function timeAgo(date: Date | string | number): string {
-  const now = Date.now();
-  const then = typeof date === 'object' ? date.getTime() : new Date(date).getTime();
-  const diffMs = now - then;
-  const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 60) return `${diffSec}s ago`;
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  if (diffDay < 30) return `${diffDay}d ago`;
-  const diffMonth = Math.floor(diffDay / 30);
-  return `${diffMonth}mo ago`;
-}
+export { timeAgo };
 
 /** Build a URL query string from an object */
 export function buildQuery(

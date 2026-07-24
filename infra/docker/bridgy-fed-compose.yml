@@ -1,14 +1,32 @@
-# bridgy-fed-compose.yml — Bridgy Fed service for Talos (netcup)
-# Bridges ActivityPub (GotoSocial) ↔ Bluesky ↔ Nostr ↔ Farcaster
+# bridgy-fed-compose.yml — Bridgy Fed service (FIXED v2)
+# Bridges ActivityPub (GotoSocial) ↔ Bluesky/ATProto
+# Includes Firestore emulator sidecar for local Datastore.
 #
-# Network: rmi-net (shared with rmi-infra, degenfeed, GotoSocial)
-# Data: named volume bridgy-fed-data for persistent state (OAuth tokens,
-#       user mappings, cached protocol objects)
-#
-# Bring up:
-#   docker compose -f infra/docker/bridgy-fed-compose.yml up -d
+# Bring up: docker compose -f infra/docker/bridgy-fed-compose.yml up -d
+# Logs:     docker compose -f infra/docker/bridgy-fed-compose.yml logs -f
 
 services:
+  # Google Cloud Firestore emulator (Datastore mode) — required by Bridgy Fed
+  firestore-emulator:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    container_name: bridgy-firestore-emulator
+    hostname: firestore-emulator
+    restart: unless-stopped
+    command: >
+      gcloud beta emulators firestore start
+      --host-port=0.0.0.0:8089
+      --database-mode=datastore-mode
+    ports:
+      - "127.0.0.1:8089:8089"
+    networks:
+      - rmi-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   bridgy-fed:
     image: bridgy-fed:latest
     build:
@@ -17,37 +35,42 @@ services:
     container_name: bridgy-fed
     hostname: bridgy-fed
     restart: unless-stopped
+    depends_on:
+      firestore-emulator:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8085:8080"
     volumes:
       - bridgy-fed-data:/data
     environment:
-      FLASK_ENV: production
+      FLASK_ENV: development
       HOST: bridgy.degenfeed.xyz
       BRIDGY_FED_DATA: /data
-      # ActivityPub → bridged-protocol delivery (public inbox)
-      # GotoSocial at social.degenfeed.xyz publishes here
+      # Firestore emulator connection
+      DATASTORE_EMULATOR_HOST: firestore-emulator:8089
+      DATASTORE_DATASET: bridgy-federated
+      DATASTORE_PROJECT_ID: bridgy-federated
+      # ActivityPub
       ACTIVITYPUB_HOST: social.degenfeed.xyz
       # Bluesky
       BSKY_APPVIEW: https://public.api.bsky.app
+      BSKY_PDS_HOST: pds.degenfeed.xyz
+      BSKY_PLC_HOST: plc.directory
+      BSKY_BGS_HOST: bsky.network
       # Nostr
       NOSTR_RELAYS: wss://relay.damus.io,wss://relay.primal.net
       # Farcaster
       FARCASTER_HUB: https://hub.farcaster.standardcrypto.vc:2281
-      # Rate limiting — protect the bridge
+      # Rate limiting via shared Redis
       RATELIMIT_STORAGE_URI: redis://rmi-redis:6379/5
     networks:
       - rmi-net
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -f -s -o /dev/null http://localhost:8080/ || exit 1",
-        ]
+      test: ["CMD-SHELL", "curl -f -s -o /dev/null http://localhost:8080/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      start_period: 60s
     logging:
       driver: json-file
       options:

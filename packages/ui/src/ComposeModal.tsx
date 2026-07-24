@@ -21,12 +21,14 @@
  *   Signed in (1+ protocols) → toggles show available protocols
  */
 
-import { resolveTokenGateSymbol, type TokenGate } from '@degenfeed/token-gate';
+import type { TokenGate } from '@degenfeed/token-gate';
 import type { ContentProof } from '@degenfeed/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ComposePreview } from './ComposePreview';
 import { getProtocolColor, getProtocolIcon, getProtocolLabel } from './ProtocolBadge';
 import { TokenGateConfigurator } from './TokenGateConfigurator';
+import { saveDraft, loadDraft, clearDraft } from './ComposeDraftManager';
+import { ComposeGateConfig } from './ComposeGateConfig';
 
 interface ComposeTarget {
   id: string;
@@ -117,7 +119,7 @@ export interface ComposeModalProps {
   ) => Promise<{ ok: boolean; nativeId?: string; error?: string }>;
 }
 
-const DRAFT_KEY = 'degenfeed_compose_draft';
+// Draft key moved to ComposeDraftManager
 const MAX_CHARS = 50000;
 
 export function ComposeModal({
@@ -171,32 +173,7 @@ export function ComposeModal({
   const [gateError, setGateError] = useState<string | undefined>(undefined);
   const gateResolveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Resolve symbol when gate config changes
-  useEffect(() => {
-    if (gateResolveTimeout.current) {
-      clearTimeout(gateResolveTimeout.current);
-    }
-    if (!tokenGate) {
-      setGateSymbol('');
-      setGateError(undefined);
-      return;
-    }
-    setGateResolving(true);
-    setGateError(undefined);
-    gateResolveTimeout.current = setTimeout(async () => {
-      try {
-        const sym = await resolveTokenGateSymbol(tokenGate);
-        setGateSymbol(sym);
-      } catch {
-        setGateError('Could not resolve token symbol');
-      } finally {
-        setGateResolving(false);
-      }
-    }, 800);
-    return () => {
-      if (gateResolveTimeout.current) clearTimeout(gateResolveTimeout.current);
-    };
-  }, [tokenGate]);
+  // Token gate state is now managed by ComposeGateConfig component
 
   // Cross-protocol reply state
   // Cross-protocol reply: remember last used reply protocol per parent protocol
@@ -220,7 +197,7 @@ export function ComposeModal({
       setText(prefillText);
     } else {
       try {
-        const saved = localStorage.getItem(DRAFT_KEY);
+        const saved = loadDraft() as any;
         if (saved) setText(saved);
       } catch {
         /* noop */
@@ -237,7 +214,7 @@ export function ComposeModal({
     if (!open) return;
     const timer = setTimeout(() => {
       try {
-        localStorage.setItem(DRAFT_KEY, text);
+        saveDraft({ text, enabledTargets: Object.fromEntries(targets.map((t) => [t.id, t.enabled])), attachedImages, timestamp: Date.now() });
       } catch {
         /* noop */
       }
@@ -341,7 +318,7 @@ export function ComposeModal({
 
     try {
       onSchedule?.(text.trim(), selectedTargets, scheduledAt);
-      localStorage.removeItem(DRAFT_KEY);
+      clearDraft();
     } catch {
       /* noop */
     }
@@ -385,7 +362,7 @@ export function ComposeModal({
 
         if (result.ok) {
           try {
-            localStorage.removeItem(DRAFT_KEY);
+            clearDraft();
           } catch {
             /* noop */
           }
@@ -444,7 +421,7 @@ export function ComposeModal({
       if (allOk) {
         // Clear draft on success
         try {
-          localStorage.removeItem(DRAFT_KEY);
+          clearDraft();
         } catch {
           /* noop */
         }

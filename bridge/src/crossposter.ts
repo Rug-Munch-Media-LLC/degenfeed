@@ -367,7 +367,7 @@ const TRANSFORMS: Record<string, TransformFunction> = {
 // ─── Publishers ─────────────────────────────────────────────────────────
 
 async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
-  const relayUrl = process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:8085';
+  const relayUrl = process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:32768';
   try {
     return new Promise((resolve) => {
       try {
@@ -651,7 +651,7 @@ const DEFAULT_CONFIG: CrossPairConfig[] = [
     rateLimit: { maxPosts: 10, windowMs: 3600000 },
     sourceConfig: {},
     targetConfigs: {
-      nostr: { relayUrl: process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:8085' },
+      nostr: { relayUrl: process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:32768' },
     },
   },
   {
